@@ -30,7 +30,6 @@ import {
   SouthConnectorMetrics
 } from '../../../shared/model/engine.model';
 import { BaseFolders } from 'src/model/types';
-import { Readable, Writable } from 'node:stream';
 import { Transformer } from '../../model/transformer.model';
 
 const CONFIG_TEST_DATABASE = path.resolve('src', 'tests', 'test-config.db');
@@ -40,27 +39,6 @@ const METRICS_TEST_DATABASE = path.resolve('src', 'tests', 'test-metrics.db');
 const CACHE_TEST_DATABASE = path.resolve('src', 'tests', 'test-cache.db');
 
 export const flushPromises = () => new Promise(jest.requireActual('timers').setImmediate);
-
-export function createMockWriteStream(): Writable & { data: Array<string> } {
-  const writtenData: Array<string> = [];
-
-  const stream = new Writable({
-    write(chunk, _encoding, callback) {
-      writtenData.push(chunk.toString()); // Store received data
-      callback(); // Notify that writing is done
-    }
-  });
-
-  return Object.assign(stream, { data: writtenData });
-}
-
-export function createMockReadStream(): Readable {
-  return new Readable({
-    read() {
-      return;
-    } // No need to override, just push data externally
-  });
-}
 
 export const initDatabase = async (database: 'config' | 'crypto' | 'cache' | 'logs' | 'metrics', populate = true) => {
   switch (database) {
@@ -480,8 +458,14 @@ const createNorth = async (database: knex.Knex, north: NorthConnectorEntity<Nort
   for (const element of north.subscriptions) {
     await createSubscription(database, north.id, element.id);
   }
-  for (const element of north.transformers) {
-    await createNorthTransformer(database, north.id, element.id);
+  for (const transformerWithOptions of north.transformers) {
+    await createNorthTransformer(
+      database,
+      north.id,
+      transformerWithOptions.transformer.id,
+      transformerWithOptions.options,
+      transformerWithOptions.transformer.inputType
+    );
   }
 };
 
@@ -606,8 +590,15 @@ const createHistoryQuery = async (
   for (const item of historyQuery.items) {
     await createHistoryQueryItem(database, historyQuery.id, item);
   }
-  for (const element of historyQuery.northTransformers) {
-    await createHistoryQueryTransformer(database, historyQuery.id, element.id);
+
+  for (const transformerWithOptions of historyQuery.northTransformers) {
+    await createHistoryQueryTransformer(
+      database,
+      historyQuery.id,
+      transformerWithOptions.transformer.id,
+      transformerWithOptions.options,
+      transformerWithOptions.transformer.inputType
+    );
   }
 };
 
@@ -629,12 +620,13 @@ const createTransformer = async (database: knex.Knex, transformer: Transformer) 
       await database
         .insert({
           id: transformer.id,
-          name: transformer.name,
-          description: transformer.description,
           type: transformer.type,
           input_type: transformer.inputType,
           output_type: transformer.outputType,
-          custom_code: transformer.customCode
+          name: transformer.name,
+          description: transformer.description,
+          custom_code: transformer.customCode,
+          custom_manifest: JSON.stringify(transformer.customManifest)
         })
         .into('transformers');
       break;
@@ -642,21 +634,29 @@ const createTransformer = async (database: knex.Knex, transformer: Transformer) 
       await database
         .insert({
           id: transformer.id,
-          name: transformer.name,
-          description: transformer.description,
           type: transformer.type,
           input_type: transformer.inputType,
           output_type: transformer.outputType,
-          standard_code: transformer.standardCode
+          function_name: transformer.functionName
         })
         .into('transformers');
   }
 };
 
-const createNorthTransformer = async (database: knex.Knex, northId: string, transformerId: string) => {
-  await database.insert({ north_id: northId, transformer_id: transformerId }).into('north_transformers');
+const createNorthTransformer = async (database: knex.Knex, northId: string, transformerId: string, options: object, inputType: string) => {
+  await database
+    .insert({ north_id: northId, transformer_id: transformerId, options: JSON.stringify(options), input_type: inputType })
+    .into('north_transformers');
 };
 
-const createHistoryQueryTransformer = async (database: knex.Knex, historyId: string, transformerId: string) => {
-  await database.insert({ history_id: historyId, transformer_id: transformerId }).into('history_query_transformers');
+const createHistoryQueryTransformer = async (
+  database: knex.Knex,
+  historyId: string,
+  transformerId: string,
+  options: object,
+  inputType: string
+) => {
+  await database
+    .insert({ history_id: historyId, transformer_id: transformerId, options: JSON.stringify(options), input_type: inputType })
+    .into('history_query_transformers');
 };

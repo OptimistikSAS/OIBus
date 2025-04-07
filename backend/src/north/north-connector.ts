@@ -20,9 +20,11 @@ import CacheService from '../service/cache/cache.service';
 import { Readable } from 'node:stream';
 import fsAsync from 'node:fs/promises';
 import TransformerService, { createTransformer } from '../service/transformer.service';
+import IgnoreTransformer from '../service/transformers/ignore-transformer';
+import IsoTransformer from '../service/transformers/iso-transformer';
 
 /**
- * Class NorthConnector : provides general attributes and methods for north connectors.
+ * Class NorthConnector: provides general attributes and methods for north connectors.
  * Building a new North connector means to extend this class, and to surcharge
  * the following methods:
  * - **handleValues**: receive an array of values that need to be sent to an external application
@@ -215,7 +217,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     }
     const runStart = DateTime.now();
     try {
-      // Transform content filename into full path of file to ease the treatment in each north connector
+      // Transform content filename into a full path of a file to ease the treatment in each north connector
       const contentToSend: {
         metadataFilename: string;
         metadata: CacheMetadata;
@@ -271,7 +273,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   }
 
   /**
-   * Create a OIBusError from an unknown error thrown by the handleFile or handleValues connector method
+   * Create an OIBusError from an unknown error thrown by the handleFile or handleValues connector method
    * The error thrown can be overridden with an OIBusError to force a retry on specific cases
    */
   createOIBusError(error: unknown): OIBusError {
@@ -298,40 +300,109 @@ export default abstract class NorthConnector<T extends NorthSettings> {
       return;
     }
 
-    if (data.type === 'raw') {
-      const readStream = createReadStream(data.filePath);
-      await this.cacheSingleBatch(readStream, 'raw', source, path.parse(data.filePath).base);
-    } else {
+    const transformerWithOptions = this.connector.transformers.find(element => element.inputType === data.type);
+    if (!transformerWithOptions) {
+      if (!this.supportedTypes().includes(data.type)) {
+        this.logger.trace(`Data type "${data.type}" not supported by the connector. Data will be ignored.`);
+      } else {
+        await this.cacheWithoutTransform(data, source);
+      }
+      return;
+    }
+    if (
+      transformerWithOptions &&
+      transformerWithOptions.transformer.type === 'standard' &&
+      transformerWithOptions.transformer.functionName === IgnoreTransformer.transformerName
+    ) {
+      this.logger.trace(`Ignoring data of type ${data.type}`);
+      return;
+    }
+
+    // Iso data
+    if (
+      transformerWithOptions.transformer.type === 'standard' &&
+      transformerWithOptions.transformer.functionName === IsoTransformer.transformerName
+    ) {
+      await this.cacheWithoutTransform(data, source);
+      return;
+    }
+
+    // Transform data
+    this.logger.trace(
+      `Transforming data of type ${data.type} into ${transformerWithOptions.transformer.outputType} type with transformer ${transformerWithOptions.transformer.id}`
+    );
+    const transformer = createTransformer(transformerWithOptions, this.connector, this.logger);
+    if (data.type === 'time-values') {
       if (this.connector.caching.throttling.maxNumberOfElements > 0) {
         for (let i = 0; i < data.content.length; i += this.connector.caching.throttling.maxNumberOfElements) {
           const chunks: Array<object> = data.content.slice(i, i + this.connector.caching.throttling.maxNumberOfElements);
-          const readStream = Readable.from(JSON.stringify(chunks));
-          await this.cacheSingleBatch(readStream, data.type, source, null);
+          const { metadata, output } = await transformer.transform(Readable.from(JSON.stringify(chunks)), source, null);
+          await this.persistDataInCache(metadata, output);
         }
       } else {
-        const readStream = Readable.from(JSON.stringify(data.content));
-        await this.cacheSingleBatch(readStream, data.type, source, null);
+        const { metadata, output } = await transformer.transform(Readable.from(JSON.stringify(data.content)), source, null);
+        await this.persistDataInCache(metadata, output);
       }
+    } else {
+      const { metadata, output } = await transformer.transform(createReadStream(data.filePath), source, path.parse(data.filePath).base);
+      await this.persistDataInCache(metadata, output);
     }
     await this.triggerRunIfNecessary(0); // No delay needed here, we check for trigger right now, once the cache is updated
   }
 
-  private async cacheSingleBatch(readStream: ReadStream | Readable, inputType: string, source: string, filename: string | null) {
-    // Either generate a filename
-    const transformerForInputType = this.connector.transformers.find(element => element.inputType === inputType);
-    if (!transformerForInputType) {
-      this.logger.error(`Could not find a transformer of input type ${inputType}. Content is not cached for this North`);
-      return;
+  private async cacheWithoutTransform(data: OIBusContent, source: string) {
+    if (data.type === 'any') {
+      await this.persistDataInCache(
+        {
+          contentFile: path.parse(data.filePath).base,
+          contentSize: 0,
+          createdAt: '',
+          numberOfElement: 0,
+          contentType: data.type,
+          source,
+          options: {}
+        },
+        createReadStream(data.filePath)
+      );
+    } else {
+      if (this.connector.caching.throttling.maxNumberOfElements > 0) {
+        for (let i = 0; i < data.content.length; i += this.connector.caching.throttling.maxNumberOfElements) {
+          const chunks: Array<object> = data.content.slice(i, i + this.connector.caching.throttling.maxNumberOfElements);
+          await this.persistDataInCache(
+            {
+              contentFile: generateRandomId(10),
+              contentSize: 0,
+              createdAt: '',
+              numberOfElement: chunks.length,
+              contentType: data.type,
+              source,
+              options: {}
+            },
+            Readable.from(JSON.stringify(chunks))
+          );
+        }
+      } else {
+        await this.persistDataInCache(
+          {
+            contentFile: generateRandomId(10),
+            contentSize: 0,
+            createdAt: '',
+            numberOfElement: data.content.length,
+            contentType: data.type,
+            source,
+            options: {}
+          },
+          Readable.from(JSON.stringify(data.content))
+        );
+      }
     }
+  }
 
-    const transformer = createTransformer(this.transformerService.findById(transformerForInputType.id)!, this.connector, this.logger);
-    const { metadata, output } = await transformer.transform(readStream, source, filename);
-
+  async persistDataInCache(metadata: CacheMetadata, output: string | ReadStream | Readable) {
     await fsAsync.writeFile(path.join(this.cacheService.cacheFolder, this.cacheService.CONTENT_FOLDER, metadata.contentFile), output, {
       encoding: 'utf-8',
       flag: 'w'
     });
-
     const fileStat = await fsAsync.stat(path.join(this.cacheService.cacheFolder, this.cacheService.CONTENT_FOLDER, metadata.contentFile));
     metadata.contentSize = fileStat.size;
     metadata.createdAt = DateTime.fromMillis(fileStat.ctimeMs).toUTC().toISO()!;
@@ -492,4 +563,6 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   abstract testConnection(): Promise<void>;
 
   abstract handleContent(cacheMetadata: CacheMetadata): Promise<void>;
+
+  abstract supportedTypes(): Array<string>;
 }

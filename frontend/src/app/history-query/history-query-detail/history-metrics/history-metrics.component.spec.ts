@@ -55,7 +55,7 @@ class TestComponent {
   northManifest: NorthConnectorManifest = {
     id: 'oianalytics',
     category: 'api',
-    types: ['raw', 'time-values'],
+    types: ['any', 'time-values'],
     settings: [
       {
         key: 'host',
