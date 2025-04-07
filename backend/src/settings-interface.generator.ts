@@ -293,6 +293,12 @@ function buildNorthInterfaceName(connectorId: string): string {
       return 'NorthRESTSettings';
     case 'sftp':
       return 'NorthSFTPSettings';
+    case 'opcua':
+      return 'NorthOPCUASettings';
+    case 'modbus':
+      return 'NorthModbusSettings';
+    case 'mqtt':
+      return 'NorthMQTTSettings';
   }
   return '';
 }

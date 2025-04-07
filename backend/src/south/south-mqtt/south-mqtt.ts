@@ -30,8 +30,8 @@ import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-c
  */
 export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQTTItemSettings> implements QueriesSubscription {
   private client: mqtt.MqttClient | null = null;
-
   private reconnectTimeout: NodeJS.Timeout | null = null;
+
   private flushTimeout: NodeJS.Timeout | null = null;
   private bufferedMessages: Array<{ topic: string; message: string }> = [];
 
