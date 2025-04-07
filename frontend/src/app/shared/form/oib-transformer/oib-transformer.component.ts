@@ -18,7 +18,7 @@ export class OibTransformerComponent implements ControlValueAccessor {
   readonly key = input('');
   readonly transformers = input.required<Array<TransformerLightDTO>>();
   readonly inputType = input<OIBusDataType>();
-  readonly outputType = input<Array<OIBusDataType>>([]);
+  readonly outputType = input<Array<string>>([]);
   transformerInputCtrl = inject(NonNullableFormBuilder).control(null as string | null);
   disabled = false;
   onChange: (value: string) => void = () => {};
