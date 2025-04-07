@@ -38,6 +38,7 @@ export class OibArrayComponent implements OnInit, AfterViewChecked, ControlValue
   readonly key = input('');
   readonly formDescription = input.required<Array<OibFormControl>>();
   readonly parentForm = input.required<FormGroup>();
+  readonly allowRowDuplication = input(false);
 
   elements: Array<any> = [];
   elementsIncludingNew: Array<any> = [];
@@ -153,6 +154,19 @@ export class OibArrayComponent implements OnInit, AfterViewChecked, ControlValue
       element
     };
     this.onChange(this.elements);
+    this.recomputeElementsIncludingNew();
+  }
+
+  /**
+   * Method that should be called to duplicate an existing element in the array.
+   * Opens the edit form for the duplicated element before saving.
+   */
+  duplicate(element: any) {
+    const duplicatedElement = { ...element, fieldName: element.fieldName + '-copy' };
+    this.editedElement = {
+      isNew: true,
+      element: duplicatedElement
+    };
     this.recomputeElementsIncludingNew();
   }
 

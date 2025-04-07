@@ -42,6 +42,13 @@
               <button type="button" [disabled]="editDisabled" class="btn btn-link px-1 py-0 edit-button" (click)="edit(element)">
                 <span class="fa fa-pencil"></span>
               </button>
+
+              @if (allowRowDuplication()) {
+                <button type="button" class="btn btn-link duplicate-south-item px-1 py-0" (click)="duplicate(element)">
+                  <span class="fa fa-copy"></span>
+                </button>
+              }
+
               <button type="button" [disabled]="editDisabled" class="btn btn-link px-1 py-0 delete-button" (click)="remove($index)">
                 <span class="fa fa-trash"></span>
               </button>
