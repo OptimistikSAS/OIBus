@@ -84,7 +84,7 @@ describe('NorthFileWriter', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     });
@@ -102,7 +102,7 @@ describe('NorthFileWriter', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'raw',
+        contentType: 'any',
         source: 'south',
         options: {}
       })
@@ -144,7 +144,7 @@ describe('NorthFileWriter without suffix or prefix', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     });

@@ -457,7 +457,11 @@ describe('NorthConnector', () => {
 
     expect(oiBusTransformer.transform).toHaveBeenCalledWith('readStream', 'south', null);
     expect(Readable.from).toHaveBeenCalledWith(JSON.stringify(testData.oibusContent[0].content));
-    expect(createTransformer).toHaveBeenCalledWith(testData.transformers.list[0], testData.north.list[0], logger);
+    expect(createTransformer).toHaveBeenCalledWith(
+      { transformer: testData.transformers.list[0], options: {}, inputType: 'time-values' },
+      testData.north.list[0],
+      logger
+    );
 
     expect(fsAsync.stat).toHaveBeenCalledWith(path.join(cacheService.cacheFolder, cacheService.CONTENT_FOLDER, '1234567890.json'));
     expect(fsAsync.writeFile).toHaveBeenCalledWith(
@@ -559,7 +563,7 @@ describe('NorthConnector', () => {
       contentSize: 100,
       numberOfElement: 0,
       createdAt: DateTime.fromMillis(123).toUTC().toISO()!,
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     };
@@ -580,7 +584,11 @@ describe('NorthConnector', () => {
       }
     );
     expect(createReadStream).toHaveBeenCalledWith((testData.oibusContent[1] as OIBusRawContent).filePath);
-    expect(createTransformer).toHaveBeenCalledWith(testData.transformers.list[0], testData.north.list[0], logger);
+    expect(createTransformer).toHaveBeenCalledWith(
+      { transformer: testData.transformers.list[1], options: {}, inputType: 'any' },
+      testData.north.list[0],
+      logger
+    );
 
     expect(fsAsync.stat).toHaveBeenCalledWith(
       path.join(
@@ -613,15 +621,16 @@ describe('NorthConnector', () => {
 
   it('should not cache content if transformer not found', async () => {
     north['connector'].transformers = [];
+    north['supportedTypes'] = () => [];
     await north.cacheContent(
       {
-        type: 'raw',
+        type: 'any',
         filePath: 'path/file.csv'
       },
       'south'
     );
 
-    expect(logger.error).toHaveBeenCalledWith(`Could not find a transformer of input type raw. Content is not cached for this North`);
+    expect(logger.trace).toHaveBeenCalledWith(`Data type "any" not supported by the connector. Data will be ignored.`);
     expect(createTransformer).not.toHaveBeenCalled();
   });
 

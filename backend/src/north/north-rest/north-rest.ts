@@ -34,13 +34,10 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
   }
 
   async handleContent(cacheMetadata: CacheMetadata): Promise<void> {
-    switch (cacheMetadata.contentType) {
-      case 'raw':
-        return this.handleFile(cacheMetadata.contentFile);
-
-      case 'time-values':
-        throw new Error('Can not manage time values');
+    if (!this.supportedTypes().includes(cacheMetadata.contentType)) {
+      throw new Error(`Unsupported data type: ${cacheMetadata.contentType} (file ${cacheMetadata.contentFile})`);
     }
+    return this.handleFile(cacheMetadata.contentFile);
   }
 
   /**
@@ -267,5 +264,9 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
     }
 
     return messages.join('; ');
+  }
+
+  supportedTypes(): Array<string> {
+    return ['any'];
   }
 }

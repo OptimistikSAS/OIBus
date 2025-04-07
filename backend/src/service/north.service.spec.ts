@@ -1,7 +1,7 @@
 import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import EncryptionService from './encryption.service';
-import NorthService from './north.service';
+import NorthService, { getTransformer } from './north.service';
 import pino from 'pino';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
@@ -329,7 +329,7 @@ describe('north service', () => {
       }))
     );
     await expect(service.createNorth(testData.north.command, null)).rejects.toThrow(
-      `Could not find OIBus transformer ${testData.north.command.transformers[0]}`
+      `Could not find OIBus Transformer ${testData.transformers.list[0].id}`
     );
   });
 
@@ -632,5 +632,11 @@ describe('north service', () => {
     expect(() => service.retrieveSecretsFromNorth('northId', testData.north.manifest)).toThrow(
       `North connector northId (type ${testData.north.list[0].type}) must be of the type ${testData.north.manifest.id}`
     );
+  });
+
+  it('getTransformer() should return transformer', () => {
+    expect(getTransformer(null, testData.transformers.list)).toBeNull();
+    expect(getTransformer(testData.transformers.list[0].id, testData.transformers.list)).toEqual(testData.transformers.list[0]);
+    expect(() => getTransformer('bad id', testData.transformers.list)).toThrow(`Could not find OIBus Transformer bad id`);
   });
 });

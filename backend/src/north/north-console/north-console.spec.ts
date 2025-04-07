@@ -105,7 +105,7 @@ describe('NorthConsole with verbose mode', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     });
@@ -167,7 +167,7 @@ describe('NorthConsole without verbose mode', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     });
