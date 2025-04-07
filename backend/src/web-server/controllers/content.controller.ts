@@ -15,7 +15,7 @@ export default class ContentController extends AbstractController {
 
     let content: OIBusContent;
     if (ctx.request.file) {
-      content = { type: 'raw', filePath: ctx.request.file.path };
+      content = { type: 'any', filePath: ctx.request.file.path };
     } else {
       const body = ctx.request.body! as OIBusTimeValueContent;
       content = { type: 'time-values', content: body.content };

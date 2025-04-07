@@ -36,16 +36,10 @@ export default class NorthModbus extends NorthConnector<NorthModbusSettings> {
   }
 
   async handleContent(cacheMetadata: CacheMetadata): Promise<void> {
-    switch (cacheMetadata.contentType) {
-      case 'modbus':
-        return this.handleValues(
-          JSON.parse(await fs.readFile(cacheMetadata.contentFile, { encoding: 'utf-8' })) as Array<OIBusModbusValue>
-        );
-
-      default:
-        this.logger.debug(`File "${cacheMetadata.contentFile}" of type ${cacheMetadata.contentType} ignored`);
-        return;
+    if (!this.supportedTypes().includes(cacheMetadata.contentType)) {
+      throw new Error(`Unsupported data type: ${cacheMetadata.contentType} (file ${cacheMetadata.contentFile})`);
     }
+    return this.handleValues(JSON.parse(await fs.readFile(cacheMetadata.contentFile, { encoding: 'utf-8' })) as Array<OIBusModbusValue>);
   }
 
   override async connect(): Promise<void> {
@@ -142,5 +136,9 @@ export default class NorthModbus extends NorthConnector<NorthModbusSettings> {
       default:
         throw new Error(`Wrong Modbus type "${modbusValue.modbusType}" for address ${address}`);
     }
+  }
+
+  supportedTypes(): Array<string> {
+    return ['modbus'];
   }
 }

@@ -165,7 +165,7 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
           item.name
         );
         const content = generateCsvContent(formattedResults, item.settings.serialization.delimiter);
-        oibusContent = { type: 'raw', filePath, content };
+        oibusContent = { type: 'any', filePath, content };
         break;
       }
     }

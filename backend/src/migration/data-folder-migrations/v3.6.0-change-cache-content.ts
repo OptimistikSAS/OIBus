@@ -58,7 +58,7 @@ async function refactorNorthFolder(northFolderPath: string) {
       try {
         const contentTargetPath = path.join(contentFolder, file);
 
-        // Create metadata file
+        // Create a metadata file
         const randomId = generateRandomId(10);
         const fileStat = await fs.stat(sourcePath);
         const metadata: CacheMetadata = {
@@ -66,7 +66,7 @@ async function refactorNorthFolder(northFolderPath: string) {
           contentSize: fileStat.size,
           numberOfElement: 0,
           createdAt: DateTime.fromMillis(fileStat.ctimeMs).toUTC().toISO()!,
-          contentType: 'raw',
+          contentType: 'any',
           source: 'south',
           options: {}
         };
