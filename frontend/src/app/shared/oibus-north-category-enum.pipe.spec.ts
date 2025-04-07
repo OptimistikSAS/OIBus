@@ -4,8 +4,10 @@ import { testEnumPipe } from './base-enum-pipe.spec';
 describe('OIBusNorthCategoryEnumPipe', () => {
   it('should translate north category', () => {
     testEnumPipe(OIBusNorthCategoryEnumPipe, {
+      debug: 'Debug',
       file: 'File',
-      api: 'API'
+      api: 'API',
+      iot: 'IoT'
     });
   });
 });

@@ -8,6 +8,9 @@ import OIBusTimeValuesToCsvTransformer from '../../service/transformers/oibus-ti
 import IsoRawTransformer from '../../service/transformers/iso-raw-transformer';
 import { OIBusDataType } from '../../../shared/model/engine.model';
 import OIBusTimeValuesToJSONTransformer from '../../service/transformers/oibus-time-values-to-json-transformer';
+import OIBusTimeValuesToMQTTTransformer from '../../service/transformers/oibus-time-values-to-mqtt-transformer';
+import OIBusTimeValuesToModbusTransformer from '../../service/transformers/oibus-time-values-to-modbus-transformer';
+import OIBusTimeValuesToOPCUATransformer from '../../service/transformers/oibus-time-values-to-opcua-transformer';
 
 const TRANSFORMERS_TABLE = 'transformers';
 const PAGE_SIZE = 10;
@@ -164,6 +167,42 @@ export default class TransformerRepository {
         standardCode: '',
         inputType: 'time-values',
         outputType: 'raw'
+      };
+      this.createStandardTransformer(standardTransformer);
+    }
+    if (!this.findById(OIBusTimeValuesToMQTTTransformer.transformerName)) {
+      const standardTransformer: StandardTransformer = {
+        id: OIBusTimeValuesToMQTTTransformer.transformerName,
+        type: 'standard',
+        name: OIBusTimeValuesToMQTTTransformer.transformerName,
+        description: '',
+        standardCode: '',
+        inputType: 'time-values',
+        outputType: 'mqtt'
+      };
+      this.createStandardTransformer(standardTransformer);
+    }
+    if (!this.findById(OIBusTimeValuesToOPCUATransformer.transformerName)) {
+      const standardTransformer: StandardTransformer = {
+        id: OIBusTimeValuesToOPCUATransformer.transformerName,
+        type: 'standard',
+        name: OIBusTimeValuesToOPCUATransformer.transformerName,
+        description: '',
+        standardCode: '',
+        inputType: 'time-values',
+        outputType: 'opcua'
+      };
+      this.createStandardTransformer(standardTransformer);
+    }
+    if (!this.findById(OIBusTimeValuesToModbusTransformer.transformerName)) {
+      const standardTransformer: StandardTransformer = {
+        id: OIBusTimeValuesToModbusTransformer.transformerName,
+        type: 'standard',
+        name: OIBusTimeValuesToModbusTransformer.transformerName,
+        description: '',
+        standardCode: '',
+        inputType: 'time-values',
+        outputType: 'modbus'
       };
       this.createStandardTransformer(standardTransformer);
     }
