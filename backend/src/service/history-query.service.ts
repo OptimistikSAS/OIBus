@@ -40,8 +40,8 @@ import { BaseFolders } from '../model/types';
 import NorthConnectorRepository from '../repository/config/north-connector.repository';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
 import { ReadStream } from 'node:fs';
-import { TransformerLightDTO } from '../../shared/model/transformer.model';
-import TransformerService, { toTransformerLightDTO } from './transformer.service';
+import TransformerService, { toTransformerDTO } from './transformer.service';
+import { Transformer } from '../model/transformer.model';
 
 export default class HistoryQueryService {
   constructor(
@@ -746,7 +746,11 @@ export const toHistoryQueryDTO = <S extends SouthSettings, N extends NorthSettin
       }
     },
     items: historyQuery.items.map(item => toHistoryQueryItemDTO<I>(item, historyQuery.southType, encryptionService)),
-    northTransformers: historyQuery.northTransformers.map(transformer => toTransformerLightDTO(transformer))
+    northTransformers: historyQuery.northTransformers.map(transformerWithOptions => ({
+      transformer: toTransformerDTO(transformerWithOptions.transformer),
+      options: transformerWithOptions.options,
+      inputType: transformerWithOptions.inputType
+    }))
   };
 };
 
@@ -769,7 +773,7 @@ const copyHistoryQueryCommandToHistoryQueryEntity = async <S extends SouthSettin
   currentSettings: HistoryQueryEntity<S, N, I> | null,
   encryptionService: EncryptionService,
   scanModes: Array<ScanMode>,
-  transformers: Array<TransformerLightDTO>,
+  transformers: Array<Transformer>,
   retrieveSecrets = false
 ): Promise<void> => {
   const southManifest = southManifestList.find(element => element.id === command.southType)!;
@@ -812,13 +816,12 @@ const copyHistoryQueryCommandToHistoryQueryEntity = async <S extends SouthSettin
       retentionDuration: command.caching.archive.retentionDuration
     }
   };
-
-  historyQueryEntity.northTransformers = command.northTransformers.map(transformerId => {
-    const transformer = transformers.find(element => element.id === transformerId);
-    if (!transformer) {
-      throw new Error(`Could not find OIBus transformer ${transformerId}`);
+  historyQueryEntity.northTransformers = command.northTransformers.map(transformerIdWithOptions => {
+    const foundTransformer = transformers.find(transformer => transformer.id === transformerIdWithOptions.transformerId);
+    if (!foundTransformer) {
+      throw new Error(`Could not find OIBus Transformer ${transformerIdWithOptions.transformerId}`);
     }
-    return transformer;
+    return { transformer: foundTransformer, options: transformerIdWithOptions.options, inputType: transformerIdWithOptions.inputType };
   });
   historyQueryEntity.items = await Promise.all(
     command.items.map(async itemCommand => {

@@ -166,7 +166,7 @@ describe('EditHistoryQueryComponent', () => {
       of({
         id: 'console',
         category: 'debug',
-        types: ['raw', 'time-values'],
+        types: ['any', 'time-values'],
         settings: [],
         schema: {} as unknown
       } as NorthConnectorManifest)
@@ -237,7 +237,7 @@ describe('EditHistoryQueryComponent', () => {
   });
 
   it('should test north connection', () => {
-    tester.componentInstance.northManifest = { id: 'console', types: ['raw'] } as NorthConnectorManifest;
+    tester.componentInstance.northManifest = { id: 'console', types: ['any'] } as NorthConnectorManifest;
     tester.componentInstance.historyQuery = historyQuery;
 
     const command = {

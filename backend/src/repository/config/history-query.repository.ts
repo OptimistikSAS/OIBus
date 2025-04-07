@@ -8,7 +8,7 @@ import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { Instant } from '../../model/types';
 import { OIBusNorthType } from '../../../shared/model/north-connector.model';
 import { OIBusSouthType } from '../../../shared/model/south-connector.model';
-import { Transformer } from '../../model/transformer.model';
+import { TransformerWithOptions } from '../../model/transformer.model';
 import { toTransformer } from './transformer.repository';
 
 const HISTORY_QUERIES_TABLE = 'history_queries';
@@ -72,7 +72,7 @@ export default class HistoryQueryRepository {
           `caching_trigger_schedule, caching_trigger_number_of_elements, caching_trigger_number_of_files, ` +
           `caching_throttling_run_min_delay, caching_throttling_cache_max_size, caching_throttling_max_number_of_elements, ` +
           `caching_error_retry_interval, caching_error_retry_count, caching_error_retention_duration, ` +
-          `caching_archive_enabled, caching_archive_retention_duration)` +
+          `caching_archive_enabled, caching_archive_retention_duration) ` +
           `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
         this.database.prepare(insertQuery).run(
           historyQuery.id,
@@ -159,11 +159,16 @@ export default class HistoryQueryRepository {
       }
 
       this.database.prepare(`DELETE FROM ${HISTORY_TRANSFORMERS_TABLE} WHERE history_id = ?;`).run(historyQuery.id);
-      if (historyQuery.northTransformers.length > 0) {
-        const insert = this.database.prepare(`INSERT INTO ${HISTORY_TRANSFORMERS_TABLE} (history_id, transformer_id) VALUES (?, ?);`);
-        for (const transformer of historyQuery.northTransformers) {
-          insert.run(historyQuery.id, transformer.id);
-        }
+      const insert = this.database.prepare(
+        `INSERT INTO ${HISTORY_TRANSFORMERS_TABLE} (history_id, transformer_id, options, input_type) VALUES (?, ?, ?, ?);`
+      );
+      for (const transformerWithOptions of historyQuery.northTransformers) {
+        insert.run(
+          historyQuery.id,
+          transformerWithOptions.transformer.id,
+          JSON.stringify(transformerWithOptions.options),
+          transformerWithOptions.inputType
+        );
       }
     });
     transaction();
@@ -311,12 +316,14 @@ export default class HistoryQueryRepository {
     this.database.prepare(query).run(id);
   }
 
-  findAllTransformersForHistory(historyId: string): Array<Transformer> {
-    const query = `SELECT t.id, t.name, t.type, t.description, t.input_type, t.output_type, t.standard_code, t.custom_code FROM ${HISTORY_TRANSFORMERS_TABLE} ht JOIN ${TRANSFORMERS_TABLE} t ON ht.transformer_id = t.id WHERE ht.history_id = ?;`;
-    return this.database
-      .prepare(query)
-      .all(historyId)
-      .map(result => toTransformer(result as Record<string, string>));
+  findTransformersForHistory(historyId: string): Array<TransformerWithOptions> {
+    const query = `SELECT t.id,  t.type,  ht.input_type, t.output_type, t.function_name, t.name, t.description, t.custom_manifest, t.custom_code, ht.options FROM ${HISTORY_TRANSFORMERS_TABLE} ht JOIN ${TRANSFORMERS_TABLE} t ON ht.transformer_id = t.id WHERE ht.history_id = ?;`;
+    const result = this.database.prepare(query).all(historyId) as Array<Record<string, string>>;
+    return result.map(element => ({
+      transformer: toTransformer(element),
+      options: JSON.parse(element.options),
+      inputType: element.input_type
+    }));
   }
 
   private toHistoryQueryItemEntity<I extends SouthItemSettings>(result: Record<string, string>): HistoryQueryItemEntity<I> {
@@ -364,7 +371,7 @@ export default class HistoryQueryRepository {
         }
       },
       items: this.findAllItemsForHistoryQuery<I>(result.id as string),
-      northTransformers: this.findAllTransformersForHistory(result.id as string)
+      northTransformers: this.findTransformersForHistory(result.id as string)
     };
   }
 }
