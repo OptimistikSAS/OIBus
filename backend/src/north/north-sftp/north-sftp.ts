@@ -33,6 +33,10 @@ export default class NorthSFTP extends NorthConnector<NorthSFTPSettings> {
   }
 
   async handleContent(cacheMetadata: CacheMetadata): Promise<void> {
+    if (!this.supportedTypes().includes(cacheMetadata.contentType)) {
+      throw new Error(`Unsupported data type: ${cacheMetadata.contentType} (file ${cacheMetadata.contentFile})`);
+    }
+
     const nowDate = DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS');
 
     // Remove timestamp from the file path
@@ -98,5 +102,9 @@ export default class NorthSFTP extends NorthConnector<NorthSFTPSettings> {
           password: this.connector.settings.password ? await this.encryptionService.decryptText(this.connector.settings.password) : ''
         };
     }
+  }
+
+  supportedTypes(): Array<string> {
+    return ['any'];
   }
 }

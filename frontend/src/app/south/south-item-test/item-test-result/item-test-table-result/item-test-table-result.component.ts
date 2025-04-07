@@ -54,7 +54,7 @@ export class ItemTestTableResultComponent implements BaseItemTestResult {
       case 'time-values':
         this.tableView = createPageFromArray(content.content, PAGE_SIZE, pageNumber);
         break;
-      case 'raw':
+      case 'any':
         const contentString = content.content;
         if (!contentString) {
           this.genericTableView = emptyPage();
@@ -72,7 +72,7 @@ export class ItemTestTableResultComponent implements BaseItemTestResult {
     switch (content.type) {
       case 'time-values':
         return ['table'];
-      case 'raw':
+      case 'any':
         if (content.filePath.endsWith('.csv') && content.content) {
           return ['table'];
         }

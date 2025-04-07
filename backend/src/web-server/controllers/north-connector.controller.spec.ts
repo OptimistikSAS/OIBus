@@ -63,12 +63,16 @@ describe('North connector controller', () => {
 
   it('findById() should return North connector', async () => {
     ctx.params.id = testData.north.list[0].id;
-    ctx.app.northService.findById.mockReturnValueOnce(testData.north.list[0]);
+    ctx.app.northService.findById.mockReturnValueOnce(testData.north.list[0]).mockReturnValueOnce(testData.north.list[1]);
 
     await northConnectorController.findById(ctx);
-
     expect(ctx.app.northService.findById).toHaveBeenCalledWith(testData.north.list[0].id);
     expect(ctx.ok).toHaveBeenCalledWith(toNorthConnectorDTO(testData.north.list[0], ctx.app.encryptionService));
+
+    ctx.params.id = testData.north.list[1].id;
+    await northConnectorController.findById(ctx);
+    expect(ctx.app.northService.findById).toHaveBeenCalledWith(testData.north.list[1].id);
+    expect(ctx.ok).toHaveBeenCalledWith(toNorthConnectorDTO(testData.north.list[1], ctx.app.encryptionService));
   });
 
   it('findById() should return found when North connector not found', async () => {

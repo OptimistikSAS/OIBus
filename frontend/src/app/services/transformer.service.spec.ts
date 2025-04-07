@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { TransformerService } from './transformer.service';
-import { CustomTransformerCommand, TransformerDTO, TransformerLightDTO } from '../../../../backend/shared/model/transformer.model';
+import { CustomTransformerCommand, TransformerDTO } from '../../../../backend/shared/model/transformer.model';
 
 describe('TransformerService', () => {
   let http: HttpTestingController;
@@ -20,7 +20,7 @@ describe('TransformerService', () => {
   afterEach(() => http.verify());
 
   it('should get all transformers', () => {
-    let expectedTransformers: Array<TransformerLightDTO> = [];
+    let expectedTransformers: Array<TransformerDTO> = [];
     service.list().subscribe(transformers => (expectedTransformers = transformers));
 
     http.expectOne('/api/transformers').flush([{ name: 'Transformer 1' }, { name: 'Transformer 2' }]);
