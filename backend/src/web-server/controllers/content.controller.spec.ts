@@ -20,7 +20,7 @@ const content: OIBusContent = {
 };
 
 const fileContent: OIBusContent = {
-  type: 'raw',
+  type: 'any',
   filePath: 'filePath'
 };
 
@@ -55,6 +55,6 @@ describe('Content controller', () => {
     ctx.request.file = { path: 'filePath' };
     await oibusController.addContent(ctx);
     expect(ctx.noContent).toHaveBeenCalled();
-    expect(ctx.app.oIBusService.addExternalContent).toHaveBeenCalledWith('northId', { type: 'raw', filePath: 'filePath' }, 'api');
+    expect(ctx.app.oIBusService.addExternalContent).toHaveBeenCalledWith('northId', { type: 'any', filePath: 'filePath' }, 'api');
   });
 });
