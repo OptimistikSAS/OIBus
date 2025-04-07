@@ -41,7 +41,7 @@ describe('ItemTestResultComponent', () => {
     tester.componentInstance.testedComponent().displayResult(testResult);
 
     // These should be the available display modes
-    expect(tester.componentInstance.testedComponent()['_availableDisplayModes']).toEqual(['table', 'json', 'raw']);
+    expect(tester.componentInstance.testedComponent()['_availableDisplayModes']).toEqual(['table', 'json', 'any']);
     // The first one should be the default
     expect(tester.componentInstance.testedComponent()['_currentDisplayMode']).toEqual('table');
     expect(changeActiveComponentSpy).toHaveBeenCalledWith('table', { content: testResult });
@@ -57,7 +57,7 @@ describe('ItemTestResultComponent', () => {
     tester.componentInstance.testedComponent().displayResult(testResult);
 
     // These should be the available display modes
-    expect(tester.componentInstance.testedComponent()['_availableDisplayModes']).toEqual(['table', 'json', 'raw']);
+    expect(tester.componentInstance.testedComponent()['_availableDisplayModes']).toEqual(['table', 'json', 'any']);
     // The first one should be the default, so we need to change it to 'json'
     tester.componentInstance.testedComponent().changeDisplayMode('json');
     tester.detectChanges();
@@ -78,11 +78,11 @@ describe('ItemTestResultComponent', () => {
     tester.componentInstance.testedComponent().displayResult(testResult);
 
     // These should be the available display modes
-    expect(tester.componentInstance.testedComponent()['_availableDisplayModes']).toEqual(['table', 'json', 'raw']);
-    // The first one should be the default, so we need to change it to 'raw'
-    tester.componentInstance.testedComponent().changeDisplayMode('raw');
+    expect(tester.componentInstance.testedComponent()['_availableDisplayModes']).toEqual(['table', 'json', 'any']);
+    // The first one should be the default, so we need to change it to 'any'
+    tester.componentInstance.testedComponent().changeDisplayMode('any');
     tester.detectChanges();
-    expect(tester.componentInstance.testedComponent()['_currentDisplayMode']).toEqual('raw');
+    expect(tester.componentInstance.testedComponent()['_currentDisplayMode']).toEqual('any');
 
     // We make sure the displayed result will be 'raw'
     tester.componentInstance.testedComponent().displayResult(testResult);
@@ -162,9 +162,9 @@ describe('ItemTestResultComponent', () => {
     icon = tester.componentInstance.testedComponent().currentDisplayModeIcon;
     expect(icon).toBe(tester.componentInstance.testedComponent().displayModeIcons.json);
 
-    tester.componentInstance.testedComponent().changeDisplayMode('raw');
+    tester.componentInstance.testedComponent().changeDisplayMode('any');
     icon = tester.componentInstance.testedComponent().currentDisplayModeIcon;
-    expect(icon).toBe(tester.componentInstance.testedComponent().displayModeIcons.raw);
+    expect(icon).toBe(tester.componentInstance.testedComponent().displayModeIcons.any);
 
     tester.componentInstance.testedComponent().changeDisplayMode('table');
     icon = tester.componentInstance.testedComponent().currentDisplayModeIcon;

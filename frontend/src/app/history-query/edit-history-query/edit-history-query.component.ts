@@ -1,9 +1,9 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { formDirectives } from '../../shared/form-directives';
-import { FormArray, FormControl, FormGroup, NonNullableFormBuilder, Validators } from '@angular/forms';
+import { FormControl, FormGroup, NonNullableFormBuilder, Validators } from '@angular/forms';
 import { NotificationService } from '../../shared/notification.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest, Observable, of, switchMap, tap } from 'rxjs';
@@ -48,11 +48,10 @@ import { NorthSettings } from '../../../../../backend/shared/model/north-setting
 import { dateTimeRangeValidatorBuilder } from '../../shared/validators';
 import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
 import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
-import { TransformerLightDTO } from '../../../../../backend/shared/model/transformer.model';
+import { TransformerDTO, TransformerDTOWithOptions } from '../../../../../backend/shared/model/transformer.model';
 import { TransformerService } from '../../services/transformer.service';
 import { CertificateService } from '../../services/certificate.service';
 import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
-import { OIBUS_DATA_TYPES, OIBusDataType } from '../../../../../backend/shared/model/engine.model';
 import { NorthTransformersComponent } from '../../north/north-transformers/north-transformers.component';
 
 @Component({
@@ -90,8 +89,6 @@ export class EditHistoryQueryComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 
-  readonly oIBusDataTypes = OIBUS_DATA_TYPES;
-
   mode: 'create' | 'edit' = 'create';
   historyId!: string;
   historyQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings> | null = null;
@@ -99,7 +96,7 @@ export class EditHistoryQueryComponent implements OnInit {
   northSettingsControls: Array<Array<OibFormControl>> = [];
   southSettingsControls: Array<Array<OibFormControl>> = [];
   scanModes: Array<ScanModeDTO> = [];
-  transformers: Array<TransformerLightDTO> = [];
+  transformers: Array<TransformerDTO> = [];
   certificates: Array<CertificateDTO> = [];
   northManifest: NorthConnectorManifest | null = null;
   southManifest: SouthConnectorManifest | null = null;
@@ -138,11 +135,10 @@ export class EditHistoryQueryComponent implements OnInit {
     }>;
     northSettings: FormGroup;
     southSettings: FormGroup;
-    northTransformers: FormArray<FormGroup<{ type: FormControl<OIBusDataType>; transformer: FormControl<string> }>>;
+    northTransformers: FormControl<Array<TransformerDTOWithOptions>>;
   }> | null = null;
 
   inMemoryItems: Array<HistoryQueryItemCommandDTO<SouthItemSettings>> = [];
-  inMemoryNorthTransformers: Array<TransformerLightDTO> = [];
 
   ngOnInit() {
     combineLatest([
@@ -275,23 +271,12 @@ export class EditHistoryQueryComponent implements OnInit {
           }),
           northSettings: createFormGroup(northManifest.settings, this.fb),
           southSettings: createFormGroup(southManifest.settings, this.fb),
-          northTransformers: this.fb.array(
-            this.oIBusDataTypes.map(type => {
-              return this.fb.group({
-                type: this.fb.control(type, Validators.required),
-                transformer: this.fb.control('', Validators.required)
-              });
-            })
-          )
+          northTransformers: [[] as Array<TransformerDTOWithOptions>]
         });
 
         if (this.historyQuery) {
           this.historyQueryForm.patchValue({
-            ...this.historyQuery,
-            northTransformers: this.oIBusDataTypes.map(element => ({
-              type: element,
-              transformer: this.historyQuery!.northTransformers.find(transformer => transformer.inputType === element)?.id ?? 'none'
-            }))
+            ...this.historyQuery
           });
         } else {
           if (southConnector) {
@@ -300,19 +285,14 @@ export class EditHistoryQueryComponent implements OnInit {
           if (northConnector) {
             this.historyQueryForm.controls.northSettings.patchValue(northConnector.settings);
             this.historyQueryForm.controls.caching.patchValue(northConnector.caching);
-            this.historyQueryForm.controls.northTransformers.patchValue(
-              this.oIBusDataTypes.map(element => ({
-                type: element,
-                transformer: northConnector.transformers.find(transformer => transformer.inputType === element)?.id ?? 'none'
-              }))
-            );
+            this.historyQueryForm.controls.northTransformers.patchValue(northConnector.transformers);
           }
         }
 
         // we should provoke all value changes to make sure fields are properly hidden and disabled
         this.historyQueryForm.setValue(this.historyQueryForm.getRawValue());
 
-        // when changing one of the dates the other should re-evaluate errors
+        // when changing one of the dates, the other should re-evaluate errors
         this.historyQueryForm.controls.startTime.valueChanges.subscribe(() => {
           this.historyQueryForm?.controls.endTime.updateValueAndValidity({ emitEvent: false });
         });
@@ -368,10 +348,11 @@ export class EditHistoryQueryComponent implements OnInit {
               settings: item.settings
             }))
           : this.inMemoryItems,
-      northTransformers:
-        this.saveItemChangesDirectly && this.historyQuery
-          ? this.historyQuery.northTransformers.map(transformer => transformer.id)
-          : this.inMemoryNorthTransformers.map(transformer => transformer.id)
+      northTransformers: formValue.northTransformers!.map(element => ({
+        transformerId: element.transformer.id,
+        options: element.options,
+        inputType: element.inputType
+      }))
     };
     if (this.mode === 'edit') {
       const modalRef = this.modalService.open(ResetCacheHistoryQueryModalComponent);

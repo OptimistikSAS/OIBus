@@ -3,7 +3,7 @@ import { SouthItemSettings, SouthSettings } from './south-settings.model';
 import { NorthSettings } from './north-settings.model';
 import { OIBusSouthType } from './south-connector.model';
 import { OIBusNorthType } from './north-connector.model';
-import { TransformerLightDTO } from './transformer.model';
+import { TransformerDTOWithOptions } from './transformer.model';
 
 export const HISTORY_QUERY_STATUS = ['PENDING', 'RUNNING', 'PAUSED', 'FINISHED', 'ERRORED'] as const;
 export type HistoryQueryStatus = (typeof HISTORY_QUERY_STATUS)[number];
@@ -50,7 +50,7 @@ export interface HistoryQueryDTO<S extends SouthSettings, N extends NorthSetting
     };
   };
   items: Array<HistoryQueryItemDTO<I>>;
-  northTransformers: Array<TransformerLightDTO>;
+  northTransformers: Array<TransformerDTOWithOptions>;
 }
 
 export interface HistoryQueryCommandDTO<S extends SouthSettings, N extends NorthSettings, I extends SouthItemSettings> {
@@ -85,7 +85,7 @@ export interface HistoryQueryCommandDTO<S extends SouthSettings, N extends North
     };
   };
   items: Array<HistoryQueryItemCommandDTO<I>>;
-  northTransformers: Array<string>;
+  northTransformers: Array<{ transformerId: string; options: object; inputType: string }>;
 }
 
 export interface HistoryQueryItemSearchParam {

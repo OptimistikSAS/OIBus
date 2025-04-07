@@ -319,7 +319,7 @@ describe('SouthFolderScanner with compression', () => {
       `${path.resolve(mockBaseFolders(configuration.id).cache, 'tmp', 'myFile1')}.gz`
     );
     expect(south.addContent).toHaveBeenCalledWith({
-      type: 'raw',
+      type: 'any',
       filePath: `${path.resolve(mockBaseFolders(configuration.id).cache, 'tmp', 'myFile1')}.gz`
     });
     expect(fs.unlink).toHaveBeenCalledWith(`${path.resolve(mockBaseFolders(configuration.id).cache, 'tmp', 'myFile1')}.gz`);
