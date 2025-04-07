@@ -193,7 +193,8 @@
     "oibus-north-category": {
       "debug": "Debug",
       "file": "File",
-      "api": "API"
+      "api": "API",
+      "iot": "IoT"
     },
     "oibus-north-type": {
       "aws-s3": "Amazon S3™",
@@ -202,7 +203,10 @@
       "file-writer": "File writer",
       "oianalytics": "OIAnalytics®",
       "sftp": "SFTP",
-      "rest": "REST"
+      "rest": "REST",
+      "opcua": "OPC UA™",
+      "mqtt": "MQTT",
+      "modbus": "Modbus"
     },
     "oibus-north-type-description": {
       "aws-s3": "Store files in Amazon S3™ (Simple Storage Service)",
@@ -211,10 +215,13 @@
       "file-writer": "Write files and data to the output folder",
       "oianalytics": "Send files and values to OIAnalytics®",
       "sftp": "Upload files and data to an SFTP server",
-      "rest": "Upload files to a REST endpoint"
+      "rest": "Upload files to a REST endpoint",
+      "mqtt": "Publish to MQTT broker topics",
+      "modbus": "Write in Modbus registers on a PLC",
+      "opcua": "Write data into OPC UA™ server"
     },
     "oibus-south-category": {
-      "iot": "IOT",
+      "iot": "IoT",
       "database": "Database",
       "file": "File",
       "api": "API"
@@ -1717,6 +1724,84 @@
       "proxy-url": "Proxy URL",
       "proxy-username": "Proxy username",
       "proxy-password": "Proxy password"
+    },
+    "modbus": {
+      "host": "Host",
+      "port": "Port",
+      "retry-interval": "Retry interval",
+      "slave-id": "Slave ID",
+      "address-offset": {
+        "title": "Address offset",
+        "modbus": "Modbus",
+        "jbus": "JBus"
+      },
+      "endianness": {
+        "title": "Endianness",
+        "big-endian": "Big endian",
+        "little-endian": "Little endian"
+      },
+      "swap-bytes-in-words": "Swap Bytes?",
+      "swap-words-in-dwords": "Swap Words?"
+    },
+    "mqtt": {
+      "url": "URL",
+      "qos": {
+        "title": "QoS",
+        "0": "0",
+        "1": "1",
+        "2": "2"
+      },
+      "persistent": "Persistent",
+      "authentication": {
+        "title": "Authentication",
+        "none": "None",
+        "basic": "User",
+        "cert": "Certificate"
+      },
+      "username": "Username",
+      "password": "Password",
+      "cert-file-path": "Cert file path",
+      "key-file-path": "Key file path",
+      "ca-file-path": "CA file path",
+      "reject-unauthorized": "Reject unauthorized connection",
+      "reconnect-period": "Reconnect period",
+      "connect-timeout": "Connect timeout"
+    },
+    "opcua": {
+      "url": "URL",
+      "keep-session-alive": "Keep session alive",
+      "read-timeout": "Read timeout",
+      "retry-interval": "Retry interval",
+      "security-mode": {
+        "title": "Security mode",
+        "none": "None",
+        "sign": "Sign",
+        "sign-and-encrypt": "Sign and encrypt"
+      },
+      "security-policy": {
+        "title": "Security policy",
+        "none": "None",
+        "basic128": "Basic128",
+        "basic192": "Basic192",
+        "basic256": "Basic256",
+        "basic128-rsa15": "Basic128-RSA15",
+        "basic192-rsa15": "Basic192-RSA15",
+        "basic256-rsa15": "Basic256-RSA15",
+        "basic256-sha256": "Basic256-SHA256",
+        "aes128-sha256-rsa-oaep": "AES128-SHA256-RSA-OAEP",
+        "pub-sub-aes-128-ctr": "PubSub AES-128-CTR",
+        "pub-sub-aes-256-ctr": "PubSub AES-256-CTR"
+      },
+      "authentication": {
+        "title": "Authentication",
+        "none": "None",
+        "basic": "Password",
+        "cert": "Certificate"
+      },
+      "username": "Username",
+      "password": "Password",
+      "cert-file-path": "Cert file path",
+      "key-file-path": "Key file path"
     }
   },
   "transformers": {
@@ -1724,10 +1809,14 @@
     "input-type": "Source type",
     "output-type": "Destination type",
     "standard": {
+      "none": "Ignore data",
       "iso-raw": "Raw (keep raw file as it is)",
       "iso-time-values": "Time values (keep time values as it is)",
       "time-values-to-csv": "To CSV (convert time values into CSV)",
-      "time-values-to-json": "To JSON (convert time values into raw JSON)"
+      "time-values-to-json": "To JSON (convert time values into raw JSON)",
+      "time-values-to-mqtt": "To MQTT payloads (convert time values into MQTT payloads)",
+      "time-values-to-opcua": "To OPCUA values (convert time values into OPCUA values)",
+      "time-values-to-modbus": "To Modbus values (convert time values into Modbus values)"
     }
   },
   "logs": {
