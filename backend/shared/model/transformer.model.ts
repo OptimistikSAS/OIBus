@@ -1,47 +1,45 @@
-import { OIBusDataType } from './engine.model';
+import { OibFormControl } from './form.model';
 
 export interface BaseTransformerDTO {
   id: string;
   type: 'custom' | 'standard';
-  name: string;
-  description: string;
-  inputType: OIBusDataType;
+  inputType: string;
   outputType: string;
+  manifest: Array<OibFormControl>;
 }
 
 export interface CustomTransformerDTO extends BaseTransformerDTO {
   type: 'custom';
+  name: string;
+  description: string;
   customCode: string;
 }
 
 export interface StandardTransformerDTO extends BaseTransformerDTO {
+  functionName: string;
   type: 'standard';
-  standardCode: string;
 }
 
 export type TransformerDTO = CustomTransformerDTO | StandardTransformerDTO;
 
-export interface TransformerLightDTO {
-  id: string;
-  type: 'custom' | 'standard';
-  name: string;
-  description: string;
-  inputType: OIBusDataType;
-  outputType: string;
+export interface TransformerDTOWithOptions {
+  inputType: string;
+  transformer: TransformerDTO;
+  options: object;
 }
 
 export interface CustomTransformerCommand {
   name: string;
   description: string;
-  inputType: OIBusDataType;
+  inputType: string;
   outputType: string;
   customCode: string;
+  customManifest: Array<OibFormControl>;
 }
 
 export interface TransformerSearchParam {
-  name?: string;
   type?: 'standard' | 'custom';
-  inputType?: OIBusDataType;
+  inputType?: string;
   outputType?: string;
   page?: number;
 }

@@ -49,7 +49,7 @@ const fileList: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [
       contentSize: 100,
       numberOfElement: 0,
       createdAt: testData.constants.dates.DATE_3,
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     }
@@ -73,7 +73,7 @@ const fileList: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [
       contentSize: 100,
       numberOfElement: 0,
       createdAt: testData.constants.dates.FAKE_NOW,
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     }
@@ -168,7 +168,7 @@ describe('CacheService', () => {
   });
 
   it('should add, get and remove element in queue', async () => {
-    const element = { metadataFilename: 'file.json', metadata: { contentType: 'raw', source: 'south', options: {} } as CacheMetadata };
+    const element = { metadataFilename: 'file.json', metadata: { contentType: 'any', source: 'south', options: {} } as CacheMetadata };
     expect(service.cacheIsEmpty()).toBeTruthy();
     service.addCacheContentToQueue(element);
     expect(service.cacheIsEmpty()).toBeFalsy();
@@ -447,7 +447,7 @@ describe('CacheService', () => {
         contentSize: 100,
         numberOfElement: 0,
         createdAt: testData.constants.dates.DATE_3,
-        contentType: 'raw',
+        contentType: 'any',
         source: 'south',
         options: {}
       }
@@ -471,7 +471,7 @@ describe('CacheService', () => {
         contentSize: 100,
         numberOfElement: 0,
         createdAt: testData.constants.dates.FAKE_NOW,
-        contentType: 'raw',
+        contentType: 'any',
         source: 'south',
         options: {}
       }
@@ -576,7 +576,7 @@ describe('CacheService', () => {
         contentSize: 100,
         numberOfElement: 0,
         createdAt: testData.constants.dates.DATE_3,
-        contentType: 'raw',
+        contentType: 'any',
         source: 'south',
         options: {}
       }
@@ -588,7 +588,7 @@ describe('CacheService', () => {
         contentSize: 100,
         numberOfElement: 0,
         createdAt: testData.constants.dates.FAKE_NOW,
-        contentType: 'raw',
+        contentType: 'any',
         source: 'south',
         options: {}
       }

@@ -7,7 +7,7 @@ import { formDirectives } from '../../form-directives';
 import { ComponentTester } from 'ngx-speculoos';
 import { FormControl, FormGroup } from '@angular/forms';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
-import { TransformerLightDTO } from '../../../../../../backend/shared/model/transformer.model';
+import { TransformerDTO } from '../../../../../../backend/shared/model/transformer.model';
 
 @Component({
   template: `<form [formGroup]="form">
@@ -23,9 +23,25 @@ class TestComponent {
     type: 'OibTransformer',
     translationKey: 'transformer field'
   } as OibTransformerFormControl;
-  transformers: Array<TransformerLightDTO> = [
-    { id: 'iso-raw', name: 'transformer1', description: '', type: 'custom', inputType: 'raw', outputType: 'raw' },
-    { id: 'iso-time-values', name: 'transformer2', description: '', type: 'standard', inputType: 'time-values', outputType: 'time-values' }
+  transformers: Array<TransformerDTO> = [
+    {
+      id: 'transformerId',
+      name: 'transformer1',
+      description: '',
+      type: 'custom',
+      inputType: 'any',
+      outputType: 'any',
+      customCode: '',
+      manifest: []
+    },
+    {
+      id: 'iso',
+      type: 'standard',
+      inputType: 'time-values',
+      outputType: 'time-values',
+      functionName: 'iso',
+      manifest: []
+    }
   ];
   form = new FormGroup({ settings: new FormGroup({ myOibTransformer: new FormControl('') }) });
 }
@@ -58,7 +74,7 @@ describe('OibTransformerComponent', () => {
   });
 
   it('should change value', () => {
-    tester.oibFormInput.selectLabel('Time values (keep time values as it is)');
-    expect(tester.oibFormInput).toHaveSelectedLabel('Time values (keep time values as it is)');
+    tester.oibFormInput.selectLabel('No transform');
+    expect(tester.oibFormInput).toHaveSelectedLabel('No transform');
   });
 });

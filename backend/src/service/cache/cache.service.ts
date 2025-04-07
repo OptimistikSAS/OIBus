@@ -130,11 +130,10 @@ export default class CacheService {
     }
     // Otherwise, get the first element from the queue
 
-    if (this.queue[0].metadata.contentType !== 'raw') {
+    if (this.queue[0].metadata.contentType !== 'any') {
       await this.compactQueue(maxGroupCount, this.queue[0].metadata.contentType);
     }
 
-    // TODO: transform here ?
     return this.queue[0];
   }
 
@@ -153,7 +152,7 @@ export default class CacheService {
     if (!this.compactQueue$) {
       this.compactQueue$ = new DeferredPromise();
 
-      // List of queue element of type contentType
+      // List of queue elements of type contentType
       const copiedQueue: Array<{ metadataFilename: string; metadata: CacheMetadata }> = this.queue.filter(
         element => element.metadata.contentType === contentType
       );
@@ -307,7 +306,7 @@ export default class CacheService {
 
   async getCacheContentFileStream(folder: 'cache' | 'archive' | 'error', filename: string): Promise<ReadStream | null> {
     const resolvedPath = path.resolve(this.getFolder(folder), this.CONTENT_FOLDER, filename);
-    // Prevent parent paths injected into the json file in cache by checking the start of the path
+    // Prevent parent paths injected into the JSON file in cache by checking the start of the path
     if (!resolvedPath.startsWith(path.resolve(this.getFolder(folder), this.CONTENT_FOLDER))) {
       this.logger.error(`Invalid file path "${resolvedPath}" when retrieving cache content file stream`);
       return null;

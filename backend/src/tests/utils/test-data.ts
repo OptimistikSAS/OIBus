@@ -84,8 +84,9 @@ const transformerCommandDTO: CustomTransformerCommand = {
   name: 'my new transformer',
   description: 'description',
   inputType: 'time-values',
-  outputType: 'raw',
-  customCode: 'console.log("Hello World");'
+  outputType: 'any',
+  customCode: 'console.log("Hello World");',
+  customManifest: []
 };
 const transformers: Array<Transformer> = [
   {
@@ -94,17 +95,19 @@ const transformers: Array<Transformer> = [
     name: 'my transformer 1',
     description: 'description',
     inputType: 'time-values',
-    outputType: 'raw',
-    customCode: 'console.log("Hello World");'
+    outputType: 'any',
+    customCode: 'console.log("Hello World");',
+    customManifest: []
   },
   {
     id: 'transformerId2',
     type: 'custom',
     name: 'my transformer 2',
     description: 'description',
-    inputType: 'raw',
-    outputType: 'raw',
-    customCode: 'console.log("Hello World");'
+    inputType: 'any',
+    outputType: 'any',
+    customCode: 'console.log("Hello World");',
+    customManifest: []
   }
 ];
 
@@ -405,7 +408,7 @@ const itemTestingSettings: SouthConnectorItemTestingSettings = {
 const northTestManifest: NorthConnectorManifest = {
   id: 'console',
   category: 'debug',
-  types: ['raw', 'time-values'],
+  types: ['any', 'time-values'],
   settings: []
 };
 const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
@@ -457,7 +460,10 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
         enabled: southConnectors[1].enabled
       }
     ],
-    transformers: [transformers[0], transformers[1]]
+    transformers: [
+      { transformer: transformers[0], options: {}, inputType: transformers[0].inputType },
+      { transformer: transformers[1], options: {}, inputType: transformers[1].inputType }
+    ]
   },
   {
     id: 'northId2',
@@ -536,7 +542,10 @@ const northConnectorCommand: NorthConnectorCommandDTO<NorthSettings> = {
     }
   },
   subscriptions: [southConnectors[0].id],
-  transformers: [transformers[0].id]
+  transformers: [
+    { transformerId: transformers[0].id, options: {}, inputType: transformers[0].inputType },
+    { transformerId: transformers[1].id, options: {}, inputType: transformers[1].inputType }
+  ]
 };
 
 const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>> = [
@@ -606,7 +615,10 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
         settings: {} as SouthItemSettings
       }
     ],
-    northTransformers: [transformers[0]]
+    northTransformers: [
+      { transformer: transformers[0], options: {}, inputType: transformers[0].inputType },
+      { transformer: transformers[1], options: {}, inputType: transformers[1].inputType }
+    ]
   },
   {
     id: 'historyId2',
@@ -668,7 +680,7 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
         settings: {} as SouthItemSettings
       }
     ],
-    northTransformers: [transformers[0]]
+    northTransformers: []
   }
 ];
 const historyQueryCommand: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings> = {
@@ -730,7 +742,10 @@ const historyQueryCommand: HistoryQueryCommandDTO<SouthSettings, NorthSettings, 
       settings: {} as SouthItemSettings
     }
   ],
-  northTransformers: [transformers[0].id]
+  northTransformers: [
+    { transformerId: transformers[0].id, options: {}, inputType: transformers[0].inputType },
+    { transformerId: transformers[1].id, options: {}, inputType: transformers[1].inputType }
+  ]
 };
 const historyQueryItemCommand: HistoryQueryItemCommandDTO<SouthItemSettings> = {
   id: 'newHistoryQueryItemId',
@@ -1516,11 +1531,11 @@ const oibusContent: Array<OIBusContent> = [
     ]
   },
   {
-    type: 'raw',
+    type: 'any',
     filePath: 'path/file.csv'
   },
   {
-    type: 'raw',
+    type: 'any',
     filePath: 'path/another-file.csv',
     content: 'my raw content'
   }

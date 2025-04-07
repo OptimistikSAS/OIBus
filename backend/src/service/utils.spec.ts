@@ -423,7 +423,7 @@ describe('Service utils', () => {
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addContent).toHaveBeenCalledWith({ type: 'raw', filePath });
+        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath });
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledTimes(1);
       });
@@ -446,7 +446,7 @@ describe('Service utils', () => {
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addContent).toHaveBeenCalledWith({ type: 'raw', filePath });
+        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath });
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledTimes(1);
       });
@@ -472,7 +472,7 @@ describe('Service utils', () => {
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addContent).toHaveBeenCalledWith({ type: 'raw', filePath });
+        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath });
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledTimes(1);
         expect(logger.error).toHaveBeenCalledWith(
@@ -498,7 +498,7 @@ describe('Service utils', () => {
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addContent).toHaveBeenCalledWith({ type: 'raw', filePath });
+        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath });
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledTimes(1);
         expect(logger.error).toHaveBeenCalledWith(`Error when deleting file "${filePath}" after caching it. ${new Error('unlink error')}`);
@@ -549,7 +549,7 @@ describe('Service utils', () => {
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addContent).toHaveBeenCalledWith({ type: 'raw', filePath: `${filePath}.gz` });
+        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath: `${filePath}.gz` });
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledWith(`${filePath}.gz`);
         expect(fs.unlink).toHaveBeenCalledTimes(2);
@@ -570,7 +570,7 @@ describe('Service utils', () => {
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addContent).toHaveBeenCalledWith({ type: 'raw', filePath: `${filePath}.gz` });
+        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath: `${filePath}.gz` });
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledWith(`${filePath}.gz`);
         expect(fs.unlink).toHaveBeenCalledTimes(2);
@@ -617,7 +617,7 @@ describe('Service utils', () => {
         expect(logger.error).toHaveBeenCalledWith(
           `Error when deleting compressed CSV file "${filePath}.gz" after caching it. Error: unlink error`
         );
-        expect(addContent).toHaveBeenCalledWith({ type: 'raw', filePath: `${filePath}.gz` });
+        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath: `${filePath}.gz` });
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledWith(`${filePath}.gz`);
         expect(fs.unlink).toHaveBeenCalledTimes(2);
@@ -646,7 +646,7 @@ describe('Service utils', () => {
         expect(logger.error).toHaveBeenCalledWith(
           `Error when deleting compressed file "${filePath}.gz" after caching it. Error: unlink error`
         );
-        expect(addContent).toHaveBeenCalledWith({ type: 'raw', filePath: `${filePath}.gz` });
+        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath: `${filePath}.gz` });
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledWith(`${filePath}.gz`);
         expect(fs.unlink).toHaveBeenCalledTimes(2);
