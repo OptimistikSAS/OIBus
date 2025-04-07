@@ -18,6 +18,9 @@ import IsoRawTransformer from './transformers/iso-raw-transformer';
 import IsoTimeValuesTransformer from './transformers/iso-time-values-transformer';
 import OIBusTimeValuesToCsvTransformer from './transformers/oibus-time-values-to-csv-transformer';
 import OIBusTimeValuesToJSONTransformer from './transformers/oibus-time-values-to-json-transformer';
+import OIBusTimeValuesToMQTTTransformer from './transformers/oibus-time-values-to-mqtt-transformer';
+import OIBusTimeValuesToOPCUATransformer from './transformers/oibus-time-values-to-opcua-transformer';
+import OIBusTimeValuesToModbusTransformer from './transformers/oibus-time-values-to-modbus-transformer';
 
 export default class TransformerService {
   constructor(
@@ -140,6 +143,15 @@ export const createTransformer = (
     }
     case OIBusTimeValuesToJSONTransformer.transformerName: {
       return new OIBusTimeValuesToJSONTransformer(logger, transformer, northConnector);
+    }
+    case OIBusTimeValuesToMQTTTransformer.transformerName: {
+      return new OIBusTimeValuesToMQTTTransformer(logger, transformer, northConnector);
+    }
+    case OIBusTimeValuesToOPCUATransformer.transformerName: {
+      return new OIBusTimeValuesToOPCUATransformer(logger, transformer, northConnector);
+    }
+    case OIBusTimeValuesToModbusTransformer.transformerName: {
+      return new OIBusTimeValuesToModbusTransformer(logger, transformer, northConnector);
     }
     default:
       throw new Error(`Could not create ${transformer.id} transformer`);
