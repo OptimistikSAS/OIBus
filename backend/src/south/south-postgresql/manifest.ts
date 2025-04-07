@@ -131,6 +131,7 @@ const manifest: SouthConnectorManifest = {
         key: 'dateTimeFields',
         type: 'OibArray',
         translationKey: 'south.items.postgresql.date-time-fields.date-time-field',
+        allowRowDuplication: true,
         content: [
           {
             key: 'fieldName',
