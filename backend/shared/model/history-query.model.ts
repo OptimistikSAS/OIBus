@@ -28,17 +28,24 @@ export interface HistoryQueryDTO<S extends SouthSettings, N extends NorthSetting
   southSettings: S;
   northSettings: N;
   caching: {
-    scanModeId: string;
-    retryInterval: number;
-    retryCount: number;
-    maxSize: number;
-    oibusTimeValues: {
-      groupCount: number;
-      maxSendCount: number;
+    trigger: {
+      scanModeId: string;
+      numberOfElements: number;
+      numberOfFiles: number;
     };
-    rawFiles: {
-      sendFileImmediately: boolean;
-      archive: { enabled: boolean; retentionDuration: number };
+    throttling: {
+      runMinDelay: number;
+      maxSize: number;
+      maxNumberOfElements: number;
+    };
+    error: {
+      retryInterval: number;
+      retryCount: number;
+      retentionDuration: number;
+    };
+    archive: {
+      enabled: boolean;
+      retentionDuration: number;
     };
   };
   items: Array<HistoryQueryItemDTO<I>>;
@@ -54,21 +61,25 @@ export interface HistoryQueryCommandDTO<S extends SouthSettings, N extends North
   southSettings: S;
   northSettings: N;
   caching: {
-    scanModeId: string | null;
-    scanModeName: string | null;
-    retryInterval: number;
-    retryCount: number;
-    maxSize: number;
-    oibusTimeValues: {
-      groupCount: number;
-      maxSendCount: number;
+    trigger: {
+      scanModeId: string;
+      scanModeName: string | null;
+      numberOfElements: number;
+      numberOfFiles: number;
     };
-    rawFiles: {
-      sendFileImmediately: boolean;
-      archive: {
-        enabled: boolean;
-        retentionDuration: number;
-      };
+    throttling: {
+      runMinDelay: number;
+      maxSize: number;
+      maxNumberOfElements: number;
+    };
+    error: {
+      retryInterval: number;
+      retryCount: number;
+      retentionDuration: number;
+    };
+    archive: {
+      enabled: boolean;
+      retentionDuration: number;
     };
   };
   items: Array<HistoryQueryItemCommandDTO<I>>;

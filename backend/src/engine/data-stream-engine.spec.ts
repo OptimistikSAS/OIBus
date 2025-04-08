@@ -3,7 +3,6 @@ import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import pino from 'pino';
 import DataStreamEngine from './data-stream-engine';
 import testData from '../tests/utils/test-data';
-import { OIBusRawContent, OIBusTimeValueContent } from '../../shared/model/engine.model';
 import NorthConnector from '../north/north-connector';
 import { NorthSettings } from '../../shared/model/north-settings.model';
 import SouthConnector from '../south/south-connector';
@@ -115,16 +114,9 @@ describe('DataStreamEngine', () => {
     (mockedNorth1.isEnabled as jest.Mock).mockReturnValueOnce(false).mockReturnValueOnce(true);
     // Add time values
     await engine.addContent(testData.south.list[0].id, testData.oibusContent[0]);
-    expect(mockedNorth1.cacheValues).not.toHaveBeenCalled();
+    expect(mockedNorth1.cacheContent).not.toHaveBeenCalled();
     await engine.addContent(testData.south.list[0].id, testData.oibusContent[0]);
-    expect(mockedNorth1.cacheValues).toHaveBeenCalledWith((testData.oibusContent[0] as OIBusTimeValueContent).content);
-
-    (mockedNorth1.isEnabled as jest.Mock).mockReturnValueOnce(false).mockReturnValueOnce(true);
-    // Add raw content
-    await engine.addContent(testData.south.list[0].id, testData.oibusContent[1]);
-    expect(mockedNorth1.cacheFile).not.toHaveBeenCalled();
-    await engine.addContent(testData.south.list[0].id, testData.oibusContent[1]);
-    expect(mockedNorth1.cacheFile).toHaveBeenCalledWith((testData.oibusContent[1] as OIBusRawContent).filePath);
+    expect(mockedNorth1.cacheContent).toHaveBeenCalledWith(testData.oibusContent[0], testData.south.list[0].id);
   });
 
   it('should add external content', async () => {
@@ -132,17 +124,10 @@ describe('DataStreamEngine', () => {
 
     (mockedNorth1.isEnabled as jest.Mock).mockReturnValueOnce(false).mockReturnValueOnce(true);
     // Add time values
-    await engine.addExternalContent(testData.north.list[0].id, testData.oibusContent[0]);
-    expect(mockedNorth1.cacheValues).not.toHaveBeenCalled();
-    await engine.addExternalContent(testData.north.list[0].id, testData.oibusContent[0]);
-    expect(mockedNorth1.cacheValues).toHaveBeenCalledWith((testData.oibusContent[0] as OIBusTimeValueContent).content);
-
-    (mockedNorth1.isEnabled as jest.Mock).mockReturnValueOnce(false).mockReturnValueOnce(true);
-    // Add raw content
-    await engine.addExternalContent(testData.north.list[0].id, testData.oibusContent[1]);
-    expect(mockedNorth1.cacheFile).not.toHaveBeenCalled();
-    await engine.addExternalContent(testData.north.list[0].id, testData.oibusContent[1]);
-    expect(mockedNorth1.cacheFile).toHaveBeenCalledWith((testData.oibusContent[1] as OIBusRawContent).filePath);
+    await engine.addExternalContent(testData.north.list[0].id, testData.oibusContent[0], 'api');
+    expect(mockedNorth1.cacheContent).not.toHaveBeenCalled();
+    await engine.addExternalContent(testData.north.list[0].id, testData.oibusContent[0], 'api');
+    expect(mockedNorth1.cacheContent).toHaveBeenCalledWith(testData.oibusContent[0], 'api');
   });
 
   it('should do nothing if connector not set', async () => {
@@ -207,149 +192,52 @@ describe('DataStreamEngine', () => {
     expect(stopNorthSpy).toHaveBeenCalled();
   });
 
-  it('should manage error files', async () => {
+  it('should manage content files', async () => {
     await engine.start([mockedNorth1], []);
 
-    await engine.getErrorFiles('bad id', testData.constants.dates.DATE_1, testData.constants.dates.DATE_2, 'file');
-    expect(mockedNorth1.getErrorFiles).not.toHaveBeenCalled();
-    await engine.getErrorFiles(testData.north.list[0].id, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2, 'file');
-    expect(mockedNorth1.getErrorFiles).toHaveBeenCalledWith(testData.constants.dates.DATE_1, testData.constants.dates.DATE_2, 'file');
+    await engine.searchCacheContent(
+      'bad id',
+      { start: testData.constants.dates.DATE_1, end: testData.constants.dates.DATE_2, nameContains: 'file' },
+      'cache'
+    );
+    expect(mockedNorth1.searchCacheContent).not.toHaveBeenCalled();
+    await engine.searchCacheContent(
+      testData.north.list[0].id,
+      { start: testData.constants.dates.DATE_1, end: testData.constants.dates.DATE_2, nameContains: 'file' },
+      'cache'
+    );
+    expect(mockedNorth1.searchCacheContent).toHaveBeenCalledWith(
+      { start: testData.constants.dates.DATE_1, end: testData.constants.dates.DATE_2, nameContains: 'file' },
+      'cache'
+    );
 
-    await engine.getErrorFileContent('bad id', 'file');
-    expect(mockedNorth1.getErrorFileContent).not.toHaveBeenCalled();
-    await engine.getErrorFileContent(testData.north.list[0].id, 'file');
-    expect(mockedNorth1.getErrorFileContent).toHaveBeenCalledWith('file');
+    await engine.getCacheContentFileStream('bad id', 'cache', 'file');
+    expect(mockedNorth1.getCacheContentFileStream).not.toHaveBeenCalled();
+    await engine.getCacheContentFileStream(testData.north.list[0].id, 'cache', 'file');
+    expect(mockedNorth1.getCacheContentFileStream).toHaveBeenCalledWith('cache', 'file');
 
-    await engine.removeErrorFiles('bad id', ['file']);
-    expect(mockedNorth1.removeErrorFiles).not.toHaveBeenCalled();
-    await engine.removeErrorFiles(testData.north.list[0].id, ['file']);
-    expect(mockedNorth1.removeErrorFiles).toHaveBeenCalledWith(['file']);
+    (mockedNorth1.metadataFileListToCacheContentList as jest.Mock).mockReturnValue([]);
+    await engine.removeCacheContent('bad id', 'cache', ['file']);
+    expect(mockedNorth1.removeCacheContent).not.toHaveBeenCalled();
+    expect(mockedNorth1.metadataFileListToCacheContentList).not.toHaveBeenCalled();
+    await engine.removeCacheContent(testData.north.list[0].id, 'cache', ['file']);
+    expect(mockedNorth1.metadataFileListToCacheContentList).toHaveBeenCalledWith('cache', ['file']);
+    expect(mockedNorth1.removeCacheContent).toHaveBeenCalledWith('cache', []);
 
-    await engine.retryErrorFiles('bad id', ['file']);
-    expect(mockedNorth1.retryErrorFiles).not.toHaveBeenCalled();
-    await engine.retryErrorFiles(testData.north.list[0].id, ['file']);
-    expect(mockedNorth1.retryErrorFiles).toHaveBeenCalledWith(['file']);
+    await engine.removeAllCacheContent('bad id', 'cache');
+    expect(mockedNorth1.removeAllCacheContent).not.toHaveBeenCalled();
+    await engine.removeAllCacheContent(testData.north.list[0].id, 'cache');
+    expect(mockedNorth1.removeAllCacheContent).toHaveBeenCalled();
 
-    await engine.removeAllErrorFiles('bad id');
-    expect(mockedNorth1.removeAllErrorFiles).not.toHaveBeenCalled();
-    await engine.removeAllErrorFiles(testData.north.list[0].id);
-    expect(mockedNorth1.removeAllErrorFiles).toHaveBeenCalled();
+    await engine.moveCacheContent('bad id', 'cache', 'error', ['file']);
+    expect(mockedNorth1.moveCacheContent).not.toHaveBeenCalled();
+    await engine.moveCacheContent(testData.north.list[0].id, 'cache', 'error', ['file']);
+    expect(mockedNorth1.moveCacheContent).toHaveBeenCalledWith('cache', 'error', []);
 
-    await engine.retryAllErrorFiles('bad id');
-    expect(mockedNorth1.retryAllErrorFiles).not.toHaveBeenCalled();
-    await engine.retryAllErrorFiles(testData.north.list[0].id);
-    expect(mockedNorth1.retryAllErrorFiles).toHaveBeenCalled();
-  });
-
-  it('should manage cache files', async () => {
-    await engine.start([mockedNorth1], []);
-
-    await engine.getCacheFiles('bad id', testData.constants.dates.DATE_1, testData.constants.dates.DATE_2, 'file');
-    expect(mockedNorth1.getCacheFiles).not.toHaveBeenCalled();
-    await engine.getCacheFiles(testData.north.list[0].id, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2, 'file');
-    expect(mockedNorth1.getCacheFiles).toHaveBeenCalledWith(testData.constants.dates.DATE_1, testData.constants.dates.DATE_2, 'file');
-
-    await engine.getCacheFileContent('bad id', 'file');
-    expect(mockedNorth1.getCacheFileContent).not.toHaveBeenCalled();
-    await engine.getCacheFileContent(testData.north.list[0].id, 'file');
-    expect(mockedNorth1.getCacheFileContent).toHaveBeenCalledWith('file');
-
-    await engine.removeCacheFiles('bad id', ['file']);
-    expect(mockedNorth1.removeCacheFiles).not.toHaveBeenCalled();
-    await engine.removeCacheFiles(testData.north.list[0].id, ['file']);
-    expect(mockedNorth1.removeCacheFiles).toHaveBeenCalledWith(['file']);
-
-    await engine.removeAllCacheFiles('bad id');
-    expect(mockedNorth1.removeAllCacheFiles).not.toHaveBeenCalled();
-    await engine.removeAllCacheFiles(testData.north.list[0].id);
-    expect(mockedNorth1.removeAllCacheFiles).toHaveBeenCalledWith();
-
-    await engine.archiveCacheFiles('bad id', ['file']);
-    expect(mockedNorth1.archiveCacheFiles).not.toHaveBeenCalled();
-    await engine.archiveCacheFiles(testData.north.list[0].id, ['file']);
-    expect(mockedNorth1.archiveCacheFiles).toHaveBeenCalledWith(['file']);
-  });
-
-  it('should manage archive files', async () => {
-    await engine.start([mockedNorth1], []);
-
-    await engine.getArchiveFiles('bad id', testData.constants.dates.DATE_1, testData.constants.dates.DATE_2, 'file');
-    expect(mockedNorth1.getArchiveFiles).not.toHaveBeenCalled();
-    await engine.getArchiveFiles(testData.north.list[0].id, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2, 'file');
-    expect(mockedNorth1.getArchiveFiles).toHaveBeenCalledWith(testData.constants.dates.DATE_1, testData.constants.dates.DATE_2, 'file');
-
-    await engine.getArchiveFileContent('bad id', 'file');
-    expect(mockedNorth1.getArchiveFileContent).not.toHaveBeenCalled();
-    await engine.getArchiveFileContent(testData.north.list[0].id, 'file');
-    expect(mockedNorth1.getArchiveFileContent).toHaveBeenCalledWith('file');
-
-    await engine.removeArchiveFiles('bad id', ['file']);
-    expect(mockedNorth1.removeArchiveFiles).not.toHaveBeenCalled();
-    await engine.removeArchiveFiles(testData.north.list[0].id, ['file']);
-    expect(mockedNorth1.removeArchiveFiles).toHaveBeenCalledWith(['file']);
-
-    await engine.retryArchiveFiles('bad id', ['file']);
-    expect(mockedNorth1.retryArchiveFiles).not.toHaveBeenCalled();
-    await engine.retryArchiveFiles(testData.north.list[0].id, ['file']);
-    expect(mockedNorth1.retryArchiveFiles).toHaveBeenCalledWith(['file']);
-
-    await engine.removeAllArchiveFiles('bad id');
-    expect(mockedNorth1.removeAllArchiveFiles).not.toHaveBeenCalled();
-    await engine.removeAllArchiveFiles(testData.north.list[0].id);
-    expect(mockedNorth1.removeAllArchiveFiles).toHaveBeenCalledWith();
-
-    await engine.retryAllArchiveFiles('bad id');
-    expect(mockedNorth1.retryAllArchiveFiles).not.toHaveBeenCalled();
-    await engine.retryAllArchiveFiles(testData.north.list[0].id);
-    expect(mockedNorth1.retryAllArchiveFiles).toHaveBeenCalledWith();
-  });
-
-  it('should manage cache time-values', async () => {
-    await engine.start([mockedNorth1], []);
-
-    await engine.getCacheValues('bad id', 'file');
-    expect(mockedNorth1.getCacheValues).not.toHaveBeenCalled();
-    await engine.getCacheValues(testData.north.list[0].id, 'file');
-    expect(mockedNorth1.getCacheValues).toHaveBeenCalledWith('file');
-
-    await engine.removeCacheValues('bad id', ['file']);
-    expect(mockedNorth1.removeCacheValues).not.toHaveBeenCalled();
-    await engine.removeCacheValues(testData.north.list[0].id, ['file']);
-    expect(mockedNorth1.removeCacheValues).toHaveBeenCalledWith(['file']);
-
-    await engine.removeAllCacheValues('bad id');
-    expect(mockedNorth1.removeAllCacheValues).not.toHaveBeenCalled();
-    await engine.removeAllCacheValues(testData.north.list[0].id);
-    expect(mockedNorth1.removeAllCacheValues).toHaveBeenCalledWith();
-  });
-
-  it('should manage error cache time-values', async () => {
-    await engine.start([mockedNorth1], []);
-
-    await engine.getErrorValues('bad id', testData.constants.dates.DATE_1, testData.constants.dates.DATE_2, 'file');
-    expect(mockedNorth1.getErrorValues).not.toHaveBeenCalled();
-    await engine.getErrorValues(testData.north.list[0].id, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2, 'file');
-    expect(mockedNorth1.getErrorValues).toHaveBeenCalledWith(testData.constants.dates.DATE_1, testData.constants.dates.DATE_2, 'file');
-
-    await engine.removeErrorValues('bad id', ['file']);
-    expect(mockedNorth1.removeErrorValues).not.toHaveBeenCalled();
-    await engine.removeErrorValues(testData.north.list[0].id, ['file']);
-    expect(mockedNorth1.removeErrorValues).toHaveBeenCalledWith(['file']);
-
-    await engine.removeAllErrorValues('bad id');
-    expect(mockedNorth1.removeAllErrorValues).not.toHaveBeenCalled();
-    await engine.removeAllErrorValues(testData.north.list[0].id);
-    expect(mockedNorth1.removeAllErrorValues).toHaveBeenCalledWith();
-
-    await engine.retryErrorValues('bad id', ['file']);
-    expect(mockedNorth1.retryErrorValues).not.toHaveBeenCalled();
-    await engine.retryErrorValues(testData.north.list[0].id, ['file']);
-    expect(mockedNorth1.retryErrorValues).toHaveBeenCalledWith(['file']);
-
-    await engine.retryAllErrorValues('bad id');
-    expect(mockedNorth1.retryAllErrorValues).not.toHaveBeenCalled();
-    await engine.retryAllErrorValues(testData.north.list[0].id);
-    expect(mockedNorth1.retryAllErrorValues).toHaveBeenCalledWith();
+    await engine.moveAllCacheContent('bad id', 'cache', 'error');
+    expect(mockedNorth1.moveAllCacheContent).not.toHaveBeenCalled();
+    await engine.moveAllCacheContent(testData.north.list[0].id, 'cache', 'error');
+    expect(mockedNorth1.moveAllCacheContent).toHaveBeenCalledWith('cache', 'error');
   });
 
   it('should manage item change', async () => {

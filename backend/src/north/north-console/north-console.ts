@@ -4,7 +4,7 @@ import NorthConnector from '../north-connector';
 import pino from 'pino';
 import EncryptionService from '../../service/encryption.service';
 import { NorthConsoleSettings } from '../../../shared/model/north-settings.model';
-import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
+import { CacheMetadata, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
@@ -25,13 +25,13 @@ export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
     super(configuration, encryptionService, northConnectorRepository, scanModeRepository, logger, baseFolders);
   }
 
-  async handleContent(data: OIBusContent): Promise<void> {
-    switch (data.type) {
+  async handleContent(cacheMetadata: CacheMetadata): Promise<void> {
+    switch (cacheMetadata.contentType) {
       case 'raw':
-        return this.handleFile(data.filePath);
+        return this.handleFile(cacheMetadata.contentFile);
 
       case 'time-values':
-        return this.handleValues(data.content);
+        return this.handleValues(JSON.parse(await fs.readFile(cacheMetadata.contentFile, { encoding: 'utf-8' })) as Array<OIBusTimeValue>);
     }
   }
 

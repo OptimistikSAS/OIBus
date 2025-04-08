@@ -11,12 +11,13 @@ import { SouthConnectorManifest } from '../../../../../../backend/shared/model/s
 import { ProgressbarComponent } from './progressbar/progressbar.component';
 import { SouthItemSettings, SouthSettings } from '../../../../../../backend/shared/model/south-settings.model';
 import { NorthSettings } from '../../../../../../backend/shared/model/north-settings.model';
+import { FileSizePipe } from '../../../shared/file-size.pipe';
 
 @Component({
   selector: 'oib-history-metrics',
   templateUrl: './history-metrics.component.html',
   styleUrl: './history-metrics.component.scss',
-  imports: [TranslateDirective, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, JsonPipe, ProgressbarComponent]
+  imports: [TranslateDirective, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, JsonPipe, ProgressbarComponent, FileSizePipe]
 })
 export class HistoryMetricsComponent {
   readonly historyQuery = input.required<HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings>>();
@@ -28,10 +29,7 @@ export class HistoryMetricsComponent {
   );
 
   get northProgress() {
-    const valueProgress = this.historyMetrics().north.numberOfValuesSent / this.historyMetrics().south.numberOfValuesRetrieved;
-    const fileProgress = this.historyMetrics().north.numberOfFilesSent / this.historyMetrics().south.numberOfFilesRetrieved;
-
-    return valueProgress > 0 ? valueProgress : fileProgress;
+    return this.historyMetrics().north.contentSentSize / this.historyMetrics().north.contentCachedSize;
   }
 
   get northProgressbarAnimated(): boolean {
