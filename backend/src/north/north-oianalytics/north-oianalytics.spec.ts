@@ -9,8 +9,7 @@ import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-serv
 import fetch from 'node-fetch';
 import { compress, filesExists } from '../../service/utils';
 
-import ValueCacheServiceMock from '../../tests/__mocks__/service/cache/value-cache-service.mock';
-import FileCacheServiceMock from '../../tests/__mocks__/service/cache/file-cache-service.mock';
+import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
 import { NorthOIAnalyticsSettings } from '../../../shared/model/north-settings.model';
 import { createProxyAgent } from '../../service/proxy-agent';
 import { OIBusTimeValue } from '../../../shared/model/engine.model';
@@ -29,6 +28,8 @@ import CertificateRepositoryMock from '../../tests/__mocks__/repository/config/c
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import OianalyticsRegistrationRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
 import { mockBaseFolders } from '../../tests/utils/test-utils';
+import CacheService from '../../service/cache/cache.service';
+import { OIBusError } from '../../model/engine.model';
 
 jest.mock('node:fs/promises');
 jest.mock('node:fs');
@@ -52,21 +53,13 @@ const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRep
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const certificateRepository: CertificateRepository = new CertificateRepositoryMock();
 const oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository = new OianalyticsRegistrationRepositoryMock();
-const valueCacheService = new ValueCacheServiceMock();
-const fileCacheService = new FileCacheServiceMock();
+const cacheService: CacheService = new CacheServiceMock();
 
 jest.mock(
-  '../../service/cache/value-cache.service',
+  '../../service/cache/cache.service',
   () =>
     function () {
-      return valueCacheService;
-    }
-);
-jest.mock(
-  '../../service/cache/file-cache.service',
-  () =>
-    function () {
-      return fileCacheService;
+      return cacheService;
     }
 );
 
@@ -80,6 +73,19 @@ const myReadStream = {
   close: jest.fn()
 };
 (fsSync.createReadStream as jest.Mock).mockReturnValue(myReadStream);
+
+const timeValues: Array<OIBusTimeValue> = [
+  {
+    pointId: 'pointId1',
+    timestamp: testData.constants.dates.FAKE_NOW,
+    data: { value: '666', quality: 'good' }
+  },
+  {
+    pointId: 'pointId2',
+    timestamp: testData.constants.dates.FAKE_NOW,
+    data: { value: '777', quality: 'good' }
+  }
+];
 
 let north: NorthOIAnalytics;
 let configuration: NorthConnectorEntity<NorthOIAnalyticsSettings>;
@@ -119,6 +125,10 @@ describe('NorthOIAnalytics without proxy', () => {
     await north.start();
   });
 
+  afterEach(() => {
+    cacheService.cacheSizeEventEmitter.removeAllListeners();
+  });
+
   it('should manage timeout error on test connection', async () => {
     (fetch as unknown as jest.Mock).mockImplementationOnce(() => {
       throw new Error('Timeout error');
@@ -140,18 +150,6 @@ describe('NorthOIAnalytics without proxy', () => {
 
   it('should properly handle values', async () => {
     await north.start();
-    const values: Array<OIBusTimeValue> = [
-      {
-        pointId: 'pointId1',
-        timestamp: testData.constants.dates.FAKE_NOW,
-        data: { value: '666', quality: 'good' }
-      },
-      {
-        pointId: 'pointId2',
-        timestamp: testData.constants.dates.FAKE_NOW,
-        data: { value: '777', quality: 'good' }
-      }
-    ];
     (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response('Ok')));
 
     const expectedFetchOptions = {
@@ -178,7 +176,17 @@ describe('NorthOIAnalytics without proxy', () => {
       agent: undefined
     };
 
-    await north.handleContent({ type: 'time-values', content: values });
+    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify(timeValues));
+
+    await north.handleContent({
+      contentFile: '/path/to/file/example-123.json',
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'time-values',
+      source: 'south',
+      options: {}
+    });
 
     expect(fetch).toHaveBeenCalledWith(
       `${configuration.settings.specificSettings!.host}/api/oianalytics/oibus/time-values?dataSourceId=${encodeURI(configuration.name)}`,
@@ -188,40 +196,31 @@ describe('NorthOIAnalytics without proxy', () => {
 
   it('should properly throw fetch error with values', async () => {
     await north.start();
-    const values: Array<OIBusTimeValue> = [
-      {
-        pointId: 'pointId1',
-        timestamp: testData.constants.dates.FAKE_NOW,
-        data: { value: '666', quality: 'good' }
-      }
-    ];
     (fetch as unknown as jest.Mock).mockImplementation(() => {
       throw new Error('error');
     });
 
-    let err;
-    try {
-      await north.handleValues(values);
-    } catch (error) {
-      err = error;
-    }
-    expect(err).toEqual({
+    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify(timeValues));
+    await expect(
+      north.handleContent({
+        contentFile: '/path/to/file/example-123.json',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'time-values',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow({
       message: `Fail to reach values endpoint ${
         configuration.settings.specificSettings!.host
-      }/api/oianalytics/oibus/time-values?dataSourceId=${encodeURI(configuration.name)}. ${new Error('error')}`,
+      }api/oianalytics/oibus/time-values?dataSourceId=${encodeURI(configuration.name)}. ${new Error('error')}`,
       retry: true
-    });
+    } as OIBusError);
   });
 
   it('should properly throw error on values bad response', async () => {
     await north.start();
-    const values: Array<OIBusTimeValue> = [
-      {
-        pointId: 'pointId1',
-        timestamp: testData.constants.dates.FAKE_NOW,
-        data: { value: '666', quality: 'good' }
-      }
-    ];
     (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve({ ok: false, status: 400, statusText: 'statusText' }));
 
     const expectedFetchOptions = {
@@ -233,21 +232,22 @@ describe('NorthOIAnalytics without proxy', () => {
         'Content-Type': 'application/json'
       },
       timeout: 30000,
-      body: JSON.stringify(values),
+      body: JSON.stringify(timeValues),
       agent: undefined
     };
 
-    let err;
-    try {
-      await north.handleValues(values);
-    } catch (error) {
-      err = error;
-    }
-
-    expect(err).toEqual({
-      message: `Error 400: statusText`,
-      retry: false
-    });
+    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify(timeValues));
+    await expect(
+      north.handleContent({
+        contentFile: '/path/to/file/example-123.json',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'time-values',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow(new OIBusError(`Error 400: statusText`, false));
 
     expect(fetch).toHaveBeenCalledWith(
       `${configuration.settings.specificSettings!.host}/api/oianalytics/oibus/time-values?dataSourceId=${encodeURI(configuration.name)}`,
@@ -256,7 +256,6 @@ describe('NorthOIAnalytics without proxy', () => {
   });
 
   it('should properly handle files', async () => {
-    const filePath = '/path/to/file/example.file';
     (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response('Ok')));
 
     const expectedFetchOptions = {
@@ -272,7 +271,15 @@ describe('NorthOIAnalytics without proxy', () => {
       agent: undefined
     };
 
-    await north.handleContent({ type: 'raw', filePath });
+    await north.handleContent({
+      contentFile: 'path/to/file/example.file',
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'raw',
+      source: 'south',
+      options: {}
+    });
 
     expect(fetch).toHaveBeenCalledWith(
       `${configuration.settings.specificSettings!.host}/api/oianalytics/file-uploads?dataSourceId=${encodeURI(configuration.name)}`,
@@ -284,13 +291,7 @@ describe('NorthOIAnalytics without proxy', () => {
     const filePath = '/path/to/file/example.file';
 
     (filesExists as jest.Mock).mockReturnValueOnce(false);
-    let err;
-    try {
-      await north.handleFile(filePath);
-    } catch (error) {
-      err = error;
-    }
-    expect(err).toEqual(new Error(`File ${filePath} does not exist`));
+    await expect(north.handleFile(filePath)).rejects.toThrow(new Error(`File ${filePath} does not exist`));
   });
 
   it('should properly throw fetch error with files', async () => {
@@ -299,18 +300,14 @@ describe('NorthOIAnalytics without proxy', () => {
       throw new Error('error');
     });
 
-    let err;
-    try {
-      await north.handleFile(filePath);
-    } catch (error) {
-      err = error;
-    }
-    expect(err).toEqual({
-      message: `Fail to reach file endpoint ${configuration.settings.specificSettings!.host}/api/oianalytics/file-uploads?dataSourceId=${encodeURI(
-        configuration.name
-      )}. ${new Error('error')}`,
-      retry: true
-    });
+    await expect(north.handleFile(filePath)).rejects.toThrow(
+      new OIBusError(
+        `Fail to reach file endpoint ${configuration.settings.specificSettings!.host}/api/oianalytics/file-uploads?dataSourceId=${encodeURI(
+          configuration.name
+        )}. ${new Error('error')}`,
+        true
+      )
+    );
   });
 
   it('should properly throw error on file bad response', async () => {
@@ -384,6 +381,10 @@ describe('NorthOIAnalytics without proxy but with acceptUnauthorized', () => {
       mockBaseFolders(testData.north.list[0].id)
     );
     await north.start();
+  });
+
+  afterEach(() => {
+    cacheService.cacheSizeEventEmitter.removeAllListeners();
   });
 
   it('should properly handle values', async () => {
@@ -495,6 +496,10 @@ describe('NorthOIAnalytics with proxy', () => {
       mockBaseFolders(testData.north.list[0].id)
     );
     await north.start();
+  });
+
+  afterEach(() => {
+    cacheService.cacheSizeEventEmitter.removeAllListeners();
   });
 
   it('should manage timeout error on test connection', async () => {
@@ -612,6 +617,10 @@ describe('NorthOIAnalytics with proxy but without proxy password', () => {
       mockBaseFolders(testData.north.list[0].id)
     );
     await north.start();
+  });
+
+  afterEach(() => {
+    cacheService.cacheSizeEventEmitter.removeAllListeners();
   });
 
   it('should manage timeout error on test connection', async () => {
@@ -745,6 +754,10 @@ describe('NorthOIAnalytics with aad-certificate', () => {
     await north.start();
   });
 
+  afterEach(() => {
+    cacheService.cacheSizeEventEmitter.removeAllListeners();
+  });
+
   it('should add header with aad-certificate', async () => {
     (certificateRepository.findById as jest.Mock).mockReturnValueOnce({
       name: 'name',
@@ -810,6 +823,10 @@ describe('NorthOIAnalytics with OIA module', () => {
       mockBaseFolders(testData.north.list[0].id)
     );
     await north.start();
+  });
+
+  afterEach(() => {
+    cacheService.cacheSizeEventEmitter.removeAllListeners();
   });
 
   it('should use oia module', async () => {
