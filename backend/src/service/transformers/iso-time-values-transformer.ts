@@ -3,6 +3,7 @@ import { ReadStream } from 'node:fs';
 import { pipeline, Readable, Transform } from 'node:stream';
 import { CacheMetadata } from '../../../shared/model/engine.model';
 import { promisify } from 'node:util';
+import { OibFormControl } from '../../../shared/model/form.model';
 import { generateRandomId } from '../utils';
 import path from 'node:path';
 
@@ -44,5 +45,9 @@ export default class IsoTimeValuesTransformer extends OIBusTransformer {
       output: stringContent,
       metadata
     };
+  }
+
+  get manifestSettings(): Array<OibFormControl> {
+    return [];
   }
 }

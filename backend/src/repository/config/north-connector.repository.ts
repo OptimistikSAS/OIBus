@@ -187,12 +187,15 @@ export default class NorthConnectorRepository {
     this.database.prepare(query).run(northId);
   }
 
-  findAllTransformersForNorth(northId: string): Array<Transformer> {
-    const query = `SELECT t.id, t.name, t.type, t.description, t.input_type, t.output_type, t.standard_code, t.custom_code FROM ${NORTH_TRANSFORMERS_TABLE} nt JOIN ${TRANSFORMERS_TABLE} t ON nt.transformer_id = t.id WHERE nt.north_id = ?;`;
+  findAllTransformersForNorth(northId: string): Array<{ transformer: Transformer; options: object }> {
+    const query = `SELECT t.id, t.name, t.type, t.description, t.input_type, t.output_type, t.standard_code, t.custom_code, nt.options FROM ${NORTH_TRANSFORMERS_TABLE} nt JOIN ${TRANSFORMERS_TABLE} t ON nt.transformer_id = t.id WHERE nt.north_id = ?;`;
     return this.database
       .prepare(query)
       .all(northId)
-      .map(result => toTransformer(result as Record<string, string>));
+      .map(result => ({
+        transformer: toTransformer(result as Record<string, string>),
+        options: JSON.parse((result as Record<string, string>).options)
+      }));
   }
 
   private toNorthConnectorLight(result: Record<string, string>): NorthConnectorEntityLight {

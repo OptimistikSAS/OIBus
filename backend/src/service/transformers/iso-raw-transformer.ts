@@ -5,6 +5,7 @@ import { CacheMetadata } from '../../../shared/model/engine.model';
 import { promisify } from 'node:util';
 import path from 'node:path';
 import { generateRandomId } from '../utils';
+import { OibFormControl } from '../../../shared/model/form.model';
 
 const pipelineAsync = promisify(pipeline);
 
@@ -42,5 +43,9 @@ export default class IsoRawTransformer extends OIBusTransformer {
       output: stringContent,
       metadata
     };
+  }
+
+  get manifestSettings(): Array<OibFormControl> {
+    return [];
   }
 }

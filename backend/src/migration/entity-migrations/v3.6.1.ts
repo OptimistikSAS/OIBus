@@ -30,7 +30,7 @@ async function createNorthTransformersTable(knex: Knex): Promise<void> {
   await knex.schema.createTable(NORTH_TRANSFORMERS_TABLE, table => {
     table.uuid('north_id').notNullable().references('id').inTable(NORTH_CONNECTORS_TABLE);
     table.uuid('transformer_id').notNullable().references('id').inTable(TRANSFORMERS_TABLE);
-    table.unique(['north_id', 'transformer_id']);
+    table.unique(['north_id', 'transformer_id', 'options']);
   });
 }
 
@@ -38,7 +38,7 @@ async function createHistoryTransformersTable(knex: Knex): Promise<void> {
   await knex.schema.createTable(HISTORY_QUERY_TRANSFORMERS_TABLE, table => {
     table.uuid('history_id').notNullable().references('id').inTable(HISTORY_QUERIES_TABLE);
     table.uuid('transformer_id').notNullable().references('id').inTable(TRANSFORMERS_TABLE);
-    table.unique(['history_id', 'transformer_id']);
+    table.unique(['history_id', 'transformer_id', 'options']);
   });
 }
 

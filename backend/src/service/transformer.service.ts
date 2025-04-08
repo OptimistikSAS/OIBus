@@ -133,25 +133,25 @@ export const createTransformer = (
 ): OibusTransformer => {
   switch (transformer.id) {
     case IsoRawTransformer.transformerName: {
-      return new IsoRawTransformer(logger, transformer, northConnector);
+      return new IsoRawTransformer(logger, transformer, northConnector, {}); // TODO
     }
     case IsoTimeValuesTransformer.transformerName: {
-      return new IsoTimeValuesTransformer(logger, transformer, northConnector);
+      return new IsoTimeValuesTransformer(logger, transformer, northConnector, {});
     }
     case OIBusTimeValuesToCsvTransformer.transformerName: {
-      return new OIBusTimeValuesToCsvTransformer(logger, transformer, northConnector);
+      return new OIBusTimeValuesToCsvTransformer(logger, transformer, northConnector, {});
     }
     case OIBusTimeValuesToJSONTransformer.transformerName: {
-      return new OIBusTimeValuesToJSONTransformer(logger, transformer, northConnector);
+      return new OIBusTimeValuesToJSONTransformer(logger, transformer, northConnector, {});
     }
     case OIBusTimeValuesToMQTTTransformer.transformerName: {
-      return new OIBusTimeValuesToMQTTTransformer(logger, transformer, northConnector);
+      return new OIBusTimeValuesToMQTTTransformer(logger, transformer, northConnector, {});
     }
     case OIBusTimeValuesToOPCUATransformer.transformerName: {
-      return new OIBusTimeValuesToOPCUATransformer(logger, transformer, northConnector);
+      return new OIBusTimeValuesToOPCUATransformer(logger, transformer, northConnector, {});
     }
     case OIBusTimeValuesToModbusTransformer.transformerName: {
-      return new OIBusTimeValuesToModbusTransformer(logger, transformer, northConnector);
+      return new OIBusTimeValuesToModbusTransformer(logger, transformer, northConnector, {});
     }
     default:
       throw new Error(`Could not create ${transformer.id} transformer`);
