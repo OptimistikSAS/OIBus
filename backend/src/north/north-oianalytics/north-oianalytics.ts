@@ -10,7 +10,7 @@ import path from 'node:path';
 import fetch, { HeadersInit, RequestInit } from 'node-fetch';
 import { compress, filesExists } from '../../service/utils';
 import { NorthOIAnalyticsSettings } from '../../../shared/model/north-settings.model';
-import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
+import { CacheMetadata, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { ClientCertificateCredential, ClientSecretCredential } from '@azure/identity';
 import fs from 'node:fs/promises';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
@@ -23,6 +23,7 @@ import https from 'node:https';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import { HttpProxyAgent } from 'http-proxy-agent';
 import { BaseFolders } from '../../model/types';
+import TransformerService from '../../service/transformer.service';
 
 /**
  * Class NorthOIAnalytics - Send files to a POST Multipart HTTP request and values as JSON payload
@@ -32,6 +33,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
   constructor(
     connector: NorthConnectorEntity<NorthOIAnalyticsSettings>,
     encryptionService: EncryptionService,
+    transformerService: TransformerService,
     northConnectorRepository: NorthConnectorRepository,
     scanModeRepository: ScanModeRepository,
     private readonly certificateRepository: CertificateRepository,
@@ -39,7 +41,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     logger: pino.Logger,
     baseFolders: BaseFolders
   ) {
-    super(connector, encryptionService, northConnectorRepository, scanModeRepository, logger, baseFolders);
+    super(connector, encryptionService, transformerService, northConnectorRepository, scanModeRepository, logger, baseFolders);
   }
 
   override async testConnection(): Promise<void> {
@@ -63,13 +65,13 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     }
   }
 
-  async handleContent(data: OIBusContent): Promise<void> {
-    switch (data.type) {
+  async handleContent(cacheMetadata: CacheMetadata): Promise<void> {
+    switch (cacheMetadata.contentType) {
       case 'raw':
-        return this.handleFile(data.filePath);
+        return this.handleFile(cacheMetadata.contentFile);
 
       case 'time-values':
-        return this.handleValues(data.content);
+        return this.handleValues(JSON.parse(await fs.readFile(cacheMetadata.contentFile, { encoding: 'utf-8' })) as Array<OIBusTimeValue>);
     }
   }
 
@@ -97,17 +99,14 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     try {
       response = await fetch(valuesUrl, fetchOptions);
     } catch (fetchError) {
-      throw {
-        message: `Fail to reach values endpoint ${valuesUrl}. ${fetchError}`,
-        retry: true
-      };
+      throw new OIBusError(`Fail to reach values endpoint ${valuesUrl}. ${fetchError}`, true);
     }
 
     if (!response.ok) {
-      throw {
-        message: `Error ${response.status}: ${response.statusText}`,
-        retry: [401, 403, 404, 500, 502, 503, 504].includes(response.status)
-      };
+      throw new OIBusError(
+        `Error ${response.status}: ${response.statusText}`,
+        [401, 403, 404, 500, 502, 503, 504].includes(response.status)
+      );
     }
   }
 
@@ -164,16 +163,13 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
       }
     } catch (fetchError) {
       readStream.close();
-      throw {
-        message: `Fail to reach file endpoint ${fileUrl}. ${fetchError}`,
-        retry: true
-      };
+      throw new OIBusError(`Fail to reach file endpoint ${fileUrl}. ${fetchError}`, true);
     }
 
     if (!response.ok) {
       throw new OIBusError(
         `Error ${response.status}: ${response.statusText}`,
-        [400, 401, 403, 404, 500, 502, 503, 504].includes(response.status)
+        [401, 403, 404, 500, 502, 503, 504].includes(response.status)
       );
     }
   }

@@ -179,10 +179,15 @@
       "test-history-query-south-item": "Test south item",
       "create-or-update-history-query-south-items-from-csv": "Load south items from CSV"
     },
+    "oibus-data-type": {
+      "raw": "Raw files (CSV, JSON, Text...)",
+      "time-values": "Time values (JSON)"
+    },
     "oibus-north-category": {
       "debug": "Debug",
       "file": "File",
-      "api": "API"
+      "api": "API",
+      "iot": "IoT"
     },
     "oibus-north-type": {
       "aws-s3": "Amazon S3™",
@@ -191,7 +196,10 @@
       "file-writer": "File writer",
       "oianalytics": "OIAnalytics®",
       "sftp": "SFTP",
-      "rest": "REST"
+      "rest": "REST",
+      "opcua": "OPC UA™",
+      "mqtt": "MQTT",
+      "modbus": "Modbus"
     },
     "oibus-north-type-description": {
       "aws-s3": "Store files in Amazon S3™ (Simple Storage Service)",
@@ -200,10 +208,13 @@
       "file-writer": "Write files and data to the output folder",
       "oianalytics": "Send files and values to OIAnalytics®",
       "sftp": "Upload files and data to an SFTP server",
-      "rest": "Upload files to a REST endpoint"
+      "rest": "Upload files to a REST endpoint",
+      "mqtt": "Publish to MQTT broker topics",
+      "modbus": "Write in Modbus registers on a PLC",
+      "opcua": "Write data into OPC UA™ server"
     },
     "oibus-south-category": {
-      "iot": "IOT",
+      "iot": "IoT",
       "database": "Database",
       "file": "File",
       "api": "API"
@@ -1552,51 +1563,59 @@
     "type": "Type",
     "general-settings": "General settings",
     "specific-settings": "{{ type }} settings",
-    "cache-settings": {
-      "title": "Cache",
-      "schedule": "Schedule",
-      "send-scan-mode": "Send interval",
-      "retry-interval": "Retry interval",
-      "retry-count": "Retry count",
-      "group-count": "Group count",
-      "max-send-count": "Max send count",
-      "max-size": "Max size",
-      "send-file-immediately": "Send file immediately",
+    "caching": {
+      "title": "Cache settings",
+      "trigger": {
+        "title": "Trigger conditions",
+        "schedule": "Schedule",
+        "number-of-elements": "Number of elements",
+        "number-of-files": "Number of files",
+        "value": "Schedule: {{ scanMode }} / Elements: {{ numberOfElements }} / Files: {{ numberOfFiles }}"
+      },
+      "throttling": {
+        "title": "Throttling",
+        "run-min-delay": "Minimum delay between two transmissions",
+        "max-size": "Maximum storage size (cache + error + archive)",
+        "max-number-of-elements": "Maximum number of elements",
+        "value": "Run min delay: {{ runMinDelay }} ms / Max cache size: {{ maxSize }} MB / Max number of elements: {{ maxNumberOfElements }}"
+      },
+      "error": {
+        "title": "Errors",
+        "retry-interval": "Delay to wait before retry after error",
+        "retry-count": "Number of retry",
+        "retention-duration": "Retention duration for errored data",
+        "value": "Retry interval: {{ retryInterval }} ms / Number of retry: {{ retryCount }} / Retention duration: {{ retentionDuration }} hr"
+      },
+      "archive": {
+        "title": "Archive",
+        "enabled": "Enabled",
+        "retention-duration": "Retention duration for archived data",
+        "value": "Enabled: {{ enabled }} / Retention duration: {{ retentionDuration }} hr"
+      },
       "explore-cache": "Explore cache",
-      "error-files": "Error files",
-      "archive-files": "Archive files",
-      "remove-selected-files": "Remove selected files",
-      "retry-selected-files": "Retry selected files",
-      "error-files-none": "No error file",
-      "archive-files-none": "No archived files",
-      "file-date": "Modification date",
+      "refresh-cache": "Refresh cache",
+      "file-date": "Creation date",
       "file-size": "Size",
       "filename": "Filename",
-      "refresh-cache": "Refresh cache",
-      "cache-files": "Cache files",
-      "cache-files-none": "No cache files",
-      "archive-selected-files": "Archive selected files",
-      "cache-values": "Cache values",
-      "cache-values-none": "No cache values",
-      "values-count": "Nr. of values",
-      "error-values": "Error values",
-      "error-values-none": "No error values",
+      "cache-content": "Cache files",
+      "cache-content-none": "No cache files",
+      "error-content": "Error content",
+      "error-content-none": "No errored content",
+      "archive-content": "Archive content",
+      "archive-content-none": "No archived content",
+      "remove-selected-content": "Remove selected content",
+      "archive-selected-content": "Archive selected content",
+      "error-selected-content": "Error selected content",
+      "retry-selected-content": "Retry selected content",
+      "replay-selected-content": "Replay selected content",
       "actions": "Actions",
-      "view-file-content": "File content",
-      "view-file": "View file",
-      "remove-file": "Remove file",
-      "retry-file": "Retry file",
-      "archive-file": "Archive file",
-      "oibus-time-values": {
-        "title": "Time values"
-      },
-      "raw-files": {
-        "title": "Files"
-      }
-    },
-    "archive-settings": {
-      "enabled": "Enable archive",
-      "retention-duration": "Archive retention duration"
+      "view-content": "File content: {{ filename }}",
+      "view-content-action": "View content",
+      "remove-content-action": "Remove content",
+      "archive-content-action": "Archive content",
+      "error-content-action": "Error content",
+      "retry-content-action": "Retry content",
+      "replay-content-action": "Replay content"
     },
     "subscriptions": {
       "title": "Subscriptions",
@@ -1618,17 +1637,16 @@
       "reset-metrics": "Reset metrics",
       "metrics-reset": "Metrics successfully reset",
       "metrics-start": "Metrics started on {{ start }}",
-      "number-of-values": "Number of values sent",
-      "number-of-files": "Number of files sent",
       "last-connection": "Last connection",
-      "last-file": "Last file sent",
-      "last-value": "Last value sent",
-      "last-value-content": "{{ pointId }} at {{ timestamp }} with content {{ data }}",
-      "last-run-start": "Last run",
-      "last-run-duration": "Last run duration",
-      "cache-size": "Cache folder size",
-      "error-size": "Error folder size",
-      "archive-size": "Archive folder size"
+      "last-content-sent": "Last content sent",
+      "last-run": "Last run",
+      "last-run-value": "{{ lastRunStart }} (in {{ lastRunDuration }})",
+      "cache-size-title": "Cache size",
+      "cache-size-value": "Current size: {{ currentSize }} / Total cached: {{ totalCached }} / Total sent: {{ totalSent }}",
+      "error-size-title": "Error size",
+      "error-size-value": "Current size: {{ currentSize }} / Total errored: {{ totalSize }}",
+      "archive-size-title": "Archive size",
+      "archive-size-value": "Current size: {{ currentSize }} / Total archived: {{ totalSize }}"
     },
     "cache": {
       "title": "Cache content for connector {{ name }}"
@@ -1746,6 +1764,99 @@
         "username": "Proxy username",
         "password": "Proxy password"
       }
+    },
+    "modbus": {
+      "host": "Host",
+      "port": "Port",
+      "retry-interval": "Retry interval",
+      "slave-id": "Slave ID",
+      "address-offset": {
+        "title": "Address offset",
+        "modbus": "Modbus",
+        "jbus": "JBus"
+      },
+      "endianness": {
+        "title": "Endianness",
+        "big-endian": "Big endian",
+        "little-endian": "Little endian"
+      },
+      "swap-bytes-in-words": "Swap Bytes?",
+      "swap-words-in-dwords": "Swap Words?"
+    },
+    "mqtt": {
+      "url": "URL",
+      "qos": {
+        "title": "QoS",
+        "0": "0",
+        "1": "1",
+        "2": "2"
+      },
+      "persistent": "Persistent",
+      "authentication": {
+        "title": "Authentication",
+        "none": "None",
+        "basic": "User",
+        "cert": "Certificate"
+      },
+      "username": "Username",
+      "password": "Password",
+      "cert-file-path": "Cert file path",
+      "key-file-path": "Key file path",
+      "ca-file-path": "CA file path",
+      "reject-unauthorized": "Reject unauthorized connection",
+      "reconnect-period": "Reconnect period",
+      "connect-timeout": "Connect timeout"
+    },
+    "opcua": {
+      "url": "URL",
+      "keep-session-alive": "Keep session alive",
+      "read-timeout": "Read timeout",
+      "retry-interval": "Retry interval",
+      "security-mode": {
+        "title": "Security mode",
+        "none": "None",
+        "sign": "Sign",
+        "sign-and-encrypt": "Sign and encrypt"
+      },
+      "security-policy": {
+        "title": "Security policy",
+        "none": "None",
+        "basic128": "Basic128",
+        "basic192": "Basic192",
+        "basic256": "Basic256",
+        "basic128-rsa15": "Basic128-RSA15",
+        "basic192-rsa15": "Basic192-RSA15",
+        "basic256-rsa15": "Basic256-RSA15",
+        "basic256-sha256": "Basic256-SHA256",
+        "aes128-sha256-rsa-oaep": "AES128-SHA256-RSA-OAEP",
+        "pub-sub-aes-128-ctr": "PubSub AES-128-CTR",
+        "pub-sub-aes-256-ctr": "PubSub AES-256-CTR"
+      },
+      "authentication": {
+        "title": "Authentication",
+        "none": "None",
+        "basic": "Password",
+        "cert": "Certificate"
+      },
+      "username": "Username",
+      "password": "Password",
+      "cert-file-path": "Cert file path",
+      "key-file-path": "Key file path"
+    }
+  },
+  "transformers": {
+    "title": "Transform payloads",
+    "input-type": "Source type",
+    "output-type": "Destination type",
+    "standard": {
+      "none": "Ignore data",
+      "iso-raw": "Raw (keep raw file as it is)",
+      "iso-time-values": "Time values (keep time values as it is)",
+      "time-values-to-csv": "To CSV (convert time values into CSV)",
+      "time-values-to-json": "To JSON (convert time values into raw JSON)",
+      "time-values-to-mqtt": "To MQTT payloads (convert time values into MQTT payloads)",
+      "time-values-to-opcua": "To OPCUA values (convert time values into OPCUA values)",
+      "time-values-to-modbus": "To Modbus values (convert time values into Modbus values)"
     }
   },
   "logs": {
@@ -1800,20 +1911,6 @@
     "north": {
       "specific-settings": "{{ type }} settings"
     },
-    "cache-settings": {
-      "title": "Cache",
-      "send-scan-mode": "Send interval",
-      "retry-interval": "Retry interval",
-      "retry-count": "Retry count",
-      "group-count": "Group count",
-      "max-send-count": "Max send count",
-      "max-size": "Max size"
-    },
-    "archive-settings": {
-      "title": "Archive",
-      "enabled": "Enabled",
-      "retention-duration": "Retention duration"
-    },
     "south": {
       "specific-settings": "{{ type }} settings"
     },
@@ -1847,12 +1944,14 @@
         "reset-metrics": "Reset metrics",
         "metrics-reset": "Metrics successfully reset",
         "metrics-start": "Metrics started on {{ start }}",
-        "number-of-values": "Number of values sent",
-        "number-of-files": "Number of files sent",
+        "cache-size-title": "Cache size",
+        "cache-size-value": "Current size: {{ currentSize }} / Total cached: {{ totalCached }} / Total sent: {{ totalSent }}",
+        "error-size-title": "Error size",
+        "error-size-value": "Current size: {{ currentSize }} / Total errored: {{ totalSize }}",
+        "archive-size-title": "Archive size",
+        "archive-size-value": "Current size: {{ currentSize }} / Total archived: {{ totalSize }}",
+        "last-content-sent": "Last content sent",
         "last-connection": "Last connection",
-        "last-file": "Last file sent",
-        "last-value": "Last value sent",
-        "last-value-content": "{{ pointId }} at {{ timestamp }} with content {{ data }}",
         "last-run-start": "Last run",
         "last-run-duration": "Last run duration",
         "data-sent": "Data sent"
