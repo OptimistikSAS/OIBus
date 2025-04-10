@@ -9,7 +9,8 @@ import { formDirectives } from '../../form-directives';
 import { OibFormControl } from '../../../../../../backend/shared/model/form.model';
 
 @Component({
-  template: '<oib-array [parentForm]="parentForm" [formDescription]="formDescription" [formControl]="control" />',
+  template:
+    '<oib-array [parentForm]="parentForm" [formDescription]="formDescription" [formControl]="control"  [allowRowDuplication]="true" />',
   imports: [OibArrayComponent, ...formDirectives]
 })
 class TestComponent {
@@ -106,6 +107,10 @@ class TestComponentTester extends ComponentTester<TestComponent> {
 
   get editButtons() {
     return this.elements<HTMLButtonElement>('.edit-button');
+  }
+
+  get duplicateButtons() {
+    return this.elements<HTMLButtonElement>('.duplicate-button');
   }
 
   get deleteButtons() {
@@ -209,5 +214,14 @@ describe('ArrayComponent', () => {
     expect(tester.displayFields.length).toBe(2);
     expect(tester.editComponent).not.toBeNull();
     expect(tester.validationErrors).toEqual({ resolvePendingChanges: true });
+  });
+
+  it('should duplicate an element and open it in edit mode', () => {
+    tester.duplicateButtons[0].click();
+    tester.detectChanges();
+
+    expect(tester.displayFields.length).toBe(2);
+    expect(tester.editComponent).not.toBeNull();
+    expect(tester.editComponent.element().fieldName).toBe('field1-copy');
   });
 });
