@@ -381,11 +381,7 @@ describe('South OPC', () => {
     );
 
     const callback = jest.fn();
-    south.connect = jest.fn();
-    south.disconnect = jest.fn();
     await south.testItem(configuration.items[0], testData.south.itemTestingSettings, callback);
-    expect(south.connect).toHaveBeenCalledTimes(1);
-    expect(south.disconnect).toHaveBeenCalledTimes(1);
     expect(callback).toHaveBeenCalledTimes(1);
 
     const { startTime, endTime } = testData.south.itemTestingSettings.history!;
@@ -394,6 +390,7 @@ describe('South OPC', () => {
       body: JSON.stringify({
         host: configuration.settings.host,
         serverName: configuration.settings.serverName,
+        mode: 'hda',
         aggregate: configuration.items[0].settings.aggregate,
         resampling: configuration.items[0].settings.resampling,
         startTime,
@@ -402,7 +399,7 @@ describe('South OPC', () => {
       }),
       headers: { 'Content-Type': 'application/json' }
     };
-    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/opc/${configuration.id}/read`, fetchOptions);
+    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/opc/${configuration.id}-test/read`, fetchOptions);
   });
 
   it('should test item and throw error if bad status', async () => {
@@ -413,13 +410,9 @@ describe('South OPC', () => {
     );
 
     const callback = jest.fn();
-    south.connect = jest.fn();
-    south.disconnect = jest.fn();
     await expect(south.testItem(configuration.items[0], testData.south.itemTestingSettings, callback)).rejects.toThrow(
       `Error occurred when sending connect command to remote agent. 400`
     );
-    expect(south.connect).toHaveBeenCalledTimes(1);
-    expect(south.disconnect).toHaveBeenCalledTimes(1);
     expect(callback).not.toHaveBeenCalled();
 
     const { startTime, endTime } = testData.south.itemTestingSettings.history!;
@@ -428,6 +421,7 @@ describe('South OPC', () => {
       body: JSON.stringify({
         host: configuration.settings.host,
         serverName: configuration.settings.serverName,
+        mode: 'hda',
         aggregate: configuration.items[0].settings.aggregate,
         resampling: configuration.items[0].settings.resampling,
         startTime,
@@ -436,6 +430,6 @@ describe('South OPC', () => {
       }),
       headers: { 'Content-Type': 'application/json' }
     };
-    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/opc/${configuration.id}/read`, fetchOptions);
+    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/opc/${configuration.id}-test/read`, fetchOptions);
   });
 });

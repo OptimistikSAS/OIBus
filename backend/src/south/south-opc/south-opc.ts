@@ -89,14 +89,14 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
       }),
       headers
     };
-    const connectResponse = await fetch(`${this.connector.settings.agentUrl!}/api/opc/${this.connector.id}/connect`, fetchOptions);
+    const connectResponse = await fetch(`${this.connector.settings.agentUrl!}/api/opc/${this.connector.id}-test/connect`, fetchOptions);
     if (connectResponse.status === 200) {
-      const response = await fetch(`${this.connector.settings.agentUrl!}/api/opc/${this.connector.id}/status`, {
+      const response = await fetch(`${this.connector.settings.agentUrl!}/api/opc/${this.connector.id}-test/status`, {
         method: 'GET',
         headers
       });
       this.logger.info(`OPC server info: ${await response.json()}`);
-      await fetch(`${this.connector.settings.agentUrl}/api/opc/${this.connector.id}/disconnect`, { method: 'DELETE' });
+      await fetch(`${this.connector.settings.agentUrl}/api/opc/${this.connector.id}-test/disconnect`, { method: 'DELETE' });
     } else if (connectResponse.status === 400) {
       const errorMessage = await connectResponse.text();
       throw new Error(`Error occurred when sending connect command to remote agent with status ${connectResponse.status}. ${errorMessage}`);
@@ -110,9 +110,7 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
     testingSettings: SouthConnectorItemTestingSettings,
     callback: (data: OIBusContent) => void
   ): Promise<void> {
-    await this.connect();
     const content: OIBusContent = { type: 'time-values', content: [] };
-
     const startTime = testingSettings.history!.startTime;
     const endTime = testingSettings.history!.endTime;
 
@@ -123,6 +121,7 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
       body: JSON.stringify({
         host: this.connector.settings.host,
         serverName: this.connector.settings.serverName,
+        mode: 'hda',
         aggregate: item.settings.aggregate,
         resampling: item.settings.resampling,
         startTime,
@@ -131,7 +130,7 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
       }),
       headers
     };
-    const response = await fetch(`${this.connector.settings.agentUrl}/api/opc/${this.connector.id}/read`, fetchOptions);
+    const response = await fetch(`${this.connector.settings.agentUrl}/api/opc/${this.connector.id}-test/read`, fetchOptions);
     if (response.status === 200) {
       const result: {
         recordCount: number;
@@ -143,9 +142,7 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
         maxInstantRetrieved: string;
       };
       content.content = result.content;
-      await this.disconnect();
     } else {
-      await this.disconnect();
       throw new Error(`Error occurred when sending connect command to remote agent. ${response.status}`);
     }
     callback(content);
@@ -239,7 +236,9 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
             const requestDuration = DateTime.now().toMillis() - startRequest;
 
             if (result.recordCount > 0) {
-              this.logger.debug(`Found ${result.recordCount} results for ${resampledItems.length} items in ${requestDuration} ms`);
+              this.logger.debug(
+                `Found ${result.recordCount} results for ${resampledItems.length} items in ${requestDuration} ms. Max instant retrieved: ${result.maxInstantRetrieved}`
+              );
               await this.addContent({ type: 'time-values', content: result.content });
               if (result.maxInstantRetrieved > startTime) {
                 // 1ms is added to the maxInstantRetrieved, so it does not take the last retrieve value on the last run
