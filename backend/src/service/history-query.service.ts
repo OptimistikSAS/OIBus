@@ -1,7 +1,7 @@
 import {
   SouthConnectorCommandDTO,
-  SouthConnectorManifest,
-  SouthConnectorItemTestingSettings
+  SouthConnectorItemTestingSettings,
+  SouthConnectorManifest
 } from '../../shared/model/south-connector.model';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { HistoryQueryEntity, HistoryQueryEntityLight, HistoryQueryItemEntity } from '../model/histor-query.model';
@@ -440,13 +440,17 @@ export default class HistoryQueryService {
     southType: string,
     file: multer.File,
     delimiter: string,
-    existingItems: Array<HistoryQueryItemDTO<I> | HistoryQueryItemCommandDTO<I>>
+    existingItems: multer.File
   ): Promise<{
     items: Array<HistoryQueryItemCommandDTO<SouthItemSettings>>;
     errors: Array<{ item: HistoryQueryItemCommandDTO<SouthItemSettings>; error: string }>;
   }> {
     const fileContent = await fs.readFile(file.path);
-    return await this.checkCsvContentImport(southType, fileContent.toString('utf8'), delimiter, existingItems);
+    const existingItemsContent: Array<HistoryQueryItemDTO<I> | HistoryQueryItemCommandDTO<I>> = JSON.parse(
+      (await fs.readFile(existingItems.path)).toString('utf8')
+    );
+
+    return await this.checkCsvContentImport(southType, fileContent.toString('utf8'), delimiter, existingItemsContent);
   }
 
   async checkCsvContentImport<I extends SouthItemSettings>(

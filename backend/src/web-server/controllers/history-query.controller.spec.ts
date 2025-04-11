@@ -8,6 +8,7 @@ import { toHistoryQueryDTO, toHistoryQueryItemDTO, toHistoryQueryLightDTO } from
 import { itemToFlattenedCSV } from '../../service/utils';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
+import fs from 'node:fs/promises';
 
 jest.mock('node:fs/promises');
 jest.mock('./validators/joi.validator');
@@ -574,13 +575,21 @@ describe('History query controller', () => {
   it('historyQueryItemsToCsv() should download a csv file', async () => {
     ctx.params.southType = testData.historyQueries.list[0].southType;
     ctx.request.body = {
-      items: testData.historyQueries.list[0].items,
       delimiter: ';'
+    };
+    ctx.request.files = {
+      items: [
+        {
+          path: 'items.json',
+          mimetype: 'text/plain'
+        }
+      ]
     };
     (itemToFlattenedCSV as jest.Mock).mockReturnValue('csv content');
     ctx.app.southService.getInstalledSouthManifests.mockReturnValueOnce([
       { ...testData.south.manifest, id: testData.historyQueries.list[0].southType }
     ]);
+    (fs.readFile as jest.Mock).mockReturnValueOnce(JSON.stringify(testData.historyQueries.list[0].items));
 
     await historyQueryController.historyQueryItemsToCsv(ctx);
 
@@ -591,14 +600,33 @@ describe('History query controller', () => {
   it('historyQueryItemsToCsv() should throw not found if manifest not found', async () => {
     ctx.params.southType = 'bad type';
     ctx.request.body = {
-      items: testData.historyQueries.list[0].items,
       delimiter: ';'
+    };
+    ctx.request.files = {
+      items: [
+        {
+          path: 'items.json',
+          mimetype: 'text/plain'
+        }
+      ]
     };
     ctx.app.southService.getInstalledSouthManifests.mockReturnValueOnce([]);
 
     await historyQueryController.historyQueryItemsToCsv(ctx);
 
     expect(ctx.throw).toHaveBeenCalledWith(404, 'South manifest not found');
+  });
+
+  it('historyQueryItemsToCsv() should throw if file not found', async () => {
+    ctx.request.body = {
+      delimiter: ';'
+    };
+    ctx.request.files = {};
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValueOnce([{ ...testData.south.manifest, id: testData.south.list[0].type }]);
+
+    await historyQueryController.historyQueryItemsToCsv(ctx);
+
+    expect(ctx.badRequest).toHaveBeenCalledWith('Missing files "items"');
   });
 
   it('exportSouthItems() should download a csv file', async () => {
@@ -626,8 +654,21 @@ describe('History query controller', () => {
   it('checkImportSouthItems() should check import of items in a csv file with new history', async () => {
     ctx.params.historyQueryId = testData.historyQueries.list[0].id;
     ctx.params.southType = testData.historyQueries.list[0].southType;
-    ctx.request.body = { delimiter: ',', currentItems: '[]' };
-    ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
+    ctx.request.body = { delimiter: ',' };
+    ctx.request.files = {
+      file: [
+        {
+          path: 'myFile.csv',
+          mimetype: 'text/csv'
+        }
+      ],
+      currentItems: [
+        {
+          path: 'currentItems.json',
+          mimetype: 'text/plain'
+        }
+      ]
+    };
     ctx.app.historyQueryService.checkCsvFileImport.mockReturnValueOnce({ items: testData.historyQueries.list[0].items, errors: [] });
 
     await historyQueryController.checkImportSouthItems(ctx);
@@ -637,9 +678,9 @@ describe('History query controller', () => {
 
     expect(ctx.app.historyQueryService.checkCsvFileImport).toHaveBeenCalledWith(
       testData.historyQueries.list[0].southType,
-      ctx.request.file,
+      { mimetype: 'text/csv', path: 'myFile.csv' },
       ctx.request.body.delimiter,
-      JSON.parse(ctx.request.body.currentItems)
+      { mimetype: 'text/plain', path: 'currentItems.json' }
     );
     expect(ctx.ok).toHaveBeenCalledWith({ items: testData.historyQueries.list[0].items, errors: [] });
   });
@@ -647,8 +688,21 @@ describe('History query controller', () => {
   it('checkImportSouthItems() should return bad request if check csv import fails', async () => {
     ctx.params.historyQueryId = testData.historyQueries.list[0].id;
     ctx.params.southType = testData.historyQueries.list[0].southType;
-    ctx.request.body = { delimiter: ',', currentItems: '[]' };
-    ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
+    ctx.request.body = { delimiter: ',' };
+    ctx.request.files = {
+      file: [
+        {
+          path: 'myFile.csv',
+          mimetype: 'text/csv'
+        }
+      ],
+      currentItems: [
+        {
+          path: 'currentItems.json',
+          mimetype: 'text/plain'
+        }
+      ]
+    };
     ctx.app.historyQueryService.checkCsvFileImport.mockImplementationOnce(() => {
       throw new Error('check import error');
     });
@@ -658,9 +712,28 @@ describe('History query controller', () => {
     expect(ctx.badRequest).toHaveBeenCalledWith('check import error');
   });
 
+  it('checkImportSouthItems() should return bad request if file is missing', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.params.southType = testData.historyQueries.list[0].southType;
+    ctx.request.body = { delimiter: ',' };
+    ctx.request.files = {};
+
+    await historyQueryController.checkImportSouthItems(ctx);
+
+    expect(ctx.badRequest).toHaveBeenCalledWith('Missing files "file" or "currentItems"');
+  });
+
   it('importSouthItems() should import items', async () => {
     ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.request.body = { items: testData.historyQueries.list[0].items };
+    ctx.request.files = {
+      items: [
+        {
+          path: 'currentItems.json',
+          mimetype: 'text/plain'
+        }
+      ]
+    };
+    (fs.readFile as jest.Mock).mockReturnValueOnce(JSON.stringify(testData.historyQueries.list[0].items));
 
     await historyQueryController.importSouthItems(ctx);
     expect(ctx.app.historyQueryService.importItems).toHaveBeenCalledWith(
@@ -669,9 +742,18 @@ describe('History query controller', () => {
     );
   });
 
-  it('importSouthItems() should import items', async () => {
+  it('importSouthItems() should return bad request if import fails', async () => {
     ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.request.body = { items: testData.historyQueries.list[0].items };
+    ctx.request.files = {
+      items: [
+        {
+          path: 'currentItems.json',
+          mimetype: 'text/plain'
+        }
+      ]
+    };
+    (fs.readFile as jest.Mock).mockReturnValueOnce(JSON.stringify(testData.historyQueries.list[0].items));
+
     ctx.app.historyQueryService.importItems.mockImplementationOnce(() => {
       throw new Error('import items error');
     });
@@ -682,5 +764,13 @@ describe('History query controller', () => {
       testData.historyQueries.list[0].items
     );
     expect(ctx.badRequest).toHaveBeenCalledWith('import items error');
+  });
+
+  it('importSouthItems() should return bad request if file is missing', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.request.files = {};
+
+    await historyQueryController.importSouthItems(ctx);
+    expect(ctx.badRequest).toHaveBeenCalledWith('Missing file "items"');
   });
 });

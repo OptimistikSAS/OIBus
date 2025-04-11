@@ -6,6 +6,7 @@ import { toSouthConnectorDTO, toSouthConnectorItemDTO, toSouthConnectorLightDTO 
 import { itemToFlattenedCSV } from '../../service/utils';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
+import fs from 'node:fs/promises';
 
 jest.mock('node:fs/promises');
 jest.mock('./validators/joi.validator');
@@ -489,12 +490,20 @@ describe('South connector controller', () => {
   it('southItemsToCsv() should download a csv file', async () => {
     ctx.params.southType = testData.south.list[0].type;
     ctx.request.body = {
-      items: testData.south.list[0].items,
       delimiter: ';'
+    };
+    ctx.request.files = {
+      items: [
+        {
+          path: 'items.json',
+          mimetype: 'text/plain'
+        }
+      ]
     };
     (itemToFlattenedCSV as jest.Mock).mockReturnValue('csv content');
     ctx.app.scanModeService.findAll.mockReturnValueOnce(testData.scanMode.list);
     ctx.app.southService.getInstalledSouthManifests.mockReturnValueOnce([{ ...testData.south.manifest, id: testData.south.list[0].type }]);
+    (fs.readFile as jest.Mock).mockReturnValueOnce(JSON.stringify(testData.south.list[0].items));
 
     await southConnectorController.southConnectorItemsToCsv(ctx);
 
@@ -502,17 +511,36 @@ describe('South connector controller', () => {
     expect(ctx.body).toEqual('csv content');
   });
 
-  it('southItemsToCsv() should throw not found a csv file', async () => {
+  it('southItemsToCsv() should throw if manifest not found', async () => {
     ctx.params.southType = 'bad';
     ctx.request.body = {
-      items: testData.south.list[0].items,
       delimiter: ';'
+    };
+    ctx.request.files = {
+      items: [
+        {
+          path: 'items.json',
+          mimetype: 'text/plain'
+        }
+      ]
     };
     ctx.app.southService.getInstalledSouthManifests.mockReturnValueOnce([{ ...testData.south.manifest, id: testData.south.list[0].type }]);
 
     await southConnectorController.southConnectorItemsToCsv(ctx);
 
     expect(ctx.throw).toHaveBeenCalledWith(404, 'South manifest not found');
+  });
+
+  it('southItemsToCsv() should throw if file not found', async () => {
+    ctx.request.body = {
+      delimiter: ';'
+    };
+    ctx.request.files = {};
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValueOnce([{ ...testData.south.manifest, id: testData.south.list[0].type }]);
+
+    await southConnectorController.southConnectorItemsToCsv(ctx);
+
+    expect(ctx.badRequest).toHaveBeenCalledWith('Missing files "items"');
   });
 
   it('exportSouthItems() should download a csv file', async () => {
@@ -541,25 +569,51 @@ describe('South connector controller', () => {
 
   it('checkImportSouthItems() should check import of items in a csv file with new south', async () => {
     ctx.params.southType = testData.south.list[0].type;
-    ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
-    ctx.request.body = { currentItems: '[]', delimiter: ',' };
+    ctx.request.files = {
+      file: [
+        {
+          path: 'myFile.csv',
+          mimetype: 'text/csv'
+        }
+      ],
+      currentItems: [
+        {
+          path: 'currentItems.json',
+          mimetype: 'text/plain'
+        }
+      ]
+    };
+    ctx.request.body = { delimiter: ',' };
     ctx.app.scanModeService.findAll.mockReturnValueOnce(testData.scanMode.list);
     ctx.app.southService.getInstalledSouthManifests.mockReturnValue(testData.south.manifest);
 
     await southConnectorController.checkImportSouthItems(ctx);
     expect(ctx.app.southService.checkCsvFileImport).toHaveBeenCalledWith(
       testData.south.list[0].type,
-      ctx.request.file,
+      { mimetype: 'text/csv', path: 'myFile.csv' },
       ctx.request.body.delimiter,
-      JSON.parse(ctx.request.body.currentItems)
+      { mimetype: 'text/plain', path: 'currentItems.json' }
     );
     expect(ctx.ok).toHaveBeenCalled();
   });
 
   it('checkImportSouthItems() should return bad request', async () => {
     ctx.params.southType = testData.south.list[0].type;
-    ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
-    ctx.request.body = { currentItems: '[]', delimiter: ',' };
+    ctx.request.body = { delimiter: ',' };
+    ctx.request.files = {
+      file: [
+        {
+          path: 'myFile.csv',
+          mimetype: 'text/csv'
+        }
+      ],
+      currentItems: [
+        {
+          path: 'currentItems.json',
+          mimetype: 'text/plain'
+        }
+      ]
+    };
     ctx.app.southService.checkCsvFileImport.mockImplementationOnce(() => {
       throw new Error('bad items');
     });
@@ -568,9 +622,27 @@ describe('South connector controller', () => {
     expect(ctx.badRequest).toHaveBeenCalledWith('bad items');
   });
 
+  it('checkImportSouthItems() should return bad request if file is missing', async () => {
+    ctx.params.southType = testData.south.list[0].type;
+    ctx.request.body = { delimiter: ',' };
+    ctx.request.files = {};
+
+    await southConnectorController.checkImportSouthItems(ctx);
+    expect(ctx.badRequest).toHaveBeenCalledWith('Missing files "file" or "currentItems"');
+  });
+
   it('importSouthItems() should import south items', async () => {
     ctx.params.southId = testData.south.list[0].id;
-    ctx.request.body = { items: testData.south.list[0].items };
+    ctx.request.files = {
+      items: [
+        {
+          path: 'currentItems.json',
+          mimetype: 'text/plain'
+        }
+      ]
+    };
+    (fs.readFile as jest.Mock).mockReturnValueOnce(JSON.stringify(testData.south.list[0].items));
+
     await southConnectorController.importSouthItems(ctx);
     expect(ctx.app.southService.importItems).toHaveBeenCalledWith(testData.south.list[0].id, testData.south.list[0].items);
     expect(ctx.noContent).toHaveBeenCalled();
@@ -578,13 +650,30 @@ describe('South connector controller', () => {
 
   it('importSouthItems() should return bad request', async () => {
     ctx.params.southId = testData.south.list[0].id;
-    ctx.request.body = { items: testData.south.list[0].items };
+    ctx.request.files = {
+      items: [
+        {
+          path: 'currentItems.json',
+          mimetype: 'text/plain'
+        }
+      ]
+    };
     ctx.app.southService.importItems.mockImplementationOnce(() => {
       throw new Error('bad import');
     });
+    (fs.readFile as jest.Mock).mockReturnValueOnce(JSON.stringify(testData.south.list[0].items));
+
     await southConnectorController.importSouthItems(ctx);
     expect(ctx.app.southService.importItems).toHaveBeenCalledWith(testData.south.list[0].id, testData.south.list[0].items);
     expect(ctx.badRequest).toHaveBeenCalledWith('bad import');
+  });
+
+  it('importSouthItems() should return bad request if file is missing', async () => {
+    ctx.params.southId = testData.south.list[0].id;
+    ctx.request.files = {};
+
+    await southConnectorController.importSouthItems(ctx);
+    expect(ctx.badRequest).toHaveBeenCalledWith('Missing file "items"');
   });
 
   it('testSouthConnection() should test South connector settings on connector update', async () => {

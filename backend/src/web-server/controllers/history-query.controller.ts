@@ -18,6 +18,8 @@ import { toHistoryQueryDTO, toHistoryQueryItemDTO, toHistoryQueryLightDTO } from
 import { itemToFlattenedCSV } from '../../service/utils';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
+import multer from '@koa/multer';
+import fs from 'node:fs/promises';
 
 export default class HistoryQueryController extends AbstractController {
   constructor(
@@ -263,16 +265,21 @@ export default class HistoryQueryController extends AbstractController {
    * Endpoint used to download a CSV from a list of items when creating a history query (before the items are saved on
    * the database). When the items are already saved, it is downloaded with the export method
    */
-  async historyQueryItemsToCsv(
-    ctx: KoaContext<{ items: Array<HistoryQueryItemDTO<SouthItemSettings>>; delimiter: string }, string>
-  ): Promise<void> {
+  async historyQueryItemsToCsv(ctx: KoaContext<{ delimiter: string }, string>): Promise<void> {
+    const files = ctx.request.files as Record<string, Array<multer.File>>;
+    if (!files || !files['items']) {
+      return ctx.badRequest('Missing files "items"');
+    }
+
     const manifest = ctx.app.southService.getInstalledSouthManifests().find(southManifest => southManifest.id === ctx.params.southType);
     if (!manifest) {
       return ctx.throw(404, 'South manifest not found');
     }
 
+    const items: Array<HistoryQueryItemDTO<SouthItemSettings>> = JSON.parse((await fs.readFile(files['items'][0].path)).toString('utf8'));
+
     ctx.body = itemToFlattenedCSV(
-      ctx.request.body!.items.map(item => toHistoryQueryItemDTO(item, manifest.id, ctx.app.encryptionService)),
+      items.map(item => toHistoryQueryItemDTO(item, manifest.id, ctx.app.encryptionService)),
       ctx.request.body!.delimiter
     );
     ctx.set('Content-disposition', 'attachment; filename=items.csv');
@@ -299,20 +306,25 @@ export default class HistoryQueryController extends AbstractController {
 
   async checkImportSouthItems(
     ctx: KoaContext<
-      { delimiter: string; currentItems: string },
+      { delimiter: string },
       {
         items: Array<HistoryQueryItemCommandDTO<SouthItemSettings>>;
         errors: Array<{ item: HistoryQueryItemCommandDTO<SouthItemSettings>; error: string }>;
       }
     >
   ): Promise<void> {
+    const files = ctx.request.files as Record<string, Array<multer.File>>;
+    if (!files || !files['file'] || !files['currentItems']) {
+      return ctx.badRequest('Missing files "file" or "currentItems"');
+    }
+
     try {
       return ctx.ok(
         await ctx.app.historyQueryService.checkCsvFileImport(
           ctx.params.southType,
-          ctx.request.file,
+          files['file'][0],
           ctx.request.body!.delimiter,
-          JSON.parse(ctx.request.body!.currentItems)
+          files['currentItems'][0]
         )
       );
     } catch (error: unknown) {
@@ -320,9 +332,18 @@ export default class HistoryQueryController extends AbstractController {
     }
   }
 
-  async importSouthItems(ctx: KoaContext<{ items: Array<HistoryQueryItemCommandDTO<SouthItemSettings>> }, void>): Promise<void> {
+  async importSouthItems(ctx: KoaContext<void, void>): Promise<void> {
+    const files = ctx.request.files as Record<string, Array<multer.File>>;
+    if (!files || !files['items']) {
+      return ctx.badRequest('Missing file "items"');
+    }
+
+    const items: Array<HistoryQueryItemCommandDTO<SouthItemSettings>> = JSON.parse(
+      (await fs.readFile(files['items'][0].path)).toString('utf8')
+    );
+
     try {
-      await ctx.app.historyQueryService.importItems(ctx.params.historyQueryId, ctx.request.body!.items);
+      await ctx.app.historyQueryService.importItems(ctx.params.historyQueryId, items);
     } catch (error: unknown) {
       return ctx.badRequest((error as Error).message);
     }

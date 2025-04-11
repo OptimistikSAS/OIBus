@@ -210,15 +210,14 @@ export class SouthConnectorService {
     fileName: string,
     delimiter: string
   ): Observable<void> {
+    const formData = new FormData();
+    // Convert the string to a Blob and append it as a file
+    const currentItemsBlob = new Blob([JSON.stringify(items)], { type: 'text/plain' });
+    formData.set('items', currentItemsBlob, 'items.json');
+    formData.set('delimiter', delimiter);
+
     return this.http
-      .put(
-        `/api/south/${southType}/items/to-csv`,
-        {
-          items,
-          delimiter
-        },
-        { responseType: 'blob', observe: 'response' }
-      )
+      .put(`/api/south/${southType}/items/to-csv`, formData, { responseType: 'blob', observe: 'response' })
       .pipe(map(response => this.downloadService.download(response, `${fileName}.csv`)));
   }
 
@@ -240,7 +239,9 @@ export class SouthConnectorService {
   }> {
     const formData = new FormData();
     formData.set('file', file);
-    formData.set('currentItems', JSON.stringify(currentItems));
+    // Convert the string to a Blob and append it as a file
+    const currentItemsBlob = new Blob([JSON.stringify(currentItems)], { type: 'text/plain' });
+    formData.set('currentItems', currentItemsBlob, 'currentItems.json');
     formData.set('delimiter', delimiter);
     return this.http.post<{
       items: Array<SouthConnectorItemDTO<SouthItemSettings>>;
@@ -248,11 +249,13 @@ export class SouthConnectorService {
     }>(`/api/south/${southType}/items/check-import/${southId}`, formData);
   }
 
-  /**
-   * Upload south items from a CSV file
-   */
   importItems(southId: string, items: Array<SouthConnectorItemCommandDTO<SouthItemSettings>>): Observable<void> {
-    return this.http.post<void>(`/api/south/${southId}/items/import`, { items });
+    const formData = new FormData();
+    // Convert the string to a Blob and append it as a file
+    const itemsBlob = new Blob([JSON.stringify(items)], { type: 'text/plain' });
+    formData.set('items', itemsBlob, 'items.json');
+
+    return this.http.post<void>(`/api/south/${southId}/items/import`, formData);
   }
 
   testConnection(southId: string, settings: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>): Observable<void> {

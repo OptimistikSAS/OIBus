@@ -192,15 +192,14 @@ export class HistoryQueryService {
     fileName: string,
     delimiter: string
   ): Observable<void> {
+    const formData = new FormData();
+    // Convert the string to a Blob and append it as a file
+    const currentItemsBlob = new Blob([JSON.stringify(items)], { type: 'text/plain' });
+    formData.set('items', currentItemsBlob, 'items.json');
+    formData.set('delimiter', delimiter);
+
     return this.http
-      .put(
-        `/api/history-queries/${southType}/south-items/to-csv`,
-        {
-          items,
-          delimiter
-        },
-        { responseType: 'blob', observe: 'response' }
-      )
+      .put(`/api/history-queries/${southType}/south-items/to-csv`, formData, { responseType: 'blob', observe: 'response' })
       .pipe(map(response => this.downloadService.download(response, `${fileName}.csv`)));
   }
 
@@ -222,7 +221,9 @@ export class HistoryQueryService {
   }> {
     const formData = new FormData();
     formData.set('file', file);
-    formData.set('currentItems', JSON.stringify(currentItems));
+    // Convert the string to a Blob and append it as a file
+    const currentItemsBlob = new Blob([JSON.stringify(currentItems)], { type: 'text/plain' });
+    formData.set('currentItems', currentItemsBlob, 'currentItems.txt');
     formData.set('delimiter', delimiter);
     return this.http.post<{
       items: Array<HistoryQueryItemDTO<SouthItemSettings>>;
@@ -230,11 +231,12 @@ export class HistoryQueryService {
     }>(`/api/history-queries/${southType}/south-items/check-south-import/${historyQueryId}`, formData);
   }
 
-  /**
-   * Upload south history items from a CSV file
-   */
   importItems(historyQueryId: string, items: Array<HistoryQueryItemCommandDTO<SouthItemSettings>>): Observable<void> {
-    return this.http.post<void>(`/api/history-queries/${historyQueryId}/south-items/import`, { items });
+    const formData = new FormData();
+    // Convert the string to a Blob and append it as a file
+    const itemsBlob = new Blob([JSON.stringify(items)], { type: 'text/plain' });
+    formData.set('items', itemsBlob, 'items.json');
+    return this.http.post<void>(`/api/history-queries/${historyQueryId}/south-items/import`, formData);
   }
 
   startHistoryQuery(historyQueryId: string): Observable<void> {

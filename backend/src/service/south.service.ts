@@ -682,13 +682,16 @@ export default class SouthService {
     southType: string,
     file: multer.File,
     delimiter: string,
-    existingItems: Array<SouthConnectorItemDTO<I> | SouthConnectorItemCommandDTO<I>>
+    existingItems: multer.File
   ): Promise<{
     items: Array<SouthConnectorItemCommandDTO<SouthItemSettings>>;
     errors: Array<{ item: SouthConnectorItemCommandDTO<SouthItemSettings>; error: string }>;
   }> {
     const fileContent = await fs.readFile(file.path);
-    return await this.checkCsvContentImport(southType, fileContent.toString('utf8'), delimiter, existingItems);
+    const existingItemsContent: Array<SouthConnectorItemDTO<I> | SouthConnectorItemCommandDTO<I>> = JSON.parse(
+      (await fs.readFile(existingItems.path)).toString('utf8')
+    );
+    return await this.checkCsvContentImport(southType, fileContent.toString('utf8'), delimiter, existingItemsContent);
   }
 
   async checkCsvContentImport<I extends SouthItemSettings>(
