@@ -58,7 +58,8 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
         method: 'PUT',
         body: JSON.stringify({
           host: this.connector.settings.host,
-          serverName: this.connector.settings.serverName
+          serverName: this.connector.settings.serverName,
+          mode: 'hda'
         }),
         headers
       };
