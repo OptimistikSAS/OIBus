@@ -125,7 +125,8 @@ describe('South OPC', () => {
       method: 'PUT',
       body: JSON.stringify({
         host: configuration.settings.host,
-        serverName: configuration.settings.serverName
+        serverName: configuration.settings.serverName,
+        mode: 'hda'
       }),
       headers: {
         'Content-Type': 'application/json'
@@ -148,7 +149,8 @@ describe('South OPC', () => {
       method: 'PUT',
       body: JSON.stringify({
         host: configuration.settings.host,
-        serverName: configuration.settings.serverName
+        serverName: configuration.settings.serverName,
+        mode: 'hda'
       }),
       headers: {
         'Content-Type': 'application/json'
