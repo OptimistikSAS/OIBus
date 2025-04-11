@@ -1115,6 +1115,6 @@ describe('SouthConnector with history and subscription', () => {
     (southConnectorRepository.findAllItemsForSouth as jest.Mock).mockReturnValueOnce([subscriptionItem]).mockReturnValueOnce([]);
     await south.onItemChange();
     await south.onItemChange();
-    expect(logger.error).toHaveBeenCalledWith(`Error when unsubscribing to items. ${new Error('unsubscription error')}`);
+    expect(logger.error).toHaveBeenCalledWith(`Error when unsubscribing from items. ${new Error('unsubscription error')}`);
   });
 });

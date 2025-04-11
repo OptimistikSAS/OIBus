@@ -201,26 +201,25 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
 
     if (this.queriesSubscription()) {
       const subscriptionItems = this.connector.items.filter(item => item.scanModeId === 'subscription' && item.enabled);
+      const alreadySubscribedItemIds = new Set(this.subscribedItems.map(item => item.id));
+      const allSubscriptionItemIds = new Set(subscriptionItems.map(item => item.id));
 
-      const itemsToSubscribe = subscriptionItems.filter(item => {
-        return !this.subscribedItems.some(subscribedItem => JSON.stringify(subscribedItem) === JSON.stringify(item));
-      });
-      const itemsToUnsubscribe = this.subscribedItems.filter(item => {
-        return !subscriptionItems.some(subscribedItem => JSON.stringify(subscribedItem) === JSON.stringify(item));
-      });
+      // Determine items to subscribe and unsubscribe
+      const itemsToSubscribe = subscriptionItems.filter(item => !alreadySubscribedItemIds.has(item.id));
+      const itemsToUnsubscribe = this.subscribedItems.filter(item => !allSubscriptionItemIds.has(item.id));
 
+      // Unsubscribe from items no longer needed
       if (itemsToUnsubscribe.length > 0) {
         try {
-          this.logger.trace(`Unsubscribing to ${itemsToUnsubscribe.length} items`);
+          this.logger.trace(`Unsubscribing from ${itemsToUnsubscribe.length} items`);
           await this.unsubscribe(itemsToUnsubscribe);
-          this.subscribedItems = this.subscribedItems.filter(
-            item => !itemsToUnsubscribe.some(itemToUnsubscribe => itemToUnsubscribe.id === item.id)
-          );
+          this.subscribedItems = this.subscribedItems.filter(item => !itemsToUnsubscribe.includes(item));
         } catch (error) {
-          this.logger.error(`Error when unsubscribing to items. ${error}`);
+          this.logger.error(`Error when unsubscribing from items. ${error}`);
         }
       }
 
+      // Subscribe to new items
       if (itemsToSubscribe.length > 0) {
         try {
           this.logger.trace(`Subscribing to ${itemsToSubscribe.length} new items`);
