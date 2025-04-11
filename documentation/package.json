@@ -1,6 +1,6 @@
 {
   "name": "doc-oibus",
-  "version": "3.5.16",
+  "version": "3.5.17",
   "private": true,
   "engines": {
     "node": ">=v22.13",
