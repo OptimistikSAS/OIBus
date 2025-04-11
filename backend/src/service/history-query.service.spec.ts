@@ -782,7 +782,7 @@ describe('History Query service', () => {
         settings_minAge: 100
       }
     ];
-    (fs.readFile as jest.Mock).mockReturnValueOnce('file content');
+    (fs.readFile as jest.Mock).mockReturnValueOnce('file content').mockReturnValueOnce(JSON.stringify(testData.south.list[0].items));
     (csv.parse as jest.Mock).mockReturnValueOnce({
       meta: { delimiter: ',' },
       data: csvData
@@ -794,7 +794,7 @@ describe('History Query service', () => {
       testData.historyQueries.command.southType,
       { path: 'file/path.csv' } as multer.File,
       ',',
-      testData.south.list[0].items
+      { path: 'items.json' } as multer.File
     );
     expect(result).toEqual({
       items: [
@@ -870,7 +870,7 @@ describe('History Query service', () => {
         })
       }
     ];
-    (fs.readFile as jest.Mock).mockReturnValueOnce('file content');
+    (fs.readFile as jest.Mock).mockReturnValueOnce('file content').mockReturnValueOnce(JSON.stringify(testData.south.list[1].items));
     (csv.parse as jest.Mock).mockReturnValueOnce({
       meta: { delimiter: ',' },
       data: csvData
@@ -879,7 +879,7 @@ describe('History Query service', () => {
       testData.historyQueries.command.southType,
       { path: 'file/path.csv' } as multer.File,
       ',',
-      testData.south.list[1].items
+      { path: 'items.json' } as multer.File
     );
     expect(result).toEqual({
       items: [
@@ -924,19 +924,16 @@ describe('History Query service', () => {
         id: testData.historyQueries.command.southType
       }
     ]);
-    (fs.readFile as jest.Mock).mockReturnValueOnce('file content');
+    (fs.readFile as jest.Mock).mockReturnValueOnce('file content').mockReturnValueOnce(JSON.stringify(testData.south.list[0].items));
     (csv.parse as jest.Mock).mockReturnValueOnce({
       meta: { delimiter: ';' },
       data: []
     });
 
     await expect(
-      service.checkCsvFileImport(
-        testData.historyQueries.command.southType,
-        { path: 'file/path.csv' } as multer.File,
-        ',',
-        testData.south.list[0].items
-      )
+      service.checkCsvFileImport(testData.historyQueries.command.southType, { path: 'file/path.csv' } as multer.File, ',', {
+        path: 'items.json'
+      } as multer.File)
     ).rejects.toThrow(`The entered delimiter "," does not correspond to the file delimiter ";"`);
   });
 

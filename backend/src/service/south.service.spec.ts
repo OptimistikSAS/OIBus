@@ -842,17 +842,14 @@ describe('south service', () => {
         scanMode: testData.scanMode.list[0].name
       }
     ];
-    (fs.readFile as jest.Mock).mockReturnValueOnce('file content');
+    (fs.readFile as jest.Mock).mockReturnValueOnce('file content').mockReturnValueOnce(JSON.stringify(testData.south.list[0].items));
     (csv.parse as jest.Mock).mockReturnValueOnce({
       meta: { delimiter: ',' },
       data: csvData
     });
-    const result = await service.checkCsvFileImport(
-      testData.south.list[0].type,
-      { path: 'file/path.csv' } as multer.File,
-      ',',
-      testData.south.list[0].items
-    );
+    const result = await service.checkCsvFileImport(testData.south.list[0].type, { path: 'file/path.csv' } as multer.File, ',', {
+      path: 'items.json'
+    } as multer.File);
     expect(result).toEqual({
       items: [
         {
@@ -941,17 +938,14 @@ describe('south service', () => {
         scanMode: testData.scanMode.list[0].name
       }
     ];
-    (fs.readFile as jest.Mock).mockReturnValueOnce('file content');
+    (fs.readFile as jest.Mock).mockReturnValueOnce('file content').mockReturnValueOnce(JSON.stringify(testData.south.list[0].items));
     (csv.parse as jest.Mock).mockReturnValueOnce({
       meta: { delimiter: ',' },
       data: csvData
     });
-    const result = await service.checkCsvFileImport(
-      testData.south.list[1].type,
-      { path: 'file/path.csv' } as multer.File,
-      ',',
-      testData.south.list[1].items
-    );
+    const result = await service.checkCsvFileImport(testData.south.list[1].type, { path: 'file/path.csv' } as multer.File, ',', {
+      path: 'items.json'
+    } as multer.File);
     expect(result).toEqual({
       items: [
         {
@@ -985,14 +979,16 @@ describe('south service', () => {
   });
 
   it('checkCsvImport() should throw error if delimiter does not match', async () => {
-    (fs.readFile as jest.Mock).mockReturnValueOnce('file content');
+    (fs.readFile as jest.Mock).mockReturnValueOnce('file content').mockReturnValueOnce(JSON.stringify(testData.south.list[0].items));
     (csv.parse as jest.Mock).mockReturnValueOnce({
       meta: { delimiter: ';' },
       data: []
     });
 
     await expect(
-      service.checkCsvFileImport(testData.south.list[0].type, { path: 'file/path.csv' } as multer.File, ',', testData.south.list[0].items)
+      service.checkCsvFileImport(testData.south.list[0].type, { path: 'file/path.csv' } as multer.File, ',', {
+        path: 'items.json'
+      } as multer.File)
     ).rejects.toThrow(`The entered delimiter "," does not correspond to the file delimiter ";"`);
   });
 

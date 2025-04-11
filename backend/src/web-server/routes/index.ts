@@ -29,7 +29,7 @@ import {
 import OianalyticsCommandController from '../controllers/oianalytics-command.controller';
 import ContentController from '../controllers/content.controller';
 import { Page } from '../../../shared/model/types';
-import { ChangePasswordCommand, UserDTO, UserCommandDTO, UserLight } from '../../../shared/model/user.model';
+import { ChangePasswordCommand, UserDTO, UserCommandDTO } from '../../../shared/model/user.model';
 import { ScanModeCommandDTO, ScanModeDTO, ValidatedCronExpression } from '../../../shared/model/scan-mode.model';
 import { CertificateCommandDTO, CertificateDTO } from '../../../shared/model/certificate.model';
 import {
@@ -93,7 +93,13 @@ const storage = multer.diskStorage({
     cb(null, file.originalname);
   }
 });
-const upload = multer({ storage });
+const upload = multer({
+  storage,
+  limits: {
+    fieldSize: 10 * 1024 * 1024, // Adjust field size limit as needed
+    fileSize: 20 * 1024 * 1024 // Adjust file size limit as needed
+  }
+});
 
 router.get('/api/users', (ctx: KoaContext<void, Page<UserDTO>>) => userController.search(ctx));
 router.get('/api/users/:id', (ctx: KoaContext<void, UserDTO>) => userController.findById(ctx));
@@ -280,7 +286,10 @@ router.post(
 );
 router.post(
   '/api/south/:southType/items/check-import/:southId',
-  upload.single('file'),
+  upload.fields([
+    { name: 'file', maxCount: 1 }, // Single file field
+    { name: 'currentItems', maxCount: 1 } // Another file field for currentItems
+  ]),
   (
     ctx: KoaContext<
       { delimiter: string; currentItems: string },
@@ -291,18 +300,16 @@ router.post(
     >
   ) => southConnectorController.checkImportSouthItems(ctx)
 );
-router.post(
-  '/api/south/:southId/items/import',
-  (ctx: KoaContext<{ items: Array<SouthConnectorItemCommandDTO<SouthItemSettings>> }, void>) =>
-    southConnectorController.importSouthItems(ctx)
+router.post('/api/south/:southId/items/import', upload.fields([{ name: 'items', maxCount: 1 }]), (ctx: KoaContext<void, void>) =>
+  southConnectorController.importSouthItems(ctx)
 );
 router.put('/api/south/:southId/items/export', (ctx: KoaContext<{ delimiter: string }, string>) =>
   southConnectorController.exportSouthItems(ctx)
 );
 router.put(
   '/api/south/:southType/items/to-csv',
-  (ctx: KoaContext<{ items: Array<SouthConnectorItemDTO<SouthItemSettings>>; delimiter: string }, string>) =>
-    southConnectorController.southConnectorItemsToCsv(ctx)
+  upload.fields([{ name: 'items', maxCount: 1 }]),
+  (ctx: KoaContext<{ delimiter: string }, string>) => southConnectorController.southConnectorItemsToCsv(ctx)
 );
 router.get('/api/south/:southId/items/:id', (ctx: KoaContext<void, SouthConnectorItemDTO<SouthItemSettings>>) =>
   southConnectorController.getSouthItem(ctx)
@@ -341,7 +348,10 @@ router.get('/api/history-queries/:historyQueryId/south-items', (ctx: KoaContext<
 );
 router.post(
   '/api/history-queries/:southType/south-items/check-south-import/:historyQueryId',
-  upload.single('file'),
+  upload.fields([
+    { name: 'file', maxCount: 1 }, // Single file field
+    { name: 'currentItems', maxCount: 1 } // Another file field for currentItems
+  ]),
   (
     ctx: KoaContext<
       { delimiter: string; currentItems: string },
@@ -354,15 +364,16 @@ router.post(
 );
 router.post(
   '/api/history-queries/:historyQueryId/south-items/import',
-  (ctx: KoaContext<{ items: Array<HistoryQueryItemCommandDTO<SouthItemSettings>> }, void>) => historyQueryController.importSouthItems(ctx)
+  upload.fields([{ name: 'items', maxCount: 1 }]),
+  (ctx: KoaContext<void, void>) => historyQueryController.importSouthItems(ctx)
 );
 router.put('/api/history-queries/:historyQueryId/south-items/export', (ctx: KoaContext<{ delimiter: string }, string>) =>
   historyQueryController.exportSouthItems(ctx)
 );
 router.put(
   '/api/history-queries/:southType/south-items/to-csv',
-  (ctx: KoaContext<{ items: Array<HistoryQueryItemDTO<SouthItemSettings>>; delimiter: string }, string>) =>
-    historyQueryController.historyQueryItemsToCsv(ctx)
+  upload.fields([{ name: 'items', maxCount: 1 }]),
+  (ctx: KoaContext<{ delimiter: string }, string>) => historyQueryController.historyQueryItemsToCsv(ctx)
 );
 
 router.get('/api/history-queries/:historyQueryId/south-items/:id', (ctx: KoaContext<void, HistoryQueryItemDTO<SouthItemSettings>>) =>

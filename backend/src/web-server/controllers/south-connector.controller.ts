@@ -15,6 +15,8 @@ import JoiValidator from './validators/joi.validator';
 import { toSouthConnectorDTO, toSouthConnectorItemDTO, toSouthConnectorLightDTO } from '../../service/south.service';
 import { itemToFlattenedCSV } from '../../service/utils';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
+import multer from '@koa/multer';
+import fs from 'node:fs/promises';
 
 export default class SouthConnectorController {
   constructor(protected readonly validator: JoiValidator) {}
@@ -261,16 +263,21 @@ export default class SouthConnectorController {
    * Endpoint used to download a CSV from a list of items when creating a South Connector (before the items are saved on
    * the database). When the items are already saved, it is downloaded with the export method
    */
-  async southConnectorItemsToCsv(
-    ctx: KoaContext<{ items: Array<SouthConnectorItemDTO<SouthItemSettings>>; delimiter: string }, string>
-  ): Promise<void> {
+  async southConnectorItemsToCsv(ctx: KoaContext<{ delimiter: string }, string>): Promise<void> {
+    const files = ctx.request.files as Record<string, Array<multer.File>>;
+    if (!files || !files['items']) {
+      return ctx.badRequest('Missing files "items"');
+    }
+
     const manifest = ctx.app.southService.getInstalledSouthManifests().find(southManifest => southManifest.id === ctx.params.southType);
     if (!manifest) {
       return ctx.throw(404, 'South manifest not found');
     }
 
+    const items: Array<SouthConnectorItemDTO<SouthItemSettings>> = JSON.parse((await fs.readFile(files['items'][0].path)).toString('utf8'));
+
     ctx.body = itemToFlattenedCSV(
-      ctx.request.body!.items.map(item => toSouthConnectorItemDTO(item, manifest.id, ctx.app.encryptionService)),
+      items.map(item => toSouthConnectorItemDTO(item, manifest.id, ctx.app.encryptionService)),
       ctx.request.body!.delimiter,
       ctx.app.scanModeService.findAll()
     );
@@ -297,20 +304,25 @@ export default class SouthConnectorController {
 
   async checkImportSouthItems(
     ctx: KoaContext<
-      { delimiter: string; currentItems: string },
+      { delimiter: string },
       {
         items: Array<SouthConnectorItemCommandDTO<SouthItemSettings>>;
         errors: Array<{ item: SouthConnectorItemCommandDTO<SouthItemSettings>; error: string }>;
       }
     >
   ): Promise<void> {
+    const files = ctx.request.files as Record<string, Array<multer.File>>;
+    if (!files || !files['file'] || !files['currentItems']) {
+      return ctx.badRequest('Missing files "file" or "currentItems"');
+    }
+
     try {
       return ctx.ok(
         await ctx.app.southService.checkCsvFileImport(
           ctx.params.southType,
-          ctx.request.file,
+          files['file'][0],
           ctx.request.body!.delimiter,
-          JSON.parse(ctx.request.body!.currentItems)
+          files['currentItems'][0]
         )
       );
     } catch (error: unknown) {
@@ -318,9 +330,18 @@ export default class SouthConnectorController {
     }
   }
 
-  async importSouthItems(ctx: KoaContext<{ items: Array<SouthConnectorItemCommandDTO<SouthItemSettings>> }, void>): Promise<void> {
+  async importSouthItems(ctx: KoaContext<void, void>): Promise<void> {
+    const files = ctx.request.files as Record<string, Array<multer.File>>;
+    if (!files || !files['items']) {
+      return ctx.badRequest('Missing file "items"');
+    }
+
+    const items: Array<SouthConnectorItemCommandDTO<SouthItemSettings>> = JSON.parse(
+      (await fs.readFile(files['items'][0].path)).toString('utf8')
+    );
+
     try {
-      await ctx.app.southService.importItems(ctx.params.southId, ctx.request.body!.items);
+      await ctx.app.southService.importItems(ctx.params.southId, items);
     } catch (error: unknown) {
       return ctx.badRequest((error as Error).message);
     }

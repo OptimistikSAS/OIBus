@@ -282,6 +282,10 @@ describe('SouthConnectorService', () => {
   });
 
   it('should import items', () => {
+    const file = new Blob() as File;
+    const expectedFormData = new FormData();
+    expectedFormData.set('file', file);
+
     let actualImportation = false;
 
     service.importItems('id1', []).subscribe(() => {
@@ -289,7 +293,7 @@ describe('SouthConnectorService', () => {
     });
 
     const testRequest = http.expectOne({ method: 'POST', url: '/api/south/id1/items/import' });
-    expect(testRequest.request.body).toEqual({ items: [] });
+    expect(testRequest.request.body).toEqual(expectedFormData);
     testRequest.flush(true);
 
     expect(actualImportation).toBe(true);
