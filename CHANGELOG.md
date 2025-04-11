@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.5.17](https://github.com/OptimistikSAS/OIBus/compare/v3.5.16...v3.5.17) (2025-04-11)
+
+
+### Bug Fixes
+
+* **items:** fix uploading large number of items ([a7f31cb](https://github.com/OptimistikSAS/OIBus/commit/a7f31cb258733de60e07bf36e9e82bfd34878c24))
+* **mqtt:** improve mqtt logging and re-subscriptions ([4809703](https://github.com/OptimistikSAS/OIBus/commit/4809703fd230b0f3ca3828b327f32e8c4a7e0ac5))
+* **opc:** fix connection error ([8f290ad](https://github.com/OptimistikSAS/OIBus/commit/8f290ad6a1bb0c201f28cac1462e50bda76f075b))
+* **opc:** fix item testing of opc south connector ([9f8376a](https://github.com/OptimistikSAS/OIBus/commit/9f8376ae1da223b84861cfcda2cbc3816f93e58f))
+
 ## [3.5.16](https://github.com/OptimistikSAS/OIBus/compare/v3.5.15...v3.5.16) (2025-04-02)
 
 
