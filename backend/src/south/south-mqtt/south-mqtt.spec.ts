@@ -19,8 +19,7 @@ import SouthCacheRepository from '../../repository/cache/south-cache.repository'
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import testData from '../../tests/utils/test-data';
-import { flushPromises } from '../../tests/utils/test-utils';
-import { mockBaseFolders } from '../../tests/utils/test-utils';
+import { flushPromises, mockBaseFolders } from '../../tests/utils/test-utils';
 
 jest.mock('mqtt');
 jest.mock('node:fs/promises');
@@ -227,7 +226,9 @@ describe('SouthMQTT without authentication', () => {
       rejectUnauthorized: false,
       connectTimeout: 1000,
       reconnectPeriod: 0,
-      queueQoSZero: false
+      queueQoSZero: false,
+      resubscribe: configuration.settings.persistent,
+      log: expect.any(Function)
     };
     await flushPromises();
     expect(mqtt.connect).toHaveBeenCalledWith(configuration.settings.url, expectedOptions);
@@ -303,7 +304,6 @@ describe('SouthMQTT with Basic Auth', () => {
     settings: {
       url: 'mqtt://localhost:1883',
       qos: '0',
-      persistent: true,
       authentication: {
         type: 'basic',
         username: 'username',
@@ -456,7 +456,9 @@ describe('SouthMQTT with Basic Auth', () => {
       password: 'pass',
       connectTimeout: 1000,
       reconnectPeriod: 0,
-      queueQoSZero: false
+      queueQoSZero: false,
+      log: expect.any(Function),
+      resubscribe: false
     };
     expect(mqtt.connect).toHaveBeenCalledWith(configuration.settings.url, expectedOptions);
   });
@@ -803,7 +805,6 @@ describe('SouthMQTT with Cert', () => {
     settings: {
       url: 'mqtt://localhost:1883',
       qos: '0',
-      persistent: true,
       authentication: {
         type: 'cert',
         certFilePath: 'myCert',
@@ -962,7 +963,9 @@ describe('SouthMQTT with Cert', () => {
       ca: 'myCa',
       connectTimeout: 1000,
       reconnectPeriod: 0,
-      queueQoSZero: false
+      queueQoSZero: false,
+      log: expect.any(Function),
+      resubscribe: false
     };
     expect(mqtt.connect).toHaveBeenCalledWith(configuration.settings.url, expectedOptions);
 
@@ -982,7 +985,6 @@ describe('SouthMQTT without Cert', () => {
     settings: {
       url: 'mqtt://localhost:1883',
       qos: '0',
-      persistent: true,
       authentication: {
         type: 'cert',
         certFilePath: '',
@@ -1141,7 +1143,9 @@ describe('SouthMQTT without Cert', () => {
       ca: '',
       connectTimeout: 1000,
       reconnectPeriod: 0,
-      queueQoSZero: false
+      queueQoSZero: false,
+      log: expect.any(Function),
+      resubscribe: false
     };
     expect(mqtt.connect).toHaveBeenCalledWith(configuration.settings.url, expectedOptions);
   });
@@ -1155,7 +1159,9 @@ describe('SouthMQTT without Cert', () => {
       ca: '',
       connectTimeout: 1000,
       reconnectPeriod: 0,
-      queueQoSZero: false
+      queueQoSZero: false,
+      log: expect.any(Function),
+      resubscribe: false
     };
     south.testConnectionToBroker = jest.fn();
     await south.testConnection();
@@ -1172,7 +1178,9 @@ describe('SouthMQTT without Cert', () => {
       ca: '',
       connectTimeout: 1000,
       reconnectPeriod: 0,
-      queueQoSZero: false
+      queueQoSZero: false,
+      log: expect.any(Function),
+      resubscribe: false
     };
     (mqttStream.end as jest.Mock).mockClear();
     south.testConnectionToBroker(options);
@@ -1202,5 +1210,10 @@ describe('SouthMQTT without Cert', () => {
     expect(mqttStream.end).toHaveBeenCalledWith(true);
     expect(logger.error).toHaveBeenCalledWith(`MQTT connection error. ${new Error('connection error')}`);
     await flushPromises();
+  });
+
+  it('should log mqtt message', () => {
+    south.mqttLog('log 1', { test: 'log2' });
+    expect(logger.trace).toHaveBeenCalledWith(`log 1 ${JSON.stringify({ test: 'log2' })}`);
   });
 });

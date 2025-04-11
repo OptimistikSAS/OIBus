@@ -210,11 +210,13 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
 
   async createConnectionOptions(): Promise<mqtt.IClientOptions> {
     const options: mqtt.IClientOptions = {
-      rejectUnauthorized: this.connector.settings.rejectUnauthorized,
       reconnectPeriod: 0, // managed by OIBus
       connectTimeout: this.connector.settings.connectTimeout,
-      clientId: this.connector.id,
-      queueQoSZero: false
+      rejectUnauthorized: this.connector.settings.rejectUnauthorized,
+      queueQoSZero: false,
+      log: this.mqttLog.bind(this),
+      resubscribe: this.connector.settings.persistent || false,
+      clientId: this.connector.id
     };
     if (this.connector.settings.authentication.type === 'basic') {
       options.username = this.connector.settings.authentication.username;
@@ -407,5 +409,11 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
 
     if (t.length === w.length) return res;
     else return null;
+  }
+
+  // Custom log function using Pino
+  mqttLog(...args: Array<object | string>) {
+    // Log all arguments as a single message
+    this.logger.trace(args.map(arg => (typeof arg === 'object' ? JSON.stringify(arg) : arg)).join(' '));
   }
 }
