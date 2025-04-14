@@ -297,7 +297,7 @@ export default class OIBusService {
     this._stream?.destroy();
     this._stream = new PassThrough();
     setTimeout(() => {
-      this._stream!.write(`data: ${JSON.stringify(this.metrics)}\n\n`);
+      this._stream?.write(`data: ${JSON.stringify(this.metrics)}\n\n`);
     }, 100);
     return this._stream;
   }
