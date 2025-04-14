@@ -77,7 +77,7 @@ export default class SouthConnectorMetricsService {
     this._stream?.destroy();
     this._stream = new PassThrough();
     setTimeout(() => {
-      this._stream!.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
+      this._stream?.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
     }, 100);
     return this._stream;
   }
