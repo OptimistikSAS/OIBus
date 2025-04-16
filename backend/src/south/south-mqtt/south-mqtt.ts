@@ -93,7 +93,6 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
       });
       this.client.on('message', async (topic, message, packet) => {
         this.logger.trace(`MQTT message for topic ${topic}: ${message}, dup:${packet.dup}, qos:${packet.qos}, retain:${packet.retain}`);
-
         this.bufferedMessages.push({ topic, message: message.toString() });
         if (this.bufferedMessages.length >= this.MAX_NUMBER_OF_MESSAGES) {
           await this.flushMessages();
@@ -159,40 +158,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
 
   override async testConnection(): Promise<void> {
     const options = await this.createConnectionOptions();
-    await this.testConnectionToBroker(options);
-  }
-
-  override async testItem(
-    item: SouthConnectorItemEntity<SouthMQTTItemSettings>,
-    _testingSettings: SouthConnectorItemTestingSettings,
-    callback: (data: OIBusContent) => void
-  ): Promise<void> {
-    const options = await this.createConnectionOptions();
-    return new Promise((resolve, reject) => {
-      this.client = mqtt.connect(this.connector.settings.url, options);
-      this.client.once('connect', async () => {
-        this.logger.info(`Connected to ${this.connector.settings.url}`);
-        await this.subscribe([item]);
-      });
-      this.client.once('error', async error => {
-        await this.disconnect();
-        reject(`MQTT connection error ${error}`);
-      });
-      this.client.once('message', async (topic, message, packet) => {
-        this.logger.trace(`MQTT message for topic ${topic}: ${message}, dup:${packet.dup}`);
-        const messageTimestamp: Instant = DateTime.now().toUTC().toISO()!;
-        await this.unsubscribe([item]);
-        await this.disconnect();
-        callback({
-          type: 'time-values',
-          content: this.createContent(item, message.toString(), messageTimestamp)
-        });
-        resolve();
-      });
-    });
-  }
-
-  async testConnectionToBroker(options: mqtt.IClientOptions): Promise<void> {
+    options.clientId = `${options.clientId}-test`;
     return new Promise((resolve, reject) => {
       const client = mqtt.connect(this.connector.settings.url, options);
       client.once('connect', () => {
@@ -204,6 +170,37 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
         this.logger.error(`MQTT connection error. ${error}`);
         client.end(true);
         reject(`MQTT connection error. ${error}`);
+      });
+    });
+  }
+
+  override async testItem(
+    item: SouthConnectorItemEntity<SouthMQTTItemSettings>,
+    _testingSettings: SouthConnectorItemTestingSettings,
+    callback: (data: OIBusContent) => void
+  ): Promise<void> {
+    const options = await this.createConnectionOptions();
+    options.clientId = `${options.clientId}-test`;
+    return new Promise((resolve, reject) => {
+      const client = mqtt.connect(this.connector.settings.url, options);
+      client.once('connect', async () => {
+        this.logger.info(`Connected to ${this.connector.settings.url}`);
+        await client.subscribeAsync(item.settings.topic, { qos: parseInt(this.connector.settings.qos) as QoS });
+      });
+      client.once('error', async error => {
+        client.end(true);
+        reject(`MQTT connection error ${error}`);
+      });
+      client.once('message', async (topic, message, packet) => {
+        this.logger.trace(`MQTT message for topic ${topic}: ${message}, dup:${packet.dup}`);
+        const messageTimestamp: Instant = DateTime.now().toUTC().toISO()!;
+        await client.unsubscribeAsync(item.settings.topic);
+        client.end(true);
+        callback({
+          type: 'time-values',
+          content: this.createContent(item, message.toString(), messageTimestamp)
+        });
+        resolve();
       });
     });
   }
