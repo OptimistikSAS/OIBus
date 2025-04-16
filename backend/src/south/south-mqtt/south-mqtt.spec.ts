@@ -424,6 +424,7 @@ describe('SouthMQTT with Basic Auth', () => {
 
   const mqttStream = new CustomStream();
   mqttStream.subscribeAsync = jest.fn();
+  mqttStream.unsubscribeAsync = jest.fn();
   mqttStream.end = jest.fn();
 
   beforeEach(async () => {
@@ -700,9 +701,6 @@ describe('SouthMQTT with Basic Auth', () => {
   });
 
   it('should test item', async () => {
-    south.subscribe = jest.fn();
-    south.unsubscribe = jest.fn();
-    south.disconnect = jest.fn();
     const callback = jest.fn();
 
     south.formatValues = jest.fn().mockReturnValue([
@@ -718,14 +716,13 @@ describe('SouthMQTT with Basic Auth', () => {
     south.testItem(configuration.items[0], testData.south.itemTestingSettings, callback);
     await flushPromises();
     expect(mqtt.connect).toHaveBeenCalled();
-    expect(south.subscribe).not.toHaveBeenCalled();
+    expect(mqttStream.subscribeAsync).not.toHaveBeenCalled();
     mqttStream.emit('connect');
-    expect(south.subscribe).toHaveBeenCalled();
-
+    expect(mqttStream.subscribeAsync).toHaveBeenCalledTimes(1);
     mqttStream.emit('message', 'myTopic', 'myMessage', { dup: false });
     await flushPromises();
-    expect(south.unsubscribe).toHaveBeenCalled();
-    expect(south.disconnect).toHaveBeenCalledTimes(1);
+    expect(mqttStream.unsubscribeAsync).toHaveBeenCalledTimes(1);
+    expect(mqttStream.end).toHaveBeenCalledWith(true);
     expect(callback).toHaveBeenCalledWith({
       type: 'time-values',
       content: [{ data: { value: 'myMessage' }, pointId: configuration.items[0].name, timestamp: testData.constants.dates.FAKE_NOW }]
@@ -1150,25 +1147,6 @@ describe('SouthMQTT without Cert', () => {
     expect(mqtt.connect).toHaveBeenCalledWith(configuration.settings.url, expectedOptions);
   });
 
-  it('should properly test connection', async () => {
-    const expectedOptions = {
-      clientId: 'southId',
-      rejectUnauthorized: false,
-      cert: '',
-      key: '',
-      ca: '',
-      connectTimeout: 1000,
-      reconnectPeriod: 0,
-      queueQoSZero: false,
-      log: expect.any(Function),
-      resubscribe: false
-    };
-    south.testConnectionToBroker = jest.fn();
-    await south.testConnection();
-
-    expect(south.testConnectionToBroker).toHaveBeenCalledWith(expectedOptions);
-  });
-
   it('should properly test connection to broker', async () => {
     const options = {
       clientId: 'oibus-test',
@@ -1182,8 +1160,10 @@ describe('SouthMQTT without Cert', () => {
       log: expect.any(Function),
       resubscribe: false
     };
+    south.createConnectionOptions = jest.fn().mockReturnValueOnce(options);
     (mqttStream.end as jest.Mock).mockClear();
-    south.testConnectionToBroker(options);
+    south.testConnection();
+    await flushPromises();
     mqttStream.emit('connect');
     expect(mqttStream.end).toHaveBeenCalledWith(true);
     expect(mqttStream.end).toHaveBeenCalledTimes(1);
@@ -1202,8 +1182,10 @@ describe('SouthMQTT without Cert', () => {
       reconnectPeriod: 1000,
       queueQoSZero: false
     };
+    south.createConnectionOptions = jest.fn().mockReturnValueOnce(options);
     mqttStream.end = jest.fn();
-    south.testConnectionToBroker(options).catch(() => null);
+    south.testConnection().catch(() => null);
+    await flushPromises();
     mqttStream.emit('error', new Error('connection error'));
     expect(mqtt.connect).toHaveBeenCalledWith(configuration.settings.url, options);
     expect(mqttStream.end).toHaveBeenCalledTimes(1);
