@@ -291,6 +291,38 @@ describe('SouthMQTT without authentication', () => {
     expect(south.disconnect).toHaveBeenCalledTimes(1);
     expect(logger.error).toHaveBeenCalledWith(`MQTT Client error: ${new Error('error')}`);
   });
+
+  it('should properly manage reconnection on connection close', async () => {
+    south.connect = jest.fn();
+    south.disconnect = jest.fn().mockImplementationOnce(() => Promise.resolve());
+    south.connectToBroker({
+      clean: !configuration.settings.persistent,
+      clientId: configuration.id,
+      rejectUnauthorized: false,
+      connectTimeout: 1000,
+      reconnectPeriod: 1000,
+      queueQoSZero: false
+    });
+    south['disconnecting'] = true;
+    mqttStream.emit('close');
+    await flushPromises();
+    expect(south['reconnectTimeout']).toBeNull();
+    expect(logger.debug).toHaveBeenCalledWith('MQTT Client intentionally disconnected');
+
+    south.connectToBroker({
+      clean: !configuration.settings.persistent,
+      clientId: configuration.id,
+      rejectUnauthorized: false,
+      connectTimeout: 1000,
+      reconnectPeriod: 1000,
+      queueQoSZero: false
+    });
+    south['disconnecting'] = false;
+    mqttStream.emit('close');
+    await flushPromises();
+    expect(south['reconnectTimeout']).not.toBeNull();
+    expect(logger.debug).toHaveBeenCalledWith(`MQTT Client closed unintentionally`);
+  });
 });
 
 describe('SouthMQTT with Basic Auth', () => {
