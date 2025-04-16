@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.5.18](https://github.com/OptimistikSAS/OIBus/compare/v3.5.17...v3.5.18) (2025-04-16)
+
+
+### Bug Fixes
+
+* **mqtt:** fix mqtt reconnection when closing unintentionally the client ([030248a](https://github.com/OptimistikSAS/OIBus/commit/030248a7be8265f94008bebdbc73dc8fbd3f6999))
+* **mqtt:** fix mqtt reconnection when testing items ([40c911f](https://github.com/OptimistikSAS/OIBus/commit/40c911f409b93aa1510b72d00116075a7fb4141c))
+
 ## [3.5.17](https://github.com/OptimistikSAS/OIBus/compare/v3.5.16...v3.5.17) (2025-04-11)
 
 
