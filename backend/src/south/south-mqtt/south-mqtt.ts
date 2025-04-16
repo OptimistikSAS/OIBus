@@ -38,6 +38,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private flushTimeout: NodeJS.Timeout | null = null;
   private bufferedMessages: Array<{ topic: string; message: string }> = [];
+  private disconnecting = false;
 
   constructor(
     connector: SouthConnectorEntity<SouthMQTTSettings, SouthMQTTItemSettings>,
@@ -91,6 +92,14 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
         this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.reconnectPeriod);
         resolve(); // No need to reject, but need to resolve to not block thread
       });
+      this.client.once('close', () => {
+        if (this.disconnecting) {
+          this.logger.debug('MQTT Client intentionally disconnected');
+        } else {
+          this.logger.debug(`MQTT Client closed unintentionally`);
+          this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.reconnectPeriod);
+        }
+      });
       this.client.on('message', async (topic, message, packet) => {
         this.logger.trace(`MQTT message for topic ${topic}: ${message}, dup:${packet.dup}, qos:${packet.qos}, retain:${packet.retain}`);
         this.bufferedMessages.push({ topic, message: message.toString() });
@@ -142,6 +151,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
       clearTimeout(this.reconnectTimeout);
       this.reconnectTimeout = null;
     }
+    this.disconnecting = true;
     if (this.client) {
       this.client.removeAllListeners();
       this.client.end(true, { cmd: 'disconnect', properties: { sessionExpiryInterval: 60 } });
@@ -154,6 +164,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
       this.flushTimeout = null;
     }
     await super.disconnect();
+    this.disconnecting = false;
   }
 
   override async testConnection(): Promise<void> {
