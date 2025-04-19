@@ -154,11 +154,13 @@ describe('NorthOPCUA', () => {
     const values = [
       {
         nodeId: 'nodeId1',
-        value: 123
+        value: 123,
+        dataType: 'boolean'
       },
       {
         nodeId: 'nodeId2',
-        value: 456
+        value: 456,
+        dataType: 'uint16'
       }
     ];
     (fs.readFile as jest.Mock).mockReturnValueOnce(JSON.stringify(values));
@@ -189,7 +191,7 @@ describe('NorthOPCUA', () => {
       attributeId: AttributeIds.Value,
       value: {
         value: {
-          dataType: 6, // DataType.Int32
+          dataType: 1,
           value: values[0].value
         }
       }
@@ -199,7 +201,7 @@ describe('NorthOPCUA', () => {
       attributeId: AttributeIds.Value,
       value: {
         value: {
-          dataType: 6, // DataType.Int32
+          dataType: 5,
           value: values[1].value
         }
       }

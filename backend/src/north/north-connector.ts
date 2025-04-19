@@ -317,14 +317,28 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   }
 
   private async cacheSingleBatch(readStream: ReadStream | Readable, inputType: string, source: string, filename: string | null) {
-    // Either generate a filename
-    const transformerForInputType = this.connector.transformers.find(element => element.inputType === inputType);
-    if (!transformerForInputType) {
-      this.logger.error(`Could not find a transformer of input type ${inputType}. Content is not cached for this North`);
+    if (
+      (inputType === 'time-values' && !this.connector.transformers.timeValues.transformer) ||
+      (inputType === 'raw' && !this.connector.transformers.unknown.transformer)
+    ) {
+      this.logger.trace(`Ignoring data of type ${inputType}`);
       return;
     }
 
-    const transformer = createTransformer(this.transformerService.findById(transformerForInputType.id)!, this.connector, this.logger);
+    let transformerForInputType;
+    let options;
+    switch (inputType) {
+      case 'time-values':
+        transformerForInputType = this.transformerService.findById(this.connector.transformers.timeValues.transformer!.id)!;
+        options = this.connector.transformers.timeValues.options;
+        break;
+      default:
+        transformerForInputType = this.transformerService.findById(this.connector.transformers.unknown.transformer!.id)!;
+        options = this.connector.transformers.unknown.options;
+        break;
+    }
+
+    const transformer = createTransformer(transformerForInputType, options, this.connector, this.logger);
     const { metadata, output } = await transformer.transform(readStream, source, filename);
 
     await fsAsync.writeFile(path.join(this.cacheService.cacheFolder, this.cacheService.CONTENT_FOLDER, metadata.contentFile), output, {

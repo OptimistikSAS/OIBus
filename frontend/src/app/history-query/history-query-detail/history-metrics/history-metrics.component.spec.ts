@@ -110,7 +110,16 @@ class TestComponent {
       }
     },
     items: [],
-    northTransformers: []
+    northTransformers: {
+      timeValues: {
+        transformer: null,
+        options: {}
+      },
+      unknown: {
+        transformer: null,
+        options: {}
+      }
+    }
   };
   historyMetrics: HistoryQueryMetrics = {
     metricsStart: '2020-01-01T00:00:00.000Z',

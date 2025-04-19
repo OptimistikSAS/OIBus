@@ -65,13 +65,13 @@ import {
 import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO } from '../../../shared/model/history-query.model';
 import TransformerRepository from './transformer.repository';
 import { StandardTransformer } from '../../model/transformer.model';
-import IsoTimeValuesTransformer from '../../service/transformers/iso-time-values-transformer';
 import OIBusTimeValuesToCsvTransformer from '../../service/transformers/oibus-time-values-to-csv-transformer';
-import IsoRawTransformer from '../../service/transformers/iso-raw-transformer';
+import IsoTransformer from '../../service/transformers/iso-transformer';
 import OIBusTimeValuesToJSONTransformer from '../../service/transformers/oibus-time-values-to-json-transformer';
 import OIBusTimeValuesToMQTTTransformer from '../../service/transformers/oibus-time-values-to-mqtt-transformer';
 import OIBusTimeValuesToOPCUATransformer from '../../service/transformers/oibus-time-values-to-opcua-transformer';
 import OIBusTimeValuesToModbusTransformer from '../../service/transformers/oibus-time-values-to-modbus-transformer';
+import IsoTimeValuesTransformer from '../../service/transformers/iso-time-values-transformer';
 
 jest.mock('../../service/utils');
 jest.mock('argon2');
@@ -117,11 +117,10 @@ describe('Repository with populated database', () => {
   describe('Transformer', () => {
     const standardTransformers: Array<StandardTransformer> = [
       {
-        id: IsoRawTransformer.transformerName,
+        id: IsoTransformer.transformerName,
         type: 'standard',
-        name: IsoRawTransformer.transformerName,
+        name: IsoTransformer.transformerName,
         description: '',
-        standardCode: '',
         inputType: 'raw',
         outputType: 'raw'
       },
@@ -130,7 +129,6 @@ describe('Repository with populated database', () => {
         type: 'standard',
         name: IsoTimeValuesTransformer.transformerName,
         description: '',
-        standardCode: '',
         inputType: 'time-values',
         outputType: 'time-values'
       },
@@ -139,7 +137,6 @@ describe('Repository with populated database', () => {
         type: 'standard',
         name: OIBusTimeValuesToCsvTransformer.transformerName,
         description: '',
-        standardCode: '',
         inputType: 'time-values',
         outputType: 'raw'
       },
@@ -148,7 +145,6 @@ describe('Repository with populated database', () => {
         type: 'standard',
         name: OIBusTimeValuesToJSONTransformer.transformerName,
         description: '',
-        standardCode: '',
         inputType: 'time-values',
         outputType: 'raw'
       },
@@ -158,7 +154,6 @@ describe('Repository with populated database', () => {
         inputType: 'time-values',
         name: OIBusTimeValuesToMQTTTransformer.transformerName,
         outputType: 'mqtt',
-        standardCode: '',
         type: 'standard'
       },
       {
@@ -167,7 +162,6 @@ describe('Repository with populated database', () => {
         inputType: 'time-values',
         name: OIBusTimeValuesToOPCUATransformer.transformerName,
         outputType: 'opcua',
-        standardCode: '',
         type: 'standard'
       },
       {
@@ -176,7 +170,6 @@ describe('Repository with populated database', () => {
         inputType: 'time-values',
         name: OIBusTimeValuesToModbusTransformer.transformerName,
         outputType: 'modbus',
-        standardCode: '',
         type: 'standard'
       }
     ];

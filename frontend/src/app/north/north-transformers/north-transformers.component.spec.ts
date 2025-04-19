@@ -7,8 +7,7 @@ import { NorthConnectorService } from '../../services/north-connector.service';
 import { Component, inject } from '@angular/core';
 import { NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
 import { TransformerLightDTO } from '../../../../../backend/shared/model/transformer.model';
-import { FormArray, FormControl, FormGroup, NonNullableFormBuilder } from '@angular/forms';
-import { OIBusDataType } from '../../../../../backend/shared/model/engine.model';
+import { FormControl, FormGroup, NonNullableFormBuilder } from '@angular/forms';
 
 @Component({
   template: `<oib-north-transformers [northManifest]="northManifest" [transformers]="transformers" [controls]="controls" />`,
@@ -17,21 +16,22 @@ import { OIBusDataType } from '../../../../../backend/shared/model/engine.model'
 class TestComponent {
   private fb = inject(NonNullableFormBuilder);
 
-  controls: FormArray<FormGroup<{ type: FormControl<OIBusDataType>; transformer: FormControl<string> }>> = this.fb.array<
-    FormGroup<{
-      type: FormControl<OIBusDataType>;
-      transformer: FormControl<string>;
-    }>
-  >([
-    this.fb.group({
-      type: this.fb.control<OIBusDataType>('raw'),
-      transformer: this.fb.control<string>('')
+  controls: FormGroup<{
+    unknown: FormGroup<{ transformer: FormControl<TransformerLightDTO | null>; options: FormControl<object> }>;
+    timeValues: FormGroup<{ transformer: FormControl<TransformerLightDTO | null>; options: FormControl<object> }>;
+  }> = this.fb.group<{
+    unknown: FormGroup<{ transformer: FormControl<TransformerLightDTO | null>; options: FormControl<object> }>;
+    timeValues: FormGroup<{ transformer: FormControl<TransformerLightDTO | null>; options: FormControl<object> }>;
+  }>({
+    unknown: this.fb.group({
+      transformer: this.fb.control(null as TransformerLightDTO | null),
+      options: this.fb.control({})
     }),
-    this.fb.group({
-      type: this.fb.control<OIBusDataType>('time-values'),
-      transformer: this.fb.control<string>('')
+    timeValues: this.fb.group({
+      transformer: this.fb.control(null as TransformerLightDTO | null),
+      options: this.fb.control({})
     })
-  ]);
+  });
   transformers: Array<TransformerLightDTO> = [];
   northManifest: NorthConnectorManifest = { id: 'console', types: ['raw', 'time-values'] } as NorthConnectorManifest;
 }
@@ -66,7 +66,6 @@ describe('NorthTransformersComponent', () => {
 
   it('should display forms with types', () => {
     tester.detectChanges();
-
     expect(tester.transformers.length).toEqual(2);
   });
 });

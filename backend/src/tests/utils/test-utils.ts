@@ -30,7 +30,6 @@ import {
   SouthConnectorMetrics
 } from '../../../shared/model/engine.model';
 import { BaseFolders } from 'src/model/types';
-import { Readable, Writable } from 'node:stream';
 import { Transformer } from '../../model/transformer.model';
 
 const CONFIG_TEST_DATABASE = path.resolve('src', 'tests', 'test-config.db');
@@ -39,27 +38,6 @@ const LOGS_TEST_DATABASE = path.resolve('src', 'tests', 'test-logs.db');
 const CACHE_TEST_DATABASE = path.resolve('src', 'tests', 'test-cache.db');
 
 export const flushPromises = () => new Promise(jest.requireActual('timers').setImmediate);
-
-export function createMockWriteStream(): Writable & { data: Array<string> } {
-  const writtenData: Array<string> = [];
-
-  const stream = new Writable({
-    write(chunk, _encoding, callback) {
-      writtenData.push(chunk.toString()); // Store received data
-      callback(); // Notify that writing is done
-    }
-  });
-
-  return Object.assign(stream, { data: writtenData });
-}
-
-export function createMockReadStream(): Readable {
-  return new Readable({
-    read() {
-      return;
-    } // No need to override, just push data externally
-  });
-}
 
 export const initDatabase = async (database: 'config' | 'crypto' | 'cache' | 'logs', populate = true) => {
   switch (database) {
@@ -465,15 +443,20 @@ const createNorth = async (database: knex.Knex, north: NorthConnectorEntity<Nort
       caching_error_retry_count: north.caching.error.retryCount,
       caching_error_retention_duration: north.caching.error.retentionDuration,
       caching_archive_enabled: north.caching.archive.enabled,
-      caching_archive_retention_duration: north.caching.archive.retentionDuration
+      caching_archive_retention_duration: north.caching.archive.retentionDuration,
+      unknown_transformer_id: north.transformers.unknown.transformer ? north.transformers.unknown.transformer.id : null,
+      time_values_transformer_id: north.transformers.timeValues.transformer ? north.transformers.timeValues.transformer.id : null
     })
     .into('north_connectors');
 
   for (const element of north.subscriptions) {
     await createSubscription(database, north.id, element.id);
   }
-  for (const element of north.transformers) {
-    await createNorthTransformer(database, north.id, element.id);
+  if (north.transformers.timeValues.transformer) {
+    await createNorthTransformer(database, north.id, north.transformers.timeValues.transformer.id, north.transformers.timeValues.options);
+  }
+  if (north.transformers.unknown.transformer) {
+    await createNorthTransformer(database, north.id, north.transformers.unknown.transformer.id, north.transformers.unknown.options);
   }
 };
 
@@ -591,15 +574,34 @@ const createHistoryQuery = async (
       caching_error_retry_count: historyQuery.caching.error.retryCount,
       caching_error_retention_duration: historyQuery.caching.error.retentionDuration,
       caching_archive_enabled: historyQuery.caching.archive.enabled,
-      caching_archive_retention_duration: historyQuery.caching.archive.retentionDuration
+      caching_archive_retention_duration: historyQuery.caching.archive.retentionDuration,
+      unknown_transformer_id: historyQuery.northTransformers.unknown.transformer
+        ? historyQuery.northTransformers.unknown.transformer.id
+        : null,
+      time_values_transformer_id: historyQuery.northTransformers.timeValues.transformer
+        ? historyQuery.northTransformers.timeValues.transformer.id
+        : null
     })
     .into('history_queries');
 
   for (const item of historyQuery.items) {
     await createHistoryQueryItem(database, historyQuery.id, item);
   }
-  for (const element of historyQuery.northTransformers) {
-    await createHistoryQueryTransformer(database, historyQuery.id, element.id);
+  if (historyQuery.northTransformers.timeValues.transformer) {
+    await createHistoryQueryTransformer(
+      database,
+      historyQuery.id,
+      historyQuery.northTransformers.timeValues.transformer.id,
+      historyQuery.northTransformers.timeValues.options
+    );
+  }
+  if (historyQuery.northTransformers.unknown.transformer) {
+    await createHistoryQueryTransformer(
+      database,
+      historyQuery.id,
+      historyQuery.northTransformers.unknown.transformer.id,
+      historyQuery.northTransformers.unknown.options
+    );
   }
 };
 
@@ -626,7 +628,8 @@ const createTransformer = async (database: knex.Knex, transformer: Transformer) 
           type: transformer.type,
           input_type: transformer.inputType,
           output_type: transformer.outputType,
-          custom_code: transformer.customCode
+          custom_code: transformer.customCode,
+          custom_manifest: JSON.stringify(transformer.customManifest)
         })
         .into('transformers');
       break;
@@ -638,17 +641,18 @@ const createTransformer = async (database: knex.Knex, transformer: Transformer) 
           description: transformer.description,
           type: transformer.type,
           input_type: transformer.inputType,
-          output_type: transformer.outputType,
-          standard_code: transformer.standardCode
+          output_type: transformer.outputType
         })
         .into('transformers');
   }
 };
 
-const createNorthTransformer = async (database: knex.Knex, northId: string, transformerId: string) => {
-  await database.insert({ north_id: northId, transformer_id: transformerId }).into('north_transformers');
+const createNorthTransformer = async (database: knex.Knex, northId: string, transformerId: string, options: object) => {
+  await database.insert({ north_id: northId, transformer_id: transformerId, options: JSON.stringify(options) }).into('north_transformers');
 };
 
-const createHistoryQueryTransformer = async (database: knex.Knex, historyId: string, transformerId: string) => {
-  await database.insert({ history_id: historyId, transformer_id: transformerId }).into('history_query_transformers');
+const createHistoryQueryTransformer = async (database: knex.Knex, historyId: string, transformerId: string, options: object) => {
+  await database
+    .insert({ history_id: historyId, transformer_id: transformerId, options: JSON.stringify(options) })
+    .into('history_query_transformers');
 };

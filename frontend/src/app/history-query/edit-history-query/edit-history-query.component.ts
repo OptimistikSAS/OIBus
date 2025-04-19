@@ -1,9 +1,9 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { formDirectives } from '../../shared/form-directives';
-import { FormArray, FormControl, FormGroup, NonNullableFormBuilder, Validators } from '@angular/forms';
+import { FormControl, FormGroup, NonNullableFormBuilder, Validators } from '@angular/forms';
 import { NotificationService } from '../../shared/notification.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest, Observable, of, switchMap, tap } from 'rxjs';
@@ -52,7 +52,6 @@ import { TransformerLightDTO } from '../../../../../backend/shared/model/transfo
 import { TransformerService } from '../../services/transformer.service';
 import { CertificateService } from '../../services/certificate.service';
 import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
-import { OIBUS_DATA_TYPES, OIBusDataType } from '../../../../../backend/shared/model/engine.model';
 import { NorthTransformersComponent } from '../../north/north-transformers/north-transformers.component';
 
 @Component({
@@ -89,8 +88,6 @@ export class EditHistoryQueryComponent implements OnInit {
   private modalService = inject(ModalService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
-
-  readonly oIBusDataTypes = OIBUS_DATA_TYPES;
 
   mode: 'create' | 'edit' = 'create';
   historyId!: string;
@@ -138,11 +135,13 @@ export class EditHistoryQueryComponent implements OnInit {
     }>;
     northSettings: FormGroup;
     southSettings: FormGroup;
-    northTransformers: FormArray<FormGroup<{ type: FormControl<OIBusDataType>; transformer: FormControl<string> }>>;
+    northTransformers: FormGroup<{
+      unknown: FormGroup<{ transformer: FormControl<TransformerLightDTO | null>; options: FormControl<object> }>;
+      timeValues: FormGroup<{ transformer: FormControl<TransformerLightDTO | null>; options: FormControl<object> }>;
+    }>;
   }> | null = null;
 
   inMemoryItems: Array<HistoryQueryItemCommandDTO<SouthItemSettings>> = [];
-  inMemoryNorthTransformers: Array<TransformerLightDTO> = [];
 
   ngOnInit() {
     combineLatest([
@@ -275,23 +274,31 @@ export class EditHistoryQueryComponent implements OnInit {
           }),
           northSettings: createFormGroup(northManifest.settings, this.fb),
           southSettings: createFormGroup(southManifest.settings, this.fb),
-          northTransformers: this.fb.array(
-            this.oIBusDataTypes.map(type => {
-              return this.fb.group({
-                type: this.fb.control(type, Validators.required),
-                transformer: this.fb.control('', Validators.required)
-              });
+          northTransformers: this.fb.group({
+            unknown: this.fb.group({
+              transformer: this.fb.control(null as TransformerLightDTO | null),
+              options: this.fb.control({})
+            }),
+            timeValues: this.fb.group({
+              transformer: this.fb.control(null as TransformerLightDTO | null),
+              options: this.fb.control({})
             })
-          )
+          })
         });
 
         if (this.historyQuery) {
           this.historyQueryForm.patchValue({
             ...this.historyQuery,
-            northTransformers: this.oIBusDataTypes.map(element => ({
-              type: element,
-              transformer: this.historyQuery!.northTransformers.find(transformer => transformer.inputType === element)?.id ?? 'none'
-            }))
+            northTransformers: {
+              unknown: {
+                transformer: this.historyQuery.northTransformers.unknown.transformer ?? null,
+                options: this.historyQuery.northTransformers.unknown.options ?? {}
+              },
+              timeValues: {
+                transformer: this.historyQuery.northTransformers.timeValues.transformer ?? null,
+                options: this.historyQuery.northTransformers.timeValues.options ?? {}
+              }
+            }
           });
         } else {
           if (southConnector) {
@@ -300,12 +307,16 @@ export class EditHistoryQueryComponent implements OnInit {
           if (northConnector) {
             this.historyQueryForm.controls.northSettings.patchValue(northConnector.settings);
             this.historyQueryForm.controls.caching.patchValue(northConnector.caching);
-            this.historyQueryForm.controls.northTransformers.patchValue(
-              this.oIBusDataTypes.map(element => ({
-                type: element,
-                transformer: northConnector.transformers.find(transformer => transformer.inputType === element)?.id ?? 'none'
-              }))
-            );
+            this.historyQueryForm.controls.northTransformers.patchValue({
+              unknown: {
+                transformer: northConnector.transformers.unknown.transformer ?? null,
+                options: northConnector.transformers.unknown.options ?? {}
+              },
+              timeValues: {
+                transformer: northConnector.transformers.timeValues.transformer ?? null,
+                options: northConnector.transformers.timeValues.options ?? {}
+              }
+            });
           }
         }
 
@@ -368,10 +379,18 @@ export class EditHistoryQueryComponent implements OnInit {
               settings: item.settings
             }))
           : this.inMemoryItems,
-      northTransformers:
-        this.saveItemChangesDirectly && this.historyQuery
-          ? this.historyQuery.northTransformers.map(transformer => transformer.id)
-          : this.inMemoryNorthTransformers.map(transformer => transformer.id)
+      northTransformers: {
+        unknown: {
+          transformerId: !formValue.northTransformers!.unknown!.transformer ? null : formValue.northTransformers!.unknown!.transformer!.id,
+          options: formValue.northTransformers!.unknown!.options ?? {}
+        },
+        timeValues: {
+          transformerId: !formValue.northTransformers!.timeValues!.transformer
+            ? null
+            : formValue.northTransformers!.timeValues!.transformer!.id,
+          options: formValue.northTransformers!.timeValues!.options ?? {}
+        }
+      }
     };
     if (this.mode === 'edit') {
       const modalRef = this.modalService.open(ResetCacheHistoryQueryModalComponent);

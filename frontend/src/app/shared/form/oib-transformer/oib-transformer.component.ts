@@ -3,7 +3,6 @@ import { formDirectives } from '../../form-directives';
 
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, NonNullableFormBuilder } from '@angular/forms';
 import { TransformerLightDTO } from '../../../../../../backend/shared/model/transformer.model';
-import { OIBusDataType } from '../../../../../../backend/shared/model/engine.model';
 import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
@@ -17,8 +16,9 @@ export class OibTransformerComponent implements ControlValueAccessor {
   readonly label = input('');
   readonly key = input('');
   readonly transformers = input.required<Array<TransformerLightDTO>>();
-  readonly inputType = input<OIBusDataType>();
-  readonly outputType = input<Array<string>>([]);
+  readonly inputType = input<string>();
+  readonly supportedOutputTypes = input<Array<string>>([]);
+
   transformerInputCtrl = inject(NonNullableFormBuilder).control(null as string | null);
   disabled = false;
   onChange: (value: string) => void = () => {};
@@ -28,7 +28,7 @@ export class OibTransformerComponent implements ControlValueAccessor {
     this.transformers().filter(
       element =>
         (!this.inputType() || this.inputType() === element.inputType) &&
-        (!this.outputType().length || this.outputType().includes(element.outputType))
+        (!this.supportedOutputTypes().length || this.supportedOutputTypes().includes(element.outputType))
     )
   );
 

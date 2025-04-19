@@ -133,7 +133,16 @@ describe('EditNorthComponent', () => {
         }
       },
       subscriptions: [],
-      transformers: []
+      transformers: {
+        timeValues: {
+          transformer: null,
+          options: {}
+        },
+        unknown: {
+          transformer: null,
+          options: {}
+        }
+      }
     };
 
     beforeEach(() => {

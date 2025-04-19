@@ -3,7 +3,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { formDirectives } from '../../shared/form-directives';
-import { FormArray, FormControl, FormGroup, NonNullableFormBuilder, Validators } from '@angular/forms';
+import { FormControl, FormGroup, NonNullableFormBuilder, Validators } from '@angular/forms';
 import { NotificationService } from '../../shared/notification.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest, Observable, of, switchMap, tap } from 'rxjs';
@@ -34,7 +34,6 @@ import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe'
 import { TransformerLightDTO } from '../../../../../backend/shared/model/transformer.model';
 import { TransformerService } from '../../services/transformer.service';
 import { NorthTransformersComponent } from '../north-transformers/north-transformers.component';
-import { OIBUS_DATA_TYPES, OIBusDataType } from '../../../../../backend/shared/model/engine.model';
 
 @Component({
   selector: 'oib-edit-north',
@@ -66,8 +65,6 @@ export class EditNorthComponent implements OnInit {
   private modalService = inject(ModalService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
-
-  readonly oIBusDataTypes = OIBUS_DATA_TYPES;
 
   mode: 'create' | 'edit' = 'create';
   northConnector: NorthConnectorDTO<NorthSettings> | null = null;
@@ -107,7 +104,10 @@ export class EditNorthComponent implements OnInit {
       }>;
     }>;
     settings: FormGroup;
-    transformers: FormArray<FormGroup<{ type: FormControl<OIBusDataType>; transformer: FormControl<string> }>>;
+    transformers: FormGroup<{
+      unknown: FormGroup<{ transformer: FormControl<TransformerLightDTO | null>; options: FormControl<object> }>;
+      timeValues: FormGroup<{ transformer: FormControl<TransformerLightDTO | null>; options: FormControl<object> }>;
+    }>;
   }> | null = null;
 
   inMemorySubscriptions: Array<SouthConnectorLightDTO> = [];
@@ -156,9 +156,7 @@ export class EditNorthComponent implements OnInit {
           this.loading = false;
           return;
         }
-
         this.northSettingsControls = groupFormControlsByRow(manifest.settings);
-
         this.northForm = this.fb.group({
           name: ['', Validators.required],
           description: '',
@@ -185,24 +183,32 @@ export class EditNorthComponent implements OnInit {
               retentionDuration: [72, Validators.required]
             })
           }),
-          transformers: this.fb.array(
-            this.oIBusDataTypes.map(type => {
-              return this.fb.group({
-                type: this.fb.control(type, Validators.required),
-                transformer: this.fb.control('', Validators.required)
-              });
+          transformers: this.fb.group({
+            unknown: this.fb.group({
+              transformer: this.fb.control(null as TransformerLightDTO | null),
+              options: this.fb.control({})
+            }),
+            timeValues: this.fb.group({
+              transformer: this.fb.control(null as TransformerLightDTO | null),
+              options: this.fb.control({})
             })
-          )
+          })
         });
 
-        // if we have a south connector we initialize the values
+        // if we have a south connector, we initialize the values
         if (northConnector) {
           this.northForm.patchValue({
             ...northConnector,
-            transformers: this.oIBusDataTypes.map(element => ({
-              type: element,
-              transformer: northConnector.transformers.find(transformer => transformer.inputType === element)?.id ?? 'none'
-            }))
+            transformers: {
+              unknown: {
+                transformer: northConnector.transformers.unknown.transformer ?? null,
+                options: northConnector.transformers.unknown.options ?? {}
+              },
+              timeValues: {
+                transformer: northConnector.transformers.timeValues.transformer ?? null,
+                options: northConnector.transformers.timeValues.options ?? {}
+              }
+            }
           });
         } else {
           this.northForm.setValue(this.northForm.getRawValue());
@@ -268,7 +274,16 @@ export class EditNorthComponent implements OnInit {
       subscriptions: this.northConnector
         ? this.northConnector.subscriptions.map(subscription => subscription.id)
         : this.inMemorySubscriptions.map(subscription => subscription.id),
-      transformers: formValue.transformers!.filter(element => element.transformer !== 'none').map(element => element.transformer!)
+      transformers: {
+        unknown: {
+          transformerId: !formValue.transformers!.unknown!.transformer ? null : formValue.transformers!.unknown!.transformer!.id,
+          options: formValue.transformers!.unknown!.options ?? {}
+        },
+        timeValues: {
+          transformerId: !formValue.transformers!.timeValues!.transformer ? null : formValue.transformers!.timeValues!.transformer!.id,
+          options: formValue.transformers!.timeValues!.options ?? {}
+        }
+      }
     };
     if (value === 'save') {
       this.createOrUpdateNorthConnector(command);

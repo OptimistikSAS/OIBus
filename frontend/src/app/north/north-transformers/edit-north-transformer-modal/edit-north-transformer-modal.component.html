@@ -1,0 +1,36 @@
+<div class="modal-header">
+  @if (inputType) {
+    <h4
+      class="modal-title"
+      [translateParams]="{ inputType: 'enums.oibus-data-type.' + inputType | translate }"
+      translate="transformers.choose-transformer-modal.title"
+    ></h4>
+  }
+</div>
+<div class="modal-body">
+  @if (form) {
+    <form [formGroup]="form" (ngSubmit)="save()" id="choose-transformer-form">
+      <div class="row">
+        <div class="form-group">
+          <oib-transformer
+            [transformers]="transformers"
+            key="transformer"
+            [label]="'transformers.choose-transformer-modal.transformer' | translate"
+            formControlName="transformerId"
+            [inputType]="inputType"
+            [supportedOutputTypes]="supportedOutputTypes"
+          />
+        </div>
+      </div>
+      @if (transformerRows.length > 0) {
+        <oib-form [parentForm]="form" [form]="form.controls.options" [settingsSchema]="transformerRows" [scanModes]="[]" />
+      }
+    </form>
+  }
+</div>
+<div class="modal-footer">
+  <div class="btn-group">
+    <oib-save-button form="choose-transformer-form" [state]="state" />
+    <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
+  </div>
+</div>

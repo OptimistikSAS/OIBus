@@ -184,7 +184,16 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
         }
       },
       subscriptions: [],
-      transformers: []
+      transformers: {
+        timeValues: {
+          transformerId: null,
+          options: {}
+        },
+        unknown: {
+          transformerId: null,
+          options: {}
+        }
+      }
     };
 
     const modalRef = this.modalService.open(TestConnectionResultModalComponent);

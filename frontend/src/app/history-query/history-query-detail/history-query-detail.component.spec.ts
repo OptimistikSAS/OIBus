@@ -150,7 +150,16 @@ describe('HistoryQueryDetailComponent', () => {
         } as SouthItemSettings
       }
     ],
-    northTransformers: []
+    northTransformers: {
+      timeValues: {
+        transformer: null,
+        options: {}
+      },
+      unknown: {
+        transformer: null,
+        options: {}
+      }
+    }
   };
   const engineInfo: OIBusInfo = {
     version: '3.0.0',

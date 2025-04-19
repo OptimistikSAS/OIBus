@@ -3,9 +3,9 @@ import JoiValidator from './validators/joi.validator';
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
 import testData from '../../tests/utils/test-data';
 import TransformerController from './transformer.controller';
-import { toTransformerDTO, toTransformerLightDTO } from '../../service/transformer.service';
+import { toTransformerLightDTO, toTransformerDTO } from '../../service/transformer.service';
 import { StandardTransformer } from '../../model/transformer.model';
-import IsoRawTransformer from '../../service/transformers/iso-raw-transformer';
+import IsoTransformer from '../../service/transformers/iso-transformer';
 
 jest.mock('./validators/joi.validator');
 
@@ -17,11 +17,10 @@ const ctx = new KoaContextMock();
 
 describe('Transformer Controller', () => {
   const standardTransformer: StandardTransformer = {
-    id: IsoRawTransformer.transformerName,
+    id: IsoTransformer.transformerName,
     type: 'standard',
-    name: IsoRawTransformer.transformerName,
+    name: IsoTransformer.transformerName,
     description: '',
-    standardCode: '',
     inputType: 'raw',
     outputType: 'raw'
   };

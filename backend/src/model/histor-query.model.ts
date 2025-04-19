@@ -48,7 +48,10 @@ export interface HistoryQueryEntity<S extends SouthSettings, N extends NorthSett
     };
   };
   items: Array<HistoryQueryItemEntity<I>>;
-  northTransformers: Array<TransformerLight>;
+  northTransformers: {
+    unknown: { transformer: TransformerLight | null; options: object };
+    timeValues: { transformer: TransformerLight | null; options: object };
+  };
 }
 
 export interface HistoryQueryItemEntity<T extends SouthItemSettings> extends BaseEntity {

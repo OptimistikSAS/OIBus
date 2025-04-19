@@ -63,7 +63,10 @@ export interface NorthConnectorDTO<T extends NorthSettings> extends BaseEntity {
     };
   };
   subscriptions: Array<SouthConnectorLightDTO>;
-  transformers: Array<TransformerLightDTO>;
+  transformers: {
+    unknown: { transformer: TransformerLightDTO | null; options: object };
+    timeValues: { transformer: TransformerLightDTO | null; options: object };
+  };
 }
 
 export interface NorthConnectorCommandDTO<T extends NorthSettings> {
@@ -95,7 +98,10 @@ export interface NorthConnectorCommandDTO<T extends NorthSettings> {
     };
   };
   subscriptions: Array<string>;
-  transformers: Array<string>;
+  transformers: {
+    unknown: { transformerId: string | null; options: object };
+    timeValues: { transformerId: string | null; options: object };
+  };
 }
 
 export interface NorthConnectorManifest {
