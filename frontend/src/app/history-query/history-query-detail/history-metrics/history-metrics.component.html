@@ -23,20 +23,6 @@
             </td>
           </tr>
         }
-        <!-- number of values for point connectors -->
-        @if (northManifest().modes.points) {
-          <tr>
-            <td style="width: 33%" translate="history-query.monitoring.north.number-of-values"></td>
-            <td>{{ historyMetrics().north.numberOfValuesSent }}</td>
-          </tr>
-        }
-        <!-- number of files for file connectors -->
-        @if (northManifest().modes.files) {
-          <tr>
-            <td translate="history-query.monitoring.north.number-of-files"></td>
-            <td>{{ historyMetrics().north.numberOfFilesSent }}</td>
-          </tr>
-        }
         <!-- last connection -->
         @if (historyMetrics().north.lastConnection; as lastConnection) {
           <tr>
@@ -44,28 +30,11 @@
             <td>{{ lastConnection | datetime: 'mediumWithSeconds' }}</td>
           </tr>
         }
-        <!-- last value -->
-        @let lastValueSent = historyMetrics().north.lastValueSent;
-        @if (northManifest().modes.points && lastValueSent) {
+        <!-- last content sent -->
+        @if (historyMetrics().north.lastContentSent; as lastContentSent) {
           <tr>
-            <td translate="history-query.monitoring.north.last-value"></td>
-            <td>
-              <span
-                translate="history-query.monitoring.north.last-value-content"
-                [translateParams]="{
-                  pointId: lastValueSent.pointId,
-                  timestamp: lastValueSent.timestamp,
-                  data: lastValueSent.data | json
-                }"
-              ></span>
-            </td>
-          </tr>
-        }
-        <!-- last file -->
-        @if (northManifest().modes.files && historyMetrics().north.lastFileSent) {
-          <tr>
-            <td translate="history-query.monitoring.north.last-file"></td>
-            <td>{{ historyMetrics().north.lastFileSent }}</td>
+            <td translate="history-query.monitoring.north.last-content-sent"></td>
+            <td>{{ historyMetrics().north.lastContentSent }}</td>
           </tr>
         }
         <!-- last run -->
@@ -82,6 +51,43 @@
             <td>{{ lastRunDuration | duration: 'short' }}</td>
           </tr>
         }
+        <!-- cache size -->
+        <tr>
+          <td translate="history-query.monitoring.north.cache-size-title"></td>
+          <td
+            class="last-column-body"
+            translate="history-query.monitoring.north.cache-size-value"
+            [translateParams]="{
+              currentSize: historyMetrics().north.currentCacheSize | fileSize,
+              totalSent: historyMetrics().north.contentSentSize | fileSize,
+              totalCached: historyMetrics().north.contentCachedSize | fileSize
+            }"
+          ></td>
+        </tr>
+        <!-- error size -->
+        <tr>
+          <td translate="history-query.monitoring.north.error-size-title"></td>
+          <td
+            class="last-column-body"
+            translate="history-query.monitoring.north.error-size-value"
+            [translateParams]="{
+              currentSize: historyMetrics().north.currentErrorSize | fileSize,
+              totalSize: historyMetrics().north.contentErroredSize | fileSize
+            }"
+          ></td>
+        </tr>
+        <!-- archive size -->
+        <tr>
+          <td translate="history-query.monitoring.north.archive-size-title"></td>
+          <td
+            class="last-column-body"
+            translate="history-query.monitoring.north.archive-size-value"
+            [translateParams]="{
+              currentSize: historyMetrics().north.currentArchiveSize | fileSize,
+              totalSize: historyMetrics().north.contentArchivedSize | fileSize
+            }"
+          ></td>
+        </tr>
       </tbody>
     </table>
     <table class="table table-sm table-hover oib-table">

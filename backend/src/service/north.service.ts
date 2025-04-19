@@ -3,7 +3,6 @@ import pino from 'pino';
 import NorthConnector from '../north/north-connector';
 import NorthConsole from '../north/north-console/north-console';
 import {
-  NorthCacheFiles,
   NorthConnectorCommandDTO,
   NorthConnectorDTO,
   NorthConnectorLightDTO,
@@ -16,6 +15,9 @@ import consoleManifest from '../north/north-console/manifest';
 import amazonManifest from '../north/north-amazon-s3/manifest';
 import sftpManifest from '../north/north-sftp/manifest';
 import restManifest from '../north/north-rest/manifest';
+import opcuaManifest from '../north/north-opcua/manifest';
+import mqttManifest from '../north/north-mqtt/manifest';
+import modbusManifest from '../north/north-modbus/manifest';
 import { NorthConnectorEntity, NorthConnectorEntityLight } from '../model/north-connector.model';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import NorthConnectorRepository from '../repository/config/north-connector.repository';
@@ -32,7 +34,10 @@ import {
   NorthAzureBlobSettings,
   NorthConsoleSettings,
   NorthFileWriterSettings,
+  NorthModbusSettings,
+  NorthMQTTSettings,
   NorthOIAnalyticsSettings,
+  NorthOPCUASettings,
   NorthRESTSettings,
   NorthSettings,
   NorthSFTPSettings
@@ -51,8 +56,13 @@ import { PassThrough } from 'node:stream';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { BaseFolders } from '../model/types';
-import { Instant } from '../../shared/model/types';
 import { ReadStream } from 'node:fs';
+import { CacheMetadata, CacheSearchParam } from '../../shared/model/engine.model';
+import TransformerService, { toTransformerLightDTO } from './transformer.service';
+import { TransformerLightDTO } from '../../shared/model/transformer.model';
+import NorthOPCUA from '../north/north-opcua/north-opcua';
+import NorthMQTT from '../north/north-mqtt/north-mqtt';
+import NorthModbus from '../north/north-modbus/north-modbus';
 
 export const northManifestList: Array<NorthConnectorManifest> = [
   consoleManifest,
@@ -61,7 +71,10 @@ export const northManifestList: Array<NorthConnectorManifest> = [
   amazonManifest,
   fileWriterManifest,
   sftpManifest,
-  restManifest
+  restManifest,
+  opcuaManifest,
+  modbusManifest,
+  mqttManifest
 ];
 
 export default class NorthService {
@@ -76,6 +89,7 @@ export default class NorthService {
     private readonly oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
     private oIAnalyticsMessageService: OIAnalyticsMessageService,
     private readonly encryptionService: EncryptionService,
+    private readonly transformerService: TransformerService,
     private readonly dataStreamEngine: DataStreamEngine
   ) {}
 
@@ -91,6 +105,7 @@ export default class NorthService {
         return new NorthAmazonS3(
           settings as NorthConnectorEntity<NorthAmazonS3Settings>,
           this.encryptionService,
+          this.transformerService,
           this.northConnectorRepository,
           this.scanModeRepository,
           logger,
@@ -100,6 +115,7 @@ export default class NorthService {
         return new NorthAzureBlob(
           settings as NorthConnectorEntity<NorthAzureBlobSettings>,
           this.encryptionService,
+          this.transformerService,
           this.northConnectorRepository,
           this.scanModeRepository,
           logger,
@@ -109,6 +125,7 @@ export default class NorthService {
         return new NorthConsole(
           settings as NorthConnectorEntity<NorthConsoleSettings>,
           this.encryptionService,
+          this.transformerService,
           this.northConnectorRepository,
           this.scanModeRepository,
           logger,
@@ -118,6 +135,7 @@ export default class NorthService {
         return new NorthFileWriter(
           settings as NorthConnectorEntity<NorthFileWriterSettings>,
           this.encryptionService,
+          this.transformerService,
           this.northConnectorRepository,
           this.scanModeRepository,
           logger,
@@ -127,6 +145,7 @@ export default class NorthService {
         return new NorthOIAnalytics(
           settings as NorthConnectorEntity<NorthOIAnalyticsSettings>,
           this.encryptionService,
+          this.transformerService,
           this.northConnectorRepository,
           this.scanModeRepository,
           this.certificateRepository,
@@ -138,6 +157,7 @@ export default class NorthService {
         return new NorthSFTP(
           settings as NorthConnectorEntity<NorthSFTPSettings>,
           this.encryptionService,
+          this.transformerService,
           this.northConnectorRepository,
           this.scanModeRepository,
           logger,
@@ -147,6 +167,37 @@ export default class NorthService {
         return new NorthREST(
           settings as NorthConnectorEntity<NorthRESTSettings>,
           this.encryptionService,
+          this.transformerService,
+          this.northConnectorRepository,
+          this.scanModeRepository,
+          logger,
+          northBaseFolders
+        );
+      case 'opcua':
+        return new NorthOPCUA(
+          settings as NorthConnectorEntity<NorthOPCUASettings>,
+          this.encryptionService,
+          this.transformerService,
+          this.northConnectorRepository,
+          this.scanModeRepository,
+          logger,
+          northBaseFolders
+        );
+      case 'mqtt':
+        return new NorthMQTT(
+          settings as NorthConnectorEntity<NorthMQTTSettings>,
+          this.encryptionService,
+          this.transformerService,
+          this.northConnectorRepository,
+          this.scanModeRepository,
+          logger,
+          northBaseFolders
+        );
+      case 'modbus':
+        return new NorthModbus(
+          settings as NorthConnectorEntity<NorthModbusSettings>,
+          this.encryptionService,
+          this.transformerService,
           this.northConnectorRepository,
           this.scanModeRepository,
           logger,
@@ -176,14 +227,15 @@ export default class NorthService {
     const testToRun: NorthConnectorEntity<NorthSettings> = {
       id: northConnector?.id || 'test',
       ...command,
-      caching: { ...command.caching, scanModeId: command.caching.scanModeId! },
+      caching: { ...command.caching, trigger: { ...command.caching.trigger, scanModeId: command.caching.trigger.scanModeId! } },
       settings: await this.encryptionService.encryptConnectorSecrets<N>(
         command.settings,
         northConnector?.settings || null,
         manifest.settings
       ),
       name: northConnector ? northConnector.name : `${command!.type}:test-connection`,
-      subscriptions: []
+      subscriptions: [],
+      transformers: []
     };
 
     const north = this.runNorth(testToRun, logger, { cache: 'baseCacheFolder', archive: 'baseArchiveFolder', error: 'baseErrorFolder' });
@@ -219,7 +271,8 @@ export default class NorthService {
       this.retrieveSecretsFromNorth(retrieveSecretsFromNorth, manifest),
       this.encryptionService,
       this.scanModeRepository.findAll(),
-      this.southConnectorRepository.findAllSouth()
+      this.southConnectorRepository.findAllSouth(),
+      this.transformerService.findAll()
     );
     this.northConnectorRepository.saveNorthConnector(northEntity);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
@@ -242,124 +295,49 @@ export default class NorthService {
     return this.dataStreamEngine.getNorthDataStream(northConnectorId);
   }
 
-  async getErrorFiles(
+  async searchCacheContent(
     northConnectorId: string,
-    start: Instant | null,
-    end: Instant | null,
-    filenameContains: string | null
-  ): Promise<Array<NorthCacheFiles>> {
-    return await this.dataStreamEngine.getErrorFiles(northConnectorId, start, end, filenameContains);
+    searchParams: CacheSearchParam,
+    folder: 'cache' | 'archive' | 'error'
+  ): Promise<Array<{ metadataFilename: string; metadata: CacheMetadata }>> {
+    return await this.dataStreamEngine.searchCacheContent(northConnectorId, searchParams, folder);
   }
 
-  async getErrorFileContent(northConnectorId: string, filename: string): Promise<ReadStream | null> {
-    return await this.dataStreamEngine.getErrorFileContent(northConnectorId, filename);
-  }
-
-  async removeErrorFiles(northConnectorId: string, filenames: Array<string>): Promise<void> {
-    return await this.dataStreamEngine.removeErrorFiles(northConnectorId, filenames);
-  }
-
-  async retryErrorFiles(northConnectorId: string, filenames: Array<string>): Promise<void> {
-    return await this.dataStreamEngine.retryErrorFiles(northConnectorId, filenames);
-  }
-
-  async removeAllErrorFiles(northConnectorId: string): Promise<void> {
-    return await this.dataStreamEngine.removeAllErrorFiles(northConnectorId);
-  }
-
-  async retryAllErrorFiles(northConnectorId: string): Promise<void> {
-    return await this.dataStreamEngine.retryAllErrorFiles(northConnectorId);
-  }
-
-  async getCacheFiles(
+  async getCacheContentFileStream(
     northConnectorId: string,
-    start: Instant | null,
-    end: Instant | null,
-    filenameContains: string | null
-  ): Promise<Array<NorthCacheFiles>> {
-    return await this.dataStreamEngine.getCacheFiles(northConnectorId, start, end, filenameContains);
+    folder: 'cache' | 'archive' | 'error',
+    filename: string
+  ): Promise<ReadStream | null> {
+    return await this.dataStreamEngine.getCacheContentFileStream(northConnectorId, folder, filename);
   }
 
-  async getCacheFileContent(northConnectorId: string, filename: string): Promise<ReadStream | null> {
-    return await this.dataStreamEngine.getCacheFileContent(northConnectorId, filename);
-  }
-
-  async removeCacheFiles(northConnectorId: string, filenames: Array<string>): Promise<void> {
-    return await this.dataStreamEngine.removeCacheFiles(northConnectorId, filenames);
-  }
-
-  async archiveCacheFiles(northConnectorId: string, filenames: Array<string>): Promise<void> {
-    return await this.dataStreamEngine.archiveCacheFiles(northConnectorId, filenames);
-  }
-
-  async removeAllCacheFiles(northConnectorId: string): Promise<void> {
-    return await this.dataStreamEngine.removeAllCacheFiles(northConnectorId);
-  }
-
-  async getArchiveFiles(
+  async removeCacheContent(
     northConnectorId: string,
-    start: Instant | null,
-    end: Instant | null,
-    filenameContains: string | null
-  ): Promise<Array<NorthCacheFiles>> {
-    return await this.dataStreamEngine.getArchiveFiles(northConnectorId, start, end, filenameContains);
+    folder: 'cache' | 'archive' | 'error',
+    metadataFilenameList: Array<string>
+  ): Promise<void> {
+    return await this.dataStreamEngine.removeCacheContent(northConnectorId, folder, metadataFilenameList);
   }
 
-  async getArchiveFileContent(northConnectorId: string, filename: string): Promise<ReadStream | null> {
-    return await this.dataStreamEngine.getArchiveFileContent(northConnectorId, filename);
+  async removeAllCacheContent(northConnectorId: string, folder: 'cache' | 'archive' | 'error'): Promise<void> {
+    return await this.dataStreamEngine.removeAllCacheContent(northConnectorId, folder);
   }
 
-  async removeArchiveFiles(northConnectorId: string, filenames: Array<string>): Promise<void> {
-    return await this.dataStreamEngine.removeArchiveFiles(northConnectorId, filenames);
-  }
-
-  async retryArchiveFiles(northConnectorId: string, filenames: Array<string>): Promise<void> {
-    return await this.dataStreamEngine.retryArchiveFiles(northConnectorId, filenames);
-  }
-
-  async removeAllArchiveFiles(northConnectorId: string): Promise<void> {
-    return await this.dataStreamEngine.removeAllArchiveFiles(northConnectorId);
-  }
-
-  async retryAllArchiveFiles(northConnectorId: string): Promise<void> {
-    return await this.dataStreamEngine.retryAllArchiveFiles(northConnectorId);
-  }
-
-  async getCacheValues(northConnectorId: string, filenameContains: string): Promise<Array<NorthCacheFiles>> {
-    return await this.dataStreamEngine.getCacheValues(northConnectorId, filenameContains);
-  }
-
-  async removeCacheValues(northConnectorId: string, filenames: Array<string>): Promise<void> {
-    return await this.dataStreamEngine.removeCacheValues(northConnectorId, filenames);
-  }
-
-  async removeAllCacheValues(northConnectorId: string): Promise<void> {
-    return await this.dataStreamEngine.removeAllCacheValues(northConnectorId);
-  }
-
-  async getErrorValues(
+  async moveCacheContent(
     northConnectorId: string,
-    start: Instant | null,
-    end: Instant | null,
-    filenameContains: string | null
-  ): Promise<Array<NorthCacheFiles>> {
-    return await this.dataStreamEngine.getErrorValues(northConnectorId, start, end, filenameContains);
+    originFolder: 'cache' | 'archive' | 'error',
+    destinationFolder: 'cache' | 'archive' | 'error',
+    cacheContentList: Array<string>
+  ): Promise<void> {
+    return await this.dataStreamEngine.moveCacheContent(northConnectorId, originFolder, destinationFolder, cacheContentList);
   }
 
-  async removeErrorValues(northConnectorId: string, filenames: Array<string>): Promise<void> {
-    return await this.dataStreamEngine.removeErrorValues(northConnectorId, filenames);
-  }
-
-  async retryErrorValues(northConnectorId: string, filenames: Array<string>): Promise<void> {
-    return await this.dataStreamEngine.retryErrorValues(northConnectorId, filenames);
-  }
-
-  async removeAllErrorValues(northConnectorId: string): Promise<void> {
-    return await this.dataStreamEngine.removeAllErrorValues(northConnectorId);
-  }
-
-  async retryAllErrorValues(northConnectorId: string): Promise<void> {
-    return await this.dataStreamEngine.retryAllErrorValues(northConnectorId);
+  async moveAllCacheContent(
+    northConnectorId: string,
+    originFolder: 'cache' | 'archive' | 'error',
+    destinationFolder: 'cache' | 'archive' | 'error'
+  ): Promise<void> {
+    return await this.dataStreamEngine.moveAllCacheContent(northConnectorId, originFolder, destinationFolder);
   }
 
   async updateNorth<N extends NorthSettings>(northConnectorId: string, command: NorthConnectorCommandDTO<N>) {
@@ -380,7 +358,8 @@ export default class NorthService {
       previousSettings,
       this.encryptionService,
       this.scanModeRepository.findAll(),
-      this.southConnectorRepository.findAllSouth()
+      this.southConnectorRepository.findAllSouth(),
+      this.transformerService.findAll()
     );
     this.northConnectorRepository.saveNorthConnector(northEntity);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
@@ -546,23 +525,28 @@ export const toNorthConnectorDTO = <N extends NorthSettings>(
       northManifestList.find(element => element.id === northEntity.type)!.settings
     ),
     caching: {
-      scanModeId: northEntity.caching.scanModeId,
-      retryInterval: northEntity.caching.retryInterval,
-      retryCount: northEntity.caching.retryCount,
-      maxSize: northEntity.caching.maxSize,
-      oibusTimeValues: {
-        groupCount: northEntity.caching.oibusTimeValues.groupCount,
-        maxSendCount: northEntity.caching.oibusTimeValues.maxSendCount
+      trigger: {
+        scanModeId: northEntity.caching.trigger.scanModeId,
+        numberOfElements: northEntity.caching.trigger.numberOfElements,
+        numberOfFiles: northEntity.caching.trigger.numberOfFiles
       },
-      rawFiles: {
-        sendFileImmediately: northEntity.caching.rawFiles.sendFileImmediately,
-        archive: {
-          enabled: northEntity.caching.rawFiles.archive.enabled,
-          retentionDuration: northEntity.caching.rawFiles.archive.retentionDuration
-        }
+      throttling: {
+        runMinDelay: northEntity.caching.throttling.runMinDelay,
+        maxSize: northEntity.caching.throttling.maxSize,
+        maxNumberOfElements: northEntity.caching.throttling.maxNumberOfElements
+      },
+      error: {
+        retryInterval: northEntity.caching.error.retryInterval,
+        retryCount: northEntity.caching.error.retryCount,
+        retentionDuration: northEntity.caching.error.retentionDuration
+      },
+      archive: {
+        enabled: northEntity.caching.archive.enabled,
+        retentionDuration: northEntity.caching.archive.retentionDuration
       }
     },
-    subscriptions: northEntity.subscriptions
+    subscriptions: northEntity.subscriptions,
+    transformers: northEntity.transformers.map(transformer => toTransformerLightDTO(transformer))
   };
 };
 
@@ -582,7 +566,8 @@ export const copyNorthConnectorCommandToNorthEntity = async <N extends NorthSett
   currentSettings: NorthConnectorEntity<N> | null,
   encryptionService: EncryptionService,
   scanModes: Array<ScanMode>,
-  southConnectors: Array<SouthConnectorLightDTO>
+  southConnectors: Array<SouthConnectorLightDTO>,
+  transformers: Array<TransformerLightDTO>
 ): Promise<void> => {
   northEntity.name = command.name;
   northEntity.type = command.type;
@@ -594,20 +579,24 @@ export const copyNorthConnectorCommandToNorthEntity = async <N extends NorthSett
     northManifestList.find(element => element.id === northEntity.type)!.settings
   );
   northEntity.caching = {
-    scanModeId: checkScanMode(scanModes, command.caching.scanModeId, command.caching.scanModeName),
-    retryInterval: command.caching.retryInterval,
-    retryCount: command.caching.retryCount,
-    maxSize: command.caching.maxSize,
-    oibusTimeValues: {
-      groupCount: command.caching.oibusTimeValues.groupCount,
-      maxSendCount: command.caching.oibusTimeValues.maxSendCount
+    trigger: {
+      scanModeId: checkScanMode(scanModes, command.caching.trigger.scanModeId, command.caching.trigger.scanModeName),
+      numberOfElements: command.caching.trigger.numberOfElements,
+      numberOfFiles: command.caching.trigger.numberOfFiles
     },
-    rawFiles: {
-      sendFileImmediately: command.caching.rawFiles.sendFileImmediately,
-      archive: {
-        enabled: command.caching.rawFiles.archive.enabled,
-        retentionDuration: command.caching.rawFiles.archive.retentionDuration
-      }
+    throttling: {
+      runMinDelay: command.caching.throttling.runMinDelay,
+      maxSize: command.caching.throttling.maxSize,
+      maxNumberOfElements: command.caching.throttling.maxNumberOfElements
+    },
+    error: {
+      retryInterval: command.caching.error.retryInterval,
+      retryCount: command.caching.error.retryCount,
+      retentionDuration: command.caching.error.retentionDuration
+    },
+    archive: {
+      enabled: command.caching.archive.enabled,
+      retentionDuration: command.caching.archive.retentionDuration
     }
   };
   northEntity.subscriptions = command.subscriptions.map(subscriptionId => {
@@ -616,5 +605,12 @@ export const copyNorthConnectorCommandToNorthEntity = async <N extends NorthSett
       throw new Error(`Could not find South Connector ${subscriptionId}`);
     }
     return subscription;
+  });
+  northEntity.transformers = command.transformers.map(transformerId => {
+    const transformer = transformers.find(element => element.id === transformerId);
+    if (!transformer) {
+      throw new Error(`Could not find OIBus transformer ${transformerId}`);
+    }
+    return transformer;
   });
 };

@@ -211,8 +211,8 @@ export default class OIBusService {
     this.logger.info(`OIBus stopped in ${startDuration} ms`);
   }
 
-  async addExternalContent(northId: string, content: OIBusContent): Promise<void> {
-    await this.dataStreamEngine.addExternalContent(northId, content);
+  async addExternalContent(northId: string, content: OIBusContent, source: string): Promise<void> {
+    await this.dataStreamEngine.addExternalContent(northId, content, source);
   }
 
   setLogger(logger: pino.Logger) {
