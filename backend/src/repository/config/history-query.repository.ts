@@ -29,7 +29,7 @@ export default class HistoryQueryRepository {
       `SELECT id, name, description, status, start_time, end_time, ` +
       `south_type, north_type, south_settings, north_settings, ` +
       `caching_scan_mode_id, caching_group_count, caching_retry_interval, ` +
-      `caching_retry_count, caching_max_send_count, ` +
+      `caching_retry_count, caching_run_min_delay, caching_max_send_count, ` +
       `caching_send_file_immediately, caching_max_size, archive_enabled, ` +
       `archive_retention_duration FROM ${HISTORY_QUERIES_TABLE};`;
     const result = this.database.prepare(query).all();
@@ -44,7 +44,7 @@ export default class HistoryQueryRepository {
       `SELECT id, name, description, status, start_time, end_time, ` +
       `south_type, north_type, south_settings, north_settings, ` +
       `caching_scan_mode_id, caching_group_count, caching_retry_interval, ` +
-      `caching_retry_count, caching_max_send_count, ` +
+      `caching_retry_count, caching_run_min_delay, caching_max_send_count, ` +
       `caching_send_file_immediately, caching_max_size, archive_enabled, ` +
       `archive_retention_duration FROM ${HISTORY_QUERIES_TABLE} WHERE id = ?;`;
     const result = this.database.prepare(query).get(id);
@@ -63,8 +63,8 @@ export default class HistoryQueryRepository {
         const insertQuery =
           `INSERT INTO ${HISTORY_QUERIES_TABLE} (id, name, description, status, ` +
           `start_time, end_time, south_type, north_type, south_settings, north_settings, caching_scan_mode_id, caching_group_count, ` +
-          `caching_retry_interval, caching_retry_count, caching_max_send_count, caching_send_file_immediately, caching_max_size, archive_enabled, ` +
-          `archive_retention_duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+          `caching_retry_interval, caching_retry_count, caching_run_min_delay, caching_max_send_count, caching_send_file_immediately, caching_max_size, archive_enabled, ` +
+          `archive_retention_duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
         this.database.prepare(insertQuery).run(
           historyQuery.id,
           historyQuery.name,
@@ -80,17 +80,18 @@ export default class HistoryQueryRepository {
           historyQuery.caching.oibusTimeValues.groupCount,
           historyQuery.caching.retryInterval,
           historyQuery.caching.retryCount,
+          historyQuery.caching.runMinDelay,
           historyQuery.caching.oibusTimeValues.maxSendCount,
           +historyQuery.caching.rawFiles.sendFileImmediately,
           historyQuery.caching.maxSize,
-          +historyQuery.caching.rawFiles.archive.enabled,
-          historyQuery.caching.rawFiles.archive.retentionDuration
+          +historyQuery.caching.archive.enabled,
+          historyQuery.caching.archive.retentionDuration
         );
       } else {
         const query =
           `UPDATE ${HISTORY_QUERIES_TABLE} SET name = ?, description = ?, start_time = ?, ` +
           `end_time = ?, south_type = ?, north_type = ?, south_settings = ?, north_settings = ?,` +
-          `caching_scan_mode_id = ?, caching_group_count = ?, caching_retry_interval = ?, caching_retry_count = ?, ` +
+          `caching_scan_mode_id = ?, caching_group_count = ?, caching_retry_interval = ?, caching_retry_count = ?, caching_run_min_delay = ?, ` +
           `caching_max_send_count = ?, caching_send_file_immediately = ?, caching_max_size = ?, archive_enabled = ?, archive_retention_duration = ? ` +
           `WHERE id = ?;`;
         this.database
@@ -108,11 +109,12 @@ export default class HistoryQueryRepository {
             historyQuery.caching.oibusTimeValues.groupCount,
             historyQuery.caching.retryInterval,
             historyQuery.caching.retryCount,
+            historyQuery.caching.runMinDelay,
             historyQuery.caching.oibusTimeValues.maxSendCount,
             +historyQuery.caching.rawFiles.sendFileImmediately,
             historyQuery.caching.maxSize,
-            +historyQuery.caching.rawFiles.archive.enabled,
-            historyQuery.caching.rawFiles.archive.retentionDuration,
+            +historyQuery.caching.archive.enabled,
+            historyQuery.caching.archive.retentionDuration,
             historyQuery.id
           );
       }
@@ -314,17 +316,18 @@ export default class HistoryQueryRepository {
         scanModeId: result.caching_scan_mode_id as string,
         retryInterval: result.caching_retry_interval as number,
         retryCount: result.caching_retry_count as number,
+        runMinDelay: result.caching_run_min_delay as number,
         maxSize: result.caching_max_size as number,
         oibusTimeValues: {
           groupCount: result.caching_group_count as number,
           maxSendCount: result.caching_max_send_count as number
         },
         rawFiles: {
-          sendFileImmediately: Boolean(result.caching_send_file_immediately),
-          archive: {
-            enabled: Boolean(result.archive_enabled),
-            retentionDuration: result.archive_retention_duration as number
-          }
+          sendFileImmediately: Boolean(result.caching_send_file_immediately)
+        },
+        archive: {
+          enabled: Boolean(result.archive_enabled),
+          retentionDuration: result.archive_retention_duration as number
         }
       },
       items: this.findAllItemsForHistoryQuery<I>(result.id as string)

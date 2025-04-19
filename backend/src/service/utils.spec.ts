@@ -22,13 +22,13 @@ import {
   generateRandomId,
   generateReplacementParameters,
   getCommandLineArguments,
-  getFilesFiltered,
   getOIBusInfo,
   getPlatformFromOsType,
   httpGetWithBody,
   itemToFlattenedCSV,
   logQuery,
   persistResults,
+  pipeTransformers,
   unzip,
   validateCronExpression
 } from './utils';
@@ -37,14 +37,14 @@ import pino from 'pino';
 import AdmZip from 'adm-zip';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import { DateTimeType } from '../../shared/model/types';
-import Stream from 'node:stream';
+import Stream, { Readable, Writable } from 'node:stream';
 import http from 'node:http';
 import https from 'node:https';
 import os from 'node:os';
 import { EngineSettingsDTO, OIBusInfo } from '../../shared/model/engine.model';
 import cronstrue from 'cronstrue';
 import testData from '../tests/utils/test-data';
-import { mockBaseFolders } from '../tests/utils/test-utils';
+import { createMockReadStream, createMockWriteStream, mockBaseFolders } from '../tests/utils/test-utils';
 
 jest.mock('node:zlib');
 jest.mock('node:fs/promises');
@@ -186,6 +186,56 @@ describe('Service utils', () => {
       await createBaseFolders(mockBaseFolders(testData.north.list[0].id));
       expect(fs.mkdir).not.toHaveBeenCalled();
       expect(fs.stat).toHaveBeenCalledTimes(3);
+    });
+  });
+
+  describe('pipeTransformers', () => {
+    beforeEach(() => {
+      jest.resetAllMocks();
+    });
+
+    it('should properly transform string stream', async () => {
+      const readStream = createMockReadStream();
+      // Push data into the read stream
+      readStream.push('Streaming Test Data');
+      readStream.push(null); // End the stream
+
+      const writeStream = createMockWriteStream();
+      await pipeTransformers(readStream, writeStream);
+      expect(writeStream.data).toEqual(['Streaming Test Data']);
+    });
+
+    it('should reject when the ReadStream throws an error', async () => {
+      const errorStream = new Readable({
+        read() {
+          this.emit('error', new Error('Stream Read Error'));
+        }
+      });
+
+      const writeStream = new Writable({
+        write(_chunk, _encoding, callback) {
+          callback(); // Normal write
+        }
+      });
+
+      await expect(pipeTransformers(errorStream, writeStream)).rejects.toThrow('Stream Read Error');
+    });
+
+    it('should reject when the WriteStream throws an error', async () => {
+      const readStream = new Readable({
+        read() {
+          this.push('Some Data');
+          this.push(null); // End stream
+        }
+      });
+
+      const errorStream = new Writable({
+        write(_chunk, _encoding, callback) {
+          callback(new Error('Stream Write Error'));
+        }
+      });
+
+      await expect(pipeTransformers(readStream, errorStream)).rejects.toThrow('Stream Write Error');
     });
   });
 
@@ -1026,66 +1076,6 @@ describe('Service utils', () => {
     expect(getPlatformFromOsType('Darwin')).toEqual('macos');
     expect(getPlatformFromOsType('Windows_NT')).toEqual('windows');
     expect(getPlatformFromOsType('unknown')).toEqual('unknown');
-  });
-
-  describe('getFilesFiltered', () => {
-    const logger: pino.Logger = new PinoLogger();
-
-    beforeEach(() => {
-      jest.resetAllMocks();
-      jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    });
-
-    it('should properly get files', async () => {
-      (fs.readdir as jest.Mock).mockImplementation(() => ['file1', 'file2', 'file3', 'anotherFile', 'errorFile']);
-      (fs.stat as jest.Mock)
-        .mockImplementationOnce(() => ({ mtimeMs: DateTime.fromISO('2020-02-02T04:02:02.222Z').toMillis() }))
-        .mockImplementationOnce(() => ({ mtimeMs: DateTime.fromISO('2020-02-02T06:02:02.222Z').toMillis() }))
-        .mockImplementationOnce(() => ({ mtimeMs: DateTime.fromISO('2020-02-04T02:02:02.222Z').toMillis() }))
-        .mockImplementationOnce(() => ({ mtimeMs: DateTime.fromISO('2020-02-05T02:02:02.222Z').toMillis() }))
-        .mockImplementationOnce(() => {
-          throw new Error('error file');
-        });
-
-      const files = await getFilesFiltered('errorFolder', '2020-02-02T02:02:02.222Z', '2020-02-03T02:02:02.222Z', 'file', logger);
-
-      expect(files).toEqual([
-        { filename: 'file1', modificationDate: '2020-02-02T04:02:02.222Z' },
-        { filename: 'file2', modificationDate: '2020-02-02T06:02:02.222Z' }
-      ]);
-      expect(logger.error).toHaveBeenCalledWith(
-        `Error while reading in errorFolder folder file stats "${path.join('errorFolder', 'errorFile')}": Error: error file`
-      );
-    });
-
-    it('should properly get files', async () => {
-      (fs.readdir as jest.Mock).mockImplementation(() => ['file1', 'file2']);
-      (fs.stat as jest.Mock)
-        .mockReturnValueOnce({ mtimeMs: DateTime.fromISO('2000-02-02T02:02:02.222Z').toMillis() })
-        .mockReturnValueOnce({ mtimeMs: DateTime.fromISO('2030-02-02T02:02:02.222Z').toMillis() });
-
-      const files = await getFilesFiltered('errorFolder', '2020-02-02T02:02:02.222Z', '2020-02-03T02:02:02.222Z', 'file', logger);
-
-      expect(files).toEqual([]);
-    });
-
-    it('should properly get files without filtering', async () => {
-      (fs.readdir as jest.Mock).mockImplementation(() => ['file1', 'file2']);
-      (fs.stat as jest.Mock)
-        .mockReturnValueOnce({ mtimeMs: DateTime.fromISO('2000-02-02T02:02:02.222Z').toMillis(), size: 100 })
-        .mockReturnValueOnce({ mtimeMs: DateTime.fromISO('2030-02-02T02:02:02.222Z').toMillis(), size: 60 });
-
-      const files = await getFilesFiltered('errorFolder', '', '', '', logger);
-
-      expect(files).toEqual([
-        { filename: 'file1', modificationDate: '2000-02-02T02:02:02.222Z', size: 100 },
-        {
-          filename: 'file2',
-          modificationDate: '2030-02-02T02:02:02.222Z',
-          size: 60
-        }
-      ]);
-    });
   });
 
   describe('validateCronExpression', () => {

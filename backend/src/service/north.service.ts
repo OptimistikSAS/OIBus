@@ -3,7 +3,6 @@ import pino from 'pino';
 import NorthConnector from '../north/north-connector';
 import NorthConsole from '../north/north-console/north-console';
 import {
-  NorthCacheFiles,
   NorthConnectorCommandDTO,
   NorthConnectorDTO,
   NorthConnectorLightDTO,
@@ -51,8 +50,8 @@ import { PassThrough } from 'node:stream';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { BaseFolders } from '../model/types';
-import { Instant } from '../../shared/model/types';
 import { ReadStream } from 'node:fs';
+import { CacheMetadata, CacheSearchParam } from '../../shared/model/engine.model';
 
 export const northManifestList: Array<NorthConnectorManifest> = [
   consoleManifest,
@@ -242,124 +241,49 @@ export default class NorthService {
     return this.dataStreamEngine.getNorthDataStream(northConnectorId);
   }
 
-  async getErrorFiles(
+  async searchCacheContent(
     northConnectorId: string,
-    start: Instant | null,
-    end: Instant | null,
-    filenameContains: string | null
-  ): Promise<Array<NorthCacheFiles>> {
-    return await this.dataStreamEngine.getErrorFiles(northConnectorId, start, end, filenameContains);
+    searchParams: CacheSearchParam,
+    folder: 'cache' | 'archive' | 'error'
+  ): Promise<Array<{ metadataFilename: string; metadata: CacheMetadata }>> {
+    return await this.dataStreamEngine.searchCacheContent(northConnectorId, searchParams, folder);
   }
 
-  async getErrorFileContent(northConnectorId: string, filename: string): Promise<ReadStream | null> {
-    return await this.dataStreamEngine.getErrorFileContent(northConnectorId, filename);
-  }
-
-  async removeErrorFiles(northConnectorId: string, filenames: Array<string>): Promise<void> {
-    return await this.dataStreamEngine.removeErrorFiles(northConnectorId, filenames);
-  }
-
-  async retryErrorFiles(northConnectorId: string, filenames: Array<string>): Promise<void> {
-    return await this.dataStreamEngine.retryErrorFiles(northConnectorId, filenames);
-  }
-
-  async removeAllErrorFiles(northConnectorId: string): Promise<void> {
-    return await this.dataStreamEngine.removeAllErrorFiles(northConnectorId);
-  }
-
-  async retryAllErrorFiles(northConnectorId: string): Promise<void> {
-    return await this.dataStreamEngine.retryAllErrorFiles(northConnectorId);
-  }
-
-  async getCacheFiles(
+  async getCacheContentFileStream(
     northConnectorId: string,
-    start: Instant | null,
-    end: Instant | null,
-    filenameContains: string | null
-  ): Promise<Array<NorthCacheFiles>> {
-    return await this.dataStreamEngine.getCacheFiles(northConnectorId, start, end, filenameContains);
+    folder: 'cache' | 'archive' | 'error',
+    filename: string
+  ): Promise<ReadStream | null> {
+    return await this.dataStreamEngine.getCacheContentFileStream(northConnectorId, folder, filename);
   }
 
-  async getCacheFileContent(northConnectorId: string, filename: string): Promise<ReadStream | null> {
-    return await this.dataStreamEngine.getCacheFileContent(northConnectorId, filename);
-  }
-
-  async removeCacheFiles(northConnectorId: string, filenames: Array<string>): Promise<void> {
-    return await this.dataStreamEngine.removeCacheFiles(northConnectorId, filenames);
-  }
-
-  async archiveCacheFiles(northConnectorId: string, filenames: Array<string>): Promise<void> {
-    return await this.dataStreamEngine.archiveCacheFiles(northConnectorId, filenames);
-  }
-
-  async removeAllCacheFiles(northConnectorId: string): Promise<void> {
-    return await this.dataStreamEngine.removeAllCacheFiles(northConnectorId);
-  }
-
-  async getArchiveFiles(
+  async removeCacheContent(
     northConnectorId: string,
-    start: Instant | null,
-    end: Instant | null,
-    filenameContains: string | null
-  ): Promise<Array<NorthCacheFiles>> {
-    return await this.dataStreamEngine.getArchiveFiles(northConnectorId, start, end, filenameContains);
+    folder: 'cache' | 'archive' | 'error',
+    metadataFilenameList: Array<string>
+  ): Promise<void> {
+    return await this.dataStreamEngine.removeCacheContent(northConnectorId, folder, metadataFilenameList);
   }
 
-  async getArchiveFileContent(northConnectorId: string, filename: string): Promise<ReadStream | null> {
-    return await this.dataStreamEngine.getArchiveFileContent(northConnectorId, filename);
+  async removeAllCacheContent(northConnectorId: string, folder: 'cache' | 'archive' | 'error'): Promise<void> {
+    return await this.dataStreamEngine.removeAllCacheContent(northConnectorId, folder);
   }
 
-  async removeArchiveFiles(northConnectorId: string, filenames: Array<string>): Promise<void> {
-    return await this.dataStreamEngine.removeArchiveFiles(northConnectorId, filenames);
-  }
-
-  async retryArchiveFiles(northConnectorId: string, filenames: Array<string>): Promise<void> {
-    return await this.dataStreamEngine.retryArchiveFiles(northConnectorId, filenames);
-  }
-
-  async removeAllArchiveFiles(northConnectorId: string): Promise<void> {
-    return await this.dataStreamEngine.removeAllArchiveFiles(northConnectorId);
-  }
-
-  async retryAllArchiveFiles(northConnectorId: string): Promise<void> {
-    return await this.dataStreamEngine.retryAllArchiveFiles(northConnectorId);
-  }
-
-  async getCacheValues(northConnectorId: string, filenameContains: string): Promise<Array<NorthCacheFiles>> {
-    return await this.dataStreamEngine.getCacheValues(northConnectorId, filenameContains);
-  }
-
-  async removeCacheValues(northConnectorId: string, filenames: Array<string>): Promise<void> {
-    return await this.dataStreamEngine.removeCacheValues(northConnectorId, filenames);
-  }
-
-  async removeAllCacheValues(northConnectorId: string): Promise<void> {
-    return await this.dataStreamEngine.removeAllCacheValues(northConnectorId);
-  }
-
-  async getErrorValues(
+  async moveCacheContent(
     northConnectorId: string,
-    start: Instant | null,
-    end: Instant | null,
-    filenameContains: string | null
-  ): Promise<Array<NorthCacheFiles>> {
-    return await this.dataStreamEngine.getErrorValues(northConnectorId, start, end, filenameContains);
+    originFolder: 'cache' | 'archive' | 'error',
+    destinationFolder: 'cache' | 'archive' | 'error',
+    cacheContentList: Array<string>
+  ): Promise<void> {
+    return await this.dataStreamEngine.moveCacheContent(northConnectorId, originFolder, destinationFolder, cacheContentList);
   }
 
-  async removeErrorValues(northConnectorId: string, filenames: Array<string>): Promise<void> {
-    return await this.dataStreamEngine.removeErrorValues(northConnectorId, filenames);
-  }
-
-  async retryErrorValues(northConnectorId: string, filenames: Array<string>): Promise<void> {
-    return await this.dataStreamEngine.retryErrorValues(northConnectorId, filenames);
-  }
-
-  async removeAllErrorValues(northConnectorId: string): Promise<void> {
-    return await this.dataStreamEngine.removeAllErrorValues(northConnectorId);
-  }
-
-  async retryAllErrorValues(northConnectorId: string): Promise<void> {
-    return await this.dataStreamEngine.retryAllErrorValues(northConnectorId);
+  async moveAllCacheContent(
+    northConnectorId: string,
+    originFolder: 'cache' | 'archive' | 'error',
+    destinationFolder: 'cache' | 'archive' | 'error'
+  ): Promise<void> {
+    return await this.dataStreamEngine.moveAllCacheContent(northConnectorId, originFolder, destinationFolder);
   }
 
   async updateNorth<N extends NorthSettings>(northConnectorId: string, command: NorthConnectorCommandDTO<N>) {
@@ -549,17 +473,18 @@ export const toNorthConnectorDTO = <N extends NorthSettings>(
       scanModeId: northEntity.caching.scanModeId,
       retryInterval: northEntity.caching.retryInterval,
       retryCount: northEntity.caching.retryCount,
+      runMinDelay: northEntity.caching.runMinDelay,
       maxSize: northEntity.caching.maxSize,
       oibusTimeValues: {
         groupCount: northEntity.caching.oibusTimeValues.groupCount,
         maxSendCount: northEntity.caching.oibusTimeValues.maxSendCount
       },
       rawFiles: {
-        sendFileImmediately: northEntity.caching.rawFiles.sendFileImmediately,
-        archive: {
-          enabled: northEntity.caching.rawFiles.archive.enabled,
-          retentionDuration: northEntity.caching.rawFiles.archive.retentionDuration
-        }
+        sendFileImmediately: northEntity.caching.rawFiles.sendFileImmediately
+      },
+      archive: {
+        enabled: northEntity.caching.archive.enabled,
+        retentionDuration: northEntity.caching.archive.retentionDuration
       }
     },
     subscriptions: northEntity.subscriptions
@@ -597,17 +522,18 @@ export const copyNorthConnectorCommandToNorthEntity = async <N extends NorthSett
     scanModeId: checkScanMode(scanModes, command.caching.scanModeId, command.caching.scanModeName),
     retryInterval: command.caching.retryInterval,
     retryCount: command.caching.retryCount,
+    runMinDelay: command.caching.runMinDelay,
     maxSize: command.caching.maxSize,
     oibusTimeValues: {
       groupCount: command.caching.oibusTimeValues.groupCount,
       maxSendCount: command.caching.oibusTimeValues.maxSendCount
     },
     rawFiles: {
-      sendFileImmediately: command.caching.rawFiles.sendFileImmediately,
-      archive: {
-        enabled: command.caching.rawFiles.archive.enabled,
-        retentionDuration: command.caching.rawFiles.archive.retentionDuration
-      }
+      sendFileImmediately: command.caching.rawFiles.sendFileImmediately
+    },
+    archive: {
+      enabled: command.caching.archive.enabled,
+      retentionDuration: command.caching.archive.retentionDuration
     }
   };
   northEntity.subscriptions = command.subscriptions.map(subscriptionId => {
