@@ -88,20 +88,24 @@ describe('EditHistoryQueryComponent', () => {
     northSettings: {} as NorthSettings,
     southSettings: {} as SouthSettings,
     caching: {
-      scanModeId: 'scanModeId1',
-      retryInterval: 1000,
-      retryCount: 3,
-      maxSize: 30,
-      oibusTimeValues: {
-        groupCount: 1000,
-        maxSendCount: 10000
+      trigger: {
+        scanModeId: 'scanModeId1',
+        numberOfElements: 1_000,
+        numberOfFiles: 1
       },
-      rawFiles: {
-        sendFileImmediately: true,
-        archive: {
-          enabled: false,
-          retentionDuration: 0
-        }
+      throttling: {
+        runMinDelay: 200,
+        maxSize: 30,
+        maxNumberOfElements: 10_000
+      },
+      error: {
+        retryInterval: 1_000,
+        retryCount: 3,
+        retentionDuration: 24
+      },
+      archive: {
+        enabled: false,
+        retentionDuration: 0
       }
     },
     items: [

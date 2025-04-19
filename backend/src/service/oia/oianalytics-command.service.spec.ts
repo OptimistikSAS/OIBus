@@ -70,6 +70,7 @@ import { CertificateCommandDTO } from '../../../shared/model/certificate.model';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import HistoryQueryService from '../history-query.service';
 import HistoryQueryServiceMock from '../../tests/__mocks__/service/history-query-service.mock';
+import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
 
 jest.mock('node:crypto');
 jest.mock('node:fs/promises');
@@ -444,6 +445,72 @@ describe('OIAnalytics Command Service', () => {
       messageRetryInterval: (testData.oIAnalytics.commands.oIBusList[15] as OIBusUpdateRegistrationSettingsCommand).commandContent
         .messageRetryInterval,
       commandPermissions: testData.oIAnalytics.registration.completed.commandPermissions
+    });
+    expect(oIAnalyticsRegistrationService.editConnectionSettings).toHaveBeenCalledTimes(1);
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      testData.oIAnalytics.commands.oIBusList[15].id,
+      testData.constants.dates.FAKE_NOW,
+      'Registration settings updated successfully'
+    );
+  });
+
+  it('should execute update-registration-settings command and not enabling permissions if disabled', async () => {
+    const registration: OIAnalyticsRegistration = {
+      ...testData.oIAnalytics.registration.completed,
+      commandPermissions: {
+        updateVersion: false,
+        restartEngine: false,
+        regenerateCipherKeys: false,
+        updateEngineSettings: false,
+        updateRegistrationSettings: false,
+        createScanMode: false,
+        updateScanMode: false,
+        deleteScanMode: false,
+        createIpFilter: false,
+        updateIpFilter: false,
+        deleteIpFilter: false,
+        createCertificate: false,
+        updateCertificate: false,
+        deleteCertificate: false,
+        createHistoryQuery: false,
+        updateHistoryQuery: false,
+        deleteHistoryQuery: false,
+        createOrUpdateHistoryItemsFromCsv: false,
+        testHistoryNorthConnection: false,
+        testHistorySouthConnection: false,
+        testHistorySouthItem: false,
+        createSouth: false,
+        updateSouth: false,
+        deleteSouth: false,
+        createOrUpdateSouthItemsFromCsv: false,
+        testSouthConnection: false,
+        testSouthItem: false,
+        createNorth: false,
+        updateNorth: false,
+        deleteNorth: false,
+        testNorthConnection: false
+      }
+    };
+
+    await service['executeUpdateRegistrationSettingsCommand'](
+      testData.oIAnalytics.commands.oIBusList[15] as OIBusUpdateRegistrationSettingsCommand,
+      registration
+    );
+
+    expect(oIAnalyticsRegistrationService.editConnectionSettings).toHaveBeenCalledWith({
+      host: registration.host,
+      useProxy: registration.useProxy,
+      proxyUrl: registration.proxyUrl,
+      proxyUsername: registration.proxyUsername,
+      proxyPassword: '',
+      acceptUnauthorized: registration.acceptUnauthorized,
+      commandRefreshInterval: (testData.oIAnalytics.commands.oIBusList[15] as OIBusUpdateRegistrationSettingsCommand).commandContent
+        .commandRefreshInterval,
+      commandRetryInterval: (testData.oIAnalytics.commands.oIBusList[15] as OIBusUpdateRegistrationSettingsCommand).commandContent
+        .commandRetryInterval,
+      messageRetryInterval: (testData.oIAnalytics.commands.oIBusList[15] as OIBusUpdateRegistrationSettingsCommand).commandContent
+        .messageRetryInterval,
+      commandPermissions: registration.commandPermissions
     });
     expect(oIAnalyticsRegistrationService.editConnectionSettings).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(

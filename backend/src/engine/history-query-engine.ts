@@ -8,6 +8,8 @@ import HistoryQueryMetricsService from '../service/metrics/history-query-metrics
 import HistoryQueryMetricsRepository from '../repository/logs/history-query-metrics.repository';
 import { PassThrough } from 'node:stream';
 import { BaseFolders } from '../model/types';
+import { CacheMetadata, CacheSearchParam } from '../../shared/model/engine.model';
+import { ReadStream } from 'node:fs';
 
 const CACHE_FOLDER = './cache';
 const ARCHIVE_FOLDER = './archive';
@@ -120,5 +122,50 @@ export default class HistoryQueryEngine {
   async deleteHistoryQuery(historyQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>): Promise<void> {
     await this.stopHistoryQuery(historyQuery.id);
     await this.resetCache(historyQuery.id);
+  }
+
+  async searchCacheContent(
+    historyQueryId: string,
+    searchParams: CacheSearchParam,
+    folder: 'cache' | 'archive' | 'error'
+  ): Promise<Array<{ metadataFilename: string; metadata: CacheMetadata }>> {
+    return (await this.historyQueries.get(historyQueryId)?.searchCacheContent(searchParams, folder)) || [];
+  }
+
+  async getCacheContentFileStream(
+    historyQueryId: string,
+    folder: 'cache' | 'archive' | 'error',
+    filename: string
+  ): Promise<ReadStream | null> {
+    return (await this.historyQueries.get(historyQueryId)?.getCacheContentFileStream(folder, filename)) || null;
+  }
+
+  async removeCacheContent(
+    historyQueryId: string,
+    folder: 'cache' | 'archive' | 'error',
+    metadataFilenameList: Array<string>
+  ): Promise<void> {
+    await this.historyQueries.get(historyQueryId)?.removeCacheContent(folder, metadataFilenameList);
+  }
+
+  async removeAllCacheContent(historyQueryId: string, folder: 'cache' | 'archive' | 'error'): Promise<void> {
+    await this.historyQueries.get(historyQueryId)?.removeAllCacheContent(folder);
+  }
+
+  async moveCacheContent(
+    historyQueryId: string,
+    originFolder: 'cache' | 'archive' | 'error',
+    destinationFolder: 'cache' | 'archive' | 'error',
+    cacheContentList: Array<string>
+  ): Promise<void> {
+    await this.historyQueries.get(historyQueryId)?.moveCacheContent(originFolder, destinationFolder, cacheContentList);
+  }
+
+  async moveAllCacheContent(
+    historyQueryId: string,
+    originFolder: 'cache' | 'archive' | 'error',
+    destinationFolder: 'cache' | 'archive' | 'error'
+  ): Promise<void> {
+    await this.historyQueries.get(historyQueryId)?.moveAllCacheContent(originFolder, destinationFolder);
   }
 }
