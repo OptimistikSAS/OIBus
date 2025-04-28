@@ -29,6 +29,7 @@ import {
   itemToFlattenedCSV,
   logQuery,
   persistResults,
+  stringToBoolean,
   unzip,
   validateCronExpression
 } from './utils';
@@ -1253,6 +1254,25 @@ describe('Service utils', () => {
           testData.scanMode.list
         )
       ).toEqual('csv content');
+    });
+  });
+
+  describe('stringToBoolean', () => {
+    beforeEach(() => {
+      jest.resetAllMocks();
+      jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    });
+
+    it('should properly convert string to boolean', () => {
+      expect(stringToBoolean('true')).toEqual(true);
+      expect(stringToBoolean('True')).toEqual(true);
+      expect(stringToBoolean('TRUE')).toEqual(true);
+      expect(stringToBoolean('1')).toEqual(true);
+      expect(stringToBoolean('false')).toEqual(false);
+      expect(stringToBoolean('False')).toEqual(false);
+      expect(stringToBoolean('FALSE')).toEqual(false);
+      expect(stringToBoolean('0')).toEqual(false);
+      expect(stringToBoolean('99')).toEqual(false);
     });
   });
 });

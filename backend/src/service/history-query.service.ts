@@ -19,7 +19,7 @@ import EncryptionService from './encryption.service';
 import HistoryQueryRepository from '../repository/config/history-query.repository';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
-import { checkScanMode, createBaseFolders, filesExists } from './utils';
+import { checkScanMode, createBaseFolders, filesExists, stringToBoolean } from './utils';
 import SouthService, { southManifestList } from './south.service';
 import NorthService, { northManifestList } from './north.service';
 import LogRepository from '../repository/logs/log.repository';
@@ -467,7 +467,7 @@ export default class HistoryQueryService {
       throw new Error(`South manifest does not exist for type ${southType}`);
     }
 
-    const csvContent = csv.parse(fileContent, { header: true, delimiter });
+    const csvContent = csv.parse(fileContent, { header: true, delimiter, skipEmptyLines: true });
 
     if (csvContent.meta.delimiter !== delimiter) {
       throw new Error(`The entered delimiter "${delimiter}" does not correspond to the file delimiter "${csvContent.meta.delimiter}"`);
@@ -479,7 +479,7 @@ export default class HistoryQueryService {
       const item: HistoryQueryItemCommandDTO<I> = {
         id: '',
         name: (data as unknown as Record<string, string>).name,
-        enabled: (data as unknown as Record<string, string>).enabled.toLowerCase() === 'true',
+        enabled: stringToBoolean((data as unknown as Record<string, string>).enabled),
         settings: {} as I
       };
       if (existingItems.find(existingItem => existingItem.name === item.name)) {
@@ -491,7 +491,7 @@ export default class HistoryQueryService {
       }
 
       let hasSettingsError = false;
-      const settings: Record<string, string | object> = {};
+      const settings: Record<string, string | object | boolean> = {};
       for (const [key, value] of Object.entries(data as unknown as Record<string, string>)) {
         if (key.startsWith('settings_')) {
           const settingsKey = key.replace('settings_', '');
@@ -506,6 +506,8 @@ export default class HistoryQueryService {
           }
           if ((manifestSettings.type === 'OibArray' || manifestSettings.type === 'OibFormGroup') && value) {
             settings[settingsKey] = JSON.parse(value as string);
+          } else if (manifestSettings.type === 'OibCheckbox') {
+            settings[settingsKey] = stringToBoolean(value);
           } else {
             settings[settingsKey] = value;
           }

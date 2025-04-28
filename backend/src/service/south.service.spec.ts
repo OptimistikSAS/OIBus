@@ -28,7 +28,7 @@ import DataStreamEngine from '../engine/data-stream-engine';
 import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
 import fs from 'node:fs/promises';
 import SouthConnectorMock from '../tests/__mocks__/south-connector.mock';
-import { createBaseFolders, filesExists } from './utils';
+import { createBaseFolders, filesExists, stringToBoolean } from './utils';
 import multer from '@koa/multer';
 import csv from 'papaparse';
 
@@ -37,6 +37,7 @@ jest.mock('./metrics/south-connector-metrics.service');
 jest.mock('node:fs/promises');
 jest.mock('papaparse');
 jest.mock('./utils');
+jest.mock('../web-server/controllers/validators/joi.validator');
 
 const validator = new JoiValidator();
 const logger: pino.Logger = new PinoLogger();
@@ -847,6 +848,10 @@ describe('south service', () => {
       meta: { delimiter: ',' },
       data: csvData
     });
+    (validator.validateSettings as jest.Mock).mockImplementationOnce(() => {
+      throw new Error(`validation error`);
+    });
+    (stringToBoolean as jest.Mock).mockReturnValue(true);
     const result = await service.checkCsvFileImport(testData.south.list[0].type, { path: 'file/path.csv' } as multer.File, ',', {
       path: 'items.json'
     } as multer.File);
@@ -855,13 +860,13 @@ describe('south service', () => {
         {
           id: '',
           name: csvData[4].name,
-          enabled: csvData[4].enabled.toLowerCase() === 'true',
+          enabled: true,
           scanModeId: 'scanModeId1',
           scanModeName: null,
           settings: {
-            ignoreModifiedDate: 'false',
+            ignoreModifiedDate: true,
             minAge: 100,
-            preserveFiles: 'true',
+            preserveFiles: true,
             regex: '*'
           }
         }
@@ -901,17 +906,17 @@ describe('south service', () => {
           }
         },
         {
-          error: '"ignoreModifiedDate" must be a boolean',
+          error: 'validation error',
           item: {
             id: '',
             name: csvData[3].name,
-            enabled: csvData[3].enabled.toLowerCase() === 'true',
+            enabled: true,
             scanModeId: 'scanModeId1',
             scanModeName: null,
             settings: {
-              ignoreModifiedDate: 12,
+              ignoreModifiedDate: true,
               minAge: 100,
-              preserveFiles: 'true',
+              preserveFiles: true,
               regex: '*'
             }
           }
@@ -943,6 +948,7 @@ describe('south service', () => {
       meta: { delimiter: ',' },
       data: csvData
     });
+    (stringToBoolean as jest.Mock).mockReturnValue(true);
     const result = await service.checkCsvFileImport(testData.south.list[1].type, { path: 'file/path.csv' } as multer.File, ',', {
       path: 'items.json'
     } as multer.File);

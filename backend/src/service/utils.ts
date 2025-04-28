@@ -692,3 +692,9 @@ export const itemToFlattenedCSV = <I extends SouthItemSettings>(
     { columns: Array.from(columns), delimiter }
   );
 };
+
+export const stringToBoolean = (value: string): boolean => {
+  if (['true', 'True', 'TRUE', '1'].includes(value)) return true;
+  if (['false', 'False', 'FALSE', '0'].includes(value)) return false;
+  return false;
+};

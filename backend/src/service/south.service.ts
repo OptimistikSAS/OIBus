@@ -41,7 +41,7 @@ import SouthConnectorMetricsRepository from '../repository/logs/south-connector-
 import { Page } from '../../shared/model/types';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
-import { checkScanMode, createBaseFolders, filesExists } from './utils';
+import { checkScanMode, createBaseFolders, filesExists, stringToBoolean } from './utils';
 import { ScanMode } from '../model/scan-mode.model';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
 import fs from 'node:fs/promises';
@@ -708,7 +708,7 @@ export default class SouthService {
       throw new Error(`South manifest does not exist for type ${southType}`);
     }
 
-    const csvContent = csv.parse(fileContent, { header: true, delimiter });
+    const csvContent = csv.parse(fileContent, { header: true, delimiter, skipEmptyLines: true });
 
     if (csvContent.meta.delimiter !== delimiter) {
       throw new Error(`The entered delimiter "${delimiter}" does not correspond to the file delimiter "${csvContent.meta.delimiter}"`);
@@ -721,7 +721,7 @@ export default class SouthService {
       const item: SouthConnectorItemCommandDTO<I> = {
         id: '',
         name: (data as unknown as Record<string, string>).name,
-        enabled: (data as unknown as Record<string, string>).enabled.toLowerCase() === 'true',
+        enabled: stringToBoolean((data as unknown as Record<string, string>).enabled),
         scanModeId: null as string | null,
         scanModeName: null,
         settings: {} as I
@@ -745,7 +745,7 @@ export default class SouthService {
       item.scanModeId = foundScanMode.id;
 
       let hasSettingsError = false;
-      const settings: Record<string, string | object> = {};
+      const settings: Record<string, string | object | boolean> = {};
       for (const [key, value] of Object.entries(data as unknown as Record<string, string>)) {
         if (key.startsWith('settings_')) {
           const settingsKey = key.replace('settings_', '');
@@ -760,6 +760,8 @@ export default class SouthService {
           }
           if ((manifestSettings.type === 'OibArray' || manifestSettings.type === 'OibFormGroup') && value) {
             settings[settingsKey] = JSON.parse(value as string);
+          } else if (manifestSettings.type === 'OibCheckbox') {
+            settings[settingsKey] = stringToBoolean(value);
           } else {
             settings[settingsKey] = value;
           }
