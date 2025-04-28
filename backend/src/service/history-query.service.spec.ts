@@ -30,9 +30,11 @@ import SouthConnectorRepository from '../repository/config/south-connector.repos
 import NorthConnectorRepository from '../repository/config/north-connector.repository';
 import SouthConnectorRepositoryMock from '../tests/__mocks__/repository/config/south-connector-repository.mock';
 import NorthConnectorRepositoryMock from '../tests/__mocks__/repository/config/north-connector-repository.mock';
+import { filesExists, stringToBoolean } from './utils';
 jest.mock('papaparse');
 jest.mock('node:fs/promises');
 jest.mock('../web-server/controllers/validators/joi.validator');
+jest.mock('./utils');
 
 const validator = new JoiValidator();
 const logger: pino.Logger = new PinoLogger();
@@ -297,13 +299,12 @@ describe('History Query service', () => {
     const historyQuery = service.runHistoryQuery(testData.historyQueries.list[0]);
     expect(historyQuery).toBeDefined();
 
-    (fs.stat as jest.Mock).mockImplementation(() => ({}));
-
+    (filesExists as jest.Mock).mockReturnValue(true);
     const baseFolders = structuredClone(service['getDefaultBaseFolders'](testData.historyQueries.list[0].id));
     await service['deleteBaseFolders'](testData.historyQueries.list[0]);
 
     for (const type of Object.keys(baseFolders) as Array<keyof BaseFolders>) {
-      expect(fs.stat).toHaveBeenCalledWith(baseFolders[type]);
+      expect(filesExists).toHaveBeenCalledWith(baseFolders[type]);
       expect(fs.rm).toHaveBeenCalledWith(baseFolders[type], { recursive: true });
     }
   });
@@ -312,15 +313,12 @@ describe('History Query service', () => {
     const historyQuery = service.runHistoryQuery(testData.historyQueries.list[0]);
     expect(historyQuery).toBeDefined();
 
-    (fs.stat as jest.Mock).mockImplementation(() => {
-      throw new Error('stat error');
-    });
-
+    (filesExists as jest.Mock).mockReturnValue(false);
     const baseFolders = structuredClone(service['getDefaultBaseFolders'](testData.historyQueries.list[0].id));
     await service['deleteBaseFolders'](testData.historyQueries.list[0]);
 
     for (const type of Object.keys(baseFolders) as Array<keyof BaseFolders>) {
-      expect(fs.stat).toHaveBeenCalledWith(baseFolders[type]);
+      expect(filesExists).toHaveBeenCalledWith(baseFolders[type]);
       expect(fs.rm).not.toHaveBeenCalled();
     }
   });
@@ -330,7 +328,7 @@ describe('History Query service', () => {
     expect(historyQuery).toBeDefined();
 
     const error = new Error('rm error');
-    (fs.stat as jest.Mock).mockImplementation(() => ({}));
+    (filesExists as jest.Mock).mockReturnValue(true);
     (fs.rm as jest.Mock).mockImplementation(() => {
       throw error;
     });
@@ -339,7 +337,7 @@ describe('History Query service', () => {
     await service['deleteBaseFolders'](testData.historyQueries.list[0]);
 
     for (const type of Object.keys(baseFolders) as Array<keyof BaseFolders>) {
-      expect(fs.stat).toHaveBeenCalledWith(baseFolders[type]);
+      expect(filesExists).toHaveBeenCalledWith(baseFolders[type]);
       expect(fs.rm).toHaveBeenCalledWith(baseFolders[type], { recursive: true });
       expect(historyQueryEngine.logger.error).toHaveBeenCalledWith(
         `Unable to delete History query "${testData.historyQueries.list[0].name}" (${testData.historyQueries.list[0].id}) "${type}" base folder: ${error}`
@@ -788,8 +786,10 @@ describe('History Query service', () => {
       data: csvData
     });
     (validator.validateSettings as jest.Mock).mockImplementationOnce(() => {
-      throw new Error(`"ignoreModifiedDate" must be a boolean`);
+      throw new Error(`validation error`);
     });
+    (stringToBoolean as jest.Mock).mockReturnValue(true);
+
     const result = await service.checkCsvFileImport(
       testData.historyQueries.command.southType,
       { path: 'file/path.csv' } as multer.File,
@@ -801,11 +801,11 @@ describe('History Query service', () => {
         {
           id: '',
           name: csvData[3].name,
-          enabled: csvData[3].enabled.toLowerCase() === 'true',
+          enabled: true,
           settings: {
-            ignoreModifiedDate: 'false',
+            ignoreModifiedDate: true,
             minAge: 100,
-            preserveFiles: 'true',
+            preserveFiles: true,
             regex: '*'
           }
         }
@@ -816,7 +816,7 @@ describe('History Query service', () => {
           item: {
             id: '',
             name: csvData[0].name,
-            enabled: csvData[0].enabled.toLowerCase() === 'true',
+            enabled: true,
             settings: {}
           }
         },
@@ -825,20 +825,20 @@ describe('History Query service', () => {
           item: {
             id: '',
             name: csvData[1].name,
-            enabled: csvData[1].enabled.toLowerCase() === 'true',
+            enabled: true,
             settings: {}
           }
         },
         {
-          error: '"ignoreModifiedDate" must be a boolean',
+          error: 'validation error',
           item: {
             id: '',
             name: csvData[2].name,
-            enabled: csvData[2].enabled.toLowerCase() === 'true',
+            enabled: true,
             settings: {
-              ignoreModifiedDate: 12,
+              ignoreModifiedDate: true,
               minAge: 100,
-              preserveFiles: 'true',
+              preserveFiles: true,
               regex: '*'
             }
           }
