@@ -1,10 +1,16 @@
 import { Knex } from 'knex';
-import { SouthMQTTSettingsAuthentication, SouthMQTTSettingsQos } from '../../../shared/model/south-settings.model';
+import {
+  SouthMQTTSettingsAuthentication,
+  SouthMQTTSettingsQos,
+  SouthOPCSettingsMode,
+  SouthOPCSettingsThrottling
+} from '../../../shared/model/south-settings.model';
 
 const OIANALYTICS_MESSAGE_TABLE = 'oianalytics_messages';
 const COMMANDS_TABLE = 'commands';
 const REGISTRATIONS_TABLE = 'registrations';
 const SOUTH_CONNECTORS_TABLE = 'south_connectors';
+const HISTORY_QUERIES_TABLE = 'history_queries';
 
 interface OldSouthMQTTSettings {
   url: string;
@@ -28,12 +34,66 @@ interface NewSouthMQTTSettings {
   flushMessageTimeout: number;
 }
 
+interface OldSouthOPCSettings {
+  throttling: SouthOPCSettingsThrottling;
+  agentUrl: string;
+  retryInterval: number;
+  host: string;
+  serverName: string;
+}
+
+interface NewSouthOPCSettings {
+  throttling: SouthOPCSettingsThrottling;
+  agentUrl: string;
+  retryInterval: number;
+  host: string;
+  serverName: string;
+  mode: SouthOPCSettingsMode;
+}
+
 export async function up(knex: Knex): Promise<void> {
   await updateOIAMessageTable(knex);
   await updateOIACommandTable(knex);
   await updateRegistrationSettings(knex);
 
   await updateSouthMQTTSettings(knex);
+  await updateSouthOPCSettings(knex);
+}
+
+async function updateSouthOPCSettings(knex: Knex) {
+  const oldSouthSettings: Array<{
+    id: string;
+    type: string;
+    settings: string;
+  }> = await knex(SOUTH_CONNECTORS_TABLE).select('id', 'type', 'settings').where('type', 'opc');
+
+  for (const connector of oldSouthSettings) {
+    const oldSettings: OldSouthOPCSettings = JSON.parse(connector.settings);
+    const newSettings: NewSouthOPCSettings = {
+      ...oldSettings,
+      mode: 'hda'
+    };
+    await knex(SOUTH_CONNECTORS_TABLE)
+      .update({ settings: JSON.stringify(newSettings) })
+      .where('id', connector.id);
+  }
+
+  const oldSouthHistorySettings: Array<{
+    id: string;
+    south_type: string;
+    south_settings: string;
+  }> = await knex(HISTORY_QUERIES_TABLE).select('id', 'south_type', 'south_settings').where('south_type', 'opc');
+
+  for (const history of oldSouthHistorySettings) {
+    const oldSettings: OldSouthOPCSettings = JSON.parse(history.south_settings);
+    const newSettings: NewSouthOPCSettings = {
+      ...oldSettings,
+      mode: 'hda'
+    };
+    await knex(HISTORY_QUERIES_TABLE)
+      .update({ south_settings: JSON.stringify(newSettings) })
+      .where('id', history.id);
+  }
 }
 
 async function updateSouthMQTTSettings(knex: Knex) {

@@ -55,7 +55,8 @@ describe('South OPC', () => {
       agentUrl: 'http://localhost:2224',
       retryInterval: 1000,
       host: 'localhost',
-      serverName: 'Matrikon.OPC.Simulation'
+      serverName: 'Matrikon.OPC.Simulation',
+      mode: 'hda'
     },
     items: [
       {
