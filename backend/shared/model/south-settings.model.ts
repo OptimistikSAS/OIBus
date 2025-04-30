@@ -158,6 +158,9 @@ export const SOUTH_O_L_E_D_B_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = [
 ] as const;
 export type SouthOLEDBItemSettingsSerializationDelimiter = (typeof SOUTH_O_L_E_D_B_ITEM_SETTINGS_SERIALIZATION_DELIMITERS)[number];
 
+export const SOUTH_O_P_C_SETTINGS_MODES = ['da', 'hda'] as const;
+export type SouthOPCSettingsMode = (typeof SOUTH_O_P_C_SETTINGS_MODES)[number];
+
 export const SOUTH_O_P_C_ITEM_SETTINGS_AGGREGATES = [
   'raw',
   'interpolative',
@@ -516,6 +519,7 @@ export interface SouthOPCSettings {
   retryInterval: number;
   host: string;
   serverName: string;
+  mode: SouthOPCSettingsMode;
 }
 
 export interface SouthOPCUASettings {
