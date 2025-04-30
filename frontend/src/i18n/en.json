@@ -800,7 +800,12 @@
       "agent-url": "Remote agent URL",
       "retry-interval": "Retry interval",
       "host": "Server URL (from the agent)",
-      "server-name": "Server name"
+      "server-name": "Server name",
+      "mode": {
+        "title": "Mode",
+        "hda": "HDA",
+        "da": "DA"
+      }
     },
     "opcua": {
       "throttling": {

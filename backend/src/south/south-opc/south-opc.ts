@@ -59,7 +59,7 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
         body: JSON.stringify({
           host: this.connector.settings.host,
           serverName: this.connector.settings.serverName,
-          mode: 'hda'
+          mode: this.connector.settings.mode
         }),
         headers
       };
@@ -86,7 +86,7 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
       body: JSON.stringify({
         host: this.connector.settings.host,
         serverName: this.connector.settings.serverName,
-        mode: 'hda'
+        mode: this.connector.settings.mode
       }),
       headers
     };
@@ -122,7 +122,7 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
       body: JSON.stringify({
         host: this.connector.settings.host,
         serverName: this.connector.settings.serverName,
-        mode: 'hda',
+        mode: this.connector.settings.mode,
         aggregate: item.settings.aggregate,
         resampling: item.settings.resampling,
         startTime,
@@ -212,7 +212,7 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
             body: JSON.stringify({
               host: this.connector.settings.host,
               serverName: this.connector.settings.serverName,
-              mode: 'hda',
+              mode: this.connector.settings.mode,
               maxReadValues: 3600,
               intervalReadDelay: 200,
               aggregate,
