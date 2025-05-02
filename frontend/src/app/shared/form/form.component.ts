@@ -61,4 +61,13 @@ export class FormComponent implements OnInit {
   checkIfRequired(setting: OibSelectFormControl) {
     return setting.validators?.some(validator => validator.key === 'required');
   }
+
+  hasUseAsReferenceWarning(): boolean {
+    const dateTimeFields = this.form().get('dateTimeFields');
+    if (dateTimeFields && Array.isArray(dateTimeFields.value)) {
+      const trueCount = dateTimeFields.value.filter((item: any) => item?.useAsReference === true).length;
+      return trueCount >= 1;
+    }
+    return false;
+  }
 }

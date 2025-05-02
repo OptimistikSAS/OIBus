@@ -4,6 +4,9 @@
       @for (setting of row; track setting) {
         @if (form().get(setting.key)?.enabled) {
           <div [class]="setting.class || 'col'">
+            @if (setting.key === 'dateTimeFields' && hasUseAsReferenceWarning()) {
+              <div class="alert alert-info mb-3">Only one field can be used as reference. Other checkboxes will be disabled.</div>
+            }
             @if (setting.type !== 'OibFormGroup') {
               <div class="form-group">
                 @if (
