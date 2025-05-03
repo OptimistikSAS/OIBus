@@ -26,17 +26,24 @@ export interface HistoryQueryEntity<S extends SouthSettings, N extends NorthSett
   southSettings: S;
   northSettings: N;
   caching: {
-    scanModeId: string;
-    retryInterval: number;
-    retryCount: number;
-    maxSize: number;
-    oibusTimeValues: {
-      groupCount: number;
-      maxSendCount: number;
+    trigger: {
+      scanModeId: string;
+      numberOfElements: number;
+      numberOfFiles: number;
     };
-    rawFiles: {
-      sendFileImmediately: boolean;
-      archive: { enabled: boolean; retentionDuration: number };
+    throttling: {
+      runMinDelay: number;
+      maxSize: number;
+      maxNumberOfElements: number;
+    };
+    error: {
+      retryInterval: number;
+      retryCount: number;
+      retentionDuration: number;
+    };
+    archive: {
+      enabled: boolean;
+      retentionDuration: number;
     };
   };
   items: Array<HistoryQueryItemEntity<I>>;

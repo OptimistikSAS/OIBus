@@ -30,9 +30,9 @@ describe('HistoryMetricsService', () => {
       ...testData.historyQueries.metrics,
       north: {
         ...testData.historyQueries.metrics.north,
-        cacheSize: 999,
-        errorSize: 888,
-        archiveSize: 777
+        currentCacheSize: 999,
+        currentErrorSize: 888,
+        currentArchiveSize: 777
       }
     });
 
@@ -41,9 +41,9 @@ describe('HistoryMetricsService', () => {
       ...testData.historyQueries.metrics,
       north: {
         ...testData.historyQueries.metrics.north,
-        cacheSize: 999,
-        errorSize: 888,
-        archiveSize: 777,
+        currentCacheSize: 999,
+        currentErrorSize: 888,
+        currentArchiveSize: 777,
         lastConnection: testData.constants.dates.DATE_1
       }
     });
@@ -53,59 +53,101 @@ describe('HistoryMetricsService', () => {
       ...testData.historyQueries.metrics,
       north: {
         ...testData.historyQueries.metrics.north,
-        cacheSize: 999,
-        errorSize: 888,
-        archiveSize: 777,
+        currentCacheSize: 999,
+        currentErrorSize: 888,
+        currentArchiveSize: 777,
         lastConnection: testData.constants.dates.DATE_1,
         lastRunStart: testData.constants.dates.DATE_2
       }
     });
 
-    historyQueryMock.metricsEvent.emit('north-run-end', { lastRunDuration: 888 });
-    expect(historyQueryMetricsRepository.updateMetrics).toHaveBeenCalledWith(testData.historyQueries.list[0].id, {
-      ...testData.historyQueries.metrics,
-      north: {
-        ...testData.historyQueries.metrics.north,
-        cacheSize: 999,
-        errorSize: 888,
-        archiveSize: 777,
-        lastConnection: testData.constants.dates.DATE_1,
-        lastRunStart: testData.constants.dates.DATE_2,
-        lastRunDuration: 888
-      }
+    historyQueryMock.metricsEvent.emit('north-run-end', {
+      lastRunDuration: 888,
+      metadata: {
+        contentSize: 10,
+        contentFile: 'file.csv'
+      },
+      action: 'sent'
     });
-
-    historyQueryMock.metricsEvent.emit('north-send-values', { numberOfValuesSent: 10, lastValueSent: {} });
     expect(historyQueryMetricsRepository.updateMetrics).toHaveBeenCalledWith(testData.historyQueries.list[0].id, {
       ...testData.historyQueries.metrics,
       north: {
         ...testData.historyQueries.metrics.north,
-        cacheSize: 999,
-        errorSize: 888,
-        archiveSize: 777,
+        currentCacheSize: 999,
+        currentErrorSize: 888,
+        currentArchiveSize: 777,
         lastConnection: testData.constants.dates.DATE_1,
         lastRunStart: testData.constants.dates.DATE_2,
         lastRunDuration: 888,
-        numberOfValuesSent: testData.historyQueries.metrics.north.numberOfValuesSent + 10,
-        lastValueSent: {}
+        contentSentSize: testData.historyQueries.metrics.north.contentSentSize + 10,
+        lastContentSent: 'file.csv'
       }
     });
-
-    historyQueryMock.metricsEvent.emit('north-send-file', { lastFileSent: 'last file sent' });
+    historyQueryMock.metricsEvent.emit('north-run-end', {
+      lastRunDuration: 888,
+      metadata: {
+        contentSize: 10,
+        contentFile: 'file.csv'
+      },
+      action: 'archived'
+    });
     expect(historyQueryMetricsRepository.updateMetrics).toHaveBeenCalledWith(testData.historyQueries.list[0].id, {
       ...testData.historyQueries.metrics,
       north: {
         ...testData.historyQueries.metrics.north,
-        cacheSize: 999,
-        errorSize: 888,
-        archiveSize: 777,
+        currentCacheSize: 999,
+        currentErrorSize: 888,
+        currentArchiveSize: 777,
         lastConnection: testData.constants.dates.DATE_1,
         lastRunStart: testData.constants.dates.DATE_2,
         lastRunDuration: 888,
-        numberOfValuesSent: testData.historyQueries.metrics.north.numberOfValuesSent + 10,
-        lastValueSent: {},
-        lastFileSent: 'last file sent',
-        numberOfFilesSent: testData.historyQueries.metrics.north.numberOfFilesSent + 1
+        contentSentSize: testData.historyQueries.metrics.north.contentSentSize + 20,
+        contentArchivedSize: testData.historyQueries.metrics.north.contentArchivedSize + 10,
+        lastContentSent: 'file.csv'
+      }
+    });
+
+    historyQueryMock.metricsEvent.emit('north-run-end', {
+      lastRunDuration: 888,
+      metadata: {
+        contentSize: 10,
+        contentFile: 'file.csv'
+      },
+      action: 'errored'
+    });
+    expect(historyQueryMetricsRepository.updateMetrics).toHaveBeenCalledWith(testData.historyQueries.list[0].id, {
+      ...testData.historyQueries.metrics,
+      north: {
+        ...testData.historyQueries.metrics.north,
+        currentCacheSize: 999,
+        currentErrorSize: 888,
+        currentArchiveSize: 777,
+        lastConnection: testData.constants.dates.DATE_1,
+        lastRunStart: testData.constants.dates.DATE_2,
+        lastRunDuration: 888,
+        contentSentSize: testData.historyQueries.metrics.north.contentSentSize + 20,
+        contentArchivedSize: testData.historyQueries.metrics.north.contentArchivedSize + 10,
+        contentErroredSize: testData.historyQueries.metrics.north.contentErroredSize + 10,
+        lastContentSent: 'file.csv'
+      }
+    });
+
+    historyQueryMock.metricsEvent.emit('north-cache-content-size', 123);
+    expect(historyQueryMetricsRepository.updateMetrics).toHaveBeenCalledWith(testData.historyQueries.list[0].id, {
+      ...testData.historyQueries.metrics,
+      north: {
+        ...testData.historyQueries.metrics.north,
+        currentCacheSize: 999,
+        currentErrorSize: 888,
+        currentArchiveSize: 777,
+        lastConnection: testData.constants.dates.DATE_1,
+        lastRunStart: testData.constants.dates.DATE_2,
+        lastRunDuration: 888,
+        contentCachedSize: testData.historyQueries.metrics.north.contentCachedSize + 123,
+        contentSentSize: testData.historyQueries.metrics.north.contentSentSize + 20,
+        contentArchivedSize: testData.historyQueries.metrics.north.contentArchivedSize + 10,
+        contentErroredSize: testData.historyQueries.metrics.north.contentErroredSize + 10,
+        lastContentSent: 'file.csv'
       }
     });
 
@@ -114,16 +156,17 @@ describe('HistoryMetricsService', () => {
       ...testData.historyQueries.metrics,
       north: {
         ...testData.historyQueries.metrics.north,
-        cacheSize: 999,
-        errorSize: 888,
-        archiveSize: 777,
+        currentCacheSize: 999,
+        currentErrorSize: 888,
+        currentArchiveSize: 777,
         lastConnection: testData.constants.dates.DATE_1,
         lastRunStart: testData.constants.dates.DATE_2,
         lastRunDuration: 888,
-        numberOfValuesSent: testData.historyQueries.metrics.north.numberOfValuesSent + 10,
-        lastValueSent: {},
-        lastFileSent: 'last file sent',
-        numberOfFilesSent: testData.historyQueries.metrics.north.numberOfFilesSent + 1
+        contentCachedSize: testData.historyQueries.metrics.north.contentCachedSize + 123,
+        contentSentSize: testData.historyQueries.metrics.north.contentSentSize + 20,
+        contentArchivedSize: testData.historyQueries.metrics.north.contentArchivedSize + 10,
+        contentErroredSize: testData.historyQueries.metrics.north.contentErroredSize + 10,
+        lastContentSent: 'file.csv'
       },
       south: {
         ...testData.historyQueries.metrics.south,
@@ -136,16 +179,17 @@ describe('HistoryMetricsService', () => {
       ...testData.historyQueries.metrics,
       north: {
         ...testData.historyQueries.metrics.north,
-        cacheSize: 999,
-        errorSize: 888,
-        archiveSize: 777,
+        currentCacheSize: 999,
+        currentErrorSize: 888,
+        currentArchiveSize: 777,
         lastConnection: testData.constants.dates.DATE_1,
         lastRunStart: testData.constants.dates.DATE_2,
         lastRunDuration: 888,
-        numberOfValuesSent: testData.historyQueries.metrics.north.numberOfValuesSent + 10,
-        lastValueSent: {},
-        lastFileSent: 'last file sent',
-        numberOfFilesSent: testData.historyQueries.metrics.north.numberOfFilesSent + 1
+        contentCachedSize: testData.historyQueries.metrics.north.contentCachedSize + 123,
+        contentSentSize: testData.historyQueries.metrics.north.contentSentSize + 20,
+        contentArchivedSize: testData.historyQueries.metrics.north.contentArchivedSize + 10,
+        contentErroredSize: testData.historyQueries.metrics.north.contentErroredSize + 10,
+        lastContentSent: 'file.csv'
       },
       south: {
         ...testData.historyQueries.metrics.south,
@@ -159,16 +203,17 @@ describe('HistoryMetricsService', () => {
       ...testData.historyQueries.metrics,
       north: {
         ...testData.historyQueries.metrics.north,
-        cacheSize: 999,
-        errorSize: 888,
-        archiveSize: 777,
+        currentCacheSize: 999,
+        currentErrorSize: 888,
+        currentArchiveSize: 777,
         lastConnection: testData.constants.dates.DATE_1,
         lastRunStart: testData.constants.dates.DATE_2,
         lastRunDuration: 888,
-        numberOfValuesSent: testData.historyQueries.metrics.north.numberOfValuesSent + 10,
-        lastValueSent: {},
-        lastFileSent: 'last file sent',
-        numberOfFilesSent: testData.historyQueries.metrics.north.numberOfFilesSent + 1
+        contentCachedSize: testData.historyQueries.metrics.north.contentCachedSize + 123,
+        contentSentSize: testData.historyQueries.metrics.north.contentSentSize + 20,
+        contentArchivedSize: testData.historyQueries.metrics.north.contentArchivedSize + 10,
+        contentErroredSize: testData.historyQueries.metrics.north.contentErroredSize + 10,
+        lastContentSent: 'file.csv'
       },
       south: {
         ...testData.historyQueries.metrics.south,
@@ -183,16 +228,17 @@ describe('HistoryMetricsService', () => {
       ...testData.historyQueries.metrics,
       north: {
         ...testData.historyQueries.metrics.north,
-        cacheSize: 999,
-        errorSize: 888,
-        archiveSize: 777,
+        currentCacheSize: 999,
+        currentErrorSize: 888,
+        currentArchiveSize: 777,
         lastConnection: testData.constants.dates.DATE_1,
         lastRunStart: testData.constants.dates.DATE_2,
         lastRunDuration: 888,
-        numberOfValuesSent: testData.historyQueries.metrics.north.numberOfValuesSent + 10,
-        lastValueSent: {},
-        lastFileSent: 'last file sent',
-        numberOfFilesSent: testData.historyQueries.metrics.north.numberOfFilesSent + 1
+        contentCachedSize: testData.historyQueries.metrics.north.contentCachedSize + 123,
+        contentSentSize: testData.historyQueries.metrics.north.contentSentSize + 20,
+        contentArchivedSize: testData.historyQueries.metrics.north.contentArchivedSize + 10,
+        contentErroredSize: testData.historyQueries.metrics.north.contentErroredSize + 10,
+        lastContentSent: 'file.csv'
       },
       south: {
         ...testData.historyQueries.metrics.south,
@@ -209,16 +255,17 @@ describe('HistoryMetricsService', () => {
       ...testData.historyQueries.metrics,
       north: {
         ...testData.historyQueries.metrics.north,
-        cacheSize: 999,
-        errorSize: 888,
-        archiveSize: 777,
+        currentCacheSize: 999,
+        currentErrorSize: 888,
+        currentArchiveSize: 777,
         lastConnection: testData.constants.dates.DATE_1,
         lastRunStart: testData.constants.dates.DATE_2,
         lastRunDuration: 888,
-        numberOfValuesSent: testData.historyQueries.metrics.north.numberOfValuesSent + 10,
-        lastValueSent: {},
-        lastFileSent: 'last file sent',
-        numberOfFilesSent: testData.historyQueries.metrics.north.numberOfFilesSent + 1
+        contentCachedSize: testData.historyQueries.metrics.north.contentCachedSize + 123,
+        contentSentSize: testData.historyQueries.metrics.north.contentSentSize + 20,
+        contentArchivedSize: testData.historyQueries.metrics.north.contentArchivedSize + 10,
+        contentErroredSize: testData.historyQueries.metrics.north.contentErroredSize + 10,
+        lastContentSent: 'file.csv'
       },
       south: {
         ...testData.historyQueries.metrics.south,
@@ -237,16 +284,17 @@ describe('HistoryMetricsService', () => {
       ...testData.historyQueries.metrics,
       north: {
         ...testData.historyQueries.metrics.north,
-        cacheSize: 999,
-        errorSize: 888,
-        archiveSize: 777,
+        currentCacheSize: 999,
+        currentErrorSize: 888,
+        currentArchiveSize: 777,
         lastConnection: testData.constants.dates.DATE_1,
         lastRunStart: testData.constants.dates.DATE_2,
         lastRunDuration: 888,
-        numberOfValuesSent: testData.historyQueries.metrics.north.numberOfValuesSent + 10,
-        lastValueSent: {},
-        lastFileSent: 'last file sent',
-        numberOfFilesSent: testData.historyQueries.metrics.north.numberOfFilesSent + 1
+        contentCachedSize: testData.historyQueries.metrics.north.contentCachedSize + 123,
+        contentSentSize: testData.historyQueries.metrics.north.contentSentSize + 20,
+        contentArchivedSize: testData.historyQueries.metrics.north.contentArchivedSize + 10,
+        contentErroredSize: testData.historyQueries.metrics.north.contentErroredSize + 10,
+        lastContentSent: 'file.csv'
       },
       south: {
         ...testData.historyQueries.metrics.south,
@@ -277,16 +325,17 @@ describe('HistoryMetricsService', () => {
       ...testData.historyQueries.metrics,
       north: {
         ...testData.historyQueries.metrics.north,
-        cacheSize: 999,
-        errorSize: 888,
-        archiveSize: 777,
+        currentCacheSize: 999,
+        currentErrorSize: 888,
+        currentArchiveSize: 777,
         lastConnection: testData.constants.dates.DATE_1,
         lastRunStart: testData.constants.dates.DATE_2,
         lastRunDuration: 888,
-        numberOfValuesSent: testData.historyQueries.metrics.north.numberOfValuesSent + 10,
-        lastValueSent: {},
-        lastFileSent: 'last file sent',
-        numberOfFilesSent: testData.historyQueries.metrics.north.numberOfFilesSent + 1
+        contentCachedSize: testData.historyQueries.metrics.north.contentCachedSize + 123,
+        contentSentSize: testData.historyQueries.metrics.north.contentSentSize + 20,
+        contentArchivedSize: testData.historyQueries.metrics.north.contentArchivedSize + 10,
+        contentErroredSize: testData.historyQueries.metrics.north.contentErroredSize + 10,
+        lastContentSent: 'file.csv'
       },
       south: {
         ...testData.historyQueries.metrics.south,
@@ -316,16 +365,17 @@ describe('HistoryMetricsService', () => {
       ...testData.historyQueries.metrics,
       north: {
         ...testData.historyQueries.metrics.north,
-        cacheSize: 999,
-        errorSize: 888,
-        archiveSize: 777,
+        currentCacheSize: 999,
+        currentErrorSize: 888,
+        currentArchiveSize: 777,
         lastConnection: testData.constants.dates.DATE_1,
         lastRunStart: testData.constants.dates.DATE_2,
         lastRunDuration: 888,
-        numberOfValuesSent: testData.historyQueries.metrics.north.numberOfValuesSent + 10,
-        lastValueSent: {},
-        lastFileSent: 'last file sent',
-        numberOfFilesSent: testData.historyQueries.metrics.north.numberOfFilesSent + 1
+        contentCachedSize: testData.historyQueries.metrics.north.contentCachedSize + 123,
+        contentSentSize: testData.historyQueries.metrics.north.contentSentSize + 20,
+        contentArchivedSize: testData.historyQueries.metrics.north.contentArchivedSize + 10,
+        contentErroredSize: testData.historyQueries.metrics.north.contentErroredSize + 10,
+        lastContentSent: 'file.csv'
       },
       south: {
         ...testData.historyQueries.metrics.south,
