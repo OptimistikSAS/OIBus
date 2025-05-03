@@ -1,7 +1,8 @@
 import { request, ProxyAgent } from 'undici';
 import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
 import { encryptionService } from './encryption.service';
-import { HTTPRequest, ReqOptions, ReqResponse } from './http-request.utils';
+import { HTTPRequest, ReqOptions } from './http-request.utils';
+import { createMockResponse } from '../tests/__mocks__/undici.mock';
 
 jest.mock('undici', () => ({
   request: jest.fn(),
@@ -15,20 +16,6 @@ jest.mock('undici', () => ({
 jest.mock('./encryption.service', () => ({
   encryptionService: new EncryptionServiceMock('', '')
 }));
-
-/**
- * Helper to create a mock Undici response
- */
-function createMockResponse(statusCode: number, body?: Record<string, unknown>, headers: Record<string, string> = {}): ReqResponse {
-  return {
-    statusCode,
-    headers,
-    body: {
-      json: jest.fn().mockResolvedValue(body),
-      text: jest.fn().mockResolvedValue(JSON.stringify(body))
-    }
-  } as unknown as ReqResponse;
-}
 
 describe('HTTPRequest Service', () => {
   let mockUndiciRequest: jest.Mock;
