@@ -22,7 +22,7 @@ import {
   generateRandomId,
   generateReplacementParameters,
   getCommandLineArguments,
-  getFilesFiltered,
+  getFilenameWithoutRandomId,
   getOIBusInfo,
   getPlatformFromOsType,
   httpGetWithBody,
@@ -187,6 +187,18 @@ describe('Service utils', () => {
       await createBaseFolders(mockBaseFolders(testData.north.list[0].id));
       expect(fs.mkdir).not.toHaveBeenCalled();
       expect(fs.stat).toHaveBeenCalledTimes(3);
+    });
+  });
+
+  describe('getFilenameWithoutRandomId', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should properly get filename without random id', () => {
+      expect(getFilenameWithoutRandomId('test.file')).toEqual('test.file');
+      expect(getFilenameWithoutRandomId('test-12345.file')).toEqual('test.file');
+      expect(getFilenameWithoutRandomId(path.join('folder', 'sub-directory', 'test-12345.file'))).toEqual('test.file');
     });
   });
 
@@ -1027,66 +1039,6 @@ describe('Service utils', () => {
     expect(getPlatformFromOsType('Darwin')).toEqual('macos');
     expect(getPlatformFromOsType('Windows_NT')).toEqual('windows');
     expect(getPlatformFromOsType('unknown')).toEqual('unknown');
-  });
-
-  describe('getFilesFiltered', () => {
-    const logger: pino.Logger = new PinoLogger();
-
-    beforeEach(() => {
-      jest.resetAllMocks();
-      jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    });
-
-    it('should properly get files', async () => {
-      (fs.readdir as jest.Mock).mockImplementation(() => ['file1', 'file2', 'file3', 'anotherFile', 'errorFile']);
-      (fs.stat as jest.Mock)
-        .mockImplementationOnce(() => ({ mtimeMs: DateTime.fromISO('2020-02-02T04:02:02.222Z').toMillis() }))
-        .mockImplementationOnce(() => ({ mtimeMs: DateTime.fromISO('2020-02-02T06:02:02.222Z').toMillis() }))
-        .mockImplementationOnce(() => ({ mtimeMs: DateTime.fromISO('2020-02-04T02:02:02.222Z').toMillis() }))
-        .mockImplementationOnce(() => ({ mtimeMs: DateTime.fromISO('2020-02-05T02:02:02.222Z').toMillis() }))
-        .mockImplementationOnce(() => {
-          throw new Error('error file');
-        });
-
-      const files = await getFilesFiltered('errorFolder', '2020-02-02T02:02:02.222Z', '2020-02-03T02:02:02.222Z', 'file', logger);
-
-      expect(files).toEqual([
-        { filename: 'file1', modificationDate: '2020-02-02T04:02:02.222Z' },
-        { filename: 'file2', modificationDate: '2020-02-02T06:02:02.222Z' }
-      ]);
-      expect(logger.error).toHaveBeenCalledWith(
-        `Error while reading in errorFolder folder file stats "${path.join('errorFolder', 'errorFile')}": Error: error file`
-      );
-    });
-
-    it('should properly get files', async () => {
-      (fs.readdir as jest.Mock).mockImplementation(() => ['file1', 'file2']);
-      (fs.stat as jest.Mock)
-        .mockReturnValueOnce({ mtimeMs: DateTime.fromISO('2000-02-02T02:02:02.222Z').toMillis() })
-        .mockReturnValueOnce({ mtimeMs: DateTime.fromISO('2030-02-02T02:02:02.222Z').toMillis() });
-
-      const files = await getFilesFiltered('errorFolder', '2020-02-02T02:02:02.222Z', '2020-02-03T02:02:02.222Z', 'file', logger);
-
-      expect(files).toEqual([]);
-    });
-
-    it('should properly get files without filtering', async () => {
-      (fs.readdir as jest.Mock).mockImplementation(() => ['file1', 'file2']);
-      (fs.stat as jest.Mock)
-        .mockReturnValueOnce({ mtimeMs: DateTime.fromISO('2000-02-02T02:02:02.222Z').toMillis(), size: 100 })
-        .mockReturnValueOnce({ mtimeMs: DateTime.fromISO('2030-02-02T02:02:02.222Z').toMillis(), size: 60 });
-
-      const files = await getFilesFiltered('errorFolder', '', '', '', logger);
-
-      expect(files).toEqual([
-        { filename: 'file1', modificationDate: '2000-02-02T02:02:02.222Z', size: 100 },
-        {
-          filename: 'file2',
-          modificationDate: '2030-02-02T02:02:02.222Z',
-          size: 60
-        }
-      ]);
-    });
   });
 
   describe('validateCronExpression', () => {

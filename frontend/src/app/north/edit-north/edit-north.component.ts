@@ -1,9 +1,9 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { formDirectives } from '../../shared/form-directives';
-import { FormControl, FormGroup, NonNullableFormBuilder, Validators } from '@angular/forms';
+import { FormArray, FormControl, FormGroup, NonNullableFormBuilder, Validators } from '@angular/forms';
 import { NotificationService } from '../../shared/notification.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest, Observable, of, switchMap, tap } from 'rxjs';
@@ -31,6 +31,10 @@ import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { SouthConnectorLightDTO } from '../../../../../backend/shared/model/south-connector.model';
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
+import { TransformerLightDTO } from '../../../../../backend/shared/model/transformer.model';
+import { TransformerService } from '../../services/transformer.service';
+import { NorthTransformersComponent } from '../north-transformers/north-transformers.component';
+import { OIBUS_DATA_TYPES, OIBusDataType } from '../../../../../backend/shared/model/engine.model';
 
 @Component({
   selector: 'oib-edit-north',
@@ -46,7 +50,8 @@ import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe'
     NorthSubscriptionsComponent,
     OibHelpComponent,
     TranslatePipe,
-    OIBusNorthTypeEnumPipe
+    OIBusNorthTypeEnumPipe,
+    NorthTransformersComponent
   ],
   templateUrl: './edit-north.component.html',
   styleUrl: './edit-north.component.scss'
@@ -57,9 +62,12 @@ export class EditNorthComponent implements OnInit {
   private notificationService = inject(NotificationService);
   private scanModeService = inject(ScanModeService);
   private certificateService = inject(CertificateService);
+  private transformerService = inject(TransformerService);
   private modalService = inject(ModalService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+
+  readonly oIBusDataTypes = OIBUS_DATA_TYPES;
 
   mode: 'create' | 'edit' = 'create';
   northConnector: NorthConnectorDTO<NorthSettings> | null = null;
@@ -69,6 +77,7 @@ export class EditNorthComponent implements OnInit {
   loading = true;
   northSettingsControls: Array<Array<OibFormControl>> = [];
   scanModes: Array<ScanModeDTO> = [];
+  transformers: Array<TransformerLightDTO> = [];
   certificates: Array<CertificateDTO> = [];
   manifest: NorthConnectorManifest | null = null;
 
@@ -77,31 +86,45 @@ export class EditNorthComponent implements OnInit {
     description: FormControl<string>;
     enabled: FormControl<boolean>;
     caching: FormGroup<{
-      scanModeId: FormControl<string | null>;
-      retryInterval: FormControl<number>;
-      retryCount: FormControl<number>;
-      maxSize: FormControl<number>;
-      oibusTimeValues: FormGroup<{ groupCount: FormControl<number>; maxSendCount: FormControl<number> }>;
-      rawFiles: FormGroup<{
-        sendFileImmediately: FormControl<boolean>;
-        archive: FormGroup<{
-          enabled: FormControl<boolean>;
-          retentionDuration: FormControl<number>;
-        }>;
+      trigger: FormGroup<{
+        scanModeId: FormControl<string | null>;
+        numberOfElements: FormControl<number>;
+        numberOfFiles: FormControl<number>;
+      }>;
+      throttling: FormGroup<{
+        runMinDelay: FormControl<number>;
+        maxSize: FormControl<number>;
+        maxNumberOfElements: FormControl<number>;
+      }>;
+      error: FormGroup<{
+        retryInterval: FormControl<number>;
+        retryCount: FormControl<number>;
+        retentionDuration: FormControl<number>;
+      }>;
+      archive: FormGroup<{
+        enabled: FormControl<boolean>;
+        retentionDuration: FormControl<number>;
       }>;
     }>;
     settings: FormGroup;
+    transformers: FormArray<FormGroup<{ type: FormControl<OIBusDataType>; transformer: FormControl<string> }>>;
   }> | null = null;
 
   inMemorySubscriptions: Array<SouthConnectorLightDTO> = [];
-  inMemorySubscriptionsToDelete: Array<string> = [];
 
   ngOnInit() {
-    combineLatest([this.scanModeService.list(), this.certificateService.list(), this.route.paramMap, this.route.queryParamMap])
+    combineLatest([
+      this.scanModeService.list(),
+      this.certificateService.list(),
+      this.transformerService.list(),
+      this.route.paramMap,
+      this.route.queryParamMap
+    ])
       .pipe(
-        switchMap(([scanModes, certificates, params, queryParams]) => {
+        switchMap(([scanModes, certificates, transformers, params, queryParams]) => {
           this.scanModes = scanModes.filter(scanMode => scanMode.id !== 'subscription');
           this.certificates = certificates;
+          this.transformers = transformers;
           let paramNorthId = params.get('northId');
           this.northType = queryParams.get('type') || '';
           // if there is a North ID, we are editing a North connector
@@ -142,27 +165,45 @@ export class EditNorthComponent implements OnInit {
           enabled: true as boolean,
           settings: createFormGroup(manifest.settings, this.fb),
           caching: this.fb.group({
-            scanModeId: this.fb.control<string | null>(null, Validators.required),
-            retryInterval: [5000, Validators.required],
-            retryCount: [3, Validators.required],
-            maxSize: [0, Validators.required],
-            oibusTimeValues: this.fb.group({
-              groupCount: [1000, Validators.required],
-              maxSendCount: [10_000, Validators.required]
+            trigger: this.fb.group({
+              scanModeId: this.fb.control<string | null>(null, Validators.required),
+              numberOfElements: [1_000, Validators.required],
+              numberOfFiles: [1, Validators.required]
             }),
-            rawFiles: this.fb.group({
-              sendFileImmediately: true as boolean,
-              archive: this.fb.group({
-                enabled: [false, Validators.required],
-                retentionDuration: [72, Validators.required]
-              })
+            throttling: this.fb.group({
+              runMinDelay: [200, Validators.required],
+              maxSize: [0, Validators.required],
+              maxNumberOfElements: [10_000, Validators.required]
+            }),
+            error: this.fb.group({
+              retryInterval: [5_000, Validators.required],
+              retryCount: [3, Validators.required],
+              retentionDuration: [72, Validators.required]
+            }),
+            archive: this.fb.group({
+              enabled: [false, Validators.required],
+              retentionDuration: [72, Validators.required]
             })
-          })
+          }),
+          transformers: this.fb.array(
+            this.oIBusDataTypes.map(type => {
+              return this.fb.group({
+                type: this.fb.control(type, Validators.required),
+                transformer: this.fb.control('', Validators.required)
+              });
+            })
+          )
         });
 
         // if we have a south connector we initialize the values
         if (northConnector) {
-          this.northForm.patchValue(northConnector);
+          this.northForm.patchValue({
+            ...northConnector,
+            transformers: this.oIBusDataTypes.map(element => ({
+              type: element,
+              transformer: northConnector.transformers.find(transformer => transformer.inputType === element)?.id ?? 'none'
+            }))
+          });
         } else {
           this.northForm.setValue(this.northForm.getRawValue());
         }
@@ -203,26 +244,31 @@ export class EditNorthComponent implements OnInit {
       enabled: formValue.enabled!,
       settings: formValue.settings!,
       caching: {
-        scanModeId: formValue.caching!.scanModeId!,
-        scanModeName: null,
-        retryInterval: formValue.caching!.retryInterval!,
-        retryCount: formValue.caching!.retryCount!,
-        maxSize: formValue.caching!.maxSize!,
-        oibusTimeValues: {
-          groupCount: formValue.caching!.oibusTimeValues!.groupCount!,
-          maxSendCount: formValue.caching!.oibusTimeValues!.maxSendCount!
+        trigger: {
+          scanModeId: formValue.caching!.trigger!.scanModeId!,
+          scanModeName: null,
+          numberOfElements: formValue.caching!.trigger!.numberOfElements!,
+          numberOfFiles: formValue.caching!.trigger!.numberOfFiles!
         },
-        rawFiles: {
-          sendFileImmediately: formValue.caching!.rawFiles!.sendFileImmediately!,
-          archive: {
-            enabled: formValue.caching!.rawFiles!.archive!.enabled!,
-            retentionDuration: formValue.caching!.rawFiles!.archive!.retentionDuration!
-          }
+        throttling: {
+          runMinDelay: formValue.caching!.throttling!.runMinDelay!,
+          maxSize: formValue.caching!.throttling!.maxSize!,
+          maxNumberOfElements: formValue.caching!.throttling!.maxNumberOfElements!
+        },
+        error: {
+          retryInterval: formValue.caching!.error!.retryInterval!,
+          retryCount: formValue.caching!.error!.retryCount!,
+          retentionDuration: formValue.caching!.error!.retentionDuration!
+        },
+        archive: {
+          enabled: formValue.caching!.archive!.enabled!,
+          retentionDuration: formValue.caching!.archive!.retentionDuration!
         }
       },
       subscriptions: this.northConnector
         ? this.northConnector.subscriptions.map(subscription => subscription.id)
-        : this.inMemorySubscriptions.map(subscription => subscription.id)
+        : this.inMemorySubscriptions.map(subscription => subscription.id),
+      transformers: formValue.transformers!.filter(element => element.transformer !== 'none').map(element => element.transformer!)
     };
     if (value === 'save') {
       this.createOrUpdateNorthConnector(command);

@@ -17,8 +17,8 @@ export default class HistoryQueryMetricsRepository {
       const insertQuery =
         `INSERT INTO ${HISTORY_QUERY_METRICS_TABLE} (history_query_id, metrics_start, nb_values_retrieved, nb_files_retrieved, ` +
         `last_value_retrieved, last_file_retrieved, last_south_connection, last_south_run_start, last_south_run_duration, ` +
-        `nb_values_sent, nb_files_sent, last_value_sent, last_file_sent, last_north_connection, last_north_run_start, ` +
-        `last_north_run_duration, north_cache_size, north_error_size, north_archive_size) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
+        `content_sent_size, content_cached_size, content_errored_size, content_archived_size, last_content_sent, last_north_connection, last_north_run_start, ` +
+        `last_north_run_duration, north_current_cache_size, north_current_error_size, north_current_archive_size) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
       this._database
         .prepare(insertQuery)
         .run(
@@ -33,7 +33,8 @@ export default class HistoryQueryMetricsRepository {
           null,
           0,
           0,
-          null,
+          0,
+          0,
           null,
           null,
           null,
@@ -49,8 +50,8 @@ export default class HistoryQueryMetricsRepository {
     const query =
       `SELECT metrics_start, nb_values_retrieved, nb_files_retrieved, ` +
       `last_value_retrieved, last_file_retrieved, last_south_connection, last_south_run_start, last_south_run_duration, ` +
-      `nb_values_sent, nb_files_sent, last_value_sent, last_file_sent, last_north_connection, last_north_run_start, ` +
-      `last_north_run_duration, north_cache_size, north_error_size, north_archive_size FROM ${HISTORY_QUERY_METRICS_TABLE} WHERE history_query_id = ?;`;
+      `content_sent_size, content_cached_size, content_errored_size, content_archived_size, last_content_sent, last_north_connection, last_north_run_start, ` +
+      `last_north_run_duration, north_current_cache_size, north_current_error_size, north_current_archive_size FROM ${HISTORY_QUERY_METRICS_TABLE} WHERE history_query_id = ?;`;
     const result = this._database.prepare(query).get(historyQueryId);
     if (!result) return null;
     return this.toHistoryQueryMetrics(result as Record<string, string | number>);
@@ -60,8 +61,8 @@ export default class HistoryQueryMetricsRepository {
     const updateQuery =
       `UPDATE ${HISTORY_QUERY_METRICS_TABLE} SET metrics_start = ?, nb_values_retrieved = ?, nb_files_retrieved = ?, ` +
       `last_value_retrieved = ?, last_file_retrieved = ?, last_south_connection = ?, last_south_run_start = ?, last_south_run_duration = ?, ` +
-      `nb_values_sent = ?, nb_files_sent = ?, last_value_sent = ?, last_file_sent = ?, last_north_connection = ?, last_north_run_start = ?, ` +
-      `last_north_run_duration = ?, north_cache_size = ?, north_error_size = ?, north_archive_size = ? WHERE history_query_id = ?;`;
+      `content_sent_size = ?, content_cached_size = ?, content_errored_size = ?, content_archived_size = ?, last_content_sent = ?, last_north_connection = ?, last_north_run_start = ?, ` +
+      `last_north_run_duration = ?, north_current_cache_size = ?, north_current_error_size = ?, north_current_archive_size = ? WHERE history_query_id = ?;`;
     this._database
       .prepare(updateQuery)
       .run(
@@ -73,16 +74,17 @@ export default class HistoryQueryMetricsRepository {
         metrics.south.lastConnection,
         metrics.south.lastRunStart,
         metrics.south.lastRunDuration,
-        metrics.north.numberOfValuesSent,
-        metrics.north.numberOfFilesSent,
-        metrics.north.lastValueSent ? JSON.stringify(metrics.north.lastValueSent) : null,
-        metrics.north.lastFileSent,
+        metrics.north.contentSentSize,
+        metrics.north.contentErroredSize,
+        metrics.north.contentArchivedSize,
+        metrics.north.contentCachedSize,
+        metrics.north.lastContentSent,
         metrics.north.lastConnection,
         metrics.north.lastRunStart,
         metrics.north.lastRunDuration,
-        metrics.north.cacheSize,
-        metrics.north.errorSize,
-        metrics.north.archiveSize,
+        metrics.north.currentCacheSize,
+        metrics.north.currentErrorSize,
+        metrics.north.currentArchiveSize,
         historyQueryId
       );
   }
@@ -99,13 +101,14 @@ export default class HistoryQueryMetricsRepository {
         lastConnection: result.last_north_connection as Instant,
         lastRunStart: result.last_north_run_start as Instant,
         lastRunDuration: result.last_north_run_duration as number,
-        numberOfValuesSent: result.nb_values_sent as number,
-        numberOfFilesSent: result.nb_files_sent as number,
-        lastValueSent: result.last_value_sent ? JSON.parse(result.last_value_sent as string) : null,
-        lastFileSent: result.last_file_sent as string,
-        cacheSize: result.north_cache_size as number,
-        errorSize: result.north_error_size as number,
-        archiveSize: result.north_archive_size as number
+        contentSentSize: result.content_sent_size as number,
+        contentCachedSize: result.content_cached_size as number,
+        contentErroredSize: result.content_errored_size as number,
+        contentArchivedSize: result.content_archived_size as number,
+        lastContentSent: result.last_content_sent as string | null,
+        currentCacheSize: result.north_current_cache_size as number,
+        currentErrorSize: result.north_current_error_size as number,
+        currentArchiveSize: result.north_current_archive_size as number
       },
       south: {
         lastConnection: result.last_south_connection as Instant,

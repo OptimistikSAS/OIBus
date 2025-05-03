@@ -34,6 +34,8 @@ import { Certificate } from '../../model/certificate.model';
 import { OIBusLog } from '../../model/logs.model';
 import { CertificateCommandDTO } from '../../../shared/model/certificate.model';
 import { LogStreamCommandDTO } from '../../../shared/model/logs.model';
+import { CustomTransformerCommand } from '../../../shared/model/transformer.model';
+import { Transformer } from '../../model/transformer.model';
 
 const constants = {
   dates: {
@@ -75,6 +77,34 @@ const ipFilters: Array<IPFilter> = [
     id: 'ipFilterId2',
     address: '*',
     description: 'All ips'
+  }
+];
+
+const transformerCommandDTO: CustomTransformerCommand = {
+  name: 'my new transformer',
+  description: 'description',
+  inputType: 'time-values',
+  outputType: 'raw',
+  customCode: 'console.log("Hello World");'
+};
+const transformers: Array<Transformer> = [
+  {
+    id: 'transformerId1',
+    type: 'custom',
+    name: 'my transformer 1',
+    description: 'description',
+    inputType: 'time-values',
+    outputType: 'raw',
+    customCode: 'console.log("Hello World");'
+  },
+  {
+    id: 'transformerId2',
+    type: 'custom',
+    name: 'my transformer 2',
+    description: 'description',
+    inputType: 'raw',
+    outputType: 'raw',
+    customCode: 'console.log("Hello World");'
   }
 ];
 
@@ -375,10 +405,7 @@ const itemTestingSettings: SouthConnectorItemTestingSettings = {
 const northTestManifest: NorthConnectorManifest = {
   id: 'console',
   category: 'debug',
-  modes: {
-    files: true,
-    points: true
-  },
+  types: ['raw', 'time-values'],
   settings: []
 };
 const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
@@ -394,20 +421,24 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
       suffix: '-suffix'
     },
     caching: {
-      scanModeId: scanModes[0].id,
-      retryInterval: 1_000,
-      retryCount: 3,
-      maxSize: 0,
-      oibusTimeValues: {
-        groupCount: 250,
-        maxSendCount: 10_000
+      trigger: {
+        scanModeId: scanModes[0].id,
+        numberOfElements: 250,
+        numberOfFiles: 1
       },
-      rawFiles: {
-        sendFileImmediately: false,
-        archive: {
-          enabled: false,
-          retentionDuration: 72
-        }
+      throttling: {
+        runMinDelay: 200,
+        maxSize: 30,
+        maxNumberOfElements: 10_000
+      },
+      error: {
+        retryInterval: 1_000,
+        retryCount: 3,
+        retentionDuration: 24
+      },
+      archive: {
+        enabled: false,
+        retentionDuration: 72
       }
     },
     subscriptions: [
@@ -425,7 +456,8 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
         description: southConnectors[1].description,
         enabled: southConnectors[1].enabled
       }
-    ]
+    ],
+    transformers: [transformers[0], transformers[1]]
   },
   {
     id: 'northId2',
@@ -439,20 +471,24 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
       compress: true
     },
     caching: {
-      scanModeId: scanModes[1].id,
-      retryInterval: 1_000,
-      retryCount: 1,
-      maxSize: 10,
-      oibusTimeValues: {
-        groupCount: 1_000,
-        maxSendCount: 10_000
+      trigger: {
+        scanModeId: scanModes[1].id,
+        numberOfElements: 1_000,
+        numberOfFiles: 1
       },
-      rawFiles: {
-        sendFileImmediately: false,
-        archive: {
-          enabled: false,
-          retentionDuration: 72
-        }
+      throttling: {
+        runMinDelay: 200,
+        maxSize: 30,
+        maxNumberOfElements: 10_000
+      },
+      error: {
+        retryInterval: 1_000,
+        retryCount: 1,
+        retentionDuration: 24
+      },
+      archive: {
+        enabled: false,
+        retentionDuration: 72
       }
     },
     subscriptions: [
@@ -463,7 +499,8 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
         description: southConnectors[0].description,
         enabled: southConnectors[0].enabled
       }
-    ]
+    ],
+    transformers: []
   }
 ];
 const northConnectorCommand: NorthConnectorCommandDTO<NorthSettings> = {
@@ -477,24 +514,29 @@ const northConnectorCommand: NorthConnectorCommandDTO<NorthSettings> = {
     suffix: '-suffix'
   },
   caching: {
-    scanModeId: scanModes[0].id,
-    scanModeName: null,
-    retryInterval: 1_000,
-    retryCount: 3,
-    maxSize: 0,
-    oibusTimeValues: {
-      groupCount: 1_000,
-      maxSendCount: 10_000
+    trigger: {
+      scanModeId: scanModes[0].id,
+      scanModeName: null,
+      numberOfElements: 1_000,
+      numberOfFiles: 1
     },
-    rawFiles: {
-      sendFileImmediately: true,
-      archive: {
-        enabled: true,
-        retentionDuration: 72
-      }
+    throttling: {
+      runMinDelay: 200,
+      maxSize: 30,
+      maxNumberOfElements: 10_000
+    },
+    error: {
+      retryInterval: 1_000,
+      retryCount: 3,
+      retentionDuration: 24
+    },
+    archive: {
+      enabled: false,
+      retentionDuration: 0
     }
   },
-  subscriptions: [southConnectors[0].id]
+  subscriptions: [southConnectors[0].id],
+  transformers: [transformers[0].id]
 };
 
 const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>> = [
@@ -530,20 +572,24 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
       compress: true
     },
     caching: {
-      scanModeId: scanModes[0].id,
-      retryInterval: 1000,
-      retryCount: 3,
-      maxSize: 10000,
-      oibusTimeValues: {
-        groupCount: 100,
-        maxSendCount: 1000
+      trigger: {
+        scanModeId: scanModes[0].id,
+        numberOfElements: 100,
+        numberOfFiles: 1
       },
-      rawFiles: {
-        archive: {
-          enabled: true,
-          retentionDuration: 1000
-        },
-        sendFileImmediately: false
+      throttling: {
+        runMinDelay: 200,
+        maxSize: 10_000,
+        maxNumberOfElements: 1_000
+      },
+      error: {
+        retryInterval: 1_000,
+        retryCount: 3,
+        retentionDuration: 24
+      },
+      archive: {
+        enabled: true,
+        retentionDuration: 1_000
       }
     },
     items: [
@@ -559,7 +605,8 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
         enabled: true,
         settings: {} as SouthItemSettings
       }
-    ]
+    ],
+    northTransformers: [transformers[0]]
   },
   {
     id: 'historyId2',
@@ -593,20 +640,24 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
       suffix: '-suffix'
     },
     caching: {
-      scanModeId: scanModes[0].id,
-      retryInterval: 1000,
-      retryCount: 3,
-      maxSize: 10000,
-      oibusTimeValues: {
-        groupCount: 100,
-        maxSendCount: 1000
+      trigger: {
+        scanModeId: scanModes[0].id,
+        numberOfElements: 100,
+        numberOfFiles: 0
       },
-      rawFiles: {
-        archive: {
-          enabled: true,
-          retentionDuration: 1000
-        },
-        sendFileImmediately: false
+      throttling: {
+        runMinDelay: 200,
+        maxSize: 10_000,
+        maxNumberOfElements: 1_000
+      },
+      error: {
+        retryInterval: 1_000,
+        retryCount: 3,
+        retentionDuration: 24
+      },
+      archive: {
+        enabled: true,
+        retentionDuration: 1_000
       }
     },
     items: [
@@ -616,7 +667,8 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
         enabled: true,
         settings: {} as SouthItemSettings
       }
-    ]
+    ],
+    northTransformers: [transformers[0]]
   }
 ];
 const historyQueryCommand: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings> = {
@@ -649,21 +701,25 @@ const historyQueryCommand: HistoryQueryCommandDTO<SouthSettings, NorthSettings, 
     suffix: '-suffix'
   },
   caching: {
-    scanModeId: scanModes[0].id,
-    scanModeName: null,
-    retryInterval: 1000,
-    retryCount: 3,
-    maxSize: 10000,
-    oibusTimeValues: {
-      groupCount: 100,
-      maxSendCount: 1000
+    trigger: {
+      scanModeId: scanModes[0].id,
+      scanModeName: null,
+      numberOfElements: 1_000,
+      numberOfFiles: 1
     },
-    rawFiles: {
-      archive: {
-        enabled: true,
-        retentionDuration: 1000
-      },
-      sendFileImmediately: false
+    throttling: {
+      runMinDelay: 200,
+      maxSize: 30,
+      maxNumberOfElements: 10_000
+    },
+    error: {
+      retryInterval: 1_000,
+      retryCount: 3,
+      retentionDuration: 24
+    },
+    archive: {
+      enabled: false,
+      retentionDuration: 0
     }
   },
   items: [
@@ -673,7 +729,8 @@ const historyQueryCommand: HistoryQueryCommandDTO<SouthSettings, NorthSettings, 
       enabled: true,
       settings: {} as SouthItemSettings
     }
-  ]
+  ],
+  northTransformers: [transformers[0].id]
 };
 const historyQueryItemCommand: HistoryQueryItemCommandDTO<SouthItemSettings> = {
   id: 'newHistoryQueryItemId',
@@ -799,13 +856,14 @@ const northMetrics: NorthConnectorMetrics = {
   lastConnection: null,
   lastRunStart: null,
   lastRunDuration: null,
-  numberOfValuesSent: 11,
-  numberOfFilesSent: 11,
-  lastValueSent: null,
-  lastFileSent: null,
-  cacheSize: 10,
-  errorSize: 20,
-  archiveSize: 30
+  contentSentSize: 11,
+  contentCachedSize: 22,
+  contentErroredSize: 23,
+  contentArchivedSize: 24,
+  lastContentSent: null,
+  currentCacheSize: 10,
+  currentErrorSize: 20,
+  currentArchiveSize: 30
 };
 const historyQueryMetrics: HistoryQueryMetrics = {
   metricsStart: constants.dates.DATE_1,
@@ -822,13 +880,14 @@ const historyQueryMetrics: HistoryQueryMetrics = {
     lastConnection: null,
     lastRunStart: null,
     lastRunDuration: null,
-    numberOfValuesSent: 11,
-    numberOfFilesSent: 11,
-    lastValueSent: null,
-    lastFileSent: null,
-    cacheSize: 10,
-    errorSize: 20,
-    archiveSize: 30
+    contentSentSize: 11,
+    contentCachedSize: 22,
+    contentErroredSize: 23,
+    contentArchivedSize: 24,
+    lastContentSent: null,
+    currentCacheSize: 10,
+    currentErrorSize: 20,
+    currentArchiveSize: 30
   },
   historyMetrics: {
     running: false,
@@ -1275,7 +1334,40 @@ const oIBusCommands: Array<OIBusCommand> = [
     commandContent: {
       commandRefreshInterval: 15,
       commandRetryInterval: 5,
-      messageRetryInterval: 5
+      messageRetryInterval: 5,
+      commandPermissions: {
+        updateVersion: true,
+        restartEngine: true,
+        regenerateCipherKeys: true,
+        updateEngineSettings: true,
+        updateRegistrationSettings: true,
+        createScanMode: true,
+        updateScanMode: true,
+        deleteScanMode: true,
+        createIpFilter: true,
+        updateIpFilter: true,
+        deleteIpFilter: true,
+        createCertificate: true,
+        updateCertificate: true,
+        deleteCertificate: true,
+        createHistoryQuery: true,
+        updateHistoryQuery: true,
+        deleteHistoryQuery: true,
+        createOrUpdateHistoryItemsFromCsv: true,
+        testHistoryNorthConnection: true,
+        testHistorySouthConnection: true,
+        testHistorySouthItem: true,
+        createSouth: true,
+        updateSouth: true,
+        deleteSouth: true,
+        createOrUpdateSouthItemsFromCsv: true,
+        testSouthConnection: true,
+        testSouthItem: true,
+        createNorth: true,
+        updateNorth: true,
+        deleteNorth: true,
+        testNorthConnection: true
+      }
     }
   }
 ];
@@ -1468,6 +1560,10 @@ export default Object.freeze({
   scanMode: {
     list: scanModes,
     command: scanModeCommandDTO
+  },
+  transformers: {
+    list: transformers,
+    command: transformerCommandDTO
   },
   north: {
     list: northConnectors,

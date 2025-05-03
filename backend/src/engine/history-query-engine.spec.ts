@@ -122,4 +122,49 @@ describe('HistoryQueryEngine', () => {
     expect(engine.getHistoryQueryDataStream(testData.historyQueries.list[0].id)).not.toBeNull();
     expect(engine.getHistoryQueryDataStream('bad id')).toBeNull();
   });
+
+  it('should manage content files', async () => {
+    await engine.start([mockedHistoryQuery1]);
+
+    await engine.searchCacheContent(
+      'bad id',
+      { start: testData.constants.dates.DATE_1, end: testData.constants.dates.DATE_2, nameContains: 'file' },
+      'cache'
+    );
+    expect(mockedHistoryQuery1.searchCacheContent).not.toHaveBeenCalled();
+    await engine.searchCacheContent(
+      testData.historyQueries.list[0].id,
+      { start: testData.constants.dates.DATE_1, end: testData.constants.dates.DATE_2, nameContains: 'file' },
+      'cache'
+    );
+    expect(mockedHistoryQuery1.searchCacheContent).toHaveBeenCalledWith(
+      { start: testData.constants.dates.DATE_1, end: testData.constants.dates.DATE_2, nameContains: 'file' },
+      'cache'
+    );
+
+    await engine.getCacheContentFileStream('bad id', 'cache', 'file');
+    expect(mockedHistoryQuery1.getCacheContentFileStream).not.toHaveBeenCalled();
+    await engine.getCacheContentFileStream(testData.historyQueries.list[0].id, 'cache', 'file');
+    expect(mockedHistoryQuery1.getCacheContentFileStream).toHaveBeenCalledWith('cache', 'file');
+
+    await engine.removeCacheContent('bad id', 'cache', ['file']);
+    expect(mockedHistoryQuery1.removeCacheContent).not.toHaveBeenCalled();
+    await engine.removeCacheContent(testData.historyQueries.list[0].id, 'cache', ['file']);
+    expect(mockedHistoryQuery1.removeCacheContent).toHaveBeenCalledWith('cache', ['file']);
+
+    await engine.removeAllCacheContent('bad id', 'cache');
+    expect(mockedHistoryQuery1.removeAllCacheContent).not.toHaveBeenCalled();
+    await engine.removeAllCacheContent(testData.historyQueries.list[0].id, 'cache');
+    expect(mockedHistoryQuery1.removeAllCacheContent).toHaveBeenCalled();
+
+    await engine.moveCacheContent('bad id', 'cache', 'error', ['file']);
+    expect(mockedHistoryQuery1.moveCacheContent).not.toHaveBeenCalled();
+    await engine.moveCacheContent(testData.historyQueries.list[0].id, 'cache', 'error', ['file']);
+    expect(mockedHistoryQuery1.moveCacheContent).toHaveBeenCalledWith('cache', 'error', ['file']);
+
+    await engine.moveAllCacheContent('bad id', 'cache', 'error');
+    expect(mockedHistoryQuery1.moveAllCacheContent).not.toHaveBeenCalled();
+    await engine.moveAllCacheContent(testData.historyQueries.list[0].id, 'cache', 'error');
+    expect(mockedHistoryQuery1.moveAllCacheContent).toHaveBeenCalledWith('cache', 'error');
+  });
 });

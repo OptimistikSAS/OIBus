@@ -31,6 +31,8 @@ import NorthConnectorRepository from '../repository/config/north-connector.repos
 import SouthConnectorRepositoryMock from '../tests/__mocks__/repository/config/south-connector-repository.mock';
 import NorthConnectorRepositoryMock from '../tests/__mocks__/repository/config/north-connector-repository.mock';
 import { filesExists, stringToBoolean } from './utils';
+import TransformerService from './transformer.service';
+import TransformerServiceMock from '../tests/__mocks__/service/transformer-service.mock';
 jest.mock('papaparse');
 jest.mock('node:fs/promises');
 jest.mock('../web-server/controllers/validators/joi.validator');
@@ -49,6 +51,7 @@ const northService: NorthService = new NorthServiceMock();
 const oIAnalyticsMessageService: OIAnalyticsMessageService = new OIAnalyticsMessageServiceMock();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const historyQueryEngine: HistoryQueryEngine = new HistoryQueryEngineMock(logger);
+const transformerService: TransformerService = new TransformerServiceMock();
 
 let service: HistoryQueryService;
 describe('History Query service', () => {
@@ -64,6 +67,7 @@ describe('History Query service', () => {
       historyQueryMetricsRepository,
       southService,
       northService,
+      transformerService,
       oIAnalyticsMessageService,
       encryptionService,
       historyQueryEngine
@@ -356,6 +360,7 @@ describe('History Query service', () => {
         ...southManifestList[4] // mssql
       }
     ]);
+    (transformerService.findAll as jest.Mock).mockReturnValueOnce(testData.transformers.list);
     service.retrieveSecrets = jest.fn();
 
     await service.createHistoryQuery(testData.historyQueries.command, testData.historyQueries.list[0].id, null, null);
@@ -396,6 +401,25 @@ describe('History Query service', () => {
     );
   });
 
+  it('createHistoryQuery() should fail to create a history query when transformer is not found', async () => {
+    (northService.getInstalledNorthManifests as jest.Mock).mockReturnValueOnce([
+      {
+        ...northManifestList[4] // file-writer
+      }
+    ]);
+    (southService.getInstalledSouthManifests as jest.Mock).mockReturnValueOnce([
+      {
+        ...southManifestList[4] // mssql
+      }
+    ]);
+    (transformerService.findAll as jest.Mock).mockReturnValueOnce([]);
+    service.retrieveSecrets = jest.fn();
+
+    await expect(service.createHistoryQuery(testData.historyQueries.command, null, null, null)).rejects.toThrow(
+      `Could not find OIBus transformer ${testData.historyQueries.command.northTransformers[0]}`
+    );
+  });
+
   it('should get history query data stream', () => {
     service.getHistoryQueryDataStream(testData.historyQueries.list[0].id);
     expect(historyQueryEngine.getHistoryQueryDataStream).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
@@ -403,6 +427,7 @@ describe('History Query service', () => {
 
   it('updateHistoryQuery() should create a history query', async () => {
     (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0]);
+    (transformerService.findAll as jest.Mock).mockReturnValueOnce(testData.transformers.list);
     (northService.getInstalledNorthManifests as jest.Mock).mockReturnValueOnce([
       {
         ...northManifestList[4] // file-writer
@@ -1102,5 +1127,43 @@ describe('History Query service', () => {
 
   it('retrieveSecrets() should return null', () => {
     expect(service.retrieveSecrets(null, null, null, southManifestList[4], northManifestList[4])).toEqual(null);
+  });
+
+  it('should search cache content', async () => {
+    await service.searchCacheContent(
+      testData.historyQueries.list[0].id,
+      { start: testData.constants.dates.DATE_1, end: testData.constants.dates.DATE_2, nameContains: 'file' },
+      'cache'
+    );
+    expect(historyQueryEngine.searchCacheContent).toHaveBeenCalledWith(
+      testData.historyQueries.list[0].id,
+      { start: testData.constants.dates.DATE_1, end: testData.constants.dates.DATE_2, nameContains: 'file' },
+      'cache'
+    );
+  });
+
+  it('should get cache content file stream', async () => {
+    await service.getCacheContentFileStream(testData.historyQueries.list[0].id, 'cache', 'filename');
+    expect(historyQueryEngine.getCacheContentFileStream).toHaveBeenCalledWith(testData.historyQueries.list[0].id, 'cache', 'filename');
+  });
+
+  it('should remove cache content', async () => {
+    await service.removeCacheContent(testData.historyQueries.list[0].id, 'cache', ['filename']);
+    expect(historyQueryEngine.removeCacheContent).toHaveBeenCalledWith(testData.historyQueries.list[0].id, 'cache', ['filename']);
+  });
+
+  it('should remove all cache content', async () => {
+    await service.removeAllCacheContent(testData.historyQueries.list[0].id, 'cache');
+    expect(historyQueryEngine.removeAllCacheContent).toHaveBeenCalledWith(testData.historyQueries.list[0].id, 'cache');
+  });
+
+  it('should move cache content', async () => {
+    await service.moveCacheContent(testData.historyQueries.list[0].id, 'cache', 'error', ['filename']);
+    expect(historyQueryEngine.moveCacheContent).toHaveBeenCalledWith(testData.historyQueries.list[0].id, 'cache', 'error', ['filename']);
+  });
+
+  it('should move all cache content', async () => {
+    await service.moveAllCacheContent(testData.historyQueries.list[0].id, 'cache', 'archive');
+    expect(historyQueryEngine.moveAllCacheContent).toHaveBeenCalledWith(testData.historyQueries.list[0].id, 'cache', 'archive');
   });
 });

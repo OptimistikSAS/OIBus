@@ -11,6 +11,7 @@ import HistoryQueryServiceMock from './service/history-query-service.mock';
 import UserServiceMock from './service/user-service.mock';
 import LogServiceMock from './service/log-service.mock';
 import CertificateServiceMock from './service/certificate-service.mock';
+import TransformerServiceMock from './service/transformer-service.mock';
 
 /**
  * Create a mock object for Koa Context
@@ -28,6 +29,7 @@ export default jest.fn().mockImplementation(() => ({
     oIAnalyticsCommandService: new OIAnalyticsCommandServiceMock(),
     engineMetricsService: new EngineMetricsServiceMock(),
     userService: new UserServiceMock(),
+    transformerService: new TransformerServiceMock(),
     logService: new LogServiceMock(),
     certificateService: new CertificateServiceMock(),
     logger: {

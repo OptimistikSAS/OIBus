@@ -4,6 +4,7 @@ import { HistoryQueryStatus } from '../../shared/model/history-query.model';
 import { NorthSettings } from '../../shared/model/north-settings.model';
 import { OIBusNorthType } from '../../shared/model/north-connector.model';
 import { OIBusSouthType } from '../../shared/model/south-connector.model';
+import { TransformerLight } from './transformer.model';
 
 export interface HistoryQueryEntityLight extends BaseEntity {
   name: string;
@@ -26,20 +27,28 @@ export interface HistoryQueryEntity<S extends SouthSettings, N extends NorthSett
   southSettings: S;
   northSettings: N;
   caching: {
-    scanModeId: string;
-    retryInterval: number;
-    retryCount: number;
-    maxSize: number;
-    oibusTimeValues: {
-      groupCount: number;
-      maxSendCount: number;
+    trigger: {
+      scanModeId: string;
+      numberOfElements: number;
+      numberOfFiles: number;
     };
-    rawFiles: {
-      sendFileImmediately: boolean;
-      archive: { enabled: boolean; retentionDuration: number };
+    throttling: {
+      runMinDelay: number;
+      maxSize: number;
+      maxNumberOfElements: number;
+    };
+    error: {
+      retryInterval: number;
+      retryCount: number;
+      retentionDuration: number;
+    };
+    archive: {
+      enabled: boolean;
+      retentionDuration: number;
     };
   };
   items: Array<HistoryQueryItemEntity<I>>;
+  northTransformers: Array<TransformerLight>;
 }
 
 export interface HistoryQueryItemEntity<T extends SouthItemSettings> extends BaseEntity {
