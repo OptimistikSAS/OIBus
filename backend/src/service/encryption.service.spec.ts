@@ -23,7 +23,7 @@ jest.mock('node:fs/promises');
 jest.mock('node:crypto');
 jest.mock('selfsigned');
 
-let encryptionService: EncryptionService;
+const encryptionService = EncryptionService.getInstance();
 
 const cryptoSettings = {
   algorithm: 'aes-256-cbc',
@@ -89,9 +89,13 @@ const settings: Array<OibFormControl> = [
 ];
 
 describe('Encryption service with crypto settings', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     jest.clearAllMocks();
-    encryptionService = new EncryptionService(cryptoSettings);
+
+    // Mock custom cert exists
+    (utils.filesExists as jest.Mock).mockResolvedValue(true);
+
+    await encryptionService.init(cryptoSettings);
   });
 
   it('should properly initialized encryption service', () => {
@@ -103,7 +107,6 @@ describe('Encryption service with crypto settings', () => {
   it('should not create certificate if it already exists', async () => {
     (utils.filesExists as jest.Mock).mockReturnValue(true);
 
-    await encryptionService.init();
     expect(utils.createFolder).toHaveBeenCalledWith(path.resolve('./', CERT_FOLDER));
     expect(utils.filesExists).toHaveBeenCalledWith(path.resolve('./', CERT_FOLDER, CERT_FILE_NAME));
     expect(utils.filesExists).toHaveBeenCalledWith(path.resolve('./', CERT_FOLDER, CERT_PUBLIC_KEY_FILE_NAME));
@@ -120,7 +123,8 @@ describe('Encryption service with crypto settings', () => {
       cert: 'myCert'
     });
 
-    await encryptionService.init();
+    await encryptionService.init(cryptoSettings);
+
     expect(selfSigned.generate).toHaveBeenCalledWith(
       [
         { name: 'commonName', value: 'OIBus' },
