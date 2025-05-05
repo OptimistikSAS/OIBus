@@ -27,15 +27,26 @@ export interface TransformerDTOWithOptions {
   transformer: TransformerDTO;
   options: object;
 }
-
-export interface CustomTransformerCommand {
-  name: string;
-  description: string;
+export interface BaseTransformerCommand {
+  type: 'custom' | 'standard';
   inputType: string;
   outputType: string;
+}
+
+export interface StandardTransformerCommand extends BaseTransformerCommand {
+  type: 'standard';
+  functionName: string;
+}
+
+export interface CustomTransformerCommand extends BaseTransformerCommand {
+  type: 'custom';
+  name: string;
+  description: string;
   customCode: string;
   customManifest: Array<OibFormControl>;
 }
+
+export type TransformerCommandDTO = StandardTransformerCommand | CustomTransformerCommand;
 
 export interface TransformerSearchParam {
   type?: 'standard' | 'custom';
