@@ -27,7 +27,7 @@ export class RegisterOibusModalComponent {
     proxyUsername: '',
     proxyPassword: '',
     acceptUnauthorized: [false, Validators.required],
-    commandRefreshInterval: [10, [Validators.required, Validators.min(1), Validators.max(3600)]],
+    commandRefreshInterval: [60, [Validators.required, Validators.min(1), Validators.max(3600)]],
     commandRetryInterval: [5, [Validators.required, Validators.min(1), Validators.max(3600)]],
     messageRetryInterval: [5, [Validators.required, Validators.min(1), Validators.max(3600)]],
     commandPermissions: this.fb.group({

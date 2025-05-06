@@ -180,7 +180,7 @@ describe('RegisterOibusModalComponent', () => {
     tester.componentInstance.prepare(
       {
         host: 'http://localhost:4200',
-        commandRefreshInterval: 10,
+        commandRefreshInterval: 60,
         commandRetryInterval: 5,
         messageRetryInterval: 5,
         commandPermissions: {
@@ -229,7 +229,7 @@ describe('RegisterOibusModalComponent', () => {
       proxyUrl: 'http://localhost:8080',
       proxyUsername: 'user',
       proxyPassword: 'pass',
-      commandRefreshInterval: 10,
+      commandRefreshInterval: 60,
       commandRetryInterval: 5,
       messageRetryInterval: 5,
       commandPermissions: {
