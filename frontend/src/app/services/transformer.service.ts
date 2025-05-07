@@ -15,8 +15,8 @@ export class TransformerService {
   /**
    * Get the transformers
    */
-  list(): Observable<Array<TransformerLightDTO>> {
-    return this.http.get<Array<TransformerLightDTO>>(`/api/transformers`);
+  list(): Observable<Array<TransformerDTO>> {
+    return this.http.get<Array<TransformerDTO>>(`/api/transformers`);
   }
 
   /**

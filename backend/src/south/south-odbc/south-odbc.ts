@@ -164,7 +164,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
           this.connector.name,
           item.name
         );
-        oibusContent = { type: 'raw', filePath, content: result };
+        oibusContent = { type: 'any', filePath, content: result };
         break;
       }
     }

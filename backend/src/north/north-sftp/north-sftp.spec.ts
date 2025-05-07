@@ -102,7 +102,7 @@ describe('NorthSFTP', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     });
@@ -122,7 +122,7 @@ describe('NorthSFTP', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'raw',
+        contentType: 'any',
         source: 'south',
         options: {}
       })
@@ -191,7 +191,7 @@ describe('NorthSFTP without suffix or prefix', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     });

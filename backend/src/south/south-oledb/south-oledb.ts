@@ -155,7 +155,7 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
           this.connector.name,
           item.name
         );
-        oibusContent = { type: 'raw', filePath, content: result };
+        oibusContent = { type: 'any', filePath, content: result };
         break;
       }
     }
