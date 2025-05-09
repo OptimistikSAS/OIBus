@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.5.19](https://github.com/OptimistikSAS/OIBus/compare/v3.5.18...v3.5.19) (2025-05-09)
+
+
+### Bug Fixes
+
+* **oianalytics:** change default command refresh interval from 10 to 60s ([1917328](https://github.com/OptimistikSAS/OIBus/commit/191732869bbd6ba27748fd4db60e48ceddfd8137))
+* **south:** convert stringified booleans into boolean when importing south items ([8abeb1b](https://github.com/OptimistikSAS/OIBus/commit/8abeb1bc1d488e00524000d94cf2aaeb609ebe62))
+
 ## [3.5.18](https://github.com/OptimistikSAS/OIBus/compare/v3.5.17...v3.5.18) (2025-04-16)
 
 
