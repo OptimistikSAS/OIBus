@@ -66,8 +66,12 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
   }
 
   async handleContent(cacheMetadata: CacheMetadata): Promise<void> {
+    if (!this.supportedTypes().includes(cacheMetadata.contentType)) {
+      throw new Error(`Unsupported data type: ${cacheMetadata.contentType} (file ${cacheMetadata.contentFile})`);
+    }
+
     switch (cacheMetadata.contentType) {
-      case 'raw':
+      case 'any':
         return this.handleFile(cacheMetadata.contentFile);
 
       case 'time-values':
@@ -267,5 +271,9 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
       headers,
       agent
     };
+  }
+
+  supportedTypes(): Array<string> {
+    return ['any', 'time-values'];
   }
 }

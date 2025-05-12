@@ -105,7 +105,7 @@ describe('NorthConsole with verbose mode', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     });
@@ -167,7 +167,7 @@ describe('NorthConsole without verbose mode', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     });
@@ -206,5 +206,19 @@ describe('NorthConsole without verbose mode', () => {
     await expect(north.testConnection()).rejects.toThrow(new Error(`Node process is unable to write to STDOUT. ${error}`));
     expect(process.stdout.write).toHaveBeenCalled();
     expect(console.table).not.toHaveBeenCalled();
+  });
+
+  it('should ignore data if bad content type', async () => {
+    await expect(
+      north.handleContent({
+        contentFile: 'path/to/file/example-123456789.file',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'bad-type',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow(`Unsupported data type: bad-type (file path/to/file/example-123456789.file)`);
   });
 });

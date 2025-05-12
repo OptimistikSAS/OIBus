@@ -130,14 +130,10 @@ export default class NorthMQTT extends NorthConnector<NorthMQTTSettings> {
   }
 
   async handleContent(cacheMetadata: CacheMetadata): Promise<void> {
-    switch (cacheMetadata.contentType) {
-      case 'mqtt':
-        return this.handleValues(JSON.parse(await fs.readFile(cacheMetadata.contentFile, { encoding: 'utf-8' })) as Array<OIBusMQTTValue>);
-
-      default:
-        this.logger.debug(`File "${cacheMetadata.contentFile}" of type ${cacheMetadata.contentType} ignored`);
-        return;
+    if (!this.supportedTypes().includes(cacheMetadata.contentType)) {
+      throw new Error(`Unsupported data type: ${cacheMetadata.contentType} (file ${cacheMetadata.contentFile})`);
     }
+    return this.handleValues(JSON.parse(await fs.readFile(cacheMetadata.contentFile, { encoding: 'utf-8' })) as Array<OIBusMQTTValue>);
   }
 
   private async handleValues(values: Array<OIBusMQTTValue>) {
@@ -148,5 +144,9 @@ export default class NorthMQTT extends NorthConnector<NorthMQTTSettings> {
     for (const value of values) {
       await this.client.publishAsync(value.topic, value.payload, { qos: parseInt(this.connector.settings.qos) as QoS });
     }
+  }
+
+  supportedTypes(): Array<string> {
+    return ['mqtt'];
   }
 }
