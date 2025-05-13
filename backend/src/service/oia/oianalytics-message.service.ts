@@ -13,6 +13,7 @@ import {
   OIAnalyticsRegistrationCommandDTO,
   OIAnalyticsScanModeCommandDTO,
   OIAnalyticsSouthCommandDTO,
+  OIAnalyticsTransformerCommandDTO,
   OIAnalyticsUserCommandDTO,
   OIBusFullConfigurationCommandDTO,
   OIBusHistoryQueriesCommandDTO
@@ -32,6 +33,7 @@ import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.mo
 import OIAnalyticsRegistrationService from './oianalytics-registration.service';
 import { FetchError } from 'node-fetch';
 import HistoryQueryRepository from '../../repository/config/history-query.repository';
+import TransformerRepository from '../../repository/config/transformer.repository';
 
 const STOP_TIMEOUT = 30_000;
 
@@ -53,6 +55,7 @@ export default class OIAnalyticsMessageService {
     private southRepository: SouthConnectorRepository,
     private northRepository: NorthConnectorRepository,
     private historyQueryRepository: HistoryQueryRepository,
+    private transformerRepository: TransformerRepository,
     private oIAnalyticsClient: OIAnalyticsClient,
     private encryptionService: EncryptionService,
     private logger: pino.Logger
@@ -234,7 +237,8 @@ export default class OIAnalyticsMessageService {
       certificates: this.createCertificatesCommand(),
       southConnectors: this.createSouthConnectorsCommand(),
       northConnectors: this.createNorthConnectorsCommand(),
-      users: this.createUsersCommand()
+      users: this.createUsersCommand(),
+      transformers: this.createTransformersCommand()
     };
   }
 
@@ -474,6 +478,36 @@ export default class OIAnalyticsMessageService {
           }))
         }
       };
+    });
+  }
+
+  private createTransformersCommand(): Array<OIAnalyticsTransformerCommandDTO> {
+    const transformers = this.transformerRepository.findAll();
+    return transformers.map(transformer => {
+      if (transformer.type === 'standard') {
+        return {
+          oIBusInternalId: transformer.id,
+          type: transformer.type,
+          settings: {
+            functionName: transformer.functionName,
+            inputType: transformer.inputType,
+            outputType: transformer.outputType
+          }
+        };
+      } else {
+        return {
+          oIBusInternalId: transformer.id,
+          type: transformer.type,
+          settings: {
+            name: transformer.name,
+            description: transformer.description,
+            inputType: transformer.inputType,
+            outputType: transformer.outputType,
+            customCode: transformer.customCode,
+            customManifest: transformer.customManifest
+          }
+        };
+      }
     });
   }
 }

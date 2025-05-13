@@ -15,6 +15,7 @@ import { UserCommandDTO } from '../../../shared/model/user.model';
 import { IPFilterCommandDTO } from '../../../shared/model/ip-filter.model';
 import { ScanModeCommandDTO } from '../../../shared/model/scan-mode.model';
 import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO, HistoryQueryStatus } from '../../../shared/model/history-query.model';
+import { TransformerCommandDTO } from '../../../shared/model/transformer.model';
 
 export interface OIAnalyticsScanModeCommandDTO {
   oIBusInternalId: string | null;
@@ -34,6 +35,12 @@ export interface OIAnalyticsCertificateCommandDTO {
 export interface OIAnalyticsUserCommandDTO {
   oIBusInternalId: string;
   settings: UserCommandDTO;
+}
+
+export interface OIAnalyticsTransformerCommandDTO {
+  oIBusInternalId: string;
+  type: 'custom' | 'standard';
+  settings: Omit<TransformerCommandDTO, 'type'>;
 }
 
 export interface OIAnalyticsRegistrationCommandDTO {
@@ -103,6 +110,7 @@ export interface OIBusFullConfigurationCommandDTO {
   southConnectors: Array<OIAnalyticsSouthCommandDTO>;
   northConnectors: Array<OIAnalyticsNorthCommandDTO>;
   users: Array<OIAnalyticsUserCommandDTO>;
+  transformers: Array<OIAnalyticsTransformerCommandDTO>;
 }
 
 export interface OIBusHistoryQueriesCommandDTO {

@@ -81,6 +81,7 @@ const ipFilters: Array<IPFilter> = [
 ];
 
 const transformerCommandDTO: CustomTransformerCommand = {
+  type: 'custom',
   name: 'my new transformer',
   description: 'description',
   inputType: 'time-values',
