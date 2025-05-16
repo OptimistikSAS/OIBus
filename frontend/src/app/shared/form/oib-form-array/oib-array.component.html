@@ -44,7 +44,12 @@
               </button>
 
               @if (allowRowDuplication()) {
-                <button type="button" class="btn btn-link duplicate-south-item duplicate-button px-1 py-0" (click)="duplicate(element)">
+                <button
+                  type="button"
+                  [disabled]="editDisabled"
+                  class="btn btn-link duplicate-south-item duplicate-button px-1 py-0"
+                  (click)="duplicate(element)"
+                >
                   <span class="fa fa-copy"></span>
                 </button>
               }
