@@ -115,6 +115,22 @@
                   />
                 }
                 @if (setting.type === 'OibArray') {
+                  @if (form().get(setting.key); as arrayControl) {
+                    <!-- Array-level error display -->
+                    @if (arrayControl.errors?.['unique']) {
+                      <div class="alert alert-danger mt-1">
+                        {{ 'Duplicate field names detected!' | translate }}
+                        @if (arrayControl.errors?.['unique'].duplicateValues) {
+                          ({{ arrayControl.errors?.['unique'].duplicateValues.join(', ') }})
+                        }
+                      </div>
+                    }
+                    @if (arrayControl.errors?.['singleTrue']) {
+                      <div class="alert alert-danger mt-1">
+                        {{ 'Only one element can be marked as reference!' | translate }}
+                      </div>
+                    }
+                  }
                   <oib-array
                     [parentForm]="parentForm()"
                     [formDescription]="setting.content"
