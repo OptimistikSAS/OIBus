@@ -80,3 +80,48 @@ export function dateTimeRangeValidatorBuilder(type: 'start' | 'end'): ValidatorF
     return null;
   };
 }
+
+/**
+ * Custom validator to check for unique field names in an array
+ * Returns
+ * - null if all field values are unique
+ * - {duplicateFieldNames: true} if there are duplicate values
+ */
+export function uniqueFieldNamesValidator(fieldKey: string): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    if (!control.value || !Array.isArray(control.value)) {
+      return null;
+    }
+
+    const fieldNames = control.value.map((item: any) => item[fieldKey]).filter(Boolean);
+    const uniqueFieldNames = new Set(fieldNames);
+
+    if (fieldNames.length !== uniqueFieldNames.size) {
+      return { duplicateFieldNames: true };
+    }
+
+    return null;
+  };
+}
+
+/**
+ * Custom validator to ensure only one item has a specific field set to true
+ * Returns
+ * - null if zero or one items have the field set to true
+ * - {onlyOneReference: true} if more than one item has the field set to true
+ */
+export function singleTrueValidator(fieldKey: string): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    if (!control.value || !Array.isArray(control.value)) {
+      return null;
+    }
+
+    const trueCount = control.value.filter((item: any) => item[fieldKey] === true).length;
+
+    if (trueCount > 1) {
+      return { onlyOneReference: true };
+    }
+
+    return null;
+  };
+}
