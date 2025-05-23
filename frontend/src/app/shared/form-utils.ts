@@ -1,5 +1,6 @@
 import { FormComponentValidator, OibFormControl } from '../../../../backend/shared/model/form.model';
 import { FormControl, FormGroup, NonNullableFormBuilder, ValidatorFn, Validators } from '@angular/forms';
+import { singleTrueValidator, uniqueFieldNamesValidator } from './validators';
 
 /**
  * Create the validators associated to an input from the settings schema
@@ -102,45 +103,6 @@ export const handleConditionalDisplay = (formGroup: FormGroup, formDescription: 
       });
     }
   });
-};
-
-/**
- * Custom validator to check for unique field names in an array
- */
-export const uniqueFieldNamesValidator = (fieldKey: string): ValidatorFn => {
-  return (control: any) => {
-    if (!control.value || !Array.isArray(control.value)) {
-      return null;
-    }
-
-    const fieldNames = control.value.map((item: any) => item[fieldKey]).filter(Boolean);
-    const uniqueFieldNames = new Set(fieldNames);
-
-    if (fieldNames.length !== uniqueFieldNames.size) {
-      return { duplicateFieldNames: true };
-    }
-
-    return null;
-  };
-};
-
-/**
- * Custom validator to ensure only one item has a specific field set to true
- */
-export const singleTrueValidator = (fieldKey: string): ValidatorFn => {
-  return (control: any) => {
-    if (!control.value || !Array.isArray(control.value)) {
-      return null;
-    }
-
-    const trueCount = control.value.filter((item: any) => item[fieldKey] === true).length;
-
-    if (trueCount > 1) {
-      return { onlyOneReference: true };
-    }
-
-    return null;
-  };
 };
 
 /**
