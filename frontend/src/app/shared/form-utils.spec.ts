@@ -1,4 +1,4 @@
-import { byIdComparisonFn, getValidators, groupFormControlsByRow } from './form-utils';
+import { byIdComparisonFn, getArrayValidators, getValidators, groupFormControlsByRow } from './form-utils';
 import { FormComponentValidator, OibFormControl } from '../../../../backend/shared/model/form.model';
 import { Validators } from '@angular/forms';
 
@@ -18,6 +18,137 @@ describe('form-utils', () => {
 
       expect(result[0]).toEqual(Validators.required);
       expect(result[6]).toEqual(Validators.nullValidator);
+    });
+  });
+
+  describe('getArrayValidators', () => {
+    it('should return empty array when no validators are specified', () => {
+      const content: Array<OibFormControl> = [
+        {
+          key: 'fieldName',
+          type: 'OibText',
+          translationKey: 'field.name',
+          defaultValue: ''
+        }
+      ];
+
+      const result = getArrayValidators(content);
+      expect(result).toEqual([]);
+    });
+
+    it('should return empty array when no unique or singleTrue validators are specified', () => {
+      const content: Array<OibFormControl> = [
+        {
+          key: 'fieldName',
+          type: 'OibText',
+          translationKey: 'field.name',
+          defaultValue: '',
+          validators: [{ key: 'required' }]
+        }
+      ];
+
+      const result = getArrayValidators(content);
+      expect(result).toEqual([]);
+    });
+
+    it('should return unique validator when unique validator is specified', () => {
+      const content: Array<OibFormControl> = [
+        {
+          key: 'fieldName',
+          type: 'OibText',
+          translationKey: 'field.name',
+          defaultValue: '',
+          validators: [{ key: 'unique' }]
+        }
+      ];
+
+      const result = getArrayValidators(content);
+      expect(result.length).toBe(1);
+      expect(typeof result[0]).toBe('function');
+    });
+
+    it('should return singleTrue validator when singleTrue validator is specified', () => {
+      const content: Array<OibFormControl> = [
+        {
+          key: 'useAsReference',
+          type: 'OibCheckbox',
+          translationKey: 'use.as.reference',
+          defaultValue: false,
+          validators: [{ key: 'singleTrue' }]
+        }
+      ];
+
+      const result = getArrayValidators(content);
+      expect(result.length).toBe(1);
+      expect(typeof result[0]).toBe('function');
+    });
+
+    it('should return multiple validators when both unique and singleTrue are specified', () => {
+      const content: Array<OibFormControl> = [
+        {
+          key: 'fieldName',
+          type: 'OibText',
+          translationKey: 'field.name',
+          defaultValue: '',
+          validators: [{ key: 'unique' }]
+        },
+        {
+          key: 'useAsReference',
+          type: 'OibCheckbox',
+          translationKey: 'use.as.reference',
+          defaultValue: false,
+          validators: [{ key: 'singleTrue' }]
+        }
+      ];
+
+      const result = getArrayValidators(content);
+      expect(result.length).toBe(2);
+      expect(typeof result[0]).toBe('function');
+      expect(typeof result[1]).toBe('function');
+    });
+
+    it('should handle multiple fields with same validator type', () => {
+      const content: Array<OibFormControl> = [
+        {
+          key: 'fieldName1',
+          type: 'OibText',
+          translationKey: 'field.name1',
+          defaultValue: '',
+          validators: [{ key: 'unique' }]
+        },
+        {
+          key: 'fieldName2',
+          type: 'OibText',
+          translationKey: 'field.name2',
+          defaultValue: '',
+          validators: [{ key: 'unique' }]
+        }
+      ];
+
+      const result = getArrayValidators(content);
+      expect(result.length).toBe(2);
+    });
+
+    it('should handle mixed validators on same field', () => {
+      const content: Array<OibFormControl> = [
+        {
+          key: 'fieldName',
+          type: 'OibText',
+          translationKey: 'field.name',
+          defaultValue: '',
+          validators: [{ key: 'required' }, { key: 'unique' }]
+        },
+        {
+          key: 'useAsReference',
+          type: 'OibCheckbox',
+          translationKey: 'use.as.reference',
+          defaultValue: false,
+          validators: [{ key: 'required' }, { key: 'singleTrue' }]
+        }
+      ];
+
+      const result = getArrayValidators(content);
+      expect(result.length).toBe(2);
     });
   });
 
