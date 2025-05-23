@@ -1,14 +1,5 @@
 import { FormComponentValidator, OibFormControl } from '../../../../backend/shared/model/form.model';
-import {
-  AbstractControl,
-  FormArray,
-  FormControl,
-  FormGroup,
-  NonNullableFormBuilder,
-  ValidationErrors,
-  ValidatorFn,
-  Validators
-} from '@angular/forms';
+import { FormControl, FormGroup, NonNullableFormBuilder, ValidatorFn, Validators } from '@angular/forms';
 
 /**
  * Create the validators associated to an input from the settings schema
@@ -28,6 +19,10 @@ export const getValidators = (validators: Array<FormComponentValidator>): Array<
         return Validators.minLength(validator.params.minLength);
       case 'maxLength':
         return Validators.maxLength(validator.params.maxLength);
+      case 'unique':
+      case 'singleTrue':
+        // Note: These are handled at the array level, not individual field level
+        return Validators.nullValidator;
       default:
         return Validators.nullValidator;
     }
@@ -37,14 +32,14 @@ export const getValidators = (validators: Array<FormComponentValidator>): Array<
 export const createFormGroup = (formDescription: Array<OibFormControl>, fb: NonNullableFormBuilder): FormGroup => {
   const formGroup = fb.group({});
   formDescription.forEach(setting => {
-    const control = createFormControl(setting, fb);
-    formGroup.addControl(setting.key, control);
+    const formControl = createFormControl(setting, fb);
+    formGroup.addControl(setting.key, formControl);
   });
   handleConditionalDisplay(formGroup, formDescription);
   return formGroup;
 };
 
-export const createFormControl = (formControlSettings: OibFormControl, fb: NonNullableFormBuilder): FormControl | FormGroup | FormArray => {
+export const createFormControl = (formControlSettings: OibFormControl, fb: NonNullableFormBuilder): FormControl | FormGroup => {
   const validators = getValidators(formControlSettings.validators || []);
   switch (formControlSettings.type) {
     case 'OibText':
@@ -55,33 +50,14 @@ export const createFormControl = (formControlSettings: OibFormControl, fb: NonNu
     case 'OibTextArea':
     case 'OibTimezone':
     case 'OibCertificate':
-    case 'OibCheckbox':
-    case 'OibScanMode':
       return fb.control(formControlSettings.defaultValue, validators);
-    case 'OibArray': {
-      // Default value for FormArray should be an array of initial item values
-      const initialItemValues = formControlSettings.defaultValue || [];
-      const arrayItems = initialItemValues.map((itemValue: any) => {
-        const itemFormGroup = createFormGroup(formControlSettings.content, fb);
-        itemFormGroup.patchValue(itemValue); // Populate the item form group
-        return itemFormGroup;
-      });
-
-      const arrayValidators: Array<ValidatorFn> = [];
-      if (formControlSettings.validators) {
-        for (const v of formControlSettings.validators) {
-          if (v.key === 'unique') {
-            arrayValidators.push(arrayUniqueFieldValidator('fieldName'));
-            console.log("Applied arrayUniqueFieldValidator for 'fieldName' to FormArray:", formControlSettings.key);
-          }
-          if (v.key === 'singleTrue') {
-            arrayValidators.push(arraySingleTrueValidator('useAsReference'));
-            console.log("Applied arraySingleTrueValidator for 'useAsReference' to FormArray:", formControlSettings.key);
-          }
-        }
-      }
-      return fb.array(arrayItems, { validators: arrayValidators });
-    }
+    case 'OibArray':
+      const arrayValidators = [...getValidators(formControlSettings.validators || []), ...getArrayValidators(formControlSettings.content)];
+      return fb.control(formControlSettings.defaultValue || [], arrayValidators);
+    case 'OibCheckbox':
+      return fb.control(formControlSettings.defaultValue || false, validators);
+    case 'OibScanMode':
+      return fb.control(null, validators);
     case 'OibFormGroup':
       return createFormGroup(formControlSettings.content, fb);
   }
@@ -128,31 +104,74 @@ export const handleConditionalDisplay = (formGroup: FormGroup, formDescription: 
   });
 };
 
-export function arrayUniqueFieldValidator(fieldKey: string): ValidatorFn {
-  return (control: AbstractControl): ValidationErrors | null => {
-    if (!(control instanceof FormArray)) return null;
-    const values = control.controls.map(group => group.get(fieldKey)?.value);
-    const duplicates = values.filter((v, i, arr) => v && arr.indexOf(v) !== i && arr.lastIndexOf(v) === i); // Find unique duplicates
-
-    if (duplicates.length > 0) {
-      console.warn(`ARRAY VALIDATOR: Duplicate found for ${fieldKey}:`, duplicates, 'All values:', values);
-      return {
-        unique: { field: fieldKey, duplicateValues: duplicates, message: `Duplicate values for ${fieldKey}: ${duplicates.join(', ')}` }
-      };
+/**
+ * Custom validator to check for unique field names in an array
+ */
+export const uniqueFieldNamesValidator = (fieldKey: string): ValidatorFn => {
+  return (control: any) => {
+    if (!control.value || !Array.isArray(control.value)) {
+      return null;
     }
+
+    const fieldNames = control.value.map((item: any) => item[fieldKey]).filter(Boolean);
+    const uniqueFieldNames = new Set(fieldNames);
+
+    if (fieldNames.length !== uniqueFieldNames.size) {
+      return { duplicateFieldNames: true };
+    }
+
     return null;
   };
-}
+};
 
-export function arraySingleTrueValidator(fieldKey: string): ValidatorFn {
-  return (control: AbstractControl): ValidationErrors | null => {
-    if (!(control instanceof FormArray)) return null;
-    const trueCount = control.controls.filter(group => group.get(fieldKey)?.value === true).length;
+/**
+ * Custom validator to ensure only one item has a specific field set to true
+ */
+export const singleTrueValidator = (fieldKey: string): ValidatorFn => {
+  return (control: any) => {
+    if (!control.value || !Array.isArray(control.value)) {
+      return null;
+    }
+
+    const trueCount = control.value.filter((item: any) => item[fieldKey] === true).length;
 
     if (trueCount > 1) {
-      console.warn(`ARRAY VALIDATOR: More than one true for ${fieldKey}. Count: ${trueCount}`);
-      return { singleTrue: { field: fieldKey, message: `Only one item can have ${fieldKey} set to true.` } };
+      return { onlyOneReference: true };
     }
+
     return null;
   };
-}
+};
+
+/**
+ * Create array-specific validators based on the content configuration
+ */
+export const getArrayValidators = (content: Array<OibFormControl>): Array<ValidatorFn> => {
+  const validators: Array<ValidatorFn> = [];
+
+  const uniqueFields: Array<string> = [];
+  const singleTrueFields: Array<string> = [];
+
+  content.forEach(field => {
+    if (field.validators) {
+      field.validators.forEach(validator => {
+        if (validator.key === 'unique') {
+          uniqueFields.push(field.key);
+        }
+        if (validator.key === 'singleTrue') {
+          singleTrueFields.push(field.key);
+        }
+      });
+    }
+  });
+
+  uniqueFields.forEach(fieldKey => {
+    validators.push(uniqueFieldNamesValidator(fieldKey));
+  });
+
+  singleTrueFields.forEach(fieldKey => {
+    validators.push(singleTrueValidator(fieldKey));
+  });
+
+  return validators;
+};
