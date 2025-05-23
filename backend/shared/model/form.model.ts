@@ -16,7 +16,16 @@ export const FORM_COMPONENT_TYPES = [
 ] as const;
 export type FormComponentType = (typeof FORM_COMPONENT_TYPES)[number];
 
-export const FORM_COMPONENT_VALIDATOR_TYPES = ['required', 'min', 'max', 'pattern', 'minLength', 'maxLength'] as const;
+export const FORM_COMPONENT_VALIDATOR_TYPES = [
+  'required',
+  'min',
+  'max',
+  'pattern',
+  'minLength',
+  'maxLength',
+  'unique',
+  'singleTrue'
+] as const;
 export type FormComponentValidatorType = (typeof FORM_COMPONENT_VALIDATOR_TYPES)[number];
 
 interface Validator {
@@ -62,13 +71,22 @@ interface MaxLengthValidator extends Validator {
   };
 }
 
+interface UniqueValidator extends Validator {
+  key: 'unique';
+}
+interface SingleTrueValidator extends Validator {
+  key: 'singleTrue';
+}
+
 export type FormComponentValidator =
   | RequiredValidator
   | MinValidator
   | MaxValidator
   | PatternValidator
   | MinLengthValidator
-  | MaxLengthValidator;
+  | MaxLengthValidator
+  | UniqueValidator
+  | SingleTrueValidator;
 
 export interface BaseOibFormControl<T> {
   key: string;
