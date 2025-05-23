@@ -39,7 +39,9 @@
       "must-be-unique": "Must be unique",
       "resolve-pending-changes": "Please validate or discard pending changes before saving",
       "bad-start-date-range": "Start time must be before end time",
-      "bad-end-date-range": "End time must be after start time"
+      "bad-end-date-range": "End time must be after start time",
+      "duplicate-field-names": "Duplicate field names detected",
+      "only-one-reference": "Only one element can be marked as reference"
     },
     "period": {
       "none": "None",
