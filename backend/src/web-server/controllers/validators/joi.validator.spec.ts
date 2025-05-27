@@ -1,6 +1,6 @@
 import Joi from 'joi';
 import JoiValidator from './joi.validator';
-import { OibFormControl } from '../../../../shared/model/form.model';
+import { OibFormControl, OibArrayFormControl } from '../../../../shared/model/form.model';
 
 const validator = new JoiValidator();
 
@@ -454,7 +454,173 @@ describe('Joi validator', () => {
     ];
     const generatedSchema = extendedValidator.generateJoiSchema(settings);
 
-    const expectedSchema = Joi.object({ dateTimeFields: Joi.array().required() });
+    const expectedSchema = Joi.object({
+      dateTimeFields: Joi.array()
+        .required()
+        .items(
+          Joi.object({
+            fieldName: Joi.string().allow(null, ''),
+            useAsReference: Joi.boolean().falsy(0).truthy(1),
+            type: Joi.string().valid('string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'),
+            timezone: Joi.string().allow(null, ''),
+            format: Joi.string().allow(null, ''),
+            locale: Joi.string().allow(null, '')
+          })
+        )
+    });
+
     expect(expectedSchema.describe()).toEqual(generatedSchema.describe());
+  });
+
+  describe('Array validation with custom validators', () => {
+    const arrayFormControlWithUniqueAndSingleTrue: OibArrayFormControl = {
+      key: 'dateTimeFields',
+      type: 'OibArray',
+      translationKey: 'Date time fields',
+      content: [
+        {
+          key: 'fieldName',
+          translationKey: 'Field name',
+          type: 'OibText',
+          validators: [{ key: 'required' }, { key: 'unique' }],
+          displayInViewMode: true
+        },
+        {
+          key: 'useAsReference',
+          translationKey: 'Reference field',
+          type: 'OibCheckbox',
+          validators: [{ key: 'singleTrue' }],
+          displayInViewMode: true
+        },
+        {
+          key: 'type',
+          translationKey: 'Type',
+          type: 'OibSelect',
+          options: ['string', 'iso-string'],
+          validators: [{ key: 'required' }],
+          displayInViewMode: true
+        }
+      ]
+    };
+
+    it('should pass validation with unique field names and single true value', async () => {
+      const validData = {
+        dateTimeFields: [
+          { fieldName: 'field1', useAsReference: true, type: 'string' },
+          { fieldName: 'field2', useAsReference: false, type: 'string' },
+          { fieldName: 'field3', useAsReference: false, type: 'iso-string' }
+        ]
+      };
+
+      await expect(extendedValidator.validateSettings([arrayFormControlWithUniqueAndSingleTrue], validData)).resolves.not.toThrow();
+    });
+
+    it('should pass validation with unique field names and no true values', async () => {
+      const validData = {
+        dateTimeFields: [
+          { fieldName: 'field1', useAsReference: false, type: 'string' },
+          { fieldName: 'field2', useAsReference: false, type: 'string' }
+        ]
+      };
+
+      await expect(extendedValidator.validateSettings([arrayFormControlWithUniqueAndSingleTrue], validData)).resolves.not.toThrow();
+    });
+
+    it('should fail validation with duplicate field names', async () => {
+      const invalidData = {
+        dateTimeFields: [
+          { fieldName: 'field1', useAsReference: true, type: 'string' },
+          { fieldName: 'field2', useAsReference: false, type: 'string' },
+          { fieldName: 'field1', useAsReference: false, type: 'iso-string' }
+        ]
+      };
+
+      await expect(extendedValidator.validateSettings([arrayFormControlWithUniqueAndSingleTrue], invalidData)).rejects.toThrow();
+    });
+
+    it('should fail validation with multiple true values', async () => {
+      const invalidData = {
+        dateTimeFields: [
+          { fieldName: 'field1', useAsReference: true, type: 'string' },
+          { fieldName: 'field2', useAsReference: true, type: 'string' },
+          { fieldName: 'field3', useAsReference: false, type: 'iso-string' }
+        ]
+      };
+
+      await expect(extendedValidator.validateSettings([arrayFormControlWithUniqueAndSingleTrue], invalidData)).rejects.toThrow();
+    });
+
+    it('should fail validation with both duplicate field names and multiple true values', async () => {
+      const invalidData = {
+        dateTimeFields: [
+          { fieldName: 'field1', useAsReference: true, type: 'string' },
+          { fieldName: 'field1', useAsReference: true, type: 'string' }
+        ]
+      };
+
+      await expect(extendedValidator.validateSettings([arrayFormControlWithUniqueAndSingleTrue], invalidData)).rejects.toThrow();
+    });
+
+    it('should pass validation with empty array', async () => {
+      const validData = {
+        dateTimeFields: []
+      };
+
+      await expect(extendedValidator.validateSettings([arrayFormControlWithUniqueAndSingleTrue], validData)).resolves.not.toThrow();
+    });
+
+    it('should handle arrays with only one item correctly', async () => {
+      const validData = {
+        dateTimeFields: [{ fieldName: 'field1', useAsReference: true, type: 'string' }]
+      };
+
+      await expect(extendedValidator.validateSettings([arrayFormControlWithUniqueAndSingleTrue], validData)).resolves.not.toThrow();
+    });
+
+    it('should validate nested object structure correctly', async () => {
+      const validData = {
+        dateTimeFields: [
+          { fieldName: 'timestamp', useAsReference: true, type: 'string' },
+          { fieldName: 'created_at', useAsReference: false, type: 'iso-string' }
+        ]
+      };
+
+      await expect(extendedValidator.validateSettings([arrayFormControlWithUniqueAndSingleTrue], validData)).resolves.not.toThrow();
+    });
+
+    it('should generate proper error messages', async () => {
+      const invalidData = {
+        dateTimeFields: [
+          { fieldName: 'field1', useAsReference: true, type: 'string' },
+          { fieldName: 'field1', useAsReference: true, type: 'string' }
+        ]
+      };
+
+      try {
+        await extendedValidator.validateSettings([arrayFormControlWithUniqueAndSingleTrue], invalidData);
+        fail('Expected validation to throw an error');
+      } catch (error: unknown) {
+        expect(error instanceof Joi.ValidationError).toBeTruthy();
+        if (error instanceof Joi.ValidationError) {
+          expect(error.details).toBeDefined();
+          expect(error.details.length).toBeGreaterThan(0);
+          const errorMessages = error.details.map((detail: Joi.ValidationErrorItem) => detail.message);
+
+          const hasUniqueError = errorMessages.some(
+            (msg: string) =>
+              msg.includes('duplicate') ||
+              msg.includes('unique') ||
+              msg.includes('fieldName') ||
+              msg.toLowerCase().includes('contains a duplicate value')
+          );
+
+          const hasSingleTrueError = errorMessages.some(
+            (msg: string) => msg.includes('Only one item') || msg.includes('useAsReference') || msg.includes('set to true')
+          );
+
+          expect(hasUniqueError || hasSingleTrueError).toBeTruthy();
+        }
+      }
+    });
   });
 });
