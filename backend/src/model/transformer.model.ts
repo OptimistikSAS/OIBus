@@ -1,5 +1,5 @@
 import { BaseEntity } from './types';
-import { OibFormControl } from '../../shared/model/form.model';
+import { OIBusObjectAttribute } from '../../shared/model/form.model';
 
 export interface BaseTransformer {
   id: string;
@@ -13,7 +13,7 @@ export interface CustomTransformer extends BaseEntity, BaseTransformer {
   name: string;
   description: string;
   customCode: string;
-  customManifest: Array<OibFormControl>;
+  customManifest: OIBusObjectAttribute;
 }
 
 export interface StandardTransformer extends BaseTransformer {
@@ -27,11 +27,4 @@ export interface TransformerWithOptions {
   transformer: Transformer;
   options: object;
   inputType: string;
-}
-
-export interface TransformerLight {
-  id: string;
-  inputType: string;
-  outputType: string;
-  type: 'custom' | 'standard';
 }

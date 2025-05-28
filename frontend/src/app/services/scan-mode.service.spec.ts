@@ -2,8 +2,9 @@ import { TestBed } from '@angular/core/testing';
 
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ScanModeService } from './scan-mode.service';
-import { ScanModeCommandDTO, ScanModeDTO, ValidatedCronExpression } from '../../../../backend/shared/model/scan-mode.model';
+import { ScanModeDTO, ValidatedCronExpression } from '../../../../backend/shared/model/scan-mode.model';
 import { provideHttpClient } from '@angular/common/http';
+import testData from '../../../../backend/src/tests/utils/test-data';
 
 describe('ScanModeService', () => {
   let http: HttpTestingController;
@@ -40,11 +41,7 @@ describe('ScanModeService', () => {
 
   it('should create a scan mode', () => {
     let done = false;
-    const command: ScanModeCommandDTO = {
-      name: 'myScanMode',
-      description: 'a test proxy',
-      cron: '* * * * * *'
-    };
+    const command = testData.scanMode.command;
 
     service.create(command).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'POST', url: '/api/scan-modes' });
@@ -55,11 +52,7 @@ describe('ScanModeService', () => {
 
   it('should update a scan mode', () => {
     let done = false;
-    const command: ScanModeCommandDTO = {
-      name: 'myScanMode',
-      description: 'a test proxy',
-      cron: '* * * * * *'
-    };
+    const command = testData.scanMode.command;
 
     service.update('id1', command).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'PUT', url: '/api/scan-modes/id1' });

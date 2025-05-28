@@ -1,9 +1,8 @@
-import { Component, inject, OnInit, output, input, effect } from '@angular/core';
+import { Component, computed, effect, inject, input, OnInit, output } from '@angular/core';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
-
 import { Modal, ModalService } from '../../shared/modal.service';
 import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import {
@@ -13,19 +12,21 @@ import {
   SouthConnectorItemDTO,
   SouthConnectorManifest
 } from '../../../../../backend/shared/model/south-connector.model';
-import { EditSouthItemModalComponent } from '../edit-south-item-modal/edit-south-item-modal.component';
+import { EditSouthItemModalComponent } from './edit-south-item-modal/edit-south-item-modal.component';
 import { debounceTime, distinctUntilChanged, firstValueFrom, of, switchMap, tap } from 'rxjs';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
-import { OibFormControl } from '../../../../../backend/shared/model/form.model';
 import { createPageFromArray, Page } from '../../../../../backend/shared/model/types';
 import { emptyPage } from '../../shared/test-utils';
-import { ImportSouthItemsModalComponent } from '../import-south-items-modal/import-south-items-modal.component';
+import { ImportSouthItemsModalComponent } from './import-south-items-modal/import-south-items-modal.component';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
 import { ImportItemModalComponent } from '../../shared/import-item-modal/import-item-modal.component';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
+import { OIBusAttribute, OIBusObjectAttribute, OIBusScanModeAttribute } from '../../../../../backend/shared/model/form.model';
+import { isDisplayableAttribute } from '../../shared/form/dynamic-form.builder';
+import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
 
 const PAGE_SIZE = 20;
 
@@ -61,19 +62,24 @@ export class SouthItemsComponent implements OnInit {
   private modalService = inject(ModalService);
   private southConnectorService = inject(SouthConnectorService);
   private translateService = inject(TranslateService);
-  /** Either the edited dto or the duplicated dto */
-  readonly southConnector = input<SouthConnectorDTO<SouthSettings, SouthItemSettings> | null>(null);
+
   /** Actual southId (or 'create') */
   readonly southId = input.required<string>();
   readonly southConnectorCommand = input.required<SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>>();
-
+  /** Either the edited dto or the duplicated dto */
+  readonly southConnector = input<SouthConnectorDTO<SouthSettings, SouthItemSettings> | null>(null);
   readonly southManifest = input.required<SouthConnectorManifest>();
   readonly scanModes = input.required<Array<ScanModeDTO>>();
+  readonly certificates = input.required<Array<CertificateDTO>>();
   /**
-   * Wether to save the changes in the backend or just emit inMemoryItems.
+   * Save the changes in the backend or just emit inMemoryItems.
    * If this is true, then southId needs to be an actual id
    */
   readonly saveChangesDirectly = input.required<boolean>();
+
+  readonly scanModeManifest = computed(() => {
+    return this.southManifest().items.rootAttribute.attributes.find(attribute => attribute.key === 'scanModeId')! as OIBusScanModeAttribute;
+  });
 
   readonly inMemoryItems = output<Array<SouthConnectorItemCommandDTO<SouthItemSettings>> | null>();
 
@@ -81,7 +87,7 @@ export class SouthItemsComponent implements OnInit {
   filteredItems: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>> = [];
 
   displayedItems: Page<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>> = emptyPage();
-  displaySettings: Array<OibFormControl> = [];
+  displaySettings: Array<OIBusAttribute> = [];
 
   searchControl = inject(NonNullableFormBuilder).control(null as string | null);
 
@@ -120,7 +126,10 @@ export class SouthItemsComponent implements OnInit {
 
   ngOnInit() {
     this.resetPage();
-    this.displaySettings = this.southManifest().items.settings.filter(setting => setting.displayInViewMode);
+    const settingsAttribute = this.southManifest().items.rootAttribute.attributes.find(
+      attribute => attribute.key === 'settings'
+    )! as OIBusObjectAttribute;
+    this.displaySettings = settingsAttribute.attributes.filter(setting => isDisplayableAttribute(setting));
 
     // subscribe to changes to search control
     this.searchControl.valueChanges.pipe(debounceTime(200), distinctUntilChanged()).subscribe(() => {
@@ -156,9 +165,9 @@ export class SouthItemsComponent implements OnInit {
 
     const tableIndex = this.allItems.findIndex(i => i.id === southItem.id || i.name === southItem.name);
     component.prepareForEdition(
-      this.southManifest().items,
       this.allItems,
       this.scanModes(),
+      this.certificates(),
       southItem,
       this.southId(),
       this.southConnectorCommand(),
@@ -179,9 +188,9 @@ export class SouthItemsComponent implements OnInit {
     });
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
     component.prepareForCreation(
-      this.southManifest().items,
       this.allItems,
       this.scanModes(),
+      this.certificates(),
       this.southId(),
       this.southConnectorCommand(),
       this.southManifest()
@@ -282,9 +291,9 @@ export class SouthItemsComponent implements OnInit {
     const modalRef = this.modalService.open(EditSouthItemModalComponent, { size: 'xl', backdrop: 'static' });
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
     component.prepareForCopy(
-      this.southManifest().items,
       this.allItems,
       this.scanModes(),
+      this.certificates(),
       item,
       this.southId(),
       this.southConnectorCommand(),
@@ -341,8 +350,11 @@ export class SouthItemsComponent implements OnInit {
       expectedHeaders.push('scanMode');
     }
 
-    this.southManifest().items.settings.forEach(setting => {
-      if (setting.conditionalDisplay) {
+    const settingsAttribute = this.southManifest().items.rootAttribute.attributes.find(
+      attribute => attribute.key === 'settings'
+    )! as OIBusObjectAttribute;
+    settingsAttribute.attributes.forEach(setting => {
+      if (settingsAttribute.enablingConditions.find(element => element.targetPathFromRoot === setting.key)) {
         optionalHeaders.push(`settings_${setting.key}`);
       } else {
         expectedHeaders.push(`settings_${setting.key}`);
@@ -376,7 +388,7 @@ export class SouthItemsComponent implements OnInit {
       }) => {
         const modalRef = this.modalService.open(ImportSouthItemsModalComponent, { size: 'xl', backdrop: 'static' });
         const component: ImportSouthItemsModalComponent = modalRef.componentInstance;
-        component.prepare(this.southManifest().items, this.allItems, result.items, result.errors, this.scanModes());
+        component.prepare(this.southManifest(), this.allItems, result.items, result.errors, this.scanModes());
         this.refreshAfterImportModalClosed(modalRef);
       }
     );
@@ -443,8 +455,12 @@ export class SouthItemsComponent implements OnInit {
   }
 
   getFieldValue(element: any, field: string): string {
-    const foundFormControl = this.southManifest().items.settings.find(formControl => formControl.key === field);
-    if (foundFormControl && element[field] && foundFormControl.type === 'OibSelect') {
+    const settingsAttribute = this.southManifest().items.rootAttribute.attributes.find(
+      attribute => attribute.key === 'settings'
+    )! as OIBusObjectAttribute;
+
+    const foundFormControl = settingsAttribute.attributes.find(formControl => formControl.key === field);
+    if (foundFormControl && element[field] && foundFormControl.type === 'string-select') {
       return this.translateService.instant(foundFormControl.translationKey + '.' + element[field]);
     }
     return element[field];

@@ -248,7 +248,7 @@ describe('SouthSFTP', () => {
       callback(fileInfo);
       return [fileInfo];
     });
-    configuration.settings.username = null;
+    configuration.settings.username = '';
     configuration.settings.password = '';
     const result = await south.listFiles(configuration.items[0]);
     expect(encryptionService.decryptText).not.toHaveBeenCalled();
@@ -446,7 +446,7 @@ describe('SouthSFTP test connection with private key', () => {
       authentication: 'private-key',
       privateKey: 'myPrivateKey',
       passphrase: 'myPassphrase',
-      username: null,
+      username: '',
       compression: false
     },
     items: [
