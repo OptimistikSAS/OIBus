@@ -9,133 +9,349 @@ const manifest: SouthConnectorManifest = {
     lastFile: true,
     history: false
   },
-  settings: [
-    {
-      key: 'host',
-      type: 'OibText',
-      translationKey: 'south.sftp.host',
-      validators: [{ key: 'required' }],
-      defaultValue: '127.0.0.1',
-      displayInViewMode: true,
-      newRow: true,
-      class: 'col-9'
+  settings: {
+    type: 'object',
+    key: 'settings',
+    translationKey: 'configuration.oibus.manifest.south.settings',
+    displayProperties: {
+      visible: true,
+      wrapInBox: false
     },
-    {
-      key: 'port',
-      type: 'OibNumber',
-      translationKey: 'south.sftp.port',
-      defaultValue: 8080,
-      validators: [{ key: 'required' }, { key: 'min', params: { min: 1 } }, { key: 'max', params: { max: 65535 } }],
-      displayInViewMode: true,
-      class: 'col-3'
-    },
-    {
-      key: 'authentication',
-      type: 'OibSelect',
-      options: ['password', 'private-key'],
-      translationKey: 'south.sftp.authentication',
-      defaultValue: 'password',
-      newRow: true,
-      validators: [{ key: 'required' }],
-      displayInViewMode: true,
-      class: 'col-6'
-    },
-    {
-      key: 'username',
-      type: 'OibText',
-      translationKey: 'south.sftp.username',
-      defaultValue: '',
-      displayInViewMode: false,
-      newRow: true,
-      class: 'col-4'
-    },
-    {
-      key: 'password',
-      type: 'OibSecret',
-      translationKey: 'south.sftp.password',
-      defaultValue: '',
-      displayInViewMode: false,
-      conditionalDisplay: { field: 'authentication', values: ['password'] },
-      class: 'col-4'
-    },
-    {
-      key: 'privateKey',
-      type: 'OibText',
-      translationKey: 'south.sftp.private-key',
-      validators: [{ key: 'required' }],
-      conditionalDisplay: { field: 'authentication', values: ['private-key'] },
-      displayInViewMode: false,
-      class: 'col-4'
-    },
-    {
-      key: 'passphrase',
-      type: 'OibSecret',
-      translationKey: 'south.sftp.passphrase',
-      conditionalDisplay: { field: 'authentication', values: ['private-key'] },
-      displayInViewMode: false,
-      class: 'col-4'
-    },
-    {
-      key: 'compression',
-      type: 'OibCheckbox',
-      translationKey: 'south.sftp.compression',
-      defaultValue: false,
-      newRow: true,
-      validators: [{ key: 'required' }],
-      displayInViewMode: true
-    }
-  ],
-  items: {
-    scanMode: 'POLL',
-    settings: [
+    enablingConditions: [
       {
-        key: 'remoteFolder',
-        type: 'OibText',
-        translationKey: 'south.items.sftp.remote-folder',
-        defaultValue: '/remote-folder',
-        newRow: true,
-        validators: [{ key: 'required' }],
-        displayInViewMode: true
+        referralPathFromRoot: 'authentication',
+        targetPathFromRoot: 'password',
+        values: ['password']
       },
       {
-        key: 'regex',
-        type: 'OibText',
-        translationKey: 'south.items.sftp.regex',
-        defaultValue: '.*.csv',
-        validators: [{ key: 'required' }],
-        displayInViewMode: true
+        referralPathFromRoot: 'authentication',
+        targetPathFromRoot: 'privateKey',
+        values: ['private-key']
       },
       {
-        key: 'minAge',
-        type: 'OibNumber',
-        translationKey: 'south.items.sftp.min-age',
-        unitLabel: 'ms',
-        defaultValue: 1000,
-        newRow: true,
-        class: 'col-4',
-        validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
-        displayInViewMode: true
+        referralPathFromRoot: 'authentication',
+        targetPathFromRoot: 'passphrase',
+        values: ['private-key']
+      }
+    ],
+    validators: [],
+    attributes: [
+      {
+        type: 'string',
+        key: 'host',
+        translationKey: 'configuration.oibus.manifest.south.sftp.host',
+        defaultValue: '127.0.0.1',
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          }
+        ],
+        displayProperties: {
+          row: 0,
+          columns: 9,
+          displayInViewMode: true
+        }
       },
       {
-        key: 'preserveFiles',
-        type: 'OibCheckbox',
-        translationKey: 'south.items.sftp.preserve-file',
-        defaultValue: true,
-        class: 'col-4',
-        validators: [{ key: 'required' }],
-        displayInViewMode: true
+        type: 'number',
+        key: 'port',
+        translationKey: 'configuration.oibus.manifest.south.sftp.port',
+        defaultValue: 8080,
+        unit: null,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          },
+          {
+            type: 'MINIMUM',
+            arguments: ['1']
+          },
+          {
+            type: 'MAXIMUM',
+            arguments: ['65535']
+          }
+        ],
+        displayProperties: {
+          row: 0,
+          columns: 3,
+          displayInViewMode: true
+        }
       },
       {
-        key: 'ignoreModifiedDate',
-        type: 'OibCheckbox',
-        translationKey: 'south.items.sftp.ignore-modified-date',
+        type: 'string-select',
+        key: 'authentication',
+        translationKey: 'configuration.oibus.manifest.south.sftp.authentication',
+        defaultValue: 'password',
+        selectableValues: ['password', 'private-key'],
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          }
+        ],
+        displayProperties: {
+          row: 1,
+          columns: 4,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'string',
+        key: 'username',
+        translationKey: 'configuration.oibus.manifest.south.sftp.username',
+        defaultValue: null,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          }
+        ],
+        displayProperties: {
+          row: 2,
+          columns: 4,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'secret',
+        key: 'password',
+        translationKey: 'configuration.oibus.manifest.south.sftp.password',
+        validators: [],
+        displayProperties: {
+          row: 2,
+          columns: 4,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'string',
+        key: 'privateKey',
+        translationKey: 'configuration.oibus.manifest.south.sftp.private-key',
+        defaultValue: null,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          }
+        ],
+        displayProperties: {
+          row: 2,
+          columns: 4,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'secret',
+        key: 'passphrase',
+        translationKey: 'configuration.oibus.manifest.south.sftp.passphrase',
+        validators: [],
+        displayProperties: {
+          row: 2,
+          columns: 4,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'boolean',
+        key: 'compression',
+        translationKey: 'configuration.oibus.manifest.south.sftp.compression',
         defaultValue: false,
-        class: 'col-4',
-        conditionalDisplay: { field: 'preserveFiles', values: [true] },
-        validators: [{ key: 'required' }],
-        displayInViewMode: false
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          }
+        ],
+        displayProperties: {
+          row: 3,
+          columns: 4,
+          displayInViewMode: true
+        }
       }
     ]
+  },
+  items: {
+    type: 'array',
+    key: 'items',
+    translationKey: 'configuration.oibus.manifest.south.items',
+    paginate: true,
+    numberOfElementPerPage: 20,
+    validators: [],
+    rootAttribute: {
+      type: 'object',
+      key: 'item',
+      translationKey: 'configuration.oibus.manifest.south.items.item',
+      displayProperties: {
+        visible: true,
+        wrapInBox: false
+      },
+      enablingConditions: [],
+      validators: [],
+      attributes: [
+        {
+          type: 'string',
+          key: 'name',
+          translationKey: 'configuration.oibus.manifest.south.items.name',
+          defaultValue: null,
+          validators: [
+            {
+              type: 'REQUIRED',
+              arguments: []
+            }
+          ],
+          displayProperties: {
+            row: 0,
+            columns: 4,
+            displayInViewMode: true
+          }
+        },
+        {
+          type: 'boolean',
+          key: 'enabled',
+          translationKey: 'configuration.oibus.manifest.south.items.enabled',
+          defaultValue: true,
+          validators: [
+            {
+              type: 'REQUIRED',
+              arguments: []
+            }
+          ],
+          displayProperties: {
+            row: 0,
+            columns: 4,
+            displayInViewMode: true
+          }
+        },
+        {
+          type: 'scan-mode',
+          key: 'scanModeId',
+          acceptableType: 'POLL',
+          translationKey: 'configuration.oibus.manifest.south.items.scan-mode',
+          validators: [
+            {
+              type: 'REQUIRED',
+              arguments: []
+            }
+          ],
+          displayProperties: {
+            row: 0,
+            columns: 4,
+            displayInViewMode: true
+          }
+        },
+        {
+          type: 'object',
+          key: 'settings',
+          translationKey: 'configuration.oibus.manifest.south.items.settings',
+          displayProperties: {
+            visible: true,
+            wrapInBox: true
+          },
+          enablingConditions: [
+            {
+              referralPathFromRoot: 'preserveFiles',
+              targetPathFromRoot: 'ignoreModifiedDate',
+              values: [true]
+            }
+          ],
+          validators: [],
+          attributes: [
+            {
+              type: 'string',
+              key: 'remoteFolder',
+              translationKey: 'configuration.oibus.manifest.south.items.sftp.remote-folder',
+              defaultValue: '/remote-folder',
+              validators: [
+                {
+                  type: 'REQUIRED',
+                  arguments: []
+                }
+              ],
+              displayProperties: {
+                row: 0,
+                columns: 6,
+                displayInViewMode: true
+              }
+            },
+            {
+              type: 'string',
+              key: 'regex',
+              translationKey: 'configuration.oibus.manifest.south.items.sftp.regex',
+              defaultValue: '.*',
+              validators: [
+                {
+                  type: 'REQUIRED',
+                  arguments: []
+                }
+              ],
+              displayProperties: {
+                row: 0,
+                columns: 6,
+                displayInViewMode: true
+              }
+            },
+            {
+              type: 'number',
+              key: 'minAge',
+              translationKey: 'configuration.oibus.manifest.south.items.sftp.min-age',
+              defaultValue: 1000,
+              unit: 'ms',
+              validators: [
+                {
+                  type: 'REQUIRED',
+                  arguments: []
+                },
+                {
+                  type: 'POSITIVE_INTEGER',
+                  arguments: []
+                }
+              ],
+              displayProperties: {
+                row: 1,
+                columns: 4,
+                displayInViewMode: false
+              }
+            },
+            {
+              type: 'boolean',
+              key: 'preserveFiles',
+              translationKey: 'configuration.oibus.manifest.south.items.sftp.preserve-files',
+              defaultValue: true,
+              validators: [
+                {
+                  type: 'REQUIRED',
+                  arguments: []
+                }
+              ],
+              displayProperties: {
+                row: 1,
+                columns: 4,
+                displayInViewMode: false
+              }
+            },
+            {
+              type: 'boolean',
+              key: 'ignoreModifiedDate',
+              translationKey: 'configuration.oibus.manifest.south.items.sftp.ignore-modified-date',
+              defaultValue: false,
+              validators: [
+                {
+                  type: 'REQUIRED',
+                  arguments: []
+                }
+              ],
+              displayProperties: {
+                row: 1,
+                columns: 4,
+                displayInViewMode: false
+              }
+            }
+          ]
+        }
+      ]
+    }
   }
 };
 export default manifest;

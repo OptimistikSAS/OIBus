@@ -1,0 +1,8 @@
+<div class="form-group">
+  <div class="form-label">&nbsp;</div>
+  <div class="form-check form-switch">
+    <input [id]="booleanAttribute().key" [formControlName]="booleanAttribute().key" type="checkbox" class="form-check-input" />
+    <label [for]="booleanAttribute().key" class="form-check-label" [translate]="booleanAttribute().translationKey"></label>
+  </div>
+  <val-errors [controlName]="booleanAttribute().key" />
+</div>

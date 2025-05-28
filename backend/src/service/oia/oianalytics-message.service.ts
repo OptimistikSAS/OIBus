@@ -13,6 +13,7 @@ import {
   OIAnalyticsRegistrationCommandDTO,
   OIAnalyticsScanModeCommandDTO,
   OIAnalyticsSouthCommandDTO,
+  OIAnalyticsTransformerCommandDTO,
   OIAnalyticsUserCommandDTO,
   OIBusFullConfigurationCommandDTO,
   OIBusHistoryQueriesCommandDTO
@@ -31,6 +32,9 @@ import OIAnalyticsClient from './oianalytics-client.service';
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
 import OIAnalyticsRegistrationService from './oianalytics-registration.service';
 import HistoryQueryRepository from '../../repository/config/history-query.repository';
+import TransformerRepository from '../../repository/config/transformer.repository';
+import { getStandardManifest } from '../transformer.service';
+import { OIBusObjectAttribute } from '../../../shared/model/form.model';
 
 const STOP_TIMEOUT = 30_000;
 
@@ -52,6 +56,7 @@ export default class OIAnalyticsMessageService {
     private southRepository: SouthConnectorRepository,
     private northRepository: NorthConnectorRepository,
     private historyQueryRepository: HistoryQueryRepository,
+    private transformerRepository: TransformerRepository,
     private oIAnalyticsClient: OIAnalyticsClient,
     private logger: pino.Logger
   ) {}
@@ -232,7 +237,8 @@ export default class OIAnalyticsMessageService {
       certificates: this.createCertificatesCommand(),
       southConnectors: this.createSouthConnectorsCommand(),
       northConnectors: this.createNorthConnectorsCommand(),
-      users: this.createUsersCommand()
+      users: this.createUsersCommand(),
+      transformers: this.createTransformersCommand()
     };
   }
 
@@ -241,6 +247,9 @@ export default class OIAnalyticsMessageService {
     return {
       historyQueries: historyQueries.map(historyQuery => {
         const southManifest = southManifestList.find(manifest => manifest.id === historyQuery.southType)!;
+        const itemSettingsManifest = southManifest.items.rootAttribute.attributes.find(
+          attribute => attribute.key === 'settings'
+        )! as OIBusObjectAttribute;
         const northManifest = northManifestList.find(manifest => manifest.id === historyQuery.northType)!;
         return {
           oIBusInternalId: historyQuery.id,
@@ -280,7 +289,7 @@ export default class OIAnalyticsMessageService {
               id: item.id,
               name: item.name,
               enabled: item.enabled,
-              settings: encryptionService.filterSecrets(item.settings, southManifest.items.settings)
+              settings: encryptionService.filterSecrets(item.settings, itemSettingsManifest)
             })),
             northTransformers: historyQuery.northTransformers.map(transformerWithOptions => ({
               transformerId: transformerWithOptions.transformer.id,
@@ -406,6 +415,9 @@ export default class OIAnalyticsMessageService {
     return souths.map(southLight => {
       const south = this.southRepository.findSouthById(southLight.id)!;
       const manifest = southManifestList.find(manifest => manifest.id === south.type)!;
+      const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
+        attribute => attribute.key === 'settings'
+      )! as OIBusObjectAttribute;
       return {
         oIBusInternalId: south.id,
         type: south.type,
@@ -421,7 +433,7 @@ export default class OIAnalyticsMessageService {
             enabled: item.enabled,
             scanModeId: item.scanModeId,
             scanModeName: null,
-            settings: encryptionService.filterSecrets(item.settings, manifest.items.settings)
+            settings: encryptionService.filterSecrets(item.settings, itemSettingsManifest)
           }))
         }
       };
@@ -472,6 +484,37 @@ export default class OIAnalyticsMessageService {
           }))
         }
       };
+    });
+  }
+
+  private createTransformersCommand(): Array<OIAnalyticsTransformerCommandDTO> {
+    const transformers = this.transformerRepository.findAll();
+    return transformers.map(transformer => {
+      if (transformer.type === 'standard') {
+        return {
+          oIBusInternalId: transformer.id,
+          type: transformer.type,
+          settings: {
+            functionName: transformer.functionName,
+            inputType: transformer.inputType,
+            outputType: transformer.outputType
+          },
+          manifest: getStandardManifest(transformer.functionName)
+        };
+      } else {
+        return {
+          oIBusInternalId: transformer.id,
+          type: transformer.type,
+          settings: {
+            name: transformer.name,
+            description: transformer.description,
+            inputType: transformer.inputType,
+            outputType: transformer.outputType,
+            customCode: transformer.customCode
+          },
+          manifest: transformer.customManifest
+        };
+      }
     });
   }
 }
