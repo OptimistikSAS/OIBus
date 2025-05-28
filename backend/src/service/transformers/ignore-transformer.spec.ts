@@ -42,6 +42,17 @@ describe('IgnoreTransformer', () => {
   });
 
   it('should return manifest', () => {
-    expect(IgnoreTransformer.manifestSettings).toEqual([]);
+    expect(IgnoreTransformer.manifestSettings).toEqual({
+      type: 'object',
+      key: 'configuration.oibus.manifest.transformers.options',
+      translationKey: '',
+      attributes: [],
+      enablingConditions: [],
+      validators: [],
+      displayProperties: {
+        visible: true,
+        wrapInBox: false
+      }
+    });
   });
 });

@@ -54,7 +54,7 @@
   </ng-template>
 
   <div class="mb-3">
-    @if (displayedItems.content.length > 0) {
+    @if (displayedItems.content.length > 0 && scanModeManifest()) {
       <table class="mb-2 table table-sm table-hover oib-table">
         <thead class="light">
           <tr>
@@ -65,7 +65,7 @@
                 <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.name] }}"></span>
               </button>
             </th>
-            @if (southManifest().items.scanMode !== 'SUBSCRIPTION') {
+            @if (scanModeManifest().acceptableType !== 'SUBSCRIPTION') {
               <th style="width: 8rem">
                 <button type="button" style="background: none; border: none; font-weight: bold" (click)="toggleColumnSort('scanMode')">
                   <span translate="south.items.scan-mode" class="me-2"></span>
@@ -74,7 +74,7 @@
               </th>
             }
             @for (setting of displaySettings; track setting) {
-              @if (setting.type === 'OibSelect') {
+              @if (setting.type === 'string-select') {
                 <th>{{ setting.translationKey + '.title' | translate }}</th>
               } @else {
                 <th>{{ setting.translationKey | translate }}</th>
@@ -96,10 +96,10 @@
                 <td></td>
               }
               <td>{{ item.name }}</td>
-              @if (southManifest().items.scanMode !== 'SUBSCRIPTION' && item.scanModeId !== 'subscription') {
+              @if (scanModeManifest().acceptableType !== 'SUBSCRIPTION' && item.scanModeId !== 'subscription') {
                 <td>{{ getScanMode(item.scanModeId)?.name }}</td>
               }
-              @if (southManifest().items.scanMode !== 'SUBSCRIPTION' && item.scanModeId === 'subscription') {
+              @if (scanModeManifest().acceptableType !== 'SUBSCRIPTION' && item.scanModeId === 'subscription') {
                 <td translate="scan-mode.subscription"></td>
               }
               @for (setting of displaySettings; track setting) {

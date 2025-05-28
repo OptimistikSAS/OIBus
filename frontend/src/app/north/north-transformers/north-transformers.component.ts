@@ -9,6 +9,8 @@ import { ModalService } from '../../shared/modal.service';
 import { EditNorthTransformerModalComponent } from './edit-north-transformer-modal/edit-north-transformer-modal.component';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { OIBUS_DATA_TYPES } from '../../../../../backend/shared/model/engine.model';
+import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
+import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 
 @Component({
   selector: 'oib-north-transformers',
@@ -22,6 +24,8 @@ export class NorthTransformersComponent {
 
   readonly northManifest = input.required<NorthConnectorManifest>();
   readonly transformers = input.required<Array<TransformerDTO>>();
+  readonly certificates = input.required<Array<CertificateDTO>>();
+  readonly scanModes = input.required<Array<ScanModeDTO>>();
   readonly control = input.required<FormControl<Array<TransformerDTOWithOptions>>>();
 
   createTransformer(e: Event) {
@@ -32,6 +36,8 @@ export class NorthTransformersComponent {
       .getRawValue()
       .map(element => element.inputType);
     component.prepareForCreation(
+      this.scanModes(),
+      this.certificates(),
       OIBUS_DATA_TYPES.filter(dataType => !usedTypes.includes(dataType)),
       this.transformers(),
       this.northManifest().types
@@ -46,7 +52,7 @@ export class NorthTransformersComponent {
   editTransformer(transformer: TransformerDTOWithOptions, index: number) {
     const modalRef = this.modalService.open(EditNorthTransformerModalComponent, { size: 'xl' });
     const component: EditNorthTransformerModalComponent = modalRef.componentInstance;
-    component.prepareForEdition(transformer, this.transformers(), this.northManifest().types);
+    component.prepareForEdition(this.scanModes(), this.certificates(), transformer, this.transformers(), this.northManifest().types);
     modalRef.result.subscribe((value: TransformerDTOWithOptions) => {
       const transformers = this.control().getRawValue();
       transformers[index] = value;

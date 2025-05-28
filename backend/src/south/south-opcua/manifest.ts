@@ -9,247 +9,578 @@ const manifest: SouthConnectorManifest = {
     lastFile: false,
     history: true
   },
-  settings: [
-    {
-      key: 'throttling',
-      type: 'OibFormGroup',
-      translationKey: 'south.opcua.throttling.title',
-      class: 'col',
-      newRow: true,
-      displayInViewMode: false,
-      validators: [{ key: 'required' }],
-      content: [
-        {
-          key: 'maxReadInterval',
-          type: 'OibNumber',
-          translationKey: 'south.opcua.throttling.max-read-interval',
-          validators: [{ key: 'required' }, { key: 'min', params: { min: 0 } }],
-          defaultValue: 3600,
-          unitLabel: 's',
-          displayInViewMode: true
-        },
-        {
-          key: 'readDelay',
-          type: 'OibNumber',
-          translationKey: 'south.opcua.throttling.read-delay',
-          validators: [{ key: 'required' }, { key: 'min', params: { min: 0 } }],
-          defaultValue: 200,
-          unitLabel: 'ms',
-          displayInViewMode: true
-        },
-        {
-          key: 'overlap',
-          type: 'OibNumber',
-          translationKey: 'south.opcua.throttling.overlap',
-          validators: [{ key: 'required' }, { key: 'min', params: { min: 0 } }],
-          defaultValue: 0,
-          unitLabel: 'ms',
-          displayInViewMode: true
-        },
-        {
-          key: 'maxInstantPerItem',
-          type: 'OibCheckbox',
-          translationKey: 'south.opcua.throttling.max-instant-per-item',
-          defaultValue: false,
-          validators: [{ key: 'required' }],
-          displayInViewMode: true
-        }
-      ]
+  settings: {
+    type: 'object',
+    key: 'settings',
+    translationKey: 'configuration.oibus.manifest.south.settings',
+    displayProperties: {
+      visible: true,
+      wrapInBox: false
     },
-    {
-      key: 'sharedConnection',
-      type: 'OibCheckbox',
-      translationKey: 'south.opcua.shared-connection',
-      defaultValue: false,
-      newRow: true,
-      validators: [{ key: 'required' }],
-      displayInViewMode: false
-    },
-    {
-      key: 'url',
-      type: 'OibText',
-      translationKey: 'south.opcua.url',
-      defaultValue: 'opc.tcp://servername:port/endpoint',
-      newRow: true,
-      class: 'col-8',
-      validators: [{ key: 'required' }, { key: 'pattern', params: { pattern: '^(http:\\/\\/|opc.tcp:\\/\\/).*' } }],
-      displayInViewMode: true
-    },
-    {
-      key: 'keepSessionAlive',
-      type: 'OibCheckbox',
-      translationKey: 'south.opcua.keep-session-alive',
-      defaultValue: false,
-      newRow: false,
-      class: 'col-4',
-      validators: [{ key: 'required' }],
-      displayInViewMode: true
-    },
-    {
-      key: 'readTimeout',
-      type: 'OibNumber',
-      translationKey: 'south.opcua.read-timeout',
-      unitLabel: 'ms',
-      defaultValue: 15_000,
-      newRow: true,
-      class: 'col-4',
-      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
-      displayInViewMode: false
-    },
-    {
-      key: 'retryInterval',
-      type: 'OibNumber',
-      translationKey: 'south.opcua.retry-interval',
-      unitLabel: 'ms',
-      defaultValue: 10_000,
-      newRow: false,
-      class: 'col-4',
-      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
-      displayInViewMode: false
-    },
-    {
-      key: 'securityMode',
-      type: 'OibSelect',
-      translationKey: 'south.opcua.security-mode',
-      options: ['none', 'sign', 'sign-and-encrypt'],
-      defaultValue: 'none',
-      validators: [{ key: 'required' }],
-      class: 'col-6',
-      newRow: true,
-      displayInViewMode: true
-    },
-    {
-      key: 'securityPolicy',
-      type: 'OibSelect',
-      translationKey: 'south.opcua.security-policy',
-      options: [
-        'none',
-        'basic128',
-        'basic192',
-        'basic192-rsa15',
-        'basic256-rsa15',
-        'basic256-sha256',
-        'aes128-sha256-rsa-oaep',
-        'pub-sub-aes-128-ctr',
-        'pub-sub-aes-256-ctr'
-      ],
-      defaultValue: 'none',
-      conditionalDisplay: { field: 'securityMode', values: ['sign', 'sign-and-encrypt'] },
-      class: 'col-6',
-      displayInViewMode: true
-    },
-    {
-      key: 'authentication',
-      type: 'OibFormGroup',
-      translationKey: '',
-      class: 'col',
-      newRow: true,
-      displayInViewMode: false,
-      validators: [{ key: 'required' }],
-      content: [
-        {
-          key: 'type',
-          type: 'OibSelect',
-          translationKey: 'south.opcua.authentication',
-          options: ['none', 'basic', 'cert'],
-          defaultValue: 'none',
-          validators: [{ key: 'required' }],
-          newRow: true,
-          class: 'col-6',
-          displayInViewMode: false
-        },
-        {
-          key: 'username',
-          type: 'OibText',
-          translationKey: 'south.opcua.username',
-          defaultValue: '',
-          newRow: true,
-          class: 'col-6',
-          validators: [{ key: 'required' }],
-          conditionalDisplay: { field: 'type', values: ['basic'] },
-          displayInViewMode: false
-        },
-        {
-          key: 'password',
-          type: 'OibSecret',
-          translationKey: 'south.opcua.password',
-          defaultValue: '',
-          class: 'col-6',
-          conditionalDisplay: { field: 'type', values: ['basic'] },
-          displayInViewMode: false
-        },
-        {
-          key: 'certFilePath',
-          type: 'OibText',
-          translationKey: 'south.opcua.cert-file-path',
-          defaultValue: '',
-          conditionalDisplay: { field: 'type', values: ['cert'] },
-          validators: [{ key: 'required' }],
-          newRow: true,
-          class: 'col-6',
-          displayInViewMode: false
-        },
-        {
-          key: 'keyFilePath',
-          type: 'OibText',
-          translationKey: 'south.opcua.key-file-path',
-          defaultValue: '',
-          conditionalDisplay: { field: 'type', values: ['cert'] },
-          class: 'col-6',
-          displayInViewMode: false
-        }
-      ]
-    }
-  ],
-  items: {
-    scanMode: 'SUBSCRIPTION_AND_POLL',
-    settings: [
+    enablingConditions: [
       {
-        key: 'nodeId',
-        type: 'OibText',
-        translationKey: 'south.items.opcua.node-id',
-        validators: [{ key: 'required' }],
-        displayInViewMode: true
-      },
+        referralPathFromRoot: 'securityMode',
+        targetPathFromRoot: 'securityPolicy',
+        values: ['sign', 'sign-and-encrypt']
+      }
+    ],
+    validators: [],
+    attributes: [
       {
-        key: 'mode',
-        type: 'OibSelect',
-        translationKey: 'south.items.opcua.mode',
-        options: ['ha', 'da'],
-        defaultValue: 'ha',
-        validators: [{ key: 'required' }],
-        displayInViewMode: true
-      },
-      {
-        key: 'haMode',
-        type: 'OibFormGroup',
-        translationKey: 'south.items.opcua.ha-mode.title',
-        newRow: true,
-        displayInViewMode: false,
-        conditionalDisplay: { field: 'mode', values: ['ha'] },
-        content: [
+        type: 'object',
+        key: 'throttling',
+        translationKey: 'configuration.oibus.manifest.south.opcua.throttling.title',
+        displayProperties: {
+          visible: true,
+          wrapInBox: false
+        },
+        enablingConditions: [],
+        validators: [
           {
-            key: 'aggregate',
-            type: 'OibSelect',
-            translationKey: 'south.items.opcua.ha-mode.aggregate',
-            options: ['raw', 'average', 'minimum', 'maximum', 'count'],
-            defaultValue: 'raw',
-            validators: [{ key: 'required' }],
-            displayInViewMode: true
+            type: 'REQUIRED',
+            arguments: []
+          }
+        ],
+        attributes: [
+          {
+            type: 'number',
+            key: 'maxReadInterval',
+            translationKey: 'configuration.oibus.manifest.south.opcua.throttling.max-read-interval',
+            unit: 's',
+            defaultValue: 3600,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              },
+              {
+                type: 'POSITIVE_INTEGER',
+                arguments: []
+              }
+            ],
+            displayProperties: {
+              row: 0,
+              columns: 3,
+              displayInViewMode: true
+            }
           },
           {
-            key: 'resampling',
-            type: 'OibSelect',
-            translationKey: 'south.items.opcua.ha-mode.resampling',
-            options: ['none', '1s', '10s', '30s', '1min', '1h', '1d'],
+            type: 'number',
+            key: 'readDelay',
+            translationKey: 'configuration.oibus.manifest.south.opcua.throttling.read-delay',
+            unit: 'ms',
+            defaultValue: 200,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              },
+              {
+                type: 'POSITIVE_INTEGER',
+                arguments: []
+              }
+            ],
+            displayProperties: {
+              row: 0,
+              columns: 3,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'number',
+            key: 'overlap',
+            translationKey: 'configuration.oibus.manifest.south.opcua.throttling.overlap',
+            unit: 'ms',
+            defaultValue: 0,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              },
+              {
+                type: 'POSITIVE_INTEGER',
+                arguments: []
+              }
+            ],
+            displayProperties: {
+              row: 0,
+              columns: 3,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'boolean',
+            key: 'maxInstantPerItem',
+            translationKey: 'configuration.oibus.manifest.south.opcua.throttling.max-instant-per-item',
+            defaultValue: false,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              }
+            ],
+            displayProperties: {
+              row: 0,
+              columns: 3,
+              displayInViewMode: true
+            }
+          }
+        ]
+      },
+      {
+        type: 'boolean',
+        key: 'sharedConnection',
+        translationKey: 'configuration.oibus.manifest.south.opcua.shared-connection',
+        defaultValue: false,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          }
+        ],
+        displayProperties: {
+          row: 0,
+          columns: 8,
+          displayInViewMode: false
+        }
+      },
+      {
+        type: 'string',
+        key: 'url',
+        translationKey: 'configuration.oibus.manifest.south.opcua.url',
+        defaultValue: 'opc.tcp://hostname:53530/OPCUA/SimulationServer',
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          },
+          {
+            type: 'PATTERN',
+            arguments: ['^(http:\\/\\/|opc.tcp:\\/\\/).*']
+          }
+        ],
+        displayProperties: {
+          row: 1,
+          columns: 8,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'boolean',
+        key: 'keepSessionAlive',
+        translationKey: 'configuration.oibus.manifest.south.opcua.keep-session-alive',
+        defaultValue: false,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          }
+        ],
+        displayProperties: {
+          row: 1,
+          columns: 4,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'number',
+        key: 'readTimeout',
+        translationKey: 'configuration.oibus.manifest.south.opcua.read-timeout',
+        unit: 'ms',
+        defaultValue: 15000,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          },
+          {
+            type: 'MINIMUM',
+            arguments: ['100']
+          },
+          {
+            type: 'MAXIMUM',
+            arguments: ['3600000']
+          }
+        ],
+        displayProperties: {
+          row: 2,
+          columns: 4,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'number',
+        key: 'retryInterval',
+        translationKey: 'configuration.oibus.manifest.south.opcua.retry-interval',
+        unit: 'ms',
+        defaultValue: 10000,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          },
+          {
+            type: 'MINIMUM',
+            arguments: ['100']
+          },
+          {
+            type: 'MAXIMUM',
+            arguments: ['30000']
+          }
+        ],
+        displayProperties: {
+          row: 2,
+          columns: 4,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'string-select',
+        key: 'securityMode',
+        translationKey: 'configuration.oibus.manifest.south.opcua.security-mode',
+        defaultValue: 'none',
+        selectableValues: ['none', 'sign', 'sign-and-encrypt'],
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          }
+        ],
+        displayProperties: {
+          row: 3,
+          columns: 6,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'string-select',
+        key: 'securityPolicy',
+        translationKey: 'configuration.oibus.manifest.south.opcua.security-policy',
+        defaultValue: 'none',
+        selectableValues: [
+          'none',
+          'basic128',
+          'basic192',
+          'basic192-rsa15',
+          'basic256-rsa15',
+          'basic256-sha256',
+          'aes128-sha256-rsa-oaep',
+          'pub-sub-aes-128-ctr',
+          'pub-sub-aes-256-ctr'
+        ],
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          }
+        ],
+        displayProperties: {
+          row: 3,
+          columns: 6,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'object',
+        key: 'authentication',
+        translationKey: 'configuration.oibus.manifest.south.opcua.authentication.title',
+        displayProperties: {
+          visible: true,
+          wrapInBox: false
+        },
+        enablingConditions: [
+          {
+            referralPathFromRoot: 'type',
+            targetPathFromRoot: 'username',
+            values: ['basic']
+          },
+          {
+            referralPathFromRoot: 'type',
+            targetPathFromRoot: 'password',
+            values: ['basic']
+          },
+          {
+            referralPathFromRoot: 'type',
+            targetPathFromRoot: 'certFilePath',
+            values: ['cert']
+          },
+          {
+            referralPathFromRoot: 'type',
+            targetPathFromRoot: 'keyFilePath',
+            values: ['cert']
+          }
+        ],
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          }
+        ],
+        attributes: [
+          {
+            type: 'string-select',
+            key: 'type',
+            translationKey: 'configuration.oibus.manifest.south.opcua.authentication',
             defaultValue: 'none',
-            validators: [{ key: 'required' }],
-            conditionalDisplay: { field: 'aggregate', values: ['average', 'minimum', 'maximum', 'count'] },
-            displayInViewMode: true
+            selectableValues: ['none', 'basic', 'cert'],
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              }
+            ],
+            displayProperties: {
+              row: 0,
+              columns: 4,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'string',
+            key: 'username',
+            translationKey: 'configuration.oibus.manifest.south.opcua.username',
+            defaultValue: null,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              }
+            ],
+            displayProperties: {
+              row: 0,
+              columns: 4,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'secret',
+            key: 'password',
+            translationKey: 'configuration.oibus.manifest.south.opcua.password',
+            validators: [],
+            displayProperties: {
+              row: 0,
+              columns: 4,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'string',
+            key: 'certFilePath',
+            translationKey: 'configuration.oibus.manifest.south.opcua.cert-file-path',
+            defaultValue: null,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              }
+            ],
+            displayProperties: {
+              row: 0,
+              columns: 4,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'string',
+            key: 'keyFilePath',
+            translationKey: 'configuration.oibus.manifest.south.opcua.key-file-path',
+            defaultValue: null,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              }
+            ],
+            displayProperties: {
+              row: 0,
+              columns: 4,
+              displayInViewMode: true
+            }
           }
         ]
       }
     ]
+  },
+  items: {
+    type: 'array',
+    key: 'items',
+    translationKey: 'configuration.oibus.manifest.south.items',
+    paginate: true,
+    numberOfElementPerPage: 20,
+    validators: [],
+    rootAttribute: {
+      type: 'object',
+      key: 'item',
+      translationKey: 'configuration.oibus.manifest.south.items.item',
+      displayProperties: {
+        visible: true,
+        wrapInBox: false
+      },
+      enablingConditions: [],
+      validators: [],
+      attributes: [
+        {
+          type: 'string',
+          key: 'name',
+          translationKey: 'configuration.oibus.manifest.south.items.name',
+          defaultValue: null,
+          validators: [
+            {
+              type: 'REQUIRED',
+              arguments: []
+            }
+          ],
+          displayProperties: {
+            row: 0,
+            columns: 4,
+            displayInViewMode: true
+          }
+        },
+        {
+          type: 'boolean',
+          key: 'enabled',
+          translationKey: 'configuration.oibus.manifest.south.items.enabled',
+          defaultValue: true,
+          validators: [
+            {
+              type: 'REQUIRED',
+              arguments: []
+            }
+          ],
+          displayProperties: {
+            row: 0,
+            columns: 4,
+            displayInViewMode: true
+          }
+        },
+        {
+          type: 'scan-mode',
+          key: 'scanModeId',
+          acceptableType: 'SUBSCRIPTION_AND_POLL',
+          translationKey: 'configuration.oibus.manifest.south.items.scan-mode',
+          validators: [
+            {
+              type: 'REQUIRED',
+              arguments: []
+            }
+          ],
+          displayProperties: {
+            row: 0,
+            columns: 4,
+            displayInViewMode: true
+          }
+        },
+        {
+          type: 'object',
+          key: 'settings',
+          translationKey: 'configuration.oibus.manifest.south.items.settings',
+          displayProperties: {
+            visible: true,
+            wrapInBox: true
+          },
+          enablingConditions: [
+            {
+              referralPathFromRoot: 'mode',
+              targetPathFromRoot: 'haMode',
+              values: ['ha']
+            }
+          ],
+          validators: [],
+          attributes: [
+            {
+              type: 'string',
+              key: 'nodeId',
+              translationKey: 'configuration.oibus.manifest.south.items.opcua.node-id',
+              defaultValue: null,
+              validators: [
+                {
+                  type: 'REQUIRED',
+                  arguments: []
+                }
+              ],
+              displayProperties: {
+                row: 0,
+                columns: 4,
+                displayInViewMode: true
+              }
+            },
+            {
+              type: 'string-select',
+              key: 'mode',
+              translationKey: 'configuration.oibus.manifest.south.items.opcua.mode',
+              defaultValue: 'ha',
+              selectableValues: ['ha', 'da'],
+              validators: [
+                {
+                  type: 'REQUIRED',
+                  arguments: []
+                }
+              ],
+              displayProperties: {
+                row: 0,
+                columns: 4,
+                displayInViewMode: false
+              }
+            },
+            {
+              type: 'object',
+              key: 'haMode',
+              translationKey: 'configuration.oibus.manifest.south.items.opcua.ha-mode.title',
+              displayProperties: {
+                visible: true,
+                wrapInBox: false
+              },
+              enablingConditions: [
+                {
+                  referralPathFromRoot: 'aggregate',
+                  targetPathFromRoot: 'resampling',
+                  values: ['average', 'minimum', 'maximum', 'count']
+                }
+              ],
+              validators: [],
+              attributes: [
+                {
+                  type: 'string-select',
+                  key: 'aggregate',
+                  translationKey: 'configuration.oibus.manifest.south.items.opcua.ha-mode.aggregate',
+                  defaultValue: 'raw',
+                  selectableValues: ['raw', 'average', 'minimum', 'maximum', 'count'],
+                  validators: [
+                    {
+                      type: 'REQUIRED',
+                      arguments: []
+                    }
+                  ],
+                  displayProperties: {
+                    row: 0,
+                    columns: 4,
+                    displayInViewMode: false
+                  }
+                },
+                {
+                  type: 'string-select',
+                  key: 'resampling',
+                  translationKey: 'configuration.oibus.manifest.south.items.opcua.ha-mode.resampling',
+                  defaultValue: 'raw',
+                  selectableValues: ['none', '1s', '10s', '30s', '1min', '1h', '1d'],
+                  validators: [
+                    {
+                      type: 'REQUIRED',
+                      arguments: []
+                    }
+                  ],
+                  displayProperties: {
+                    row: 0,
+                    columns: 4,
+                    displayInViewMode: false
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
   }
 };
 export default manifest;

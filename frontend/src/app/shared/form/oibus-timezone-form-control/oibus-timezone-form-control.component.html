@@ -1,0 +1,11 @@
+<div class="form-group">
+  <label [for]="timezoneAttribute().key" class="form-label" [translate]="timezoneAttribute().translationKey"></label>
+  <input
+    class="form-control"
+    [id]="timezoneAttribute().key"
+    [formControlName]="timezoneAttribute().key"
+    [ngbTypeahead]="timezoneTypeahead"
+    [editable]="false"
+  />
+  <val-errors [controlName]="timezoneAttribute().key" />
+</div>

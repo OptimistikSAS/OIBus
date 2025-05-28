@@ -2,48 +2,33 @@ import { TestBed } from '@angular/core/testing';
 
 import { OibTransformerComponent } from './oib-transformer.component';
 import { Component } from '@angular/core';
-import { OibTransformerFormControl } from '../../../../../../backend/shared/model/form.model';
-import { formDirectives } from '../../form-directives';
 import { ComponentTester } from 'ngx-speculoos';
-import { FormControl, FormGroup } from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { TransformerDTO } from '../../../../../../backend/shared/model/transformer.model';
+import testData from '../../../../../../backend/src/tests/utils/test-data';
 
 @Component({
   template: `<form [formGroup]="form">
     <div formGroupName="settings">
-      <oib-transformer [transformers]="transformers" [key]="settings.key" [formControlName]="settings.key" />
+      <oib-transformer [transformers]="transformers" key="transformer" formControlName="transformer" />
     </div>
   </form>`,
-  imports: [OibTransformerComponent, ...formDirectives]
+  imports: [OibTransformerComponent, ReactiveFormsModule]
 })
 class TestComponent {
-  settings: OibTransformerFormControl = {
-    key: 'myOibTransformer',
-    type: 'OibTransformer',
-    translationKey: 'transformer field'
-  } as OibTransformerFormControl;
-  transformers: Array<TransformerDTO> = [
-    {
-      id: 'transformerId',
-      name: 'transformer1',
-      description: '',
-      type: 'custom',
-      inputType: 'any',
-      outputType: 'any',
-      customCode: '',
-      manifest: []
-    },
+  transformers = [
+    ...testData.transformers.list,
     {
       id: 'iso',
       type: 'standard',
       inputType: 'time-values',
       outputType: 'time-values',
       functionName: 'iso',
-      manifest: []
+      manifest: {}
     }
-  ];
-  form = new FormGroup({ settings: new FormGroup({ myOibTransformer: new FormControl('') }) });
+  ] as Array<TransformerDTO>;
+  form = new FormGroup({ settings: new FormGroup({ transformer: new FormControl('') }) });
 }
 class OibFormComponentTester extends ComponentTester<TestComponent> {
   constructor() {
@@ -51,7 +36,7 @@ class OibFormComponentTester extends ComponentTester<TestComponent> {
   }
 
   get oibFormInput() {
-    return this.select('#OibTransformer-myOibTransformer')!;
+    return this.select('#OibTransformer-transformer')!;
   }
 }
 

@@ -8,7 +8,7 @@ import { NorthConnectorService } from '../services/north-connector.service';
 import { combineLatest } from 'rxjs';
 import { EngineMetricsComponent } from '../engine/engine-metrics/engine-metrics.component';
 import { NorthMetricsComponent } from '../north/north-metrics/north-metrics.component';
-import { SouthMetricsComponent } from '../south/south-metrics/south-metrics.component';
+import { SouthMetricsComponent } from '../south/south-detail/south-metrics/south-metrics.component';
 import { HomeMetrics } from '../../../../backend/shared/model/engine.model';
 import { WindowService } from '../shared/window.service';
 

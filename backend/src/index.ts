@@ -122,6 +122,7 @@ const LOG_DB_NAME = 'logs.db';
     repositoryService.southConnectorRepository,
     repositoryService.northConnectorRepository,
     repositoryService.historyQueryRepository,
+    repositoryService.transformerRepository,
     oIAnalyticsClient,
     encryptionService,
     loggerService.logger!

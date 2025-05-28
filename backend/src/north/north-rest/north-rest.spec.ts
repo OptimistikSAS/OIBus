@@ -78,8 +78,10 @@ describe('NorthREST', () => {
     configuration = {
       ...testData.north.list[0],
       settings: {
-        endpoint: 'http://test.ing/file-upload',
+        host: 'http://test.ing',
+        endpoint: '/file-upload',
         testPath: '/test-auth',
+        acceptUnauthorized: true,
         timeout: 30,
         authType: 'basic',
         basicAuthUsername: 'user',
@@ -153,7 +155,10 @@ describe('NorthREST', () => {
         options: {}
       })
     ).rejects.toThrow(
-      new OIBusError(`Failed to reach file endpoint ${new URL(configuration.settings.endpoint)}; message: generic error object`, true)
+      new OIBusError(
+        `Failed to reach file endpoint ${new URL(configuration.settings.endpoint, configuration.settings.host)}; message: generic error object`,
+        true
+      )
     );
 
     expect(request).toHaveBeenCalled();
@@ -172,7 +177,12 @@ describe('NorthREST', () => {
         source: 'south',
         options: {}
       })
-    ).rejects.toThrow(new OIBusError(`Failed to reach file endpoint ${new URL(configuration.settings.endpoint)}; {"some":"data"}`, true));
+    ).rejects.toThrow(
+      new OIBusError(
+        `Failed to reach file endpoint ${new URL(configuration.settings.endpoint, configuration.settings.host)}; {"some":"data"}`,
+        true
+      )
+    );
 
     expect(request).toHaveBeenCalled();
   });
@@ -191,7 +201,10 @@ describe('NorthREST', () => {
         options: {}
       })
     ).rejects.toThrow(
-      new OIBusError(`Failed to reach file endpoint ${new URL(configuration.settings.endpoint)}; message: error 1; message: error 2`, true)
+      new OIBusError(
+        `Failed to reach file endpoint ${new URL(configuration.settings.endpoint, configuration.settings.host)}; message: error 1; message: error 2`,
+        true
+      )
     );
 
     expect(request).toHaveBeenCalled();
@@ -214,7 +227,10 @@ describe('NorthREST', () => {
         options: {}
       })
     ).rejects.toThrow(
-      new OIBusError(`Failed to reach file endpoint ${new URL(configuration.settings.endpoint)}; message: error with code, code: 1`, true)
+      new OIBusError(
+        `Failed to reach file endpoint ${new URL(configuration.settings.endpoint, configuration.settings.host)}; message: error with code, code: 1`,
+        true
+      )
     );
 
     expect(request).toHaveBeenCalled();
@@ -241,7 +257,7 @@ describe('NorthREST', () => {
       })
     ).rejects.toThrow(
       new OIBusError(
-        `Failed to reach file endpoint ${new URL(configuration.settings.endpoint)}; message: error with code 1, code: 1; message: error with code 2, code: 2`,
+        `Failed to reach file endpoint ${new URL(configuration.settings.endpoint, configuration.settings.host)}; message: error with code 1, code: 1; message: error with code 2, code: 2`,
         true
       )
     );
@@ -264,8 +280,10 @@ describe('NorthREST without proxy', () => {
     configuration = {
       ...testData.north.list[0],
       settings: {
-        endpoint: 'http://test.ing/file-upload',
+        host: 'http://test.ing',
+        endpoint: '/file-upload',
         testPath: '/test-auth',
+        acceptUnauthorized: true,
         timeout: 30,
         authType: 'basic',
         basicAuthUsername: 'user',
@@ -415,7 +433,7 @@ describe('NorthREST without proxy', () => {
       options: {}
     });
 
-    expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint), expectedOptions);
+    expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint, configuration.settings.host), expectedOptions);
   });
 
   it('should properly handle files without query params', async () => {
@@ -450,7 +468,7 @@ describe('NorthREST without proxy', () => {
       options: {}
     });
 
-    expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint), expectedOptions);
+    expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint, configuration.settings.host), expectedOptions);
   });
 
   it('should properly handle files withoutout basic auth password', async () => {
@@ -485,7 +503,7 @@ describe('NorthREST without proxy', () => {
       options: {}
     });
 
-    expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint), expectedOptions);
+    expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint, configuration.settings.host), expectedOptions);
   });
 
   it('should properly handle files with bearer token', async () => {
@@ -523,7 +541,7 @@ describe('NorthREST without proxy', () => {
       options: {}
     });
 
-    expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint), expectedOptions);
+    expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint, configuration.settings.host), expectedOptions);
   });
 
   it('should properly handle files with missing bearer token', async () => {
@@ -561,7 +579,7 @@ describe('NorthREST without proxy', () => {
       options: {}
     });
 
-    expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint), expectedOptions);
+    expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint, configuration.settings.host), expectedOptions);
   });
 
   it('should properly throw error when file does not exist', async () => {
@@ -607,9 +625,14 @@ describe('NorthREST without proxy', () => {
         source: 'south',
         options: {}
       })
-    ).rejects.toThrow(new OIBusError(`Failed to reach file endpoint ${new URL(configuration.settings.endpoint)}; message: error`, true));
+    ).rejects.toThrow(
+      new OIBusError(
+        `Failed to reach file endpoint ${new URL(configuration.settings.endpoint, configuration.settings.host)}; message: error`,
+        true
+      )
+    );
 
-    expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint), expectedOptions);
+    expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint, configuration.settings.host), expectedOptions);
   });
 
   it('should properly throw error on file bad response without retrying', async () => {
@@ -640,7 +663,7 @@ describe('NorthREST without proxy', () => {
       })
     ).rejects.toThrow(new OIBusError('HTTP request failed with status code 500 and message: Internal Server Error', false));
 
-    expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint), expectedOptions);
+    expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint, configuration.settings.host), expectedOptions);
   });
 
   it('should properly throw error on file bad response with retrying', async () => {
@@ -671,7 +694,7 @@ describe('NorthREST without proxy', () => {
       })
     ).rejects.toThrow(new OIBusError('HTTP request failed with status code 401 and message: Internal Server Error', true));
 
-    expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint), expectedOptions);
+    expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint, configuration.settings.host), expectedOptions);
   });
 
   it('should properly get message from generic Error', async () => {
@@ -688,7 +711,10 @@ describe('NorthREST without proxy', () => {
         options: {}
       })
     ).rejects.toThrow(
-      new OIBusError(`Failed to reach file endpoint ${new URL(configuration.settings.endpoint)}; message: generic error object`, true)
+      new OIBusError(
+        `Failed to reach file endpoint ${new URL(configuration.settings.endpoint, configuration.settings.host)}; message: generic error object`,
+        true
+      )
     );
 
     expect(request).toHaveBeenCalled();
@@ -707,7 +733,12 @@ describe('NorthREST without proxy', () => {
         source: 'south',
         options: {}
       })
-    ).rejects.toThrow(new OIBusError(`Failed to reach file endpoint ${new URL(configuration.settings.endpoint)}; {"some":"data"}`, true));
+    ).rejects.toThrow(
+      new OIBusError(
+        `Failed to reach file endpoint ${new URL(configuration.settings.endpoint, configuration.settings.host)}; {"some":"data"}`,
+        true
+      )
+    );
 
     expect(request).toHaveBeenCalled();
   });
@@ -726,7 +757,10 @@ describe('NorthREST without proxy', () => {
         options: {}
       })
     ).rejects.toThrow(
-      new OIBusError(`Failed to reach file endpoint ${new URL(configuration.settings.endpoint)}; message: error 1; message: error 2`, true)
+      new OIBusError(
+        `Failed to reach file endpoint ${new URL(configuration.settings.endpoint, configuration.settings.host)}; message: error 1; message: error 2`,
+        true
+      )
     );
 
     expect(request).toHaveBeenCalled();
@@ -749,7 +783,10 @@ describe('NorthREST without proxy', () => {
         options: {}
       })
     ).rejects.toThrow(
-      new OIBusError(`Failed to reach file endpoint ${new URL(configuration.settings.endpoint)}; message: error with code, code: 1`, true)
+      new OIBusError(
+        `Failed to reach file endpoint ${new URL(configuration.settings.endpoint, configuration.settings.host)}; message: error with code, code: 1`,
+        true
+      )
     );
 
     expect(request).toHaveBeenCalled();
@@ -776,7 +813,7 @@ describe('NorthREST without proxy', () => {
       })
     ).rejects.toThrow(
       new OIBusError(
-        `Failed to reach file endpoint ${new URL(configuration.settings.endpoint)}; message: error with code 1, code: 1; message: error with code 2, code: 2`,
+        `Failed to reach file endpoint ${new URL(configuration.settings.endpoint, configuration.settings.host)}; message: error with code 1, code: 1; message: error with code 2, code: 2`,
         true
       )
     );
@@ -800,8 +837,10 @@ describe('NorthREST with proxy', () => {
     configuration = {
       ...testData.north.list[0],
       settings: {
-        endpoint: 'http://test.ing/file-upload',
+        host: 'http://test.ing',
+        endpoint: '/file-upload',
         testPath: '/test-auth',
+        acceptUnauthorized: true,
         timeout: 30,
         authType: 'basic',
         basicAuthUsername: 'user',
@@ -958,7 +997,7 @@ describe('NorthREST with proxy', () => {
       options: {}
     });
 
-    expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint), expectedOptions);
+    expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint, configuration.settings.host), expectedOptions);
     expect(ProxyAgent).toHaveBeenCalledWith({
       uri: configuration.settings.proxyUrl,
       token: expectedProxyToken
@@ -1021,7 +1060,7 @@ describe('NorthREST with proxy', () => {
       options: {}
     });
 
-    expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint), expectedOptions);
+    expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint, configuration.settings.host), expectedOptions);
     expect(ProxyAgent).toHaveBeenCalledWith({
       uri: configuration.settings.proxyUrl,
       token: `Basic ${Buffer.from(`${configuration.settings.proxyUsername}:`).toString('base64')}`
@@ -1060,7 +1099,7 @@ describe('NorthREST with proxy', () => {
       options: {}
     });
 
-    expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint), expectedOptions);
+    expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint, configuration.settings.host), expectedOptions);
     expect(ProxyAgent).toHaveBeenCalledWith({
       uri: configuration.settings.proxyUrl,
       token: expectedProxyToken
@@ -1099,7 +1138,7 @@ describe('NorthREST with proxy', () => {
       options: {}
     });
 
-    expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint), expectedOptions);
+    expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint, configuration.settings.host), expectedOptions);
     expect(ProxyAgent).toHaveBeenCalledWith({
       uri: configuration.settings.proxyUrl,
       token: expectedProxyToken
@@ -1141,7 +1180,7 @@ describe('NorthREST with proxy', () => {
       options: {}
     });
 
-    expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint), expectedOptions);
+    expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint, configuration.settings.host), expectedOptions);
     expect(ProxyAgent).toHaveBeenCalledWith({
       uri: configuration.settings.proxyUrl,
       token: expectedProxyToken
@@ -1183,7 +1222,7 @@ describe('NorthREST with proxy', () => {
       options: {}
     });
 
-    expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint), expectedOptions);
+    expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint, configuration.settings.host), expectedOptions);
     expect(ProxyAgent).toHaveBeenCalledWith({
       uri: configuration.settings.proxyUrl,
       token: expectedProxyToken
@@ -1215,9 +1254,14 @@ describe('NorthREST with proxy', () => {
         source: 'south',
         options: {}
       })
-    ).rejects.toThrow(new OIBusError(`Failed to reach file endpoint ${new URL(configuration.settings.endpoint)}; message: error`, true));
+    ).rejects.toThrow(
+      new OIBusError(
+        `Failed to reach file endpoint ${new URL(configuration.settings.endpoint, configuration.settings.host)}; message: error`,
+        true
+      )
+    );
 
-    expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint), expectedOptions);
+    expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint, configuration.settings.host), expectedOptions);
     expect(ProxyAgent).toHaveBeenCalledWith({
       uri: configuration.settings.proxyUrl,
       token: expectedProxyToken
@@ -1252,7 +1296,7 @@ describe('NorthREST with proxy', () => {
       })
     ).rejects.toThrow(new OIBusError('HTTP request failed with status code 500 and message: Internal Server Error', false));
 
-    expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint), expectedOptions);
+    expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint, configuration.settings.host), expectedOptions);
     expect(ProxyAgent).toHaveBeenCalledWith({
       uri: configuration.settings.proxyUrl,
       token: expectedProxyToken
@@ -1287,7 +1331,7 @@ describe('NorthREST with proxy', () => {
       })
     ).rejects.toThrow(new OIBusError('HTTP request failed with status code 401 and message: Internal Server Error', true));
 
-    expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint), expectedOptions);
+    expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint, configuration.settings.host), expectedOptions);
     expect(ProxyAgent).toHaveBeenCalledWith({
       uri: configuration.settings.proxyUrl,
       token: expectedProxyToken

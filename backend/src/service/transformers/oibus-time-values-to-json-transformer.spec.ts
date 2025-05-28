@@ -77,6 +77,17 @@ describe('OIBusTimeValuesToJSONTransformer', () => {
   });
 
   it('should return manifest', () => {
-    expect(OIBusTimeValuesToJSONTransformer.manifestSettings).toEqual([]);
+    expect(OIBusTimeValuesToJSONTransformer.manifestSettings).toEqual({
+      type: 'object',
+      key: 'configuration.oibus.manifest.transformers.options',
+      translationKey: '',
+      attributes: [],
+      enablingConditions: [],
+      validators: [],
+      displayProperties: {
+        visible: true,
+        wrapInBox: false
+      }
+    });
   });
 });
