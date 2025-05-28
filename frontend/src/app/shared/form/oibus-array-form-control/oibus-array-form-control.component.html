@@ -1,0 +1,79 @@
+<oib-box class="mt-1">
+  <ng-template oibBoxTitle>
+    <div class="d-flex justify-content-between align-items-center">
+      <div [translate]="arrayAttribute().rootAttribute.translationKey"></div>
+      <div>
+        <button
+          class="btn btn-sm btn-warning"
+          id="oibus-array-add-button"
+          [ngbTooltip]="'configuration.oibus.edit-array-element-modal.tooltips.add' | translate"
+          (click)="addItem($event)"
+        >
+          <span class="fa fa-plus"></span>
+        </button>
+      </div>
+    </div>
+  </ng-template>
+
+  @if (arrayAttribute().paginate && paginatedValues().totalPages > 1) {
+    <div>
+      <oib-pagination class="d-flex justify-content-end" [page]="paginatedValues()" (pageChanged)="paginatedValues().gotoPage($event)" />
+    </div>
+  }
+  @if (control().value.length > 0) {
+    <table style="table-layout: fixed" class="table table-sm table-hover">
+      <thead>
+        <tr>
+          @for (column of columns(); track column.translationKey) {
+            @if (column.type === 'string-select') {
+              <th>{{ column.translationKey + '.title' | translate }}</th>
+            } @else {
+              <th>{{ column.translationKey | translate }}</th>
+            }
+          }
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (element of arrayAttribute().paginate ? paginatedValues().content : control().value; track element) {
+          <tr>
+            @for (column of columns(); track column.translationKey) {
+              <td style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap">
+                {{ formatValue(element, column.path, column.type, column.translationKey) }}
+              </td>
+            }
+            <td class="text-nowrap text-end">
+              <button
+                type="button"
+                class="btn btn-sm btn-link btn-link-bold edit-button px-1 py-0"
+                [ngbTooltip]="'configuration.oibus.edit-array-element-modal.tooltips.edit' | translate"
+                (click)="editItem(element)"
+              >
+                <span class="fa fa-pencil"></span>
+              </button>
+              <button
+                type="button"
+                class="btn btn-sm btn-link btn-link-bold copy-button px-1 py-0"
+                [ngbTooltip]="'configuration.oibus.edit-array-element-modal.tooltips.copy' | translate"
+                (click)="copyItem(element)"
+              >
+                <span class="fa fa-copy"></span>
+              </button>
+              <button
+                type="button"
+                class="btn btn-sm btn-link btn-link-bold delete-button px-1 py-0"
+                [ngbTooltip]="'configuration.oibus.edit-array-element-modal.tooltips.delete' | translate"
+                (click)="deleteItem(element)"
+              >
+                <span class="fa fa-trash"></span>
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  } @else {
+    <div class="oi-details" translate="configuration.oibus.manifest.south.items.no-items"></div>
+  }
+  <val-errors [controlName]="arrayAttribute().key" />
+</oib-box>

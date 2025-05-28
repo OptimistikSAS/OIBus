@@ -86,33 +86,73 @@ describe('OIBusTimeValuesToMQTTTransformer', () => {
   });
 
   it('should return manifest', () => {
-    expect(OIBusTimeValuesToMQTTTransformer.manifestSettings).toEqual([
-      {
-        key: 'mapping',
-        type: 'OibArray',
-        translationKey: 'transformers.mapping.title',
-        content: [
-          {
-            key: 'pointId',
-            translationKey: 'transformers.mapping.point-id',
-            type: 'OibText',
-            defaultValue: '',
-            validators: [{ key: 'required' }],
-            displayInViewMode: true
-          },
-          {
-            key: 'topic',
-            translationKey: 'transformers.mapping.mqtt.topic',
-            type: 'OibText',
-            defaultValue: '',
-            validators: [{ key: 'required' }],
-            displayInViewMode: true
+    expect(OIBusTimeValuesToMQTTTransformer.manifestSettings).toEqual({
+      type: 'object',
+      key: 'options',
+      translationKey: 'configuration.oibus.manifest.transformers.options',
+      attributes: [
+        {
+          type: 'array',
+          key: 'mapping',
+          translationKey: 'configuration.oibus.manifest.transformers.mapping.title',
+          paginate: true,
+          numberOfElementPerPage: 20,
+          validators: [],
+          rootAttribute: {
+            type: 'object',
+            key: 'item',
+            translationKey: 'configuration.oibus.manifest.transformers.mapping.title',
+            displayProperties: {
+              visible: true,
+              wrapInBox: false
+            },
+            enablingConditions: [],
+            validators: [],
+            attributes: [
+              {
+                type: 'string',
+                key: 'pointId',
+                translationKey: 'configuration.oibus.manifest.transformers.mapping.point-id',
+                defaultValue: null,
+                validators: [
+                  {
+                    type: 'REQUIRED',
+                    arguments: []
+                  }
+                ],
+                displayProperties: {
+                  row: 0,
+                  columns: 4,
+                  displayInViewMode: true
+                }
+              },
+              {
+                type: 'string',
+                key: 'topic',
+                translationKey: 'configuration.oibus.manifest.transformers.mapping.mqtt.topic',
+                defaultValue: null,
+                validators: [
+                  {
+                    type: 'REQUIRED',
+                    arguments: []
+                  }
+                ],
+                displayProperties: {
+                  row: 0,
+                  columns: 4,
+                  displayInViewMode: true
+                }
+              }
+            ]
           }
-        ],
-        class: 'col',
-        newRow: true,
-        displayInViewMode: false
+        }
+      ],
+      enablingConditions: [],
+      validators: [],
+      displayProperties: {
+        visible: true,
+        wrapInBox: false
       }
-    ]);
+    });
   });
 });

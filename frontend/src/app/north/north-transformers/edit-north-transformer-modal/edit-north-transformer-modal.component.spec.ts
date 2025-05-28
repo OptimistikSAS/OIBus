@@ -7,10 +7,9 @@ import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
 import { TransformerService } from '../../../services/transformer.service';
 import { of } from 'rxjs';
-import { TransformerDTO } from '../../../../../../backend/shared/model/transformer.model';
-import { OibTransformerComponent } from '../../../shared/form/oib-transformer/oib-transformer.component';
 import { By } from '@angular/platform-browser';
-import { FormComponent } from '../../../shared/form/form.component';
+import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
+import { TransformerDTO } from '../../../../../../backend/shared/model/transformer.model';
 
 class EditNorthTransformerModalComponentTester extends ComponentTester<EditNorthTransformerModalComponent> {
   constructor() {
@@ -22,11 +21,11 @@ class EditNorthTransformerModalComponentTester extends ComponentTester<EditNorth
   }
 
   get transformerSelect() {
-    return this.debugElement.query(By.directive(OibTransformerComponent))!;
+    return this.select('#transformer-id');
   }
 
   get options() {
-    return this.debugElement.query(By.directive(FormComponent))!;
+    return this.debugElement.query(By.directive(OIBusObjectFormControlComponent))!;
   }
 
   get save() {
@@ -44,34 +43,92 @@ const transformer: TransformerDTO = {
   functionName: 'time-values-to-mqtt',
   inputType: 'time-values',
   outputType: 'mqtt',
-  manifest: [
-    {
-      key: 'mapping',
-      type: 'OibArray',
-      translationKey: 'transformers.mapping.title',
-      content: [
-        {
-          key: 'pointId',
-          translationKey: 'transformers.mapping.point-id',
-          type: 'OibText',
-          defaultValue: '',
-          validators: [{ key: 'required' }],
-          displayInViewMode: true
-        },
-        {
-          key: 'topic',
-          translationKey: 'transformers.mapping.mqtt.topic',
-          type: 'OibText',
-          defaultValue: '',
-          validators: [{ key: 'required' }],
-          displayInViewMode: true
+  manifest: {
+    type: 'object',
+    key: 'configuration.oibus.manifest.transformers.options',
+    translationKey: '',
+    attributes: [
+      {
+        type: 'array',
+        key: 'mapping',
+        translationKey: 'configuration.oibus.manifest.transformers.mapping.title',
+        paginate: true,
+        numberOfElementPerPage: 20,
+        validators: [],
+        rootAttribute: {
+          type: 'object',
+          key: 'item',
+          translationKey: '',
+          displayProperties: {
+            visible: true,
+            wrapInBox: false
+          },
+          enablingConditions: [],
+          validators: [],
+          attributes: [
+            {
+              type: 'string',
+              key: 'pointId',
+              translationKey: 'configuration.oibus.manifest.transformers.mapping.point-id',
+              defaultValue: null,
+              validators: [
+                {
+                  type: 'REQUIRED',
+                  arguments: []
+                }
+              ],
+              displayProperties: {
+                row: 0,
+                columns: 4,
+                displayInViewMode: true
+              }
+            },
+            {
+              type: 'string',
+              key: 'address',
+              translationKey: 'configuration.oibus.manifest.transformers.mapping.modbus.address',
+              defaultValue: null,
+              validators: [
+                {
+                  type: 'REQUIRED',
+                  arguments: []
+                }
+              ],
+              displayProperties: {
+                row: 0,
+                columns: 4,
+                displayInViewMode: true
+              }
+            },
+            {
+              type: 'string-select',
+              key: 'modbusType',
+              translationKey: 'configuration.oibus.manifest.transformers.mapping.modbus.modbus-type',
+              defaultValue: 'register',
+              selectableValues: ['coil', 'register'],
+              validators: [
+                {
+                  type: 'REQUIRED',
+                  arguments: []
+                }
+              ],
+              displayProperties: {
+                row: 0,
+                columns: 4,
+                displayInViewMode: true
+              }
+            }
+          ]
         }
-      ],
-      class: 'col',
-      newRow: true,
-      displayInViewMode: false
+      }
+    ],
+    enablingConditions: [],
+    validators: [],
+    displayProperties: {
+      visible: true,
+      wrapInBox: false
     }
-  ]
+  }
 };
 
 describe('EditNorthTransformerModalComponent', () => {
@@ -103,7 +160,7 @@ describe('EditNorthTransformerModalComponent', () => {
   });
 
   it('should display title and form, and validate without transformers', () => {
-    tester.componentInstance.prepareForCreation([], [transformer], []);
+    tester.componentInstance.prepareForCreation([], [], [], [transformer], []);
     tester.detectChanges();
     expect(tester.title).toContainText('Choose how to handle payloads');
     expect(tester.options).toBeNull();
@@ -114,6 +171,8 @@ describe('EditNorthTransformerModalComponent', () => {
   it('should validate with transformers', () => {
     transformerService.get.and.returnValue(of(transformer));
     tester.componentInstance.prepareForEdition(
+      [],
+      [],
       {
         transformer,
         options: {

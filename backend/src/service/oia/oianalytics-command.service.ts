@@ -60,6 +60,7 @@ import HistoryQueryService from '../history-query.service';
 import { HistoryQueryCommandDTO } from '../../../shared/model/history-query.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
+import { OIBusObjectAttribute } from '../../../shared/model/form.model';
 
 const UPDATE_SETTINGS_FILE = 'update.json';
 
@@ -692,6 +693,9 @@ export default class OIAnalyticsCommandService {
     privateKey: string
   ) {
     const manifest = this.southService.getInstalledSouthManifests().find(element => element.id === command.commandContent.type)!;
+    const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
+      attribute => attribute.key === 'settings'
+    )! as OIBusObjectAttribute;
     command.commandContent.settings = await encryptionService.decryptSecretsWithPrivateKey(
       command.commandContent.settings,
       manifest.settings,
@@ -702,7 +706,7 @@ export default class OIAnalyticsCommandService {
         id: item.id,
         enabled: item.enabled,
         name: item.name,
-        settings: await encryptionService.decryptSecretsWithPrivateKey(item.settings, manifest.items.settings, privateKey),
+        settings: await encryptionService.decryptSecretsWithPrivateKey(item.settings, itemSettingsManifest, privateKey),
         scanModeId: item.scanModeId,
         scanModeName: item.scanModeName
       }))
@@ -713,6 +717,9 @@ export default class OIAnalyticsCommandService {
     const manifest = this.southService
       .getInstalledSouthManifests()
       .find(element => element.id === command.commandContent.southCommand.type)!;
+    const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
+      attribute => attribute.key === 'settings'
+    )! as OIBusObjectAttribute;
     command.commandContent.southCommand.settings = await encryptionService.decryptSecretsWithPrivateKey(
       command.commandContent.southCommand.settings,
       manifest.settings,
@@ -720,7 +727,7 @@ export default class OIAnalyticsCommandService {
     );
     command.commandContent.itemCommand.settings = await encryptionService.decryptSecretsWithPrivateKey(
       command.commandContent.itemCommand.settings,
-      manifest.items.settings,
+      itemSettingsManifest,
       privateKey
     );
   }
@@ -832,6 +839,9 @@ export default class OIAnalyticsCommandService {
   ) {
     const northManifest = this.northService.getInstalledNorthManifests().find(element => element.id === command.northType)!;
     const southManifest = this.southService.getInstalledSouthManifests().find(element => element.id === command.southType)!;
+    const itemSettingsManifest = southManifest.items.rootAttribute.attributes.find(
+      attribute => attribute.key === 'settings'
+    )! as OIBusObjectAttribute;
     command.northSettings = await encryptionService.decryptSecretsWithPrivateKey(command.northSettings, northManifest.settings, privateKey);
     command.southSettings = await encryptionService.decryptSecretsWithPrivateKey(command.southSettings, southManifest.settings, privateKey);
     command.items = await Promise.all(
@@ -839,7 +849,7 @@ export default class OIAnalyticsCommandService {
         id: item.id,
         enabled: item.enabled,
         name: item.name,
-        settings: await encryptionService.decryptSecretsWithPrivateKey(item.settings, southManifest.items.settings, privateKey)
+        settings: await encryptionService.decryptSecretsWithPrivateKey(item.settings, itemSettingsManifest, privateKey)
       }))
     );
   }
@@ -848,6 +858,9 @@ export default class OIAnalyticsCommandService {
     const manifest = this.southService
       .getInstalledSouthManifests()
       .find(element => element.id === command.commandContent.historyCommand.southType)!;
+    const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
+      attribute => attribute.key === 'settings'
+    )! as OIBusObjectAttribute;
     command.commandContent.historyCommand.southSettings = await encryptionService.decryptSecretsWithPrivateKey(
       command.commandContent.historyCommand.southSettings,
       manifest.settings,
@@ -855,7 +868,7 @@ export default class OIAnalyticsCommandService {
     );
     command.commandContent.itemCommand.settings = await encryptionService.decryptSecretsWithPrivateKey(
       command.commandContent.itemCommand.settings,
-      manifest.items.settings,
+      itemSettingsManifest,
       privateKey
     );
   }

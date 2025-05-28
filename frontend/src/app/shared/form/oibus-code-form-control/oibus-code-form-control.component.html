@@ -1,0 +1,5 @@
+<div class="form-group">
+  <label [for]="codeAttribute().key" class="form-label" [translate]="codeAttribute().translationKey"></label>
+  <oib-code-block [language]="codeAttribute().contentType" [id]="codeAttribute().key" [formControlName]="codeAttribute().key" />
+  <val-errors [controlName]="codeAttribute().key" />
+</div>

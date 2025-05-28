@@ -1,6 +1,5 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ComponentTester, createMock, TestInput } from 'ngx-speculoos';
-import { SouthConnectorCommandDTO, SouthConnectorManifest } from '../../../../../backend/shared/model/south-connector.model';
 import { of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
@@ -18,7 +17,9 @@ import {
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 import { ModalService } from '../../shared/modal.service';
 import { ImportItemModalComponent } from '../../shared/import-item-modal/import-item-modal.component';
-import { ImportHistoryQueryItemsModalComponent } from '../import-history-query-items-modal/import-history-query-items-modal.component';
+import { ImportHistoryQueryItemsModalComponent } from './import-history-query-items-modal/import-history-query-items-modal.component';
+import testData from '../../../../../backend/src/tests/utils/test-data';
+import { OIBusBooleanAttribute, OIBusNumberAttribute, OIBusStringAttribute } from '../../../../../backend/shared/model/form.model';
 
 const testHistoryQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings> = {
   id: 'historyId',
@@ -98,30 +99,8 @@ const testHistoryQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemS
 })
 class TestComponent {
   _historyQueryService!: HistoryQueryService;
-
   historyQuery = structuredClone(testHistoryQuery);
-  manifest: SouthConnectorManifest = {
-    id: 'mssql',
-    category: 'database',
-    settings: [],
-    items: {
-      scanMode: 'POLL',
-      settings: [
-        {
-          translationKey: 'south.items.mssql.query',
-          key: 'query',
-          displayInViewMode: true,
-          type: 'OibText'
-        }
-      ]
-    },
-    modes: {
-      subscription: false,
-      history: true,
-      lastFile: true,
-      lastPoint: false
-    }
-  };
+  manifest = testData.south.manifest;
   saveChangesDirectly!: boolean;
   inMemoryItems: Array<HistoryQueryItemCommandDTO<SouthItemSettings>> = [];
   updateInMemoryItems(items: Array<HistoryQueryItemCommandDTO<SouthItemSettings>> | null) {
@@ -130,14 +109,11 @@ class TestComponent {
     } else {
       this._historyQueryService.get(this.historyQuery!.id).subscribe(historyQuery => {
         this.historyQuery!.items = historyQuery.items;
-        this.historyQuery = JSON.parse(JSON.stringify(this.historyQuery)); // Used to force a refresh in history query item list
+        this.historyQuery = JSON.parse(JSON.stringify(this.historyQuery)); // Used to force a refresh in a history query item list
       });
     }
   }
-  southCommand: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> = {
-    name: 'test',
-    settings: {}
-  } as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
+  southCommand = testData.south.command;
 }
 
 class HistoryQueryItemsComponentTester extends ComponentTester<TestComponent> {
@@ -156,10 +132,6 @@ class HistoryQueryItemsComponentTester extends ComponentTester<TestComponent> {
 
   get deleteAllButton() {
     return this.button('#delete-all')!;
-  }
-
-  get exportButton() {
-    return this.button('#export-items')!;
   }
 
   get southItems() {
@@ -231,18 +203,17 @@ describe('HistoryQueryItemsComponent with saving changes directly', () => {
     expect(tester.southItems.length).toBe(3);
     const item = tester.southItems[0];
     expect(item.elements('td')[1]).toContainText(testHistoryQuery.items[0].name);
-    expect(item.elements('td')[2]).toContainText('sql');
   });
 
   it('should enable history item', () => {
-    const btnIdx = 1; // second one is disabled by default
+    const btnIdx = 1; // the second one is disabled by default
     tester.toggleButtons[btnIdx].click();
     expect(historyQueryService.enableItem).toHaveBeenCalledWith(testHistoryQuery.id, testHistoryQuery.items[btnIdx].id);
     expect(notificationService.success).toHaveBeenCalledWith('history-query.items.enabled', { name: testHistoryQuery.items[btnIdx].name });
   });
 
   it('should disable history item', () => {
-    const btnIdx = 0; // first one is enabled by default
+    const btnIdx = 0; // the first one is enabled by default
     tester.toggleButtons[btnIdx].click();
     expect(historyQueryService.disableItem).toHaveBeenCalledWith(testHistoryQuery.id, testHistoryQuery.items[btnIdx].id);
     expect(notificationService.success).toHaveBeenCalledWith('history-query.items.disabled', { name: testHistoryQuery.items[btnIdx].name });
@@ -431,7 +402,6 @@ describe('HistoryQueryItemsComponent without saving changes directly', () => {
     expect(tester.southItems.length).toBe(3);
     const item = tester.southItems[0];
     expect(item.elements('td')[1]).toContainText(testHistoryQuery.items[0].name);
-    expect(item.elements('td')[2]).toContainText('sql');
   });
 
   it('should not have option to enable/disable history item', () => {
@@ -592,7 +562,13 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
       expect(modalService.open).toHaveBeenCalledWith(ImportItemModalComponent, { backdrop: 'static' });
 
       const modalRef = (modalService.open as jasmine.Spy).calls.mostRecent().returnValue as { componentInstance: any };
-      expect(modalRef.componentInstance.expectedHeaders).toEqual(['name', 'enabled', 'settings_query']);
+      expect(modalRef.componentInstance.expectedHeaders).toEqual([
+        'name',
+        'enabled',
+        'settings_objectArray',
+        'settings_objectSettings',
+        'settings_objectValue'
+      ]);
     });
 
     it('should call checkImportItems when file is selected', () => {
@@ -645,7 +621,7 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
 
       const lastModal = (modalService.open as jasmine.Spy).calls.mostRecent().returnValue as { componentInstance: any };
       expect(lastModal.componentInstance.prepare).toHaveBeenCalledWith(
-        tester.componentInstance.manifest.items,
+        tester.componentInstance.manifest,
         jasmine.any(Array),
         mockItems,
         mockErrors
@@ -830,26 +806,38 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
   describe('Expected headers generation', () => {
     beforeEach(() => {
       tester.componentInstance.saveChangesDirectly = true;
-      tester.componentInstance.manifest.items.settings = [
+      const specificManifest = structuredClone(testData.south.manifest);
+      specificManifest.items.rootAttribute.attributes = [
         {
-          key: 'query',
-          type: 'OibText',
-          translationKey: 'south.items.mssql.query',
-          displayInViewMode: true
-        },
-        {
-          key: 'timeout',
-          type: 'OibNumber',
-          translationKey: 'south.items.mssql.query',
-          displayInViewMode: true
-        },
-        {
-          key: 'enabled',
-          type: 'OibCheckbox',
-          translationKey: 'south.items.mssql.query',
-          displayInViewMode: true
+          type: 'object',
+          key: 'settings',
+          translationKey: 'configuration.oibus.manifest.south.items.settings',
+          displayProperties: {
+            visible: true,
+            wrapInBox: true
+          },
+          enablingConditions: [],
+          validators: [],
+          attributes: [
+            {
+              key: 'query',
+              type: 'string',
+              translationKey: 'configuration.oibus.manifest.south.items.settings'
+            } as OIBusStringAttribute,
+            {
+              key: 'timeout',
+              type: 'number',
+              translationKey: 'configuration.oibus.manifest.south.items.settings'
+            } as OIBusNumberAttribute,
+            {
+              key: 'enabled',
+              type: 'boolean',
+              translationKey: 'configuration.oibus.manifest.south.items.settings'
+            } as OIBusBooleanAttribute
+          ]
         }
       ];
+      tester.componentInstance.manifest = specificManifest;
       tester.detectChanges();
     });
 
