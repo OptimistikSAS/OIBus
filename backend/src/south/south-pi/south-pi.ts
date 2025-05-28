@@ -5,7 +5,6 @@ import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { QueriesHistory } from '../south-interface';
 import { SouthPIItemSettings, SouthPISettings } from '../../../shared/model/south-settings.model';
-import fetch from 'node-fetch';
 import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
@@ -13,6 +12,7 @@ import SouthCacheRepository from '../../repository/cache/south-cache.repository'
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import { BaseFolders } from '../../model/types';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import { HTTPRequest } from '../../service/http-request.utils';
 
 /**
  * Class SouthPI - Run a PI Agent to connect to a PI server.
@@ -52,14 +52,13 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
     }
 
     try {
-      const headers: Record<string, string> = {};
-      headers['Content-Type'] = 'application/json';
       const fetchOptions = {
         method: 'PUT',
-        headers
+        headers: { 'Content-Type': 'application/json' }
       };
 
-      await fetch(`${this.connector.settings.agentUrl}/api/pi/${this.connector.id}/connect`, fetchOptions);
+      const requestUrl = new URL(`/api/pi/${this.connector.id}/connect`, this.connector.settings.agentUrl);
+      await HTTPRequest(requestUrl, fetchOptions);
       this.connected = true;
       await super.connect();
     } catch (error) {
@@ -74,20 +73,19 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
   }
 
   async testConnection(): Promise<void> {
-    const headers: Record<string, string> = {};
-    headers['Content-Type'] = 'application/json';
     const fetchOptions = {
       method: 'PUT',
-      headers
+      headers: { 'Content-Type': 'application/json' }
     };
-    const response = await fetch(`${this.connector.settings.agentUrl!}/api/pi/${this.connector.id}/connect`, fetchOptions);
-    if (response.status === 200) {
-      await fetch(`${this.connector.settings.agentUrl}/api/pi/${this.connector.id}/disconnect`, { method: 'DELETE' });
-    } else if (response.status === 400) {
-      const errorMessage = await response.text();
-      throw new Error(`Error occurred when sending connect command to remote agent with status ${response.status}. ${errorMessage}`);
+    const requestUrl = new URL(`/api/pi/${this.connector.id}/connect`, this.connector.settings.agentUrl);
+    const response = await HTTPRequest(requestUrl, fetchOptions);
+    if (response.statusCode === 200) {
+      await HTTPRequest(`${this.connector.settings.agentUrl}/api/pi/${this.connector.id}/disconnect`, { method: 'DELETE' });
+    } else if (response.statusCode === 400) {
+      const errorMessage = await response.body.text();
+      throw new Error(`Error occurred when sending connect command to remote agent with status ${response.statusCode}. ${errorMessage}`);
     } else {
-      throw new Error(`Error occurred when sending connect command to remote agent with status ${response.status}`);
+      throw new Error(`Error occurred when sending connect command to remote agent with status ${response.statusCode}`);
     }
   }
 
@@ -102,10 +100,9 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
     const startTime = testingSettings.history!.startTime;
     const endTime = testingSettings.history!.endTime;
 
-    const headers: Record<string, string> = {};
-    headers['Content-Type'] = 'application/json';
     const fetchOptions = {
       method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         startTime,
         endTime,
@@ -117,16 +114,16 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
             piQuery: item.settings.piQuery
           }
         ]
-      }),
-      headers
+      })
     };
-    const response = await fetch(`${this.connector.settings.agentUrl}/api/pi/${this.connector.id}/read`, fetchOptions);
-    if (response.status === 200) {
+    const requestUrl = new URL(`/api/pi/${this.connector.id}/read`, this.connector.settings.agentUrl);
+    const response = await HTTPRequest(requestUrl, fetchOptions);
+    if (response.statusCode === 200) {
       const result: {
         recordCount: number;
         content: Array<OIBusTimeValue>;
         maxInstantRetrieved: Instant;
-      } = (await response.json()) as {
+      } = (await response.body.json()) as {
         recordCount: number;
         content: Array<OIBusTimeValue>;
         maxInstantRetrieved: string;
@@ -135,7 +132,7 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
       await this.disconnect();
     } else {
       await this.disconnect();
-      throw new Error(`Error occurred when sending connect command to remote agent. ${response.status}`);
+      throw new Error(`Error occurred when sending connect command to remote agent. ${response.statusCode}`);
     }
     callback(content);
   }
@@ -152,10 +149,10 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
     let updatedStartTime: Instant | null = null;
     this.logger.debug(`Requesting ${items.length} items between ${startTime} and ${endTime}`);
     const startRequest = DateTime.now().toMillis();
-    const headers: Record<string, string> = {};
-    headers['Content-Type'] = 'application/json';
+
     const fetchOptions = {
       method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         startTime,
         endTime,
@@ -165,17 +162,17 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
           piPoint: item.settings.piPoint,
           piQuery: item.settings.piQuery
         }))
-      }),
-      headers
+      })
     };
-    const response = await fetch(`${this.connector.settings.agentUrl}/api/pi/${this.connector.id}/read`, fetchOptions);
-    if (response.status === 200) {
+    const requestUrl = new URL(`/api/pi/${this.connector.id}/read`, this.connector.settings.agentUrl);
+    const response = await HTTPRequest(requestUrl, fetchOptions);
+    if (response.statusCode === 200) {
       const result: {
         recordCount: number;
         content: Array<OIBusTimeValue>;
         logs: Array<string>;
         maxInstantRetrieved: Instant;
-      } = (await response.json()) as {
+      } = (await response.body.json()) as {
         recordCount: number;
         content: Array<OIBusTimeValue>;
         logs: Array<string>;
@@ -197,11 +194,11 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
       } else {
         this.logger.debug(`No result found. Request done in ${requestDuration} ms`);
       }
-    } else if (response.status === 400) {
-      const errorMessage = await response.text();
-      throw new Error(`Error occurred when querying remote agent with status ${response.status}: ${errorMessage}`);
+    } else if (response.statusCode === 400) {
+      const errorMessage = await response.body.text();
+      throw new Error(`Error occurred when querying remote agent with status ${response.statusCode}: ${errorMessage}`);
     } else {
-      throw new Error(`Error occurred when querying remote agent with status ${response.status}`);
+      throw new Error(`Error occurred when querying remote agent with status ${response.statusCode}`);
     }
     return updatedStartTime;
   }
@@ -230,7 +227,8 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
     if (this.connected) {
       try {
         const fetchOptions = { method: 'DELETE' };
-        await fetch(`${this.connector.settings.agentUrl}/api/pi/${this.connector.id}/disconnect`, fetchOptions);
+        const requestUrl = new URL(`/api/pi/${this.connector.id}/disconnect`, this.connector.settings.agentUrl);
+        await HTTPRequest(requestUrl, fetchOptions);
       } catch (error) {
         this.logger.error(`Error while sending disconnection HTTP request into agent. ${error}`);
       }
