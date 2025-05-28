@@ -12,5 +12,5 @@
   </oib-datepicker-container>
 </ng-template>
 <ng-template #defaultTimeTemplate let-formControl>
-  <ngb-timepicker [formControl]="formControl" [spinners]="false" />
+  <ngb-timepicker [seconds]="displaySeconds()" [formControl]="formControl" />
 </ng-template>

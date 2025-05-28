@@ -1,0 +1,64 @@
+<div class="modal-header">
+  <h4 class="modal-title" [translate]="'south.edit-item-modal.' + mode + '-title'"></h4>
+</div>
+@if (form) {
+  <div class="modal-body">
+    <form [formGroup]="form" (ngSubmit)="save()" id="form">
+      <div class="row">
+        <!-- Name -->
+        <div class="col-3">
+          <div class="form-group">
+            <label class="form-label" for="name" translate="south.items.name"></label>
+            <input formControlName="name" id="name" class="form-control" />
+            <val-errors controlName="name" />
+          </div>
+        </div>
+        <!-- Scan mode -->
+        @if (form.controls.scanModeId.enabled) {
+          <div class="col-3">
+            <div class="form-group">
+              <label for="scanModeId" class="form-label" translate="configuration.oibus.manifest.south.items.scan-mode"></label>
+              <select class="form-select" id="scanModeId" formControlName="scanModeId">
+                <option [ngValue]="null"></option>
+                @for (scanMode of scanModes; track scanMode.id) {
+                  <option [value]="scanMode.id">{{ scanMode.name }}</option>
+                }
+              </select>
+              <val-errors controlName="scanModeId" />
+            </div>
+          </div>
+        }
+        <!-- Enabled -->
+        <div class="col-3">
+          <div class="form-group">
+            <div class="form-check form-switch padded">
+              <input formControlName="enabled" id="item-enabled" type="checkbox" class="form-check-input" />
+              <label class="form-check-label" for="item-enabled" translate="south.items.enable"></label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <ng-container formGroupName="settings">
+        <oib-oibus-object-form-control
+          [scanModes]="scanModes"
+          [certificates]="certificates"
+          [group]="form.controls.settings"
+          [objectAttribute]="getItemSettingsAttribute()"
+        />
+      </ng-container>
+    </form>
+    <oib-south-item-test
+      type="south"
+      [entityId]="southId"
+      [item]="formItem"
+      [connectorCommand]="southConnectorCommand"
+      [manifest]="manifest"
+    />
+  </div>
+}
+<div class="modal-footer">
+  <div class="btn-group">
+    <button [oib-save-button]="state" form="form"></button>
+    <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
+  </div>
+</div>

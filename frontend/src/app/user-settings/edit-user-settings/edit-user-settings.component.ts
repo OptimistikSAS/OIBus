@@ -1,8 +1,7 @@
 import { Component, inject } from '@angular/core';
-import { NonNullableFormBuilder, Validators } from '@angular/forms';
+import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Language, LANGUAGES, Timezone } from '../../../../../backend/shared/model/types';
 import { Observable, of, switchMap, tap, timer } from 'rxjs';
-import { inMemoryTypeahead } from '../../shared/typeahead';
 import { CurrentUserService } from '../../shared/current-user.service';
 import { ChangePasswordModalComponent } from '../change-password-modal/change-password-modal.component';
 import { UserDTO, UserCommandDTO } from '../../../../../backend/shared/model/user.model';
@@ -11,10 +10,11 @@ import { UserSettingsService } from '../../services/user-settings.service';
 import { NotificationService } from '../../shared/notification.service';
 import { TranslateDirective, TranslateService } from '@ngx-translate/core';
 import { WindowService } from '../../shared/window.service';
-import { formDirectives } from '../../shared/form-directives';
 
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
+import { inMemoryTypeahead } from '../../shared/form/typeahead';
+import { OI_FORM_VALIDATION_DIRECTIVES } from '../../shared/form/form-validation-directives';
 import { CanComponentDeactivate } from '../../shared/unsaved-changes.guard';
 import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
 
@@ -30,7 +30,7 @@ declare namespace Intl {
   selector: 'oib-edit-user-settings',
   templateUrl: './edit-user-settings.component.html',
   styleUrl: './edit-user-settings.component.scss',
-  imports: [...formDirectives, TranslateDirective, NgbTypeahead, SaveButtonComponent]
+  imports: [TranslateDirective, NgbTypeahead, SaveButtonComponent, ReactiveFormsModule, OI_FORM_VALIDATION_DIRECTIVES, SaveButtonComponent]
 })
 export class EditUserSettingsComponent implements CanComponentDeactivate {
   private modalService = inject(ModalService);
