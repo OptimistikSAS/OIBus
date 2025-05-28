@@ -2,8 +2,9 @@ import { TestBed } from '@angular/core/testing';
 
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { CertificateService } from './certificate.service';
-import { CertificateCommandDTO, CertificateDTO } from '../../../../backend/shared/model/certificate.model';
+import { CertificateDTO } from '../../../../backend/shared/model/certificate.model';
 import { provideHttpClient } from '@angular/common/http';
+import testData from '../../../../backend/src/tests/utils/test-data';
 
 describe('CertificateService', () => {
   let http: HttpTestingController;
@@ -40,10 +41,7 @@ describe('CertificateService', () => {
 
   it('should create an certificate', () => {
     let done = false;
-    const command: CertificateCommandDTO = {
-      name: 'Cert1',
-      description: 'a test certificate'
-    } as CertificateCommandDTO;
+    const command = testData.certificates.command;
 
     service.create(command).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'POST', url: '/api/certificates' });
@@ -54,10 +52,7 @@ describe('CertificateService', () => {
 
   it('should update an certificate', () => {
     let done = false;
-    const command: CertificateCommandDTO = {
-      name: 'cert',
-      description: 'a test certificate'
-    } as CertificateCommandDTO;
+    const command = testData.certificates.command;
 
     service.update('id1', command).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'PUT', url: '/api/certificates/id1' });

@@ -1,182 +1,162 @@
-import { ScanModeDTO } from './scan-mode.model';
-
-export const FORM_COMPONENT_TYPES = [
-  'OibText',
-  'OibNumber',
-  'OibSelect',
-  'OibSecret',
-  'OibTextArea',
-  'OibCodeBlock',
-  'OibCheckbox',
-  'OibScanMode',
-  'OibTransformer',
-  'OibCertificate',
-  'OibTimezone',
-  'OibArray',
-  'OibFormGroup'
+export const OIBUS_ATTRIBUTE_TYPES = [
+  'string',
+  'number',
+  'instant',
+  'string-select',
+  'secret',
+  'code',
+  'boolean',
+  'scan-mode',
+  'transformer-array',
+  'certificate',
+  'timezone',
+  'array',
+  'object'
 ] as const;
-export type FormComponentType = (typeof FORM_COMPONENT_TYPES)[number];
+export type OIBusAttributeType = (typeof OIBUS_ATTRIBUTE_TYPES)[number];
 
-export const FORM_COMPONENT_VALIDATOR_TYPES = [
-  'required',
-  'min',
-  'max',
-  'pattern',
-  'minLength',
-  'maxLength',
-  'unique',
-  'singleTrue'
+export const OIBUS_ATTRIBUTE_VALIDATOR_TYPES = [
+  'REQUIRED',
+  'MINIMUM',
+  'MAXIMUM',
+  'POSITIVE_INTEGER',
+  'VALID_CRON',
+  'PATTERN',
+  'UNIQUE',
+  'SINGLE_TRUE'
 ] as const;
-export type FormComponentValidatorType = (typeof FORM_COMPONENT_VALIDATOR_TYPES)[number];
+export type OIBusAttributeValidatorType = (typeof OIBUS_ATTRIBUTE_VALIDATOR_TYPES)[number];
 
-interface Validator {
-  key: FormComponentValidatorType;
+export interface OIBusAttributeValidator {
+  type: OIBusAttributeValidatorType;
+  arguments: Array<string>;
 }
 
-interface RequiredValidator extends Validator {
-  key: 'required';
+interface OIBusAttributeDisplayProperties {
+  row: number;
+  columns: number;
+  displayInViewMode: boolean;
 }
 
-interface MinValidator extends Validator {
-  key: 'min';
-  params: {
-    min: number;
-  };
+interface OIBusObjectDisplayProperties {
+  visible: boolean;
+  wrapInBox: boolean;
 }
 
-interface MaxValidator extends Validator {
-  key: 'max';
-  params: {
-    max: number;
-  };
-}
-
-interface PatternValidator extends Validator {
-  key: 'pattern';
-  params: {
-    pattern: string;
-  };
-}
-
-interface MinLengthValidator extends Validator {
-  key: 'minLength';
-  params: {
-    minLength: number;
-  };
-}
-
-interface MaxLengthValidator extends Validator {
-  key: 'maxLength';
-  params: {
-    maxLength: number;
-  };
-}
-
-interface UniqueValidator extends Validator {
-  key: 'unique';
-}
-interface SingleTrueValidator extends Validator {
-  key: 'singleTrue';
-}
-
-export type FormComponentValidator =
-  | RequiredValidator
-  | MinValidator
-  | MaxValidator
-  | PatternValidator
-  | MinLengthValidator
-  | MaxLengthValidator
-  | UniqueValidator
-  | SingleTrueValidator;
-
-export interface BaseOibFormControl<T> {
-  key: string;
-  type: FormComponentType;
-  translationKey: string;
-  defaultValue?: T;
-  unitLabel?: string; // an optional unit label to indicate which unit is used
-  newRow?: boolean;
-  class?: string;
-  conditionalDisplay?: DisplayCondition;
-  displayInViewMode?: boolean; // readDisplay is used to display the settings value in display mode
-  validators?: Array<FormComponentValidator>;
-}
-
-export interface DisplayCondition {
-  field: string;
+export interface OIBusEnablingCondition {
+  targetPathFromRoot: string;
+  referralPathFromRoot: string;
   values: Array<string | number | boolean>;
 }
 
-export interface OibTextFormControl extends BaseOibFormControl<string> {
-  type: 'OibText';
+interface BaseOIBusAttribute {
+  type: OIBusAttributeType;
+  key: string;
+  translationKey: string;
+  validators: Array<OIBusAttributeValidator>;
 }
 
-export interface OibTextAreaFormControl extends BaseOibFormControl<string> {
-  type: 'OibTextArea';
+export interface BaseOIBusDisplayableAttribute extends BaseOIBusAttribute {
+  displayProperties: OIBusAttributeDisplayProperties;
 }
 
-export interface OibCodeBlockFormControl extends BaseOibFormControl<string> {
-  type: 'OibCodeBlock';
-  contentType: string;
+export interface OIBusObjectAttribute extends BaseOIBusAttribute {
+  type: 'object';
+  attributes: Array<OIBusAttribute>;
+  enablingConditions: Array<OIBusEnablingCondition>;
+  displayProperties: OIBusObjectDisplayProperties;
 }
 
-export interface OibNumberFormControl extends BaseOibFormControl<number> {
-  type: 'OibNumber';
+export interface OIBusNumberAttribute extends BaseOIBusDisplayableAttribute {
+  type: 'number';
+  defaultValue: number | null;
+  unit: string | null;
 }
 
-export interface OibSelectFormControl extends BaseOibFormControl<string> {
-  type: 'OibSelect';
-  options: Array<string>;
+export interface OIBusSecretAttribute extends BaseOIBusDisplayableAttribute {
+  type: 'secret';
 }
 
-export interface OibSecretFormControl extends BaseOibFormControl<string> {
-  type: 'OibSecret';
+export interface OIBusStringAttribute extends BaseOIBusDisplayableAttribute {
+  type: 'string';
+  defaultValue: string | null;
 }
 
-export interface OibCheckboxFormControl extends BaseOibFormControl<boolean> {
-  type: 'OibCheckbox';
+export interface OIBusCodeAttribute extends BaseOIBusDisplayableAttribute {
+  type: 'code';
+  contentType: 'sql' | 'json';
+  defaultValue: string | null;
 }
 
-export interface OibScanModeFormControl extends BaseOibFormControl<ScanModeDTO> {
-  type: 'OibScanMode';
-  acceptSubscription: boolean;
-  subscriptionOnly: boolean;
+export interface OIBusStringSelectAttribute extends BaseOIBusDisplayableAttribute {
+  type: 'string-select';
+  selectableValues: Array<string>;
+  defaultValue: string | null;
 }
 
-export interface OibTransformerFormControl extends BaseOibFormControl<string> {
-  type: 'OibTransformer';
+export interface OIBusBooleanAttribute extends BaseOIBusDisplayableAttribute {
+  type: 'boolean';
+  defaultValue: boolean;
 }
 
-export interface OibCertificateFormControl extends BaseOibFormControl<string> {
-  type: 'OibCertificate';
+export interface OIBusInstantAttribute extends BaseOIBusDisplayableAttribute {
+  type: 'instant';
 }
 
-export interface OibTimezoneFormControl extends BaseOibFormControl<string> {
-  type: 'OibTimezone';
+export interface OIBusScanModeAttribute extends BaseOIBusDisplayableAttribute {
+  type: 'scan-mode';
+  acceptableType: 'POLL' | 'SUBSCRIPTION_AND_POLL' | 'SUBSCRIPTION';
 }
 
-export interface OibArrayFormControl extends BaseOibFormControl<Array<OibFormControl>> {
-  type: 'OibArray';
-  content: Array<OibFormControl>;
-  allowRowDuplication?: boolean;
+export interface OIBusCertificateAttribute extends BaseOIBusDisplayableAttribute {
+  type: 'certificate';
 }
 
-export interface OibFormGroup extends BaseOibFormControl<void> {
-  type: 'OibFormGroup';
-  content: Array<OibFormControl>;
+export interface OIBusArrayAttribute extends BaseOIBusAttribute {
+  type: 'array';
+  paginate: boolean;
+  numberOfElementPerPage: number;
+  rootAttribute: OIBusObjectAttribute;
 }
 
-export type OibFormControl =
-  | OibTextFormControl
-  | OibTextAreaFormControl
-  | OibCodeBlockFormControl
-  | OibNumberFormControl
-  | OibSelectFormControl
-  | OibSecretFormControl
-  | OibCheckboxFormControl
-  | OibScanModeFormControl
-  | OibTransformerFormControl
-  | OibCertificateFormControl
-  | OibTimezoneFormControl
-  | OibArrayFormControl
-  | OibFormGroup;
+export interface OIBusTimezoneAttribute extends BaseOIBusDisplayableAttribute {
+  type: 'timezone';
+  defaultValue: string | null;
+}
+
+export type OIBusAttribute =
+  | OIBusObjectAttribute
+  | OIBusStringAttribute
+  | OIBusCodeAttribute
+  | OIBusStringSelectAttribute
+  | OIBusSecretAttribute
+  | OIBusNumberAttribute
+  | OIBusBooleanAttribute
+  | OIBusInstantAttribute
+  | OIBusScanModeAttribute
+  | OIBusCertificateAttribute
+  | OIBusTimezoneAttribute
+  | OIBusArrayAttribute;
+
+export type OIBusControlAttribute =
+  | OIBusStringAttribute
+  | OIBusCodeAttribute
+  | OIBusStringSelectAttribute
+  | OIBusSecretAttribute
+  | OIBusNumberAttribute
+  | OIBusBooleanAttribute
+  | OIBusInstantAttribute
+  | OIBusScanModeAttribute
+  | OIBusTimezoneAttribute
+  | OIBusCertificateAttribute;
+export type OIBusDisplayableAttribute =
+  | OIBusStringAttribute
+  | OIBusCodeAttribute
+  | OIBusStringSelectAttribute
+  | OIBusSecretAttribute
+  | OIBusNumberAttribute
+  | OIBusBooleanAttribute
+  | OIBusInstantAttribute
+  | OIBusScanModeAttribute
+  | OIBusCertificateAttribute
+  | OIBusTimezoneAttribute;

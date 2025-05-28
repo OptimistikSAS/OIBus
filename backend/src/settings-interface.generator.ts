@@ -1,8 +1,8 @@
 import { appendFileSync, openSync, readdirSync } from 'node:fs';
-import { OibFormControl } from '../shared/model/form.model';
 import { ConnectorManifest } from '../shared/model/types';
 import { SouthConnectorManifest } from '../shared/model/south-connector.model';
 import path from 'node:path';
+import { OIBusAttribute, OIBusEnablingCondition, OIBusObjectAttribute } from '../shared/model/form.model';
 
 const SOUTH_SETTINGS_DESTINATION_PATH = 'shared/model/south-settings.model.ts';
 const NORTH_SETTINGS_DESTINATION_PATH = 'shared/model/north-settings.model.ts';
@@ -24,9 +24,9 @@ async function generateSettingsInterfaces() {
 }
 
 /**
- * This function is used to build the south settings interface from the various manifests in order to
+ * This function is used to build the south settings interface from the various manifests to
  * enforce type safety when using those settings in the connectors.
- * This function runs an all manifests and will generate the corresponding typescript interface declaration
+ * This function runs an all manifests and will generate the corresponding TypeScript interface declaration
  * in shared folder located in the root path of the project
  */
 async function generateSettingsInterfacesForConnectorType(connectorType: ConnectorType) {
@@ -54,7 +54,7 @@ async function generateSettingsInterfacesForConnectorType(connectorType: Connect
 }
 
 /**
- * Create the appropriate typescript file from the types in the given path
+ * Create the appropriate TypeScript file from the types in the given path
  */
 function buildTypescriptFile(typesToGenerate: TypeGenerationDescription, connectorType: ConnectorType) {
   const path = connectorType === 'South' ? SOUTH_SETTINGS_DESTINATION_PATH : NORTH_SETTINGS_DESTINATION_PATH;
@@ -139,7 +139,7 @@ function generateTypesForManifest(
   const interfaceName =
     connectorType === 'South' ? buildSouthInterfaceName(manifestObject.id, false) : buildNorthInterfaceName(manifestObject.id);
 
-  // gather recursively all sub interfaces
+  // recursively gather all sub interfaces
   const subManifests: Array<SubManifest> = collectSubManifests(manifestObject.settings);
   subManifests.forEach(subManifest => {
     const subManifestInterface = generateInterface(
@@ -157,8 +157,11 @@ function generateTypesForManifest(
   if (connectorType === 'South') {
     const interfaceName = buildSouthInterfaceName(manifestObject.id, true);
 
-    // gather recursively all sub interfaces
-    const itemSubManifests: Array<SubManifest> = collectSubManifests((manifestObject as unknown as SouthConnectorManifest).items.settings);
+    const itemSettingsManifest = (manifestObject as unknown as SouthConnectorManifest).items.rootAttribute.attributes.find(
+      attribute => attribute.key === 'settings'
+    )! as OIBusObjectAttribute;
+    // recursively gather all sub interfaces
+    const itemSubManifests: Array<SubManifest> = collectSubManifests(itemSettingsManifest);
     itemSubManifests.forEach(subManifest => {
       const subManifestInterface = generateInterface(
         interfaceName + capitalizeFirstLetter(subManifest.name),
@@ -169,63 +172,58 @@ function generateTypesForManifest(
     });
 
     // generate item settings interface
-    const mainItemSettingsInterface = generateInterface(
-      interfaceName,
-      (manifestObject as unknown as SouthConnectorManifest).items.settings,
-      typesToGenerate
-    );
+    const mainItemSettingsInterface = generateInterface(interfaceName, itemSettingsManifest, typesToGenerate);
     typesToGenerate.itemSettingsInterfaces.push(mainItemSettingsInterface);
   }
 }
 
-function generateInterface(interfaceName: string, settings: Array<OibFormControl>, typesToGenerate: TypeGenerationDescription): Interface {
+function generateInterface(interfaceName: string, settings: OIBusObjectAttribute, typesToGenerate: TypeGenerationDescription): Interface {
   const attributes: Array<Attribute> = [];
-  settings.forEach(setting => {
+  settings.attributes.forEach(setting => {
     switch (setting.type) {
-      case 'OibText':
-      case 'OibTextArea':
-      case 'OibSecret':
-      case 'OibCodeBlock':
-        attributes.push({ key: setting.key, type: 'string', ...checkIfNullableOrUndefined(setting) });
+      case 'string':
+      case 'secret':
+      case 'code':
+        attributes.push({ key: setting.key, type: 'string', ...checkIfNullableOrUndefined(setting, settings.enablingConditions) });
         break;
-      case 'OibSelect':
+      case 'string-select':
         const enumName = `${interfaceName}${capitalizeFirstLetter(setting.key)}`;
-        typesToGenerate.enums.push({ name: enumName, values: setting.options });
-        attributes.push({ key: setting.key, type: `${enumName}`, ...checkIfNullableOrUndefined(setting) });
+        typesToGenerate.enums.push({ name: enumName, values: setting.selectableValues });
+        attributes.push({ key: setting.key, type: `${enumName}`, ...checkIfNullableOrUndefined(setting, settings.enablingConditions) });
         break;
-      case 'OibCheckbox':
-        attributes.push({ key: setting.key, type: 'boolean', ...checkIfNullableOrUndefined(setting) });
+      case 'boolean':
+        attributes.push({ key: setting.key, type: 'boolean', ...checkIfNullableOrUndefined(setting, settings.enablingConditions) });
         break;
-      case 'OibScanMode':
+      case 'scan-mode':
         typesToGenerate.imports.add(SCAN_MODE_IMPORT);
-        attributes.push({ key: setting.key, type: 'ScanMode', ...checkIfNullableOrUndefined(setting) });
+        attributes.push({ key: setting.key, type: 'ScanMode', ...checkIfNullableOrUndefined(setting, settings.enablingConditions) });
         break;
-      case 'OibCertificate':
-        attributes.push({ key: setting.key, type: 'string', ...checkIfNullableOrUndefined(setting) });
+      case 'certificate':
+        attributes.push({ key: setting.key, type: 'string', ...checkIfNullableOrUndefined(setting, settings.enablingConditions) });
         break;
-      case 'OibTimezone':
+      case 'timezone':
         typesToGenerate.imports.add(TIMEZONE_IMPORT);
-        attributes.push({ key: setting.key, type: 'Timezone', ...checkIfNullableOrUndefined(setting) });
+        attributes.push({ key: setting.key, type: 'Timezone', ...checkIfNullableOrUndefined(setting, settings.enablingConditions) });
         break;
-      case 'OibArray':
+      case 'array':
         attributes.push({
           key: setting.key,
           type: `Array<${interfaceName}${capitalizeFirstLetter(setting.key)}>`,
-          ...checkIfNullableOrUndefined(setting)
+          ...checkIfNullableOrUndefined(setting, settings.enablingConditions)
         });
         break;
-      case 'OibFormGroup':
+      case 'object':
         attributes.push({
           key: setting.key,
           type: `${interfaceName}${capitalizeFirstLetter(setting.key)}`,
-          ...checkIfNullableOrUndefined(setting)
+          ...checkIfNullableOrUndefined(setting, settings.enablingConditions)
         });
         break;
-      case 'OibNumber':
+      case 'number':
         attributes.push({
           key: setting.key,
           type: 'number',
-          ...checkIfNullableOrUndefined(setting)
+          ...checkIfNullableOrUndefined(setting, settings.enablingConditions)
         });
         break;
     }
@@ -236,10 +234,13 @@ function generateInterface(interfaceName: string, settings: Array<OibFormControl
 /**
  * Check if the given OibFormControl is nullable or not
  */
-function checkIfNullableOrUndefined(setting: OibFormControl): { nullable: boolean; undefinable: boolean } {
-  // if the setting has no validators it is nullable
-  const nullable = !setting.validators ? true : setting.validators.filter(validator => validator.key === 'required').length === 0;
-  const undefinable = setting.conditionalDisplay != null;
+function checkIfNullableOrUndefined(
+  setting: OIBusAttribute,
+  enablingConditions: Array<OIBusEnablingCondition>
+): { nullable: boolean; undefinable: boolean } {
+  // if the setting has no validators, it is nullable
+  const nullable = !setting.validators ? true : setting.validators.filter(validator => validator.type === 'REQUIRED').length === 0;
+  const undefinable = !!enablingConditions.find(enablingCondition => enablingCondition.targetPathFromRoot === setting.key);
 
   return { nullable, undefinable };
 }
@@ -247,12 +248,15 @@ function checkIfNullableOrUndefined(setting: OibFormControl): { nullable: boolea
 /**
  * Get all sub manifests
  */
-function collectSubManifests(manifestControls: Array<OibFormControl>, prefixKey = ''): Array<SubManifest> {
+function collectSubManifests(manifestControls: OIBusObjectAttribute, prefixKey = ''): Array<SubManifest> {
   const subManifests: Array<SubManifest> = [];
-  manifestControls.forEach(formControl => {
-    if (formControl.type === 'OibFormGroup' || formControl.type === 'OibArray') {
-      subManifests.push(...collectSubManifests(formControl.content, prefixKey + capitalizeFirstLetter(formControl.key)));
-      subManifests.push({ name: prefixKey + capitalizeFirstLetter(formControl.key), settings: formControl.content });
+  manifestControls.attributes.forEach(formControl => {
+    if (formControl.type === 'object') {
+      subManifests.push(...collectSubManifests(formControl, prefixKey + capitalizeFirstLetter(formControl.key)));
+      subManifests.push({ name: prefixKey + capitalizeFirstLetter(formControl.key), settings: formControl });
+    } else if (formControl.type === 'array') {
+      subManifests.push(...collectSubManifests(formControl.rootAttribute, prefixKey + capitalizeFirstLetter(formControl.key)));
+      subManifests.push({ name: prefixKey + capitalizeFirstLetter(formControl.key), settings: formControl.rootAttribute });
     }
   });
   return subManifests;
@@ -355,7 +359,7 @@ function toSnakeCase(s: string) {
 
 interface SubManifest {
   name: string;
-  settings: Array<OibFormControl>;
+  settings: OIBusObjectAttribute;
 }
 
 interface TypeGenerationDescription {

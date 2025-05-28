@@ -1,0 +1,5 @@
+<div class="form-group">
+  <label [for]="instantAttribute().key" class="form-label" [translate]="instantAttribute().translationKey"></label>
+  <oib-datetimepicker [id]="instantAttribute().key" [formControlName]="instantAttribute().key" />
+  <val-errors [controlName]="instantAttribute().key" />
+</div>

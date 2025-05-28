@@ -1,14 +1,12 @@
-import { Component, inject, OnInit, output, input, effect } from '@angular/core';
+import { Component, effect, inject, input, OnInit, output } from '@angular/core';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
-
 import { Modal, ModalService } from '../../shared/modal.service';
 import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { SouthConnectorCommandDTO, SouthConnectorManifest } from '../../../../../backend/shared/model/south-connector.model';
 import { debounceTime, distinctUntilChanged, firstValueFrom, of, switchMap, tap } from 'rxjs';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
-import { OibFormControl } from '../../../../../backend/shared/model/form.model';
 import { createPageFromArray, Page } from '../../../../../backend/shared/model/types';
 import { emptyPage } from '../../shared/test-utils';
 import { HistoryQueryDTO, HistoryQueryItemCommandDTO, HistoryQueryItemDTO } from '../../../../../backend/shared/model/history-query.model';
@@ -17,10 +15,12 @@ import { PaginationComponent } from '../../shared/pagination/pagination.componen
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
 import { ImportItemModalComponent } from '../../shared/import-item-modal/import-item-modal.component';
-import { EditHistoryQueryItemModalComponent } from '../edit-history-query-item-modal/edit-history-query-item-modal.component';
-import { ImportHistoryQueryItemsModalComponent } from '../import-history-query-items-modal/import-history-query-items-modal.component';
+import { EditHistoryQueryItemModalComponent } from './edit-history-query-item-modal/edit-history-query-item-modal.component';
+import { ImportHistoryQueryItemsModalComponent } from './import-history-query-items-modal/import-history-query-items-modal.component';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
+import { OIBusAttribute, OIBusObjectAttribute } from '../../../../../backend/shared/model/form.model';
+import { isDisplayableAttribute } from '../../shared/form/dynamic-form.builder';
 
 const PAGE_SIZE = 20;
 
@@ -72,7 +72,7 @@ export class HistoryQueryItemsComponent implements OnInit {
   filteredItems: Array<HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>> = [];
 
   displayedItems: Page<HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>> = emptyPage();
-  displaySettings: Array<OibFormControl> = [];
+  displaySettings: Array<OIBusAttribute> = [];
 
   searchControl = inject(NonNullableFormBuilder).control(null as string | null);
 
@@ -109,7 +109,10 @@ export class HistoryQueryItemsComponent implements OnInit {
 
   ngOnInit() {
     this.resetPage();
-    this.displaySettings = this.southManifest().items.settings.filter(setting => setting.displayInViewMode);
+    const settingsAttribute = this.southManifest().items.rootAttribute.attributes.find(
+      attribute => attribute.key === 'settings'
+    )! as OIBusObjectAttribute;
+    this.displaySettings = settingsAttribute.attributes.filter(setting => isDisplayableAttribute(setting));
 
     // subscribe to changes to search control
     this.searchControl.valueChanges.pipe(debounceTime(200), distinctUntilChanged()).subscribe(() => {
@@ -145,7 +148,6 @@ export class HistoryQueryItemsComponent implements OnInit {
 
     const tableIndex = this.allItems.findIndex(i => i.id === historyQueryItem.id || i.name === historyQueryItem.name);
     component.prepareForEdition(
-      this.southManifest().items,
       this.allItems,
       historyQueryItem,
       this.historyId(),
@@ -166,13 +168,7 @@ export class HistoryQueryItemsComponent implements OnInit {
       }
     });
     const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
-    component.prepareForCreation(
-      this.southManifest().items,
-      this.allItems,
-      this.historyId(),
-      this.southConnectorCommand(),
-      this.southManifest()
-    );
+    component.prepareForCreation(this.allItems, this.historyId(), this.southConnectorCommand(), this.southManifest());
     this.refreshAfterCreationModalClosed(modalRef);
   }
 
@@ -266,14 +262,7 @@ export class HistoryQueryItemsComponent implements OnInit {
   duplicateItem(item: HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>) {
     const modalRef = this.modalService.open(EditHistoryQueryItemModalComponent, { size: 'xl', backdrop: 'static' });
     const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
-    component.prepareForCopy(
-      this.southManifest().items,
-      this.allItems,
-      item,
-      this.historyId(),
-      this.southConnectorCommand(),
-      this.southManifest()
-    );
+    component.prepareForCopy(this.allItems, item, this.historyId(), this.southConnectorCommand(), this.southManifest());
     this.refreshAfterCreationModalClosed(modalRef);
   }
 
@@ -322,8 +311,11 @@ export class HistoryQueryItemsComponent implements OnInit {
     const optionalHeaders: Array<string> = ['scanMode'];
 
     // Separate conditional fields from required fields
-    this.southManifest().items.settings.forEach(setting => {
-      if (setting.conditionalDisplay) {
+    const settingsAttribute = this.southManifest().items.rootAttribute.attributes.find(
+      attribute => attribute.key === 'settings'
+    )! as OIBusObjectAttribute;
+    settingsAttribute.attributes.forEach(setting => {
+      if (settingsAttribute.enablingConditions.find(element => element.targetPathFromRoot === setting.key)) {
         optionalHeaders.push(`settings_${setting.key}`);
       } else {
         expectedHeaders.push(`settings_${setting.key}`);
@@ -350,14 +342,14 @@ export class HistoryQueryItemsComponent implements OnInit {
       }) => {
         const modalRef = this.modalService.open(ImportHistoryQueryItemsModalComponent, { size: 'xl', backdrop: 'static' });
         const component: ImportHistoryQueryItemsModalComponent = modalRef.componentInstance;
-        component.prepare(this.southManifest().items, this.allItems, result.items, result.errors);
+        component.prepare(this.southManifest(), this.allItems, result.items, result.errors);
         this.refreshAfterImportModalClosed(modalRef);
       }
     );
   }
 
   /**
-   * Refresh the History Query item list when a History Query items are created
+   * Refresh the History Query item list when a History Query item is created
    */
   private refreshAfterImportModalClosed(modalRef: Modal<any>) {
     modalRef.result
@@ -412,6 +404,18 @@ export class HistoryQueryItemsComponent implements OnInit {
     }
   }
 
+  getFieldValue(element: any, field: string): string {
+    const settingsAttribute = this.southManifest().items.rootAttribute.attributes.find(
+      attribute => attribute.key === 'settings'
+    )! as OIBusObjectAttribute;
+
+    const foundFormControl = settingsAttribute.attributes.find(formControl => formControl.key === field);
+    if (foundFormControl && element[field] && foundFormControl.type === 'string-select') {
+      return this.translateService.instant(foundFormControl.translationKey + '.' + element[field]);
+    }
+    return element[field];
+  }
+
   toggleColumnSort(columnName: keyof TableData) {
     this.currentColumnSort = columnName;
     // Toggle state
@@ -437,13 +441,5 @@ export class HistoryQueryItemsComponent implements OnInit {
           break;
       }
     }
-  }
-
-  getFieldValue(element: any, field: string): string {
-    const foundFormControl = this.southManifest().items.settings.find(formControl => formControl.key === field);
-    if (foundFormControl && element[field] && foundFormControl.type === 'OibSelect') {
-      return this.translateService.instant(foundFormControl.translationKey + '.' + element[field]);
-    }
-    return element[field];
   }
 }
