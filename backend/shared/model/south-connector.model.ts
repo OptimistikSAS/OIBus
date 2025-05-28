@@ -1,4 +1,4 @@
-import { OibFormControl } from './form.model';
+import { OIBusArrayAttribute, OIBusObjectAttribute } from './form.model';
 import { BaseEntity, Instant } from './types';
 import { SouthItemSettings, SouthSettings } from './south-settings.model';
 
@@ -87,11 +87,6 @@ export interface SouthConnectorItemSearchParam {
   page?: number;
 }
 
-export interface SouthConnectorItemManifest {
-  scanMode: 'POLL' | 'SUBSCRIPTION' | 'SUBSCRIPTION_AND_POLL';
-  settings: Array<OibFormControl>;
-}
-
 export interface SouthConnectorItemTestingSettings {
   history?: {
     startTime: string;
@@ -108,8 +103,8 @@ export interface SouthConnectorManifest {
     lastFile: boolean;
     history: boolean;
   };
-  settings: Array<OibFormControl>;
-  items: SouthConnectorItemManifest;
+  settings: OIBusObjectAttribute;
+  items: OIBusArrayAttribute;
 }
 
 export interface SouthCache {

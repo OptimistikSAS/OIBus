@@ -1,23 +1,28 @@
 import { Component, inject } from '@angular/core';
-import { ObservableState, SaveButtonComponent } from './save-button.component';
+import { SaveButtonComponent } from './save-button.component';
 import { ComponentTester } from 'ngx-speculoos';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { delay, of } from 'rxjs';
-import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { ObservableState } from './save-button.component';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 
 @Component({
   template: `
     <form [formGroup]="form" id="test-form" (ngSubmit)="save()">
-      <oib-save-button form="test-form" [state]="state" />
+      <button [oib-save-button]="state" form="test-form" [forceDisabled]="forceDisabled"></button>
     </form>
   `,
-  imports: [SaveButtonComponent, ReactiveFormsModule]
+  imports: [ReactiveFormsModule, SaveButtonComponent]
 })
 class TestComponent {
+  private fb = inject(FormBuilder);
+
   state = new ObservableState();
   save$ = of(null).pipe(delay(500), this.state.pendingUntilFinalization());
-  form = inject(NonNullableFormBuilder).group({ name: '' });
+  form = this.fb.group({ name: '' });
+
+  forceDisabled = false;
 
   save() {
     this.save$.subscribe();
@@ -30,15 +35,15 @@ class TestComponentTester extends ComponentTester<TestComponent> {
   }
 
   get saveButton() {
-    return this.button('#save-button')!;
+    return this.button('button')!;
   }
 
   get spinner() {
-    return this.element('.fa.fa-spinner')!;
+    return this.element('.fa.fa-spinner');
   }
 
   get saveIcon() {
-    return this.element('.fa.fa-save')!;
+    return this.element('.fa.fa-save');
   }
 }
 
@@ -49,48 +54,86 @@ describe('SaveButton', () => {
     TestBed.configureTestingModule({
       providers: [provideI18nTesting()]
     });
-
-    tester = new TestComponentTester();
   });
 
-  it('should display the button by default', () => {
-    tester.detectChanges();
-    expect(tester.saveButton).toContainText('Save');
-    expect(tester.saveButton).toHaveClass('btn');
-    expect(tester.saveButton).toHaveClass('btn-primary');
-    expect(tester.saveButton.attr('form')).toBe('test-form');
-    expect(tester.saveIcon).not.toBeNull();
-    expect(tester.saveButton.disabled).toBe(false);
-    expect(tester.spinner).toBeNull();
+  describe('with form attribute and without id attribute', () => {
+    beforeEach(() => {
+      tester = new TestComponentTester();
+      tester.detectChanges();
+    });
+
+    it('should display the button by default', () => {
+      expect(tester.saveButton).toContainText('Save');
+      expect(tester.saveButton).toHaveClass('btn');
+      expect(tester.saveButton).toHaveClass('btn-primary');
+      expect(tester.saveButton.attr('form')).toBe('test-form');
+      expect(tester.saveButton.attr('id')).toBe('save-button');
+      expect(tester.saveIcon).not.toBeNull();
+      expect(tester.saveButton.disabled).toBe(false);
+      expect(tester.spinner).toBeNull();
+    });
+
+    it('should disable the button and display the spinner when saving', fakeAsync(() => {
+      tester.saveButton.click();
+
+      expect(tester.saveButton).toContainText('Save');
+      expect(tester.saveButton.disabled).toBe(true);
+      expect(tester.spinner).not.toBeNull();
+      expect(tester.saveIcon).toBeNull();
+
+      tick(500);
+      tester.detectChanges();
+      expect(tester.saveButton.disabled).toBe(false);
+      expect(tester.spinner).toBeNull();
+      expect(tester.saveIcon).not.toBeNull();
+
+      // save again
+      tester.saveButton.click();
+
+      expect(tester.saveButton).toContainText('Save');
+      expect(tester.saveButton.disabled).toBe(true);
+      expect(tester.spinner).not.toBeNull();
+      expect(tester.saveIcon).toBeNull();
+
+      tick(500);
+      tester.detectChanges();
+      expect(tester.saveButton.disabled).toBe(false);
+      expect(tester.spinner).toBeNull();
+      expect(tester.saveIcon).not.toBeNull();
+    }));
+
+    it('should disable the button when forceDisabled', () => {
+      tester.componentInstance.forceDisabled = true;
+      tester.detectChanges();
+
+      expect(tester.saveButton.disabled).toBeTrue();
+
+      tester.componentInstance.forceDisabled = false;
+      tester.detectChanges();
+
+      expect(tester.saveButton.disabled).toBeFalse();
+    });
   });
 
-  it('should disable the button and display the spinner when saving', fakeAsync(() => {
-    tester.detectChanges();
-    tester.saveButton.click();
+  describe('without form attribute and with id attribute', () => {
+    beforeEach(() => {
+      TestBed.overrideTemplate(
+        TestComponent,
+        `
+        <form [formGroup]="form" (ngSubmit)="save()">
+            <button [oib-save-button]="state" id="foo"></button>
+        </form>
+      `
+      );
 
-    expect(tester.saveButton).toContainText('Save');
-    expect(tester.saveButton.disabled).toBe(true);
-    expect(tester.spinner).not.toBeNull();
-    expect(tester.saveIcon).toBeNull();
+      tester = new TestComponentTester();
+      tester.detectChanges();
+    });
 
-    tick(500);
-    tester.detectChanges();
-    expect(tester.saveButton.disabled).toBe(false);
-    expect(tester.spinner).toBeNull();
-    expect(tester.saveIcon).not.toBeNull();
-
-    // save again
-    tester.saveButton.click();
-
-    expect(tester.saveButton).toContainText('Save');
-    expect(tester.saveButton.disabled).toBe(true);
-    expect(tester.spinner).not.toBeNull();
-    expect(tester.saveIcon).toBeNull();
-
-    tick(500);
-    tester.detectChanges();
-    expect(tester.saveButton.disabled).toBe(false);
-    expect(tester.spinner).toBeNull();
-    expect(tester.saveIcon).not.toBeNull();
-  }));
+    it('should have no form attribute and the specified id the button by default', () => {
+      expect(tester.saveButton).toContainText('Save');
+      expect(tester.saveButton.attr('form')).toBeNull();
+      expect(tester.saveButton.attr('id')).toBe('foo');
+    });
+  });
 });

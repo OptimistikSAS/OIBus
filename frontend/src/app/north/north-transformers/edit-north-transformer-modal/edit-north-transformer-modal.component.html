@@ -1,5 +1,5 @@
 <div class="modal-header">
-  <h4 class="modal-title" translate="transformers.choose-transformer-modal.title"></h4>
+  <h4 class="modal-title" translate="configuration.oibus.manifest.transformers.choose-transformer-modal.title"></h4>
 </div>
 <div class="modal-body">
   @if (form) {
@@ -8,7 +8,7 @@
         @if (inputTypeControl) {
           <div class="col-6">
             <div class="form-group">
-              <label class="form-label" for="input-type" translate="transformers.input-type"></label>
+              <label class="form-label" for="input-type" translate="configuration.oibus.manifest.transformers.input-type"></label>
               <select [formControl]="inputTypeControl" class="form-select mb-2 mr-sm-2" id="input-type">
                 @for (inputType of selectableInputs; track inputType) {
                   <option [ngValue]="inputType" [translate]="'enums.oibus-data-type.' + inputType"></option>
@@ -19,25 +19,38 @@
         }
         <div [class]="inputTypeControl ? 'col-6' : 'col-12'">
           <div class="form-group">
-            <oib-transformer
-              [transformers]="selectableTransformers"
-              key="transformer"
-              [label]="'transformers.choose-transformer-modal.transformer' | translate"
-              formControlName="transformerId"
-              [supportedOutputTypes]="supportedOutputTypes"
-            />
+            <label class="form-label" for="transformer-id" translate="configuration.oibus.manifest.transformers.transformer"></label>
+            <select class="form-select" id="transformer-id" formControlName="transformerId">
+              <option [ngValue]="null"></option>
+              @for (transformer of selectableTransformers; track transformer.id) {
+                @if (transformer.type === 'standard') {
+                  <option [ngValue]="transformer.id">
+                    {{ 'configuration.oibus.manifest.transformers.standard.' + transformer.functionName | translate }}
+                  </option>
+                } @else {
+                  <option [ngValue]="transformer.id">{{ transformer.name }}</option>
+                }
+              }
+            </select>
           </div>
         </div>
       </div>
-      @if (transformerRows.length > 0) {
-        <oib-form [parentForm]="form" [form]="form.controls.options" [settingsSchema]="transformerRows" [scanModes]="[]" />
+      @if (manifest) {
+        <ng-container formGroupName="options">
+          <oib-oibus-object-form-control
+            [scanModes]="scanModes"
+            [certificates]="certificates"
+            [group]="form.controls.options"
+            [objectAttribute]="manifest"
+          />
+        </ng-container>
       }
     </form>
   }
 </div>
 <div class="modal-footer">
   <div class="btn-group">
-    <oib-save-button form="choose-transformer-form" [state]="state" />
+    <button [oib-save-button]="state" form="choose-transformer-form"></button>
     <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
   </div>
 </div>

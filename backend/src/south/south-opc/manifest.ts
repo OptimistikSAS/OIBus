@@ -9,185 +9,408 @@ const manifest: SouthConnectorManifest = {
     lastFile: false,
     history: true
   },
-  settings: [
-    {
-      key: 'throttling',
-      type: 'OibFormGroup',
-      translationKey: 'south.opc.throttling.title',
-      class: 'col',
-      newRow: true,
-      displayInViewMode: false,
-      validators: [{ key: 'required' }],
-      content: [
-        {
-          key: 'maxReadInterval',
-          type: 'OibNumber',
-          translationKey: 'south.opc.throttling.max-read-interval',
-          validators: [{ key: 'required' }, { key: 'min', params: { min: 0 } }],
-          defaultValue: 3600,
-          unitLabel: 's',
-          displayInViewMode: true
+  settings: {
+    type: 'object',
+    key: 'settings',
+    translationKey: 'configuration.oibus.manifest.south.settings',
+    displayProperties: {
+      visible: true,
+      wrapInBox: false
+    },
+    enablingConditions: [],
+    validators: [],
+    attributes: [
+      {
+        type: 'object',
+        key: 'throttling',
+        translationKey: 'configuration.oibus.manifest.south.opc.throttling.title',
+        displayProperties: {
+          visible: true,
+          wrapInBox: false
         },
-        {
-          key: 'readDelay',
-          type: 'OibNumber',
-          translationKey: 'south.opc.throttling.read-delay',
-          validators: [{ key: 'required' }, { key: 'min', params: { min: 0 } }],
-          defaultValue: 200,
-          unitLabel: 'ms',
-          displayInViewMode: true
-        },
-        {
-          key: 'overlap',
-          type: 'OibNumber',
-          translationKey: 'south.opc.throttling.overlap',
-          validators: [{ key: 'required' }, { key: 'min', params: { min: 0 } }],
-          defaultValue: 0,
-          unitLabel: 'ms',
-          displayInViewMode: true
-        },
-        {
-          key: 'maxInstantPerItem',
-          type: 'OibCheckbox',
-          translationKey: 'south.opc.throttling.max-instant-per-item',
-          defaultValue: false,
-          validators: [{ key: 'required' }],
+        enablingConditions: [],
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          }
+        ],
+        attributes: [
+          {
+            type: 'number',
+            key: 'maxReadInterval',
+            translationKey: 'configuration.oibus.manifest.south.opc.throttling.max-read-interval',
+            unit: 's',
+            defaultValue: 3600,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              },
+              {
+                type: 'POSITIVE_INTEGER',
+                arguments: []
+              }
+            ],
+            displayProperties: {
+              row: 0,
+              columns: 3,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'number',
+            key: 'readDelay',
+            translationKey: 'configuration.oibus.manifest.south.opc.throttling.read-delay',
+            unit: 'ms',
+            defaultValue: 200,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              },
+              {
+                type: 'POSITIVE_INTEGER',
+                arguments: []
+              }
+            ],
+            displayProperties: {
+              row: 0,
+              columns: 3,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'number',
+            key: 'overlap',
+            translationKey: 'configuration.oibus.manifest.south.opc.throttling.overlap',
+            unit: 'ms',
+            defaultValue: 0,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              },
+              {
+                type: 'POSITIVE_INTEGER',
+                arguments: []
+              }
+            ],
+            displayProperties: {
+              row: 0,
+              columns: 3,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'boolean',
+            key: 'maxInstantPerItem',
+            translationKey: 'configuration.oibus.manifest.south.opc.throttling.max-instant-per-item',
+            defaultValue: false,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              }
+            ],
+            displayProperties: {
+              row: 0,
+              columns: 3,
+              displayInViewMode: true
+            }
+          }
+        ]
+      },
+      {
+        type: 'string',
+        key: 'agentUrl',
+        translationKey: 'configuration.oibus.manifest.south.opc.agent-url',
+        defaultValue: 'http://ip-adress-or-host:2224',
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          }
+        ],
+        displayProperties: {
+          row: 1,
+          columns: 9,
+          displayInViewMode: false
+        }
+      },
+      {
+        type: 'number',
+        key: 'retryInterval',
+        translationKey: 'configuration.oibus.manifest.south.opc.retry-interval',
+        unit: 'ms',
+        defaultValue: 10000,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          },
+          {
+            type: 'MINIMUM',
+            arguments: ['100']
+          },
+          {
+            type: 'MAXIMUM',
+            arguments: ['30000']
+          }
+        ],
+        displayProperties: {
+          row: 1,
+          columns: 3,
+          displayInViewMode: false
+        }
+      },
+      {
+        type: 'string',
+        key: 'host',
+        defaultValue: 'localhost',
+        translationKey: 'configuration.oibus.manifest.south.opc.host',
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          }
+        ],
+        displayProperties: {
+          row: 2,
+          columns: 8,
           displayInViewMode: true
         }
-      ]
-    },
-    {
-      key: 'agentUrl',
-      type: 'OibText',
-      translationKey: 'south.opc.agent-url',
-      defaultValue: 'http://ip-adress-or-host:2224',
-      validators: [{ key: 'required' }],
-      newRow: true,
-      displayInViewMode: true
-    },
-    {
-      key: 'retryInterval',
-      type: 'OibNumber',
-      translationKey: 'south.opc.retry-interval',
-      defaultValue: 10_000,
-      unitLabel: 'ms',
-      class: 'col-3',
-      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 30_000 } }]
-    },
-    {
-      key: 'host',
-      type: 'OibText',
-      translationKey: 'south.opc.host',
-      defaultValue: 'localhost',
-      class: 'col-6',
-      newRow: true,
-      validators: [{ key: 'required' }],
-      displayInViewMode: true
-    },
-    {
-      key: 'serverName',
-      type: 'OibText',
-      translationKey: 'south.opc.server-name',
-      defaultValue: 'Matrikon.OPC.Simulation',
-      class: 'col-4',
-      newRow: false,
-      validators: [{ key: 'required' }],
-      displayInViewMode: true
-    },
-    {
-      key: 'mode',
-      type: 'OibSelect',
-      options: ['da', 'hda'],
-      translationKey: 'south.opc.mode',
-      defaultValue: 'hda',
-      class: 'col-2',
-      validators: [{ key: 'required' }],
-      displayInViewMode: true
-    }
-  ],
-  items: {
-    scanMode: 'POLL',
-    settings: [
-      {
-        key: 'nodeId',
-        type: 'OibText',
-        translationKey: 'south.items.opc.node-id',
-        validators: [{ key: 'required' }],
-        displayInViewMode: true
       },
       {
-        key: 'aggregate',
-        type: 'OibSelect',
-        translationKey: 'south.items.opc.aggregate',
-        options: [
-          'raw',
-          'interpolative',
-          'total',
-          'average',
-          'time-average',
-          'count',
-          'stdev',
-          'minimum-actual-time',
-          'minimum',
-          'maximum-actual-time',
-          'maximum',
-          'start',
-          'end',
-          'delta',
-          'reg-slope',
-          'reg-const',
-          'reg-dev',
-          'variance',
-          'range',
-          'duration-good',
-          'duration-bad',
-          'percent-good',
-          'percent-bad',
-          'worst-quality',
-          'annotations'
+        type: 'string',
+        key: 'serverName',
+        defaultValue: 'Matrikon.OPC.Simulation',
+        translationKey: 'configuration.oibus.manifest.south.opc.server-name',
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          }
         ],
-        defaultValue: 'raw',
-        validators: [{ key: 'required' }],
-        displayInViewMode: true
+        displayProperties: {
+          row: 2,
+          columns: 4,
+          displayInViewMode: true
+        }
       },
       {
-        key: 'resampling',
-        type: 'OibSelect',
-        translationKey: 'south.items.opc.resampling',
-        options: ['none', '1s', '10s', '30s', '1min', '1h', '1d'],
-        defaultValue: 'none',
-        validators: [{ key: 'required' }],
-        conditionalDisplay: {
-          field: 'aggregate',
-          values: [
-            'interpolative',
-            'total',
-            'average',
-            'time-average',
-            'count',
-            'stdev',
-            'minimum-actual-time',
-            'minimum',
-            'maximum-actual-time',
-            'maximum',
-            'start',
-            'end',
-            'delta',
-            'reg-slope',
-            'reg-const',
-            'reg-dev',
-            'variance',
-            'range',
-            'duration-good',
-            'duration-bad',
-            'percent-good',
-            'percent-bad',
-            'worst-quality'
-          ]
-        },
-        displayInViewMode: true
+        type: 'string-select',
+        key: 'mode',
+        translationKey: 'configuration.oibus.manifest.south.opc.mode',
+        defaultValue: 'hda',
+        selectableValues: ['hda', 'da'],
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          }
+        ],
+        displayProperties: {
+          row: 2,
+          columns: 2,
+          displayInViewMode: true
+        }
       }
     ]
+  },
+  items: {
+    type: 'array',
+    key: 'items',
+    translationKey: 'configuration.oibus.manifest.south.items',
+    paginate: true,
+    numberOfElementPerPage: 20,
+    validators: [],
+    rootAttribute: {
+      type: 'object',
+      key: 'item',
+      translationKey: 'configuration.oibus.manifest.south.items.item',
+      displayProperties: {
+        visible: true,
+        wrapInBox: false
+      },
+      enablingConditions: [],
+      validators: [],
+      attributes: [
+        {
+          type: 'string',
+          key: 'name',
+          translationKey: 'configuration.oibus.manifest.south.items.name',
+          defaultValue: null,
+          validators: [
+            {
+              type: 'REQUIRED',
+              arguments: []
+            }
+          ],
+          displayProperties: {
+            row: 0,
+            columns: 4,
+            displayInViewMode: true
+          }
+        },
+        {
+          type: 'boolean',
+          key: 'enabled',
+          translationKey: 'configuration.oibus.manifest.south.items.enabled',
+          defaultValue: true,
+          validators: [
+            {
+              type: 'REQUIRED',
+              arguments: []
+            }
+          ],
+          displayProperties: {
+            row: 0,
+            columns: 4,
+            displayInViewMode: true
+          }
+        },
+        {
+          type: 'scan-mode',
+          key: 'scanModeId',
+          acceptableType: 'POLL',
+          translationKey: 'configuration.oibus.manifest.south.items.scan-mode',
+          validators: [
+            {
+              type: 'REQUIRED',
+              arguments: []
+            }
+          ],
+          displayProperties: {
+            row: 0,
+            columns: 4,
+            displayInViewMode: true
+          }
+        },
+        {
+          type: 'object',
+          key: 'settings',
+          translationKey: 'configuration.oibus.manifest.south.items.settings',
+          displayProperties: {
+            visible: true,
+            wrapInBox: true
+          },
+          enablingConditions: [
+            {
+              referralPathFromRoot: 'aggregate',
+              targetPathFromRoot: 'resampling',
+              values: [
+                'interpolative',
+                'total',
+                'average',
+                'time-average',
+                'count',
+                'stdev',
+                'minimum-actual-time',
+                'minimum',
+                'maximum-actual-time',
+                'maximum',
+                'start',
+                'end',
+                'delta',
+                'reg-slope',
+                'reg-const',
+                'reg-dev',
+                'variance',
+                'range',
+                'duration-good',
+                'duration-bad',
+                'percent-good',
+                'percent-bad',
+                'worst-quality'
+              ]
+            }
+          ],
+          validators: [],
+          attributes: [
+            {
+              type: 'string',
+              key: 'nodeId',
+              translationKey: 'configuration.oibus.manifest.south.items.opc.node-id',
+              defaultValue: null,
+              validators: [
+                {
+                  type: 'REQUIRED',
+                  arguments: []
+                }
+              ],
+              displayProperties: {
+                row: 0,
+                columns: 4,
+                displayInViewMode: true
+              }
+            },
+            {
+              type: 'string-select',
+              key: 'aggregate',
+              translationKey: 'configuration.oibus.manifest.south.items.opc.aggregate',
+              defaultValue: 'raw',
+              selectableValues: [
+                'raw',
+                'interpolative',
+                'total',
+                'average',
+                'time-average',
+                'count',
+                'stdev',
+                'minimum-actual-time',
+                'minimum',
+                'maximum-actual-time',
+                'maximum',
+                'start',
+                'end',
+                'delta',
+                'reg-slope',
+                'reg-const',
+                'reg-dev',
+                'variance',
+                'range',
+                'duration-good',
+                'duration-bad',
+                'percent-good',
+                'percent-bad',
+                'worst-quality',
+                'annotations'
+              ],
+              validators: [
+                {
+                  type: 'REQUIRED',
+                  arguments: []
+                }
+              ],
+              displayProperties: {
+                row: 0,
+                columns: 4,
+                displayInViewMode: false
+              }
+            },
+            {
+              type: 'string-select',
+              key: 'resampling',
+              translationKey: 'configuration.oibus.manifest.south.items.opc.resampling',
+              defaultValue: 'raw',
+              selectableValues: ['none', '1s', '10s', '30s', '1min', '1h', '1d'],
+              validators: [
+                {
+                  type: 'REQUIRED',
+                  arguments: []
+                }
+              ],
+              displayProperties: {
+                row: 0,
+                columns: 4,
+                displayInViewMode: false
+              }
+            }
+          ]
+        }
+      ]
+    }
   }
 };
 export default manifest;

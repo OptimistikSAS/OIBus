@@ -38,7 +38,7 @@ export default class OIAnalyticsRegistrationService {
   }
 
   /**
-   * First step, the user want to register: the service try to reach OIAnalytics to send
+   * First step, the user wants to register: the service try to reach OIAnalytics to send
    * the activation code. On success, it runs an interval to regularly check if it has been accepted on OIAnalytics
    */
   async register(command: RegistrationSettingsCommandDTO): Promise<void> {

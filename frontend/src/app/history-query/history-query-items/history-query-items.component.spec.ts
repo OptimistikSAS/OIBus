@@ -1,6 +1,5 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ComponentTester, createMock, TestInput } from 'ngx-speculoos';
-import { SouthConnectorCommandDTO, SouthConnectorManifest } from '../../../../../backend/shared/model/south-connector.model';
 import { of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
@@ -12,6 +11,7 @@ import { HistoryQueryDTO, HistoryQueryItemCommandDTO } from '../../../../../back
 import { HistoryQueryService } from '../../services/history-query.service';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
+import testData from '../../../../../backend/src/tests/utils/test-data';
 
 const testHistoryQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings> = {
   id: 'historyId',
@@ -93,28 +93,7 @@ class TestComponent {
   _historyQueryService!: HistoryQueryService;
 
   historyQuery = structuredClone(testHistoryQuery);
-  manifest: SouthConnectorManifest = {
-    id: 'mssql',
-    category: 'database',
-    settings: [],
-    items: {
-      scanMode: 'POLL',
-      settings: [
-        {
-          translationKey: 'south.items.mssql.query',
-          key: 'query',
-          displayInViewMode: true,
-          type: 'OibText'
-        }
-      ]
-    },
-    modes: {
-      subscription: false,
-      history: true,
-      lastFile: true,
-      lastPoint: false
-    }
-  };
+  manifest = testData.south.manifest;
   saveChangesDirectly!: boolean;
   inMemoryItems: Array<HistoryQueryItemCommandDTO<SouthItemSettings>> = [];
   updateInMemoryItems(items: Array<HistoryQueryItemCommandDTO<SouthItemSettings>> | null) {
@@ -123,14 +102,11 @@ class TestComponent {
     } else {
       this._historyQueryService.get(this.historyQuery!.id).subscribe(historyQuery => {
         this.historyQuery!.items = historyQuery.items;
-        this.historyQuery = JSON.parse(JSON.stringify(this.historyQuery)); // Used to force a refresh in history query item list
+        this.historyQuery = JSON.parse(JSON.stringify(this.historyQuery)); // Used to force a refresh in a history query item list
       });
     }
   }
-  southCommand: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> = {
-    name: 'test',
-    settings: {}
-  } as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
+  southCommand = testData.south.command;
 }
 
 class HistoryQueryItemsComponentTester extends ComponentTester<TestComponent> {
@@ -149,10 +125,6 @@ class HistoryQueryItemsComponentTester extends ComponentTester<TestComponent> {
 
   get deleteAllButton() {
     return this.button('#delete-all')!;
-  }
-
-  get exportButton() {
-    return this.button('#export-items')!;
   }
 
   get southItems() {
@@ -211,18 +183,17 @@ describe('HistoryQueryItemsComponent with saving changes directly', () => {
     expect(tester.southItems.length).toBe(3);
     const item = tester.southItems[0];
     expect(item.elements('td')[1]).toContainText(testHistoryQuery.items[0].name);
-    expect(item.elements('td')[2]).toContainText('sql');
   });
 
   it('should enable history item', () => {
-    const btnIdx = 1; // second one is disabled by default
+    const btnIdx = 1; // the second one is disabled by default
     tester.toggleButtons[btnIdx].click();
     expect(historyQueryService.enableItem).toHaveBeenCalledWith(testHistoryQuery.id, testHistoryQuery.items[btnIdx].id);
     expect(notificationService.success).toHaveBeenCalledWith('history-query.items.enabled', { name: testHistoryQuery.items[btnIdx].name });
   });
 
   it('should disable history item', () => {
-    const btnIdx = 0; // first one is enabled by default
+    const btnIdx = 0; // the first one is enabled by default
     tester.toggleButtons[btnIdx].click();
     expect(historyQueryService.disableItem).toHaveBeenCalledWith(testHistoryQuery.id, testHistoryQuery.items[btnIdx].id);
     expect(notificationService.success).toHaveBeenCalledWith('history-query.items.disabled', { name: testHistoryQuery.items[btnIdx].name });
@@ -372,7 +343,6 @@ describe('HistoryQueryItemsComponent without saving changes directly', () => {
     expect(tester.southItems.length).toBe(3);
     const item = tester.southItems[0];
     expect(item.elements('td')[1]).toContainText(testHistoryQuery.items[0].name);
-    expect(item.elements('td')[2]).toContainText('sql');
   });
 
   it('should not have option to enable/disable history item', () => {
