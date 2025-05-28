@@ -17,7 +17,6 @@ import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { QueriesHistory } from '../south-interface';
 import { SouthODBCItemSettings, SouthODBCSettings } from '../../../shared/model/south-settings.model';
-import fetch, { HeadersInit, RequestInit } from 'node-fetch';
 import { OIBusContent } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
@@ -26,6 +25,7 @@ import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import { BaseFolders } from '../../model/types';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { loadOdbc } from './odbc-loader';
+import { HTTPRequest, ReqOptions } from '../../service/http-request.utils';
 
 /**
  * Class SouthODBC - Retrieve data from SQL databases with ODBC driver and send them to the cache as CSV files.
@@ -72,17 +72,16 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     if (this.connector.settings.remoteAgent) {
       try {
         this.connected = false;
-        const headers: Record<string, string> = {};
-        headers['Content-Type'] = 'application/json';
-        const fetchOptions = {
+        const fetchOptions: ReqOptions = {
           method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             connectionString: this.connector.settings.connectionString,
             connectionTimeout: this.connector.settings.connectionTimeout
-          }),
-          headers
+          })
         };
-        await fetch(`${this.connector.settings.agentUrl}/api/odbc/${this.connector.id}/connect`, fetchOptions);
+        const requestUrl = new URL(`/api/odbc/${this.connector.id}/connect`, this.connector.settings.agentUrl);
+        await HTTPRequest(requestUrl, fetchOptions);
         this.connected = true;
         await super.connect();
       } catch (error) {
@@ -104,8 +103,9 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
 
     if (this.connector.settings.remoteAgent && this.connected) {
       try {
-        const fetchOptions = { method: 'DELETE' };
-        await fetch(`${this.connector.settings.agentUrl}/api/odbc/${this.connector.id}/disconnect`, fetchOptions);
+        const fetchOptions: ReqOptions = { method: 'DELETE' };
+        const requestUrl = new URL(`/api/odbc/${this.connector.id}/disconnect`, this.connector.settings.agentUrl);
+        await HTTPRequest(requestUrl, fetchOptions);
       } catch (error) {
         this.logger.error(`Error while sending disconnection HTTP request into agent. ${error}`);
       }
@@ -214,24 +214,24 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
   }
 
   async testAgentConnection(): Promise<void> {
-    const headers: Record<string, string> = {};
-    headers['Content-Type'] = 'application/json';
     const fetchOptions = {
       method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         connectionString: this.connector.settings.connectionString,
         connectionTimeout: this.connector.settings.connectionTimeout
-      }),
-      headers
+      })
     };
-    const response = await fetch(`${this.connector.settings.agentUrl!}/api/odbc/${this.connector.id}/connect`, fetchOptions);
-    if (response.status === 200) {
-      await fetch(`${this.connector.settings.agentUrl}/api/odbc/${this.connector.id}/disconnect`, { method: 'DELETE' });
-    } else if (response.status === 400) {
-      const errorMessage = await response.text();
-      throw new Error(`Error occurred when sending connect command to remote agent with status ${response.status}: ${errorMessage}`);
+    const requestUrl = new URL(`/api/odbc/${this.connector.id}/connect`, this.connector.settings.agentUrl);
+    const response = await HTTPRequest(requestUrl, fetchOptions);
+    if (response.statusCode === 200) {
+      const requestUrl = new URL(`/api/odbc/${this.connector.id}/disconnect`, this.connector.settings.agentUrl);
+      await HTTPRequest(requestUrl, { method: 'DELETE' });
+    } else if (response.statusCode === 400) {
+      const errorMessage = await response.body.text();
+      throw new Error(`Error occurred when sending connect command to remote agent with status ${response.statusCode}: ${errorMessage}`);
     } else {
-      throw new Error(`Error occurred when sending connect command to remote agent with status ${response.status}`);
+      throw new Error(`Error occurred when sending connect command to remote agent with status ${response.statusCode}`);
     }
   }
 
@@ -280,17 +280,15 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     let updatedStartTime: Instant | null = null;
     const startRequest = DateTime.now().toMillis();
 
-    const headers: HeadersInit = {};
-    headers['Content-Type'] = 'application/json';
-
     const referenceTimestampField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.useAsReference);
     const odbcStartTime = referenceTimestampField ? formatInstant(startTime, referenceTimestampField) : startTime;
     const odbcEndTime = referenceTimestampField ? formatInstant(endTime, referenceTimestampField) : endTime;
     const adaptedQuery = item.settings.query.replace(/@StartTime/g, `${odbcStartTime}`).replace(/@EndTime/g, `${odbcEndTime}`);
     logQuery(adaptedQuery, odbcStartTime, odbcEndTime, this.logger);
 
-    const fetchOptions: RequestInit = {
+    const fetchOptions: ReqOptions = {
       method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         connectionString: this.connector.settings.connectionString,
         sql: adaptedQuery,
@@ -301,12 +299,12 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
         delimiter: convertDelimiter(item.settings.serialization.delimiter),
         outputTimestampFormat: item.settings.serialization.outputTimestampFormat,
         outputTimezone: item.settings.serialization.outputTimezone
-      }),
-      headers
+      })
     };
-    const response = await fetch(`${this.connector.settings.agentUrl}/api/odbc/${this.connector.id}/read`, fetchOptions);
-    if (response.status === 200) {
-      const result: { recordCount: number; content: string; maxInstant: Instant } = (await response.json()) as {
+    const requestUrl = new URL(`/api/odbc/${this.connector.id}/read`, this.connector.settings.agentUrl);
+    const response = await HTTPRequest(requestUrl, fetchOptions);
+    if (response.statusCode === 200) {
+      const result: { recordCount: number; content: string; maxInstant: Instant } = (await response.body.json()) as {
         recordCount: number;
         content: string;
         maxInstant: Instant;
@@ -334,13 +332,13 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
           this.logger.debug(`No result found for item ${item.name}. Request done in ${requestDuration} ms`);
         }
       }
-    } else if (response.status === 400) {
-      const errorMessage = await response.text();
-      this.logger.error(`Error occurred when querying remote agent with status ${response.status}: ${errorMessage}`);
-      throw new Error(`Error occurred when querying remote agent with status ${response.status}: ${errorMessage}`);
+    } else if (response.statusCode === 400) {
+      const errorMessage = await response.body.text();
+      this.logger.error(`Error occurred when querying remote agent with status ${response.statusCode}: ${errorMessage}`);
+      throw new Error(`Error occurred when querying remote agent with status ${response.statusCode}: ${errorMessage}`);
     } else {
-      this.logger.error(`Error occurred when querying remote agent with status ${response.status}`);
-      throw new Error(`Error occurred when querying remote agent with status ${response.status}`);
+      this.logger.error(`Error occurred when querying remote agent with status ${response.statusCode}`);
+      throw new Error(`Error occurred when querying remote agent with status ${response.statusCode}`);
     }
 
     return updatedStartTime;
