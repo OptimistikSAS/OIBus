@@ -83,7 +83,7 @@ describe('Repository service', () => {
     expect(CertificateRepository).toHaveBeenCalledWith(mockedDatabase);
     expect(OianalyticsCommandRepository).toHaveBeenCalledWith(mockedDatabase);
     expect(OianalyticsMessageRepository).toHaveBeenCalledWith(mockedDatabase);
-    expect(TransformerRepository).toHaveBeenCalledWith('sqlite database');
+    expect(TransformerRepository).toHaveBeenCalledWith(mockedDatabase);
 
     expect(repositoryService.engineRepository).toBeDefined();
     expect(repositoryService.cryptoRepository).toBeDefined();

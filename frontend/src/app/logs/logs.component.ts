@@ -1,12 +1,12 @@
-import { Component, inject, OnDestroy, OnInit, input, signal } from '@angular/core';
+import { Component, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
 import { TranslateDirective } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PageLoader } from '../shared/page-loader.service';
-import { NonNullableFormBuilder } from '@angular/forms';
+import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { LogDTO, LogSearchParam, Scope } from '../../../../backend/shared/model/logs.model';
 import { DateTime } from 'luxon';
 import { Instant, Page } from '../../../../backend/shared/model/types';
-import { ascendingDates } from '../shared/validators';
+import { ascendingDates } from '../shared/form/validators';
 import { LOG_LEVELS, LogLevel, SCOPE_TYPES, ScopeType } from '../../../../backend/shared/model/engine.model';
 import {
   catchError,
@@ -25,28 +25,29 @@ import {
 } from 'rxjs';
 import { emptyPage } from '../shared/test-utils';
 import { LogService } from '../services/log.service';
-import { formDirectives } from '../shared/form-directives';
 
 import { PaginationComponent } from '../shared/pagination/pagination.component';
-import { MultiSelectComponent } from '../shared/multi-select/multi-select.component';
-import { MultiSelectOptionDirective } from '../shared/multi-select/multi-select-option.directive';
+import { MultiSelectComponent } from '../shared/form/multi-select/multi-select.component';
+import { MultiSelectOptionDirective } from '../shared/form/multi-select/multi-select-option.directive';
 import { LogLevelsEnumPipe } from '../shared/log-levels-enum.pipe';
 import { DatetimepickerComponent } from '../shared/datetimepicker/datetimepicker.component';
 import { DatetimePipe } from '../shared/datetime.pipe';
 import { ScopeTypesEnumPipe } from '../shared/scope-types-enum.pipe';
-import { TYPEAHEAD_DEBOUNCE_TIME } from '../shared/typeahead';
 import { NgbAccordionModule, NgbTypeahead, NgbTypeaheadSelectItemEvent } from '@ng-bootstrap/ng-bootstrap';
 import { PillComponent } from '../shared/pill/pill.component';
 import { LegendComponent } from '../shared/legend/legend.component';
 import { NgClass } from '@angular/common';
+import { TYPEAHEAD_DEBOUNCE_TIME } from '../shared/form/typeahead';
+import { OI_FORM_VALIDATION_DIRECTIVES } from '../shared/form/form-validation-directives';
 import { TranslateModule } from '@ngx-translate/core';
 import { toObservable } from '@angular/core/rxjs-interop';
+
 @Component({
   selector: 'oib-logs',
   imports: [
+    ReactiveFormsModule,
     TranslateDirective,
     TranslateModule,
-    ...formDirectives,
     PaginationComponent,
     MultiSelectComponent,
     MultiSelectOptionDirective,
@@ -58,7 +59,8 @@ import { toObservable } from '@angular/core/rxjs-interop';
     PillComponent,
     LegendComponent,
     NgClass,
-    NgbAccordionModule
+    NgbAccordionModule,
+    OI_FORM_VALIDATION_DIRECTIVES
   ],
   templateUrl: './logs.component.html',
   styleUrl: './logs.component.scss',

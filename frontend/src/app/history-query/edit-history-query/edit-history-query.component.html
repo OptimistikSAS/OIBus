@@ -1,6 +1,6 @@
 <div class="oib-padded-container">
   <div class="row justify-content-center">
-    @if (southManifest && northManifest && historyQueryForm) {
+    @if (southManifest && northManifest && form) {
       <div class="col-md-10 col-lg-8">
         <div class="d-flex">
           @if (mode === 'create') {
@@ -11,7 +11,7 @@
           }
           <button class="ms-2 btn btn-cancel-edit" translate="common.back" id="cancel-edit-button" oibBackButton></button>
         </div>
-        <form [formGroup]="historyQueryForm" (ngSubmit)="save()" id="history-query-form" class="mt-3">
+        <form [formGroup]="form" (ngSubmit)="save()" id="history-query-form" class="mt-3">
           <div class="save-zone">
             <!-- General settings -->
             <oib-box boxTitle="south.general-settings" helpUrl="https://oibus.optimistik.com/docs/guide/history-queries">
@@ -60,13 +60,7 @@
                   <!-- Scan mode -->
                   <div class="col-4">
                     <div class="form-group">
-                      <oib-scan-mode
-                        key="cache-scan-mode"
-                        formControlName="scanModeId"
-                        [scanModes]="scanModes"
-                        [label]="'north.caching.trigger.schedule' | translate"
-                      />
-                      <val-errors controlName="scanModeId" />
+                      <oib-oibus-scan-mode-form-control [allScanModes]="scanModes" [scanModeAttribute]="scanModeAttribute" />
                     </div>
                   </div>
                   <!-- Number of elements -->
@@ -187,9 +181,11 @@
               </div>
             </oib-box>
             <oib-north-transformers
-              [control]="historyQueryForm.controls.northTransformers"
+              [control]="form.controls.northTransformers"
               [northManifest]="northManifest"
               [transformers]="transformers"
+              [certificates]="certificates"
+              [scanModes]="scanModes"
             />
 
             <!-- North settings -->
@@ -213,15 +209,14 @@
                   </div>
                 </div>
               </ng-template>
-              @if (northSettingsControls.length > 0) {
-                <oib-form
-                  [parentForm]="historyQueryForm"
-                  [form]="historyQueryForm.controls.northSettings"
-                  [settingsSchema]="northSettingsControls"
+              <div formGroupName="northSettings" class="row">
+                <oib-oibus-object-form-control
                   [scanModes]="scanModes"
                   [certificates]="certificates"
+                  [group]="form.controls.northSettings"
+                  [objectAttribute]="northManifest.settings"
                 />
-              }
+              </div>
             </oib-box>
 
             <!-- South settings -->
@@ -245,20 +240,20 @@
                   </div>
                 </div>
               </ng-template>
-              @if (southSettingsControls.length > 0) {
-                <oib-form
-                  [parentForm]="historyQueryForm"
-                  [form]="historyQueryForm.controls.southSettings"
-                  [settingsSchema]="southSettingsControls"
+              <div formGroupName="southSettings" class="row">
+                <oib-oibus-object-form-control
                   [scanModes]="scanModes"
+                  [certificates]="certificates"
+                  [group]="form.controls.southSettings"
+                  [objectAttribute]="southManifest.settings"
                 />
-              }
+              </div>
             </oib-box>
           </div>
           @if (mode === 'edit' && historyQuery) {
             <div id="actions" class="d-flex justify-content-end">
               <div class="btn-group">
-                <oib-save-button [insideOfGroup]="false" form="history-query-form" [state]="state" />
+                <button [oib-save-button]="state" form="history-query-form"></button>
               </div>
             </div>
             <oib-history-query-items
@@ -284,7 +279,7 @@
         @if (mode === 'create') {
           <div id="actions" class="mt-2 d-flex justify-content-end">
             <div class="btn-group">
-              <oib-save-button [insideOfGroup]="false" form="history-query-form" [state]="state" />
+              <button [oib-save-button]="state" form="history-query-form"></button>
             </div>
           </div>
         }
