@@ -64,7 +64,7 @@ describe('Transformer Service', () => {
     const result = await service.create(testData.transformers.command);
 
     expect(validator.validate).toHaveBeenCalledWith(transformerSchema, testData.transformers.command);
-    expect(result).toEqual({ type: 'custom', ...testData.transformers.command });
+    expect(result).toEqual(testData.transformers.command);
   });
 
   it('update() should update a transformer', async () => {

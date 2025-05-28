@@ -1,16 +1,14 @@
-import { Component } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
-import { CsvCharacter, ALL_CSV_CHARACTERS } from '../../../../../backend/shared/model/types';
-import { NonNullableFormBuilder, Validators } from '@angular/forms';
-import { inject, OnInit } from '@angular/core';
-import { formDirectives } from '../form-directives';
+import { ALL_CSV_CHARACTERS, CsvCharacter } from '../../../../../backend/shared/model/types';
+import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 @Component({
   selector: 'oib-import-item-modal',
   templateUrl: './import-item-modal.component.html',
   styleUrl: './import-item-modal.component.scss',
-  imports: [TranslateDirective, ...formDirectives]
+  imports: [TranslateDirective, ReactiveFormsModule]
 })
 export class ImportItemModalComponent implements OnInit {
   private modal = inject(NgbActiveModal);
@@ -51,14 +49,12 @@ export class ImportItemModalComponent implements OnInit {
 
   onImportDrop(e: DragEvent) {
     e.preventDefault();
-    const file = e.dataTransfer!.files![0];
-    this.selectedFile = file;
+    this.selectedFile = e.dataTransfer!.files![0];
   }
 
   onImportClick(e: Event) {
     const fileInput = e.target as HTMLInputElement;
-    const file = fileInput!.files![0];
-    this.selectedFile = file;
+    this.selectedFile = fileInput!.files![0];
     fileInput.value = '';
   }
 

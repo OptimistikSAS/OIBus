@@ -28,6 +28,7 @@ import { LogsComponent } from '../../logs/logs.component';
 import { SouthConnectorLightDTO } from '../../../../../backend/shared/model/south-connector.model';
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
+import { isDisplayableAttribute } from '../../shared/form/dynamic-form.builder';
 
 @Component({
   selector: 'oib-north-detail',
@@ -58,7 +59,6 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
   private modalService = inject(ModalService);
   private route = inject(ActivatedRoute);
   private cd = inject(ChangeDetectorRef);
-  private booleanPipe = inject(BooleanEnumPipe);
   private translateService = inject(TranslateService);
 
   northConnector: NorthConnectorDTO<NorthSettings> | null = null;
@@ -99,46 +99,27 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
         }
         this.connectToEventSource();
         const northSettings: Record<string, string | boolean> = JSON.parse(JSON.stringify(this.northConnector!.settings));
-        this.displayedSettings = manifest.settings
-          .filter(setting => setting.displayInViewMode)
+        this.displayedSettings = manifest.settings.attributes
+          .filter(setting => isDisplayableAttribute(setting))
           .filter(setting => {
-            if (setting.conditionalDisplay) {
-              return setting.conditionalDisplay.values.includes(northSettings[setting.conditionalDisplay.field]);
-            }
-            return true;
+            const condition = manifest.settings.enablingConditions.find(
+              enablingCondition => enablingCondition.targetPathFromRoot === setting.key
+            );
+            return (
+              !condition ||
+              (condition &&
+                northSettings[condition.referralPathFromRoot] &&
+                condition.values.includes(northSettings[condition.referralPathFromRoot]))
+            );
           })
           .map(setting => {
-            switch (setting.type) {
-              case 'OibText':
-              case 'OibTextArea':
-              case 'OibCodeBlock':
-              case 'OibNumber':
-              case 'OibTimezone':
-              case 'OibScanMode':
-              case 'OibTransformer':
-                return {
-                  key: setting.translationKey,
-                  value: northSettings[setting.key]
-                };
-              case 'OibSelect':
-                return {
-                  key: setting.translationKey + '.title',
-                  value: this.translateService.instant(setting.translationKey + '.' + northSettings[setting.key])
-                };
-              case 'OibCheckbox':
-                return {
-                  key: setting.translationKey,
-                  value: this.booleanPipe.transform(northSettings[setting.key] as boolean)
-                };
-              case 'OibCertificate':
-              case 'OibSecret':
-              case 'OibArray':
-              case 'OibFormGroup':
-                return {
-                  key: setting.translationKey,
-                  value: ''
-                };
-            }
+            return {
+              key: setting.type === 'string-select' ? setting.translationKey + '.title' : setting.translationKey,
+              value:
+                setting.type === 'string-select'
+                  ? this.translateService.instant(setting.translationKey + '.' + northSettings[setting.key])
+                  : northSettings[setting.key]
+            };
           });
         this.manifest = manifest;
       });

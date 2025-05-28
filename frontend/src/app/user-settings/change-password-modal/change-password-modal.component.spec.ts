@@ -8,6 +8,7 @@ import { UserSettingsService } from '../../services/user-settings.service';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { UserDTO } from '../../../../../backend/shared/model/user.model';
+import testData from '../../../../../backend/src/tests/utils/test-data';
 
 class ChangePasswordModalComponentTester extends ComponentTester<ChangePasswordModalComponent> {
   constructor() {
@@ -58,15 +59,7 @@ describe('ChangePasswordModalComponent', () => {
       ]
     });
 
-    userSettings = {
-      id: 'id1',
-      firstName: 'Admin',
-      email: 'email@mail.fr',
-      login: 'admin',
-      lastName: 'Admin',
-      language: 'en', // current language of the mock i18n translate service
-      timezone: 'Europe/Paris' // current language of the mock i18n translate service
-    } as UserDTO;
+    userSettings = testData.users.list[0] as UserDTO;
     userSettingsService.get.and.returnValue(of(userSettings));
 
     TestBed.createComponent(DefaultValidationErrorsComponent).detectChanges();

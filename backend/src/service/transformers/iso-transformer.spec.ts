@@ -85,6 +85,17 @@ describe('IsoTransformer', () => {
   });
 
   it('should return manifest', () => {
-    expect(IsoTransformer.manifestSettings).toEqual([]);
+    expect(IsoTransformer.manifestSettings).toEqual({
+      type: 'object',
+      key: 'options',
+      translationKey: 'configuration.oibus.manifest.transformers.options',
+      attributes: [],
+      enablingConditions: [],
+      validators: [],
+      displayProperties: {
+        visible: true,
+        wrapInBox: false
+      }
+    });
   });
 });

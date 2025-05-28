@@ -120,6 +120,7 @@ const CERT_FOLDER = 'certs';
     repositoryService.southConnectorRepository,
     repositoryService.northConnectorRepository,
     repositoryService.historyQueryRepository,
+    repositoryService.transformerRepository,
     oIAnalyticsClient,
     loggerService.logger!
   );

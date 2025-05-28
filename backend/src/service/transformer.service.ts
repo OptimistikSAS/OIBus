@@ -15,8 +15,8 @@ import OIBusTimeValuesToJSONTransformer from './transformers/oibus-time-values-t
 import OIBusTimeValuesToMQTTTransformer from './transformers/oibus-time-values-to-mqtt-transformer';
 import OIBusTimeValuesToOPCUATransformer from './transformers/oibus-time-values-to-opcua-transformer';
 import OIBusTimeValuesToModbusTransformer from './transformers/oibus-time-values-to-modbus-transformer';
-import { OibFormControl } from '../../shared/model/form.model';
 import IgnoreTransformer from './transformers/ignore-transformer';
+import { OIBusObjectAttribute } from '../../shared/model/form.model';
 
 export default class TransformerService {
   constructor(
@@ -164,7 +164,7 @@ export const createTransformer = (
   throw new Error(`Transformer ${transformerWithOptions.transformer.id} (${transformerWithOptions.transformer.type}) not implemented`);
 };
 
-export const getStandardManifest = (functionName: string): Array<OibFormControl> => {
+export const getStandardManifest = (functionName: string): OIBusObjectAttribute => {
   switch (functionName) {
     case IsoTransformer.transformerName: {
       return IsoTransformer.manifestSettings;

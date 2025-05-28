@@ -20,20 +20,24 @@ describe('Transformer Controller', () => {
     id: IsoTransformer.transformerName,
     type: 'standard',
     functionName: IsoTransformer.transformerName,
-    inputType: 'raw',
-    outputType: 'raw'
+    inputType: 'any',
+    outputType: 'any'
   };
+
   beforeEach(async () => {
     jest.clearAllMocks();
   });
 
   it('findAll() should return transformers', async () => {
-    ctx.app.transformerService.findAll.mockReturnValueOnce(testData.transformers.list);
+    ctx.app.transformerService.findAll.mockReturnValueOnce([...testData.transformers.list, standardTransformer]);
 
     await transformerController.findAll(ctx);
 
     expect(ctx.app.transformerService.findAll).toHaveBeenCalled();
-    expect(ctx.ok).toHaveBeenCalledWith(testData.transformers.list.map(element => toTransformerDTO(element)));
+    expect(ctx.ok).toHaveBeenCalledWith([
+      ...testData.transformers.list.map(element => toTransformerDTO(element)),
+      toTransformerDTO(standardTransformer)
+    ]);
   });
 
   it('search() should return transformers', async () => {

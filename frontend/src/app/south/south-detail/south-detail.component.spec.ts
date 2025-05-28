@@ -3,7 +3,6 @@ import { TestBed } from '@angular/core/testing';
 import { SouthDetailComponent } from './south-detail.component';
 import { ComponentTester, createMock, stubRoute } from 'ngx-speculoos';
 import { SouthConnectorService } from '../../services/south-connector.service';
-import { SouthConnectorDTO, SouthConnectorManifest } from '../../../../../backend/shared/model/south-connector.model';
 import { of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
@@ -11,9 +10,9 @@ import { ActivatedRoute, provideRouter } from '@angular/router';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
 import { ScanModeService } from '../../services/scan-mode.service';
-import { OIBusInfo } from '../../../../../backend/shared/model/engine.model';
 import { EngineService } from '../../services/engine.service';
-import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
+import testData from '../../../../../backend/src/tests/utils/test-data';
+import { CertificateService } from '../../services/certificate.service';
 
 class SouthDisplayComponentTester extends ComponentTester<SouthDetailComponent> {
   constructor() {
@@ -45,68 +44,19 @@ describe('SouthDetailComponent', () => {
   let tester: SouthDisplayComponentTester;
   let southConnectorService: jasmine.SpyObj<SouthConnectorService>;
   let scanModeService: jasmine.SpyObj<ScanModeService>;
+  let certificateService: jasmine.SpyObj<CertificateService>;
   let confirmationService: jasmine.SpyObj<ConfirmationService>;
   let notificationService: jasmine.SpyObj<NotificationService>;
   let engineService: jasmine.SpyObj<EngineService>;
 
-  const manifest: SouthConnectorManifest = {
-    id: 'mssql',
-    category: 'database',
-    settings: [],
-    items: {
-      scanMode: 'POLL',
-      settings: [
-        {
-          translationKey: 'south.items.mssql.query',
-          key: 'query',
-          displayInViewMode: true,
-          type: 'OibText'
-        }
-      ]
-    },
-    modes: {
-      subscription: false,
-      history: true,
-      lastFile: true,
-      lastPoint: false
-    }
-  };
-  const southConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> = {
-    id: 'id1',
-    type: 'mssql',
-    name: 'South Connector',
-    description: 'My South connector description',
-    enabled: true,
-    settings: {} as SouthSettings,
-    items: [
-      {
-        id: 'id1',
-        name: 'item1',
-        enabled: true,
-        settings: {
-          query: 'sql'
-        } as SouthItemSettings,
-        scanModeId: 'scanModeId1'
-      }
-    ]
-  };
-  const engineInfo: OIBusInfo = {
-    version: '3.0.0',
-    launcherVersion: '3.5.0',
-    dataDirectory: 'data-folder',
-    processId: '1234',
-    architecture: 'x64',
-    hostname: 'hostname',
-    binaryDirectory: 'bin-directory',
-    operatingSystem: 'Windows',
-    platform: 'windows',
-    oibusId: 'id',
-    oibusName: 'name'
-  };
+  const manifest = testData.south.manifest;
+  const southConnector = testData.south.list[0];
+  const engineInfo = testData.engine.oIBusInfo;
 
   beforeEach(() => {
     southConnectorService = createMock(SouthConnectorService);
     scanModeService = createMock(ScanModeService);
+    certificateService = createMock(CertificateService);
     confirmationService = createMock(ConfirmationService);
     notificationService = createMock(NotificationService);
     engineService = createMock(EngineService);
@@ -126,22 +76,15 @@ describe('SouthDetailComponent', () => {
         },
         { provide: SouthConnectorService, useValue: southConnectorService },
         { provide: ScanModeService, useValue: scanModeService },
+        { provide: CertificateService, useValue: certificateService },
         { provide: ConfirmationService, useValue: confirmationService },
         { provide: EngineService, useValue: engineService },
         { provide: NotificationService, useValue: notificationService }
       ]
     });
 
-    scanModeService.list.and.returnValue(
-      of([
-        {
-          id: 'scanModeId1',
-          name: 'Every mn',
-          description: '',
-          cron: ''
-        }
-      ])
-    );
+    scanModeService.list.and.returnValue(of(testData.scanMode.list));
+    certificateService.list.and.returnValue(of(testData.certificates.list));
     engineService.getInfo.and.returnValue(of(engineInfo));
     southConnectorService.get.and.returnValue(of(southConnector));
     southConnectorService.getSouthConnectorTypeManifest.and.returnValue(of(manifest));
@@ -162,11 +105,10 @@ describe('SouthDetailComponent', () => {
 
   it('should display items', () => {
     tester.detectChanges();
-    expect(tester.southItems.length).toBe(1);
+    expect(tester.southItems.length).toBe(2);
     const item = tester.southItems[0];
     expect(item.elements('td')[1]).toContainText('item1');
-    expect(item.elements('td')[2]).toContainText('Every mn');
-    expect(item.elements('td')[3]).toContainText('sql');
+    expect(item.elements('td')[2]).toContainText('scanMode1');
   });
 
   it('should display logs', () => {
