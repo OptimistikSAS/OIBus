@@ -1,0 +1,8 @@
+@import "../../../../common";
+
+.btn-link-bold {
+  color: $darkGrey;
+  &:hover {
+    color: $yellow;
+  }
+}

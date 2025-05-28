@@ -4,7 +4,7 @@
   </h4>
 </div>
 <div class="modal-body">
-  <oib-code-block style="max-height: 80vh" [contentType]="contentFile?.metadata?.contentType === 'raw' ? 'csv' : 'json'" #codeBlock />
+  <oib-code-block style="max-height: 80vh" [language]="contentFile?.metadata?.contentType === 'raw' ? 'csv' : 'json'" #codeBlock />
 </div>
 <div class="modal-footer">
   <div class="btn-group">

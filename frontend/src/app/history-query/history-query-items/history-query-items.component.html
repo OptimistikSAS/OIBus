@@ -67,7 +67,7 @@
               </button>
             </th>
             @for (setting of displaySettings; track setting) {
-              @if (setting.type === 'OibSelect') {
+              @if (setting.type === 'string-select') {
                 <th>{{ setting.translationKey + '.title' | translate }}</th>
               } @else {
                 <th>{{ setting.translationKey | translate }}</th>

@@ -6,6 +6,10 @@ const NO_ANIMATION_NGB_CONFIG: NgbConfig = { animation: false };
 
 export const noAnimation: Provider = { provide: NgbConfig, useValue: NO_ANIMATION_NGB_CONFIG };
 
+export function byIdComparisonFn(o1: { id: string } | null, o2: { id: string } | null): boolean {
+  return (!o1 && !o2) || (o1 != null && o2 != null && o1.id === o2.id);
+}
+
 export function toPage<T>(content: Array<T>, totalElements: number = content.length, num = 0, size = Math.max(20, totalElements)): Page<T> {
   return {
     content,

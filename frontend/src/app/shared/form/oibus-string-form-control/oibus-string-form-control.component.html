@@ -1,0 +1,5 @@
+<div class="form-group">
+  <label [for]="stringAttribute().key" class="form-label" [translate]="stringAttribute().translationKey"></label>
+  <input [id]="stringAttribute().key" class="form-control" type="text" [formControlName]="stringAttribute().key" />
+  <val-errors [controlName]="stringAttribute().key" />
+</div>

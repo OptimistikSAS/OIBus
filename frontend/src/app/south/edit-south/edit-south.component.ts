@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 
 import { TranslateDirective } from '@ngx-translate/core';
 import {
@@ -10,16 +10,12 @@ import {
 } from '../../../../../backend/shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
-import { formDirectives } from '../../shared/form-directives';
 import { FormControl, FormGroup, NonNullableFormBuilder, Validators } from '@angular/forms';
 import { NotificationService } from '../../shared/notification.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest, Observable, of, switchMap, tap } from 'rxjs';
-import { FormComponent } from '../../shared/form/form.component';
-import { OibFormControl } from '../../../../../backend/shared/model/form.model';
 import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
-import { createFormGroup, groupFormControlsByRow } from '../../shared/form-utils';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { SouthItemsComponent } from '../south-items/south-items.component';
@@ -28,6 +24,11 @@ import { ModalService } from '../../shared/modal.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
+import { formDirectives } from '../../shared/form/form-directives';
+import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
+import { CertificateService } from '../../services/certificate.service';
+import { addAttributeToForm, addEnablingConditions, asFormGroup } from '../../shared/form/dynamic-form.builder';
+import { OIBusObjectFormControlComponent } from '../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
 import { CanComponentDeactivate } from '../../shared/unsaved-changes.guard';
 import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
 
@@ -37,13 +38,13 @@ import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-
     TranslateDirective,
     ...formDirectives,
     SaveButtonComponent,
-    FormComponent,
     BackNavigationDirective,
     BoxComponent,
     BoxTitleDirective,
     SouthItemsComponent,
     OibHelpComponent,
-    OIBusSouthTypeEnumPipe
+    OIBusSouthTypeEnumPipe,
+    OIBusObjectFormControlComponent
   ],
   templateUrl: './edit-south.component.html',
   styleUrl: './edit-south.component.scss'
@@ -53,6 +54,7 @@ export class EditSouthComponent implements OnInit, CanComponentDeactivate {
   private fb = inject(NonNullableFormBuilder);
   private notificationService = inject(NotificationService);
   private scanModeService = inject(ScanModeService);
+  private certificateService = inject(CertificateService);
   private modalService = inject(ModalService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
@@ -65,11 +67,10 @@ export class EditSouthComponent implements OnInit, CanComponentDeactivate {
   duplicateId = '';
   saveItemChangesDirectly!: boolean;
   state = new ObservableState();
-
-  southSettingsControls: Array<Array<OibFormControl>> = [];
   scanModes: Array<ScanModeDTO> = [];
+  certificates: Array<CertificateDTO> = [];
   manifest: SouthConnectorManifest | null = null;
-  southForm: FormGroup<{
+  form: FormGroup<{
     name: FormControl<string>;
     description: FormControl<string>;
     enabled: FormControl<boolean>;
@@ -79,10 +80,11 @@ export class EditSouthComponent implements OnInit, CanComponentDeactivate {
   inMemoryItems: Array<SouthConnectorItemCommandDTO<SouthItemSettings>> = [];
 
   ngOnInit() {
-    combineLatest([this.scanModeService.list(), this.route.paramMap, this.route.queryParamMap])
+    combineLatest([this.scanModeService.list(), this.certificateService.list(), this.route.paramMap, this.route.queryParamMap])
       .pipe(
-        switchMap(([scanModes, params, queryParams]) => {
+        switchMap(([scanModes, certificates, params, queryParams]) => {
           this.scanModes = scanModes.filter(scanMode => scanMode.id !== 'subscription');
+          this.certificates = certificates;
           const paramSouthId = params.get('southId');
           const duplicateSouthId = queryParams.get('duplicate');
           this.southType = queryParams.get('type') || '';
@@ -134,27 +136,12 @@ export class EditSouthComponent implements OnInit, CanComponentDeactivate {
         }
 
         this.manifest = manifest;
-        this.southSettingsControls = groupFormControlsByRow(manifest.settings);
-
-        this.southForm = this.fb.group({
-          name: ['', Validators.required],
-          description: '',
-          enabled: true as boolean,
-          settings: createFormGroup(manifest.settings, this.fb)
-        });
-
-        // if we have a south connector we initialize the values
-        if (this.southConnector) {
-          this.southForm.patchValue(this.southConnector);
-        } else {
-          // we should provoke all value changes to make sure fields are properly hidden and disabled
-          this.southForm.setValue(this.southForm.getRawValue());
-        }
+        this.buildForm();
       });
   }
 
   canDeactivate(): Observable<boolean> | boolean {
-    if (this.southForm?.dirty) {
+    if (this.form?.dirty) {
       return this.unsavedChangesConfirmation.confirmUnsavedChanges();
     }
     return true;
@@ -166,7 +153,7 @@ export class EditSouthComponent implements OnInit, CanComponentDeactivate {
       createOrUpdate = this.southConnectorService.update(this.southConnector!.id, command).pipe(
         tap(() => {
           this.notificationService.success('south.updated', { name: command.name });
-          this.southForm?.markAsPristine();
+          this.form?.markAsPristine();
         }),
         switchMap(() => this.southConnectorService.get(this.southConnector!.id))
       );
@@ -174,7 +161,7 @@ export class EditSouthComponent implements OnInit, CanComponentDeactivate {
       createOrUpdate = this.southConnectorService.create(command, this.duplicateId).pipe(
         tap(() => {
           this.notificationService.success('south.created', { name: command.name });
-          this.southForm?.markAsPristine();
+          this.form?.markAsPristine();
         })
       );
     }
@@ -184,7 +171,7 @@ export class EditSouthComponent implements OnInit, CanComponentDeactivate {
   }
 
   submit(value: 'save' | 'test') {
-    if (!this.southForm!.valid) {
+    if (!this.form!.valid) {
       return;
     }
 
@@ -208,9 +195,29 @@ export class EditSouthComponent implements OnInit, CanComponentDeactivate {
     }
   }
 
+  buildForm() {
+    this.form = this.fb.group({
+      name: ['', Validators.required],
+      description: '',
+      enabled: true as boolean,
+      settings: this.fb.group({})
+    });
+    for (const attribute of this.manifest!.settings.attributes) {
+      addAttributeToForm(this.fb, this.form.controls.settings, attribute);
+    }
+    addEnablingConditions(this.form.controls.settings, this.manifest!.settings.enablingConditions);
+    // if we have a south connector, we initialize the values
+    if (this.southConnector) {
+      this.form.patchValue(this.southConnector);
+    } else {
+      // we should provoke all value changes to make sure fields are properly hidden and disabled
+      this.form.setValue(this.form.getRawValue());
+    }
+  }
+
   get formSouthConnectorCommand(): SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> {
-    const formValue = this.southForm!.value;
-    const command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> = {
+    const formValue = this.form!.value;
+    return {
       name: formValue.name!,
       type: this.southType as OIBusSouthType,
       description: formValue.description!,
@@ -228,7 +235,7 @@ export class EditSouthComponent implements OnInit, CanComponentDeactivate {
             }))
           : this.inMemoryItems
     };
-
-    return command;
   }
+
+  protected readonly asFormGroup = asFormGroup;
 }

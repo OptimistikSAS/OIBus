@@ -9,145 +9,321 @@ const manifest: SouthConnectorManifest = {
     lastFile: false,
     history: false
   },
-  settings: [
-    {
-      key: 'netId',
-      type: 'OibText',
-      translationKey: 'south.ads.net-id',
-      defaultValue: '127.0.0.1.1.1',
-      newRow: true,
-      class: 'col-8',
-      validators: [{ key: 'required' }],
-      displayInViewMode: true
+  settings: {
+    type: 'object',
+    key: 'settings',
+    translationKey: 'configuration.oibus.manifest.south.settings',
+    displayProperties: {
+      visible: true,
+      wrapInBox: false
     },
-    {
-      key: 'port',
-      type: 'OibNumber',
-      translationKey: 'south.ads.port',
-      defaultValue: 851,
-      newRow: false,
-      class: 'col-4',
-      validators: [{ key: 'required' }, { key: 'min', params: { min: 1 } }, { key: 'max', params: { max: 65535 } }],
-      displayInViewMode: true
-    },
-    {
-      key: 'routerAddress',
-      type: 'OibText',
-      translationKey: 'south.ads.router-address',
-      newRow: true,
-      class: 'col-8',
-      displayInViewMode: true
-    },
-    {
-      key: 'routerTcpPort',
-      type: 'OibNumber',
-      translationKey: 'south.ads.router-tcp-port',
-      newRow: false,
-      class: 'col-4',
-      validators: [
-        { key: 'min', params: { min: 1 } },
-        { key: 'max', params: { max: 65535 } }
-      ],
-      displayInViewMode: true
-    },
-    {
-      key: 'clientAmsNetId',
-      type: 'OibText',
-      translationKey: 'south.ads.client-ams-net-id',
-      newRow: true,
-      class: 'col-8',
-      displayInViewMode: true
-    },
-    {
-      key: 'clientAdsPort',
-      type: 'OibNumber',
-      translationKey: 'south.ads.client-ads-port',
-      newRow: false,
-      class: 'col-4',
-      validators: [
-        { key: 'min', params: { min: 1 } },
-        { key: 'max', params: { max: 65535 } }
-      ],
-      displayInViewMode: true
-    },
-    {
-      key: 'retryInterval',
-      type: 'OibNumber',
-      translationKey: 'south.ads.retry-interval',
-      unitLabel: 'ms',
-      defaultValue: 10_000,
-      newRow: true,
-      class: 'col-4',
-      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 60_000 } }],
-      displayInViewMode: false
-    },
-    {
-      key: 'plcName',
-      type: 'OibText',
-      translationKey: 'south.ads.plc-name',
-      defaultValue: '',
-      newRow: true,
-      class: 'col-4',
-      displayInViewMode: true
-    },
-    {
-      key: 'enumAsText',
-      type: 'OibSelect',
-      options: ['text', 'integer'],
-      translationKey: 'south.ads.enum-as-text',
-      defaultValue: 'integer',
-      class: 'col-4',
-      validators: [{ key: 'required' }],
-      displayInViewMode: true
-    },
-    {
-      key: 'boolAsText',
-      type: 'OibSelect',
-      translationKey: 'south.ads.bool-as-text',
-      options: ['text', 'integer'],
-      defaultValue: 'integer',
-      class: 'col-4',
-      validators: [{ key: 'required' }],
-      displayInViewMode: true
-    },
-    {
-      key: 'structureFiltering',
-      type: 'OibArray',
-      translationKey: 'south.ads.structure-filtering.structure',
-      content: [
-        {
-          key: 'name',
-          translationKey: 'south.ads.structure-filtering.name',
-          type: 'OibText',
-          defaultValue: '',
-          validators: [{ key: 'required' }],
-          displayInViewMode: true
-        },
-        {
-          key: 'fields',
-          translationKey: 'south.ads.structure-filtering.fields',
-          type: 'OibText',
-          defaultValue: '',
-          validators: [{ key: 'required' }],
+    enablingConditions: [],
+    validators: [],
+    attributes: [
+      {
+        type: 'string',
+        key: 'netId',
+        translationKey: 'configuration.oibus.manifest.south.ads.net-id',
+        defaultValue: '127.0.0.1.1.1',
+        validators: [{ type: 'REQUIRED', arguments: [] }],
+        displayProperties: {
+          row: 0,
+          columns: 8,
           displayInViewMode: true
         }
-      ],
-      class: 'col',
-      newRow: true,
-      displayInViewMode: false
-    }
-  ],
-  items: {
-    scanMode: 'POLL',
-    settings: [
+      },
       {
-        key: 'address',
-        type: 'OibText',
-        translationKey: 'south.items.ads.address',
-        validators: [{ key: 'required' }],
-        displayInViewMode: true
+        type: 'number',
+        key: 'port',
+        translationKey: 'configuration.oibus.manifest.south.ads.port',
+        unit: null,
+        defaultValue: 851,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          },
+          { type: 'MINIMUM', arguments: ['1'] },
+          { type: 'MAXIMUM', arguments: ['65535'] }
+        ],
+        displayProperties: {
+          row: 0,
+          columns: 4,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'string',
+        key: 'routerAddress',
+        translationKey: 'configuration.oibus.manifest.south.ads.router-address',
+        defaultValue: null,
+        validators: [],
+        displayProperties: {
+          row: 1,
+          columns: 8,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'number',
+        key: 'routerTcpPort',
+        translationKey: 'configuration.oibus.manifest.south.ads.router-tcp-port',
+        unit: null,
+        defaultValue: null,
+        validators: [
+          { type: 'MINIMUM', arguments: ['1'] },
+          { type: 'MAXIMUM', arguments: ['65535'] }
+        ],
+        displayProperties: {
+          row: 1,
+          columns: 4,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'string',
+        key: 'clientAmsNetId',
+        translationKey: 'configuration.oibus.manifest.south.ads.client-ams-net-id',
+        defaultValue: null,
+        validators: [],
+        displayProperties: {
+          row: 2,
+          columns: 8,
+          displayInViewMode: true
+        }
+      },
+      {
+        key: 'clientAdsPort',
+        type: 'number',
+        translationKey: 'configuration.oibus.manifest.south.ads.client-ads-port',
+        unit: null,
+        defaultValue: null,
+        validators: [
+          { type: 'MINIMUM', arguments: ['1'] },
+          { type: 'MAXIMUM', arguments: ['65535'] }
+        ],
+        displayProperties: {
+          row: 2,
+          columns: 4,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'number',
+        key: 'retryInterval',
+        translationKey: 'configuration.oibus.manifest.south.ads.retry-interval',
+        unit: 'ms',
+        defaultValue: 10_000,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          },
+          { type: 'MINIMUM', arguments: ['100'] },
+          { type: 'MAXIMUM', arguments: ['60000'] }
+        ],
+        displayProperties: {
+          row: 3,
+          columns: 4,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'string',
+        key: 'plcName',
+        translationKey: 'configuration.oibus.manifest.south.ads.plc-name',
+        defaultValue: null,
+        validators: [],
+        displayProperties: {
+          row: 4,
+          columns: 4,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'string-select',
+        key: 'enumAsText',
+        selectableValues: ['text', 'integer'],
+        translationKey: 'configuration.oibus.manifest.south.ads.enum-as-text',
+        defaultValue: 'integer',
+        validators: [{ type: 'REQUIRED', arguments: [] }],
+        displayProperties: {
+          row: 4,
+          columns: 4,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'string-select',
+        key: 'boolAsText',
+        translationKey: 'configuration.oibus.manifest.south.ads.bool-as-text',
+        selectableValues: ['text', 'integer'],
+        defaultValue: 'integer',
+        validators: [{ type: 'REQUIRED', arguments: [] }],
+        displayProperties: {
+          row: 4,
+          columns: 4,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'array',
+        key: 'structureFiltering',
+        translationKey: 'configuration.oibus.manifest.south.ads.structure-filtering',
+        paginate: false,
+        numberOfElementPerPage: 0,
+        validators: [],
+        rootAttribute: {
+          type: 'object',
+          key: 'structureFiltering',
+          translationKey: 'configuration.oibus.manifest.south.ads.structure-filtering.structure',
+          enablingConditions: [],
+          validators: [],
+          displayProperties: {
+            visible: true,
+            wrapInBox: false
+          },
+          attributes: [
+            {
+              type: 'string',
+              key: 'name',
+              translationKey: 'configuration.oibus.manifest.south.ads.structure-filtering.name',
+              defaultValue: null,
+              validators: [
+                {
+                  type: 'REQUIRED',
+                  arguments: []
+                }
+              ],
+              displayProperties: {
+                row: 0,
+                columns: 6,
+                displayInViewMode: true
+              }
+            },
+            {
+              type: 'string',
+              key: 'fields',
+              translationKey: 'configuration.oibus.manifest.south.ads.structure-filtering.fields',
+              defaultValue: null,
+              validators: [
+                {
+                  type: 'REQUIRED',
+                  arguments: []
+                }
+              ],
+              displayProperties: {
+                row: 0,
+                columns: 6,
+                displayInViewMode: true
+              }
+            }
+          ]
+        }
       }
     ]
+  },
+  items: {
+    type: 'array',
+    key: 'items',
+    translationKey: 'configuration.oibus.manifest.south.items',
+    paginate: true,
+    numberOfElementPerPage: 20,
+    validators: [],
+    rootAttribute: {
+      type: 'object',
+      key: 'item',
+      translationKey: 'configuration.oibus.manifest.south.items.item',
+      displayProperties: {
+        visible: true,
+        wrapInBox: false
+      },
+      enablingConditions: [],
+      validators: [],
+      attributes: [
+        {
+          type: 'string',
+          key: 'name',
+          translationKey: 'configuration.oibus.manifest.south.items.name',
+          defaultValue: null,
+          validators: [
+            {
+              type: 'REQUIRED',
+              arguments: []
+            }
+          ],
+          displayProperties: {
+            row: 0,
+            columns: 4,
+            displayInViewMode: true
+          }
+        },
+        {
+          type: 'boolean',
+          key: 'enabled',
+          translationKey: 'configuration.oibus.manifest.south.items.enabled',
+          defaultValue: true,
+          validators: [
+            {
+              type: 'REQUIRED',
+              arguments: []
+            }
+          ],
+          displayProperties: {
+            row: 0,
+            columns: 4,
+            displayInViewMode: true
+          }
+        },
+        {
+          type: 'scan-mode',
+          key: 'scanModeId',
+          acceptableType: 'POLL',
+          translationKey: 'configuration.oibus.manifest.south.items.scan-mode',
+          validators: [
+            {
+              type: 'REQUIRED',
+              arguments: []
+            }
+          ],
+          displayProperties: {
+            row: 0,
+            columns: 4,
+            displayInViewMode: true
+          }
+        },
+        {
+          type: 'object',
+          key: 'settings',
+          translationKey: 'configuration.oibus.manifest.south.items.settings',
+          displayProperties: {
+            visible: true,
+            wrapInBox: true
+          },
+          enablingConditions: [],
+          validators: [],
+          attributes: [
+            {
+              type: 'string',
+              key: 'address',
+              translationKey: 'configuration.oibus.manifest.south.items.ads.address',
+              defaultValue: null,
+              validators: [
+                {
+                  type: 'REQUIRED',
+                  arguments: []
+                }
+              ],
+              displayProperties: {
+                row: 0,
+                columns: 12,
+                displayInViewMode: true
+              }
+            }
+          ]
+        }
+      ]
+    }
   }
 };
 export default manifest;
