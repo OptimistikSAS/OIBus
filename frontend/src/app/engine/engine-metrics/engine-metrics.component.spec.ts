@@ -6,20 +6,15 @@ import { Component } from '@angular/core';
 import { NotificationService } from '../../shared/notification.service';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { EngineService } from '../../services/engine.service';
-import { EngineMetrics } from '../../../../../backend/shared/model/engine.model';
 import { provideHttpClient } from '@angular/common/http';
+import testData from '../../../../../backend/src/tests/utils/test-data';
 
 @Component({
-  template: ` <oib-engine-metrics [metrics]="metrics" />`,
+  template: `<oib-engine-metrics [metrics]="metrics" />`,
   imports: [EngineMetricsComponent]
 })
 class TestComponent {
-  metrics: EngineMetrics = {
-    metricsStart: '2020-02-02T00:00:00.000Z',
-    processCpuUsageInstant: 11,
-    processCpuUsageAverage: 12,
-    processUptime: 13
-  } as EngineMetrics;
+  metrics = testData.engine.metrics;
 }
 
 class EngineMetricsComponentTester extends ComponentTester<TestComponent> {

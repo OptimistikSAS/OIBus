@@ -254,7 +254,6 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
       securityPolicy: toOPCUASecurityPolicy(settings.securityPolicy),
       endpointMustExist: false,
       keepSessionAlive: settings.keepSessionAlive,
-      requestedSessionTimeout: settings.readTimeout,
       keepPendingSessionsOnDisconnect: false,
       clientName,
       clientCertificateManager

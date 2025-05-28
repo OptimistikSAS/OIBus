@@ -2,10 +2,14 @@
   <ng-template oibBoxTitle>
     <div class="d-flex justify-content-between align-items-center">
       <div>
-        <span translate="transformers.title" id="title"></span>
+        <span translate="configuration.oibus.manifest.transformers.title" id="title"></span>
       </div>
       <div>
-        <button class="btn btn-primary btn-sm oib-box-btn" (click)="createTransformer($event)" translate="transformers.add"></button>
+        <button
+          class="btn btn-primary btn-sm oib-box-btn"
+          (click)="createTransformer($event)"
+          translate="configuration.oibus.manifest.transformers.add"
+        ></button>
         <oib-help url="https://oibus.optimistik.com/docs/guide/north-connectors/common-settings#transformers" />
       </div>
     </div>
@@ -16,8 +20,8 @@
         <thead class="light">
           <tr>
             <th></th>
-            <th translate="transformers.input-type"></th>
-            <th translate="transformers.transformer"></th>
+            <th translate="configuration.oibus.manifest.transformers.input-type"></th>
+            <th translate="configuration.oibus.manifest.transformers.transformer"></th>
             <th></th>
           </tr>
         </thead>
@@ -30,7 +34,9 @@
               </td>
               <td>
                 @if (transformerWithOptions.transformer.type === 'standard') {
-                  <span>{{ 'transformers.standard.' + transformerWithOptions.transformer.functionName | translate }}</span>
+                  <span>{{
+                    'configuration.oibus.manifest.transformers.standard.' + transformerWithOptions.transformer.functionName | translate
+                  }}</span>
                 } @else {
                   <span>{{ transformerWithOptions.transformer.name }}</span>
                 }
@@ -50,7 +56,7 @@
     </div>
   } @else {
     <div>
-      <div class="mb-3 oib-grey-container" id="no-transformer" translate="transformers.none"></div>
+      <div class="mb-3 oib-grey-container" id="no-transformer" translate="configuration.oibus.manifest.transformers.none"></div>
     </div>
   }
 </oib-box>

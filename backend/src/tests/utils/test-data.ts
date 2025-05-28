@@ -81,12 +81,24 @@ const ipFilters: Array<IPFilter> = [
 ];
 
 const transformerCommandDTO: CustomTransformerCommand = {
+  type: 'custom',
   name: 'my new transformer',
   description: 'description',
   inputType: 'time-values',
   outputType: 'any',
   customCode: 'console.log("Hello World");',
-  customManifest: []
+  customManifest: {
+    type: 'object',
+    key: 'transformers.options',
+    translationKey: '',
+    attributes: [],
+    enablingConditions: [],
+    validators: [],
+    displayProperties: {
+      visible: true,
+      wrapInBox: false
+    }
+  }
 };
 const transformers: Array<Transformer> = [
   {
@@ -97,7 +109,18 @@ const transformers: Array<Transformer> = [
     inputType: 'time-values',
     outputType: 'any',
     customCode: 'console.log("Hello World");',
-    customManifest: []
+    customManifest: {
+      type: 'object',
+      key: 'transformers.options',
+      translationKey: '',
+      attributes: [],
+      enablingConditions: [],
+      validators: [],
+      displayProperties: {
+        visible: true,
+        wrapInBox: false
+      }
+    }
   },
   {
     id: 'transformerId2',
@@ -107,7 +130,18 @@ const transformers: Array<Transformer> = [
     inputType: 'any',
     outputType: 'any',
     customCode: 'console.log("Hello World");',
-    customManifest: []
+    customManifest: {
+      type: 'object',
+      key: 'transformers.options',
+      translationKey: '',
+      attributes: [],
+      enablingConditions: [],
+      validators: [],
+      displayProperties: {
+        visible: true,
+        wrapInBox: false
+      }
+    }
   }
 ];
 
@@ -210,28 +244,152 @@ const southTestManifest: SouthConnectorManifest = {
     lastFile: true,
     history: true
   },
-  settings: [],
+  settings: {
+    type: 'object',
+    key: 'settings',
+    translationKey: 'configuration.oibus.manifest.south.settings',
+    attributes: [],
+    enablingConditions: [],
+    validators: [],
+    displayProperties: {
+      visible: true,
+      wrapInBox: false
+    }
+  },
   items: {
-    scanMode: 'POLL',
-    settings: [
-      {
-        key: 'objectArray',
-        type: 'OibArray',
-        translationKey: 'Array',
-        content: []
+    type: 'array',
+    key: 'items',
+    translationKey: 'configuration.oibus.manifest.south.items.title',
+    paginate: true,
+    numberOfElementPerPage: 20,
+    validators: [],
+    rootAttribute: {
+      type: 'object',
+      key: 'item',
+      translationKey: 'configuration.oibus.manifest.south.items.item',
+      displayProperties: {
+        visible: true,
+        wrapInBox: false
       },
-      {
-        key: 'objectSettings',
-        type: 'OibFormGroup',
-        translationKey: 'Group',
-        content: []
-      },
-      {
-        key: 'objectValue',
-        type: 'OibNumber',
-        translationKey: 'Number'
-      }
-    ]
+      enablingConditions: [],
+      validators: [],
+      attributes: [
+        {
+          type: 'string',
+          key: 'name',
+          translationKey: 'configuration.oibus.manifest.south.items.name',
+          defaultValue: null,
+          validators: [
+            {
+              type: 'REQUIRED',
+              arguments: []
+            }
+          ],
+          displayProperties: {
+            row: 0,
+            columns: 4,
+            displayInViewMode: true
+          }
+        },
+        {
+          type: 'boolean',
+          key: 'enabled',
+          translationKey: 'configuration.oibus.manifest.south.items.enabled',
+          defaultValue: true,
+          validators: [
+            {
+              type: 'REQUIRED',
+              arguments: []
+            }
+          ],
+          displayProperties: {
+            row: 0,
+            columns: 4,
+            displayInViewMode: true
+          }
+        },
+        {
+          type: 'scan-mode',
+          key: 'scanModeId',
+          acceptableType: 'POLL',
+          translationKey: 'configuration.oibus.manifest.south.items.scan-mode',
+          validators: [
+            {
+              type: 'REQUIRED',
+              arguments: []
+            }
+          ],
+          displayProperties: {
+            row: 0,
+            columns: 4,
+            displayInViewMode: true
+          }
+        },
+        {
+          type: 'object',
+          key: 'settings',
+          translationKey: 'configuration.oibus.manifest.south.items.settings',
+          displayProperties: {
+            visible: true,
+            wrapInBox: true
+          },
+          enablingConditions: [],
+          validators: [],
+          attributes: [
+            {
+              type: 'array',
+              key: 'objectArray',
+              translationKey: 'configuration.oibus.manifest.south.items.settings',
+              paginate: true,
+              numberOfElementPerPage: 20,
+              validators: [],
+              rootAttribute: {
+                type: 'object',
+                key: 'item',
+                translationKey: 'configuration.oibus.manifest.south.items.item',
+                displayProperties: {
+                  visible: true,
+                  wrapInBox: false
+                },
+                enablingConditions: [],
+                validators: [],
+                attributes: []
+              }
+            },
+            {
+              type: 'object',
+              key: 'objectSettings',
+              translationKey: 'configuration.oibus.manifest.south.items.settings',
+              displayProperties: {
+                visible: true,
+                wrapInBox: false
+              },
+              enablingConditions: [],
+              validators: [],
+              attributes: []
+            },
+            {
+              type: 'number',
+              key: 'objectValue',
+              translationKey: 'configuration.oibus.manifest.south.items.settings',
+              defaultValue: 1,
+              unit: null,
+              validators: [
+                {
+                  type: 'REQUIRED',
+                  arguments: []
+                }
+              ],
+              displayProperties: {
+                row: 0,
+                columns: 4,
+                displayInViewMode: true
+              }
+            }
+          ]
+        }
+      ]
+    }
   }
 };
 const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettings>> = [
@@ -409,7 +567,18 @@ const northTestManifest: NorthConnectorManifest = {
   id: 'console',
   category: 'debug',
   types: ['any', 'time-values'],
-  settings: []
+  settings: {
+    type: 'object',
+    key: 'settings',
+    translationKey: 'configuration.oibus.manifest.north.settings',
+    displayProperties: {
+      visible: true,
+      wrapInBox: true
+    },
+    enablingConditions: [],
+    validators: [],
+    attributes: []
+  }
 };
 const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
   {

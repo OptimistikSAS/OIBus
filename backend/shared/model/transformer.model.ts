@@ -1,11 +1,11 @@
-import { OibFormControl } from './form.model';
+import { OIBusObjectAttribute } from './form.model';
 
 export interface BaseTransformerDTO {
   id: string;
   type: 'custom' | 'standard';
   inputType: string;
   outputType: string;
-  manifest: Array<OibFormControl>;
+  manifest: OIBusObjectAttribute;
 }
 
 export interface CustomTransformerDTO extends BaseTransformerDTO {
@@ -27,15 +27,26 @@ export interface TransformerDTOWithOptions {
   transformer: TransformerDTO;
   options: object;
 }
-
-export interface CustomTransformerCommand {
-  name: string;
-  description: string;
+export interface BaseTransformerCommand {
+  type: 'custom' | 'standard';
   inputType: string;
   outputType: string;
-  customCode: string;
-  customManifest: Array<OibFormControl>;
 }
+
+export interface StandardTransformerCommand extends BaseTransformerCommand {
+  type: 'standard';
+  functionName: string;
+}
+
+export interface CustomTransformerCommand extends BaseTransformerCommand {
+  type: 'custom';
+  name: string;
+  description: string;
+  customCode: string;
+  customManifest: OIBusObjectAttribute;
+}
+
+export type TransformerCommandDTO = StandardTransformerCommand | CustomTransformerCommand;
 
 export interface TransformerSearchParam {
   type?: 'standard' | 'custom';

@@ -3,57 +3,20 @@ import { TestBed } from '@angular/core/testing';
 import { ComponentTester, createMock } from 'ngx-speculoos';
 import { NorthMetricsComponent } from './north-metrics.component';
 import { Component } from '@angular/core';
-import { NorthConnectorDTO, NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { NotificationService } from '../../shared/notification.service';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
-import { NorthConnectorMetrics } from '../../../../../backend/shared/model/engine.model';
 import { provideHttpClient } from '@angular/common/http';
-import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
+import testData from '../../../../../backend/src/tests/utils/test-data';
 
 @Component({
   template: `<oib-north-metrics [connectorMetrics]="metrics" [northConnector]="northConnector" [manifest]="manifest" />`,
   imports: [NorthMetricsComponent]
 })
 class TestComponent {
-  metrics: NorthConnectorMetrics = {
-    metricsStart: '2020-02-02T00:00:00.000Z',
-    lastConnection: '2020-02-02T00:00:00.000Z',
-    lastRunStart: '2020-02-02T00:00:00.000Z',
-    lastRunDuration: 10,
-    lastContentSent: 'file',
-    contentCachedSize: 11,
-    contentErroredSize: 22,
-    contentArchivedSize: 33,
-    contentSentSize: 44,
-    currentCacheSize: 14,
-    currentErrorSize: 15,
-    currentArchiveSize: 16
-  };
-  northConnector: NorthConnectorDTO<NorthSettings> = {
-    id: 'northId',
-    name: 'North Connector'
-  } as NorthConnectorDTO<NorthSettings>;
-  manifest: NorthConnectorManifest = {
-    id: 'oianalytics',
-    category: 'api',
-    types: ['any', 'time-values'],
-    settings: [
-      {
-        key: 'host',
-        type: 'OibText',
-        translationKey: 'Host',
-        validators: [
-          { key: 'required' },
-          {
-            key: 'pattern',
-            params: { pattern: '^(http:\\/\\/|https:\\/\\/|HTTP:\\/\\/|HTTPS:\\/\\/).*' }
-          }
-        ],
-        displayInViewMode: true
-      }
-    ]
-  };
+  metrics = testData.north.metrics;
+  northConnector = testData.north.list[0];
+  manifest = testData.north.manifest;
 }
 
 class NorthMetricsComponentTester extends ComponentTester<TestComponent> {
@@ -89,6 +52,6 @@ describe('NorthMetricsComponent', () => {
 
   it('should display a title', () => {
     tester.detectChanges();
-    expect(tester.title).toContainText('North Connector metrics');
+    expect(tester.title).toContainText('North 1 metrics');
   });
 });
