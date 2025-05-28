@@ -1,6 +1,5 @@
 import path from 'node:path';
 
-import fetch, { HeadersInit, RequestInit } from 'node-fetch';
 import SouthConnector from '../south-connector';
 import { createFolder, formatQueryParams, persistResults } from '../../service/utils';
 import EncryptionService from '../../service/encryption.service';
@@ -9,7 +8,6 @@ import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { QueriesHistory } from '../south-interface';
 import { SouthOIAnalyticsItemSettings, SouthOIAnalyticsSettings } from '../../../shared/model/south-settings.model';
-import { createProxyAgent } from '../../service/proxy-agent';
 import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { ClientCertificateCredential, ClientSecretCredential } from '@azure/identity';
 import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
@@ -18,11 +16,9 @@ import SouthCacheRepository from '../../repository/cache/south-cache.repository'
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import CertificateRepository from '../../repository/config/certificate.repository';
-import https from 'node:https';
-import { HttpsProxyAgent } from 'https-proxy-agent';
-import { HttpProxyAgent } from 'http-proxy-agent';
 import { BaseFolders } from '../../model/types';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import { HTTPRequest, ReqAuthOptions, ReqOptions, ReqProxyOptions, ReqResponse } from '../../service/http-request.utils';
 
 interface OIATimeValues {
   type: string;
@@ -85,23 +81,24 @@ export default class SouthOIAnalytics
   }
 
   override async testConnection(): Promise<void> {
-    const connectionSettings = await this.getNetworkSettings('/api/optimistik/oibus/status');
-    const requestUrl = `${connectionSettings.host}/api/optimistik/oibus/status`;
-    const fetchOptions: RequestInit = {
+    const host = this.getHost();
+    const requestUrl = new URL('/api/optimistik/oibus/status', host);
+
+    const fetchOptions: ReqOptions = {
       method: 'GET',
-      headers: connectionSettings.headers,
-      timeout: this.connector.settings.timeout * 1000,
-      agent: connectionSettings.agent
+      auth: await this.getAuthorizationOptions(),
+      proxy: this.getProxyOptions(),
+      timeout: this.connector.settings.timeout * 1000
     };
 
-    let response;
+    let response: ReqResponse;
     try {
-      response = await fetch(requestUrl, fetchOptions);
+      response = await HTTPRequest(requestUrl, fetchOptions);
     } catch (error) {
       throw new Error(`Fetch error ${error}`);
     }
     if (!response.ok) {
-      throw new Error(`HTTP request failed with status code ${response.status} and message: ${response.statusText}`);
+      throw new Error(`HTTP request failed with status code ${response.statusCode} and message: ${await response.body.text()}`);
     }
   }
 
@@ -176,124 +173,158 @@ export default class SouthOIAnalytics
     startTime: Instant,
     endTime: Instant
   ): Promise<Array<OIATimeValues>> {
-    const connectionSettings = await this.getNetworkSettings(
-      `${item.settings.endpoint}${formatQueryParams(startTime, endTime, item.settings.queryParams || [])}`
-    );
+    const host = this.getHost();
+    const requestUrl = new URL(item.settings.endpoint, host);
+    const query = formatQueryParams(startTime, endTime, item.settings.queryParams || []);
 
-    const requestUrl = `${connectionSettings.host}${item.settings.endpoint}${formatQueryParams(
-      startTime,
-      endTime,
-      item.settings.queryParams || []
-    )}`;
-    const fetchOptions: RequestInit = {
+    const fetchOptions: ReqOptions = {
       method: 'GET',
-      headers: connectionSettings.headers,
-      timeout: this.connector.settings.timeout * 1000,
-      agent: connectionSettings.agent
+      query,
+      auth: await this.getAuthorizationOptions(),
+      proxy: this.getProxyOptions(),
+      timeout: this.connector.settings.timeout * 1000
     };
 
-    this.logger.info(`Requesting data from URL "${requestUrl}"`);
+    this.logger.info(`Requesting data from URL "${requestUrl}" and query params "${JSON.stringify(query)}"`);
 
-    const response = await fetch(requestUrl, fetchOptions);
+    const response = await HTTPRequest(requestUrl, fetchOptions);
     if (!response.ok) {
-      throw new Error(`HTTP request failed with status code ${response.status} and message: ${response.statusText}`);
+      throw new Error(`HTTP request failed with status code ${response.statusCode} and message: ${await response.body.text()}`);
     }
-    return response.json();
+    return response.body.json() as unknown as Array<OIATimeValues>;
   }
 
-  async getNetworkSettings(
-    endpoint: string
-  ): Promise<{ host: string; headers: HeadersInit; agent: https.Agent | HttpsProxyAgent<string> | HttpProxyAgent<string> | undefined }> {
-    const headers: HeadersInit = {};
+  /**
+   * Get proxy options if proxy is enabled
+   * @throws Error if no proxy url is specified in settings
+   */
+  private getProxyOptions(): ReqProxyOptions | undefined {
+    let settings: {
+      useProxy: boolean;
+      proxyUrl?: string | null;
+      proxyUsername?: string | null;
+      proxyPassword?: string | null;
+    };
+    let scope: string;
 
+    // OIAnalytics module
     if (this.connector.settings.useOiaModule) {
       const registrationSettings = this.oIAnalyticsRegistrationRepository.get();
       if (!registrationSettings || registrationSettings.status !== 'REGISTERED') {
         throw new Error('OIBus not registered in OIAnalytics');
       }
 
-      if (registrationSettings.host.endsWith('/')) {
-        registrationSettings.host = registrationSettings.host.slice(0, registrationSettings.host.length - 1);
-      }
+      settings = registrationSettings;
+      scope = 'registered OIAnalytics module';
+    }
+    // Specific settings
+    else {
+      settings = this.connector.settings.specificSettings!;
+      scope = 'specific settings';
+    }
 
-      const token = await this.encryptionService.decryptText(registrationSettings.token!);
-      headers.authorization = `Bearer ${token}`;
+    if (!settings.useProxy) {
+      return;
+    }
+    if (!settings.proxyUrl) {
+      throw new Error(`Proxy URL not specified using ${scope}`);
+    }
 
-      const agent = createProxyAgent(
-        registrationSettings.useProxy,
-        `${registrationSettings.host}${endpoint}`,
-        registrationSettings.useProxy
-          ? {
-              url: registrationSettings.proxyUrl!,
-              username: registrationSettings.proxyUsername!,
-              password: registrationSettings.proxyPassword
-                ? await this.encryptionService.decryptText(registrationSettings.proxyPassword)
-                : null
-            }
-          : null,
-        registrationSettings.acceptUnauthorized
-      );
+    const options: ReqProxyOptions = {
+      url: settings.proxyUrl
+    };
 
-      return {
-        host: registrationSettings.host,
-        headers,
-        agent
+    if (settings.proxyUsername) {
+      options.auth = {
+        type: 'url',
+        username: settings.proxyUsername,
+        password: settings.proxyPassword
       };
     }
 
-    const specificSettings = this.connector.settings.specificSettings!;
-    if (specificSettings.host.endsWith('/')) {
-      specificSettings.host = specificSettings.host.slice(0, specificSettings.host.length - 1);
+    return options;
+  }
+
+  /**
+   * Get authorization options from settings
+   */
+  private async getAuthorizationOptions(): Promise<ReqAuthOptions | undefined> {
+    // OIAnalytics module
+    if (this.connector.settings.useOiaModule) {
+      const registrationSettings = this.oIAnalyticsRegistrationRepository.get();
+      if (!registrationSettings || registrationSettings.status !== 'REGISTERED') {
+        throw new Error('OIBus not registered in OIAnalytics');
+      }
+
+      return {
+        type: 'bearer',
+        token: `Bearer ${registrationSettings.token}`
+      };
     }
 
+    // Specific settings
+    const specificSettings = this.connector.settings.specificSettings!;
+
     switch (specificSettings.authentication) {
-      case 'basic':
-        headers.authorization = `Basic ${Buffer.from(
-          `${specificSettings.accessKey}:${
-            specificSettings.secretKey ? await this.encryptionService.decryptText(specificSettings.secretKey) : ''
-          }`
-        ).toString('base64')}`;
-        break;
-      case 'aad-client-secret':
+      case 'basic': {
+        if (!specificSettings.accessKey) return;
+
+        return {
+          type: 'basic',
+          username: specificSettings.accessKey,
+          password: specificSettings.secretKey
+        };
+      }
+
+      case 'aad-client-secret': {
         const clientSecretCredential = new ClientSecretCredential(
           specificSettings.tenantId!,
           specificSettings.clientId!,
           await this.encryptionService.decryptText(specificSettings.clientSecret!)
         );
         const result = await clientSecretCredential.getToken(specificSettings.scope!);
-        headers.authorization = `Bearer ${Buffer.from(result.token)}`;
-        break;
-      case 'aad-certificate':
+        // Note: token needs to be encrypted when adding it to proxy options
+        const token = await this.encryptionService.encryptText(`Bearer ${Buffer.from(result.token)}`);
+        return {
+          type: 'bearer',
+          token
+        };
+      }
+
+      case 'aad-certificate': {
         const certificate = this.certificateRepository.findById(specificSettings.certificateId!);
-        if (certificate != null) {
-          const decryptedPrivateKey = await this.encryptionService.decryptText(certificate.privateKey);
-          const clientCertificateCredential = new ClientCertificateCredential(specificSettings.tenantId!, specificSettings.clientId!, {
-            certificate: `${certificate.certificate}\n${decryptedPrivateKey}`
-          });
-          const result = await clientCertificateCredential.getToken(specificSettings.scope!);
-          headers.authorization = `Bearer ${Buffer.from(result.token)}`;
-        }
-        break;
+        if (certificate === null) return;
+
+        const decryptedPrivateKey = await this.encryptionService.decryptText(certificate.privateKey);
+        const clientCertificateCredential = new ClientCertificateCredential(specificSettings.tenantId!, specificSettings.clientId!, {
+          certificate: `${certificate.certificate}\n${decryptedPrivateKey}`
+        });
+        const result = await clientCertificateCredential.getToken(specificSettings.scope!);
+        // Note: token needs to be encrypted when adding it to proxy options
+        const token = await this.encryptionService.encryptText(`Bearer ${Buffer.from(result.token)}`);
+        return {
+          type: 'bearer',
+          token
+        };
+      }
+    }
+  }
+
+  private getHost() {
+    let host: string;
+
+    if (this.connector.settings.useOiaModule) {
+      const registrationSettings = this.oIAnalyticsRegistrationRepository.get();
+      if (!registrationSettings || registrationSettings.status !== 'REGISTERED') {
+        throw new Error('OIBus not registered in OIAnalytics');
+      }
+      host = registrationSettings.host;
+    } else {
+      const specificSettings = this.connector.settings.specificSettings!;
+      host = specificSettings.host;
     }
 
-    const agent = createProxyAgent(
-      specificSettings.useProxy,
-      `${specificSettings.host}${endpoint}`,
-      specificSettings.useProxy
-        ? {
-            url: specificSettings.proxyUrl!,
-            username: specificSettings.proxyUsername!,
-            password: specificSettings.proxyPassword ? await this.encryptionService.decryptText(specificSettings.proxyPassword) : null
-          }
-        : null,
-      specificSettings.acceptUnauthorized
-    );
-
-    return {
-      host: specificSettings.host,
-      headers,
-      agent
-    };
+    return host;
   }
 
   /**

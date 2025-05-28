@@ -2,8 +2,7 @@ import build from 'pino-abstract-transport';
 
 import { LogDTO, PinoLog } from '../../../shared/model/logs.model';
 import { LogLevel, ScopeType } from '../../../shared/model/engine.model';
-import { createProxyAgent } from '../proxy-agent';
-import fetch, { HeadersInit } from 'node-fetch';
+import { HTTPRequest, ReqProxyOptions } from '../http-request.utils';
 
 const MAX_BATCH_LOG = 500;
 const MAX_BATCH_INTERVAL_S = 60;
@@ -63,46 +62,55 @@ class OianalyticsTransport {
    * Method used to send the log to OIAnalytics
    */
   sendOIALogs = async (): Promise<void> => {
-    const headers: HeadersInit = {};
-    headers.authorization = `Bearer ${this.options.token}`;
-    headers['Content-Type'] = 'application/json';
-    const endpoint = '/api/oianalytics/oibus/logs';
-    const agent = createProxyAgent(
-      this.options.useProxy,
-      `${this.options.host}${endpoint}`,
-      this.options.useProxy
-        ? {
-            url: this.options.proxyUrl!,
-            username: this.options.proxyUsername || null,
-            password: this.options.proxyPassword || null
-          }
-        : null,
-      this.options.acceptUnauthorized
-    );
-
+    const logUrl = new URL('/api/oianalytics/oibus/logs', this.options.host);
     const dataBuffer = JSON.stringify(this.batchLogs);
     this.batchLogs = [];
-    const fetchOptions = {
-      method: 'POST',
-      headers,
-      body: dataBuffer,
-      agent
-    };
 
-    const logUrl = `${this.options.host}${endpoint}`;
     try {
-      const response = await fetch(logUrl, fetchOptions);
-      if (response.status !== 200 && response.status !== 201 && response.status !== 204) {
-        if (response.status === 401) {
-          console.error(`OIAnalytics authentication error on ${logUrl}: ${response.status} - ${response.statusText}`);
+      const response = await HTTPRequest(logUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: dataBuffer,
+        auth: {
+          type: 'bearer',
+          token: this.options.token //TODO: is this encrypted? if not, it needs to be
+        },
+        proxy: this.getProxyOptions()
+      });
+      if (response.statusCode !== 200 && response.statusCode !== 201 && response.statusCode !== 204) {
+        if (response.statusCode === 401) {
+          console.error(`OIAnalytics authentication error on ${logUrl}: ${response.statusCode} - ${await response.body.text()}`);
         } else {
-          console.error(`OIAnalytics fetch error on ${logUrl}: ${response.status} - ${response.statusText} with payload ${dataBuffer}`);
+          console.error(`OIAnalytics fetch error on ${logUrl}: ${response.statusCode} - ${response.statusCode} with payload ${dataBuffer}`);
         }
       }
     } catch (error) {
       console.error(`Error when sending logs to ${logUrl}. ${error}`);
     }
   };
+
+  private getProxyOptions(): ReqProxyOptions | undefined {
+    if (!this.options.useProxy) {
+      return;
+    }
+    if (!this.options.proxyUrl) {
+      throw new Error('Proxy URL not specified');
+    }
+
+    const options: ReqProxyOptions = {
+      url: this.options.proxyUrl
+    };
+
+    if (this.options.proxyUsername) {
+      options.auth = {
+        type: 'url',
+        username: this.options.proxyUsername,
+        password: this.options.proxyPassword
+      };
+    }
+
+    return options;
+  }
 
   /**
    * Store the log in the batch log array and send them immediately if the array is full
