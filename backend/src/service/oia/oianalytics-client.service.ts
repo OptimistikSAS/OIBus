@@ -1,14 +1,11 @@
 import { generateRandomId } from '../utils';
-import EncryptionService from '../encryption.service';
-import fetch from 'node-fetch';
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
 import { OIBusCommand } from '../../model/oianalytics-command.model';
 import { OIAnalyticsFetchCommandDTO } from './oianalytics.model';
 import { OIBusInfo, RegistrationSettingsCommandDTO } from '../../../shared/model/engine.model';
 import { Instant } from '../../../shared/model/types';
 import fs from 'node:fs/promises';
-import { RequestOptions } from 'http';
-import { createProxyAgent } from '../proxy-agent';
+import { HTTPRequest, ReqProxyOptions } from '../http-request.utils';
 
 const OIANALYTICS_TIMEOUT = 10_000;
 const OIANALYTICS_DOWNLOAD_TIMEOUT = 900_000; // 15 minutes
@@ -21,23 +18,23 @@ const HISTORY_QUERY_OIANALYTICS_ENDPOINT = `/api/oianalytics/oibus/configuration
 const DOWNLOAD_UPDATE_OIANALYTICS_ENDPOINT = `/api/oianalytics/oibus/upgrade/asset`;
 
 export default class OIAnalyticsClient {
-  constructor(private readonly encryptionService: EncryptionService) {}
-
   async updateCommandStatus(registration: OIAnalyticsRegistration, payload: string): Promise<void> {
-    const connectionSettings = await this.getNetworkSettingsFromRegistration(registration, COMMAND_STATUS_OIANALYTICS_ENDPOINT);
-    const url = `${connectionSettings.host}${COMMAND_STATUS_OIANALYTICS_ENDPOINT}`;
-    const response = await fetch(url, {
+    const url = new URL(COMMAND_STATUS_OIANALYTICS_ENDPOINT, registration.host);
+
+    if (!registration.token) {
+      throw new Error('No registration token');
+    }
+
+    const response = await HTTPRequest(url, {
       method: 'PUT',
       body: payload,
-      headers: {
-        authorization: `Bearer ${await this.encryptionService.decryptText(registration.token!)}`,
-        'Content-Type': 'application/json'
-      },
-      timeout: OIANALYTICS_TIMEOUT,
-      agent: connectionSettings.agent
+      headers: { 'Content-Type': 'application/json' },
+      auth: { type: 'bearer', token: registration.token },
+      proxy: this.getProxyOptions(registration),
+      timeout: OIANALYTICS_TIMEOUT
     });
     if (!response.ok) {
-      throw new Error(`${response.status} - ${response.statusText}`);
+      throw new Error(`${response.statusCode} - ${await response.body.text()}`);
     }
   }
 
@@ -45,42 +42,42 @@ export default class OIAnalyticsClient {
     registration: OIAnalyticsRegistration,
     commands: Array<OIBusCommand>
   ): Promise<Array<OIAnalyticsFetchCommandDTO>> {
-    let endpoint = `${RETRIEVE_CANCELLED_COMMANDS_OIANALYTICS_ENDPOINT}?`;
-    for (const command of commands) {
-      endpoint += `ids=${encodeURIComponent(command.id)}&`;
+    const url = new URL(RETRIEVE_CANCELLED_COMMANDS_OIANALYTICS_ENDPOINT, registration.host);
+
+    if (!registration.token) {
+      throw new Error('No registration token');
     }
-    endpoint = endpoint.slice(0, endpoint.length - 1);
-    const connectionSettings = await this.getNetworkSettingsFromRegistration(registration, endpoint);
-    const url = `${connectionSettings.host}${endpoint}`;
-    const response = await fetch(url, {
+
+    const response = await HTTPRequest(url, {
       method: 'GET',
-      headers: {
-        authorization: `Bearer ${await this.encryptionService.decryptText(registration.token!)}`
-      },
-      timeout: OIANALYTICS_TIMEOUT,
-      agent: connectionSettings.agent
+      query: { ids: commands.map(command => command.id) },
+      auth: { type: 'bearer', token: registration.token },
+      proxy: this.getProxyOptions(registration),
+      timeout: OIANALYTICS_TIMEOUT
     });
     if (!response.ok) {
-      throw new Error(`${response.status} - ${response.statusText}`);
+      throw new Error(`${response.statusCode} - ${await response.body.text()}`);
     }
-    return (await response.json()) as Array<OIAnalyticsFetchCommandDTO>;
+    return (await response.body.json()) as Array<OIAnalyticsFetchCommandDTO>;
   }
 
   async retrievePendingCommands(registration: OIAnalyticsRegistration): Promise<Array<OIAnalyticsFetchCommandDTO>> {
-    const connectionSettings = await this.getNetworkSettingsFromRegistration(registration, RETRIEVE_PENDING_COMMANDS_OIANALYTICS_ENDPOINT);
-    const url = `${connectionSettings.host}${RETRIEVE_PENDING_COMMANDS_OIANALYTICS_ENDPOINT}`;
-    const response = await fetch(url, {
+    const url = new URL(RETRIEVE_PENDING_COMMANDS_OIANALYTICS_ENDPOINT, registration.host);
+
+    if (!registration.token) {
+      throw new Error('No registration token');
+    }
+
+    const response = await HTTPRequest(url, {
       method: 'GET',
-      headers: {
-        authorization: `Bearer ${await this.encryptionService.decryptText(registration.token!)}`
-      },
-      timeout: OIANALYTICS_TIMEOUT,
-      agent: connectionSettings.agent
+      auth: { type: 'bearer', token: registration.token },
+      proxy: this.getProxyOptions(registration),
+      timeout: OIANALYTICS_TIMEOUT
     });
     if (!response.ok) {
-      throw new Error(`${response.status} - ${response.statusText}`);
+      throw new Error(`${response.statusCode} - ${await response.body.text()}`);
     }
-    return (await response.json()) as Array<OIAnalyticsFetchCommandDTO>;
+    return (await response.body.json()) as Array<OIAnalyticsFetchCommandDTO>;
   }
 
   async register(
@@ -99,139 +96,146 @@ export default class OIAnalyticsClient {
       publicKey
     };
 
-    const connectionSettings = await this.getNetworkSettingsFromRegistration(registration, REGISTRATION_OIANALYTICS_ENDPOINT);
-    const url = `${connectionSettings.host}${REGISTRATION_OIANALYTICS_ENDPOINT}`;
+    const url = new URL(REGISTRATION_OIANALYTICS_ENDPOINT, registration.host);
 
-    const response = await fetch(url, {
+    const response = await HTTPRequest(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
-      timeout: OIANALYTICS_TIMEOUT,
-      agent: connectionSettings.agent
+      proxy: this.getProxyOptions(registration),
+      timeout: OIANALYTICS_TIMEOUT
     });
     if (!response.ok) {
-      throw new Error(`${response.status} - ${response.statusText}`);
+      throw new Error(`${response.statusCode} - ${await response.body.text()}`);
     }
 
-    return { ...(await response.json()), activationCode } as { redirectUrl: string; expirationDate: Instant; activationCode: string };
+    return { ...((await response.body.json()) as object), activationCode } as {
+      redirectUrl: string;
+      expirationDate: Instant;
+      activationCode: string;
+    };
   }
 
   async checkRegistration(registration: OIAnalyticsRegistration): Promise<{ status: string; expired: boolean; accessToken: string }> {
-    const connectionSettings = await this.getNetworkSettingsFromRegistration(registration, registration.checkUrl!);
-    const url = `${connectionSettings.host}${registration.checkUrl}`;
-
-    const response = await fetch(url, {
-      method: 'GET',
-      timeout: OIANALYTICS_TIMEOUT,
-      agent: connectionSettings.agent
-    });
-    if (!response.ok) {
-      throw new Error(`${response.status} - ${response.statusText}`);
+    if (!registration.checkUrl) {
+      throw new Error('No check url specified');
     }
 
-    return (await response.json()) as { status: string; expired: boolean; accessToken: string };
+    const url = new URL(registration.checkUrl, registration.host);
+
+    const response = await HTTPRequest(url, {
+      method: 'GET',
+      proxy: this.getProxyOptions(registration),
+      timeout: OIANALYTICS_TIMEOUT
+    });
+    if (!response.ok) {
+      throw new Error(`${response.statusCode} - ${await response.body.text()}`);
+    }
+
+    return (await response.body.json()) as { status: string; expired: boolean; accessToken: string };
   }
 
   async sendConfiguration(registration: OIAnalyticsRegistration, payload: string): Promise<void> {
-    const connectionSettings = await this.getNetworkSettingsFromRegistration(registration, SEND_CONFIGURATION_OIANALYTICS_ENDPOINT);
-    const url = `${connectionSettings.host}${SEND_CONFIGURATION_OIANALYTICS_ENDPOINT}`;
-    const response = await fetch(url, {
+    const url = new URL(SEND_CONFIGURATION_OIANALYTICS_ENDPOINT, registration.host);
+
+    if (!registration.token) {
+      throw new Error('No registration token');
+    }
+
+    const response = await HTTPRequest(url, {
       method: 'PUT',
-      headers: {
-        authorization: `Bearer ${await this.encryptionService.decryptText(registration.token!)}`,
-        'Content-Type': 'application/json'
-      },
       body: payload,
-      timeout: OIANALYTICS_TIMEOUT,
-      agent: connectionSettings.agent
+      headers: { 'Content-Type': 'application/json' },
+      auth: { type: 'bearer', token: registration.token },
+      proxy: this.getProxyOptions(registration),
+      timeout: OIANALYTICS_TIMEOUT
     });
     if (!response.ok) {
-      throw new Error(`${response.status} - ${response.statusText}`);
+      throw new Error(`${response.statusCode} - ${await response.body.text()}`);
     }
   }
 
   async sendHistoryQuery(registration: OIAnalyticsRegistration, payload: string): Promise<void> {
-    const connectionSettings = await this.getNetworkSettingsFromRegistration(registration, HISTORY_QUERY_OIANALYTICS_ENDPOINT);
-    const url = `${connectionSettings.host}${HISTORY_QUERY_OIANALYTICS_ENDPOINT}`;
-    const response = await fetch(url, {
+    const url = new URL(HISTORY_QUERY_OIANALYTICS_ENDPOINT, registration.host);
+
+    if (!registration.token) {
+      throw new Error('No registration token');
+    }
+
+    const response = await HTTPRequest(url, {
       method: 'PUT',
-      headers: {
-        authorization: `Bearer ${await this.encryptionService.decryptText(registration.token!)}`,
-        'Content-Type': 'application/json'
-      },
       body: payload,
-      timeout: OIANALYTICS_TIMEOUT,
-      agent: connectionSettings.agent
+      headers: { 'Content-Type': 'application/json' },
+      auth: { type: 'bearer', token: registration.token },
+      proxy: this.getProxyOptions(registration),
+      timeout: OIANALYTICS_TIMEOUT
     });
     if (!response.ok) {
-      throw new Error(`${response.status} - ${response.statusText}`);
+      throw new Error(`${response.statusCode} - ${await response.body.text()}`);
     }
   }
 
   async deleteHistoryQuery(registration: OIAnalyticsRegistration, historyId: string): Promise<void> {
-    const connectionSettings = await this.getNetworkSettingsFromRegistration(registration, HISTORY_QUERY_OIANALYTICS_ENDPOINT);
-    const url = `${connectionSettings.host}${HISTORY_QUERY_OIANALYTICS_ENDPOINT}?historyId=${historyId}`;
-    const response = await fetch(url, {
+    const url = new URL(HISTORY_QUERY_OIANALYTICS_ENDPOINT, registration.host);
+
+    if (!registration.token) {
+      throw new Error('No registration token');
+    }
+
+    const response = await HTTPRequest(url, {
       method: 'DELETE',
-      headers: {
-        authorization: `Bearer ${await this.encryptionService.decryptText(registration.token!)}`,
-        'Content-Type': 'application/json'
-      },
-      timeout: OIANALYTICS_TIMEOUT,
-      agent: connectionSettings.agent
+      query: { historyId },
+      headers: { 'Content-Type': 'application/json' },
+      auth: { type: 'bearer', token: registration.token },
+      proxy: this.getProxyOptions(registration),
+      timeout: OIANALYTICS_TIMEOUT
     });
     if (!response.ok) {
-      throw new Error(`${response.status} - ${response.statusText}`);
+      throw new Error(`${response.statusCode} - ${await response.body.text()}`);
     }
   }
 
   async downloadFile(registration: OIAnalyticsRegistration, assetId: string, filename: string): Promise<void> {
-    const endpoint = `${DOWNLOAD_UPDATE_OIANALYTICS_ENDPOINT}?assetId=${assetId}`;
+    const url = new URL(DOWNLOAD_UPDATE_OIANALYTICS_ENDPOINT, registration.host);
 
-    const connectionSettings = await this.getNetworkSettingsFromRegistration(registration, endpoint);
+    if (!registration.token) {
+      throw new Error('No registration token');
+    }
 
-    const response = await fetch(`${connectionSettings.host}${endpoint}`, {
+    const response = await HTTPRequest(url, {
       method: 'GET',
-      timeout: OIANALYTICS_DOWNLOAD_TIMEOUT,
-      agent: connectionSettings.agent,
-      headers: {
-        authorization: `Bearer ${await this.encryptionService.decryptText(registration.token!)}`
-      }
+      query: { assetId },
+      auth: { type: 'bearer', token: registration.token },
+      proxy: this.getProxyOptions(registration),
+      timeout: OIANALYTICS_DOWNLOAD_TIMEOUT
     });
     if (!response.ok) {
-      throw new Error(`${response.status} - ${response.statusText}`);
+      throw new Error(`${response.statusCode} - ${await response.body.text()}`);
     }
-    const buffer = await response.buffer();
+    const buffer = Buffer.from(await response.body.arrayBuffer());
     await fs.writeFile(filename, buffer);
   }
 
-  private async getNetworkSettingsFromRegistration(
-    registrationSettings: RegistrationSettingsCommandDTO,
-    endpoint: string
-  ): Promise<{ host: string; agent: RequestOptions['agent'] | undefined }> {
-    if (registrationSettings.host.endsWith('/')) {
-      registrationSettings.host = registrationSettings.host.slice(0, registrationSettings.host.length - 1);
+  private getProxyOptions(registrationSettings: RegistrationSettingsCommandDTO): ReqProxyOptions | undefined {
+    if (!registrationSettings.useProxy) {
+      return;
     }
-    const agent = createProxyAgent(
-      registrationSettings.useProxy,
-      `${registrationSettings.host}${endpoint}`,
-      registrationSettings.useProxy
-        ? {
-            url: registrationSettings.proxyUrl!,
-            username: registrationSettings.proxyUsername!,
-            password: registrationSettings.proxyPassword
-              ? await this.encryptionService.decryptText(registrationSettings.proxyPassword)
-              : null
-          }
-        : null,
-      registrationSettings.acceptUnauthorized
-    );
+    if (!registrationSettings.proxyUrl) {
+      throw new Error('Proxy URL not specified');
+    }
 
-    return {
-      host: registrationSettings.host,
-      agent
+    const options: ReqProxyOptions = {
+      url: registrationSettings.proxyUrl
     };
+
+    if (registrationSettings.proxyUsername) {
+      options.auth = {
+        type: 'url',
+        username: registrationSettings.proxyUsername,
+        password: registrationSettings.proxyPassword
+      };
+    }
+
+    return options;
   }
 }
