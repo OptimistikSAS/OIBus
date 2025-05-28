@@ -2,7 +2,7 @@ import OIBusTransformer from './oibus-transformer';
 import { ReadStream } from 'node:fs';
 import { Readable } from 'node:stream';
 import { CacheMetadata } from '../../../shared/model/engine.model';
-import { OibFormControl } from '../../../shared/model/form.model';
+import { OIBusObjectAttribute } from '../../../shared/model/form.model';
 
 export default class IgnoreTransformer extends OIBusTransformer {
   public static transformerName = 'ignore';
@@ -26,7 +26,18 @@ export default class IgnoreTransformer extends OIBusTransformer {
     };
   }
 
-  public static get manifestSettings(): Array<OibFormControl> {
-    return [];
+  public static get manifestSettings(): OIBusObjectAttribute {
+    return {
+      type: 'object',
+      key: 'options',
+      translationKey: 'configuration.oibus.manifest.transformers.options',
+      attributes: [],
+      enablingConditions: [],
+      validators: [],
+      displayProperties: {
+        visible: true,
+        wrapInBox: false
+      }
+    };
   }
 }

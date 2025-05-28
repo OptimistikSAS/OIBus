@@ -1,0 +1,27 @@
+<div class="modal-header">
+  @if (elementManifest) {
+    <h3 class="modal-title" [translate]="'configuration.oibus.edit-array-element-modal.title.' + mode"></h3>
+  }
+</div>
+<div class="modal-body">
+  @if (elementManifest) {
+    <form [id]="'edit-array-element-form-' + elementManifest.key" [formGroup]="form" (ngSubmit)="submit()">
+      <ng-container [formGroupName]="elementManifest.key">
+        <oib-oibus-object-form-control
+          [scanModes]="scanModes"
+          [certificates]="certificates"
+          [group]="asFormGroup(form.controls[elementManifest.key])"
+          [objectAttribute]="elementManifest"
+        />
+      </ng-container>
+    </form>
+  }
+</div>
+<div class="modal-footer d-flex justify-content-between">
+  <div class="btn-group">
+    @if (elementManifest) {
+      <button [oib-save-button]="state" [form]="'edit-array-element-form-' + elementManifest.key"></button>
+    }
+    <button type="button" class="btn btn-cancel" (click)="dismiss()" translate="common.close" id="cancel-button"></button>
+  </div>
+</div>

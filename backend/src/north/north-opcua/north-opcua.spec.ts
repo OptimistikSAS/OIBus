@@ -79,11 +79,9 @@ describe('NorthOPCUA', () => {
     configuration.settings = {
       url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
       retryInterval: 10000,
-      readTimeout: 15000,
       authentication: {
         type: 'none',
-        password: null,
-        keyFilePath: null
+        password: null
       },
       securityMode: 'none',
       securityPolicy: 'none',
@@ -122,7 +120,6 @@ describe('NorthOPCUA', () => {
         endpointMustExist: false,
         keepPendingSessionsOnDisconnect: false,
         keepSessionAlive: false,
-        requestedSessionTimeout: 15000,
         securityMode: 1,
         securityPolicy: 'none'
       }
@@ -533,11 +530,9 @@ describe('NorthOPCUA test connection', () => {
     configuration.settings = {
       url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
       retryInterval: 10000,
-      readTimeout: 15000,
       authentication: {
         type: 'none',
-        password: null,
-        keyFilePath: null
+        password: null
       },
       securityMode: 'sign-and-encrypt',
       securityPolicy: 'none',
@@ -693,7 +688,6 @@ describe('NorthOPCUA test connection', () => {
         endpointMustExist: false,
         keepPendingSessionsOnDisconnect: false,
         keepSessionAlive: false,
-        requestedSessionTimeout: 15000,
         securityMode: 3,
         securityPolicy: 'none'
       },
@@ -701,7 +695,7 @@ describe('NorthOPCUA test connection', () => {
     });
 
     const result2 = await north.createSessionConfigs(
-      { ...configuration.settings, securityMode: 'sign', securityPolicy: null },
+      { ...configuration.settings, securityMode: 'sign', securityPolicy: undefined },
       {} as OPCUACertificateManager,
       encryptionService,
       'oibus'
@@ -715,9 +709,7 @@ describe('NorthOPCUA test connection', () => {
         endpointMustExist: false,
         keepPendingSessionsOnDisconnect: false,
         keepSessionAlive: false,
-        requestedSessionTimeout: 15000,
-        securityMode: 2,
-        securityPolicy: undefined
+        securityMode: 2
       },
       userIdentity: { type: 0 }
     });

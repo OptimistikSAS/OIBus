@@ -10,8 +10,7 @@ import { ChooseNorthConnectorTypeModalComponent } from './choose-north-connector
 import { RouterLink } from '@angular/router';
 import { AsyncPipe } from '@angular/common';
 import { LoadingSpinnerComponent } from '../shared/loading-spinner/loading-spinner.component';
-import { NonNullableFormBuilder } from '@angular/forms';
-import { formDirectives } from '../shared/form-directives';
+import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { createPageFromArray, Page } from '../../../../backend/shared/model/types';
 import { emptyPage } from '../shared/test-utils';
 import { PaginationComponent } from '../shared/pagination/pagination.component';
@@ -25,10 +24,10 @@ const PAGE_SIZE = 15;
 @Component({
   selector: 'oib-north-list',
   imports: [
+    ReactiveFormsModule,
     TranslateDirective,
     RouterLink,
     LoadingSpinnerComponent,
-    ...formDirectives,
     PaginationComponent,
     AsyncPipe,
     LegendComponent,

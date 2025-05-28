@@ -8,10 +8,10 @@ import os from 'node:os';
 import EncryptionService, { CERT_FILE_NAME, CERT_PRIVATE_KEY_FILE_NAME, CERT_PUBLIC_KEY_FILE_NAME } from './encryption.service';
 
 import * as utils from './utils';
-import { OibFormControl } from '../../shared/model/form.model';
 
 import { SouthConnectorCommandDTO, SouthConnectorDTO } from '../../shared/model/south-connector.model';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
+import { OIBusArrayAttribute, OIBusObjectAttribute, OIBusSecretAttribute, OIBusStringAttribute } from '../../shared/model/form.model';
 
 jest.mock('./utils');
 jest.mock('node:fs/promises');
@@ -26,62 +26,70 @@ const cryptoSettings = {
   securityKey: Buffer.from('0123456789abcdef').toString('base64')
 };
 
-const settings: Array<OibFormControl> = [
-  {
-    key: 'field1',
-    type: 'OibText',
-    translationKey: 'Field 1'
-  },
-  {
-    key: 'field2',
-    type: 'OibSecret',
-    translationKey: 'Field 2'
-  },
-  {
-    key: 'field3',
-    type: 'OibText',
-    translationKey: 'Field 3'
-  },
-  {
-    key: 'field4',
-    type: 'OibArray',
-    translationKey: 'Field 4',
-    content: [
-      {
-        key: 'fieldArray1',
-        type: 'OibText',
-        translationKey: 'Field array 1'
-      },
-      {
-        key: 'fieldArray2',
-        type: 'OibSecret',
-        translationKey: 'Field array 2'
-      },
-      {
-        key: 'fieldArray3',
-        type: 'OibSecret',
-        translationKey: 'Field array 3'
-      }
-    ]
-  },
-  {
-    key: 'field5',
-    type: 'OibFormGroup',
-    translationKey: 'Field 5',
-    content: [
-      {
-        key: 'fieldGroup1',
-        type: 'OibText',
-        translationKey: 'Field group 1'
-      },
-      {
-        key: 'fieldGroup2',
-        type: 'OibSecret',
-        translationKey: 'Field group 2'
-      }
-    ]
-  }
-];
+const manifest: OIBusObjectAttribute = {
+  type: 'object',
+  attributes: [
+    {
+      key: 'field1',
+      type: 'string',
+      translationKey: 'Field 1'
+    } as OIBusStringAttribute,
+    {
+      key: 'field2',
+      type: 'secret',
+      translationKey: 'Field 2'
+    } as OIBusSecretAttribute,
+    {
+      key: 'field3',
+      type: 'string',
+      translationKey: 'Field 3'
+    } as OIBusStringAttribute,
+    {
+      key: 'field4',
+      type: 'array',
+      translationKey: 'Field 4',
+      paginate: false,
+      numberOfElementPerPage: 0,
+      rootAttribute: {
+        type: 'object',
+        attributes: [
+          {
+            key: 'fieldArray1',
+            type: 'string',
+            translationKey: 'Field array 1'
+          } as OIBusStringAttribute,
+          {
+            key: 'fieldArray2',
+            type: 'secret',
+            translationKey: 'Field array 2'
+          } as OIBusSecretAttribute,
+          {
+            key: 'fieldArray3',
+            type: 'secret',
+            translationKey: 'Field array 3'
+          } as OIBusSecretAttribute
+        ]
+      } as OIBusObjectAttribute
+    } as OIBusArrayAttribute,
+    {
+      key: 'field5',
+      type: 'object',
+      translationKey: 'Field 5',
+      attributes: [
+        {
+          key: 'fieldGroup1',
+          type: 'string',
+          translationKey: 'Field group 1'
+        } as OIBusStringAttribute,
+        {
+          key: 'fieldGroup2',
+          type: 'secret',
+          translationKey: 'Field group 2'
+        } as OIBusSecretAttribute
+      ]
+    } as OIBusObjectAttribute
+  ]
+} as OIBusObjectAttribute;
 
 const certFolder = 'certFolder';
 describe('Encryption service with crypto settings', () => {
@@ -305,7 +313,7 @@ describe('Encryption service with crypto settings', () => {
       }
     };
 
-    expect(await encryptionService.encryptConnectorSecrets(command.settings, connector.settings, settings)).toEqual(expectedCommand);
+    expect(await encryptionService.encryptConnectorSecrets(command.settings, connector.settings, manifest)).toEqual(expectedCommand);
   });
 
   it('should properly encrypt connector secrets when no secret provided', async () => {
@@ -351,7 +359,7 @@ describe('Encryption service with crypto settings', () => {
       }
     };
 
-    expect(await encryptionService.encryptConnectorSecrets(command.settings, null, settings)).toEqual(expectedCommand);
+    expect(await encryptionService.encryptConnectorSecrets(command.settings, null, manifest)).toEqual(expectedCommand);
   });
 
   it('should properly keep existing and encrypted connector secrets', async () => {
@@ -416,7 +424,7 @@ describe('Encryption service with crypto settings', () => {
       final
     }));
 
-    expect(await encryptionService.encryptConnectorSecrets(command.settings, connector.settings, settings)).toEqual(expectedCommand);
+    expect(await encryptionService.encryptConnectorSecrets(command.settings, connector.settings, manifest)).toEqual(expectedCommand);
   });
 
   it('should properly decrypt connector secrets', async () => {
@@ -461,7 +469,7 @@ describe('Encryption service with crypto settings', () => {
       }
     };
 
-    expect(await encryptionService.decryptConnectorSecrets(command.settings, settings)).toEqual(expectedCommand);
+    expect(await encryptionService.decryptConnectorSecrets(command.settings, manifest)).toEqual(expectedCommand);
   });
 
   it('should properly filter out secret', () => {
@@ -486,7 +494,7 @@ describe('Encryption service with crypto settings', () => {
       } as unknown as SouthSettings
     } as SouthConnectorDTO<SouthSettings, SouthItemSettings>;
 
-    expect(encryptionService.filterSecrets(connector.settings, settings)).toEqual({
+    expect(encryptionService.filterSecrets(connector.settings, manifest)).toEqual({
       field1: 'not a secret',
       field2: '',
       field3: 'not a secret',
@@ -537,6 +545,6 @@ describe('Encryption service with crypto settings', () => {
       }
     };
 
-    expect(await encryptionService.decryptSecretsWithPrivateKey(command.settings, settings, 'private key')).toEqual(expectedCommand);
+    expect(await encryptionService.decryptSecretsWithPrivateKey(command.settings, manifest, 'private key')).toEqual(expectedCommand);
   });
 });
