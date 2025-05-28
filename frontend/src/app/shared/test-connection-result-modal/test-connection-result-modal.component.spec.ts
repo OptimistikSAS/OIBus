@@ -2,7 +2,7 @@ import { TestConnectionResultModalComponent } from './test-connection-result-mod
 import { ComponentTester, createMock } from 'ngx-speculoos';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { fakeAsync, TestBed } from '@angular/core/testing';
-import { SouthConnectorCommandDTO, SouthConnectorDTO } from '../../../../../backend/shared/model/south-connector.model';
+import { SouthConnectorCommandDTO } from '../../../../../backend/shared/model/south-connector.model';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { NorthConnectorService } from '../../services/north-connector.service';
@@ -12,6 +12,7 @@ import { NorthConnectorCommandDTO, NorthConnectorDTO } from '../../../../../back
 import { HistoryQueryService } from '../../services/history-query.service';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
+import testData from '../../../../../backend/src/tests/utils/test-data';
 
 class TestConnectionResultModalComponentTester extends ComponentTester<TestConnectionResultModalComponent> {
   constructor() {
@@ -62,20 +63,8 @@ describe('TestConnectionResultModalComponent', () => {
   });
 
   describe('South type', () => {
-    const southConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> = {
-      id: 'id1',
-      type: 'mssql',
-      name: 'My South Connector 1',
-      description: 'My South connector description',
-      enabled: true,
-      settings: {} as SouthSettings,
-      items: []
-    };
-
-    const southCommand: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> = {
-      name: 'test',
-      settings: {}
-    } as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
+    const southConnector = testData.south.list[0];
+    const southCommand = testData.south.command;
 
     beforeEach(() => {
       southConnectorService.testConnection.and.returnValue(of(undefined));

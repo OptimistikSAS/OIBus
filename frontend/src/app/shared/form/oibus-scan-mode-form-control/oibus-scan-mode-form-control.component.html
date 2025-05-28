@@ -1,0 +1,10 @@
+<div class="form-group">
+  <label [for]="scanModeAttribute().key" class="form-label" [translate]="scanModeAttribute().translationKey"></label>
+  <select class="form-select" [id]="scanModeAttribute().key" [formControlName]="scanModeAttribute().key">
+    <option [ngValue]="null"></option>
+    @for (scanMode of scanModes(); track scanMode.id) {
+      <option [value]="scanMode.id">{{ scanMode.name }}</option>
+    }
+  </select>
+  <val-errors [controlName]="scanModeAttribute().key" />
+</div>

@@ -10,8 +10,8 @@ import OIBusTimeValuesToJSONTransformer from '../../service/transformers/oibus-t
 import OIBusTimeValuesToMQTTTransformer from '../../service/transformers/oibus-time-values-to-mqtt-transformer';
 import OIBusTimeValuesToOPCUATransformer from '../../service/transformers/oibus-time-values-to-opcua-transformer';
 import OIBusTimeValuesToModbusTransformer from '../../service/transformers/oibus-time-values-to-modbus-transformer';
-import { OibFormControl } from '../../../shared/model/form.model';
 import IgnoreTransformer from '../../service/transformers/ignore-transformer';
+import { OIBusObjectAttribute } from '../../../shared/model/form.model';
 
 const TRANSFORMERS_TABLE = 'transformers';
 const PAGE_SIZE = 10;
@@ -209,7 +209,7 @@ export const toTransformer = (result: Record<string, string>): Transformer => {
       name: result.name as string,
       description: result.description as string,
       customCode: result.custom_code as string,
-      customManifest: JSON.parse(result.custom_manifest as string) as Array<OibFormControl>
+      customManifest: JSON.parse(result.custom_manifest as string) as OIBusObjectAttribute
     };
   }
 };

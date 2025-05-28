@@ -1,19 +1,19 @@
 import Joi, { AnySchema } from 'joi';
 import {
-  OibCheckboxFormControl,
-  OibCodeBlockFormControl,
-  OibArrayFormControl,
-  OibFormControl,
-  OibFormGroup,
-  OibNumberFormControl,
-  OibScanModeFormControl,
-  OibSecretFormControl,
-  OibSelectFormControl,
-  OibTextAreaFormControl,
-  OibTextFormControl,
-  OibTimezoneFormControl,
-  OibCertificateFormControl,
-  OibTransformerFormControl
+  OIBusArrayAttribute,
+  OIBusAttribute,
+  OIBusAttributeValidator,
+  OIBusBooleanAttribute,
+  OIBusCertificateAttribute,
+  OIBusCodeAttribute,
+  OIBusInstantAttribute,
+  OIBusNumberAttribute,
+  OIBusObjectAttribute,
+  OIBusScanModeAttribute,
+  OIBusSecretAttribute,
+  OIBusStringAttribute,
+  OIBusStringSelectAttribute,
+  OIBusTimezoneAttribute
 } from '../../../../shared/model/form.model';
 
 export default class JoiValidator {
@@ -23,171 +23,152 @@ export default class JoiValidator {
     });
   }
 
-  async validateSettings(settings: Array<OibFormControl>, dto: object): Promise<void> {
-    const schema = this.generateJoiSchema(settings);
+  async validateSettings(settings: OIBusObjectAttribute, dto: object): Promise<void> {
+    const schema = this.generateFormGroupJoiSchema(settings)[settings.key];
     await this.validate(schema, dto);
   }
 
-  public generateJoiSchema(settings: Array<OibFormControl>): Joi.ObjectSchema {
-    let schema = Joi.object({});
-    settings.forEach(setting => {
-      schema = schema.append(this.generateJoiSchemaFromOibFormControl(setting));
-    });
-
-    return schema;
+  public generateJoiSchema(settings: OIBusObjectAttribute): Joi.ObjectSchema {
+    return Joi.object(this.generateJoiSchemaFromOibFormControl(settings));
   }
 
-  private generateJoiSchemaFromOibFormControl(oibFormControl: OibFormControl): Record<string, AnySchema> {
+  private generateJoiSchemaFromOibFormControl(oibFormControl: OIBusAttribute): Record<string, AnySchema> {
     switch (oibFormControl.type) {
-      case 'OibText':
+      case 'string':
+      case 'secret':
+      case 'instant':
+      case 'scan-mode':
+      case 'certificate':
+      case 'timezone':
+      case 'code':
         return this.generateTextJoiSchema(oibFormControl);
-      case 'OibNumber':
+      case 'number':
         return this.generateNumberJoiSchema(oibFormControl);
-      case 'OibSelect':
+      case 'string-select':
         return this.generateSelectJoiSchema(oibFormControl);
-      case 'OibSecret':
-        return this.generateTextJoiSchema(oibFormControl);
-      case 'OibTextArea':
-        return this.generateTextJoiSchema(oibFormControl);
-      case 'OibCodeBlock':
-        return this.generateTextJoiSchema(oibFormControl);
-      case 'OibCheckbox':
+      case 'boolean':
         return this.generateBooleanJoiSchema(oibFormControl);
-      case 'OibScanMode':
-        return this.generateTextJoiSchema(oibFormControl);
-      case 'OibCertificate':
-        return this.generateTextJoiSchema(oibFormControl);
-      case 'OibTimezone':
-        return this.generateTextJoiSchema(oibFormControl);
-      case 'OibFormGroup':
+      case 'object':
         return this.generateFormGroupJoiSchema(oibFormControl);
-      case 'OibArray':
+      case 'array':
         return this.generateFormArrayJoiSchema(oibFormControl);
-      case 'OibTransformer':
-        return this.generateFormTransformerJoiSchema(oibFormControl);
     }
   }
 
   private generateTextJoiSchema(
     formControl:
-      | OibTextFormControl
-      | OibSecretFormControl
-      | OibTextAreaFormControl
-      | OibCodeBlockFormControl
-      | OibCertificateFormControl
-      | OibScanModeFormControl
-      | OibTimezoneFormControl
+      | OIBusStringAttribute
+      | OIBusSecretAttribute
+      | OIBusCodeAttribute
+      | OIBusCertificateAttribute
+      | OIBusScanModeAttribute
+      | OIBusTimezoneAttribute
+      | OIBusInstantAttribute
   ): Record<string, AnySchema> {
     let schema = Joi.string();
     let isRequired = false;
     formControl.validators?.forEach(validator => {
-      switch (validator.key) {
-        case 'required':
+      switch (validator.type) {
+        case 'REQUIRED':
           schema = schema.required();
           isRequired = true;
           break;
-        case 'pattern':
-          schema = schema.pattern(new RegExp(validator.params.pattern));
-          break;
-        case 'minLength':
-          schema = schema.min(validator.params.minLength);
-          break;
-        case 'maxLength':
-          schema = schema.max(validator.params.maxLength);
+        case 'PATTERN':
+          schema = schema.pattern(new RegExp(validator.arguments[0]));
           break;
       }
     });
     if (!isRequired) {
       schema = schema.allow(null, '');
     }
-    schema = this.handleConditionalDisplay(formControl, schema) as Joi.StringSchema;
     return {
       [formControl.key]: schema
     };
   }
 
-  private generateNumberJoiSchema(formControl: OibNumberFormControl): Record<string, AnySchema> {
+  private generateNumberJoiSchema(formControl: OIBusNumberAttribute): Record<string, AnySchema> {
     let schema = Joi.number();
     let isRequired = false;
     formControl.validators?.forEach(validator => {
-      switch (validator.key) {
-        case 'required':
+      switch (validator.type) {
+        case 'REQUIRED':
           schema = schema.required();
           isRequired = true;
           break;
-        case 'min':
-          schema = schema.min(validator.params.min);
+        case 'MINIMUM':
+          schema = schema.min(parseInt(validator.arguments[0]));
           break;
-        case 'max':
-          schema = schema.max(validator.params.max);
+        case 'MAXIMUM':
+          schema = schema.max(parseInt(validator.arguments[0]));
           break;
       }
     });
     if (!isRequired) {
       schema = schema.allow(null);
     }
-    schema = this.handleConditionalDisplay(formControl, schema) as Joi.NumberSchema;
     return {
       [formControl.key]: schema
     };
   }
 
-  private generateSelectJoiSchema(formControl: OibSelectFormControl): Record<string, AnySchema> {
+  private generateSelectJoiSchema(formControl: OIBusStringSelectAttribute): Record<string, AnySchema> {
     let schema = Joi.string();
     formControl.validators?.forEach(validator => {
-      switch (validator.key) {
-        case 'required':
+      switch (validator.type) {
+        case 'REQUIRED':
           schema = schema.required();
           break;
       }
     });
-    schema = schema.valid(...formControl.options);
-    schema = this.handleConditionalDisplay(formControl, schema) as Joi.StringSchema;
+    schema = schema.valid(...formControl.selectableValues);
     return {
       [formControl.key]: schema
     };
   }
 
-  private generateBooleanJoiSchema(formControl: OibCheckboxFormControl): Record<string, AnySchema> {
+  private generateBooleanJoiSchema(formControl: OIBusBooleanAttribute): Record<string, AnySchema> {
     let schema = Joi.boolean();
     formControl.validators?.forEach(validator => {
-      switch (validator.key) {
-        case 'required':
+      switch (validator.type) {
+        case 'REQUIRED':
           schema = schema.required();
           break;
       }
     });
     schema = schema.falsy(0).truthy(1);
-    schema = this.handleConditionalDisplay(formControl, schema) as Joi.BooleanSchema;
-
     return {
       [formControl.key]: schema
     };
   }
 
-  private generateFormGroupJoiSchema(formControl: OibFormGroup): Record<string, AnySchema> {
+  generateFormGroupJoiSchema(objectAttribute: OIBusObjectAttribute): Record<string, Joi.ObjectSchema> {
     const subSchema: Record<string, AnySchema> = {};
-
-    formControl.content.forEach(formControl => {
+    objectAttribute.attributes.forEach(formControl => {
       subSchema[formControl.key] = this.generateJoiSchemaFromOibFormControl(formControl)[formControl.key];
+      const enablingCondition = objectAttribute.enablingConditions.find(element => element.targetPathFromRoot === formControl.key);
+      if (enablingCondition) {
+        subSchema[formControl.key] = subSchema[formControl.key].when(enablingCondition.referralPathFromRoot, {
+          is: Joi.any().valid(...enablingCondition.values),
+          then: subSchema[formControl.key].required(),
+          otherwise: subSchema[formControl.key].allow('').optional()
+        });
+      }
     });
     let schema = Joi.object(subSchema);
-
-    formControl.validators?.forEach(validator => {
-      switch (validator.key) {
-        case 'required':
+    objectAttribute.validators.forEach(validator => {
+      switch (validator.type) {
+        case 'REQUIRED':
           schema = schema.required();
           break;
       }
     });
-    schema = this.handleConditionalDisplay(formControl, schema) as Joi.ObjectSchema;
     return {
-      [formControl.key]: schema
+      [objectAttribute.key]: schema
     };
   }
 
-  private generateFormArrayJoiSchema(formControl: OibArrayFormControl): Record<string, AnySchema> {
-    const { subSchema, customValidators } = this.buildArraySubSchemaAndValidators(formControl.content);
+  private generateFormArrayJoiSchema(formControl: OIBusArrayAttribute): Record<string, AnySchema> {
+    const { subSchema, customValidators } = this.buildArraySubSchemaAndValidators(formControl.rootAttribute.attributes);
 
     let schema = Joi.array().items(Joi.object(subSchema));
 
@@ -197,38 +178,26 @@ export default class JoiValidator {
     if (this.isMqttItemsArray(formControl)) {
       schema = schema.custom(this.mqttTopicOverlapValidator, 'MQTT topic overlap validation');
     }
-
-    schema = this.handleConditionalDisplay(formControl, schema) as Joi.ArraySchema;
-
     return {
       [formControl.key]: schema
     };
   }
 
-  private generateFormTransformerJoiSchema(formControl: OibTransformerFormControl) {
-    const subSchema: Record<string, AnySchema> = {};
-
-    const schema = Joi.object(subSchema).required();
-    return {
-      [formControl.key]: schema
-    };
-  }
-
-  private buildArraySubSchemaAndValidators(content: Array<OibFormControl>) {
+  private buildArraySubSchemaAndValidators(content: Array<OIBusAttribute>) {
     const subSchema: Record<string, AnySchema> = {};
     const customValidators = {
-      unique: [] as Array<string>,
-      singleTrue: [] as Array<string>
+      UNIQUE: [] as Array<string>,
+      SINGLE_TRUE: [] as Array<string>
     };
 
     content.forEach(subControl => {
       subSchema[subControl.key] = this.generateJoiSchemaFromOibFormControl(subControl)[subControl.key];
 
       subControl.validators?.forEach(validator => {
-        if (validator.key === 'unique') {
-          customValidators.unique.push(subControl.key);
-        } else if (validator.key === 'singleTrue') {
-          customValidators.singleTrue.push(subControl.key);
+        if (validator.type === 'UNIQUE') {
+          customValidators.UNIQUE.push(subControl.key);
+        } else if (validator.type === 'SINGLE_TRUE') {
+          customValidators.SINGLE_TRUE.push(subControl.key);
         }
       });
     });
@@ -238,41 +207,26 @@ export default class JoiValidator {
 
   private applyCustomArrayValidators(
     schema: Joi.ArraySchema,
-    validators: { unique: Array<string>; singleTrue: Array<string> }
+    validators: { UNIQUE: Array<string>; SINGLE_TRUE: Array<string> }
   ): Joi.ArraySchema {
-    validators.unique.forEach(fieldKey => {
+    validators.UNIQUE.forEach(fieldKey => {
       schema = schema.unique(fieldKey);
     });
 
-    validators.singleTrue.forEach(fieldKey => {
-      schema = schema.custom(this.generateSingleTrueValidator(fieldKey), `singleTrue validation for ${fieldKey}`);
+    validators.SINGLE_TRUE.forEach(fieldKey => {
+      schema = schema.custom(this.generateSingleTrueValidator(fieldKey), `SINGLE_TRUE validation for ${fieldKey}`);
     });
 
     return schema;
   }
 
-  private applyArrayLevelValidators(
-    schema: Joi.ArraySchema,
-    validators?: Array<{ key: string; params?: Record<string, unknown> }>
-  ): Joi.ArraySchema {
+  private applyArrayLevelValidators(schema: Joi.ArraySchema, validators?: Array<OIBusAttributeValidator>): Joi.ArraySchema {
     if (!validators) return schema;
 
     validators.forEach(validator => {
-      switch (validator.key) {
-        case 'required':
+      switch (validator.type) {
+        case 'REQUIRED':
           schema = schema.required();
-          break;
-        case 'min':
-          schema = schema.min(Number(validator.params?.min));
-          break;
-        case 'minLength':
-          schema = schema.min(Number(validator.params?.minLength));
-          break;
-        case 'max':
-          schema = schema.max(Number(validator.params?.max));
-          break;
-        case 'maxLength':
-          schema = schema.max(Number(validator.params?.maxLength));
           break;
       }
     });
@@ -292,20 +246,8 @@ export default class JoiValidator {
     };
   }
 
-  private handleConditionalDisplay(formControl: OibFormControl, schema: AnySchema): AnySchema {
-    if (formControl.conditionalDisplay) {
-      const condition = formControl.conditionalDisplay;
-      schema = schema.when(condition.field, {
-        is: Joi.any().valid(...condition.values),
-        then: schema.required(),
-        otherwise: schema.allow('').optional()
-      });
-    }
-    return schema;
-  }
-
-  private isMqttItemsArray(formControl: OibArrayFormControl): boolean {
-    return formControl.content.some(control => control.key === 'topic');
+  private isMqttItemsArray(formControl: OIBusArrayAttribute): boolean {
+    return formControl.rootAttribute.attributes.some(control => control.key === 'topic');
   }
 
   private mqttTopicOverlapValidator: Joi.CustomValidator = (value: Array<Record<string, unknown>>, helpers: Joi.CustomHelpers) => {
