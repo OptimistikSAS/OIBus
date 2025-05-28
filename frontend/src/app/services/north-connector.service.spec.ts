@@ -4,7 +4,6 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 
 import { NorthConnectorService } from './north-connector.service';
 import {
-  NorthConnectorCommandDTO,
   NorthConnectorDTO,
   NorthConnectorLightDTO,
   NorthConnectorManifest,
@@ -14,6 +13,7 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { SouthConnectorLightDTO } from '../../../../backend/shared/model/south-connector.model';
 import { NorthSettings } from '../../../../backend/shared/model/north-settings.model';
 import { CacheMetadata } from '../../../../backend/shared/model/engine.model';
+import testData from '../../../../backend/src/tests/utils/test-data';
 
 describe('NorthConnectorService', () => {
   let http: HttpTestingController;
@@ -42,12 +42,12 @@ describe('NorthConnectorService', () => {
   });
 
   it('should get a North connector manifest', () => {
-    let expectedNorthConnectorSchema: NorthConnectorManifest | null = null;
-    service.getNorthConnectorTypeManifest('console').subscribe(manifest => (expectedNorthConnectorSchema = manifest));
+    let expectedManifest: NorthConnectorManifest | null = null;
+    service.getNorthConnectorTypeManifest('console').subscribe(manifest => (expectedManifest = manifest));
 
-    http.expectOne('/api/north-types/console').flush({ id: 'console' });
+    http.expectOne('/api/north-types/console').flush(testData.north.manifest);
 
-    expect(expectedNorthConnectorSchema!).toEqual({ id: 'console' } as NorthConnectorManifest);
+    expect(expectedManifest!).toEqual(testData.north.manifest);
   });
 
   it('should get all North connectors', () => {
@@ -71,47 +71,17 @@ describe('NorthConnectorService', () => {
 
   it('should get a North connector schema', () => {
     let expectedNorthConnectorType: object | null = null;
-    const northConnectorSchema = {};
+    const manifest = testData.north.manifest;
 
     service.getSchema('SQL').subscribe(c => (expectedNorthConnectorType = c));
 
-    http.expectOne({ url: '/api/north-type/SQL', method: 'GET' }).flush(northConnectorSchema);
-    expect(expectedNorthConnectorType!).toEqual(northConnectorSchema);
+    http.expectOne({ url: '/api/north-type/SQL', method: 'GET' }).flush(manifest);
+    expect(expectedNorthConnectorType!).toEqual(manifest);
   });
 
   it('should create a North connector', () => {
     let done = false;
-    const command: NorthConnectorCommandDTO<NorthSettings> = {
-      name: 'myNorthConnector',
-      description: 'a test north connector',
-      enabled: true,
-      type: 'file-writer',
-      settings: {} as NorthSettings,
-      caching: {
-        trigger: {
-          scanModeId: 'scanModeId1',
-          scanModeName: null,
-          numberOfElements: 1_000,
-          numberOfFiles: 1
-        },
-        throttling: {
-          runMinDelay: 200,
-          maxSize: 30,
-          maxNumberOfElements: 10_000
-        },
-        error: {
-          retryInterval: 1_000,
-          retryCount: 3,
-          retentionDuration: 24
-        },
-        archive: {
-          enabled: false,
-          retentionDuration: 0
-        }
-      },
-      subscriptions: [],
-      transformers: []
-    };
+    const command = testData.north.command;
 
     service.create(command, '').subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'POST', url: '/api/north' });
@@ -122,37 +92,7 @@ describe('NorthConnectorService', () => {
 
   it('should update a North connector', () => {
     let done = false;
-    const command: NorthConnectorCommandDTO<NorthSettings> = {
-      name: 'myNorthConnector',
-      description: 'a test north connector',
-      enabled: true,
-      type: 'file-writer',
-      settings: {} as NorthSettings,
-      caching: {
-        trigger: {
-          scanModeId: 'scanModeId1',
-          scanModeName: null,
-          numberOfElements: 1_000,
-          numberOfFiles: 1
-        },
-        throttling: {
-          runMinDelay: 200,
-          maxSize: 30,
-          maxNumberOfElements: 10_000
-        },
-        error: {
-          retryInterval: 1_000,
-          retryCount: 3,
-          retentionDuration: 24
-        },
-        archive: {
-          enabled: false,
-          retentionDuration: 0
-        }
-      },
-      subscriptions: [],
-      transformers: []
-    };
+    const command = testData.north.command;
 
     service.update('id1', command).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'PUT', url: '/api/north/id1' });
@@ -274,37 +214,7 @@ describe('NorthConnectorService', () => {
 
   it('should test a North connector connection', () => {
     let done = false;
-    const command: NorthConnectorCommandDTO<NorthSettings> = {
-      name: 'myNorthConnector',
-      description: 'a test north connector',
-      enabled: true,
-      type: 'file-writer',
-      settings: {} as NorthSettings,
-      caching: {
-        trigger: {
-          scanModeId: 'scanModeId1',
-          scanModeName: null,
-          numberOfElements: 1_000,
-          numberOfFiles: 1
-        },
-        throttling: {
-          runMinDelay: 200,
-          maxSize: 30,
-          maxNumberOfElements: 10_000
-        },
-        error: {
-          retryInterval: 1_000,
-          retryCount: 3,
-          retentionDuration: 24
-        },
-        archive: {
-          enabled: false,
-          retentionDuration: 0
-        }
-      },
-      subscriptions: [],
-      transformers: []
-    };
+    const command = testData.north.command;
 
     service.testConnection('id1', command).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'PUT', url: '/api/north/id1/test-connection' });

@@ -3,19 +3,18 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { SouthConnectorService } from './south-connector.service';
 import {
-  SouthConnectorItemCommandDTO,
-  SouthConnectorItemDTO,
-  SouthConnectorCommandDTO,
   SouthConnectorDTO,
+  SouthConnectorItemDTO,
+  SouthConnectorLightDTO,
   SouthConnectorManifest,
-  SouthType,
-  SouthConnectorLightDTO
+  SouthType
 } from '../../../../backend/shared/model/south-connector.model';
 import { Page } from '../../../../backend/shared/model/types';
 import { toPage } from '../shared/test-utils';
 import { DownloadService } from './download.service';
 import { provideHttpClient } from '@angular/common/http';
 import { SouthItemSettings, SouthSettings } from '../../../../backend/shared/model/south-settings.model';
+import testData from '../../../../backend/src/tests/utils/test-data';
 
 describe('SouthConnectorService', () => {
   let http: HttpTestingController;
@@ -46,12 +45,12 @@ describe('SouthConnectorService', () => {
   });
 
   it('should get a South connector manifest', () => {
-    let expectedSouthConnectorSchema: SouthConnectorManifest | null = null;
-    service.getSouthConnectorTypeManifest('mqtt').subscribe(manifest => (expectedSouthConnectorSchema = manifest));
+    let expectedManifest: SouthConnectorManifest | null = null;
+    service.getSouthConnectorTypeManifest('mqtt').subscribe(manifest => (expectedManifest = manifest));
 
-    http.expectOne('/api/south-types/mqtt').flush({ id: 'mqtt' });
+    http.expectOne('/api/south-types/mqtt').flush(testData.south.manifest);
 
-    expect(expectedSouthConnectorSchema!).toEqual({ id: 'mqtt' } as SouthConnectorManifest);
+    expect(expectedManifest!).toEqual(testData.south.manifest);
   });
 
   it('should get all South connectors', () => {
@@ -85,14 +84,7 @@ describe('SouthConnectorService', () => {
 
   it('should create a South connector', () => {
     let done = false;
-    const command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> = {
-      name: 'mySouthConnector',
-      description: 'a test south connector',
-      enabled: true,
-      type: 'mssql',
-      settings: {} as SouthSettings,
-      items: []
-    };
+    const command = testData.south.command;
 
     service.create(command, '').subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'POST', url: '/api/south' });
@@ -103,14 +95,7 @@ describe('SouthConnectorService', () => {
 
   it('should update a South connector', () => {
     let done = false;
-    const command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> = {
-      name: 'mySouthConnector',
-      description: 'a test south connector',
-      enabled: true,
-      type: 'mssql',
-      settings: {} as SouthSettings,
-      items: []
-    };
+    const command = testData.south.command;
 
     service.update('id1', command).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'PUT', url: '/api/south/id1' });
@@ -151,14 +136,7 @@ describe('SouthConnectorService', () => {
 
   it('should create a South connector item', () => {
     let done = false;
-    const command: SouthConnectorItemCommandDTO<any> = {
-      id: null,
-      name: 'myPointId',
-      enabled: false,
-      scanModeId: 'scanModeId',
-      scanModeName: null,
-      settings: {}
-    };
+    const command = testData.south.itemCommand;
 
     service.createItem('id1', command).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'POST', url: '/api/south/id1/items' });
@@ -169,14 +147,7 @@ describe('SouthConnectorService', () => {
 
   it('should update a South connector item', () => {
     let done = false;
-    const command: SouthConnectorItemCommandDTO<any> = {
-      id: null,
-      name: 'myPointId',
-      enabled: true,
-      scanModeId: 'scanModeId',
-      scanModeName: null,
-      settings: {}
-    };
+    const command = testData.south.itemCommand;
 
     service.updateItem('id1', 'southItemId1', command).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'PUT', url: '/api/south/id1/items/southItemId1' });
@@ -301,14 +272,7 @@ describe('SouthConnectorService', () => {
 
   it('should test a South connector connection', () => {
     let done = false;
-    const command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> = {
-      name: 'mySouthConnector',
-      description: 'a test south connector',
-      enabled: true,
-      type: 'mssql',
-      settings: {} as SouthSettings,
-      items: []
-    };
+    const command = testData.south.command;
 
     service.testConnection('id1', command).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'PUT', url: '/api/south/id1/test-connection' });

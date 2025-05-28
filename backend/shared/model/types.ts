@@ -1,4 +1,4 @@
-import { OibFormControl } from './form.model';
+import { OIBusObjectAttribute } from './form.model';
 
 export type Instant = string;
 export type LocalDate = string;
@@ -140,5 +140,5 @@ export interface ConnectorManifest {
   category: string;
   name: string;
   description: string;
-  settings: Array<OibFormControl>;
+  settings: OIBusObjectAttribute;
 }

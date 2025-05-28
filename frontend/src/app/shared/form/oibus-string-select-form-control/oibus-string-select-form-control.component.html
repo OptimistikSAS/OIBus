@@ -1,0 +1,12 @@
+<div class="form-group">
+  <label [for]="stringSelectAttribute().key" class="form-label" [translate]="stringSelectAttribute().translationKey + '.title'"></label>
+  <select [id]="stringSelectAttribute().key" class="form-select" [formControlName]="stringSelectAttribute().key">
+    <option [ngValue]="null"></option>
+    @for (value of stringSelectAttribute().selectableValues; track value) {
+      <option [value]="value">
+        {{ stringSelectAttribute().translationKey + '.' + value | translate }}
+      </option>
+    }
+  </select>
+  <val-errors [controlName]="stringSelectAttribute().key" />
+</div>

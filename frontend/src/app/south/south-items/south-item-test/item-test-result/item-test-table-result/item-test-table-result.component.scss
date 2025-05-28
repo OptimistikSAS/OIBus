@@ -1,0 +1,25 @@
+@import '../../../../../../common';
+
+.json-content {
+  display: block;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.grid-table {
+  display: grid;
+  grid-template-columns: minmax(150px, auto) minmax(100px, 200px) minmax(75px, auto) minmax(100px, auto);
+}
+
+.grid-table-header,
+.grid-table-row {
+  display: contents;
+}
+
+.grid-table>.grid-table-row:nth-child(even)>div {
+  background-color: $veryLightGrey;
+}
+
+.grid-table-row:hover>div {
+  background-color: $mediumGrey !important;
+}

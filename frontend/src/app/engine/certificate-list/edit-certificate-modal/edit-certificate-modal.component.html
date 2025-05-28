@@ -1,0 +1,101 @@
+<div class="modal-header">
+  <h4 class="modal-title" [translate]="'engine.certificate.title-' + mode"></h4>
+</div>
+<div class="modal-body">
+  <form [formGroup]="form" (ngSubmit)="save()" id="form">
+    <!-- Name -->
+    <div class="form-group">
+      <label class="form-label" for="name" translate="engine.certificate.name"></label>
+      <input formControlName="name" id="name" class="form-control" />
+      <val-errors controlName="name" />
+    </div>
+    <!-- Description -->
+    <div class="form-group">
+      <label class="form-label" for="description" translate="engine.certificate.description"></label>
+      <textarea formControlName="description" id="description" class="form-control"></textarea>
+    </div>
+
+    <!-- Regenerate certificate -->
+    @if (mode === 'edit') {
+      <div class="form-group">
+        <div class="form-check form-switch padded">
+          <label class="form-check-label" for="regenerate-certificate" translate="engine.certificate.regenerate-certificate"></label>
+          <input formControlName="regenerateCertificate" id="regenerate-certificate" type="checkbox" class="form-check-input" />
+        </div>
+      </div>
+    }
+
+    @if (form.value.regenerateCertificate) {
+      <ng-container formGroupName="certificateOptions">
+        <div class="row">
+          <!-- Common name -->
+          <div class="col-4">
+            <div class="form-group">
+              <label class="form-label" for="common-name" translate="engine.certificate.common-name"></label>
+              <input formControlName="commonName" id="common-name" class="form-control" />
+              <val-errors controlName="commonName" />
+            </div>
+          </div>
+          <!-- Country name -->
+          <div class="col-4">
+            <div class="form-group">
+              <label class="form-label" for="country-name" translate="engine.certificate.country-name"></label>
+              <input formControlName="countryName" id="country-name" class="form-control" />
+              <val-errors controlName="countryName" />
+            </div>
+          </div>
+          <!-- State or province name -->
+          <div class="col-4">
+            <div class="form-group">
+              <label class="form-label" for="state-or-province-name" translate="engine.certificate.state-or-province-name"></label>
+              <input formControlName="stateOrProvinceName" id="state-or-province-name" class="form-control" />
+              <val-errors controlName="stateOrProvinceName" />
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <!-- Locality name -->
+          <div class="col-6">
+            <div class="form-group">
+              <label class="form-label" for="locality-name" translate="engine.certificate.locality-name"></label>
+              <input formControlName="localityName" id="locality-name" class="form-control" />
+              <val-errors controlName="localityName" />
+            </div>
+          </div>
+          <!-- Organization name -->
+          <div class="col-6">
+            <div class="form-group">
+              <label class="form-label" for="organization-name" translate="engine.certificate.organization-name"></label>
+              <input formControlName="organizationName" id="organization-name" class="form-control" />
+              <val-errors controlName="organizationName" />
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <!-- Key size -->
+          <div class="col-6">
+            <div class="form-group">
+              <label class="form-label" for="key-size" translate="engine.certificate.key-size"></label>
+              <input type="number" formControlName="keySize" id="key-size" class="form-control" />
+              <val-errors controlName="keySize" />
+            </div>
+          </div>
+          <!-- Days before expiry -->
+          <div class="col-6">
+            <div class="form-group">
+              <label class="form-label" for="days-before-expiry" translate="engine.certificate.days-before-expiry"></label>
+              <input type="number" formControlName="daysBeforeExpiry" id="days-before-expiry" class="form-control" />
+              <val-errors controlName="daysBeforeExpiry" />
+            </div>
+          </div>
+        </div>
+      </ng-container>
+    }
+  </form>
+</div>
+<div class="modal-footer">
+  <div class="btn-group">
+    <button [oib-save-button]="state" form="form"></button>
+    <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
+  </div>
+</div>

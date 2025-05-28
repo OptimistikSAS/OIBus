@@ -8,13 +8,9 @@
         }
       </div>
       <div>
-        <button
-          type="button"
-          class="btn btn-primary btn-sm oib-box-btn"
-          [ngbTooltip]="'engine.certificate.tooltips.add' | translate"
-          (click)="addCertificate()"
-        >
-          <span class="fa fa-plus" id="add-certificate"></span>
+        <button type="button" id="add-certificate" class="btn btn-primary btn-sm oib-box-btn"
+          [ngbTooltip]="'engine.certificate.tooltips.add' | translate" (click)="addCertificate()">
+          <span class="fa fa-plus"></span>
         </button>
         <oib-help url="https://oibus.optimistik.com/docs/guide/engine/engine-settings" />
       </div>
