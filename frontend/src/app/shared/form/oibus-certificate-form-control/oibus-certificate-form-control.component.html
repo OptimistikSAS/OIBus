@@ -1,0 +1,10 @@
+<div class="form-group">
+  <label [for]="certificateAttribute().key" class="form-label" [translate]="certificateAttribute().translationKey"></label>
+  <select class="form-select" [id]="certificateAttribute().key" [formControlName]="certificateAttribute().key">
+    <option [ngValue]="null"></option>
+    @for (certificate of certificates(); track certificate.id) {
+      <option [value]="certificate.id">{{ certificate.name }}</option>
+    }
+  </select>
+  <val-errors [controlName]="certificateAttribute().key" />
+</div>

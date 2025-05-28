@@ -4,8 +4,7 @@ import { SouthConnectorService } from '../../services/south-connector.service';
 import {
   SouthConnectorCommandDTO,
   SouthConnectorDTO,
-  SouthConnectorItemCommandDTO,
-  SouthConnectorManifest
+  SouthConnectorItemCommandDTO
 } from '../../../../../backend/shared/model/south-connector.model';
 import { of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
@@ -14,8 +13,8 @@ import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
 import { SouthItemsComponent } from './south-items.component';
 import { Component } from '@angular/core';
-import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
+import testData from '../../../../../backend/src/tests/utils/test-data';
 
 const testSouthConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> = {
   id: 'southId',
@@ -56,9 +55,10 @@ const testSouthConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> = 
     [southId]="southConnector.id"
     [southConnector]="southConnector"
     [scanModes]="scanModes"
+    [certificates]="[]"
     [southManifest]="manifest"
+    [southConnectorCommand]="southCommand"
     [saveChangesDirectly]="saveChangesDirectly"
-    [southConnectorCommand]="southConnectorCommand"
     (inMemoryItems)="updateInMemoryItems($event)"
   />`,
   imports: [SouthItemsComponent]
@@ -67,36 +67,8 @@ class TestComponent {
   _southConnectorService!: SouthConnectorService;
 
   southConnector = structuredClone(testSouthConnector);
-  scanModes: Array<ScanModeDTO> = [
-    {
-      id: 'scanModeId1',
-      name: 'Every mn',
-      description: '',
-      cron: ''
-    }
-  ];
-  manifest: SouthConnectorManifest = {
-    id: 'mssql',
-    category: 'database',
-    settings: [],
-    items: {
-      scanMode: 'POLL',
-      settings: [
-        {
-          translationKey: 'south.items.mssql.query',
-          key: 'query',
-          displayInViewMode: true,
-          type: 'OibText'
-        }
-      ]
-    },
-    modes: {
-      subscription: false,
-      history: true,
-      lastFile: true,
-      lastPoint: false
-    }
-  };
+  scanModes = testData.scanMode.list;
+  manifest = testData.south.manifest;
   saveChangesDirectly!: boolean;
   inMemoryItems: Array<SouthConnectorItemCommandDTO<SouthItemSettings>> = [];
   southConnectorCommand = {} as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
@@ -107,10 +79,11 @@ class TestComponent {
     } else {
       this._southConnectorService.get(this.southConnector!.id).subscribe(southConnector => {
         this.southConnector!.items = southConnector.items;
-        this.southConnector = JSON.parse(JSON.stringify(this.southConnector)); // Used to force a refresh in south item list
+        this.southConnector = JSON.parse(JSON.stringify(this.southConnector)); // Used to force a refresh in a south item list
       });
     }
   }
+  southCommand = testData.south.command;
 }
 
 class SouthItemsComponentTester extends ComponentTester<TestComponent> {
@@ -195,19 +168,18 @@ describe('SouthItemsComponent with saving changes directly', () => {
     expect(tester.southItems.length).toBe(3);
     const item = tester.southItems[0];
     expect(item.elements('td')[1]).toContainText(testSouthConnector.items[0].name);
-    expect(item.elements('td')[2]).toContainText('Every mn');
-    expect(item.elements('td')[3]).toContainText('sql');
+    expect(item.elements('td')[2]).toContainText('scanMode1');
   });
 
   it('should enable south item', () => {
-    const btnIdx = 1; // second one is disabled by default
+    const btnIdx = 1; // the second one is disabled by default
     tester.toggleButtons[btnIdx].click();
     expect(southConnectorService.enableItem).toHaveBeenCalledWith('southId', testSouthConnector.items[btnIdx].id);
     expect(notificationService.success).toHaveBeenCalledWith('south.items.enabled', { name: testSouthConnector.items[btnIdx].name });
   });
 
   it('should disable south item', () => {
-    const btnIdx = 0; // first one is enabled by default
+    const btnIdx = 0; // the first one is enabled by default
     tester.toggleButtons[btnIdx].click();
     expect(southConnectorService.disableItem).toHaveBeenCalledWith('southId', testSouthConnector.items[btnIdx].id);
     expect(notificationService.success).toHaveBeenCalledWith('south.items.disabled', { name: testSouthConnector.items[btnIdx].name });
@@ -389,8 +361,7 @@ describe('SouthItemsComponent without saving changes directly', () => {
     expect(tester.southItems.length).toBe(3);
     const item = tester.southItems[0];
     expect(item.elements('td')[1]).toContainText(testSouthConnector.items[0].name);
-    expect(item.elements('td')[2]).toContainText('Every mn');
-    expect(item.elements('td')[3]).toContainText('sql');
+    expect(item.elements('td')[2]).toContainText('scanMode1');
   });
 
   it('should not have option to enable/disable south item', () => {
