@@ -30,7 +30,6 @@ import UserRepository from '../../repository/config/user.repository';
 import OIAnalyticsClient from './oianalytics-client.service';
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
 import OIAnalyticsRegistrationService from './oianalytics-registration.service';
-import { FetchError } from 'node-fetch';
 import HistoryQueryRepository from '../../repository/config/history-query.repository';
 
 const STOP_TIMEOUT = 30_000;
@@ -103,9 +102,9 @@ export default class OIAnalyticsMessageService {
       }
       this.oIAnalyticsMessageRepository.markAsCompleted(message.id, DateTime.now().toUTC().toISO());
     } catch (error: unknown) {
-      if (error instanceof FetchError) {
+      if (error instanceof Error && 'code' in error && error.code && typeof error.code === 'string') {
         this.logger.error(`Error while sending message ${message.id} of type ${message.type}. ${error.message}${error.code}`);
-        if (!['ECONNREFUSED', 'ECONNRESET', 'ETIMEDOUT'].includes(error.code!)) {
+        if (!['ECONNREFUSED', 'ECONNRESET', 'ETIMEDOUT'].includes(error.code)) {
           this.oIAnalyticsMessageRepository.markAsErrored(message.id, DateTime.now().toUTC().toISO(), `${error.message}${error.code}`);
         } else {
           this.retryMessageInterval = setTimeout(this.run.bind(this), registration.messageRetryInterval * 1000);

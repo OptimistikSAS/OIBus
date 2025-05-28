@@ -47,7 +47,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
 
   override async testConnection(): Promise<void> {
     const host = this.getHost();
-    const requestUrl = `${host}/api/optimistik/oibus/status`;
+    const requestUrl = new URL('/api/optimistik/oibus/status', host);
 
     const fetchOptions: ReqOptions = {
       method: 'GET',
@@ -87,7 +87,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
       : '/api/oianalytics/oibus/time-values';
 
     let response: ReqResponse;
-    const valuesUrl = `${host}${endpoint}`;
+    const valuesUrl = new URL(endpoint, host);
     const fetchOptions: ReqOptions = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -119,7 +119,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     const host = this.getHost();
     const endpoint = '/api/oianalytics/file-uploads';
     const query = { dataSourceId: this.connector.name };
-    const fileUrl = `${host}${endpoint}`;
+    const fileUrl = new URL(endpoint, host);
 
     if (!(await filesExists(filePath))) {
       throw new Error(`File ${filePath} does not exist`);
@@ -305,10 +305,6 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     } else {
       const specificSettings = this.connector.settings.specificSettings!;
       host = specificSettings.host;
-    }
-
-    if (host.endsWith('/')) {
-      host = host.slice(0, host.length - 1);
     }
 
     return host;

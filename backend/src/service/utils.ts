@@ -455,12 +455,10 @@ export const formatQueryParams = (
     key: string;
     value: string;
   }>
-): string => {
-  if (queryParams.length === 0) {
-    return '';
-  }
-  let queryParamsString = '?';
-  queryParams.forEach((queryParam, index) => {
+): Record<string, string | number> => {
+  const params: Record<string, string | number> = {};
+
+  for (const queryParam of queryParams) {
     let value;
     switch (queryParam.value) {
       case '@StartTime':
@@ -472,12 +470,10 @@ export const formatQueryParams = (
       default:
         value = queryParam.value;
     }
-    queryParamsString += `${encodeURIComponent(queryParam.key)}=${encodeURIComponent(value)}`;
-    if (index < queryParams.length - 1) {
-      queryParamsString += '&';
-    }
-  });
-  return queryParamsString;
+    params[queryParam.key] = value;
+  }
+
+  return params;
 };
 
 export const getOIBusInfo = (oibusSettings: EngineSettingsDTO): OIBusInfo => {
