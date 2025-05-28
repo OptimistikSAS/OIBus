@@ -17,8 +17,8 @@ import { LoginComponent } from './auth/login/login.component';
 import { authenticationGuard } from './auth/authentication.guard';
 import { ExploreNorthCacheComponent } from './north/explore-cache/explore-north-cache.component';
 import { EditUserSettingsComponent } from './user-settings/edit-user-settings/edit-user-settings.component';
-import { OiaModuleComponent } from './engine/oia-module/oia-module.component';
 import { ExploreHistoryCacheComponent } from './history-query/explore-cache/explore-history-cache.component';
+import { OIARegistrationComponent } from './engine/oia-registration/oia-registration.component';
 import { UnsavedChangesGuard } from './shared/unsaved-changes.guard';
 
 export const ROUTES: Routes = [
@@ -37,7 +37,7 @@ export const ROUTES: Routes = [
       },
       {
         path: 'engine/oianalytics',
-        component: OiaModuleComponent
+        component: OIARegistrationComponent
       },
       {
         path: 'engine/edit',

@@ -109,9 +109,7 @@ describe('SouthOPCUA', () => {
       retryInterval: 10000,
       readTimeout: 15000,
       authentication: {
-        type: 'none',
-        password: null,
-        keyFilePath: null
+        type: 'none'
       },
       securityMode: 'none',
       securityPolicy: 'none',
@@ -1103,7 +1101,6 @@ describe('SouthOPCUA with basic auth', () => {
         certFilePath: ''
       },
       securityMode: 'none',
-      securityPolicy: null,
       keepSessionAlive: false
     },
     items: [
@@ -1507,9 +1504,7 @@ describe('SouthOPCUA test connection', () => {
       retryInterval: 10000,
       readTimeout: 15000,
       authentication: {
-        type: 'none',
-        password: null,
-        keyFilePath: null
+        type: 'none'
       },
       securityMode: 'sign-and-encrypt',
       securityPolicy: 'none',
@@ -1787,9 +1782,7 @@ describe('SouthOPCUA with shared connection', () => {
       retryInterval: 10000,
       readTimeout: 15000,
       authentication: {
-        type: 'none',
-        password: null,
-        keyFilePath: null
+        type: 'none'
       },
       securityMode: 'none',
       securityPolicy: 'none',

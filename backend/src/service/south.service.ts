@@ -104,6 +104,7 @@ import CertificateRepository from '../repository/config/certificate.repository';
 import DataStreamEngine from '../engine/data-stream-engine';
 import { PassThrough } from 'node:stream';
 import { BaseFolders } from '../model/types';
+import { OIBusObjectAttribute } from '../../shared/model/form.model';
 
 export const southManifestList: Array<SouthConnectorManifest> = [
   folderScannerManifest,
@@ -393,14 +394,17 @@ export default class SouthService {
       throw new Error(`South manifest ${command.type} not found`);
     }
     await this.validator.validateSettings(manifest.settings, command.settings);
-    await this.validator.validateSettings(manifest.items.settings, itemCommand.settings);
+    const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
+      attribute => attribute.key === 'settings'
+    )! as OIBusObjectAttribute;
+    await this.validator.validateSettings(itemSettingsManifest, itemCommand.settings);
 
     const testItemToRun: SouthConnectorItemEntity<I> = {
       id: 'test',
       enabled: itemCommand.enabled,
       name: itemCommand.name,
       scanModeId: itemCommand.scanModeId!,
-      settings: await this.encryptionService.encryptConnectorSecrets(itemCommand.settings, null, manifest.items.settings)
+      settings: await this.encryptionService.encryptConnectorSecrets(itemCommand.settings, null, itemSettingsManifest)
     };
     const testConnectorToRun: SouthConnectorEntity<SouthSettings, SouthItemSettings> = {
       id: southConnector?.id || 'test',
@@ -446,8 +450,11 @@ export default class SouthService {
     }
     await this.validator.validateSettings(manifest.settings, command.settings);
     // Check if item settings match the item schema, throw an error otherwise
+    const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
+      attribute => attribute.key === 'settings'
+    )! as OIBusObjectAttribute;
     for (const item of command.items) {
-      await this.validator.validateSettings(manifest.items.settings, item.settings);
+      await this.validator.validateSettings(itemSettingsManifest, item.settings);
     }
 
     const southEntity = {} as SouthConnectorEntity<S, I>;
@@ -575,7 +582,10 @@ export default class SouthService {
     if (!manifest) {
       throw new Error(`South manifest does not exist for type ${southConnector.type}`);
     }
-    await this.validator.validateSettings(manifest.items.settings, command.settings);
+    const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
+      attribute => attribute.key === 'settings'
+    )! as OIBusObjectAttribute;
+    await this.validator.validateSettings(itemSettingsManifest, command.settings);
 
     const southItemEntity = {} as SouthConnectorItemEntity<I>;
     await copySouthItemCommandToSouthItemEntity<I>(
@@ -607,7 +617,10 @@ export default class SouthService {
       throw new Error(`South manifest does not exist for type ${southConnector.type}`);
     }
 
-    await this.validator.validateSettings(manifest.items.settings, command.settings);
+    const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
+      attribute => attribute.key === 'settings'
+    )! as OIBusObjectAttribute;
+    await this.validator.validateSettings(itemSettingsManifest, command.settings);
 
     const southItemEntity = { id: previousSettings.id } as SouthConnectorItemEntity<I>;
     await copySouthItemCommandToSouthItemEntity<I>(
@@ -733,10 +746,13 @@ export default class SouthService {
 
       let hasSettingsError = false;
       const settings: Record<string, string | object | boolean> = {};
+      const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
+        attribute => attribute.key === 'settings'
+      )! as OIBusObjectAttribute;
       for (const [key, value] of Object.entries(data as unknown as Record<string, string>)) {
         if (key.startsWith('settings_')) {
           const settingsKey = key.replace('settings_', '');
-          const manifestSettings = manifest.items.settings.find(settings => settings.key === settingsKey);
+          const manifestSettings = itemSettingsManifest.attributes.find(settings => settings.key === settingsKey);
           if (!manifestSettings) {
             hasSettingsError = true;
             errors.push({
@@ -745,9 +761,9 @@ export default class SouthService {
             });
             break;
           }
-          if ((manifestSettings.type === 'OibArray' || manifestSettings.type === 'OibFormGroup') && value) {
+          if ((manifestSettings.type === 'array' || manifestSettings.type === 'object') && value) {
             settings[settingsKey] = JSON.parse(value as string);
-          } else if (manifestSettings.type === 'OibCheckbox') {
+          } else if (manifestSettings.type === 'boolean') {
             settings[settingsKey] = stringToBoolean(value);
           } else {
             settings[settingsKey] = value;
@@ -758,7 +774,7 @@ export default class SouthService {
       item.settings = settings as unknown as I;
 
       try {
-        await this.validator.validateSettings(manifest.items.settings, item.settings);
+        await this.validator.validateSettings(itemSettingsManifest, item.settings);
         validItems.push(item);
       } catch (itemError: unknown) {
         errors.push({ item, error: (itemError as Error).message });
@@ -780,9 +796,11 @@ export default class SouthService {
     const manifest = this.getInstalledSouthManifests().find(southManifest => southManifest.id === southConnector.type)!;
     const itemsToAdd: Array<SouthConnectorItemEntity<I>> = [];
     const scanModes = this.scanModeRepository.findAll();
-
+    const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
+      attribute => attribute.key === 'settings'
+    )! as OIBusObjectAttribute;
     for (const itemCommand of items) {
-      await this.validator.validateSettings(manifest.items.settings, itemCommand.settings);
+      await this.validator.validateSettings(itemSettingsManifest, itemCommand.settings);
       const southItemEntity = {} as SouthConnectorItemEntity<I>;
       await copySouthItemCommandToSouthItemEntity(
         southItemEntity,
@@ -904,6 +922,9 @@ const copySouthItemCommandToSouthItemEntity = async <I extends SouthItemSettings
   retrieveSecretsFromSouth = false
 ): Promise<void> => {
   const manifest = southManifestList.find(element => element.id === southType)!;
+  const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
+    attribute => attribute.key === 'settings'
+  )! as OIBusObjectAttribute;
   southItemEntity.id = retrieveSecretsFromSouth ? '' : command.id || ''; // reset id if it is a copy from another connector
   southItemEntity.name = command.name;
   southItemEntity.enabled = command.enabled;
@@ -911,7 +932,7 @@ const copySouthItemCommandToSouthItemEntity = async <I extends SouthItemSettings
   southItemEntity.settings = await encryptionService.encryptConnectorSecrets<I>(
     command.settings,
     currentSettings?.settings || null,
-    manifest.items.settings
+    itemSettingsManifest
   );
 };
 
@@ -937,11 +958,14 @@ export const toSouthConnectorItemDTO = <I extends SouthItemSettings>(
   encryptionService: EncryptionService
 ): SouthConnectorItemDTO<I> => {
   const manifest = southManifestList.find(element => element.id === southType)!;
+  const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
+    attribute => attribute.key === 'settings'
+  )! as OIBusObjectAttribute;
   return {
     id: entity.id,
     name: entity.name,
     enabled: entity.enabled,
     scanModeId: entity.scanModeId,
-    settings: encryptionService.filterSecrets<I>(entity.settings, manifest.items.settings)
+    settings: encryptionService.filterSecrets<I>(entity.settings, itemSettingsManifest)
   };
 };

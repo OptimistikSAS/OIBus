@@ -7,11 +7,11 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { NorthConnectorService } from '../../services/north-connector.service';
-import { NorthConnectorDTO, NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { NotificationService } from '../../shared/notification.service';
 import { EngineService } from '../../services/engine.service';
-import { OIBusInfo } from '../../../../../backend/shared/model/engine.model';
+import testData from '../../../../../backend/src/tests/utils/test-data';
+import { NorthConnectorDTO } from '../../../../../backend/shared/model/north-connector.model';
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 
 class NorthDetailComponentTester extends ComponentTester<NorthDetailComponent> {
@@ -43,72 +43,9 @@ describe('NorthDetailComponent', () => {
   let engineService: jasmine.SpyObj<EngineService>;
   let notificationService: jasmine.SpyObj<NotificationService>;
 
-  const northConnector: NorthConnectorDTO<NorthSettings> = {
-    id: 'id1',
-    type: 'file-writer',
-    name: 'North Connector',
-    description: 'My North connector description',
-    enabled: true,
-    settings: {
-      host: 'url'
-    } as NorthSettings,
-    caching: {
-      trigger: {
-        scanModeId: 'scanModeId1',
-        numberOfElements: 1_000,
-        numberOfFiles: 1
-      },
-      throttling: {
-        runMinDelay: 200,
-        maxSize: 30,
-        maxNumberOfElements: 10_000
-      },
-      error: {
-        retryInterval: 1_000,
-        retryCount: 3,
-        retentionDuration: 24
-      },
-      archive: {
-        enabled: false,
-        retentionDuration: 0
-      }
-    },
-    subscriptions: [],
-    transformers: []
-  };
-  const manifest: NorthConnectorManifest = {
-    id: 'oianalytics',
-    category: 'api',
-    types: ['any', 'time-values'],
-    settings: [
-      {
-        key: 'host',
-        type: 'OibText',
-        translationKey: 'north.oianalytics.specific-settings.host',
-        validators: [
-          { key: 'required' },
-          {
-            key: 'pattern',
-            params: { pattern: '^(http:\\/\\/|https:\\/\\/|HTTP:\\/\\/|HTTPS:\\/\\/).*' }
-          }
-        ],
-        displayInViewMode: true
-      }
-    ]
-  };
-  const engineInfo: OIBusInfo = {
-    version: '3.0.0',
-    launcherVersion: '3.5.0',
-    dataDirectory: 'data-folder',
-    processId: '1234',
-    architecture: 'x64',
-    hostname: 'hostname',
-    binaryDirectory: 'bin-directory',
-    operatingSystem: 'Windows',
-    platform: 'windows',
-    oibusId: 'id',
-    oibusName: 'name'
-  };
+  const northConnector = testData.north.list[0] as NorthConnectorDTO<NorthSettings>;
+  const manifest = testData.north.manifest;
+  const engineInfo = testData.engine.oIBusInfo;
 
   beforeEach(() => {
     northConnectorService = createMock(NorthConnectorService);
@@ -150,11 +87,9 @@ describe('NorthDetailComponent', () => {
     tester.detectChanges();
     expect(tester.title).toContainText(northConnector.name);
     const settings = tester.northSettings;
-    expect(settings.length).toBe(2);
+    expect(settings.length).toBe(1);
     expect(settings[0]).toContainText('Status');
     expect(settings[0]).toContainText('active');
-    expect(settings[1]).toContainText('URL');
-    expect(settings[1]).toContainText('url');
   });
 
   it('should display logs', () => {

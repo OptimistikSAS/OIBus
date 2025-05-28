@@ -2,8 +2,9 @@ import { TestBed } from '@angular/core/testing';
 
 import { UserSettingsService } from './user-settings.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { ChangePasswordCommand, UserDTO, UserCommandDTO } from '../../../../backend/shared/model/user.model';
+import { ChangePasswordCommand, UserDTO } from '../../../../backend/shared/model/user.model';
 import { provideHttpClient } from '@angular/common/http';
+import testData from '../../../../backend/src/tests/utils/test-data';
 
 describe('UserSettingsService', () => {
   let http: HttpTestingController;
@@ -32,7 +33,7 @@ describe('UserSettingsService', () => {
 
   it('should update user settings', () => {
     let done = false;
-    const command: UserCommandDTO = { firstName: 'Admin' } as UserCommandDTO;
+    const command = testData.users.command;
     service.update('id1', command).subscribe(() => (done = true));
 
     const testRequest = http.expectOne({ method: 'PUT', url: '/api/users/id1' });

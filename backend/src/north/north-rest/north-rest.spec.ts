@@ -85,10 +85,9 @@ class ErrorWithCode extends Error {
   }
 }
 
-const endpoint = new URL('http://test.ing/file-upload');
-const testEndpoint = new URL('http://test.ing/test-auth');
 const sharedSettings = {
-  endpoint: endpoint.toString(),
+  host: 'http://test.ing/',
+  endpoint: '/file-upload',
   testPath: '/test-auth',
   timeout: 30,
   queryParams: [{ key: 'entityId', value: 'test' }]
@@ -235,7 +234,7 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
 
     await north.testConnection();
 
-    expect(HTTPRequest).toHaveBeenCalledWith(testEndpoint, expectedReqOptions);
+    expect(HTTPRequest).toHaveBeenCalledWith(new URL(settings.testPath, settings.host), expectedReqOptions);
   });
 
   it('should be able to test the connection with different slashes', async () => {
@@ -259,7 +258,7 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
 
         await north.testConnection();
 
-        expect(HTTPRequest).toHaveBeenCalledWith(testEndpoint, expectedReqOptions);
+        expect(HTTPRequest).toHaveBeenCalledWith(new URL(settings.testPath, settings.host), expectedReqOptions);
       }
     }
   });
@@ -274,9 +273,11 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
 
     (HTTPRequest as jest.Mock).mockRejectedValueOnce(new Error('Timeout error'));
 
-    await expect(north.testConnection()).rejects.toThrow(`Failed to reach file endpoint ${testEndpoint}; message: Timeout error`);
+    await expect(north.testConnection()).rejects.toThrow(
+      `Failed to reach file endpoint ${new URL(settings.testPath, settings.host)}; message: Timeout error`
+    );
 
-    expect(HTTPRequest).toHaveBeenCalledWith(testEndpoint, expectedReqOptions);
+    expect(HTTPRequest).toHaveBeenCalledWith(new URL(settings.testPath, settings.host), expectedReqOptions);
   });
 
   it('should manage bad response on test connection', async () => {
@@ -293,7 +294,7 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
       new OIBusError('HTTP request failed with status code 500 and message: "Internal Server Error"', false)
     );
 
-    expect(HTTPRequest).toHaveBeenCalledWith(testEndpoint, expectedReqOptions);
+    expect(HTTPRequest).toHaveBeenCalledWith(new URL(settings.testPath, settings.host), expectedReqOptions);
   });
 
   it('should properly handle files', async () => {
@@ -319,7 +320,7 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
       options: {}
     });
 
-    expect(HTTPRequest).toHaveBeenCalledWith(endpoint, expectedReqOptions);
+    expect(HTTPRequest).toHaveBeenCalledWith(new URL(settings.endpoint, settings.host), expectedReqOptions);
   });
 
   it('should properly handle files without query params', async () => {
@@ -352,7 +353,7 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
       options: {}
     });
 
-    expect(HTTPRequest).toHaveBeenCalledWith(endpoint, expectedReqOptions);
+    expect(HTTPRequest).toHaveBeenCalledWith(new URL(settings.endpoint, settings.host), expectedReqOptions);
   });
 
   it('should properly throw error when file does not exist', async () => {
@@ -398,9 +399,9 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
         source: 'south',
         options: {}
       })
-    ).rejects.toThrow(new OIBusError(`Failed to reach file endpoint ${endpoint}; message: error`, true));
+    ).rejects.toThrow(new OIBusError(`Failed to reach file endpoint ${new URL(settings.endpoint, settings.host)}; message: error`, true));
 
-    expect(HTTPRequest).toHaveBeenCalledWith(endpoint, expectedReqOptions);
+    expect(HTTPRequest).toHaveBeenCalledWith(new URL(settings.endpoint, settings.host), expectedReqOptions);
   });
 
   it('should properly throw error on file bad response without retrying', async () => {
@@ -431,7 +432,7 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
       })
     ).rejects.toThrow(new OIBusError('HTTP request failed with status code 500 and message: "Internal Server Error"', false));
 
-    expect(HTTPRequest).toHaveBeenCalledWith(endpoint, expectedReqOptions);
+    expect(HTTPRequest).toHaveBeenCalledWith(new URL(settings.endpoint, settings.host), expectedReqOptions);
   });
 
   it('should properly throw error on file bad response with retrying', async () => {
@@ -462,7 +463,7 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
       })
     ).rejects.toThrow(new OIBusError('HTTP request failed with status code 401 and message: "Internal Server Error"', true));
 
-    expect(HTTPRequest).toHaveBeenCalledWith(endpoint, expectedReqOptions);
+    expect(HTTPRequest).toHaveBeenCalledWith(new URL(settings.endpoint, settings.host), expectedReqOptions);
   });
 
   it('should properly get message from generic Error', async () => {
@@ -478,7 +479,9 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
         source: 'south',
         options: {}
       })
-    ).rejects.toThrow(new OIBusError(`Failed to reach file endpoint ${endpoint}; message: generic error object`, true));
+    ).rejects.toThrow(
+      new OIBusError(`Failed to reach file endpoint ${new URL(settings.endpoint, settings.host)}; message: generic error object`, true)
+    );
 
     expect(HTTPRequest).toHaveBeenCalled();
   });
@@ -496,7 +499,7 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
         source: 'south',
         options: {}
       })
-    ).rejects.toThrow(new OIBusError(`Failed to reach file endpoint ${endpoint}; {"some":"data"}`, true));
+    ).rejects.toThrow(new OIBusError(`Failed to reach file endpoint ${new URL(settings.endpoint, settings.host)}; {"some":"data"}`, true));
 
     expect(HTTPRequest).toHaveBeenCalled();
   });
@@ -514,7 +517,9 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
         source: 'south',
         options: {}
       })
-    ).rejects.toThrow(new OIBusError(`Failed to reach file endpoint ${endpoint}; message: error 1; message: error 2`, true));
+    ).rejects.toThrow(
+      new OIBusError(`Failed to reach file endpoint ${new URL(settings.endpoint, settings.host)}; message: error 1; message: error 2`, true)
+    );
 
     expect(HTTPRequest).toHaveBeenCalled();
   });
@@ -533,7 +538,9 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
         source: 'south',
         options: {}
       })
-    ).rejects.toThrow(new OIBusError(`Failed to reach file endpoint ${endpoint}; message: error with code, code: 1`, true));
+    ).rejects.toThrow(
+      new OIBusError(`Failed to reach file endpoint ${new URL(settings.endpoint, settings.host)}; message: error with code, code: 1`, true)
+    );
 
     expect(HTTPRequest).toHaveBeenCalled();
   });
@@ -555,7 +562,7 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
       })
     ).rejects.toThrow(
       new OIBusError(
-        `Failed to reach file endpoint ${endpoint}; message: error with code 1, code: 1; message: error with code 2, code: 2`,
+        `Failed to reach file endpoint ${new URL(settings.endpoint, settings.host)}; message: error with code 1, code: 1; message: error with code 2, code: 2`,
         true
       )
     );
@@ -597,7 +604,7 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
           source: 'south',
           options: {}
         })
-      ).rejects.toThrow(`Failed to reach file endpoint ${endpoint}; message: Proxy URL not specified`);
+      ).rejects.toThrow(`Failed to reach file endpoint ${new URL(settings.endpoint, settings.host)}; message: Proxy URL not specified`);
     });
   }
 });

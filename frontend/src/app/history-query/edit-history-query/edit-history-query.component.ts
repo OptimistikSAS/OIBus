@@ -1,14 +1,11 @@
 import { Component, inject, OnInit } from '@angular/core';
 
-import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
-import { formDirectives } from '../../shared/form-directives';
-import { FormControl, FormGroup, NonNullableFormBuilder, Validators } from '@angular/forms';
+import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NotificationService } from '../../shared/notification.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest, Observable, of, switchMap, tap } from 'rxjs';
-import { FormComponent } from '../../shared/form/form.component';
-import { OibFormControl } from '../../../../../backend/shared/model/form.model';
 import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
 import {
@@ -18,8 +15,6 @@ import {
   OIBusNorthType
 } from '../../../../../backend/shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
-import { OibScanModeComponent } from '../../shared/form/oib-scan-mode/oib-scan-mode.component';
-import { createFormGroup, groupFormControlsByRow } from '../../shared/form-utils';
 import {
   HistoryQueryCommandDTO,
   HistoryQueryDTO,
@@ -45,7 +40,7 @@ import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { ResetCacheHistoryQueryModalComponent } from '../reset-cache-history-query-modal/reset-cache-history-query-modal.component';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
-import { dateTimeRangeValidatorBuilder } from '../../shared/validators';
+import { dateTimeRangeValidatorBuilder } from '../../shared/form/validators';
 import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
 import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
 import { TransformerDTO, TransformerDTOWithOptions } from '../../../../../backend/shared/model/transformer.model';
@@ -53,27 +48,32 @@ import { TransformerService } from '../../services/transformer.service';
 import { CertificateService } from '../../services/certificate.service';
 import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
 import { NorthTransformersComponent } from '../../north/north-transformers/north-transformers.component';
+import { addAttributeToForm, addEnablingConditions } from '../../shared/form/dynamic-form.builder';
+import { OI_FORM_VALIDATION_DIRECTIVES } from '../../shared/form/form-validation-directives';
+import { OIBusScanModeFormControlComponent } from '../../shared/form/oibus-scan-mode-form-control/oibus-scan-mode-form-control.component';
+import { OIBusScanModeAttribute } from '../../../../../backend/shared/model/form.model';
+import { OIBusObjectFormControlComponent } from '../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
 import { CanComponentDeactivate } from '../../shared/unsaved-changes.guard';
 import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
 
 @Component({
   selector: 'oib-edit-history-query',
   imports: [
+    ReactiveFormsModule,
     TranslateDirective,
-    ...formDirectives,
     SaveButtonComponent,
-    FormComponent,
-    OibScanModeComponent,
     DatetimepickerComponent,
     BackNavigationDirective,
     BoxComponent,
     BoxTitleDirective,
     HistoryQueryItemsComponent,
     OibHelpComponent,
-    TranslatePipe,
     OIBusNorthTypeEnumPipe,
     OIBusSouthTypeEnumPipe,
-    NorthTransformersComponent
+    NorthTransformersComponent,
+    OI_FORM_VALIDATION_DIRECTIVES,
+    OIBusScanModeFormControlComponent,
+    OIBusObjectFormControlComponent
   ],
   templateUrl: './edit-history-query.component.html',
   styleUrl: './edit-history-query.component.scss'
@@ -96,8 +96,6 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
   historyId!: string;
   historyQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings> | null = null;
   state = new ObservableState();
-  northSettingsControls: Array<Array<OibFormControl>> = [];
-  southSettingsControls: Array<Array<OibFormControl>> = [];
   scanModes: Array<ScanModeDTO> = [];
   transformers: Array<TransformerDTO> = [];
   certificates: Array<CertificateDTO> = [];
@@ -110,7 +108,7 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
   duplicateId = '';
   saveItemChangesDirectly!: boolean;
 
-  historyQueryForm: FormGroup<{
+  form: FormGroup<{
     name: FormControl<string>;
     description: FormControl<string>;
     startTime: FormControl<Instant>;
@@ -142,6 +140,18 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
   }> | null = null;
 
   inMemoryItems: Array<HistoryQueryItemCommandDTO<SouthItemSettings>> = [];
+  scanModeAttribute: OIBusScanModeAttribute = {
+    type: 'scan-mode',
+    key: 'scanModeId',
+    translationKey: 'north.caching.trigger.schedule',
+    acceptableType: 'POLL',
+    validators: [{ type: 'REQUIRED', arguments: [] }],
+    displayProperties: {
+      row: 0,
+      columns: 4,
+      displayInViewMode: true
+    }
+  };
 
   ngOnInit() {
     combineLatest([
@@ -203,7 +213,7 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
         switchMap(([historyQuery, northConnector, southConnector]) => {
           this.historyQuery = historyQuery;
 
-          // creating/duplicating history query
+          // creating/duplicating a history query
           if (historyQuery) {
             this.southType = historyQuery.southType;
             this.northType = historyQuery.northType;
@@ -223,7 +233,8 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
               this.fromSouthId = southConnector.id;
               this.inMemoryItems = southConnector.items.map(item => ({
                 ...item,
-                id: null // we need to remove the exiting ids
+                id: null, // we need to remove the exiting ids
+                scanModeId: undefined // remove scanModeId retrieved from south connector
               }));
             }
             if (northConnector) {
@@ -241,83 +252,96 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
         })
       )
       .subscribe(([northManifest, southManifest, southConnector, northConnector]) => {
+        if (!northManifest || !southManifest) {
+          return;
+        }
         this.northManifest = northManifest;
         this.southManifest = southManifest;
-        this.northSettingsControls = groupFormControlsByRow(northManifest.settings);
-        this.southSettingsControls = groupFormControlsByRow(southManifest.settings);
-
-        this.historyQueryForm = this.fb.group({
-          name: ['', Validators.required],
-          description: '',
-          startTime: [DateTime.now().minus({ days: 1 }).toUTC().toISO()!, [dateTimeRangeValidatorBuilder('start')]],
-          endTime: [DateTime.now().toUTC().toISO()!, [dateTimeRangeValidatorBuilder('end')]],
-          caching: this.fb.group({
-            trigger: this.fb.group({
-              scanModeId: this.fb.control<string | null>(null, Validators.required),
-              numberOfElements: [1_000, Validators.required],
-              numberOfFiles: [1, Validators.required]
-            }),
-            throttling: this.fb.group({
-              runMinDelay: [200, Validators.required],
-              maxSize: [0, Validators.required],
-              maxNumberOfElements: [10_000, Validators.required]
-            }),
-            error: this.fb.group({
-              retryInterval: [5_000, Validators.required],
-              retryCount: [3, Validators.required],
-              retentionDuration: [72, Validators.required]
-            }),
-            archive: this.fb.group({
-              enabled: [false, Validators.required],
-              retentionDuration: [72, Validators.required]
-            })
-          }),
-          northSettings: createFormGroup(northManifest.settings, this.fb),
-          southSettings: createFormGroup(southManifest.settings, this.fb),
-          northTransformers: [[] as Array<TransformerDTOWithOptions>]
-        });
-
-        if (this.historyQuery) {
-          this.historyQueryForm.patchValue({
-            ...this.historyQuery
-          });
-        } else {
-          if (southConnector) {
-            this.historyQueryForm.controls.southSettings.patchValue(southConnector.settings);
-          }
-          if (northConnector) {
-            this.historyQueryForm.controls.northSettings.patchValue(northConnector.settings);
-            this.historyQueryForm.controls.caching.patchValue(northConnector.caching);
-            this.historyQueryForm.controls.northTransformers.patchValue(northConnector.transformers);
-          }
-        }
-
-        // we should provoke all value changes to make sure fields are properly hidden and disabled
-        this.historyQueryForm.setValue(this.historyQueryForm.getRawValue());
-
-        // when changing one of the dates, the other should re-evaluate errors
-        this.historyQueryForm.controls.startTime.valueChanges.subscribe(() => {
-          this.historyQueryForm?.controls.endTime.updateValueAndValidity({ emitEvent: false });
-        });
-        this.historyQueryForm.controls.endTime.valueChanges.subscribe(() => {
-          this.historyQueryForm?.controls.startTime.updateValueAndValidity({ emitEvent: false });
-        });
+        this.buildForm(northConnector, southConnector);
       });
   }
 
+  buildForm(
+    northConnector: NorthConnectorDTO<NorthSettings> | null,
+    southConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> | null
+  ) {
+    this.form = this.fb.group({
+      name: ['', Validators.required],
+      description: '',
+      startTime: [DateTime.now().minus({ days: 1 }).toUTC().toISO()!, [dateTimeRangeValidatorBuilder('start')]],
+      endTime: [DateTime.now().toUTC().toISO()!, [dateTimeRangeValidatorBuilder('end')]],
+      caching: this.fb.group({
+        trigger: this.fb.group({
+          scanModeId: this.fb.control<string | null>(null, Validators.required),
+          numberOfElements: [1_000, Validators.required],
+          numberOfFiles: [1, Validators.required]
+        }),
+        throttling: this.fb.group({
+          runMinDelay: [200, Validators.required],
+          maxSize: [0, Validators.required],
+          maxNumberOfElements: [10_000, Validators.required]
+        }),
+        error: this.fb.group({
+          retryInterval: [5_000, Validators.required],
+          retryCount: [3, Validators.required],
+          retentionDuration: [72, Validators.required]
+        }),
+        archive: this.fb.group({
+          enabled: [false, Validators.required],
+          retentionDuration: [72, Validators.required]
+        })
+      }),
+      northSettings: this.fb.group({}),
+      southSettings: this.fb.group({}),
+      northTransformers: [[] as Array<TransformerDTOWithOptions>]
+    });
+    for (const attribute of this.northManifest!.settings.attributes) {
+      addAttributeToForm(this.fb, this.form.controls.northSettings, attribute);
+    }
+    addEnablingConditions(this.form.controls.northSettings, this.northManifest!.settings.enablingConditions);
+
+    for (const attribute of this.southManifest!.settings.attributes) {
+      addAttributeToForm(this.fb, this.form.controls.southSettings, attribute);
+    }
+    addEnablingConditions(this.form.controls.southSettings, this.southManifest!.settings.enablingConditions);
+
+    // when changing one of the dates, the other should re-evaluate errors
+    this.form.controls.startTime.valueChanges.subscribe(() => {
+      this.form?.controls.endTime.updateValueAndValidity({ emitEvent: false });
+    });
+    this.form.controls.endTime.valueChanges.subscribe(() => {
+      this.form?.controls.startTime.updateValueAndValidity({ emitEvent: false });
+    });
+    // if we have a south connector, we initialize the values
+    if (this.historyQuery) {
+      this.form.patchValue(this.historyQuery);
+    } else {
+      if (southConnector) {
+        this.form.controls.southSettings.patchValue(southConnector.settings);
+      }
+      if (northConnector) {
+        this.form.controls.northSettings.patchValue(northConnector.settings);
+        this.form.controls.caching.patchValue(northConnector.caching);
+        this.form.controls.northTransformers.patchValue(northConnector.transformers);
+      }
+      // we should provoke all value changes to make sure fields are properly hidden and disabled
+      this.form.setValue(this.form.getRawValue());
+    }
+  }
+
   canDeactivate(): Observable<boolean> | boolean {
-    if (this.historyQueryForm?.dirty) {
+    if (this.form?.dirty) {
       return this.unsavedChangesConfirmation.confirmUnsavedChanges();
     }
     return true;
   }
 
   save() {
-    if (!this.historyQueryForm!.valid) {
+    if (!this.form!.valid) {
       return;
     }
 
-    const formValue = this.historyQueryForm!.value;
+    const formValue = this.form!.value;
     const command: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings> = {
       name: formValue.name!,
       description: formValue.description!,
@@ -381,7 +405,7 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
       createOrUpdate = this.historyQueryService.update(this.historyQuery!.id, command, resetCache).pipe(
         tap(() => {
           this.notificationService.success('history-query.updated', { name: command.name });
-          this.historyQueryForm?.markAsPristine();
+          this.form?.markAsPristine();
         }),
         switchMap(() => this.historyQueryService.get(this.historyQuery!.id))
       );
@@ -389,7 +413,7 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
       createOrUpdate = this.historyQueryService.create(command, this.fromSouthId, this.fromNorthId, this.duplicateId).pipe(
         tap(() => {
           this.notificationService.success('history-query.created', { name: command.name });
-          this.historyQueryForm?.markAsPristine();
+          this.form?.markAsPristine();
         })
       );
     }
@@ -404,15 +428,15 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
     } else {
       this.historyQueryService.get(this.historyQuery!.id).subscribe(historyQuery => {
         this.historyQuery!.items = historyQuery.items;
-        this.historyQuery = JSON.parse(JSON.stringify(this.historyQuery)); // Used to force a refresh in history query item list
+        this.historyQuery = JSON.parse(JSON.stringify(this.historyQuery)); // Used to force a refresh in a history query item list
       });
     }
   }
 
   test(type: 'south' | 'north') {
-    this.historyQueryForm?.markAllAsTouched();
+    this.form?.markAllAsTouched();
 
-    if (!this.historyQueryForm?.valid) {
+    if (!this.form?.valid) {
       return;
     }
 
@@ -434,7 +458,7 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
   }
 
   get southConnectorCommand() {
-    const formValue = this.historyQueryForm!.value;
+    const formValue = this.form!.value;
     return {
       type: this.southManifest!.id,
       settings: formValue.southSettings,
@@ -443,7 +467,7 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
   }
 
   get northConnectorCommand() {
-    const formValue = this.historyQueryForm!.value;
+    const formValue = this.form!.value;
 
     return {
       type: this.northManifest!.id,
