@@ -1,13 +1,12 @@
 import { Component, forwardRef, inject, Input, OnDestroy, OnInit } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR, NonNullableFormBuilder, Validators } from '@angular/forms';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
-import { formDirectives } from '../form-directives';
 import { DatetimepickerComponent } from '../datetimepicker/datetimepicker.component';
 import { ValidationErrorsComponent } from 'ngx-valdemort';
 import { DateTime } from 'luxon';
 import { Instant } from '../../../../../backend/shared/model/types';
 import { Subject, takeUntil } from 'rxjs';
-import { dateTimeRangeValidatorBuilder } from '../validators';
+import { dateTimeRangeValidatorBuilder } from '../form/validators';
 
 export interface DateRange {
   startTime: Instant;
@@ -23,7 +22,7 @@ export interface PredefinedRange {
 @Component({
   selector: 'oib-date-range-selector',
   templateUrl: './date-range-selector.component.html',
-  imports: [TranslateDirective, TranslatePipe, ...formDirectives, DatetimepickerComponent, ValidationErrorsComponent],
+  imports: [TranslateDirective, TranslatePipe, DatetimepickerComponent, ValidationErrorsComponent, ReactiveFormsModule],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

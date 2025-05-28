@@ -138,7 +138,7 @@ describe('NorthSFTP', () => {
   });
 
   it('should send content into SFTP server without user and password', async () => {
-    configuration.settings.username = null;
+    configuration.settings.username = '';
     configuration.settings.password = null;
     await north.sendToSftpServer('myFile.csv', 'remoteFolder/target');
     expect(mockSftpClient.connect).toHaveBeenCalledTimes(1);

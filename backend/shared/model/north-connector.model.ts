@@ -1,4 +1,4 @@
-import { OibFormControl } from './form.model';
+import { OIBusObjectAttribute } from './form.model';
 import { BaseEntity } from './types';
 import { NorthSettings } from './north-settings.model';
 import { SouthConnectorLightDTO } from './south-connector.model';
@@ -102,5 +102,5 @@ export interface NorthConnectorManifest {
   id: OIBusNorthType;
   category: OIBusNorthCategory;
   types: Array<string>;
-  settings: Array<OibFormControl>;
+  settings: OIBusObjectAttribute;
 }

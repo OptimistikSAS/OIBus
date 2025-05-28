@@ -9,319 +9,749 @@ const manifest: SouthConnectorManifest = {
     lastFile: false,
     history: false
   },
-  settings: [
-    {
-      key: 'url',
-      type: 'OibText',
-      translationKey: 'south.mqtt.url',
-      defaultValue: '',
-      newRow: true,
-      validators: [
-        { key: 'required' },
-        { key: 'pattern', params: { pattern: '^(mqtt:\\/\\/|mqtts:\\/\\/|tcp:\\/\\/|tls:\\/\\/|ws:\\/\\/|wss:\\/\\/).*' } }
-      ],
-      class: 'col-6',
-      displayInViewMode: true
+  settings: {
+    type: 'object',
+    key: 'settings',
+    translationKey: 'configuration.oibus.manifest.south.settings',
+    displayProperties: {
+      visible: true,
+      wrapInBox: true
     },
-    {
-      key: 'qos',
-      type: 'OibSelect',
-      options: ['0', '1', '2'],
-      translationKey: 'south.mqtt.qos',
-      defaultValue: '1',
-      class: 'col-3',
-      validators: [{ key: 'required' }],
-      displayInViewMode: true
-    },
-    {
-      key: 'persistent',
-      type: 'OibCheckbox',
-      translationKey: 'south.mqtt.persistent',
-      defaultValue: false,
-      class: 'col-3',
-      conditionalDisplay: { field: 'qos', values: ['1', '2'] },
-      validators: [{ key: 'required' }],
-      displayInViewMode: true
-    },
-    {
-      key: 'authentication',
-      type: 'OibFormGroup',
-      translationKey: '',
-      class: 'col',
-      newRow: true,
-      displayInViewMode: false,
-      validators: [{ key: 'required' }],
-      content: [
-        {
-          key: 'type',
-          type: 'OibSelect',
-          translationKey: 'south.mqtt.authentication',
-          options: ['none', 'basic', 'cert'],
-          validators: [{ key: 'required' }],
-          defaultValue: 'none',
-          newRow: true,
-          class: 'col-4',
-          displayInViewMode: false
-        },
-        {
-          key: 'username',
-          type: 'OibText',
-          translationKey: 'south.mqtt.username',
-          defaultValue: '',
-          newRow: true,
-          class: 'col-4',
-          validators: [{ key: 'required' }],
-          conditionalDisplay: { field: 'type', values: ['basic'] },
-          displayInViewMode: false
-        },
-        {
-          key: 'password',
-          type: 'OibSecret',
-          translationKey: 'south.mqtt.password',
-          defaultValue: '',
-          class: 'col-4',
-          conditionalDisplay: { field: 'type', values: ['basic'] },
-          displayInViewMode: false
-        },
-        {
-          key: 'certFilePath',
-          type: 'OibText',
-          translationKey: 'south.mqtt.cert-file-path',
-          defaultValue: '',
-          newRow: true,
-          class: 'col-4',
-          conditionalDisplay: { field: 'type', values: ['cert'] },
-          validators: [{ key: 'required' }],
-          displayInViewMode: false
-        },
-        {
-          key: 'keyFilePath',
-          type: 'OibText',
-          translationKey: 'south.mqtt.key-file-path',
-          defaultValue: '',
-          conditionalDisplay: { field: 'type', values: ['cert'] },
-          class: 'col-4',
-          displayInViewMode: false
-        },
-        {
-          key: 'caFilePath',
-          type: 'OibText',
-          translationKey: 'south.mqtt.ca-file-path',
-          defaultValue: '',
-          conditionalDisplay: { field: 'type', values: ['cert'] },
-          class: 'col-4',
-          displayInViewMode: false
+    enablingConditions: [
+      {
+        referralPathFromRoot: 'qos',
+        targetPathFromRoot: 'persistent',
+        values: ['1', '2']
+      }
+    ],
+    validators: [],
+    attributes: [
+      {
+        type: 'string',
+        key: 'url',
+        translationKey: 'configuration.oibus.manifest.south.mqtt.url',
+        defaultValue: null,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          },
+          {
+            type: 'PATTERN',
+            arguments: ['^(mqtt:\\/\\/|mqtts:\\/\\/|tcp:\\/\\/|tls:\\/\\/|ws:\\/\\/|wss:\\/\\/).*']
+          }
+        ],
+        displayProperties: {
+          row: 0,
+          columns: 6,
+          displayInViewMode: true
         }
-      ]
-    },
-    {
-      key: 'rejectUnauthorized',
-      type: 'OibCheckbox',
-      translationKey: 'south.mqtt.reject-unauthorized',
-      defaultValue: false,
-      newRow: true,
-      displayInViewMode: false,
-      validators: [{ key: 'required' }]
-    },
-    {
-      key: 'reconnectPeriod',
-      type: 'OibNumber',
-      translationKey: 'south.mqtt.reconnect-period',
-      unitLabel: 'ms',
-      defaultValue: 10000,
-      newRow: false,
-      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 30_000 } }],
-      displayInViewMode: false
-    },
-    {
-      key: 'connectTimeout',
-      type: 'OibNumber',
-      translationKey: 'south.mqtt.connect-timeout',
-      unitLabel: 'ms',
-      defaultValue: 10000,
-      newRow: false,
-      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 30_000 } }],
-      displayInViewMode: false
-    },
-    {
-      key: 'maxNumberOfMessages',
-      type: 'OibNumber',
-      translationKey: 'south.mqtt.max-number-of-messages',
-      defaultValue: 1_000,
-      newRow: true,
-      validators: [{ key: 'required' }, { key: 'min', params: { min: 1 } }, { key: 'max', params: { max: 1_000_000 } }],
-      displayInViewMode: false
-    },
-    {
-      key: 'flushMessageTimeout',
-      type: 'OibNumber',
-      translationKey: 'south.mqtt.flush-message-timeout',
-      unitLabel: 'ms',
-      defaultValue: 1_000,
-      newRow: false,
-      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 1_000_000 } }],
-      displayInViewMode: false
-    }
-  ],
-  items: {
-    scanMode: 'SUBSCRIPTION',
-    settings: [
-      {
-        key: 'topic',
-        type: 'OibText',
-        translationKey: 'south.items.mqtt.topic',
-        validators: [{ key: 'required' }],
-        displayInViewMode: true,
-        class: 'col-8'
       },
       {
-        key: 'valueType',
-        type: 'OibSelect',
-        translationKey: 'south.items.mqtt.value-type',
-        options: ['number', 'string', 'json'],
-        defaultValue: 'number',
-        validators: [{ key: 'required' }],
-        newRow: false,
-        displayInViewMode: true,
-        class: 'col-4'
+        type: 'string-select',
+        key: 'qos',
+        translationKey: 'configuration.oibus.manifest.south.mqtt.qos',
+        defaultValue: '1',
+        selectableValues: ['0', '1', '2'],
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          }
+        ],
+        displayProperties: {
+          row: 0,
+          columns: 3,
+          displayInViewMode: true
+        }
       },
       {
-        key: 'jsonPayload',
-        type: 'OibFormGroup',
-        translationKey: 'south.items.mqtt.json-payload.title',
-        newRow: true,
-        displayInViewMode: false,
-        conditionalDisplay: { field: 'valueType', values: ['json'] },
-        content: [
+        type: 'boolean',
+        key: 'persistent',
+        translationKey: 'configuration.oibus.manifest.south.mqtt.persistent',
+        defaultValue: false,
+        validators: [
           {
-            key: 'useArray',
-            type: 'OibCheckbox',
-            translationKey: 'south.items.mqtt.json-payload.use-array',
-            defaultValue: false,
-            class: 'col-4',
-            validators: [{ key: 'required' }]
+            type: 'REQUIRED',
+            arguments: []
+          }
+        ],
+        displayProperties: {
+          row: 0,
+          columns: 3,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'object',
+        key: 'authentication',
+        translationKey: 'configuration.oibus.manifest.south.mqtt.authentication.title',
+        displayProperties: {
+          visible: true,
+          wrapInBox: false
+        },
+        enablingConditions: [
+          {
+            referralPathFromRoot: 'type',
+            targetPathFromRoot: 'username',
+            values: ['basic']
           },
           {
-            key: 'dataArrayPath',
-            type: 'OibText',
-            translationKey: 'south.items.mqtt.json-payload.data-array-path',
-            newRow: false,
-            defaultValue: '',
-            class: 'col-4',
-            conditionalDisplay: { field: 'useArray', values: [true] }
+            referralPathFromRoot: 'type',
+            targetPathFromRoot: 'password',
+            values: ['basic']
           },
           {
-            key: 'valuePath',
-            type: 'OibText',
-            translationKey: 'south.items.mqtt.json-payload.value-path',
-            defaultValue: 'value',
-            class: 'col-4',
-            newRow: true,
-            validators: [{ key: 'required' }]
+            referralPathFromRoot: 'type',
+            targetPathFromRoot: 'certFilePath',
+            values: ['cert']
           },
           {
-            key: 'pointIdOrigin',
-            type: 'OibSelect',
-            translationKey: 'south.items.mqtt.json-payload.point-id-origin',
-            options: ['oibus', 'payload'],
-            defaultValue: 'oibus',
-            class: 'col-4',
-            newRow: true,
-            validators: [{ key: 'required' }]
+            referralPathFromRoot: 'type',
+            targetPathFromRoot: 'keyFilePath',
+            values: ['cert']
           },
           {
-            key: 'pointIdPath',
-            type: 'OibText',
-            translationKey: 'south.items.mqtt.json-payload.point-id-path',
-            defaultValue: 'name',
-            class: 'col-4',
-            conditionalDisplay: { field: 'pointIdOrigin', values: ['payload'] }
-          },
+            referralPathFromRoot: 'type',
+            targetPathFromRoot: 'caFilePath',
+            values: ['cert']
+          }
+        ],
+        validators: [
           {
-            key: 'timestampOrigin',
-            type: 'OibSelect',
-            translationKey: 'south.items.mqtt.json-payload.timestamp-origin',
-            options: ['oibus', 'payload'],
-            defaultValue: 'oibus',
-            newRow: true,
-            class: 'col-4',
-            validators: [{ key: 'required' }]
-          },
+            type: 'REQUIRED',
+            arguments: []
+          }
+        ],
+        attributes: [
           {
-            key: 'timestampPayload',
-            type: 'OibFormGroup',
-            translationKey: 'south.items.mqtt.json-payload.timestamp-payload.title',
-            newRow: true,
-            conditionalDisplay: { field: 'timestampOrigin', values: ['payload'] },
-            content: [
+            type: 'string-select',
+            key: 'type',
+            translationKey: 'configuration.oibus.manifest.south.mqtt.authentication',
+            defaultValue: 'none',
+            selectableValues: ['none', 'basic', 'cert'],
+            validators: [
               {
-                key: 'timestampPath',
-                translationKey: 'south.items.mqtt.json-payload.timestamp-payload.timestamp-path',
-                type: 'OibText',
-                defaultValue: '',
-                validators: [{ key: 'required' }],
-                displayInViewMode: true,
-                class: 'col-4'
-              },
-              {
-                key: 'timestampType',
-                translationKey: 'south.items.mqtt.json-payload.timestamp-payload.timestamp-type',
-                type: 'OibSelect',
-                defaultValue: 'string',
-                options: ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'],
-                validators: [{ key: 'required' }],
-                class: 'col-4'
-              },
-              {
-                key: 'timestampFormat',
-                translationKey: 'south.items.mqtt.json-payload.timestamp-payload.timestamp-format',
-                type: 'OibText',
-                newRow: true,
-                class: 'col-4',
-                defaultValue: 'yyyy-MM-dd HH:mm:ss.SSS',
-                conditionalDisplay: { field: 'timestampType', values: ['string'] },
-                validators: [{ key: 'required' }]
-              },
-              {
-                key: 'timezone',
-                translationKey: 'south.items.mqtt.json-payload.timestamp-payload.timezone',
-                type: 'OibTimezone',
-                defaultValue: 'UTC',
-                class: 'col-4',
-                validators: [{ key: 'required' }],
-                conditionalDisplay: { field: 'timestampType', values: ['string'] }
-              }
-            ]
-          },
-          {
-            key: 'otherFields',
-            type: 'OibArray',
-            translationKey: 'south.items.mqtt.json-payload.other-fields.title',
-            content: [
-              {
-                key: 'name',
-                translationKey: 'south.items.mqtt.json-payload.other-fields.name',
-                type: 'OibText',
-                defaultValue: '',
-                validators: [{ key: 'required' }],
-                displayInViewMode: true
-              },
-              {
-                key: 'path',
-                translationKey: 'south.items.mqtt.json-payload.other-fields.path',
-                type: 'OibText',
-                defaultValue: '*',
-                validators: [{ key: 'required' }],
-                displayInViewMode: true
+                type: 'REQUIRED',
+                arguments: []
               }
             ],
-            class: 'col',
-            newRow: true,
-            displayInViewMode: false
+            displayProperties: {
+              row: 0,
+              columns: 4,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'string',
+            key: 'username',
+            translationKey: 'configuration.oibus.manifest.south.mqtt.authentication.username',
+            defaultValue: null,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              }
+            ],
+            displayProperties: {
+              row: 1,
+              columns: 4,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'secret',
+            key: 'password',
+            translationKey: 'configuration.oibus.manifest.south.mqtt.authentication.password',
+            validators: [],
+            displayProperties: {
+              row: 1,
+              columns: 4,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'string',
+            key: 'certFilePath',
+            translationKey: 'configuration.oibus.manifest.south.mqtt.authentication.cert-file-path',
+            defaultValue: null,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              }
+            ],
+            displayProperties: {
+              row: 1,
+              columns: 4,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'string',
+            key: 'keyFilePath',
+            translationKey: 'configuration.oibus.manifest.south.mqtt.authentication.key-file-path',
+            defaultValue: null,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              }
+            ],
+            displayProperties: {
+              row: 1,
+              columns: 4,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'string',
+            key: 'caFilePath',
+            translationKey: 'configuration.oibus.manifest.south.mqtt.authentication.ca-file-path',
+            defaultValue: null,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              }
+            ],
+            displayProperties: {
+              row: 1,
+              columns: 4,
+              displayInViewMode: true
+            }
           }
         ]
+      },
+      {
+        type: 'boolean',
+        key: 'rejectUnauthorized',
+        translationKey: 'configuration.oibus.manifest.south.mqtt.reject-unauthorized',
+        defaultValue: false,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          }
+        ],
+        displayProperties: {
+          row: 2,
+          columns: 4,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'number',
+        key: 'reconnectPeriod',
+        translationKey: 'configuration.oibus.manifest.south.mqtt.reconnect-period',
+        unit: 'ms',
+        defaultValue: 10000,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          },
+          {
+            type: 'MINIMUM',
+            arguments: ['100']
+          },
+          {
+            type: 'MAXIMUM',
+            arguments: ['30000']
+          }
+        ],
+        displayProperties: {
+          row: 2,
+          columns: 4,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'number',
+        key: 'connectTimeout',
+        translationKey: 'configuration.oibus.manifest.south.mqtt.connect-timeout',
+        unit: 'ms',
+        defaultValue: 10000,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          },
+          {
+            type: 'MINIMUM',
+            arguments: ['100']
+          },
+          {
+            type: 'MAXIMUM',
+            arguments: ['30000']
+          }
+        ],
+        displayProperties: {
+          row: 2,
+          columns: 4,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'number',
+        key: 'maxNumberOfMessages',
+        translationKey: 'configuration.oibus.manifest.south.mqtt.max-number-of-messages',
+        defaultValue: 1000,
+        unit: null,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          },
+          {
+            type: 'MINIMUM',
+            arguments: ['1']
+          },
+          {
+            type: 'MAXIMUM',
+            arguments: ['1000000']
+          }
+        ],
+        displayProperties: {
+          row: 3,
+          columns: 4,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'number',
+        key: 'flushMessageTimeout',
+        translationKey: 'configuration.oibus.manifest.south.mqtt.flush-message-timeout',
+        unit: 'ms',
+        defaultValue: 1000,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          },
+          {
+            type: 'MINIMUM',
+            arguments: ['1']
+          },
+          {
+            type: 'MAXIMUM',
+            arguments: ['1000000']
+          }
+        ],
+        displayProperties: {
+          row: 3,
+          columns: 4,
+          displayInViewMode: true
+        }
       }
     ]
+  },
+  items: {
+    type: 'array',
+    key: 'items',
+    translationKey: 'configuration.oibus.manifest.south.items',
+    paginate: true,
+    numberOfElementPerPage: 20,
+    validators: [],
+    rootAttribute: {
+      type: 'object',
+      key: 'item',
+      translationKey: 'configuration.oibus.manifest.south.items.item',
+      displayProperties: {
+        visible: true,
+        wrapInBox: false
+      },
+      enablingConditions: [],
+      validators: [],
+      attributes: [
+        {
+          type: 'string',
+          key: 'name',
+          translationKey: 'configuration.oibus.manifest.south.items.name',
+          defaultValue: null,
+          validators: [
+            {
+              type: 'REQUIRED',
+              arguments: []
+            }
+          ],
+          displayProperties: {
+            row: 0,
+            columns: 4,
+            displayInViewMode: true
+          }
+        },
+        {
+          type: 'boolean',
+          key: 'enabled',
+          translationKey: 'configuration.oibus.manifest.south.items.enabled',
+          defaultValue: true,
+          validators: [
+            {
+              type: 'REQUIRED',
+              arguments: []
+            }
+          ],
+          displayProperties: {
+            row: 0,
+            columns: 4,
+            displayInViewMode: true
+          }
+        },
+        {
+          type: 'scan-mode',
+          key: 'scanModeId',
+          acceptableType: 'SUBSCRIPTION',
+          translationKey: 'configuration.oibus.manifest.south.items.scan-mode',
+          validators: [
+            {
+              type: 'REQUIRED',
+              arguments: []
+            }
+          ],
+          displayProperties: {
+            row: 0,
+            columns: 4,
+            displayInViewMode: true
+          }
+        },
+        {
+          type: 'object',
+          key: 'settings',
+          translationKey: 'configuration.oibus.manifest.south.items.settings',
+          displayProperties: {
+            visible: true,
+            wrapInBox: false
+          },
+          enablingConditions: [
+            {
+              referralPathFromRoot: 'valueType',
+              targetPathFromRoot: 'jsonPayload',
+              values: ['json']
+            }
+          ],
+          validators: [],
+          attributes: [
+            {
+              type: 'string',
+              key: 'topic',
+              translationKey: 'configuration.oibus.manifest.south.items.mqtt.topic',
+              defaultValue: null,
+              validators: [
+                {
+                  type: 'REQUIRED',
+                  arguments: []
+                }
+              ],
+              displayProperties: {
+                row: 0,
+                columns: 8,
+                displayInViewMode: true
+              }
+            },
+            {
+              type: 'string-select',
+              key: 'valueType',
+              translationKey: 'configuration.oibus.manifest.south.items.mqtt.value-type',
+              defaultValue: 'number',
+              selectableValues: ['number', 'string', 'json'],
+              validators: [
+                {
+                  type: 'REQUIRED',
+                  arguments: []
+                }
+              ],
+              displayProperties: {
+                row: 0,
+                columns: 4,
+                displayInViewMode: true
+              }
+            },
+            {
+              type: 'object',
+              key: 'jsonPayload',
+              translationKey: 'configuration.oibus.manifest.south.items.mqtt.json-payload.title',
+              displayProperties: {
+                visible: true,
+                wrapInBox: true
+              },
+              enablingConditions: [
+                {
+                  referralPathFromRoot: 'useArray',
+                  targetPathFromRoot: 'dataArrayPath',
+                  values: [true]
+                },
+                {
+                  referralPathFromRoot: 'pointIdOrigin',
+                  targetPathFromRoot: 'pointIdPath',
+                  values: ['payload']
+                },
+                {
+                  referralPathFromRoot: 'timestampOrigin',
+                  targetPathFromRoot: 'timestampPayload',
+                  values: ['payload']
+                }
+              ],
+              validators: [],
+              attributes: [
+                {
+                  type: 'boolean',
+                  key: 'useArray',
+                  translationKey: 'configuration.oibus.manifest.south.items.mqtt.json-payload.use-array',
+                  defaultValue: false,
+                  validators: [
+                    {
+                      type: 'REQUIRED',
+                      arguments: []
+                    }
+                  ],
+                  displayProperties: {
+                    row: 0,
+                    columns: 4,
+                    displayInViewMode: false
+                  }
+                },
+                {
+                  type: 'string',
+                  key: 'dataArrayPath',
+                  translationKey: 'configuration.oibus.manifest.south.items.mqtt.json-payload.data-array-path',
+                  defaultValue: null,
+                  validators: [
+                    {
+                      type: 'REQUIRED',
+                      arguments: []
+                    }
+                  ],
+                  displayProperties: {
+                    row: 0,
+                    columns: 4,
+                    displayInViewMode: false
+                  }
+                },
+                {
+                  type: 'string',
+                  key: 'valuePath',
+                  translationKey: 'configuration.oibus.manifest.south.items.mqtt.json-payload.value-path',
+                  defaultValue: null,
+                  validators: [
+                    {
+                      type: 'REQUIRED',
+                      arguments: []
+                    }
+                  ],
+                  displayProperties: {
+                    row: 1,
+                    columns: 4,
+                    displayInViewMode: false
+                  }
+                },
+                {
+                  type: 'string-select',
+                  key: 'pointIdOrigin',
+                  translationKey: 'configuration.oibus.manifest.south.items.mqtt.json-payload.point-id-origin',
+                  defaultValue: 'oibus',
+                  selectableValues: ['oibus', 'payload'],
+                  validators: [
+                    {
+                      type: 'REQUIRED',
+                      arguments: []
+                    }
+                  ],
+                  displayProperties: {
+                    row: 2,
+                    columns: 4,
+                    displayInViewMode: false
+                  }
+                },
+                {
+                  type: 'string',
+                  key: 'pointIdPath',
+                  translationKey: 'configuration.oibus.manifest.south.items.mqtt.json-payload.point-id-path',
+                  defaultValue: null,
+                  validators: [
+                    {
+                      type: 'REQUIRED',
+                      arguments: []
+                    }
+                  ],
+                  displayProperties: {
+                    row: 2,
+                    columns: 4,
+                    displayInViewMode: false
+                  }
+                },
+                {
+                  type: 'string-select',
+                  key: 'timestampOrigin',
+                  translationKey: 'configuration.oibus.manifest.south.items.mqtt.json-payload.timestamp-origin',
+                  defaultValue: 'oibus',
+                  selectableValues: ['oibus', 'payload'],
+                  validators: [
+                    {
+                      type: 'REQUIRED',
+                      arguments: []
+                    }
+                  ],
+                  displayProperties: {
+                    row: 3,
+                    columns: 4,
+                    displayInViewMode: false
+                  }
+                },
+                {
+                  type: 'object',
+                  key: 'timestampPayload',
+                  translationKey: 'configuration.oibus.manifest.south.items.mqtt.json-payload.timestamp-payload.title',
+                  displayProperties: {
+                    visible: true,
+                    wrapInBox: false
+                  },
+                  enablingConditions: [
+                    {
+                      referralPathFromRoot: 'timestampType',
+                      targetPathFromRoot: 'timestampFormat',
+                      values: ['string']
+                    },
+                    {
+                      referralPathFromRoot: 'timestampType',
+                      targetPathFromRoot: 'timezone',
+                      values: ['string']
+                    }
+                  ],
+                  validators: [],
+                  attributes: [
+                    {
+                      type: 'string',
+                      key: 'timestampPath',
+                      translationKey: 'configuration.oibus.manifest.south.items.mqtt.json-payload.timestamp-payload.timestamp-path',
+                      defaultValue: null,
+                      validators: [
+                        {
+                          type: 'REQUIRED',
+                          arguments: []
+                        }
+                      ],
+                      displayProperties: {
+                        row: 0,
+                        columns: 4,
+                        displayInViewMode: false
+                      }
+                    },
+                    {
+                      type: 'string-select',
+                      key: 'timestampType',
+                      translationKey: 'configuration.oibus.manifest.south.items.mqtt.json-payload.timestamp-payload.timestamp-type',
+                      defaultValue: 'string',
+                      selectableValues: ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'],
+                      validators: [
+                        {
+                          type: 'REQUIRED',
+                          arguments: []
+                        }
+                      ],
+                      displayProperties: {
+                        row: 0,
+                        columns: 4,
+                        displayInViewMode: false
+                      }
+                    },
+                    {
+                      type: 'string',
+                      key: 'timestampFormat',
+                      translationKey: 'configuration.oibus.manifest.south.items.mqtt.json-payload.timestamp-payload.timestamp-format',
+                      defaultValue: 'yyyy-MM-dd HH:mm:ss.SSS',
+                      validators: [
+                        {
+                          type: 'REQUIRED',
+                          arguments: []
+                        }
+                      ],
+                      displayProperties: {
+                        row: 1,
+                        columns: 4,
+                        displayInViewMode: false
+                      }
+                    },
+                    {
+                      type: 'timezone',
+                      key: 'timezone',
+                      translationKey: 'configuration.oibus.manifest.south.items.mqtt.json-payload.timestamp-payload.timezone',
+                      defaultValue: 'UTC',
+                      validators: [
+                        {
+                          type: 'REQUIRED',
+                          arguments: []
+                        }
+                      ],
+                      displayProperties: {
+                        row: 1,
+                        columns: 4,
+                        displayInViewMode: false
+                      }
+                    }
+                  ]
+                },
+                {
+                  type: 'array',
+                  key: 'otherFields',
+                  translationKey: 'configuration.oibus.manifest.south.items.mqtt.json-payload.other-fields',
+                  paginate: false,
+                  numberOfElementPerPage: 0,
+                  validators: [],
+                  rootAttribute: {
+                    type: 'object',
+                    key: 'otherField',
+                    translationKey: 'configuration.oibus.manifest.south.items.mqtt.json-payload.other-fields.title',
+                    displayProperties: {
+                      visible: true,
+                      wrapInBox: false
+                    },
+                    enablingConditions: [],
+                    validators: [],
+                    attributes: [
+                      {
+                        type: 'string',
+                        key: 'name',
+                        translationKey: 'configuration.oibus.manifest.south.items.mqtt.json-payload.other-fields.name',
+                        defaultValue: null,
+                        validators: [
+                          {
+                            type: 'REQUIRED',
+                            arguments: []
+                          }
+                        ],
+                        displayProperties: {
+                          row: 0,
+                          columns: 4,
+                          displayInViewMode: true
+                        }
+                      },
+                      {
+                        type: 'string',
+                        key: 'path',
+                        translationKey: 'configuration.oibus.manifest.south.items.mqtt.json-payload.other-fields.path',
+                        defaultValue: null,
+                        validators: [
+                          {
+                            type: 'REQUIRED',
+                            arguments: []
+                          }
+                        ],
+                        displayProperties: {
+                          row: 0,
+                          columns: 4,
+                          displayInViewMode: false
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
   }
 };
 export default manifest;

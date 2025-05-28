@@ -49,10 +49,10 @@ export type NorthSFTPSettingsAuthentication = (typeof NORTH_S_F_T_P_SETTINGS_AUT
 export interface NorthMQTTSettingsAuthentication {
   type: NorthMQTTSettingsAuthenticationType;
   username?: string;
-  password?: string | null;
+  password?: string;
   certFilePath?: string;
-  keyFilePath?: string | null;
-  caFilePath?: string | null;
+  keyFilePath?: string;
+  caFilePath?: string;
 }
 
 export interface NorthOIAnalyticsSettingsSpecificSettings {
@@ -77,7 +77,7 @@ export interface NorthOPCUASettingsAuthentication {
   username?: string;
   password?: string | null;
   certFilePath?: string;
-  keyFilePath?: string | null;
+  keyFilePath?: string;
 }
 
 export interface NorthRESTSettingsQueryParams {
@@ -92,7 +92,7 @@ export interface NorthAmazonS3Settings {
   accessKey: string;
   secretKey: string | null;
   useProxy: boolean;
-  proxyUrl?: string;
+  proxyUrl?: string | null;
   proxyUsername?: string | null;
   proxyPassword?: string | null;
 }
@@ -103,10 +103,10 @@ export interface NorthAzureBlobSettings {
   account?: string;
   customUrl?: string;
   container: string;
-  path: string | null;
+  path: string;
   authentication: NorthAzureBlobSettingsAuthentication;
-  sasToken?: string | null;
   accessKey?: string | null;
+  sasToken?: string | null;
   tenantId?: string | null;
   clientId?: string | null;
   clientSecret?: string | null;
@@ -157,14 +157,15 @@ export interface NorthOIAnalyticsSettings {
 export interface NorthOPCUASettings {
   url: string;
   keepSessionAlive: boolean;
-  readTimeout: number;
   retryInterval: number;
   securityMode: NorthOPCUASettingsSecurityMode;
-  securityPolicy?: NorthOPCUASettingsSecurityPolicy | null;
+  securityPolicy?: NorthOPCUASettingsSecurityPolicy;
   authentication: NorthOPCUASettingsAuthentication;
 }
 
 export interface NorthRESTSettings {
+  host: string;
+  acceptUnauthorized: boolean;
   endpoint: string;
   testPath: string;
   timeout: number;
@@ -183,7 +184,7 @@ export interface NorthSFTPSettings {
   host: string;
   port: number;
   authentication: NorthSFTPSettingsAuthentication;
-  username: string | null;
+  username: string;
   password?: string | null;
   privateKey?: string;
   passphrase?: string | null;

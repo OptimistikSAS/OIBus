@@ -12,7 +12,7 @@ import { BehaviorSubject, of, Subscription } from 'rxjs';
 import { emptyPage, toPage } from '../shared/test-utils';
 import { DateTime } from 'luxon';
 import { PageLoader } from '../shared/page-loader.service';
-import { TYPEAHEAD_DEBOUNCE_TIME } from '../shared/typeahead';
+import { TYPEAHEAD_DEBOUNCE_TIME } from '../shared/form/typeahead';
 
 class LogsComponentTester extends ComponentTester<LogsComponent> {
   constructor() {

@@ -3,22 +3,15 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { HistoryQueryService } from './history-query.service';
-import {
-  HistoryQueryCommandDTO,
-  HistoryQueryDTO,
-  HistoryQueryItemCommandDTO,
-  HistoryQueryItemDTO,
-  HistoryQueryLightDTO
-} from '../../../../backend/shared/model/history-query.model';
+import { HistoryQueryDTO, HistoryQueryItemDTO, HistoryQueryLightDTO } from '../../../../backend/shared/model/history-query.model';
 import { toPage } from '../shared/test-utils';
 import { Page } from '../../../../backend/shared/model/types';
-import { SouthConnectorCommandDTO } from '../../../../backend/shared/model/south-connector.model';
 import { DownloadService } from './download.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { NorthConnectorCommandDTO } from '../../../../backend/shared/model/north-connector.model';
 import { SouthItemSettings, SouthSettings } from '../../../../backend/shared/model/south-settings.model';
 import { NorthSettings } from '../../../../backend/shared/model/north-settings.model';
 import { CacheMetadata } from '../../../../backend/shared/model/engine.model';
+import testData from '../../../../backend/src/tests/utils/test-data';
 
 describe('HistoryQueryService', () => {
   let http: HttpTestingController;
@@ -57,12 +50,7 @@ describe('HistoryQueryService', () => {
 
   it('should create a History query', () => {
     let done = false;
-    const command: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings> = {
-      name: 'myHistoryQuery',
-      description: 'a test history query',
-      southType: 'mssql',
-      northType: 'file-writer'
-    } as HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
+    const command = testData.historyQueries.command;
 
     service.create(command, null, null, '').subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'POST', url: '/api/history-queries' });
@@ -73,40 +61,7 @@ describe('HistoryQueryService', () => {
 
   it('should update a History query', () => {
     let done = false;
-    const command: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings> = {
-      name: 'myHistoryQuery',
-      description: 'a test history query',
-      startTime: '2023-01-01T00:00:00.000Z',
-      endTime: '2023-01-01T00:00:00.000Z',
-      southType: 'mssql',
-      northType: 'file-writer',
-      southSettings: {} as SouthSettings,
-      northSettings: {} as NorthSettings,
-      caching: {
-        trigger: {
-          scanModeId: 'scanModeId1',
-          scanModeName: null,
-          numberOfElements: 1_000,
-          numberOfFiles: 1
-        },
-        throttling: {
-          runMinDelay: 200,
-          maxSize: 30,
-          maxNumberOfElements: 10_000
-        },
-        error: {
-          retryInterval: 1_000,
-          retryCount: 3,
-          retentionDuration: 24
-        },
-        archive: {
-          enabled: false,
-          retentionDuration: 0
-        }
-      },
-      items: [],
-      northTransformers: []
-    };
+    const command = testData.historyQueries.command;
 
     service.update('id1', command, true).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'PUT', url: '/api/history-queries/id1?resetCache=true' });
@@ -147,12 +102,7 @@ describe('HistoryQueryService', () => {
 
   it('should create a History query item', () => {
     let done = false;
-    const command: HistoryQueryItemCommandDTO<SouthItemSettings> = {
-      id: null,
-      name: 'myPointId',
-      enabled: true,
-      settings: {} as SouthItemSettings
-    };
+    const command = testData.historyQueries.itemCommand;
 
     service.createItem('id1', command).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'POST', url: '/api/history-queries/id1/south-items' });
@@ -163,12 +113,7 @@ describe('HistoryQueryService', () => {
 
   it('should update a History query item', () => {
     let done = false;
-    const command: HistoryQueryItemCommandDTO<SouthItemSettings> = {
-      id: null,
-      name: 'myPointId',
-      enabled: false,
-      settings: {} as SouthItemSettings
-    };
+    const command = testData.historyQueries.itemCommand;
 
     service.updateItem('id1', 'itemId1', command).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'PUT', url: '/api/history-queries/id1/south-items/itemId1' });
@@ -300,10 +245,7 @@ describe('HistoryQueryService', () => {
 
   it('should test a History query North connector connection', () => {
     let done = false;
-    const command: NorthConnectorCommandDTO<NorthSettings> = {
-      type: 'file-writer',
-      settings: {}
-    } as NorthConnectorCommandDTO<NorthSettings>;
+    const command = testData.north.command;
 
     service.testNorthConnection('id1', command).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'PUT', url: '/api/history-queries/id1/north/test-connection' });
@@ -314,10 +256,7 @@ describe('HistoryQueryService', () => {
 
   it('should test a History query South connector connection', () => {
     let done = false;
-    const command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> = {
-      type: 'mssql',
-      settings: {}
-    } as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
+    const command = testData.south.command;
 
     service.testSouthConnection('id1', command).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'PUT', url: '/api/history-queries/id1/south/test-connection' });

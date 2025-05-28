@@ -14,7 +14,7 @@
               class="btn btn-primary pull-right me-2"
               id="south-enabled"
               [ngbTooltip]="(southConnector.enabled ? 'south.tooltips.stop' : 'south.tooltips.start') | translate"
-              (click)="toggleConnector(!southConnector.enabled)"
+              (click)="toggleConnector(!southConnector!.enabled)"
             >
               <i [class]="southConnector.enabled ? 'fa fa-pause' : 'fa fa-play'"></i>
             </button>
@@ -78,6 +78,7 @@
           [southConnectorCommand]="southConnectorCommand"
           [southManifest]="manifest"
           [scanModes]="scanModes"
+          [certificates]="certificates"
           [saveChangesDirectly]="true"
           (inMemoryItems)="updateInMemoryItems($event)"
         />
