@@ -623,4 +623,180 @@ describe('Joi validator', () => {
       }
     });
   });
+
+  describe('Array level validators', () => {
+    it('should apply min validator to array', async () => {
+      const arrayFormControl: OibArrayFormControl = {
+        key: 'items',
+        type: 'OibArray',
+        translationKey: 'Items',
+        validators: [{ key: 'min', params: { min: 2 } }],
+        content: [
+          {
+            key: 'name',
+            type: 'OibText',
+            translationKey: 'Name'
+          }
+        ]
+      };
+
+      const invalidData = { items: [{ name: 'item1' }] };
+      const validData = { items: [{ name: 'item1' }, { name: 'item2' }] };
+
+      await expect(extendedValidator.validateSettings([arrayFormControl], invalidData)).rejects.toThrow();
+      await expect(extendedValidator.validateSettings([arrayFormControl], validData)).resolves.not.toThrow();
+    });
+
+    it('should apply minLength validator to array', async () => {
+      const arrayFormControl: OibArrayFormControl = {
+        key: 'items',
+        type: 'OibArray',
+        translationKey: 'Items',
+        validators: [{ key: 'minLength', params: { minLength: 3 } }],
+        content: [
+          {
+            key: 'name',
+            type: 'OibText',
+            translationKey: 'Name'
+          }
+        ]
+      };
+
+      const invalidData = { items: [{ name: 'item1' }, { name: 'item2' }] };
+      const validData = { items: [{ name: 'item1' }, { name: 'item2' }, { name: 'item3' }] };
+
+      await expect(extendedValidator.validateSettings([arrayFormControl], invalidData)).rejects.toThrow();
+      await expect(extendedValidator.validateSettings([arrayFormControl], validData)).resolves.not.toThrow();
+    });
+
+    it('should apply max validator to array', async () => {
+      const arrayFormControl: OibArrayFormControl = {
+        key: 'items',
+        type: 'OibArray',
+        translationKey: 'Items',
+        validators: [{ key: 'max', params: { max: 2 } }],
+        content: [
+          {
+            key: 'name',
+            type: 'OibText',
+            translationKey: 'Name'
+          }
+        ]
+      };
+
+      const invalidData = { items: [{ name: 'item1' }, { name: 'item2' }, { name: 'item3' }] };
+      const validData = { items: [{ name: 'item1' }, { name: 'item2' }] };
+
+      await expect(extendedValidator.validateSettings([arrayFormControl], invalidData)).rejects.toThrow();
+      await expect(extendedValidator.validateSettings([arrayFormControl], validData)).resolves.not.toThrow();
+    });
+
+    it('should apply maxLength validator to array', async () => {
+      const arrayFormControl: OibArrayFormControl = {
+        key: 'items',
+        type: 'OibArray',
+        translationKey: 'Items',
+        validators: [{ key: 'maxLength', params: { maxLength: 1 } }],
+        content: [
+          {
+            key: 'name',
+            type: 'OibText',
+            translationKey: 'Name'
+          }
+        ]
+      };
+
+      const invalidData = { items: [{ name: 'item1' }, { name: 'item2' }] };
+      const validData = { items: [{ name: 'item1' }] };
+
+      await expect(extendedValidator.validateSettings([arrayFormControl], invalidData)).rejects.toThrow();
+      await expect(extendedValidator.validateSettings([arrayFormControl], validData)).resolves.not.toThrow();
+    });
+
+    it('should handle multiple array validators together', async () => {
+      const arrayFormControl: OibArrayFormControl = {
+        key: 'items',
+        type: 'OibArray',
+        translationKey: 'Items',
+        validators: [
+          { key: 'min', params: { min: 2 } },
+          { key: 'max', params: { max: 4 } }
+        ],
+        content: [
+          {
+            key: 'name',
+            type: 'OibText',
+            translationKey: 'Name'
+          }
+        ]
+      };
+
+      const tooFewItems = { items: [{ name: 'item1' }] };
+      const tooManyItems = { items: [{ name: 'item1' }, { name: 'item2' }, { name: 'item3' }, { name: 'item4' }, { name: 'item5' }] };
+      const validData = { items: [{ name: 'item1' }, { name: 'item2' }, { name: 'item3' }] };
+
+      await expect(extendedValidator.validateSettings([arrayFormControl], tooFewItems)).rejects.toThrow();
+      await expect(extendedValidator.validateSettings([arrayFormControl], tooManyItems)).rejects.toThrow();
+      await expect(extendedValidator.validateSettings([arrayFormControl], validData)).resolves.not.toThrow();
+    });
+  });
+
+  describe('SingleTrue validator edge cases', () => {
+    it('should handle non-array values in singleTrue validator directly', () => {
+      const validatorInstance = new JoiValidator();
+      const customValidator: Joi.CustomValidator = (
+        validatorInstance as unknown as {
+          generateSingleTrueValidator: (field: string) => Joi.CustomValidator;
+        }
+      ).generateSingleTrueValidator('isActive');
+
+      const mockHelpers = {
+        message: jest.fn()
+      };
+
+      const nonArrayValue = 'not-an-array';
+      const result = customValidator(nonArrayValue as unknown, mockHelpers as unknown as Joi.CustomHelpers);
+
+      expect(result).toBe(nonArrayValue);
+      expect(mockHelpers.message).not.toHaveBeenCalled();
+    });
+
+    it('should handle non-array values in singleTrue validator - alternative approach', async () => {
+      const validatorInstance = new JoiValidator();
+      const customValidator = (
+        validatorInstance as unknown as { generateSingleTrueValidator: (field: string) => Joi.CustomValidator }
+      ).generateSingleTrueValidator('isActive');
+
+      const schema = Joi.any().custom(customValidator);
+
+      const nonArrayValue = 'not-an-array';
+      const result = await schema.validateAsync(nonArrayValue);
+
+      expect(result).toBe(nonArrayValue);
+    });
+
+    it('should handle null values in singleTrue validator', async () => {
+      const validatorInstance = new JoiValidator();
+      const customValidator = (
+        validatorInstance as unknown as { generateSingleTrueValidator: (field: string) => Joi.CustomValidator }
+      ).generateSingleTrueValidator('isActive');
+
+      const schema = Joi.any().custom(customValidator);
+
+      const result = await schema.validateAsync(null);
+      expect(result).toBe(null);
+    });
+
+    it('should handle undefined values in singleTrue validator', async () => {
+      const validatorInstance = new JoiValidator();
+      const customValidator = (
+        validatorInstance as unknown as { generateSingleTrueValidator: (field: string) => Joi.CustomValidator }
+      ).generateSingleTrueValidator('isActive');
+
+      const schema = Joi.any().custom(customValidator);
+
+      const result = await schema.validateAsync(undefined);
+      expect(result).toBe(undefined);
+    });
+  });
 });
