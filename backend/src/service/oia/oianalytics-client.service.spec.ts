@@ -1,6 +1,3 @@
-import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
-
-import EncryptionService from '../encryption.service';
 import testData from '../../tests/utils/test-data';
 import OIAnalyticsClient from './oianalytics-client.service';
 import { createProxyAgent } from '../proxy-agent';
@@ -12,15 +9,13 @@ jest.mock('node-fetch');
 jest.mock('../proxy-agent');
 jest.mock('../utils');
 
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
-
 let service: OIAnalyticsClient;
 describe('OIAnalytics Client', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
     (createProxyAgent as jest.Mock).mockReturnValue(null);
-    service = new OIAnalyticsClient(encryptionService);
+    service = new OIAnalyticsClient();
   });
 
   it('should update command status', async () => {
