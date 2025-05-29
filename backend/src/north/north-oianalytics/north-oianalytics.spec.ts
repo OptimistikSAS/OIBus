@@ -186,7 +186,10 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
     };
 
     await expect(north.testConnection()).resolves.not.toThrow();
-    expect(HTTPRequest).toHaveBeenCalledWith(`${hostname}/api/optimistik/oibus/status`, expectedReqOptions);
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${hostname}/api/optimistik/oibus/status` }),
+      expectedReqOptions
+    );
   });
 
   it('should manage timeout error on test connection', async () => {
@@ -202,7 +205,11 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
     });
 
     await expect(north.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
-    expect(HTTPRequest).toHaveBeenCalledWith(`${hostname}/api/optimistik/oibus/status`, expectedReqOptions);
+
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${hostname}/api/optimistik/oibus/status` }),
+      expectedReqOptions
+    );
   });
 
   it('should manage bad response on test connection', async () => {
@@ -216,7 +223,11 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
     (HTTPRequest as jest.Mock).mockResolvedValueOnce(createMockResponse(400, 'statusText'));
 
     await expect(north.testConnection()).rejects.toThrow(`HTTP request failed with status code 400 and message: "statusText"`);
-    expect(HTTPRequest).toHaveBeenCalledWith(`${hostname}/api/optimistik/oibus/status`, expectedReqOptions);
+
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${hostname}/api/optimistik/oibus/status` }),
+      expectedReqOptions
+    );
   });
 
   it('should properly handle values', async () => {
@@ -234,7 +245,10 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
 
     await north.handleValues(timeValues);
 
-    expect(HTTPRequest).toHaveBeenCalledWith(`${hostname}/api/oianalytics/oibus/time-values`, expectedReqOptions);
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${hostname}/api/oianalytics/oibus/time-values` }),
+      expectedReqOptions
+    );
   });
 
   it('should properly handle values and compress them', async () => {
@@ -277,7 +291,10 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
       options: {}
     });
 
-    expect(HTTPRequest).toHaveBeenCalledWith(`${hostname}/api/oianalytics/oibus/time-values/compressed`, expectedReqOptions);
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${hostname}/api/oianalytics/oibus/time-values/compressed` }),
+      expectedReqOptions
+    );
     expect(zlib.gzipSync).toHaveBeenCalledWith(JSON.stringify(values));
   });
 
@@ -329,7 +346,10 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
       })
     ).rejects.toThrow(new OIBusError(`Error 400: "statusText"`, false));
 
-    expect(HTTPRequest).toHaveBeenCalledWith(`${hostname}/api/oianalytics/oibus/time-values`, expectedReqOptions);
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${hostname}/api/oianalytics/oibus/time-values` }),
+      expectedReqOptions
+    );
   });
 
   it('should properly handle files', async () => {
@@ -354,7 +374,11 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
       source: 'south',
       options: {}
     });
-    expect(HTTPRequest).toHaveBeenCalledWith(`${hostname}/api/oianalytics/file-uploads`, expectedReqOptions);
+
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${hostname}/api/oianalytics/file-uploads` }),
+      expectedReqOptions
+    );
   });
 
   it('should properly handle files and compress them', async () => {
@@ -385,7 +409,10 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
       options: {}
     });
 
-    expect(HTTPRequest).toHaveBeenCalledWith(`${hostname}/api/oianalytics/file-uploads`, expectedReqOptions);
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${hostname}/api/oianalytics/file-uploads` }),
+      expectedReqOptions
+    );
     expect(compress).toHaveBeenCalledWith(
       '/path/to/file/example-123456.file',
       path.resolve('/path', 'to', 'file', 'example.file-123456.gz')
@@ -427,7 +454,10 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
 
     await expect(north.handleFile(filePath)).rejects.toThrow(new OIBusError(`Error 501: "statusText"`, false));
 
-    expect(HTTPRequest).toHaveBeenCalledWith(`${hostname}/api/oianalytics/file-uploads`, expectedReqOptions);
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${hostname}/api/oianalytics/file-uploads` }),
+      expectedReqOptions
+    );
   });
 
   it('should not get auth options without accessKey', async () => {
@@ -457,7 +487,10 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
       options: {}
     });
 
-    expect(HTTPRequest).toHaveBeenCalledWith(`${hostname}/api/oianalytics/file-uploads`, expectedReqOptions);
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${hostname}/api/oianalytics/file-uploads` }),
+      expectedReqOptions
+    );
   });
 
   it('should remove trailing slash from host', async () => {
@@ -487,7 +520,10 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
       options: {}
     });
 
-    expect(HTTPRequest).toHaveBeenCalledWith(`${hostname}/api/oianalytics/file-uploads`, expectedReqOptions);
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${hostname}/api/oianalytics/file-uploads` }),
+      expectedReqOptions
+    );
   });
 
   if (settings.specificSettings?.useProxy) {
@@ -596,7 +632,10 @@ describe('NorthOIAnalytics with Azure Active Directory', () => {
       expect(ClientCertificateCredential).toHaveBeenCalledWith(tenantId, clientId, {
         certificate: `cert\nprivate key`
       });
-      expect(HTTPRequest).toHaveBeenCalledWith(`${hostname}/api/oianalytics/file-uploads`, expectedReqOptions);
+      expect(HTTPRequest).toHaveBeenCalledWith(
+        expect.objectContaining({ href: `${hostname}/api/oianalytics/file-uploads` }),
+        expectedReqOptions
+      );
     });
 
     it('should not auth option with aad-certificate when cert not found', async () => {
@@ -625,7 +664,10 @@ describe('NorthOIAnalytics with Azure Active Directory', () => {
       });
 
       expect(ClientCertificateCredential).not.toHaveBeenCalled();
-      expect(HTTPRequest).toHaveBeenCalledWith(`${hostname}/api/oianalytics/file-uploads`, expectedReqOptions);
+      expect(HTTPRequest).toHaveBeenCalledWith(
+        expect.objectContaining({ href: `${hostname}/api/oianalytics/file-uploads` }),
+        expectedReqOptions
+      );
     });
   });
 
@@ -678,7 +720,10 @@ describe('NorthOIAnalytics with Azure Active Directory', () => {
 
       const { tenantId, clientId, clientSecret } = configuration.settings.specificSettings!;
       expect(ClientSecretCredential).toHaveBeenCalledWith(tenantId, clientId, clientSecret);
-      expect(HTTPRequest).toHaveBeenCalledWith(`${hostname}/api/oianalytics/file-uploads`, expectedReqOptions);
+      expect(HTTPRequest).toHaveBeenCalledWith(
+        expect.objectContaining({ href: `${hostname}/api/oianalytics/file-uploads` }),
+        expectedReqOptions
+      );
     });
   });
 });
@@ -761,7 +806,10 @@ describe('NorthOIAnalytics with OIA module', () => {
       options: {}
     });
 
-    expect(HTTPRequest).toHaveBeenCalledWith(`${hostname}/api/oianalytics/file-uploads`, expectedReqOptions);
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${hostname}/api/oianalytics/file-uploads` }),
+      expectedReqOptions
+    );
   });
 
   it('should use oia module with proxy', async () => {
@@ -804,7 +852,10 @@ describe('NorthOIAnalytics with OIA module', () => {
       options: {}
     });
 
-    expect(HTTPRequest).toHaveBeenCalledWith(`${hostname}/api/oianalytics/file-uploads`, expectedReqOptions);
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${hostname}/api/oianalytics/file-uploads` }),
+      expectedReqOptions
+    );
   });
 
   it('should use oia module with proxy without user', async () => {
@@ -840,7 +891,10 @@ describe('NorthOIAnalytics with OIA module', () => {
       options: {}
     });
 
-    expect(HTTPRequest).toHaveBeenCalledWith(`${hostname}/api/oianalytics/file-uploads`, expectedReqOptions);
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${hostname}/api/oianalytics/file-uploads` }),
+      expectedReqOptions
+    );
   });
 
   it('should not use oia module if not registered', async () => {
