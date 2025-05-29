@@ -937,7 +937,7 @@ describe('Service utils', () => {
   describe('formatQueryParams', () => {
     it('should correctly return void string when there is no query params', () => {
       const result = formatQueryParams('2020-01-01T00:00:00.000Z', '2021-01-01T00:00:00.000Z', []);
-      expect(result).toEqual('');
+      expect(result).toEqual({});
     });
 
     it('should correctly format query params with ISO date string', () => {
@@ -950,7 +950,7 @@ describe('Service utils', () => {
       ];
 
       const result = formatQueryParams(startTime, endTime, queryParams);
-      expect(result).toEqual('?start=2020-01-01T00%3A00%3A00.000Z&end=2021-01-01T00%3A00%3A00.000Z&' + 'anotherParam=anotherQueryParam');
+      expect(result).toEqual({ anotherParam: 'anotherQueryParam', end: '2021-01-01T00:00:00.000Z', start: '2020-01-01T00:00:00.000Z' });
     });
   });
 
