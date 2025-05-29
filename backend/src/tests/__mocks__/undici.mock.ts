@@ -5,7 +5,7 @@ import { ReqResponse } from '../../service/http-request.utils';
  */
 export function createMockResponse(
   statusCode: number,
-  body?: Record<string, unknown> | string,
+  body?: Record<string, unknown> | Array<unknown> | ArrayBuffer | string,
   headers: Record<string, string> = {}
 ): ReqResponse {
   return {
@@ -13,7 +13,8 @@ export function createMockResponse(
     headers,
     body: {
       json: jest.fn().mockResolvedValue(body),
-      text: jest.fn().mockResolvedValue(JSON.stringify(body))
+      text: jest.fn().mockResolvedValue(JSON.stringify(body)),
+      arrayBuffer: jest.fn().mockReturnValue(body)
     },
     ok: statusCode >= 200 && statusCode <= 299
   } as unknown as ReqResponse;
