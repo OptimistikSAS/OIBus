@@ -21,7 +21,7 @@ export default class OIAnalyticsClient {
   async updateCommandStatus(registration: OIAnalyticsRegistration, payload: string): Promise<void> {
     const url = new URL(COMMAND_STATUS_OIANALYTICS_ENDPOINT, registration.host);
 
-    if (!registration.token) {
+    if (registration.token === null) {
       throw new Error('No registration token');
     }
 
@@ -44,7 +44,7 @@ export default class OIAnalyticsClient {
   ): Promise<Array<OIAnalyticsFetchCommandDTO>> {
     const url = new URL(RETRIEVE_CANCELLED_COMMANDS_OIANALYTICS_ENDPOINT, registration.host);
 
-    if (!registration.token) {
+    if (registration.token === null) {
       throw new Error('No registration token');
     }
 
@@ -64,7 +64,7 @@ export default class OIAnalyticsClient {
   async retrievePendingCommands(registration: OIAnalyticsRegistration): Promise<Array<OIAnalyticsFetchCommandDTO>> {
     const url = new URL(RETRIEVE_PENDING_COMMANDS_OIANALYTICS_ENDPOINT, registration.host);
 
-    if (!registration.token) {
+    if (registration.token === null) {
       throw new Error('No registration token');
     }
 
@@ -117,7 +117,7 @@ export default class OIAnalyticsClient {
   }
 
   async checkRegistration(registration: OIAnalyticsRegistration): Promise<{ status: string; expired: boolean; accessToken: string }> {
-    if (!registration.checkUrl) {
+    if (registration.checkUrl === null) {
       throw new Error('No check url specified');
     }
 
@@ -138,7 +138,7 @@ export default class OIAnalyticsClient {
   async sendConfiguration(registration: OIAnalyticsRegistration, payload: string): Promise<void> {
     const url = new URL(SEND_CONFIGURATION_OIANALYTICS_ENDPOINT, registration.host);
 
-    if (!registration.token) {
+    if (registration.token === null) {
       throw new Error('No registration token');
     }
 
@@ -158,7 +158,7 @@ export default class OIAnalyticsClient {
   async sendHistoryQuery(registration: OIAnalyticsRegistration, payload: string): Promise<void> {
     const url = new URL(HISTORY_QUERY_OIANALYTICS_ENDPOINT, registration.host);
 
-    if (!registration.token) {
+    if (registration.token === null) {
       throw new Error('No registration token');
     }
 
@@ -178,7 +178,7 @@ export default class OIAnalyticsClient {
   async deleteHistoryQuery(registration: OIAnalyticsRegistration, historyId: string): Promise<void> {
     const url = new URL(HISTORY_QUERY_OIANALYTICS_ENDPOINT, registration.host);
 
-    if (!registration.token) {
+    if (registration.token === null) {
       throw new Error('No registration token');
     }
 
@@ -198,7 +198,7 @@ export default class OIAnalyticsClient {
   async downloadFile(registration: OIAnalyticsRegistration, assetId: string, filename: string): Promise<void> {
     const url = new URL(DOWNLOAD_UPDATE_OIANALYTICS_ENDPOINT, registration.host);
 
-    if (!registration.token) {
+    if (registration.token === null) {
       throw new Error('No registration token');
     }
 
