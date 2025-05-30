@@ -3,7 +3,7 @@ import { NorthConnectorManifest } from '../../../shared/model/north-connector.mo
 const manifest: NorthConnectorManifest = {
   id: 'sftp',
   category: 'file',
-  types: ['raw'],
+  types: ['any'],
   settings: [
     {
       key: 'host',

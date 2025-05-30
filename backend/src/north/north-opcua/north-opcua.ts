@@ -15,6 +15,7 @@ import { SouthOPCUASettingsSecurityMode, SouthOPCUASettingsSecurityPolicy } from
 import {
   AttributeIds,
   ClientSession,
+  DataType,
   OPCUACertificateManager,
   OPCUAClient,
   OPCUAClientOptions,
@@ -57,6 +58,39 @@ function toOPCUASecurityPolicy(securityPolicy: SouthOPCUASettingsSecurityPolicy 
       return 'PubSub_Aes256_CTR';
     default:
       return undefined;
+  }
+}
+
+function toOPCUADataTypes(dataType: string) {
+  switch (dataType) {
+    case 'boolean':
+      return DataType.Boolean;
+    case 's-byte':
+      return DataType.SByte;
+    case 'byte':
+      return DataType.Byte;
+    case 'int16':
+      return DataType.Int16;
+    case 'uint16':
+      return DataType.UInt16;
+    case 'int32':
+      return DataType.Int32;
+    case 'uint32':
+      return DataType.UInt32;
+    case 'int64':
+      return DataType.Int64;
+    case 'uint64':
+      return DataType.UInt64;
+    case 'float':
+      return DataType.Float;
+    case 'double':
+      return DataType.Double;
+    case 'string':
+      return DataType.String;
+    case 'date-time':
+      return DataType.DateTime;
+    default:
+      return null;
   }
 }
 
@@ -270,14 +304,10 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
   }
 
   async handleContent(cacheMetadata: CacheMetadata): Promise<void> {
-    switch (cacheMetadata.contentType) {
-      case 'opcua':
-        return this.handleValues(JSON.parse(await fs.readFile(cacheMetadata.contentFile, { encoding: 'utf-8' })) as Array<OIBusOPCUAValue>);
-
-      default:
-        this.logger.debug(`File "${cacheMetadata.contentFile}" of type ${cacheMetadata.contentType} ignored`);
-        return;
+    if (!this.supportedTypes().includes(cacheMetadata.contentType)) {
+      throw new Error(`Unsupported data type: ${cacheMetadata.contentType} (file ${cacheMetadata.contentFile})`);
     }
+    return this.handleValues(JSON.parse(await fs.readFile(cacheMetadata.contentFile, { encoding: 'utf-8' })) as Array<OIBusOPCUAValue>);
   }
 
   private async handleValues(values: Array<OIBusOPCUAValue>) {
@@ -287,13 +317,18 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
     }
 
     for (const value of values) {
+      const dataType = toOPCUADataTypes(value.dataType);
+      if (!dataType) {
+        this.logger.trace(`Data type "${value.dataType}" unrecognized. ${value.nodeId}: ${value.value}`);
+        continue;
+      }
       // Write the value to the node
       const writeResult = await this.client.write({
         nodeId: value.nodeId,
         attributeId: AttributeIds.Value,
         value: {
           value: {
-            dataType: 6, // DataType.Int32
+            dataType: dataType, // DataType.Int32
             value: value.value
           }
         }
@@ -305,5 +340,9 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
         this.logger.error(`Failed to write value ${value.value} on nodeId ${value.nodeId}: ${writeResult.name}`);
       }
     }
+  }
+
+  supportedTypes(): Array<string> {
+    return ['opcua'];
   }
 }

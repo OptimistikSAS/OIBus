@@ -168,7 +168,7 @@ export default class SouthPostgreSQL
           item.name
         );
         const content = generateCsvContent(formattedResults, item.settings.serialization.delimiter);
-        oibusContent = { type: 'raw', filePath, content };
+        oibusContent = { type: 'any', filePath, content };
         break;
       }
     }

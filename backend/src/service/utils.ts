@@ -277,7 +277,7 @@ export const persistResults = async (
         }
 
         logger.debug(`Sending compressed file "${gzipPath}" to Engine`);
-        await addContentFn({ type: 'raw', filePath: gzipPath });
+        await addContentFn({ type: 'any', filePath: gzipPath });
         try {
           await fs.unlink(gzipPath);
           logger.trace(`File "${gzipPath}" deleted`);
@@ -286,7 +286,7 @@ export const persistResults = async (
         }
       } else {
         logger.debug(`Sending file "${filePath}" to Engine`);
-        await addContentFn({ type: 'raw', filePath });
+        await addContentFn({ type: 'any', filePath });
         try {
           await fs.unlink(filePath);
           logger.trace(`File ${filePath} deleted`);
@@ -315,7 +315,7 @@ export const persistResults = async (
         }
 
         logger.debug(`Sending compressed CSV file "${gzipPath}" to Engine`);
-        await addContentFn({ type: 'raw', filePath: gzipPath });
+        await addContentFn({ type: 'any', filePath: gzipPath });
 
         try {
           await fs.unlink(gzipPath);
@@ -325,7 +325,7 @@ export const persistResults = async (
         }
       } else {
         logger.debug(`Sending CSV file "${csvPath}" to Engine`);
-        await addContentFn({ type: 'raw', filePath: csvPath });
+        await addContentFn({ type: 'any', filePath: csvPath });
 
         try {
           await fs.unlink(csvPath);

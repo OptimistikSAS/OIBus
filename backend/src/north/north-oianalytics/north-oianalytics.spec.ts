@@ -202,6 +202,20 @@ describe('NorthOIAnalytics without proxy', () => {
     );
   });
 
+  it('should ignore data if bad content type', async () => {
+    await expect(
+      north.handleContent({
+        contentFile: 'path/to/file/example-123456789.file',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'bad',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow(`Unsupported data type: bad (file path/to/file/example-123456789.file)`);
+  });
+
   it('should properly throw fetch error with values', async () => {
     await north.start();
     (fetch as unknown as jest.Mock).mockImplementation(() => {
@@ -284,7 +298,7 @@ describe('NorthOIAnalytics without proxy', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     });

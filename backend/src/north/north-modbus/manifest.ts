@@ -3,7 +3,7 @@ import { NorthConnectorManifest } from '../../../shared/model/north-connector.mo
 const manifest: NorthConnectorManifest = {
   id: 'modbus',
   category: 'iot',
-  types: ['time-values'],
+  types: ['modbus'],
   settings: [
     {
       key: 'host',

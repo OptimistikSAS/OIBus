@@ -1,21 +1,21 @@
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import { transformerSchema } from '../web-server/controllers/validators/oibus-validation-schema';
 import testData from '../tests/utils/test-data';
-import TransformerService, { createTransformer } from './transformer.service';
+import TransformerService, { createTransformer, getStandardManifest } from './transformer.service';
 import TransformerRepository from '../repository/config/transformer.repository';
 import TransformerRepositoryMock from '../tests/__mocks__/repository/config/transformer-repository.mock';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import OianalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
-import { StandardTransformer, Transformer } from '../model/transformer.model';
+import { StandardTransformer } from '../model/transformer.model';
 import pino from 'pino';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
-import IsoRawTransformer from './transformers/iso-raw-transformer';
-import IsoTimeValuesTransformer from './transformers/iso-time-values-transformer';
+import IsoTransformer from './transformers/iso-transformer';
 import OIBusTimeValuesToJSONTransformer from './transformers/oibus-time-values-to-json-transformer';
 import OIBusTimeValuesToCsvTransformer from './transformers/oibus-time-values-to-csv-transformer';
 import OIBusTimeValuesToModbusTransformer from './transformers/oibus-time-values-to-modbus-transformer';
 import OIBusTimeValuesToOPCUATransformer from './transformers/oibus-time-values-to-opcua-transformer';
 import OIBusTimeValuesToMQTTTransformer from './transformers/oibus-time-values-to-mqtt-transformer';
+import IgnoreTransformer from './transformers/ignore-transformer';
 
 jest.mock('papaparse');
 jest.mock('./utils');
@@ -95,8 +95,7 @@ describe('Transformer Service', () => {
   it('update() should not update if the transformer is a standard one', async () => {
     const standardTransformer: StandardTransformer = {
       id: 'id',
-      type: 'standard',
-      standardCode: 'code'
+      type: 'standard'
     } as StandardTransformer;
     (transformerRepository.findById as jest.Mock).mockReturnValueOnce(standardTransformer);
 
@@ -131,8 +130,7 @@ describe('Transformer Service', () => {
   it('delete() should not delete if the transformer is a standard one', async () => {
     const standardTransformer: StandardTransformer = {
       id: 'id',
-      type: 'standard',
-      standardCode: 'code'
+      type: 'standard'
     } as StandardTransformer;
     (transformerRepository.findById as jest.Mock).mockReturnValueOnce(standardTransformer);
 
@@ -147,29 +145,47 @@ describe('Transformer Service', () => {
   it('createTransformer() should create the transformer', async () => {
     const logger: pino.Logger = new PinoLogger();
 
-    const transformer: Transformer = JSON.parse(JSON.stringify(testData.transformers.list[0]));
-    transformer.id = 'iso-raw';
-    expect(createTransformer(transformer, testData.north.list[0], logger)).toBeInstanceOf(IsoRawTransformer);
+    const transformer: StandardTransformer = JSON.parse(JSON.stringify(testData.transformers.list[0]));
+    transformer.type = 'standard';
+    transformer.functionName = 'time-values-to-csv';
+    expect(createTransformer({ transformer, options: {}, inputType: 'time-values' }, testData.north.list[0], logger)).toBeInstanceOf(
+      OIBusTimeValuesToCsvTransformer
+    );
 
-    transformer.id = 'iso-time-values';
-    expect(createTransformer(transformer, testData.north.list[0], logger)).toBeInstanceOf(IsoTimeValuesTransformer);
+    transformer.functionName = 'time-values-to-json';
+    expect(createTransformer({ transformer, options: {}, inputType: 'time-values' }, testData.north.list[0], logger)).toBeInstanceOf(
+      OIBusTimeValuesToJSONTransformer
+    );
 
-    transformer.id = 'time-values-to-csv';
-    expect(createTransformer(transformer, testData.north.list[0], logger)).toBeInstanceOf(OIBusTimeValuesToCsvTransformer);
+    transformer.functionName = 'time-values-to-modbus';
+    expect(createTransformer({ transformer, options: {}, inputType: 'time-values' }, testData.north.list[0], logger)).toBeInstanceOf(
+      OIBusTimeValuesToModbusTransformer
+    );
 
-    transformer.id = 'time-values-to-json';
-    expect(createTransformer(transformer, testData.north.list[0], logger)).toBeInstanceOf(OIBusTimeValuesToJSONTransformer);
+    transformer.functionName = 'time-values-to-opcua';
+    expect(createTransformer({ transformer, options: {}, inputType: 'time-values' }, testData.north.list[0], logger)).toBeInstanceOf(
+      OIBusTimeValuesToOPCUATransformer
+    );
 
-    transformer.id = 'time-values-to-modbus';
-    expect(createTransformer(transformer, testData.north.list[0], logger)).toBeInstanceOf(OIBusTimeValuesToModbusTransformer);
+    transformer.functionName = 'time-values-to-mqtt';
+    expect(createTransformer({ transformer, options: {}, inputType: 'time-values' }, testData.north.list[0], logger)).toBeInstanceOf(
+      OIBusTimeValuesToMQTTTransformer
+    );
 
-    transformer.id = 'time-values-to-opcua';
-    expect(createTransformer(transformer, testData.north.list[0], logger)).toBeInstanceOf(OIBusTimeValuesToOPCUATransformer);
+    transformer.functionName = 'bad-id';
+    expect(() => createTransformer({ transformer, options: {}, inputType: 'any' }, testData.north.list[0], logger)).toThrow(
+      'Transformer transformerId1 (standard) not implemented'
+    );
+  });
 
-    transformer.id = 'time-values-to-mqtt';
-    expect(createTransformer(transformer, testData.north.list[0], logger)).toBeInstanceOf(OIBusTimeValuesToMQTTTransformer);
-
-    transformer.id = 'bad-id';
-    expect(() => createTransformer(transformer, testData.north.list[0], logger)).toThrow(new Error('Could not create bad-id transformer'));
+  it('getStandardManifest() should get standard manifest', async () => {
+    expect(getStandardManifest('iso')).toEqual(IsoTransformer.manifestSettings);
+    expect(getStandardManifest('ignore')).toEqual(IgnoreTransformer.manifestSettings);
+    expect(getStandardManifest('time-values-to-csv')).toEqual(OIBusTimeValuesToCsvTransformer.manifestSettings);
+    expect(getStandardManifest('time-values-to-json')).toEqual(OIBusTimeValuesToJSONTransformer.manifestSettings);
+    expect(getStandardManifest('time-values-to-modbus')).toEqual(OIBusTimeValuesToModbusTransformer.manifestSettings);
+    expect(getStandardManifest('time-values-to-opcua')).toEqual(OIBusTimeValuesToOPCUATransformer.manifestSettings);
+    expect(getStandardManifest('time-values-to-mqtt')).toEqual(OIBusTimeValuesToMQTTTransformer.manifestSettings);
+    expect(() => getStandardManifest('bad-id')).toThrow(`Could not find manifest for bad-id transformer`);
   });
 });
