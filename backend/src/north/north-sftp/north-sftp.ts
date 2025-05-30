@@ -5,8 +5,7 @@ import EncryptionService from '../../service/encryption.service';
 import pino from 'pino';
 import { DateTime } from 'luxon';
 import { NorthSFTPSettings } from '../../../shared/model/north-settings.model';
-import csv from 'papaparse';
-import { CacheMetadata, OIBusTimeValue } from '../../../shared/model/engine.model';
+import { CacheMetadata } from '../../../shared/model/engine.model';
 
 import sftpClient, { ConnectOptions } from 'ssh2-sftp-client';
 import fs from 'node:fs/promises';
@@ -14,6 +13,8 @@ import { NorthConnectorEntity } from '../../model/north-connector.model';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import { BaseFolders } from '../../model/types';
+import TransformerService from '../../service/transformer.service';
+import { getFilenameWithoutRandomId } from '../../service/utils';
 
 /**
  * Class NorthSFTP - Write files in an output folder
@@ -22,66 +23,28 @@ export default class NorthSFTP extends NorthConnector<NorthSFTPSettings> {
   constructor(
     configuration: NorthConnectorEntity<NorthSFTPSettings>,
     encryptionService: EncryptionService,
+    transformerService: TransformerService,
     northConnectorRepository: NorthConnectorRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolders: BaseFolders
   ) {
-    super(configuration, encryptionService, northConnectorRepository, scanModeRepository, logger, baseFolders);
+    super(configuration, encryptionService, transformerService, northConnectorRepository, scanModeRepository, logger, baseFolders);
   }
 
   async handleContent(cacheMetadata: CacheMetadata): Promise<void> {
-    switch (cacheMetadata.contentType) {
-      case 'raw':
-        return this.handleFile(cacheMetadata.contentFile);
-
-      case 'time-values':
-        return this.handleValues(JSON.parse(await fs.readFile(cacheMetadata.contentFile, { encoding: 'utf-8' })) as Array<OIBusTimeValue>);
-    }
-  }
-
-  async handleValues(values: Array<OIBusTimeValue>): Promise<void> {
-    const nowDate = DateTime.now().toUTC();
-    const prefix = (this.connector.settings.prefix || '')
-      .replace('@CurrentDate', nowDate.toFormat('yyyy_MM_dd_HH_mm_ss_SSS'))
-      .replace('@ConnectorName', this.connector.name);
-    const suffix = (this.connector.settings.suffix || '')
-      .replace('@CurrentDate', nowDate.toFormat('yyyy_MM_dd_HH_mm_ss_SSS'))
-      .replace('@ConnectorName', this.connector.name);
-
-    const filename = `${prefix}${nowDate.toMillis()}${suffix}.csv`;
-
-    const csvContent = csv.unparse(
-      values.map(value => ({
-        pointId: value.pointId,
-        timestamp: value.timestamp,
-        value: value.data.value
-      })),
-      {
-        header: true,
-        delimiter: ';'
-      }
-    );
-
-    const target = `${this.connector.settings.remoteFolder}/${filename}`;
-    await this.sendToSftpServer(Buffer.from(csvContent, 'utf8'), target);
-    this.logger.debug(`File "${filename}" sent into "${target}" remote folder`);
-  }
-
-  async handleFile(filePath: string): Promise<void> {
     const nowDate = DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS');
 
     // Remove timestamp from the file path
-    const { name, ext } = path.parse(filePath);
-    const filename = name.slice(0, name.lastIndexOf('-'));
+    const { name, ext } = path.parse(getFilenameWithoutRandomId(cacheMetadata.contentFile));
 
     const prefix = (this.connector.settings.prefix || '').replace('@CurrentDate', nowDate).replace('@ConnectorName', this.connector.name);
     const suffix = (this.connector.settings.suffix || '').replace('@CurrentDate', nowDate).replace('@ConnectorName', this.connector.name);
 
-    const resultingFilename = `${prefix}${filename}${suffix}${ext}`;
+    const resultingFilename = `${prefix}${name}${suffix}${ext}`;
     const target = `${this.connector.settings.remoteFolder}/${resultingFilename}`;
-    await this.sendToSftpServer(filePath, target);
-    this.logger.debug(`File "${filePath}" sent into "${target}" remote folder`);
+    await this.sendToSftpServer(cacheMetadata.contentFile, target);
+    this.logger.debug(`File "${cacheMetadata.contentFile}" sent into "${target}" remote folder`);
   }
 
   async sendToSftpServer(file: string | Buffer, target: string): Promise<void> {

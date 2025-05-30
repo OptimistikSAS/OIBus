@@ -1,6 +1,4 @@
 import fs from 'node:fs';
-import fsAsync from 'node:fs/promises';
-import path from 'node:path';
 
 import { HeadBucketCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { NodeHttpHandler } from '@aws-sdk/node-http-handler';
@@ -10,13 +8,13 @@ import EncryptionService from '../../service/encryption.service';
 import pino from 'pino';
 import { NorthAmazonS3Settings } from '../../../shared/model/north-settings.model';
 import { createProxyAgent } from '../../service/proxy-agent';
-import { CacheMetadata, OIBusTimeValue } from '../../../shared/model/engine.model';
-import { DateTime } from 'luxon';
-import csv from 'papaparse';
+import { CacheMetadata } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import { BaseFolders } from '../../model/types';
+import { getFilenameWithoutRandomId } from '../../service/utils';
+import TransformerService from '../../service/transformer.service';
 
 /**
  * Class NorthAmazonS3 - sends files to Amazon AWS S3
@@ -27,12 +25,13 @@ export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings>
   constructor(
     connector: NorthConnectorEntity<NorthAmazonS3Settings>,
     encryptionService: EncryptionService,
+    transformerService: TransformerService,
     northConnectorRepository: NorthConnectorRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolders: BaseFolders
   ) {
-    super(connector, encryptionService, northConnectorRepository, scanModeRepository, logger, baseFolders);
+    super(connector, encryptionService, transformerService, northConnectorRepository, scanModeRepository, logger, baseFolders);
   }
 
   /**
@@ -77,58 +76,13 @@ export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings>
   }
 
   override async handleContent(cacheMetadata: CacheMetadata): Promise<void> {
-    switch (cacheMetadata.contentType) {
-      case 'raw':
-        return this.handleFile(cacheMetadata.contentFile);
-
-      case 'time-values':
-        return this.handleValues(
-          JSON.parse(await fsAsync.readFile(cacheMetadata.contentFile, { encoding: 'utf-8' })) as Array<OIBusTimeValue>
-        );
-    }
-  }
-
-  /**
-   * Handle the file by sending it to AWS S3.
-   */
-  async handleFile(filePath: string): Promise<void> {
     const params = {
       Bucket: this.connector.settings.bucket,
-      Body: fs.createReadStream(filePath),
-      Key: `${this.connector.settings.folder}/${this.getFilenameWithoutTimestamp(filePath)}`
+      Body: fs.createReadStream(cacheMetadata.contentFile),
+      Key: `${this.connector.settings.folder}/${getFilenameWithoutRandomId(cacheMetadata.contentFile)}`
     };
 
     await this.s3!.send(new PutObjectCommand(params));
-  }
-
-  async handleValues(values: Array<OIBusTimeValue>): Promise<void> {
-    const filename = `${this.connector.name}-${DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS')}.csv`;
-    const csvContent = csv.unparse(
-      values.map(value => ({
-        pointId: value.pointId,
-        timestamp: value.timestamp,
-        value: value.data.value
-      })),
-      {
-        header: true,
-        delimiter: ';'
-      }
-    );
-    const params = {
-      Bucket: this.connector.settings.bucket,
-      Body: csvContent,
-      Key: `${this.connector.settings.folder}/${filename}`
-    };
-    await this.s3!.send(new PutObjectCommand(params));
-  }
-
-  /**
-   * Get filename without timestamp from file path.
-   */
-  getFilenameWithoutTimestamp(filePath: string): string {
-    const { name, ext } = path.parse(filePath);
-    const filename = name.slice(0, name.lastIndexOf('-'));
-    return `${filename}${ext}`;
   }
 
   override async testConnection(): Promise<void> {

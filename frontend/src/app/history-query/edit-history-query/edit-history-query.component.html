@@ -186,6 +186,11 @@
                 </div>
               </div>
             </oib-box>
+            <oib-north-transformers
+              [controls]="historyQueryForm.controls.northTransformers"
+              [northManifest]="northManifest"
+              [transformers]="transformers"
+            />
             <!-- North settings -->
             <oib-box>
               <ng-template oibBoxTitle>
@@ -213,6 +218,7 @@
                   [form]="historyQueryForm.controls.northSettings"
                   [settingsSchema]="northSettingsControls"
                   [scanModes]="scanModes"
+                  [certificates]="certificates"
                 />
               }
             </oib-box>

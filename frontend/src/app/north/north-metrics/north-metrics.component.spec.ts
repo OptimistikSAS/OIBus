@@ -37,10 +37,7 @@ class TestComponent {
   manifest: NorthConnectorManifest = {
     id: 'oianalytics',
     category: 'api',
-    modes: {
-      files: true,
-      points: true
-    },
+    types: ['raw', 'time-values'],
     settings: [
       {
         key: 'host',
