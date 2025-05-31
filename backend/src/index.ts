@@ -96,7 +96,7 @@ const LOG_DB_NAME = 'logs.db';
   );
   const historyQueryEngine = new HistoryQueryEngine(repositoryService.historyQueryMetricsRepository, loggerService.logger!);
 
-  const oIAnalyticsClient = new OIAnalyticsClient(encryptionService);
+  const oIAnalyticsClient = new OIAnalyticsClient();
 
   const oIAnalyticsRegistrationService = new OianalyticsRegistrationService(
     new JoiValidator(),
