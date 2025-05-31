@@ -11,7 +11,6 @@ import {
   SouthOLEDBSettings
 } from '../../../shared/model/south-settings.model';
 import SouthOLEDB from './south-oledb';
-import fetch from 'node-fetch';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import SouthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/south-connector-repository.mock';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
@@ -22,9 +21,11 @@ import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-ser
 import testData from '../../tests/utils/test-data';
 import { mockBaseFolders } from '../../tests/utils/test-utils';
 import { SouthConnectorEntity } from '../../model/south-connector.model';
+import { HTTPRequest } from '../../service/http-request.utils';
+import { createMockResponse } from '../../tests/__mocks__/undici.mock';
 
 jest.mock('node:fs/promises');
-jest.mock('node-fetch');
+jest.mock('../../service/http-request.utils');
 jest.mock('../../service/utils');
 
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
@@ -193,68 +194,69 @@ describe('SouthOLEDB', () => {
 
   it('should properly connect to remote agent and disconnect ', async () => {
     await south.connect();
-    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/ole/${configuration.id}/connect`, {
-      method: 'PUT',
-      body: JSON.stringify({
-        connectionString: configuration.settings.connectionString,
-        connectionTimeout: configuration.settings.connectionTimeout
-      }),
-      headers: {
-        'Content-Type': 'application/json'
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${configuration.settings.agentUrl}/api/ole/${configuration.id}/connect` }),
+      {
+        method: 'PUT',
+        body: JSON.stringify({
+          connectionString: configuration.settings.connectionString,
+          connectionTimeout: configuration.settings.connectionTimeout
+        }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
       }
-    });
+    );
 
     await south.disconnect();
-    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/ole/${configuration.id}/disconnect`, {
-      method: 'DELETE'
-    });
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${configuration.settings.agentUrl}/api/ole/${configuration.id}/disconnect` }),
+      {
+        method: 'DELETE'
+      }
+    );
   });
 
   it('should properly reconnect to when connection fails ', async () => {
-    (fetch as unknown as jest.Mock).mockImplementationOnce(() => {
-      throw new Error('connection failed');
-    });
+    (HTTPRequest as jest.Mock).mockRejectedValueOnce(new Error('connection failed'));
 
     await south.connect();
-    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/ole/${configuration.id}/connect`, {
-      method: 'PUT',
-      body: JSON.stringify({
-        connectionString: configuration.settings.connectionString,
-        connectionTimeout: configuration.settings.connectionTimeout
-      }),
-      headers: {
-        'Content-Type': 'application/json'
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${configuration.settings.agentUrl}/api/ole/${configuration.id}/connect` }),
+      {
+        method: 'PUT',
+        body: JSON.stringify({
+          connectionString: configuration.settings.connectionString,
+          connectionTimeout: configuration.settings.connectionTimeout
+        }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
       }
-    });
+    );
 
-    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(HTTPRequest).toHaveBeenCalledTimes(1);
     jest.advanceTimersByTime(configuration.settings.retryInterval);
-    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(HTTPRequest).toHaveBeenCalledTimes(2);
   });
 
   it('should properly clear reconnect timeout on disconnect', async () => {
-    (fetch as unknown as jest.Mock)
-      .mockImplementationOnce(() => {
-        throw new Error('connection failed');
-      })
-      .mockImplementationOnce(() => {
-        return true;
-      })
-      .mockImplementationOnce(() => {
-        throw new Error('disconnection failed');
-      });
+    (HTTPRequest as jest.Mock)
+      .mockRejectedValueOnce(new Error('connection failed'))
+      .mockResolvedValueOnce(true)
+      .mockRejectedValueOnce(new Error('disconnection failed'));
 
     const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
 
     await south.connect();
 
-    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(HTTPRequest).toHaveBeenCalledTimes(1);
     await south.connect();
 
     await south.disconnect();
     expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
     jest.advanceTimersByTime(configuration.settings.retryInterval);
-    expect(fetch).toHaveBeenCalledTimes(3);
+    expect(HTTPRequest).toHaveBeenCalledTimes(3);
     expect(logger.error).toHaveBeenCalledWith(
       `Error while sending connection HTTP request into agent. Reconnecting in ${configuration.settings.retryInterval} ms. ${new Error(
         'connection failed'
@@ -280,25 +282,19 @@ describe('SouthOLEDB', () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
 
-    (fetch as unknown as jest.Mock)
-      .mockReturnValueOnce(
-        Promise.resolve({
-          status: 200,
-          json: () => ({
-            recordCount: 2,
-            content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
-            maxInstant: '2020-03-01T00:00:00.000Z'
-          })
+    (HTTPRequest as jest.Mock)
+      .mockResolvedValueOnce(
+        createMockResponse(200, {
+          recordCount: 2,
+          content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
+          maxInstant: '2020-03-01T00:00:00.000Z'
         })
       )
-      .mockReturnValueOnce(
-        Promise.resolve({
-          status: 200,
-          json: () => ({
-            recordCount: 0,
-            content: [],
-            maxInstant: '2020-03-01T00:00:00.000Z'
-          })
+      .mockResolvedValueOnce(
+        createMockResponse(200, {
+          recordCount: 0,
+          content: [],
+          maxInstant: '2020-03-01T00:00:00.000Z'
         })
       );
 
@@ -306,23 +302,26 @@ describe('SouthOLEDB', () => {
 
     expect(utils.logQuery).toHaveBeenCalledWith(configuration.items[0].settings.query, startTime, endTime, logger);
 
-    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/ole/${configuration.id}/read`, {
-      method: 'PUT',
-      body: JSON.stringify({
-        connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
-        sql: 'SELECT * FROM table',
-        readTimeout: 1000,
-        timeColumn: 'timestamp',
-        datasourceTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-        datasourceTimezone: 'Europe/Paris',
-        delimiter: 'COMMA',
-        outputTimestampFormat: configuration.items[0].settings.serialization.outputTimestampFormat,
-        outputTimezone: configuration.items[0].settings.serialization.outputTimezone
-      }),
-      headers: {
-        'Content-Type': 'application/json'
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${configuration.settings.agentUrl}/api/ole/${configuration.id}/read` }),
+      {
+        method: 'PUT',
+        body: JSON.stringify({
+          connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
+          sql: 'SELECT * FROM table',
+          readTimeout: 1000,
+          timeColumn: 'timestamp',
+          datasourceTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+          datasourceTimezone: 'Europe/Paris',
+          delimiter: 'COMMA',
+          outputTimestampFormat: configuration.items[0].settings.serialization.outputTimestampFormat,
+          outputTimezone: configuration.items[0].settings.serialization.outputTimezone
+        }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
       }
-    });
+    );
 
     expect(result).toEqual('2020-03-01T00:00:00.000Z');
     expect(persistResults).toHaveBeenCalledWith(
@@ -347,14 +346,11 @@ describe('SouthOLEDB', () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
 
-    (fetch as unknown as jest.Mock).mockReturnValueOnce(
-      Promise.resolve({
-        status: 200,
-        json: () => ({
-          recordCount: 2,
-          content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
-          maxInstant: startTime
-        })
+    (HTTPRequest as jest.Mock).mockResolvedValueOnce(
+      createMockResponse(200, {
+        recordCount: 2,
+        content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
+        maxInstant: startTime
       })
     );
 
@@ -362,20 +358,23 @@ describe('SouthOLEDB', () => {
 
     expect(utils.logQuery).toHaveBeenCalledWith(configuration.items[1].settings.query, startTime, endTime, logger);
 
-    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/ole/${configuration.id}/read`, {
-      method: 'PUT',
-      body: JSON.stringify({
-        connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
-        sql: 'SELECT * FROM table',
-        readTimeout: 1000,
-        delimiter: 'COMMA',
-        outputTimestampFormat: configuration.items[1].settings.serialization.outputTimestampFormat,
-        outputTimezone: configuration.items[1].settings.serialization.outputTimezone
-      }),
-      headers: {
-        'Content-Type': 'application/json'
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${configuration.settings.agentUrl}/api/ole/${configuration.id}/read` }),
+      {
+        method: 'PUT',
+        body: JSON.stringify({
+          connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
+          sql: 'SELECT * FROM table',
+          readTimeout: 1000,
+          delimiter: 'COMMA',
+          outputTimestampFormat: configuration.items[1].settings.serialization.outputTimestampFormat,
+          outputTimezone: configuration.items[1].settings.serialization.outputTimezone
+        }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
       }
-    });
+    );
 
     expect(result).toEqual(null);
   });
@@ -384,22 +383,12 @@ describe('SouthOLEDB', () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
 
-    (fetch as unknown as jest.Mock)
-      .mockReturnValueOnce(
-        Promise.resolve({
-          status: 400,
-          text: () => 'bad request'
-        })
-      )
-      .mockReturnValueOnce(
-        Promise.resolve({
-          status: 500
-        })
-      );
+    (HTTPRequest as jest.Mock).mockResolvedValueOnce(createMockResponse(400, 'bad request')).mockResolvedValueOnce(createMockResponse(500));
+
     await expect(south.queryRemoteAgentData(configuration.items[0], startTime, endTime)).rejects.toThrow(
-      `Error occurred when querying remote agent with status 400: bad request`
+      `Error occurred when querying remote agent with status 400: "bad request"`
     );
-    expect(logger.error).toHaveBeenCalledWith(`Error occurred when querying remote agent with status 400: bad request`);
+    expect(logger.error).toHaveBeenCalledWith(`Error occurred when querying remote agent with status 400: "bad request"`);
 
     await expect(south.queryRemoteAgentData(configuration.items[0], startTime, endTime)).rejects.toThrow(
       `Error occurred when querying remote agent with status 500`
@@ -441,25 +430,19 @@ describe('SouthOLEDB', () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
 
-    (fetch as unknown as jest.Mock)
-      .mockReturnValueOnce(
-        Promise.resolve({
-          status: 200,
-          json: () => ({
-            recordCount: 2,
-            content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
-            maxInstantRetrieved: '2020-03-01T00:00:00.000Z'
-          })
+    (HTTPRequest as jest.Mock)
+      .mockResolvedValueOnce(
+        createMockResponse(200, {
+          recordCount: 2,
+          content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
+          maxInstantRetrieved: '2020-03-01T00:00:00.000Z'
         })
       )
-      .mockReturnValueOnce(
-        Promise.resolve({
-          status: 200,
-          json: () => ({
-            recordCount: 0,
-            content: [],
-            maxInstantRetrieved: '2020-03-01T00:00:00.000Z'
-          })
+      .mockResolvedValueOnce(
+        createMockResponse(200, {
+          recordCount: 0,
+          content: [],
+          maxInstantRetrieved: '2020-03-01T00:00:00.000Z'
         })
       );
 
@@ -467,50 +450,40 @@ describe('SouthOLEDB', () => {
 
     expect(utils.logQuery).toHaveBeenCalledWith(configuration.items[0].settings.query, startTime, endTime, logger);
 
-    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/ole/${configuration.id}/read`, {
-      method: 'PUT',
-      body: JSON.stringify({
-        connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
-        sql: 'SELECT * FROM table',
-        readTimeout: 1000,
-        timeColumn: 'timestamp',
-        datasourceTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-        datasourceTimezone: 'Europe/Paris',
-        delimiter: 'COMMA',
-        outputTimestampFormat: configuration.items[0].settings.serialization.outputTimestampFormat,
-        outputTimezone: configuration.items[0].settings.serialization.outputTimezone
-      }),
-      headers: {
-        'Content-Type': 'application/json'
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${configuration.settings.agentUrl}/api/ole/${configuration.id}/read` }),
+      {
+        method: 'PUT',
+        body: JSON.stringify({
+          connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
+          sql: 'SELECT * FROM table',
+          readTimeout: 1000,
+          timeColumn: 'timestamp',
+          datasourceTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+          datasourceTimezone: 'Europe/Paris',
+          delimiter: 'COMMA',
+          outputTimestampFormat: configuration.items[0].settings.serialization.outputTimestampFormat,
+          outputTimezone: configuration.items[0].settings.serialization.outputTimezone
+        }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
       }
-    });
+    );
   });
 
   it('should test connection successfully', async () => {
-    (fetch as unknown as jest.Mock).mockReturnValueOnce(
-      Promise.resolve({
-        status: 200
-      })
-    );
+    (HTTPRequest as jest.Mock).mockResolvedValueOnce(createMockResponse(200));
     await expect(south.testConnection()).resolves.not.toThrow();
   });
 
   it('should test connection fail', async () => {
-    (fetch as unknown as jest.Mock)
-      .mockReturnValueOnce(
-        Promise.resolve({
-          status: 400,
-          text: () => 'bad request'
-        })
-      )
-      .mockReturnValueOnce(
-        Promise.resolve({
-          status: 500,
-          text: () => 'another error'
-        })
-      );
+    (HTTPRequest as jest.Mock)
+      .mockResolvedValueOnce(createMockResponse(400, 'bad request'))
+      .mockResolvedValueOnce(createMockResponse(500, 'another error'));
+
     await expect(south.testConnection()).rejects.toThrow(
-      new Error(`Error occurred when sending connect command to remote agent with status 400: bad request`)
+      new Error(`Error occurred when sending connect command to remote agent with status 400: "bad request"`)
     );
     await expect(south.testConnection()).rejects.toThrow(
       new Error(`Error occurred when sending connect command to remote agent with status 500`)
@@ -519,6 +492,6 @@ describe('SouthOLEDB', () => {
 
   it('should disconnect without fetch when not connected', async () => {
     await south.disconnect();
-    expect(fetch).not.toHaveBeenCalled();
+    expect(HTTPRequest).not.toHaveBeenCalled();
   });
 });
