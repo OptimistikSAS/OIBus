@@ -1,4 +1,3 @@
-import fetch from 'node-fetch';
 import SouthOianalytics from './south-oianalytics';
 import * as utils from '../../service/utils';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
@@ -8,7 +7,6 @@ import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import path from 'node:path';
 import { SouthOIAnalyticsItemSettings, SouthOIAnalyticsSettings } from '../../../shared/model/south-settings.model';
-import { createProxyAgent } from '../../service/proxy-agent';
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import SouthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/south-connector-repository.mock';
@@ -25,31 +23,31 @@ import OIAnalyticsRegistrationRepositoryMock from '../../tests/__mocks__/reposit
 import CertificateRepository from '../../repository/config/certificate.repository';
 import CertificateRepositoryMock from '../../tests/__mocks__/repository/config/certificate-repository.mock';
 import { OIBusTimeValue } from '../../../shared/model/engine.model';
+import { HTTPRequest } from '../../service/http-request.utils';
+import { createMockResponse } from '../../tests/__mocks__/undici.mock';
 
-jest.mock('../../service/proxy-agent');
-jest.mock('../../service/utils', () => ({
-  formatInstant: jest.fn((instant: string) => instant),
-  persistResults: jest.fn(),
-  createFolder: jest.fn(),
-  formatQueryParams: jest.fn(),
-  getOIBusInfo: jest.fn(),
-  createBaseFolders: jest.fn()
-}));
+jest.mock('../../service/utils', () => {
+  const actualUtils = jest.requireActual('../../service/utils');
+  return {
+    formatInstant: jest.fn((instant: string) => instant),
+    persistResults: jest.fn(),
+    createFolder: jest.fn(),
+    formatQueryParams: actualUtils.formatQueryParams,
+    getOIBusInfo: jest.fn(),
+    createBaseFolders: jest.fn()
+  };
+});
 jest.mock('@azure/identity', () => ({
   ClientSecretCredential: jest.fn().mockImplementation(() => ({
-    getToken: () => ({ token: 'token' })
+    getToken: () => ({ token: 'ClientSecretCredentialToken' })
   })),
   ClientCertificateCredential: jest.fn().mockImplementation(() => ({
-    getToken: () => ({ token: 'token' })
+    getToken: () => ({ token: 'ClientCertificateCredentialToken' })
   }))
 }));
 
-// Mock node-fetch
-jest.mock('https', () => ({ Agent: jest.fn() }));
-jest.mock('node-fetch');
+jest.mock('../../service/http-request.utils');
 jest.mock('node:fs/promises');
-
-jest.mock('../../service/utils');
 
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
@@ -69,98 +67,101 @@ jest.mock(
 
 const logger: pino.Logger = new PinoLogger();
 const addContentCallback = jest.fn();
+const baseConfiguration: SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIAnalyticsItemSettings> = {
+  id: 'southId',
+  name: 'south',
+  type: 'oianalytics',
+  description: 'my test connector',
+  enabled: true,
+  settings: {
+    throttling: {
+      maxReadInterval: 3600,
+      readDelay: 0,
+      overlap: 0
+    },
+    useOiaModule: false,
+    timeout: 30,
+    specificSettings: {
+      host: 'http://localhost:4200/',
+      acceptUnauthorized: true,
+      authentication: 'basic',
+      accessKey: 'username',
+      secretKey: 'password',
+      useProxy: false
+    }
+  },
+  items: [
+    {
+      id: 'id1',
+      name: 'item1',
+      enabled: true,
+      settings: {
+        endpoint: '/api/my/endpoint',
+        //from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z' + '&aggregation=RAW_VALUES&data-reference=SP_003_X
+        queryParams: [
+          { key: 'from', value: '2019-10-03T13:36:38.590Z' },
+          { key: 'to', value: '2019-10-03T15:36:38.590Z' },
+          { key: 'aggregation', value: 'RAW_VALUES' },
+          { key: 'data-reference', value: 'SP_003_X' }
+        ],
+        serialization: {
+          type: 'csv',
+          filename: 'sql-@CurrentDate.csv',
+          delimiter: 'COMMA',
+          compression: true,
+          outputTimestampFormat: 'yyyy-MM-dd',
+          outputTimezone: 'Europe/Paris'
+        }
+      },
+      scanModeId: 'scanModeId1'
+    },
+    {
+      id: 'id2',
+      name: 'item2',
+      enabled: true,
+      settings: {
+        endpoint: '/api/my/endpoint',
+        queryParams: null,
+        serialization: {
+          type: 'csv',
+          filename: 'sql-@CurrentDate.csv',
+          delimiter: 'COMMA',
+          compression: true,
+          outputTimestampFormat: 'yyyy-MM-dd',
+          outputTimezone: 'Europe/Paris'
+        }
+      },
+      scanModeId: 'scanModeId1'
+    },
+    {
+      id: 'id3',
+      name: 'item3',
+      enabled: true,
+      settings: {
+        endpoint: '/api/my/endpoint',
+        queryParams: [],
+        serialization: {
+          type: 'csv',
+          filename: 'sql-@CurrentDate.csv',
+          delimiter: 'COMMA',
+          compression: true,
+          outputTimestampFormat: 'yyyy-MM-dd',
+          outputTimezone: 'Europe/Paris'
+        }
+      },
+      scanModeId: 'scanModeId2'
+    }
+  ]
+};
 
 describe('SouthOIAnalytics with Basic auth', () => {
   let south: SouthOianalytics;
-  const configuration: SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIAnalyticsItemSettings> = {
-    id: 'southId',
-    name: 'south',
-    type: 'oianalytics',
-    description: 'my test connector',
-    enabled: true,
-    settings: {
-      throttling: {
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0
-      },
-      useOiaModule: false,
-      timeout: 30,
-      specificSettings: {
-        host: 'http://localhost:4200',
-        authentication: 'basic',
-        acceptUnauthorized: false,
-        accessKey: 'username',
-        secretKey: 'password',
-        useProxy: false
-      }
-    },
-    items: [
-      {
-        id: 'id1',
-        name: 'item1',
-        enabled: true,
-        settings: {
-          endpoint: '/api/my/endpoint',
-          queryParams: [],
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanModeId: 'scanModeId1'
-      },
-      {
-        id: 'id2',
-        name: 'item2',
-        enabled: true,
-        settings: {
-          endpoint: '/api/my/endpoint',
-          queryParams: null,
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanModeId: 'scanModeId1'
-      },
-      {
-        id: 'id3',
-        name: 'item3',
-        enabled: true,
-        settings: {
-          endpoint: '/api/my/endpoint',
-          queryParams: [],
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanModeId: 'scanModeId2'
-      }
-    ]
-  };
+  const configuration: SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIAnalyticsItemSettings> = structuredClone(baseConfiguration);
 
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
     (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
-
-    (utils.formatQueryParams as jest.Mock).mockReturnValue(
-      '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z' + '&aggregation=RAW_VALUES&data-reference=SP_003_X'
-    );
 
     south = new SouthOianalytics(
       configuration,
@@ -186,23 +187,12 @@ describe('SouthOIAnalytics with Basic auth', () => {
   });
 
   it('should test connection', async () => {
-    (fetch as unknown as jest.Mock)
-      .mockReturnValueOnce(
-        Promise.resolve({
-          ok: true,
-          status: 200
-        })
-      )
-      .mockReturnValueOnce(
-        Promise.resolve({
-          ok: false,
-          status: 401,
-          statusText: 'Unauthorized'
-        })
-      );
+    (HTTPRequest as jest.Mock)
+      .mockResolvedValueOnce(createMockResponse(200))
+      .mockResolvedValueOnce(createMockResponse(401, 'Unauthorized'));
 
     await expect(south.testConnection()).resolves.not.toThrow();
-    await expect(south.testConnection()).rejects.toThrow(`HTTP request failed with status code 401 and message: Unauthorized`);
+    await expect(south.testConnection()).rejects.toThrow(`HTTP request failed with status code 401 and message: "Unauthorized"`);
   });
 
   it('should log error if temp folder creation fails', async () => {
@@ -243,201 +233,52 @@ describe('SouthOIAnalytics with Basic auth', () => {
   });
 
   it('should fail to scan', async () => {
-    (fetch as unknown as jest.Mock).mockReturnValue(
-      Promise.resolve({
-        ok: false,
-        status: 400,
-        statusText: 'statusText'
-      })
-    );
+    (HTTPRequest as jest.Mock).mockResolvedValueOnce(createMockResponse(400, 'statusText'));
 
     await expect(south.queryData(configuration.items[0], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z')).rejects.toThrow(
-      'HTTP request failed with status code 400 and message: statusText'
+      'HTTP request failed with status code 400 and message: "statusText"'
     );
 
-    expect(fetch).toHaveBeenCalledWith(
-      'http://localhost:4200/api/my/endpoint' +
-        '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X',
-      {
-        headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
-        method: 'GET',
-        timeout: 30000
-      }
-    );
-    expect(logger.info).toHaveBeenCalledWith(
-      'Requesting data from URL "http://localhost:4200/api/my/endpoint' +
-        '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X"'
-    );
-  });
+    const query = {
+      from: '2019-10-03T13:36:38.590Z',
+      to: '2019-10-03T15:36:38.590Z',
+      aggregation: 'RAW_VALUES',
+      'data-reference': 'SP_003_X'
+    };
 
-  it('should properly fetch', async () => {
-    (fetch as unknown as jest.Mock).mockReturnValue(
-      Promise.resolve({
-        json: () => ({ result: [] }),
-        ok: true
-      })
-    );
-
-    const result = await south.queryData(configuration.items[1], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z');
-    expect(result).toEqual({ result: [] });
-    expect(fetch).toHaveBeenCalledWith(
-      'http://localhost:4200/api/my/endpoint' +
-        '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X',
-      {
-        headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
-        method: 'GET',
-        timeout: 30000
-      }
-    );
-    expect(logger.info).toHaveBeenCalledWith(
-      'Requesting data from URL "http://localhost:4200/api/my/endpoint' +
-        '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X"'
-    );
-  });
-});
-
-describe('SouthOIAnalytics without proxy but with accept self signed', () => {
-  let south: SouthOianalytics;
-  const configuration: SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIAnalyticsItemSettings> = {
-    id: 'southId',
-    name: 'south',
-    type: 'oianalytics',
-    description: 'my test connector',
-    enabled: true,
-    settings: {
-      throttling: {
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0
-      },
-      useOiaModule: false,
-      timeout: 30,
-      specificSettings: {
-        host: 'https://localhost:4200/',
-        acceptUnauthorized: true,
-        authentication: 'basic',
-        accessKey: 'username',
-        secretKey: '',
-        useProxy: false
-      }
-    },
-    items: [
-      {
-        id: 'id1',
-        name: 'item1',
-        enabled: true,
-        settings: {
-          endpoint: '/api/my/endpoint',
-          queryParams: [],
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanModeId: 'scanModeId1'
-      },
-      {
-        id: 'id2',
-        name: 'item2',
-        enabled: true,
-        settings: {
-          endpoint: '/api/my/endpoint',
-          queryParams: null,
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanModeId: 'scanModeId1'
-      },
-      {
-        id: 'id3',
-        name: 'item3',
-        enabled: true,
-        settings: {
-          endpoint: '/api/my/endpoint',
-          queryParams: [],
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanModeId: 'scanModeId2'
-      }
-    ]
-  };
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
-
-    (utils.formatQueryParams as jest.Mock).mockReturnValue(
-      '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z' + '&aggregation=RAW_VALUES&data-reference=SP_003_X'
-    );
-
-    south = new SouthOianalytics(
-      configuration,
-      addContentCallback,
-      encryptionService,
-      southConnectorRepository,
-      southCacheRepository,
-      scanModeRepository,
-      oIAnalyticsRegistrationRepository,
-      certificateRepository,
-      logger,
-      mockBaseFolders(configuration.id)
-    );
-  });
-
-  it('should test connection', async () => {
-    await south.start();
-    (fetch as unknown as jest.Mock).mockImplementationOnce(() => {
-      throw new Error('Timeout error');
-    });
-
-    await expect(south.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
-    expect(fetch).toHaveBeenCalledWith('https://localhost:4200/api/optimistik/oibus/status', {
-      headers: { authorization: 'Basic dXNlcm5hbWU6' },
+    expect(HTTPRequest).toHaveBeenCalledWith(expect.objectContaining({ href: 'http://localhost:4200/api/my/endpoint' }), {
       method: 'GET',
+      query,
+      auth: { type: 'basic', username: 'username', password: 'password' },
+      proxy: undefined,
       timeout: 30000
     });
+    expect(logger.info).toHaveBeenCalledWith(
+      `Requesting data from URL "http://localhost:4200/api/my/endpoint" and query params "${JSON.stringify(query)}"`
+    );
   });
 
   it('should properly fetch', async () => {
-    (fetch as unknown as jest.Mock).mockReturnValue(
-      Promise.resolve({
-        json: () => ({ result: [] }),
-        ok: true
-      })
-    );
+    (HTTPRequest as jest.Mock).mockResolvedValueOnce(createMockResponse(200, { result: [] }));
 
-    const result = await south.queryData(configuration.items[2], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z');
+    const query = {
+      from: '2019-10-03T13:36:38.590Z',
+      to: '2019-10-03T15:36:38.590Z',
+      aggregation: 'RAW_VALUES',
+      'data-reference': 'SP_003_X'
+    };
+    const result = await south.queryData(configuration.items[0], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z');
+
     expect(result).toEqual({ result: [] });
-    expect(fetch).toHaveBeenCalledWith(
-      'https://localhost:4200/api/my/endpoint' +
-        '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X',
-      {
-        headers: { authorization: 'Basic dXNlcm5hbWU6' },
-        method: 'GET',
-        timeout: 30000
-      }
-    );
+    expect(HTTPRequest).toHaveBeenCalledWith(expect.objectContaining({ href: 'http://localhost:4200/api/my/endpoint' }), {
+      method: 'GET',
+      query,
+      auth: { type: 'basic', username: 'username', password: 'password' },
+      proxy: undefined,
+      timeout: 30000
+    });
     expect(logger.info).toHaveBeenCalledWith(
-      'Requesting data from URL "https://localhost:4200/api/my/endpoint' +
-        '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X"'
+      `Requesting data from URL "http://localhost:4200/api/my/endpoint" and query params "${JSON.stringify(query)}"`
     );
   });
 
@@ -529,101 +370,19 @@ describe('SouthOIAnalytics without proxy but with accept self signed', () => {
 
 describe('SouthOIAnalytics with proxy', () => {
   let south: SouthOianalytics;
-  const configuration: SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIAnalyticsItemSettings> = {
-    id: 'southId',
-    name: 'south',
-    type: 'oianalytics',
-    description: 'my test connector',
-    enabled: true,
-    settings: {
-      throttling: {
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0
-      },
-      useOiaModule: false,
-      timeout: 30,
-      specificSettings: {
-        host: 'http://localhost:4200',
-        acceptUnauthorized: false,
-        authentication: 'basic',
-        accessKey: 'username',
-        secretKey: 'password',
-        useProxy: true,
-        proxyPassword: 'proxyPassword',
-        proxyUrl: 'http://proxyurl',
-        proxyUsername: 'proxyUsername'
-      }
-    },
-    items: [
-      {
-        id: 'id1',
-        name: 'item1',
-        enabled: true,
-        settings: {
-          endpoint: '/api/my/endpoint',
-          queryParams: [],
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanModeId: 'scanModeId1'
-      },
-      {
-        id: 'id2',
-        name: 'item2',
-        enabled: true,
-        settings: {
-          endpoint: '/api/my/endpoint',
-          queryParams: null,
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanModeId: 'scanModeId1'
-      },
-      {
-        id: 'id3',
-        name: 'item3',
-        enabled: true,
-        settings: {
-          endpoint: '/api/my/endpoint',
-          queryParams: [],
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanModeId: 'scanModeId2'
-      }
-    ]
+  const configuration: SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIAnalyticsItemSettings> = structuredClone(baseConfiguration);
+  configuration.settings.specificSettings = {
+    ...configuration.settings.specificSettings!,
+    useProxy: true,
+    proxyUrl: 'http://proxyurl',
+    proxyPassword: 'proxyPassword',
+    proxyUsername: 'proxyUsername'
   };
-
-  const fakeAgent = { rejectUnauthorized: false };
 
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    (createProxyAgent as jest.Mock).mockReturnValue(fakeAgent);
     (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
-
-    (utils.formatQueryParams as jest.Mock).mockReturnValue(
-      '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z' + '&aggregation=RAW_VALUES&data-reference=SP_003_X'
-    );
 
     south = new SouthOianalytics(
       configuration,
@@ -640,139 +399,70 @@ describe('SouthOIAnalytics with proxy', () => {
   });
 
   it('should test connection', async () => {
-    (fetch as unknown as jest.Mock).mockImplementationOnce(() => {
-      throw new Error('Timeout error');
-    });
+    (HTTPRequest as unknown as jest.Mock).mockRejectedValueOnce(new Error('Timeout error'));
 
     await expect(south.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
-    expect(fetch).toHaveBeenCalledWith('http://localhost:4200/api/optimistik/oibus/status', {
-      agent: fakeAgent,
-      headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
+    expect(HTTPRequest).toHaveBeenCalledWith(expect.objectContaining({ href: 'http://localhost:4200/api/optimistik/oibus/status' }), {
       method: 'GET',
+      auth: { type: 'basic', username: 'username', password: 'password' },
+      proxy: {
+        url: 'http://proxyurl',
+        auth: {
+          type: 'url',
+          username: 'proxyUsername',
+          password: 'proxyPassword'
+        }
+      },
       timeout: 30000
     });
   });
 
   it('should properly fetch', async () => {
-    (fetch as unknown as jest.Mock).mockReturnValue(
-      Promise.resolve({
-        json: () => ({ result: [] }),
-        ok: true
-      })
-    );
+    (HTTPRequest as jest.Mock).mockResolvedValueOnce(createMockResponse(200, { result: [] }));
 
-    const result = await south.queryData(configuration.items[2], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z');
+    const query = {
+      from: '2019-10-03T13:36:38.590Z',
+      to: '2019-10-03T15:36:38.590Z',
+      aggregation: 'RAW_VALUES',
+      'data-reference': 'SP_003_X'
+    };
+    const result = await south.queryData(configuration.items[0], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z');
+
     expect(result).toEqual({ result: [] });
-    expect(fetch).toHaveBeenCalledWith(
-      'http://localhost:4200/api/my/endpoint' +
-        '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X',
-      {
-        headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
-        method: 'GET',
-        agent: fakeAgent,
-        timeout: 30000
-      }
+    expect(HTTPRequest).toHaveBeenCalledWith(expect.objectContaining({ href: 'http://localhost:4200/api/my/endpoint' }), {
+      method: 'GET',
+      query,
+      auth: { type: 'basic', username: 'username', password: 'password' },
+      proxy: {
+        url: 'http://proxyurl',
+        auth: {
+          type: 'url',
+          username: 'proxyUsername',
+          password: 'proxyPassword'
+        }
+      },
+      timeout: 30000
+    });
+    expect(logger.info).toHaveBeenCalledWith(
+      `Requesting data from URL "http://localhost:4200/api/my/endpoint" and query params "${JSON.stringify(query)}"`
     );
   });
 });
 
 describe('SouthOIAnalytics with proxy but without proxy password', () => {
   let south: SouthOianalytics;
-  const configuration: SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIAnalyticsItemSettings> = {
-    id: 'southId',
-    name: 'south',
-    type: 'oianalytics',
-    description: 'my test connector',
-    enabled: true,
-    settings: {
-      throttling: {
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0
-      },
-      useOiaModule: false,
-      timeout: 30,
-      specificSettings: {
-        host: 'http://localhost:4200',
-        authentication: 'basic',
-        acceptUnauthorized: false,
-        accessKey: 'username',
-        secretKey: 'password',
-        useProxy: true,
-        proxyPassword: '',
-        proxyUrl: 'http://proxyurl',
-        proxyUsername: 'proxyUsername'
-      }
-    },
-    items: [
-      {
-        id: 'id1',
-        name: 'item1',
-        enabled: true,
-        settings: {
-          endpoint: '/api/my/endpoint',
-          queryParams: [],
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanModeId: 'scanModeId1'
-      },
-      {
-        id: 'id2',
-        name: 'item2',
-        enabled: true,
-        settings: {
-          endpoint: '/api/my/endpoint',
-          queryParams: null,
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanModeId: 'scanModeId1'
-      },
-      {
-        id: 'id3',
-        name: 'item3',
-        enabled: true,
-        settings: {
-          endpoint: '/api/my/endpoint',
-          queryParams: [],
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanModeId: 'scanModeId2'
-      }
-    ]
+  const configuration: SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIAnalyticsItemSettings> = structuredClone(baseConfiguration);
+  configuration.settings.specificSettings = {
+    ...configuration.settings.specificSettings!,
+    useProxy: true,
+    proxyUrl: 'http://proxyurl',
+    proxyUsername: 'proxyUsername'
   };
-
-  const fakeAgent = { rejectUnauthorized: false };
 
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
     (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
-
-    (createProxyAgent as jest.Mock).mockReturnValue(fakeAgent);
-    (utils.formatQueryParams as jest.Mock).mockReturnValue(
-      '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z' + '&aggregation=RAW_VALUES&data-reference=SP_003_X'
-    );
 
     south = new SouthOianalytics(
       configuration,
@@ -789,148 +479,73 @@ describe('SouthOIAnalytics with proxy but without proxy password', () => {
   });
 
   it('should test connection', async () => {
-    (fetch as unknown as jest.Mock).mockImplementationOnce(() => {
-      throw new Error('Timeout error');
-    });
+    (HTTPRequest as unknown as jest.Mock).mockRejectedValueOnce(new Error('Timeout error'));
 
     await expect(south.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
-    expect(fetch).toHaveBeenCalledWith('http://localhost:4200/api/optimistik/oibus/status', {
-      agent: fakeAgent,
-      headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
+    expect(HTTPRequest).toHaveBeenCalledWith(expect.objectContaining({ href: 'http://localhost:4200/api/optimistik/oibus/status' }), {
       method: 'GET',
+      auth: { type: 'basic', username: 'username', password: 'password' },
+      proxy: {
+        url: 'http://proxyurl',
+        auth: {
+          type: 'url',
+          username: 'proxyUsername'
+        }
+      },
       timeout: 30000
     });
   });
 
   it('should properly fetch', async () => {
-    (fetch as unknown as jest.Mock).mockReturnValue(
-      Promise.resolve({
-        json: () => ({ result: [] }),
-        ok: true
-      })
-    );
+    (HTTPRequest as jest.Mock).mockResolvedValueOnce(createMockResponse(200, { result: [] }));
 
-    const result = await south.queryData(configuration.items[2], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z');
+    const query = {
+      from: '2019-10-03T13:36:38.590Z',
+      to: '2019-10-03T15:36:38.590Z',
+      aggregation: 'RAW_VALUES',
+      'data-reference': 'SP_003_X'
+    };
+    const result = await south.queryData(configuration.items[0], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z');
+
     expect(result).toEqual({ result: [] });
-    expect(fetch).toHaveBeenCalledWith(
-      'http://localhost:4200/api/my/endpoint' +
-        '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X',
-      {
-        headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
-        method: 'GET',
-        timeout: 30000,
-        agent: fakeAgent
-      }
-    );
-    expect(createProxyAgent).toHaveBeenCalledWith(
-      true,
-      'http://localhost:4200/api/my/endpoint' +
-        '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X',
-      {
-        url: configuration.settings.specificSettings!.proxyUrl!,
-        username: configuration.settings.specificSettings!.proxyUsername!,
-        password: null
+    expect(HTTPRequest).toHaveBeenCalledWith(expect.objectContaining({ href: 'http://localhost:4200/api/my/endpoint' }), {
+      method: 'GET',
+      query,
+      auth: { type: 'basic', username: 'username', password: 'password' },
+      proxy: {
+        url: 'http://proxyurl',
+        auth: {
+          type: 'url',
+          username: 'proxyUsername'
+        }
       },
-      configuration.settings.specificSettings!.acceptUnauthorized
+      timeout: 30000
+    });
+    expect(logger.info).toHaveBeenCalledWith(
+      `Requesting data from URL "http://localhost:4200/api/my/endpoint" and query params "${JSON.stringify(query)}"`
     );
   });
 });
 
-describe('SouthOIAnalytics without proxy but with acceptUnauthorized', () => {
+describe('SouthOIAnalytics with aad-client-secret', () => {
   let south: SouthOianalytics;
-  const configuration: SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIAnalyticsItemSettings> = {
-    id: 'southId',
-    name: 'south',
-    type: 'oianalytics',
-    description: 'my test connector',
-    enabled: true,
-    settings: {
-      throttling: {
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0
-      },
-      useOiaModule: false,
-      timeout: 30,
-      specificSettings: {
-        host: 'https://hostname',
-        acceptUnauthorized: true,
-        accessKey: 'anyUser',
-        authentication: 'aad-client-secret',
-        tenantId: 'tenantId',
-        clientId: 'clientId',
-        clientSecret: 'clientSecret',
-        scope: 'api://my-scope/.default',
-        secretKey: null,
-        useProxy: false
-      }
-    },
-    items: [
-      {
-        id: 'id1',
-        name: 'item1',
-        enabled: true,
-        settings: {
-          endpoint: '/api/my/endpoint',
-          queryParams: [],
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanModeId: 'scanModeId1'
-      },
-      {
-        id: 'id2',
-        name: 'item2',
-        enabled: true,
-        settings: {
-          endpoint: '/api/my/endpoint',
-          queryParams: null,
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanModeId: 'scanModeId1'
-      },
-      {
-        id: 'id3',
-        name: 'item3',
-        enabled: true,
-        settings: {
-          endpoint: '/api/my/endpoint',
-          queryParams: [],
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanModeId: 'scanModeId2'
-      }
-    ]
+  const configuration: SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIAnalyticsItemSettings> = structuredClone(baseConfiguration);
+  configuration.settings.specificSettings = {
+    ...configuration.settings.specificSettings!,
+    authentication: 'aad-client-secret',
+    tenantId: 'tenantId',
+    clientId: 'clientId',
+    clientSecret: 'clientSecret',
+    scope: 'api://my-scope/.default',
+    secretKey: null,
+    useProxy: false
   };
-
-  const fakeAgent = { rejectUnauthorized: false };
 
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
     (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
 
-    (createProxyAgent as jest.Mock).mockReturnValue(fakeAgent);
     south = new SouthOianalytics(
       configuration,
       addContentCallback,
@@ -946,101 +561,61 @@ describe('SouthOIAnalytics without proxy but with acceptUnauthorized', () => {
     await south.start();
   });
 
-  it('should add header with aad-client-secret', async () => {
-    const result = await south.getNetworkSettings('/endpoint');
-    expect(result.headers).toEqual({ authorization: 'Bearer token' });
-    expect(result.host).toEqual(configuration.settings.specificSettings!.host);
-    expect(result.agent).toEqual(fakeAgent);
+  it('should test connection', async () => {
+    (HTTPRequest as unknown as jest.Mock).mockRejectedValueOnce(new Error('Timeout error'));
+
+    await expect(south.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
+    expect(HTTPRequest).toHaveBeenCalledWith(expect.objectContaining({ href: 'http://localhost:4200/api/optimistik/oibus/status' }), {
+      method: 'GET',
+      auth: { type: 'bearer', token: 'Bearer ClientSecretCredentialToken' },
+      proxy: undefined,
+      timeout: 30000
+    });
+  });
+
+  it('should properly fetch', async () => {
+    (HTTPRequest as jest.Mock).mockResolvedValueOnce(createMockResponse(200, { result: [] }));
+
+    const query = {
+      from: '2019-10-03T13:36:38.590Z',
+      to: '2019-10-03T15:36:38.590Z',
+      aggregation: 'RAW_VALUES',
+      'data-reference': 'SP_003_X'
+    };
+    const result = await south.queryData(configuration.items[0], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z');
+
+    expect(result).toEqual({ result: [] });
+    expect(HTTPRequest).toHaveBeenCalledWith(expect.objectContaining({ href: 'http://localhost:4200/api/my/endpoint' }), {
+      method: 'GET',
+      query,
+      auth: { type: 'bearer', token: 'Bearer ClientSecretCredentialToken' },
+      proxy: undefined,
+      timeout: 30000
+    });
+    expect(logger.info).toHaveBeenCalledWith(
+      `Requesting data from URL "http://localhost:4200/api/my/endpoint" and query params "${JSON.stringify(query)}"`
+    );
   });
 });
 
 describe('SouthOIAnalytics with aad-certificate', () => {
   let south: SouthOianalytics;
-  const configuration: SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIAnalyticsItemSettings> = {
-    id: 'southId',
-    name: 'south',
-    type: 'oianalytics',
-    description: 'my test connector',
-    enabled: true,
-    settings: {
-      throttling: {
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0
-      },
-      useOiaModule: false,
-      timeout: 30,
-      specificSettings: {
-        host: 'https://hostname/',
-        acceptUnauthorized: false,
-        authentication: 'aad-certificate',
-        certificateId: 'certificateId',
-        useProxy: false
-      }
-    },
-    items: [
-      {
-        id: 'id1',
-        name: 'item1',
-        enabled: true,
-        settings: {
-          endpoint: '/api/my/endpoint',
-          queryParams: [],
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanModeId: 'scanModeId1'
-      },
-      {
-        id: 'id2',
-        name: 'item2',
-        enabled: true,
-        settings: {
-          endpoint: '/api/my/endpoint',
-          queryParams: null,
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanModeId: 'scanModeId1'
-      },
-      {
-        id: 'id3',
-        name: 'item3',
-        enabled: true,
-        settings: {
-          endpoint: '/api/my/endpoint',
-          queryParams: [],
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanModeId: 'scanModeId2'
-      }
-    ]
+  const configuration: SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIAnalyticsItemSettings> = structuredClone(baseConfiguration);
+  configuration.settings.specificSettings = {
+    ...configuration.settings.specificSettings!,
+    authentication: 'aad-certificate',
+    certificateId: 'certificateId',
+    useProxy: false
   };
 
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    (createProxyAgent as jest.Mock).mockReturnValue({});
     (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
+    (certificateRepository.findById as jest.Mock).mockReturnValue({
+      privateKey: 'private key',
+      certificate: 'certificate'
+    });
 
     south = new SouthOianalytics(
       configuration,
@@ -1057,101 +632,49 @@ describe('SouthOIAnalytics with aad-certificate', () => {
     await south.start();
   });
 
-  it('should add header with aad-certificate', async () => {
-    (certificateRepository.findById as jest.Mock).mockReturnValueOnce({
-      name: 'name',
-      description: 'description',
-      publicKey: 'public key',
-      privateKey: 'private key',
-      certificate: 'cert',
-      expiry: '2020-10-10T00:00:00.000Z'
+  it('should test connection', async () => {
+    (HTTPRequest as unknown as jest.Mock).mockRejectedValueOnce(new Error('Timeout error'));
+
+    await expect(south.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
+    expect(HTTPRequest).toHaveBeenCalledWith(expect.objectContaining({ href: 'http://localhost:4200/api/optimistik/oibus/status' }), {
+      method: 'GET',
+      auth: { type: 'bearer', token: 'Bearer ClientCertificateCredentialToken' },
+      proxy: undefined,
+      timeout: 30000
     });
-    const result = await south.getNetworkSettings('/endpoint');
-    expect(result.headers).toEqual({ authorization: 'Bearer token' });
-    expect(result.host).toEqual('https://hostname');
-    expect(result.agent).toEqual({});
   });
 
-  it('should not add header with aad-certificate when cert not found', async () => {
-    (certificateRepository.findById as jest.Mock).mockReturnValueOnce(null);
-    const result = await south.getNetworkSettings('/endpoint');
-    expect(result.headers).toEqual({});
+  it('should properly fetch', async () => {
+    (HTTPRequest as jest.Mock).mockResolvedValueOnce(createMockResponse(200, { result: [] }));
+
+    const query = {
+      from: '2019-10-03T13:36:38.590Z',
+      to: '2019-10-03T15:36:38.590Z',
+      aggregation: 'RAW_VALUES',
+      'data-reference': 'SP_003_X'
+    };
+    const result = await south.queryData(configuration.items[0], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z');
+
+    expect(result).toEqual({ result: [] });
+    expect(HTTPRequest).toHaveBeenCalledWith(expect.objectContaining({ href: 'http://localhost:4200/api/my/endpoint' }), {
+      method: 'GET',
+      query,
+      auth: { type: 'bearer', token: 'Bearer ClientCertificateCredentialToken' },
+      proxy: undefined,
+      timeout: 30000
+    });
+    expect(logger.info).toHaveBeenCalledWith(
+      `Requesting data from URL "http://localhost:4200/api/my/endpoint" and query params "${JSON.stringify(query)}"`
+    );
   });
 });
 
 describe('SouthOIAnalytics with OIA module', () => {
   let south: SouthOianalytics;
-  const configuration: SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIAnalyticsItemSettings> = {
-    id: 'southId',
-    name: 'south',
-    type: 'oianalytics',
-    description: 'my test connector',
-    enabled: true,
-    settings: {
-      throttling: {
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0
-      },
-      useOiaModule: true,
-      timeout: 30
-    },
-    items: [
-      {
-        id: 'id1',
-        name: 'item1',
-        enabled: true,
-        settings: {
-          endpoint: '/api/my/endpoint',
-          queryParams: [],
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanModeId: 'scanModeId1'
-      },
-      {
-        id: 'id2',
-        name: 'item2',
-        enabled: true,
-        settings: {
-          endpoint: '/api/my/endpoint',
-          queryParams: null,
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanModeId: 'scanModeId1'
-      },
-      {
-        id: 'id3',
-        name: 'item3',
-        enabled: true,
-        settings: {
-          endpoint: '/api/my/endpoint',
-          queryParams: [],
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanModeId: 'scanModeId2'
-      }
-    ]
+  const configuration: SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIAnalyticsItemSettings> = structuredClone(baseConfiguration);
+  configuration.settings = {
+    ...configuration.settings,
+    useOiaModule: true
   };
 
   let registrationSettings: OIAnalyticsRegistration;
@@ -1161,7 +684,6 @@ describe('SouthOIAnalytics with OIA module', () => {
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
     (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
 
-    (createProxyAgent as jest.Mock).mockReturnValue({});
     registrationSettings = {
       id: 'id',
       host: 'http://localhost:4200',
@@ -1193,18 +715,42 @@ describe('SouthOIAnalytics with OIA module', () => {
     await south.start();
   });
 
-  it('should use oia module', async () => {
-    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce(registrationSettings);
-    const result = await south.getNetworkSettings('/endpoint');
-    expect(result.headers).toEqual({ authorization: 'Bearer my oia token' });
-    expect(result.host).toEqual(registrationSettings.host);
-    expect(createProxyAgent).toHaveBeenCalledWith(
-      registrationSettings.useProxy,
-      `${registrationSettings.host}/endpoint`,
-      null,
-      registrationSettings.acceptUnauthorized
+  it('should test connection', async () => {
+    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(registrationSettings);
+    (HTTPRequest as unknown as jest.Mock).mockRejectedValueOnce(new Error('Timeout error'));
+
+    await expect(south.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
+    expect(HTTPRequest).toHaveBeenCalledWith(expect.objectContaining({ href: 'http://localhost:4200/api/optimistik/oibus/status' }), {
+      method: 'GET',
+      auth: { type: 'bearer', token: 'Bearer my oia token' },
+      proxy: undefined,
+      timeout: 30000
+    });
+  });
+
+  it('should properly fetch', async () => {
+    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(registrationSettings);
+    (HTTPRequest as jest.Mock).mockResolvedValueOnce(createMockResponse(200, { result: [] }));
+
+    const query = {
+      from: '2019-10-03T13:36:38.590Z',
+      to: '2019-10-03T15:36:38.590Z',
+      aggregation: 'RAW_VALUES',
+      'data-reference': 'SP_003_X'
+    };
+    const result = await south.queryData(configuration.items[0], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z');
+
+    expect(result).toEqual({ result: [] });
+    expect(HTTPRequest).toHaveBeenCalledWith(expect.objectContaining({ href: 'http://localhost:4200/api/my/endpoint' }), {
+      method: 'GET',
+      query,
+      auth: { type: 'bearer', token: 'Bearer my oia token' },
+      proxy: undefined,
+      timeout: 30000
+    });
+    expect(logger.info).toHaveBeenCalledWith(
+      `Requesting data from URL "http://localhost:4200/api/my/endpoint" and query params "${JSON.stringify(query)}"`
     );
-    expect(result.agent).toEqual({});
   });
 
   it('should use oia module with proxy', async () => {
@@ -1213,43 +759,61 @@ describe('SouthOIAnalytics with OIA module', () => {
     registrationSettings.proxyUrl = 'http://localhost:8080';
     registrationSettings.proxyUsername = 'user';
     registrationSettings.proxyPassword = 'pass';
-    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce(registrationSettings);
-    const result = await south.getNetworkSettings('/endpoint');
-    expect(result.headers).toEqual({ authorization: 'Bearer my oia token' });
-    expect(result.host).toEqual('http://localhost:4200');
-    expect(createProxyAgent).toHaveBeenCalledWith(
-      registrationSettings.useProxy,
-      `${registrationSettings.host}/endpoint`,
-      { url: registrationSettings.proxyUrl, username: registrationSettings.proxyUsername, password: registrationSettings.proxyPassword },
-      registrationSettings.acceptUnauthorized
+    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(registrationSettings);
+    (HTTPRequest as jest.Mock).mockResolvedValueOnce(createMockResponse(200, { result: [] }));
+
+    const query = {
+      from: '2019-10-03T13:36:38.590Z',
+      to: '2019-10-03T15:36:38.590Z',
+      aggregation: 'RAW_VALUES',
+      'data-reference': 'SP_003_X'
+    };
+    const result = await south.queryData(configuration.items[0], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z');
+
+    expect(result).toEqual({ result: [] });
+    expect(HTTPRequest).toHaveBeenCalledWith(expect.objectContaining({ href: 'http://localhost:4200/api/my/endpoint' }), {
+      method: 'GET',
+      query,
+      auth: { type: 'bearer', token: 'Bearer my oia token' },
+      proxy: {
+        url: 'http://localhost:8080',
+        auth: { type: 'url', username: 'user', password: 'pass' }
+      },
+      timeout: 30000
+    });
+    expect(logger.info).toHaveBeenCalledWith(
+      `Requesting data from URL "http://localhost:4200/api/my/endpoint" and query params "${JSON.stringify(query)}"`
     );
-    expect(result.agent).toEqual({});
   });
 
   it('should use oia module with proxy without user', async () => {
     registrationSettings.host = 'http://localhost:4200/';
     registrationSettings.useProxy = true;
     registrationSettings.proxyUrl = 'http://localhost:8080';
-    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce(registrationSettings);
-    const result = await south.getNetworkSettings('/endpoint');
-    expect(result.headers).toEqual({ authorization: 'Bearer my oia token' });
-    expect(result.host).toEqual('http://localhost:4200');
-    expect(createProxyAgent).toHaveBeenCalledWith(
-      registrationSettings.useProxy,
-      `${registrationSettings.host}/endpoint`,
-      { url: registrationSettings.proxyUrl, username: null, password: null },
-      registrationSettings.acceptUnauthorized
+    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(registrationSettings);
+    (HTTPRequest as jest.Mock).mockResolvedValueOnce(createMockResponse(200, { result: [] }));
+
+    const query = {
+      from: '2019-10-03T13:36:38.590Z',
+      to: '2019-10-03T15:36:38.590Z',
+      aggregation: 'RAW_VALUES',
+      'data-reference': 'SP_003_X'
+    };
+    const result = await south.queryData(configuration.items[0], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z');
+
+    expect(result).toEqual({ result: [] });
+    expect(HTTPRequest).toHaveBeenCalledWith(expect.objectContaining({ href: 'http://localhost:4200/api/my/endpoint' }), {
+      method: 'GET',
+      query,
+      auth: { type: 'bearer', token: 'Bearer my oia token' },
+      proxy: {
+        url: 'http://localhost:8080'
+      },
+      timeout: 30000
+    });
+    expect(logger.info).toHaveBeenCalledWith(
+      `Requesting data from URL "http://localhost:4200/api/my/endpoint" and query params "${JSON.stringify(query)}"`
     );
-    expect(result.agent).toEqual({});
-  });
-
-  it('should not use oia module if not registered', async () => {
-    registrationSettings.status = 'PENDING';
-    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce(registrationSettings);
-
-    await expect(south.getNetworkSettings('/endpoint')).rejects.toThrow(new Error('OIBus not registered in OIAnalytics'));
-
-    expect(createProxyAgent).not.toHaveBeenCalled();
   });
 
   it('should test item', async () => {
@@ -1271,5 +835,106 @@ describe('SouthOIAnalytics with OIA module', () => {
     const { startTime, endTime } = testData.south.itemTestingSettings.history!;
     expect(south.queryData).toHaveBeenCalledWith(configuration.items[0], startTime, endTime);
     expect(callback).not.toHaveBeenCalled();
+  });
+});
+
+describe('SouthOIAnalytics with edge cases', () => {
+  let south: SouthOianalytics;
+  const configuration: SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIAnalyticsItemSettings> = structuredClone(baseConfiguration);
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
+
+    south = new SouthOianalytics(
+      configuration,
+      addContentCallback,
+      encryptionService,
+      southConnectorRepository,
+      southCacheRepository,
+      scanModeRepository,
+      oIAnalyticsRegistrationRepository,
+      certificateRepository,
+      logger,
+      mockBaseFolders(configuration.id)
+    );
+    await south.start();
+  });
+
+  it('should properly query data without query params', async () => {
+    (HTTPRequest as jest.Mock).mockResolvedValueOnce(createMockResponse(200, { result: [] }));
+
+    const result = await south.queryData(configuration.items[1], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z');
+
+    expect(result).toEqual({ result: [] });
+    expect(HTTPRequest).toHaveBeenCalledWith(expect.objectContaining({ href: 'http://localhost:4200/api/my/endpoint' }), {
+      method: 'GET',
+      query: {},
+      auth: { type: 'basic', username: 'username', password: 'password' },
+      proxy: undefined,
+      timeout: 30000
+    });
+    expect(logger.info).toHaveBeenCalledWith(
+      `Requesting data from URL "http://localhost:4200/api/my/endpoint" and query params "${JSON.stringify({})}"`
+    );
+  });
+
+  it('should throw error when OIAnalytics is not set up', async () => {
+    south['connector'] = structuredClone(south['connector']);
+    south['connector'].settings.useOiaModule = true;
+    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(null);
+
+    const error = new Error('OIBus not registered in OIAnalytics');
+    expect(south['getProxyOptions'].bind(south)).toThrow(error);
+    await expect(south['getAuthorizationOptions'].bind(south)).rejects.toThrow(error);
+    expect(south['getHost'].bind(south)).toThrow(error);
+  });
+
+  it('should throw error when OIAnalytics is not registered', async () => {
+    south['connector'] = structuredClone(south['connector']);
+    south['connector'].settings.useOiaModule = true;
+    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValue({ status: 'pending' });
+
+    const error = new Error('OIBus not registered in OIAnalytics');
+    expect(south['getProxyOptions'].bind(south)).toThrow(error);
+    await expect(south['getAuthorizationOptions'].bind(south)).rejects.toThrow(error);
+    expect(south['getHost'].bind(south)).toThrow(error);
+  });
+
+  it('should throw error when no proxy url is specified', () => {
+    // Specific settings
+    south['connector'] = structuredClone(south['connector']);
+    south['connector'].settings.specificSettings = {
+      ...south['connector'].settings.specificSettings!,
+      useProxy: true,
+      proxyUrl: undefined
+    };
+
+    expect(south['getProxyOptions'].bind(south)).toThrow(new Error(`Proxy URL not specified using specific settings`));
+
+    // OIA module
+    south['connector'].settings.useOiaModule = true;
+    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValue({ status: 'REGISTERED', useProxy: true, proxyUrl: undefined });
+
+    expect(south['getProxyOptions'].bind(south)).toThrow(new Error(`Proxy URL not specified using registered OIAnalytics module`));
+  });
+
+  it('should return undefined when there is no accessKey', async () => {
+    south['connector'] = structuredClone(south['connector']);
+    south['connector'].settings.specificSettings!.accessKey = undefined;
+    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(null);
+
+    const result = await south['getAuthorizationOptions'].call(south);
+    expect(result).toBeUndefined();
+  });
+
+  it('should return undefined when there is no certificate', async () => {
+    south['connector'] = structuredClone(south['connector']);
+    south['connector'].settings.specificSettings!.authentication = 'aad-certificate';
+    (certificateRepository.findById as jest.Mock).mockReturnValue(null);
+
+    const result = await south['getAuthorizationOptions'].call(south);
+    expect(result).toBeUndefined();
   });
 });
