@@ -27,7 +27,6 @@ import UserRepository from '../../repository/config/user.repository';
 import UserRepositoryMock from '../../tests/__mocks__/repository/config/user-repository.mock';
 import OIAnalyticsRegistrationService from './oianalytics-registration.service';
 import OIAnalyticsRegistrationServiceMock from '../../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
-import { FetchError } from 'node-fetch';
 import HistoryQueryRepository from '../../repository/config/history-query.repository';
 import HistoryQueryRepositoryMock from '../../tests/__mocks__/repository/config/history-query-repository.mock';
 import { OIAnalyticsMessageHistoryQueries } from '../../model/oianalytics-message.model';
@@ -195,9 +194,12 @@ describe('OIAnalytics Message Service', () => {
     const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
     const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
 
-    (oIAnalyticsClient.sendConfiguration as jest.Mock) = jest.fn().mockImplementationOnce(() => {
-      throw new FetchError('fetch error - ', 'system', { code: 'ECONNREFUSED', name: '', message: '' });
-    });
+    (oIAnalyticsClient.sendConfiguration as jest.Mock) = jest.fn().mockRejectedValueOnce(
+      new (class extends Error {
+        public message = 'fetch error - ';
+        public code = 'ECONNREFUSED';
+      })()
+    );
 
     service.start();
     await flushPromises();
@@ -212,9 +214,12 @@ describe('OIAnalytics Message Service', () => {
   it('should not resend message if fetch fails', async () => {
     const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
 
-    (oIAnalyticsClient.sendConfiguration as jest.Mock) = jest.fn().mockImplementationOnce(() => {
-      throw new FetchError('fetch error - ', 'system', { code: 'ERROR', name: '', message: '' });
-    });
+    (oIAnalyticsClient.sendConfiguration as jest.Mock) = jest.fn().mockRejectedValueOnce(
+      new (class extends Error {
+        public message = 'fetch error - ';
+        public code = 'ERROR';
+      })()
+    );
 
     service.start();
     await flushPromises();
