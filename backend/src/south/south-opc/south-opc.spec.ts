@@ -3,7 +3,6 @@ import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
-import fetch from 'node-fetch';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import SouthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/south-connector-repository.mock';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
@@ -15,8 +14,10 @@ import { SouthConnectorEntity } from '../../model/south-connector.model';
 import { SouthOPCItemSettings, SouthOPCSettings } from '../../../shared/model/south-settings.model';
 import { mockBaseFolders } from '../../tests/utils/test-utils';
 import testData from '../../tests/utils/test-data';
+import { HTTPRequest } from '../../service/http-request.utils';
+import { createMockResponse } from '../../tests/__mocks__/undici.mock';
 
-jest.mock('node-fetch');
+jest.mock('../../service/http-request.utils');
 jest.mock('node:fs/promises');
 jest.mock('../../service/utils');
 
@@ -122,61 +123,66 @@ describe('South OPC', () => {
 
   it('should properly connect to remote agent and disconnect ', async () => {
     await south.connect();
-    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/opc/${configuration.id}/connect`, {
-      method: 'PUT',
-      body: JSON.stringify({
-        host: configuration.settings.host,
-        serverName: configuration.settings.serverName,
-        mode: 'hda'
-      }),
-      headers: {
-        'Content-Type': 'application/json'
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${configuration.settings.agentUrl}/api/opc/${configuration.id}/connect` }),
+      {
+        method: 'PUT',
+        body: JSON.stringify({
+          host: configuration.settings.host,
+          serverName: configuration.settings.serverName,
+          mode: 'hda'
+        }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
       }
-    });
+    );
 
     await south.disconnect();
-    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/opc/${configuration.id}/disconnect`, {
-      method: 'DELETE'
-    });
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${configuration.settings.agentUrl}/api/opc/${configuration.id}/disconnect` }),
+      {
+        method: 'DELETE'
+      }
+    );
   });
 
   it('should properly reconnect to when connection fails ', async () => {
-    (fetch as unknown as jest.Mock).mockImplementationOnce(() => {
-      throw new Error('connection failed');
-    });
+    (HTTPRequest as unknown as jest.Mock).mockRejectedValueOnce(new Error('connection failed'));
 
     await south.connect();
-    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/opc/${configuration.id}/connect`, {
-      method: 'PUT',
-      body: JSON.stringify({
-        host: configuration.settings.host,
-        serverName: configuration.settings.serverName,
-        mode: 'hda'
-      }),
-      headers: {
-        'Content-Type': 'application/json'
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${configuration.settings.agentUrl}/api/opc/${configuration.id}/connect` }),
+      {
+        method: 'PUT',
+        body: JSON.stringify({
+          host: configuration.settings.host,
+          serverName: configuration.settings.serverName,
+          mode: 'hda'
+        }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
       }
-    });
+    );
 
-    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(HTTPRequest).toHaveBeenCalledTimes(1);
     jest.advanceTimersByTime(configuration.settings.retryInterval);
-    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(HTTPRequest).toHaveBeenCalledTimes(2);
   });
 
   it('should properly clear reconnect timeout on disconnect when not connected', async () => {
-    (fetch as unknown as jest.Mock).mockImplementationOnce(() => {
-      throw new Error('connection failed');
-    });
+    (HTTPRequest as unknown as jest.Mock).mockRejectedValueOnce(new Error('connection failed'));
 
     const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
 
     await south.connect();
 
-    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(HTTPRequest).toHaveBeenCalledTimes(1);
     await south.disconnect();
     expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
     jest.advanceTimersByTime(configuration.settings.retryInterval);
-    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(HTTPRequest).toHaveBeenCalledTimes(1);
     expect(logger.error).toHaveBeenCalledWith(
       `Error while sending connection HTTP request into agent. Reconnecting in ${configuration.settings.retryInterval} ms. ${new Error(
         'connection failed'
@@ -185,65 +191,38 @@ describe('South OPC', () => {
   });
 
   it('should properly clear reconnect timeout on disconnect when connected', async () => {
-    (fetch as unknown as jest.Mock)
-      .mockImplementationOnce(() => {
-        return true;
-      })
-      .mockImplementationOnce(() => {
-        throw new Error('disconnection failed');
-      });
+    (HTTPRequest as jest.Mock).mockResolvedValueOnce(true).mockRejectedValueOnce(new Error('disconnection failed'));
 
     const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
 
     await south.connect();
 
-    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(HTTPRequest).toHaveBeenCalledTimes(1);
     await south.disconnect();
     expect(clearTimeoutSpy).toHaveBeenCalledTimes(0);
     jest.advanceTimersByTime(configuration.settings.retryInterval);
-    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(HTTPRequest).toHaveBeenCalledTimes(2);
     expect(logger.error).toHaveBeenCalledWith(
       `Error while sending disconnection HTTP request into agent. ${new Error('disconnection failed')}`
     );
   });
 
   it('should test connection successfully', async () => {
-    (fetch as unknown as jest.Mock)
-      .mockReturnValueOnce(
-        Promise.resolve({
-          status: 200
-        })
-      )
-      .mockReturnValueOnce(
-        Promise.resolve({
-          status: 200,
-          json: () => JSON.stringify({})
-        })
-      )
-      .mockReturnValueOnce(
-        Promise.resolve({
-          status: 200
-        })
-      );
+    (HTTPRequest as jest.Mock)
+      .mockResolvedValueOnce(createMockResponse(200))
+      .mockResolvedValueOnce(createMockResponse(200, {}))
+      .mockResolvedValueOnce(createMockResponse(200));
+
     await expect(south.testConnection()).resolves.not.toThrow();
   });
 
   it('should test connection fail', async () => {
-    (fetch as unknown as jest.Mock)
-      .mockReturnValueOnce(
-        Promise.resolve({
-          status: 400,
-          text: () => 'bad request'
-        })
-      )
-      .mockReturnValueOnce(
-        Promise.resolve({
-          status: 500,
-          text: () => 'another error'
-        })
-      );
+    (HTTPRequest as jest.Mock)
+      .mockResolvedValueOnce(createMockResponse(400, 'bad request'))
+      .mockResolvedValueOnce(createMockResponse(500, 'another error'));
+
     await expect(south.testConnection()).rejects.toThrow(
-      new Error(`Error occurred when sending connect command to remote agent with status 400. bad request`)
+      new Error(`Error occurred when sending connect command to remote agent with status 400. "bad request"`)
     );
 
     await expect(south.testConnection()).rejects.toThrow(
@@ -256,70 +235,70 @@ describe('South OPC', () => {
     const endTime = '2022-01-01T00:00:00.000Z';
 
     south.addContent = jest.fn();
-    (fetch as unknown as jest.Mock)
-      .mockReturnValueOnce(
-        Promise.resolve({
-          status: 200,
-          json: () => ({
-            recordCount: 2,
-            content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
-            maxInstantRetrieved: '2020-03-01T00:00:00.000Z'
-          })
+    (HTTPRequest as jest.Mock)
+      .mockResolvedValueOnce(
+        createMockResponse(200, {
+          recordCount: 2,
+          content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
+          maxInstantRetrieved: '2020-03-01T00:00:00.000Z'
         })
       )
-      .mockReturnValueOnce(
-        Promise.resolve({
-          status: 200,
-          json: () => ({
-            recordCount: 0,
-            content: [],
-            maxInstantRetrieved: '2020-03-01T00:00:00.000Z'
-          })
+      .mockResolvedValueOnce(
+        createMockResponse(200, {
+          recordCount: 0,
+          content: [],
+          maxInstantRetrieved: '2020-03-01T00:00:00.000Z'
         })
       );
 
     const result = await south.historyQuery(configuration.items, startTime, endTime);
 
-    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/opc/${configuration.id}/read`, {
-      method: 'PUT',
-      body: JSON.stringify({
-        host: configuration.settings.host,
-        serverName: configuration.settings.serverName,
-        mode: 'hda',
-        maxReadValues: 3600,
-        intervalReadDelay: 200,
-        aggregate: 'raw',
-        resampling: 'none',
-        startTime,
-        endTime,
-        items: [
-          { name: 'item1', nodeId: 'ns=3;s=Random' },
-          { name: 'item2', nodeId: 'ns=3;s=Counter' }
-        ]
-      }),
-      headers: {
-        'Content-Type': 'application/json'
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${configuration.settings.agentUrl}/api/opc/${configuration.id}/read` }),
+      {
+        method: 'PUT',
+        body: JSON.stringify({
+          host: configuration.settings.host,
+          serverName: configuration.settings.serverName,
+          mode: 'hda',
+          maxReadValues: 3600,
+          intervalReadDelay: 200,
+          aggregate: 'raw',
+          resampling: 'none',
+          startTime,
+          endTime,
+          items: [
+            { name: 'item1', nodeId: 'ns=3;s=Random' },
+            { name: 'item2', nodeId: 'ns=3;s=Counter' }
+          ]
+        }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
       }
-    });
+    );
 
-    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/opc/${configuration.id}/read`, {
-      method: 'PUT',
-      body: JSON.stringify({
-        host: configuration.settings.host,
-        serverName: configuration.settings.serverName,
-        mode: 'hda',
-        maxReadValues: 3600,
-        intervalReadDelay: 200,
-        aggregate: 'average',
-        resampling: '10s',
-        startTime,
-        endTime,
-        items: [{ name: 'item3', nodeId: 'ns=3;s=Triangle' }]
-      }),
-      headers: {
-        'Content-Type': 'application/json'
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${configuration.settings.agentUrl}/api/opc/${configuration.id}/read` }),
+      {
+        method: 'PUT',
+        body: JSON.stringify({
+          host: configuration.settings.host,
+          serverName: configuration.settings.serverName,
+          mode: 'hda',
+          maxReadValues: 3600,
+          intervalReadDelay: 200,
+          aggregate: 'average',
+          resampling: '10s',
+          startTime,
+          endTime,
+          items: [{ name: 'item3', nodeId: 'ns=3;s=Triangle' }]
+        }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
       }
-    });
+    );
 
     expect(result).toEqual('2020-03-01T00:00:00.001Z');
     expect(south.addContent).toHaveBeenCalledWith({
@@ -334,25 +313,14 @@ describe('South OPC', () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
 
-    (fetch as unknown as jest.Mock)
-      .mockReturnValueOnce(
-        Promise.resolve({
-          status: 400,
-          text: () => 'bad request'
-        })
-      )
-      .mockReturnValueOnce(
-        Promise.resolve({
-          status: 500
-        })
-      );
+    (HTTPRequest as jest.Mock).mockResolvedValueOnce(createMockResponse(400, 'bad request')).mockResolvedValueOnce(createMockResponse(500));
     south.disconnect = jest.fn();
     south.connect = jest.fn();
 
     await expect(south.historyQuery(configuration.items, startTime, endTime)).rejects.toThrow(
-      `Error occurred when querying remote agent with status 400: bad request`
+      `Error occurred when querying remote agent with status 400: "bad request"`
     );
-    expect(logger.error).toHaveBeenCalledWith(`Error occurred when querying remote agent with status 400: bad request`);
+    expect(logger.error).toHaveBeenCalledWith(`Error occurred when querying remote agent with status 400: "bad request"`);
 
     await expect(south.historyQuery(configuration.items, startTime, endTime)).rejects.toThrow(
       `Error occurred when querying remote agent with status 500`
@@ -364,22 +332,17 @@ describe('South OPC', () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
 
-    (fetch as unknown as jest.Mock).mockImplementation(() => {
-      throw new Error('bad request');
-    });
+    (HTTPRequest as unknown as jest.Mock).mockRejectedValueOnce(new Error('bad request'));
 
     await expect(south.historyQuery(configuration.items, startTime, endTime)).rejects.toThrow(new Error('bad request'));
   });
 
   it('should test item', async () => {
-    (fetch as unknown as jest.Mock).mockReturnValueOnce(
-      Promise.resolve({
-        status: 200,
-        json: () => ({
-          recordCount: 2,
-          content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
-          maxInstantRetrieved: '2020-03-01T00:00:00.000Z'
-        })
+    (HTTPRequest as jest.Mock).mockResolvedValueOnce(
+      createMockResponse(200, {
+        recordCount: 2,
+        content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
+        maxInstantRetrieved: '2020-03-01T00:00:00.000Z'
       })
     );
 
@@ -402,15 +365,14 @@ describe('South OPC', () => {
       }),
       headers: { 'Content-Type': 'application/json' }
     };
-    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/opc/${configuration.id}-test/read`, fetchOptions);
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${configuration.settings.agentUrl}/api/opc/${configuration.id}-test/read` }),
+      fetchOptions
+    );
   });
 
   it('should test item and throw error if bad status', async () => {
-    (fetch as unknown as jest.Mock).mockImplementationOnce(() =>
-      Promise.resolve({
-        status: 400
-      })
-    );
+    (HTTPRequest as jest.Mock).mockResolvedValueOnce(createMockResponse(400));
 
     const callback = jest.fn();
     await expect(south.testItem(configuration.items[0], testData.south.itemTestingSettings, callback)).rejects.toThrow(
@@ -433,6 +395,9 @@ describe('South OPC', () => {
       }),
       headers: { 'Content-Type': 'application/json' }
     };
-    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/opc/${configuration.id}-test/read`, fetchOptions);
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${configuration.settings.agentUrl}/api/opc/${configuration.id}-test/read` }),
+      fetchOptions
+    );
   });
 });
