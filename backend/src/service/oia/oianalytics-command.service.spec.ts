@@ -74,7 +74,6 @@ import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.mo
 
 jest.mock('node:crypto');
 jest.mock('node:fs/promises');
-jest.mock('node-fetch');
 jest.mock('../../web-server/controllers/validators/joi.validator');
 jest.mock('../utils');
 
