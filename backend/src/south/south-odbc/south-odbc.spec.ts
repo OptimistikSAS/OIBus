@@ -5,7 +5,6 @@ import * as utils from '../../service/utils';
 import { convertDateTimeToInstant, convertDelimiter, formatInstant, persistResults } from '../../service/utils';
 
 import pino from 'pino';
-import fetch from 'node-fetch';
 import { loadOdbc } from './odbc-loader';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import EncryptionService from '../../service/encryption.service';
@@ -22,8 +21,10 @@ import testData from '../../tests/utils/test-data';
 import { OIBusTimeValue } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity } from '../../model/south-connector.model';
 import { mockBaseFolders } from '../../tests/utils/test-utils';
+import { HTTPRequest } from '../../service/http-request.utils';
+import { createMockResponse } from '../../tests/__mocks__/undici.mock';
 
-jest.mock('node-fetch');
+jest.mock('../../service/http-request.utils');
 jest.mock('node:fs/promises');
 jest.mock('../../service/utils');
 jest.mock('./odbc-loader.ts');
@@ -199,7 +200,7 @@ describe('SouthODBC odbc driver with authentication', () => {
   it('should do nothing on connect and disconnect', async () => {
     await south.connect();
     await south.disconnect();
-    expect(fetch).not.toHaveBeenCalled();
+    expect(HTTPRequest).not.toHaveBeenCalled();
   });
 
   it('should properly run historyQuery', async () => {
@@ -1016,47 +1017,56 @@ describe('SouthODBC odbc remote with authentication', () => {
 
   it('should properly connect to remote agent and disconnect ', async () => {
     await south.connect();
-    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/odbc/${configuration.id}/connect`, {
-      method: 'PUT',
-      body: JSON.stringify({
-        connectionString: configuration.settings.connectionString,
-        connectionTimeout: configuration.settings.connectionTimeout
-      }),
-      headers: {
-        'Content-Type': 'application/json'
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${configuration.settings.agentUrl}/api/odbc/${configuration.id}/connect` }),
+      {
+        method: 'PUT',
+        body: JSON.stringify({
+          connectionString: configuration.settings.connectionString,
+          connectionTimeout: configuration.settings.connectionTimeout
+        }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
       }
-    });
+    );
 
     await south.disconnect();
-    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/odbc/${configuration.id}/disconnect`, {
-      method: 'DELETE'
-    });
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${configuration.settings.agentUrl}/api/odbc/${configuration.id}/disconnect` }),
+      {
+        method: 'DELETE'
+      }
+    );
   });
 
   it('should properly reconnect to when connection fails ', async () => {
-    (fetch as unknown as jest.Mock).mockImplementationOnce(() => {
+    (HTTPRequest as unknown as jest.Mock).mockImplementationOnce(() => {
       throw new Error('connection failed');
     });
 
     await south.connect();
-    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/odbc/${configuration.id}/connect`, {
-      method: 'PUT',
-      body: JSON.stringify({
-        connectionString: configuration.settings.connectionString,
-        connectionTimeout: configuration.settings.connectionTimeout
-      }),
-      headers: {
-        'Content-Type': 'application/json'
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${configuration.settings.agentUrl}/api/odbc/${configuration.id}/connect` }),
+      {
+        method: 'PUT',
+        body: JSON.stringify({
+          connectionString: configuration.settings.connectionString,
+          connectionTimeout: configuration.settings.connectionTimeout
+        }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
       }
-    });
+    );
 
-    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(HTTPRequest).toHaveBeenCalledTimes(1);
     jest.advanceTimersByTime(configuration.settings.retryInterval);
-    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(HTTPRequest).toHaveBeenCalledTimes(2);
   });
 
   it('should properly clear reconnect timeout on disconnect', async () => {
-    (fetch as unknown as jest.Mock)
+    (HTTPRequest as unknown as jest.Mock)
       .mockImplementationOnce(() => {
         throw new Error('connection failed');
       })
@@ -1071,13 +1081,13 @@ describe('SouthODBC odbc remote with authentication', () => {
 
     await south.connect();
 
-    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(HTTPRequest).toHaveBeenCalledTimes(1);
     await south.connect();
 
     await south.disconnect();
     expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
     jest.advanceTimersByTime(configuration.settings.retryInterval);
-    expect(fetch).toHaveBeenCalledTimes(3);
+    expect(HTTPRequest).toHaveBeenCalledTimes(3);
     expect(logger.error).toHaveBeenCalledWith(
       `Error while sending connection HTTP request into agent. Reconnecting in ${configuration.settings.retryInterval} ms. ${new Error(
         'connection failed'
@@ -1103,25 +1113,19 @@ describe('SouthODBC odbc remote with authentication', () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
 
-    (fetch as unknown as jest.Mock)
-      .mockReturnValueOnce(
-        Promise.resolve({
-          status: 200,
-          json: () => ({
-            recordCount: 2,
-            content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
-            maxInstant: '2020-03-01T00:00:00.000Z'
-          })
+    (HTTPRequest as jest.Mock)
+      .mockResolvedValueOnce(
+        createMockResponse(200, {
+          recordCount: 2,
+          content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
+          maxInstant: '2020-03-01T00:00:00.000Z'
         })
       )
-      .mockReturnValueOnce(
-        Promise.resolve({
-          status: 200,
-          json: () => ({
-            recordCount: 0,
-            content: [],
-            maxInstant: '2020-03-01T00:00:00.000Z'
-          })
+      .mockResolvedValueOnce(
+        createMockResponse(200, {
+          recordCount: 0,
+          content: [],
+          maxInstant: '2020-03-01T00:00:00.000Z'
         })
       );
     (formatInstant as jest.Mock).mockImplementation(value => value);
@@ -1130,23 +1134,26 @@ describe('SouthODBC odbc remote with authentication', () => {
 
     expect(utils.logQuery).toHaveBeenCalledWith(configuration.items[0].settings.query, startTime, endTime, logger);
 
-    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/odbc/${configuration.id}/read`, {
-      method: 'PUT',
-      body: JSON.stringify({
-        connectionString: configuration.settings.connectionString,
-        sql: configuration.items[0].settings.query,
-        readTimeout: configuration.settings.requestTimeout,
-        timeColumn: configuration.items[0].settings.dateTimeFields![1].fieldName,
-        datasourceTimestampFormat: configuration.items[0].settings.dateTimeFields![1].format,
-        datasourceTimezone: configuration.items[0].settings.dateTimeFields![1].timezone,
-        delimiter: configuration.items[0].settings.serialization.delimiter,
-        outputTimestampFormat: configuration.items[0].settings.serialization.outputTimestampFormat,
-        outputTimezone: configuration.items[0].settings.serialization.outputTimezone
-      }),
-      headers: {
-        'Content-Type': 'application/json'
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${configuration.settings.agentUrl}/api/odbc/${configuration.id}/read` }),
+      {
+        method: 'PUT',
+        body: JSON.stringify({
+          connectionString: configuration.settings.connectionString,
+          sql: configuration.items[0].settings.query,
+          readTimeout: configuration.settings.requestTimeout,
+          timeColumn: configuration.items[0].settings.dateTimeFields![1].fieldName,
+          datasourceTimestampFormat: configuration.items[0].settings.dateTimeFields![1].format,
+          datasourceTimezone: configuration.items[0].settings.dateTimeFields![1].timezone,
+          delimiter: configuration.items[0].settings.serialization.delimiter,
+          outputTimestampFormat: configuration.items[0].settings.serialization.outputTimestampFormat,
+          outputTimezone: configuration.items[0].settings.serialization.outputTimezone
+        }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
       }
-    });
+    );
 
     expect(result).toEqual('2020-03-01T00:00:00.000Z');
     expect(persistResults).toHaveBeenCalledWith(
@@ -1171,14 +1178,11 @@ describe('SouthODBC odbc remote with authentication', () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
 
-    (fetch as unknown as jest.Mock).mockReturnValueOnce(
-      Promise.resolve({
-        status: 200,
-        json: () => ({
-          recordCount: 2,
-          content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
-          maxInstantRetrieved: startTime
-        })
+    (HTTPRequest as jest.Mock).mockResolvedValueOnce(
+      createMockResponse(200, {
+        recordCount: 2,
+        content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
+        maxInstantRetrieved: startTime
       })
     );
 
@@ -1186,20 +1190,23 @@ describe('SouthODBC odbc remote with authentication', () => {
 
     expect(utils.logQuery).toHaveBeenCalledWith(configuration.items[1].settings.query, startTime, endTime, logger);
 
-    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/odbc/${configuration.id}/read`, {
-      method: 'PUT',
-      body: JSON.stringify({
-        connectionString: configuration.settings.connectionString,
-        sql: configuration.items[0].settings.query,
-        readTimeout: configuration.settings.requestTimeout,
-        delimiter: configuration.items[0].settings.serialization.delimiter,
-        outputTimestampFormat: configuration.items[0].settings.serialization.outputTimestampFormat,
-        outputTimezone: configuration.items[0].settings.serialization.outputTimezone
-      }),
-      headers: {
-        'Content-Type': 'application/json'
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${configuration.settings.agentUrl}/api/odbc/${configuration.id}/read` }),
+      {
+        method: 'PUT',
+        body: JSON.stringify({
+          connectionString: configuration.settings.connectionString,
+          sql: configuration.items[0].settings.query,
+          readTimeout: configuration.settings.requestTimeout,
+          delimiter: configuration.items[0].settings.serialization.delimiter,
+          outputTimestampFormat: configuration.items[0].settings.serialization.outputTimestampFormat,
+          outputTimezone: configuration.items[0].settings.serialization.outputTimezone
+        }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
       }
-    });
+    );
 
     expect(result).toEqual(null);
   });
@@ -1208,23 +1215,12 @@ describe('SouthODBC odbc remote with authentication', () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
 
-    (fetch as unknown as jest.Mock)
-      .mockReturnValueOnce(
-        Promise.resolve({
-          status: 400,
-          text: () => 'bad request'
-        })
-      )
-      .mockReturnValueOnce(
-        Promise.resolve({
-          status: 500
-        })
-      );
+    (HTTPRequest as jest.Mock).mockResolvedValueOnce(createMockResponse(400, 'bad request')).mockResolvedValueOnce(createMockResponse(500));
 
     await expect(south.queryRemoteAgentData(configuration.items[0], startTime, endTime)).rejects.toThrow(
-      `Error occurred when querying remote agent with status 400: bad request`
+      `Error occurred when querying remote agent with status 400: "bad request"`
     );
-    expect(logger.error).toHaveBeenCalledWith(`Error occurred when querying remote agent with status 400: bad request`);
+    expect(logger.error).toHaveBeenCalledWith(`Error occurred when querying remote agent with status 400: "bad request"`);
 
     await expect(south.queryRemoteAgentData(configuration.items[0], startTime, endTime)).rejects.toThrow(
       `Error occurred when querying remote agent with status 500`
@@ -1252,19 +1248,16 @@ describe('SouthODBC odbc remote with authentication', () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
 
-    (fetch as unknown as jest.Mock).mockReturnValue(
-      Promise.resolve({
-        status: 200,
-        json: () => ({
-          recordCount: 0,
-          content: [],
-          maxInstantRetrieved: '2020-03-01T00:00:00.000Z'
-        })
+    (HTTPRequest as jest.Mock).mockResolvedValueOnce(
+      createMockResponse(200, {
+        recordCount: 0,
+        content: [],
+        maxInstantRetrieved: '2020-03-01T00:00:00.000Z'
       })
     );
 
     await south.queryRemoteAgentData(configuration.items[0], startTime, endTime, true);
-    expect(fetch).toHaveBeenCalled();
+    expect(HTTPRequest).toHaveBeenCalled();
   });
 });
 
@@ -1400,30 +1393,16 @@ describe('SouthODBC odbc remote test connection', () => {
   });
 
   it('should test connection successfully', async () => {
-    (fetch as unknown as jest.Mock).mockReturnValueOnce(
-      Promise.resolve({
-        status: 200
-      })
-    );
+    (HTTPRequest as jest.Mock).mockResolvedValueOnce(createMockResponse(200, 'bad request'));
     await expect(south.testConnection()).resolves.not.toThrow();
   });
 
   it('should test connection fail', async () => {
-    (fetch as unknown as jest.Mock)
-      .mockReturnValueOnce(
-        Promise.resolve({
-          status: 400,
-          text: () => 'bad request'
-        })
-      )
-      .mockReturnValueOnce(
-        Promise.resolve({
-          status: 500,
-          text: () => 'another error'
-        })
-      );
+    (HTTPRequest as jest.Mock)
+      .mockResolvedValueOnce(createMockResponse(400, 'bad request'))
+      .mockResolvedValueOnce(createMockResponse(500, 'another error'));
     await expect(south.testConnection()).rejects.toThrow(
-      new Error(`Error occurred when sending connect command to remote agent with status 400: bad request`)
+      new Error(`Error occurred when sending connect command to remote agent with status 400: "bad request"`)
     );
 
     await expect(south.testConnection()).rejects.toThrow(
