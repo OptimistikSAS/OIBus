@@ -9,301 +9,729 @@ const manifest: SouthConnectorManifest = {
     lastFile: false,
     history: true
   },
-  settings: [
-    {
-      key: 'throttling',
-      type: 'OibFormGroup',
-      translationKey: 'south.slims.throttling.title',
-      class: 'col',
-      newRow: true,
-      displayInViewMode: false,
-      validators: [{ key: 'required' }],
-      content: [
-        {
-          key: 'maxReadInterval',
-          type: 'OibNumber',
-          translationKey: 'south.slims.throttling.max-read-interval',
-          validators: [{ key: 'required' }, { key: 'min', params: { min: 0 } }],
-          defaultValue: 3600,
-          unitLabel: 's',
-          displayInViewMode: true
-        },
-        {
-          key: 'readDelay',
-          type: 'OibNumber',
-          translationKey: 'south.slims.throttling.read-delay',
-          validators: [{ key: 'required' }, { key: 'min', params: { min: 0 } }],
-          defaultValue: 200,
-          unitLabel: 'ms',
-          displayInViewMode: true
-        },
-        {
-          key: 'overlap',
-          type: 'OibNumber',
-          translationKey: 'south.slims.throttling.overlap',
-          validators: [{ key: 'required' }, { key: 'min', params: { min: 0 } }],
-          defaultValue: 0,
-          unitLabel: 'ms',
-          displayInViewMode: true
-        }
-      ]
+  settings: {
+    type: 'object',
+    key: 'settings',
+    translationKey: 'configuration.oibus.manifest.south.settings',
+    displayProperties: {
+      visible: true,
+      wrapInBox: false
     },
-    {
-      key: 'url',
-      type: 'OibText',
-      translationKey: 'south.slims.host',
-      defaultValue: 'http://localhost',
-      newRow: true,
-      validators: [{ key: 'required' }, { key: 'pattern', params: { pattern: '^(http:\\/\\/|https:\\/\\/|HTTP:\\/\\/|HTTPS:\\/\\/).*' } }],
-      displayInViewMode: true,
-      class: 'col-8'
-    },
-    {
-      key: 'port',
-      type: 'OibNumber',
-      translationKey: 'south.slims.port',
-      defaultValue: 80,
-      validators: [{ key: 'required' }, { key: 'min', params: { min: 1 } }, { key: 'max', params: { max: 65535 } }],
-      displayInViewMode: true,
-      class: 'col-4'
-    },
-    {
-      key: 'acceptUnauthorized',
-      type: 'OibCheckbox',
-      translationKey: 'south.slims.accept-unauthorized',
-      validators: [{ key: 'required' }],
-      defaultValue: false,
-      displayInViewMode: true,
-      newRow: true,
-      class: 'col-6'
-    },
-    {
-      key: 'timeout',
-      type: 'OibNumber',
-      translationKey: 'south.slims.timeout',
-      defaultValue: 30,
-      unitLabel: 's',
-      validators: [{ key: 'required' }],
-      class: 'col-6'
-    },
-    {
-      key: 'username',
-      type: 'OibText',
-      translationKey: 'south.slims.username',
-      defaultValue: '',
-      validators: [{ key: 'required' }],
-      newRow: true,
-      class: 'col-6',
-      displayInViewMode: false
-    },
-    {
-      key: 'password',
-      type: 'OibSecret',
-      translationKey: 'south.slims.password',
-      defaultValue: '',
-      class: 'col-6',
-      displayInViewMode: false
-    },
-    {
-      key: 'useProxy',
-      translationKey: 'south.slims.use-proxy',
-      type: 'OibCheckbox',
-      newRow: true,
-      defaultValue: false,
-      displayInViewMode: true,
-      validators: [{ key: 'required' }]
-    },
-    {
-      key: 'proxyUrl',
-      translationKey: 'south.slims.proxy-url',
-      type: 'OibText',
-      validators: [{ key: 'required' }],
-      conditionalDisplay: { field: 'useProxy', values: [true] }
-    },
-    {
-      key: 'proxyUsername',
-      translationKey: 'south.slims.proxy-username',
-      type: 'OibText',
-      conditionalDisplay: { field: 'useProxy', values: [true] }
-    },
-    {
-      key: 'proxyPassword',
-      translationKey: 'south.slims.proxy-password',
-      type: 'OibSecret',
-      conditionalDisplay: { field: 'useProxy', values: [true] }
-    }
-  ],
-  items: {
-    scanMode: 'POLL',
-    settings: [
+    enablingConditions: [
       {
-        key: 'endpoint',
-        type: 'OibText',
-        translationKey: 'south.items.slims.endpoint',
-        defaultValue: '/endpoint',
-        validators: [{ key: 'required' }]
+        referralPathFromRoot: 'useProxy',
+        targetPathFromRoot: 'proxyUrl',
+        values: [true]
       },
       {
-        key: 'body',
-        type: 'OibCodeBlock',
-        translationKey: 'south.items.slims.body',
-        contentType: 'json',
-        defaultValue: '',
-        newRow: true
+        referralPathFromRoot: 'useProxy',
+        targetPathFromRoot: 'proxyUsername',
+        values: [true]
       },
       {
-        key: 'queryParams',
-        type: 'OibArray',
-        translationKey: 'south.items.slims.query-params.query-param',
-        content: [
+        referralPathFromRoot: 'useProxy',
+        targetPathFromRoot: 'proxyPassword',
+        values: [true]
+      }
+    ],
+    validators: [],
+    attributes: [
+      {
+        type: 'object',
+        key: 'throttling',
+        translationKey: 'configuration.oibus.manifest.south.slims.throttling.title',
+        displayProperties: {
+          visible: true,
+          wrapInBox: false
+        },
+        enablingConditions: [],
+        validators: [
           {
-            key: 'key',
-            translationKey: 'south.items.slims.query-params.key',
-            type: 'OibText',
-            defaultValue: '',
-            validators: [{ key: 'required' }],
-            displayInViewMode: true
-          },
-          {
-            key: 'value',
-            translationKey: 'south.items.slims.query-params.value',
-            type: 'OibText',
-            defaultValue: '',
-            validators: [{ key: 'required' }],
-            displayInViewMode: true
+            type: 'REQUIRED',
+            arguments: []
           }
         ],
-        newRow: true,
-        displayInViewMode: false
-      },
-      {
-        key: 'dateTimeFields',
-        type: 'OibArray',
-        translationKey: 'south.items.slims.date-time-fields.date-time-field',
-        content: [
+        attributes: [
           {
-            key: 'fieldName',
-            translationKey: 'south.items.slims.date-time-fields.field-name',
-            type: 'OibText',
-            defaultValue: '',
-            validators: [{ key: 'required' }, { key: 'unique' }],
-            displayInViewMode: true
+            type: 'number',
+            key: 'maxReadInterval',
+            translationKey: 'configuration.oibus.manifest.south.slims.throttling.max-read-interval',
+            unit: 's',
+            defaultValue: 3600,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              },
+              {
+                type: 'POSITIVE_INTEGER',
+                arguments: []
+              }
+            ],
+            displayProperties: {
+              row: 0,
+              columns: 4,
+              displayInViewMode: true
+            }
           },
           {
-            key: 'useAsReference',
-            translationKey: 'south.items.slims.date-time-fields.use-as-reference',
-            type: 'OibCheckbox',
-            defaultValue: false,
-            displayInViewMode: true,
-            validators: [{ key: 'required' }, { key: 'singleTrue' }]
+            type: 'number',
+            key: 'readDelay',
+            translationKey: 'configuration.oibus.manifest.south.slims.throttling.read-delay',
+            unit: 'ms',
+            defaultValue: 200,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              },
+              {
+                type: 'POSITIVE_INTEGER',
+                arguments: []
+              }
+            ],
+            displayProperties: {
+              row: 0,
+              columns: 4,
+              displayInViewMode: true
+            }
           },
           {
-            key: 'type',
-            translationKey: 'south.items.slims.date-time-fields.type',
-            type: 'OibSelect',
-            defaultValue: 'string',
-            options: ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'],
-            displayInViewMode: true,
-            validators: [{ key: 'required' }]
-          },
-          {
-            key: 'timezone',
-            translationKey: 'south.items.slims.date-time-fields.timezone',
-            type: 'OibTimezone',
-            defaultValue: 'UTC',
-            newRow: true,
-            validators: [{ key: 'required' }],
-            displayInViewMode: true,
-            conditionalDisplay: { field: 'type', values: ['string', 'timestamp', 'DateTime', 'DateTime2', 'SmallDateTime', 'Date'] }
-          },
-          {
-            key: 'format',
-            translationKey: 'south.items.slims.date-time-fields.format',
-            type: 'OibText',
-            defaultValue: 'yyyy-MM-dd HH:mm:ss.SSS',
-            validators: [{ key: 'required' }],
-            conditionalDisplay: { field: 'type', values: ['string'] }
-          },
-          {
-            key: 'locale',
-            translationKey: 'south.items.slims.date-time-fields.locale',
-            defaultValue: 'en-En',
-            type: 'OibText',
-            validators: [{ key: 'required' }],
-            conditionalDisplay: { field: 'type', values: ['string'] }
-          }
-        ],
-        class: 'col',
-        newRow: true,
-        displayInViewMode: false
-      },
-      {
-        key: 'serialization',
-        type: 'OibFormGroup',
-        translationKey: 'south.items.slims.serialization.title',
-        newRow: true,
-        displayInViewMode: false,
-        validators: [{ key: 'required' }],
-        content: [
-          {
-            key: 'type',
-            type: 'OibSelect',
-            translationKey: 'south.items.slims.serialization.type',
-            options: ['csv'],
-            defaultValue: 'csv',
-            newRow: true,
-            displayInViewMode: false,
-            validators: [{ key: 'required' }]
-          },
-          {
-            key: 'filename',
-            type: 'OibText',
-            translationKey: 'south.items.slims.serialization.filename',
-            defaultValue: '@ConnectorName-@ItemName-@CurrentDate.csv',
-            newRow: false,
-            displayInViewMode: false,
-            validators: [{ key: 'required' }]
-          },
-          {
-            key: 'delimiter',
-            type: 'OibSelect',
-            translationKey: 'south.items.slims.serialization.delimiter',
-            options: ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'],
-            defaultValue: 'COMMA',
-            newRow: false,
-            displayInViewMode: false,
-            validators: [{ key: 'required' }]
-          },
-          {
-            key: 'compression',
-            type: 'OibCheckbox',
-            translationKey: 'south.items.slims.serialization.compression',
-            defaultValue: false,
-            newRow: false,
-            displayInViewMode: false,
-            validators: [{ key: 'required' }]
-          },
-          {
-            key: 'outputTimestampFormat',
-            type: 'OibText',
-            translationKey: 'south.items.slims.serialization.output-timestamp-format',
-            defaultValue: 'yyyy-MM-dd HH:mm:ss.SSS',
-            newRow: true,
-            displayInViewMode: false,
-            validators: [{ key: 'required' }]
-          },
-          {
-            key: 'outputTimezone',
-            type: 'OibTimezone',
-            translationKey: 'south.items.slims.serialization.output-timezone',
-            defaultValue: 'Europe/Paris',
-            newRow: false,
-            displayInViewMode: false,
-            validators: [{ key: 'required' }]
+            type: 'number',
+            key: 'overlap',
+            translationKey: 'configuration.oibus.manifest.south.slims.throttling.overlap',
+            unit: 'ms',
+            defaultValue: 0,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              },
+              {
+                type: 'POSITIVE_INTEGER',
+                arguments: []
+              }
+            ],
+            displayProperties: {
+              row: 0,
+              columns: 4,
+              displayInViewMode: true
+            }
           }
         ]
+      },
+      {
+        type: 'string',
+        key: 'url',
+        translationKey: 'configuration.oibus.manifest.south.slims.host',
+        defaultValue: null,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          },
+          {
+            type: 'PATTERN',
+            arguments: ['^(http:\\/\\/|https:\\/\\/|HTTP:\\/\\/|HTTPS:\\/\\/).*']
+          }
+        ],
+        displayProperties: {
+          row: 1,
+          columns: 8,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'number',
+        key: 'port',
+        translationKey: 'configuration.oibus.manifest.south.slims.port',
+        defaultValue: 80,
+        unit: null,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          },
+          {
+            type: 'MINIMUM',
+            arguments: ['1']
+          },
+          {
+            type: 'MAXIMUM',
+            arguments: ['65535']
+          }
+        ],
+        displayProperties: {
+          row: 1,
+          columns: 4,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'boolean',
+        key: 'acceptUnauthorized',
+        translationKey: 'configuration.oibus.manifest.south.slims.accept-unauthorized',
+        defaultValue: false,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          }
+        ],
+        displayProperties: {
+          row: 2,
+          columns: 6,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'number',
+        key: 'timeout',
+        translationKey: 'configuration.oibus.manifest.south.slims.timeout',
+        unit: 's',
+        defaultValue: 30,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          },
+          {
+            type: 'POSITIVE_INTEGER',
+            arguments: []
+          }
+        ],
+        displayProperties: {
+          row: 2,
+          columns: 6,
+          displayInViewMode: false
+        }
+      },
+      {
+        type: 'string',
+        key: 'username',
+        translationKey: 'configuration.oibus.manifest.south.slims.username',
+        defaultValue: null,
+        validators: [],
+        displayProperties: {
+          row: 3,
+          columns: 6,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'secret',
+        key: 'password',
+        translationKey: 'configuration.oibus.manifest.south.slims.password',
+        validators: [],
+        displayProperties: {
+          row: 3,
+          columns: 6,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'boolean',
+        key: 'useProxy',
+        translationKey: 'configuration.oibus.manifest.south.slims.use-proxy',
+        defaultValue: false,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          }
+        ],
+        displayProperties: {
+          row: 4,
+          columns: 3,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'string',
+        key: 'proxyUrl',
+        translationKey: 'configuration.oibus.manifest.south.slims.proxy-url',
+        defaultValue: null,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          }
+        ],
+        displayProperties: {
+          row: 4,
+          columns: 3,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'string',
+        key: 'proxyUsername',
+        translationKey: 'configuration.oibus.manifest.south.slims.proxy-username',
+        defaultValue: null,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          }
+        ],
+        displayProperties: {
+          row: 4,
+          columns: 3,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'secret',
+        key: 'proxyPassword',
+        translationKey: 'configuration.oibus.manifest.south.slims.proxy-password',
+        validators: [],
+        displayProperties: {
+          row: 4,
+          columns: 3,
+          displayInViewMode: true
+        }
       }
     ]
+  },
+  items: {
+    type: 'array',
+    key: 'items',
+    translationKey: 'configuration.oibus.manifest.south.items',
+    paginate: true,
+    numberOfElementPerPage: 20,
+    validators: [],
+    rootAttribute: {
+      type: 'object',
+      key: 'item',
+      translationKey: 'configuration.oibus.manifest.south.items.item',
+      displayProperties: {
+        visible: true,
+        wrapInBox: false
+      },
+      enablingConditions: [],
+      validators: [],
+      attributes: [
+        {
+          type: 'string',
+          key: 'name',
+          translationKey: 'configuration.oibus.manifest.south.items.name',
+          defaultValue: null,
+          validators: [
+            {
+              type: 'REQUIRED',
+              arguments: []
+            }
+          ],
+          displayProperties: {
+            row: 0,
+            columns: 4,
+            displayInViewMode: true
+          }
+        },
+        {
+          type: 'boolean',
+          key: 'enabled',
+          translationKey: 'configuration.oibus.manifest.south.items.enabled',
+          defaultValue: true,
+          validators: [
+            {
+              type: 'REQUIRED',
+              arguments: []
+            }
+          ],
+          displayProperties: {
+            row: 0,
+            columns: 4,
+            displayInViewMode: true
+          }
+        },
+        {
+          type: 'scan-mode',
+          key: 'scanModeId',
+          acceptableType: 'POLL',
+          translationKey: 'configuration.oibus.manifest.south.items.scan-mode',
+          validators: [
+            {
+              type: 'REQUIRED',
+              arguments: []
+            }
+          ],
+          displayProperties: {
+            row: 0,
+            columns: 4,
+            displayInViewMode: true
+          }
+        },
+        {
+          type: 'object',
+          key: 'settings',
+          translationKey: 'configuration.oibus.manifest.south.items.settings',
+          displayProperties: {
+            visible: true,
+            wrapInBox: true
+          },
+          enablingConditions: [],
+          validators: [],
+          attributes: [
+            {
+              type: 'string',
+              key: 'endpoint',
+              translationKey: 'configuration.oibus.manifest.south.items.slims.endpoint',
+              defaultValue: '/endpoint',
+              validators: [
+                {
+                  type: 'REQUIRED',
+                  arguments: []
+                }
+              ],
+              displayProperties: {
+                row: 0,
+                columns: 12,
+                displayInViewMode: true
+              }
+            },
+            {
+              type: 'code',
+              key: 'body',
+              contentType: 'json',
+              translationKey: 'configuration.oibus.manifest.south.items.slims.body',
+              defaultValue: null,
+              validators: [],
+              displayProperties: {
+                row: 1,
+                columns: 12,
+                displayInViewMode: true
+              }
+            },
+            {
+              type: 'array',
+              key: 'queryParams',
+              translationKey: 'configuration.oibus.manifest.south.items.slims.query-params',
+              paginate: false,
+              numberOfElementPerPage: 0,
+              validators: [],
+              rootAttribute: {
+                type: 'object',
+                key: 'queryParam',
+                translationKey: 'configuration.oibus.manifest.south.items.slims.query-params.query-param',
+                displayProperties: {
+                  visible: true,
+                  wrapInBox: false
+                },
+                enablingConditions: [],
+                validators: [],
+                attributes: [
+                  {
+                    type: 'string',
+                    key: 'key',
+                    translationKey: 'configuration.oibus.manifest.south.items.slims.query-params.key',
+                    defaultValue: null,
+                    validators: [
+                      {
+                        type: 'REQUIRED',
+                        arguments: []
+                      }
+                    ],
+                    displayProperties: {
+                      row: 0,
+                      columns: 4,
+                      displayInViewMode: true
+                    }
+                  },
+                  {
+                    type: 'string',
+                    key: 'value',
+                    translationKey: 'configuration.oibus.manifest.south.items.slims.query-params.value',
+                    defaultValue: null,
+                    validators: [
+                      {
+                        type: 'REQUIRED',
+                        arguments: []
+                      }
+                    ],
+                    displayProperties: {
+                      row: 0,
+                      columns: 4,
+                      displayInViewMode: true
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              type: 'array',
+              key: 'dateTimeFields',
+              translationKey: 'configuration.oibus.manifest.south.items.slims.date-time-fields',
+              paginate: false,
+              numberOfElementPerPage: 0,
+              validators: [],
+              rootAttribute: {
+                type: 'object',
+                key: 'dateTimeField',
+                translationKey: 'configuration.oibus.manifest.south.items.slims.date-time-fields.date-time-field',
+                displayProperties: {
+                  visible: true,
+                  wrapInBox: false
+                },
+                enablingConditions: [
+                  {
+                    referralPathFromRoot: 'type',
+                    targetPathFromRoot: 'timezone',
+                    values: ['string']
+                  },
+                  {
+                    referralPathFromRoot: 'type',
+                    targetPathFromRoot: 'locale',
+                    values: ['string']
+                  },
+                  {
+                    referralPathFromRoot: 'type',
+                    targetPathFromRoot: 'format',
+                    values: ['string']
+                  }
+                ],
+                validators: [],
+                attributes: [
+                  {
+                    type: 'string',
+                    key: 'fieldName',
+                    translationKey: 'configuration.oibus.manifest.south.items.slims.date-time-fields.field-name',
+                    defaultValue: null,
+                    validators: [
+                      {
+                        type: 'REQUIRED',
+                        arguments: []
+                      },
+                      {
+                        type: 'UNIQUE',
+                        arguments: []
+                      }
+                    ],
+                    displayProperties: {
+                      row: 0,
+                      columns: 4,
+                      displayInViewMode: true
+                    }
+                  },
+                  {
+                    type: 'boolean',
+                    key: 'useAsReference',
+                    translationKey: 'configuration.oibus.manifest.south.items.slims.date-time-fields.use-as-reference',
+                    defaultValue: false,
+                    validators: [
+                      {
+                        type: 'REQUIRED',
+                        arguments: []
+                      },
+                      {
+                        type: 'SINGLE_TRUE',
+                        arguments: []
+                      }
+                    ],
+                    displayProperties: {
+                      row: 0,
+                      columns: 4,
+                      displayInViewMode: true
+                    }
+                  },
+                  {
+                    type: 'string-select',
+                    key: 'type',
+                    translationKey: 'configuration.oibus.manifest.south.items.slims.date-time-fields.type',
+                    defaultValue: 'string',
+                    selectableValues: ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'],
+                    validators: [
+                      {
+                        type: 'REQUIRED',
+                        arguments: []
+                      }
+                    ],
+                    displayProperties: {
+                      row: 0,
+                      columns: 4,
+                      displayInViewMode: true
+                    }
+                  },
+                  {
+                    type: 'timezone',
+                    key: 'timezone',
+                    translationKey: 'configuration.oibus.manifest.south.items.slims.date-time-fields.timezone',
+                    defaultValue: 'UTC',
+                    validators: [
+                      {
+                        type: 'REQUIRED',
+                        arguments: []
+                      }
+                    ],
+                    displayProperties: {
+                      row: 1,
+                      columns: 4,
+                      displayInViewMode: true
+                    }
+                  },
+                  {
+                    type: 'string',
+                    key: 'format',
+                    translationKey: 'configuration.oibus.manifest.south.items.slims.date-time-fields.format',
+                    defaultValue: 'yyyy-MM-dd HH:mm:ss',
+                    validators: [
+                      {
+                        type: 'REQUIRED',
+                        arguments: []
+                      }
+                    ],
+                    displayProperties: {
+                      row: 1,
+                      columns: 4,
+                      displayInViewMode: false
+                    }
+                  },
+                  {
+                    type: 'string',
+                    key: 'locale',
+                    translationKey: 'configuration.oibus.manifest.south.items.slims.date-time-fields.locale',
+                    defaultValue: 'en-En',
+                    validators: [
+                      {
+                        type: 'REQUIRED',
+                        arguments: []
+                      }
+                    ],
+                    displayProperties: {
+                      row: 1,
+                      columns: 4,
+                      displayInViewMode: false
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              type: 'object',
+              key: 'serialization',
+              translationKey: 'configuration.oibus.manifest.south.items.slims.serialization.title',
+              displayProperties: {
+                visible: true,
+                wrapInBox: true
+              },
+              enablingConditions: [],
+              validators: [
+                {
+                  type: 'REQUIRED',
+                  arguments: []
+                }
+              ],
+              attributes: [
+                {
+                  type: 'string-select',
+                  key: 'type',
+                  translationKey: 'configuration.oibus.manifest.south.items.slims.serialization.type',
+                  defaultValue: 'csv',
+                  selectableValues: ['csv'],
+                  validators: [
+                    {
+                      type: 'REQUIRED',
+                      arguments: []
+                    }
+                  ],
+                  displayProperties: {
+                    row: 0,
+                    columns: 2,
+                    displayInViewMode: false
+                  }
+                },
+                {
+                  type: 'string',
+                  key: 'filename',
+                  translationKey: 'configuration.oibus.manifest.south.items.slims.serialization.filename',
+                  defaultValue: '@ConnectorName-@ItemName-@CurrentDate.csv',
+                  validators: [
+                    {
+                      type: 'REQUIRED',
+                      arguments: []
+                    }
+                  ],
+                  displayProperties: {
+                    row: 0,
+                    columns: 4,
+                    displayInViewMode: false
+                  }
+                },
+                {
+                  type: 'string-select',
+                  key: 'delimiter',
+                  translationKey: 'configuration.oibus.manifest.south.items.slims.serialization.delimiter',
+                  defaultValue: 'COMMA',
+                  selectableValues: ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'],
+                  validators: [
+                    {
+                      type: 'REQUIRED',
+                      arguments: []
+                    }
+                  ],
+                  displayProperties: {
+                    row: 0,
+                    columns: 3,
+                    displayInViewMode: false
+                  }
+                },
+                {
+                  type: 'boolean',
+                  key: 'compression',
+                  translationKey: 'configuration.oibus.manifest.south.items.slims.serialization.compression',
+                  defaultValue: false,
+                  validators: [
+                    {
+                      type: 'REQUIRED',
+                      arguments: []
+                    }
+                  ],
+                  displayProperties: {
+                    row: 0,
+                    columns: 3,
+                    displayInViewMode: true
+                  }
+                },
+                {
+                  type: 'string',
+                  key: 'outputTimestampFormat',
+                  translationKey: 'configuration.oibus.manifest.south.items.slims.serialization.output-timestamp-format',
+                  defaultValue: 'yyyy-MM-dd HH:mm:ss.SSS',
+                  validators: [
+                    {
+                      type: 'REQUIRED',
+                      arguments: []
+                    }
+                  ],
+                  displayProperties: {
+                    row: 1,
+                    columns: 3,
+                    displayInViewMode: false
+                  }
+                },
+                {
+                  type: 'timezone',
+                  key: 'outputTimezone',
+                  translationKey: 'configuration.oibus.manifest.south.items.slims.serialization.output-timezone',
+                  defaultValue: 'Europe/Paris',
+                  validators: [
+                    {
+                      type: 'REQUIRED',
+                      arguments: []
+                    }
+                  ],
+                  displayProperties: {
+                    row: 1,
+                    columns: 3,
+                    displayInViewMode: false
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
   }
 };
 

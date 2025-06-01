@@ -2,8 +2,9 @@ import { TestBed } from '@angular/core/testing';
 
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { IpFilterService } from './ip-filter.service';
-import { IPFilterCommandDTO, IPFilterDTO } from '../../../../backend/shared/model/ip-filter.model';
+import { IPFilterDTO } from '../../../../backend/shared/model/ip-filter.model';
 import { provideHttpClient } from '@angular/common/http';
+import testData from '../../../../backend/src/tests/utils/test-data';
 
 describe('IpFilterService', () => {
   let http: HttpTestingController;
@@ -40,10 +41,7 @@ describe('IpFilterService', () => {
 
   it('should create an IP filter', () => {
     let done = false;
-    const command: IPFilterCommandDTO = {
-      address: '127.0.0.1',
-      description: 'a test ip filter'
-    };
+    const command = testData.ipFilters.command;
 
     service.create(command).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'POST', url: '/api/ip-filters' });
@@ -54,10 +52,7 @@ describe('IpFilterService', () => {
 
   it('should update an IP filter', () => {
     let done = false;
-    const command: IPFilterCommandDTO = {
-      address: '127.0.0.1',
-      description: 'a test ip filter'
-    };
+    const command = testData.ipFilters.command;
 
     service.update('id1', command).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'PUT', url: '/api/ip-filters/id1' });

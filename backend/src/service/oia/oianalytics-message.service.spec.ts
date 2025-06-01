@@ -31,6 +31,10 @@ import { FetchError } from 'node-fetch';
 import HistoryQueryRepository from '../../repository/config/history-query.repository';
 import HistoryQueryRepositoryMock from '../../tests/__mocks__/repository/config/history-query-repository.mock';
 import { OIAnalyticsMessageHistoryQueries } from '../../model/oianalytics-message.model';
+import TransformerRepository from '../../repository/config/transformer.repository';
+import TransformerRepositoryMock from '../../tests/__mocks__/repository/config/transformer-repository.mock';
+import { StandardTransformer } from '../../model/transformer.model';
+import IsoTransformer from '../transformers/iso-transformer';
 
 jest.mock('node:fs/promises');
 jest.mock('../utils');
@@ -45,6 +49,7 @@ const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const southRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
 const northRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
 const historyQueryRepository: HistoryQueryRepository = new HistoryQueryRepositoryMock();
+const transformerRepository: TransformerRepository = new TransformerRepositoryMock();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const oIAnalyticsClient: OIAnalyticsClient = new OianalyticsClientMock();
 
@@ -52,6 +57,14 @@ const logger: pino.Logger = new PinoLogger();
 
 let service: OIAnalyticsMessageService;
 describe('OIAnalytics Message Service', () => {
+  const standardTransformer: StandardTransformer = {
+    id: IsoTransformer.transformerName,
+    type: 'standard',
+    functionName: IsoTransformer.transformerName,
+    inputType: 'any',
+    outputType: 'any'
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
@@ -69,6 +82,7 @@ describe('OIAnalytics Message Service', () => {
     (southRepository.findSouthById as jest.Mock).mockImplementation(id => testData.south.list.find(element => element.id === id));
     (northRepository.findAllNorth as jest.Mock).mockReturnValue(testData.north.list);
     (northRepository.findNorthById as jest.Mock).mockImplementation(id => testData.north.list.find(element => element.id === id));
+    (transformerRepository.findAll as jest.Mock).mockReturnValue([...testData.transformers.list, standardTransformer]);
 
     service = new OIAnalyticsMessageService(
       oIAnalyticsMessageRepository,
@@ -81,6 +95,7 @@ describe('OIAnalytics Message Service', () => {
       southRepository,
       northRepository,
       historyQueryRepository,
+      transformerRepository,
       oIAnalyticsClient,
       encryptionService,
       logger
@@ -245,6 +260,7 @@ describe('OIAnalytics message service without message', () => {
       southRepository,
       northRepository,
       historyQueryRepository,
+      transformerRepository,
       oIAnalyticsClient,
       encryptionService,
       logger
@@ -279,6 +295,7 @@ describe('OIAnalytics message service without completed registration', () => {
       southRepository,
       northRepository,
       historyQueryRepository,
+      transformerRepository,
       oIAnalyticsClient,
       encryptionService,
       logger

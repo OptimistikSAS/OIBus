@@ -3,14 +3,13 @@ import { TestBed } from '@angular/core/testing';
 import { ComponentTester } from 'ngx-speculoos';
 import { HistoryMetricsComponent } from './history-metrics.component';
 import { Component } from '@angular/core';
-import { NorthConnectorManifest } from '../../../../../../backend/shared/model/north-connector.model';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
-import { SouthConnectorManifest } from '../../../../../../backend/shared/model/south-connector.model';
 import { HistoryQueryDTO } from '../../../../../../backend/shared/model/history-query.model';
 import { HistoryQueryMetrics } from '../../../../../../backend/shared/model/engine.model';
 import { provideHttpClient } from '@angular/common/http';
 import { SouthItemSettings, SouthSettings } from '../../../../../../backend/shared/model/south-settings.model';
 import { NorthSettings } from '../../../../../../backend/shared/model/north-settings.model';
+import testData from '../../../../../../backend/src/tests/utils/test-data';
 
 @Component({
   template: `<oib-history-metrics
@@ -22,56 +21,8 @@ import { NorthSettings } from '../../../../../../backend/shared/model/north-sett
   imports: [HistoryMetricsComponent]
 })
 class TestComponent {
-  southManifest: SouthConnectorManifest = {
-    id: 'mssql',
-    category: 'database',
-    settings: [
-      {
-        key: 'database',
-        type: 'OibText',
-        translationKey: 'Database',
-        validators: [{ key: 'required' }],
-        displayInViewMode: true
-      }
-    ],
-    items: {
-      scanMode: 'POLL',
-      settings: [
-        {
-          translationKey: 'query',
-          key: 'query',
-          displayInViewMode: true,
-          type: 'OibText'
-        }
-      ]
-    },
-    modes: {
-      subscription: false,
-      history: true,
-      lastFile: true,
-      lastPoint: false
-    }
-  };
-  northManifest: NorthConnectorManifest = {
-    id: 'oianalytics',
-    category: 'api',
-    types: ['any', 'time-values'],
-    settings: [
-      {
-        key: 'host',
-        type: 'OibText',
-        translationKey: 'Host',
-        validators: [
-          { key: 'required' },
-          {
-            key: 'pattern',
-            params: { pattern: '^(http:\\/\\/|https:\\/\\/|HTTP:\\/\\/|HTTPS:\\/\\/).*' }
-          }
-        ],
-        displayInViewMode: true
-      }
-    ]
-  };
+  southManifest = testData.south.manifest;
+  northManifest = testData.north.manifest;
 
   historyQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings> = {
     id: 'id1',

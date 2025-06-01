@@ -1,13 +1,12 @@
 import { Component, computed, forwardRef, inject, input } from '@angular/core';
-import { formDirectives } from '../../form-directives';
 
-import { ControlValueAccessor, NG_VALUE_ACCESSOR, NonNullableFormBuilder } from '@angular/forms';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { TransformerDTO } from '../../../../../../backend/shared/model/transformer.model';
 import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
   selector: 'oib-transformer',
-  imports: [...formDirectives, TranslatePipe],
+  imports: [ReactiveFormsModule, TranslatePipe],
   templateUrl: './oib-transformer.component.html',
   styleUrl: './oib-transformer.component.scss',
   providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => OibTransformerComponent), multi: true }]

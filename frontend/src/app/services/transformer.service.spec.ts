@@ -3,7 +3,8 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { TransformerService } from './transformer.service';
-import { CustomTransformerCommand, TransformerDTO } from '../../../../backend/shared/model/transformer.model';
+import { TransformerDTO } from '../../../../backend/shared/model/transformer.model';
+import testData from '../../../../backend/src/tests/utils/test-data';
 
 describe('TransformerService', () => {
   let http: HttpTestingController;
@@ -40,10 +41,7 @@ describe('TransformerService', () => {
 
   it('should create a transformer', () => {
     let done = false;
-    const command: CustomTransformerCommand = {
-      name: 'myTransformer',
-      description: 'a transformer'
-    } as CustomTransformerCommand;
+    const command = testData.transformers.command;
 
     service.create(command).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'POST', url: '/api/transformers' });
@@ -54,10 +52,7 @@ describe('TransformerService', () => {
 
   it('should update a transformer', () => {
     let done = false;
-    const command: CustomTransformerCommand = {
-      name: 'myTransformer',
-      description: 'a transformer'
-    } as CustomTransformerCommand;
+    const command = testData.transformers.command;
 
     service.update('id1', command).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'PUT', url: '/api/transformers/id1' });

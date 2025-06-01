@@ -9,7 +9,6 @@ import { AsyncPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ModalService } from '../shared/modal.service';
 import { ChooseSouthConnectorTypeModalComponent } from './choose-south-connector-type-modal/choose-south-connector-type-modal.component';
-import { FormControlValidationDirective } from '../shared/form-control-validation.directive';
 import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { LoadingSpinnerComponent } from '../shared/loading-spinner/loading-spinner.component';
 import { createPageFromArray, Page } from '../../../../backend/shared/model/types';
@@ -18,6 +17,7 @@ import { PaginationComponent } from '../shared/pagination/pagination.component';
 import { ObservableState } from '../shared/save-button/save-button.component';
 import { LegendComponent } from '../shared/legend/legend.component';
 import { OIBusSouthTypeEnumPipe } from '../shared/oibus-south-type-enum.pipe';
+import { FormControlValidationDirective } from '../shared/form/form-control-validation.directive';
 const PAGE_SIZE = 15;
 
 @Component({

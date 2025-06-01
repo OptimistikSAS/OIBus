@@ -1,0 +1,146 @@
+@if (objectAttribute().displayProperties.visible) {
+  @if (objectAttribute().displayProperties.wrapInBox) {
+    <oib-box class="mt-1">
+      <ng-template oibBoxTitle>
+        <span [translate]="objectAttribute().translationKey"></span>
+      </ng-template>
+      @for (row of formRows(); track row) {
+        @if (row.wrapInRow) {
+          <div class="row">
+            @for (column of row.columns; track column) {
+              @if (group().get(column.attribute.key)!.enabled) {
+                <div [class]="'col-md-' + column.size">
+                  @switch (column.attribute.type) {
+                    @case ('number') {
+                      <oib-oibus-number-form-control [numberAttribute]="column.attribute" />
+                    }
+                    @case ('string') {
+                      <oib-oibus-string-form-control [stringAttribute]="column.attribute" />
+                    }
+                    @case ('code') {
+                      <oib-oibus-code-form-control [codeAttribute]="column.attribute" />
+                    }
+                    @case ('string-select') {
+                      <oib-oibus-string-select-form-control [stringSelectAttribute]="column.attribute" />
+                    }
+                    @case ('secret') {
+                      <oib-oibus-secret-form-control [secretAttribute]="column.attribute" />
+                    }
+                    @case ('instant') {
+                      <oib-oibus-instant-form-control [instantAttribute]="column.attribute" />
+                    }
+                    @case ('boolean') {
+                      <oib-oibus-boolean-form-control [booleanAttribute]="column.attribute" />
+                    }
+                    @case ('scan-mode') {
+                      <oib-oibus-scan-mode-form-control [allScanModes]="scanModes()" [scanModeAttribute]="column.attribute" />
+                    }
+                    @case ('certificate') {
+                      <oib-oibus-certificate-form-control [certificates]="certificates()" [certificateAttribute]="column.attribute" />
+                    }
+                    @case ('timezone') {
+                      <oib-oibus-timezone-form-control [timezoneAttribute]="column.attribute" />
+                    }
+                  }
+                </div>
+              }
+            }
+          </div>
+        } @else {
+          @if (group().get(row.columns[0].attribute.key)!.enabled) {
+            @switch (row.columns[0].attribute.type) {
+              @case ('object') {
+                <ng-container [formGroupName]="row.columns[0].attribute.key">
+                  <oib-oibus-object-form-control
+                    [scanModes]="scanModes()"
+                    [certificates]="certificates()"
+                    [group]="asFormGroup(group().controls[row.columns[0].attribute.key])"
+                    [objectAttribute]="row.columns[0].attribute"
+                  />
+                </ng-container>
+              }
+              @case ('array') {
+                <oib-oibus-array-form-control
+                  [scanModes]="scanModes()"
+                  [certificates]="certificates()"
+                  [parentGroup]="group()"
+                  [control]="asFormControl(group().controls[row.columns[0].attribute.key])"
+                  [arrayAttribute]="row.columns[0].attribute"
+                />
+              }
+            }
+          }
+        }
+      }
+    </oib-box>
+  } @else {
+    @for (row of formRows(); track row) {
+      @if (row.wrapInRow) {
+        <div class="row">
+          @for (column of row.columns; track column) {
+            @if (group().get(column.attribute.key)!.enabled) {
+              <div [class]="'col-md-' + column.size">
+                @switch (column.attribute.type) {
+                  @case ('number') {
+                    <oib-oibus-number-form-control [numberAttribute]="column.attribute" />
+                  }
+                  @case ('string') {
+                    <oib-oibus-string-form-control [stringAttribute]="column.attribute" />
+                  }
+                  @case ('code') {
+                    <oib-oibus-code-form-control [codeAttribute]="column.attribute" />
+                  }
+                  @case ('string-select') {
+                    <oib-oibus-string-select-form-control [stringSelectAttribute]="column.attribute" />
+                  }
+                  @case ('secret') {
+                    <oib-oibus-secret-form-control [secretAttribute]="column.attribute" />
+                  }
+                  @case ('instant') {
+                    <oib-oibus-instant-form-control [instantAttribute]="column.attribute" />
+                  }
+                  @case ('boolean') {
+                    <oib-oibus-boolean-form-control [booleanAttribute]="column.attribute" />
+                  }
+                  @case ('scan-mode') {
+                    <oib-oibus-scan-mode-form-control [allScanModes]="scanModes()" [scanModeAttribute]="column.attribute" />
+                  }
+                  @case ('certificate') {
+                    <oib-oibus-certificate-form-control [certificates]="certificates()" [certificateAttribute]="column.attribute" />
+                  }
+                  @case ('timezone') {
+                    <oib-oibus-timezone-form-control [timezoneAttribute]="column.attribute" />
+                  }
+                }
+              </div>
+            }
+          }
+        </div>
+      } @else {
+        @if (group().get(row.columns[0].attribute.key)!.enabled) {
+          @switch (row.columns[0].attribute.type) {
+            @case ('object') {
+              <ng-container [formGroupName]="row.columns[0].attribute.key">
+                <oib-oibus-object-form-control
+                  [scanModes]="scanModes()"
+                  [certificates]="certificates()"
+                  [group]="asFormGroup(group().controls[row.columns[0].attribute.key])"
+                  [objectAttribute]="row.columns[0].attribute"
+                />
+              </ng-container>
+            }
+            @case ('array') {
+              <oib-oibus-array-form-control
+                [scanModes]="scanModes()"
+                [certificates]="certificates()"
+                [parentGroup]="group()"
+                [control]="asFormControl(group().controls[row.columns[0].attribute.key])"
+                [arrayAttribute]="row.columns[0].attribute"
+              />
+            }
+          }
+        }
+      }
+    }
+  }
+}

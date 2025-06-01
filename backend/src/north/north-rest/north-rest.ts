@@ -50,7 +50,7 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
       throw new OIBusError(`File ${filePath} does not exist`, false);
     }
 
-    const endpoint = new URL(this.connector.settings.endpoint);
+    const endpoint = new URL(this.connector.settings.endpoint, this.connector.settings.host);
 
     // Get query params
     const queryParams = this.getQueryParams();
@@ -116,13 +116,13 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
 
   override async testConnection(): Promise<void> {
     // the URL class handles the correct use of slashes
-    const testEndpoint = new URL(this.connector.settings.testPath, this.connector.settings.endpoint);
+    const testEndpoint = new URL(this.connector.settings.testPath, this.connector.settings.host);
     const headers: Record<string, string> = {};
 
-    // Get proxy agent if needed
+    // Get a proxy agent if needed
     const proxyAgent = await this.getProxyAgent();
 
-    // Add authorization header if available
+    // Add an authorization header if available
     const authHeader = await this.getAuthorizationHeader();
     if (authHeader) {
       headers['Authorization'] = authHeader;

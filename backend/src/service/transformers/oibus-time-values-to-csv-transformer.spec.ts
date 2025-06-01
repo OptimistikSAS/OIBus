@@ -77,6 +77,17 @@ describe('OIBusTimeValuesToCsvTransformer', () => {
   });
 
   it('should return manifest', () => {
-    expect(OIBusTimeValuesToCsvTransformer.manifestSettings).toEqual([]);
+    expect(OIBusTimeValuesToCsvTransformer.manifestSettings).toEqual({
+      type: 'object',
+      key: 'configuration.oibus.manifest.transformers.options',
+      translationKey: '',
+      attributes: [],
+      enablingConditions: [],
+      validators: [],
+      displayProperties: {
+        visible: true,
+        wrapInBox: false
+      }
+    });
   });
 });

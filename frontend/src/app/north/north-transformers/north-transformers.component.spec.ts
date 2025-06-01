@@ -10,7 +10,13 @@ import { TransformerDTO, TransformerDTOWithOptions } from '../../../../../backen
 import { FormControl, NonNullableFormBuilder } from '@angular/forms';
 
 @Component({
-  template: `<oib-north-transformers [northManifest]="northManifest" [transformers]="transformers" [control]="control" />`,
+  template: `<oib-north-transformers
+    [northManifest]="northManifest"
+    [transformers]="transformers"
+    [certificates]="[]"
+    [scanModes]="[]"
+    [control]="control"
+  />`,
   imports: [NorthTransformersComponent]
 })
 class TestComponent {
