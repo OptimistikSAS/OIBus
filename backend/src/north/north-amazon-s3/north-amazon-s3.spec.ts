@@ -22,7 +22,7 @@ import { OIBusTimeValue } from '../../../shared/model/engine.model';
 
 const sendMock = jest.fn();
 jest.mock('@aws-sdk/client-s3');
-jest.mock('@aws-sdk/node-http-handler', () => ({ NodeHttpHandler: jest.fn() }));
+jest.mock('@smithy/node-http-handler', () => ({ NodeHttpHandler: jest.fn() }));
 jest.mock('node:fs/promises');
 jest.mock('node:fs');
 jest.mock('papaparse');
