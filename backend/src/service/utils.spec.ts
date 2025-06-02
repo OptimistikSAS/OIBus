@@ -52,7 +52,6 @@ jest.mock('papaparse');
 jest.mock('adm-zip');
 jest.mock('node:http', () => ({ request: jest.fn() }));
 jest.mock('node:https', () => ({ request: jest.fn() }));
-jest.mock('./proxy-agent');
 
 describe('Service utils', () => {
   describe('getCommandLineArguments', () => {

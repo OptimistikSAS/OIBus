@@ -6,7 +6,6 @@ import { createMockResponse } from '../../tests/__mocks__/undici.mock';
 
 jest.mock('node:fs/promises');
 jest.mock('../http-request.utils');
-jest.mock('../proxy-agent');
 jest.mock('../utils');
 
 let service: OIAnalyticsClient;
