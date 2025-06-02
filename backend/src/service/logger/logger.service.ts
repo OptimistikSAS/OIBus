@@ -87,26 +87,20 @@ class LoggerService {
     }
 
     if (registration && registration.status === 'REGISTERED' && engineSettings.logParameters.oia.level !== 'silent') {
-      try {
-        targets.push({
-          target: path.join(__dirname, './oianalytics-transport.js'),
-          options: {
-            interval: engineSettings.logParameters.oia.interval,
-            host: registration.host,
-            token: registration.token ? await this.encryptionService.decryptText(registration.token) : '',
-            useProxy: registration.useProxy,
-            proxyUrl: registration.proxyUrl,
-            proxyUsername: registration.proxyUsername,
-            proxyPassword: registration.proxyPassword ? await this.encryptionService.decryptText(registration.proxyPassword) : '',
-            acceptUnauthorized: registration.acceptUnauthorized
-          },
-          level: engineSettings.logParameters.oia.level
-        });
-      } catch (error) {
-        // In case of bad decryption, an error is triggered, so instead of leaving the process, the error will just be
-        // logged in the console and loki won't be activated
-        console.error(error);
-      }
+      targets.push({
+        target: path.join(__dirname, './oianalytics-transport.js'),
+        options: {
+          interval: engineSettings.logParameters.oia.interval,
+          host: registration.host,
+          token: registration.token!,
+          useProxy: registration.useProxy,
+          proxyUrl: registration.proxyUrl,
+          proxyUsername: registration.proxyUsername,
+          proxyPassword: registration.proxyPassword,
+          acceptUnauthorized: registration.acceptUnauthorized
+        },
+        level: engineSettings.logParameters.oia.level
+      });
     }
 
     this.logger = pino({
