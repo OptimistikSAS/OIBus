@@ -24,7 +24,6 @@ import {
   getCommandLineArguments,
   getOIBusInfo,
   getPlatformFromOsType,
-  httpGetWithBody,
   itemToFlattenedCSV,
   logQuery,
   persistResults,
@@ -38,9 +37,7 @@ import pino from 'pino';
 import AdmZip from 'adm-zip';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import { DateTimeType } from '../../shared/model/types';
-import Stream, { Readable, Writable } from 'node:stream';
-import http from 'node:http';
-import https from 'node:https';
+import { Readable, Writable } from 'node:stream';
 import os from 'node:os';
 import { EngineSettingsDTO, OIBusInfo } from '../../shared/model/engine.model';
 import cronstrue from 'cronstrue';
@@ -954,103 +951,6 @@ describe('Service utils', () => {
 
       const result = formatQueryParams(startTime, endTime, queryParams);
       expect(result).toEqual('?start=2020-01-01T00%3A00%3A00.000Z&end=2021-01-01T00%3A00%3A00.000Z&' + 'anotherParam=anotherQueryParam');
-    });
-  });
-
-  describe('httpGetWithBody', () => {
-    beforeEach(() => {
-      jest.resetAllMocks();
-      jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    });
-
-    it('should correctly create a body with GET HTTP', async () => {
-      const streamStream = new Stream();
-      const onMock = jest.fn();
-      const writeMock = jest.fn();
-      const endMock = jest.fn();
-      (http.request as jest.Mock).mockImplementation((options, callback) => {
-        callback(streamStream);
-        streamStream.emit('data', '{ "data": "myValue" }');
-        streamStream.emit('end'); // this will trigger the promise resolve
-
-        return {
-          on: onMock,
-          write: writeMock,
-          end: endMock
-        };
-      });
-      const expectedResult = { data: 'myValue' };
-      const result = await httpGetWithBody('body', { protocol: 'http:' });
-      expect(result).toEqual(expectedResult);
-      expect(onMock).toHaveBeenCalledTimes(1);
-      expect(writeMock).toHaveBeenCalledTimes(1);
-      expect(writeMock).toHaveBeenCalledWith('body');
-      expect(endMock).toHaveBeenCalledTimes(1);
-    });
-
-    it('should correctly create a body with GET HTTPS', async () => {
-      const streamStream = new Stream();
-      const onMock = jest.fn();
-      const writeMock = jest.fn();
-      const endMock = jest.fn();
-      (https.request as jest.Mock).mockImplementation((options, callback) => {
-        callback(streamStream);
-        streamStream.emit('data', '{ "data": "myValue" }');
-        streamStream.emit('end'); // this will trigger the promise resolve
-
-        return {
-          on: onMock,
-          write: writeMock,
-          end: endMock
-        };
-      });
-      const expectedResult = { data: 'myValue' };
-      const result = await httpGetWithBody('body', { protocol: 'https:' });
-      expect(result).toEqual(expectedResult);
-      expect(onMock).toHaveBeenCalledTimes(1);
-      expect(writeMock).toHaveBeenCalledTimes(1);
-      expect(writeMock).toHaveBeenCalledWith('body');
-      expect(endMock).toHaveBeenCalledTimes(1);
-    });
-
-    it('should throw an error when HTTP req throws an error', async () => {
-      const streamStream = new Stream();
-      const onMock = jest.fn((type, callback) => {
-        callback(new Error('an error'));
-      });
-      const writeMock = jest.fn(() => {
-        streamStream.emit('error', new Error('an error'));
-      });
-
-      (https.request as jest.Mock).mockImplementation((options, callback) => {
-        callback(streamStream);
-
-        return {
-          on: onMock,
-          write: writeMock,
-          end: jest.fn()
-        };
-      });
-      await expect(httpGetWithBody('body', { protocol: 'https:' })).rejects.toThrow('an error');
-    });
-
-    it('should throw an error when parsing received data', async () => {
-      const streamStream = new Stream();
-      (https.request as jest.Mock).mockImplementation((options, callback) => {
-        callback(streamStream);
-        streamStream.emit('data', 'some data');
-        streamStream.emit('data', 'but not a');
-        streamStream.emit('data', 'json');
-        streamStream.emit('end'); // this will trigger the promise resolve
-        return {
-          on: jest.fn(),
-          write: jest.fn(),
-          end: jest.fn()
-        };
-      });
-      await expect(httpGetWithBody('body', { protocol: 'https:' })).rejects.toThrow(
-        'Unexpected token \'s\', "some datab"... is not valid JSON'
-      );
     });
   });
 

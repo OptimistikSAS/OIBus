@@ -330,8 +330,6 @@ function buildSouthInterfaceName(connectorId: string, itemInterface: boolean): s
       return `SouthPostgreSQL${prefix}Settings`;
     case 'sqlite':
       return `SouthSQLite${prefix}Settings`;
-    case 'slims':
-      return `SouthSlims${prefix}Settings`;
     case 'sftp':
       return `SouthSFTP${prefix}Settings`;
   }

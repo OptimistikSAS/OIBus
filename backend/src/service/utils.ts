@@ -10,8 +10,6 @@ import AdmZip from 'adm-zip';
 import { CsvCharacter, DateTimeType, Instant, Interval, SerializationSettings, Timezone } from '../../shared/model/types';
 import pino from 'pino';
 import csv from 'papaparse';
-import https from 'node:https';
-import http from 'node:http';
 import { EngineSettingsDTO, OIBusContent, OIBusInfo, OIBusTimeValue } from '../../shared/model/engine.model';
 import os from 'node:os';
 import cronstrue from 'cronstrue';
@@ -21,7 +19,6 @@ import { SouthConnectorItemDTO } from '../../shared/model/south-connector.model'
 import { ScanMode } from '../model/scan-mode.model';
 import { HistoryQueryItemDTO } from '../../shared/model/history-query.model';
 import { SouthItemSettings } from '../../shared/model/south-settings.model';
-import { EventEmitter } from 'node:events';
 import { BaseFolders } from '../model/types';
 import { pipeline, Readable, Writable } from 'node:stream';
 
@@ -482,34 +479,6 @@ export const formatQueryParams = (
   });
   return queryParamsString;
 };
-
-/**
- * Some API such as SLIMS uses a body with GET. It's not standard and requires a specific implementation
- */
-export const httpGetWithBody = (body: string, options: Record<string, string | number | unknown>): Promise<unknown> =>
-  new Promise((resolve, reject) => {
-    const callback = (response: EventEmitter) => {
-      let str = '';
-      response.on('data', (chunk: string) => {
-        str += chunk;
-      });
-      response.on('end', () => {
-        try {
-          const parsedResult = JSON.parse(str);
-          resolve(parsedResult);
-        } catch (error) {
-          reject(error);
-        }
-      });
-    };
-
-    const req = (options.protocol === 'https:' ? https : http).request(options, callback);
-    req.on('error', e => {
-      reject(e);
-    });
-    req.write(body);
-    req.end();
-  });
 
 export const getOIBusInfo = (oibusSettings: EngineSettingsDTO): OIBusInfo => {
   return {

@@ -19,7 +19,6 @@ describe('OIBusSouthTypeDescriptionEnumPipe', () => {
       'osisoft-pi': 'Establish a connection with an OIBus Agent to access data from a PI System™',
       postgresql: 'Query PostgreSQL databases',
       sftp: 'Read files from a remote SFTP server',
-      slims: 'Connect to SLIMS™ application',
       sqlite: 'Query  SQLite™ databases'
     });
   });
