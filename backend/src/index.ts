@@ -32,6 +32,7 @@ const CACHE_FOLDER = './cache';
 const CACHE_DATABASE = 'cache.db';
 const LOG_FOLDER_NAME = 'logs';
 const LOG_DB_NAME = 'logs.db';
+const CERT_FOLDER = 'certs';
 
 (async () => {
   const { configFile, check, ignoreIpFilters, ignoreRemoteUpdate, launcherVersion } = getCommandLineArguments();
@@ -78,7 +79,7 @@ const LOG_DB_NAME = 'logs.db';
     console.error('Error while loading OIBus crypto settings from database');
     return;
   }
-  await encryptionService.init(cryptoSettings);
+  await encryptionService.init(cryptoSettings, path.resolve(CERT_FOLDER));
 
   if (check) {
     console.info('OIBus started in check mode. Exiting process.');

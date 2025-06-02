@@ -10,7 +10,6 @@ import { OibFormControl } from '../../shared/model/form.model';
 import { CryptoSettings } from '../../shared/model/engine.model';
 import { CertificateOptions } from '../../shared/model/certificate.model';
 
-export const CERT_FOLDER = 'certs';
 export const CERT_PRIVATE_KEY_FILE_NAME = 'private.pem';
 export const CERT_PUBLIC_KEY_FILE_NAME = 'public.pem';
 export const CERT_FILE_NAME = 'cert.pem';
@@ -29,14 +28,10 @@ export default class EncryptionService<TInitialized extends boolean = false> {
   private static instance: EncryptionService | null = null;
   private initialized = false;
   private _cryptoSettings: CryptoSettingsInternal | null = null;
-  private readonly _certsFolder: string;
+  private _certsFolder = ''; // resolved path of cert folders, passed from the init call
   private _publicKey: string | null = null;
   private _privateKey: string | null = null;
   private _certFile: string | null = null;
-
-  private constructor() {
-    this._certsFolder = path.resolve('./', CERT_FOLDER);
-  }
 
   get cryptoSettings() {
     return this._cryptoSettings as TInitialized extends true ? CryptoSettingsInternal : CryptoSettingsInternal | null;
@@ -87,7 +82,8 @@ export default class EncryptionService<TInitialized extends boolean = false> {
     return this._publicKey;
   }
 
-  async init(cryptoSettings: CryptoSettings) {
+  async init(cryptoSettings: CryptoSettings, certsFolder: string) {
+    this._certsFolder = certsFolder;
     this._cryptoSettings = {
       algorithm: cryptoSettings.algorithm,
       initVector: Buffer.from(cryptoSettings.initVector, 'base64'),

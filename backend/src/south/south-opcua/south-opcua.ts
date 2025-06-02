@@ -1,6 +1,6 @@
 import { Aggregate, Instant, Resampling } from '../../../shared/model/types';
 import SouthConnector from '../south-connector';
-import EncryptionService, { CERT_FILE_NAME, CERT_FOLDER, CERT_PRIVATE_KEY_FILE_NAME } from '../../service/encryption.service';
+import EncryptionService, { encryptionService } from '../../service/encryption.service';
 import pino from 'pino';
 import { DateTime } from 'luxon';
 import fs from 'node:fs/promises';
@@ -23,24 +23,24 @@ import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import { BaseFolders } from '../../model/types';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import {
+  AggregateFunction,
   AttributeIds,
   ClientMonitoredItem,
+  ClientSession,
   ClientSubscription,
+  DataType,
   DataValue,
+  HistoryReadRequest,
+  OPCUACertificateManager,
   OPCUAClient,
   OPCUAClientOptions,
-  UserIdentityInfo,
-  UserTokenType,
-  Variant,
-  AggregateFunction,
-  DataType,
-  HistoryReadRequest,
   ReadProcessedDetails,
   ReadRawModifiedDetails,
   StatusCodes,
   TimestampsToReturn,
-  ClientSession,
-  OPCUACertificateManager
+  UserIdentityInfo,
+  UserTokenType,
+  Variant
 } from 'node-opcua';
 import { HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_opcua_types';
 
@@ -784,9 +784,8 @@ export default class SouthOPCUA
     await createFolder(path.join(opcuaBaseFolder, 'issuers'));
     await createFolder(path.join(opcuaBaseFolder, 'issuers/certs')); // contains Trusted CA certificates
     await createFolder(path.join(opcuaBaseFolder, 'issuers/crl')); // contains CRL of revoked CA certificates
-
-    await fs.copyFile(path.resolve(`./`, CERT_FOLDER, CERT_PRIVATE_KEY_FILE_NAME), `${opcuaBaseFolder}/own/private/private_key.pem`);
-    await fs.copyFile(path.resolve(`./`, CERT_FOLDER, CERT_FILE_NAME), `${opcuaBaseFolder}/own/certs/client_certificate.pem`);
+    await fs.copyFile(encryptionService.getPrivateKeyPath(), `${opcuaBaseFolder}/own/private/private_key.pem`);
+    await fs.copyFile(encryptionService.getCertPath(), `${opcuaBaseFolder}/own/certs/client_certificate.pem`);
   }
 
   parseOPCUAValue(itemName: string, opcuaVariant: Variant): string {
