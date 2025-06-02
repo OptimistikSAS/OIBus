@@ -73,7 +73,7 @@ class OianalyticsTransport {
         body: dataBuffer,
         auth: {
           type: 'bearer',
-          token: this.options.token //TODO: is this encrypted? if not, it needs to be
+          token: this.options.token
         },
         proxy: this.getProxyOptions()
       });

@@ -92,7 +92,7 @@ describe('Logger', () => {
           useProxy: registration.useProxy,
           proxyUrl: registration.proxyUrl,
           proxyUsername: registration.proxyUsername,
-          proxyPassword: '',
+          proxyPassword: registration.proxyPassword,
           acceptUnauthorized: registration.acceptUnauthorized
         },
         level: engineSettings.logParameters.oia.level
@@ -115,17 +115,13 @@ describe('Logger', () => {
 
     jest.spyOn(console, 'error').mockImplementation(() => Promise.resolve());
 
-    (encryptionService.decryptText as jest.Mock)
-      .mockImplementationOnce(() => {
-        throw new Error('decrypt-error');
-      })
-      .mockImplementationOnce(() => {
-        throw new Error('decrypt-error');
-      });
+    (encryptionService.decryptText as jest.Mock).mockImplementationOnce(() => {
+      throw new Error('decrypt-error');
+    });
 
     await service.start(engineSettings, registration);
 
-    expect(console.error).toHaveBeenCalledTimes(2);
+    expect(console.error).toHaveBeenCalledTimes(1);
     expect(console.error).toHaveBeenCalledWith(new Error('decrypt-error'));
   });
 
