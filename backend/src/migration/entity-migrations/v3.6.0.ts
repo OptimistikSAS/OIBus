@@ -11,8 +11,10 @@ const COMMANDS_TABLE = 'commands';
 const REGISTRATIONS_TABLE = 'registrations';
 const NORTH_CONNECTORS_TABLE = 'north_connectors';
 const HISTORY_QUERIES_TABLE = 'history_queries';
-
+const HISTORY_ITEMS_TABLE = 'history_items';
 const SOUTH_CONNECTORS_TABLE = 'south_connectors';
+const SOUTH_ITEMS_TABLE = 'south_items';
+const SUBSCRIPTION_TABLE = 'subscription';
 
 interface OldSouthMQTTSettings {
   url: string;
@@ -61,6 +63,7 @@ export async function up(knex: Knex): Promise<void> {
   await updateHistoryQueries(knex);
   await updateSouthMQTTSettings(knex);
   await updateSouthOPCSettings(knex);
+  await removeSouthSLIMS(knex);
 }
 
 async function updateSouthOPCSettings(knex: Knex) {
@@ -197,6 +200,29 @@ async function updateHistoryQueries(knex: Knex): Promise<void> {
     caching_throttling_run_min_delay: 200,
     caching_error_retention_duration: 0
   });
+}
+
+async function removeSouthSLIMS(knex: Knex): Promise<void> {
+  const southSlims: Array<{
+    id: string;
+    type: string;
+  }> = await knex(SOUTH_CONNECTORS_TABLE).select('id', 'type').where('type', 'slims');
+
+  for (const south of southSlims) {
+    await knex(SUBSCRIPTION_TABLE).delete().where('south_connector_id', south.id);
+    await knex(SOUTH_ITEMS_TABLE).delete().where('connector_id', south.id);
+    await knex(SOUTH_CONNECTORS_TABLE).delete().where('id', south.id);
+  }
+
+  const historySlims: Array<{
+    id: string;
+    south_type: string;
+  }> = await knex(HISTORY_QUERIES_TABLE).select('id', 'south_type').where('south_type', 'slims');
+
+  for (const history of historySlims) {
+    await knex(HISTORY_ITEMS_TABLE).delete().where('history_id', history.id);
+    await knex(HISTORY_QUERIES_TABLE).delete().where('id', history.id);
+  }
 }
 
 export async function down(_knex: Knex): Promise<void> {

@@ -270,24 +270,6 @@ export type SouthPostgreSQLItemSettingsSerializationDelimiter = (typeof SOUTH_PO
 export const SOUTH_S_F_T_P_SETTINGS_AUTHENTICATIONS = ['password', 'private-key'] as const;
 export type SouthSFTPSettingsAuthentication = (typeof SOUTH_S_F_T_P_SETTINGS_AUTHENTICATIONS)[number];
 
-export const SOUTH_SLIMS_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'] as const;
-export type SouthSlimsItemSettingsDateTimeFieldsType = (typeof SOUTH_SLIMS_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
-
-export const SOUTH_SLIMS_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv'] as const;
-export type SouthSlimsItemSettingsSerializationType = (typeof SOUTH_SLIMS_ITEM_SETTINGS_SERIALIZATION_TYPES)[number];
-
-export const SOUTH_SLIMS_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = [
-  'DOT',
-  'SEMI_COLON',
-  'COLON',
-  'COMMA',
-  'NON_BREAKING_SPACE',
-  'SLASH',
-  'TAB',
-  'PIPE'
-] as const;
-export type SouthSlimsItemSettingsSerializationDelimiter = (typeof SOUTH_SLIMS_ITEM_SETTINGS_SERIALIZATION_DELIMITERS)[number];
-
 export const SOUTH_S_Q_LITE_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'] as const;
 export type SouthSQLiteItemSettingsDateTimeFieldsType = (typeof SOUTH_S_Q_LITE_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
 
@@ -403,12 +385,6 @@ export interface SouthPISettingsThrottling {
 }
 
 export interface SouthPostgreSQLSettingsThrottling {
-  maxReadInterval: number;
-  readDelay: number;
-  overlap: number;
-}
-
-export interface SouthSlimsSettingsThrottling {
   maxReadInterval: number;
   readDelay: number;
   overlap: number;
@@ -574,20 +550,6 @@ export interface SouthSFTPSettings {
   compression: boolean;
 }
 
-export interface SouthSlimsSettings {
-  throttling: SouthSlimsSettingsThrottling;
-  url: string;
-  port: number;
-  acceptUnauthorized: boolean;
-  timeout: number;
-  username: string;
-  password: string | null;
-  useProxy: boolean;
-  proxyUrl?: string;
-  proxyUsername?: string | null;
-  proxyPassword?: string | null;
-}
-
 export interface SouthSQLiteSettings {
   throttling: SouthSQLiteSettingsThrottling;
   databasePath: string;
@@ -609,7 +571,6 @@ export type SouthSettings =
   | SouthPISettings
   | SouthPostgreSQLSettings
   | SouthSFTPSettings
-  | SouthSlimsSettings
   | SouthSQLiteSettings;
 
 export interface SouthModbusItemSettingsData {
@@ -768,29 +729,6 @@ export interface SouthPostgreSQLItemSettingsSerialization {
   outputTimezone: Timezone;
 }
 
-export interface SouthSlimsItemSettingsQueryParams {
-  key: string;
-  value: string;
-}
-
-export interface SouthSlimsItemSettingsDateTimeFields {
-  fieldName: string;
-  useAsReference: boolean;
-  type: SouthSlimsItemSettingsDateTimeFieldsType;
-  timezone?: Timezone;
-  format?: string;
-  locale?: string;
-}
-
-export interface SouthSlimsItemSettingsSerialization {
-  type: SouthSlimsItemSettingsSerializationType;
-  filename: string;
-  delimiter: SouthSlimsItemSettingsSerializationDelimiter;
-  compression: boolean;
-  outputTimestampFormat: string;
-  outputTimezone: Timezone;
-}
-
 export interface SouthSQLiteItemSettingsDateTimeFields {
   fieldName: string;
   useAsReference: boolean;
@@ -902,14 +840,6 @@ export interface SouthSFTPItemSettings {
   ignoreModifiedDate?: boolean;
 }
 
-export interface SouthSlimsItemSettings {
-  endpoint: string;
-  body: string | null;
-  queryParams: Array<SouthSlimsItemSettingsQueryParams> | null;
-  dateTimeFields: Array<SouthSlimsItemSettingsDateTimeFields> | null;
-  serialization: SouthSlimsItemSettingsSerialization;
-}
-
 export interface SouthSQLiteItemSettings {
   query: string;
   dateTimeFields: Array<SouthSQLiteItemSettingsDateTimeFields> | null;
@@ -932,5 +862,4 @@ export type SouthItemSettings =
   | SouthPIItemSettings
   | SouthPostgreSQLItemSettings
   | SouthSFTPItemSettings
-  | SouthSlimsItemSettings
   | SouthSQLiteItemSettings;

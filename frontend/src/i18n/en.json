@@ -226,7 +226,6 @@
       "osisoft-pi": "OSIsoft PI System™",
       "postgresql": "PostgreSQL",
       "sftp": "SFTP",
-      "slims": "SLIMS™",
       "sqlite": "SQLite™"
     },
     "oibus-south-type-description": {
@@ -245,7 +244,6 @@
       "osisoft-pi": "Establish a connection with an OIBus Agent to access data from a PI System™",
       "postgresql": "Query PostgreSQL databases",
       "sftp": "Read files from a remote SFTP server",
-      "slims": "Connect to SLIMS™ application",
       "sqlite": "Query  SQLite™ databases"
     }
   },
@@ -909,24 +907,6 @@
       "passphrase": "Passphrase",
       "compression": "Compress files"
     },
-    "slims": {
-      "throttling": {
-        "title": "Throttling",
-        "max-read-interval": "Max read interval",
-        "read-delay": "Read delay",
-        "overlap": "Overlap"
-      },
-      "host": "Host",
-      "port": "Port",
-      "accept-unauthorized": "Accept unauthorized certificate",
-      "timeout": "Connection timeout",
-      "username": "Username",
-      "password": "Password",
-      "use-proxy": "Use proxy",
-      "proxy-url": "Proxy URL",
-      "proxy-username": "Proxy username",
-      "proxy-password": "Proxy password"
-    },
     "sqlite": {
       "throttling": {
         "title": "Throttling",
@@ -1419,52 +1399,6 @@
         "min-age": "Min age",
         "preserve-files": "Preserve files",
         "ignore-modified-date": "Ignorer modification date"
-      },
-      "slims": {
-        "endpoint": "Endpoint",
-        "body": "Body",
-        "query-params": {
-          "query-param": "Query params",
-          "key": "Key",
-          "value": "Value"
-        },
-        "date-time-fields": {
-          "date-time-field": "Date time fields",
-          "field-name": "Field name",
-          "use-as-reference": "Reference field",
-          "type": {
-            "title": "Type",
-            "iso-string": "ISO String",
-            "unix-epoch": "UNIX epoch (s)",
-            "unix-epoch-ms": "UNIX epoch (ms)",
-            "string": "String"
-          },
-          "timezone": "Timezone",
-          "format": "Format",
-          "locale": "Locale"
-        },
-        "serialization": {
-          "title": "Serialization",
-          "type": {
-            "title": "Type",
-            "csv": "CSV"
-          },
-          "filename": "Filename",
-          "delimiter": {
-            "title": "Delimiter",
-            "DOT": "Dot .",
-            "SEMI_COLON": "Semi colon ;",
-            "COLON": "Colon :",
-            "COMMA": "Comma ,",
-            "SLASH": "Slash /",
-            "TAB": "Tab",
-            "NON_BREAKING_SPACE": "Space",
-            "PIPE": "Pipe |"
-          },
-          "compression": "Compression",
-          "output-timestamp-format": "Output date time format",
-          "output-timezone": "Output timezone"
-        }
       },
       "sqlite": {
         "query": "Query",

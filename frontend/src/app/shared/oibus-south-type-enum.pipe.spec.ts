@@ -19,7 +19,6 @@ describe('OIBusSouthTypeEnumPipe', () => {
       'osisoft-pi': 'OSIsoft PI System™',
       postgresql: 'PostgreSQL',
       sftp: 'SFTP',
-      slims: 'SLIMS™',
       sqlite: 'SQLite™'
     });
   });
