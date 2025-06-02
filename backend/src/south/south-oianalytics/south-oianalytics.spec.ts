@@ -722,7 +722,7 @@ describe('SouthOIAnalytics with OIA module', () => {
     await expect(south.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
     expect(HTTPRequest).toHaveBeenCalledWith(expect.objectContaining({ href: 'http://localhost:4200/api/optimistik/oibus/status' }), {
       method: 'GET',
-      auth: { type: 'bearer', token: 'Bearer my oia token' },
+      auth: { type: 'bearer', token: 'my oia token' },
       proxy: undefined,
       timeout: 30000
     });
@@ -744,7 +744,7 @@ describe('SouthOIAnalytics with OIA module', () => {
     expect(HTTPRequest).toHaveBeenCalledWith(expect.objectContaining({ href: 'http://localhost:4200/api/my/endpoint' }), {
       method: 'GET',
       query,
-      auth: { type: 'bearer', token: 'Bearer my oia token' },
+      auth: { type: 'bearer', token: 'my oia token' },
       proxy: undefined,
       timeout: 30000
     });
@@ -774,7 +774,7 @@ describe('SouthOIAnalytics with OIA module', () => {
     expect(HTTPRequest).toHaveBeenCalledWith(expect.objectContaining({ href: 'http://localhost:4200/api/my/endpoint' }), {
       method: 'GET',
       query,
-      auth: { type: 'bearer', token: 'Bearer my oia token' },
+      auth: { type: 'bearer', token: 'my oia token' },
       proxy: {
         url: 'http://localhost:8080',
         auth: { type: 'url', username: 'user', password: 'pass' }
@@ -805,7 +805,7 @@ describe('SouthOIAnalytics with OIA module', () => {
     expect(HTTPRequest).toHaveBeenCalledWith(expect.objectContaining({ href: 'http://localhost:4200/api/my/endpoint' }), {
       method: 'GET',
       query,
-      auth: { type: 'bearer', token: 'Bearer my oia token' },
+      auth: { type: 'bearer', token: 'my oia token' },
       proxy: {
         url: 'http://localhost:8080'
       },

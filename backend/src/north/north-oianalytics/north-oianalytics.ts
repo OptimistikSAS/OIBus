@@ -241,7 +241,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
 
       return {
         type: 'bearer',
-        token: `Bearer ${registrationSettings.token}`
+        token: registrationSettings.token!
       };
     }
 
