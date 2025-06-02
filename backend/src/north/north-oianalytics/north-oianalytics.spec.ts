@@ -790,7 +790,7 @@ describe('NorthOIAnalytics with OIA module', () => {
       body: expect.any(FormData),
       auth: {
         type: 'bearer',
-        token: 'Bearer my-oia-token'
+        token: 'my-oia-token'
       } as ReqAuthOptions,
       timeout: 30000,
       proxy: undefined
@@ -829,7 +829,7 @@ describe('NorthOIAnalytics with OIA module', () => {
       body: expect.any(FormData),
       auth: {
         type: 'bearer',
-        token: 'Bearer my-oia-token'
+        token: 'my-oia-token'
       } as ReqAuthOptions,
       timeout: 30000,
       proxy: {
@@ -873,7 +873,7 @@ describe('NorthOIAnalytics with OIA module', () => {
       body: expect.any(FormData),
       auth: {
         type: 'bearer',
-        token: 'Bearer my-oia-token'
+        token: 'my-oia-token'
       } as ReqAuthOptions,
       timeout: 30000,
       proxy: {

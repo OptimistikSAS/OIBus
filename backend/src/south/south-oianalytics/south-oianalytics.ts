@@ -258,7 +258,7 @@ export default class SouthOIAnalytics
 
       return {
         type: 'bearer',
-        token: `Bearer ${registrationSettings.token}`
+        token: registrationSettings.token!
       };
     }
 
