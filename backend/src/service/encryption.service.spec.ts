@@ -5,12 +5,7 @@ import path from 'node:path';
 import selfSigned from 'selfsigned';
 import os from 'node:os';
 
-import EncryptionService, {
-  CERT_FILE_NAME,
-  CERT_FOLDER,
-  CERT_PRIVATE_KEY_FILE_NAME,
-  CERT_PUBLIC_KEY_FILE_NAME
-} from './encryption.service';
+import EncryptionService, { CERT_FILE_NAME, CERT_PRIVATE_KEY_FILE_NAME, CERT_PUBLIC_KEY_FILE_NAME } from './encryption.service';
 
 import * as utils from './utils';
 import { OibFormControl } from '../../shared/model/form.model';
@@ -88,6 +83,7 @@ const settings: Array<OibFormControl> = [
   }
 ];
 
+const certFolder = 'certFolder';
 describe('Encryption service with crypto settings', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -95,22 +91,22 @@ describe('Encryption service with crypto settings', () => {
     // Mock custom cert exists
     (utils.filesExists as jest.Mock).mockResolvedValue(true);
 
-    await encryptionService.init(cryptoSettings);
+    await encryptionService.init(cryptoSettings, certFolder);
   });
 
   it('should properly initialized encryption service', () => {
-    expect(encryptionService.getCertPath()).toEqual(path.resolve('./', CERT_FOLDER, CERT_FILE_NAME));
-    expect(encryptionService.getPrivateKeyPath()).toEqual(path.resolve('./', CERT_FOLDER, CERT_PRIVATE_KEY_FILE_NAME));
-    expect(encryptionService.getPublicKeyPath()).toEqual(path.resolve('./', CERT_FOLDER, CERT_PUBLIC_KEY_FILE_NAME));
+    expect(encryptionService.getCertPath()).toEqual(path.resolve(certFolder, CERT_FILE_NAME));
+    expect(encryptionService.getPrivateKeyPath()).toEqual(path.resolve(certFolder, CERT_PRIVATE_KEY_FILE_NAME));
+    expect(encryptionService.getPublicKeyPath()).toEqual(path.resolve(certFolder, CERT_PUBLIC_KEY_FILE_NAME));
   });
 
   it('should not create certificate if it already exists', async () => {
     (utils.filesExists as jest.Mock).mockReturnValue(true);
 
-    expect(utils.createFolder).toHaveBeenCalledWith(path.resolve('./', CERT_FOLDER));
-    expect(utils.filesExists).toHaveBeenCalledWith(path.resolve('./', CERT_FOLDER, CERT_FILE_NAME));
-    expect(utils.filesExists).toHaveBeenCalledWith(path.resolve('./', CERT_FOLDER, CERT_PUBLIC_KEY_FILE_NAME));
-    expect(utils.filesExists).toHaveBeenCalledWith(path.resolve('./', CERT_FOLDER, CERT_PUBLIC_KEY_FILE_NAME));
+    expect(utils.createFolder).toHaveBeenCalledWith(certFolder);
+    expect(utils.filesExists).toHaveBeenCalledWith(path.resolve(certFolder, CERT_FILE_NAME));
+    expect(utils.filesExists).toHaveBeenCalledWith(path.resolve(certFolder, CERT_PUBLIC_KEY_FILE_NAME));
+    expect(utils.filesExists).toHaveBeenCalledWith(path.resolve(certFolder, CERT_PUBLIC_KEY_FILE_NAME));
     expect(selfSigned.generate).not.toHaveBeenCalled();
     expect(fs.writeFile).not.toHaveBeenCalled();
   });
@@ -123,7 +119,7 @@ describe('Encryption service with crypto settings', () => {
       cert: 'myCert'
     });
 
-    await encryptionService.init(cryptoSettings);
+    await encryptionService.init(cryptoSettings, certFolder);
 
     expect(selfSigned.generate).toHaveBeenCalledWith(
       [
@@ -172,9 +168,9 @@ describe('Encryption service with crypto settings', () => {
         ]
       }
     );
-    expect(fs.writeFile).toHaveBeenCalledWith(path.resolve('./', CERT_FOLDER, CERT_PRIVATE_KEY_FILE_NAME), 'myPrivateKey');
-    expect(fs.writeFile).toHaveBeenCalledWith(path.resolve('./', CERT_FOLDER, CERT_PUBLIC_KEY_FILE_NAME), 'myPublicKey');
-    expect(fs.writeFile).toHaveBeenCalledWith(path.resolve('./', CERT_FOLDER, CERT_FILE_NAME), 'myCert');
+    expect(fs.writeFile).toHaveBeenCalledWith(path.resolve(certFolder, CERT_PRIVATE_KEY_FILE_NAME), 'myPrivateKey');
+    expect(fs.writeFile).toHaveBeenCalledWith(path.resolve(certFolder, CERT_PUBLIC_KEY_FILE_NAME), 'myPublicKey');
+    expect(fs.writeFile).toHaveBeenCalledWith(path.resolve(certFolder, CERT_FILE_NAME), 'myCert');
   });
 
   it('should properly retrieve files', async () => {
