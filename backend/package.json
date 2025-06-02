@@ -38,7 +38,7 @@
     "Optimistik"
   ],
   "dependencies": {
-    "@aws-sdk/client-s3": "3.817.0",
+    "@aws-sdk/client-s3": "3.821.0",
     "@aws-sdk/node-http-handler": "3.374.0",
     "@azure/core-http": "3.0.5",
     "@azure/storage-blob": "12.27.0",
@@ -51,7 +51,7 @@
     "argon2": "0.43.0",
     "basic-auth": "2.0.1",
     "better-sqlite3": "11.10.0",
-    "cron": "4.3.0",
+    "cron": "4.3.1",
     "cron-parser": "5.2.0",
     "cronstrue": "2.61.0",
     "form-data": "4.0.2",
@@ -83,7 +83,7 @@
     "pg": "8.16.0",
     "pino": "9.7.0",
     "pino-abstract-transport": "2.0.0",
-    "pino-loki": "2.5.0",
+    "pino-loki": "2.6.0",
     "pino-pretty": "13.0.0",
     "pino-roll": "3.1.0",
     "selfsigned": "2.4.1",
@@ -117,7 +117,7 @@
     "@types/object-path": "0.11.4",
     "@types/oracledb": "6.6.0",
     "@types/papaparse": "5.3.16",
-    "@types/pg": "8.15.2",
+    "@types/pg": "8.15.4",
     "@types/serialport": "10.2.0",
     "@types/sprintf-js": "1.1.4",
     "@types/ssh2-sftp-client": "9.0.4",
@@ -125,9 +125,9 @@
     "@types/ws": "8.18.1",
     "@yao-pkg/pkg": "6.5.1",
     "dotenv": "16.5.0",
-    "eslint": "9.27.0",
+    "eslint": "9.28.0",
     "eslint-config-prettier": "10.1.5",
-    "eslint-plugin-prettier": "5.4.0",
+    "eslint-plugin-prettier": "5.4.1",
     "jest": "29.7.0",
     "jest-environment-jsdom": "29.7.0",
     "ncp": "2.0.0",
@@ -136,7 +136,7 @@
     "rimraf": "6.0.1",
     "ts-jest": "29.3.4",
     "typescript": "5.4.5",
-    "typescript-eslint": "8.32.1"
+    "typescript-eslint": "8.33.0"
   },
   "pkg": {
     "scripts": [
