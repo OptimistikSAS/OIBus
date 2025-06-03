@@ -5,7 +5,7 @@
   "author": "Optimistik SAS",
   "license": "EUPL",
   "engines": {
-    "node": ">=v22.13",
+    "node": ">=v22.16",
     "npm": ">=10"
   },
   "scripts": {
@@ -28,11 +28,11 @@
     "lint": "eslint src/*.ts shared/model/*.ts",
     "lint:fix": "npm run lint -- --fix",
     "build": "tsc --project tsconfig.app.json",
-    "internal:build:lib-win-x64": "npm run --prefix node_modules/better-sqlite3 install -- --target=v22.13.0 --arch=x64 && npm run --prefix node_modules/argon2 install --update-binary -- --target_platform=win --target_arch=x64",
-    "internal:build:lib-macos-x64": "npm run --prefix node_modules/better-sqlite3 install -- --target=v22.13.0 --arch=x64 && npm run --prefix node_modules/argon2 install --update-binary -- --target_platform=darwin --target_arch=x64",
-    "internal:build:lib-macos-arm64": "npm run --prefix node_modules/better-sqlite3 install -- --target=v22.13.0 --arch=arm64 && npm run --prefix node_modules/argon2 install -- --target_arch=arm64 --target_platform=darwin",
-    "internal:build:lib-linux-x64": "npm run --prefix node_modules/better-sqlite3 install -- --target=v22.13.0 --arch=x64 && npm run --prefix node_modules/argon2 install --update-binary -- --target_arch=x64 --target_platform=linux",
-    "internal:build:lib-linux-arm64": "npm run --prefix node_modules/better-sqlite3 install --update-binary -- --target=v22.13.0 --arch=arm64 && npm run --prefix node_modules/argon2 install --update-binary -- --target_arch=arm64 --target_platform=linux"
+    "internal:build:lib-win-x64": "npm run --prefix node_modules/better-sqlite3 install -- --target=v22.16.0 --arch=x64 && npm run --prefix node_modules/argon2 install --update-binary -- --target_platform=win --target_arch=x64",
+    "internal:build:lib-macos-x64": "npm run --prefix node_modules/better-sqlite3 install -- --target=v22.16.0 --arch=x64 && npm run --prefix node_modules/argon2 install --update-binary -- --target_platform=darwin --target_arch=x64",
+    "internal:build:lib-macos-arm64": "npm run --prefix node_modules/better-sqlite3 install -- --target=v22.16.0 --arch=arm64 && npm run --prefix node_modules/argon2 install -- --target_arch=arm64 --target_platform=darwin",
+    "internal:build:lib-linux-x64": "npm run --prefix node_modules/better-sqlite3 install -- --target=v22.16.0 --arch=x64 && npm run --prefix node_modules/argon2 install --update-binary -- --target_arch=x64 --target_platform=linux",
+    "internal:build:lib-linux-arm64": "npm run --prefix node_modules/better-sqlite3 install -- --target=v22.16.0 --arch=arm64 && npm run --prefix node_modules/argon2 install --update-binary -- --target_arch=arm64 --target_platform=linux"
   },
   "keywords": [
     "Optimistik"
