@@ -17,6 +17,10 @@
     "confirmation-modal-title": "Confirmation",
     "date-hour-format": "yyyy-MM-dd HH:mm",
     "delimiter": "Delimiter",
+    "unsaved-changes": "Unsaved changes",
+    "unsaved-changes-message": "You have unsaved changes. Are you sure you want to leave without saving?",
+    "leave-without-saving": "Leave without saving",
+    "continue-editing": "Continue editing",
     "validation-errors": {
       "this-field": "This field",
       "required": "{{ label }} is required",

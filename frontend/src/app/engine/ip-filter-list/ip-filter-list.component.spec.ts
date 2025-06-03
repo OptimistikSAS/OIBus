@@ -8,6 +8,7 @@ import { IpFilterService } from '../../services/ip-filter.service';
 import { IPFilterDTO } from '../../../../../backend/shared/model/ip-filter.model';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
+import { ModalService } from '../../shared/modal.service';
 
 class IpFilterListComponentTester extends ComponentTester<IpFilterListComponent> {
   constructor() {
@@ -44,6 +45,7 @@ describe('IpFilterListComponent', () => {
   let ipFilterService: jasmine.SpyObj<IpFilterService>;
   let confirmationService: jasmine.SpyObj<ConfirmationService>;
   let notificationService: jasmine.SpyObj<NotificationService>;
+  let modalService: jasmine.SpyObj<ModalService>;
 
   let ipFilters: Array<IPFilterDTO>;
 
@@ -51,13 +53,15 @@ describe('IpFilterListComponent', () => {
     ipFilterService = createMock(IpFilterService);
     confirmationService = createMock(ConfirmationService);
     notificationService = createMock(NotificationService);
+    modalService = createMock(ModalService);
 
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
         { provide: IpFilterService, useValue: ipFilterService },
         { provide: ConfirmationService, useValue: confirmationService },
-        { provide: NotificationService, useValue: notificationService }
+        { provide: NotificationService, useValue: notificationService },
+        { provide: ModalService, useValue: modalService }
       ]
     });
 
@@ -75,6 +79,15 @@ describe('IpFilterListComponent', () => {
     ];
 
     tester = new IpFilterListComponentTester();
+
+    modalService.open.and.returnValue({
+      componentInstance: {
+        prepareForCreation: jasmine.createSpy(),
+        prepareForEdition: jasmine.createSpy(),
+        canDismiss: jasmine.createSpy().and.returnValue(true)
+      },
+      result: of({})
+    } as any);
   });
 
   describe('with ip filter', () => {
@@ -89,6 +102,31 @@ describe('IpFilterListComponent', () => {
       expect(tester.ipFilters[0].elements('td').length).toEqual(3);
       expect(tester.ipFilters[1].elements('td')[0]).toContainText('http://localhost');
       expect(tester.ipFilters[1].elements('td')[1]).toContainText('My IP filter 2');
+    });
+
+    it('should open edit modal with beforeDismiss configuration', () => {
+      tester.editButtons[0].click();
+
+      expect(modalService.open).toHaveBeenCalledWith(
+        jasmine.any(Function),
+        jasmine.objectContaining({
+          beforeDismiss: jasmine.any(Function)
+        })
+      );
+    });
+
+    it('should open add modal with beforeDismiss configuration', () => {
+      const addButton = tester.element('#add-ip-filter');
+
+      expect(addButton).toBeTruthy();
+
+      (addButton as TestButton)!.click();
+      expect(modalService.open).toHaveBeenCalledWith(
+        jasmine.any(Function),
+        jasmine.objectContaining({
+          beforeDismiss: jasmine.any(Function)
+        })
+      );
     });
   });
 

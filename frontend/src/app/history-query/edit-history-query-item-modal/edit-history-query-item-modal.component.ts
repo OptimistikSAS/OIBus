@@ -16,6 +16,8 @@ import { FormComponent } from '../../shared/form/form.component';
 import { HistoryQueryItemCommandDTO, HistoryQueryItemDTO } from '../../../../../backend/shared/model/history-query.model';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 import { SouthItemTestComponent } from '../../south/south-item-test/south-item-test.component';
+import { Observable } from 'rxjs';
+import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
 
 @Component({
   selector: 'oib-edit-history-query-item-modal',
@@ -26,6 +28,7 @@ import { SouthItemTestComponent } from '../../south/south-item-test/south-item-t
 export class EditHistoryQueryItemModalComponent {
   private modal = inject(NgbActiveModal);
   private fb = inject(NonNullableFormBuilder);
+  private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
 
   mode: 'create' | 'edit' | 'copy' = 'create';
   state = new ObservableState();
@@ -155,6 +158,12 @@ export class EditHistoryQueryItemModalComponent {
     this.createForm(this.item);
   }
 
+  canDismiss(): Observable<boolean> | boolean {
+    if (this.form?.dirty) {
+      return this.unsavedChangesConfirmation.confirmUnsavedChanges();
+    }
+    return true;
+  }
   cancel() {
     this.modal.dismiss();
   }
