@@ -39,7 +39,7 @@ export class CertificateListComponent {
    * Open a modal to edit a certificate
    */
   editCertificate(certificate: CertificateDTO) {
-    const modalRef = this.modalService.open(EditCertificateModalComponent, { size: 'lg' });
+    const modalRef = this.modalService.open(EditCertificateModalComponent, { size: 'lg', backdrop: 'static' });
     const component: EditCertificateModalComponent = modalRef.componentInstance;
     component.prepareForEdition(certificate);
     this.refreshAfterEditCertificateModalClosed(modalRef, 'updated');
@@ -49,7 +49,7 @@ export class CertificateListComponent {
    * Open a modal to create a certificate
    */
   addCertificate() {
-    const modalRef = this.modalService.open(EditCertificateModalComponent, { size: 'lg' });
+    const modalRef = this.modalService.open(EditCertificateModalComponent, { size: 'lg', backdrop: 'static' });
     const component: EditCertificateModalComponent = modalRef.componentInstance;
     component.prepareForCreation();
     this.refreshAfterEditCertificateModalClosed(modalRef, 'created');
