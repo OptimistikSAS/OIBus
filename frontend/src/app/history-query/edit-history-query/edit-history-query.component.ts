@@ -327,7 +327,7 @@ export class EditHistoryQueryComponent implements OnInit {
           : this.inMemoryItems
     };
     if (this.mode === 'edit') {
-      const modalRef = this.modalService.open(ResetCacheHistoryQueryModalComponent);
+      const modalRef = this.modalService.open(ResetCacheHistoryQueryModalComponent, { backdrop: 'static' });
       modalRef.result.subscribe(resetCache => {
         this.createOrUpdateHistoryQuery(command, resetCache);
       });
@@ -384,7 +384,7 @@ export class EditHistoryQueryComponent implements OnInit {
       fromConnectorId = this.fromNorthId;
     }
 
-    const modalRef = this.modalService.open(TestConnectionResultModalComponent);
+    const modalRef = this.modalService.open(TestConnectionResultModalComponent, { backdrop: 'static' });
     const component: TestConnectionResultModalComponent = modalRef.componentInstance;
     component.runHistoryQueryTest(type, command, historyQueryId, fromConnectorId ? fromConnectorId : null);
   }

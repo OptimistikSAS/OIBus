@@ -45,7 +45,7 @@ export class NorthSubscriptionsComponent implements OnInit {
 
   addSubscription(e: Event) {
     e.preventDefault();
-    const modalRef = this.modalService.open(CreateNorthSubscriptionModalComponent);
+    const modalRef = this.modalService.open(CreateNorthSubscriptionModalComponent, { backdrop: 'static' });
     const component: CreateNorthSubscriptionModalComponent = modalRef.componentInstance;
 
     if (this.northConnector()) {
