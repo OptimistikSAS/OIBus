@@ -22,6 +22,7 @@ import { OibFormControl } from '../../../../../backend/shared/model/form.model';
 import { FormComponent } from '../../shared/form/form.component';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 import { SouthItemTestComponent } from '../south-item-test/south-item-test.component';
+import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
 
 // TypeScript issue with Intl: https://github.com/microsoft/TypeScript/issues/49231
 // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -48,6 +49,7 @@ declare namespace Intl {
 export class EditSouthItemModalComponent {
   private modal = inject(NgbActiveModal);
   private fb = inject(NonNullableFormBuilder);
+  private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
 
   mode: 'create' | 'edit' | 'copy' = 'create';
   state = new ObservableState();
@@ -196,6 +198,13 @@ export class EditSouthItemModalComponent {
     this.southItemRows = groupFormControlsByRow(southItemSchema.settings);
     this.scanModes = scanModes;
     this.createForm(this.item);
+  }
+
+  canDismiss(): Observable<boolean> | boolean {
+    if (this.form?.dirty) {
+      return this.unsavedChangesConfirmation.confirmUnsavedChanges();
+    }
+    return true;
   }
 
   cancel() {

@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 
-import { switchMap, tap } from 'rxjs';
+import { firstValueFrom, switchMap, tap } from 'rxjs';
 import { Modal, ModalService } from '../../shared/modal.service';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
@@ -35,7 +35,13 @@ export class ScanModeListComponent implements OnInit {
    * Open a modal to edit a scan mode
    */
   editScanMode(scanMode: ScanModeDTO) {
-    const modalRef = this.modalService.open(EditScanModeModalComponent, { backdrop: 'static' });
+    const modalRef = this.modalService.open(EditScanModeModalComponent, {
+      beforeDismiss: () => {
+        const component: EditScanModeModalComponent = modalRef.componentInstance;
+        const result = component.canDismiss();
+        return typeof result === 'boolean' ? result : firstValueFrom(result);
+      }
+    });
     const component: EditScanModeModalComponent = modalRef.componentInstance;
     component.prepareForEdition(scanMode);
     this.refreshAfterEditScanModeModalClosed(modalRef, 'updated');
@@ -45,7 +51,13 @@ export class ScanModeListComponent implements OnInit {
    * Open a modal to create a scan mode
    */
   addScanMode() {
-    const modalRef = this.modalService.open(EditScanModeModalComponent, { backdrop: 'static' });
+    const modalRef = this.modalService.open(EditScanModeModalComponent, {
+      beforeDismiss: () => {
+        const component: EditScanModeModalComponent = modalRef.componentInstance;
+        const result = component.canDismiss();
+        return typeof result === 'boolean' ? result : firstValueFrom(result);
+      }
+    });
     const component: EditScanModeModalComponent = modalRef.componentInstance;
     component.prepareForCreation();
     this.refreshAfterEditScanModeModalClosed(modalRef, 'created');

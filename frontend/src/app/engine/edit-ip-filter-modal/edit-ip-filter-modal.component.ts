@@ -7,6 +7,7 @@ import { TranslateDirective } from '@ngx-translate/core';
 import { IPFilterCommandDTO, IPFilterDTO } from '../../../../../backend/shared/model/ip-filter.model';
 import { IpFilterService } from '../../services/ip-filter.service';
 import { formDirectives } from '../../shared/form-directives';
+import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
 
 @Component({
   selector: 'oib-edit-ip-filter-modal',
@@ -17,6 +18,7 @@ import { formDirectives } from '../../shared/form-directives';
 export class EditIpFilterModalComponent {
   private modal = inject(NgbActiveModal);
   private ipFilterService = inject(IpFilterService);
+  private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
 
   mode: 'create' | 'edit' = 'create';
   state = new ObservableState();
@@ -44,6 +46,13 @@ export class EditIpFilterModalComponent {
       address: ipFilter.address,
       description: ipFilter.description
     });
+  }
+
+  canDismiss(): Observable<boolean> | boolean {
+    if (this.form?.dirty) {
+      return this.unsavedChangesConfirmation.confirmUnsavedChanges();
+    }
+    return true;
   }
 
   cancel() {
