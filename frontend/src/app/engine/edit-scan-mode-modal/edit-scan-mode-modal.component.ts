@@ -9,6 +9,7 @@ import { ScanModeCommandDTO, ScanModeDTO, ValidatedCronExpression } from '../../
 import { formDirectives } from '../../shared/form-directives';
 
 import { DatetimePipe } from '../../shared/datetime.pipe';
+import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
 
 @Component({
   selector: 'oib-edit-scan-mode-modal',
@@ -20,6 +21,7 @@ export class EditScanModeModalComponent {
   private modal = inject(NgbActiveModal);
   private scanModeService = inject(ScanModeService);
   private fb = inject(NonNullableFormBuilder);
+  private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
 
   mode: 'create' | 'edit' = 'create';
   state = new ObservableState();
@@ -77,6 +79,13 @@ export class EditScanModeModalComponent {
       description: scanMode.description,
       cron: scanMode.cron
     });
+  }
+
+  canDismiss(): Observable<boolean> | boolean {
+    if (this.form?.dirty) {
+      return this.unsavedChangesConfirmation.confirmUnsavedChanges();
+    }
+    return true;
   }
 
   cancel() {
