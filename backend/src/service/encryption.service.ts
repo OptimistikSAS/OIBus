@@ -37,6 +37,10 @@ export default class EncryptionService<TInitialized extends boolean = false> {
     return this._cryptoSettings as TInitialized extends true ? CryptoSettingsInternal : CryptoSettingsInternal | null;
   }
 
+  get certsFolder() {
+    return this._certsFolder;
+  }
+
   static getInstance() {
     if (!this.instance) {
       this.instance = new EncryptionService();
