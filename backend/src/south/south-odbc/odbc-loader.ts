@@ -13,6 +13,8 @@ let odbc: IOdbc | null = null;
 // Exported only so we can mock it in tests
 export async function importOdbc(): Promise<IOdbc | null> {
   try {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     const mod = await import('odbc');
     return mod.default as IOdbc;
   } catch (error) {
