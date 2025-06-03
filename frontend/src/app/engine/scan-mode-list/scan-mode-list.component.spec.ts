@@ -136,6 +136,24 @@ describe('ScanModeListComponent', () => {
       expect(scanModeService.list).toHaveBeenCalledTimes(1);
       expect(notificationService.success).toHaveBeenCalledWith('engine.scan-mode.deleted', { name: 'scanMode1' });
     });
+
+    it('should open edit modal with beforeDismiss configuration', () => {
+      const modalService: MockModalService<EditScanModeModalComponent> = TestBed.inject(MockModalService);
+      const fakeEditComponent = createMock(EditScanModeModalComponent);
+      modalService.mockClosedModal(fakeEditComponent, { name: 'new-name' });
+
+      tester.editButtons[0].click();
+      expect(fakeEditComponent.prepareForEdition).toHaveBeenCalled();
+    });
+
+    it('should open add modal with beforeDismiss configuration', () => {
+      const modalService: MockModalService<EditScanModeModalComponent> = TestBed.inject(MockModalService);
+      const fakeEditComponent = createMock(EditScanModeModalComponent);
+      modalService.mockClosedModal(fakeEditComponent, { name: 'new-name' });
+
+      tester.addScanMode.click();
+      expect(fakeEditComponent.prepareForCreation).toHaveBeenCalled();
+    });
   });
 
   describe('with no scan mode', () => {

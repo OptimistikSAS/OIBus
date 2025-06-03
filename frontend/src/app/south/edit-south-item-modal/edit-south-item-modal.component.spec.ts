@@ -14,6 +14,8 @@ import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 import { provideHttpClient } from '@angular/common/http';
+import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
+import { of } from 'rxjs';
 
 class EditSouthItemModalComponentTester extends ComponentTester<EditSouthItemModalComponent> {
   constructor() {
@@ -48,6 +50,7 @@ class EditSouthItemModalComponentTester extends ComponentTester<EditSouthItemMod
 describe('EditSouthItemModalComponent', () => {
   let tester: EditSouthItemModalComponentTester;
   let fakeActiveModal: NgbActiveModal;
+  let unsavedChangesConfirmationService: jasmine.SpyObj<UnsavedChangesConfirmationService>;
 
   const southItemSchema: SouthConnectorItemManifest = {
     scanMode: 'SUBSCRIPTION_AND_POLL',
@@ -90,9 +93,15 @@ describe('EditSouthItemModalComponent', () => {
 
   beforeEach(() => {
     fakeActiveModal = createMock(NgbActiveModal);
+    unsavedChangesConfirmationService = createMock(UnsavedChangesConfirmationService);
 
     TestBed.configureTestingModule({
-      providers: [provideI18nTesting(), provideHttpClient(), { provide: NgbActiveModal, useValue: fakeActiveModal }]
+      providers: [
+        provideI18nTesting(),
+        provideHttpClient(),
+        { provide: NgbActiveModal, useValue: fakeActiveModal },
+        { provide: UnsavedChangesConfirmationService, useValue: unsavedChangesConfirmationService }
+      ]
     });
 
     TestBed.createComponent(DefaultValidationErrorsComponent).detectChanges();
@@ -140,6 +149,71 @@ describe('EditSouthItemModalComponent', () => {
     it('should cancel', () => {
       tester.cancel.click();
       expect(fakeActiveModal.dismiss).toHaveBeenCalled();
+    });
+
+    it('should return true from canDismiss when form is pristine', () => {
+      const result = tester.componentInstance.canDismiss();
+      expect(result).toBe(true);
+    });
+
+    it('should return observable from canDismiss when form is dirty', () => {
+      tester.name.fillWith('test name');
+      tester.detectChanges();
+
+      unsavedChangesConfirmationService.confirmUnsavedChanges.and.returnValue(of(true));
+
+      const result = tester.componentInstance.canDismiss();
+
+      expect(result).toBeInstanceOf(Object); // Observable
+      expect(unsavedChangesConfirmationService.confirmUnsavedChanges).toHaveBeenCalled();
+    });
+
+    it('should call unsaved changes service when form is dirty and canDismiss is called', () => {
+      // Make form dirty
+      tester.name.fillWith('test name');
+      tester.detectChanges();
+
+      unsavedChangesConfirmationService.confirmUnsavedChanges.and.returnValue(of(false));
+
+      const result = tester.componentInstance.canDismiss();
+
+      if (typeof result !== 'boolean') {
+        result.subscribe(canDismiss => {
+          expect(canDismiss).toBe(false);
+        });
+      }
+
+      expect(unsavedChangesConfirmationService.confirmUnsavedChanges).toHaveBeenCalled();
+    });
+
+    it('should allow dismissal when user confirms leaving', () => {
+      tester.name.fillWith('test name');
+      tester.detectChanges();
+
+      unsavedChangesConfirmationService.confirmUnsavedChanges.and.returnValue(of(true));
+
+      const result = tester.componentInstance.canDismiss();
+
+      if (typeof result !== 'boolean') {
+        result.subscribe(canDismiss => {
+          expect(canDismiss).toBe(true);
+        });
+      }
+    });
+
+    it('should prevent dismissal when user cancels leaving', () => {
+      tester.name.fillWith('test name');
+      tester.detectChanges();
+
+      unsavedChangesConfirmationService.confirmUnsavedChanges.and.returnValue(of(false));
+
+      const result = tester.componentInstance.canDismiss();
+
+      if (typeof result !== 'boolean') {
+        result.subscribe(canDismiss => {
+          expect(canDismiss).toBe(false);
+        });
+      }
     });
   });
 

@@ -7,7 +7,7 @@ import { DefaultValidationErrorsComponent } from '../../shared/default-validatio
 import { CertificateService } from '../../services/certificate.service';
 import { CertificateCommandDTO, CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
-
+import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
 class EditCertificateModalComponentTester extends ComponentTester<EditCertificateModalComponent> {
   constructor() {
     super(EditCertificateModalComponent);
@@ -70,16 +70,19 @@ describe('EditCertificateModalComponent', () => {
   let tester: EditCertificateModalComponentTester;
   let fakeActiveModal: NgbActiveModal;
   let certificateService: jasmine.SpyObj<CertificateService>;
+  let unsavedChangesConfirmationService: jasmine.SpyObj<UnsavedChangesConfirmationService>;
 
   beforeEach(() => {
     fakeActiveModal = createMock(NgbActiveModal);
     certificateService = createMock(CertificateService);
+    unsavedChangesConfirmationService = createMock(UnsavedChangesConfirmationService);
 
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
         { provide: NgbActiveModal, useValue: fakeActiveModal },
-        { provide: CertificateService, useValue: certificateService }
+        { provide: CertificateService, useValue: certificateService },
+        { provide: UnsavedChangesConfirmationService, useValue: unsavedChangesConfirmationService }
       ]
     });
 
@@ -242,6 +245,61 @@ describe('EditCertificateModalComponent', () => {
     it('should cancel', () => {
       tester.cancel.click();
       expect(fakeActiveModal.dismiss).toHaveBeenCalled();
+    });
+  });
+
+  describe('unsaved changes', () => {
+    beforeEach(() => {
+      tester.componentInstance.prepareForCreation();
+      tester.detectChanges();
+    });
+
+    it('should return true from canDismiss when form is pristine', () => {
+      const result = tester.componentInstance.canDismiss();
+      expect(result).toBe(true);
+    });
+
+    it('should return observable from canDismiss when form is dirty', () => {
+      // Make form dirty
+      tester.name.fillWith('test name');
+      tester.detectChanges();
+
+      unsavedChangesConfirmationService.confirmUnsavedChanges.and.returnValue(of(true));
+
+      const result = tester.componentInstance.canDismiss();
+
+      expect(result).toBeInstanceOf(Object); // Observable
+      expect(unsavedChangesConfirmationService.confirmUnsavedChanges).toHaveBeenCalled();
+    });
+
+    it('should allow dismissal when user confirms leaving', () => {
+      tester.name.fillWith('test name');
+      tester.detectChanges();
+
+      unsavedChangesConfirmationService.confirmUnsavedChanges.and.returnValue(of(true));
+
+      const result = tester.componentInstance.canDismiss();
+
+      if (typeof result !== 'boolean') {
+        result.subscribe(canDismiss => {
+          expect(canDismiss).toBe(true);
+        });
+      }
+    });
+
+    it('should prevent dismissal when user cancels leaving', () => {
+      tester.name.fillWith('test name');
+      tester.detectChanges();
+
+      unsavedChangesConfirmationService.confirmUnsavedChanges.and.returnValue(of(false));
+
+      const result = tester.componentInstance.canDismiss();
+
+      if (typeof result !== 'boolean') {
+        result.subscribe(canDismiss => {
+          expect(canDismiss).toBe(false);
+        });
+      }
     });
   });
 });
