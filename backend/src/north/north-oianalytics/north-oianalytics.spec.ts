@@ -180,6 +180,7 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
   it('should test connection', async () => {
     const expectedReqOptions: ReqOptions = {
       method: 'GET',
+      acceptUnauthorized: false,
       auth: authOptions,
       timeout: 30000,
       ...proxyOptions
@@ -195,6 +196,7 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
   it('should manage timeout error on test connection', async () => {
     const expectedReqOptions: ReqOptions = {
       method: 'GET',
+      acceptUnauthorized: false,
       auth: authOptions,
       timeout: 30000,
       ...proxyOptions
@@ -215,6 +217,7 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
   it('should manage bad response on test connection', async () => {
     const expectedReqOptions: ReqOptions = {
       method: 'GET',
+      acceptUnauthorized: false,
       auth: authOptions,
       timeout: 30000,
       ...proxyOptions
@@ -238,6 +241,7 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
       headers: { 'Content-Type': 'application/json' },
       query: { dataSourceId: configuration.name },
       body: JSON.stringify(timeValues),
+      acceptUnauthorized: false,
       auth: authOptions,
       timeout: 30000,
       ...proxyOptions
@@ -274,6 +278,7 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
       headers: { 'Content-Type': 'application/json' },
       query: { dataSourceId: configuration.name },
       body: `gzipped ${JSON.stringify(values)}`,
+      acceptUnauthorized: false,
       auth: authOptions,
       timeout: 30000,
       ...proxyOptions
@@ -328,6 +333,7 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
       },
       query: { dataSourceId: configuration.name },
       body: JSON.stringify(timeValues),
+      acceptUnauthorized: false,
       auth: authOptions,
       timeout: 30000,
       ...proxyOptions
@@ -360,6 +366,7 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
       },
       query: { dataSourceId: configuration.name },
       body: expect.any(FormData),
+      acceptUnauthorized: false,
       auth: authOptions,
       timeout: 30000,
       ...proxyOptions
@@ -393,6 +400,7 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
       },
       query: { dataSourceId: configuration.name },
       body: expect.any(FormData),
+      acceptUnauthorized: false,
       auth: authOptions,
       timeout: 30000,
       ...proxyOptions
@@ -447,6 +455,7 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
       },
       query: { dataSourceId: configuration.name },
       body: expect.any(FormData),
+      acceptUnauthorized: false,
       auth: authOptions,
       timeout: 30000,
       ...proxyOptions
@@ -472,6 +481,7 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
       },
       query: { dataSourceId: configuration.name },
       body: expect.any(FormData),
+      acceptUnauthorized: false,
       auth: undefined, // no auth options given
       timeout: 30000,
       ...proxyOptions
@@ -505,6 +515,7 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
       },
       query: { dataSourceId: configuration.name },
       body: expect.any(FormData),
+      acceptUnauthorized: false,
       auth: authOptions,
       timeout: 30000,
       ...proxyOptions
@@ -610,6 +621,7 @@ describe('NorthOIAnalytics with Azure Active Directory', () => {
         },
         query: { dataSourceId: configuration.name },
         body: expect.any(FormData),
+        acceptUnauthorized: false,
         auth: {
           type: 'bearer',
           token: 'Bearer client-certificate-token'
@@ -648,6 +660,7 @@ describe('NorthOIAnalytics with Azure Active Directory', () => {
         },
         query: { dataSourceId: configuration.name },
         body: expect.any(FormData),
+        acceptUnauthorized: false,
         auth: undefined,
         timeout: 30000,
         proxy: undefined
@@ -700,6 +713,7 @@ describe('NorthOIAnalytics with Azure Active Directory', () => {
         },
         query: { dataSourceId: configuration.name },
         body: expect.any(FormData),
+        acceptUnauthorized: false,
         auth: {
           type: 'bearer',
           token: 'Bearer client-secret-token'
@@ -788,6 +802,7 @@ describe('NorthOIAnalytics with OIA module', () => {
       },
       query: { dataSourceId: configuration.name },
       body: expect.any(FormData),
+      acceptUnauthorized: false,
       auth: {
         type: 'bearer',
         token: 'my-oia-token'
@@ -827,6 +842,7 @@ describe('NorthOIAnalytics with OIA module', () => {
       },
       query: { dataSourceId: configuration.name },
       body: expect.any(FormData),
+      acceptUnauthorized: false,
       auth: {
         type: 'bearer',
         token: 'my-oia-token'
@@ -871,6 +887,7 @@ describe('NorthOIAnalytics with OIA module', () => {
       },
       query: { dataSourceId: configuration.name },
       body: expect.any(FormData),
+      acceptUnauthorized: false,
       auth: {
         type: 'bearer',
         token: 'my-oia-token'

@@ -84,15 +84,16 @@ export default class SouthOIAnalytics
     const host = this.getHost();
     const requestUrl = new URL('/api/optimistik/oibus/status', host);
 
-    const fetchOptions: ReqOptions = {
-      method: 'GET',
-      auth: await this.getAuthorizationOptions(),
-      proxy: this.getProxyOptions(),
-      timeout: this.connector.settings.timeout * 1000
-    };
-
     let response: ReqResponse;
     try {
+      const { proxy, acceptUnauthorized } = this.getProxyOptions();
+      const fetchOptions: ReqOptions = {
+        method: 'GET',
+        auth: await this.getAuthorizationOptions(),
+        proxy,
+        timeout: this.connector.settings.timeout * 1000,
+        acceptUnauthorized
+      };
       response = await HTTPRequest(requestUrl, fetchOptions);
     } catch (error) {
       throw new Error(`Fetch error ${error}`);
@@ -176,17 +177,17 @@ export default class SouthOIAnalytics
     const host = this.getHost();
     const requestUrl = new URL(item.settings.endpoint, host);
     const query = formatQueryParams(startTime, endTime, item.settings.queryParams || []);
+    this.logger.info(`Requesting data from URL "${requestUrl}" and query params "${JSON.stringify(query)}"`);
 
+    const { proxy, acceptUnauthorized } = this.getProxyOptions();
     const fetchOptions: ReqOptions = {
       method: 'GET',
       query,
       auth: await this.getAuthorizationOptions(),
-      proxy: this.getProxyOptions(),
-      timeout: this.connector.settings.timeout * 1000
+      proxy,
+      timeout: this.connector.settings.timeout * 1000,
+      acceptUnauthorized
     };
-
-    this.logger.info(`Requesting data from URL "${requestUrl}" and query params "${JSON.stringify(query)}"`);
-
     const response = await HTTPRequest(requestUrl, fetchOptions);
     if (!response.ok) {
       throw new Error(`HTTP request failed with status code ${response.statusCode} and message: ${await response.body.text()}`);
@@ -198,12 +199,13 @@ export default class SouthOIAnalytics
    * Get proxy options if proxy is enabled
    * @throws Error if no proxy url is specified in settings
    */
-  private getProxyOptions(): ReqProxyOptions | undefined {
+  private getProxyOptions(): { proxy: ReqProxyOptions | undefined; acceptUnauthorized: boolean } {
     let settings: {
       useProxy: boolean;
       proxyUrl?: string | null;
       proxyUsername?: string | null;
       proxyPassword?: string | null;
+      acceptUnauthorized: boolean;
     };
     let scope: string;
 
@@ -224,7 +226,7 @@ export default class SouthOIAnalytics
     }
 
     if (!settings.useProxy) {
-      return;
+      return { proxy: undefined, acceptUnauthorized: settings.acceptUnauthorized };
     }
     if (!settings.proxyUrl) {
       throw new Error(`Proxy URL not specified using ${scope}`);
@@ -242,7 +244,7 @@ export default class SouthOIAnalytics
       };
     }
 
-    return options;
+    return { proxy: options, acceptUnauthorized: settings.acceptUnauthorized };
   }
 
   /**
