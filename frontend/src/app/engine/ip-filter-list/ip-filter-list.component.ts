@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 
-import { switchMap } from 'rxjs';
+import { firstValueFrom, switchMap } from 'rxjs';
 import { Modal, ModalService } from '../../shared/modal.service';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
@@ -35,7 +35,13 @@ export class IpFilterListComponent implements OnInit {
    * Open a modal to edit an IP filter
    */
   editIpFilter(ipFilter: IPFilterDTO) {
-    const modalRef = this.modalService.open(EditIpFilterModalComponent, { backdrop: 'static' });
+    const modalRef = this.modalService.open(EditIpFilterModalComponent, {
+      beforeDismiss: () => {
+        const component: EditIpFilterModalComponent = modalRef.componentInstance;
+        const result = component.canDismiss();
+        return typeof result === 'boolean' ? result : firstValueFrom(result);
+      }
+    });
     const component: EditIpFilterModalComponent = modalRef.componentInstance;
     component.prepareForEdition(ipFilter);
     this.refreshAfterEditIpFilterModalClosed(modalRef, 'updated');
@@ -45,7 +51,13 @@ export class IpFilterListComponent implements OnInit {
    * Open a modal to create an IP filter
    */
   addIpFilter() {
-    const modalRef = this.modalService.open(EditIpFilterModalComponent, { backdrop: 'static' });
+    const modalRef = this.modalService.open(EditIpFilterModalComponent, {
+      beforeDismiss: () => {
+        const component: EditIpFilterModalComponent = modalRef.componentInstance;
+        const result = component.canDismiss();
+        return typeof result === 'boolean' ? result : firstValueFrom(result);
+      }
+    });
     const component: EditIpFilterModalComponent = modalRef.componentInstance;
     component.prepareForCreation();
     this.refreshAfterEditIpFilterModalClosed(modalRef, 'created');

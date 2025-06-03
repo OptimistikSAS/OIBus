@@ -7,6 +7,7 @@ import { TranslateDirective } from '@ngx-translate/core';
 import { formDirectives } from '../../shared/form-directives';
 import { CertificateCommandDTO, CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
 import { CertificateService } from '../../services/certificate.service';
+import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
 
 @Component({
   selector: 'oib-edit-certificate-modal',
@@ -17,6 +18,7 @@ import { CertificateService } from '../../services/certificate.service';
 export class EditCertificateModalComponent {
   private modal = inject(NgbActiveModal);
   private certificateService = inject(CertificateService);
+  private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
 
   mode: 'create' | 'edit' = 'create';
   state = new ObservableState();
@@ -59,6 +61,13 @@ export class EditCertificateModalComponent {
       description: certificate.description,
       regenerateCertificate: false
     });
+  }
+
+  canDismiss(): Observable<boolean> | boolean {
+    if (this.form?.dirty) {
+      return this.unsavedChangesConfirmation.confirmUnsavedChanges();
+    }
+    return true;
   }
 
   cancel() {

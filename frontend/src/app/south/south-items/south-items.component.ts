@@ -14,7 +14,7 @@ import {
   SouthConnectorManifest
 } from '../../../../../backend/shared/model/south-connector.model';
 import { EditSouthItemModalComponent } from '../edit-south-item-modal/edit-south-item-modal.component';
-import { debounceTime, distinctUntilChanged, of, switchMap, tap } from 'rxjs';
+import { debounceTime, distinctUntilChanged, firstValueFrom, of, switchMap, tap } from 'rxjs';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { OibFormControl } from '../../../../../backend/shared/model/form.model';
@@ -144,7 +144,14 @@ export class SouthItemsComponent implements OnInit {
   }
 
   editItem(southItem: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>) {
-    const modalRef = this.modalService.open(EditSouthItemModalComponent, { size: 'xl', backdrop: 'static' });
+    const modalRef = this.modalService.open(EditSouthItemModalComponent, {
+      size: 'xl',
+      beforeDismiss: () => {
+        const component: EditSouthItemModalComponent = modalRef.componentInstance;
+        const result = component.canDismiss();
+        return typeof result === 'boolean' ? result : firstValueFrom(result);
+      }
+    });
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
 
     const tableIndex = this.allItems.findIndex(i => i.id === southItem.id || i.name === southItem.name);
@@ -162,7 +169,14 @@ export class SouthItemsComponent implements OnInit {
   }
 
   addItem() {
-    const modalRef = this.modalService.open(EditSouthItemModalComponent, { size: 'xl', backdrop: 'static' });
+    const modalRef = this.modalService.open(EditSouthItemModalComponent, {
+      size: 'xl',
+      beforeDismiss: () => {
+        const component: EditSouthItemModalComponent = modalRef.componentInstance;
+        const result = component.canDismiss();
+        return typeof result === 'boolean' ? result : firstValueFrom(result);
+      }
+    });
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
     component.prepareForCreation(
       this.southManifest().items,

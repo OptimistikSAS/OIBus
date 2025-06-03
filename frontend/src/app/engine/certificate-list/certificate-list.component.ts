@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { startWith, Subject, switchMap } from 'rxjs';
+import { firstValueFrom, startWith, Subject, switchMap } from 'rxjs';
 import { Modal, ModalService } from '../../shared/modal.service';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
@@ -39,7 +39,14 @@ export class CertificateListComponent {
    * Open a modal to edit a certificate
    */
   editCertificate(certificate: CertificateDTO) {
-    const modalRef = this.modalService.open(EditCertificateModalComponent, { size: 'lg', backdrop: 'static' });
+    const modalRef = this.modalService.open(EditCertificateModalComponent, {
+      size: 'lg',
+      beforeDismiss: () => {
+        const component: EditCertificateModalComponent = modalRef.componentInstance;
+        const result = component.canDismiss();
+        return typeof result === 'boolean' ? result : firstValueFrom(result);
+      }
+    });
     const component: EditCertificateModalComponent = modalRef.componentInstance;
     component.prepareForEdition(certificate);
     this.refreshAfterEditCertificateModalClosed(modalRef, 'updated');
@@ -49,7 +56,14 @@ export class CertificateListComponent {
    * Open a modal to create a certificate
    */
   addCertificate() {
-    const modalRef = this.modalService.open(EditCertificateModalComponent, { size: 'lg', backdrop: 'static' });
+    const modalRef = this.modalService.open(EditCertificateModalComponent, {
+      size: 'lg',
+      beforeDismiss: () => {
+        const component: EditCertificateModalComponent = modalRef.componentInstance;
+        const result = component.canDismiss();
+        return typeof result === 'boolean' ? result : firstValueFrom(result);
+      }
+    });
     const component: EditCertificateModalComponent = modalRef.componentInstance;
     component.prepareForCreation();
     this.refreshAfterEditCertificateModalClosed(modalRef, 'created');
