@@ -243,7 +243,7 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
       command = this.northConnectorCommand;
     }
 
-    const modalRef = this.modalService.open(TestConnectionResultModalComponent);
+    const modalRef = this.modalService.open(TestConnectionResultModalComponent, { backdrop: 'static' });
     const component: TestConnectionResultModalComponent = modalRef.componentInstance;
     component.runHistoryQueryTest(type, command, this.historyQuery!.id);
   }

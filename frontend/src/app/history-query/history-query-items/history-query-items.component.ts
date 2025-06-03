@@ -133,7 +133,7 @@ export class HistoryQueryItemsComponent implements OnInit {
   }
 
   editItem(historyQueryItem: HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>) {
-    const modalRef = this.modalService.open(EditHistoryQueryItemModalComponent, { size: 'xl' });
+    const modalRef = this.modalService.open(EditHistoryQueryItemModalComponent, { size: 'xl', backdrop: 'static' });
     const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
 
     const tableIndex = this.allItems.findIndex(i => i.id === historyQueryItem.id || i.name === historyQueryItem.name);
@@ -150,7 +150,7 @@ export class HistoryQueryItemsComponent implements OnInit {
   }
 
   addItem() {
-    const modalRef = this.modalService.open(EditHistoryQueryItemModalComponent, { size: 'xl' });
+    const modalRef = this.modalService.open(EditHistoryQueryItemModalComponent, { size: 'xl', backdrop: 'static' });
     const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
     component.prepareForCreation(
       this.southManifest().items,
@@ -250,7 +250,7 @@ export class HistoryQueryItemsComponent implements OnInit {
   }
 
   duplicateItem(item: HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>) {
-    const modalRef = this.modalService.open(EditHistoryQueryItemModalComponent, { size: 'xl' });
+    const modalRef = this.modalService.open(EditHistoryQueryItemModalComponent, { size: 'xl', backdrop: 'static' });
     const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
     component.prepareForCopy(
       this.southManifest().items,
@@ -264,7 +264,7 @@ export class HistoryQueryItemsComponent implements OnInit {
   }
 
   exportItems() {
-    const modalRef = this.modalService.open(ExportItemModalComponent);
+    const modalRef = this.modalService.open(ExportItemModalComponent, { backdrop: 'static' });
     modalRef.componentInstance.prepare(this.historyQuery()?.name);
     modalRef.result.subscribe(response => {
       if (response.delimiter && this.historyId() !== 'create') {
@@ -302,7 +302,7 @@ export class HistoryQueryItemsComponent implements OnInit {
   }
 
   importItems() {
-    const modalRef = this.modalService.open(ImportItemModalComponent);
+    const modalRef = this.modalService.open(ImportItemModalComponent, { backdrop: 'static' });
     modalRef.result.subscribe(response => {
       this.checkImportItems(response.file, response.delimiter);
     });
@@ -317,7 +317,7 @@ export class HistoryQueryItemsComponent implements OnInit {
           error: string;
         }>;
       }) => {
-        const modalRef = this.modalService.open(ImportHistoryQueryItemsModalComponent, { size: 'xl' });
+        const modalRef = this.modalService.open(ImportHistoryQueryItemsModalComponent, { size: 'xl', backdrop: 'static' });
         const component: ImportHistoryQueryItemsModalComponent = modalRef.componentInstance;
         component.prepare(this.southManifest().items, this.allItems, result.items, result.errors);
         this.refreshAfterImportModalClosed(modalRef);
