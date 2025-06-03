@@ -35,7 +35,7 @@ export class ScanModeListComponent implements OnInit {
    * Open a modal to edit a scan mode
    */
   editScanMode(scanMode: ScanModeDTO) {
-    const modalRef = this.modalService.open(EditScanModeModalComponent);
+    const modalRef = this.modalService.open(EditScanModeModalComponent, { backdrop: 'static' });
     const component: EditScanModeModalComponent = modalRef.componentInstance;
     component.prepareForEdition(scanMode);
     this.refreshAfterEditScanModeModalClosed(modalRef, 'updated');
@@ -45,7 +45,7 @@ export class ScanModeListComponent implements OnInit {
    * Open a modal to create a scan mode
    */
   addScanMode() {
-    const modalRef = this.modalService.open(EditScanModeModalComponent);
+    const modalRef = this.modalService.open(EditScanModeModalComponent, { backdrop: 'static' });
     const component: EditScanModeModalComponent = modalRef.componentInstance;
     component.prepareForCreation();
     this.refreshAfterEditScanModeModalClosed(modalRef, 'created');
