@@ -7,7 +7,6 @@ import { DataLakeServiceClient, StorageSharedKeyCredential as DataLakeStorageSha
 import NorthConnector from '../north-connector';
 import EncryptionService from '../../service/encryption.service';
 import { NorthAzureBlobSettings } from '../../../shared/model/north-settings.model';
-import { ProxyOptions } from '@azure/core-http';
 import { CacheMetadata, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { DateTime } from 'luxon';
 import csv from 'papaparse';
@@ -15,6 +14,7 @@ import { NorthConnectorEntity } from '../../model/north-connector.model';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import { BaseFolders } from '../../model/types';
+import type { ProxySettings } from '@azure/core-rest-pipeline/dist/browser';
 
 const TEST_FILE = 'oibus-azure-test.txt';
 
@@ -65,7 +65,7 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
     this.logger.info(
       `Connecting to ${this.connector.settings.useADLS ? 'Azure Data Lake Storage' : 'Azure Blob Storage'} for the account ${this.connector.settings.account} and the container ${this.connector.settings.container} using ${this.connector.settings.authentication} authentication.`
     );
-    let proxyOptions: ProxyOptions | undefined = undefined;
+    let proxyOptions: ProxySettings | undefined = undefined;
     if (this.connector.settings.useProxy) {
       const { proxyHost, proxyPort } = this.parseProxyUrl(this.connector.settings.proxyUrl!);
       proxyOptions = {
