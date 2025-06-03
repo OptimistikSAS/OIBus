@@ -4,28 +4,23 @@ import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-serv
 import pino from 'pino';
 
 import LoggerService from './logger.service';
-import EncryptionService from '../encryption.service';
+import { encryptionService } from '../encryption.service';
 import FileCleanupService from './file-cleanup.service';
 import testData from '../../tests/utils/test-data';
 import { EngineSettings } from '../../model/engine.model';
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
 
+jest.mock('../encryption.service', () => ({
+  encryptionService: new EncryptionServiceMock('', '')
+}));
 jest.mock(
   'pino',
   jest.fn(() => jest.fn(() => ({ child: jest.fn() })))
 );
+
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-expect-error
 pino.stdTimeFunctions = {
-  epochTime(): string {
-    return '';
-  },
-  nullTime(): string {
-    return '';
-  },
-  unixTime(): string {
-    return '';
-  },
   isoTime(): string {
     return '';
   }
@@ -34,8 +29,6 @@ jest.mock('./file-cleanup.service');
 jest.mock('../encryption.service');
 
 jest.mock('../utils');
-
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 
 let service: LoggerService;
 describe('Logger', () => {
@@ -46,7 +39,7 @@ describe('Logger', () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
 
-    service = new LoggerService(encryptionService, 'folder');
+    service = new LoggerService('folder');
   });
 
   it('should be properly initialized', async () => {
@@ -93,7 +86,9 @@ describe('Logger', () => {
           proxyUrl: registration.proxyUrl,
           proxyUsername: registration.proxyUsername,
           proxyPassword: registration.proxyPassword,
-          acceptUnauthorized: registration.acceptUnauthorized
+          acceptUnauthorized: registration.acceptUnauthorized,
+          certsFolder: '',
+          cryptoSettings: {}
         },
         level: engineSettings.logParameters.oia.level
       }
@@ -170,7 +165,9 @@ describe('Logger', () => {
           proxyUrl: specificRegistration.proxyUrl,
           proxyUsername: specificRegistration.proxyUsername,
           proxyPassword: specificRegistration.proxyPassword,
-          acceptUnauthorized: specificRegistration.acceptUnauthorized
+          acceptUnauthorized: specificRegistration.acceptUnauthorized,
+          certsFolder: '',
+          cryptoSettings: {}
         },
         level: specificSettings.logParameters.oia.level
       }

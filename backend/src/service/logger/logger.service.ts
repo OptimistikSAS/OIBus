@@ -5,7 +5,7 @@ import pino from 'pino';
 import { ScopeType } from '../../../shared/model/engine.model';
 
 import FileCleanupService from './file-cleanup.service';
-import EncryptionService from '../encryption.service';
+import { encryptionService } from '../encryption.service';
 import { EngineSettings } from '../../model/engine.model';
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
 
@@ -25,10 +25,7 @@ class LoggerService {
   logger: pino.Logger | null = null;
   fileCleanUpService: FileCleanupService | null = null;
 
-  constructor(
-    private readonly encryptionService: EncryptionService,
-    private readonly folder: string
-  ) {}
+  constructor(private readonly folder: string) {}
 
   /**
    * Run the appropriate pino log transports according to the configuration
@@ -72,7 +69,7 @@ class LoggerService {
             basicAuth: {
               username: engineSettings.logParameters.loki.username,
               password: engineSettings.logParameters.loki.password
-                ? await this.encryptionService.decryptText(engineSettings.logParameters.loki.password)
+                ? await encryptionService.decryptText(engineSettings.logParameters.loki.password)
                 : ''
             },
             labels: { name: engineSettings.name }
@@ -97,7 +94,9 @@ class LoggerService {
           proxyUrl: registration.proxyUrl,
           proxyUsername: registration.proxyUsername,
           proxyPassword: registration.proxyPassword,
-          acceptUnauthorized: registration.acceptUnauthorized
+          acceptUnauthorized: registration.acceptUnauthorized,
+          cryptoSettings: encryptionService.cryptoSettings,
+          certsFolder: encryptionService.certsFolder
         },
         level: engineSettings.logParameters.oia.level
       });
