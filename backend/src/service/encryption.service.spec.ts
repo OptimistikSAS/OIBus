@@ -95,6 +95,7 @@ describe('Encryption service with crypto settings', () => {
   });
 
   it('should properly initialized encryption service', () => {
+    expect(encryptionService.certsFolder).toEqual(certFolder);
     expect(encryptionService.getCertPath()).toEqual(path.resolve(certFolder, CERT_FILE_NAME));
     expect(encryptionService.getPrivateKeyPath()).toEqual(path.resolve(certFolder, CERT_PRIVATE_KEY_FILE_NAME));
     expect(encryptionService.getPublicKeyPath()).toEqual(path.resolve(certFolder, CERT_PUBLIC_KEY_FILE_NAME));

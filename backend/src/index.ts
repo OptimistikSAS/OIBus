@@ -87,7 +87,7 @@ const CERT_FOLDER = 'certs';
   }
 
   await createFolder(LOG_FOLDER_NAME);
-  const loggerService = new LoggerService(encryptionService, path.resolve(LOG_FOLDER_NAME));
+  const loggerService = new LoggerService(path.resolve(LOG_FOLDER_NAME));
   await loggerService.start(oibusSettings, repositoryService.oianalyticsRegistrationRepository.get()!);
 
   const dataStreamEngine = new DataStreamEngine(
