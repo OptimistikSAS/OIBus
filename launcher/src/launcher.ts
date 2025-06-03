@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { ChildProcessWithoutNullStreams } from 'child_process';
-import * as os from 'os';
+import os from 'node:os';
 import { createFolder, filesExists, replaceConfigArgumentWithAbsolutePath } from './utils';
 
 const STARTED_DELAY = 30000;
