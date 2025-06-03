@@ -1,8 +1,9 @@
 import build from 'pino-abstract-transport';
 
 import { LogDTO, PinoLog } from '../../../shared/model/logs.model';
-import { LogLevel, ScopeType } from '../../../shared/model/engine.model';
+import { CryptoSettings, LogLevel, ScopeType } from '../../../shared/model/engine.model';
 import { HTTPRequest, ReqProxyOptions } from '../http-request.utils';
+import { encryptionService } from '../encryption.service';
 
 const MAX_BATCH_LOG = 500;
 const MAX_BATCH_INTERVAL_S = 60;
@@ -32,6 +33,8 @@ interface OIAnalyticsOptions {
   proxyPassword?: string | null;
   acceptUnauthorized: boolean;
   batchLimit?: number;
+  cryptoSettings: CryptoSettings;
+  certsFolder: string;
 }
 
 /**
@@ -71,6 +74,7 @@ class OianalyticsTransport {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: dataBuffer,
+        acceptUnauthorized: this.options.acceptUnauthorized,
         auth: {
           type: 'bearer',
           token: this.options.token
@@ -156,6 +160,7 @@ class OianalyticsTransport {
 
 const createTransport = async (opts: OIAnalyticsOptions) => {
   const oianalyticsTransport = new OianalyticsTransport(opts);
+  await encryptionService.init(opts.cryptoSettings, opts.certsFolder);
   return build(
     async source => {
       for await (const log of source) {
