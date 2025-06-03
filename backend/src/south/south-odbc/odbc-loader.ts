@@ -1,16 +1,29 @@
-let odbc: typeof import('odbc') | null = null;
-
-// Exported only so we can mock it in tests
-export async function importOdbc() {
-  return await import('odbc');
+export interface IOdbc {
+  connect(args: { connectionString: string; connectionTimeout?: number }): Promise<{
+    query(sql: string): Promise<Array<Record<string, string>>>;
+    close(): Promise<void>;
+  }>;
 }
 
-export async function loadOdbc(): Promise<typeof import('odbc') | null> {
+let odbc: IOdbc | null = null;
+
+export async function importOdbc(): Promise<IOdbc | null> {
   try {
-    const mod = await importOdbc(); // use this instead of direct import
-    odbc = mod.default;
-    return odbc;
-  } catch {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    const mod = await import('odbc');
+    return mod.default as IOdbc;
+  } catch (error) {
+    console.error('Failed to load odbc module:', error);
     return null;
   }
+}
+
+export async function loadOdbc(): Promise<IOdbc | null> {
+  if (odbc) {
+    return odbc;
+  }
+
+  odbc = await importOdbc();
+  return odbc;
 }
