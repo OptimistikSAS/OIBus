@@ -113,7 +113,7 @@ export class SouthListComponent implements OnInit {
    * Open a modal to create a South connector
    */
   createSouth() {
-    const modalRef = this.modalService.open(ChooseSouthConnectorTypeModalComponent, { size: 'xl' });
+    const modalRef = this.modalService.open(ChooseSouthConnectorTypeModalComponent, { size: 'xl', backdrop: 'static' });
     modalRef.result.subscribe();
   }
 

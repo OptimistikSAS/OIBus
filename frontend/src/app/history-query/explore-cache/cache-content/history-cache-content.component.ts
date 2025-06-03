@@ -75,7 +75,7 @@ export class HistoryCacheContentComponent implements OnInit {
             if (!response.body) return;
             const content = await response.body.text();
 
-            const modalRef = this.modalService.open(FileContentModalComponent, { size: 'xl' });
+            const modalRef = this.modalService.open(FileContentModalComponent, { size: 'xl', backdrop: 'static' });
             const component: FileContentModalComponent = modalRef.componentInstance;
             component.prepareForCreation(event.file, content);
           });
