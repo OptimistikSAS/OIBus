@@ -1,4 +1,4 @@
-import { request, ProxyAgent } from 'undici';
+import { request, ProxyAgent, Agent } from 'undici';
 import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
 import { encryptionService } from './encryption.service';
 import { HTTPRequest, ReqOptions } from './http-request.utils';
@@ -10,6 +10,11 @@ jest.mock('undici', () => ({
     // Mock the constructor
     options, // Store options for potential assertion
     isMockProxyAgent: true // Add a flag for easy identification in tests
+  })),
+  Agent: jest.fn().mockImplementation(options => ({
+    // Mock the constructor
+    options, // Store options for potential assertion
+    isMockAgent: true // Add a flag for easy identification in tests
   }))
 }));
 
@@ -20,6 +25,7 @@ jest.mock('./encryption.service', () => ({
 describe('HTTPRequest Service', () => {
   let mockUndiciRequest: jest.Mock;
   let mockUndiciProxyAgent: jest.Mock;
+  let mockUndiciAgent: jest.Mock;
   let mockDecryptText: jest.Mock;
   let mockAbortSignalTimeout: jest.SpyInstance;
   const mockAbortSignal = 'mock-abort-signal' as unknown as AbortSignal;
@@ -32,6 +38,7 @@ describe('HTTPRequest Service', () => {
 
     mockUndiciRequest = request as jest.Mock;
     mockUndiciProxyAgent = ProxyAgent as unknown as jest.Mock;
+    mockUndiciAgent = Agent as unknown as jest.Mock;
     mockDecryptText = encryptionService.decryptText as jest.Mock;
 
     mockUndiciRequest.mockResolvedValue(createMockResponse(200, { success: true }));
@@ -49,6 +56,7 @@ describe('HTTPRequest Service', () => {
     expect(response.ok).toBe(true);
     expect(mockDecryptText).not.toHaveBeenCalled();
     expect(mockUndiciProxyAgent).not.toHaveBeenCalled();
+    expect(mockUndiciAgent).not.toHaveBeenCalled();
     expect(mockAbortSignalTimeout).not.toHaveBeenCalled();
   });
 
@@ -65,6 +73,37 @@ describe('HTTPRequest Service', () => {
 
     expect(mockUndiciRequest).toHaveBeenCalledTimes(1);
     expect(mockUndiciRequest).toHaveBeenCalledWith(testUrl, options);
+    expect(response.ok).toBe(true);
+  });
+
+  it('should make a request with accept unauthorized', async () => {
+    const options: ReqOptions = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Custom-Header': 'value123'
+      },
+      body: JSON.stringify({ data: 'test' }),
+      acceptUnauthorized: true
+    };
+    const response = await HTTPRequest(testUrl, options);
+
+    expect(mockUndiciAgent).toHaveBeenCalledTimes(1);
+    expect(mockUndiciAgent).toHaveBeenCalledWith({
+      connect: {
+        rejectUnauthorized: false
+      }
+    });
+    expect(mockUndiciRequest).toHaveBeenCalledTimes(1);
+    expect(mockUndiciRequest).toHaveBeenCalledWith(testUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Custom-Header': 'value123'
+      },
+      body: JSON.stringify({ data: 'test' }),
+      dispatcher: expect.objectContaining({ isMockAgent: true })
+    });
     expect(response.ok).toBe(true);
   });
 
@@ -275,6 +314,29 @@ describe('HTTPRequest Service', () => {
 
       expect(mockUndiciProxyAgent).toHaveBeenCalledTimes(1);
       expect(mockUndiciProxyAgent).toHaveBeenCalledWith({ uri: testProxyUrl });
+      expect(mockUndiciRequest).toHaveBeenCalledWith(testUrl, {
+        dispatcher: expect.objectContaining({ isMockProxyAgent: true }) // Check if our mock instance was passed
+      });
+      expect(mockDecryptText).not.toHaveBeenCalled(); // No auth decryption needed
+    });
+
+    it('should configure ProxyAgent without auth and accept unauthorized', async () => {
+      const options: ReqOptions = {
+        proxy: {
+          url: testProxyUrl
+        },
+        acceptUnauthorized: true
+      };
+
+      await HTTPRequest(testUrl, options);
+
+      expect(mockUndiciProxyAgent).toHaveBeenCalledTimes(1);
+      expect(mockUndiciProxyAgent).toHaveBeenCalledWith({
+        uri: testProxyUrl,
+        requestTls: {
+          rejectUnauthorized: false
+        }
+      });
       expect(mockUndiciRequest).toHaveBeenCalledWith(testUrl, {
         dispatcher: expect.objectContaining({ isMockProxyAgent: true }) // Check if our mock instance was passed
       });

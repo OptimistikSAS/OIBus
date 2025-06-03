@@ -27,6 +27,7 @@ describe('OIAnalytics Client', () => {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: 'payload',
+        acceptUnauthorized: false,
         auth: { type: 'bearer', token: testData.oIAnalytics.registration.completed.token },
         proxy: undefined,
         timeout: 10_000
@@ -54,6 +55,7 @@ describe('OIAnalytics Client', () => {
       {
         method: 'GET',
         query: { ids: ['commandId1', 'commandId2'] },
+        acceptUnauthorized: false,
         auth: { type: 'bearer', token: testData.oIAnalytics.registration.completed.token },
         proxy: undefined,
         timeout: 10_000
@@ -82,6 +84,7 @@ describe('OIAnalytics Client', () => {
       expect.objectContaining({ href: `${testData.oIAnalytics.registration.completed.host}/api/oianalytics/oibus/commands/pending` }),
       {
         method: 'GET',
+        acceptUnauthorized: false,
         auth: { type: 'bearer', token: testData.oIAnalytics.registration.completed.token },
         proxy: undefined,
         timeout: 10_000
@@ -116,6 +119,7 @@ describe('OIAnalytics Client', () => {
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        acceptUnauthorized: false,
         body: JSON.stringify({
           activationCode: '123ABC',
           oibusId: testData.engine.oIBusInfo.oibusId,
@@ -149,6 +153,7 @@ describe('OIAnalytics Client', () => {
       }),
       {
         method: 'GET',
+        acceptUnauthorized: false,
         proxy: undefined,
         timeout: 10_000
       }
@@ -172,6 +177,7 @@ describe('OIAnalytics Client', () => {
       expect.objectContaining({ href: `${testData.oIAnalytics.registration.completed.host}/api/oianalytics/oibus/configuration` }),
       {
         method: 'PUT',
+        acceptUnauthorized: false,
         auth: { type: 'bearer', token: testData.oIAnalytics.registration.completed.token },
         headers: { 'Content-Type': 'application/json' },
         body: 'payload',
@@ -198,6 +204,7 @@ describe('OIAnalytics Client', () => {
       }),
       {
         method: 'PUT',
+        acceptUnauthorized: false,
         auth: { type: 'bearer', token: testData.oIAnalytics.registration.completed.token },
         headers: { 'Content-Type': 'application/json' },
         body: 'payload',
@@ -225,6 +232,7 @@ describe('OIAnalytics Client', () => {
       {
         method: 'DELETE',
         query: { historyId: 'historyId' },
+        acceptUnauthorized: false,
         auth: { type: 'bearer', token: testData.oIAnalytics.registration.completed.token },
         headers: { 'Content-Type': 'application/json' },
         proxy: undefined,
@@ -264,6 +272,7 @@ describe('OIAnalytics Client', () => {
       {
         method: 'GET',
         query: { assetId: 'assetId' },
+        acceptUnauthorized: false,
         auth: { type: 'bearer', token: testData.oIAnalytics.registration.completed.token },
         proxy: {
           url: 'http://localhost:3128',

@@ -1,7 +1,5 @@
-import { request, ProxyAgent } from 'undici';
+import { request, ProxyAgent, Agent } from 'undici';
 import { encryptionService } from './encryption.service';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import type { Dispatcher } from 'undici'; // used in jsdoc
 
 export type ReqURL = Parameters<typeof request>['0'];
 /**
@@ -18,6 +16,7 @@ export type ReqOptions = Parameters<typeof request>['1'] & {
    */
   auth?: ReqAuthOptions;
   proxy?: ReqProxyOptions;
+  acceptUnauthorized?: boolean;
 };
 
 export interface ReqProxyOptions {
@@ -77,8 +76,16 @@ export async function HTTPRequest(url: ReqURL, options: ReqOptions = {}): Promis
   }
 
   if (options.proxy) {
-    options.dispatcher = await createProxy(options.proxy);
+    options.dispatcher = await createProxy(options.proxy, options.acceptUnauthorized || false);
     delete options.proxy; // remove non-standard option
+    delete options.acceptUnauthorized;
+  } else if (options.acceptUnauthorized) {
+    options.dispatcher = new Agent({
+      connect: {
+        rejectUnauthorized: false
+      }
+    });
+    delete options.acceptUnauthorized;
   }
 
   if (options.timeout) {
@@ -151,10 +158,16 @@ async function getAuthorization(options: ReqAuthOptions, url: string) {
   return auth;
 }
 
-async function createProxy(options: NonNullable<ReqOptions['proxy']>) {
+async function createProxy(options: NonNullable<ReqOptions['proxy']>, acceptUnauthorized: boolean) {
   const proxyOptions: ProxyAgent.Options = {
     uri: options.url
   };
+
+  if (acceptUnauthorized) {
+    proxyOptions.requestTls = {
+      rejectUnauthorized: false
+    };
+  }
 
   if (!options.auth) {
     return new ProxyAgent(proxyOptions);

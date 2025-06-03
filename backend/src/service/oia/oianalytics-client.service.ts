@@ -25,13 +25,15 @@ export default class OIAnalyticsClient {
       throw new Error('No registration token');
     }
 
+    const { proxy, acceptUnauthorized } = this.getProxyOptions(registration);
     const response = await HTTPRequest(url, {
       method: 'PUT',
       body: payload,
       headers: { 'Content-Type': 'application/json' },
       auth: { type: 'bearer', token: registration.token },
-      proxy: this.getProxyOptions(registration),
-      timeout: OIANALYTICS_TIMEOUT
+      proxy,
+      timeout: OIANALYTICS_TIMEOUT,
+      acceptUnauthorized
     });
     if (!response.ok) {
       throw new Error(`${response.statusCode} - ${await response.body.text()}`);
@@ -48,12 +50,14 @@ export default class OIAnalyticsClient {
       throw new Error('No registration token');
     }
 
+    const { proxy, acceptUnauthorized } = this.getProxyOptions(registration);
     const response = await HTTPRequest(url, {
       method: 'GET',
       query: { ids: commands.map(command => command.id) },
       auth: { type: 'bearer', token: registration.token },
-      proxy: this.getProxyOptions(registration),
-      timeout: OIANALYTICS_TIMEOUT
+      proxy,
+      timeout: OIANALYTICS_TIMEOUT,
+      acceptUnauthorized
     });
     if (!response.ok) {
       throw new Error(`${response.statusCode} - ${await response.body.text()}`);
@@ -68,11 +72,13 @@ export default class OIAnalyticsClient {
       throw new Error('No registration token');
     }
 
+    const { proxy, acceptUnauthorized } = this.getProxyOptions(registration);
     const response = await HTTPRequest(url, {
       method: 'GET',
       auth: { type: 'bearer', token: registration.token },
-      proxy: this.getProxyOptions(registration),
-      timeout: OIANALYTICS_TIMEOUT
+      proxy,
+      timeout: OIANALYTICS_TIMEOUT,
+      acceptUnauthorized
     });
     if (!response.ok) {
       throw new Error(`${response.statusCode} - ${await response.body.text()}`);
@@ -98,12 +104,14 @@ export default class OIAnalyticsClient {
 
     const url = new URL(REGISTRATION_OIANALYTICS_ENDPOINT, registration.host);
 
+    const { proxy, acceptUnauthorized } = this.getProxyOptions(registration);
     const response = await HTTPRequest(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
-      proxy: this.getProxyOptions(registration),
-      timeout: OIANALYTICS_TIMEOUT
+      proxy,
+      timeout: OIANALYTICS_TIMEOUT,
+      acceptUnauthorized
     });
     if (!response.ok) {
       throw new Error(`${response.statusCode} - ${await response.body.text()}`);
@@ -123,10 +131,12 @@ export default class OIAnalyticsClient {
 
     const url = new URL(registration.checkUrl, registration.host);
 
+    const { proxy, acceptUnauthorized } = this.getProxyOptions(registration);
     const response = await HTTPRequest(url, {
       method: 'GET',
-      proxy: this.getProxyOptions(registration),
-      timeout: OIANALYTICS_TIMEOUT
+      proxy,
+      timeout: OIANALYTICS_TIMEOUT,
+      acceptUnauthorized
     });
     if (!response.ok) {
       throw new Error(`${response.statusCode} - ${await response.body.text()}`);
@@ -142,13 +152,15 @@ export default class OIAnalyticsClient {
       throw new Error('No registration token');
     }
 
+    const { proxy, acceptUnauthorized } = this.getProxyOptions(registration);
     const response = await HTTPRequest(url, {
       method: 'PUT',
       body: payload,
       headers: { 'Content-Type': 'application/json' },
       auth: { type: 'bearer', token: registration.token },
-      proxy: this.getProxyOptions(registration),
-      timeout: OIANALYTICS_TIMEOUT
+      proxy,
+      timeout: OIANALYTICS_TIMEOUT,
+      acceptUnauthorized
     });
     if (!response.ok) {
       throw new Error(`${response.statusCode} - ${await response.body.text()}`);
@@ -162,13 +174,15 @@ export default class OIAnalyticsClient {
       throw new Error('No registration token');
     }
 
+    const { proxy, acceptUnauthorized } = this.getProxyOptions(registration);
     const response = await HTTPRequest(url, {
       method: 'PUT',
       body: payload,
       headers: { 'Content-Type': 'application/json' },
       auth: { type: 'bearer', token: registration.token },
-      proxy: this.getProxyOptions(registration),
-      timeout: OIANALYTICS_TIMEOUT
+      proxy,
+      timeout: OIANALYTICS_TIMEOUT,
+      acceptUnauthorized
     });
     if (!response.ok) {
       throw new Error(`${response.statusCode} - ${await response.body.text()}`);
@@ -182,13 +196,15 @@ export default class OIAnalyticsClient {
       throw new Error('No registration token');
     }
 
+    const { proxy, acceptUnauthorized } = this.getProxyOptions(registration);
     const response = await HTTPRequest(url, {
       method: 'DELETE',
       query: { historyId },
       headers: { 'Content-Type': 'application/json' },
       auth: { type: 'bearer', token: registration.token },
-      proxy: this.getProxyOptions(registration),
-      timeout: OIANALYTICS_TIMEOUT
+      proxy,
+      timeout: OIANALYTICS_TIMEOUT,
+      acceptUnauthorized
     });
     if (!response.ok) {
       throw new Error(`${response.statusCode} - ${await response.body.text()}`);
@@ -202,12 +218,14 @@ export default class OIAnalyticsClient {
       throw new Error('No registration token');
     }
 
+    const { proxy, acceptUnauthorized } = this.getProxyOptions(registration);
     const response = await HTTPRequest(url, {
       method: 'GET',
       query: { assetId },
       auth: { type: 'bearer', token: registration.token },
-      proxy: this.getProxyOptions(registration),
-      timeout: OIANALYTICS_DOWNLOAD_TIMEOUT
+      proxy,
+      timeout: OIANALYTICS_DOWNLOAD_TIMEOUT,
+      acceptUnauthorized
     });
     if (!response.ok) {
       throw new Error(`${response.statusCode} - ${await response.body.text()}`);
@@ -216,9 +234,12 @@ export default class OIAnalyticsClient {
     await fs.writeFile(filename, buffer);
   }
 
-  private getProxyOptions(registrationSettings: RegistrationSettingsCommandDTO): ReqProxyOptions | undefined {
+  private getProxyOptions(registrationSettings: RegistrationSettingsCommandDTO): {
+    proxy: ReqProxyOptions | undefined;
+    acceptUnauthorized: boolean;
+  } {
     if (!registrationSettings.useProxy) {
-      return;
+      return { proxy: undefined, acceptUnauthorized: registrationSettings.acceptUnauthorized };
     }
     if (!registrationSettings.proxyUrl) {
       throw new Error('Proxy URL not specified');
@@ -236,6 +257,6 @@ export default class OIAnalyticsClient {
       };
     }
 
-    return options;
+    return { proxy: options, acceptUnauthorized: registrationSettings.acceptUnauthorized };
   }
 }
