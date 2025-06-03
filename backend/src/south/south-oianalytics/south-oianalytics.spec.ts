@@ -249,6 +249,7 @@ describe('SouthOIAnalytics with Basic auth', () => {
     expect(HTTPRequest).toHaveBeenCalledWith(expect.objectContaining({ href: 'http://localhost:4200/api/my/endpoint' }), {
       method: 'GET',
       query,
+      acceptUnauthorized: true,
       auth: { type: 'basic', username: 'username', password: 'password' },
       proxy: undefined,
       timeout: 30000
@@ -273,6 +274,7 @@ describe('SouthOIAnalytics with Basic auth', () => {
     expect(HTTPRequest).toHaveBeenCalledWith(expect.objectContaining({ href: 'http://localhost:4200/api/my/endpoint' }), {
       method: 'GET',
       query,
+      acceptUnauthorized: true,
       auth: { type: 'basic', username: 'username', password: 'password' },
       proxy: undefined,
       timeout: 30000
@@ -404,6 +406,7 @@ describe('SouthOIAnalytics with proxy', () => {
     await expect(south.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
     expect(HTTPRequest).toHaveBeenCalledWith(expect.objectContaining({ href: 'http://localhost:4200/api/optimistik/oibus/status' }), {
       method: 'GET',
+      acceptUnauthorized: true,
       auth: { type: 'basic', username: 'username', password: 'password' },
       proxy: {
         url: 'http://proxyurl',
@@ -432,6 +435,7 @@ describe('SouthOIAnalytics with proxy', () => {
     expect(HTTPRequest).toHaveBeenCalledWith(expect.objectContaining({ href: 'http://localhost:4200/api/my/endpoint' }), {
       method: 'GET',
       query,
+      acceptUnauthorized: true,
       auth: { type: 'basic', username: 'username', password: 'password' },
       proxy: {
         url: 'http://proxyurl',
@@ -484,6 +488,7 @@ describe('SouthOIAnalytics with proxy but without proxy password', () => {
     await expect(south.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
     expect(HTTPRequest).toHaveBeenCalledWith(expect.objectContaining({ href: 'http://localhost:4200/api/optimistik/oibus/status' }), {
       method: 'GET',
+      acceptUnauthorized: true,
       auth: { type: 'basic', username: 'username', password: 'password' },
       proxy: {
         url: 'http://proxyurl',
@@ -511,6 +516,7 @@ describe('SouthOIAnalytics with proxy but without proxy password', () => {
     expect(HTTPRequest).toHaveBeenCalledWith(expect.objectContaining({ href: 'http://localhost:4200/api/my/endpoint' }), {
       method: 'GET',
       query,
+      acceptUnauthorized: true,
       auth: { type: 'basic', username: 'username', password: 'password' },
       proxy: {
         url: 'http://proxyurl',
@@ -567,6 +573,7 @@ describe('SouthOIAnalytics with aad-client-secret', () => {
     await expect(south.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
     expect(HTTPRequest).toHaveBeenCalledWith(expect.objectContaining({ href: 'http://localhost:4200/api/optimistik/oibus/status' }), {
       method: 'GET',
+      acceptUnauthorized: true,
       auth: { type: 'bearer', token: 'Bearer ClientSecretCredentialToken' },
       proxy: undefined,
       timeout: 30000
@@ -588,6 +595,7 @@ describe('SouthOIAnalytics with aad-client-secret', () => {
     expect(HTTPRequest).toHaveBeenCalledWith(expect.objectContaining({ href: 'http://localhost:4200/api/my/endpoint' }), {
       method: 'GET',
       query,
+      acceptUnauthorized: true,
       auth: { type: 'bearer', token: 'Bearer ClientSecretCredentialToken' },
       proxy: undefined,
       timeout: 30000
@@ -638,6 +646,7 @@ describe('SouthOIAnalytics with aad-certificate', () => {
     await expect(south.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
     expect(HTTPRequest).toHaveBeenCalledWith(expect.objectContaining({ href: 'http://localhost:4200/api/optimistik/oibus/status' }), {
       method: 'GET',
+      acceptUnauthorized: true,
       auth: { type: 'bearer', token: 'Bearer ClientCertificateCredentialToken' },
       proxy: undefined,
       timeout: 30000
@@ -659,6 +668,7 @@ describe('SouthOIAnalytics with aad-certificate', () => {
     expect(HTTPRequest).toHaveBeenCalledWith(expect.objectContaining({ href: 'http://localhost:4200/api/my/endpoint' }), {
       method: 'GET',
       query,
+      acceptUnauthorized: true,
       auth: { type: 'bearer', token: 'Bearer ClientCertificateCredentialToken' },
       proxy: undefined,
       timeout: 30000
@@ -722,6 +732,7 @@ describe('SouthOIAnalytics with OIA module', () => {
     await expect(south.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
     expect(HTTPRequest).toHaveBeenCalledWith(expect.objectContaining({ href: 'http://localhost:4200/api/optimistik/oibus/status' }), {
       method: 'GET',
+      acceptUnauthorized: false,
       auth: { type: 'bearer', token: 'my oia token' },
       proxy: undefined,
       timeout: 30000
@@ -744,6 +755,7 @@ describe('SouthOIAnalytics with OIA module', () => {
     expect(HTTPRequest).toHaveBeenCalledWith(expect.objectContaining({ href: 'http://localhost:4200/api/my/endpoint' }), {
       method: 'GET',
       query,
+      acceptUnauthorized: false,
       auth: { type: 'bearer', token: 'my oia token' },
       proxy: undefined,
       timeout: 30000
@@ -774,6 +786,7 @@ describe('SouthOIAnalytics with OIA module', () => {
     expect(HTTPRequest).toHaveBeenCalledWith(expect.objectContaining({ href: 'http://localhost:4200/api/my/endpoint' }), {
       method: 'GET',
       query,
+      acceptUnauthorized: false,
       auth: { type: 'bearer', token: 'my oia token' },
       proxy: {
         url: 'http://localhost:8080',
@@ -805,6 +818,7 @@ describe('SouthOIAnalytics with OIA module', () => {
     expect(HTTPRequest).toHaveBeenCalledWith(expect.objectContaining({ href: 'http://localhost:4200/api/my/endpoint' }), {
       method: 'GET',
       query,
+      acceptUnauthorized: false,
       auth: { type: 'bearer', token: 'my oia token' },
       proxy: {
         url: 'http://localhost:8080'
@@ -871,6 +885,7 @@ describe('SouthOIAnalytics with edge cases', () => {
     expect(HTTPRequest).toHaveBeenCalledWith(expect.objectContaining({ href: 'http://localhost:4200/api/my/endpoint' }), {
       method: 'GET',
       query: {},
+      acceptUnauthorized: true,
       auth: { type: 'basic', username: 'username', password: 'password' },
       proxy: undefined,
       timeout: 30000

@@ -49,15 +49,16 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     const host = this.getHost();
     const requestUrl = new URL('/api/optimistik/oibus/status', host);
 
-    const fetchOptions: ReqOptions = {
-      method: 'GET',
-      auth: await this.getAuthorizationOptions(),
-      proxy: this.getProxyOptions(),
-      timeout: this.connector.settings.timeout * 1000
-    };
-
     let response: ReqResponse;
     try {
+      const { proxy, acceptUnauthorized } = this.getProxyOptions();
+      const fetchOptions: ReqOptions = {
+        method: 'GET',
+        auth: await this.getAuthorizationOptions(),
+        proxy,
+        timeout: this.connector.settings.timeout * 1000,
+        acceptUnauthorized
+      };
       response = await HTTPRequest(requestUrl, fetchOptions);
     } catch (error) {
       throw new Error(`Fetch error ${error}`);
@@ -88,17 +89,18 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
 
     let response: ReqResponse;
     const valuesUrl = new URL(endpoint, host);
-    const fetchOptions: ReqOptions = {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      query: { dataSourceId: this.connector.name },
-      body: this.connector.settings.compress ? zlib.gzipSync(JSON.stringify(values)) : JSON.stringify(values),
-      auth: await this.getAuthorizationOptions(),
-      proxy: this.getProxyOptions(),
-      timeout: this.connector.settings.timeout * 1000
-    };
-
     try {
+      const { proxy, acceptUnauthorized } = this.getProxyOptions();
+      const fetchOptions: ReqOptions = {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        query: { dataSourceId: this.connector.name },
+        body: this.connector.settings.compress ? zlib.gzipSync(JSON.stringify(values)) : JSON.stringify(values),
+        auth: await this.getAuthorizationOptions(),
+        proxy,
+        timeout: this.connector.settings.timeout * 1000,
+        acceptUnauthorized
+      };
       response = await HTTPRequest(valuesUrl, fetchOptions);
     } catch (fetchError) {
       throw new OIBusError(`Fail to reach values endpoint ${valuesUrl}. ${fetchError}`, true);
@@ -146,14 +148,16 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
 
     let response: ReqResponse;
     try {
+      const { proxy, acceptUnauthorized } = this.getProxyOptions();
       response = await HTTPRequest(fileUrl, {
         method: 'POST',
         headers: body.getHeaders(),
         query,
         body,
         auth: await this.getAuthorizationOptions(),
-        proxy: this.getProxyOptions(),
-        timeout: this.connector.settings.timeout * 1000
+        proxy,
+        timeout: this.connector.settings.timeout * 1000,
+        acceptUnauthorized
       });
       if (!readStream.closed) {
         readStream.close();
@@ -181,15 +185,16 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
    * Get proxy options if proxy is enabled
    * @throws Error if no proxy url is specified in settings
    */
-  private getProxyOptions(): ReqProxyOptions | undefined {
+  private getProxyOptions(): { proxy: ReqProxyOptions | undefined; acceptUnauthorized: boolean } {
     let settings: {
       useProxy: boolean;
       proxyUrl?: string | null;
       proxyUsername?: string | null;
       proxyPassword?: string | null;
+      acceptUnauthorized: boolean;
     };
-    let scope: string;
 
+    let scope: string;
     // OIAnalytics module
     if (this.connector.settings.useOiaModule) {
       const registrationSettings = this.oIAnalyticsRegistrationRepository.get();
@@ -207,7 +212,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     }
 
     if (!settings.useProxy) {
-      return;
+      return { proxy: undefined, acceptUnauthorized: settings.acceptUnauthorized };
     }
     if (!settings.proxyUrl) {
       throw new Error(`Proxy URL not specified using ${scope}`);
@@ -225,7 +230,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
       };
     }
 
-    return options;
+    return { proxy: options, acceptUnauthorized: settings.acceptUnauthorized };
   }
 
   /**
