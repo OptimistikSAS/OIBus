@@ -112,7 +112,7 @@ export class NorthListComponent implements OnInit {
    * Open a modal to create a North connector
    */
   createNorth() {
-    const modalRef = this.modalService.open(ChooseNorthConnectorTypeModalComponent, { size: 'xl' });
+    const modalRef = this.modalService.open(ChooseNorthConnectorTypeModalComponent, { size: 'xl', backdrop: 'static' });
     modalRef.result.subscribe();
   }
 

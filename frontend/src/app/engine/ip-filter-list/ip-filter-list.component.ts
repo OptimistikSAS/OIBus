@@ -35,7 +35,7 @@ export class IpFilterListComponent implements OnInit {
    * Open a modal to edit an IP filter
    */
   editIpFilter(ipFilter: IPFilterDTO) {
-    const modalRef = this.modalService.open(EditIpFilterModalComponent);
+    const modalRef = this.modalService.open(EditIpFilterModalComponent, { backdrop: 'static' });
     const component: EditIpFilterModalComponent = modalRef.componentInstance;
     component.prepareForEdition(ipFilter);
     this.refreshAfterEditIpFilterModalClosed(modalRef, 'updated');
@@ -45,7 +45,7 @@ export class IpFilterListComponent implements OnInit {
    * Open a modal to create an IP filter
    */
   addIpFilter() {
-    const modalRef = this.modalService.open(EditIpFilterModalComponent);
+    const modalRef = this.modalService.open(EditIpFilterModalComponent, { backdrop: 'static' });
     const component: EditIpFilterModalComponent = modalRef.componentInstance;
     component.prepareForCreation();
     this.refreshAfterEditIpFilterModalClosed(modalRef, 'created');
