@@ -73,7 +73,7 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
     const config: ConnectionAttributes = {
       user: this.connector.settings.username || undefined,
       password: this.connector.settings.password ? await this.encryptionService.decryptText(this.connector.settings.password) : undefined,
-      connectString: `${this.connector.settings.host}:${this.connector.settings.port}/${this.connector.settings.database}`
+      connectString: `${this.connector.settings.host}:${this.connector.settings.port}/${this.connector.settings.database}?connect_timeout=${this.connector.settings.connectionTimeout}ms`
     };
 
     let connection;
@@ -256,7 +256,7 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
     const config: ConnectionAttributes = {
       user: this.connector.settings.username || undefined,
       password: this.connector.settings.password ? await this.encryptionService.decryptText(this.connector.settings.password) : undefined,
-      connectString: `${this.connector.settings.host}:${this.connector.settings.port}/${this.connector.settings.database}`
+      connectString: `${this.connector.settings.host}:${this.connector.settings.port}/${this.connector.settings.database}?connect_timeout=${this.connector.settings.connectionTimeout}ms`
     };
 
     const referenceTimestampField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.useAsReference);
