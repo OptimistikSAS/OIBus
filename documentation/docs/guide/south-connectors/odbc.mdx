@@ -75,7 +75,9 @@ important to ensure that the OIBus agent runs with the appropriate permissions. 
 different user, which can be configured through the service management window.
 :::
 
-The following connection string works with a basic IP21 installation: `Driver={AspenTech SQLplus};HOST=<host>;PORT=10014"`
+The following connection string works with a basic IP21 installation: `Driver={AspenTech SQLplus};HOST=<host>;PORT=10014;MAXROWS=12000000`
+
+In this example, the variable `MAXROWS` is used to customize the maximum number of rows return by IP21.
 
 <ThrottlingSettings />
 <ItemSettings />
