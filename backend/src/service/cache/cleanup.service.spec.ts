@@ -360,7 +360,7 @@ describe('CacheService', () => {
     });
     const result = await service['readCacheMetadataFiles']('folder');
     expect(result).toEqual([]);
-    expect(logger.error).toHaveBeenCalledWith(`Could not read cache metadata files from folder "folder": read error`);
+    expect(logger.debug).toHaveBeenCalledWith(`Could not read cache metadata files from folder "folder": read error`);
   });
 
   it('should read cache metadata files', async () => {

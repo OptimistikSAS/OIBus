@@ -186,7 +186,7 @@ export default class CleanupService {
     try {
       filenames = await fs.readdir(path.join(folderPath, METADATA_SUB_FOLDER));
     } catch (error: unknown) {
-      this.logger.error(`Could not read cache metadata files from folder "${folderPath}": ${(error as Error).message}`);
+      this.logger.debug(`Could not read cache metadata files from folder "${folderPath}": ${(error as Error).message}`);
       return [];
     }
 
