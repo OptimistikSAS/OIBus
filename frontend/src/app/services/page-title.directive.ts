@@ -17,6 +17,6 @@ export class PageTitleDirective implements OnChanges {
   readonly title = input<string>();
 
   ngOnChanges() {
-    this.titleService.setTitle(`OIBus - ${this.title()}`);
+    this.titleService.setTitle(this.title() ? `OIBus - ${this.title()}` : 'OIBus');
   }
 }
