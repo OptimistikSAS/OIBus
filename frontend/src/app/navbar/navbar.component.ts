@@ -24,9 +24,6 @@ export class NavbarComponent implements OnInit {
   info: OIBusInfo | null = null;
 
   ngOnInit() {
-    this.currentUserService.get().subscribe(u => (this.user = u));
-    this.engineService.getInfo().subscribe(u => (this.info = u));
-
     this.currentUserService
       .get()
       .pipe(
