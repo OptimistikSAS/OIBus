@@ -3,7 +3,7 @@ import pino from 'pino';
 import { EventEmitter } from 'node:events';
 import DeferredPromise from '../deferred-promise';
 import { DateTime } from 'luxon';
-import EncryptionService from '../encryption.service';
+import { encryptionService } from '../encryption.service';
 import { OIAnalyticsMessage } from '../../model/oianalytics-message.model';
 import {
   OIAnalyticsCertificateCommandDTO,
@@ -53,7 +53,6 @@ export default class OIAnalyticsMessageService {
     private northRepository: NorthConnectorRepository,
     private historyQueryRepository: HistoryQueryRepository,
     private oIAnalyticsClient: OIAnalyticsClient,
-    private encryptionService: EncryptionService,
     private logger: pino.Logger
   ) {}
 
@@ -253,8 +252,8 @@ export default class OIAnalyticsMessageService {
             endTime: historyQuery.endTime,
             southType: historyQuery.southType,
             northType: historyQuery.northType,
-            northSettings: this.encryptionService.filterSecrets(historyQuery.northSettings, northManifest.settings),
-            southSettings: this.encryptionService.filterSecrets(historyQuery.southSettings, southManifest.settings),
+            northSettings: encryptionService.filterSecrets(historyQuery.northSettings, northManifest.settings),
+            southSettings: encryptionService.filterSecrets(historyQuery.southSettings, southManifest.settings),
             caching: {
               trigger: {
                 scanModeId: historyQuery.caching.trigger.scanModeId,
@@ -281,7 +280,7 @@ export default class OIAnalyticsMessageService {
               id: item.id,
               name: item.name,
               enabled: item.enabled,
-              settings: this.encryptionService.filterSecrets(item.settings, southManifest.items.settings)
+              settings: encryptionService.filterSecrets(item.settings, southManifest.items.settings)
             }))
           }
         };
@@ -410,14 +409,14 @@ export default class OIAnalyticsMessageService {
           name: south.name,
           description: south.description,
           enabled: south.enabled,
-          settings: this.encryptionService.filterSecrets(south.settings, manifest.settings),
+          settings: encryptionService.filterSecrets(south.settings, manifest.settings),
           items: south.items.map(item => ({
             id: item.id,
             name: item.name,
             enabled: item.enabled,
             scanModeId: item.scanModeId,
             scanModeName: null,
-            settings: this.encryptionService.filterSecrets(item.settings, manifest.items.settings)
+            settings: encryptionService.filterSecrets(item.settings, manifest.items.settings)
           }))
         }
       };
@@ -437,7 +436,7 @@ export default class OIAnalyticsMessageService {
           name: north.name,
           description: north.description,
           enabled: north.enabled,
-          settings: this.encryptionService.filterSecrets(north.settings, manifest.settings),
+          settings: encryptionService.filterSecrets(north.settings, manifest.settings),
           caching: {
             trigger: {
               scanModeId: north.caching.trigger.scanModeId,
