@@ -1,7 +1,7 @@
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import ScanModeServiceMock from '../../tests/__mocks__/service/scan-mode-service.mock';
 
-import EncryptionService from '../encryption.service';
+import { encryptionService } from '../encryption.service';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import OIAnalyticsCommandService from './oianalytics-command.service';
@@ -82,7 +82,6 @@ jest.spyOn(process, 'exit').mockImplementation();
 const oIAnalyticsCommandRepository: OIAnalyticsCommandRepository = new OIAnalyticsCommandRepositoryMock();
 const oIAnalyticsRegistrationService: OIAnalyticsRegistrationService = new OIAnalyticsRegistrationServiceMock();
 const oIAnalyticsMessageService: OIAnalyticsMessageService = new OIAnalyticsMessageServiceMock();
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const oIBusService: OIBusService = new OibusServiceMock();
 const scanModeService: ScanModeService = new ScanModeServiceMock();
 const ipFilterService: IPFilterService = new IpFilterServiceMock();
@@ -91,6 +90,10 @@ const southService: SouthService = new SouthServiceMock();
 const northService: NorthService = new NorthServiceMock();
 const historyQueryService: HistoryQueryService = new HistoryQueryServiceMock();
 const oIAnalyticsClient: OIAnalyticsClient = new OianalyticsClientMock();
+
+jest.mock('../encryption.service', () => ({
+  encryptionService: new EncryptionServiceMock('', '')
+}));
 
 const logger: pino.Logger = new PinoLogger();
 const anotherLogger: pino.Logger = new PinoLogger();
@@ -110,7 +113,6 @@ describe('OIAnalytics Command Service', () => {
       oIAnalyticsCommandRepository,
       oIAnalyticsRegistrationService,
       oIAnalyticsMessageService,
-      encryptionService,
       oIAnalyticsClient,
       oIBusService,
       scanModeService,
@@ -1433,7 +1435,6 @@ describe('OIAnalytics Command service with update error', () => {
       oIAnalyticsCommandRepository,
       oIAnalyticsRegistrationService,
       oIAnalyticsMessageService,
-      encryptionService,
       oIAnalyticsClient,
       oIBusService,
       scanModeService,
@@ -1472,7 +1473,6 @@ describe('OIAnalytics Command service with ignoreRemoteUpdate', () => {
       oIAnalyticsCommandRepository,
       oIAnalyticsRegistrationService,
       oIAnalyticsMessageService,
-      encryptionService,
       oIAnalyticsClient,
       oIBusService,
       scanModeService,
@@ -1520,7 +1520,6 @@ describe('OIAnalytics Command service with no commands', () => {
       oIAnalyticsCommandRepository,
       oIAnalyticsRegistrationService,
       oIAnalyticsMessageService,
-      encryptionService,
       oIAnalyticsClient,
       oIBusService,
       scanModeService,
@@ -1557,7 +1556,6 @@ describe('OIAnalytics Command service with no commands and without update', () =
       oIAnalyticsCommandRepository,
       oIAnalyticsRegistrationService,
       oIAnalyticsMessageService,
-      encryptionService,
       oIAnalyticsClient,
       oIBusService,
       scanModeService,

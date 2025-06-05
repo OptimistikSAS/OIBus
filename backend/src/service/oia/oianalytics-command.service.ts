@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import { delay, getOIBusInfo, unzip } from '../utils';
-import EncryptionService from '../encryption.service';
+import { encryptionService } from '../encryption.service';
 import pino from 'pino';
 import { DateTime } from 'luxon';
 import path from 'node:path';
@@ -73,7 +73,6 @@ export default class OIAnalyticsCommandService {
     private oIAnalyticsCommandRepository: OIAnalyticsCommandRepository,
     private oIAnalyticsRegistrationService: OIAnalyticsRegistrationService,
     private oIAnalyticsMessageService: OIAnalyticsMessageService,
-    private encryptionService: EncryptionService,
     private oIAnalyticsClient: OIAnalyticsClient,
     private oIBusService: OIBusService,
     private scanModeService: ScanModeService,
@@ -291,7 +290,7 @@ export default class OIAnalyticsCommandService {
           break;
         case 'update-engine-settings':
           {
-            const privateKey = await this.encryptionService.decryptText(registration.privateCipherKey!);
+            const privateKey = await encryptionService.decryptText(registration.privateCipherKey!);
             await this.executeUpdateEngineSettingsCommand(command, privateKey);
           }
           break;
@@ -327,13 +326,13 @@ export default class OIAnalyticsCommandService {
           break;
         case 'create-south':
           {
-            const privateKey = await this.encryptionService.decryptText(registration.privateCipherKey!);
+            const privateKey = await encryptionService.decryptText(registration.privateCipherKey!);
             await this.executeCreateSouthCommand(command, privateKey);
           }
           break;
         case 'update-south':
           {
-            const privateKey = await this.encryptionService.decryptText(registration.privateCipherKey!);
+            const privateKey = await encryptionService.decryptText(registration.privateCipherKey!);
             await this.executeUpdateSouthCommand(command, privateKey);
           }
           break;
@@ -345,25 +344,25 @@ export default class OIAnalyticsCommandService {
           break;
         case 'test-south-connection':
           {
-            const privateKey = await this.encryptionService.decryptText(registration.privateCipherKey!);
+            const privateKey = await encryptionService.decryptText(registration.privateCipherKey!);
             await this.executeTestSouthConnectionCommand(command, privateKey);
           }
           break;
         case 'test-south-item':
           {
-            const privateKey = await this.encryptionService.decryptText(registration.privateCipherKey!);
+            const privateKey = await encryptionService.decryptText(registration.privateCipherKey!);
             await this.executeTestSouthItemCommand(command, privateKey);
           }
           break;
         case 'create-north':
           {
-            const privateKey = await this.encryptionService.decryptText(registration.privateCipherKey!);
+            const privateKey = await encryptionService.decryptText(registration.privateCipherKey!);
             await this.executeCreateNorthCommand(command, privateKey);
           }
           break;
         case 'update-north':
           {
-            const privateKey = await this.encryptionService.decryptText(registration.privateCipherKey!);
+            const privateKey = await encryptionService.decryptText(registration.privateCipherKey!);
             await this.executeUpdateNorthCommand(command, privateKey);
           }
           break;
@@ -372,19 +371,19 @@ export default class OIAnalyticsCommandService {
           break;
         case 'test-north-connection':
           {
-            const privateKey = await this.encryptionService.decryptText(registration.privateCipherKey!);
+            const privateKey = await encryptionService.decryptText(registration.privateCipherKey!);
             await this.executeTestNorthConnectionCommand(command, privateKey);
           }
           break;
         case 'create-history-query':
           {
-            const privateKey = await this.encryptionService.decryptText(registration.privateCipherKey!);
+            const privateKey = await encryptionService.decryptText(registration.privateCipherKey!);
             await this.executeCreateHistoryQueryCommand(command, privateKey);
           }
           break;
         case 'update-history-query':
           {
-            const privateKey = await this.encryptionService.decryptText(registration.privateCipherKey!);
+            const privateKey = await encryptionService.decryptText(registration.privateCipherKey!);
             await this.executeUpdateHistoryQueryCommand(command, privateKey);
           }
           break;
@@ -396,19 +395,19 @@ export default class OIAnalyticsCommandService {
           break;
         case 'test-history-query-north-connection':
           {
-            const privateKey = await this.encryptionService.decryptText(registration.privateCipherKey!);
+            const privateKey = await encryptionService.decryptText(registration.privateCipherKey!);
             await this.executeTestHistoryQueryNorthConnectionCommand(command, privateKey);
           }
           break;
         case 'test-history-query-south-connection':
           {
-            const privateKey = await this.encryptionService.decryptText(registration.privateCipherKey!);
+            const privateKey = await encryptionService.decryptText(registration.privateCipherKey!);
             await this.executeTestHistoryQuerySouthConnectionCommand(command, privateKey);
           }
           break;
         case 'test-history-query-south-item':
           {
-            const privateKey = await this.encryptionService.decryptText(registration.privateCipherKey!);
+            const privateKey = await encryptionService.decryptText(registration.privateCipherKey!);
             await this.executeTestHistoryQuerySouthItemCommand(command, privateKey);
           }
           break;
@@ -513,7 +512,7 @@ export default class OIAnalyticsCommandService {
 
   private async executeUpdateEngineSettingsCommand(command: OIBusUpdateEngineSettingsCommand, privateKey: string) {
     command.commandContent.logParameters.loki.password = command.commandContent.logParameters.loki.password
-      ? await this.encryptionService.decryptTextWithPrivateKey(command.commandContent.logParameters.loki.password, privateKey)
+      ? await encryptionService.decryptTextWithPrivateKey(command.commandContent.logParameters.loki.password, privateKey)
       : '';
     await this.oIBusService.updateEngineSettings(command.commandContent);
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'Engine settings updated successfully');
@@ -689,7 +688,7 @@ export default class OIAnalyticsCommandService {
     privateKey: string
   ) {
     const manifest = this.southService.getInstalledSouthManifests().find(element => element.id === command.commandContent.type)!;
-    command.commandContent.settings = await this.encryptionService.decryptSecretsWithPrivateKey(
+    command.commandContent.settings = await encryptionService.decryptSecretsWithPrivateKey(
       command.commandContent.settings,
       manifest.settings,
       privateKey
@@ -699,7 +698,7 @@ export default class OIAnalyticsCommandService {
         id: item.id,
         enabled: item.enabled,
         name: item.name,
-        settings: await this.encryptionService.decryptSecretsWithPrivateKey(item.settings, manifest.items.settings, privateKey),
+        settings: await encryptionService.decryptSecretsWithPrivateKey(item.settings, manifest.items.settings, privateKey),
         scanModeId: item.scanModeId,
         scanModeName: item.scanModeName
       }))
@@ -710,12 +709,12 @@ export default class OIAnalyticsCommandService {
     const manifest = this.southService
       .getInstalledSouthManifests()
       .find(element => element.id === command.commandContent.southCommand.type)!;
-    command.commandContent.southCommand.settings = await this.encryptionService.decryptSecretsWithPrivateKey(
+    command.commandContent.southCommand.settings = await encryptionService.decryptSecretsWithPrivateKey(
       command.commandContent.southCommand.settings,
       manifest.settings,
       privateKey
     );
-    command.commandContent.itemCommand.settings = await this.encryptionService.decryptSecretsWithPrivateKey(
+    command.commandContent.itemCommand.settings = await encryptionService.decryptSecretsWithPrivateKey(
       command.commandContent.itemCommand.settings,
       manifest.items.settings,
       privateKey
@@ -793,7 +792,7 @@ export default class OIAnalyticsCommandService {
     privateKey: string
   ) {
     const manifest = this.northService.getInstalledNorthManifests().find(element => element.id === command.commandContent.type)!;
-    command.commandContent.settings = await this.encryptionService.decryptSecretsWithPrivateKey(
+    command.commandContent.settings = await encryptionService.decryptSecretsWithPrivateKey(
       command.commandContent.settings,
       manifest.settings,
       privateKey
@@ -829,22 +828,14 @@ export default class OIAnalyticsCommandService {
   ) {
     const northManifest = this.northService.getInstalledNorthManifests().find(element => element.id === command.northType)!;
     const southManifest = this.southService.getInstalledSouthManifests().find(element => element.id === command.southType)!;
-    command.northSettings = await this.encryptionService.decryptSecretsWithPrivateKey(
-      command.northSettings,
-      northManifest.settings,
-      privateKey
-    );
-    command.southSettings = await this.encryptionService.decryptSecretsWithPrivateKey(
-      command.southSettings,
-      southManifest.settings,
-      privateKey
-    );
+    command.northSettings = await encryptionService.decryptSecretsWithPrivateKey(command.northSettings, northManifest.settings, privateKey);
+    command.southSettings = await encryptionService.decryptSecretsWithPrivateKey(command.southSettings, southManifest.settings, privateKey);
     command.items = await Promise.all(
       command.items.map(async item => ({
         id: item.id,
         enabled: item.enabled,
         name: item.name,
-        settings: await this.encryptionService.decryptSecretsWithPrivateKey(item.settings, southManifest.items.settings, privateKey)
+        settings: await encryptionService.decryptSecretsWithPrivateKey(item.settings, southManifest.items.settings, privateKey)
       }))
     );
   }
@@ -853,12 +844,12 @@ export default class OIAnalyticsCommandService {
     const manifest = this.southService
       .getInstalledSouthManifests()
       .find(element => element.id === command.commandContent.historyCommand.southType)!;
-    command.commandContent.historyCommand.southSettings = await this.encryptionService.decryptSecretsWithPrivateKey(
+    command.commandContent.historyCommand.southSettings = await encryptionService.decryptSecretsWithPrivateKey(
       command.commandContent.historyCommand.southSettings,
       manifest.settings,
       privateKey
     );
-    command.commandContent.itemCommand.settings = await this.encryptionService.decryptSecretsWithPrivateKey(
+    command.commandContent.itemCommand.settings = await encryptionService.decryptSecretsWithPrivateKey(
       command.commandContent.itemCommand.settings,
       manifest.items.settings,
       privateKey

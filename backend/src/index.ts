@@ -104,7 +104,6 @@ const CERT_FOLDER = 'certs';
     oIAnalyticsClient,
     repositoryService.oianalyticsRegistrationRepository,
     repositoryService.engineRepository,
-    encryptionService,
     loggerService.logger!
   );
   oIAnalyticsRegistrationService.start();
@@ -121,7 +120,6 @@ const CERT_FOLDER = 'certs';
     repositoryService.northConnectorRepository,
     repositoryService.historyQueryRepository,
     oIAnalyticsClient,
-    encryptionService,
     loggerService.logger!
   );
 
@@ -209,7 +207,6 @@ const CERT_FOLDER = 'certs';
     repositoryService.oianalyticsCommandRepository,
     oIAnalyticsRegistrationService,
     oIAnalyticsMessageService,
-    encryptionService,
     oIAnalyticsClient,
     oIBusService,
     scanModeService,
@@ -224,7 +221,7 @@ const CERT_FOLDER = 'certs';
     launcherVersion
   );
   await oIAnalyticsCommandService.start();
-  oIAnalyticsMessageService.start(); // Start after command to send the full config with new version after an update
+  oIAnalyticsMessageService.start(); // Start after command to send the full config with a new version after an update
 
   const cleanupService = new CleanupService(
     loggerService.logger!,
