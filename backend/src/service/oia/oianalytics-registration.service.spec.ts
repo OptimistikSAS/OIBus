@@ -1,6 +1,6 @@
 import { RegistrationSettingsCommandDTO } from '../../../shared/model/engine.model';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
-import EncryptionService from '../encryption.service';
+import { encryptionService } from '../encryption.service';
 import pino from 'pino';
 import crypto from 'node:crypto';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
@@ -22,10 +22,13 @@ jest.mock('node:crypto');
 jest.mock('../../web-server/controllers/validators/joi.validator');
 jest.mock('../utils');
 
+jest.mock('../encryption.service', () => ({
+  encryptionService: new EncryptionServiceMock('', '')
+}));
+
 const validator = new JoiValidator();
 const oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository = new OianalyticsRegistrationRepositoryMock();
 const engineRepository: EngineRepository = new EngineRepositoryMock();
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const oIAnalyticsClient: OIAnalyticsClient = new OianalyticsClientMock();
 
 const logger: pino.Logger = new PinoLogger();
@@ -39,14 +42,7 @@ describe('OIAnalytics Registration Service', () => {
     (getOIBusInfo as jest.Mock).mockReturnValue(testData.engine.oIBusInfo);
     (engineRepository.get as jest.Mock).mockReturnValue(testData.engine.settings);
 
-    service = new OIAnalyticsRegistrationService(
-      validator,
-      oIAnalyticsClient,
-      oIAnalyticsRegistrationRepository,
-      engineRepository,
-      encryptionService,
-      logger
-    );
+    service = new OIAnalyticsRegistrationService(validator, oIAnalyticsClient, oIAnalyticsRegistrationRepository, engineRepository, logger);
   });
 
   it('should start with completed registration', () => {

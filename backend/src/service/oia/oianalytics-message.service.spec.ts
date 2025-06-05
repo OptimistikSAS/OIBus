@@ -1,10 +1,9 @@
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import { getOIBusInfo } from '../utils';
-import OIAnalyticsMessageService from './oianalytics-message.service';
 import testData from '../../tests/utils/test-data';
-import EncryptionService from '../encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
+import OIAnalyticsMessageService from './oianalytics-message.service';
 import { flushPromises } from '../../tests/utils/test-utils';
 import { DateTime } from 'luxon';
 import OIAnalyticsMessageRepository from '../../repository/config/oianalytics-message.repository';
@@ -33,6 +32,9 @@ import { OIAnalyticsMessageHistoryQueries } from '../../model/oianalytics-messag
 
 jest.mock('node:fs/promises');
 jest.mock('../utils');
+jest.mock('../encryption.service', () => ({
+  encryptionService: new EncryptionServiceMock('', '')
+}));
 
 const oIAnalyticsMessageRepository: OIAnalyticsMessageRepository = new OIAnalyticsMessageRepositoryMock();
 const oIAnalyticsRegistrationService: OIAnalyticsRegistrationService = new OIAnalyticsRegistrationServiceMock();
@@ -44,7 +46,6 @@ const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const southRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
 const northRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
 const historyQueryRepository: HistoryQueryRepository = new HistoryQueryRepositoryMock();
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const oIAnalyticsClient: OIAnalyticsClient = new OianalyticsClientMock();
 
 const logger: pino.Logger = new PinoLogger();
@@ -81,7 +82,6 @@ describe('OIAnalytics Message Service', () => {
       northRepository,
       historyQueryRepository,
       oIAnalyticsClient,
-      encryptionService,
       logger
     );
   });
@@ -251,7 +251,6 @@ describe('OIAnalytics message service without message', () => {
       northRepository,
       historyQueryRepository,
       oIAnalyticsClient,
-      encryptionService,
       logger
     );
   });
@@ -285,7 +284,6 @@ describe('OIAnalytics message service without completed registration', () => {
       northRepository,
       historyQueryRepository,
       oIAnalyticsClient,
-      encryptionService,
       logger
     );
   });
