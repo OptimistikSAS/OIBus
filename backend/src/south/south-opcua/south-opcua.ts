@@ -373,8 +373,7 @@ export default class SouthOPCUA
                   const result = response.results[i];
                   const associatedItem = resampledItems.find(item => item.nodeId === node.nodeId)!;
 
-                  // Reason of statusCode not equal to zero could be there is no data for the requested data and interval
-                  if (result.statusCode !== StatusCodes.Good) {
+                  if (![StatusCodes.Good, StatusCodes.GoodNoData, StatusCodes.GoodMoreData].includes(result.statusCode)) {
                     if (!logs.has(result.statusCode.name)) {
                       logs.set(result.statusCode.name, {
                         description: result.statusCode.description,
@@ -412,7 +411,11 @@ export default class SouthOPCUA
                   };
                 })
                 .filter(
-                  node => node.hasData && node.status === StatusCodes.Good && node.continuationPoint && node.continuationPoint.length > 0
+                  node =>
+                    node.hasData &&
+                    [StatusCodes.Good, StatusCodes.GoodNoData, StatusCodes.GoodMoreData].includes(node.status) &&
+                    node.continuationPoint &&
+                    node.continuationPoint.length > 0
                 );
 
               this.logger.debug(`Adding ${dataByItems.length} values between ${startTime} and ${endTime}`);
