@@ -764,7 +764,44 @@ describe('SouthMQTT with Basic Auth', () => {
     });
   });
 
-  it('should test item and reject on error', async () => {
+  it('should test item and reject on parse error', async () => {
+    const callback = jest.fn();
+
+    south['createContent'] = jest.fn().mockImplementationOnce(() => {
+      throw new Error('format error');
+    });
+
+    const promise = south.testItem(configuration.items[0], testData.south.itemTestingSettings, callback);
+    await flushPromises(); // flush options async
+    mqttStream.emit('message', 'myTopic', 'myMessage', { dup: false });
+    let error;
+    promise.then().catch(err => (error = err));
+    await flushPromises(); // flush unsubscribe
+    expect(callback).not.toHaveBeenCalled();
+    expect(error).toEqual('Error when testing item my/first/topic while parsing message myMessage: format error');
+  });
+
+  it('should test item and reject on sub error', async () => {
+    const customMqttStream = new CustomStream();
+    customMqttStream.subscribeAsync = jest.fn().mockImplementationOnce(() => {
+      throw new Error('subscribeAsync error');
+    });
+
+    (mqtt.connect as jest.Mock).mockImplementationOnce(() => customMqttStream);
+
+    const callback = jest.fn();
+
+    const promise = south.testItem(configuration.items[0], testData.south.itemTestingSettings, callback);
+    let error;
+    promise.then().catch(err => (error = err));
+    await flushPromises(); // flush options async
+    customMqttStream.emit('connect');
+    await flushPromises(); // flush sub async
+    expect(callback).not.toHaveBeenCalled();
+    expect(error).toEqual('Error while subscribing to my/first/topic: subscribeAsync error');
+  });
+
+  it('should test item and reject on conn error', async () => {
     south.subscribe = jest.fn();
     south.unsubscribe = jest.fn();
     south.disconnect = jest.fn();
