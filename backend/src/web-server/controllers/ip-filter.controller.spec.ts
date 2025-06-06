@@ -14,7 +14,7 @@ const ipFilterController = new IpFilterController(validator, schema);
 
 const ctx = new KoaContextMock();
 
-describe('IP filter controller', () => {
+describe('IP Filter controller', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
   });
@@ -54,7 +54,7 @@ describe('IP filter controller', () => {
 
     await ipFilterController.create(ctx);
 
-    expect(ctx.app.ipFilterService.create).toHaveBeenCalledWith(testData.ipFilters.command, ctx.app.ipFilters);
+    expect(ctx.app.ipFilterService.create).toHaveBeenCalledWith(testData.ipFilters.command);
     expect(ctx.created).toHaveBeenCalledWith(toIPFilterDTO(testData.ipFilters.list[0]));
   });
 
@@ -75,11 +75,7 @@ describe('IP filter controller', () => {
 
     await ipFilterController.update(ctx);
 
-    expect(ctx.app.ipFilterService.update).toHaveBeenCalledWith(
-      testData.ipFilters.list[0].id,
-      testData.ipFilters.command,
-      ctx.app.ipFilters
-    );
+    expect(ctx.app.ipFilterService.update).toHaveBeenCalledWith(testData.ipFilters.list[0].id, testData.ipFilters.command);
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
@@ -100,7 +96,7 @@ describe('IP filter controller', () => {
 
     await ipFilterController.delete(ctx);
 
-    expect(ctx.app.ipFilterService.delete).toHaveBeenCalledWith(testData.ipFilters.list[0].id, ctx.app.ipFilters);
+    expect(ctx.app.ipFilterService.delete).toHaveBeenCalledWith(testData.ipFilters.list[0].id);
     expect(ctx.noContent).toHaveBeenCalled();
   });
 

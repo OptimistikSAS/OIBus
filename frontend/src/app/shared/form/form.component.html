@@ -120,6 +120,7 @@
                     [formDescription]="setting.content"
                     [label]="setting.translationKey"
                     [key]="setting.key"
+                    [allowRowDuplication]="setting.allowRowDuplication ?? false"
                     [formControl]="asFormControl(form().controls[setting.key])"
                   />
                 }

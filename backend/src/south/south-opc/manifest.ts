@@ -79,7 +79,7 @@ const manifest: SouthConnectorManifest = {
       type: 'OibText',
       translationKey: 'south.opc.host',
       defaultValue: 'localhost',
-      class: 'col-7',
+      class: 'col-6',
       newRow: true,
       validators: [{ key: 'required' }],
       displayInViewMode: true
@@ -89,8 +89,18 @@ const manifest: SouthConnectorManifest = {
       type: 'OibText',
       translationKey: 'south.opc.server-name',
       defaultValue: 'Matrikon.OPC.Simulation',
-      class: 'col-5',
+      class: 'col-4',
       newRow: false,
+      validators: [{ key: 'required' }],
+      displayInViewMode: true
+    },
+    {
+      key: 'mode',
+      type: 'OibSelect',
+      options: ['da', 'hda'],
+      translationKey: 'south.opc.mode',
+      defaultValue: 'hda',
+      class: 'col-2',
       validators: [{ key: 'required' }],
       displayInViewMode: true
     }

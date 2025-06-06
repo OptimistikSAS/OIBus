@@ -112,13 +112,14 @@ const manifest: SouthConnectorManifest = {
         key: 'dateTimeFields',
         type: 'OibArray',
         translationKey: 'south.items.oledb.date-time-fields.date-time-field',
+        allowRowDuplication: true,
         content: [
           {
             key: 'fieldName',
             translationKey: 'south.items.oledb.date-time-fields.field-name',
             type: 'OibText',
             defaultValue: '',
-            validators: [{ key: 'required' }],
+            validators: [{ key: 'required' }, { key: 'unique' }],
             displayInViewMode: true
           },
           {
@@ -127,7 +128,7 @@ const manifest: SouthConnectorManifest = {
             type: 'OibCheckbox',
             defaultValue: false,
             displayInViewMode: true,
-            validators: [{ key: 'required' }]
+            validators: [{ key: 'required' }, { key: 'singleTrue' }]
           },
           {
             key: 'type',

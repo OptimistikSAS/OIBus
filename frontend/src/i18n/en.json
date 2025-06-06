@@ -39,7 +39,9 @@
       "must-be-unique": "Must be unique",
       "resolve-pending-changes": "Please validate or discard pending changes before saving",
       "bad-start-date-range": "Start time must be before end time",
-      "bad-end-date-range": "End time must be after start time"
+      "bad-end-date-range": "End time must be after start time",
+      "duplicate-field-names": "Duplicate field names detected",
+      "only-one-reference": "Only one element can be marked as reference"
     },
     "period": {
       "none": "None",
@@ -155,13 +157,29 @@
       "create-scan-mode": "Create scan mode",
       "update-scan-mode": "Update scan mode",
       "delete-scan-mode": "Delete scan mode",
+      "create-ip-filter": "Create IP filter",
+      "update-ip-filter": "Update IP filter",
+      "delete-ip-filter": "Delete IP filter",
+      "create-certificate": "Create certificate",
+      "update-certificate": "Update certificate",
+      "delete-certificate": "Delete certificate",
       "create-south": "Create south connector",
       "update-south": "Update south connector",
       "delete-south": "Delete south connector",
+      "test-south-connection": "Test south connection",
+      "test-south-item": "Test south item",
       "create-or-update-south-items-from-csv": "Load south items from CSV",
       "create-north": "Create north connector",
       "update-north": "Update north connector",
-      "delete-north": "Delete north connector"
+      "delete-north": "Delete north connector",
+      "test-north-connection": "Test north connection",
+      "create-history-query": "Create history query",
+      "update-history-query": "Update history query",
+      "delete-history-query": "Delete history query",
+      "test-history-query-north-connection": "Test north connection",
+      "test-history-query-south-connection": "Test south connection",
+      "test-history-query-south-item": "Test south item",
+      "create-or-update-history-query-south-items-from-csv": "Load south items from CSV"
     },
     "oibus-north-category": {
       "debug": "Debug",
@@ -174,7 +192,8 @@
       "console": "Console",
       "file-writer": "File writer",
       "oianalytics": "OIAnalytics®",
-      "sftp": "SFTP"
+      "sftp": "SFTP",
+      "rest": "REST"
     },
     "oibus-north-type-description": {
       "aws-s3": "Store files in Amazon S3™ (Simple Storage Service)",
@@ -182,7 +201,8 @@
       "console": "Display filenames or values in Console (used for debug)",
       "file-writer": "Write files and data to the output folder",
       "oianalytics": "Send files and values to OIAnalytics®",
-      "sftp": "Upload files and data to an SFTP server"
+      "sftp": "Upload files and data to an SFTP server",
+      "rest": "Upload files to a REST endpoint"
     },
     "oibus-south-category": {
       "iot": "IOT",
@@ -206,7 +226,6 @@
       "osisoft-pi": "OSIsoft PI System™",
       "postgresql": "PostgreSQL",
       "sftp": "SFTP",
-      "slims": "SLIMS™",
       "sqlite": "SQLite™"
     },
     "oibus-south-type-description": {
@@ -225,7 +244,6 @@
       "osisoft-pi": "Establish a connection with an OIBus Agent to access data from a PI System™",
       "postgresql": "Query PostgreSQL databases",
       "sftp": "Read files from a remote SFTP server",
-      "slims": "Connect to SLIMS™ application",
       "sqlite": "Query  SQLite™ databases"
     }
   },
@@ -325,8 +343,13 @@
       "engine": "Engine",
       "registration": "Registration",
       "scan-mode": "Scan mode",
+      "ip-filter": "IP filter",
+      "certificate": "Certificate",
       "north-connector": "North connector",
       "south-connector": "South connector",
+      "test-connector": "Test connectors",
+      "history-query": "History query",
+      "test-history-query": "Test history queries",
       "details-modal": {
         "title": "Command {{ type }}",
         "success-info": "Command completed successfully",
@@ -574,11 +597,23 @@
       "cancel-button": "Cancel",
       "query-start": "Query data from",
       "query-end": "Query data until",
-      "editor-message": {
+      "status-message": {
         "initial": "Test results will appear here",
-        "loading": "Running item...",
-        "error": "Error when testing item",
+        "item-error": "Error when testing item",
+        "display-result-error": "Error when displaying item, please try another view mode",
         "cancel": "Test cancelled"
+      },
+      "view": {
+        "raw": "Raw view",
+        "table": "Table view",
+        "json": "JSON view"
+      },
+      "table": {
+        "timestamp": "Timestamp",
+        "pointId": "Point Id",
+        "value": "Value",
+        "other": "Other",
+        "no-values": "There are no values to display"
       }
     },
     "type": "Type",
@@ -658,7 +693,9 @@
       "ca-file-path": "CA file path",
       "reject-unauthorized": "Reject unauthorized connection",
       "reconnect-period": "Reconnect period",
-      "connect-timeout": "Connect timeout"
+      "connect-timeout": "Connect timeout",
+      "flush-message-timeout": "Delay between flush",
+      "max-number-of-messages": "Number of messages before flush"
     },
     "mssql": {
       "throttling": {
@@ -763,7 +800,12 @@
       "agent-url": "Remote agent URL",
       "retry-interval": "Retry interval",
       "host": "Server URL (from the agent)",
-      "server-name": "Server name"
+      "server-name": "Server name",
+      "mode": {
+        "title": "Mode",
+        "hda": "HDA",
+        "da": "DA"
+      }
     },
     "opcua": {
       "throttling": {
@@ -864,24 +906,6 @@
       "private-key": "Private key",
       "passphrase": "Passphrase",
       "compression": "Compress files"
-    },
-    "slims": {
-      "throttling": {
-        "title": "Throttling",
-        "max-read-interval": "Max read interval",
-        "read-delay": "Read delay",
-        "overlap": "Overlap"
-      },
-      "host": "Host",
-      "port": "Port",
-      "accept-unauthorized": "Accept unauthorized certificate",
-      "timeout": "Connection timeout",
-      "username": "Username",
-      "password": "Password",
-      "use-proxy": "Use proxy",
-      "proxy-url": "Proxy URL",
-      "proxy-username": "Proxy username",
-      "proxy-password": "Proxy password"
     },
     "sqlite": {
       "throttling": {
@@ -1376,52 +1400,6 @@
         "preserve-files": "Preserve files",
         "ignore-modified-date": "Ignorer modification date"
       },
-      "slims": {
-        "endpoint": "Endpoint",
-        "body": "Body",
-        "query-params": {
-          "query-param": "Query params",
-          "key": "Key",
-          "value": "Value"
-        },
-        "date-time-fields": {
-          "date-time-field": "Date time fields",
-          "field-name": "Field name",
-          "use-as-reference": "Reference field",
-          "type": {
-            "title": "Type",
-            "iso-string": "ISO String",
-            "unix-epoch": "UNIX epoch (s)",
-            "unix-epoch-ms": "UNIX epoch (ms)",
-            "string": "String"
-          },
-          "timezone": "Timezone",
-          "format": "Format",
-          "locale": "Locale"
-        },
-        "serialization": {
-          "title": "Serialization",
-          "type": {
-            "title": "Type",
-            "csv": "CSV"
-          },
-          "filename": "Filename",
-          "delimiter": {
-            "title": "Delimiter",
-            "DOT": "Dot .",
-            "SEMI_COLON": "Semi colon ;",
-            "COLON": "Colon :",
-            "COMMA": "Comma ,",
-            "SLASH": "Slash /",
-            "TAB": "Tab",
-            "NON_BREAKING_SPACE": "Space",
-            "PIPE": "Pipe |"
-          },
-          "compression": "Compression",
-          "output-timestamp-format": "Output date time format",
-          "output-timezone": "Output timezone"
-        }
-      },
       "sqlite": {
         "query": "Query",
         "date-time-fields": {
@@ -1515,51 +1493,59 @@
     "type": "Type",
     "general-settings": "General settings",
     "specific-settings": "{{ type }} settings",
-    "cache-settings": {
-      "title": "Cache",
-      "schedule": "Schedule",
-      "send-scan-mode": "Send interval",
-      "retry-interval": "Retry interval",
-      "retry-count": "Retry count",
-      "group-count": "Group count",
-      "max-send-count": "Max send count",
-      "max-size": "Max size",
-      "send-file-immediately": "Send file immediately",
+    "caching": {
+      "title": "Cache settings",
+      "trigger": {
+        "title": "Trigger conditions",
+        "schedule": "Schedule",
+        "number-of-elements": "Number of elements",
+        "number-of-files": "Number of files",
+        "value": "Schedule: {{ scanMode }} / Elements: {{ numberOfElements }} / Files: {{ numberOfFiles }}"
+      },
+      "throttling": {
+        "title": "Throttling",
+        "run-min-delay": "Minimum delay between two transmissions",
+        "max-size": "Maximum storage size (cache + error + archive)",
+        "max-number-of-elements": "Maximum number of elements",
+        "value": "Run min delay: {{ runMinDelay }} ms / Max cache size: {{ maxSize }} MB / Max number of elements: {{ maxNumberOfElements }}"
+      },
+      "error": {
+        "title": "Errors",
+        "retry-interval": "Delay to wait before retry after error",
+        "retry-count": "Number of retry",
+        "retention-duration": "Retention duration for errored data",
+        "value": "Retry interval: {{ retryInterval }} ms / Number of retry: {{ retryCount }} / Retention duration: {{ retentionDuration }} hr"
+      },
+      "archive": {
+        "title": "Archive",
+        "enabled": "Enabled",
+        "retention-duration": "Retention duration for archived data",
+        "value": "Enabled: {{ enabled }} / Retention duration: {{ retentionDuration }} hr"
+      },
       "explore-cache": "Explore cache",
-      "error-files": "Error files",
-      "archive-files": "Archive files",
-      "remove-selected-files": "Remove selected files",
-      "retry-selected-files": "Retry selected files",
-      "error-files-none": "No error file",
-      "archive-files-none": "No archived files",
-      "file-date": "Modification date",
+      "refresh-cache": "Refresh cache",
+      "file-date": "Creation date",
       "file-size": "Size",
       "filename": "Filename",
-      "refresh-cache": "Refresh cache",
-      "cache-files": "Cache files",
-      "cache-files-none": "No cache files",
-      "archive-selected-files": "Archive selected files",
-      "cache-values": "Cache values",
-      "cache-values-none": "No cache values",
-      "values-count": "Nr. of values",
-      "error-values": "Error values",
-      "error-values-none": "No error values",
+      "cache-content": "Cache files",
+      "cache-content-none": "No cache files",
+      "error-content": "Error content",
+      "error-content-none": "No errored content",
+      "archive-content": "Archive content",
+      "archive-content-none": "No archived content",
+      "remove-selected-content": "Remove selected content",
+      "archive-selected-content": "Archive selected content",
+      "error-selected-content": "Error selected content",
+      "retry-selected-content": "Retry selected content",
+      "replay-selected-content": "Replay selected content",
       "actions": "Actions",
-      "view-file-content": "File content",
-      "view-file": "View file",
-      "remove-file": "Remove file",
-      "retry-file": "Retry file",
-      "archive-file": "Archive file",
-      "oibus-time-values": {
-        "title": "Time values"
-      },
-      "raw-files": {
-        "title": "Files"
-      }
-    },
-    "archive-settings": {
-      "enabled": "Enable archive",
-      "retention-duration": "Archive retention duration"
+      "view-content": "File content: {{ filename }}",
+      "view-content-action": "View content",
+      "remove-content-action": "Remove content",
+      "archive-content-action": "Archive content",
+      "error-content-action": "Error content",
+      "retry-content-action": "Retry content",
+      "replay-content-action": "Replay content"
     },
     "subscriptions": {
       "title": "Subscriptions",
@@ -1581,17 +1567,16 @@
       "reset-metrics": "Reset metrics",
       "metrics-reset": "Metrics successfully reset",
       "metrics-start": "Metrics started on {{ start }}",
-      "number-of-values": "Number of values sent",
-      "number-of-files": "Number of files sent",
       "last-connection": "Last connection",
-      "last-file": "Last file sent",
-      "last-value": "Last value sent",
-      "last-value-content": "{{ pointId }} at {{ timestamp }} with content {{ data }}",
-      "last-run-start": "Last run",
-      "last-run-duration": "Last run duration",
-      "cache-size": "Cache folder size",
-      "error-size": "Error folder size",
-      "archive-size": "Archive folder size"
+      "last-content-sent": "Last content sent",
+      "last-run": "Last run",
+      "last-run-value": "{{ lastRunStart }} (in {{ lastRunDuration }})",
+      "cache-size-title": "Cache size",
+      "cache-size-value": "Current size: {{ currentSize }} / Total cached: {{ totalCached }} / Total sent: {{ totalSent }}",
+      "error-size-title": "Error size",
+      "error-size-value": "Current size: {{ currentSize }} / Total errored: {{ totalSize }}",
+      "archive-size-title": "Archive size",
+      "archive-size-value": "Current size: {{ currentSize }} / Total archived: {{ totalSize }}"
     },
     "cache": {
       "title": "Cache content for connector {{ name }}"
@@ -1681,6 +1666,34 @@
       "private-key": "Private key",
       "passphrase": "Passphrase",
       "compression": "Compress files"
+    },
+    "rest": {
+      "endpoint": "Endpoint",
+      "test-path": "Test path",
+      "timeout": "Timeout",
+      "auth-type": {
+        "title": "Authentication type",
+        "bearer": "Bearer Auth"
+      },
+      "auth": {
+        "title": "Authentication type",
+        "basic": "Basic Auth",
+        "bearer": "Bearer Auth",
+        "bearer-token": "Bearer token",
+        "basic-username": "Username",
+        "basic-password": "Password"
+      },
+      "query-params": {
+        "query-param": "Query params",
+        "key": "Key",
+        "value": "Value"
+      },
+      "proxy": {
+        "title": "Use proxy",
+        "url": "Proxy URL",
+        "username": "Proxy username",
+        "password": "Proxy password"
+      }
     }
   },
   "logs": {
@@ -1735,20 +1748,6 @@
     "north": {
       "specific-settings": "{{ type }} settings"
     },
-    "cache-settings": {
-      "title": "Cache",
-      "send-scan-mode": "Send interval",
-      "retry-interval": "Retry interval",
-      "retry-count": "Retry count",
-      "group-count": "Group count",
-      "max-send-count": "Max send count",
-      "max-size": "Max size"
-    },
-    "archive-settings": {
-      "title": "Archive",
-      "enabled": "Enabled",
-      "retention-duration": "Retention duration"
-    },
     "south": {
       "specific-settings": "{{ type }} settings"
     },
@@ -1782,12 +1781,14 @@
         "reset-metrics": "Reset metrics",
         "metrics-reset": "Metrics successfully reset",
         "metrics-start": "Metrics started on {{ start }}",
-        "number-of-values": "Number of values sent",
-        "number-of-files": "Number of files sent",
+        "cache-size-title": "Cache size",
+        "cache-size-value": "Current size: {{ currentSize }} / Total cached: {{ totalCached }} / Total sent: {{ totalSent }}",
+        "error-size-title": "Error size",
+        "error-size-value": "Current size: {{ currentSize }} / Total errored: {{ totalSize }}",
+        "archive-size-title": "Archive size",
+        "archive-size-value": "Current size: {{ currentSize }} / Total archived: {{ totalSize }}",
+        "last-content-sent": "Last content sent",
         "last-connection": "Last connection",
-        "last-file": "Last file sent",
-        "last-value": "Last value sent",
-        "last-value-content": "{{ pointId }} at {{ timestamp }} with content {{ data }}",
         "last-run-start": "Last run",
         "last-run-duration": "Last run duration",
         "data-sent": "Data sent"

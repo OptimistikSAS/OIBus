@@ -1,5 +1,5 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { AsyncPipe, DecimalPipe } from '@angular/common';
+import { ChangeDetectorRef, Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { AsyncPipe } from '@angular/common';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { combineLatest, of, switchMap } from 'rxjs';
@@ -18,7 +18,6 @@ import { HistoryQueryService } from '../../services/history-query.service';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { HistoryQueryItemsComponent } from '../history-query-items/history-query-items.component';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
-import { DurationPipe } from '../../shared/duration.pipe';
 import { ReactiveFormsModule } from '@angular/forms';
 import { HistoryMetricsComponent } from './history-metrics/history-metrics.component';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
@@ -41,12 +40,10 @@ import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe'
   imports: [
     TranslateDirective,
     RouterLink,
-    DecimalPipe,
     BackNavigationDirective,
     HistoryQueryItemsComponent,
     BoxComponent,
     BoxTitleDirective,
-    DurationPipe,
     ReactiveFormsModule,
     HistoryMetricsComponent,
     AsyncPipe,
@@ -243,7 +240,7 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
     if (type === 'south') {
       command = this.southConnectorCommand;
     } else {
-      command = this.northConnectorComand;
+      command = this.northConnectorCommand;
     }
 
     const modalRef = this.modalService.open(TestConnectionResultModalComponent);
@@ -255,12 +252,7 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
     if (!this.historyMetrics || this.historyMetrics.historyMetrics.intervalProgress !== 1) {
       return false;
     }
-
-    const valueProgress = this.historyMetrics.north.numberOfValuesSent / this.historyMetrics.south.numberOfValuesRetrieved;
-    const fileProgress = this.historyMetrics.north.numberOfFilesSent / this.historyMetrics.south.numberOfFilesRetrieved;
-
-    const percentage = valueProgress > 0 ? valueProgress : fileProgress;
-    return percentage === 1;
+    return this.historyMetrics.north.currentCacheSize === 0;
   }
 
   get southConnectorCommand() {
@@ -270,7 +262,7 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
     } as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
   }
 
-  get northConnectorComand() {
+  get northConnectorCommand() {
     return {
       type: this.northManifest!.id,
       settings: this.historyQuery!.northSettings,

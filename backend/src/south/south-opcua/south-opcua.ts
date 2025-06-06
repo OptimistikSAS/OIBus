@@ -1,6 +1,6 @@
 import { Aggregate, Instant, Resampling } from '../../../shared/model/types';
 import SouthConnector from '../south-connector';
-import EncryptionService, { CERT_FILE_NAME, CERT_FOLDER, CERT_PRIVATE_KEY_FILE_NAME } from '../../service/encryption.service';
+import EncryptionService, { encryptionService } from '../../service/encryption.service';
 import pino from 'pino';
 import { DateTime } from 'luxon';
 import fs from 'node:fs/promises';
@@ -23,24 +23,24 @@ import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import { BaseFolders } from '../../model/types';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import {
+  AggregateFunction,
   AttributeIds,
   ClientMonitoredItem,
+  ClientSession,
   ClientSubscription,
+  DataType,
   DataValue,
+  HistoryReadRequest,
+  OPCUACertificateManager,
   OPCUAClient,
   OPCUAClientOptions,
-  UserIdentityInfo,
-  UserTokenType,
-  Variant,
-  AggregateFunction,
-  DataType,
-  HistoryReadRequest,
   ReadProcessedDetails,
   ReadRawModifiedDetails,
   StatusCodes,
   TimestampsToReturn,
-  ClientSession,
-  OPCUACertificateManager
+  UserIdentityInfo,
+  UserTokenType,
+  Variant
 } from 'node-opcua';
 import { HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_opcua_types';
 
@@ -101,7 +101,7 @@ export default class SouthOPCUA
   connectionSettings: ManagedConnectionSettings<ClientSession>;
   connection!: ManagedConnection<ClientSession>;
   private flushTimeout: NodeJS.Timeout | null = null;
-  private bufferedMessages: Array<OIBusTimeValue> = [];
+  private bufferedValues: Array<OIBusTimeValue> = [];
 
   constructor(
     connector: SouthConnectorEntity<SouthOPCUASettings, SouthOPCUAItemSettings>,
@@ -373,8 +373,7 @@ export default class SouthOPCUA
                   const result = response.results[i];
                   const associatedItem = resampledItems.find(item => item.nodeId === node.nodeId)!;
 
-                  // Reason of statusCode not equal to zero could be there is no data for the requested data and interval
-                  if (result.statusCode !== StatusCodes.Good) {
+                  if (![StatusCodes.Good, StatusCodes.GoodNoData, StatusCodes.GoodMoreData].includes(result.statusCode)) {
                     if (!logs.has(result.statusCode.name)) {
                       logs.set(result.statusCode.name, {
                         description: result.statusCode.description,
@@ -412,7 +411,11 @@ export default class SouthOPCUA
                   };
                 })
                 .filter(
-                  node => node.hasData && node.status === StatusCodes.Good && node.continuationPoint && node.continuationPoint.length > 0
+                  node =>
+                    node.hasData &&
+                    [StatusCodes.Good, StatusCodes.GoodNoData, StatusCodes.GoodMoreData].includes(node.status) &&
+                    node.continuationPoint &&
+                    node.continuationPoint.length > 0
                 );
 
               this.logger.debug(`Adding ${dataByItems.length} values between ${startTime} and ${endTime}`);
@@ -723,7 +726,7 @@ export default class SouthOPCUA
       monitoredItem.on('changed', async (dataValue: DataValue) => {
         const parsedValue = this.parseOPCUAValue(item.name, dataValue.value);
         if (parsedValue) {
-          this.bufferedMessages.push({
+          this.bufferedValues.push({
             pointId: item.name,
             timestamp: DateTime.now().toUTC().toISO()!,
             data: {
@@ -731,7 +734,7 @@ export default class SouthOPCUA
               quality: dataValue.statusCode.name
             }
           });
-          if (this.bufferedMessages.length >= this.MAX_NUMBER_OF_MESSAGES) {
+          if (this.bufferedValues.length >= this.MAX_NUMBER_OF_MESSAGES) {
             await this.flushMessages();
           }
         }
@@ -741,18 +744,18 @@ export default class SouthOPCUA
   }
 
   async flushMessages(): Promise<void> {
-    const messageToParse = Array.from(this.bufferedMessages);
-    this.bufferedMessages = [];
+    const valuesToSend = Array.from(this.bufferedValues);
+    this.bufferedValues = [];
     if (this.flushTimeout) {
       clearTimeout(this.flushTimeout);
       this.flushTimeout = null;
     }
-    if (messageToParse.length) {
-      this.logger.debug(`Flushing ${messageToParse.length} messages`);
+    if (valuesToSend.length) {
+      this.logger.debug(`Flushing ${valuesToSend.length} messages`);
       try {
         await this.addContent({
           type: 'time-values',
-          content: messageToParse
+          content: valuesToSend
         });
       } catch (error: unknown) {
         this.logger.error(`Error when flushing messages: ${error}`);
@@ -784,9 +787,8 @@ export default class SouthOPCUA
     await createFolder(path.join(opcuaBaseFolder, 'issuers'));
     await createFolder(path.join(opcuaBaseFolder, 'issuers/certs')); // contains Trusted CA certificates
     await createFolder(path.join(opcuaBaseFolder, 'issuers/crl')); // contains CRL of revoked CA certificates
-
-    await fs.copyFile(path.resolve(`./`, CERT_FOLDER, CERT_PRIVATE_KEY_FILE_NAME), `${opcuaBaseFolder}/own/private/private_key.pem`);
-    await fs.copyFile(path.resolve(`./`, CERT_FOLDER, CERT_FILE_NAME), `${opcuaBaseFolder}/own/certs/client_certificate.pem`);
+    await fs.copyFile(encryptionService.getPrivateKeyPath(), `${opcuaBaseFolder}/own/private/private_key.pem`);
+    await fs.copyFile(encryptionService.getCertPath(), `${opcuaBaseFolder}/own/certs/client_certificate.pem`);
   }
 
   parseOPCUAValue(itemName: string, opcuaVariant: Variant): string {

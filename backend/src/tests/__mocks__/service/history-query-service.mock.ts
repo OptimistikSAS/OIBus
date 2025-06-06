@@ -24,5 +24,12 @@ export default jest.fn().mockImplementation(() => ({
   enableHistoryQueryItem: jest.fn(),
   disableHistoryQueryItem: jest.fn(),
   checkCsvFileImport: jest.fn(),
-  importItems: jest.fn()
+  checkCsvContentImport: jest.fn(),
+  importItems: jest.fn(),
+  searchCacheContent: jest.fn(),
+  getCacheContentFileStream: jest.fn(),
+  removeCacheContent: jest.fn(),
+  removeAllCacheContent: jest.fn(),
+  moveCacheContent: jest.fn(),
+  moveAllCacheContent: jest.fn()
 }));

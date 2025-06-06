@@ -1,18 +1,12 @@
 import fsSync from 'node:fs';
-
 import NorthOIAnalytics from './north-oianalytics';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
-
-import fetch from 'node-fetch';
 import { compress, filesExists } from '../../service/utils';
-
-import ValueCacheServiceMock from '../../tests/__mocks__/service/cache/value-cache-service.mock';
-import FileCacheServiceMock from '../../tests/__mocks__/service/cache/file-cache-service.mock';
-import { NorthOIAnalyticsSettings } from '../../../shared/model/north-settings.model';
-import { createProxyAgent } from '../../service/proxy-agent';
+import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
+import { NorthOIAnalyticsSettings, NorthOIAnalyticsSettingsSpecificSettings } from '../../../shared/model/north-settings.model';
 import { OIBusTimeValue } from '../../../shared/model/engine.model';
 import zlib from 'node:zlib';
 import fs from 'node:fs/promises';
@@ -29,22 +23,28 @@ import CertificateRepositoryMock from '../../tests/__mocks__/repository/config/c
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import OianalyticsRegistrationRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
 import { mockBaseFolders } from '../../tests/utils/test-utils';
+import { HTTPRequest, ReqAuthOptions, ReqOptions, ReqProxyOptions } from '../../service/http-request.utils';
+import { createMockResponse } from '../../tests/__mocks__/undici.mock';
+import FormData from 'form-data';
+import { ClientCertificateCredential, ClientSecretCredential } from '@azure/identity';
+import CacheService from '../../service/cache/cache.service';
+import { OIBusError } from '../../model/engine.model';
 
 jest.mock('node:fs/promises');
 jest.mock('node:fs');
-jest.mock('node:zlib');
+jest.mock('node:zlib', () => ({
+  gzipSync: jest.fn().mockImplementation(data => `gzipped ${data}`)
+}));
 jest.mock('../../service/utils');
-jest.mock('../../service/proxy-agent');
 jest.mock('@azure/identity', () => ({
   ClientSecretCredential: jest.fn().mockImplementation(() => ({
-    getToken: () => ({ token: 'token' })
+    getToken: () => ({ token: 'client-secret-token' })
   })),
   ClientCertificateCredential: jest.fn().mockImplementation(() => ({
-    getToken: () => ({ token: 'token' })
+    getToken: () => ({ token: 'client-certificate-token' })
   }))
 }));
-jest.mock('node-fetch');
-const { Response } = jest.requireActual('node-fetch');
+jest.mock('../../service/http-request.utils');
 
 const logger: pino.Logger = new PinoLogger();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
@@ -52,27 +52,19 @@ const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRep
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const certificateRepository: CertificateRepository = new CertificateRepositoryMock();
 const oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository = new OianalyticsRegistrationRepositoryMock();
-const valueCacheService = new ValueCacheServiceMock();
-const fileCacheService = new FileCacheServiceMock();
+const cacheService: CacheService = new CacheServiceMock();
 
 jest.mock(
-  '../../service/cache/value-cache.service',
+  '../../service/cache/cache.service',
   () =>
     function () {
-      return valueCacheService;
-    }
-);
-jest.mock(
-  '../../service/cache/file-cache.service',
-  () =>
-    function () {
-      return fileCacheService;
+      return cacheService;
     }
 );
 
 const myReadStream = {
   pipe: jest.fn().mockReturnThis(),
-  on: jest.fn().mockImplementation((event, handler) => {
+  on: jest.fn().mockImplementation((_event, handler) => {
     handler();
     return this;
   }),
@@ -81,36 +73,98 @@ const myReadStream = {
 };
 (fsSync.createReadStream as jest.Mock).mockReturnValue(myReadStream);
 
+const timeValues: Array<OIBusTimeValue> = [
+  {
+    pointId: 'pointId1',
+    timestamp: testData.constants.dates.FAKE_NOW,
+    data: { value: '666', quality: 'good' }
+  },
+  {
+    pointId: 'pointId2',
+    timestamp: testData.constants.dates.FAKE_NOW,
+    data: { value: '777', quality: 'good' }
+  }
+];
+
 let north: NorthOIAnalytics;
 let configuration: NorthConnectorEntity<NorthOIAnalyticsSettings>;
-describe('NorthOIAnalytics without proxy', () => {
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    configuration = JSON.parse(JSON.stringify(testData.north.list[0]));
-    configuration.settings = {
+
+const hostname = 'https://hostname';
+const testCases: Array<[string, NorthOIAnalyticsSettings]> = [
+  [
+    'without proxy',
+    {
       useOiaModule: false,
       timeout: 30,
       compress: false,
       specificSettings: {
-        host: 'https://hostname/',
+        host: hostname,
         acceptUnauthorized: false,
         authentication: 'basic',
         accessKey: 'anyUser',
         secretKey: 'anypass',
         useProxy: false
       }
-    };
+    }
+  ],
+  [
+    'with proxy',
+    {
+      useOiaModule: false,
+      timeout: 30,
+      compress: false,
+      specificSettings: {
+        host: hostname,
+        acceptUnauthorized: false,
+        authentication: 'basic',
+        accessKey: 'anyUser',
+        secretKey: 'anypass',
+        useProxy: true,
+        proxyUrl: 'http://localhost',
+        proxyUsername: 'my username',
+        proxyPassword: 'my password'
+      }
+    }
+  ]
+];
+
+describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
+  let authOptions: ReqAuthOptions;
+  let proxyOptions: { proxy?: ReqProxyOptions };
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    configuration = JSON.parse(JSON.stringify(testData.north.list[0]));
+    configuration.settings = settings as NorthOIAnalyticsSettings;
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
     (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
-
+    (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(200));
     (filesExists as jest.Mock).mockReturnValue(true);
+
+    authOptions = {
+      type: 'basic',
+      username: settings.specificSettings!.accessKey!,
+      password: settings.specificSettings!.secretKey
+    };
+    proxyOptions = settings.specificSettings!.useProxy
+      ? {
+          proxy: {
+            url: settings.specificSettings?.proxyUrl,
+            auth: {
+              type: 'url',
+              username: settings.specificSettings?.proxyUsername,
+              password: settings.specificSettings?.proxyPassword
+            }
+          } as ReqProxyOptions
+        }
+      : {};
+
     north = new NorthOIAnalytics(
       configuration,
       encryptionService,
       northConnectorRepository,
       scanModeRepository,
-
       certificateRepository,
       oIAnalyticsRegistrationRepository,
       logger,
@@ -119,27 +173,93 @@ describe('NorthOIAnalytics without proxy', () => {
     await north.start();
   });
 
+  afterEach(() => {
+    cacheService.cacheSizeEventEmitter.removeAllListeners();
+  });
+
+  it('should test connection', async () => {
+    const expectedReqOptions: ReqOptions = {
+      method: 'GET',
+      acceptUnauthorized: false,
+      auth: authOptions,
+      timeout: 30000,
+      ...proxyOptions
+    };
+
+    await expect(north.testConnection()).resolves.not.toThrow();
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${hostname}/api/optimistik/oibus/status` }),
+      expectedReqOptions
+    );
+  });
+
   it('should manage timeout error on test connection', async () => {
-    (fetch as unknown as jest.Mock).mockImplementationOnce(() => {
+    const expectedReqOptions: ReqOptions = {
+      method: 'GET',
+      acceptUnauthorized: false,
+      auth: authOptions,
+      timeout: 30000,
+      ...proxyOptions
+    };
+
+    (HTTPRequest as jest.Mock).mockImplementationOnce(() => {
       throw new Error('Timeout error');
     });
 
     await expect(north.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
-    expect(fetch).toHaveBeenCalledWith('https://hostname/api/optimistik/oibus/status', {
-      headers: { authorization: 'Basic YW55VXNlcjphbnlwYXNz' },
+
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${hostname}/api/optimistik/oibus/status` }),
+      expectedReqOptions
+    );
+  });
+
+  it('should manage bad response on test connection', async () => {
+    const expectedReqOptions: ReqOptions = {
       method: 'GET',
-      timeout: 30000
-    });
-    expect(createProxyAgent).toHaveBeenCalledWith(
-      false,
-      `${configuration.settings.specificSettings!.host}/api/optimistik/oibus/status`,
-      null,
-      configuration.settings.specificSettings!.acceptUnauthorized
+      acceptUnauthorized: false,
+      auth: authOptions,
+      timeout: 30000,
+      ...proxyOptions
+    };
+
+    (HTTPRequest as jest.Mock).mockResolvedValueOnce(createMockResponse(400, 'statusText'));
+
+    await expect(north.testConnection()).rejects.toThrow(`HTTP request failed with status code 400 and message: "statusText"`);
+
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${hostname}/api/optimistik/oibus/status` }),
+      expectedReqOptions
     );
   });
 
   it('should properly handle values', async () => {
     await north.start();
+
+    const expectedReqOptions: ReqOptions = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      query: { dataSourceId: configuration.name },
+      body: JSON.stringify(timeValues),
+      acceptUnauthorized: false,
+      auth: authOptions,
+      timeout: 30000,
+      ...proxyOptions
+    };
+
+    await north.handleValues(timeValues);
+
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${hostname}/api/oianalytics/oibus/time-values` }),
+      expectedReqOptions
+    );
+  });
+
+  it('should properly handle values and compress them', async () => {
+    const newSettings = structuredClone(north['connector'].settings);
+    newSettings.compress = true;
+    north['connector'].settings = newSettings;
+
     const values: Array<OIBusTimeValue> = [
       {
         pointId: 'pointId1',
@@ -152,565 +272,295 @@ describe('NorthOIAnalytics without proxy', () => {
         data: { value: '777', quality: 'good' }
       }
     ];
-    (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response('Ok')));
 
-    const expectedFetchOptions = {
+    const expectedReqOptions: ReqOptions = {
       method: 'POST',
-      headers: {
-        authorization: `Basic ${Buffer.from(
-          `${configuration.settings.specificSettings!.accessKey}:${configuration.settings.specificSettings!.secretKey}`
-        ).toString('base64')}`,
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
+      query: { dataSourceId: configuration.name },
+      body: `gzipped ${JSON.stringify(values)}`,
+      acceptUnauthorized: false,
+      auth: authOptions,
       timeout: 30000,
-      body: JSON.stringify([
-        {
-          pointId: 'pointId1',
-          timestamp: testData.constants.dates.FAKE_NOW,
-          data: { value: '666', quality: 'good' }
-        },
-        {
-          pointId: 'pointId2',
-          timestamp: testData.constants.dates.FAKE_NOW,
-          data: { value: '777', quality: 'good' }
-        }
-      ]),
-      agent: undefined
+      ...proxyOptions
     };
 
-    await north.handleContent({ type: 'time-values', content: values });
+    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify(timeValues));
 
-    expect(fetch).toHaveBeenCalledWith(
-      `${configuration.settings.specificSettings!.host}/api/oianalytics/oibus/time-values?dataSourceId=${encodeURI(configuration.name)}`,
-      expectedFetchOptions
+    await north.handleContent({
+      contentFile: '/path/to/file/example-123.json',
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'time-values',
+      source: 'south',
+      options: {}
+    });
+
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${hostname}/api/oianalytics/oibus/time-values/compressed` }),
+      expectedReqOptions
     );
+    expect(zlib.gzipSync).toHaveBeenCalledWith(JSON.stringify(values));
   });
 
   it('should properly throw fetch error with values', async () => {
     await north.start();
-    const values: Array<OIBusTimeValue> = [
-      {
-        pointId: 'pointId1',
-        timestamp: testData.constants.dates.FAKE_NOW,
-        data: { value: '666', quality: 'good' }
-      }
-    ];
-    (fetch as unknown as jest.Mock).mockImplementation(() => {
-      throw new Error('error');
-    });
+    const error = new Error('error');
+    (HTTPRequest as jest.Mock).mockRejectedValueOnce(error);
 
-    let err;
-    try {
-      await north.handleValues(values);
-    } catch (error) {
-      err = error;
-    }
-    expect(err).toEqual({
-      message: `Fail to reach values endpoint ${
-        configuration.settings.specificSettings!.host
-      }/api/oianalytics/oibus/time-values?dataSourceId=${encodeURI(configuration.name)}. ${new Error('error')}`,
-      retry: true
-    });
+    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify(timeValues));
+    await expect(
+      north.handleContent({
+        contentFile: '/path/to/file/example-123.json',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'time-values',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow(new OIBusError(`Fail to reach values endpoint ${hostname}/api/oianalytics/oibus/time-values. ${error}`, true));
   });
 
   it('should properly throw error on values bad response', async () => {
     await north.start();
-    const values: Array<OIBusTimeValue> = [
-      {
-        pointId: 'pointId1',
-        timestamp: testData.constants.dates.FAKE_NOW,
-        data: { value: '666', quality: 'good' }
-      }
-    ];
-    (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve({ ok: false, status: 400, statusText: 'statusText' }));
+    (HTTPRequest as jest.Mock).mockResolvedValueOnce(createMockResponse(400, 'statusText'));
 
-    const expectedFetchOptions = {
+    const expectedReqOptions = {
       method: 'POST',
       headers: {
-        authorization: `Basic ${Buffer.from(
-          `${configuration.settings.specificSettings!.accessKey}:${configuration.settings.specificSettings!.secretKey}`
-        ).toString('base64')}`,
         'Content-Type': 'application/json'
       },
+      query: { dataSourceId: configuration.name },
+      body: JSON.stringify(timeValues),
+      acceptUnauthorized: false,
+      auth: authOptions,
       timeout: 30000,
-      body: JSON.stringify(values),
-      agent: undefined
+      ...proxyOptions
     };
 
-    let err;
-    try {
-      await north.handleValues(values);
-    } catch (error) {
-      err = error;
-    }
+    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify(timeValues));
+    await expect(
+      north.handleContent({
+        contentFile: '/path/to/file/example-123.json',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'time-values',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow(new OIBusError(`Error 400: "statusText"`, false));
 
-    expect(err).toEqual({
-      message: `Error 400: statusText`,
-      retry: false
-    });
-
-    expect(fetch).toHaveBeenCalledWith(
-      `${configuration.settings.specificSettings!.host}/api/oianalytics/oibus/time-values?dataSourceId=${encodeURI(configuration.name)}`,
-      expectedFetchOptions
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${hostname}/api/oianalytics/oibus/time-values` }),
+      expectedReqOptions
     );
   });
 
   it('should properly handle files', async () => {
-    const filePath = '/path/to/file/example.file';
-    (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response('Ok')));
-
-    const expectedFetchOptions = {
+    const expectedReqOptions = {
       method: 'POST',
       headers: {
-        authorization: `Basic ${Buffer.from(
-          `${configuration.settings.specificSettings!.accessKey}:${configuration.settings.specificSettings!.secretKey}`
-        ).toString('base64')}`,
         'content-type': expect.stringContaining('multipart/form-data; boundary=')
       },
+      query: { dataSourceId: configuration.name },
+      body: expect.any(FormData),
+      acceptUnauthorized: false,
+      auth: authOptions,
       timeout: 30000,
-      body: expect.anything(),
-      agent: undefined
+      ...proxyOptions
     };
 
-    await north.handleContent({ type: 'raw', filePath });
+    await north.handleContent({
+      contentFile: 'path/to/file/example.file',
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'raw',
+      source: 'south',
+      options: {}
+    });
 
-    expect(fetch).toHaveBeenCalledWith(
-      `${configuration.settings.specificSettings!.host}/api/oianalytics/file-uploads?dataSourceId=${encodeURI(configuration.name)}`,
-      expectedFetchOptions
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${hostname}/api/oianalytics/file-uploads` }),
+      expectedReqOptions
     );
+  });
+
+  it('should properly handle files and compress them', async () => {
+    const newSettings = structuredClone(north['connector'].settings);
+    newSettings.compress = true;
+    north['connector'].settings = newSettings;
+
+    const expectedReqOptions = {
+      method: 'POST',
+      headers: {
+        'content-type': expect.stringContaining('multipart/form-data; boundary=')
+      },
+      query: { dataSourceId: configuration.name },
+      body: expect.any(FormData),
+      acceptUnauthorized: false,
+      auth: authOptions,
+      timeout: 30000,
+      ...proxyOptions
+    };
+    (filesExists as jest.Mock).mockReturnValueOnce(true).mockReturnValueOnce(false);
+
+    await north.handleContent({
+      contentFile: '/path/to/file/example-123456.file',
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'raw',
+      source: 'south',
+      options: {}
+    });
+
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${hostname}/api/oianalytics/file-uploads` }),
+      expectedReqOptions
+    );
+    expect(compress).toHaveBeenCalledWith(
+      '/path/to/file/example-123456.file',
+      path.resolve('/path', 'to', 'file', 'example.file-123456.gz')
+    );
+    expect(fs.unlink).toHaveBeenCalledWith(path.resolve('/path', 'to', 'file', 'example.file-123456.gz'));
   });
 
   it('should properly throw error when file does not exist', async () => {
     const filePath = '/path/to/file/example.file';
-
     (filesExists as jest.Mock).mockReturnValueOnce(false);
-    let err;
-    try {
-      await north.handleFile(filePath);
-    } catch (error) {
-      err = error;
-    }
-    expect(err).toEqual(new Error(`File ${filePath} does not exist`));
+    await expect(north.handleFile(filePath)).rejects.toThrow(new Error(`File ${filePath} does not exist`));
   });
 
   it('should properly throw fetch error with files', async () => {
     const filePath = '/path/to/file/example.file';
-    (fetch as unknown as jest.Mock).mockImplementation(() => {
-      throw new Error('error');
-    });
+    const error = new Error('error');
+    (HTTPRequest as jest.Mock).mockRejectedValueOnce(error);
 
-    let err;
-    try {
-      await north.handleFile(filePath);
-    } catch (error) {
-      err = error;
-    }
-    expect(err).toEqual({
-      message: `Fail to reach file endpoint ${configuration.settings.specificSettings!.host}/api/oianalytics/file-uploads?dataSourceId=${encodeURI(
-        configuration.name
-      )}. ${new Error('error')}`,
-      retry: true
-    });
+    await expect(north.handleFile(filePath)).rejects.toThrow(
+      new OIBusError(`Fail to reach file endpoint ${hostname}/api/oianalytics/file-uploads. ${error}`, true)
+    );
   });
 
   it('should properly throw error on file bad response', async () => {
-    await north.start();
-
     const filePath = '/path/to/file/example.file';
-    (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve({ ok: false, status: 501, statusText: 'statusText' }));
+    (HTTPRequest as jest.Mock).mockResolvedValueOnce(createMockResponse(501, 'statusText'));
 
-    const expectedFetchOptions = {
+    const expectedReqOptions = {
       method: 'POST',
       headers: {
-        authorization: `Basic ${Buffer.from(
-          `${configuration.settings.specificSettings!.accessKey}:${configuration.settings.specificSettings!.secretKey}`
-        ).toString('base64')}`,
         'content-type': expect.stringContaining('multipart/form-data; boundary=')
       },
+      query: { dataSourceId: configuration.name },
+      body: expect.any(FormData),
+      acceptUnauthorized: false,
+      auth: authOptions,
       timeout: 30000,
-      body: expect.anything(),
-      agent: undefined
+      ...proxyOptions
     };
 
-    await expect(north.handleFile(filePath)).rejects.toThrow({
-      message: `Error 501: statusText`,
-      retry: false
-    } as unknown as Error);
+    await expect(north.handleFile(filePath)).rejects.toThrow(new OIBusError(`Error 501: "statusText"`, false));
 
-    expect(fetch).toHaveBeenCalledWith(
-      `${configuration.settings.specificSettings!.host}/api/oianalytics/file-uploads?dataSourceId=${encodeURI(configuration.name)}`,
-      expectedFetchOptions
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${hostname}/api/oianalytics/file-uploads` }),
+      expectedReqOptions
     );
   });
-});
 
-describe('NorthOIAnalytics without proxy but with acceptUnauthorized', () => {
-  const fakeAgent = { rejectUnauthorized: false };
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    configuration = JSON.parse(JSON.stringify(testData.north.list[0]));
-    configuration.settings = {
-      useOiaModule: false,
-      timeout: 30,
-      compress: false,
-      specificSettings: {
-        host: 'https://hostname',
-        acceptUnauthorized: true,
-        accessKey: 'anyUser',
-        authentication: 'aad-client-secret',
-        tenantId: 'tenantId',
-        clientId: 'clientId',
-        clientSecret: 'clientSecret',
-        scope: 'api://my-scope/.default',
-        secretKey: null,
-        useProxy: false
-      }
-    };
-    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
-    (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
+  it('should not get auth options without accessKey', async () => {
+    const newSettings = structuredClone(north['connector'].settings);
+    newSettings.specificSettings!.accessKey = undefined;
+    north['connector'].settings = newSettings;
 
-    (filesExists as jest.Mock).mockReturnValue(true);
-    (createProxyAgent as jest.Mock).mockReturnValue(fakeAgent);
-    north = new NorthOIAnalytics(
-      configuration,
-      encryptionService,
-      northConnectorRepository,
-      scanModeRepository,
-
-      certificateRepository,
-      oIAnalyticsRegistrationRepository,
-      logger,
-      mockBaseFolders(testData.north.list[0].id)
-    );
-    await north.start();
-  });
-
-  it('should properly handle values', async () => {
-    await north.start();
-    const values: Array<OIBusTimeValue> = [
-      {
-        pointId: 'pointId1',
-        timestamp: testData.constants.dates.FAKE_NOW,
-        data: { value: '666', quality: 'good' }
-      }
-    ];
-    (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response('Ok')));
-
-    const expectedFetchOptions = {
+    const expectedReqOptions = {
       method: 'POST',
       headers: {
-        authorization: `Bearer token`,
-        'Content-Type': 'application/json'
-      },
-      timeout: 30000,
-      body: JSON.stringify(values),
-      agent: fakeAgent
-    };
-
-    await north.handleValues(values);
-
-    expect(fetch).toHaveBeenCalledWith(
-      `${configuration.settings.specificSettings!.host}/api/oianalytics/oibus/time-values?dataSourceId=${encodeURI(configuration.name)}`,
-      expectedFetchOptions
-    );
-    expect(createProxyAgent).toHaveBeenCalledWith(
-      false,
-      `${configuration.settings.specificSettings!.host}/api/oianalytics/oibus/time-values?dataSourceId=${encodeURI(configuration.name)}`,
-      null,
-      true
-    );
-  });
-
-  it('should properly handle files', async () => {
-    const filePath = '/path/to/file/example.file';
-    (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response('Ok')));
-
-    const expectedFetchOptions = {
-      method: 'POST',
-      headers: {
-        authorization: `Bearer token`,
         'content-type': expect.stringContaining('multipart/form-data; boundary=')
       },
-      body: expect.anything(),
-      agent: fakeAgent,
-      timeout: 30000
+      query: { dataSourceId: configuration.name },
+      body: expect.any(FormData),
+      acceptUnauthorized: false,
+      auth: undefined, // no auth options given
+      timeout: 30000,
+      ...proxyOptions
     };
 
-    await north.handleFile(filePath);
-
-    expect(fetch).toHaveBeenCalledWith(
-      `${configuration.settings.specificSettings!.host}/api/oianalytics/file-uploads?dataSourceId=${encodeURI(configuration.name)}`,
-      expectedFetchOptions
-    );
-    expect(createProxyAgent).toHaveBeenCalledWith(
-      false,
-      `${configuration.settings.specificSettings!.host}/api/oianalytics/file-uploads?dataSourceId=${encodeURI(configuration.name)}`,
-      null,
-      true
-    );
-  });
-});
-
-describe('NorthOIAnalytics with proxy', () => {
-  const fakeAgent = { rejectUnauthorized: false };
-
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-
-    (filesExists as jest.Mock).mockReturnValue(true);
-    (createProxyAgent as jest.Mock).mockReturnValue(fakeAgent);
-    configuration = JSON.parse(JSON.stringify(testData.north.list[0]));
-    configuration.settings = {
-      useOiaModule: false,
-      timeout: 30,
-      compress: false,
-      specificSettings: {
-        host: 'https://hostname',
-        acceptUnauthorized: false,
-        authentication: 'aad-client-secret',
-        tenantId: 'tenantId',
-        clientId: 'clientId',
-        clientSecret: 'clientSecret',
-        scope: 'api://my-scope/.default',
-        useProxy: true,
-        proxyUrl: 'http://localhost',
-        proxyUsername: 'my username',
-        proxyPassword: 'my password'
-      }
-    };
-    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
-    (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
-
-    north = new NorthOIAnalytics(
-      configuration,
-      encryptionService,
-      northConnectorRepository,
-      scanModeRepository,
-
-      certificateRepository,
-      oIAnalyticsRegistrationRepository,
-      logger,
-      mockBaseFolders(testData.north.list[0].id)
-    );
-    await north.start();
-  });
-
-  it('should manage timeout error on test connection', async () => {
-    (fetch as unknown as jest.Mock).mockImplementationOnce(() => {
-      throw new Error('Timeout error');
+    await north.handleContent({
+      contentFile: 'path/to/file/example.file',
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'raw',
+      source: 'south',
+      options: {}
     });
 
-    await expect(north.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
-    expect(fetch).toHaveBeenCalledWith('https://hostname/api/optimistik/oibus/status', {
-      headers: { authorization: `Bearer token` },
-      method: 'GET',
-      agent: fakeAgent,
-      timeout: 30000
-    });
-    expect(createProxyAgent).toHaveBeenCalledWith(
-      true,
-      `${configuration.settings.specificSettings!.host}/api/optimistik/oibus/status`,
-      {
-        url: configuration.settings.specificSettings!.proxyUrl!,
-        username: configuration.settings.specificSettings!.proxyUsername!,
-        password: configuration.settings.specificSettings!.proxyPassword
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${hostname}/api/oianalytics/file-uploads` }),
+      expectedReqOptions
+    );
+  });
+
+  it('should remove trailing slash from host', async () => {
+    const newSettings = structuredClone(north['connector'].settings);
+    newSettings.specificSettings!.host = hostname + '/';
+    north['connector'].settings = newSettings;
+
+    const expectedReqOptions = {
+      method: 'POST',
+      headers: {
+        'content-type': expect.stringContaining('multipart/form-data; boundary=')
       },
-      configuration.settings.specificSettings!.acceptUnauthorized
+      query: { dataSourceId: configuration.name },
+      body: expect.any(FormData),
+      acceptUnauthorized: false,
+      auth: authOptions,
+      timeout: 30000,
+      ...proxyOptions
+    };
+
+    await north.handleContent({
+      contentFile: 'path/to/file/example.file',
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'raw',
+      source: 'south',
+      options: {}
+    });
+
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${hostname}/api/oianalytics/file-uploads` }),
+      expectedReqOptions
     );
   });
 
-  it('should test connection', async () => {
-    (fetch as unknown as jest.Mock)
-      .mockReturnValueOnce(
-        Promise.resolve({
-          ok: true,
-          status: 200
+  if (settings.specificSettings?.useProxy) {
+    it('should throw error when proxy url is not defined', async () => {
+      const newSettings = structuredClone(north['connector'].settings);
+      newSettings.specificSettings!.proxyUrl = undefined;
+      north['connector'].settings = newSettings;
+
+      await expect(
+        north.handleContent({
+          contentFile: 'path/to/file/example.file',
+          contentSize: 1234,
+          numberOfElement: 1,
+          createdAt: '2020-02-02T02:02:02.222Z',
+          contentType: 'raw',
+          source: 'south',
+          options: {}
         })
-      )
-      .mockReturnValueOnce(
-        Promise.resolve({
-          ok: false,
-          status: 401,
-          statusText: 'Unauthorized'
-        })
+      ).rejects.toThrow(
+        `Fail to reach file endpoint ${hostname}/api/oianalytics/file-uploads. ${new Error('Proxy URL not specified using specific settings')}`
       );
-
-    await expect(north.testConnection()).resolves.not.toThrow();
-    await expect(north.testConnection()).rejects.toThrow(`HTTP request failed with status code 401 and message: Unauthorized`);
-  });
-
-  it('should properly handle values', async () => {
-    (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response('Ok')));
-    await north.handleValues([]);
-    expect(createProxyAgent).toHaveBeenCalledWith(
-      true,
-      `${configuration.settings.specificSettings!.host}/api/oianalytics/oibus/time-values?dataSourceId=${encodeURI(configuration.name)}`,
-      {
-        url: configuration.settings.specificSettings!.proxyUrl!,
-        username: configuration.settings.specificSettings!.proxyUsername!,
-        password: configuration.settings.specificSettings!.proxyPassword
-      },
-      configuration.settings.specificSettings!.acceptUnauthorized
-    );
-  });
-
-  it('should properly handle files', async () => {
-    const filePath = '/path/to/file/example.file';
-    (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response('Ok')));
-    await north.handleFile(filePath);
-    expect(createProxyAgent).toHaveBeenCalledWith(
-      true,
-      `${configuration.settings.specificSettings!.host}/api/oianalytics/file-uploads?dataSourceId=${encodeURI(configuration.name)}`,
-      {
-        url: configuration.settings.specificSettings!.proxyUrl!,
-        username: configuration.settings.specificSettings!.proxyUsername!,
-        password: configuration.settings.specificSettings!.proxyPassword
-      },
-      configuration.settings.specificSettings!.acceptUnauthorized
-    );
-  });
-});
-
-describe('NorthOIAnalytics with proxy but without proxy password', () => {
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-
-    (filesExists as jest.Mock).mockReturnValue(true);
-    (createProxyAgent as jest.Mock).mockReturnValue({});
-    configuration = JSON.parse(JSON.stringify(testData.north.list[0]));
-    configuration.settings = {
-      useOiaModule: false,
-      timeout: 30,
-      compress: true,
-      specificSettings: {
-        host: 'https://hostname',
-        acceptUnauthorized: false,
-        authentication: 'basic',
-        accessKey: 'anyUser',
-        secretKey: null,
-        useProxy: true,
-        proxyUrl: 'http://localhost',
-        proxyUsername: 'my username',
-        proxyPassword: null
-      }
-    };
-    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
-    (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
-
-    north = new NorthOIAnalytics(
-      configuration,
-      encryptionService,
-      northConnectorRepository,
-      scanModeRepository,
-
-      certificateRepository,
-      oIAnalyticsRegistrationRepository,
-      logger,
-      mockBaseFolders(testData.north.list[0].id)
-    );
-    await north.start();
-  });
-
-  it('should manage timeout error on test connection', async () => {
-    (fetch as unknown as jest.Mock).mockImplementationOnce(() => {
-      throw new Error('Timeout error');
     });
-
-    await expect(north.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
-    expect(createProxyAgent).toHaveBeenCalledWith(
-      true,
-      `${configuration.settings.specificSettings!.host}/api/optimistik/oibus/status`,
-      {
-        url: configuration.settings.specificSettings!.proxyUrl!,
-        username: configuration.settings.specificSettings!.proxyUsername!,
-        password: configuration.settings.specificSettings!.proxyPassword
-      },
-      configuration.settings.specificSettings!.acceptUnauthorized
-    );
-  });
-
-  it('should properly handle values', async () => {
-    (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response('Ok')));
-    await north.handleValues([]);
-    expect(createProxyAgent).toHaveBeenCalledWith(
-      true,
-      `${configuration.settings.specificSettings!.host}/api/oianalytics/oibus/time-values/compressed?dataSourceId=${encodeURI(configuration.name)}`,
-      {
-        url: configuration.settings.specificSettings!.proxyUrl!,
-        username: configuration.settings.specificSettings!.proxyUsername!,
-        password: null
-      },
-      configuration.settings.specificSettings!.acceptUnauthorized
-    );
-    expect(zlib.gzipSync).toHaveBeenCalledWith(JSON.stringify([]));
-  });
-
-  it('should properly handle files and compress it', async () => {
-    const filePath = '/path/to/file/example-123456.file';
-    (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response('Ok')));
-    (filesExists as jest.Mock).mockReturnValueOnce(true).mockReturnValueOnce(false);
-    await north.handleFile(filePath);
-    expect(createProxyAgent).toHaveBeenCalledWith(
-      true,
-      `${configuration.settings.specificSettings!.host}/api/oianalytics/file-uploads?dataSourceId=${encodeURI(configuration.name)}`,
-      {
-        url: configuration.settings.specificSettings!.proxyUrl!,
-        username: configuration.settings.specificSettings!.proxyUsername!,
-        password: null
-      },
-      configuration.settings.specificSettings!.acceptUnauthorized
-    );
-    expect(compress).toHaveBeenCalledWith(filePath, path.resolve('/path', 'to', 'file', 'example.file-123456.gz'));
-    expect(fs.unlink).toHaveBeenCalledWith(path.resolve('/path', 'to', 'file', 'example.file-123456.gz'));
-  });
-
-  it('should properly handle files and not compress it', async () => {
-    const filePath = '/path/to/file/example-123456.file';
-    (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response('Ok')));
-    (filesExists as jest.Mock).mockReturnValueOnce(true).mockReturnValueOnce(true);
-    await north.handleFile(filePath);
-    expect(createProxyAgent).toHaveBeenCalledWith(
-      true,
-      `${configuration.settings.specificSettings!.host}/api/oianalytics/file-uploads?dataSourceId=${encodeURI(configuration.name)}`,
-      {
-        url: configuration.settings.specificSettings!.proxyUrl!,
-        username: configuration.settings.specificSettings!.proxyUsername!,
-        password: null
-      },
-      configuration.settings.specificSettings!.acceptUnauthorized
-    );
-    expect(compress).not.toHaveBeenCalled();
-    expect(fs.unlink).toHaveBeenCalledWith(path.resolve('/path', 'to', 'file', 'example.file-123456.gz'));
-  });
-
-  it('should properly handle files without secret key', async () => {
-    const filePath = '/path/to/file/example-123456.file';
-    (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response('Ok')));
-
-    const expectedFetchOptions = {
-      method: 'POST',
-      headers: {
-        authorization: `Basic ${Buffer.from(`${configuration.settings.specificSettings!.accessKey}:`).toString('base64')}`,
-        'content-type': expect.stringContaining('multipart/form-data; boundary=')
-      },
-      body: expect.anything(),
-      timeout: configuration.settings.timeout * 1000,
-      agent: {}
-    };
-
-    await north.handleFile(filePath);
-
-    expect(fetch).toHaveBeenCalledWith(
-      `${configuration.settings.specificSettings!.host}/api/oianalytics/file-uploads?dataSourceId=${encodeURI(configuration.name)}`,
-      expectedFetchOptions
-    );
-  });
+  }
 });
 
-describe('NorthOIAnalytics with aad-certificate', () => {
+describe('NorthOIAnalytics with Azure Active Directory', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
@@ -720,49 +570,175 @@ describe('NorthOIAnalytics with aad-certificate', () => {
       timeout: 30,
       compress: false,
       specificSettings: {
-        host: 'https://hostname/',
+        host: hostname,
         acceptUnauthorized: false,
-        authentication: 'aad-certificate',
-        certificateId: 'certificateId',
-        useProxy: false
-      }
+        useProxy: false,
+        tenantId: 'tenantId',
+        clientId: 'clientId'
+      } as NorthOIAnalyticsSettingsSpecificSettings
     };
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
     (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
-
     (filesExists as jest.Mock).mockReturnValue(true);
-    north = new NorthOIAnalytics(
-      configuration,
-      encryptionService,
-      northConnectorRepository,
-      scanModeRepository,
-
-      certificateRepository,
-      oIAnalyticsRegistrationRepository,
-      logger,
-      mockBaseFolders(testData.north.list[0].id)
-    );
-    await north.start();
+    (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(200));
   });
 
-  it('should add header with aad-certificate', async () => {
-    (certificateRepository.findById as jest.Mock).mockReturnValueOnce({
-      name: 'name',
-      description: 'description',
-      publicKey: 'public key',
-      privateKey: 'private key',
-      certificate: 'cert',
-      expiry: '2020-10-10T00:00:00.000Z'
+  describe('Azure Active Directory using certificate', () => {
+    beforeEach(async () => {
+      configuration.settings.specificSettings = {
+        ...configuration.settings.specificSettings,
+        authentication: 'aad-certificate',
+        certificateId: 'certificateId'
+      } as NorthOIAnalyticsSettingsSpecificSettings;
+
+      north = new NorthOIAnalytics(
+        configuration,
+        encryptionService,
+        northConnectorRepository,
+        scanModeRepository,
+        certificateRepository,
+        oIAnalyticsRegistrationRepository,
+        logger,
+        mockBaseFolders(testData.north.list[0].id)
+      );
+      await north.start();
     });
-    const result = await north.getNetworkSettings('/endpoint');
-    expect(result.headers).toEqual({ authorization: 'Bearer token' });
-    expect(result.host).toEqual(configuration.settings.specificSettings!.host);
+
+    it('should add auth option with aad-certificate', async () => {
+      (certificateRepository.findById as jest.Mock).mockReturnValueOnce({
+        name: 'name',
+        description: 'description',
+        publicKey: 'public key',
+        privateKey: 'private key',
+        certificate: 'cert',
+        expiry: '2020-10-10T00:00:00.000Z'
+      });
+
+      const expectedReqOptions = {
+        method: 'POST',
+        headers: {
+          'content-type': expect.stringContaining('multipart/form-data; boundary=')
+        },
+        query: { dataSourceId: configuration.name },
+        body: expect.any(FormData),
+        acceptUnauthorized: false,
+        auth: {
+          type: 'bearer',
+          token: 'Bearer client-certificate-token'
+        } as ReqAuthOptions,
+        timeout: 30000,
+        proxy: undefined
+      };
+
+      await north.handleContent({
+        contentFile: 'path/to/file/example.file',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'raw',
+        source: 'south',
+        options: {}
+      });
+
+      const { tenantId, clientId } = configuration.settings.specificSettings!;
+      expect(ClientCertificateCredential).toHaveBeenCalledWith(tenantId, clientId, {
+        certificate: `cert\nprivate key`
+      });
+      expect(HTTPRequest).toHaveBeenCalledWith(
+        expect.objectContaining({ href: `${hostname}/api/oianalytics/file-uploads` }),
+        expectedReqOptions
+      );
+    });
+
+    it('should not auth option with aad-certificate when cert not found', async () => {
+      (certificateRepository.findById as jest.Mock).mockReturnValueOnce(null);
+
+      const expectedReqOptions = {
+        method: 'POST',
+        headers: {
+          'content-type': expect.stringContaining('multipart/form-data; boundary=')
+        },
+        query: { dataSourceId: configuration.name },
+        body: expect.any(FormData),
+        acceptUnauthorized: false,
+        auth: undefined,
+        timeout: 30000,
+        proxy: undefined
+      };
+
+      await north.handleContent({
+        contentFile: 'path/to/file/example.file',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'raw',
+        source: 'south',
+        options: {}
+      });
+
+      expect(ClientCertificateCredential).not.toHaveBeenCalled();
+      expect(HTTPRequest).toHaveBeenCalledWith(
+        expect.objectContaining({ href: `${hostname}/api/oianalytics/file-uploads` }),
+        expectedReqOptions
+      );
+    });
   });
 
-  it('should not add header with aad-certificate when cert not found', async () => {
-    (certificateRepository.findById as jest.Mock).mockReturnValueOnce(null);
-    const result = await north.getNetworkSettings('/endpoint');
-    expect(result.headers).toEqual({});
+  describe('Azure Active Directory using client secret', () => {
+    beforeEach(async () => {
+      configuration.settings.specificSettings = {
+        ...configuration.settings.specificSettings,
+        authentication: 'aad-client-secret',
+        clientSecret: 'clientSecret'
+      } as NorthOIAnalyticsSettingsSpecificSettings;
+
+      north = new NorthOIAnalytics(
+        configuration,
+        encryptionService,
+        northConnectorRepository,
+        scanModeRepository,
+        certificateRepository,
+        oIAnalyticsRegistrationRepository,
+        logger,
+        mockBaseFolders(testData.north.list[0].id)
+      );
+      await north.start();
+    });
+
+    it('should add auth option with aad-client-secret', async () => {
+      const expectedReqOptions = {
+        method: 'POST',
+        headers: {
+          'content-type': expect.stringContaining('multipart/form-data; boundary=')
+        },
+        query: { dataSourceId: configuration.name },
+        body: expect.any(FormData),
+        acceptUnauthorized: false,
+        auth: {
+          type: 'bearer',
+          token: 'Bearer client-secret-token'
+        } as ReqAuthOptions,
+        timeout: 30000,
+        proxy: undefined
+      };
+
+      await north.handleContent({
+        contentFile: 'path/to/file/example.file',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'raw',
+        source: 'south',
+        options: {}
+      });
+
+      const { tenantId, clientId, clientSecret } = configuration.settings.specificSettings!;
+      expect(ClientSecretCredential).toHaveBeenCalledWith(tenantId, clientId, clientSecret);
+      expect(HTTPRequest).toHaveBeenCalledWith(
+        expect.objectContaining({ href: `${hostname}/api/oianalytics/file-uploads` }),
+        expectedReqOptions
+      );
+    });
   });
 });
 
@@ -780,13 +756,13 @@ describe('NorthOIAnalytics with OIA module', () => {
     };
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
     (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
-
     (filesExists as jest.Mock).mockReturnValue(true);
+    (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(200));
 
     registrationSettings = {
       id: 'id',
-      host: 'http://localhost:4200',
-      token: 'my oia token',
+      host: hostname,
+      token: 'my-oia-token',
       status: 'REGISTERED',
       activationDate: '2020-01-01T00:00:00Z',
       useProxy: false,
@@ -812,59 +788,215 @@ describe('NorthOIAnalytics with OIA module', () => {
     await north.start();
   });
 
+  afterEach(() => {
+    cacheService.cacheSizeEventEmitter.removeAllListeners();
+  });
+
   it('should use oia module', async () => {
-    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce(registrationSettings);
-    const result = await north.getNetworkSettings('/endpoint');
-    expect(result.headers).toEqual({ authorization: 'Bearer my oia token' });
-    expect(result.host).toEqual(registrationSettings.host);
-    expect(createProxyAgent).toHaveBeenCalledWith(
-      registrationSettings.useProxy,
-      `${registrationSettings.host}/endpoint`,
-      null,
-      registrationSettings.acceptUnauthorized
+    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(registrationSettings);
+
+    const expectedReqOptions = {
+      method: 'POST',
+      headers: {
+        'content-type': expect.stringContaining('multipart/form-data; boundary=')
+      },
+      query: { dataSourceId: configuration.name },
+      body: expect.any(FormData),
+      acceptUnauthorized: false,
+      auth: {
+        type: 'bearer',
+        token: 'my-oia-token'
+      } as ReqAuthOptions,
+      timeout: 30000,
+      proxy: undefined
+    };
+
+    await north.handleContent({
+      contentFile: 'path/to/file/example.file',
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'raw',
+      source: 'south',
+      options: {}
+    });
+
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${hostname}/api/oianalytics/file-uploads` }),
+      expectedReqOptions
     );
   });
 
   it('should use oia module with proxy', async () => {
-    registrationSettings.host = 'http://localhost:4200/';
+    registrationSettings.host = hostname;
     registrationSettings.useProxy = true;
     registrationSettings.proxyUrl = 'http://localhost:8080';
     registrationSettings.proxyUsername = 'user';
     registrationSettings.proxyPassword = 'pass';
-    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce(registrationSettings);
-    const result = await north.getNetworkSettings('/endpoint');
-    expect(result.headers).toEqual({ authorization: 'Bearer my oia token' });
-    expect(result.host).toEqual('http://localhost:4200');
-    expect(createProxyAgent).toHaveBeenCalledWith(
-      registrationSettings.useProxy,
-      `${registrationSettings.host}/endpoint`,
-      { url: registrationSettings.proxyUrl, username: registrationSettings.proxyUsername, password: registrationSettings.proxyPassword },
-      registrationSettings.acceptUnauthorized
+    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(registrationSettings);
+
+    const expectedReqOptions = {
+      method: 'POST',
+      headers: {
+        'content-type': expect.stringContaining('multipart/form-data; boundary=')
+      },
+      query: { dataSourceId: configuration.name },
+      body: expect.any(FormData),
+      acceptUnauthorized: false,
+      auth: {
+        type: 'bearer',
+        token: 'my-oia-token'
+      } as ReqAuthOptions,
+      timeout: 30000,
+      proxy: {
+        url: 'http://localhost:8080',
+        auth: {
+          type: 'url',
+          username: 'user',
+          password: 'pass'
+        }
+      } as ReqProxyOptions
+    };
+
+    await north.handleContent({
+      contentFile: 'path/to/file/example.file',
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'raw',
+      source: 'south',
+      options: {}
+    });
+
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${hostname}/api/oianalytics/file-uploads` }),
+      expectedReqOptions
     );
   });
 
   it('should use oia module with proxy without user', async () => {
-    registrationSettings.host = 'http://localhost:4200/';
+    registrationSettings.host = hostname;
     registrationSettings.useProxy = true;
     registrationSettings.proxyUrl = 'http://localhost:8080';
-    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce(registrationSettings);
-    const result = await north.getNetworkSettings('/endpoint');
-    expect(result.headers).toEqual({ authorization: 'Bearer my oia token' });
-    expect(result.host).toEqual('http://localhost:4200');
-    expect(createProxyAgent).toHaveBeenCalledWith(
-      registrationSettings.useProxy,
-      `${registrationSettings.host}/endpoint`,
-      { url: registrationSettings.proxyUrl, username: null, password: null },
-      registrationSettings.acceptUnauthorized
+    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(registrationSettings);
+
+    const expectedReqOptions = {
+      method: 'POST',
+      headers: {
+        'content-type': expect.stringContaining('multipart/form-data; boundary=')
+      },
+      query: { dataSourceId: configuration.name },
+      body: expect.any(FormData),
+      acceptUnauthorized: false,
+      auth: {
+        type: 'bearer',
+        token: 'my-oia-token'
+      } as ReqAuthOptions,
+      timeout: 30000,
+      proxy: {
+        url: 'http://localhost:8080'
+      } as ReqProxyOptions
+    };
+
+    await north.handleContent({
+      contentFile: 'path/to/file/example.file',
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'raw',
+      source: 'south',
+      options: {}
+    });
+
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${hostname}/api/oianalytics/file-uploads` }),
+      expectedReqOptions
     );
   });
 
   it('should not use oia module if not registered', async () => {
     registrationSettings.status = 'PENDING';
-    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce(registrationSettings);
+    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(registrationSettings);
+    await expect(
+      north.handleContent({
+        contentFile: 'path/to/file/example.file',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'raw',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow(new Error('OIBus not registered in OIAnalytics'));
+  });
 
-    await expect(north.getNetworkSettings('/endpoint')).rejects.toThrow(new Error('OIBus not registered in OIAnalytics'));
+  it('should not use proxy when oia module is not registered', async () => {
+    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockImplementation(() => {
+      const { stack } = new Error();
+      if (stack?.includes('NorthOIAnalytics.getProxyOptions')) {
+        return null;
+      }
+      return registrationSettings;
+    });
 
-    expect(createProxyAgent).not.toHaveBeenCalled();
+    await expect(
+      north.handleContent({
+        contentFile: 'path/to/file/example.file',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'raw',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow(
+      `Fail to reach file endpoint ${hostname}/api/oianalytics/file-uploads. ${new Error('OIBus not registered in OIAnalytics')}`
+    );
+  });
+
+  it('should not use auth options when oia module is not registered', async () => {
+    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockImplementation(() => {
+      const { stack } = new Error();
+      if (stack?.includes('NorthOIAnalytics.getAuthorizationOptions')) {
+        return null;
+      }
+      return registrationSettings;
+    });
+
+    await expect(
+      north.handleContent({
+        contentFile: 'path/to/file/example.file',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'raw',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow(
+      `Fail to reach file endpoint ${hostname}/api/oianalytics/file-uploads. ${new Error('OIBus not registered in OIAnalytics')}`
+    );
+  });
+
+  it('should not use host when oia module is not registered', async () => {
+    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockImplementation(() => {
+      const { stack } = new Error();
+      if (stack?.includes('NorthOIAnalytics.getHost')) {
+        return null;
+      }
+      return registrationSettings;
+    });
+
+    await expect(
+      north.handleContent({
+        contentFile: 'path/to/file/example.file',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'raw',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow(new Error('OIBus not registered in OIAnalytics'));
   });
 });

@@ -13,10 +13,11 @@ Query data from an Oracle Database™.
 To configure the SQL connector for querying an Oracle Server, provide the following details:
 
 - **Thick mode**: When enabled, uses the Oracle Client Library to access the database. More details [here](https://node-oracledb.readthedocs.io/en/latest/user_guide/introduction.html#node-oracledb-thick-mode-architecture).
-  - **Oracle Client Library**: Path to the installed Oracle Client Library on the host machine.
+  - **Oracle Client Library**: Path to the installed Oracle Client Library on the host machine. Specify the repository
+  that contains the library, for example `C:\oracle\instantclient_23_5`
 - **Host**: Address of the Oracle server.
 - **Port**: Server port (default is `1521`).
-- **Connection timeout**: Maximum time allowed to establish the connection.
+- **Connection timeout**: Maximum time allowed to establish the connection (in ms).
 - **Database**: Name of the target database.
 - **Username**: Username for authentication.
 - **Password**: Corresponding password.

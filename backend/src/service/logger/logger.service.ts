@@ -5,7 +5,7 @@ import pino from 'pino';
 import { ScopeType } from '../../../shared/model/engine.model';
 
 import FileCleanupService from './file-cleanup.service';
-import EncryptionService from '../encryption.service';
+import { encryptionService } from '../encryption.service';
 import { EngineSettings } from '../../model/engine.model';
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
 
@@ -25,10 +25,7 @@ class LoggerService {
   logger: pino.Logger | null = null;
   fileCleanUpService: FileCleanupService | null = null;
 
-  constructor(
-    private readonly encryptionService: EncryptionService,
-    private readonly folder: string
-  ) {}
+  constructor(private readonly folder: string) {}
 
   /**
    * Run the appropriate pino log transports according to the configuration
@@ -72,7 +69,7 @@ class LoggerService {
             basicAuth: {
               username: engineSettings.logParameters.loki.username,
               password: engineSettings.logParameters.loki.password
-                ? await this.encryptionService.decryptText(engineSettings.logParameters.loki.password)
+                ? await encryptionService.decryptText(engineSettings.logParameters.loki.password)
                 : ''
             },
             labels: { name: engineSettings.name }
@@ -87,26 +84,22 @@ class LoggerService {
     }
 
     if (registration && registration.status === 'REGISTERED' && engineSettings.logParameters.oia.level !== 'silent') {
-      try {
-        targets.push({
-          target: path.join(__dirname, './oianalytics-transport.js'),
-          options: {
-            interval: engineSettings.logParameters.oia.interval,
-            host: registration.host,
-            token: registration.token ? await this.encryptionService.decryptText(registration.token) : '',
-            useProxy: registration.useProxy,
-            proxyUrl: registration.proxyUrl,
-            proxyUsername: registration.proxyUsername,
-            proxyPassword: registration.proxyPassword ? await this.encryptionService.decryptText(registration.proxyPassword) : '',
-            acceptUnauthorized: registration.acceptUnauthorized
-          },
-          level: engineSettings.logParameters.oia.level
-        });
-      } catch (error) {
-        // In case of bad decryption, an error is triggered, so instead of leaving the process, the error will just be
-        // logged in the console and loki won't be activated
-        console.error(error);
-      }
+      targets.push({
+        target: path.join(__dirname, './oianalytics-transport.js'),
+        options: {
+          interval: engineSettings.logParameters.oia.interval,
+          host: registration.host,
+          token: registration.token!,
+          useProxy: registration.useProxy,
+          proxyUrl: registration.proxyUrl,
+          proxyUsername: registration.proxyUsername,
+          proxyPassword: registration.proxyPassword,
+          acceptUnauthorized: registration.acceptUnauthorized,
+          cryptoSettings: encryptionService.cryptoSettings,
+          certsFolder: encryptionService.certsFolder
+        },
+        level: engineSettings.logParameters.oia.level
+      });
     }
 
     this.logger = pino({

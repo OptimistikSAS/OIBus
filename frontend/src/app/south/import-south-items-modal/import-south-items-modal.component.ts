@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ObservableState } from '../../shared/save-button/save-button.component';
-import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
@@ -26,6 +26,7 @@ const PAGE_SIZE = 20;
 })
 export class ImportSouthItemsModalComponent {
   private modal = inject(NgbActiveModal);
+  private translateService = inject(TranslateService);
 
   state = new ObservableState();
   southItemSchema: SouthConnectorItemManifest | null = null;
@@ -79,6 +80,10 @@ export class ImportSouthItemsModalComponent {
   }
 
   getFieldValue(element: any, field: string): string {
+    const foundFormControl = this.southItemSchema!.settings.find(formControl => formControl.key === field);
+    if (foundFormControl && element[field] && foundFormControl.type === 'OibSelect') {
+      return this.translateService.instant(foundFormControl.translationKey + '.' + element[field]);
+    }
     return element[field];
   }
 

@@ -1,15 +1,14 @@
 import fs from 'node:fs';
+import fsAsync from 'node:fs/promises';
 import path from 'node:path';
-
+import { HttpsProxyAgent } from 'https-proxy-agent';
+import { NodeHttpHandler } from '@smithy/node-http-handler';
 import { HeadBucketCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { NodeHttpHandler } from '@aws-sdk/node-http-handler';
-
 import NorthConnector from '../north-connector';
 import EncryptionService from '../../service/encryption.service';
 import pino from 'pino';
 import { NorthAmazonS3Settings } from '../../../shared/model/north-settings.model';
-import { createProxyAgent } from '../../service/proxy-agent';
-import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
+import { CacheMetadata, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { DateTime } from 'luxon';
 import csv from 'papaparse';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
@@ -43,20 +42,18 @@ export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings>
   }
 
   async prepareConnection(): Promise<void> {
-    const proxy = createProxyAgent(
-      this.connector.settings.useProxy,
-      'https://',
-      this.connector.settings.useProxy
-        ? {
-            url: this.connector.settings.proxyUrl!,
-            username: this.connector.settings.proxyUsername!,
-            password: this.connector.settings.proxyPassword
-              ? await this.encryptionService.decryptText(this.connector.settings.proxyPassword)
-              : null
-          }
-        : null,
-      false
-    );
+    let proxyAgent;
+    if (this.connector.settings.useProxy) {
+      let proxyUrl = this.connector.settings.proxyUrl!;
+      if (this.connector.settings.proxyUsername && this.connector.settings.proxyPassword) {
+        // Insert username and password into the proxy URL
+        const url = new URL(proxyUrl);
+        url.username = this.connector.settings.proxyUsername;
+        url.password = await this.encryptionService.decryptText(this.connector.settings.proxyPassword);
+        proxyUrl = url.toString();
+      }
+      proxyAgent = new HttpsProxyAgent(proxyUrl);
+    }
 
     this.s3 = new S3Client({
       region: this.connector.settings.region,
@@ -66,22 +63,23 @@ export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings>
           ? await this.encryptionService.decryptText(this.connector.settings.secretKey)
           : ''
       },
-      requestHandler: proxy
+      requestHandler: proxyAgent
         ? new NodeHttpHandler({
-            httpAgent: proxy,
-            httpsAgent: proxy
+            httpsAgent: proxyAgent
           })
         : undefined
     });
   }
 
-  async handleContent(data: OIBusContent): Promise<void> {
-    switch (data.type) {
+  override async handleContent(cacheMetadata: CacheMetadata): Promise<void> {
+    switch (cacheMetadata.contentType) {
       case 'raw':
-        return this.handleFile(data.filePath);
+        return this.handleFile(cacheMetadata.contentFile);
 
       case 'time-values':
-        return this.handleValues(data.content);
+        return this.handleValues(
+          JSON.parse(await fsAsync.readFile(cacheMetadata.contentFile, { encoding: 'utf-8' })) as Array<OIBusTimeValue>
+        );
     }
   }
 

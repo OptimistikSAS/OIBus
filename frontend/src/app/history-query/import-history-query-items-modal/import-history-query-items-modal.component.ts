@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ObservableState } from '../../shared/save-button/save-button.component';
-import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { SouthConnectorItemManifest } from '../../../../../backend/shared/model/south-connector.model';
 import { groupFormControlsByRow } from '../../shared/form-utils';
 import { OibFormControl } from '../../../../../backend/shared/model/form.model';
@@ -21,6 +21,7 @@ const PAGE_SIZE = 20;
 })
 export class ImportHistoryQueryItemsModalComponent {
   private modal = inject(NgbActiveModal);
+  private translateService = inject(TranslateService);
 
   state = new ObservableState();
   southItemSchema: SouthConnectorItemManifest | null = null;
@@ -67,6 +68,10 @@ export class ImportHistoryQueryItemsModalComponent {
   }
 
   getFieldValue(element: any, field: string): string {
+    const foundFormControl = this.southItemSchema!.settings.find(formControl => formControl.key === field);
+    if (foundFormControl && element[field] && foundFormControl.type === 'OibSelect') {
+      return this.translateService.instant(foundFormControl.translationKey + '.' + element[field]);
+    }
     return element[field];
   }
 

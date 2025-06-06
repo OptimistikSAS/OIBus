@@ -12,14 +12,31 @@ import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.mo
 import OIAnalyticsCommandRepository from './oianalytics-command.repository';
 import { createPageFromArray } from '../../../shared/model/types';
 import {
+  OIAnalyticsFetchCreateCertificateCommandDTO,
+  OIAnalyticsFetchCreateHistoryQueryCommandDTO,
+  OIAnalyticsFetchCreateIPFilterCommandDTO,
   OIAnalyticsFetchCreateNorthConnectorCommandDTO,
+  OIAnalyticsFetchCreateOrUpdateHistoryQuerySouthItemsFromCSVCommandDTO,
   OIAnalyticsFetchCreateOrUpdateSouthConnectorItemsFromCSVCommandDTO,
   OIAnalyticsFetchCreateSouthConnectorCommandDTO,
+  OIAnalyticsFetchDeleteCertificateCommandDTO,
+  OIAnalyticsFetchDeleteHistoryQueryCommandDTO,
+  OIAnalyticsFetchDeleteIPFilterCommandDTO,
   OIAnalyticsFetchDeleteNorthConnectorCommandDTO,
   OIAnalyticsFetchDeleteScanModeCommandDTO,
   OIAnalyticsFetchDeleteSouthConnectorCommandDTO,
   OIAnalyticsFetchRestartEngineCommandDTO,
+  OIAnalyticsFetchTestHistoryQueryNorthConnectionCommandDTO,
+  OIAnalyticsFetchTestHistoryQuerySouthConnectionCommandDTO,
+  OIAnalyticsFetchTestHistoryQuerySouthItemConnectionCommandDTO,
+  OIAnalyticsFetchTestNorthConnectionCommandDTO,
+  OIAnalyticsFetchTestSouthConnectionCommandDTO,
+  OIAnalyticsFetchTestSouthItemCommandDTO,
+  OIAnalyticsFetchUpdateCertificateCommandDTO,
   OIAnalyticsFetchUpdateEngineSettingsCommandDTO,
+  OIAnalyticsFetchUpdateHistoryQueryCommandDTO,
+  OIAnalyticsFetchUpdateHistoryQueryStatusCommandDTO,
+  OIAnalyticsFetchUpdateIPFilterCommandDTO,
   OIAnalyticsFetchUpdateNorthConnectorCommandDTO,
   OIAnalyticsFetchUpdateRegistrationSettingsCommandDTO,
   OIAnalyticsFetchUpdateScanModeCommandDTO,
@@ -39,6 +56,13 @@ import { User } from '../../model/user.model';
 import argon2 from 'argon2';
 import HistoryQueryRepository from './history-query.repository';
 import { HistoryQueryEntity, HistoryQueryItemEntity } from '../../model/histor-query.model';
+import { NorthConnectorCommandDTO } from '../../../shared/model/north-connector.model';
+import {
+  SouthConnectorCommandDTO,
+  SouthConnectorItemCommandDTO,
+  SouthConnectorItemTestingSettings
+} from '../../../shared/model/south-connector.model';
+import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO } from '../../../shared/model/history-query.model';
 
 jest.mock('../../service/utils');
 jest.mock('argon2');
@@ -614,6 +638,64 @@ describe('Repository with populated database', () => {
       });
     });
 
+    it('should create a test south connection command', () => {
+      const command: OIAnalyticsFetchTestSouthConnectionCommandDTO = {
+        id: 'testSouthConnectionCommandId',
+        targetVersion: 'v3.5.0',
+        type: 'test-south-connection',
+        southConnectorId: 'southId',
+        commandContent: {} as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>
+      };
+      repository.create(command);
+
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
+        status: 'RETRIEVED',
+        ack: false,
+        targetVersion: command.targetVersion,
+        retrievedDate: testData.constants.dates.FAKE_NOW,
+        completedDate: null,
+        result: null,
+        southConnectorId: 'southId',
+        commandContent: {}
+      });
+    });
+
+    it('should create a test south item command', () => {
+      const command: OIAnalyticsFetchTestSouthItemCommandDTO = {
+        id: 'testSouthItemCommandId',
+        targetVersion: 'v3.5.0',
+        type: 'test-south-item',
+        southConnectorId: 'southId',
+        itemId: 'itemId',
+        commandContent: {
+          southCommand: {} as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>,
+          itemCommand: {} as SouthConnectorItemCommandDTO<SouthItemSettings>,
+          testingSettings: {} as SouthConnectorItemTestingSettings
+        }
+      };
+      repository.create(command);
+
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
+        status: 'RETRIEVED',
+        ack: false,
+        targetVersion: command.targetVersion,
+        retrievedDate: testData.constants.dates.FAKE_NOW,
+        completedDate: null,
+        result: null,
+        itemId: 'itemId',
+        southConnectorId: 'southId',
+        commandContent: {
+          southCommand: {},
+          itemCommand: {},
+          testingSettings: {}
+        }
+      });
+    });
+
     it('should create a delete north command', () => {
       const command: OIAnalyticsFetchDeleteNorthConnectorCommandDTO = testData.oIAnalytics.commands
         .oIAnalyticsList[8] as OIAnalyticsFetchDeleteNorthConnectorCommandDTO;
@@ -629,6 +711,30 @@ describe('Repository with populated database', () => {
         result: null,
         targetVersion: command.targetVersion,
         northConnectorId: command.northConnectorId
+      });
+    });
+
+    it('should create a test north connection command', () => {
+      const command: OIAnalyticsFetchTestNorthConnectionCommandDTO = {
+        id: 'testNorthConnectionCommandId',
+        targetVersion: 'v3.5.0',
+        type: 'test-north-connection',
+        northConnectorId: 'northId',
+        commandContent: {} as NorthConnectorCommandDTO<NorthSettings>
+      };
+      repository.create(command);
+
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
+        status: 'RETRIEVED',
+        ack: false,
+        targetVersion: command.targetVersion,
+        retrievedDate: testData.constants.dates.FAKE_NOW,
+        completedDate: null,
+        result: null,
+        northConnectorId: 'northId',
+        commandContent: {}
       });
     });
 
@@ -704,6 +810,417 @@ describe('Repository with populated database', () => {
 
       expect(repository.findById(testData.oIAnalytics.commands.oIBusList[5].id)).toEqual(null);
     });
+
+    it('should create a create ip filter command', () => {
+      const command: OIAnalyticsFetchCreateIPFilterCommandDTO = {
+        id: 'createIpFilterCommandId',
+        targetVersion: 'v3.5.0',
+        type: 'create-ip-filter',
+        commandContent: {
+          address: '*',
+          description: 'desc'
+        }
+      };
+      repository.create(command);
+
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
+        status: 'RETRIEVED',
+        ack: false,
+        targetVersion: command.targetVersion,
+        retrievedDate: testData.constants.dates.FAKE_NOW,
+        completedDate: null,
+        result: null,
+        commandContent: { address: '*', description: 'desc' }
+      });
+    });
+
+    it('should create an update ip filter command', () => {
+      const command: OIAnalyticsFetchUpdateIPFilterCommandDTO = {
+        id: 'updateIpFilterCommandId',
+        targetVersion: 'v3.5.0',
+        type: 'update-ip-filter',
+        ipFilterId: 'ipFilterId',
+        commandContent: {
+          address: '*',
+          description: 'desc'
+        }
+      };
+      repository.create(command);
+
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
+        status: 'RETRIEVED',
+        ack: false,
+        targetVersion: command.targetVersion,
+        retrievedDate: testData.constants.dates.FAKE_NOW,
+        completedDate: null,
+        result: null,
+        ipFilterId: 'ipFilterId',
+        commandContent: { address: '*', description: 'desc' }
+      });
+    });
+
+    it('should create a delete ip filter command', () => {
+      const command: OIAnalyticsFetchDeleteIPFilterCommandDTO = {
+        id: 'deleteIpFilterCommandId',
+        targetVersion: 'v3.5.0',
+        type: 'delete-ip-filter',
+        ipFilterId: 'ipFilterId'
+      };
+      repository.create(command);
+
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
+        status: 'RETRIEVED',
+        ack: false,
+        targetVersion: command.targetVersion,
+        retrievedDate: testData.constants.dates.FAKE_NOW,
+        completedDate: null,
+        result: null,
+        ipFilterId: 'ipFilterId'
+      });
+    });
+
+    it('should create a create certificate command', () => {
+      const command: OIAnalyticsFetchCreateCertificateCommandDTO = {
+        id: 'createCertificateCommandId',
+        targetVersion: 'v3.5.0',
+        type: 'create-certificate',
+        commandContent: {
+          name: 'name',
+          description: 'desc',
+          regenerateCertificate: false,
+          options: null
+        }
+      };
+      repository.create(command);
+
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
+        status: 'RETRIEVED',
+        ack: false,
+        targetVersion: command.targetVersion,
+        retrievedDate: testData.constants.dates.FAKE_NOW,
+        completedDate: null,
+        result: null,
+        commandContent: {
+          name: 'name',
+          description: 'desc',
+          regenerateCertificate: false,
+          options: null
+        }
+      });
+    });
+
+    it('should create an update certificate command', () => {
+      const command: OIAnalyticsFetchUpdateCertificateCommandDTO = {
+        id: 'updateCertificateCommandId',
+        targetVersion: 'v3.5.0',
+        type: 'update-certificate',
+        certificateId: 'certificateId',
+        commandContent: {
+          name: 'name',
+          description: 'desc',
+          regenerateCertificate: false,
+          options: null
+        }
+      };
+      repository.create(command);
+
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
+        status: 'RETRIEVED',
+        ack: false,
+        targetVersion: command.targetVersion,
+        retrievedDate: testData.constants.dates.FAKE_NOW,
+        completedDate: null,
+        result: null,
+        certificateId: 'certificateId',
+        commandContent: {
+          name: 'name',
+          description: 'desc',
+          regenerateCertificate: false,
+          options: null
+        }
+      });
+    });
+
+    it('should create a delete certificate command', () => {
+      const command: OIAnalyticsFetchDeleteCertificateCommandDTO = {
+        id: 'deleteCertificateCommandId',
+        targetVersion: 'v3.5.0',
+        type: 'delete-certificate',
+        certificateId: 'certificateId'
+      };
+      repository.create(command);
+
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
+        status: 'RETRIEVED',
+        ack: false,
+        targetVersion: command.targetVersion,
+        retrievedDate: testData.constants.dates.FAKE_NOW,
+        completedDate: null,
+        result: null,
+        certificateId: 'certificateId'
+      });
+    });
+
+    it('should create a create history query command', () => {
+      const command: OIAnalyticsFetchCreateHistoryQueryCommandDTO = {
+        id: 'createHistoryQueryCommandId',
+        targetVersion: 'v3.5.0',
+        type: 'create-history-query',
+        retrieveSecretsFromSouth: 'id1',
+        retrieveSecretsFromNorth: 'id2',
+        retrieveSecretsFromHistoryQuery: 'id3',
+        commandContent: {} as HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>
+      };
+      repository.create(command);
+
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
+        status: 'RETRIEVED',
+        ack: false,
+        retrievedDate: testData.constants.dates.FAKE_NOW,
+        completedDate: null,
+        result: null,
+        targetVersion: command.targetVersion,
+        commandContent: command.commandContent,
+        southConnectorId: command.retrieveSecretsFromSouth,
+        northConnectorId: command.retrieveSecretsFromNorth,
+        historyQueryId: command.retrieveSecretsFromHistoryQuery
+      });
+    });
+
+    it('should create a create history query command without retrieve secrets', () => {
+      const command: OIAnalyticsFetchCreateHistoryQueryCommandDTO = {
+        id: 'createHistoryQueryWithoutSecretsCommandId',
+        targetVersion: 'v3.5.0',
+        type: 'create-history-query',
+        retrieveSecretsFromSouth: null,
+        retrieveSecretsFromNorth: null,
+        retrieveSecretsFromHistoryQuery: null,
+        commandContent: {} as HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>
+      };
+      repository.create(command);
+
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
+        status: 'RETRIEVED',
+        ack: false,
+        retrievedDate: testData.constants.dates.FAKE_NOW,
+        completedDate: null,
+        result: null,
+        targetVersion: command.targetVersion,
+        commandContent: command.commandContent,
+        southConnectorId: '',
+        northConnectorId: '',
+        historyQueryId: ''
+      });
+    });
+
+    it('should create an update history query command', () => {
+      const command: OIAnalyticsFetchUpdateHistoryQueryCommandDTO = {
+        id: 'updateHistoryQueryCommandId',
+        targetVersion: 'v3.5.0',
+        type: 'update-history-query',
+        historyId: 'id1',
+        commandContent: {
+          resetCache: false,
+          historyQuery: {} as HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>
+        }
+      };
+      repository.create(command);
+
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
+        status: 'RETRIEVED',
+        ack: false,
+        retrievedDate: testData.constants.dates.FAKE_NOW,
+        completedDate: null,
+        result: null,
+        targetVersion: command.targetVersion,
+        commandContent: command.commandContent,
+        historyQueryId: command.historyId
+      });
+    });
+
+    it('should create a delete history query command', () => {
+      const command: OIAnalyticsFetchDeleteHistoryQueryCommandDTO = {
+        id: 'deleteHistoryQueryCommandId',
+        targetVersion: 'v3.5.0',
+        type: 'delete-history-query',
+        historyId: 'id1'
+      };
+      repository.create(command);
+
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
+        status: 'RETRIEVED',
+        ack: false,
+        retrievedDate: testData.constants.dates.FAKE_NOW,
+        completedDate: null,
+        result: null,
+        targetVersion: command.targetVersion,
+        historyQueryId: command.historyId
+      });
+    });
+
+    it('should create a test history query north connection command', () => {
+      const command: OIAnalyticsFetchTestHistoryQueryNorthConnectionCommandDTO = {
+        id: 'testHistoryQueryNorthCommandId',
+        targetVersion: 'v3.5.0',
+        type: 'test-history-query-north-connection',
+        historyId: 'h1',
+        northConnectorId: 'n1',
+        commandContent: {} as HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>
+      };
+      repository.create(command);
+
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
+        status: 'RETRIEVED',
+        ack: false,
+        targetVersion: command.targetVersion,
+        retrievedDate: testData.constants.dates.FAKE_NOW,
+        completedDate: null,
+        result: null,
+        historyQueryId: 'h1',
+        northConnectorId: 'n1',
+        commandContent: {}
+      });
+    });
+
+    it('should create a test south connection command', () => {
+      const command: OIAnalyticsFetchTestHistoryQuerySouthConnectionCommandDTO = {
+        id: 'testHistoryQuerySouthCommandId',
+        targetVersion: 'v3.5.0',
+        type: 'test-history-query-south-connection',
+        historyId: 'h1',
+        southConnectorId: 's1',
+        commandContent: {} as HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>
+      };
+      repository.create(command);
+
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
+        status: 'RETRIEVED',
+        ack: false,
+        targetVersion: command.targetVersion,
+        retrievedDate: testData.constants.dates.FAKE_NOW,
+        completedDate: null,
+        result: null,
+        historyQueryId: 'h1',
+        southConnectorId: 's1',
+        commandContent: {}
+      });
+    });
+
+    it('should create a test south item command', () => {
+      const command: OIAnalyticsFetchTestHistoryQuerySouthItemConnectionCommandDTO = {
+        id: 'testHistoryQuerySouthItemCommandId',
+        targetVersion: 'v3.5.0',
+        type: 'test-history-query-south-item',
+        historyId: 'h1',
+        southConnectorId: 'southId',
+        itemId: 'itemId',
+        commandContent: {
+          historyCommand: {} as HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>,
+          itemCommand: {} as HistoryQueryItemCommandDTO<SouthItemSettings>,
+          testingSettings: {} as SouthConnectorItemTestingSettings
+        }
+      };
+      repository.create(command);
+
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
+        status: 'RETRIEVED',
+        ack: false,
+        targetVersion: command.targetVersion,
+        retrievedDate: testData.constants.dates.FAKE_NOW,
+        completedDate: null,
+        result: null,
+        historyQueryId: 'h1',
+        itemId: 'itemId',
+        southConnectorId: 'southId',
+        commandContent: {
+          historyCommand: {},
+          itemCommand: {},
+          testingSettings: {}
+        }
+      });
+    });
+
+    it('should create a create-or-update-history-query-south-items-from-csv command', () => {
+      const command: OIAnalyticsFetchCreateOrUpdateHistoryQuerySouthItemsFromCSVCommandDTO = {
+        id: 'createOrUpdateHistoryQuerySouthItemsCommandId',
+        targetVersion: 'v3.5.0',
+        type: 'create-or-update-history-query-south-items-from-csv',
+        historyId: 'h1',
+        deleteItemsNotPresent: true,
+        csvContent: '',
+        delimiter: ','
+      };
+      repository.create(command);
+
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
+        status: 'RETRIEVED',
+        ack: false,
+        targetVersion: command.targetVersion,
+        retrievedDate: testData.constants.dates.FAKE_NOW,
+        completedDate: null,
+        result: null,
+        historyQueryId: command.historyId,
+        commandContent: {
+          csvContent: command.csvContent,
+          deleteItemsNotPresent: command.deleteItemsNotPresent,
+          delimiter: command.delimiter
+        }
+      });
+    });
+
+    it('should create a update-history-query-status command', () => {
+      const command: OIAnalyticsFetchUpdateHistoryQueryStatusCommandDTO = {
+        id: 'updateHistoryQueryStatusCommandId',
+        targetVersion: 'v3.5.0',
+        type: 'update-history-query-status',
+        historyId: 'h1',
+        historyQueryStatus: 'RUNNING'
+      };
+      repository.create(command);
+
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
+        status: 'RETRIEVED',
+        ack: false,
+        targetVersion: command.targetVersion,
+        retrievedDate: testData.constants.dates.FAKE_NOW,
+        completedDate: null,
+        result: null,
+        historyQueryId: command.historyId,
+        commandContent: {
+          historyQueryStatus: command.historyQueryStatus
+        }
+      });
+    });
   });
 
   describe('OIAnalytics Message', () => {
@@ -766,6 +1283,22 @@ describe('Repository with populated database', () => {
       expect(repository.findById('newId')).toEqual({
         id: 'newId',
         type: 'full-config',
+        status: 'PENDING',
+        error: null,
+        completedDate: null
+      });
+    });
+
+    it('should create history-queries message', () => {
+      (generateRandomId as jest.Mock).mockReturnValueOnce('newHistoryQueriesId');
+
+      repository.create({
+        type: 'history-queries'
+      });
+
+      expect(repository.findById('newHistoryQueriesId')).toEqual({
+        id: 'newHistoryQueriesId',
+        type: 'history-queries',
         status: 'PENDING',
         error: null,
         completedDate: null
@@ -1089,7 +1622,7 @@ describe('Repository with populated database', () => {
 
     it('should update a north connector', () => {
       const newNorthConnector: NorthConnectorEntity<NorthSettings> = JSON.parse(JSON.stringify(testData.north.list[1]));
-      newNorthConnector.caching.maxSize = 999;
+      newNorthConnector.caching.throttling.maxSize = 999;
       newNorthConnector.subscriptions = [
         ...testData.north.list[1].subscriptions,
         {
@@ -1104,7 +1637,7 @@ describe('Repository with populated database', () => {
 
       const updatedConnector = repository.findNorthById(newNorthConnector.id)!;
 
-      expect(updatedConnector.caching.maxSize).toEqual(newNorthConnector.caching.maxSize);
+      expect(updatedConnector.caching.throttling.maxSize).toEqual(newNorthConnector.caching.throttling.maxSize);
       expect(updatedConnector.subscriptions.length).toEqual(2);
     });
 
@@ -1148,8 +1681,8 @@ describe('Repository with populated database', () => {
       repository = new HistoryQueryRepository(database);
     });
 
-    it('should properly get history queries', () => {
-      expect(repository.findAllHistoryQueries()).toEqual(
+    it('should properly get history queries (light)', () => {
+      expect(repository.findAllHistoryQueriesLight()).toEqual(
         testData.historyQueries.list.map(element => ({
           id: element.id,
           name: element.name,
@@ -1161,6 +1694,10 @@ describe('Repository with populated database', () => {
           northType: element.northType
         }))
       );
+    });
+
+    it('should properly get history queries (full)', () => {
+      expect(repository.findAllHistoryQueriesFull()).toEqual(testData.historyQueries.list);
     });
 
     it('should properly get a history query', () => {
@@ -1279,7 +1816,7 @@ describe('Repository with populated database', () => {
       ).toEqual(true);
     });
 
-    it('should save all items', () => {
+    it('should save all items without and delete previous items', () => {
       (generateRandomId as jest.Mock).mockReturnValueOnce('newItemIdHistory1');
 
       const itemsToSave: Array<HistoryQueryItemEntity<SouthItemSettings>> = JSON.parse(
@@ -1293,7 +1830,7 @@ describe('Repository with populated database', () => {
       });
       itemsToSave[0].name = 'updated name';
 
-      repository.saveAllItems(testData.historyQueries.list[0].id, itemsToSave);
+      repository.saveAllItems(testData.historyQueries.list[0].id, itemsToSave, false);
 
       const results = repository.findAllItemsForHistoryQuery(testData.historyQueries.list[0].id);
       expect(results.length).toEqual(4);
@@ -1301,6 +1838,27 @@ describe('Repository with populated database', () => {
       expect(
         repository.findHistoryQueryItemById(testData.historyQueries.list[0].id, testData.historyQueries.list[0].items[0].id)!.name
       ).toEqual(itemsToSave[0].name);
+      expect(repository.findHistoryQueryItemById(testData.historyQueries.list[0].id, 'newItemIdHistory1')!.id).toEqual('newItemIdHistory1');
+    });
+
+    it('should save all items without deleting previous items', () => {
+      (generateRandomId as jest.Mock).mockReturnValueOnce('newItemIdHistory1');
+
+      const itemsToSave: Array<HistoryQueryItemEntity<SouthItemSettings>> = JSON.parse(
+        JSON.stringify(testData.historyQueries.list[0].items)
+      );
+      itemsToSave.push({
+        id: '',
+        name: 'new history item',
+        enabled: false,
+        settings: {} as SouthItemSettings
+      });
+      itemsToSave[0].name = 'updated name';
+
+      repository.saveAllItems(testData.historyQueries.list[0].id, itemsToSave, true);
+
+      const results = repository.findAllItemsForHistoryQuery(testData.historyQueries.list[0].id);
+      expect(results.length).toEqual(1);
       expect(repository.findHistoryQueryItemById(testData.historyQueries.list[0].id, 'newItemIdHistory1')!.id).toEqual('newItemIdHistory1');
     });
   });
@@ -1412,13 +1970,19 @@ describe('Repository with empty database', () => {
           updateHistoryQuery: true,
           deleteHistoryQuery: true,
           createOrUpdateHistoryItemsFromCsv: true,
+          testHistoryNorthConnection: true,
+          testHistorySouthConnection: true,
+          testHistorySouthItem: true,
           createSouth: true,
           updateSouth: true,
           deleteSouth: true,
           createOrUpdateSouthItemsFromCsv: true,
+          testSouthConnection: true,
+          testSouthItem: true,
           createNorth: true,
           updateNorth: true,
-          deleteNorth: true
+          deleteNorth: true,
+          testNorthConnection: true
         }
       });
     });

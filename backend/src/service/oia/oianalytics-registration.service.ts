@@ -1,5 +1,5 @@
 import { getOIBusInfo } from '../utils';
-import EncryptionService from '../encryption.service';
+import { encryptionService } from '../encryption.service';
 import pino from 'pino';
 import { DateTime } from 'luxon';
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
@@ -23,7 +23,6 @@ export default class OIAnalyticsRegistrationService {
     private oIAnalyticsClient: OIAnalyticsClient,
     private oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
     private engineRepository: EngineRepository,
-    private encryptionService: EncryptionService,
     private logger: pino.Logger
   ) {}
 
@@ -50,7 +49,7 @@ export default class OIAnalyticsRegistrationService {
     if (!command.proxyPassword) {
       command.proxyPassword = registrationSettings.proxyPassword;
     } else {
-      command.proxyPassword = await this.encryptionService.encryptText(command.proxyPassword);
+      command.proxyPassword = await encryptionService.encryptText(command.proxyPassword);
     }
 
     const oibusInfo = getOIBusInfo(engineSettings);
@@ -74,7 +73,7 @@ export default class OIAnalyticsRegistrationService {
       result.redirectUrl,
       result.expirationDate,
       publicKey,
-      await this.encryptionService.encryptText(privateKey)
+      await encryptionService.encryptText(privateKey)
     );
     if (!this.intervalCheckRegistration) {
       this.intervalCheckRegistration = setInterval(this.checkRegistration.bind(this), CHECK_REGISTRATION_INTERVAL);
@@ -101,7 +100,7 @@ export default class OIAnalyticsRegistrationService {
       if (result.status !== 'COMPLETED') {
         this.logger.warn(`Registration not completed. Status: ${result.status}`);
       } else {
-        const encryptedToken = await this.encryptionService.encryptText(result.accessToken);
+        const encryptedToken = await encryptionService.encryptText(result.accessToken);
         this.oIAnalyticsRegistrationRepository.activate(DateTime.now().toUTC().toISO()!, encryptedToken);
         if (this.intervalCheckRegistration) {
           clearInterval(this.intervalCheckRegistration);
@@ -124,14 +123,14 @@ export default class OIAnalyticsRegistrationService {
     if (!command.proxyPassword) {
       command.proxyPassword = currentRegistration.proxyPassword;
     } else {
-      command.proxyPassword = await this.encryptionService.encryptText(command.proxyPassword);
+      command.proxyPassword = await encryptionService.encryptText(command.proxyPassword);
     }
     this.oIAnalyticsRegistrationRepository.update(command);
     this.registrationEvent.emit('updated');
   }
 
   async updateKeys(privateKey: string, publicKey: string): Promise<void> {
-    this.oIAnalyticsRegistrationRepository.updateKeys(await this.encryptionService.encryptText(privateKey), publicKey);
+    this.oIAnalyticsRegistrationRepository.updateKeys(await encryptionService.encryptText(privateKey), publicKey);
   }
 
   unregister() {

@@ -31,10 +31,6 @@ import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-c
 export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQTTItemSettings> implements QueriesSubscription {
   private client: mqtt.MqttClient | null = null;
 
-  // TODO: add these as settings
-  private MAX_NUMBER_OF_MESSAGES = 1000;
-  private FLUSH_MESSAGE_TIMEOUT = 1000;
-
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private flushTimeout: NodeJS.Timeout | null = null;
   private bufferedMessages: Array<{ topic: string; message: string }> = [];
@@ -83,7 +79,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
 
       this.client.once('connect', async () => {
         this.logger.info(`Connected to ${this.connector.settings.url}`);
-        this.flushTimeout = setTimeout(this.flushMessages.bind(this), this.FLUSH_MESSAGE_TIMEOUT);
+        this.flushTimeout = setTimeout(this.flushMessages.bind(this), this.connector.settings.flushMessageTimeout);
         resolve();
       });
       this.client.once('error', async error => {
@@ -103,7 +99,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
       this.client.on('message', async (topic, message, packet) => {
         this.logger.trace(`MQTT message for topic ${topic}: ${message}, dup:${packet.dup}, qos:${packet.qos}, retain:${packet.retain}`);
         this.bufferedMessages.push({ topic, message: message.toString() });
-        if (this.bufferedMessages.length >= this.MAX_NUMBER_OF_MESSAGES) {
+        if (this.bufferedMessages.length >= this.connector.settings.maxNumberOfMessages) {
           await this.flushMessages();
         }
       });
@@ -132,7 +128,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
         this.logger.error(`Error when flushing messages: ${error}`);
       }
     }
-    this.flushTimeout = setTimeout(this.flushMessages.bind(this), this.FLUSH_MESSAGE_TIMEOUT);
+    this.flushTimeout = setTimeout(this.flushMessages.bind(this), this.connector.settings.flushMessageTimeout);
   }
 
   parseMessage(topic: string, message: string): Array<OIBusTimeValue> {
@@ -195,23 +191,31 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
     return new Promise((resolve, reject) => {
       const client = mqtt.connect(this.connector.settings.url, options);
       client.once('connect', async () => {
-        this.logger.info(`Connected to ${this.connector.settings.url}`);
-        await client.subscribeAsync(item.settings.topic, { qos: parseInt(this.connector.settings.qos) as QoS });
+        try {
+          this.logger.info(`Connected to ${this.connector.settings.url}`);
+          await client.subscribeAsync(item.settings.topic, { qos: parseInt(this.connector.settings.qos) as QoS });
+        } catch (error: unknown) {
+          reject(`Error while subscribing to ${item.settings.topic}: ${(error as Error).message}`);
+        }
       });
       client.once('error', async error => {
         client.end(true);
         reject(`MQTT connection error ${error}`);
       });
       client.once('message', async (topic, message, packet) => {
-        this.logger.trace(`MQTT message for topic ${topic}: ${message}, dup:${packet.dup}`);
-        const messageTimestamp: Instant = DateTime.now().toUTC().toISO()!;
-        await client.unsubscribeAsync(item.settings.topic);
-        client.end(true);
-        callback({
-          type: 'time-values',
-          content: this.createContent(item, message.toString(), messageTimestamp)
-        });
-        resolve();
+        try {
+          this.logger.trace(`MQTT message for topic ${topic}: ${message}, dup:${packet.dup}`);
+          const messageTimestamp: Instant = DateTime.now().toUTC().toISO()!;
+          await client.unsubscribeAsync(item.settings.topic);
+          client.end(true);
+          callback({
+            type: 'time-values',
+            content: this.createContent(item, message.toString(), messageTimestamp)
+          });
+          resolve();
+        } catch (error: unknown) {
+          reject(`Error when testing item ${item.settings.topic} while parsing message ${message}: ${(error as Error).message}`);
+        }
       });
     });
   }

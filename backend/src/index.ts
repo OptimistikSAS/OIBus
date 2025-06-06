@@ -1,7 +1,7 @@
 import path from 'node:path';
 import WebServer from './web-server/web-server';
 import LoggerService from './service/logger/logger.service';
-import EncryptionService from './service/encryption.service';
+import { encryptionService } from './service/encryption.service';
 
 import { createFolder, getCommandLineArguments, getOIBusInfo } from './service/utils';
 import RepositoryService from './service/repository.service';
@@ -11,7 +11,7 @@ import DataStreamEngine from './engine/data-stream-engine';
 import HistoryQueryEngine from './engine/history-query-engine';
 import HistoryQueryService from './service/history-query.service';
 import OIBusService from './service/oibus.service';
-import { migrateCrypto, migrateEntities, migrateDataFolder, migrateLogsAndMetrics, migrateSouthCache } from './migration/migration-service';
+import { migrateCrypto, migrateDataFolder, migrateEntities, migrateLogsAndMetrics, migrateSouthCache } from './migration/migration-service';
 import OIAnalyticsCommandService from './service/oia/oianalytics-command.service';
 import OianalyticsRegistrationService from './service/oia/oianalytics-registration.service';
 import ConnectionService from './service/connection.service';
@@ -24,6 +24,7 @@ import OIAnalyticsClient from './service/oia/oianalytics-client.service';
 import CertificateService from './service/certificate.service';
 import UserService from './service/user.service';
 import LogService from './service/log.service';
+import CleanupService from './service/cache/cleanup.service';
 
 const CONFIG_DATABASE = 'oibus.db';
 const CRYPTO_DATABASE = 'crypto.db';
@@ -31,6 +32,7 @@ const CACHE_FOLDER = './cache';
 const CACHE_DATABASE = 'cache.db';
 const LOG_FOLDER_NAME = 'logs';
 const LOG_DB_NAME = 'logs.db';
+const CERT_FOLDER = 'certs';
 
 (async () => {
   const { configFile, check, ignoreIpFilters, ignoreRemoteUpdate, launcherVersion } = getCommandLineArguments();
@@ -77,9 +79,7 @@ const LOG_DB_NAME = 'logs.db';
     console.error('Error while loading OIBus crypto settings from database');
     return;
   }
-
-  const encryptionService = new EncryptionService(cryptoSettings);
-  await encryptionService.init();
+  await encryptionService.init(cryptoSettings, path.resolve(CERT_FOLDER));
 
   if (check) {
     console.info('OIBus started in check mode. Exiting process.');
@@ -87,7 +87,7 @@ const LOG_DB_NAME = 'logs.db';
   }
 
   await createFolder(LOG_FOLDER_NAME);
-  const loggerService = new LoggerService(encryptionService, path.resolve(LOG_FOLDER_NAME));
+  const loggerService = new LoggerService(path.resolve(LOG_FOLDER_NAME));
   await loggerService.start(oibusSettings, repositoryService.oianalyticsRegistrationRepository.get()!);
 
   const dataStreamEngine = new DataStreamEngine(
@@ -97,14 +97,13 @@ const LOG_DB_NAME = 'logs.db';
   );
   const historyQueryEngine = new HistoryQueryEngine(repositoryService.historyQueryMetricsRepository, loggerService.logger!);
 
-  const oIAnalyticsClient = new OIAnalyticsClient(encryptionService);
+  const oIAnalyticsClient = new OIAnalyticsClient();
 
   const oIAnalyticsRegistrationService = new OianalyticsRegistrationService(
     new JoiValidator(),
     oIAnalyticsClient,
     repositoryService.oianalyticsRegistrationRepository,
     repositoryService.engineRepository,
-    encryptionService,
     loggerService.logger!
   );
   oIAnalyticsRegistrationService.start();
@@ -119,8 +118,8 @@ const LOG_DB_NAME = 'logs.db';
     repositoryService.userRepository,
     repositoryService.southConnectorRepository,
     repositoryService.northConnectorRepository,
+    repositoryService.historyQueryRepository,
     oIAnalyticsClient,
-    encryptionService,
     loggerService.logger!
   );
 
@@ -167,11 +166,12 @@ const LOG_DB_NAME = 'logs.db';
     historyQueryEngine
   );
 
+  const ipFilterService = new IPFilterService(new JoiValidator(), repositoryService.ipFilterRepository, oIAnalyticsMessageService);
   const oIBusService = new OIBusService(
     new JoiValidator(),
     repositoryService.engineRepository,
     repositoryService.engineMetricsRepository,
-    repositoryService.ipFilterRepository,
+    ipFilterService,
     oIAnalyticsRegistrationService,
     encryptionService,
     loggerService,
@@ -194,13 +194,12 @@ const LOG_DB_NAME = 'logs.db';
     oIAnalyticsMessageService,
     dataStreamEngine
   );
-  const ipFilterService = new IPFilterService(
+  const certificateService = new CertificateService(
     new JoiValidator(),
-    repositoryService.ipFilterRepository,
-    oIAnalyticsMessageService,
-    oIBusService.getProxyServer()
+    repositoryService.certificateRepository,
+    encryptionService,
+    oIAnalyticsMessageService
   );
-  const certificateService = new CertificateService(new JoiValidator(), repositoryService.certificateRepository, encryptionService);
   const userService = new UserService(new JoiValidator(), repositoryService.userRepository);
   const logService = new LogService(new JoiValidator(), repositoryService.logRepository);
 
@@ -208,19 +207,32 @@ const LOG_DB_NAME = 'logs.db';
     repositoryService.oianalyticsCommandRepository,
     oIAnalyticsRegistrationService,
     oIAnalyticsMessageService,
-    encryptionService,
     oIAnalyticsClient,
     oIBusService,
     scanModeService,
+    ipFilterService,
+    certificateService,
     southService,
     northService,
+    historyQueryService,
     loggerService.logger!,
     binaryFolder,
     ignoreRemoteUpdate,
     launcherVersion
   );
   await oIAnalyticsCommandService.start();
-  oIAnalyticsMessageService.start(); // Start after command to send the full config with new version after an update
+  oIAnalyticsMessageService.start(); // Start after command to send the full config with a new version after an update
+
+  const cleanupService = new CleanupService(
+    loggerService.logger!,
+    './',
+    repositoryService.historyQueryRepository,
+    repositoryService.northConnectorRepository,
+    repositoryService.southConnectorRepository,
+    dataStreamEngine,
+    historyQueryEngine
+  );
+  await cleanupService.start();
 
   const server = new WebServer(
     oibusSettings.id,
@@ -253,6 +265,7 @@ const LOG_DB_NAME = 'logs.db';
     await oIAnalyticsCommandService.stop();
     await oIAnalyticsMessageService.stop();
     await server.stop();
+    await cleanupService.stop();
     oIAnalyticsRegistrationService.stop();
     loggerService.stop();
     console.info('OIBus stopped');

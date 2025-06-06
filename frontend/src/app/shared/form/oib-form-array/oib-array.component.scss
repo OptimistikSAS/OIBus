@@ -17,6 +17,9 @@
 
 .oib-fake-table {
   align-items: center;
+  .btn-link {
+    color: $blue;
+  }
 }
 
 .oib-fake-table:hover {

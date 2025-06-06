@@ -5,12 +5,7 @@ import path from 'node:path';
 import selfSigned from 'selfsigned';
 import os from 'node:os';
 
-import EncryptionService, {
-  CERT_FILE_NAME,
-  CERT_FOLDER,
-  CERT_PRIVATE_KEY_FILE_NAME,
-  CERT_PUBLIC_KEY_FILE_NAME
-} from './encryption.service';
+import EncryptionService, { CERT_FILE_NAME, CERT_PRIVATE_KEY_FILE_NAME, CERT_PUBLIC_KEY_FILE_NAME } from './encryption.service';
 
 import * as utils from './utils';
 import { OibFormControl } from '../../shared/model/form.model';
@@ -23,7 +18,7 @@ jest.mock('node:fs/promises');
 jest.mock('node:crypto');
 jest.mock('selfsigned');
 
-let encryptionService: EncryptionService;
+const encryptionService = EncryptionService.getInstance();
 
 const cryptoSettings = {
   algorithm: 'aes-256-cbc',
@@ -88,26 +83,31 @@ const settings: Array<OibFormControl> = [
   }
 ];
 
+const certFolder = 'certFolder';
 describe('Encryption service with crypto settings', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     jest.clearAllMocks();
-    encryptionService = new EncryptionService(cryptoSettings);
+
+    // Mock custom cert exists
+    (utils.filesExists as jest.Mock).mockResolvedValue(true);
+
+    await encryptionService.init(cryptoSettings, certFolder);
   });
 
   it('should properly initialized encryption service', () => {
-    expect(encryptionService.getCertPath()).toEqual(path.resolve('./', CERT_FOLDER, CERT_FILE_NAME));
-    expect(encryptionService.getPrivateKeyPath()).toEqual(path.resolve('./', CERT_FOLDER, CERT_PRIVATE_KEY_FILE_NAME));
-    expect(encryptionService.getPublicKeyPath()).toEqual(path.resolve('./', CERT_FOLDER, CERT_PUBLIC_KEY_FILE_NAME));
+    expect(encryptionService.certsFolder).toEqual(certFolder);
+    expect(encryptionService.getCertPath()).toEqual(path.resolve(certFolder, CERT_FILE_NAME));
+    expect(encryptionService.getPrivateKeyPath()).toEqual(path.resolve(certFolder, CERT_PRIVATE_KEY_FILE_NAME));
+    expect(encryptionService.getPublicKeyPath()).toEqual(path.resolve(certFolder, CERT_PUBLIC_KEY_FILE_NAME));
   });
 
   it('should not create certificate if it already exists', async () => {
     (utils.filesExists as jest.Mock).mockReturnValue(true);
 
-    await encryptionService.init();
-    expect(utils.createFolder).toHaveBeenCalledWith(path.resolve('./', CERT_FOLDER));
-    expect(utils.filesExists).toHaveBeenCalledWith(path.resolve('./', CERT_FOLDER, CERT_FILE_NAME));
-    expect(utils.filesExists).toHaveBeenCalledWith(path.resolve('./', CERT_FOLDER, CERT_PUBLIC_KEY_FILE_NAME));
-    expect(utils.filesExists).toHaveBeenCalledWith(path.resolve('./', CERT_FOLDER, CERT_PUBLIC_KEY_FILE_NAME));
+    expect(utils.createFolder).toHaveBeenCalledWith(certFolder);
+    expect(utils.filesExists).toHaveBeenCalledWith(path.resolve(certFolder, CERT_FILE_NAME));
+    expect(utils.filesExists).toHaveBeenCalledWith(path.resolve(certFolder, CERT_PUBLIC_KEY_FILE_NAME));
+    expect(utils.filesExists).toHaveBeenCalledWith(path.resolve(certFolder, CERT_PUBLIC_KEY_FILE_NAME));
     expect(selfSigned.generate).not.toHaveBeenCalled();
     expect(fs.writeFile).not.toHaveBeenCalled();
   });
@@ -120,7 +120,8 @@ describe('Encryption service with crypto settings', () => {
       cert: 'myCert'
     });
 
-    await encryptionService.init();
+    await encryptionService.init(cryptoSettings, certFolder);
+
     expect(selfSigned.generate).toHaveBeenCalledWith(
       [
         { name: 'commonName', value: 'OIBus' },
@@ -168,9 +169,9 @@ describe('Encryption service with crypto settings', () => {
         ]
       }
     );
-    expect(fs.writeFile).toHaveBeenCalledWith(path.resolve('./', CERT_FOLDER, CERT_PRIVATE_KEY_FILE_NAME), 'myPrivateKey');
-    expect(fs.writeFile).toHaveBeenCalledWith(path.resolve('./', CERT_FOLDER, CERT_PUBLIC_KEY_FILE_NAME), 'myPublicKey');
-    expect(fs.writeFile).toHaveBeenCalledWith(path.resolve('./', CERT_FOLDER, CERT_FILE_NAME), 'myCert');
+    expect(fs.writeFile).toHaveBeenCalledWith(path.resolve(certFolder, CERT_PRIVATE_KEY_FILE_NAME), 'myPrivateKey');
+    expect(fs.writeFile).toHaveBeenCalledWith(path.resolve(certFolder, CERT_PUBLIC_KEY_FILE_NAME), 'myPublicKey');
+    expect(fs.writeFile).toHaveBeenCalledWith(path.resolve(certFolder, CERT_FILE_NAME), 'myCert');
   });
 
   it('should properly retrieve files', async () => {
@@ -209,6 +210,17 @@ describe('Encryption service with crypto settings', () => {
     expect(final).toHaveBeenCalledWith('base64');
   });
 
+  it('should properly encrypt empty input', async () => {
+    const encryptedText = await encryptionService.encryptText('');
+    expect(encryptedText).toEqual('');
+    expect(crypto.createCipheriv).not.toHaveBeenCalled();
+  });
+
+  it('should throw error on encrypt when class is not initialized', async () => {
+    encryptionService['initialized'] = false;
+    await expect(encryptionService.encryptText('test')).rejects.toThrow('EncryptionService not initialized');
+  });
+
   it('should properly decrypt text', async () => {
     const update = jest.fn(() => 'decrypted text');
     const final = jest.fn(() => '');
@@ -217,8 +229,8 @@ describe('Encryption service with crypto settings', () => {
       final
     }));
 
-    const encryptedText = await encryptionService.decryptText('text to decrypt');
-    expect(encryptedText).toEqual('decrypted text');
+    const decryptedText = await encryptionService.decryptText('text to decrypt');
+    expect(decryptedText).toEqual('decrypted text');
     expect(crypto.createDecipheriv).toHaveBeenCalledWith(
       cryptoSettings.algorithm,
       Buffer.from(cryptoSettings.securityKey, 'base64'),
@@ -226,6 +238,17 @@ describe('Encryption service with crypto settings', () => {
     );
     expect(update).toHaveBeenCalledWith('text to decrypt', 'base64', 'utf8');
     expect(final).toHaveBeenCalledWith('utf8');
+  });
+
+  it('should properly decrypt empty input', async () => {
+    const decryptedText = await encryptionService.decryptText('');
+    expect(decryptedText).toEqual('');
+    expect(crypto.createCipheriv).not.toHaveBeenCalled();
+  });
+
+  it('should throw error on decrypt when class is not initialized', async () => {
+    encryptionService['initialized'] = false;
+    await expect(encryptionService.decryptText('test')).rejects.toThrow('EncryptionService not initialized');
   });
 
   it('should properly encrypt connector secrets', async () => {

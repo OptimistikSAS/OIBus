@@ -160,13 +160,6 @@ jest.mock(
     }
 );
 jest.mock(
-  '../south/south-slims/south-slims',
-  () =>
-    function () {
-      return mockedSouth1;
-    }
-);
-jest.mock(
   '../south/south-sqlite/south-sqlite',
   () =>
     function () {
@@ -313,13 +306,6 @@ describe('south service', () => {
     const sftp = JSON.parse(JSON.stringify(testData.south.list[0]));
     sftp.type = 'sftp';
     const connector = service.runSouth(sftp, jest.fn(), logger, mockBaseFolders(testData.south.list[0].id));
-    expect(connector).toEqual(mockedSouth1);
-  });
-
-  it('runSouth() should run SLIMS South connector', () => {
-    const slims = JSON.parse(JSON.stringify(testData.south.list[0]));
-    slims.type = 'slims';
-    const connector = service.runSouth(slims, jest.fn(), logger, mockBaseFolders(testData.south.list[0].id));
     expect(connector).toEqual(mockedSouth1);
   });
 

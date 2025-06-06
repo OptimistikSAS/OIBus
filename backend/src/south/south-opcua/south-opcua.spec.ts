@@ -804,7 +804,8 @@ describe('SouthOPCUA', () => {
       .mockImplementationOnce(() => Promise.resolve())
       .mockImplementationOnce(() => {
         throw new Error('add content error');
-      });
+      })
+      .mockImplementationOnce(() => Promise.resolve());
 
     south['MAX_NUMBER_OF_MESSAGES'] = 1;
     await south.start();
@@ -837,6 +838,16 @@ describe('SouthOPCUA', () => {
       statusCode: StatusCodes.Good
     });
     expect(logger.error).toHaveBeenCalledWith('Error when flushing messages: Error: add content error');
+    south['MAX_NUMBER_OF_MESSAGES'] = 1000;
+    stream.emit('changed', {
+      value: { value: 1, dataType: DataType.Float },
+      serverTimestamp: DateTime.now(),
+      statusCode: StatusCodes.Good
+    });
+    expect(south.addContent).toHaveBeenCalledTimes(2);
+    jest.advanceTimersByTime(1000); // Trigger flush timeout
+    await south.flushMessages(); // do not trigger since it already have been done
+    expect(south.addContent).toHaveBeenCalledTimes(3);
 
     await south.unsubscribe([configuration.items[0]]);
     expect(stream.terminate).toHaveBeenCalledTimes(1);
@@ -938,14 +949,11 @@ describe('SouthOPCUA', () => {
                   value: '123',
                   dataType: DataType.String
                 },
-                statusCode: {
-                  value: StatusCodes.Good,
-                  description: 'ok'
-                }
+                statusCode: StatusCodes.Good
               }
             ]
           },
-          statusCode: { value: StatusCodes.Good, description: 'ok' },
+          statusCode: StatusCodes.Good,
           continuationPoint: false
         }
       ]

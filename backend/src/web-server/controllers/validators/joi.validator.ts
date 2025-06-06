@@ -184,10 +184,94 @@ export default class JoiValidator {
   }
 
   private generateFormArrayJoiSchema(formControl: OibArrayFormControl): Record<string, AnySchema> {
-    const schema = Joi.array().required();
+    const { subSchema, customValidators } = this.buildArraySubSchemaAndValidators(formControl.content);
+
+    let schema = Joi.array().items(Joi.object(subSchema));
+
+    schema = this.applyCustomArrayValidators(schema, customValidators);
+    schema = this.applyArrayLevelValidators(schema, formControl.validators);
+    schema = this.handleConditionalDisplay(formControl, schema) as Joi.ArraySchema;
 
     return {
       [formControl.key]: schema
+    };
+  }
+
+  private buildArraySubSchemaAndValidators(content: Array<OibFormControl>) {
+    const subSchema: Record<string, AnySchema> = {};
+    const customValidators = {
+      unique: [] as Array<string>,
+      singleTrue: [] as Array<string>
+    };
+
+    content.forEach(subControl => {
+      subSchema[subControl.key] = this.generateJoiSchemaFromOibFormControl(subControl)[subControl.key];
+
+      subControl.validators?.forEach(validator => {
+        if (validator.key === 'unique') {
+          customValidators.unique.push(subControl.key);
+        } else if (validator.key === 'singleTrue') {
+          customValidators.singleTrue.push(subControl.key);
+        }
+      });
+    });
+
+    return { subSchema, customValidators };
+  }
+
+  private applyCustomArrayValidators(
+    schema: Joi.ArraySchema,
+    validators: { unique: Array<string>; singleTrue: Array<string> }
+  ): Joi.ArraySchema {
+    validators.unique.forEach(fieldKey => {
+      schema = schema.unique(fieldKey);
+    });
+
+    validators.singleTrue.forEach(fieldKey => {
+      schema = schema.custom(this.generateSingleTrueValidator(fieldKey), `singleTrue validation for ${fieldKey}`);
+    });
+
+    return schema;
+  }
+
+  private applyArrayLevelValidators(
+    schema: Joi.ArraySchema,
+    validators?: Array<{ key: string; params?: Record<string, unknown> }>
+  ): Joi.ArraySchema {
+    if (!validators) return schema;
+
+    validators.forEach(validator => {
+      switch (validator.key) {
+        case 'required':
+          schema = schema.required();
+          break;
+        case 'min':
+          schema = schema.min(Number(validator.params?.min));
+          break;
+        case 'minLength':
+          schema = schema.min(Number(validator.params?.minLength));
+          break;
+        case 'max':
+          schema = schema.max(Number(validator.params?.max));
+          break;
+        case 'maxLength':
+          schema = schema.max(Number(validator.params?.maxLength));
+          break;
+      }
+    });
+
+    return schema;
+  }
+
+  private generateSingleTrueValidator(fieldKey: string): Joi.CustomValidator {
+    return (value: Array<Record<string, unknown>>, helpers: Joi.CustomHelpers) => {
+      if (!Array.isArray(value)) {
+        return value;
+      }
+
+      const trueCount = value.filter(item => item?.[fieldKey] === true).length;
+
+      return trueCount > 1 ? helpers.message({ custom: `Only one item in the array can have "${fieldKey}" set to true` }) : value;
     };
   }
 

@@ -15,7 +15,6 @@ import {
 import SouthConnector from '../south/south-connector';
 
 import oianalyticsManifest from '../south/south-oianalytics/manifest';
-import slimsManifest from '../south/south-slims/manifest';
 import opcuaManifest from '../south/south-opcua/manifest';
 import mqttManifest from '../south/south-mqtt/manifest';
 import modbusManifest from '../south/south-modbus/manifest';
@@ -81,8 +80,6 @@ import {
   SouthSettings,
   SouthSFTPItemSettings,
   SouthSFTPSettings,
-  SouthSlimsItemSettings,
-  SouthSlimsSettings,
   SouthSQLiteItemSettings,
   SouthSQLiteSettings
 } from '../../shared/model/south-settings.model';
@@ -101,7 +98,6 @@ import SouthOracle from '../south/south-oracle/south-oracle';
 import SouthPI from '../south/south-pi/south-pi';
 import SouthPostgreSQL from '../south/south-postgresql/south-postgresql';
 import SouthSFTP from '../south/south-sftp/south-sftp';
-import SouthSlims from '../south/south-slims/south-slims';
 import SouthSQLite from '../south/south-sqlite/south-sqlite';
 import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
 import CertificateRepository from '../repository/config/certificate.repository';
@@ -124,7 +120,6 @@ export const southManifestList: Array<SouthConnectorManifest> = [
   adsManifest,
   modbusManifest,
   oianalyticsManifest,
-  slimsManifest,
   piManifest,
   sftpManifest
 ];
@@ -322,17 +317,6 @@ export default class SouthService {
           logger,
           southBaseFolders
         );
-      case 'slims':
-        return new SouthSlims(
-          settings as SouthConnectorEntity<SouthSlimsSettings, SouthSlimsItemSettings>,
-          addContent,
-          this.encryptionService,
-          this.southConnectorRepository,
-          this.southCacheRepository,
-          this.scanModeRepository,
-          logger,
-          southBaseFolders
-        );
       case 'sqlite':
         return new SouthSQLite(
           settings as SouthConnectorEntity<SouthSQLiteSettings, SouthSQLiteItemSettings>,
@@ -379,7 +363,9 @@ export default class SouthService {
       items: []
     };
 
-    const south = this.runSouth(testToRun, async (_southId: string, _content: OIBusContent): Promise<void> => Promise.resolve(), logger, {
+    /* istanbul ignore next */
+    const mockedAddContent = async (_southId: string, _content: OIBusContent): Promise<void> => Promise.resolve();
+    const south = this.runSouth(testToRun, mockedAddContent, logger, {
       cache: 'baseCacheFolder',
       archive: 'baseArchiveFolder',
       error: 'baseErrorFolder'
@@ -428,6 +414,7 @@ export default class SouthService {
       items: [testItemToRun]
     };
 
+    /* istanbul ignore next */
     const mockedAddContent = async (_southId: string, _content: OIBusContent): Promise<void> => Promise.resolve();
     const south = this.runSouth(testConnectorToRun, mockedAddContent, logger, {
       cache: 'baseCacheFolder',

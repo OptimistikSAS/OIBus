@@ -3,7 +3,7 @@ import pino from 'pino';
 import { EventEmitter } from 'node:events';
 import DeferredPromise from '../deferred-promise';
 import { DateTime } from 'luxon';
-import EncryptionService from '../encryption.service';
+import { encryptionService } from '../encryption.service';
 import { OIAnalyticsMessage } from '../../model/oianalytics-message.model';
 import {
   OIAnalyticsCertificateCommandDTO,
@@ -14,16 +14,14 @@ import {
   OIAnalyticsScanModeCommandDTO,
   OIAnalyticsSouthCommandDTO,
   OIAnalyticsUserCommandDTO,
-  OIBusFullConfigurationCommandDTO
+  OIBusFullConfigurationCommandDTO,
+  OIBusHistoryQueriesCommandDTO
 } from './oianalytics.model';
 import EngineRepository from '../../repository/config/engine.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import OIAnalyticsMessageRepository from '../../repository/config/oianalytics-message.repository';
-import { HistoryQueryEntity } from '../../model/histor-query.model';
-import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
-import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { southManifestList } from '../south.service';
 import { northManifestList } from '../north.service';
 import IpFilterRepository from '../../repository/config/ip-filter.repository';
@@ -32,7 +30,7 @@ import UserRepository from '../../repository/config/user.repository';
 import OIAnalyticsClient from './oianalytics-client.service';
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
 import OIAnalyticsRegistrationService from './oianalytics-registration.service';
-import { FetchError } from 'node-fetch';
+import HistoryQueryRepository from '../../repository/config/history-query.repository';
 
 const STOP_TIMEOUT = 30_000;
 
@@ -53,13 +51,14 @@ export default class OIAnalyticsMessageService {
     private userRepository: UserRepository,
     private southRepository: SouthConnectorRepository,
     private northRepository: NorthConnectorRepository,
+    private historyQueryRepository: HistoryQueryRepository,
     private oIAnalyticsClient: OIAnalyticsClient,
-    private encryptionService: EncryptionService,
     private logger: pino.Logger
   ) {}
 
   start(): void {
     this.createFullConfigMessageIfNotPending();
+    this.createFullHistoryQueriesMessageIfNotPending();
     this.messagesQueue = this.oIAnalyticsMessageRepository.list({ status: ['PENDING'], types: [] });
 
     this.triggerRun.on('next', async () => {
@@ -75,6 +74,7 @@ export default class OIAnalyticsMessageService {
       const registrationSettings = this.oIAnalyticsRegistrationService.getRegistrationSettings()!;
       if (registrationSettings.status === 'REGISTERED') {
         this.createFullConfigMessageIfNotPending();
+        this.createFullHistoryQueriesMessageIfNotPending();
       }
     });
   }
@@ -95,12 +95,15 @@ export default class OIAnalyticsMessageService {
         case 'full-config':
           await this.sendFullConfiguration(this.createFullConfigurationCommand(registration));
           break;
+        case 'history-queries':
+          await this.sendHistoryQueriesMessage(this.createSendHistoryQueriesCommand());
+          break;
       }
       this.oIAnalyticsMessageRepository.markAsCompleted(message.id, DateTime.now().toUTC().toISO());
     } catch (error: unknown) {
-      if (error instanceof FetchError) {
+      if (error instanceof Error && 'code' in error && error.code && typeof error.code === 'string') {
         this.logger.error(`Error while sending message ${message.id} of type ${message.type}. ${error.message}${error.code}`);
-        if (!['ECONNREFUSED', 'ECONNRESET', 'ETIMEDOUT'].includes(error.code!)) {
+        if (!['ECONNREFUSED', 'ECONNRESET', 'ETIMEDOUT'].includes(error.code)) {
           this.oIAnalyticsMessageRepository.markAsErrored(message.id, DateTime.now().toUTC().toISO(), `${error.message}${error.code}`);
         } else {
           this.retryMessageInterval = setTimeout(this.run.bind(this), registration.messageRetryInterval * 1000);
@@ -148,17 +151,13 @@ export default class OIAnalyticsMessageService {
     this.logger = logger;
   }
 
-  createHistoryQueryMessage(_historyQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>) {
-    // TODO: implement history query message for settings
-  }
-
   /**
-   * Create a FULL_CONFIG message if there is no pending message of this type. It will trigger at startup
+   * Create a full-config message if there is no pending message of this type. It will trigger at startup
    */
   createFullConfigMessageIfNotPending() {
     const registration = this.oIAnalyticsRegistrationService.getRegistrationSettings()!;
     if (registration.status !== 'REGISTERED') {
-      this.logger.debug(`OIBus is not registered to OIAnalytics. Messages won't be created`);
+      this.logger.debug(`OIBus is not registered to OIAnalytics. Full config message won't be created`);
       return;
     }
 
@@ -172,7 +171,28 @@ export default class OIAnalyticsMessageService {
     }
     const message = this.oIAnalyticsMessageRepository.create({ type: 'full-config' });
     this.addMessageToQueue(message);
-    this.triggerRun.emit('next');
+  }
+
+  /**
+   * Create a send-history-queries message if there is no pending message of this type. It will trigger at startup
+   */
+  createFullHistoryQueriesMessageIfNotPending() {
+    const registration = this.oIAnalyticsRegistrationService.getRegistrationSettings()!;
+    if (registration.status !== 'REGISTERED') {
+      this.logger.debug(`OIBus is not registered to OIAnalytics. History query message won't be created`);
+      return;
+    }
+
+    if (
+      this.oIAnalyticsMessageRepository.list({
+        status: ['PENDING'],
+        types: ['history-queries']
+      }).length > 0
+    ) {
+      return;
+    }
+    const message = this.oIAnalyticsMessageRepository.create({ type: 'history-queries' });
+    this.addMessageToQueue(message);
   }
 
   private removeMessageFromQueue(messageId: string): void {
@@ -194,6 +214,12 @@ export default class OIAnalyticsMessageService {
     this.logger.debug('Full OIBus configuration sent to OIAnalytics');
   }
 
+  private async sendHistoryQueriesMessage(list: OIBusHistoryQueriesCommandDTO): Promise<void> {
+    const registrationSettings = this.oIAnalyticsRegistrationService.getRegistrationSettings()!;
+    await this.oIAnalyticsClient.sendHistoryQuery(registrationSettings, JSON.stringify(list));
+    this.logger.debug(`${list.historyQueries.length} history queries sent to OIAnalytics`);
+  }
+
   //
   // Class utility method to generate each OIAnalytics message DTO
   //
@@ -207,6 +233,58 @@ export default class OIAnalyticsMessageService {
       southConnectors: this.createSouthConnectorsCommand(),
       northConnectors: this.createNorthConnectorsCommand(),
       users: this.createUsersCommand()
+    };
+  }
+
+  private createSendHistoryQueriesCommand(): OIBusHistoryQueriesCommandDTO {
+    const historyQueries = this.historyQueryRepository.findAllHistoryQueriesFull();
+    return {
+      historyQueries: historyQueries.map(historyQuery => {
+        const southManifest = southManifestList.find(manifest => manifest.id === historyQuery.southType)!;
+        const northManifest = northManifestList.find(manifest => manifest.id === historyQuery.northType)!;
+        return {
+          oIBusInternalId: historyQuery.id,
+          settings: {
+            name: historyQuery.name,
+            description: historyQuery.description,
+            status: historyQuery.status,
+            startTime: historyQuery.startTime,
+            endTime: historyQuery.endTime,
+            southType: historyQuery.southType,
+            northType: historyQuery.northType,
+            northSettings: encryptionService.filterSecrets(historyQuery.northSettings, northManifest.settings),
+            southSettings: encryptionService.filterSecrets(historyQuery.southSettings, southManifest.settings),
+            caching: {
+              trigger: {
+                scanModeId: historyQuery.caching.trigger.scanModeId,
+                scanModeName: null,
+                numberOfElements: historyQuery.caching.trigger.numberOfElements,
+                numberOfFiles: historyQuery.caching.trigger.numberOfFiles
+              },
+              throttling: {
+                runMinDelay: historyQuery.caching.throttling.runMinDelay,
+                maxSize: historyQuery.caching.throttling.maxSize,
+                maxNumberOfElements: historyQuery.caching.throttling.maxNumberOfElements
+              },
+              error: {
+                retryInterval: historyQuery.caching.error.retryInterval,
+                retryCount: historyQuery.caching.error.retryCount,
+                retentionDuration: historyQuery.caching.error.retentionDuration
+              },
+              archive: {
+                enabled: historyQuery.caching.archive.enabled,
+                retentionDuration: historyQuery.caching.archive.retentionDuration
+              }
+            },
+            items: historyQuery.items.map(item => ({
+              id: item.id,
+              name: item.name,
+              enabled: item.enabled,
+              settings: encryptionService.filterSecrets(item.settings, southManifest.items.settings)
+            }))
+          }
+        };
+      })
     };
   }
 
@@ -331,14 +409,14 @@ export default class OIAnalyticsMessageService {
           name: south.name,
           description: south.description,
           enabled: south.enabled,
-          settings: this.encryptionService.filterSecrets(south.settings, manifest.settings),
+          settings: encryptionService.filterSecrets(south.settings, manifest.settings),
           items: south.items.map(item => ({
             id: item.id,
             name: item.name,
             enabled: item.enabled,
             scanModeId: item.scanModeId,
             scanModeName: null,
-            settings: this.encryptionService.filterSecrets(item.settings, manifest.items.settings)
+            settings: encryptionService.filterSecrets(item.settings, manifest.items.settings)
           }))
         }
       };
@@ -358,23 +436,27 @@ export default class OIAnalyticsMessageService {
           name: north.name,
           description: north.description,
           enabled: north.enabled,
-          settings: this.encryptionService.filterSecrets(north.settings, manifest.settings),
+          settings: encryptionService.filterSecrets(north.settings, manifest.settings),
           caching: {
-            scanModeId: north.caching.scanModeId,
-            scanModeName: null,
-            retryInterval: north.caching.retryInterval,
-            retryCount: north.caching.retryCount,
-            maxSize: north.caching.maxSize,
-            oibusTimeValues: {
-              groupCount: north.caching.oibusTimeValues.groupCount,
-              maxSendCount: north.caching.oibusTimeValues.maxSendCount
+            trigger: {
+              scanModeId: north.caching.trigger.scanModeId,
+              scanModeName: null,
+              numberOfElements: north.caching.trigger.numberOfElements,
+              numberOfFiles: north.caching.trigger.numberOfFiles
             },
-            rawFiles: {
-              sendFileImmediately: north.caching.rawFiles.sendFileImmediately,
-              archive: {
-                enabled: north.caching.rawFiles.archive.enabled,
-                retentionDuration: north.caching.rawFiles.archive.retentionDuration
-              }
+            throttling: {
+              runMinDelay: north.caching.throttling.runMinDelay,
+              maxSize: north.caching.throttling.maxSize,
+              maxNumberOfElements: north.caching.throttling.maxNumberOfElements
+            },
+            error: {
+              retryInterval: north.caching.error.retryInterval,
+              retryCount: north.caching.error.retryCount,
+              retentionDuration: north.caching.error.retentionDuration
+            },
+            archive: {
+              enabled: north.caching.archive.enabled,
+              retentionDuration: north.caching.archive.retentionDuration
             }
           },
           subscriptions: north.subscriptions.map(south => south.id)

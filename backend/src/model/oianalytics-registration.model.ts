@@ -38,13 +38,19 @@ export interface OIAnalyticsRegistration extends BaseEntity {
     updateHistoryQuery: boolean;
     deleteHistoryQuery: boolean;
     createOrUpdateHistoryItemsFromCsv: boolean;
+    testHistoryNorthConnection: boolean;
+    testHistorySouthConnection: boolean;
+    testHistorySouthItem: boolean;
     createSouth: boolean;
     updateSouth: boolean;
     deleteSouth: boolean;
     createOrUpdateSouthItemsFromCsv: boolean;
+    testSouthConnection: boolean;
+    testSouthItem: boolean;
     createNorth: boolean;
     updateNorth: boolean;
     deleteNorth: boolean;
+    testNorthConnection: boolean;
   };
 }
 
@@ -77,12 +83,18 @@ export interface OIAnalyticsRegistrationEditCommand {
     updateHistoryQuery: boolean;
     deleteHistoryQuery: boolean;
     createOrUpdateHistoryItemsFromCsv: boolean;
+    testHistoryNorthConnection: boolean;
+    testHistorySouthConnection: boolean;
+    testHistorySouthItem: boolean;
     createSouth: boolean;
     updateSouth: boolean;
     deleteSouth: boolean;
     createOrUpdateSouthItemsFromCsv: boolean;
+    testSouthConnection: boolean;
+    testSouthItem: boolean;
     createNorth: boolean;
     updateNorth: boolean;
     deleteNorth: boolean;
+    testNorthConnection: boolean;
   };
 }

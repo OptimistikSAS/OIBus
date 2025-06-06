@@ -1,5 +1,6 @@
 import { FormComponentValidator, OibFormControl } from '../../../../backend/shared/model/form.model';
 import { FormControl, FormGroup, NonNullableFormBuilder, ValidatorFn, Validators } from '@angular/forms';
+import { singleTrueValidator, uniqueFieldNamesValidator } from './validators';
 
 /**
  * Create the validators associated to an input from the settings schema
@@ -19,6 +20,10 @@ export const getValidators = (validators: Array<FormComponentValidator>): Array<
         return Validators.minLength(validator.params.minLength);
       case 'maxLength':
         return Validators.maxLength(validator.params.maxLength);
+      case 'unique':
+      case 'singleTrue':
+        // Note: These are handled at the array level, not individual field level
+        return Validators.nullValidator;
       default:
         return Validators.nullValidator;
     }
@@ -27,7 +32,6 @@ export const getValidators = (validators: Array<FormComponentValidator>): Array<
 
 export const createFormGroup = (formDescription: Array<OibFormControl>, fb: NonNullableFormBuilder): FormGroup => {
   const formGroup = fb.group({});
-
   formDescription.forEach(setting => {
     const formControl = createFormControl(setting, fb);
     formGroup.addControl(setting.key, formControl);
@@ -37,6 +41,7 @@ export const createFormGroup = (formDescription: Array<OibFormControl>, fb: NonN
 };
 
 export const createFormControl = (formControlSettings: OibFormControl, fb: NonNullableFormBuilder): FormControl | FormGroup => {
+  const validators = getValidators(formControlSettings.validators || []);
   switch (formControlSettings.type) {
     case 'OibText':
     case 'OibNumber':
@@ -46,13 +51,14 @@ export const createFormControl = (formControlSettings: OibFormControl, fb: NonNu
     case 'OibTextArea':
     case 'OibTimezone':
     case 'OibCertificate':
-      return fb.control(formControlSettings.defaultValue, getValidators(formControlSettings.validators || []));
+      return fb.control(formControlSettings.defaultValue, validators);
     case 'OibArray':
-      return fb.control(formControlSettings.defaultValue || [], getValidators(formControlSettings.validators || []));
+      const arrayValidators = [...getValidators(formControlSettings.validators || []), ...getArrayValidators(formControlSettings.content)];
+      return fb.control(formControlSettings.defaultValue || [], arrayValidators);
     case 'OibCheckbox':
-      return fb.control(formControlSettings.defaultValue || false, getValidators(formControlSettings.validators || []));
+      return fb.control(formControlSettings.defaultValue || false, validators);
     case 'OibScanMode':
-      return fb.control(null, getValidators(formControlSettings.validators || []));
+      return fb.control(null, validators);
     case 'OibFormGroup':
       return createFormGroup(formControlSettings.content, fb);
   }
@@ -97,4 +103,37 @@ export const handleConditionalDisplay = (formGroup: FormGroup, formDescription: 
       });
     }
   });
+};
+
+/**
+ * Create array-specific validators based on the content configuration
+ */
+export const getArrayValidators = (content: Array<OibFormControl>): Array<ValidatorFn> => {
+  const validators: Array<ValidatorFn> = [];
+
+  const uniqueFields: Array<string> = [];
+  const singleTrueFields: Array<string> = [];
+
+  content.forEach(field => {
+    if (field.validators) {
+      field.validators.forEach(validator => {
+        if (validator.key === 'unique') {
+          uniqueFields.push(field.key);
+        }
+        if (validator.key === 'singleTrue') {
+          singleTrueFields.push(field.key);
+        }
+      });
+    }
+  });
+
+  uniqueFields.forEach(fieldKey => {
+    validators.push(uniqueFieldNamesValidator(fieldKey));
+  });
+
+  singleTrueFields.forEach(fieldKey => {
+    validators.push(singleTrueValidator(fieldKey));
+  });
+
+  return validators;
 };

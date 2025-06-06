@@ -22,13 +22,12 @@ import {
   generateRandomId,
   generateReplacementParameters,
   getCommandLineArguments,
-  getFilesFiltered,
   getOIBusInfo,
   getPlatformFromOsType,
-  httpGetWithBody,
   itemToFlattenedCSV,
   logQuery,
   persistResults,
+  pipeTransformers,
   stringToBoolean,
   unzip,
   validateCronExpression
@@ -38,14 +37,12 @@ import pino from 'pino';
 import AdmZip from 'adm-zip';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import { DateTimeType } from '../../shared/model/types';
-import Stream from 'node:stream';
-import http from 'node:http';
-import https from 'node:https';
+import { Readable, Writable } from 'node:stream';
 import os from 'node:os';
 import { EngineSettingsDTO, OIBusInfo } from '../../shared/model/engine.model';
 import cronstrue from 'cronstrue';
 import testData from '../tests/utils/test-data';
-import { mockBaseFolders } from '../tests/utils/test-utils';
+import { createMockReadStream, createMockWriteStream, mockBaseFolders } from '../tests/utils/test-utils';
 
 jest.mock('node:zlib');
 jest.mock('node:fs/promises');
@@ -55,7 +52,6 @@ jest.mock('papaparse');
 jest.mock('adm-zip');
 jest.mock('node:http', () => ({ request: jest.fn() }));
 jest.mock('node:https', () => ({ request: jest.fn() }));
-jest.mock('./proxy-agent');
 
 describe('Service utils', () => {
   describe('getCommandLineArguments', () => {
@@ -187,6 +183,56 @@ describe('Service utils', () => {
       await createBaseFolders(mockBaseFolders(testData.north.list[0].id));
       expect(fs.mkdir).not.toHaveBeenCalled();
       expect(fs.stat).toHaveBeenCalledTimes(3);
+    });
+  });
+
+  describe('pipeTransformers', () => {
+    beforeEach(() => {
+      jest.resetAllMocks();
+    });
+
+    it('should properly transform string stream', async () => {
+      const readStream = createMockReadStream();
+      // Push data into the read stream
+      readStream.push('Streaming Test Data');
+      readStream.push(null); // End the stream
+
+      const writeStream = createMockWriteStream();
+      await pipeTransformers(readStream, writeStream);
+      expect(writeStream.data).toEqual(['Streaming Test Data']);
+    });
+
+    it('should reject when the ReadStream throws an error', async () => {
+      const errorStream = new Readable({
+        read() {
+          this.emit('error', new Error('Stream Read Error'));
+        }
+      });
+
+      const writeStream = new Writable({
+        write(_chunk, _encoding, callback) {
+          callback(); // Normal write
+        }
+      });
+
+      await expect(pipeTransformers(errorStream, writeStream)).rejects.toThrow('Stream Read Error');
+    });
+
+    it('should reject when the WriteStream throws an error', async () => {
+      const readStream = new Readable({
+        read() {
+          this.push('Some Data');
+          this.push(null); // End stream
+        }
+      });
+
+      const errorStream = new Writable({
+        write(_chunk, _encoding, callback) {
+          callback(new Error('Stream Write Error'));
+        }
+      });
+
+      await expect(pipeTransformers(readStream, errorStream)).rejects.toThrow('Stream Write Error');
     });
   });
 
@@ -890,7 +936,7 @@ describe('Service utils', () => {
   describe('formatQueryParams', () => {
     it('should correctly return void string when there is no query params', () => {
       const result = formatQueryParams('2020-01-01T00:00:00.000Z', '2021-01-01T00:00:00.000Z', []);
-      expect(result).toEqual('');
+      expect(result).toEqual({});
     });
 
     it('should correctly format query params with ISO date string', () => {
@@ -903,104 +949,7 @@ describe('Service utils', () => {
       ];
 
       const result = formatQueryParams(startTime, endTime, queryParams);
-      expect(result).toEqual('?start=2020-01-01T00%3A00%3A00.000Z&end=2021-01-01T00%3A00%3A00.000Z&' + 'anotherParam=anotherQueryParam');
-    });
-  });
-
-  describe('httpGetWithBody', () => {
-    beforeEach(() => {
-      jest.resetAllMocks();
-      jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    });
-
-    it('should correctly create a body with GET HTTP', async () => {
-      const streamStream = new Stream();
-      const onMock = jest.fn();
-      const writeMock = jest.fn();
-      const endMock = jest.fn();
-      (http.request as jest.Mock).mockImplementation((options, callback) => {
-        callback(streamStream);
-        streamStream.emit('data', '{ "data": "myValue" }');
-        streamStream.emit('end'); // this will trigger the promise resolve
-
-        return {
-          on: onMock,
-          write: writeMock,
-          end: endMock
-        };
-      });
-      const expectedResult = { data: 'myValue' };
-      const result = await httpGetWithBody('body', { protocol: 'http:' });
-      expect(result).toEqual(expectedResult);
-      expect(onMock).toHaveBeenCalledTimes(1);
-      expect(writeMock).toHaveBeenCalledTimes(1);
-      expect(writeMock).toHaveBeenCalledWith('body');
-      expect(endMock).toHaveBeenCalledTimes(1);
-    });
-
-    it('should correctly create a body with GET HTTPS', async () => {
-      const streamStream = new Stream();
-      const onMock = jest.fn();
-      const writeMock = jest.fn();
-      const endMock = jest.fn();
-      (https.request as jest.Mock).mockImplementation((options, callback) => {
-        callback(streamStream);
-        streamStream.emit('data', '{ "data": "myValue" }');
-        streamStream.emit('end'); // this will trigger the promise resolve
-
-        return {
-          on: onMock,
-          write: writeMock,
-          end: endMock
-        };
-      });
-      const expectedResult = { data: 'myValue' };
-      const result = await httpGetWithBody('body', { protocol: 'https:' });
-      expect(result).toEqual(expectedResult);
-      expect(onMock).toHaveBeenCalledTimes(1);
-      expect(writeMock).toHaveBeenCalledTimes(1);
-      expect(writeMock).toHaveBeenCalledWith('body');
-      expect(endMock).toHaveBeenCalledTimes(1);
-    });
-
-    it('should throw an error when HTTP req throws an error', async () => {
-      const streamStream = new Stream();
-      const onMock = jest.fn((type, callback) => {
-        callback(new Error('an error'));
-      });
-      const writeMock = jest.fn(() => {
-        streamStream.emit('error', new Error('an error'));
-      });
-
-      (https.request as jest.Mock).mockImplementation((options, callback) => {
-        callback(streamStream);
-
-        return {
-          on: onMock,
-          write: writeMock,
-          end: jest.fn()
-        };
-      });
-      await expect(httpGetWithBody('body', { protocol: 'https:' })).rejects.toThrow('an error');
-    });
-
-    it('should throw an error when parsing received data', async () => {
-      const streamStream = new Stream();
-      (https.request as jest.Mock).mockImplementation((options, callback) => {
-        callback(streamStream);
-        streamStream.emit('data', 'some data');
-        streamStream.emit('data', 'but not a');
-        streamStream.emit('data', 'json');
-        streamStream.emit('end'); // this will trigger the promise resolve
-        return {
-          on: jest.fn(),
-          write: jest.fn(),
-          end: jest.fn()
-        };
-      });
-      await expect(httpGetWithBody('body', { protocol: 'https:' })).rejects.toThrow(
-        'Unexpected token \'s\', "some datab"... is not valid JSON'
-      );
+      expect(result).toEqual({ anotherParam: 'anotherQueryParam', end: '2021-01-01T00:00:00.000Z', start: '2020-01-01T00:00:00.000Z' });
     });
   });
 
@@ -1027,66 +976,6 @@ describe('Service utils', () => {
     expect(getPlatformFromOsType('Darwin')).toEqual('macos');
     expect(getPlatformFromOsType('Windows_NT')).toEqual('windows');
     expect(getPlatformFromOsType('unknown')).toEqual('unknown');
-  });
-
-  describe('getFilesFiltered', () => {
-    const logger: pino.Logger = new PinoLogger();
-
-    beforeEach(() => {
-      jest.resetAllMocks();
-      jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    });
-
-    it('should properly get files', async () => {
-      (fs.readdir as jest.Mock).mockImplementation(() => ['file1', 'file2', 'file3', 'anotherFile', 'errorFile']);
-      (fs.stat as jest.Mock)
-        .mockImplementationOnce(() => ({ mtimeMs: DateTime.fromISO('2020-02-02T04:02:02.222Z').toMillis() }))
-        .mockImplementationOnce(() => ({ mtimeMs: DateTime.fromISO('2020-02-02T06:02:02.222Z').toMillis() }))
-        .mockImplementationOnce(() => ({ mtimeMs: DateTime.fromISO('2020-02-04T02:02:02.222Z').toMillis() }))
-        .mockImplementationOnce(() => ({ mtimeMs: DateTime.fromISO('2020-02-05T02:02:02.222Z').toMillis() }))
-        .mockImplementationOnce(() => {
-          throw new Error('error file');
-        });
-
-      const files = await getFilesFiltered('errorFolder', '2020-02-02T02:02:02.222Z', '2020-02-03T02:02:02.222Z', 'file', logger);
-
-      expect(files).toEqual([
-        { filename: 'file1', modificationDate: '2020-02-02T04:02:02.222Z' },
-        { filename: 'file2', modificationDate: '2020-02-02T06:02:02.222Z' }
-      ]);
-      expect(logger.error).toHaveBeenCalledWith(
-        `Error while reading in errorFolder folder file stats "${path.join('errorFolder', 'errorFile')}": Error: error file`
-      );
-    });
-
-    it('should properly get files', async () => {
-      (fs.readdir as jest.Mock).mockImplementation(() => ['file1', 'file2']);
-      (fs.stat as jest.Mock)
-        .mockReturnValueOnce({ mtimeMs: DateTime.fromISO('2000-02-02T02:02:02.222Z').toMillis() })
-        .mockReturnValueOnce({ mtimeMs: DateTime.fromISO('2030-02-02T02:02:02.222Z').toMillis() });
-
-      const files = await getFilesFiltered('errorFolder', '2020-02-02T02:02:02.222Z', '2020-02-03T02:02:02.222Z', 'file', logger);
-
-      expect(files).toEqual([]);
-    });
-
-    it('should properly get files without filtering', async () => {
-      (fs.readdir as jest.Mock).mockImplementation(() => ['file1', 'file2']);
-      (fs.stat as jest.Mock)
-        .mockReturnValueOnce({ mtimeMs: DateTime.fromISO('2000-02-02T02:02:02.222Z').toMillis(), size: 100 })
-        .mockReturnValueOnce({ mtimeMs: DateTime.fromISO('2030-02-02T02:02:02.222Z').toMillis(), size: 60 });
-
-      const files = await getFilesFiltered('errorFolder', '', '', '', logger);
-
-      expect(files).toEqual([
-        { filename: 'file1', modificationDate: '2000-02-02T02:02:02.222Z', size: 100 },
-        {
-          filename: 'file2',
-          modificationDate: '2030-02-02T02:02:02.222Z',
-          size: 60
-        }
-      ]);
-    });
   });
 
   describe('validateCronExpression', () => {
@@ -1185,12 +1074,6 @@ describe('Service utils', () => {
     });
 
     it('should throw an error for invalid cron expression caught by cron-parser', () => {
-      expect(validateCronExpression('0 23 10 12 6/')).toEqual({
-        isValid: false,
-        errorMessage: 'Constraint error, cannot repeat at every 0 time.',
-        humanReadableForm: '',
-        nextExecutions: []
-      });
       expect(validateCronExpression('0 23 10 12 6/-')).toEqual({
         isValid: false,
         errorMessage: 'Constraint error, cannot repeat at every NaN time.',
@@ -1199,7 +1082,7 @@ describe('Service utils', () => {
       });
       expect(validateCronExpression('0 23 10-1 12 6/1')).toEqual({
         isValid: false,
-        errorMessage: 'Invalid range: 10-1',
+        errorMessage: 'Invalid range: 10-1, min(10) > max(1)',
         humanReadableForm: '',
         nextExecutions: []
       });

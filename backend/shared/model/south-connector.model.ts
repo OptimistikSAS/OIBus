@@ -21,7 +21,6 @@ export const OIBUS_SOUTH_TYPES = [
   'osisoft-pi',
   'postgresql',
   'sftp',
-  'slims',
   'sqlite'
 ] as const;
 export type OIBusSouthType = (typeof OIBUS_SOUTH_TYPES)[number];

@@ -13,6 +13,12 @@ export default jest.fn().mockImplementation(settings => {
     setLogger: jest.fn(),
     getMetricsDataStream: jest.fn().mockReturnValue(settings.id),
     settings: settings,
-    metricsEvent: new EventEmitter()
+    metricsEvent: new EventEmitter(),
+    searchCacheContent: jest.fn(),
+    getCacheContentFileStream: jest.fn(),
+    removeCacheContent: jest.fn(),
+    removeAllCacheContent: jest.fn(),
+    moveCacheContent: jest.fn(),
+    moveAllCacheContent: jest.fn()
   };
 });

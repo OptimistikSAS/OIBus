@@ -77,9 +77,7 @@ export default class WebServer {
   async init(): Promise<void> {
     this.app = new Koa() as KoaApplication;
 
-    this.app.ipFilters = {
-      whiteList: ['127.0.0.1', '::1', '::ffff:127.0.0.1', ...this.ipFilterService.findAll().map(filter => filter.address)]
-    };
+    this.app.whiteList = ['127.0.0.1', '::1', '::ffff:127.0.0.1', ...this.ipFilterService.findAll().map(filter => filter.address)];
 
     this.app.use(
       oibus(
@@ -147,6 +145,11 @@ export default class WebServer {
       this._port = value;
       await this.stop();
       await this.start();
+    });
+    this.ipFilterService.whiteListEvent.on('update-white-list', (newWhiteList: Array<string>) => {
+      if (this.app) {
+        this.app.whiteList = newWhiteList;
+      }
     });
     if (!this.app) return;
     this.webServer = this.app.listen(this.port, () => {
