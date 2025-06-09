@@ -5,16 +5,20 @@ import NorthConnector from '../north-connector';
 import pino from 'pino';
 import EncryptionService from '../../service/encryption.service';
 import { NorthRESTSettings } from '../../../shared/model/north-settings.model';
-import { CacheMetadata } from '../../../shared/model/engine.model';
+import { CacheMetadata, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import { BaseFolders } from '../../model/types';
 import { filesExists } from '../../service/utils';
 import FormData from 'form-data';
+import { Readable } from 'node:stream';
 import { URL } from 'node:url';
 import { OIBusError } from '../../model/engine.model';
 import { HTTPRequest, ReqAuthOptions, ReqProxyOptions, ReqResponse, retryableHttpStatusCodes } from '../../service/http-request.utils';
+import fs from 'node:fs/promises';
+import { DateTime } from 'luxon';
+import csv from 'papaparse';
 
 /**
  * Class Console - display values and file path into the console
@@ -37,7 +41,59 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
         return this.handleFile(cacheMetadata.contentFile);
 
       case 'time-values':
-        throw new Error('Can not manage time values');
+        return this.handleValues(JSON.parse(await fs.readFile(cacheMetadata.contentFile, { encoding: 'utf-8' })) as Array<OIBusTimeValue>);
+    }
+  }
+
+  /**
+   * Handle the file by sending it over to the specified endpoint
+   */
+  async handleValues(values: Array<OIBusTimeValue>): Promise<void> {
+    const filename = `${this.connector.name}-${DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS')}.csv`;
+    const csvContent = csv.unparse(
+      values.map(value => ({
+        pointId: value.pointId,
+        timestamp: value.timestamp,
+        value: value.data.value
+      })),
+      {
+        header: true,
+        delimiter: ';'
+      }
+    );
+
+    const endpoint = new URL(this.connector.settings.endpoint);
+
+    // Get query params
+    const queryParams = this.getQueryParams();
+
+    // Create FormData with file
+    const { base } = path.parse(filename);
+    const form = new FormData();
+    const readableStream = Readable.from(JSON.stringify(csvContent));
+    form.append('file', readableStream, { filename: base });
+
+    let response: ReqResponse;
+    try {
+      response = await HTTPRequest(endpoint, {
+        method: 'POST',
+        headers: form.getHeaders(),
+        query: queryParams,
+        body: form,
+        auth: this.getAuthorizationOptions(),
+        proxy: this.getProxyOptions(),
+        timeout: this.connector.settings.timeout * 1000
+      });
+    } catch (error) {
+      const message = this.getMessageFromError(error);
+      throw new OIBusError(`Failed to reach file endpoint ${endpoint}; ${message}`, true);
+    }
+
+    if (!response.ok) {
+      throw new OIBusError(
+        `HTTP request failed with status code ${response.statusCode} and message: ${await response.body.text()}`,
+        retryableHttpStatusCodes.includes(response.statusCode)
+      );
     }
   }
 

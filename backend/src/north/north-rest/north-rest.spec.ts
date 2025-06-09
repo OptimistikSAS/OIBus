@@ -23,8 +23,13 @@ import { mockBaseFolders } from '../../tests/utils/test-utils';
 import { OIBusError } from '../../model/engine.model';
 import CacheService from '../../service/cache/cache.service';
 import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
+import fs from 'node:fs/promises';
+import { OIBusTimeValue } from '../../../shared/model/engine.model';
+import csv from 'papaparse';
 
 jest.mock('node:fs');
+jest.mock('node:fs/promises');
+jest.mock('papaparse');
 jest.mock('../../service/utils');
 jest.mock('../../service/http-request.utils');
 
@@ -55,6 +60,14 @@ const myReadStream = {
 
 let north: NorthREST;
 let configuration: NorthConnectorEntity<NorthRESTSettings>;
+
+const timeValues: Array<OIBusTimeValue> = [
+  {
+    pointId: 'pointId',
+    timestamp: testData.constants.dates.FAKE_NOW,
+    data: { value: '666', quality: 'good' }
+  }
+];
 
 class ErrorWithCode extends Error {
   constructor(
@@ -156,6 +169,8 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
     (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
     (filesExists as jest.Mock).mockReturnValue(true);
     (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(200));
+    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify(timeValues));
+    (csv.unparse as jest.Mock).mockReturnValue('csv content');
 
     // Expected auth options
     switch (settings.authType) {
@@ -273,7 +288,47 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
     expect(HTTPRequest).toHaveBeenCalledWith(testEndpoint, expectedReqOptions);
   });
 
-  it('should not handle values', async () => {
+  it('should handle values', async () => {
+    await north.handleContent({
+      contentFile: '/path/to/file/example-123.json',
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'time-values',
+      source: 'south',
+      options: {}
+    });
+
+    const expectedReqOptions = {
+      method: 'POST',
+      headers: {
+        'content-type': expect.stringContaining('multipart/form-data; boundary=')
+      },
+      query: { entityId: 'test' },
+      body: expect.any(FormData),
+      auth: authOptions,
+      timeout: 30000,
+      ...proxyOptions
+    };
+
+    expect(HTTPRequest).toHaveBeenCalledWith(endpoint, expectedReqOptions);
+  });
+
+  it('should properly throw fetch error with time values', async () => {
+    const expectedReqOptions = {
+      method: 'POST',
+      headers: {
+        'content-type': expect.stringContaining('multipart/form-data; boundary=')
+      },
+      query: { entityId: 'test' },
+      body: expect.any(FormData),
+      auth: authOptions,
+      timeout: 30000,
+      ...proxyOptions
+    };
+
+    (HTTPRequest as jest.Mock).mockRejectedValueOnce(new Error('error'));
+
     await expect(
       north.handleContent({
         contentFile: '/path/to/file/example-123.json',
@@ -284,9 +339,40 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
         source: 'south',
         options: {}
       })
-    ).rejects.toThrow('Can not manage time values');
+    ).rejects.toThrow(new OIBusError(`Failed to reach file endpoint ${endpoint}; message: error`, true));
 
-    expect(HTTPRequest).not.toHaveBeenCalled();
+    expect(HTTPRequest).toHaveBeenCalledWith(endpoint, expectedReqOptions);
+  });
+
+  it('should properly throw error on time values bad response without retrying', async () => {
+    const expectedReqOptions = {
+      method: 'POST',
+      headers: {
+        'content-type': expect.stringContaining('multipart/form-data; boundary=')
+      },
+      query: { entityId: 'test' },
+      body: expect.any(FormData),
+      auth: authOptions,
+      timeout: 30000,
+      ...proxyOptions
+    };
+
+    // 500 error should not be retried
+    (HTTPRequest as jest.Mock).mockResolvedValueOnce(createMockResponse(500, 'Internal Server Error'));
+
+    await expect(
+      north.handleContent({
+        contentFile: '/path/to/file/example-123.json',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'time-values',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow(new OIBusError('HTTP request failed with status code 500 and message: "Internal Server Error"', false));
+
+    expect(HTTPRequest).toHaveBeenCalledWith(endpoint, expectedReqOptions);
   });
 
   it('should properly handle files', async () => {

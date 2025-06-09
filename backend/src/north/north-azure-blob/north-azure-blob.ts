@@ -208,6 +208,7 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
       this.logger.info(`Upload block blob "${blobPath}" successfully with requestId: ${uploadBlobResponse.requestId}`);
     }
   }
+
   override async testConnection(): Promise<void> {
     await this.prepareConnection();
     const blobPath = this.connector.settings.path ? `${this.connector.settings.path}/${TEST_FILE}` : TEST_FILE;
