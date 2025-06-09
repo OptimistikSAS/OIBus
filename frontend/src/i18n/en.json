@@ -179,7 +179,8 @@
       "test-history-query-north-connection": "Test north connection",
       "test-history-query-south-connection": "Test south connection",
       "test-history-query-south-item": "Test south item",
-      "create-or-update-history-query-south-items-from-csv": "Load south items from CSV"
+      "create-or-update-history-query-south-items-from-csv": "Load south items from CSV",
+      "update-history-query-status": "Update history query status"
     },
     "oibus-north-category": {
       "debug": "Debug",
