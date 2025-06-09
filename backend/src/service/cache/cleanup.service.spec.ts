@@ -171,7 +171,7 @@ describe('CacheService', () => {
   });
 
   it('should clean up cache folder', async () => {
-    service['readCacheMetadataFiles'] = jest.fn();
+    service['readCacheMetadataFiles'] = jest.fn().mockReturnValue([]);
     (fs.readdir as jest.Mock).mockReturnValueOnce([
       'cache.db',
       'south-id1',

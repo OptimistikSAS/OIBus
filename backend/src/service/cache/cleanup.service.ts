@@ -75,7 +75,7 @@ export default class CleanupService {
         ? (await fs.readdir(this.getFolder(mainFolder))).filter(element => element !== CACHE_DATABASE)
         : await fs.readdir(this.getFolder(mainFolder));
 
-    // Remove south folder if folder is present but connector does not exist
+    // Remove south folder if folder is present but the connector does not exist
     const southFolders = cacheFolders.filter(element => element.startsWith('south-'));
     for (const folder of southFolders) {
       const folderPath = path.join(this.getFolder(mainFolder), folder);
@@ -90,7 +90,7 @@ export default class CleanupService {
       }
     }
 
-    // Remove north folder if folder is present but connector does not exist
+    // Remove north folder if folder is present but the connector does not exist
     const northFolders = cacheFolders.filter(element => element.startsWith('north-'));
     for (const folder of northFolders) {
       const folderPath = path.join(this.getFolder(mainFolder), folder);
@@ -105,6 +105,9 @@ export default class CleanupService {
         }
       } else {
         const fileList = await this.readCacheMetadataFiles(folderPath);
+        if (fileList.length === 0) {
+          continue;
+        }
         if (mainFolder === 'archive') {
           if (!north.caching.archive.enabled) {
             await this.dataStreamEngine.removeCacheContent(
@@ -133,7 +136,7 @@ export default class CleanupService {
       }
     }
 
-    // Remove history folder if folder is present but connector does not exist
+    // Remove history folder if folder is present but the connector does not exist
     const historyQueryFolders = cacheFolders.filter(element => element.startsWith('history-'));
     for (const folder of historyQueryFolders) {
       const folderPath = path.join(this.getFolder(mainFolder), folder);
@@ -150,6 +153,9 @@ export default class CleanupService {
       } else {
         const northFolderPath = path.join(folderPath, 'north');
         const fileList = await this.readCacheMetadataFiles(northFolderPath);
+        if (fileList.length === 0) {
+          continue;
+        }
         if (mainFolder === 'archive') {
           if (!historyQuery.caching.archive.enabled) {
             await this.historyQueryEngine.removeCacheContent(
