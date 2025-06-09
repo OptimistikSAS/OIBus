@@ -13,6 +13,10 @@ on:
         description: 'The git tag to build'
         type: string
         required: true
+      prerelease:
+        description: 'If this version is a prerelease or not'
+        type: string
+        required: true
 
 jobs:
   publish:
@@ -43,6 +47,6 @@ jobs:
           build-args: |
             VERSION=${{ inputs.tag }}
           tags: |
-            ghcr.io/optimistiksas/oibus:latest
+            ghcr.io/optimistiksas/oibus:${{ inputs.prerelease == 'true' && 'beta' || 'latest' }}
             ghcr.io/optimistiksas/oibus:${{ inputs.tag }}
 
