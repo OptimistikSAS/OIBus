@@ -14,7 +14,7 @@ jobs:
         config:
           - { friendlyName: 'MacOS arm64', os: 'macos-15', platform: 'macos-arm64', archiveName: 'oibus-macos_arm64', zip: 'zip -r' }
           - { friendlyName: 'MacOS x64', os: 'macos-13', platform: 'macos-x64', archiveName: 'oibus-macos_x64', zip: 'zip -r' }
-          - { friendlyName: 'Windows x64', os: 'windows-2022', platform: 'win-x64', archiveName: 'oibus-win_x64', zip: '7z a -tzip' }
+          - { friendlyName: 'Windows x64', os: 'windows-2025', platform: 'win-x64', archiveName: 'oibus-win_x64', zip: '7z a -tzip' }
           - { friendlyName: 'Linux x64', os: 'ubuntu-24.04', platform: 'linux-x64', archiveName: 'oibus-linux_x64', zip: 'zip -r' }
           - { friendlyName: 'Linux arm64', os: 'ubuntu-24.04-arm', platform: 'linux-arm64', archiveName: 'oibus-linux_arm64', zip: 'zip -r' }
     timeout-minutes: 25
@@ -29,6 +29,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version-file: backend/package.json
+
+      - name: Install InnoSetup
+        if: ${{ matrix.config['platform'] == 'win-x64' }}
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri https://jrsoftware.org/download.php/is.exe -OutFile D:\\is.exe
+          Start-Process -FilePath D:\\is.exe -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART" -Wait
 
       - name: Get release info
         id: release_info
