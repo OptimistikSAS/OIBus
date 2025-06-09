@@ -133,6 +133,7 @@ jobs:
 
     outputs:
       release_name: ${{ steps.release_info.outputs.release_name }}
+      prerelease: ${{ steps.release_info.outputs.prerelease }}
 
   docker:
     name: 'Release OIBus docker container'
@@ -140,6 +141,7 @@ jobs:
     uses: ./.github/workflows/docker.yml
     with:
       tag: ${{ needs.build.outputs.release_name }}
+      prerelease: ${{ needs.build.outputs.prerelease }}
 
   slack:
     name: 'Slack notification'
