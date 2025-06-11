@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.6.1](https://github.com/OptimistikSAS/OIBus/compare/v3.6.0...v3.6.1) (2025-06-11)
+
+
+### Bug Fixes
+
+* **history-query:** add missing translation when updating history query status ([a6e4e05](https://github.com/OptimistikSAS/OIBus/commit/a6e4e054acb67b005e5d3c10dbe30a9aa4e2fa02))
+* **north-rest:** fix time values for north rest ([b26551c](https://github.com/OptimistikSAS/OIBus/commit/b26551c74c0b8902311e6e55ec5591f2b496998a))
+* **opcua:** fix null value log for opcua south connector ([f3db00f](https://github.com/OptimistikSAS/OIBus/commit/f3db00f0d10c34edbaebf16b3505a94648c8e0da))
+* **opcua:** fix release of continuation point and resolve node id ([cafd3da](https://github.com/OptimistikSAS/OIBus/commit/cafd3daeaab8ca8acc7a43a7ab9fccd55c287c42))
+
 ## [3.6.0](https://github.com/OptimistikSAS/OIBus/compare/v3.5.18...v3.6.0) (2025-06-09)
 
 
