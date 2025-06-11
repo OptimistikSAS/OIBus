@@ -31,18 +31,20 @@ import {
   DataType,
   DataValue,
   HistoryReadRequest,
+  NodeId,
   OPCUACertificateManager,
   OPCUAClient,
   OPCUAClientOptions,
   ReadProcessedDetails,
   ReadRawModifiedDetails,
+  resolveNodeId,
   StatusCodes,
   TimestampsToReturn,
   UserIdentityInfo,
   UserTokenType,
   Variant
 } from 'node-opcua';
-import { HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_opcua_types';
+import { HistoryDataOptions, HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_opcua_types';
 
 export const MAX_NUMBER_OF_NODE_TO_LOG = 10;
 export const NUM_VALUES_PER_NODE = 1000;
@@ -235,7 +237,13 @@ export default class SouthOPCUA
       session = await OPCUAClient.createSession(this.connector.settings.url, userIdentity, options);
       let content: OIBusContent;
       if (item.settings.mode === 'da') {
-        content = await this.getDAValues([item], session);
+        let nodeId;
+        try {
+          nodeId = resolveNodeId(item.settings.nodeId);
+        } catch (error: unknown) {
+          throw new Error(`Error when parsing node ID ${item.settings.nodeId} for item ${item.name}: ${(error as Error).message}`);
+        }
+        content = await this.getDAValues([{ nodeId, name: item.name }], session);
       } else {
         content = (await this.getHAValues(
           [item],
@@ -317,32 +325,39 @@ export default class SouthOPCUA
   ): Promise<Instant | OIBusContent | null> {
     try {
       let maxTimestamp: number | null = null;
-      const itemsByAggregates = new Map<Aggregate, Map<Resampling | undefined, Array<{ nodeId: string; itemName: string }>>>();
+      const itemsByAggregates = new Map<Aggregate, Map<Resampling | undefined, Array<{ nodeId: NodeId; itemName: string }>>>();
 
-      items.forEach(item => {
+      for (const item of items) {
+        let nodeId;
+        try {
+          nodeId = resolveNodeId(item.settings.nodeId);
+        } catch (error: unknown) {
+          this.logger.error(`Error when parsing node ID ${item.settings.nodeId} for item ${item.name}: ${(error as Error).message}`);
+          continue;
+        }
+
         if (!itemsByAggregates.has(item.settings.haMode!.aggregate)) {
           itemsByAggregates.set(
             item.settings.haMode!.aggregate,
             new Map<
               Resampling,
               Array<{
-                nodeId: string;
+                nodeId: NodeId;
                 itemName: string;
               }>
             >()
           );
         }
         if (!itemsByAggregates.get(item.settings.haMode!.aggregate!)!.has(item.settings.haMode!.resampling)) {
-          itemsByAggregates
-            .get(item.settings.haMode!.aggregate)!
-            .set(item.settings.haMode!.resampling, [{ itemName: item.name, nodeId: item.settings.nodeId }]);
+          itemsByAggregates.get(item.settings.haMode!.aggregate)!.set(item.settings.haMode!.resampling, [{ itemName: item.name, nodeId }]);
         } else {
           const currentList = itemsByAggregates.get(item.settings.haMode!.aggregate)!.get(item.settings.haMode!.resampling)!;
-          currentList.push({ itemName: item.name, nodeId: item.settings.nodeId });
+          currentList.push({ itemName: item.name, nodeId });
           itemsByAggregates.get(item.settings.haMode!.aggregate)!.set(item.settings.haMode!.resampling, currentList);
         }
-      });
+      }
 
+      const startRequest = DateTime.now().toMillis();
       let dataByItems: Array<OIBusTimeValue> = [];
       for (const [aggregate, aggregatedItems] of itemsByAggregates.entries()) {
         for (const [resampling, resampledItems] of aggregatedItems.entries()) {
@@ -356,24 +371,27 @@ export default class SouthOPCUA
           }));
           this.logger.trace(`Reading ${resampledItems.length} items with aggregate ${aggregate} and resampling ${resampling}`);
           do {
-            const request: HistoryReadRequest = this.getHistoryReadRequest(startTime, endTime, aggregate, resampling, nodesToRead);
+            const request = this.getHistoryReadRequest(startTime, endTime, aggregate, resampling, nodesToRead);
             request.requestHeader.timeoutHint = this.connector.settings.readTimeout;
 
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-expect-error
-            const response = await session.performMessageTransaction(request);
+            const response = await session.historyRead(request);
             if (response.responseHeader.serviceResult.isNot(StatusCodes.Good)) {
               this.logger.error(`Error while reading history: ${response.responseHeader.serviceResult.description}`);
             }
 
             if (response.results) {
               this.logger.debug(`Received a response of ${response.results.length} nodes`);
+
               nodesToRead = nodesToRead
                 .map((node, i) => {
-                  const result = response.results[i];
+                  const result = response.results![i];
                   const associatedItem = resampledItems.find(item => item.nodeId === node.nodeId)!;
 
-                  if (![StatusCodes.Good, StatusCodes.GoodNoData, StatusCodes.GoodMoreData].includes(result.statusCode)) {
+                  if (
+                    ![StatusCodes.Good.value, StatusCodes.GoodNoData.value, StatusCodes.GoodMoreData.value].includes(
+                      result.statusCode.value
+                    )
+                  ) {
                     if (!logs.has(result.statusCode.name)) {
                       logs.set(result.statusCode.name, {
                         description: result.statusCode.description,
@@ -382,13 +400,16 @@ export default class SouthOPCUA
                     } else {
                       logs.get(result.statusCode.name)!.affectedNodes.push(associatedItem.itemName);
                     }
-                  } else if (result.historyData && result.historyData.dataValues) {
+                  } else if (result.historyData && (result.historyData as HistoryDataOptions).dataValues) {
+                    const historyDataValues = (result.historyData as HistoryDataOptions).dataValues!.filter(
+                      value => value
+                    ) as Array<DataValue>;
                     this.logger.trace(
                       `Result for node "${node.nodeId}" (number ${i}) contains ` +
-                        `${result.historyData.dataValues.length} values and has status code ` +
+                        `${historyDataValues.length} values and has status code ` +
                         `${result.statusCode.name}, continuation point is ${result.continuationPoint}`
                     );
-                    for (const historyValue of result.historyData.dataValues) {
+                    for (const historyValue of historyDataValues) {
                       const value = this.parseOPCUAValue(associatedItem.itemName, historyValue.value);
                       if (!value) {
                         continue;
@@ -411,13 +432,16 @@ export default class SouthOPCUA
                     ...node,
                     continuationPoint: result.continuationPoint,
                     status: result.statusCode,
-                    hasData: result.historyData && result.historyData.dataValues && result.historyData.dataValues.length > 0
+                    hasData:
+                      result.historyData &&
+                      (result.historyData as HistoryDataOptions).dataValues &&
+                      (result.historyData as HistoryDataOptions).dataValues!.length > 0
                   };
                 })
                 .filter(
                   node =>
                     node.hasData &&
-                    [StatusCodes.Good, StatusCodes.GoodNoData, StatusCodes.GoodMoreData].includes(node.status) &&
+                    [StatusCodes.Good.value, StatusCodes.GoodNoData.value, StatusCodes.GoodMoreData.value].includes(node.status.value) &&
                     node.continuationPoint &&
                     node.continuationPoint.length > 0
                 );
@@ -442,11 +466,9 @@ export default class SouthOPCUA
             nodeId: item.nodeId
           }));
 
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-expect-error
-          const response = await session.performMessageTransaction(
-            this.getHistoryReadRequest(startTime, endTime, aggregate, resampling, nodesToRead)
-          );
+          const historyRequest = this.getHistoryReadRequest(startTime, endTime, aggregate, resampling, nodesToRead);
+          historyRequest.releaseContinuationPoints = true;
+          const response = await session.historyRead(historyRequest);
 
           if (response.responseHeader.serviceResult.isNot(StatusCodes.Good)) {
             this.logger.error(`Error while releasing continuation points: ${response.responseHeader.serviceResult.description}`);
@@ -464,6 +486,9 @@ export default class SouthOPCUA
           }
         }
       }
+
+      const requestDuration = DateTime.now().toMillis() - startRequest;
+      this.logger.debug(`HA request done in ${requestDuration} ms`);
       if (testingItem) {
         return { type: 'time-values', content: dataByItems };
       }
@@ -630,20 +655,27 @@ export default class SouthOPCUA
       return;
     }
 
-    const itemsToRead = items.filter(item => item.settings.mode === 'da');
-    if (itemsToRead.length === 0) {
+    const nodesToRead: Array<{ nodeId: NodeId; name: string }> = [];
+    for (const item of items) {
+      if (item.settings.mode === 'da') {
+        let nodeId;
+        try {
+          nodeId = resolveNodeId(item.settings.nodeId);
+          nodesToRead.push({ nodeId, name: item.name });
+        } catch (error: unknown) {
+          this.logger.error(`Error when parsing node ID ${item.settings.nodeId} for item ${item.name}: ${(error as Error).message}`);
+        }
+      }
+    }
+    if (nodesToRead.length === 0) {
       return;
+    } else if (nodesToRead.length > 1) {
+      this.logger.debug(`Read ${nodesToRead.length} nodes ` + `[${nodesToRead[0].nodeId}...${nodesToRead[nodesToRead.length - 1].nodeId}]`);
+    } else {
+      this.logger.debug(`Read node ${nodesToRead[0].nodeId}`);
     }
     try {
-      if (itemsToRead.length > 1) {
-        this.logger.debug(
-          `Read ${itemsToRead.length} nodes ` +
-            `[${itemsToRead[0].settings.nodeId}...${itemsToRead[itemsToRead.length - 1].settings.nodeId}]`
-        );
-      } else {
-        this.logger.debug(`Read node ${itemsToRead[0].settings.nodeId}`);
-      }
-      const content = await this.getDAValues(itemsToRead, session);
+      const content = await this.getDAValues(nodesToRead, session);
       await this.addContent(content);
     } catch (error) {
       await this.disconnect();
@@ -654,15 +686,15 @@ export default class SouthOPCUA
     }
   }
 
-  async getDAValues(items: Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>, session: ClientSession): Promise<OIBusContent> {
+  async getDAValues(nodesToRead: Array<{ nodeId: NodeId; name: string }>, session: ClientSession): Promise<OIBusContent> {
     try {
       const startRequest = DateTime.now().toMillis();
-      const dataValues = await session.read(items.map(item => ({ nodeId: item.settings.nodeId })));
+      const dataValues = await session.read(nodesToRead);
       const requestDuration = DateTime.now().toMillis() - startRequest;
-      this.logger.debug(`Found ${dataValues.length} results for ${items.length} items (DA mode) in ${requestDuration} ms`);
-      if (dataValues.length !== items.length) {
+      this.logger.debug(`Found ${dataValues.length} results for ${nodesToRead.length} items (DA mode) in ${requestDuration} ms`);
+      if (dataValues.length !== nodesToRead.length) {
         this.logger.error(
-          `Received ${dataValues.length} node results, requested ${items.length} nodes. Request done in ${requestDuration} ms`
+          `Received ${dataValues.length} node results, requested ${nodesToRead.length} nodes. Request done in ${requestDuration} ms`
         );
       }
 
@@ -671,10 +703,10 @@ export default class SouthOPCUA
         .map((dataValue: DataValue, i) => {
           const selectedTimestamp = dataValue.sourceTimestamp ?? dataValue.serverTimestamp;
           return {
-            pointId: items[i].name,
+            pointId: nodesToRead[i].name,
             timestamp: selectedTimestamp ? selectedTimestamp.toISOString() : defaultTimestamp,
             data: {
-              value: this.parseOPCUAValue(items[i].name, dataValue.value),
+              value: this.parseOPCUAValue(nodesToRead[i].name, dataValue.value),
               quality: dataValue.statusCode.name
             }
           };
@@ -717,9 +749,16 @@ export default class SouthOPCUA
     }
 
     for (const item of items) {
+      let nodeId;
+      try {
+        nodeId = resolveNodeId(item.settings.nodeId);
+      } catch (error: unknown) {
+        this.logger.error(`Error when parsing node ID ${item.settings.nodeId} for item ${item.name}: ${(error as Error).message}`);
+        continue;
+      }
       const monitoredItem = await this.subscription.monitor(
         {
-          nodeId: item.settings.nodeId,
+          nodeId,
           attributeId: AttributeIds.Value
         },
         {
