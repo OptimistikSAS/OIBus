@@ -448,26 +448,32 @@ describe('SouthOPCUA', () => {
   });
 
   it('should properly parse boolean values', async () => {
-    const values = [
-      {
-        sourceTimestamp: new Date(testData.constants.dates.FAKE_NOW),
-        value: {
-          value: true,
-          dataType: DataType.Boolean
-        },
-        statusCode: StatusCodes.Good
-      },
-      {
-        sourceTimestamp: new Date(testData.constants.dates.FAKE_NOW),
-        value: {
-          value: false,
-          dataType: DataType.Boolean
-        },
-        statusCode: StatusCodes.Bad
-      }
-    ];
-    south.parseOPCUAValue('item1', values[0].value as Variant);
-    south.parseOPCUAValue('item1', values[1].value as Variant);
+    expect(
+      south.parseOPCUAValue('item1', {
+        value: true,
+        dataType: DataType.Boolean
+      } as Variant)
+    ).toEqual('1');
+    expect(
+      south.parseOPCUAValue('item1', {
+        value: false,
+        dataType: DataType.Boolean
+      } as Variant)
+    ).toEqual('0');
+    expect(
+      south.parseOPCUAValue('item1', {
+        value: null,
+        dataType: DataType.Null
+      } as Variant)
+    ).toEqual('');
+    expect(logger.debug).not.toHaveBeenCalled();
+    expect(
+      south.parseOPCUAValue('item1', {
+        value: 'test',
+        dataType: DataType.Variant
+      } as Variant)
+    ).toEqual('');
+    expect(logger.debug).toHaveBeenCalledWith(`Item item1 with value test of type ${DataType.Variant} could not be parsed`);
   });
 
   it('should properly manage history query with status not good', async () => {
