@@ -389,6 +389,10 @@ export default class SouthOPCUA
                         `${result.statusCode.name}, continuation point is ${result.continuationPoint}`
                     );
                     for (const historyValue of result.historyData.dataValues) {
+                      const value = this.parseOPCUAValue(associatedItem.itemName, historyValue.value);
+                      if (!value) {
+                        continue;
+                      }
                       const selectedTimestamp = historyValue.sourceTimestamp ?? historyValue.serverTimestamp;
                       maxTimestamp =
                         !maxTimestamp || selectedTimestamp!.getTime() > maxTimestamp ? selectedTimestamp!.getTime() : maxTimestamp;
@@ -396,7 +400,7 @@ export default class SouthOPCUA
                         pointId: associatedItem.itemName,
                         timestamp: selectedTimestamp!.toISOString(),
                         data: {
-                          value: this.parseOPCUAValue(associatedItem.itemName, historyValue.value),
+                          value,
                           quality: historyValue.statusCode.name
                         }
                       });
@@ -420,7 +424,7 @@ export default class SouthOPCUA
 
               this.logger.debug(`Adding ${dataByItems.length} values between ${startTime} and ${endTime}`);
               if (!testingItem) {
-                await this.addContent({ type: 'time-values', content: dataByItems.filter(parsedData => parsedData.data.value) });
+                await this.addContent({ type: 'time-values', content: dataByItems });
                 dataByItems = [];
                 this.logger.trace(`Continue read for ${nodesToRead.length} points`);
               }
@@ -461,7 +465,7 @@ export default class SouthOPCUA
         }
       }
       if (testingItem) {
-        return { type: 'time-values', content: dataByItems.filter(parsedData => parsedData.data.value) };
+        return { type: 'time-values', content: dataByItems };
       }
       return maxTimestamp ? DateTime.fromMillis(maxTimestamp).toUTC().toISO() : null;
     } catch (error) {
@@ -663,18 +667,20 @@ export default class SouthOPCUA
       }
 
       const defaultTimestamp = DateTime.now().toUTC().toISO();
-      const values = dataValues.map((dataValue: DataValue, i) => {
-        const selectedTimestamp = dataValue.sourceTimestamp ?? dataValue.serverTimestamp;
-        return {
-          pointId: items[i].name,
-          timestamp: selectedTimestamp ? selectedTimestamp.toISOString() : defaultTimestamp,
-          data: {
-            value: this.parseOPCUAValue(items[i].name, dataValue.value),
-            quality: dataValue.statusCode.name
-          }
-        };
-      });
-      return { type: 'time-values', content: values.filter(parsedValue => parsedValue.data.value) };
+      const values = dataValues
+        .map((dataValue: DataValue, i) => {
+          const selectedTimestamp = dataValue.sourceTimestamp ?? dataValue.serverTimestamp;
+          return {
+            pointId: items[i].name,
+            timestamp: selectedTimestamp ? selectedTimestamp.toISOString() : defaultTimestamp,
+            data: {
+              value: this.parseOPCUAValue(items[i].name, dataValue.value),
+              quality: dataValue.statusCode.name
+            }
+          };
+        })
+        .filter(parsedValue => parsedValue.data.value);
+      return { type: 'time-values', content: values };
     } catch (error) {
       await this.disconnect();
       if (!this.disconnecting && this.connector.enabled) {
@@ -830,6 +836,8 @@ export default class SouthOPCUA
         return DateTime.fromJSDate(opcuaVariant.value).toUTC().toISO()!;
 
       case DataType.Null:
+        return '';
+
       case DataType.Variant:
       case DataType.DataValue:
       case DataType.DiagnosticInfo:
