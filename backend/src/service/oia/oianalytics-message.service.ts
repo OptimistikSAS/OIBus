@@ -281,6 +281,11 @@ export default class OIAnalyticsMessageService {
               name: item.name,
               enabled: item.enabled,
               settings: encryptionService.filterSecrets(item.settings, southManifest.items.settings)
+            })),
+            northTransformers: historyQuery.northTransformers.map(transformerWithOptions => ({
+              transformerId: transformerWithOptions.transformer.id,
+              options: transformerWithOptions.options,
+              inputType: transformerWithOptions.inputType
             }))
           }
         };
@@ -459,7 +464,12 @@ export default class OIAnalyticsMessageService {
               retentionDuration: north.caching.archive.retentionDuration
             }
           },
-          subscriptions: north.subscriptions.map(south => south.id)
+          subscriptions: north.subscriptions.map(south => south.id),
+          transformers: north.transformers.map(transformerWithOptions => ({
+            transformerId: transformerWithOptions.transformer.id,
+            options: transformerWithOptions.options,
+            inputType: transformerWithOptions.inputType
+          }))
         }
       };
     });

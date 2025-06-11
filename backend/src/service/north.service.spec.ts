@@ -1,7 +1,7 @@
 import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import EncryptionService from './encryption.service';
-import NorthService from './north.service';
+import NorthService, { getTransformer } from './north.service';
 import pino from 'pino';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
@@ -27,6 +27,8 @@ import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
 import NorthConnectorMock from '../tests/__mocks__/north-connector.mock';
 import { createBaseFolders, filesExists } from './utils';
 import fs from 'node:fs/promises';
+import TransformerServiceMock from '../tests/__mocks__/service/transformer-service.mock';
+import TransformerService, { toTransformerDTO } from './transformer.service';
 
 jest.mock('./encryption.service');
 jest.mock('./utils');
@@ -45,6 +47,7 @@ const oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository = new
 const oIAnalyticsMessageService: OIAnalyticsMessageService = new OIAnalyticsMessageServiceMock();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const dataStreamEngine: DataStreamEngine = new DataStreamEngineMock(logger);
+const transformerService: TransformerService = new TransformerServiceMock();
 
 const mockedNorth1 = new NorthConnectorMock(testData.north.list[0]);
 
@@ -97,6 +100,27 @@ jest.mock(
       return mockedNorth1;
     }
 );
+jest.mock(
+  '../north/north-opcua/north-opcua',
+  () =>
+    function () {
+      return mockedNorth1;
+    }
+);
+jest.mock(
+  '../north/north-mqtt/north-mqtt',
+  () =>
+    function () {
+      return mockedNorth1;
+    }
+);
+jest.mock(
+  '../north/north-modbus/north-modbus',
+  () =>
+    function () {
+      return mockedNorth1;
+    }
+);
 
 let service: NorthService;
 describe('north service', () => {
@@ -113,6 +137,7 @@ describe('north service', () => {
       oIAnalyticsRegistrationRepository,
       oIAnalyticsMessageService,
       encryptionService,
+      transformerService,
       dataStreamEngine
     );
   });
@@ -177,6 +202,27 @@ describe('north service', () => {
     expect(connector).toEqual(mockedNorth1);
   });
 
+  it('runNorth() should run NorthOPCUA', () => {
+    const rest = JSON.parse(JSON.stringify(testData.north.list[0]));
+    rest.type = 'opcua';
+    const connector = service.runNorth(rest, logger, mockBaseFolders(rest.id));
+    expect(connector).toEqual(mockedNorth1);
+  });
+
+  it('runNorth() should run NorthModbus', () => {
+    const rest = JSON.parse(JSON.stringify(testData.north.list[0]));
+    rest.type = 'modbus';
+    const connector = service.runNorth(rest, logger, mockBaseFolders(rest.id));
+    expect(connector).toEqual(mockedNorth1);
+  });
+
+  it('runNorth() should run NorthMQTT', () => {
+    const rest = JSON.parse(JSON.stringify(testData.north.list[0]));
+    rest.type = 'mqtt';
+    const connector = service.runNorth(rest, logger, mockBaseFolders(rest.id));
+    expect(connector).toEqual(mockedNorth1);
+  });
+
   it('runNorth() should not run connector if bad type', () => {
     const bad = JSON.parse(JSON.stringify(testData.north.list[0]));
     bad.type = 'bad';
@@ -233,8 +279,9 @@ describe('north service', () => {
 
   it('createNorth() should create North connector', async () => {
     service.runNorth = jest.fn().mockReturnValue(mockedNorth1);
-    (scanModeRepository.findAll as jest.Mock).mockReturnValue(testData.scanMode.list);
-    (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValue(
+    (scanModeRepository.findAll as jest.Mock).mockReturnValueOnce(testData.scanMode.list);
+    (transformerService.findAll as jest.Mock).mockReturnValueOnce(testData.transformers.list);
+    (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValueOnce(
       testData.south.list.map(element => ({
         id: element.id,
         name: element.name,
@@ -253,8 +300,8 @@ describe('north service', () => {
 
   it('createNorth() should not create North connector if subscription not found', async () => {
     service.runNorth = jest.fn().mockReturnValue(mockedNorth1);
-    (scanModeRepository.findAll as jest.Mock).mockReturnValue(testData.scanMode.list);
-    (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValue(
+    (scanModeRepository.findAll as jest.Mock).mockReturnValueOnce(testData.scanMode.list);
+    (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValueOnce(
       testData.south.list.map(element => ({
         id: element.id,
         name: element.name,
@@ -266,6 +313,24 @@ describe('north service', () => {
     const command = JSON.parse(JSON.stringify(testData.north.command));
     command.subscriptions = [testData.south.list[0].id, 'bad'];
     await expect(service.createNorth(command, null)).rejects.toThrow(`Could not find South Connector bad`);
+  });
+
+  it('createNorth() should not create North connector if transformer is not found', async () => {
+    service.runNorth = jest.fn().mockReturnValue(mockedNorth1);
+    (scanModeRepository.findAll as jest.Mock).mockReturnValueOnce(testData.scanMode.list);
+    (transformerService.findAll as jest.Mock).mockReturnValueOnce([]);
+    (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValueOnce(
+      testData.south.list.map(element => ({
+        id: element.id,
+        name: element.name,
+        type: element.type,
+        description: element.description,
+        enabled: element.enabled
+      }))
+    );
+    await expect(service.createNorth(testData.north.command, null)).rejects.toThrow(
+      `Could not find OIBus Transformer ${testData.transformers.list[0].id}`
+    );
   });
 
   it('should get North data stream', () => {
@@ -318,6 +383,9 @@ describe('north service', () => {
 
   it('updateNorth() should update North connector', async () => {
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValueOnce(testData.north.list[0]);
+    (transformerService.findAll as jest.Mock).mockReturnValueOnce(testData.transformers.list);
+    (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValueOnce(testData.south.list);
+    (scanModeRepository.findAll as jest.Mock).mockReturnValueOnce(testData.scanMode.list);
     await service.updateNorth(testData.north.list[0].id, testData.north.command);
 
     expect(northConnectorRepository.saveNorthConnector).toHaveBeenCalledTimes(1);
@@ -564,5 +632,12 @@ describe('north service', () => {
     expect(() => service.retrieveSecretsFromNorth('northId', testData.north.manifest)).toThrow(
       `North connector northId (type ${testData.north.list[0].type}) must be of the type ${testData.north.manifest.id}`
     );
+  });
+
+  it('getTransformer() should return transformer', () => {
+    const transformers = testData.transformers.list.map(element => toTransformerDTO(element));
+    expect(getTransformer(null, transformers)).toBeNull();
+    expect(getTransformer(transformers[0].id, transformers)).toEqual(transformers[0]);
+    expect(() => getTransformer('bad id', transformers)).toThrow(`Could not find OIBus Transformer bad id`);
   });
 });

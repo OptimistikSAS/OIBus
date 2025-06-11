@@ -40,6 +40,8 @@ import { BaseFolders } from '../model/types';
 import NorthConnectorRepository from '../repository/config/north-connector.repository';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
 import { ReadStream } from 'node:fs';
+import TransformerService, { toTransformerDTO } from './transformer.service';
+import { Transformer } from '../model/transformer.model';
 
 export default class HistoryQueryService {
   constructor(
@@ -52,6 +54,7 @@ export default class HistoryQueryService {
     private readonly historyQueryMetricsRepository: HistoryQueryMetricsRepository,
     private readonly southService: SouthService,
     private readonly northService: NorthService,
+    private readonly transformerService: TransformerService,
     private readonly oIAnalyticsMessageService: OIAnalyticsMessageService,
     private readonly encryptionService: EncryptionService,
     private readonly historyQueryEngine: HistoryQueryEngine
@@ -225,6 +228,7 @@ export default class HistoryQueryService {
       ),
       this.encryptionService,
       this.scanModeRepository.findAll(),
+      this.transformerService.findAll(),
       !!retrieveSecretsFromHistoryQuery || !!retrieveSecretsFromSouth
     );
     this.historyQueryRepository.saveHistoryQuery(historyQuery);
@@ -271,7 +275,8 @@ export default class HistoryQueryService {
       command,
       previousSettings,
       this.encryptionService,
-      this.scanModeRepository.findAll()
+      this.scanModeRepository.findAll(),
+      this.transformerService.findAll()
     );
     this.historyQueryRepository.saveHistoryQuery(historyQuery);
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
@@ -739,7 +744,12 @@ export const toHistoryQueryDTO = <S extends SouthSettings, N extends NorthSettin
         retentionDuration: historyQuery.caching.archive.retentionDuration
       }
     },
-    items: historyQuery.items.map(item => toHistoryQueryItemDTO<I>(item, historyQuery.southType, encryptionService))
+    items: historyQuery.items.map(item => toHistoryQueryItemDTO<I>(item, historyQuery.southType, encryptionService)),
+    northTransformers: historyQuery.northTransformers.map(transformerWithOptions => ({
+      transformer: toTransformerDTO(transformerWithOptions.transformer),
+      options: transformerWithOptions.options,
+      inputType: transformerWithOptions.inputType
+    }))
   };
 };
 
@@ -762,6 +772,7 @@ const copyHistoryQueryCommandToHistoryQueryEntity = async <S extends SouthSettin
   currentSettings: HistoryQueryEntity<S, N, I> | null,
   encryptionService: EncryptionService,
   scanModes: Array<ScanMode>,
+  transformers: Array<Transformer>,
   retrieveSecrets = false
 ): Promise<void> => {
   const southManifest = southManifestList.find(element => element.id === command.southType)!;
@@ -804,7 +815,13 @@ const copyHistoryQueryCommandToHistoryQueryEntity = async <S extends SouthSettin
       retentionDuration: command.caching.archive.retentionDuration
     }
   };
-
+  historyQueryEntity.northTransformers = command.northTransformers.map(transformerIdWithOptions => {
+    const foundTransformer = transformers.find(transformer => transformer.id === transformerIdWithOptions.transformerId);
+    if (!foundTransformer) {
+      throw new Error(`Could not find OIBus Transformer ${transformerIdWithOptions.transformerId}`);
+    }
+    return { transformer: foundTransformer, options: transformerIdWithOptions.options, inputType: transformerIdWithOptions.inputType };
+  });
   historyQueryEntity.items = await Promise.all(
     command.items.map(async itemCommand => {
       const itemEntity = { id: itemCommand.id } as HistoryQueryItemEntity<I>;

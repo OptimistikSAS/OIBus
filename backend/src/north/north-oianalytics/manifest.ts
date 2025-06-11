@@ -3,10 +3,7 @@ import { NorthConnectorManifest } from '../../../shared/model/north-connector.mo
 const manifest: NorthConnectorManifest = {
   id: 'oianalytics',
   category: 'api',
-  modes: {
-    files: true,
-    points: true
-  },
+  types: ['any', 'time-values'],
   settings: [
     {
       key: 'useOiaModule',

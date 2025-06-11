@@ -19,6 +19,11 @@ import { NorthConnectorEntity } from '../../model/north-connector.model';
 import { mockBaseFolders } from '../../tests/utils/test-utils';
 import CacheService from '../../service/cache/cache.service';
 import { OIBusTimeValue } from '../../../shared/model/engine.model';
+import TransformerService, { createTransformer } from '../../service/transformer.service';
+import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';
+import OIBusTransformer from '../../service/transformers/oibus-transformer';
+import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
+import { getFilenameWithoutRandomId } from '../../service/utils';
 
 const sendMock = jest.fn();
 jest.mock('@aws-sdk/client-s3');
@@ -26,6 +31,7 @@ jest.mock('@smithy/node-http-handler', () => ({ NodeHttpHandler: jest.fn() }));
 jest.mock('node:fs/promises');
 jest.mock('node:fs');
 jest.mock('papaparse');
+jest.mock('../../service/transformer.service');
 jest.mock('../../service/utils');
 (fs.stat as jest.Mock).mockReturnValue({ size: 123 });
 
@@ -34,6 +40,8 @@ const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const cacheService: CacheService = new CacheServiceMock();
+const transformerService: TransformerService = new TransformerServiceMock();
+const oiBusTransformer: OIBusTransformer = new OIBusTransformerMock() as unknown as OIBusTransformer;
 
 jest.mock(
   '../../service/cache/cache.service',
@@ -77,10 +85,13 @@ describe('NorthAmazonS3', () => {
       (S3Client as jest.Mock).mockImplementation(() => ({
         send: sendMock
       }));
+      (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
+      (getFilenameWithoutRandomId as jest.Mock).mockReturnValue('example.file');
 
       north = new NorthAmazonS3(
         configuration,
         encryptionService,
+        transformerService,
         northConnectorRepository,
         scanModeRepository,
         logger,
@@ -113,7 +124,7 @@ describe('NorthAmazonS3', () => {
         contentSize: 1234,
         numberOfElement: 0,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'raw',
+        contentType: 'any',
         source: 'south',
         options: {}
       });
@@ -121,32 +132,18 @@ describe('NorthAmazonS3', () => {
       expect(createReadStream).toHaveBeenCalledWith('/csv/test/file-789.csv');
     });
 
-    it('should properly handle values', async () => {
-      (createReadStream as jest.Mock).mockImplementation(() => ({}) as ReadStream);
-
-      await north.start();
-      (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify(timeValues));
-      await north.handleContent({
-        contentFile: '/path/to/file/example-123.json',
-        contentSize: 1234,
-        numberOfElement: 1,
-        createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'time-values',
-        source: 'south',
-        options: {}
-      });
-    });
-
-    it('should properly catch handle file error', async () => {
-      const filePath = '/csv/test/file-789.csv';
-      (createReadStream as jest.Mock).mockImplementation(() => ({}) as ReadStream);
-
-      sendMock.mockImplementationOnce(() => {
-        throw new Error('test');
-      });
-      await north.start();
-
-      await expect(north.handleFile(filePath)).rejects.toThrow('test');
+    it('should ignore data if bad content type', async () => {
+      await expect(
+        north.handleContent({
+          contentFile: 'path/to/file/example-123456789.file',
+          contentSize: 1234,
+          numberOfElement: 1,
+          createdAt: '2020-02-02T02:02:02.222Z',
+          contentType: 'time-values',
+          source: 'south',
+          options: {}
+        })
+      ).rejects.toThrow(`Unsupported data type: time-values (file path/to/file/example-123456789.file)`);
     });
   });
 
@@ -170,14 +167,16 @@ describe('NorthAmazonS3', () => {
 
       (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
       (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
-
       (S3Client as jest.Mock).mockImplementation(() => ({
         send: sendMock
       }));
+      (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
+      (getFilenameWithoutRandomId as jest.Mock).mockReturnValue('example.file');
 
       north = new NorthAmazonS3(
         configuration,
         encryptionService,
+        transformerService,
         northConnectorRepository,
         scanModeRepository,
         logger,
@@ -200,28 +199,6 @@ describe('NorthAmazonS3', () => {
         requestHandler: {}
       });
     });
-
-    it('should properly handle file', async () => {
-      const filePath = '/csv/test/file-789.csv';
-      (createReadStream as jest.Mock).mockImplementation(() => ({}) as ReadStream);
-
-      await north.start();
-      await north.handleFile(filePath);
-
-      expect(createReadStream).toHaveBeenCalledWith(filePath);
-    });
-
-    it('should properly catch handle file error', async () => {
-      const filePath = '/csv/test/file-789.csv';
-      (createReadStream as jest.Mock).mockImplementation(() => ({}) as ReadStream);
-
-      sendMock.mockImplementationOnce(() => {
-        throw new Error('test');
-      });
-      await north.start();
-
-      await expect(north.handleFile(filePath)).rejects.toThrow('test');
-    });
   });
 
   describe('without proxy', () => {
@@ -241,14 +218,16 @@ describe('NorthAmazonS3', () => {
 
       (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
       (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
-
       (S3Client as jest.Mock).mockImplementation(() => ({
         send: sendMock
       }));
+      (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
+      (getFilenameWithoutRandomId as jest.Mock).mockReturnValue('example.file');
 
       north = new NorthAmazonS3(
         configuration,
         encryptionService,
+        transformerService,
         northConnectorRepository,
         scanModeRepository,
         logger,

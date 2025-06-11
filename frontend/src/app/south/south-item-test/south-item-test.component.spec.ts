@@ -131,7 +131,7 @@ class SouthItemTestComponentTester extends ComponentTester<TestComponent> {
 
 describe('SouthItemTestComponent', () => {
   let tester: SouthItemTestComponentTester;
-  const testResultOIBusContent: OIBusContent = { type: 'raw', filePath: '/file/path' };
+  const testResultOIBusContent: OIBusContent = { type: 'any', filePath: '/file/path' };
   const southConnectorService: jasmine.SpyObj<SouthConnectorService> = createMock(SouthConnectorService);
   const historyQueryService: jasmine.SpyObj<HistoryQueryService> = createMock(HistoryQueryService);
 
@@ -302,7 +302,7 @@ describe('SouthItemTestComponent', () => {
 
       testCase.service.testItem.and.returnValue(
         of({
-          type: 'raw',
+          type: 'any',
           filePath: '/file/path'
         } as OIBusRawContent).pipe(delay(3000))
       );
@@ -344,7 +344,7 @@ describe('SouthItemTestComponent', () => {
 
       testCase.service.testItem.and.returnValue(
         of({
-          type: 'raw',
+          type: 'any',
           filePath: '/file/path'
         } as OIBusRawContent).pipe(delay(3000))
       );
@@ -450,14 +450,14 @@ describe('SouthItemTestComponent', () => {
       tester.testButton.click();
 
       // Mocking display mode changes after test data has been received
-      tester.componentInstance.testedComponent.availableDisplayModes = ['table', 'raw'];
+      tester.componentInstance.testedComponent.availableDisplayModes = ['table', 'any'];
       tester.componentInstance.testedComponent.currentDisplayMode = 'table';
       tester.detectChanges();
       tester.button('#view-dropdown')!.click();
       tester.button('.dropdown-item:not(.active)')!.click();
       tester.detectChanges();
 
-      expect(tester.testResultViewComponent.changeDisplayMode).toHaveBeenCalledWith('raw');
+      expect(tester.testResultViewComponent.changeDisplayMode).toHaveBeenCalledWith('any');
       expect(tester.testResultViewComponent.displayResult).toHaveBeenCalledWith(result);
       expect(tester.componentInstance.testedComponent.isTestRunning).toBeFalse();
     });

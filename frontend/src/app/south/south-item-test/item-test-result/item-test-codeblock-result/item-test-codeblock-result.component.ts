@@ -38,7 +38,7 @@ export class ItemTestCodeblockResultComponent implements BaseItemTestResult {
           case 'time-values':
             this.codeBlock()?.writeValueChunked(JSON.stringify(content.content));
             break;
-          case 'raw':
+          case 'any':
             this.codeBlock()?.writeValueChunked(content.content ?? content.filePath);
             break;
         }
@@ -49,9 +49,9 @@ export class ItemTestCodeblockResultComponent implements BaseItemTestResult {
   getSupportedDisplayModes(content: OIBusContent): Array<ContentDisplayMode> | null {
     switch (content.type) {
       case 'time-values':
-        return ['json', 'raw'];
-      case 'raw':
-        return ['raw'];
+        return ['json', 'any'];
+      case 'any':
+        return ['any'];
       default:
         return null;
     }

@@ -3,10 +3,7 @@ import { NorthConnectorManifest } from '../../../shared/model/north-connector.mo
 const manifest: NorthConnectorManifest = {
   id: 'azure-blob',
   category: 'file',
-  modes: {
-    files: true,
-    points: true
-  },
+  types: ['any'],
   settings: [
     {
       key: 'useADLS',

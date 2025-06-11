@@ -26,18 +26,25 @@ import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.
 import fs from 'node:fs/promises';
 import { OIBusTimeValue } from '../../../shared/model/engine.model';
 import csv from 'papaparse';
+import TransformerService, { createTransformer } from '../../service/transformer.service';
+import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';
+import OIBusTransformer from '../../service/transformers/oibus-transformer';
+import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
 
 jest.mock('node:fs');
 jest.mock('node:fs/promises');
 jest.mock('papaparse');
 jest.mock('../../service/utils');
+jest.mock('../../service/transformer.service');
 jest.mock('../../service/http-request.utils');
 
 const logger: pino.Logger = new PinoLogger();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
+const transformerService: TransformerService = new TransformerServiceMock();
 const cacheService: CacheService = new CacheServiceMock();
+const oiBusTransformer: OIBusTransformer = new OIBusTransformerMock() as unknown as OIBusTransformer;
 
 jest.mock(
   '../../service/cache/cache.service',
@@ -152,7 +159,6 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
   let authOptions: ReqAuthOptions | undefined;
   let proxyOptions: { proxy?: ReqProxyOptions };
 
-  // Todo: make it so it changes settings directly, not the whole config
   async function changeNorthConfig(config: NorthConnectorEntity<NorthRESTSettings>) {
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValueOnce(config);
     await north.start(); // needed to reload the north's config
@@ -168,6 +174,7 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
     (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
     (filesExists as jest.Mock).mockReturnValue(true);
+    (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
     (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(200));
     (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify(timeValues));
     (csv.unparse as jest.Mock).mockReturnValue('csv content');
@@ -209,6 +216,7 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
     north = new NorthREST(
       configuration,
       encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
       logger,
@@ -288,93 +296,6 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
     expect(HTTPRequest).toHaveBeenCalledWith(testEndpoint, expectedReqOptions);
   });
 
-  it('should handle values', async () => {
-    await north.handleContent({
-      contentFile: '/path/to/file/example-123.json',
-      contentSize: 1234,
-      numberOfElement: 1,
-      createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'time-values',
-      source: 'south',
-      options: {}
-    });
-
-    const expectedReqOptions = {
-      method: 'POST',
-      headers: {
-        'content-type': expect.stringContaining('multipart/form-data; boundary=')
-      },
-      query: { entityId: 'test' },
-      body: expect.any(FormData),
-      auth: authOptions,
-      timeout: 30000,
-      ...proxyOptions
-    };
-
-    expect(HTTPRequest).toHaveBeenCalledWith(endpoint, expectedReqOptions);
-  });
-
-  it('should properly throw fetch error with time values', async () => {
-    const expectedReqOptions = {
-      method: 'POST',
-      headers: {
-        'content-type': expect.stringContaining('multipart/form-data; boundary=')
-      },
-      query: { entityId: 'test' },
-      body: expect.any(FormData),
-      auth: authOptions,
-      timeout: 30000,
-      ...proxyOptions
-    };
-
-    (HTTPRequest as jest.Mock).mockRejectedValueOnce(new Error('error'));
-
-    await expect(
-      north.handleContent({
-        contentFile: '/path/to/file/example-123.json',
-        contentSize: 1234,
-        numberOfElement: 1,
-        createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'time-values',
-        source: 'south',
-        options: {}
-      })
-    ).rejects.toThrow(new OIBusError(`Failed to reach file endpoint ${endpoint}; message: error`, true));
-
-    expect(HTTPRequest).toHaveBeenCalledWith(endpoint, expectedReqOptions);
-  });
-
-  it('should properly throw error on time values bad response without retrying', async () => {
-    const expectedReqOptions = {
-      method: 'POST',
-      headers: {
-        'content-type': expect.stringContaining('multipart/form-data; boundary=')
-      },
-      query: { entityId: 'test' },
-      body: expect.any(FormData),
-      auth: authOptions,
-      timeout: 30000,
-      ...proxyOptions
-    };
-
-    // 500 error should not be retried
-    (HTTPRequest as jest.Mock).mockResolvedValueOnce(createMockResponse(500, 'Internal Server Error'));
-
-    await expect(
-      north.handleContent({
-        contentFile: '/path/to/file/example-123.json',
-        contentSize: 1234,
-        numberOfElement: 1,
-        createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'time-values',
-        source: 'south',
-        options: {}
-      })
-    ).rejects.toThrow(new OIBusError('HTTP request failed with status code 500 and message: "Internal Server Error"', false));
-
-    expect(HTTPRequest).toHaveBeenCalledWith(endpoint, expectedReqOptions);
-  });
-
   it('should properly handle files', async () => {
     const expectedReqOptions = {
       method: 'POST',
@@ -393,7 +314,7 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     });
@@ -426,7 +347,7 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     });
@@ -443,7 +364,7 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'raw',
+        contentType: 'any',
         source: 'south',
         options: {}
       })
@@ -473,7 +394,7 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'raw',
+        contentType: 'any',
         source: 'south',
         options: {}
       })
@@ -504,7 +425,7 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'raw',
+        contentType: 'any',
         source: 'south',
         options: {}
       })
@@ -535,7 +456,7 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'raw',
+        contentType: 'any',
         source: 'south',
         options: {}
       })
@@ -553,7 +474,7 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'raw',
+        contentType: 'any',
         source: 'south',
         options: {}
       })
@@ -571,7 +492,7 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'raw',
+        contentType: 'any',
         source: 'south',
         options: {}
       })
@@ -589,7 +510,7 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'raw',
+        contentType: 'any',
         source: 'south',
         options: {}
       })
@@ -608,7 +529,7 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'raw',
+        contentType: 'any',
         source: 'south',
         options: {}
       })
@@ -628,7 +549,7 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'raw',
+        contentType: 'any',
         source: 'south',
         options: {}
       })
@@ -640,6 +561,20 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
     );
 
     expect(HTTPRequest).toHaveBeenCalled();
+  });
+
+  it('should ignore data if bad content type', async () => {
+    await expect(
+      north.handleContent({
+        contentFile: 'path/to/file/example-123456789.file',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'time-values',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow(`Unsupported data type: time-values (file path/to/file/example-123456789.file)`);
   });
 
   if (settings.useProxy) {
@@ -658,7 +593,7 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
           contentSize: 1234,
           numberOfElement: 1,
           createdAt: '2020-02-02T02:02:02.222Z',
-          contentType: 'raw',
+          contentType: 'any',
           source: 'south',
           options: {}
         })
