@@ -6,8 +6,7 @@ import { provideI18nTesting } from '../../../../../i18n/mock-i18n';
 import { OIBusContent, OIBusRawContent, OIBusTimeValueContent } from '../../../../../../../backend/shared/model/engine.model';
 
 @Component({
-  template: `<oib-item-test-table-result #testedComponent [content]="content" />`,
-  standalone: true,
+  template: ` <oib-item-test-table-result #testedComponent [content]="content" />`,
   imports: [ItemTestTableResultComponent]
 })
 class TestComponent {
@@ -114,12 +113,18 @@ describe('ItemTestTableResultComponent', () => {
 
     // raw (csv without content) -> table
     expect(
-      tester.componentInstance.testedComponent().getSupportedDisplayModes({ type: 'raw', filePath: 'test.csv' } as OIBusContent)
+      tester.componentInstance.testedComponent().getSupportedDisplayModes({
+        type: 'raw',
+        filePath: 'test.csv'
+      } as OIBusContent)
     ).toEqual(null);
 
     // raw (generic) -> nothing
     expect(
-      tester.componentInstance.testedComponent().getSupportedDisplayModes({ type: 'raw', filePath: 'test.txt' } as OIBusContent)
+      tester.componentInstance.testedComponent().getSupportedDisplayModes({
+        type: 'raw',
+        filePath: 'test.txt'
+      } as OIBusContent)
     ).toEqual(null);
 
     // unexpected -> nothing

@@ -27,7 +27,6 @@ import { OIBusContent, OIBusRawContent, OIBusTimeValueContent } from '../../../.
     [connectorCommand]="connectorCommand"
     [manifest]="manifest"
   />`,
-  standalone: true,
   imports: [SouthItemTestComponent]
 })
 class TestComponent {

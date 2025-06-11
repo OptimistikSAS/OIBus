@@ -6,8 +6,7 @@ import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { OIBusTimeValueContent } from '../../../../../../backend/shared/model/engine.model';
 
 @Component({
-  template: `<oib-item-test-result #testedComponent />`,
-  standalone: true,
+  template: ` <oib-item-test-result #testedComponent />`,
   imports: [ItemTestResultComponent]
 })
 class TestComponent {
@@ -86,7 +85,10 @@ describe('ItemTestResultComponent', () => {
 
     // We make sure the displayed result will be 'raw'
     tester.componentInstance.testedComponent().displayResult(testResult);
-    expect(changeActiveComponentSpy).toHaveBeenCalledWith('codeblock', { content: testResult, contentType: 'plaintext' });
+    expect(changeActiveComponentSpy).toHaveBeenCalledWith('codeblock', {
+      content: testResult,
+      contentType: 'plaintext'
+    });
   });
 
   it('should not display anything when the result is null', () => {
@@ -134,7 +136,10 @@ describe('ItemTestResultComponent', () => {
     // Make sure when an error message is shown, that display related data is reset
     expect(removeActiveComponentSpy).toHaveBeenCalled();
     expect(tester.componentInstance.testedComponent().isLoading).toBeFalse();
-    expect(tester.componentInstance.testedComponent().message).toEqual({ value: 'Testing', type: 'display-result-error' });
+    expect(tester.componentInstance.testedComponent().message).toEqual({
+      value: 'Testing',
+      type: 'display-result-error'
+    });
   });
 
   it('should display a loading indicator', () => {
@@ -239,7 +244,10 @@ describe('ItemTestResultComponent', () => {
       content: [{ data: { value: 'test' }, pointId: 'pointId', timestamp: 'timestamp' }]
     };
 
-    tester.componentInstance.testedComponent()['changeActiveComponent']('codeblock', { content: testResult, contentType: 'json' });
+    tester.componentInstance.testedComponent()['changeActiveComponent']('codeblock', {
+      content: testResult,
+      contentType: 'json'
+    });
 
     expect(removeActiveComponentSpy).toHaveBeenCalled();
     // Values needed to be set: content, contentType
@@ -275,7 +283,10 @@ describe('ItemTestResultComponent', () => {
     };
 
     tester.componentInstance.testedComponent().resultComponents['codeblock'].ref.instance.errorMessage = 'Component display error';
-    tester.componentInstance.testedComponent()['changeActiveComponent']('codeblock', { content: testResult, contentType: 'json' });
+    tester.componentInstance.testedComponent()['changeActiveComponent']('codeblock', {
+      content: testResult,
+      contentType: 'json'
+    });
 
     expect(removeActiveComponentSpy).toHaveBeenCalled();
     // Values needed to be set: content, contentType
@@ -308,7 +319,10 @@ describe('ItemTestResultComponent', () => {
     };
 
     detectChangesSpy.and.throwError('Cannot write value');
-    tester.componentInstance.testedComponent()['changeActiveComponent']('codeblock', { content: testResult, contentType: 'json' });
+    tester.componentInstance.testedComponent()['changeActiveComponent']('codeblock', {
+      content: testResult,
+      contentType: 'json'
+    });
 
     expect(removeActiveComponentSpy).toHaveBeenCalled();
     // Values needed to be set: content, contentType

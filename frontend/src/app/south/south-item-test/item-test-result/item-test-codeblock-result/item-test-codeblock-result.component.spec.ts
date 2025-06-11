@@ -6,8 +6,7 @@ import { ComponentTester } from 'ngx-speculoos';
 import { provideI18nTesting } from '../../../../../i18n/mock-i18n';
 
 @Component({
-  template: `<oib-item-test-codeblock-result #testedComponent [content]="content" [contentType]="contentType" />`,
-  standalone: true,
+  template: ` <oib-item-test-codeblock-result #testedComponent [content]="content" [contentType]="contentType" />`,
   imports: [ItemTestCodeblockResultComponent]
 })
 class TestComponent {
