@@ -4,8 +4,7 @@ import { OIBusSouthType } from '../../../../backend/shared/model/south-connector
 
 @Pipe({
   name: 'oIBusSouthTypeDescriptionEnum',
-  pure: false,
-  standalone: true
+  pure: false
 })
 export class OIBusSouthTypeDescriptionEnumPipe extends BaseEnumPipe<OIBusSouthType> implements PipeTransform {
   constructor() {

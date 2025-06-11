@@ -4,8 +4,7 @@ import { OIBusNorthCategory } from '../../../../backend/shared/model/north-conne
 
 @Pipe({
   name: 'oIBusNorthCategoryEnum',
-  pure: false,
-  standalone: true
+  pure: false
 })
 export class OIBusNorthCategoryEnumPipe extends BaseEnumPipe<OIBusNorthCategory> implements PipeTransform {
   constructor() {
