@@ -20,7 +20,8 @@ import nodeOPCUAClient, {
   StatusCodes,
   TimestampsToReturn,
   ClientSession,
-  Variant
+  Variant,
+  resolveNodeId
 } from 'node-opcua';
 
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
@@ -60,7 +61,8 @@ jest.mock('node-opcua', () => ({
   ReadRawModifiedDetails: jest.fn(() => ({})),
   HistoryReadRequest: jest.requireActual('node-opcua').HistoryReadRequest,
   ReadProcessedDetails: jest.fn(() => ({})),
-  OPCUACertificateManager: jest.fn(() => ({}))
+  OPCUACertificateManager: jest.fn(() => ({})),
+  resolveNodeId: jest.fn(nodeId => nodeId)
 }));
 // Mock only the randomUUID function because other functions are used by OPCUA
 jest.mock('crypto', () => ({
@@ -282,7 +284,7 @@ describe('SouthOPCUA', () => {
   });
 
   it('should properly manage history query', async () => {
-    const performMessageTransaction = jest
+    const historyRead = jest
       .fn()
       .mockReturnValueOnce({
         responseHeader: {
@@ -399,7 +401,7 @@ describe('SouthOPCUA', () => {
         ]
       });
     (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({
-      performMessageTransaction,
+      historyRead,
       close: jest.fn()
     });
 
@@ -477,7 +479,7 @@ describe('SouthOPCUA', () => {
   });
 
   it('should properly manage history query with status not good', async () => {
-    const performMessageTransaction = jest.fn().mockReturnValue({
+    const historyRead = jest.fn().mockReturnValue({
       responseHeader: {
         serviceResult: {
           isNot: jest.fn().mockReturnValue(true),
@@ -486,7 +488,7 @@ describe('SouthOPCUA', () => {
       }
     });
     (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({
-      performMessageTransaction,
+      historyRead,
       close: jest.fn()
     });
 
@@ -514,7 +516,7 @@ describe('SouthOPCUA', () => {
         continuationPoint: false
       });
     }
-    const performMessageTransaction = jest.fn().mockReturnValue({
+    const historyRead = jest.fn().mockReturnValue({
       responseHeader: {
         serviceResult: {
           isNot: jest.fn().mockReturnValue(true),
@@ -524,7 +526,7 @@ describe('SouthOPCUA', () => {
       results
     });
     (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({
-      performMessageTransaction,
+      historyRead,
       close: jest.fn()
     });
 
@@ -555,7 +557,7 @@ describe('SouthOPCUA', () => {
   });
 
   it('should properly manage history query with associated node not found', async () => {
-    const performMessageTransaction = jest.fn().mockReturnValue({
+    const historyRead = jest.fn().mockReturnValue({
       responseHeader: {
         serviceResult: {
           isNot: jest.fn().mockReturnValue(true),
@@ -564,7 +566,7 @@ describe('SouthOPCUA', () => {
       }
     });
     (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({
-      performMessageTransaction,
+      historyRead,
       close: jest.fn()
     });
 
@@ -582,7 +584,7 @@ describe('SouthOPCUA', () => {
   });
 
   it('should properly manage history query and catch read error', async () => {
-    const performMessageTransaction = jest.fn().mockImplementation(() => {
+    const historyRead = jest.fn().mockImplementation(() => {
       throw new Error('opcua read error');
     });
     const close = jest.fn().mockImplementationOnce(() => {
@@ -590,7 +592,7 @@ describe('SouthOPCUA', () => {
         setTimeout(() => resolve(), 1000);
       });
     });
-    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({ performMessageTransaction, close });
+    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({ historyRead, close });
     south.addContent = jest.fn();
 
     await south.start();
@@ -654,7 +656,7 @@ describe('SouthOPCUA', () => {
       `Read ${expectedItemsToRead.length} nodes ` +
         `[${expectedItemsToRead[0].settings.nodeId}...${expectedItemsToRead[expectedItemsToRead.length - 1].settings.nodeId}]`
     );
-    expect(read).toHaveBeenCalledWith(expectedItemsToRead.map(item => ({ nodeId: item.settings.nodeId })));
+    expect(read).toHaveBeenCalledWith(expectedItemsToRead.map(item => ({ nodeId: item.settings.nodeId, name: item.name })));
     expect(south.addContent).toHaveBeenCalledWith({
       type: 'time-values',
       content: [
@@ -707,7 +709,7 @@ describe('SouthOPCUA', () => {
     await expect(south.lastPointQuery(configuration.items)).rejects.toThrow('opcua read error');
     const expectedItemsToRead = configuration.items.filter(item => item.settings.mode === 'da');
 
-    expect(read).toHaveBeenCalledWith(expectedItemsToRead.map(item => ({ nodeId: item.settings.nodeId })));
+    expect(read).toHaveBeenCalledWith(expectedItemsToRead.map(item => ({ nodeId: item.settings.nodeId, name: item.name })));
     expect(south.addContent).not.toHaveBeenCalled();
     (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue({
       ...configuration,
@@ -732,6 +734,28 @@ describe('SouthOPCUA', () => {
     expect(read).not.toHaveBeenCalled();
   });
 
+  it('should not query items if bad node id', async () => {
+    const read = jest.fn().mockReturnValue(null);
+    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({ read });
+    south.addContent = jest.fn();
+    (resolveNodeId as jest.Mock)
+      .mockImplementationOnce(() => {
+        throw new Error('bad node id');
+      })
+      .mockImplementationOnce(() => {
+        throw new Error('bad node id');
+      })
+      .mockImplementationOnce(() => {
+        throw new Error('bad node id');
+      });
+
+    await south.start();
+    await south.lastPointQuery([configuration.items[3], configuration.items[4], configuration.items[5]]);
+    expect(south.addContent).not.toHaveBeenCalled();
+    expect(read).not.toHaveBeenCalled();
+    expect(logger.error).toHaveBeenCalledTimes(3);
+  });
+
   it('should properly query one item', async () => {
     const read = jest.fn().mockReturnValue([]);
     (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({ read });
@@ -740,7 +764,7 @@ describe('SouthOPCUA', () => {
     await south.start();
     await south.lastPointQuery([configuration.items[3]]);
     expect(logger.debug).toHaveBeenCalledWith(`Read node ${configuration.items[3].settings.nodeId}`);
-    expect(read).toHaveBeenCalledWith([{ nodeId: configuration.items[3].settings.nodeId }]);
+    expect(read).toHaveBeenCalledWith([{ nodeId: configuration.items[3].settings.nodeId, name: configuration.items[3].name }]);
   });
 
   it('should properly query items and log error when not same number of items and values', async () => {
@@ -757,7 +781,7 @@ describe('SouthOPCUA', () => {
     expect(logger.error).toHaveBeenCalledWith(
       `Received 2 node results, requested ${expectedItemsToRead.length} nodes. Request done in 0 ms`
     );
-    expect(read).toHaveBeenCalledWith(expectedItemsToRead.map(item => ({ nodeId: item.settings.nodeId })));
+    expect(read).toHaveBeenCalledWith(expectedItemsToRead.map(item => ({ nodeId: item.settings.nodeId, name: item.name })));
     expect(south.addContent).toHaveBeenCalledWith({
       type: 'time-values',
       content: [
@@ -796,6 +820,28 @@ describe('SouthOPCUA', () => {
   it('should not subscribe if session is not set', async () => {
     await south.subscribe(configuration.items);
     expect(logger.error).toHaveBeenCalledWith('OPCUA client could not subscribe to items: session not set');
+  });
+
+  it('should not subscribe if bad node id', async () => {
+    const stream = new CustomStream();
+    stream.terminate = jest.fn();
+    (resolveNodeId as jest.Mock).mockImplementationOnce(() => {
+      throw new Error('bad node id');
+    });
+    const monitorFn = jest.fn().mockReturnValue(stream);
+    const session = { close: jest.fn(), createSubscription2: jest.fn() };
+    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue(session);
+    (session.createSubscription2 as jest.Mock).mockReturnValue({ terminate: jest.fn(), monitor: monitorFn });
+    south.addContent = jest.fn();
+
+    await south.start();
+    await south.subscribe([configuration.items[0]]);
+    expect(session.createSubscription2).toHaveBeenCalledTimes(1);
+    expect(monitorFn).not.toHaveBeenCalled();
+    expect(south.addContent).not.toHaveBeenCalled();
+    expect(logger.error).toHaveBeenCalledWith(
+      `Error when parsing node ID ${configuration.items[0].settings.nodeId} for item ${configuration.items[0].name}: bad node id`
+    );
   });
 
   it('should properly subscribe', async () => {
@@ -893,7 +939,31 @@ describe('SouthOPCUA', () => {
 
     const callback = jest.fn();
     await south.testItem(configuration.items[3], testData.south.itemTestingSettings, callback);
-    expect(south.getDAValues).toHaveBeenCalledWith([configuration.items[3]], session);
+    expect(south.getDAValues).toHaveBeenCalledWith(
+      [{ nodeId: configuration.items[3].settings.nodeId, name: configuration.items[3].name }],
+      session
+    );
+  });
+
+  it('should test DA item with wrong node id', async () => {
+    const read = jest.fn();
+    const close = jest.fn();
+    const session = { read, close };
+    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue(session);
+    (resolveNodeId as jest.Mock).mockImplementationOnce(() => {
+      throw new Error('bad node id');
+    });
+    south.getDAValues = jest.fn();
+
+    const callback = jest.fn();
+    await expect(south.testItem(configuration.items[3], testData.south.itemTestingSettings, callback)).rejects.toThrow(
+      'Error when parsing node ID ns=3;s=Random for item item1: bad node id'
+    );
+    expect(south.getDAValues).not.toHaveBeenCalled();
+    expect(logger.error).toHaveBeenCalledWith(
+      'Error when testing item: Error when parsing node ID ns=3;s=Random for item item1: bad node id'
+    );
+    expect(callback).not.toHaveBeenCalled();
   });
 
   it('should test HA item', async () => {
@@ -941,7 +1011,7 @@ describe('SouthOPCUA', () => {
   });
 
   it('getValueHA() in case of a test', async () => {
-    const performMessageTransaction = jest.fn().mockReturnValue({
+    const historyRead = jest.fn().mockReturnValue({
       responseHeader: {
         serviceResult: StatusCodes.Good
       },
@@ -964,11 +1034,27 @@ describe('SouthOPCUA', () => {
         }
       ]
     });
-    const session = { performMessageTransaction } as unknown as ClientSession;
+    const session = { historyRead } as unknown as ClientSession;
 
     await south.start();
     await south.getHAValues([configuration.items[0]], testData.constants.dates.FAKE_NOW, testData.constants.dates.FAKE_NOW, session, true);
-    expect(performMessageTransaction).toHaveBeenCalled();
+    expect(historyRead).toHaveBeenCalled();
+  });
+
+  it('getValueHA() should do nothing if bad node id', async () => {
+    const historyRead = jest.fn();
+    (resolveNodeId as jest.Mock).mockImplementationOnce(() => {
+      throw new Error('bad node id');
+    });
+    const session = { historyRead } as unknown as ClientSession;
+
+    await south.start();
+    await south.getHAValues([configuration.items[0]], testData.constants.dates.FAKE_NOW, testData.constants.dates.FAKE_NOW, session, true);
+    expect(historyRead).not.toHaveBeenCalled();
+    expect(logger.error).toHaveBeenCalledTimes(1);
+    expect(logger.error).toHaveBeenCalledWith(
+      `Error when parsing node ID ${configuration.items[0].settings.nodeId} for item ${configuration.items[0].name}: bad node id`
+    );
   });
 });
 
