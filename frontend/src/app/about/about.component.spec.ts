@@ -5,6 +5,7 @@ import { ComponentTester, createMock } from 'ngx-speculoos';
 import { provideI18nTesting } from '../../i18n/mock-i18n';
 import { EngineService } from '../services/engine.service';
 import { EMPTY, of } from 'rxjs';
+import testData from '../../../../backend/src/tests/utils/test-data';
 
 class AboutComponentTester extends ComponentTester<AboutComponent> {
   constructor() {
@@ -75,33 +76,19 @@ describe('AboutComponent', () => {
   });
 
   it('should have dynamic info', () => {
-    engineService.getInfo.and.returnValue(
-      of({
-        version: '3.0.0',
-        launcherVersion: '3.5.0',
-        dataDirectory: 'data-folder',
-        processId: '1234',
-        architecture: 'x64',
-        hostname: 'hostname',
-        binaryDirectory: 'bin-directory',
-        operatingSystem: 'Windows',
-        platform: 'windows',
-        oibusId: 'id',
-        oibusName: 'name'
-      })
-    );
+    engineService.getInfo.and.returnValue(of(testData.engine.oIBusInfo));
     tester = new AboutComponentTester();
     tester.detectChanges();
 
     expect(tester.officialSite).toContainText('Official site');
     expect(tester.license).toContainText('License');
-    expect(tester.version).toContainText('Version: 3.0');
+    expect(tester.version).toContainText('Version: 3.4.9');
     expect(tester.versionSpinner).toBeNull();
-    expect(tester.executable).toHaveText('Executable: bin-directory');
-    expect(tester.dataFolder).toHaveText('Data folder: data-folder');
-    expect(tester.processId).toHaveText('Process ID: 1234');
+    expect(tester.executable).toHaveText('Executable: binary-directory');
+    expect(tester.dataFolder).toHaveText('Data folder: data-directory');
+    expect(tester.processId).toHaveText('Process ID: pid');
     expect(tester.architecture).toHaveText('Architecture: x64');
-    expect(tester.operatingSystem).toHaveText('Operating system: Windows');
-    expect(tester.hostname).toHaveText('Hostname: hostname');
+    expect(tester.operatingSystem).toHaveText('Operating system: win');
+    expect(tester.hostname).toHaveText('Hostname: host name');
   });
 });
