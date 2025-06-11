@@ -17,7 +17,6 @@ import { HistoryQueryService } from '../../services/history-query.service';
 import { DateTime, Settings } from 'luxon';
 import { provideDatepicker } from '../../shared/datepicker.providers';
 import { OIBusContent, OIBusRawContent, OIBusTimeValueContent } from '../../../../../backend/shared/model/engine.model';
-import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   template: ` <oib-south-item-test
@@ -34,9 +33,7 @@ import { TranslateService } from '@ngx-translate/core';
 class TestComponent {
   @ViewChild('testedComponent') testedComponent!: SouthItemTestComponent<'south'>;
 
-  constructor(private translate: TranslateService) {}
-
-  type!: string;
+  type!: 'history-south' | 'south';
   entityId!: string;
 
   item = {} as SouthConnectorItemCommandDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>;
@@ -69,7 +66,7 @@ class SouthItemTestComponentTester extends ComponentTester<TestComponent> {
     super(TestComponent);
   }
 
-  changeType(type: string) {
+  changeType(type: 'south' | 'history-south') {
     this.componentInstance.type = type;
   }
 
@@ -126,10 +123,6 @@ class SouthItemTestComponentTester extends ComponentTester<TestComponent> {
 
   get testingSettingsForm() {
     return this.componentInstance.testedComponent.testingSettingsForm!;
-  }
-
-  get translate() {
-    return this.componentInstance['translate'];
   }
 
   get testResultViewComponent() {
@@ -191,8 +184,8 @@ describe('SouthItemTestComponent', () => {
   });
 
   const testCases = [
-    { type: 'south', entityId: 'southId', service: { testItem: southConnectorService!.testItem } },
-    { type: 'history-south', entityId: 'historyId', service: { testItem: historyQueryService!.testSouthItem } }
+    { type: 'south' as const, entityId: 'southId', service: { testItem: southConnectorService!.testItem } },
+    { type: 'history-south' as const, entityId: 'historyId', service: { testItem: historyQueryService!.testSouthItem } }
   ];
 
   testCases.forEach(testCase => {
@@ -488,7 +481,7 @@ describe('SouthItemTestComponent', () => {
   });
 
   it('should not make request if the type provided is unsupported', () => {
-    tester.changeType('unsupported');
+    tester.changeType('unsupported' as 'south' | 'history-south');
     tester.changeEntityId('entityId');
     tester.detectChanges();
 

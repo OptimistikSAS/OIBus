@@ -1,4 +1,4 @@
-import { Component, OnInit, input } from '@angular/core';
+import { Component, OnInit, input, forwardRef } from '@angular/core';
 
 import { AbstractControl, FormControl, FormGroup, FormSubmittedEvent } from '@angular/forms';
 import { formDirectives } from '../form-directives';
@@ -16,7 +16,7 @@ import { CertificateDTO } from '../../../../../backend/shared/model/certificate.
 
 @Component({
   selector: 'oib-form',
-  imports: [...formDirectives, OibCodeBlockComponent, NgbTypeahead, TranslateDirective, OibArrayComponent, TranslatePipe],
+  imports: [...formDirectives, OibCodeBlockComponent, NgbTypeahead, TranslateDirective, forwardRef(() => OibArrayComponent), TranslatePipe],
   templateUrl: './form.component.html',
   styleUrl: './form.component.scss'
 })

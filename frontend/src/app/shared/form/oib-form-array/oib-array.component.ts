@@ -17,7 +17,7 @@ import { OibFormControl } from '../../../../../../backend/shared/model/form.mode
   selector: 'oib-array',
   templateUrl: './oib-array.component.html',
   styleUrl: './oib-array.component.scss',
-  imports: [TranslateDirective, EditElementComponent, TranslatePipe],
+  imports: [TranslateDirective, forwardRef(() => EditElementComponent), TranslatePipe],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -26,7 +26,7 @@ import { OibFormControl } from '../../../../../../backend/shared/model/form.mode
     },
     {
       provide: NG_VALIDATORS,
-      useExisting: OibArrayComponent,
+      useExisting: forwardRef(() => OibArrayComponent),
       multi: true
     }
   ]

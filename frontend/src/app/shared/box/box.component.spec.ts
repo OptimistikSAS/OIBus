@@ -6,8 +6,8 @@ import { BoxComponent, BoxTitleDirective } from './box.component';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 
 @Component({
-  template: `<oib-box [boxTitle]="title"> This is the content </oib-box>`,
-  imports: [BoxComponent, BoxTitleDirective]
+  template: ` <oib-box [boxTitle]="title"> This is the content</oib-box>`,
+  imports: [BoxComponent]
 })
 class TestComponent {
   title = 'common.yes';
@@ -59,6 +59,9 @@ describe('BoxComponent', () => {
         </oib-box>
       `
       );
+      TestBed.overrideComponent(TestComponent, {
+        add: { imports: [BoxTitleDirective] }
+      });
     });
 
     it('should display string title', () => {
