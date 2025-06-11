@@ -9,7 +9,7 @@ export class ClipboardCopyDirective {
 
   readonly string = input.required<string | null | undefined>();
 
-  @HostListener('click', ['$event'])
+  @HostListener('click')
   public onClick(): void {
     this.clipboard.copy(this.string()!);
   }

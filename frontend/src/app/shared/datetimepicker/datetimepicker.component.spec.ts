@@ -1,33 +1,25 @@
 import { TestBed } from '@angular/core/testing';
 
 import { Component, inject } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ComponentTester } from 'ngx-speculoos';
 import { TestDatetimepicker } from './datetimepicker.test-utils';
 import { noAnimation } from '../test-utils';
-import { formDirectives } from '../form-directives';
-import { DatetimepickerComponent } from './datetimepicker.component';
 import { provideDatepicker } from '../datepicker.providers';
-import { DatepickerContainerComponent } from '../datepicker-container/datepicker-container.component';
-import { NgbInputDatepicker, NgbTimepicker } from '@ng-bootstrap/ng-bootstrap';
-import { NgTemplateOutlet } from '@angular/common';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { provideCurrentUser } from '../current-user-testing';
+import { DatetimepickerComponent } from './datetimepicker.component';
+import { DatepickerContainerComponent } from '../datepicker-container/datepicker-container.component';
+import { NgbInputDatepicker, NgbTimepicker } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
   template: '',
-  imports: [DatetimepickerComponent, DatepickerContainerComponent, NgTemplateOutlet, NgbInputDatepicker, NgbTimepicker, ...formDirectives],
   providers: [noAnimation, provideDatepicker()]
 })
 class TestComponent {
-  form: FormGroup;
-  constructor() {
-    const fb = inject(FormBuilder);
-
-    this.form = fb.group({
-      from: null as string | null
-    });
-  }
+  readonly form = inject(FormBuilder).group({
+    from: null as string | null
+  });
 }
 
 class TestComponentTester extends ComponentTester<TestComponent> {
@@ -66,6 +58,11 @@ describe('DatetimepickerComponent', () => {
           <oib-datetimepicker formControlName="from"></oib-datetimepicker>
         </form>`
       );
+      TestBed.overrideComponent(TestComponent, {
+        set: {
+          imports: [DatetimepickerComponent, ReactiveFormsModule]
+        }
+      });
       tester = new TestComponentTester();
       tester.detectChanges();
     });
@@ -136,6 +133,11 @@ describe('DatetimepickerComponent', () => {
           <oib-datetimepicker timezone="UTC" formControlName="from"></oib-datetimepicker>
         </form>`
       );
+      TestBed.overrideComponent(TestComponent, {
+        set: {
+          imports: [DatetimepickerComponent, ReactiveFormsModule]
+        }
+      });
       tester = new TestComponentTester();
       tester.detectChanges();
     });
@@ -172,6 +174,11 @@ describe('DatetimepickerComponent', () => {
           </oib-datetimepicker>
         </form>`
       );
+      TestBed.overrideComponent(TestComponent, {
+        set: {
+          imports: [DatetimepickerComponent, DatepickerContainerComponent, NgbInputDatepicker, NgbTimepicker, ReactiveFormsModule]
+        }
+      });
       tester = new TestComponentTester();
       tester.detectChanges();
     });

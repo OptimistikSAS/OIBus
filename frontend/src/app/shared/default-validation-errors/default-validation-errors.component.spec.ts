@@ -5,7 +5,7 @@ import { Component, inject } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ComponentTester } from 'ngx-speculoos';
 import { ValdemortModule } from 'ngx-valdemort';
-import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 
 @Component({
@@ -21,7 +21,7 @@ import { provideI18nTesting } from '../../../i18n/mock-i18n';
       <button id="submit">Submit</button>
     </form>
   `,
-  imports: [ValdemortModule, TranslateDirective, ReactiveFormsModule, DefaultValidationErrorsComponent, TranslatePipe]
+  imports: [ValdemortModule, ReactiveFormsModule, DefaultValidationErrorsComponent, TranslatePipe]
 })
 class TestComponent {
   form = inject(NonNullableFormBuilder).group({

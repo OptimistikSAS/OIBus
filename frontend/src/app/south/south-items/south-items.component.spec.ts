@@ -2,6 +2,7 @@ import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ComponentTester, createMock, TestInput } from 'ngx-speculoos';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import {
+  SouthConnectorCommandDTO,
   SouthConnectorDTO,
   SouthConnectorItemCommandDTO,
   SouthConnectorManifest
@@ -51,12 +52,13 @@ const testSouthConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> = 
 } as SouthConnectorDTO<SouthSettings, SouthItemSettings>;
 
 @Component({
-  template: `<oib-south-items
+  template: ` <oib-south-items
     [southId]="southConnector.id"
     [southConnector]="southConnector"
     [scanModes]="scanModes"
     [southManifest]="manifest"
     [saveChangesDirectly]="saveChangesDirectly"
+    [southConnectorCommand]="southConnectorCommand"
     (inMemoryItems)="updateInMemoryItems($event)"
   />`,
   imports: [SouthItemsComponent]
@@ -97,6 +99,8 @@ class TestComponent {
   };
   saveChangesDirectly!: boolean;
   inMemoryItems: Array<SouthConnectorItemCommandDTO<SouthItemSettings>> = [];
+  southConnectorCommand = {} as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
+
   updateInMemoryItems(items: Array<SouthConnectorItemCommandDTO<SouthItemSettings>> | null) {
     if (items) {
       this.inMemoryItems = items;
@@ -125,10 +129,6 @@ class SouthItemsComponentTester extends ComponentTester<TestComponent> {
 
   get deleteAllButton() {
     return this.button('#delete-all')!;
-  }
-
-  get exportButton() {
-    return this.button('#export-items')!;
   }
 
   get southItems() {
@@ -286,7 +286,12 @@ describe('SouthItemsComponent with saving changes directly', () => {
     expect(tester.tableItemNames).toEqual(['item3', 'item1-copy', 'item1']);
 
     // mock API response to delete third item
-    southConnectorService.get.and.returnValue(of({ ...testSouthConnector, items: testSouthConnector.items.slice(0, 2) }));
+    southConnectorService.get.and.returnValue(
+      of({
+        ...testSouthConnector,
+        items: testSouthConnector.items.slice(0, 2)
+      })
+    );
 
     tester.southItems[2].button('.delete-south-item')!.click();
 
@@ -325,7 +330,12 @@ describe('SouthItemsComponent with saving changes directly', () => {
     expect(tester.tableItemNames).toEqual(['item3']);
 
     // Delete the third item in the list
-    southConnectorService.get.and.returnValue(of({ ...testSouthConnector, items: testSouthConnector.items.slice(0, 2) }));
+    southConnectorService.get.and.returnValue(
+      of({
+        ...testSouthConnector,
+        items: testSouthConnector.items.slice(0, 2)
+      })
+    );
     tester.southItems[0].button('.delete-south-item')!.click();
 
     expect(confirmationService.confirm).toHaveBeenCalledTimes(1);

@@ -1,4 +1,4 @@
-import { provideZoneChangeDetection } from '@angular/core';
+import { provideBrowserGlobalErrorListeners, provideZoneChangeDetection } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { AppComponent } from './app/app.component';
@@ -11,6 +11,7 @@ import { errorInterceptor } from './app/shared/error-interceptor.service';
 
 bootstrapApplication(AppComponent, {
   providers: [
+    provideBrowserGlobalErrorListeners(),
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(ROUTES),
     provideI18n(),
