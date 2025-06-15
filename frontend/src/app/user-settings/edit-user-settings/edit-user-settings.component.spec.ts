@@ -5,14 +5,14 @@ import { ComponentTester, createMock } from 'ngx-speculoos';
 import { of } from 'rxjs';
 import { MockModalService, provideModalTesting } from '../../shared/mock-modal.service.spec';
 import { ChangePasswordModalComponent } from '../change-password-modal/change-password-modal.component';
-import { UserDTO, UserCommandDTO } from '../../../../../backend/shared/model/user.model';
-import { TestTypeahead } from '../../shared/typeahead.test-utils';
+import { UserCommandDTO, UserDTO } from '../../../../../backend/shared/model/user.model';
 import { UserSettingsService } from '../../services/user-settings.service';
 import { WindowService } from '../../shared/window.service';
 import { CurrentUserService } from '../../shared/current-user.service';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
-import { TYPEAHEAD_DEBOUNCE_TIME } from '../../shared/typeahead';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
+import { TYPEAHEAD_DEBOUNCE_TIME } from '../../shared/form/typeahead';
+import { TestTypeahead } from '../../shared/form/typeahead.test-utils';
 
 class EditUserSettingsComponentTester extends ComponentTester<EditUserSettingsComponent> {
   constructor() {

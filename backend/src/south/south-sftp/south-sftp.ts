@@ -218,7 +218,7 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
         return {
           host: this.connector.settings.host,
           port: this.connector.settings.port,
-          username: this.connector.settings.username || '',
+          username: this.connector.settings.username,
           privateKey: await fs.readFile(this.connector.settings.privateKey!, 'utf8'),
           passphrase: this.connector.settings.passphrase ? await this.encryptionService.decryptText(this.connector.settings.passphrase) : ''
         };
@@ -227,7 +227,7 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
         return {
           host: this.connector.settings.host,
           port: this.connector.settings.port,
-          username: this.connector.settings.username || '',
+          username: this.connector.settings.username,
           password: this.connector.settings.password ? await this.encryptionService.decryptText(this.connector.settings.password) : ''
         };
     }

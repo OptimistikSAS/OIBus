@@ -1,11 +1,22 @@
 import Joi from 'joi';
 import JoiValidator from './joi.validator';
-import { OibFormControl, OibArrayFormControl } from '../../../../shared/model/form.model';
+import {
+  OIBusBooleanAttribute,
+  OIBusCertificateAttribute,
+  OIBusCodeAttribute,
+  OIBusNumberAttribute,
+  OIBusObjectAttribute,
+  OIBusScanModeAttribute,
+  OIBusSecretAttribute,
+  OIBusStringAttribute,
+  OIBusStringSelectAttribute,
+  OIBusTimezoneAttribute
+} from '../../../../shared/model/form.model';
 
 const validator = new JoiValidator();
 
 class JoiValidatorExtend extends JoiValidator {
-  generateJoiSchema(settings: Array<OibFormControl>): Joi.ObjectSchema {
+  generateJoiSchema(settings: OIBusObjectAttribute): Joi.ObjectSchema {
     return super.generateJoiSchema(settings);
   }
 }
@@ -34,11 +45,19 @@ describe('Joi validator', () => {
   });
 
   it('validateSettings should properly call validate', async () => {
-    const settings: Array<OibFormControl> = [];
+    const settings: OIBusObjectAttribute = {
+      type: 'object',
+      key: 'objectSettings',
+      translationKey: '',
+      attributes: [],
+      enablingConditions: [],
+      validators: [],
+      displayProperties: { visible: true, wrapInBox: false }
+    };
     const dto = {};
     const schema = Joi.object({});
     validator.validate = jest.fn();
-    jest.spyOn(validator, 'generateJoiSchema').mockReturnValueOnce(schema);
+    jest.spyOn(validator, 'generateFormGroupJoiSchema').mockReturnValueOnce({ objectSettings: schema });
 
     await validator.validateSettings(settings, dto);
 
@@ -46,266 +65,338 @@ describe('Joi validator', () => {
   });
 
   it('generateJoiSchema should generate proper Joi schema for different form controls', async () => {
-    const settings: Array<OibFormControl> = [
-      {
-        key: 'text',
-        type: 'OibText',
-        translationKey: 'OibText'
+    const settings: OIBusObjectAttribute = {
+      type: 'object',
+      key: 'settings',
+      translationKey: 'configuration.oibus.manifest.south.items.settings',
+      displayProperties: {
+        visible: true,
+        wrapInBox: true
       },
-      {
-        key: 'number',
-        type: 'OibNumber',
-        translationKey: 'OibNumber'
-      },
-      {
-        key: 'select',
-        type: 'OibSelect',
-        options: ['GET', 'POST', 'PUT', 'PATCH'],
-        translationKey: 'OibSelect'
-      },
-      {
-        key: 'secret',
-        type: 'OibSecret',
-        translationKey: 'OibSecret'
-      },
-      {
-        key: 'area',
-        type: 'OibTextArea',
-        translationKey: 'OibTextArea'
-      },
-      {
-        key: 'block',
-        type: 'OibCodeBlock',
-        contentType: 'json',
-        translationKey: 'OibCodeBlock'
-      },
-      {
-        key: 'checkbox',
-        type: 'OibCheckbox',
-        translationKey: 'OibCheckbox'
-      },
-      {
-        key: 'timezone',
-        type: 'OibTimezone',
-        translationKey: 'OibTimezone'
-      },
-      {
-        key: 'scanMode',
-        type: 'OibScanMode',
-        translationKey: 'OibScanMode',
-        acceptSubscription: false,
-        subscriptionOnly: false
-      },
-      {
-        key: 'certificate',
-        type: 'OibCertificate',
-        translationKey: 'OibCertificate'
-      }
-    ];
+      enablingConditions: [],
+      validators: [],
+      attributes: [
+        {
+          key: 'text',
+          type: 'string',
+          translationKey: 'OibText'
+        } as OIBusStringAttribute,
+        {
+          key: 'number',
+          type: 'number',
+          translationKey: 'OibNumber'
+        } as OIBusNumberAttribute,
+        {
+          key: 'select',
+          type: 'string-select',
+          selectableValues: ['GET', 'POST', 'PUT', 'PATCH'],
+          translationKey: 'OibSelect'
+        } as OIBusStringSelectAttribute,
+        {
+          key: 'secret',
+          type: 'secret',
+          translationKey: 'OibSecret'
+        } as OIBusSecretAttribute,
+        {
+          key: 'block',
+          type: 'code',
+          contentType: 'json',
+          translationKey: 'OibCodeBlock'
+        } as OIBusCodeAttribute,
+        {
+          key: 'checkbox',
+          type: 'boolean',
+          translationKey: 'OibCheckbox'
+        } as OIBusBooleanAttribute,
+        {
+          key: 'timezone',
+          type: 'timezone',
+          translationKey: 'OibTimezone'
+        } as OIBusTimezoneAttribute,
+        {
+          key: 'scanMode',
+          type: 'scan-mode',
+          translationKey: 'OibScanMode',
+          acceptableType: 'SUBSCRIPTION_AND_POLL'
+        } as OIBusScanModeAttribute,
+        {
+          key: 'certificate',
+          type: 'certificate',
+          translationKey: 'OibCertificate'
+        } as OIBusCertificateAttribute
+      ]
+    };
 
     const generatedSchema = extendedValidator.generateJoiSchema(settings);
 
     const expectedSchema = Joi.object({
-      text: Joi.string().allow(null, ''),
-      number: Joi.number().allow(null),
-      select: Joi.string().valid('GET', 'POST', 'PUT', 'PATCH'),
-      secret: Joi.string().allow(null, ''),
-      area: Joi.string().allow(null, ''),
-      block: Joi.string().allow(null, ''),
-      checkbox: Joi.boolean().falsy(0).truthy(1),
-      timezone: Joi.string().allow(null, ''),
-      scanMode: Joi.string().allow(null, ''),
-      certificate: Joi.string().allow(null, '')
+      settings: Joi.object({
+        text: Joi.string().allow(null, ''),
+        number: Joi.number().allow(null),
+        select: Joi.string().valid('GET', 'POST', 'PUT', 'PATCH'),
+        secret: Joi.string().allow(null, ''),
+        block: Joi.string().allow(null, ''),
+        checkbox: Joi.boolean().falsy(0).truthy(1),
+        timezone: Joi.string().allow(null, ''),
+        scanMode: Joi.string().allow(null, ''),
+        certificate: Joi.string().allow(null, '')
+      })
     });
     expect(expectedSchema.describe()).toEqual(generatedSchema.describe());
   });
 
   it('generateJoiSchema should properly generate text Joi schema', async () => {
-    const settings: Array<OibFormControl> = [
-      {
-        key: 'host',
-        type: 'OibText',
-        translationKey: 'Host',
-        validators: [
-          { key: 'required' },
-          { key: 'minLength', params: { minLength: 1 } },
-          { key: 'maxLength', params: { maxLength: 255 } },
-          { key: 'pattern', params: { pattern: '^(http:\\/\\/|https:\\/\\/|HTTP:\\/\\/|HTTPS:\\/\\/).*' } }
-        ],
-        displayInViewMode: true
-      }
-    ];
+    const settings: OIBusObjectAttribute = {
+      type: 'object',
+      key: 'settings',
+      translationKey: 'configuration.oibus.manifest.south.items.settings',
+      displayProperties: {
+        visible: true,
+        wrapInBox: true
+      },
+      enablingConditions: [],
+      validators: [],
+      attributes: [
+        {
+          key: 'host',
+          type: 'string',
+          translationKey: 'Host',
+          validators: [
+            { type: 'REQUIRED', arguments: [] },
+            { type: 'PATTERN', arguments: ['^(http:\\/\\/|https:\\/\\/|HTTP:\\/\\/|HTTPS:\\/\\/).*'] }
+          ]
+        } as OIBusStringAttribute
+      ]
+    };
 
     const generatedSchema = extendedValidator.generateJoiSchema(settings);
 
     const expectedSchema = Joi.object({
-      host: Joi.string().required().min(1).max(255).pattern(new RegExp('^(http:\\/\\/|https:\\/\\/|HTTP:\\/\\/|HTTPS:\\/\\/).*'))
+      settings: Joi.object({
+        host: Joi.string().required().pattern(new RegExp('^(http:\\/\\/|https:\\/\\/|HTTP:\\/\\/|HTTPS:\\/\\/).*'))
+      })
     });
     expect(expectedSchema.describe()).toEqual(generatedSchema.describe());
   });
 
   it('generateJoiSchema should properly generate number Joi schema', async () => {
-    const settings: Array<OibFormControl> = [
-      {
-        key: 'port',
-        type: 'OibNumber',
-        translationKey: 'Port',
-        defaultValue: 1883,
-        newRow: false,
-        validators: [{ key: 'required' }, { key: 'min', params: { min: 1 } }, { key: 'max', params: { max: 65535 } }],
-        displayInViewMode: true
-      }
-    ];
+    const settings: OIBusObjectAttribute = {
+      type: 'object',
+      key: 'settings',
+      translationKey: 'configuration.oibus.manifest.south.items.settings',
+      displayProperties: {
+        visible: true,
+        wrapInBox: true
+      },
+      enablingConditions: [],
+      validators: [],
+      attributes: [
+        {
+          key: 'port',
+          type: 'number',
+          translationKey: 'Port',
+          defaultValue: 1883,
+          validators: [{ type: 'REQUIRED' }, { type: 'MINIMUM', arguments: ['1'] }, { type: 'MAXIMUM', arguments: ['65535'] }]
+        } as OIBusNumberAttribute
+      ]
+    };
 
     const generatedSchema = extendedValidator.generateJoiSchema(settings);
 
     const expectedSchema = Joi.object({
-      port: Joi.number().required().min(1).max(65535)
+      settings: Joi.object({
+        port: Joi.number().required().min(1).max(65535)
+      })
     });
     expect(expectedSchema.describe()).toEqual(generatedSchema.describe());
   });
 
   it('generateJoiSchema should properly generate select Joi schema', async () => {
-    const settings: Array<OibFormControl> = [
-      {
-        key: 'requestMethod',
-        type: 'OibSelect',
-        options: ['GET', 'POST', 'PUT', 'PATCH'],
-        translationKey: 'HTTP Method',
-        defaultValue: 'POST',
-        newRow: false,
-        validators: [{ key: 'required' }]
-      }
-    ];
+    const settings: OIBusObjectAttribute = {
+      type: 'object',
+      key: 'settings',
+      translationKey: 'configuration.oibus.manifest.south.items.settings',
+      displayProperties: {
+        visible: true,
+        wrapInBox: true
+      },
+      enablingConditions: [],
+      validators: [],
+      attributes: [
+        {
+          key: 'requestMethod',
+          type: 'string-select',
+          selectableValues: ['GET', 'POST', 'PUT', 'PATCH'],
+          translationKey: 'HTTP Method',
+          defaultValue: 'POST',
+          validators: [{ type: 'REQUIRED', arguments: [] }],
+          displayProperties: {
+            row: 0,
+            columns: 1,
+            displayInViewMode: true
+          }
+        } as OIBusStringSelectAttribute
+      ]
+    };
 
     const generatedSchema = extendedValidator.generateJoiSchema(settings);
 
     const expectedSchema = Joi.object({
-      requestMethod: Joi.string().required().valid('GET', 'POST', 'PUT', 'PATCH')
+      settings: Joi.object({
+        requestMethod: Joi.string().required().valid('GET', 'POST', 'PUT', 'PATCH')
+      })
     });
     expect(expectedSchema.describe()).toEqual(generatedSchema.describe());
   });
 
   it('generateJoiSchema should properly generate boolean Joi schema', async () => {
-    const settings: Array<OibFormControl> = [
-      {
-        key: 'verbose',
-        type: 'OibCheckbox',
-        translationKey: 'Verbose',
-        newRow: true,
-        validators: [{ key: 'required' }],
-        displayInViewMode: true
-      }
-    ];
+    const settings: OIBusObjectAttribute = {
+      type: 'object',
+      key: 'settings',
+      translationKey: 'configuration.oibus.manifest.south.items.settings',
+      displayProperties: {
+        visible: true,
+        wrapInBox: true
+      },
+      enablingConditions: [],
+      validators: [],
+      attributes: [
+        {
+          key: 'verbose',
+          type: 'boolean',
+          translationKey: 'Verbose',
+          validators: [{ type: 'REQUIRED', arguments: [] }],
+          defaultValue: false,
+          displayProperties: {
+            row: 0,
+            columns: 1,
+            displayInViewMode: true
+          }
+        } as OIBusBooleanAttribute
+      ]
+    };
 
     const generatedSchema = extendedValidator.generateJoiSchema(settings);
 
     const expectedSchema = Joi.object({
-      verbose: Joi.boolean().required().falsy(0).truthy(1)
+      settings: Joi.object({
+        verbose: Joi.boolean().required().falsy(0).truthy(1)
+      })
     });
     expect(expectedSchema.describe()).toEqual(generatedSchema.describe());
   });
 
   it('generateJoiSchema should properly handle conditional display', async () => {
-    const settings: Array<OibFormControl> = [
-      {
-        key: 'driver',
-        type: 'OibSelect',
-        translationKey: 'SQL Driver',
-        options: ['MSSQL', 'MySQL', 'PostgreSQL', 'Oracle', 'SQLite'],
-        validators: [{ key: 'required' }]
-      },
-      {
-        key: 'databasePath',
-        type: 'OibText',
-        translationKey: 'Database path',
-        conditionalDisplay: { field: 'driver', values: ['SQLite'] }
-      },
-      {
-        key: 'query',
-        type: 'OibText',
-        translationKey: 'Query'
-      }
-    ];
+    const settings: OIBusObjectAttribute = {
+      type: 'object',
+      key: 'objectSettings',
+      translationKey: '',
+      attributes: [
+        {
+          key: 'driver',
+          type: 'string-select',
+          translationKey: 'SQL Driver',
+          selectableValues: ['MSSQL', 'MySQL', 'PostgreSQL', 'Oracle', 'SQLite'],
+          validators: [{ type: 'REQUIRED', arguments: [] }],
+          defaultValue: '',
+          displayProperties: {
+            row: 0,
+            columns: 1,
+            displayInViewMode: true
+          }
+        } as OIBusStringSelectAttribute,
+        {
+          key: 'databasePath',
+          type: 'string',
+          translationKey: 'Database path',
+          validators: [{ type: 'REQUIRED', arguments: [] }],
+          displayProperties: {
+            row: 0,
+            columns: 2,
+            displayInViewMode: true
+          },
+          defaultValue: ''
+        } as OIBusStringAttribute,
+        {
+          key: 'query',
+          type: 'string',
+          translationKey: 'Query'
+        } as OIBusStringAttribute
+      ],
+      enablingConditions: [{ referralPathFromRoot: 'driver', targetPathFromRoot: 'databasePath', values: ['SQLite'] }],
+      validators: [],
+      displayProperties: { visible: true, wrapInBox: false }
+    };
 
     const generatedSchema = extendedValidator.generateJoiSchema(settings);
 
     const expectedSchema = Joi.object({
-      driver: Joi.string().required().valid('MSSQL', 'MySQL', 'PostgreSQL', 'Oracle', 'SQLite'),
-      databasePath: Joi.string()
-        .allow(null, '')
-        .when('driver', {
-          is: Joi.any().valid('SQLite'),
-          then: Joi.string().allow(null, '').required(),
-          otherwise: Joi.string().allow(null, '').optional()
-        }),
-      query: Joi.string().allow(null, '')
+      objectSettings: Joi.object({
+        driver: Joi.string().required().valid('MSSQL', 'MySQL', 'PostgreSQL', 'Oracle', 'SQLite'),
+        databasePath: Joi.string()
+          .required()
+          .when('driver', {
+            is: Joi.any().valid('SQLite'),
+            then: Joi.string().required(),
+            otherwise: Joi.string().allow('').optional()
+          }),
+        query: Joi.string().allow(null, '')
+      })
     });
-    expect(expectedSchema.describe()).toEqual(generatedSchema.describe());
+    expect(generatedSchema.describe()).toEqual(expectedSchema.describe());
   });
 
   it('generateJoiSchema should generate proper Joi schema for form Groups', async () => {
-    const settings: Array<OibFormControl> = [
-      {
-        key: 'authentication',
-        type: 'OibFormGroup',
-        translationKey: 'Authentication',
-        class: 'col',
-        newRow: true,
-        displayInViewMode: false,
-        validators: [{ key: 'required' }],
-        content: [
-          {
-            key: 'type',
-            type: 'OibSelect',
-            translationKey: 'Type',
-            options: ['none', 'basic', 'bearer', 'api-key'],
-            validators: [{ key: 'required' }],
-            defaultValue: 'none',
-            newRow: true,
-            displayInViewMode: false
-          },
-          {
-            key: 'username',
-            type: 'OibText',
-            translationKey: 'Username',
-            defaultValue: '',
-            displayInViewMode: false
-          },
-          {
-            key: 'password',
-            type: 'OibSecret',
-            translationKey: 'Password',
-            defaultValue: '',
-            displayInViewMode: false
-          },
-          {
-            key: 'token',
-            type: 'OibSecret',
-            translationKey: 'Token',
-            defaultValue: '',
-            newRow: false,
-            displayInViewMode: false
-          },
-          {
-            key: 'apiKeyHeader',
-            type: 'OibSecret',
-            translationKey: 'Api key header',
-            defaultValue: '',
-            newRow: false,
-            displayInViewMode: false
-          },
-          {
-            key: 'apiKey',
-            type: 'OibSecret',
-            translationKey: 'Api key',
-            defaultValue: '',
-            newRow: false,
-            displayInViewMode: false
+    const settings: OIBusObjectAttribute = {
+      key: 'authentication',
+      type: 'object',
+      translationKey: 'Authentication',
+      validators: [{ type: 'REQUIRED', arguments: [] }],
+      enablingConditions: [],
+      displayProperties: { visible: true, wrapInBox: false },
+      attributes: [
+        {
+          key: 'type',
+          type: 'string-select',
+          translationKey: 'Type',
+          selectableValues: ['none', 'basic', 'bearer', 'api-key'],
+          validators: [{ type: 'REQUIRED', arguments: [] }],
+          defaultValue: '',
+          displayProperties: {
+            row: 0,
+            columns: 1,
+            displayInViewMode: true
           }
-        ]
-      }
-    ];
+        } as OIBusStringSelectAttribute,
+        {
+          key: 'username',
+          type: 'string',
+          translationKey: 'Username',
+          defaultValue: ''
+        } as OIBusStringAttribute,
+        {
+          key: 'password',
+          type: 'secret',
+          translationKey: 'Password'
+        } as OIBusSecretAttribute,
+        {
+          key: 'token',
+          type: 'secret',
+          translationKey: 'Token'
+        } as OIBusSecretAttribute,
+        {
+          key: 'apiKeyHeader',
+          type: 'secret',
+          translationKey: 'Api key header'
+        } as OIBusSecretAttribute,
+        {
+          key: 'apiKey',
+          type: 'secret',
+          translationKey: 'Api key'
+        } as OIBusSecretAttribute
+      ]
+    };
+
     const generatedSchema = extendedValidator.generateJoiSchema(settings);
 
     const expectedSchema = Joi.object({
@@ -322,65 +413,54 @@ describe('Joi validator', () => {
   });
 
   it('generateJoiSchema should generate proper Joi schema for form Groups without validators', async () => {
-    const settings: Array<OibFormControl> = [
-      {
-        key: 'authentication',
-        type: 'OibFormGroup',
-        translationKey: 'Authentication',
-        class: 'col',
-        newRow: true,
-        displayInViewMode: false,
-        content: [
-          {
-            key: 'type',
-            type: 'OibSelect',
-            translationKey: 'Type',
-            options: ['none', 'basic', 'bearer', 'api-key'],
-            defaultValue: 'none',
-            newRow: true,
-            displayInViewMode: false
-          },
-          {
-            key: 'username',
-            type: 'OibText',
-            translationKey: 'Username',
-            defaultValue: '',
-            displayInViewMode: false
-          },
-          {
-            key: 'password',
-            type: 'OibSecret',
-            translationKey: 'Password',
-            defaultValue: '',
-            displayInViewMode: false
-          },
-          {
-            key: 'token',
-            type: 'OibSecret',
-            translationKey: 'Token',
-            defaultValue: '',
-            newRow: false,
-            displayInViewMode: false
-          },
-          {
-            key: 'apiKeyHeader',
-            type: 'OibSecret',
-            translationKey: 'Api key header',
-            defaultValue: '',
-            newRow: false,
-            displayInViewMode: false
-          },
-          {
-            key: 'apiKey',
-            type: 'OibSecret',
-            translationKey: 'Api key',
-            defaultValue: '',
-            newRow: false,
-            displayInViewMode: false
+    const settings: OIBusObjectAttribute = {
+      key: 'authentication',
+      type: 'object',
+      translationKey: 'Authentication',
+      validators: [],
+      enablingConditions: [],
+      displayProperties: { visible: true, wrapInBox: false },
+      attributes: [
+        {
+          key: 'type',
+          type: 'string-select',
+          translationKey: 'Type',
+          selectableValues: ['none', 'basic', 'bearer', 'api-key'],
+          validators: [],
+          defaultValue: '',
+          displayProperties: {
+            row: 0,
+            columns: 1,
+            displayInViewMode: true
           }
-        ]
-      }
-    ];
+        } as OIBusStringSelectAttribute,
+        {
+          key: 'username',
+          type: 'string',
+          translationKey: 'Username'
+        } as OIBusStringAttribute,
+        {
+          key: 'password',
+          type: 'secret',
+          translationKey: 'Password'
+        } as OIBusSecretAttribute,
+        {
+          key: 'token',
+          type: 'secret',
+          translationKey: 'Token'
+        } as OIBusSecretAttribute,
+        {
+          key: 'apiKeyHeader',
+          type: 'secret',
+          translationKey: 'Api key header'
+        } as OIBusSecretAttribute,
+        {
+          key: 'apiKey',
+          type: 'secret',
+          translationKey: 'Api key'
+        } as OIBusSecretAttribute
+      ]
+    } as OIBusObjectAttribute;
     const generatedSchema = extendedValidator.generateJoiSchema(settings);
 
     const expectedSchema = Joi.object({
@@ -397,426 +477,192 @@ describe('Joi validator', () => {
   });
 
   it('generateJoiSchema should generate proper Joi schema for form Array', async () => {
-    const settings: Array<OibFormControl> = [
-      {
-        key: 'dateTimeFields',
-        type: 'OibArray',
-        translationKey: 'Date time fields',
-        validators: [{ key: 'required' }],
-        content: [
-          {
-            key: 'fieldName',
-            translationKey: 'Field name',
-            type: 'OibText',
-            defaultValue: '',
-            displayInViewMode: true
-          },
-          {
-            key: 'useAsReference',
-            translationKey: 'Reference field',
-            type: 'OibCheckbox',
-            defaultValue: false,
-            displayInViewMode: true
-          },
-          {
-            key: 'type',
-            translationKey: 'Type',
-            type: 'OibSelect',
-            defaultValue: 'string',
-            options: ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'],
-            displayInViewMode: true
-          },
-          {
-            key: 'timezone',
-            translationKey: 'Timezone',
-            type: 'OibTimezone',
-            defaultValue: 'UTC',
-            newRow: true,
-            displayInViewMode: true
-          },
-          {
-            key: 'format',
-            translationKey: 'Format',
-            type: 'OibText',
-            defaultValue: 'yyyy-MM-dd HH:mm:ss'
-          },
-          {
-            key: 'locale',
-            translationKey: 'Locale',
-            defaultValue: 'en-En',
-            type: 'OibText'
+    const settings: OIBusObjectAttribute = {
+      type: 'object',
+      key: 'settings',
+      translationKey: 'configuration.oibus.manifest.south.items.settings',
+      displayProperties: {
+        visible: true,
+        wrapInBox: true
+      },
+      enablingConditions: [],
+      validators: [],
+      attributes: [
+        {
+          type: 'array',
+          key: 'dateTimeFields',
+          translationKey: 'Date time fields',
+          paginate: true,
+          numberOfElementPerPage: 20,
+          validators: [{ type: 'REQUIRED', arguments: [] }],
+          rootAttribute: {
+            type: 'object',
+            key: 'item',
+            translationKey: 'configuration.oibus.manifest.south.items.item',
+            displayProperties: {
+              visible: true,
+              wrapInBox: false
+            },
+            enablingConditions: [],
+            validators: [],
+            attributes: [
+              {
+                type: 'string',
+                key: 'fieldName',
+                translationKey: 'date-time-fields.field-name',
+                defaultValue: null,
+                validators: [
+                  {
+                    type: 'REQUIRED',
+                    arguments: []
+                  },
+                  {
+                    type: 'UNIQUE',
+                    arguments: []
+                  }
+                ],
+                displayProperties: {
+                  row: 0,
+                  columns: 4,
+                  displayInViewMode: true
+                }
+              },
+              {
+                type: 'boolean',
+                key: 'useAsReference',
+                translationKey: 'date-time-fields.use-as-reference',
+                defaultValue: false,
+                validators: [
+                  {
+                    type: 'REQUIRED',
+                    arguments: []
+                  },
+                  {
+                    type: 'SINGLE_TRUE',
+                    arguments: []
+                  }
+                ],
+                displayProperties: {
+                  row: 0,
+                  columns: 4,
+                  displayInViewMode: true
+                }
+              },
+              {
+                type: 'string-select',
+                key: 'type',
+                translationKey: 'date-time-fields.type',
+                defaultValue: 'string',
+                selectableValues: ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'],
+                validators: [
+                  {
+                    type: 'REQUIRED',
+                    arguments: []
+                  }
+                ],
+                displayProperties: {
+                  row: 0,
+                  columns: 4,
+                  displayInViewMode: false
+                }
+              },
+              {
+                type: 'timezone',
+                key: 'timezone',
+                translationKey: 'date-time-fields.timezone',
+                defaultValue: 'UTC',
+                validators: [
+                  {
+                    type: 'REQUIRED',
+                    arguments: []
+                  }
+                ],
+                displayProperties: {
+                  row: 1,
+                  columns: 4,
+                  displayInViewMode: false
+                }
+              },
+              {
+                type: 'string',
+                key: 'format',
+                translationKey: 'date-time-fields.format',
+                defaultValue: 'yyyy-MM-dd HH:mm:ss',
+                validators: [
+                  {
+                    type: 'REQUIRED',
+                    arguments: []
+                  }
+                ],
+                displayProperties: {
+                  row: 1,
+                  columns: 4,
+                  displayInViewMode: false
+                }
+              },
+              {
+                type: 'string',
+                key: 'locale',
+                translationKey: 'date-time-fields.locale',
+                defaultValue: 'en-En',
+                validators: [
+                  {
+                    type: 'REQUIRED',
+                    arguments: []
+                  }
+                ],
+                displayProperties: {
+                  row: 1,
+                  columns: 4,
+                  displayInViewMode: true
+                }
+              }
+            ]
           }
-        ],
-        class: 'col',
-        newRow: true,
-        displayInViewMode: false
-      }
-    ];
-    const generatedSchema = extendedValidator.generateJoiSchema(settings);
-
-    const expectedSchema = Joi.object({
-      dateTimeFields: Joi.array()
-        .required()
-        .items(
-          Joi.object({
-            fieldName: Joi.string().allow(null, ''),
-            useAsReference: Joi.boolean().falsy(0).truthy(1),
-            type: Joi.string().valid('string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'),
-            timezone: Joi.string().allow(null, ''),
-            format: Joi.string().allow(null, ''),
-            locale: Joi.string().allow(null, '')
-          })
-        )
-    });
-
-    expect(expectedSchema.describe()).toEqual(generatedSchema.describe());
-  });
-
-  describe('Array validation with custom validators', () => {
-    const arrayFormControlWithUniqueAndSingleTrue: OibArrayFormControl = {
-      key: 'dateTimeFields',
-      type: 'OibArray',
-      translationKey: 'Date time fields',
-      content: [
-        {
-          key: 'fieldName',
-          translationKey: 'Field name',
-          type: 'OibText',
-          validators: [{ key: 'required' }, { key: 'unique' }],
-          displayInViewMode: true
-        },
-        {
-          key: 'useAsReference',
-          translationKey: 'Reference field',
-          type: 'OibCheckbox',
-          validators: [{ key: 'singleTrue' }],
-          displayInViewMode: true
-        },
-        {
-          key: 'type',
-          translationKey: 'Type',
-          type: 'OibSelect',
-          options: ['string', 'iso-string'],
-          validators: [{ key: 'required' }],
-          displayInViewMode: true
         }
       ]
     };
 
-    it('should pass validation with unique field names and single true value', async () => {
-      const validData = {
-        dateTimeFields: [
-          { fieldName: 'field1', useAsReference: true, type: 'string' },
-          { fieldName: 'field2', useAsReference: false, type: 'string' },
-          { fieldName: 'field3', useAsReference: false, type: 'iso-string' }
-        ]
-      };
-
-      await expect(extendedValidator.validateSettings([arrayFormControlWithUniqueAndSingleTrue], validData)).resolves.not.toThrow();
-    });
-
-    it('should pass validation with unique field names and no true values', async () => {
-      const validData = {
-        dateTimeFields: [
-          { fieldName: 'field1', useAsReference: false, type: 'string' },
-          { fieldName: 'field2', useAsReference: false, type: 'string' }
-        ]
-      };
-
-      await expect(extendedValidator.validateSettings([arrayFormControlWithUniqueAndSingleTrue], validData)).resolves.not.toThrow();
-    });
-
-    it('should fail validation with duplicate field names', async () => {
-      const invalidData = {
-        dateTimeFields: [
-          { fieldName: 'field1', useAsReference: true, type: 'string' },
-          { fieldName: 'field2', useAsReference: false, type: 'string' },
-          { fieldName: 'field1', useAsReference: false, type: 'iso-string' }
-        ]
-      };
-
-      await expect(extendedValidator.validateSettings([arrayFormControlWithUniqueAndSingleTrue], invalidData)).rejects.toThrow();
-    });
-
-    it('should fail validation with multiple true values', async () => {
-      const invalidData = {
-        dateTimeFields: [
-          { fieldName: 'field1', useAsReference: true, type: 'string' },
-          { fieldName: 'field2', useAsReference: true, type: 'string' },
-          { fieldName: 'field3', useAsReference: false, type: 'iso-string' }
-        ]
-      };
-
-      await expect(extendedValidator.validateSettings([arrayFormControlWithUniqueAndSingleTrue], invalidData)).rejects.toThrow();
-    });
-
-    it('should fail validation with both duplicate field names and multiple true values', async () => {
-      const invalidData = {
-        dateTimeFields: [
-          { fieldName: 'field1', useAsReference: true, type: 'string' },
-          { fieldName: 'field1', useAsReference: true, type: 'string' }
-        ]
-      };
-
-      await expect(extendedValidator.validateSettings([arrayFormControlWithUniqueAndSingleTrue], invalidData)).rejects.toThrow();
-    });
-
-    it('should pass validation with empty array', async () => {
-      const validData = {
-        dateTimeFields: []
-      };
-
-      await expect(extendedValidator.validateSettings([arrayFormControlWithUniqueAndSingleTrue], validData)).resolves.not.toThrow();
-    });
-
-    it('should handle arrays with only one item correctly', async () => {
-      const validData = {
-        dateTimeFields: [{ fieldName: 'field1', useAsReference: true, type: 'string' }]
-      };
-
-      await expect(extendedValidator.validateSettings([arrayFormControlWithUniqueAndSingleTrue], validData)).resolves.not.toThrow();
-    });
-
-    it('should validate nested object structure correctly', async () => {
-      const validData = {
-        dateTimeFields: [
-          { fieldName: 'timestamp', useAsReference: true, type: 'string' },
-          { fieldName: 'created_at', useAsReference: false, type: 'iso-string' }
-        ]
-      };
-
-      await expect(extendedValidator.validateSettings([arrayFormControlWithUniqueAndSingleTrue], validData)).resolves.not.toThrow();
-    });
-
-    it('should generate proper error messages', async () => {
-      const invalidData = {
-        dateTimeFields: [
-          { fieldName: 'field1', useAsReference: true, type: 'string' },
-          { fieldName: 'field1', useAsReference: true, type: 'string' }
-        ]
-      };
-
-      try {
-        await extendedValidator.validateSettings([arrayFormControlWithUniqueAndSingleTrue], invalidData);
-        fail('Expected validation to throw an error');
-      } catch (error: unknown) {
-        expect(error instanceof Joi.ValidationError).toBeTruthy();
-        if (error instanceof Joi.ValidationError) {
-          expect(error.details).toBeDefined();
-          expect(error.details.length).toBeGreaterThan(0);
-          const errorMessages = error.details.map((detail: Joi.ValidationErrorItem) => detail.message);
-
-          const hasUniqueError = errorMessages.some(
-            (msg: string) =>
-              msg.includes('duplicate') ||
-              msg.includes('unique') ||
-              msg.includes('fieldName') ||
-              msg.toLowerCase().includes('contains a duplicate value')
-          );
-
-          const hasSingleTrueError = errorMessages.some(
-            (msg: string) => msg.includes('Only one item') || msg.includes('useAsReference') || msg.includes('set to true')
-          );
-
-          expect(hasUniqueError || hasSingleTrueError).toBeTruthy();
-        }
-      }
-    });
-  });
-
-  describe('Array level validators', () => {
-    it('should apply min validator to array', async () => {
-      const arrayFormControl: OibArrayFormControl = {
-        key: 'items',
-        type: 'OibArray',
-        translationKey: 'Items',
-        validators: [{ key: 'min', params: { min: 2 } }],
-        content: [
-          {
-            key: 'name',
-            type: 'OibText',
-            translationKey: 'Name'
-          }
-        ]
-      };
-
-      const invalidData = { items: [{ name: 'item1' }] };
-      const validData = { items: [{ name: 'item1' }, { name: 'item2' }] };
-
-      await expect(extendedValidator.validateSettings([arrayFormControl], invalidData)).rejects.toThrow();
-      await expect(extendedValidator.validateSettings([arrayFormControl], validData)).resolves.not.toThrow();
-    });
-
-    it('should apply minLength validator to array', async () => {
-      const arrayFormControl: OibArrayFormControl = {
-        key: 'items',
-        type: 'OibArray',
-        translationKey: 'Items',
-        validators: [{ key: 'minLength', params: { minLength: 3 } }],
-        content: [
-          {
-            key: 'name',
-            type: 'OibText',
-            translationKey: 'Name'
-          }
-        ]
-      };
-
-      const invalidData = { items: [{ name: 'item1' }, { name: 'item2' }] };
-      const validData = { items: [{ name: 'item1' }, { name: 'item2' }, { name: 'item3' }] };
-
-      await expect(extendedValidator.validateSettings([arrayFormControl], invalidData)).rejects.toThrow();
-      await expect(extendedValidator.validateSettings([arrayFormControl], validData)).resolves.not.toThrow();
-    });
-
-    it('should apply max validator to array', async () => {
-      const arrayFormControl: OibArrayFormControl = {
-        key: 'items',
-        type: 'OibArray',
-        translationKey: 'Items',
-        validators: [{ key: 'max', params: { max: 2 } }],
-        content: [
-          {
-            key: 'name',
-            type: 'OibText',
-            translationKey: 'Name'
-          }
-        ]
-      };
-
-      const invalidData = { items: [{ name: 'item1' }, { name: 'item2' }, { name: 'item3' }] };
-      const validData = { items: [{ name: 'item1' }, { name: 'item2' }] };
-
-      await expect(extendedValidator.validateSettings([arrayFormControl], invalidData)).rejects.toThrow();
-      await expect(extendedValidator.validateSettings([arrayFormControl], validData)).resolves.not.toThrow();
-    });
-
-    it('should apply maxLength validator to array', async () => {
-      const arrayFormControl: OibArrayFormControl = {
-        key: 'items',
-        type: 'OibArray',
-        translationKey: 'Items',
-        validators: [{ key: 'maxLength', params: { maxLength: 1 } }],
-        content: [
-          {
-            key: 'name',
-            type: 'OibText',
-            translationKey: 'Name'
-          }
-        ]
-      };
-
-      const invalidData = { items: [{ name: 'item1' }, { name: 'item2' }] };
-      const validData = { items: [{ name: 'item1' }] };
-
-      await expect(extendedValidator.validateSettings([arrayFormControl], invalidData)).rejects.toThrow();
-      await expect(extendedValidator.validateSettings([arrayFormControl], validData)).resolves.not.toThrow();
-    });
-
-    it('should handle multiple array validators together', async () => {
-      const arrayFormControl: OibArrayFormControl = {
-        key: 'items',
-        type: 'OibArray',
-        translationKey: 'Items',
-        validators: [
-          { key: 'min', params: { min: 2 } },
-          { key: 'max', params: { max: 4 } }
-        ],
-        content: [
-          {
-            key: 'name',
-            type: 'OibText',
-            translationKey: 'Name'
-          }
-        ]
-      };
-
-      const tooFewItems = { items: [{ name: 'item1' }] };
-      const tooManyItems = { items: [{ name: 'item1' }, { name: 'item2' }, { name: 'item3' }, { name: 'item4' }, { name: 'item5' }] };
-      const validData = { items: [{ name: 'item1' }, { name: 'item2' }, { name: 'item3' }] };
-
-      await expect(extendedValidator.validateSettings([arrayFormControl], tooFewItems)).rejects.toThrow();
-      await expect(extendedValidator.validateSettings([arrayFormControl], tooManyItems)).rejects.toThrow();
-      await expect(extendedValidator.validateSettings([arrayFormControl], validData)).resolves.not.toThrow();
-    });
-  });
-
-  describe('SingleTrue validator edge cases', () => {
-    it('should handle non-array values in singleTrue validator directly', () => {
-      const validatorInstance = new JoiValidator();
-      const customValidator: Joi.CustomValidator = (
-        validatorInstance as unknown as {
-          generateSingleTrueValidator: (field: string) => Joi.CustomValidator;
-        }
-      ).generateSingleTrueValidator('isActive');
-
-      const mockHelpers = {
-        message: jest.fn()
-      };
-
-      const nonArrayValue = 'not-an-array';
-      const result = customValidator(nonArrayValue as unknown, mockHelpers as unknown as Joi.CustomHelpers);
-
-      expect(result).toBe(nonArrayValue);
-      expect(mockHelpers.message).not.toHaveBeenCalled();
-    });
-
-    it('should handle non-array values in singleTrue validator - alternative approach', async () => {
-      const validatorInstance = new JoiValidator();
-      const customValidator = (
-        validatorInstance as unknown as { generateSingleTrueValidator: (field: string) => Joi.CustomValidator }
-      ).generateSingleTrueValidator('isActive');
-
-      const schema = Joi.any().custom(customValidator);
-
-      const nonArrayValue = 'not-an-array';
-      const result = await schema.validateAsync(nonArrayValue);
-
-      expect(result).toBe(nonArrayValue);
-    });
-
-    it('should handle null values in singleTrue validator', async () => {
-      const validatorInstance = new JoiValidator();
-      const customValidator = (
-        validatorInstance as unknown as { generateSingleTrueValidator: (field: string) => Joi.CustomValidator }
-      ).generateSingleTrueValidator('isActive');
-
-      const schema = Joi.any().custom(customValidator);
-
-      const result = await schema.validateAsync(null);
-      expect(result).toBe(null);
-    });
-
-    it('should handle undefined values in singleTrue validator', async () => {
-      const validatorInstance = new JoiValidator();
-      const customValidator = (
-        validatorInstance as unknown as { generateSingleTrueValidator: (field: string) => Joi.CustomValidator }
-      ).generateSingleTrueValidator('isActive');
-
-      const schema = Joi.any().custom(customValidator);
-
-      const result = await schema.validateAsync(undefined);
-      expect(result).toBe(undefined);
-    });
-  });
-
-  it('generateJoiSchema should generate proper Joi schema for form Transformer', async () => {
-    const settings: Array<OibFormControl> = [
-      {
-        key: 'transformer',
-        type: 'OibTransformer',
-        translationKey: 'Transformer',
-        class: 'col',
-        newRow: true,
-        displayInViewMode: false,
-        validators: [{ key: 'required' }]
-      }
-    ];
     const generatedSchema = extendedValidator.generateJoiSchema(settings);
 
     const expectedSchema = Joi.object({
-      transformer: Joi.object({}).required()
+      settings: Joi.object({
+        dateTimeFields: Joi.array()
+          .required()
+          .items(
+            Joi.object({
+              fieldName: Joi.string().required(),
+              useAsReference: Joi.boolean().required().falsy(0).truthy(1),
+              type: Joi.string().required().valid('iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'),
+              timezone: Joi.string().required(),
+              format: Joi.string().required(),
+              locale: Joi.string().required()
+            })
+          )
+          .unique('fieldName')
+          .custom(() => null, 'SINGLE_TRUE validation for useAsReference')
+      })
     });
-    expect(expectedSchema.describe()).toEqual(generatedSchema.describe());
+    expect(JSON.stringify(generatedSchema.describe())).toEqual(JSON.stringify(expectedSchema.describe()));
+  });
+
+  it('generateSingleTrueValidator should manage single true fields', async () => {
+    const helpers = { message: jest.fn().mockReturnValueOnce('error') } as unknown as Joi.CustomHelpers;
+    const test = extendedValidator['generateSingleTrueValidator']('singleTrueField');
+    expect(test([{ singleTrueField: true }, { singleTrueField: true }, { singleTrueField: true }], helpers)).toEqual('error');
+    expect(helpers.message).toHaveBeenCalledWith({ custom: `Only one item in the array can have "singleTrueField" set to true` });
+
+    expect(test([{ singleTrueField: true }, { singleTrueField: false }, { singleTrueField: false }], helpers)).toEqual([
+      { singleTrueField: true },
+      { singleTrueField: false },
+      { singleTrueField: false }
+    ]);
+
+    expect(test({ singleTrueField: true }, helpers)).toEqual({ singleTrueField: true });
+  });
+
+  it('applyArrayLevelValidators should return schema if no validators', async () => {
+    const schema = Joi.array();
+    expect(extendedValidator['applyArrayLevelValidators'](schema)).toEqual(schema);
   });
 });

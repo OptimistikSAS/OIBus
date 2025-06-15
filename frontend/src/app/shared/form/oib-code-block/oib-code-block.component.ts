@@ -1,17 +1,17 @@
 /* eslint-disable-next-line */
 /// <reference path="../../../../../node_modules/monaco-editor/monaco.d.ts" />
 import { Component, ElementRef, forwardRef, inject, viewChild, input, signal } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR, ReactiveFormsModule } from '@angular/forms';
 import { MonacoEditorLoaderService } from './monaco-editor-loader.service';
-import { formDirectives } from '../../form-directives';
+import { OI_FORM_VALIDATION_DIRECTIVES } from '../form-validation-directives';
 
-// This component relies on the monaco editor, and needs it to load it if it is not already available.
-// It delegates this task to the MonacoEditorLoaderService, that returns a Promise which resolves when the loading is done.
+// This component relies on the monaco editor and needs it to load it if it is not already available.
+// It delegates this task to the MonacoEditorLoaderService, which returns a Promise which resolves when the loading is done.
 @Component({
   selector: 'oib-code-block',
   templateUrl: './oib-code-block.component.html',
   styleUrl: './oib-code-block.component.scss',
-  imports: [...formDirectives],
+  imports: [ReactiveFormsModule, OI_FORM_VALIDATION_DIRECTIVES],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -25,7 +25,7 @@ export class OibCodeBlockComponent implements ControlValueAccessor {
 
   readonly _editorContainer = viewChild.required<ElementRef<HTMLDivElement>>('editorContainer');
   readonly key = input('');
-  readonly contentType = input('');
+  readonly language = input('');
   readonly height = input('12rem');
   readonly readOnly = input(false);
   readonly disabled = signal(false);
@@ -60,7 +60,7 @@ export class OibCodeBlockComponent implements ControlValueAccessor {
       this.codeEditorInstance.set(
         monaco.editor.create(this._editorContainer().nativeElement, {
           value: '',
-          language: this.contentType(),
+          language: this.language(),
           theme: 'vs-light',
           selectOnLineNumbers: true,
           wordWrap: 'on',
