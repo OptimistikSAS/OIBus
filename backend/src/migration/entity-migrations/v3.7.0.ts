@@ -5,11 +5,13 @@ const NORTH_TRANSFORMERS_TABLE = 'north_transformers';
 const HISTORY_QUERY_TRANSFORMERS_TABLE = 'history_query_transformers';
 const NORTH_CONNECTORS_TABLE = 'north_connectors';
 const HISTORY_QUERIES_TABLE = 'history_queries';
+const REGISTRATIONS_TABLE = 'registrations';
 
 export async function up(knex: Knex): Promise<void> {
   await createTransformersTable(knex);
   await createNorthTransformersTable(knex);
   await createHistoryTransformersTable(knex);
+  await updateRegistrationSettings(knex);
 }
 
 async function createTransformersTable(knex: Knex): Promise<void> {
@@ -46,6 +48,15 @@ async function createHistoryTransformersTable(knex: Knex): Promise<void> {
     table.string('options');
     table.string('input_type');
     table.unique(['history_id', 'transformer_id', 'input_type']);
+  });
+}
+
+async function updateRegistrationSettings(knex: Knex): Promise<void> {
+  await knex.schema.alterTable(REGISTRATIONS_TABLE, table => {
+    table.boolean('command_setpoint');
+  });
+  await knex(REGISTRATIONS_TABLE).update({
+    command_setpoint: true
   });
 }
 

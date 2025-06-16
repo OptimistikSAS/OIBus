@@ -52,18 +52,20 @@ import NorthSFTP from '../north/north-sftp/north-sftp';
 import NorthREST from '../north/north-rest/north-rest';
 import DataStreamEngine from '../engine/data-stream-engine';
 import { SouthConnectorEntityLight } from '../model/south-connector.model';
-import { PassThrough } from 'node:stream';
+import { PassThrough, Readable } from 'node:stream';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { BaseFolders } from '../model/types';
 import { ReadStream } from 'node:fs';
-import { CacheMetadata, CacheSearchParam } from '../../shared/model/engine.model';
-import TransformerService, { toTransformerDTO } from './transformer.service';
+import { CacheMetadata, CacheSearchParam, OIBusTimeValue, OIBusTimeValueContent } from '../../shared/model/engine.model';
+import TransformerService, { createTransformer, toTransformerDTO } from './transformer.service';
 import { TransformerDTO } from '../../shared/model/transformer.model';
 import NorthOPCUA from '../north/north-opcua/north-opcua';
 import NorthMQTT from '../north/north-mqtt/north-mqtt';
 import NorthModbus from '../north/north-modbus/north-modbus';
 import { Transformer } from '../model/transformer.model';
+import { Instant } from '../../shared/model/types';
+import { DateTime } from 'luxon';
 
 export const northManifestList: Array<NorthConnectorManifest> = [
   consoleManifest,
@@ -462,6 +464,37 @@ export default class NorthService {
     this.northConnectorRepository.deleteAllSubscriptionsByNorth(northId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     this.dataStreamEngine.updateSubscription(northId);
+  }
+
+  async executeSetpoint(
+    northConnectorId: string,
+    commandContent: {
+      pointId: string;
+      value: string;
+    },
+    callback: (result: string) => void
+  ) {
+    const northConnector = this.dataStreamEngine.northConnectors.get(northConnectorId);
+    if (!northConnector) {
+      throw new Error(`North connector ${northConnectorId} not found`);
+    }
+
+    const timeValuesContent: OIBusTimeValueContent = {
+      type: 'time-values',
+      content: [
+        {
+          pointId: commandContent.pointId,
+          timestamp: DateTime.now().toUTC().toISO()!,
+          data: {
+            value: commandContent.value
+          }
+        }
+      ]
+    };
+
+    await northConnector.cacheContent(timeValuesContent, 'oianalytics');
+
+    callback(`Set point ${JSON.stringify(commandContent)} properly sent into the cache of ${northConnectorId}`);
   }
 
   private async deleteBaseFolders(north: NorthConnectorEntity<NorthSettings>) {

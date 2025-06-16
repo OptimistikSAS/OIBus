@@ -41,7 +41,8 @@ export const OIBUS_COMMAND_TYPES = [
   'test-history-query-south-connection',
   'test-history-query-south-item',
   'create-or-update-history-query-south-items-from-csv',
-  'update-history-query-status'
+  'update-history-query-status',
+  'setpoint'
 ] as const;
 export type OIBusCommandType = (typeof OIBUS_COMMAND_TYPES)[number];
 
@@ -288,6 +289,16 @@ export interface OIBusUpdateHistoryQueryStatusCommandDTO extends BaseOIBusComman
   };
 }
 
+export interface OIBusSetpointCommandDTO extends BaseOIBusCommandDTO {
+  type: 'setpoint';
+  targetVersion: string;
+  northConnectorId: string;
+  commandContent: {
+    pointId: string;
+    value: string;
+  };
+}
+
 export type OIBusCommandDTO =
   | OIBusUpdateVersionCommandDTO
   | OIBusRegenerateCipherKeysCommandDTO
@@ -320,7 +331,8 @@ export type OIBusCommandDTO =
   | OIBusTestHistoryQuerySouthConnectionCommandDTO
   | OIBusTestHistoryQuerySouthItemCommandDTO
   | OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommandDTO
-  | OIBusUpdateHistoryQueryStatusCommandDTO;
+  | OIBusUpdateHistoryQueryStatusCommandDTO
+  | OIBusSetpointCommandDTO;
 
 export interface CommandSearchParam {
   page?: number;
