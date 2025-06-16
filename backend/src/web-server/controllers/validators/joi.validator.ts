@@ -168,7 +168,7 @@ export default class JoiValidator {
   }
 
   private generateFormArrayJoiSchema(formControl: OIBusArrayAttribute): Record<string, AnySchema> {
-    const { subSchema, customValidators } = this.buildArraySubSchemaAndValidators(formControl.rootAttribute.attributes);
+    const { subSchema, customValidators } = this.buildArraySubSchemaAndValidators(formControl.rootAttribute);
 
     let schema = Joi.array().items(Joi.object(subSchema));
 
@@ -179,15 +179,23 @@ export default class JoiValidator {
     };
   }
 
-  private buildArraySubSchemaAndValidators(content: Array<OIBusAttribute>) {
+  private buildArraySubSchemaAndValidators(objectAttribute: OIBusObjectAttribute) {
     const subSchema: Record<string, AnySchema> = {};
     const customValidators = {
       UNIQUE: [] as Array<string>,
       SINGLE_TRUE: [] as Array<string>
     };
 
-    content.forEach(subControl => {
+    objectAttribute.attributes.forEach(subControl => {
       subSchema[subControl.key] = this.generateJoiSchemaFromOibFormControl(subControl)[subControl.key];
+      const enablingCondition = objectAttribute.enablingConditions.find(element => element.targetPathFromRoot === subControl.key);
+      if (enablingCondition) {
+        subSchema[subControl.key] = subSchema[subControl.key].when(enablingCondition.referralPathFromRoot, {
+          is: Joi.any().valid(...enablingCondition.values),
+          then: subSchema[subControl.key].required(),
+          otherwise: subSchema[subControl.key].allow('').optional()
+        });
+      }
 
       subControl.validators?.forEach(validator => {
         if (validator.type === 'UNIQUE') {
