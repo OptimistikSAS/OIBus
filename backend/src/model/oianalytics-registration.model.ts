@@ -51,6 +51,7 @@ export interface OIAnalyticsRegistration extends BaseEntity {
     updateNorth: boolean;
     deleteNorth: boolean;
     testNorthConnection: boolean;
+    setpoint: boolean;
   };
 }
 
@@ -96,5 +97,6 @@ export interface OIAnalyticsRegistrationEditCommand {
     updateNorth: boolean;
     deleteNorth: boolean;
     testNorthConnection: boolean;
+    setpoint: boolean;
   };
 }
