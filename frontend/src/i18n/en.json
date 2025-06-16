@@ -184,7 +184,8 @@
       "test-history-query-south-connection": "Test south connection",
       "test-history-query-south-item": "Test south item",
       "create-or-update-history-query-south-items-from-csv": "Load south items from CSV",
-      "update-history-query-status": "Update history query status"
+      "update-history-query-status": "Update history query status",
+      "setpoint": "Setpoint"
     },
     "oibus-data-type": {
       "any": "Any",
@@ -201,24 +202,24 @@
       "azure-blob": "Azure Blob Storage™",
       "console": "Console",
       "file-writer": "File writer",
-      "oianalytics": "OIAnalytics®",
-      "sftp": "SFTP",
-      "rest": "REST",
-      "opcua": "OPC UA™",
+      "modbus": "Modbus",
       "mqtt": "MQTT",
-      "modbus": "Modbus"
+      "oianalytics": "OIAnalytics®",
+      "opcua": "OPC UA™",
+      "rest": "REST",
+      "sftp": "SFTP"
     },
     "oibus-north-type-description": {
       "aws-s3": "Store files in Amazon S3™ (Simple Storage Service)",
       "azure-blob": "Store files in Microsoft Azure Blob Storage™",
       "console": "Display filenames or values in Console (used for debug)",
       "file-writer": "Write files and data to the output folder",
-      "oianalytics": "Send files and values to OIAnalytics®",
-      "sftp": "Upload files and data to an SFTP server",
-      "rest": "Upload files to a REST endpoint",
-      "mqtt": "Publish to MQTT broker topics",
       "modbus": "Write in Modbus registers on a PLC",
-      "opcua": "Write data into OPC UA™ server"
+      "mqtt": "Publish to MQTT broker topics",
+      "oianalytics": "Send files and values to OIAnalytics®",
+      "opcua": "Write data into OPC UA™ server",
+      "rest": "Upload files to a REST endpoint",
+      "sftp": "Upload files and data to an SFTP server"
     },
     "oibus-south-category": {
       "iot": "IoT",
@@ -368,6 +369,7 @@
       "test-connector": "Test connectors",
       "history-query": "History query",
       "test-history-query": "Test history queries",
+      "setpoint": "Setpoint",
       "details-modal": {
         "title": "Command {{ type }}",
         "success-info": "Command completed successfully",
@@ -631,77 +633,6 @@
             "prefix": "Prefix",
             "suffix": "Suffix"
           },
-          "oianalytics": {
-            "use-oianalytics-module": "Use OIAnalytics registration",
-            "timeout": "Timeout",
-            "compress": "Compress",
-            "specific-settings": {
-              "host": "URL",
-              "accept-unauthorized": "Accept unauthorized",
-              "authentication": {
-                "title": "Authentication",
-                "basic": "Access key",
-                "aad-client-secret": "Azure Active Directory with client secret",
-                "aad-certificate": "Azure Active Directory with certificate"
-              },
-              "access-key": "Access key",
-              "secret-key": "Secret key",
-              "tenant-id": "Tenant ID",
-              "client-id": "Client ID",
-              "client-secret": "Client secret",
-              "certificate-id": "Certificate",
-              "scope": "Scope",
-              "use-proxy": "Use proxy",
-              "proxy-url": "Proxy URL",
-              "proxy-username": "Proxy username",
-              "proxy-password": "Proxy password"
-            }
-          },
-          "sftp": {
-            "host": "Host",
-            "port": "Port",
-            "authentication": {
-              "title": "Authentication",
-              "password": "Password",
-              "private-key": "Private key"
-            },
-            "remote-folder": "Remote folder",
-            "prefix": "Prefix",
-            "suffix": "Suffix",
-            "username": "Username",
-            "password": "Password",
-            "private-key": "Private key",
-            "passphrase": "Passphrase",
-            "compression": "Compress files"
-          },
-          "rest": {
-            "endpoint": "Endpoint",
-            "test-path": "Test path",
-            "timeout": "Timeout",
-            "auth-type": {
-              "title": "Authentication type",
-              "bearer": "Bearer Auth"
-            },
-            "auth": {
-              "title": "Authentication type",
-              "basic": "Basic Auth",
-              "bearer": "Bearer Auth",
-              "bearer-token": "Bearer token",
-              "basic-username": "Username",
-              "basic-password": "Password"
-            },
-            "query-params": {
-              "query-param": "Query params",
-              "key": "Key",
-              "value": "Value"
-            },
-            "proxy": {
-              "title": "Use proxy",
-              "url": "Proxy URL",
-              "username": "Proxy username",
-              "password": "Proxy password"
-            }
-          },
           "modbus": {
             "host": "Host",
             "port": "Port",
@@ -744,6 +675,32 @@
             "reconnect-period": "Reconnect period",
             "connect-timeout": "Connect timeout"
           },
+          "oianalytics": {
+            "use-oianalytics-module": "Use OIAnalytics registration",
+            "timeout": "Timeout",
+            "compress": "Compress",
+            "specific-settings": {
+              "host": "URL",
+              "accept-unauthorized": "Accept unauthorized",
+              "authentication": {
+                "title": "Authentication",
+                "basic": "Access key",
+                "aad-client-secret": "Azure Active Directory with client secret",
+                "aad-certificate": "Azure Active Directory with certificate"
+              },
+              "access-key": "Access key",
+              "secret-key": "Secret key",
+              "tenant-id": "Tenant ID",
+              "client-id": "Client ID",
+              "client-secret": "Client secret",
+              "certificate-id": "Certificate",
+              "scope": "Scope",
+              "use-proxy": "Use proxy",
+              "proxy-url": "Proxy URL",
+              "proxy-username": "Proxy username",
+              "proxy-password": "Proxy password"
+            }
+          },
           "opcua": {
             "url": "URL",
             "keep-session-alive": "Keep session alive",
@@ -779,6 +736,51 @@
             "password": "Password",
             "cert-file-path": "Cert file path",
             "key-file-path": "Key file path"
+          },
+          "rest": {
+            "endpoint": "Endpoint",
+            "test-path": "Test path",
+            "timeout": "Timeout",
+            "auth-type": {
+              "title": "Authentication type",
+              "bearer": "Bearer Auth"
+            },
+            "auth": {
+              "title": "Authentication type",
+              "basic": "Basic Auth",
+              "bearer": "Bearer Auth",
+              "bearer-token": "Bearer token",
+              "basic-username": "Username",
+              "basic-password": "Password"
+            },
+            "query-params": {
+              "query-param": "Query params",
+              "key": "Key",
+              "value": "Value"
+            },
+            "proxy": {
+              "title": "Use proxy",
+              "url": "Proxy URL",
+              "username": "Proxy username",
+              "password": "Proxy password"
+            }
+          },
+          "sftp": {
+            "host": "Host",
+            "port": "Port",
+            "authentication": {
+              "title": "Authentication",
+              "password": "Password",
+              "private-key": "Private key"
+            },
+            "remote-folder": "Remote folder",
+            "prefix": "Prefix",
+            "suffix": "Suffix",
+            "username": "Username",
+            "password": "Password",
+            "private-key": "Private key",
+            "passphrase": "Passphrase",
+            "compression": "Compress files"
           }
         },
         "transformers": {
