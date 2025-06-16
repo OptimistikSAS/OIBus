@@ -1,7 +1,7 @@
 import { createReadStream, ReadStream } from 'node:fs';
 import fs from 'node:fs/promises';
 
-import { S3Client } from '@aws-sdk/client-s3';
+import { HeadBucketCommand, S3Client } from '@aws-sdk/client-s3';
 import NorthAmazonS3 from './north-amazon-s3';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
@@ -20,8 +20,12 @@ import { mockBaseFolders } from '../../tests/utils/test-utils';
 import CacheService from '../../service/cache/cache.service';
 import { OIBusTimeValue } from '../../../shared/model/engine.model';
 
-const sendMock = jest.fn();
-jest.mock('@aws-sdk/client-s3');
+const s3client = { send: jest.fn() };
+jest.mock('@aws-sdk/client-s3', () => ({
+  S3Client: jest.fn().mockImplementation(() => s3client),
+  PutObjectCommand: jest.fn().mockImplementation(() => ({})),
+  HeadBucketCommand: jest.fn().mockImplementation(() => ({}))
+}));
 jest.mock('@smithy/node-http-handler', () => ({ NodeHttpHandler: jest.fn() }));
 jest.mock('node:fs/promises');
 jest.mock('node:fs');
@@ -74,9 +78,6 @@ describe('NorthAmazonS3', () => {
       (csv.unparse as jest.Mock).mockReturnValue('csv content');
       (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
       (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
-      (S3Client as jest.Mock).mockImplementation(() => ({
-        send: sendMock
-      }));
 
       north = new NorthAmazonS3(
         configuration,
@@ -141,7 +142,7 @@ describe('NorthAmazonS3', () => {
       const filePath = '/csv/test/file-789.csv';
       (createReadStream as jest.Mock).mockImplementation(() => ({}) as ReadStream);
 
-      sendMock.mockImplementationOnce(() => {
+      s3client.send.mockImplementationOnce(() => {
         throw new Error('test');
       });
       await north.start();
@@ -170,10 +171,6 @@ describe('NorthAmazonS3', () => {
 
       (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
       (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
-
-      (S3Client as jest.Mock).mockImplementation(() => ({
-        send: sendMock
-      }));
 
       north = new NorthAmazonS3(
         configuration,
@@ -215,7 +212,7 @@ describe('NorthAmazonS3', () => {
       const filePath = '/csv/test/file-789.csv';
       (createReadStream as jest.Mock).mockImplementation(() => ({}) as ReadStream);
 
-      sendMock.mockImplementationOnce(() => {
+      s3client.send.mockImplementationOnce(() => {
         throw new Error('test');
       });
       await north.start();
@@ -241,10 +238,6 @@ describe('NorthAmazonS3', () => {
 
       (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
       (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
-
-      (S3Client as jest.Mock).mockImplementation(() => ({
-        send: sendMock
-      }));
 
       north = new NorthAmazonS3(
         configuration,
@@ -273,14 +266,14 @@ describe('NorthAmazonS3', () => {
     });
 
     it('should test connection and success', async () => {
-      sendMock.mockReturnValueOnce({ result: 'ok' });
+      s3client.send.mockReturnValueOnce({ result: 'ok' });
       await north.testConnection();
-      expect(sendMock).toHaveBeenCalledTimes(1);
+      expect(s3client.send).toHaveBeenCalledTimes(1);
     });
 
     it('should test connection and fail', async () => {
       const error = new Error('connection error');
-      sendMock.mockImplementationOnce(() => {
+      s3client.send.mockImplementationOnce(() => {
         throw error;
       });
 
