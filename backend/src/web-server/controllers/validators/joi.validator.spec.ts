@@ -503,7 +503,23 @@ describe('Joi validator', () => {
               visible: true,
               wrapInBox: false
             },
-            enablingConditions: [],
+            enablingConditions: [
+              {
+                referralPathFromRoot: 'type',
+                targetPathFromRoot: 'timezone',
+                values: ['string']
+              },
+              {
+                referralPathFromRoot: 'type',
+                targetPathFromRoot: 'locale',
+                values: ['string']
+              },
+              {
+                referralPathFromRoot: 'type',
+                targetPathFromRoot: 'format',
+                values: ['string']
+              }
+            ],
             validators: [],
             attributes: [
               {
@@ -634,9 +650,27 @@ describe('Joi validator', () => {
               fieldName: Joi.string().required(),
               useAsReference: Joi.boolean().required().falsy(0).truthy(1),
               type: Joi.string().required().valid('iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'),
-              timezone: Joi.string().required(),
-              format: Joi.string().required(),
-              locale: Joi.string().required()
+              timezone: Joi.string()
+                .required()
+                .when('type', {
+                  is: Joi.any().valid('string'),
+                  then: Joi.string().required(),
+                  otherwise: Joi.string().allow('').optional()
+                }),
+              format: Joi.string()
+                .required()
+                .when('type', {
+                  is: Joi.any().valid('string'),
+                  then: Joi.string().required(),
+                  otherwise: Joi.string().allow('').optional()
+                }),
+              locale: Joi.string()
+                .required()
+                .when('type', {
+                  is: Joi.any().valid('string'),
+                  then: Joi.string().required(),
+                  otherwise: Joi.string().allow('').optional()
+                })
             })
           )
           .unique('fieldName')
