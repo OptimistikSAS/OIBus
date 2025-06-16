@@ -142,7 +142,8 @@ describe('OIAnalytics Registration Service', () => {
         createNorth: true,
         updateNorth: true,
         deleteNorth: true,
-        testNorthConnection: true
+        testNorthConnection: true,
+        setpoint: true
       }
     };
     const result = {
@@ -224,7 +225,8 @@ describe('OIAnalytics Registration Service', () => {
         createNorth: true,
         updateNorth: true,
         deleteNorth: true,
-        testNorthConnection: true
+        testNorthConnection: true,
+        setpoint: true
       }
     };
     (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.registration.completed);
