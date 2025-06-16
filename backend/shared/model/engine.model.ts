@@ -137,6 +137,7 @@ export interface RegistrationSettingsCommandDTO {
     updateNorth: boolean;
     deleteNorth: boolean;
     testNorthConnection: boolean;
+    setpoint: boolean;
   };
 }
 
