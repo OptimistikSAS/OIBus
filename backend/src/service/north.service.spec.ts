@@ -126,6 +126,7 @@ let service: NorthService;
 describe('north service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
     service = new NorthService(
       validator,
       northConnectorRepository,
@@ -639,5 +640,40 @@ describe('north service', () => {
     expect(getTransformer(null, transformers)).toBeNull();
     expect(getTransformer(transformers[0].id, transformers)).toEqual(transformers[0]);
     expect(() => getTransformer('bad id', transformers)).toThrow(`Could not find OIBus Transformer bad id`);
+  });
+
+  it('executeSetpoint() should cache content in north', async () => {
+    const northMock = new NorthConnectorMock(testData.north.list[0]);
+    (dataStreamEngine.getNorth as jest.Mock).mockReturnValue(northMock);
+    const callback = jest.fn();
+    const commandContent = [{ reference: 'reference', value: '123456' }];
+    await service.executeSetpoint('northId', commandContent, callback);
+    expect(northMock.cacheContent).toHaveBeenCalledWith(
+      {
+        type: 'time-values',
+        content: [
+          {
+            pointId: commandContent[0].reference,
+            timestamp: testData.constants.dates.FAKE_NOW,
+            data: {
+              value: commandContent[0].value
+            }
+          }
+        ]
+      },
+      'oianalytics'
+    );
+    expect(callback).toHaveBeenCalledWith(
+      `Setpoint ${JSON.stringify([{ reference: 'reference', value: '123456' }])} properly sent into the cache of northId`
+    );
+  });
+
+  it('executeSetpoint() should not cache content if north not found', async () => {
+    (dataStreamEngine.getNorth as jest.Mock).mockReturnValue(null);
+    const callback = jest.fn();
+    await expect(service.executeSetpoint('badId', [{ reference: 'reference', value: '123456' }], callback)).rejects.toThrow(
+      `North connector badId not found`
+    );
+    expect(callback).not.toHaveBeenCalled();
   });
 });

@@ -25,7 +25,6 @@ import {
 } from 'rxjs';
 import { emptyPage } from '../shared/test-utils';
 import { LogService } from '../services/log.service';
-
 import { PaginationComponent } from '../shared/pagination/pagination.component';
 import { MultiSelectComponent } from '../shared/form/multi-select/multi-select.component';
 import { MultiSelectOptionDirective } from '../shared/form/multi-select/multi-select-option.directive';

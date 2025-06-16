@@ -583,8 +583,8 @@ const manifest: SouthConnectorManifest = {
               ]
             },
             {
-              key: 'timestampOrigin',
               type: 'string-select',
+              key: 'timestampOrigin',
               translationKey: 'configuration.oibus.manifest.south.items.opcua.timestamp-origin',
               defaultValue: 'oibus',
               selectableValues: ['oibus', 'point', 'server'],

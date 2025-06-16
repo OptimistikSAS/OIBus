@@ -268,6 +268,13 @@ describe('DataStreamEngine', () => {
     expect(mockedNorth2.updateConnectorSubscription).toHaveBeenCalledTimes(0);
   });
 
+  it('should get North', async () => {
+    await engine.start([mockedNorth1], []);
+
+    expect(engine.getNorth(testData.north.list[0].id)).toEqual(mockedNorth1);
+    expect(engine.getNorth('bad id')).toBeUndefined();
+  });
+
   it('should update scan mode', async () => {
     await engine.start([mockedNorth1], [mockedSouth1]);
 
