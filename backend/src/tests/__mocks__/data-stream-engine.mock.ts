@@ -19,6 +19,7 @@ export default jest.fn().mockImplementation(logger => {
     startNorth: jest.fn(),
     reloadNorth: jest.fn(),
     stopNorth: jest.fn(),
+    getNorth: jest.fn(),
     updateNorthConnectorSubscriptions: jest.fn(),
     onSouthItemsChange: jest.fn(),
     addContent: jest.fn(),

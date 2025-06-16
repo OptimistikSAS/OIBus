@@ -7,6 +7,7 @@ import { DefaultValidationErrorsComponent } from '../../../shared/default-valida
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { EngineService } from '../../../services/engine.service';
 import { RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../../../../../backend/shared/model/engine.model';
+import testData from '../../../../../../backend/src/tests/utils/test-data';
 
 class RegisterOibusModalComponentTester extends ComponentTester<RegisterOibusModalComponent> {
   constructor() {
@@ -203,7 +204,8 @@ describe('RegisterOibusModalComponent', () => {
         createNorth: true,
         updateNorth: true,
         deleteNorth: true,
-        testNorthConnection: true
+        testNorthConnection: true,
+        setpoint: true
       }
     };
 
@@ -228,7 +230,16 @@ describe('RegisterOibusModalComponent', () => {
   it('should edit registration if valid', fakeAsync(() => {
     tester.componentInstance.prepare(
       {
+        id: 'id',
         host: 'http://localhost:4200',
+        activationCode: '123456',
+        status: 'PENDING',
+        activationDate: testData.constants.dates.FAKE_NOW,
+        checkUrl: null,
+        useProxy: false,
+        proxyUrl: null,
+        proxyUsername: null,
+        acceptUnauthorized: false,
         commandRefreshInterval: 60,
         commandRetryInterval: 5,
         messageRetryInterval: 5,
@@ -257,7 +268,8 @@ describe('RegisterOibusModalComponent', () => {
           createOrUpdateSouthItemsFromCsv: true,
           createNorth: true,
           updateNorth: true,
-          deleteNorth: true
+          deleteNorth: true,
+          setpoint: true
         }
       } as RegistrationSettingsDTO,
       'edit'
@@ -312,7 +324,8 @@ describe('RegisterOibusModalComponent', () => {
         createNorth: true,
         updateNorth: true,
         deleteNorth: true,
-        testNorthConnection: true
+        testNorthConnection: true,
+        setpoint: true
       }
     };
 

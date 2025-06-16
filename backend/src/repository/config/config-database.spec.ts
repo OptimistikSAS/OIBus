@@ -26,6 +26,7 @@ import {
   OIAnalyticsFetchDeleteScanModeCommandDTO,
   OIAnalyticsFetchDeleteSouthConnectorCommandDTO,
   OIAnalyticsFetchRestartEngineCommandDTO,
+  OIAnalyticsFetchSetpointCommandDTO,
   OIAnalyticsFetchTestHistoryQueryNorthConnectionCommandDTO,
   OIAnalyticsFetchTestHistoryQuerySouthConnectionCommandDTO,
   OIAnalyticsFetchTestHistoryQuerySouthItemConnectionCommandDTO,
@@ -1349,6 +1350,33 @@ describe('Repository with populated database', () => {
         }
       });
     });
+
+    it('should create a setpoint command', () => {
+      const command: OIAnalyticsFetchSetpointCommandDTO = {
+        id: 'setpointCommandId',
+        targetVersion: 'v3.7.0',
+        type: 'setpoint',
+        northConnectorId: 'n1',
+        commandContent: {
+          pointId: 'reference',
+          value: '123456'
+        }
+      };
+      repository.create(command);
+
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
+        status: 'RETRIEVED',
+        ack: false,
+        targetVersion: command.targetVersion,
+        retrievedDate: testData.constants.dates.FAKE_NOW,
+        completedDate: null,
+        result: null,
+        northConnectorId: command.northConnectorId,
+        commandContent: command.commandContent
+      });
+    });
   });
 
   describe('OIAnalytics Message', () => {
@@ -2137,7 +2165,8 @@ describe('Repository with empty database', () => {
           createNorth: true,
           updateNorth: true,
           deleteNorth: true,
-          testNorthConnection: true
+          testNorthConnection: true,
+          setpoint: true
         }
       });
     });

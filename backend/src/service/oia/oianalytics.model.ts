@@ -157,7 +157,8 @@ export const OIANALYTICS_FETCH_COMMAND_TYPES = [
   'test-history-query-south-connection',
   'test-history-query-south-item',
   'create-or-update-history-query-south-items-from-csv',
-  'update-history-query-status'
+  'update-history-query-status',
+  'setpoint'
 ] as const;
 export type OIAnalyticsFetchCommandType = (typeof OIANALYTICS_FETCH_COMMAND_TYPES)[number];
 
@@ -372,6 +373,15 @@ export interface OIAnalyticsFetchUpdateHistoryQueryStatusCommandDTO extends Base
   historyQueryStatus: HistoryQueryStatus;
 }
 
+export interface OIAnalyticsFetchSetpointCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'setpoint';
+  northConnectorId: string;
+  commandContent: {
+    pointId: string;
+    value: string;
+  };
+}
+
 export type OIAnalyticsFetchCommandDTO =
   | OIAnalyticsFetchUpdateVersionCommandDTO
   | OIAnalyticsFetchRestartEngineCommandDTO
@@ -404,4 +414,5 @@ export type OIAnalyticsFetchCommandDTO =
   | OIAnalyticsFetchTestHistoryQuerySouthConnectionCommandDTO
   | OIAnalyticsFetchTestHistoryQuerySouthItemConnectionCommandDTO
   | OIAnalyticsFetchCreateOrUpdateHistoryQuerySouthItemsFromCSVCommandDTO
-  | OIAnalyticsFetchUpdateHistoryQueryStatusCommandDTO;
+  | OIAnalyticsFetchUpdateHistoryQueryStatusCommandDTO
+  | OIAnalyticsFetchSetpointCommandDTO;
