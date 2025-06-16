@@ -85,6 +85,7 @@ export interface OIBusUpdateRegistrationSettingsCommand extends BaseOIBusCommand
       updateNorth: boolean;
       deleteNorth: boolean;
       testNorthConnection: boolean;
+      setpoint: boolean;
     };
   };
 }
@@ -273,6 +274,15 @@ export interface OIBusUpdateHistoryQueryStatusCommand extends BaseOIBusCommand {
   };
 }
 
+export interface OIBusSetpointCommand extends BaseOIBusCommand {
+  type: 'setpoint';
+  northConnectorId: string;
+  commandContent: {
+    pointId: string;
+    value: string;
+  };
+}
+
 export type OIBusCommand =
   | OIBusUpdateVersionCommand
   | OIBusRestartEngineCommand
@@ -305,4 +315,5 @@ export type OIBusCommand =
   | OIBusTestHistoryQuerySouthConnectionCommand
   | OIBusTestHistoryQuerySouthItemConnectionCommand
   | OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand
-  | OIBusUpdateHistoryQueryStatusCommand;
+  | OIBusUpdateHistoryQueryStatusCommand
+  | OIBusSetpointCommand;

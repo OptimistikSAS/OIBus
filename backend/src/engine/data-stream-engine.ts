@@ -337,4 +337,8 @@ export default class DataStreamEngine {
   updateSubscription(northId: string) {
     this.northConnectors.get(northId)?.updateConnectorSubscription();
   }
+
+  getNorth(northId: string): NorthConnector<NorthSettings> | undefined {
+    return this.northConnectors.get(northId);
+  }
 }

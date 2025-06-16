@@ -68,7 +68,8 @@ export class RegisterOibusModalComponent {
       createNorth: [true, Validators.required],
       updateNorth: [true, Validators.required],
       deleteNorth: [true, Validators.required],
-      testNorthConnection: [true, Validators.required]
+      testNorthConnection: [true, Validators.required],
+      setpoint: [true, Validators.required]
     })
   });
   mode: 'register' | 'edit' = 'register';
@@ -150,7 +151,8 @@ export class RegisterOibusModalComponent {
           createNorth: formValue.commandPermissions!.createNorth!,
           updateNorth: formValue.commandPermissions!.updateNorth!,
           deleteNorth: formValue.commandPermissions!.deleteNorth!,
-          testNorthConnection: formValue.commandPermissions!.testNorthConnection!
+          testNorthConnection: formValue.commandPermissions!.testNorthConnection!,
+          setpoint: formValue.commandPermissions!.setpoint!
         }
       };
       this.oibusService
@@ -201,7 +203,8 @@ export class RegisterOibusModalComponent {
           createNorth: formValue.commandPermissions!.createNorth!,
           updateNorth: formValue.commandPermissions!.updateNorth!,
           deleteNorth: formValue.commandPermissions!.deleteNorth!,
-          testNorthConnection: formValue.commandPermissions!.testNorthConnection!
+          testNorthConnection: formValue.commandPermissions!.testNorthConnection!,
+          setpoint: formValue.commandPermissions!.setpoint!
         }
       };
       this.oibusService
