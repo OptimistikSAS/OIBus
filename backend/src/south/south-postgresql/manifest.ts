@@ -9,253 +9,611 @@ const manifest: SouthConnectorManifest = {
     lastFile: false,
     history: true
   },
-  settings: [
-    {
-      key: 'throttling',
-      type: 'OibFormGroup',
-      translationKey: 'south.postgresql.throttling.title',
-      class: 'col',
-      newRow: true,
-      displayInViewMode: false,
-      validators: [{ key: 'required' }],
-      content: [
-        {
-          key: 'maxReadInterval',
-          type: 'OibNumber',
-          translationKey: 'south.postgresql.throttling.max-read-interval',
-          validators: [{ key: 'required' }, { key: 'min', params: { min: 0 } }],
-          defaultValue: 3600,
-          unitLabel: 's',
-          displayInViewMode: true
-        },
-        {
-          key: 'readDelay',
-          type: 'OibNumber',
-          translationKey: 'south.postgresql.throttling.read-delay',
-          validators: [{ key: 'required' }, { key: 'min', params: { min: 0 } }],
-          defaultValue: 200,
-          unitLabel: 'ms',
-          displayInViewMode: true
-        },
-        {
-          key: 'overlap',
-          type: 'OibNumber',
-          translationKey: 'south.postgresql.throttling.overlap',
-          validators: [{ key: 'required' }, { key: 'min', params: { min: 0 } }],
-          defaultValue: 0,
-          unitLabel: 'ms',
-          displayInViewMode: true
-        }
-      ]
+  settings: {
+    type: 'object',
+    key: 'settings',
+    translationKey: 'configuration.oibus.manifest.south.settings',
+    displayProperties: {
+      visible: true,
+      wrapInBox: false
     },
-    {
-      key: 'host',
-      type: 'OibText',
-      translationKey: 'south.postgresql.host',
-      defaultValue: 'localhost',
-      validators: [{ key: 'required' }],
-      newRow: true,
-      class: 'col-6',
-      displayInViewMode: true
-    },
-    {
-      key: 'port',
-      type: 'OibNumber',
-      translationKey: 'south.postgresql.port',
-      defaultValue: 5432,
-      class: 'col-3',
-      validators: [{ key: 'required' }, { key: 'min', params: { min: 1 } }, { key: 'max', params: { max: 65535 } }],
-      displayInViewMode: true
-    },
-    {
-      key: 'connectionTimeout',
-      type: 'OibNumber',
-      translationKey: 'south.postgresql.connection-timeout',
-      defaultValue: 10_000,
-      class: 'col-3',
-      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 30000 } }],
-      unitLabel: 'ms',
-      displayInViewMode: false
-    },
-    {
-      key: 'database',
-      type: 'OibText',
-      translationKey: 'south.postgresql.database',
-      defaultValue: 'db',
-      newRow: true,
-      class: 'col-8',
-      validators: [{ key: 'required' }],
-      displayInViewMode: true
-    },
-    {
-      key: 'requestTimeout',
-      type: 'OibNumber',
-      translationKey: 'south.postgresql.request-timeout',
-      defaultValue: 10_000,
-      class: 'col-4',
-      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
-      unitLabel: 'ms',
-      displayInViewMode: false
-    },
-    {
-      key: 'username',
-      type: 'OibText',
-      translationKey: 'south.postgresql.username',
-      displayInViewMode: true,
-      newRow: true,
-      class: 'col-6'
-    },
-    {
-      key: 'password',
-      type: 'OibSecret',
-      translationKey: 'south.postgresql.password',
-      displayInViewMode: false,
-      class: 'col-6'
-    }
-  ],
-  items: {
-    scanMode: 'POLL',
-    settings: [
+    enablingConditions: [],
+    validators: [],
+    attributes: [
       {
-        key: 'query',
-        type: 'OibCodeBlock',
-        translationKey: 'south.items.postgresql.query',
-        contentType: 'sql',
-        defaultValue:
-          'SELECT level, message, timestamp, scope_name as scopeName FROM logs WHERE timestamp > @StartTime AND timestamp <= @EndTime',
-        class: 'col-12 text-nowrap',
-        validators: [{ key: 'required' }],
-        displayInViewMode: true
-      },
-      {
-        key: 'dateTimeFields',
-        type: 'OibArray',
-        translationKey: 'south.items.postgresql.date-time-fields.date-time-field',
-        allowRowDuplication: true,
-        content: [
+        type: 'object',
+        key: 'throttling',
+        translationKey: 'configuration.oibus.manifest.south.postgresql.throttling.title',
+        displayProperties: {
+          visible: true,
+          wrapInBox: false
+        },
+        enablingConditions: [],
+        validators: [
           {
-            key: 'fieldName',
-            translationKey: 'south.items.postgresql.date-time-fields.field-name',
-            type: 'OibText',
-            defaultValue: '',
-            validators: [{ key: 'required' }, { key: 'unique' }],
-            displayInViewMode: true
-          },
-          {
-            key: 'useAsReference',
-            translationKey: 'south.items.postgresql.date-time-fields.use-as-reference',
-            type: 'OibCheckbox',
-            defaultValue: false,
-            displayInViewMode: true,
-            validators: [{ key: 'required' }, { key: 'singleTrue' }]
-          },
-          {
-            key: 'type',
-            translationKey: 'south.items.postgresql.date-time-fields.type',
-            type: 'OibSelect',
-            defaultValue: 'string',
-            options: ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms', 'timestamp', 'timestamptz'],
-            displayInViewMode: true,
-            validators: [{ key: 'required' }]
-          },
-          {
-            key: 'timezone',
-            translationKey: 'south.items.postgresql.date-time-fields.timezone',
-            type: 'OibTimezone',
-            defaultValue: 'UTC',
-            newRow: true,
-            validators: [{ key: 'required' }],
-            displayInViewMode: true,
-            conditionalDisplay: { field: 'type', values: ['string', 'timestamp', 'DateTime', 'DateTime2', 'SmallDateTime', 'Date'] }
-          },
-          {
-            key: 'format',
-            translationKey: 'south.items.postgresql.date-time-fields.format',
-            type: 'OibText',
-            defaultValue: 'yyyy-MM-dd HH:mm:ss.SSS',
-            validators: [{ key: 'required' }],
-            conditionalDisplay: { field: 'type', values: ['string'] }
-          },
-          {
-            key: 'locale',
-            translationKey: 'south.items.postgresql.date-time-fields.locale',
-            defaultValue: 'en-En',
-            type: 'OibText',
-            validators: [{ key: 'required' }],
-            conditionalDisplay: { field: 'type', values: ['string'] }
+            type: 'REQUIRED',
+            arguments: []
           }
         ],
-        class: 'col',
-        newRow: true,
-        displayInViewMode: false
-      },
-      {
-        key: 'serialization',
-        type: 'OibFormGroup',
-        translationKey: 'south.items.postgresql.serialization.title',
-        newRow: true,
-        displayInViewMode: false,
-        validators: [{ key: 'required' }],
-        content: [
+        attributes: [
           {
-            key: 'type',
-            type: 'OibSelect',
-            translationKey: 'south.items.postgresql.serialization.type',
-            options: ['csv'],
-            defaultValue: 'csv',
-            newRow: true,
-            displayInViewMode: false,
-            validators: [{ key: 'required' }]
+            type: 'number',
+            key: 'maxReadInterval',
+            translationKey: 'configuration.oibus.manifest.south.postgresql.throttling.max-read-interval',
+            unit: 's',
+            defaultValue: 3600,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              },
+              {
+                type: 'POSITIVE_INTEGER',
+                arguments: []
+              }
+            ],
+            displayProperties: {
+              row: 0,
+              columns: 4,
+              displayInViewMode: true
+            }
           },
           {
-            key: 'filename',
-            type: 'OibText',
-            translationKey: 'south.items.postgresql.serialization.filename',
-            defaultValue: '@ConnectorName-@ItemName-@CurrentDate.csv',
-            newRow: false,
-            displayInViewMode: false,
-            validators: [{ key: 'required' }]
+            type: 'number',
+            key: 'readDelay',
+            translationKey: 'configuration.oibus.manifest.south.postgresql.throttling.read-delay',
+            unit: 'ms',
+            defaultValue: 200,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              },
+              {
+                type: 'POSITIVE_INTEGER',
+                arguments: []
+              }
+            ],
+            displayProperties: {
+              row: 0,
+              columns: 4,
+              displayInViewMode: true
+            }
           },
           {
-            key: 'delimiter',
-            type: 'OibSelect',
-            translationKey: 'south.items.postgresql.serialization.delimiter',
-            options: ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'],
-            defaultValue: 'COMMA',
-            newRow: false,
-            displayInViewMode: false,
-            validators: [{ key: 'required' }]
-          },
-          {
-            key: 'compression',
-            type: 'OibCheckbox',
-            translationKey: 'south.items.postgresql.serialization.compression',
-            defaultValue: false,
-            newRow: false,
-            displayInViewMode: false,
-            validators: [{ key: 'required' }]
-          },
-          {
-            key: 'outputTimestampFormat',
-            type: 'OibText',
-            translationKey: 'south.items.postgresql.serialization.output-timestamp-format',
-            defaultValue: 'yyyy-MM-dd HH:mm:ss.SSS',
-            newRow: true,
-            displayInViewMode: false,
-            validators: [{ key: 'required' }]
-          },
-          {
-            key: 'outputTimezone',
-            type: 'OibTimezone',
-            translationKey: 'south.items.postgresql.serialization.output-timezone',
-            defaultValue: 'Europe/Paris',
-            newRow: false,
-            displayInViewMode: false,
-            validators: [{ key: 'required' }]
+            type: 'number',
+            key: 'overlap',
+            translationKey: 'configuration.oibus.manifest.south.postgresql.throttling.overlap',
+            unit: 'ms',
+            defaultValue: 0,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              },
+              {
+                type: 'POSITIVE_INTEGER',
+                arguments: []
+              }
+            ],
+            displayProperties: {
+              row: 0,
+              columns: 4,
+              displayInViewMode: true
+            }
           }
         ]
+      },
+      {
+        type: 'string',
+        key: 'host',
+        translationKey: 'configuration.oibus.manifest.south.postgresql.host',
+        defaultValue: null,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          }
+        ],
+        displayProperties: {
+          row: 1,
+          columns: 6,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'number',
+        key: 'port',
+        translationKey: 'configuration.oibus.manifest.south.postgresql.port',
+        defaultValue: 5432,
+        unit: null,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          },
+          {
+            type: 'MINIMUM',
+            arguments: ['1']
+          },
+          {
+            type: 'MAXIMUM',
+            arguments: ['65535']
+          }
+        ],
+        displayProperties: {
+          row: 1,
+          columns: 3,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'number',
+        key: 'connectionTimeout',
+        translationKey: 'configuration.oibus.manifest.south.postgresql.connection-timeout',
+        unit: 'ms',
+        defaultValue: 10000,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          },
+          {
+            type: 'MINIMUM',
+            arguments: ['100']
+          },
+          {
+            type: 'MAXIMUM',
+            arguments: ['30000']
+          }
+        ],
+        displayProperties: {
+          row: 1,
+          columns: 3,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'string',
+        key: 'database',
+        translationKey: 'configuration.oibus.manifest.south.postgresql.database',
+        defaultValue: null,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          }
+        ],
+        displayProperties: {
+          row: 2,
+          columns: 8,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'number',
+        key: 'requestTimeout',
+        translationKey: 'configuration.oibus.manifest.south.postgresql.request-timeout',
+        unit: 'ms',
+        defaultValue: 15000,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          },
+          {
+            type: 'MINIMUM',
+            arguments: ['100']
+          },
+          {
+            type: 'MAXIMUM',
+            arguments: ['3600000']
+          }
+        ],
+        displayProperties: {
+          row: 2,
+          columns: 4,
+          displayInViewMode: false
+        }
+      },
+      {
+        type: 'string',
+        key: 'username',
+        translationKey: 'configuration.oibus.manifest.south.postgresql.username',
+        defaultValue: null,
+        validators: [],
+        displayProperties: {
+          row: 3,
+          columns: 6,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'secret',
+        key: 'password',
+        translationKey: 'configuration.oibus.manifest.south.postgresql.password',
+        validators: [],
+        displayProperties: {
+          row: 3,
+          columns: 6,
+          displayInViewMode: false
+        }
       }
     ]
+  },
+  items: {
+    type: 'array',
+    key: 'items',
+    translationKey: 'configuration.oibus.manifest.south.items',
+    paginate: true,
+    numberOfElementPerPage: 20,
+    validators: [],
+    rootAttribute: {
+      type: 'object',
+      key: 'item',
+      translationKey: 'configuration.oibus.manifest.south.items.item',
+      displayProperties: {
+        visible: true,
+        wrapInBox: false
+      },
+      enablingConditions: [],
+      validators: [],
+      attributes: [
+        {
+          type: 'string',
+          key: 'name',
+          translationKey: 'configuration.oibus.manifest.south.items.name',
+          defaultValue: null,
+          validators: [
+            {
+              type: 'REQUIRED',
+              arguments: []
+            }
+          ],
+          displayProperties: {
+            row: 0,
+            columns: 4,
+            displayInViewMode: true
+          }
+        },
+        {
+          type: 'boolean',
+          key: 'enabled',
+          translationKey: 'configuration.oibus.manifest.south.items.enabled',
+          defaultValue: true,
+          validators: [
+            {
+              type: 'REQUIRED',
+              arguments: []
+            }
+          ],
+          displayProperties: {
+            row: 0,
+            columns: 4,
+            displayInViewMode: true
+          }
+        },
+        {
+          type: 'scan-mode',
+          key: 'scanModeId',
+          acceptableType: 'POLL',
+          translationKey: 'configuration.oibus.manifest.south.items.scan-mode',
+          validators: [
+            {
+              type: 'REQUIRED',
+              arguments: []
+            }
+          ],
+          displayProperties: {
+            row: 0,
+            columns: 4,
+            displayInViewMode: true
+          }
+        },
+        {
+          type: 'object',
+          key: 'settings',
+          translationKey: 'configuration.oibus.manifest.south.items.settings',
+          displayProperties: {
+            visible: true,
+            wrapInBox: true
+          },
+          enablingConditions: [],
+          validators: [],
+          attributes: [
+            {
+              type: 'code',
+              key: 'query',
+              contentType: 'sql',
+              translationKey: 'configuration.oibus.manifest.south.items.postgresql.query',
+              defaultValue:
+                'SELECT level, message, timestamp, scope_name as scopeName FROM logs WHERE timestamp > @StartTime AND timestamp <= @EndTime',
+              validators: [
+                {
+                  type: 'REQUIRED',
+                  arguments: []
+                }
+              ],
+              displayProperties: {
+                row: 0,
+                columns: 12,
+                displayInViewMode: true
+              }
+            },
+            {
+              type: 'array',
+              key: 'dateTimeFields',
+              translationKey: 'configuration.oibus.manifest.south.items.postgresql.date-time-fields',
+              paginate: false,
+              numberOfElementPerPage: 0,
+              validators: [],
+              rootAttribute: {
+                type: 'object',
+                key: 'dateTimeField',
+                translationKey: 'configuration.oibus.manifest.south.items.postgresql.date-time-fields.date-time-field',
+                displayProperties: {
+                  visible: true,
+                  wrapInBox: false
+                },
+                enablingConditions: [
+                  {
+                    referralPathFromRoot: 'type',
+                    targetPathFromRoot: 'timezone',
+                    values: ['string']
+                  },
+                  {
+                    referralPathFromRoot: 'type',
+                    targetPathFromRoot: 'locale',
+                    values: ['string']
+                  },
+                  {
+                    referralPathFromRoot: 'type',
+                    targetPathFromRoot: 'format',
+                    values: ['string']
+                  }
+                ],
+                validators: [],
+                attributes: [
+                  {
+                    type: 'string',
+                    key: 'fieldName',
+                    translationKey: 'configuration.oibus.manifest.south.items.postgresql.date-time-fields.field-name',
+                    defaultValue: null,
+                    validators: [
+                      {
+                        type: 'REQUIRED',
+                        arguments: []
+                      },
+                      {
+                        type: 'UNIQUE',
+                        arguments: []
+                      }
+                    ],
+                    displayProperties: {
+                      row: 0,
+                      columns: 4,
+                      displayInViewMode: true
+                    }
+                  },
+                  {
+                    type: 'boolean',
+                    key: 'useAsReference',
+                    translationKey: 'configuration.oibus.manifest.south.items.postgresql.date-time-fields.use-as-reference',
+                    defaultValue: false,
+                    validators: [
+                      {
+                        type: 'REQUIRED',
+                        arguments: []
+                      },
+                      {
+                        type: 'SINGLE_TRUE',
+                        arguments: []
+                      }
+                    ],
+                    displayProperties: {
+                      row: 0,
+                      columns: 4,
+                      displayInViewMode: true
+                    }
+                  },
+                  {
+                    type: 'string-select',
+                    key: 'type',
+                    translationKey: 'configuration.oibus.manifest.south.items.postgresql.date-time-fields.type',
+                    defaultValue: 'string',
+                    selectableValues: ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms', 'timestamp', 'timestamptz'],
+                    validators: [
+                      {
+                        type: 'REQUIRED',
+                        arguments: []
+                      }
+                    ],
+                    displayProperties: {
+                      row: 0,
+                      columns: 4,
+                      displayInViewMode: true
+                    }
+                  },
+                  {
+                    type: 'timezone',
+                    key: 'timezone',
+                    translationKey: 'configuration.oibus.manifest.south.items.postgresql.date-time-fields.timezone',
+                    defaultValue: 'UTC',
+                    validators: [
+                      {
+                        type: 'REQUIRED',
+                        arguments: []
+                      }
+                    ],
+                    displayProperties: {
+                      row: 1,
+                      columns: 4,
+                      displayInViewMode: true
+                    }
+                  },
+                  {
+                    type: 'string',
+                    key: 'format',
+                    translationKey: 'configuration.oibus.manifest.south.items.postgresql.date-time-fields.format',
+                    defaultValue: 'yyyy-MM-dd HH:mm:ss',
+                    validators: [
+                      {
+                        type: 'REQUIRED',
+                        arguments: []
+                      }
+                    ],
+                    displayProperties: {
+                      row: 1,
+                      columns: 4,
+                      displayInViewMode: false
+                    }
+                  },
+                  {
+                    type: 'string',
+                    key: 'locale',
+                    translationKey: 'configuration.oibus.manifest.south.items.postgresql.date-time-fields.locale',
+                    defaultValue: 'en-En',
+                    validators: [
+                      {
+                        type: 'REQUIRED',
+                        arguments: []
+                      }
+                    ],
+                    displayProperties: {
+                      row: 1,
+                      columns: 4,
+                      displayInViewMode: false
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              type: 'object',
+              key: 'serialization',
+              translationKey: 'configuration.oibus.manifest.south.items.postgresql.serialization.title',
+              displayProperties: {
+                visible: true,
+                wrapInBox: true
+              },
+              enablingConditions: [],
+              validators: [
+                {
+                  type: 'REQUIRED',
+                  arguments: []
+                }
+              ],
+              attributes: [
+                {
+                  type: 'string-select',
+                  key: 'type',
+                  translationKey: 'configuration.oibus.manifest.south.items.postgresql.serialization.type',
+                  defaultValue: 'csv',
+                  selectableValues: ['csv'],
+                  validators: [
+                    {
+                      type: 'REQUIRED',
+                      arguments: []
+                    }
+                  ],
+                  displayProperties: {
+                    row: 0,
+                    columns: 2,
+                    displayInViewMode: false
+                  }
+                },
+                {
+                  type: 'string',
+                  key: 'filename',
+                  translationKey: 'configuration.oibus.manifest.south.items.postgresql.serialization.filename',
+                  defaultValue: '@ConnectorName-@ItemName-@CurrentDate.csv',
+                  validators: [
+                    {
+                      type: 'REQUIRED',
+                      arguments: []
+                    }
+                  ],
+                  displayProperties: {
+                    row: 0,
+                    columns: 4,
+                    displayInViewMode: false
+                  }
+                },
+                {
+                  type: 'string-select',
+                  key: 'delimiter',
+                  translationKey: 'configuration.oibus.manifest.south.items.postgresql.serialization.delimiter',
+                  defaultValue: 'COMMA',
+                  selectableValues: ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'],
+                  validators: [
+                    {
+                      type: 'REQUIRED',
+                      arguments: []
+                    }
+                  ],
+                  displayProperties: {
+                    row: 0,
+                    columns: 3,
+                    displayInViewMode: false
+                  }
+                },
+                {
+                  type: 'boolean',
+                  key: 'compression',
+                  translationKey: 'configuration.oibus.manifest.south.items.postgresql.serialization.compression',
+                  defaultValue: false,
+                  validators: [
+                    {
+                      type: 'REQUIRED',
+                      arguments: []
+                    }
+                  ],
+                  displayProperties: {
+                    row: 0,
+                    columns: 3,
+                    displayInViewMode: true
+                  }
+                },
+                {
+                  type: 'string',
+                  key: 'outputTimestampFormat',
+                  translationKey: 'configuration.oibus.manifest.south.items.postgresql.serialization.output-timestamp-format',
+                  defaultValue: 'yyyy-MM-dd HH:mm:ss.SSS',
+                  validators: [
+                    {
+                      type: 'REQUIRED',
+                      arguments: []
+                    }
+                  ],
+                  displayProperties: {
+                    row: 1,
+                    columns: 3,
+                    displayInViewMode: false
+                  }
+                },
+                {
+                  type: 'timezone',
+                  key: 'outputTimezone',
+                  translationKey: 'configuration.oibus.manifest.south.items.postgresql.serialization.output-timezone',
+                  defaultValue: 'Europe/Paris',
+                  validators: [
+                    {
+                      type: 'REQUIRED',
+                      arguments: []
+                    }
+                  ],
+                  displayProperties: {
+                    row: 1,
+                    columns: 3,
+                    displayInViewMode: false
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
   }
 };
 

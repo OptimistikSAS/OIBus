@@ -166,7 +166,7 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
           item.name
         );
         const content = generateCsvContent(formattedResults, item.settings.serialization.delimiter);
-        oibusContent = { type: 'raw', filePath, content };
+        oibusContent = { type: 'any', filePath, content };
         break;
       }
     }

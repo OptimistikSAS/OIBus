@@ -5,13 +5,15 @@ import { ComponentTester, createMock, stubRoute } from 'ngx-speculoos';
 import { of } from 'rxjs';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
-import { FormComponent } from '../../shared/form/form.component';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { provideHttpClient } from '@angular/common/http';
 import { NorthConnectorService } from '../../services/north-connector.service';
-import { NorthConnectorDTO, NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
+import { NorthConnectorDTO } from '../../../../../backend/shared/model/north-connector.model';
 import { CertificateService } from '../../services/certificate.service';
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
+import { TransformerService } from '../../services/transformer.service';
+import testData from '../../../../../backend/src/tests/utils/test-data';
+import { OIBusObjectFormControlComponent } from '../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
 
 class EditNorthComponentTester extends ComponentTester<EditNorthComponent> {
   constructor() {
@@ -39,7 +41,7 @@ class EditNorthComponentTester extends ComponentTester<EditNorthComponent> {
   }
 
   get specificForm() {
-    return this.element(FormComponent);
+    return this.element(OIBusObjectFormControlComponent);
   }
 }
 describe('EditNorthComponent', () => {
@@ -47,11 +49,13 @@ describe('EditNorthComponent', () => {
   let northConnectorService: jasmine.SpyObj<NorthConnectorService>;
   let scanModeService: jasmine.SpyObj<ScanModeService>;
   let certificateService: jasmine.SpyObj<CertificateService>;
+  let transformerService: jasmine.SpyObj<TransformerService>;
 
   beforeEach(() => {
     northConnectorService = createMock(NorthConnectorService);
     scanModeService = createMock(ScanModeService);
     certificateService = createMock(CertificateService);
+    transformerService = createMock(TransformerService);
 
     TestBed.configureTestingModule({
       providers: [
@@ -60,27 +64,16 @@ describe('EditNorthComponent', () => {
         provideHttpClient(),
         { provide: NorthConnectorService, useValue: northConnectorService },
         { provide: ScanModeService, useValue: scanModeService },
-        { provide: CertificateService, useValue: certificateService }
+        { provide: CertificateService, useValue: certificateService },
+        { provide: TransformerService, useValue: transformerService }
       ]
     });
 
     scanModeService.list.and.returnValue(of([]));
     certificateService.list.and.returnValue(of([]));
+    transformerService.list.and.returnValue(of([]));
 
-    northConnectorService.getNorthConnectorTypeManifest.and.returnValue(
-      of({
-        id: 'console',
-        category: 'debug',
-        name: 'Console',
-        description: 'Console description',
-        modes: {
-          files: true,
-          points: true
-        },
-        settings: [],
-        schema: {} as unknown
-      } as NorthConnectorManifest)
-    );
+    northConnectorService.getNorthConnectorTypeManifest.and.returnValue(of(testData.north.manifest));
   });
 
   describe('create mode', () => {
@@ -130,7 +123,8 @@ describe('EditNorthComponent', () => {
           retentionDuration: 0
         }
       },
-      subscriptions: []
+      subscriptions: [],
+      transformers: []
     };
 
     beforeEach(() => {
