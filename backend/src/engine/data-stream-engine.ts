@@ -27,7 +27,7 @@ const ARCHIVE_FOLDER = './archive';
 const ERROR_FOLDER = './error';
 
 export default class DataStreamEngine {
-  private northConnectors = new Map<string, NorthConnector<NorthSettings>>();
+  public northConnectors = new Map<string, NorthConnector<NorthSettings>>();
   private northConnectorMetrics: Map<string, NorthConnectorMetricsService> = new Map<string, NorthConnectorMetricsService>();
   private southConnectors = new Map<string, SouthConnector<SouthSettings, SouthItemSettings>>();
   private southConnectorMetrics: Map<string, SouthConnectorMetricsService> = new Map<string, SouthConnectorMetricsService>();

@@ -417,6 +417,17 @@
             </div>
           </div>
         </div>
+        <div class="row mb-2">
+          <label class="form-label" translate="oia-module.commands.setpoint"></label>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input formControlName="setpoint" id="setpoint" type="checkbox" class="form-check-input" />
+                <label class="form-check-label" for="setpoint">{{ 'setpoint' | oibusCommandTypeEnum }}</label>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </oib-box>
   </form>
