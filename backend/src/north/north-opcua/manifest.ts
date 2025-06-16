@@ -37,7 +37,7 @@ const manifest: NorthConnectorManifest = {
           }
         ],
         displayProperties: {
-          row: 1,
+          row: 0,
           columns: 8,
           displayInViewMode: true
         }
@@ -54,7 +54,7 @@ const manifest: NorthConnectorManifest = {
           }
         ],
         displayProperties: {
-          row: 1,
+          row: 0,
           columns: 4,
           displayInViewMode: true
         }
@@ -80,7 +80,7 @@ const manifest: NorthConnectorManifest = {
           }
         ],
         displayProperties: {
-          row: 2,
+          row: 1,
           columns: 4,
           displayInViewMode: true
         }
@@ -98,7 +98,7 @@ const manifest: NorthConnectorManifest = {
           }
         ],
         displayProperties: {
-          row: 3,
+          row: 2,
           columns: 6,
           displayInViewMode: true
         }
@@ -126,7 +126,7 @@ const manifest: NorthConnectorManifest = {
           }
         ],
         displayProperties: {
-          row: 3,
+          row: 2,
           columns: 6,
           displayInViewMode: true
         }

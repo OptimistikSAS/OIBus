@@ -1227,7 +1227,8 @@ const oIAnalyticsRegistrationRegistered: OIAnalyticsRegistration = {
     createNorth: true,
     updateNorth: true,
     deleteNorth: true,
-    testNorthConnection: true
+    testNorthConnection: true,
+    setpoint: true
   }
 };
 const oIAnalyticsRegistrationPending: OIAnalyticsRegistration = {
@@ -1280,7 +1281,8 @@ const oIAnalyticsRegistrationPending: OIAnalyticsRegistration = {
     createNorth: true,
     updateNorth: true,
     deleteNorth: true,
-    testNorthConnection: true
+    testNorthConnection: true,
+    setpoint: true
   }
 };
 const oIAnalyticsRegistrationCommand: OIAnalyticsRegistrationEditCommand = {
@@ -1324,7 +1326,8 @@ const oIAnalyticsRegistrationCommand: OIAnalyticsRegistrationEditCommand = {
     createNorth: true,
     updateNorth: true,
     deleteNorth: true,
-    testNorthConnection: true
+    testNorthConnection: true,
+    setpoint: true
   }
 };
 
@@ -1550,7 +1553,8 @@ const oIBusCommands: Array<OIBusCommand> = [
         createNorth: true,
         updateNorth: true,
         deleteNorth: true,
-        testNorthConnection: true
+        testNorthConnection: true,
+        setpoint: true
       }
     }
   }
