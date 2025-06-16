@@ -27,6 +27,7 @@ import {
   OIBusDeleteSouthConnectorCommand,
   OIBusRegenerateCipherKeysCommand,
   OIBusRestartEngineCommand,
+  OIBusSetpointCommand,
   OIBusTestHistoryQueryNorthConnectionCommand,
   OIBusTestHistoryQuerySouthConnectionCommand,
   OIBusTestHistoryQuerySouthItemConnectionCommand,
@@ -415,6 +416,9 @@ export default class OIAnalyticsCommandService {
         case 'update-history-query-status':
           await this.executeUpdateHistoryQueryStatusCommand(command);
           break;
+        case 'setpoint':
+          await this.executeSetpointCommand(command);
+          break;
       }
     } catch (error: unknown) {
       this.ongoingExecuteCommand = false;
@@ -627,7 +631,10 @@ export default class OIAnalyticsCommandService {
           : registration.commandPermissions.deleteNorth,
         testNorthConnection: registration.commandPermissions.testNorthConnection
           ? command.commandContent.commandPermissions.testNorthConnection
-          : registration.commandPermissions.testNorthConnection
+          : registration.commandPermissions.testNorthConnection,
+        setpoint: registration.commandPermissions.setpoint
+          ? command.commandContent.commandPermissions.setpoint
+          : registration.commandPermissions.setpoint
       }
     };
     await this.oIAnalyticsRegistrationService.editConnectionSettings(registrationCommand);
@@ -1013,6 +1020,12 @@ export default class OIAnalyticsCommandService {
     }
   }
 
+  private async executeSetpointCommand(command: OIBusSetpointCommand) {
+    await this.northService.executeSetpoint(command.northConnectorId, command.commandContent, result => {
+      this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), result);
+    });
+  }
+
   private checkCommandPermission(command: OIBusCommand, registration: OIAnalyticsRegistration) {
     switch (command.type) {
       case 'update-version':
@@ -1079,6 +1092,8 @@ export default class OIAnalyticsCommandService {
         return registration.commandPermissions.createOrUpdateHistoryItemsFromCsv;
       case 'update-history-query-status':
         return registration.commandPermissions.updateHistoryQuery;
+      case 'setpoint':
+        return registration.commandPermissions.setpoint;
     }
   }
 }
@@ -1117,6 +1132,7 @@ export const toOIBusCommandDTO = (command: OIBusCommand): OIBusCommandDTO => {
     case 'test-history-query-south-item':
     case 'create-or-update-history-query-south-items-from-csv':
     case 'update-history-query-status':
+    case 'setpoint':
       return command;
   }
 };

@@ -290,6 +290,11 @@ export default class OIAnalyticsCommandRepository {
         );
         insertQuery += `(id, retrieved_date, type, status, ack, target_version, history_id, command_content) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
         break;
+      case 'setpoint':
+        queryParams.push(command.northConnectorId);
+        queryParams.push(JSON.stringify(command.commandContent));
+        insertQuery += `(id, retrieved_date, type, status, ack, target_version, north_connector_id, command_content) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
+        break;
     }
     this.database.prepare(insertQuery).run(...queryParams);
   }
@@ -750,6 +755,19 @@ export default class OIAnalyticsCommandRepository {
           completedDate: command.completed_date as Instant,
           result: command.result as string,
           historyQueryId: command.history_id as string,
+          commandContent: JSON.parse(command.command_content as string)
+        };
+      case 'setpoint':
+        return {
+          id: command.id as string,
+          type: 'setpoint',
+          status: command.status as OIBusCommandStatus,
+          ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
+          retrievedDate: command.retrieved_date as Instant,
+          completedDate: command.completed_date as Instant,
+          result: command.result as string,
+          northConnectorId: command.north_connector_id as string,
           commandContent: JSON.parse(command.command_content as string)
         };
     }

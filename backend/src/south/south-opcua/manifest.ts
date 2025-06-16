@@ -398,16 +398,6 @@ const manifest: SouthConnectorManifest = {
             }
           }
         ]
-      },
-      {
-        key: 'timestampOrigin',
-        type: 'OibSelect',
-        translationKey: 'south.items.opcua.timestamp-origin',
-        conditionalDisplay: { field: 'mode', values: ['da'] },
-        options: ['oibus', 'point', 'server'],
-        defaultValue: 'oibus',
-        validators: [{ key: 'required' }],
-        displayInViewMode: true
       }
     ]
   },
@@ -493,6 +483,11 @@ const manifest: SouthConnectorManifest = {
               referralPathFromRoot: 'mode',
               targetPathFromRoot: 'haMode',
               values: ['ha']
+            },
+            {
+              referralPathFromRoot: 'mode',
+              targetPathFromRoot: 'timestampOrigin',
+              values: ['da']
             }
           ],
           validators: [],
@@ -586,6 +581,24 @@ const manifest: SouthConnectorManifest = {
                   }
                 }
               ]
+            },
+            {
+              type: 'string-select',
+              key: 'timestampOrigin',
+              translationKey: 'configuration.oibus.manifest.south.items.opcua.timestamp-origin',
+              defaultValue: 'oibus',
+              selectableValues: ['oibus', 'point', 'server'],
+              validators: [
+                {
+                  type: 'REQUIRED',
+                  arguments: []
+                }
+              ],
+              displayProperties: {
+                row: 0,
+                columns: 4,
+                displayInViewMode: false
+              }
             }
           ]
         }

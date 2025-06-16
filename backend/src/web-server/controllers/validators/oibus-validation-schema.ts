@@ -111,7 +111,8 @@ const registrationSchema: Joi.ObjectSchema = Joi.object({
     createNorth: Joi.boolean().required(),
     updateNorth: Joi.boolean().required(),
     deleteNorth: Joi.boolean().required(),
-    testNorthConnection: Joi.boolean().required()
+    testNorthConnection: Joi.boolean().required(),
+    setpoint: Joi.boolean().required()
   }).required()
 });
 
