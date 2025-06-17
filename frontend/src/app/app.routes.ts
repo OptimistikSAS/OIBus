@@ -19,6 +19,7 @@ import { ExploreNorthCacheComponent } from './north/explore-cache/explore-north-
 import { EditUserSettingsComponent } from './user-settings/edit-user-settings/edit-user-settings.component';
 import { OiaModuleComponent } from './engine/oia-module/oia-module.component';
 import { ExploreHistoryCacheComponent } from './history-query/explore-cache/explore-history-cache.component';
+import { UnsavedChangesGuard } from './shared/unsaved-changes.guard';
 
 export const ROUTES: Routes = [
   { path: 'login', component: LoginComponent },
@@ -40,7 +41,8 @@ export const ROUTES: Routes = [
       },
       {
         path: 'engine/edit',
-        component: EditEngineComponent
+        component: EditEngineComponent,
+        canDeactivate: [UnsavedChangesGuard]
       },
       {
         path: 'north',
@@ -48,11 +50,13 @@ export const ROUTES: Routes = [
       },
       {
         path: 'north/create',
-        component: EditNorthComponent
+        component: EditNorthComponent,
+        canDeactivate: [UnsavedChangesGuard]
       },
       {
         path: 'north/:northId/edit',
-        component: EditNorthComponent
+        component: EditNorthComponent,
+        canDeactivate: [UnsavedChangesGuard]
       },
       {
         path: 'north/:northId/cache',
@@ -68,11 +72,13 @@ export const ROUTES: Routes = [
       },
       {
         path: 'south/create',
-        component: EditSouthComponent
+        component: EditSouthComponent,
+        canDeactivate: [UnsavedChangesGuard]
       },
       {
         path: 'south/:southId/edit',
-        component: EditSouthComponent
+        component: EditSouthComponent,
+        canDeactivate: [UnsavedChangesGuard]
       },
       {
         path: 'south/:southId',
@@ -80,7 +86,8 @@ export const ROUTES: Routes = [
       },
       {
         path: 'engine/edit',
-        component: EditEngineComponent
+        component: EditEngineComponent,
+        canDeactivate: [UnsavedChangesGuard]
       },
       {
         path: 'history-queries',
@@ -88,11 +95,13 @@ export const ROUTES: Routes = [
       },
       {
         path: 'history-queries/create',
-        component: EditHistoryQueryComponent
+        component: EditHistoryQueryComponent,
+        canDeactivate: [UnsavedChangesGuard]
       },
       {
         path: 'history-queries/:historyQueryId/edit',
-        component: EditHistoryQueryComponent
+        component: EditHistoryQueryComponent,
+        canDeactivate: [UnsavedChangesGuard]
       },
       {
         path: 'history-queries/:historyQueryId/cache',
@@ -112,7 +121,8 @@ export const ROUTES: Routes = [
       },
       {
         path: 'user-settings',
-        component: EditUserSettingsComponent
+        component: EditUserSettingsComponent,
+        canDeactivate: [UnsavedChangesGuard]
       }
     ]
   }

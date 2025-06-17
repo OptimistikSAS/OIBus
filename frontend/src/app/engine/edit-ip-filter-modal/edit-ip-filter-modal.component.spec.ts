@@ -7,7 +7,7 @@ import { DefaultValidationErrorsComponent } from '../../shared/default-validatio
 import { IpFilterService } from '../../services/ip-filter.service';
 import { IPFilterCommandDTO, IPFilterDTO } from '../../../../../backend/shared/model/ip-filter.model';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
-
+import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
 class EditIpFilterModalComponentTester extends ComponentTester<EditIpFilterModalComponent> {
   constructor() {
     super(EditIpFilterModalComponent);
@@ -38,16 +38,19 @@ describe('EditIpFilterModalComponent', () => {
   let tester: EditIpFilterModalComponentTester;
   let fakeActiveModal: NgbActiveModal;
   let ipFilterService: jasmine.SpyObj<IpFilterService>;
+  let unsavedChangesConfirmationService: jasmine.SpyObj<UnsavedChangesConfirmationService>;
 
   beforeEach(() => {
     fakeActiveModal = createMock(NgbActiveModal);
     ipFilterService = createMock(IpFilterService);
+    unsavedChangesConfirmationService = createMock(UnsavedChangesConfirmationService);
 
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
         { provide: NgbActiveModal, useValue: fakeActiveModal },
-        { provide: IpFilterService, useValue: ipFilterService }
+        { provide: IpFilterService, useValue: ipFilterService },
+        { provide: UnsavedChangesConfirmationService, useValue: unsavedChangesConfirmationService }
       ]
     });
 
@@ -152,6 +155,60 @@ describe('EditIpFilterModalComponent', () => {
     it('should cancel', () => {
       tester.cancel.click();
       expect(fakeActiveModal.dismiss).toHaveBeenCalled();
+    });
+  });
+
+  describe('unsaved changes', () => {
+    beforeEach(() => {
+      tester.componentInstance.prepareForCreation();
+      tester.detectChanges();
+    });
+
+    it('should return true from canDismiss when form is pristine', () => {
+      const result = tester.componentInstance.canDismiss();
+      expect(result).toBe(true);
+    });
+
+    it('should return observable from canDismiss when form is dirty', () => {
+      tester.address.fillWith('test address');
+      tester.detectChanges();
+
+      unsavedChangesConfirmationService.confirmUnsavedChanges.and.returnValue(of(true));
+
+      const result = tester.componentInstance.canDismiss();
+
+      expect(result).toBeInstanceOf(Object); // Observable
+      expect(unsavedChangesConfirmationService.confirmUnsavedChanges).toHaveBeenCalled();
+    });
+
+    it('should allow dismissal when user confirms leaving', () => {
+      tester.address.fillWith('test address');
+      tester.detectChanges();
+
+      unsavedChangesConfirmationService.confirmUnsavedChanges.and.returnValue(of(true));
+
+      const result = tester.componentInstance.canDismiss();
+
+      if (typeof result !== 'boolean') {
+        result.subscribe(canDismiss => {
+          expect(canDismiss).toBe(true);
+        });
+      }
+    });
+
+    it('should prevent dismissal when user cancels leaving', () => {
+      tester.address.fillWith('test address');
+      tester.detectChanges();
+
+      unsavedChangesConfirmationService.confirmUnsavedChanges.and.returnValue(of(false));
+
+      const result = tester.componentInstance.canDismiss();
+
+      if (typeof result !== 'boolean') {
+        result.subscribe(canDismiss => {
+          expect(canDismiss).toBe(false);
+        });
+      }
     });
   });
 });

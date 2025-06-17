@@ -12,6 +12,7 @@ import { HistoryQueryDTO, HistoryQueryItemCommandDTO } from '../../../../../back
 import { HistoryQueryService } from '../../services/history-query.service';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
+import { ModalService } from '../../shared/modal.service';
 
 const testHistoryQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings> = {
   id: 'historyId',
@@ -176,11 +177,13 @@ describe('HistoryQueryItemsComponent with saving changes directly', () => {
   let historyQueryService: jasmine.SpyObj<HistoryQueryService>;
   let confirmationService: jasmine.SpyObj<ConfirmationService>;
   let notificationService: jasmine.SpyObj<NotificationService>;
+  let modalService: jasmine.SpyObj<ModalService>;
 
   beforeEach(() => {
     historyQueryService = createMock(HistoryQueryService);
     confirmationService = createMock(ConfirmationService);
     notificationService = createMock(NotificationService);
+    modalService = createMock(ModalService);
 
     TestBed.configureTestingModule({
       providers: [
@@ -188,7 +191,8 @@ describe('HistoryQueryItemsComponent with saving changes directly', () => {
         provideHttpClient(),
         { provide: HistoryQueryService, useValue: historyQueryService },
         { provide: ConfirmationService, useValue: confirmationService },
-        { provide: NotificationService, useValue: notificationService }
+        { provide: NotificationService, useValue: notificationService },
+        { provide: ModalService, useValue: modalService }
       ]
     });
 
@@ -200,6 +204,16 @@ describe('HistoryQueryItemsComponent with saving changes directly', () => {
     historyQueryService.get.and.returnValue(of(testHistoryQuery));
 
     confirmationService.confirm.and.returnValue(of(undefined));
+
+    modalService.open.and.returnValue({
+      componentInstance: {
+        prepareForCreation: jasmine.createSpy(),
+        prepareForEdition: jasmine.createSpy(),
+        prepareForCopy: jasmine.createSpy(),
+        canDismiss: jasmine.createSpy().and.returnValue(true)
+      },
+      result: of({})
+    } as any);
 
     tester = new HistoryQueryItemsComponentTester(historyQueryService);
     tester.componentInstance.saveChangesDirectly = true;
@@ -330,6 +344,32 @@ describe('HistoryQueryItemsComponent with saving changes directly', () => {
     tester.detectChanges();
     expect(tester.tableItemNames).toEqual(['item1', 'item1-copy']);
   }));
+
+  it('should open edit modal with beforeDismiss configuration', () => {
+    const editButton = tester.southItems[0].button('.edit-south-item')!;
+    editButton.click();
+
+    expect(modalService.open).toHaveBeenCalledWith(
+      jasmine.any(Function),
+      jasmine.objectContaining({
+        size: 'xl',
+        beforeDismiss: jasmine.any(Function)
+      })
+    );
+  });
+
+  it('should open add modal with beforeDismiss configuration', () => {
+    const addButton = tester.button('button.btn-sm:nth-child(1)')!;
+    addButton.click();
+
+    expect(modalService.open).toHaveBeenCalledWith(
+      jasmine.any(Function),
+      jasmine.objectContaining({
+        size: 'xl',
+        beforeDismiss: jasmine.any(Function)
+      })
+    );
+  });
 });
 
 describe('HistoryQueryItemsComponent without saving changes directly', () => {
@@ -337,11 +377,13 @@ describe('HistoryQueryItemsComponent without saving changes directly', () => {
   let historyQueryService: jasmine.SpyObj<HistoryQueryService>;
   let confirmationService: jasmine.SpyObj<ConfirmationService>;
   let notificationService: jasmine.SpyObj<NotificationService>;
+  let modalService: jasmine.SpyObj<ModalService>;
 
   beforeEach(() => {
     historyQueryService = createMock(HistoryQueryService);
     confirmationService = createMock(ConfirmationService);
     notificationService = createMock(NotificationService);
+    modalService = createMock(ModalService);
 
     TestBed.configureTestingModule({
       providers: [
@@ -349,7 +391,8 @@ describe('HistoryQueryItemsComponent without saving changes directly', () => {
         provideHttpClient(),
         { provide: HistoryQueryService, useValue: historyQueryService },
         { provide: ConfirmationService, useValue: confirmationService },
-        { provide: NotificationService, useValue: notificationService }
+        { provide: NotificationService, useValue: notificationService },
+        { provide: ModalService, useValue: modalService }
       ]
     });
 
@@ -361,6 +404,16 @@ describe('HistoryQueryItemsComponent without saving changes directly', () => {
     historyQueryService.get.and.returnValue(of(testHistoryQuery));
 
     confirmationService.confirm.and.returnValue(of(undefined));
+
+    modalService.open.and.returnValue({
+      componentInstance: {
+        prepareForCreation: jasmine.createSpy(),
+        prepareForEdition: jasmine.createSpy(),
+        prepareForCopy: jasmine.createSpy(),
+        canDismiss: jasmine.createSpy().and.returnValue(true)
+      },
+      result: of({})
+    } as any);
 
     tester = new HistoryQueryItemsComponentTester(historyQueryService);
     tester.componentInstance.saveChangesDirectly = false;

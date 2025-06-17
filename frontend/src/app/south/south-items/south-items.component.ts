@@ -14,7 +14,7 @@ import {
   SouthConnectorManifest
 } from '../../../../../backend/shared/model/south-connector.model';
 import { EditSouthItemModalComponent } from '../edit-south-item-modal/edit-south-item-modal.component';
-import { debounceTime, distinctUntilChanged, of, switchMap, tap } from 'rxjs';
+import { debounceTime, distinctUntilChanged, firstValueFrom, of, switchMap, tap } from 'rxjs';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { OibFormControl } from '../../../../../backend/shared/model/form.model';
@@ -144,7 +144,14 @@ export class SouthItemsComponent implements OnInit {
   }
 
   editItem(southItem: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>) {
-    const modalRef = this.modalService.open(EditSouthItemModalComponent, { size: 'xl' });
+    const modalRef = this.modalService.open(EditSouthItemModalComponent, {
+      size: 'xl',
+      beforeDismiss: () => {
+        const component: EditSouthItemModalComponent = modalRef.componentInstance;
+        const result = component.canDismiss();
+        return typeof result === 'boolean' ? result : firstValueFrom(result);
+      }
+    });
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
 
     const tableIndex = this.allItems.findIndex(i => i.id === southItem.id || i.name === southItem.name);
@@ -162,7 +169,14 @@ export class SouthItemsComponent implements OnInit {
   }
 
   addItem() {
-    const modalRef = this.modalService.open(EditSouthItemModalComponent, { size: 'xl' });
+    const modalRef = this.modalService.open(EditSouthItemModalComponent, {
+      size: 'xl',
+      beforeDismiss: () => {
+        const component: EditSouthItemModalComponent = modalRef.componentInstance;
+        const result = component.canDismiss();
+        return typeof result === 'boolean' ? result : firstValueFrom(result);
+      }
+    });
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
     component.prepareForCreation(
       this.southManifest().items,
@@ -265,7 +279,7 @@ export class SouthItemsComponent implements OnInit {
   }
 
   duplicateItem(item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>) {
-    const modalRef = this.modalService.open(EditSouthItemModalComponent, { size: 'xl' });
+    const modalRef = this.modalService.open(EditSouthItemModalComponent, { size: 'xl', backdrop: 'static' });
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
     component.prepareForCopy(
       this.southManifest().items,
@@ -280,7 +294,7 @@ export class SouthItemsComponent implements OnInit {
   }
 
   exportItems() {
-    const modalRef = this.modalService.open(ExportItemModalComponent);
+    const modalRef = this.modalService.open(ExportItemModalComponent, { backdrop: 'static' });
     modalRef.componentInstance.prepare(this.southConnector()?.name);
     modalRef.result.subscribe(response => {
       if (response && this.southId() !== 'create') {
@@ -318,7 +332,7 @@ export class SouthItemsComponent implements OnInit {
   }
 
   importItems() {
-    const modalRef = this.modalService.open(ImportItemModalComponent);
+    const modalRef = this.modalService.open(ImportItemModalComponent, { backdrop: 'static' });
     modalRef.result.subscribe(response => {
       this.checkImportItems(response.file, response.delimiter);
     });
@@ -333,7 +347,7 @@ export class SouthItemsComponent implements OnInit {
           error: string;
         }>;
       }) => {
-        const modalRef = this.modalService.open(ImportSouthItemsModalComponent, { size: 'xl' });
+        const modalRef = this.modalService.open(ImportSouthItemsModalComponent, { size: 'xl', backdrop: 'static' });
         const component: ImportSouthItemsModalComponent = modalRef.componentInstance;
         component.prepare(this.southManifest().items, this.allItems, result.items, result.errors, this.scanModes());
         this.refreshAfterImportModalClosed(modalRef);

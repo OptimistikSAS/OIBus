@@ -8,6 +8,7 @@ import { CertificateService } from '../../services/certificate.service';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
 import { provideHttpClient } from '@angular/common/http';
+import { ModalService } from '../../shared/modal.service';
 
 class CertificateListComponentTester extends ComponentTester<CertificateListComponent> {
   constructor() {
@@ -40,11 +41,13 @@ describe('CertificateListComponent', () => {
   let certificateService: jasmine.SpyObj<CertificateService>;
   let confirmationService: jasmine.SpyObj<ConfirmationService>;
   let notificationService: jasmine.SpyObj<NotificationService>;
+  let modalService: jasmine.SpyObj<ModalService>;
 
   beforeEach(() => {
     certificateService = createMock(CertificateService);
     confirmationService = createMock(ConfirmationService);
     notificationService = createMock(NotificationService);
+    modalService = createMock(ModalService);
 
     TestBed.configureTestingModule({
       providers: [
@@ -52,9 +55,19 @@ describe('CertificateListComponent', () => {
         provideHttpClient(),
         { provide: CertificateService, useValue: certificateService },
         { provide: ConfirmationService, useValue: confirmationService },
-        { provide: NotificationService, useValue: notificationService }
+        { provide: NotificationService, useValue: notificationService },
+        { provide: ModalService, useValue: modalService }
       ]
     });
+
+    modalService.open.and.returnValue({
+      componentInstance: {
+        prepareForCreation: jasmine.createSpy(),
+        prepareForEdition: jasmine.createSpy(),
+        canDismiss: jasmine.createSpy().and.returnValue(true)
+      },
+      result: of({})
+    } as any);
   });
 
   describe('with certificate', () => {
@@ -94,6 +107,31 @@ describe('CertificateListComponent', () => {
       expect(tester.certificates[1].elements('td')[6]).toContainText('1 Jan 2033');
       expect(tester.editButtons.length).toBe(2);
       expect(tester.deleteButtons.length).toBe(2);
+    });
+
+    it('should open edit modal with beforeDismiss configuration', () => {
+      tester.editButtons[0].click();
+
+      expect(modalService.open).toHaveBeenCalledWith(
+        jasmine.any(Function),
+        jasmine.objectContaining({
+          size: 'lg',
+          beforeDismiss: jasmine.any(Function)
+        })
+      );
+    });
+
+    it('should open add modal with beforeDismiss configuration', () => {
+      const addButton = tester.element('#add-certificate')!;
+      (addButton as TestButton)!.click();
+
+      expect(modalService.open).toHaveBeenCalledWith(
+        jasmine.any(Function),
+        jasmine.objectContaining({
+          size: 'lg',
+          beforeDismiss: jasmine.any(Function)
+        })
+      );
     });
   });
 
