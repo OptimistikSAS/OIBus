@@ -31,6 +31,8 @@ import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { SouthConnectorLightDTO } from '../../../../../backend/shared/model/south-connector.model';
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
+import { CanComponentDeactivate } from '../../shared/unsaved-changes.guard';
+import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
 
 @Component({
   selector: 'oib-edit-north',
@@ -51,7 +53,7 @@ import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe'
   templateUrl: './edit-north.component.html',
   styleUrl: './edit-north.component.scss'
 })
-export class EditNorthComponent implements OnInit {
+export class EditNorthComponent implements OnInit, CanComponentDeactivate {
   private northConnectorService = inject(NorthConnectorService);
   private fb = inject(NonNullableFormBuilder);
   private notificationService = inject(NotificationService);
@@ -60,6 +62,7 @@ export class EditNorthComponent implements OnInit {
   private modalService = inject(ModalService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
 
   mode: 'create' | 'edit' = 'create';
   northConnector: NorthConnectorDTO<NorthSettings> | null = null;
@@ -182,17 +185,30 @@ export class EditNorthComponent implements OnInit {
       });
   }
 
+  canDeactivate(): Observable<boolean> | boolean {
+    if (this.northForm?.dirty) {
+      return this.unsavedChangesConfirmation.confirmUnsavedChanges();
+    }
+    return true;
+  }
+
   createOrUpdateNorthConnector(command: NorthConnectorCommandDTO<NorthSettings>): void {
     let createOrUpdate: Observable<NorthConnectorDTO<NorthSettings>>;
     if (this.mode === 'edit') {
       createOrUpdate = this.northConnectorService.update(this.northConnector!.id, command).pipe(
-        tap(() => this.notificationService.success('north.updated', { name: command.name })),
+        tap(() => {
+          this.notificationService.success('north.updated', { name: command.name });
+          this.northForm?.markAsPristine();
+        }),
         switchMap(() => this.northConnectorService.get(this.northConnector!.id))
       );
     } else {
-      createOrUpdate = this.northConnectorService
-        .create(command, this.duplicateId)
-        .pipe(tap(() => this.notificationService.success('north.created', { name: command.name })));
+      createOrUpdate = this.northConnectorService.create(command, this.duplicateId).pipe(
+        tap(() => {
+          this.notificationService.success('north.created', { name: command.name });
+          this.northForm?.markAsPristine();
+        })
+      );
     }
     createOrUpdate.pipe(this.state.pendingUntilFinalization()).subscribe(northConnector => {
       this.router.navigate(['/north', northConnector.id]);

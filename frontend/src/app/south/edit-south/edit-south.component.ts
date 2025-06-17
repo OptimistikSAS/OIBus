@@ -28,6 +28,8 @@ import { ModalService } from '../../shared/modal.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
+import { CanComponentDeactivate } from '../../shared/unsaved-changes.guard';
+import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
 
 @Component({
   selector: 'oib-edit-south',
@@ -46,7 +48,7 @@ import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe'
   templateUrl: './edit-south.component.html',
   styleUrl: './edit-south.component.scss'
 })
-export class EditSouthComponent implements OnInit {
+export class EditSouthComponent implements OnInit, CanComponentDeactivate {
   private southConnectorService = inject(SouthConnectorService);
   private fb = inject(NonNullableFormBuilder);
   private notificationService = inject(NotificationService);
@@ -54,6 +56,7 @@ export class EditSouthComponent implements OnInit {
   private modalService = inject(ModalService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
 
   mode: 'create' | 'edit' = 'create';
   southId!: string;
@@ -150,17 +153,30 @@ export class EditSouthComponent implements OnInit {
       });
   }
 
+  canDeactivate(): Observable<boolean> | boolean {
+    if (this.southForm?.dirty) {
+      return this.unsavedChangesConfirmation.confirmUnsavedChanges();
+    }
+    return true;
+  }
+
   createOrUpdateSouthConnector(command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>): void {
     let createOrUpdate: Observable<SouthConnectorDTO<SouthSettings, SouthItemSettings>>;
     if (this.mode === 'edit') {
       createOrUpdate = this.southConnectorService.update(this.southConnector!.id, command).pipe(
-        tap(() => this.notificationService.success('south.updated', { name: command.name })),
+        tap(() => {
+          this.notificationService.success('south.updated', { name: command.name });
+          this.southForm?.markAsPristine();
+        }),
         switchMap(() => this.southConnectorService.get(this.southConnector!.id))
       );
     } else {
-      createOrUpdate = this.southConnectorService
-        .create(command, this.duplicateId)
-        .pipe(tap(() => this.notificationService.success('south.created', { name: command.name })));
+      createOrUpdate = this.southConnectorService.create(command, this.duplicateId).pipe(
+        tap(() => {
+          this.notificationService.success('south.created', { name: command.name });
+          this.southForm?.markAsPristine();
+        })
+      );
     }
     createOrUpdate.pipe(this.state.pendingUntilFinalization()).subscribe(southConnector => {
       this.router.navigate(['/south', southConnector.id]);
