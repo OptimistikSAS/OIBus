@@ -48,6 +48,8 @@ import { NorthSettings } from '../../../../../backend/shared/model/north-setting
 import { dateTimeRangeValidatorBuilder } from '../../shared/validators';
 import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
 import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
+import { CanComponentDeactivate } from '../../shared/unsaved-changes.guard';
+import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
 
 @Component({
   selector: 'oib-edit-history-query',
@@ -70,7 +72,7 @@ import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe'
   templateUrl: './edit-history-query.component.html',
   styleUrl: './edit-history-query.component.scss'
 })
-export class EditHistoryQueryComponent implements OnInit {
+export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate {
   private historyQueryService = inject(HistoryQueryService);
   private northConnectorService = inject(NorthConnectorService);
   private southConnectorService = inject(SouthConnectorService);
@@ -80,6 +82,7 @@ export class EditHistoryQueryComponent implements OnInit {
   private modalService = inject(ModalService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
 
   mode: 'create' | 'edit' = 'create';
   historyId!: string;
@@ -279,6 +282,13 @@ export class EditHistoryQueryComponent implements OnInit {
       });
   }
 
+  canDeactivate(): Observable<boolean> | boolean {
+    if (this.historyQueryForm?.dirty) {
+      return this.unsavedChangesConfirmation.confirmUnsavedChanges();
+    }
+    return true;
+  }
+
   save() {
     if (!this.historyQueryForm!.valid) {
       return;
@@ -341,13 +351,19 @@ export class EditHistoryQueryComponent implements OnInit {
     // if we are editing
     if (this.mode === 'edit') {
       createOrUpdate = this.historyQueryService.update(this.historyQuery!.id, command, resetCache).pipe(
-        tap(() => this.notificationService.success('history-query.updated', { name: command.name })),
+        tap(() => {
+          this.notificationService.success('history-query.updated', { name: command.name });
+          this.historyQueryForm?.markAsPristine();
+        }),
         switchMap(() => this.historyQueryService.get(this.historyQuery!.id))
       );
     } else {
-      createOrUpdate = this.historyQueryService
-        .create(command, this.fromSouthId, this.fromNorthId, this.duplicateId)
-        .pipe(tap(() => this.notificationService.success('history-query.created', { name: command.name })));
+      createOrUpdate = this.historyQueryService.create(command, this.fromSouthId, this.fromNorthId, this.duplicateId).pipe(
+        tap(() => {
+          this.notificationService.success('history-query.created', { name: command.name });
+          this.historyQueryForm?.markAsPristine();
+        })
+      );
     }
     createOrUpdate.pipe(this.state.pendingUntilFinalization()).subscribe(historyQuery => {
       this.router.navigate(['/history-queries', historyQuery.id]);
