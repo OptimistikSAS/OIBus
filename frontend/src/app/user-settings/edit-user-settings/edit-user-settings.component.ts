@@ -15,6 +15,8 @@ import { formDirectives } from '../../shared/form-directives';
 
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
+import { CanComponentDeactivate } from '../../shared/unsaved-changes.guard';
+import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
 
 // TypeScript issue with Intl: https://github.com/microsoft/TypeScript/issues/49231
 // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -30,13 +32,14 @@ declare namespace Intl {
   styleUrl: './edit-user-settings.component.scss',
   imports: [...formDirectives, TranslateDirective, NgbTypeahead, SaveButtonComponent]
 })
-export class EditUserSettingsComponent {
+export class EditUserSettingsComponent implements CanComponentDeactivate {
   private modalService = inject(ModalService);
   private userSettingsService = inject(UserSettingsService);
   private notificationService = inject(NotificationService);
   private translateService = inject(TranslateService);
   private windowService = inject(WindowService);
   private currentUserService = inject(CurrentUserService);
+  private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
 
   form = inject(NonNullableFormBuilder).group({
     firstName: [null as string | null, [Validators.maxLength(50)]],
@@ -56,6 +59,13 @@ export class EditUserSettingsComponent {
 
   constructor() {
     this.loadSettingsAndPopulate().subscribe();
+  }
+
+  canDeactivate(): Observable<boolean> | boolean {
+    if (this.form?.dirty) {
+      return this.unsavedChangesConfirmation.confirmUnsavedChanges();
+    }
+    return true;
   }
 
   save() {
@@ -79,6 +89,7 @@ export class EditUserSettingsComponent {
         this.state.pendingUntilFinalization(),
         tap(() => {
           this.notificationService.success('user-settings.edit-user-settings.saved');
+          this.form.markAsPristine();
         }),
         switchMap(() => this.loadSettingsAndPopulate()),
         switchMap(settings => {
@@ -113,6 +124,6 @@ export class EditUserSettingsComponent {
   }
 
   openChangePasswordModal() {
-    this.modalService.open(ChangePasswordModalComponent, { size: 'sm' });
+    this.modalService.open(ChangePasswordModalComponent, { size: 'sm', backdrop: 'static' });
   }
 }
