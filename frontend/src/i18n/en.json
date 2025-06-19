@@ -1699,6 +1699,10 @@
   },
   "logs": {
     "title": "Logs",
+    "auto-reload": {
+      "pause": "Pause auto-reload",
+      "resume": "Resume auto-reload"
+    },
     "search": {
       "start": "Start",
       "end": "End",
