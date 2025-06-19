@@ -30,7 +30,7 @@
     "@angular/platform-browser": "20.0.3",
     "@angular/platform-browser-dynamic": "20.0.3",
     "@angular/router": "20.0.3",
-    "@ng-bootstrap/ng-bootstrap": "19.0.0-rc.0",
+    "@ng-bootstrap/ng-bootstrap": "19.0.0",
     "@ngx-translate/core": "16.0.4",
     "@popperjs/core": "2.11.8",
     "bootstrap": "5.3.6",
