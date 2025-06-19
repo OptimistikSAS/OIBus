@@ -96,13 +96,31 @@
                     </div>
 
                     <div class="col">
-                      <button class="btn btn-primary pull-right" id="search-button" [disabled]="loading()">
-                        @if (loading()) {
-                          <span class="fa fa-spin fa-spinner"></span>
-                        } @else {
-                          <span translate="common.search"></span>
-                        }
-                      </button>
+                      <div class="d-flex gap-2 pull-right">
+                        <button
+                          type="button"
+                          class="btn btn-primary"
+                          id="auto-reload-toggle"
+                          (click)="toggleAutoReload()"
+                          [attr.title]="
+                            autoReloadPaused() ? ('logs.auto-reload.resume' | translate) : ('logs.auto-reload.pause' | translate)
+                          "
+                        >
+                          @if (autoReloadPaused()) {
+                            <i class="fa fa-play" aria-hidden="true"></i>
+                          } @else {
+                            <i class="fa fa-pause" aria-hidden="true"></i>
+                          }
+                        </button>
+
+                        <button class="btn btn-primary" id="search-button" [disabled]="loading()">
+                          @if (loading()) {
+                            <span class="fa fa-spin fa-spinner"></span>
+                          } @else {
+                            <span translate="common.search"></span>
+                          }
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </form>
