@@ -4,22 +4,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
   selector: 'oib-unsaved-changes-confirmation-modal',
-  template: `
-    <div class="modal-header">
-      <h4 class="modal-title">{{ 'common.unsaved-changes' | translate }}</h4>
-    </div>
-    <div class="modal-body">
-      <p>{{ 'common.unsaved-changes-message' | translate }}</p>
-    </div>
-    <div class="modal-footer">
-      <button type="button" class="btn btn-secondary" (click)="continueEditing()">
-        {{ 'common.continue-editing' | translate }}
-      </button>
-      <button type="button" class="btn btn-danger" (click)="leaveWithoutSaving()">
-        {{ 'common.leave-without-saving' | translate }}
-      </button>
-    </div>
-  `,
+  templateUrl: './unsaved-changes-confirmation-modal.component.html',
   imports: [TranslatePipe]
 })
 export class UnsavedChangesConfirmationModalComponent {
