@@ -40,6 +40,9 @@ import { BaseFolders } from '../model/types';
 import NorthConnectorRepository from '../repository/config/north-connector.repository';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
 import { ReadStream } from 'node:fs';
+import TransformerService, { toTransformerDTO } from './transformer.service';
+import { Transformer } from '../model/transformer.model';
+import { OIBusObjectAttribute } from '../../shared/model/form.model';
 
 export default class HistoryQueryService {
   constructor(
@@ -52,6 +55,7 @@ export default class HistoryQueryService {
     private readonly historyQueryMetricsRepository: HistoryQueryMetricsRepository,
     private readonly southService: SouthService,
     private readonly northService: NorthService,
+    private readonly transformerService: TransformerService,
     private readonly oIAnalyticsMessageService: OIAnalyticsMessageService,
     private readonly encryptionService: EncryptionService,
     private readonly historyQueryEngine: HistoryQueryEngine
@@ -166,7 +170,10 @@ export default class HistoryQueryService {
       throw new Error(`South manifest ${command.type} not found`);
     }
     await this.validator.validateSettings(manifest.settings, command.settings);
-    await this.validator.validateSettings(manifest.items.settings, itemCommand.settings);
+    const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
+      attribute => attribute.key === 'settings'
+    )! as OIBusObjectAttribute;
+    await this.validator.validateSettings(itemSettingsManifest, itemCommand.settings);
     command.settings = await this.encryptionService.decryptConnectorSecrets(
       await this.encryptionService.encryptConnectorSecrets(command.settings, southSettings, manifest.settings),
       manifest.settings
@@ -208,8 +215,11 @@ export default class HistoryQueryService {
     await this.validator.validateSettings(northManifest.settings, command.northSettings);
     await this.validator.validateSettings(southManifest.settings, command.southSettings);
     // Check if item settings match the item schema, throw an error otherwise
+    const itemSettingsManifest = southManifest.items.rootAttribute.attributes.find(
+      attribute => attribute.key === 'settings'
+    )! as OIBusObjectAttribute;
     for (const item of command.items) {
-      await this.validator.validateSettings(southManifest.items.settings, item.settings);
+      await this.validator.validateSettings(itemSettingsManifest, item.settings);
       item.id = null;
     }
 
@@ -226,6 +236,7 @@ export default class HistoryQueryService {
       ),
       this.encryptionService,
       this.scanModeRepository.findAll(),
+      this.transformerService.findAll(),
       !!retrieveSecretsFromHistoryQuery || !!retrieveSecretsFromSouth
     );
     this.historyQueryRepository.saveHistoryQuery(historyQuery);
@@ -262,8 +273,11 @@ export default class HistoryQueryService {
     await this.validator.validateSettings(northManifest.settings, previousSettings.northSettings);
     await this.validator.validateSettings(southManifest.settings, previousSettings.southSettings);
     // Check if item settings match the item schema, throw an error otherwise
+    const itemSettingsManifest = southManifest.items.rootAttribute.attributes.find(
+      attribute => attribute.key === 'settings'
+    )! as OIBusObjectAttribute;
     for (const item of command.items) {
-      await this.validator.validateSettings(southManifest.items.settings, item.settings);
+      await this.validator.validateSettings(itemSettingsManifest, item.settings);
     }
 
     const historyQuery = { id: previousSettings.id } as HistoryQueryEntity<S, N, I>;
@@ -272,7 +286,8 @@ export default class HistoryQueryService {
       command,
       previousSettings,
       this.encryptionService,
-      this.scanModeRepository.findAll()
+      this.scanModeRepository.findAll(),
+      this.transformerService.findAll()
     );
     this.historyQueryRepository.saveHistoryQuery(historyQuery);
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
@@ -352,7 +367,10 @@ export default class HistoryQueryService {
     if (!manifest) {
       throw new Error(`South manifest does not exist for type ${historyQuery.southType}`);
     }
-    await this.validator.validateSettings(manifest.items.settings, command.settings);
+    const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
+      attribute => attribute.key === 'settings'
+    )! as OIBusObjectAttribute;
+    await this.validator.validateSettings(itemSettingsManifest, command.settings);
 
     const historyQueryItemEntity = {} as HistoryQueryItemEntity<I>;
     await copyHistoryQueryItemCommandToHistoryQueryItemEntity<I>(
@@ -386,7 +404,10 @@ export default class HistoryQueryService {
     if (!manifest) {
       throw new Error(`South manifest does not exist for type ${historyQuery.southType}`);
     }
-    await this.validator.validateSettings(manifest.items.settings, command.settings);
+    const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
+      attribute => attribute.key === 'settings'
+    )! as OIBusObjectAttribute;
+    await this.validator.validateSettings(itemSettingsManifest, command.settings);
 
     const historyQueryItemEntity = { id: previousSettings.id } as HistoryQueryItemEntity<I>;
     await copyHistoryQueryItemCommandToHistoryQueryItemEntity<I>(
@@ -504,11 +525,14 @@ export default class HistoryQueryService {
 
       let hasSettingsError = false;
       const settings: Record<string, string | object | boolean> = {};
+      const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
+        attribute => attribute.key === 'settings'
+      )! as OIBusObjectAttribute;
       for (const [key, value] of Object.entries(data as unknown as Record<string, string>)) {
         if (key.startsWith('settings_')) {
           const settingsKey = key.replace('settings_', '');
-          const manifestSettings = manifest.items.settings.find(settings => settings.key === settingsKey);
-          if (!manifestSettings) {
+          const fieldManifest = itemSettingsManifest.attributes.find(settings => settings.key === settingsKey);
+          if (!fieldManifest) {
             hasSettingsError = true;
             errors.push({
               item: item,
@@ -516,9 +540,9 @@ export default class HistoryQueryService {
             });
             break;
           }
-          if ((manifestSettings.type === 'OibArray' || manifestSettings.type === 'OibFormGroup') && value) {
+          if ((fieldManifest.type === 'array' || fieldManifest.type === 'object') && value) {
             settings[settingsKey] = JSON.parse(value as string);
-          } else if (manifestSettings.type === 'OibCheckbox') {
+          } else if (fieldManifest.type === 'boolean') {
             settings[settingsKey] = stringToBoolean(value);
           } else {
             settings[settingsKey] = value;
@@ -529,7 +553,7 @@ export default class HistoryQueryService {
       item.settings = settings as unknown as I;
 
       try {
-        await this.validator.validateSettings(manifest.items.settings, item.settings);
+        await this.validator.validateSettings(itemSettingsManifest, item.settings);
         validItems.push(item);
       } catch (itemError: unknown) {
         errors.push({ item, error: (itemError as Error).message });
@@ -550,8 +574,11 @@ export default class HistoryQueryService {
     }
     const manifest = this.southService.getInstalledSouthManifests().find(southManifest => southManifest.id === historyQuery.southType)!;
     const itemsToAdd: Array<HistoryQueryItemEntity<I>> = [];
+    const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
+      attribute => attribute.key === 'settings'
+    )! as OIBusObjectAttribute;
     for (const itemCommand of items) {
-      await this.validator.validateSettings(manifest.items.settings, itemCommand.settings);
+      await this.validator.validateSettings(itemSettingsManifest, itemCommand.settings);
       const historyQueryItemEntity = {} as HistoryQueryItemEntity<I>;
       await copyHistoryQueryItemCommandToHistoryQueryItemEntity<I>(
         historyQueryItemEntity,
@@ -740,7 +767,12 @@ export const toHistoryQueryDTO = <S extends SouthSettings, N extends NorthSettin
         retentionDuration: historyQuery.caching.archive.retentionDuration
       }
     },
-    items: historyQuery.items.map(item => toHistoryQueryItemDTO<I>(item, historyQuery.southType, encryptionService))
+    items: historyQuery.items.map(item => toHistoryQueryItemDTO<I>(item, historyQuery.southType, encryptionService)),
+    northTransformers: historyQuery.northTransformers.map(transformerWithOptions => ({
+      transformer: toTransformerDTO(transformerWithOptions.transformer),
+      options: transformerWithOptions.options,
+      inputType: transformerWithOptions.inputType
+    }))
   };
 };
 
@@ -763,6 +795,7 @@ const copyHistoryQueryCommandToHistoryQueryEntity = async <S extends SouthSettin
   currentSettings: HistoryQueryEntity<S, N, I> | null,
   encryptionService: EncryptionService,
   scanModes: Array<ScanMode>,
+  transformers: Array<Transformer>,
   retrieveSecrets = false
 ): Promise<void> => {
   const southManifest = southManifestList.find(element => element.id === command.southType)!;
@@ -805,7 +838,13 @@ const copyHistoryQueryCommandToHistoryQueryEntity = async <S extends SouthSettin
       retentionDuration: command.caching.archive.retentionDuration
     }
   };
-
+  historyQueryEntity.northTransformers = command.northTransformers.map(transformerIdWithOptions => {
+    const foundTransformer = transformers.find(transformer => transformer.id === transformerIdWithOptions.transformerId);
+    if (!foundTransformer) {
+      throw new Error(`Could not find OIBus Transformer ${transformerIdWithOptions.transformerId}`);
+    }
+    return { transformer: foundTransformer, options: transformerIdWithOptions.options, inputType: transformerIdWithOptions.inputType };
+  });
   historyQueryEntity.items = await Promise.all(
     command.items.map(async itemCommand => {
       const itemEntity = { id: itemCommand.id } as HistoryQueryItemEntity<I>;
@@ -831,13 +870,16 @@ const copyHistoryQueryItemCommandToHistoryQueryItemEntity = async <I extends Sou
   retrieveSecrets = false
 ): Promise<void> => {
   const southManifest = southManifestList.find(element => element.id === southType)!;
+  const itemSettingsManifest = southManifest.items.rootAttribute.attributes.find(
+    attribute => attribute.key === 'settings'
+  )! as OIBusObjectAttribute;
   historyQueryItemEntity.id = retrieveSecrets ? '' : command.id || ''; // reset id if it is a copy from another history query
   historyQueryItemEntity.name = command.name;
   historyQueryItemEntity.enabled = command.enabled;
   historyQueryItemEntity.settings = await encryptionService.encryptConnectorSecrets<I>(
     command.settings,
     currentSettings?.settings || null,
-    southManifest.items.settings
+    itemSettingsManifest
   );
 };
 
@@ -847,10 +889,13 @@ export const toHistoryQueryItemDTO = <I extends SouthItemSettings>(
   encryptionService: EncryptionService
 ): HistoryQueryItemDTO<I> => {
   const southManifest = southManifestList.find(element => element.id === southType)!;
+  const itemSettingsManifest = southManifest.items.rootAttribute.attributes.find(
+    attribute => attribute.key === 'settings'
+  )! as OIBusObjectAttribute;
   return {
     id: historyQueryItem.id,
     name: historyQueryItem.name,
     enabled: historyQueryItem.enabled,
-    settings: encryptionService.filterSecrets<I>(historyQueryItem.settings, southManifest.items.settings)
+    settings: encryptionService.filterSecrets<I>(historyQueryItem.settings, itemSettingsManifest)
   };
 };

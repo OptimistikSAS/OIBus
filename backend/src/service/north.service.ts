@@ -15,6 +15,9 @@ import consoleManifest from '../north/north-console/manifest';
 import amazonManifest from '../north/north-amazon-s3/manifest';
 import sftpManifest from '../north/north-sftp/manifest';
 import restManifest from '../north/north-rest/manifest';
+import opcuaManifest from '../north/north-opcua/manifest';
+import mqttManifest from '../north/north-mqtt/manifest';
+import modbusManifest from '../north/north-modbus/manifest';
 import { NorthConnectorEntity, NorthConnectorEntityLight } from '../model/north-connector.model';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import NorthConnectorRepository from '../repository/config/north-connector.repository';
@@ -31,7 +34,10 @@ import {
   NorthAzureBlobSettings,
   NorthConsoleSettings,
   NorthFileWriterSettings,
+  NorthModbusSettings,
+  NorthMQTTSettings,
   NorthOIAnalyticsSettings,
+  NorthOPCUASettings,
   NorthRESTSettings,
   NorthSettings,
   NorthSFTPSettings
@@ -51,7 +57,14 @@ import path from 'node:path';
 import fs from 'node:fs/promises';
 import { BaseFolders } from '../model/types';
 import { ReadStream } from 'node:fs';
-import { CacheMetadata, CacheSearchParam } from '../../shared/model/engine.model';
+import { CacheMetadata, CacheSearchParam, OIBusTimeValueContent } from '../../shared/model/engine.model';
+import TransformerService, { toTransformerDTO } from './transformer.service';
+import { TransformerDTO } from '../../shared/model/transformer.model';
+import NorthOPCUA from '../north/north-opcua/north-opcua';
+import NorthMQTT from '../north/north-mqtt/north-mqtt';
+import NorthModbus from '../north/north-modbus/north-modbus';
+import { Transformer } from '../model/transformer.model';
+import { DateTime } from 'luxon';
 
 export const northManifestList: Array<NorthConnectorManifest> = [
   consoleManifest,
@@ -60,7 +73,10 @@ export const northManifestList: Array<NorthConnectorManifest> = [
   amazonManifest,
   fileWriterManifest,
   sftpManifest,
-  restManifest
+  restManifest,
+  opcuaManifest,
+  modbusManifest,
+  mqttManifest
 ];
 
 export default class NorthService {
@@ -75,6 +91,7 @@ export default class NorthService {
     private readonly oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
     private oIAnalyticsMessageService: OIAnalyticsMessageService,
     private readonly encryptionService: EncryptionService,
+    private readonly transformerService: TransformerService,
     private readonly dataStreamEngine: DataStreamEngine
   ) {}
 
@@ -90,6 +107,7 @@ export default class NorthService {
         return new NorthAmazonS3(
           settings as NorthConnectorEntity<NorthAmazonS3Settings>,
           this.encryptionService,
+          this.transformerService,
           this.northConnectorRepository,
           this.scanModeRepository,
           logger,
@@ -99,6 +117,7 @@ export default class NorthService {
         return new NorthAzureBlob(
           settings as NorthConnectorEntity<NorthAzureBlobSettings>,
           this.encryptionService,
+          this.transformerService,
           this.northConnectorRepository,
           this.scanModeRepository,
           logger,
@@ -108,6 +127,7 @@ export default class NorthService {
         return new NorthConsole(
           settings as NorthConnectorEntity<NorthConsoleSettings>,
           this.encryptionService,
+          this.transformerService,
           this.northConnectorRepository,
           this.scanModeRepository,
           logger,
@@ -117,6 +137,7 @@ export default class NorthService {
         return new NorthFileWriter(
           settings as NorthConnectorEntity<NorthFileWriterSettings>,
           this.encryptionService,
+          this.transformerService,
           this.northConnectorRepository,
           this.scanModeRepository,
           logger,
@@ -126,6 +147,7 @@ export default class NorthService {
         return new NorthOIAnalytics(
           settings as NorthConnectorEntity<NorthOIAnalyticsSettings>,
           this.encryptionService,
+          this.transformerService,
           this.northConnectorRepository,
           this.scanModeRepository,
           this.certificateRepository,
@@ -137,6 +159,7 @@ export default class NorthService {
         return new NorthSFTP(
           settings as NorthConnectorEntity<NorthSFTPSettings>,
           this.encryptionService,
+          this.transformerService,
           this.northConnectorRepository,
           this.scanModeRepository,
           logger,
@@ -146,6 +169,37 @@ export default class NorthService {
         return new NorthREST(
           settings as NorthConnectorEntity<NorthRESTSettings>,
           this.encryptionService,
+          this.transformerService,
+          this.northConnectorRepository,
+          this.scanModeRepository,
+          logger,
+          northBaseFolders
+        );
+      case 'opcua':
+        return new NorthOPCUA(
+          settings as NorthConnectorEntity<NorthOPCUASettings>,
+          this.encryptionService,
+          this.transformerService,
+          this.northConnectorRepository,
+          this.scanModeRepository,
+          logger,
+          northBaseFolders
+        );
+      case 'mqtt':
+        return new NorthMQTT(
+          settings as NorthConnectorEntity<NorthMQTTSettings>,
+          this.encryptionService,
+          this.transformerService,
+          this.northConnectorRepository,
+          this.scanModeRepository,
+          logger,
+          northBaseFolders
+        );
+      case 'modbus':
+        return new NorthModbus(
+          settings as NorthConnectorEntity<NorthModbusSettings>,
+          this.encryptionService,
+          this.transformerService,
           this.northConnectorRepository,
           this.scanModeRepository,
           logger,
@@ -182,7 +236,8 @@ export default class NorthService {
         manifest.settings
       ),
       name: northConnector ? northConnector.name : `${command!.type}:test-connection`,
-      subscriptions: []
+      subscriptions: [],
+      transformers: []
     };
 
     const north = this.runNorth(testToRun, logger, { cache: 'baseCacheFolder', archive: 'baseArchiveFolder', error: 'baseErrorFolder' });
@@ -218,7 +273,8 @@ export default class NorthService {
       this.retrieveSecretsFromNorth(retrieveSecretsFromNorth, manifest),
       this.encryptionService,
       this.scanModeRepository.findAll(),
-      this.southConnectorRepository.findAllSouth()
+      this.southConnectorRepository.findAllSouth(),
+      this.transformerService.findAll()
     );
     this.northConnectorRepository.saveNorthConnector(northEntity);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
@@ -304,7 +360,8 @@ export default class NorthService {
       previousSettings,
       this.encryptionService,
       this.scanModeRepository.findAll(),
-      this.southConnectorRepository.findAllSouth()
+      this.southConnectorRepository.findAllSouth(),
+      this.transformerService.findAll()
     );
     this.northConnectorRepository.saveNorthConnector(northEntity);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
@@ -408,6 +465,37 @@ export default class NorthService {
     this.dataStreamEngine.updateSubscription(northId);
   }
 
+  async executeSetpoint(
+    northConnectorId: string,
+    commandContent: {
+      pointId: string;
+      value: string;
+    },
+    callback: (result: string) => void
+  ) {
+    const northConnector = this.dataStreamEngine.getNorth(northConnectorId);
+    if (!northConnector) {
+      throw new Error(`North connector ${northConnectorId} not found`);
+    }
+
+    const timeValuesContent: OIBusTimeValueContent = {
+      type: 'time-values',
+      content: [
+        {
+          pointId: commandContent.pointId,
+          timestamp: DateTime.now().toUTC().toISO()!,
+          data: {
+            value: commandContent.value
+          }
+        }
+      ]
+    };
+
+    await northConnector.cacheContent(timeValuesContent, 'oianalytics');
+
+    callback(`Setpoint ${JSON.stringify(commandContent)} properly sent into the cache of ${northConnectorId}`);
+  }
+
   private async deleteBaseFolders(north: NorthConnectorEntity<NorthSettings>) {
     const folders = this.getDefaultBaseFolders(north.id);
 
@@ -490,7 +578,12 @@ export const toNorthConnectorDTO = <N extends NorthSettings>(
         retentionDuration: northEntity.caching.archive.retentionDuration
       }
     },
-    subscriptions: northEntity.subscriptions
+    subscriptions: northEntity.subscriptions,
+    transformers: northEntity.transformers.map(transformerWithOptions => ({
+      transformer: toTransformerDTO(transformerWithOptions.transformer),
+      options: transformerWithOptions.options,
+      inputType: transformerWithOptions.inputType
+    }))
   };
 };
 
@@ -510,7 +603,8 @@ export const copyNorthConnectorCommandToNorthEntity = async <N extends NorthSett
   currentSettings: NorthConnectorEntity<N> | null,
   encryptionService: EncryptionService,
   scanModes: Array<ScanMode>,
-  southConnectors: Array<SouthConnectorLightDTO>
+  southConnectors: Array<SouthConnectorLightDTO>,
+  transformers: Array<Transformer>
 ): Promise<void> => {
   northEntity.name = command.name;
   northEntity.type = command.type;
@@ -549,4 +643,20 @@ export const copyNorthConnectorCommandToNorthEntity = async <N extends NorthSett
     }
     return subscription;
   });
+  northEntity.transformers = command.transformers.map(transformerIdWithOptions => {
+    const foundTransformer = transformers.find(transformer => transformer.id === transformerIdWithOptions.transformerId);
+    if (!foundTransformer) {
+      throw new Error(`Could not find OIBus Transformer ${transformerIdWithOptions.transformerId}`);
+    }
+    return { transformer: foundTransformer, options: transformerIdWithOptions.options, inputType: transformerIdWithOptions.inputType };
+  });
+};
+
+export const getTransformer = (id: string | null, transformers: Array<TransformerDTO>): TransformerDTO | null => {
+  if (!id) return null;
+  const transformer = transformers.find(element => element.id === id);
+  if (!transformer) {
+    throw new Error(`Could not find OIBus Transformer ${id}`);
+  }
+  return transformer;
 };

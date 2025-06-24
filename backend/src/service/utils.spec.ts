@@ -22,12 +22,12 @@ import {
   generateRandomId,
   generateReplacementParameters,
   getCommandLineArguments,
+  getFilenameWithoutRandomId,
   getOIBusInfo,
   getPlatformFromOsType,
   itemToFlattenedCSV,
   logQuery,
   persistResults,
-  pipeTransformers,
   stringToBoolean,
   unzip,
   validateCronExpression
@@ -37,12 +37,11 @@ import pino from 'pino';
 import AdmZip from 'adm-zip';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import { DateTimeType } from '../../shared/model/types';
-import { Readable, Writable } from 'node:stream';
 import os from 'node:os';
 import { EngineSettingsDTO, OIBusInfo } from '../../shared/model/engine.model';
 import cronstrue from 'cronstrue';
 import testData from '../tests/utils/test-data';
-import { createMockReadStream, createMockWriteStream, mockBaseFolders } from '../tests/utils/test-utils';
+import { mockBaseFolders } from '../tests/utils/test-utils';
 
 jest.mock('node:zlib');
 jest.mock('node:fs/promises');
@@ -186,53 +185,15 @@ describe('Service utils', () => {
     });
   });
 
-  describe('pipeTransformers', () => {
+  describe('getFilenameWithoutRandomId', () => {
     beforeEach(() => {
-      jest.resetAllMocks();
+      jest.clearAllMocks();
     });
 
-    it('should properly transform string stream', async () => {
-      const readStream = createMockReadStream();
-      // Push data into the read stream
-      readStream.push('Streaming Test Data');
-      readStream.push(null); // End the stream
-
-      const writeStream = createMockWriteStream();
-      await pipeTransformers(readStream, writeStream);
-      expect(writeStream.data).toEqual(['Streaming Test Data']);
-    });
-
-    it('should reject when the ReadStream throws an error', async () => {
-      const errorStream = new Readable({
-        read() {
-          this.emit('error', new Error('Stream Read Error'));
-        }
-      });
-
-      const writeStream = new Writable({
-        write(_chunk, _encoding, callback) {
-          callback(); // Normal write
-        }
-      });
-
-      await expect(pipeTransformers(errorStream, writeStream)).rejects.toThrow('Stream Read Error');
-    });
-
-    it('should reject when the WriteStream throws an error', async () => {
-      const readStream = new Readable({
-        read() {
-          this.push('Some Data');
-          this.push(null); // End stream
-        }
-      });
-
-      const errorStream = new Writable({
-        write(_chunk, _encoding, callback) {
-          callback(new Error('Stream Write Error'));
-        }
-      });
-
-      await expect(pipeTransformers(readStream, errorStream)).rejects.toThrow('Stream Write Error');
+    it('should properly get filename without random id', () => {
+      expect(getFilenameWithoutRandomId('test.file')).toEqual('test.file');
+      expect(getFilenameWithoutRandomId('test-12345.file')).toEqual('test.file');
+      expect(getFilenameWithoutRandomId(path.join('folder', 'sub-directory', 'test-12345.file'))).toEqual('test.file');
     });
   });
 
@@ -462,7 +423,7 @@ describe('Service utils', () => {
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addContent).toHaveBeenCalledWith({ type: 'raw', filePath });
+        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath });
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledTimes(1);
       });
@@ -485,7 +446,7 @@ describe('Service utils', () => {
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addContent).toHaveBeenCalledWith({ type: 'raw', filePath });
+        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath });
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledTimes(1);
       });
@@ -511,7 +472,7 @@ describe('Service utils', () => {
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addContent).toHaveBeenCalledWith({ type: 'raw', filePath });
+        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath });
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledTimes(1);
         expect(logger.error).toHaveBeenCalledWith(
@@ -537,7 +498,7 @@ describe('Service utils', () => {
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addContent).toHaveBeenCalledWith({ type: 'raw', filePath });
+        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath });
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledTimes(1);
         expect(logger.error).toHaveBeenCalledWith(`Error when deleting file "${filePath}" after caching it. ${new Error('unlink error')}`);
@@ -588,7 +549,7 @@ describe('Service utils', () => {
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addContent).toHaveBeenCalledWith({ type: 'raw', filePath: `${filePath}.gz` });
+        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath: `${filePath}.gz` });
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledWith(`${filePath}.gz`);
         expect(fs.unlink).toHaveBeenCalledTimes(2);
@@ -609,7 +570,7 @@ describe('Service utils', () => {
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addContent).toHaveBeenCalledWith({ type: 'raw', filePath: `${filePath}.gz` });
+        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath: `${filePath}.gz` });
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledWith(`${filePath}.gz`);
         expect(fs.unlink).toHaveBeenCalledTimes(2);
@@ -656,7 +617,7 @@ describe('Service utils', () => {
         expect(logger.error).toHaveBeenCalledWith(
           `Error when deleting compressed CSV file "${filePath}.gz" after caching it. Error: unlink error`
         );
-        expect(addContent).toHaveBeenCalledWith({ type: 'raw', filePath: `${filePath}.gz` });
+        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath: `${filePath}.gz` });
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledWith(`${filePath}.gz`);
         expect(fs.unlink).toHaveBeenCalledTimes(2);
@@ -685,7 +646,7 @@ describe('Service utils', () => {
         expect(logger.error).toHaveBeenCalledWith(
           `Error when deleting compressed file "${filePath}.gz" after caching it. Error: unlink error`
         );
-        expect(addContent).toHaveBeenCalledWith({ type: 'raw', filePath: `${filePath}.gz` });
+        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath: `${filePath}.gz` });
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledWith(`${filePath}.gz`);
         expect(fs.unlink).toHaveBeenCalledTimes(2);

@@ -29,6 +29,10 @@ import FormData from 'form-data';
 import { ClientCertificateCredential, ClientSecretCredential } from '@azure/identity';
 import CacheService from '../../service/cache/cache.service';
 import { OIBusError } from '../../model/engine.model';
+import TransformerService, { createTransformer } from '../../service/transformer.service';
+import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';
+import OIBusTransformer from '../../service/transformers/oibus-transformer';
+import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
 
 jest.mock('node:fs/promises');
 jest.mock('node:fs');
@@ -36,6 +40,7 @@ jest.mock('node:zlib', () => ({
   gzipSync: jest.fn().mockImplementation(data => `gzipped ${data}`)
 }));
 jest.mock('../../service/utils');
+jest.mock('../../service/transformer.service');
 jest.mock('@azure/identity', () => ({
   ClientSecretCredential: jest.fn().mockImplementation(() => ({
     getToken: () => ({ token: 'client-secret-token' })
@@ -53,6 +58,8 @@ const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const certificateRepository: CertificateRepository = new CertificateRepositoryMock();
 const oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository = new OianalyticsRegistrationRepositoryMock();
 const cacheService: CacheService = new CacheServiceMock();
+const transformerService: TransformerService = new TransformerServiceMock();
+const oiBusTransformer: OIBusTransformer = new OIBusTransformerMock() as unknown as OIBusTransformer;
 
 jest.mock(
   '../../service/cache/cache.service',
@@ -141,6 +148,7 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
     (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
     (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(200));
     (filesExists as jest.Mock).mockReturnValue(true);
+    (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
 
     authOptions = {
       type: 'basic',
@@ -163,6 +171,7 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
     north = new NorthOIAnalytics(
       configuration,
       encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
       certificateRepository,
@@ -303,6 +312,20 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
     expect(zlib.gzipSync).toHaveBeenCalledWith(JSON.stringify(values));
   });
 
+  it('should ignore data if bad content type', async () => {
+    await expect(
+      north.handleContent({
+        contentFile: 'path/to/file/example-123456789.file',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'bad',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow(`Unsupported data type: bad (file path/to/file/example-123456789.file)`);
+  });
+
   it('should properly throw fetch error with values', async () => {
     await north.start();
     const error = new Error('error');
@@ -377,7 +400,7 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     });
@@ -412,7 +435,7 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     });
@@ -492,7 +515,7 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     });
@@ -526,7 +549,7 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     });
@@ -549,7 +572,7 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
           contentSize: 1234,
           numberOfElement: 1,
           createdAt: '2020-02-02T02:02:02.222Z',
-          contentType: 'raw',
+          contentType: 'any',
           source: 'south',
           options: {}
         })
@@ -591,9 +614,12 @@ describe('NorthOIAnalytics with Azure Active Directory', () => {
         certificateId: 'certificateId'
       } as NorthOIAnalyticsSettingsSpecificSettings;
 
+      (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
+
       north = new NorthOIAnalytics(
         configuration,
         encryptionService,
+        transformerService,
         northConnectorRepository,
         scanModeRepository,
         certificateRepository,
@@ -635,7 +661,7 @@ describe('NorthOIAnalytics with Azure Active Directory', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'raw',
+        contentType: 'any',
         source: 'south',
         options: {}
       });
@@ -671,11 +697,12 @@ describe('NorthOIAnalytics with Azure Active Directory', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'raw',
+        contentType: 'any',
         source: 'south',
         options: {}
       });
 
+      (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
       expect(ClientCertificateCredential).not.toHaveBeenCalled();
       expect(HTTPRequest).toHaveBeenCalledWith(
         expect.objectContaining({ href: `${hostname}/api/oianalytics/file-uploads` }),
@@ -691,10 +718,12 @@ describe('NorthOIAnalytics with Azure Active Directory', () => {
         authentication: 'aad-client-secret',
         clientSecret: 'clientSecret'
       } as NorthOIAnalyticsSettingsSpecificSettings;
+      (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
 
       north = new NorthOIAnalytics(
         configuration,
         encryptionService,
+        transformerService,
         northConnectorRepository,
         scanModeRepository,
         certificateRepository,
@@ -727,7 +756,7 @@ describe('NorthOIAnalytics with Azure Active Directory', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'raw',
+        contentType: 'any',
         source: 'south',
         options: {}
       });
@@ -757,6 +786,7 @@ describe('NorthOIAnalytics with OIA module', () => {
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
     (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
     (filesExists as jest.Mock).mockReturnValue(true);
+    (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
     (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(200));
 
     registrationSettings = {
@@ -778,6 +808,7 @@ describe('NorthOIAnalytics with OIA module', () => {
     north = new NorthOIAnalytics(
       configuration,
       encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
       certificateRepository,
@@ -816,7 +847,7 @@ describe('NorthOIAnalytics with OIA module', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     });
@@ -863,7 +894,7 @@ describe('NorthOIAnalytics with OIA module', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     });
@@ -903,7 +934,7 @@ describe('NorthOIAnalytics with OIA module', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     });
@@ -923,7 +954,7 @@ describe('NorthOIAnalytics with OIA module', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'raw',
+        contentType: 'any',
         source: 'south',
         options: {}
       })
@@ -945,7 +976,7 @@ describe('NorthOIAnalytics with OIA module', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'raw',
+        contentType: 'any',
         source: 'south',
         options: {}
       })
@@ -969,7 +1000,7 @@ describe('NorthOIAnalytics with OIA module', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'raw',
+        contentType: 'any',
         source: 'south',
         options: {}
       })
@@ -993,7 +1024,7 @@ describe('NorthOIAnalytics with OIA module', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'raw',
+        contentType: 'any',
         source: 'south',
         options: {}
       })
