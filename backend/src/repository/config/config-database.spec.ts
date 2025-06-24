@@ -353,7 +353,9 @@ describe('Repository with populated database', () => {
           {
             types: ['update-version'],
             status: ['RUNNING'],
-            ack: false
+            ack: false,
+            start: testData.constants.dates.JANUARY_1ST_2020_UTC,
+            end: testData.constants.dates.FAKE_NOW_IN_FUTURE
           },
           0
         )
@@ -373,7 +375,9 @@ describe('Repository with populated database', () => {
         repository.list({
           types: ['update-version'],
           status: ['RUNNING'],
-          ack: false
+          ack: false,
+          start: testData.constants.dates.JANUARY_1ST_2020_UTC,
+          end: testData.constants.dates.FAKE_NOW_IN_FUTURE
         })
       ).toEqual(
         testData.oIAnalytics.commands.oIBusList.filter(
@@ -1324,6 +1328,12 @@ describe('Repository with populated database', () => {
         completedDate: testData.constants.dates.FAKE_NOW,
         error: 'not ok'
       });
+    });
+
+    it('should properly delete new message', () => {
+      expect(repository.findById('newId')).not.toEqual(null);
+      repository.delete('newId');
+      expect(repository.findById('newId')).toEqual(null);
     });
   });
 

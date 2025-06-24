@@ -229,6 +229,8 @@ const CERT_FOLDER = 'certs';
     repositoryService.historyQueryRepository,
     repositoryService.northConnectorRepository,
     repositoryService.southConnectorRepository,
+    repositoryService.oianalyticsMessageRepository,
+    repositoryService.oianalyticsCommandRepository,
     dataStreamEngine,
     historyQueryEngine
   );

@@ -17,6 +17,10 @@ import { flushPromises } from '../../tests/utils/test-utils';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { DateTime } from 'luxon';
+import OIAnalyticsMessageRepository from '../../repository/config/oianalytics-message.repository';
+import OianalyticsMessageRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-message-repository.mock';
+import OIAnalyticsCommandRepository from '../../repository/config/oianalytics-command.repository';
+import OianalyticsCommandRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-command-repository.mock';
 
 jest.mock('node:fs/promises');
 jest.mock('node:fs');
@@ -27,6 +31,8 @@ const anotherLogger: pino.Logger = new PinoLogger();
 const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
 const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
 const historyQueryRepository: HistoryQueryRepository = new HistoryQueryRepositoryMock();
+const oianalyticsMessageRepository: OIAnalyticsMessageRepository = new OianalyticsMessageRepositoryMock();
+const oianalyticsCommandRepository: OIAnalyticsCommandRepository = new OianalyticsCommandRepositoryMock();
 const dataStreamEngine: DataStreamEngine = new DataStreamEngineMock();
 const historyQueryEngine: HistoryQueryEngine = new HistoryQueryEngineMock();
 
@@ -118,6 +124,8 @@ describe('CacheService', () => {
       historyQueryRepository,
       northConnectorRepository,
       southConnectorRepository,
+      oianalyticsMessageRepository,
+      oianalyticsCommandRepository,
       dataStreamEngine,
       historyQueryEngine
     );
@@ -126,9 +134,11 @@ describe('CacheService', () => {
   it('should trigger cleanup method', async () => {
     const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
     service.scanMainFolder = jest.fn();
+    service.cleanUpOIAnalyticsCommandAndMessage = jest.fn();
     await service.start();
     expect(clearIntervalSpy).not.toHaveBeenCalled();
     expect(logger.debug).toHaveBeenCalledWith(`Cleaning up data folder...`);
+    expect(service.cleanUpOIAnalyticsCommandAndMessage).toHaveBeenCalledTimes(1);
     expect(service.scanMainFolder).toHaveBeenCalledTimes(3);
     expect(service.scanMainFolder).toHaveBeenCalledWith('cache');
     expect(service.scanMainFolder).toHaveBeenCalledWith('error');
@@ -136,6 +146,7 @@ describe('CacheService', () => {
     jest.advanceTimersByTime(3600 * 1000); // trigger next cleanup
     await flushPromises();
     expect(service.scanMainFolder).toHaveBeenCalledTimes(6);
+    expect(service.cleanUpOIAnalyticsCommandAndMessage).toHaveBeenCalledTimes(2);
 
     await service.start();
     expect(clearIntervalSpy).toHaveBeenCalledTimes(1);
@@ -386,5 +397,33 @@ describe('CacheService', () => {
     expect(logger.error).toHaveBeenCalledWith(
       `Error while removing file "${path.join('folder', 'metadata', fileList[2].metadataFilename)}": remove error`
     );
+  });
+
+  it('should clean up oianalytics tables', () => {
+    (oianalyticsMessageRepository.list as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.messages.oIBusList);
+    (oianalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.commands.oIBusList);
+
+    service.cleanUpOIAnalyticsCommandAndMessage();
+    expect(oianalyticsMessageRepository.list).toHaveBeenCalledTimes(1);
+    expect(oianalyticsMessageRepository.list).toHaveBeenCalledWith({
+      types: [],
+      status: ['ERRORED', 'COMPLETED'],
+      end: DateTime.fromISO(testData.constants.dates.FAKE_NOW)
+        .minus({ hour: 24 * 7 })
+        .toUTC()
+        .toISO()!
+    });
+    expect(oianalyticsMessageRepository.delete).toHaveBeenCalledTimes(testData.oIAnalytics.messages.oIBusList.length);
+
+    expect(oianalyticsCommandRepository.list).toHaveBeenCalledTimes(1);
+    expect(oianalyticsCommandRepository.list).toHaveBeenCalledWith({
+      types: [],
+      status: ['ERRORED', 'COMPLETED', 'CANCELLED'],
+      end: DateTime.fromISO(testData.constants.dates.FAKE_NOW)
+        .minus({ hour: 24 * 7 })
+        .toUTC()
+        .toISO()!
+    });
+    expect(oianalyticsCommandRepository.delete).toHaveBeenCalledTimes(testData.oIAnalytics.commands.oIBusList.length);
   });
 });

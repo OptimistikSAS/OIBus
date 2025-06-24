@@ -1,18 +1,18 @@
 import { KoaContext } from '../koa';
 import { Page } from '../../../shared/model/types';
 import AbstractController from './abstract.controller';
-import { CommandSearchParam, OIBusCommandDTO } from '../../../shared/model/command.model';
+import { CommandSearchParam, OIBusCommandDTO, OIBusCommandStatus } from '../../../shared/model/command.model';
 import { toOIBusCommandDTO } from '../../service/oia/oianalytics-command.service';
 
 export default class OIAnalyticsCommandController extends AbstractController {
   async search(ctx: KoaContext<void, Page<OIBusCommandDTO>>): Promise<void> {
     const types: Array<string> = Array.isArray(ctx.query.types) ? ctx.query.types : [];
-    const status: Array<string> = Array.isArray(ctx.query.status) ? ctx.query.status : [];
+    const status: Array<OIBusCommandStatus> = Array.isArray(ctx.query.status) ? (ctx.query.status as Array<OIBusCommandStatus>) : [];
     if (typeof ctx.query.types === 'string') {
       types.push(ctx.query.types);
     }
     if (typeof ctx.query.status === 'string') {
-      status.push(ctx.query.status);
+      status.push(ctx.query.status as OIBusCommandStatus);
     }
 
     const searchParams: CommandSearchParam = {

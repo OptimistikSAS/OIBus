@@ -8,6 +8,8 @@ import HistoryQueryRepository from '../../repository/config/history-query.reposi
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import DataStreamEngine from '../../engine/data-stream-engine';
 import HistoryQueryEngine from '../../engine/history-query-engine';
+import OIAnalyticsMessageRepository from '../../repository/config/oianalytics-message.repository';
+import OIAnalyticsCommandRepository from '../../repository/config/oianalytics-command.repository';
 
 const CACHE_FOLDER = 'cache';
 const CACHE_DATABASE = 'cache.db';
@@ -30,6 +32,8 @@ export default class CleanupService {
     private readonly historyQueryRepository: HistoryQueryRepository,
     private readonly northConnectorRepository: NorthConnectorRepository,
     private readonly southConnectorRepository: SouthConnectorRepository,
+    private readonly oianalyticsMessageRepository: OIAnalyticsMessageRepository,
+    private readonly oianalyticsCommandRepository: OIAnalyticsCommandRepository,
     private readonly dataStreamEngine: DataStreamEngine,
     private readonly historyQueryEngine: HistoryQueryEngine
   ) {
@@ -65,6 +69,12 @@ export default class CleanupService {
       await this.scanMainFolder('archive');
     } catch (error: unknown) {
       this.logger.error(`Data folder clean up error: ${(error as Error).message}`);
+    }
+
+    try {
+      this.cleanUpOIAnalyticsCommandAndMessage();
+    } catch (error: unknown) {
+      this.logger.error(`Error while cleaning up old OIAnalytics commands and messages: ${(error as Error).message}`);
     }
   }
 
@@ -184,6 +194,34 @@ export default class CleanupService {
           }
         }
       }
+    }
+  }
+
+  cleanUpOIAnalyticsCommandAndMessage() {
+    // Retrieve messages and commands older than 7 days
+    const messagesToRemove = this.oianalyticsMessageRepository.list({
+      types: [],
+      status: ['ERRORED', 'COMPLETED'],
+      end: DateTime.now()
+        .minus({ hour: 24 * 7 })
+        .toUTC()
+        .toISO()!
+    });
+
+    for (const message of messagesToRemove) {
+      this.oianalyticsMessageRepository.delete(message.id);
+    }
+
+    const commandsToRemove = this.oianalyticsCommandRepository.list({
+      types: [],
+      status: ['ERRORED', 'COMPLETED', 'CANCELLED'],
+      end: DateTime.now()
+        .minus({ hour: 24 * 7 })
+        .toUTC()
+        .toISO()!
+    });
+    for (const command of commandsToRemove) {
+      this.oianalyticsCommandRepository.delete(command.id);
     }
   }
 
