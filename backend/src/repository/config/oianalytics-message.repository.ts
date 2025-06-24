@@ -121,6 +121,13 @@ export default class OIAnalyticsMessageRepository {
     this.database.prepare(query).run(completedDate, result, id);
   }
 
+  delete(id: string): void {
+    const query = `DELETE
+                   FROM ${OIANALYTICS_MESSAGE_TABLE}
+                   WHERE id = ?;`;
+    this.database.prepare(query).run(id);
+  }
+
   private toMessage(message: Record<string, string>): OIAnalyticsMessage {
     switch (message.type as OIAnalyticsMessageType) {
       case 'full-config':

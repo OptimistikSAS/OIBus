@@ -6,6 +6,7 @@ export default jest.fn().mockImplementation(() => {
     search: jest.fn(),
     list: jest.fn(),
     create: jest.fn(),
+    delete: jest.fn(),
     markAsCompleted: jest.fn(),
     markAsErrored: jest.fn()
   };

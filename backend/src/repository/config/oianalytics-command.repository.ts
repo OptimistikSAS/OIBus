@@ -35,6 +35,18 @@ export default class OIAnalyticsCommandRepository {
       whereClause += ` AND status IN (${searchParams.status.map(() => '?')})`;
       queryParams.push(...searchParams.status);
     }
+    if (searchParams.ack !== undefined) {
+      whereClause += ` AND ack = ?`;
+      queryParams.push(+searchParams.ack);
+    }
+    if (searchParams.start) {
+      whereClause += ` AND created_at >= ?`;
+      queryParams.push(searchParams.start);
+    }
+    if (searchParams.end) {
+      whereClause += ` AND created_at <= ?`;
+      queryParams.push(searchParams.end);
+    }
 
     const query = `SELECT *
                    FROM ${COMMANDS_TABLE} ${whereClause}
@@ -77,6 +89,14 @@ export default class OIAnalyticsCommandRepository {
     if (searchParams.ack !== undefined) {
       whereClause += ` AND ack = ?`;
       queryParams.push(+searchParams.ack);
+    }
+    if (searchParams.start) {
+      whereClause += ` AND created_at >= ?`;
+      queryParams.push(searchParams.start);
+    }
+    if (searchParams.end) {
+      whereClause += ` AND created_at <= ?`;
+      queryParams.push(searchParams.end);
     }
 
     const query = `SELECT *
