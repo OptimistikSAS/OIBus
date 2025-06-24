@@ -325,6 +325,8 @@ export type OIBusCommandDTO =
 export interface CommandSearchParam {
   page?: number;
   types: Array<string>;
-  status: Array<string>;
+  status: Array<OIBusCommandStatus>;
   ack?: boolean;
+  start?: Instant;
+  end?: Instant;
 }
