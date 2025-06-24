@@ -21,6 +21,8 @@ import { flushPromises, mockBaseFolders } from '../tests/utils/test-utils';
 import HistoryQueryMetricsServiceMock from '../tests/__mocks__/service/metrics/history-query-metrics-service.mock';
 import { createBaseFolders } from '../service/utils';
 import path from 'node:path';
+import OIAnalyticsMessageService from '../service/oia/oianalytics-message.service';
+import OianalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
 
 jest.mock('../service/south.service');
 jest.mock('../service/north.service');
@@ -41,6 +43,7 @@ const anotherLogger: pino.Logger = new PinoLogger();
 const southService: SouthService = new SouthServiceMock();
 const northService: NorthService = new NorthServiceMock();
 const historyQueryRepository: HistoryQueryRepository = new HistoryQueryRepositoryMock();
+const oianalyticsMessageService: OIAnalyticsMessageService = new OianalyticsMessageServiceMock();
 
 describe('HistoryQuery enabled', () => {
   let historyQuery: HistoryQuery;
@@ -60,6 +63,7 @@ describe('HistoryQuery enabled', () => {
       testData.historyQueries.list[0],
       southService,
       northService,
+      oianalyticsMessageService,
       historyQueryRepository,
       mockBaseFolders(testData.historyQueries.list[0].id),
       logger
@@ -244,11 +248,13 @@ describe('HistoryQuery enabled', () => {
     await historyQuery.finish();
 
     expect(logger.debug).toHaveBeenCalledWith(`History query "${testData.historyQueries.list[0].name}" is still running`);
+    expect(oianalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).not.toHaveBeenCalled();
     await historyQuery.finish();
     expect(logger.debug).toHaveBeenCalledTimes(2);
 
     mockedSouth1.historyIsRunning = false;
     await historyQuery.finish();
+    expect(oianalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).toHaveBeenCalledTimes(1);
     expect(logger.info).toHaveBeenCalledWith(`Finish "${testData.historyQueries.list[0].name}" (${testData.historyQueries.list[0].id})`);
   });
 
@@ -351,6 +357,7 @@ describe('HistoryQuery disabled', () => {
       testData.historyQueries.list[0],
       southService,
       northService,
+      oianalyticsMessageService,
       historyQueryRepository,
       mockBaseFolders(testData.historyQueries.list[1].id),
       logger
