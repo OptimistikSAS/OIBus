@@ -17,6 +17,7 @@ import { EventEmitter } from 'node:events';
 import { BaseFolders, Instant } from '../model/types';
 import { QueriesHistory } from '../south/south-interface';
 import { ReadStream } from 'node:fs';
+import OIAnalyticsMessageService from '../service/oia/oianalytics-message.service';
 
 const FINISH_INTERVAL = 5000;
 
@@ -32,6 +33,7 @@ export default class HistoryQuery {
     private historyConfiguration: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>,
     private readonly southService: SouthService,
     private readonly northService: NorthService,
+    private readonly oianalyticsMessageService: OIAnalyticsMessageService,
     private readonly historyQueryRepository: HistoryQueryRepository,
     private readonly baseFolders: BaseFolders,
     private logger: pino.Logger
@@ -211,6 +213,7 @@ export default class HistoryQuery {
       await this.stop();
       this.historyQueryRepository.updateHistoryQueryStatus(this.historyConfiguration.id, 'FINISHED');
       this.historyConfiguration = this.historyQueryRepository.findHistoryQueryById(this.historyConfiguration.id)!;
+      this.oianalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
     } else {
       this.logger.debug(`History query "${this.historyConfiguration.name}" is still running`);
     }

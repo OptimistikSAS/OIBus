@@ -64,6 +64,7 @@ export default class HistoryQueryService {
       this.findById(settings.id)!,
       this.southService,
       this.northService,
+      this.oIAnalyticsMessageService,
       this.historyQueryRepository,
       historyQueryBaseFolders,
       this.historyQueryEngine.logger.child({ scopeType: 'history-query', scopeId: settings.id, scopeName: settings.name })
