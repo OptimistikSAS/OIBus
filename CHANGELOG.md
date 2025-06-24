@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.6.2](https://github.com/OptimistikSAS/OIBus/compare/v3.6.1...v3.6.2) (2025-06-24)
+
+
+### Bug Fixes
+
+* **api:** properly manage file received from add-content endpoint ([88a2e00](https://github.com/OptimistikSAS/OIBus/commit/88a2e00221dfe8f006bb8003129220011b5c7ac8))
+* **clean-up:** clean up oianalytics command and message tables ([5ada2ee](https://github.com/OptimistikSAS/OIBus/commit/5ada2ee0924f67351863541c45836798c68b8997))
+* **frontend:** confirmation modal component for unsaved changes ([69b81c1](https://github.com/OptimistikSAS/OIBus/commit/69b81c169bc025ab7f80f86448ef8e77bb29a350))
+* **frontend:** implemented unsaved changes guard and integrated with relevant components ([dc1d7cd](https://github.com/OptimistikSAS/OIBus/commit/dc1d7cdebff4252002330c58ea3c1b9041403ed6))
+* **frontend:** moved unsaved changes confirmation modal template to separate HTML file ([4f58969](https://github.com/OptimistikSAS/OIBus/commit/4f589697e62f4cc03fa59fe56a6efe2a7b43c9ff))
+* **frontend:** preventing closing the modal by clicking outside the form ([198410b](https://github.com/OptimistikSAS/OIBus/commit/198410bf485970a7c1da74651349cc1505b2e4b0))
+* **history-query:** send history queries to OIAnalytics on finish ([b67e3f7](https://github.com/OptimistikSAS/OIBus/commit/b67e3f75358cf2583a654d5bbc3d7c0bb301066a))
+
 ## [3.6.1](https://github.com/OptimistikSAS/OIBus/compare/v3.6.0...v3.6.1) (2025-06-11)
 
 
