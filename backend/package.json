@@ -5,7 +5,7 @@
   "author": "Optimistik SAS",
   "license": "EUPL",
   "engines": {
-    "node": ">=v22.16",
+    "node": "=v22.16",
     "npm": ">=10"
   },
   "scripts": {
