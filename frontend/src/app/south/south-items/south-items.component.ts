@@ -333,8 +333,29 @@ export class SouthItemsComponent implements OnInit {
 
   importItems() {
     const modalRef = this.modalService.open(ImportItemModalComponent, { backdrop: 'static' });
+
+    // Set expected headers based on manifest
+    const expectedHeaders = ['name', 'enabled'];
+    if (this.scanModes().length > 0) {
+      expectedHeaders.push('scanModeId');
+    }
+    // Add the simple fields from the manifest
+    this.southManifest().items.settings.forEach(setting => {
+      if (['OibText', 'OibNumber', 'OibSelect', 'OibCheckbox'].includes(setting.type)) {
+        expectedHeaders.push(setting.key);
+      }
+    });
+
+    modalRef.componentInstance.expectedHeaders = expectedHeaders;
+
     modalRef.result.subscribe(response => {
-      this.checkImportItems(response.file, response.delimiter);
+      if (response?.validationError) {
+        this.notificationService.error(
+          `CSV format error. Missing columns: ${response.validationError.missingHeaders.join(', ')}. Expected: ${response.validationError.expectedHeaders.join(', ')}`
+        );
+      } else {
+        this.checkImportItems(response.file, response.delimiter);
+      }
     });
   }
 
