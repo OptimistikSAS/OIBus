@@ -1,7 +1,41 @@
 <div class="modal-header">
-  <h4 class="modal-title" translate="history-query.items.import"></h4>
+  <h4 class="modal-title" translate="south.items.import.csv-file"></h4>
 </div>
 <div class="modal-body">
+  @if (validationError) {
+    <div class="alert alert-danger" role="alert">
+      <h6>
+        <i class="fa fa-solid fa-exclamation-triangle me-2"></i>
+        <span translate="south.items.import.format-error-title"></span>
+      </h6>
+      <p translate="south.items.import.format-error-description"></p>
+
+      @if (validationError.missingHeaders.length > 0) {
+        <div class="mt-2">
+          <strong translate="south.items.import.missing-columns"></strong>
+          <code class="ms-2">{{ validationError.missingHeaders.join(', ') }}</code>
+        </div>
+      }
+
+      @if (validationError.extraHeaders.length > 0) {
+        <div class="mt-2">
+          <strong translate="south.items.import.extra-columns"></strong>
+          <code class="ms-2">{{ validationError.extraHeaders.join(', ') }}</code>
+        </div>
+      }
+
+      <div class="mt-2">
+        <strong translate="south.items.import.expected-format"></strong>
+        <code class="ms-2">{{ validationError.expectedHeaders.join(', ') }}</code>
+      </div>
+
+      <div class="mt-2">
+        <strong translate="south.items.import.actual-format"></strong>
+        <code class="ms-2">{{ validationError.actualHeaders.join(', ') }}</code>
+      </div>
+    </div>
+  }
+
   <div class="row justify-content-center mb-3">
     <div class="text-center">
       <label class="form-label" for="file" translate="south.items.import.csv-file"></label>
@@ -9,6 +43,7 @@
     <button
       type="button"
       class="m-1 w-50 btn btn-secondary"
+      [class.btn-danger]="validationError"
       (click)="fileInput.click()"
       (drop)="onImportDrop($event)"
       (dragover)="onImportDragOver($event)"
@@ -21,7 +56,7 @@
     <div class="text-center">
       <label class="form-label" for="delimiter" translate="common.delimiter"></label>
     </div>
-    <select formControlName="delimiter" class="form-select w-50 m-1" id="delimiter">
+    <select formControlName="delimiter" (change)="onDelimiterChange()" class="form-select w-50 m-1" id="delimiter">
       @for (delimiter of csvDelimiters; track delimiter) {
         <option [ngValue]="delimiter" [translate]="'enums.csv-character.' + delimiter"></option>
       }
@@ -31,7 +66,7 @@
 <input #fileInput (change)="onImportClick($event)" id="file" type="file" accept=".csv" class="d-none" />
 <div class="modal-footer">
   <div class="btn-group">
-    <button type="button" class="btn btn-primary" (click)="save()" translate="common.save" id="save-button"></button>
+    <button type="button" class="btn btn-primary" (click)="save()" [disabled]="!canSave" translate="common.save" id="save-button"></button>
     <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
   </div>
 </div>

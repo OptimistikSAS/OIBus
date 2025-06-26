@@ -333,7 +333,27 @@ export class SouthItemsComponent implements OnInit {
 
   importItems() {
     const modalRef = this.modalService.open(ImportItemModalComponent, { backdrop: 'static' });
+
+    const expectedHeaders = ['name', 'enabled'];
+    const optionalHeaders: Array<string> = [];
+
+    if (this.scanModes().length > 0) {
+      expectedHeaders.push('scanMode');
+    }
+
+    this.southManifest().items.settings.forEach(setting => {
+      if (setting.conditionalDisplay) {
+        optionalHeaders.push(`settings_${setting.key}`);
+      } else {
+        expectedHeaders.push(`settings_${setting.key}`);
+      }
+    });
+
+    modalRef.componentInstance.expectedHeaders = expectedHeaders;
+    modalRef.componentInstance.optionalHeaders = optionalHeaders;
+
     modalRef.result.subscribe(response => {
+      if (!response) return;
       this.checkImportItems(response.file, response.delimiter);
     });
   }

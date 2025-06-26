@@ -7,6 +7,13 @@ export interface RangeFormValue {
   end: Instant;
 }
 
+export interface CsvValidationError {
+  expectedHeaders: Array<string>;
+  actualHeaders: Array<string>;
+  missingHeaders: Array<string>;
+  extraHeaders: Array<string>;
+}
+
 /**
  * Validator to check if a number is a positive integer
  * { invalidPositiveInteger: true } if the number is not
@@ -124,4 +131,68 @@ export function singleTrueValidator(fieldKey: string): ValidatorFn {
 
     return null;
   };
+}
+
+/**
+ * Validates CSV headers against expected headers
+ * Returns
+ * - Promise<CsvValidationError | null> - null if valid, error object if invalid
+ */
+export async function validateCsvHeaders(
+  file: File,
+  delimiter: string,
+  expectedHeaders: Array<string>,
+  optionalHeaders: Array<string> = []
+): Promise<CsvValidationError | null> {
+  if (expectedHeaders.length === 0) {
+    return null;
+  }
+
+  try {
+    const text = await file.text();
+    const lines = text.split('\n');
+
+    if (lines.length === 0) {
+      return {
+        expectedHeaders,
+        actualHeaders: [],
+        missingHeaders: expectedHeaders,
+        extraHeaders: []
+      };
+    }
+
+    const firstLine = lines[0].trim();
+    if (!firstLine) {
+      return {
+        expectedHeaders,
+        actualHeaders: [],
+        missingHeaders: expectedHeaders,
+        extraHeaders: []
+      };
+    }
+
+    const actualHeaders = firstLine.split(delimiter).map(h => h.trim());
+    const allValidHeaders = [...expectedHeaders, ...optionalHeaders];
+
+    const missingHeaders = expectedHeaders.filter(h => !actualHeaders.includes(h));
+    const extraHeaders = actualHeaders.filter(h => !allValidHeaders.includes(h));
+
+    if (missingHeaders.length > 0 || extraHeaders.length > 0) {
+      return {
+        expectedHeaders,
+        actualHeaders,
+        missingHeaders,
+        extraHeaders
+      };
+    }
+
+    return null;
+  } catch (_error) {
+    return {
+      expectedHeaders,
+      actualHeaders: [],
+      missingHeaders: expectedHeaders,
+      extraHeaders: []
+    };
+  }
 }
