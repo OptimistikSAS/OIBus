@@ -38,7 +38,7 @@ const manifest: NorthConnectorManifest = {
       key: 'authType',
       type: 'OibSelect',
       newRow: true,
-      translationKey: 'north.rest.auth',
+      translationKey: 'north.rest.auth.auth-type',
       defaultValue: 'basic',
       displayInViewMode: true,
       validators: [{ key: 'required' }],
@@ -94,7 +94,7 @@ const manifest: NorthConnectorManifest = {
     },
     {
       key: 'useProxy',
-      translationKey: 'north.rest.proxy.title',
+      translationKey: 'north.rest.use-proxy',
       type: 'OibCheckbox',
       newRow: true,
       defaultValue: false,
@@ -103,20 +103,20 @@ const manifest: NorthConnectorManifest = {
     },
     {
       key: 'proxyUrl',
-      translationKey: 'north.rest.proxy.url',
+      translationKey: 'north.rest.proxy-url',
       type: 'OibText',
       validators: [{ key: 'required' }],
       conditionalDisplay: { field: 'useProxy', values: [true] }
     },
     {
       key: 'proxyUsername',
-      translationKey: 'north.rest.proxy.username',
+      translationKey: 'north.rest.proxy-username',
       type: 'OibText',
       conditionalDisplay: { field: 'useProxy', values: [true] }
     },
     {
       key: 'proxyPassword',
-      translationKey: 'north.rest.proxy.password',
+      translationKey: 'north.rest.proxy-password',
       type: 'OibSecret',
       conditionalDisplay: { field: 'useProxy', values: [true] }
     }
