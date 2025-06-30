@@ -1304,6 +1304,12 @@
             "1h": "1 hour",
             "1d": "1 day"
           }
+        },
+        "timestamp-origin": {
+          "title": "Timestamp origin",
+          "oibus": "OIBus",
+          "point": "Point",
+          "server": "Server"
         }
       },
       "oracle": {
@@ -1681,9 +1687,11 @@
         "bearer": "Bearer Auth"
       },
       "auth": {
-        "title": "Authentication type",
-        "basic": "Basic Auth",
-        "bearer": "Bearer Auth",
+        "auth-type": {
+          "title": "Authentication type",
+          "basic": "Basic Auth",
+          "bearer": "Bearer Auth"
+        },
         "bearer-token": "Bearer token",
         "basic-username": "Username",
         "basic-password": "Password"
@@ -1693,12 +1701,10 @@
         "key": "Key",
         "value": "Value"
       },
-      "proxy": {
-        "title": "Use proxy",
-        "url": "Proxy URL",
-        "username": "Proxy username",
-        "password": "Proxy password"
-      }
+      "use-proxy": "Use proxy",
+      "proxy-url": "Proxy URL",
+      "proxy-username": "Proxy username",
+      "proxy-password": "Proxy password"
     }
   },
   "logs": {
