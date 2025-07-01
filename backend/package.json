@@ -52,7 +52,7 @@
     "better-sqlite3": "12.2.0",
     "cron": "4.3.1",
     "cron-parser": "5.3.0",
-    "cronstrue": "2.61.0",
+    "cronstrue": "3.0.0",
     "form-data": "4.0.3",
     "http-proxy": "1.18.1",
     "https-proxy-agent": "7.0.6",
