@@ -1,5 +1,6 @@
-import { FormControl } from '@angular/forms';
-import { uniqueFieldNamesValidator, singleTrueValidator } from './validators';
+import { FormControl, ValidationErrors } from '@angular/forms';
+import { uniqueFieldNamesValidator, singleTrueValidator, headerMatches, simpleHeaderValidator, CsvValidationError } from './validators';
+import { Observable } from 'rxjs';
 
 describe('Custom Validators', () => {
   describe('uniqueFieldNamesValidator', () => {
@@ -192,6 +193,163 @@ describe('Custom Validators', () => {
 
       expect(uniqueValidator(multipleTrueControl)).toBeNull();
       expect(singleTrueValidator_(multipleTrueControl)).toEqual({ onlyOneReference: true });
+    });
+  });
+
+  describe('headerMatches', () => {
+    it('matches identical headers ignoring case', () => {
+      expect(headerMatches('Foo', 'foo')).toBeTrue();
+      expect(headerMatches('bar', 'BAR')).toBeTrue();
+    });
+
+    it('matches when actual has settings_ prefix', () => {
+      expect(headerMatches('field', 'settings_field')).toBeTrue();
+    });
+
+    it('matches when expected has settings_ prefix', () => {
+      expect(headerMatches('settings_field', 'field')).toBeTrue();
+    });
+
+    it('does not match unrelated headers', () => {
+      expect(headerMatches('foo', 'bar')).toBeFalse();
+      expect(headerMatches('settings_foo', 'settings_bar')).toBeFalse();
+    });
+  });
+
+  describe('simpleHeaderValidator', () => {
+    let originalFileReader: any;
+
+    beforeAll(() => {
+      originalFileReader = (window as any).FileReader;
+    });
+
+    afterAll(() => {
+      (window as any).FileReader = originalFileReader;
+    });
+
+    beforeEach(() => {
+      // stub out FileReader to synchronously emit fakeFileContent
+      (window as any).fakeFileContent = '';
+      (window as any).FileReader = class {
+        public onload!: (e: any) => void;
+        public onerror!: () => void;
+        public result: string = (window as any).fakeFileContent;
+        readAsText(_f: any) {
+          // immediately fire onload
+          this.onload({ target: { result: this.result } });
+        }
+      };
+    });
+
+    const expected = ['col1', 'col2'];
+    const delimiter = ',';
+    const validator = simpleHeaderValidator(expected, delimiter);
+
+    it('returns null when control value is null', done => {
+      const control = new FormControl(null);
+      // force the return‐type to Observable<ValidationErrors|null>
+      const result$ = validator(control) as Observable<ValidationErrors | null>;
+
+      result$.subscribe((result: ValidationErrors | null) => {
+        expect(result).toBeNull();
+        done();
+      });
+    });
+
+    it('returns null when value is not a File instance', done => {
+      const control = new FormControl({ name: 'not a file' } as any);
+      const result$ = validator(control) as Observable<ValidationErrors | null>;
+
+      result$.subscribe((result: ValidationErrors | null) => {
+        expect(result).toBeNull();
+        done();
+      });
+    });
+
+    it('passes when headers exactly match', done => {
+      (window as any).fakeFileContent = 'col1,col2\n1,2';
+      const file = new File([''], 'test.csv', { type: 'text/csv' });
+      const control = new FormControl(file);
+      const result$ = validator(control) as Observable<ValidationErrors | null>;
+
+      result$.subscribe((result: ValidationErrors | null) => {
+        expect(result).toBeNull();
+        done();
+      });
+    });
+
+    it('errors when a header is missing', done => {
+      (window as any).fakeFileContent = 'col1\n1';
+      const file = new File([''], 'test.csv', { type: 'text/csv' });
+      const control = new FormControl(file);
+      const result$ = validator(control) as Observable<ValidationErrors | null>;
+
+      result$.subscribe((result: ValidationErrors | null) => {
+        expect(result).toEqual({
+          csvFormatError: {
+            missingHeaders: ['col2'],
+            extraHeaders: [],
+            expectedHeaders: expected,
+            actualHeaders: ['col1']
+          } as CsvValidationError
+        });
+        done();
+      });
+    });
+
+    it('errors when there are missing and extra headers', done => {
+      (window as any).fakeFileContent = 'col1,foo\n1,2';
+      const file = new File([''], 'test.csv', { type: 'text/csv' });
+      const control = new FormControl(file);
+
+      (validator(control) as Observable<ValidationErrors | null>).subscribe(result => {
+        expect(result).toEqual({
+          csvFormatError: {
+            missingHeaders: ['col2'],
+            extraHeaders: ['foo'],
+            expectedHeaders: expected,
+            actualHeaders: ['col1', 'foo']
+          } as CsvValidationError
+        });
+        done();
+      });
+    });
+
+    it('ignores extra common headers when none are missing', done => {
+      (window as any).fakeFileContent = 'col1,id,createdAt,scanModeName,col2\n1,2,3,4,5';
+      const file = new File([''], 'test.csv', { type: 'text/csv' });
+      const control = new FormControl(file);
+
+      const result$ = validator(control) as Observable<ValidationErrors | null>;
+      result$.subscribe(result => {
+        expect(result).toBeNull();
+        done();
+      });
+    });
+
+    it('accepts headers with settings_ prefix', done => {
+      (window as any).fakeFileContent = 'settings_col1,settings_col2\n1,2';
+      const file = new File([''], 'test.csv', { type: 'text/csv' });
+      const control = new FormControl(file);
+
+      (validator(control) as Observable<ValidationErrors | null>).subscribe(result => {
+        expect(result).toBeNull();
+        done();
+      });
+    });
+
+    it('accepts expected settings_ prefix headers when actual has no prefix', done => {
+      const customExpected = ['settings_col'];
+      const customVal = simpleHeaderValidator(customExpected, delimiter);
+      (window as any).fakeFileContent = 'col\n1';
+      const file = new File([''], 'file.csv', { type: 'text/csv' });
+      const control = new FormControl(file);
+
+      const result$ = customVal(control) as Observable<ValidationErrors | null>;
+      result$.subscribe(result => {
+        expect(result).toBeNull();
+        done();
+      });
     });
   });
 });
