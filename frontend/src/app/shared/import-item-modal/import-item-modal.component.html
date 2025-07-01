@@ -70,7 +70,7 @@
       type="button"
       class="btn btn-primary"
       (click)="save()"
-      [disabled]="!importForm.valid"
+      [disabled]="selectedFile === initializeFile"
       translate="common.save"
       id="save-button"
     ></button>

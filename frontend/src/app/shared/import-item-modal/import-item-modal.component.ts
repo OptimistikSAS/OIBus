@@ -1,11 +1,11 @@
-import { Component, Input } from '@angular/core'; // Add Input
+import { Component, Input } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
 import { CsvCharacter, ALL_CSV_CHARACTERS } from '../../../../../backend/shared/model/types';
-import { NonNullableFormBuilder, Validators } from '@angular/forms';
+import { FormBuilder, Validators, FormGroup } from '@angular/forms';
 import { inject, OnInit } from '@angular/core';
 import { formDirectives } from '../form-directives';
-import { simpleHeaderValidator, CsvValidationError } from '../../shared/validators'; // Add these imports
+import { simpleHeaderValidator, CsvValidationError, fileRequiredValidator } from '../../shared/validators';
 
 @Component({
   selector: 'oib-import-item-modal',
@@ -15,6 +15,7 @@ import { simpleHeaderValidator, CsvValidationError } from '../../shared/validato
 })
 export class ImportItemModalComponent implements OnInit {
   private modal = inject(NgbActiveModal);
+  private fb = inject(FormBuilder);
 
   @Input() expectedHeaders: Array<string> = [];
 
@@ -23,10 +24,9 @@ export class ImportItemModalComponent implements OnInit {
   selectedDelimiter = 'COMMA';
   selectedFile: File = this.initializeFile;
 
-  private fb = inject(NonNullableFormBuilder);
-  importForm = this.fb.group({
+  importForm: FormGroup = this.fb.group({
     delimiter: ['COMMA' as CsvCharacter, Validators.required],
-    file: [this.initializeFile]
+    file: [this.initializeFile, [fileRequiredValidator]]
   });
 
   ngOnInit(): void {
@@ -42,6 +42,10 @@ export class ImportItemModalComponent implements OnInit {
       const delimiter = this.findCorrespondingDelimiter(this.importForm.get('delimiter')?.value as CsvCharacter);
       this.importForm.get('file')?.setAsyncValidators([simpleHeaderValidator(this.expectedHeaders, delimiter)]);
       this.importForm.get('file')?.updateValueAndValidity();
+    } else {
+      // Clear async validators if no file is selected
+      this.importForm.get('file')?.clearAsyncValidators();
+      this.importForm.get('file')?.updateValueAndValidity();
     }
   }
 
@@ -50,13 +54,16 @@ export class ImportItemModalComponent implements OnInit {
   }
 
   save() {
-    if (!this.importForm.valid || this.selectedFile === this.initializeFile) {
-      return;
-    }
-
+    // Always try to save, even with validation errors
+    // The parent component will handle the validation error
     const formValue = this.importForm.value;
     const fileControl = this.importForm.get('file');
 
+    if (this.selectedFile === this.initializeFile) {
+      return; // Don't proceed if no file selected
+    }
+
+    // Check if there's a CSV format error
     if (fileControl?.errors?.['csvFormatError']) {
       const validationError: CsvValidationError = fileControl.errors['csvFormatError'];
       this.modal.close({
@@ -67,8 +74,13 @@ export class ImportItemModalComponent implements OnInit {
       return;
     }
 
+    // If validation passes, close with success
     this.selectedDelimiter = this.findCorrespondingDelimiter(formValue.delimiter!);
-    this.modal.close({ delimiter: this.selectedDelimiter, file: this.selectedFile });
+    this.modal.close({
+      delimiter: this.selectedDelimiter,
+      file: this.selectedFile,
+      validationError: null
+    });
   }
 
   cancel() {
@@ -82,23 +94,32 @@ export class ImportItemModalComponent implements OnInit {
   onImportDrop(e: DragEvent) {
     e.preventDefault();
     const file = e.dataTransfer!.files![0];
-    this.selectedFile = file;
-    this.importForm.get('file')?.setValue(file);
-    this.updateFileValidator();
+    if (file) {
+      this.selectedFile = file;
+      this.importForm.get('file')?.setValue(file);
+      this.updateFileValidator();
+    }
   }
 
   onImportClick(e: Event) {
     const fileInput = e.target as HTMLInputElement;
     const file = fileInput!.files![0];
-    this.selectedFile = file;
-    this.importForm.get('file')?.setValue(file);
-    this.updateFileValidator();
-    fileInput.value = '';
+    if (file) {
+      this.selectedFile = file;
+      this.importForm.get('file')?.setValue(file);
+      this.updateFileValidator();
+      fileInput.value = '';
+    }
   }
 
   get hasValidationError(): boolean {
     const fileControl = this.importForm.get('file');
     return !!(fileControl?.errors?.['csvFormatError'] && fileControl?.touched);
+  }
+
+  get hasFileRequiredError(): boolean {
+    const fileControl = this.importForm.get('file');
+    return !!(fileControl?.errors?.['fileRequired'] && fileControl?.touched);
   }
 
   get validationError(): CsvValidationError | null {

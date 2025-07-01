@@ -337,23 +337,49 @@ export class SouthItemsComponent implements OnInit {
     // Set expected headers based on manifest
     const expectedHeaders = ['name', 'enabled'];
     if (this.scanModes().length > 0) {
-      expectedHeaders.push('scanModeId');
+      expectedHeaders.push('scanMode');
     }
-    // Add the simple fields from the manifest
+
+    // Add the simple fields from the manifest with settings_ prefix to match export format
     this.southManifest().items.settings.forEach(setting => {
       if (['OibText', 'OibNumber', 'OibSelect', 'OibCheckbox'].includes(setting.type)) {
-        expectedHeaders.push(setting.key);
+        // Add both prefixed and non-prefixed versions to be flexible
+        expectedHeaders.push(`settings_${setting.key}`);
       }
     });
 
     modalRef.componentInstance.expectedHeaders = expectedHeaders;
 
     modalRef.result.subscribe(response => {
-      if (response?.validationError) {
-        this.notificationService.error(
-          `CSV format error. Missing columns: ${response.validationError.missingHeaders.join(', ')}. Expected: ${response.validationError.expectedHeaders.join(', ')}`
-        );
+      // Early return if modal was cancelled/dismissed
+      if (!response) return;
+
+      if (response.validationError) {
+        // Create a more user-friendly error message for the notification
+        const error = response.validationError;
+        let errorMessage = 'CSV Import Format Error:\n\n';
+
+        if (error.missingHeaders.length > 0) {
+          errorMessage += `Missing required columns: ${error.missingHeaders.join(', ')}\n`;
+        }
+
+        if (error.extraHeaders.length > 0) {
+          errorMessage += `Unexpected columns found: ${error.extraHeaders.join(', ')}\n`;
+        }
+
+        errorMessage += `\nExpected format: ${error.expectedHeaders.join(', ')}`;
+
+        if (error.actualHeaders.length > 0) {
+          errorMessage += `\nActual format: ${error.actualHeaders.join(', ')}`;
+        }
+
+        // Show the detailed error message
+        this.notificationService.error(errorMessage);
+
+        // Don't proceed with import if there are validation errors
+        return;
       } else {
+        // Proceed with import if validation passes
         this.checkImportItems(response.file, response.delimiter);
       }
     });

@@ -134,49 +134,139 @@ export function singleTrueValidator(fieldKey: string): ValidatorFn {
 }
 
 /**
- * Async validator to check if the file has the expected headers
+ * Validator to check if a file has been selected in a FileInput
  * Returns
- * - null if the file has the expected headers
- * - {csvFormatError: {expectedHeaders, actualHeaders, missingHeaders, extraHeaders}} if the file does not have the expected headers
+ * - null if a file has been selected
+ * - {fileRequired: true} if no file has been selected
+ */
+export function fileRequiredValidator(control: AbstractControl): ValidationErrors | null {
+  const file = control.value as File;
+  if (!file || !(file instanceof File) || file.name === 'Choose a file') {
+    return { fileRequired: true };
+  }
+  return null;
+}
+
+/**
+ * Validator to check if the CSV file has the expected headers.
+ * Returns
+ * - null if the CSV file has the expected headers
+ * - {csvFormatError: CsvValidationError} if the CSV file does not have the expected headers
+ *
+ * The CsvValidationError object contains the following properties:
+ * - missingHeaders: Array of headers that are missing from the CSV file
+ * - extraHeaders: Array of headers that are present in the CSV file but are not expected
+ * - expectedHeaders: Array of headers that are expected to be in the CSV file
+ * - actualHeaders: Array of headers that are actually present in the CSV file
+ *
+ * The `delimiter` parameter is the separator used in the CSV file.
+ * The `expectedHeaders` parameter is the array of headers that are expected to be in the CSV file.
  */
 export function simpleHeaderValidator(expectedHeaders: Array<string>, delimiter: string): AsyncValidatorFn {
   return (control: AbstractControl): Observable<ValidationErrors | null> => {
     const file = control.value as File;
 
-    if (!file || !(file instanceof File)) {
-      return of(null);
+    if (!file || !(file instanceof File) || file.name === 'Choose a file') {
+      return of(null); // Let the fileRequiredValidator handle this
     }
 
     return new Observable(observer => {
       const reader = new FileReader();
 
       reader.onload = e => {
-        const csvContent = e.target?.result as string;
-        const lines = csvContent.split('\n');
+        try {
+          const content = e.target?.result as string;
+          if (!content) {
+            observer.next(null);
+            observer.complete();
+            return;
+          }
 
-        if (lines.length === 0) {
-          observer.next(null);
+          // Get the first line (header)
+          const lines = content.split('\n');
+          if (lines.length === 0) {
+            observer.next({
+              csvFormatError: {
+                missingHeaders: expectedHeaders,
+                extraHeaders: [],
+                expectedHeaders: expectedHeaders,
+                actualHeaders: []
+              } as CsvValidationError
+            });
+            observer.complete();
+            return;
+          }
+
+          // Parse the header line
+          const headerLine = lines[0].trim();
+          const actualHeaders = headerLine.split(delimiter).map(header => header.trim().replace(/['"]/g, ''));
+
+          // Helper function to check if a header matches (considering settings_ prefix)
+          const headerMatches = (expected: string, actual: string): boolean => {
+            const expectedLower = expected.toLowerCase();
+            const actualLower = actual.toLowerCase();
+
+            // Direct match
+            if (expectedLower === actualLower) return true;
+
+            // Check if actual has settings_ prefix
+            if (actualLower === `settings_${expectedLower}`) return true;
+
+            // Check if expected has settings_ prefix but actual doesn't
+            if (expectedLower.startsWith('settings_') && actualLower === expectedLower.replace('settings_', '')) return true;
+
+            return false;
+          };
+
+          // Check for missing headers
+          const missingHeaders = expectedHeaders.filter(expected => !actualHeaders.some(actual => headerMatches(expected, actual)));
+
+          // Check for extra headers (but be more lenient - only flag truly unexpected ones)
+          const extraHeaders = actualHeaders.filter(actual => {
+            // Skip common CSV headers that might be extra but are acceptable
+            const commonExtraHeaders = ['id', 'createdAt', 'updatedAt', 'scanModeName'];
+            if (commonExtraHeaders.some(common => headerMatches(common, actual))) {
+              return false;
+            }
+
+            return !expectedHeaders.some(expected => headerMatches(expected, actual));
+          });
+
+          if (missingHeaders.length > 0) {
+            observer.next({
+              csvFormatError: {
+                missingHeaders,
+                extraHeaders,
+                expectedHeaders,
+                actualHeaders
+              } as CsvValidationError
+            });
+          } else {
+            observer.next(null);
+          }
           observer.complete();
-          return;
-        }
-
-        const actualHeaders = lines[0].split(delimiter).map(h => h.trim().replace(/"/g, '').replace(/\r/g, '')); // Added \r removal
-        const missingHeaders = expectedHeaders.filter(h => !actualHeaders.includes(h));
-        const extraHeaders = actualHeaders.filter(h => !expectedHeaders.includes(h)); // Add this line
-
-        if (missingHeaders.length > 0) {
+        } catch (_error) {
           observer.next({
             csvFormatError: {
-              expectedHeaders,
-              actualHeaders,
-              missingHeaders,
-              extraHeaders
-            }
+              missingHeaders: expectedHeaders,
+              extraHeaders: [],
+              expectedHeaders: expectedHeaders,
+              actualHeaders: []
+            } as CsvValidationError
           });
-        } else {
-          observer.next(null);
+          observer.complete();
         }
+      };
 
+      reader.onerror = () => {
+        observer.next({
+          csvFormatError: {
+            missingHeaders: expectedHeaders,
+            extraHeaders: [],
+            expectedHeaders: expectedHeaders,
+            actualHeaders: []
+          } as CsvValidationError
+        });
         observer.complete();
       };
 
