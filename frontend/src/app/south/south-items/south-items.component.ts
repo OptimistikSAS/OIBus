@@ -26,6 +26,7 @@ import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
 import { ImportItemModalComponent } from '../../shared/import-item-modal/import-item-modal.component';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
+import { CsvValidationError } from '../../shared/validators';
 
 const PAGE_SIZE = 20;
 
@@ -340,10 +341,8 @@ export class SouthItemsComponent implements OnInit {
       expectedHeaders.push('scanMode');
     }
 
-    // Add the simple fields from the manifest with settings_ prefix to match export format
     this.southManifest().items.settings.forEach(setting => {
       if (['OibText', 'OibNumber', 'OibSelect', 'OibCheckbox'].includes(setting.type)) {
-        // Add both prefixed and non-prefixed versions to be flexible
         expectedHeaders.push(`settings_${setting.key}`);
       }
     });
@@ -351,38 +350,40 @@ export class SouthItemsComponent implements OnInit {
     modalRef.componentInstance.expectedHeaders = expectedHeaders;
 
     modalRef.result.subscribe(response => {
-      // Early return if modal was cancelled/dismissed
       if (!response) return;
 
       if (response.validationError) {
-        // Create a more user-friendly error message for the notification
-        const error = response.validationError;
-        let errorMessage = 'CSV Import Format Error:\n\n';
-
-        if (error.missingHeaders.length > 0) {
-          errorMessage += `Missing required columns: ${error.missingHeaders.join(', ')}\n`;
-        }
-
-        if (error.extraHeaders.length > 0) {
-          errorMessage += `Unexpected columns found: ${error.extraHeaders.join(', ')}\n`;
-        }
-
-        errorMessage += `\nExpected format: ${error.expectedHeaders.join(', ')}`;
-
-        if (error.actualHeaders.length > 0) {
-          errorMessage += `\nActual format: ${error.actualHeaders.join(', ')}`;
-        }
-
-        // Show the detailed error message
+        const errorMessage = this.buildCsvFormatErrorMessage(response.validationError);
         this.notificationService.error(errorMessage);
-
-        // Don't proceed with import if there are validation errors
         return;
       } else {
-        // Proceed with import if validation passes
         this.checkImportItems(response.file, response.delimiter);
       }
     });
+  }
+
+  private buildCsvFormatErrorMessage(error: CsvValidationError): string {
+    const t = (key: string) => this.translateService.instant(key);
+    const lines: Array<string> = [];
+
+    lines.push(t('south.items.import.format-error-title'));
+    lines.push(t('south.items.import.format-error-description'));
+
+    if (error.missingHeaders.length > 0) {
+      lines.push(`${t('south.items.import.missing-columns')} ${error.missingHeaders.join(', ')}`);
+    }
+
+    if (error.extraHeaders.length > 0) {
+      lines.push(`${t('south.items.import.extra-columns')} ${error.extraHeaders.join(', ')}`);
+    }
+
+    lines.push(`${t('south.items.import.expected-format')} ${error.expectedHeaders.join(', ')}`);
+
+    if (error.actualHeaders.length > 0) {
+      lines.push(`${t('south.items.import.actual-format')} ${error.actualHeaders.join(', ')}`);
+    }
+
+    return lines.join('\n');
   }
 
   checkImportItems(file: File, delimiter: string) {

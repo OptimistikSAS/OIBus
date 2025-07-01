@@ -54,16 +54,13 @@ export class ImportItemModalComponent implements OnInit {
   }
 
   save() {
-    // Always try to save, even with validation errors
-    // The parent component will handle the validation error
     const formValue = this.importForm.value;
     const fileControl = this.importForm.get('file');
 
     if (this.selectedFile === this.initializeFile) {
-      return; // Don't proceed if no file selected
+      return;
     }
 
-    // Check if there's a CSV format error
     if (fileControl?.errors?.['csvFormatError']) {
       const validationError: CsvValidationError = fileControl.errors['csvFormatError'];
       this.modal.close({
@@ -74,7 +71,6 @@ export class ImportItemModalComponent implements OnInit {
       return;
     }
 
-    // If validation passes, close with success
     this.selectedDelimiter = this.findCorrespondingDelimiter(formValue.delimiter!);
     this.modal.close({
       delimiter: this.selectedDelimiter,

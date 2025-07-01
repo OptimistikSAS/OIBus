@@ -148,25 +148,33 @@ export function fileRequiredValidator(control: AbstractControl): ValidationError
 }
 
 /**
+ * Helper to check if a header matches, considering settings_ prefix
+ */
+export function headerMatches(expected: string, actual: string): boolean {
+  const expectedLower = expected.toLowerCase();
+  const actualLower = actual.toLowerCase();
+
+  if (expectedLower === actualLower) return true;
+
+  if (actualLower === `settings_${expectedLower}`) return true;
+
+  if (expectedLower.startsWith('settings_') && actualLower === expectedLower.replace('settings_', '')) return true;
+
+  return false;
+}
+
+/**
  * Validator to check if the CSV file has the expected headers.
  * Returns
  * - null if the CSV file has the expected headers
  * - {csvFormatError: CsvValidationError} if the CSV file does not have the expected headers
- *
- * The CsvValidationError object contains the following properties:
- * - missingHeaders: Array of headers that are missing from the CSV file
- * - extraHeaders: Array of headers that are present in the CSV file but are not expected
- * - expectedHeaders: Array of headers that are expected to be in the CSV file
- * - actualHeaders: Array of headers that are actually present in the CSV file
- *
- * The `delimiter` parameter is the separator used in the CSV file.
- * The `expectedHeaders` parameter is the array of headers that are expected to be in the CSV file.
  */
 export function simpleHeaderValidator(expectedHeaders: Array<string>, delimiter: string): AsyncValidatorFn {
   return (control: AbstractControl): Observable<ValidationErrors | null> => {
     const file = control.value as File;
+    const uploadFileName = 'Choose a file';
 
-    if (!file || !(file instanceof File) || file.name === 'Choose a file') {
+    if (!file || !(file instanceof File) || file.name === uploadFileName) {
       return of(null); // Let the fileRequiredValidator handle this
     }
 
@@ -182,7 +190,6 @@ export function simpleHeaderValidator(expectedHeaders: Array<string>, delimiter:
             return;
           }
 
-          // Get the first line (header)
           const lines = content.split('\n');
           if (lines.length === 0) {
             observer.next({
@@ -197,38 +204,16 @@ export function simpleHeaderValidator(expectedHeaders: Array<string>, delimiter:
             return;
           }
 
-          // Parse the header line
           const headerLine = lines[0].trim();
           const actualHeaders = headerLine.split(delimiter).map(header => header.trim().replace(/['"]/g, ''));
 
-          // Helper function to check if a header matches (considering settings_ prefix)
-          const headerMatches = (expected: string, actual: string): boolean => {
-            const expectedLower = expected.toLowerCase();
-            const actualLower = actual.toLowerCase();
-
-            // Direct match
-            if (expectedLower === actualLower) return true;
-
-            // Check if actual has settings_ prefix
-            if (actualLower === `settings_${expectedLower}`) return true;
-
-            // Check if expected has settings_ prefix but actual doesn't
-            if (expectedLower.startsWith('settings_') && actualLower === expectedLower.replace('settings_', '')) return true;
-
-            return false;
-          };
-
-          // Check for missing headers
           const missingHeaders = expectedHeaders.filter(expected => !actualHeaders.some(actual => headerMatches(expected, actual)));
 
-          // Check for extra headers (but be more lenient - only flag truly unexpected ones)
           const extraHeaders = actualHeaders.filter(actual => {
-            // Skip common CSV headers that might be extra but are acceptable
             const commonExtraHeaders = ['id', 'createdAt', 'updatedAt', 'scanModeName'];
             if (commonExtraHeaders.some(common => headerMatches(common, actual))) {
               return false;
             }
-
             return !expectedHeaders.some(expected => headerMatches(expected, actual));
           });
 
