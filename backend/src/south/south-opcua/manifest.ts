@@ -248,6 +248,16 @@ const manifest: SouthConnectorManifest = {
             displayInViewMode: true
           }
         ]
+      },
+      {
+        key: 'timestampOrigin',
+        type: 'OibSelect',
+        translationKey: 'south.items.opcua.timestamp-origin',
+        conditionalDisplay: { field: 'mode', values: ['da'] },
+        options: ['oibus', 'point', 'server'],
+        defaultValue: 'oibus',
+        validators: [{ key: 'required' }],
+        displayInViewMode: true
       }
     ]
   }

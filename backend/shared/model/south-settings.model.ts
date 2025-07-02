@@ -221,6 +221,9 @@ export type SouthOPCUAItemSettingsHaModeResampling = (typeof SOUTH_O_P_C_U_A_ITE
 export const SOUTH_O_P_C_U_A_ITEM_SETTINGS_MODES = ['ha', 'da'] as const;
 export type SouthOPCUAItemSettingsMode = (typeof SOUTH_O_P_C_U_A_ITEM_SETTINGS_MODES)[number];
 
+export const SOUTH_O_P_C_U_A_ITEM_SETTINGS_TIMESTAMP_ORIGINS = ['oibus', 'point', 'server'] as const;
+export type SouthOPCUAItemSettingsTimestampOrigin = (typeof SOUTH_O_P_C_U_A_ITEM_SETTINGS_TIMESTAMP_ORIGINS)[number];
+
 export const SOUTH_ORACLE_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'] as const;
 export type SouthOracleItemSettingsDateTimeFieldsType = (typeof SOUTH_ORACLE_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
 
@@ -811,6 +814,7 @@ export interface SouthOPCUAItemSettings {
   nodeId: string;
   mode: SouthOPCUAItemSettingsMode;
   haMode?: SouthOPCUAItemSettingsHaMode | null;
+  timestampOrigin?: SouthOPCUAItemSettingsTimestampOrigin;
 }
 
 export interface SouthOracleItemSettings {

@@ -166,7 +166,8 @@ describe('SouthOPCUA', () => {
         enabled: true,
         settings: {
           nodeId: 'ns=3;s=Random',
-          mode: 'da'
+          mode: 'da',
+          timestampOrigin: 'oibus'
         },
         scanModeId: 'scanModeId1'
       },
@@ -176,7 +177,8 @@ describe('SouthOPCUA', () => {
         enabled: true,
         settings: {
           nodeId: 'ns=3;s=Counter',
-          mode: 'da'
+          mode: 'da',
+          timestampOrigin: 'point'
         },
         scanModeId: 'scanModeId1'
       },
@@ -186,7 +188,8 @@ describe('SouthOPCUA', () => {
         enabled: true,
         settings: {
           nodeId: 'ns=3;s=Triangle',
-          mode: 'da'
+          mode: 'da',
+          timestampOrigin: 'server'
         },
         scanModeId: 'scanModeId2'
       }
@@ -636,14 +639,21 @@ describe('SouthOPCUA', () => {
       {
         value: { value: 1, dataType: DataType.Float },
         sourceTimestamp: new Date(testData.constants.dates.DATE_1),
+        serverTimestamp: new Date(testData.constants.dates.DATE_2),
         statusCode: StatusCodes.Good
       },
       {
         value: { value: 2, dataType: DataType.Double },
+        sourceTimestamp: new Date(testData.constants.dates.DATE_1),
         serverTimestamp: new Date(testData.constants.dates.DATE_2),
         statusCode: StatusCodes.Good
       },
-      { value: { value: 3, dataType: DataType.UInt16 }, statusCode: StatusCodes.Good }
+      {
+        value: { value: 3, dataType: DataType.UInt16 },
+        sourceTimestamp: new Date(testData.constants.dates.DATE_1),
+        serverTimestamp: new Date(testData.constants.dates.DATE_2),
+        statusCode: StatusCodes.Good
+      }
     ]);
     (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({ read });
     south.addContent = jest.fn();
@@ -656,13 +666,15 @@ describe('SouthOPCUA', () => {
       `Read ${expectedItemsToRead.length} nodes ` +
         `[${expectedItemsToRead[0].settings.nodeId}...${expectedItemsToRead[expectedItemsToRead.length - 1].settings.nodeId}]`
     );
-    expect(read).toHaveBeenCalledWith(expectedItemsToRead.map(item => ({ nodeId: item.settings.nodeId, name: item.name })));
+    expect(read).toHaveBeenCalledWith(
+      expectedItemsToRead.map(item => ({ nodeId: item.settings.nodeId, name: item.name, settings: item.settings }))
+    );
     expect(south.addContent).toHaveBeenCalledWith({
       type: 'time-values',
       content: [
         {
           pointId: expectedItemsToRead[0].name,
-          timestamp: testData.constants.dates.DATE_1,
+          timestamp: testData.constants.dates.FAKE_NOW,
           data: {
             value: '1',
             quality: StatusCodes.Good.name
@@ -670,7 +682,7 @@ describe('SouthOPCUA', () => {
         },
         {
           pointId: expectedItemsToRead[1].name,
-          timestamp: testData.constants.dates.DATE_2,
+          timestamp: testData.constants.dates.DATE_1,
           data: {
             value: '2',
             quality: StatusCodes.Good.name
@@ -678,7 +690,7 @@ describe('SouthOPCUA', () => {
         },
         {
           pointId: expectedItemsToRead[2].name,
-          timestamp: testData.constants.dates.FAKE_NOW,
+          timestamp: testData.constants.dates.DATE_2,
           data: {
             value: '3',
             quality: StatusCodes.Good.name
@@ -709,7 +721,9 @@ describe('SouthOPCUA', () => {
     await expect(south.lastPointQuery(configuration.items)).rejects.toThrow('opcua read error');
     const expectedItemsToRead = configuration.items.filter(item => item.settings.mode === 'da');
 
-    expect(read).toHaveBeenCalledWith(expectedItemsToRead.map(item => ({ nodeId: item.settings.nodeId, name: item.name })));
+    expect(read).toHaveBeenCalledWith(
+      expectedItemsToRead.map(item => ({ nodeId: item.settings.nodeId, name: item.name, settings: item.settings }))
+    );
     expect(south.addContent).not.toHaveBeenCalled();
     (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue({
       ...configuration,
@@ -764,7 +778,9 @@ describe('SouthOPCUA', () => {
     await south.start();
     await south.lastPointQuery([configuration.items[3]]);
     expect(logger.debug).toHaveBeenCalledWith(`Read node ${configuration.items[3].settings.nodeId}`);
-    expect(read).toHaveBeenCalledWith([{ nodeId: configuration.items[3].settings.nodeId, name: configuration.items[3].name }]);
+    expect(read).toHaveBeenCalledWith([
+      { nodeId: configuration.items[3].settings.nodeId, name: configuration.items[3].name, settings: configuration.items[3].settings }
+    ]);
   });
 
   it('should properly query items and log error when not same number of items and values', async () => {
@@ -781,7 +797,9 @@ describe('SouthOPCUA', () => {
     expect(logger.error).toHaveBeenCalledWith(
       `Received 2 node results, requested ${expectedItemsToRead.length} nodes. Request done in 0 ms`
     );
-    expect(read).toHaveBeenCalledWith(expectedItemsToRead.map(item => ({ nodeId: item.settings.nodeId, name: item.name })));
+    expect(read).toHaveBeenCalledWith(
+      expectedItemsToRead.map(item => ({ nodeId: item.settings.nodeId, name: item.name, settings: item.settings }))
+    );
     expect(south.addContent).toHaveBeenCalledWith({
       type: 'time-values',
       content: [
@@ -940,7 +958,7 @@ describe('SouthOPCUA', () => {
     const callback = jest.fn();
     await south.testItem(configuration.items[3], testData.south.itemTestingSettings, callback);
     expect(south.getDAValues).toHaveBeenCalledWith(
-      [{ nodeId: configuration.items[3].settings.nodeId, name: configuration.items[3].name }],
+      [{ nodeId: configuration.items[3].settings.nodeId, name: configuration.items[3].name, settings: configuration.items[3].settings }],
       session
     );
   });
