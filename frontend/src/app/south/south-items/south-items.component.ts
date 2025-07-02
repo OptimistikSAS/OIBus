@@ -26,6 +26,7 @@ import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
 import { ImportItemModalComponent } from '../../shared/import-item-modal/import-item-modal.component';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
+import { CsvValidationError } from '../../shared/validators';
 
 const PAGE_SIZE = 20;
 
@@ -333,9 +334,56 @@ export class SouthItemsComponent implements OnInit {
 
   importItems() {
     const modalRef = this.modalService.open(ImportItemModalComponent, { backdrop: 'static' });
-    modalRef.result.subscribe(response => {
-      this.checkImportItems(response.file, response.delimiter);
+
+    // Set expected headers based on manifest
+    const expectedHeaders = ['name', 'enabled'];
+    if (this.scanModes().length > 0) {
+      expectedHeaders.push('scanMode');
+    }
+
+    this.southManifest().items.settings.forEach(setting => {
+      if (['OibText', 'OibNumber', 'OibSelect', 'OibCheckbox'].includes(setting.type)) {
+        expectedHeaders.push(`settings_${setting.key}`);
+      }
     });
+
+    modalRef.componentInstance.expectedHeaders = expectedHeaders;
+
+    modalRef.result.subscribe(response => {
+      if (!response) return;
+
+      if (response.validationError) {
+        const errorMessage = this.buildCsvFormatErrorMessage(response.validationError);
+        this.notificationService.error(errorMessage);
+        return;
+      } else {
+        this.checkImportItems(response.file, response.delimiter);
+      }
+    });
+  }
+
+  private buildCsvFormatErrorMessage(error: CsvValidationError): string {
+    const t = (key: string) => this.translateService.instant(key);
+    const lines: Array<string> = [];
+
+    lines.push(t('south.items.import.format-error-title'));
+    lines.push(t('south.items.import.format-error-description'));
+
+    if (error.missingHeaders.length > 0) {
+      lines.push(`${t('south.items.import.missing-columns')} ${error.missingHeaders.join(', ')}`);
+    }
+
+    if (error.extraHeaders.length > 0) {
+      lines.push(`${t('south.items.import.extra-columns')} ${error.extraHeaders.join(', ')}`);
+    }
+
+    lines.push(`${t('south.items.import.expected-format')} ${error.expectedHeaders.join(', ')}`);
+
+    if (error.actualHeaders.length > 0) {
+      lines.push(`${t('south.items.import.actual-format')} ${error.actualHeaders.join(', ')}`);
+    }
+
+    return lines.join('\n');
   }
 
   checkImportItems(file: File, delimiter: string) {

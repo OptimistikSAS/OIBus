@@ -1,10 +1,17 @@
-import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
+import { AbstractControl, AsyncValidatorFn, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { Instant } from '../../../../backend/shared/model/types';
 import { DateTime } from 'luxon';
+import { Observable, of } from 'rxjs';
 
 export interface RangeFormValue {
   start: Instant;
   end: Instant;
+}
+export interface CsvValidationError {
+  expectedHeaders: Array<string>;
+  actualHeaders: Array<string>;
+  missingHeaders: Array<string>;
+  extraHeaders: Array<string>;
 }
 
 /**
@@ -123,5 +130,132 @@ export function singleTrueValidator(fieldKey: string): ValidatorFn {
     }
 
     return null;
+  };
+}
+
+/**
+ * Validator to check if a file has been selected in a FileInput
+ * Returns
+ * - null if a file has been selected
+ * - {fileRequired: true} if no file has been selected
+ */
+export function fileRequiredValidator(control: AbstractControl): ValidationErrors | null {
+  const file = control.value as File;
+  if (!file || !(file instanceof File) || file.name === 'Choose a file') {
+    return { fileRequired: true };
+  }
+  return null;
+}
+
+/**
+ * Helper to check if a header matches, considering settings_ prefix
+ */
+export function headerMatches(expected: string, actual: string): boolean {
+  const expectedLower = expected.toLowerCase();
+  const actualLower = actual.toLowerCase();
+
+  if (expectedLower === actualLower) return true;
+
+  if (actualLower === `settings_${expectedLower}`) return true;
+
+  if (expectedLower.startsWith('settings_') && actualLower === expectedLower.replace('settings_', '')) return true;
+
+  return false;
+}
+
+/**
+ * Validator to check if the CSV file has the expected headers.
+ * Returns
+ * - null if the CSV file has the expected headers
+ * - {csvFormatError: CsvValidationError} if the CSV file does not have the expected headers
+ */
+export function simpleHeaderValidator(expectedHeaders: Array<string>, delimiter: string): AsyncValidatorFn {
+  return (control: AbstractControl): Observable<ValidationErrors | null> => {
+    const file = control.value as File;
+    const uploadFileName = 'Choose a file';
+
+    if (!file || !(file instanceof File) || file.name === uploadFileName) {
+      return of(null); // Let the fileRequiredValidator handle this
+    }
+
+    return new Observable(observer => {
+      const reader = new FileReader();
+
+      reader.onload = e => {
+        try {
+          const content = e.target?.result as string;
+          if (!content) {
+            observer.next(null);
+            observer.complete();
+            return;
+          }
+
+          const lines = content.split('\n');
+          if (lines.length === 0) {
+            observer.next({
+              csvFormatError: {
+                missingHeaders: expectedHeaders,
+                extraHeaders: [],
+                expectedHeaders: expectedHeaders,
+                actualHeaders: []
+              } as CsvValidationError
+            });
+            observer.complete();
+            return;
+          }
+
+          const headerLine = lines[0].trim();
+          const actualHeaders = headerLine.split(delimiter).map(header => header.trim().replace(/['"]/g, ''));
+
+          const missingHeaders = expectedHeaders.filter(expected => !actualHeaders.some(actual => headerMatches(expected, actual)));
+
+          const extraHeaders = actualHeaders.filter(actual => {
+            const commonExtraHeaders = ['id', 'createdAt', 'updatedAt', 'scanModeName'];
+            if (commonExtraHeaders.some(common => headerMatches(common, actual))) {
+              return false;
+            }
+            return !expectedHeaders.some(expected => headerMatches(expected, actual));
+          });
+
+          if (missingHeaders.length > 0) {
+            observer.next({
+              csvFormatError: {
+                missingHeaders,
+                extraHeaders,
+                expectedHeaders,
+                actualHeaders
+              } as CsvValidationError
+            });
+          } else {
+            observer.next(null);
+          }
+          observer.complete();
+        } catch (_error) {
+          observer.next({
+            csvFormatError: {
+              missingHeaders: expectedHeaders,
+              extraHeaders: [],
+              expectedHeaders: expectedHeaders,
+              actualHeaders: []
+            } as CsvValidationError
+          });
+          observer.complete();
+        }
+      };
+
+      reader.onerror = () => {
+        observer.next({
+          csvFormatError: {
+            missingHeaders: expectedHeaders,
+            extraHeaders: [],
+            expectedHeaders: expectedHeaders,
+            actualHeaders: []
+          } as CsvValidationError
+        });
+        observer.complete();
+      };
+
+      reader.readAsText(file);
+    });
   };
 }
