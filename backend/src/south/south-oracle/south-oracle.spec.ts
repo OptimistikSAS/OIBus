@@ -1,13 +1,10 @@
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import path from 'node:path';
-
 import SouthOracle from './south-oracle';
 import * as utils from '../../service/utils';
 import { generateReplacementParameters } from '../../service/utils';
 import pino from 'pino';
-
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import EncryptionService from '../../service/encryption.service';
-import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import oracledb from 'oracledb';
 import { DateTime } from 'luxon';
 import {
@@ -28,8 +25,10 @@ import { mockBaseFolders } from '../../tests/utils/test-utils';
 
 jest.mock('oracledb');
 jest.mock('../../service/utils');
+jest.mock('../../service/encryption.service', () => ({
+  encryptionService: new EncryptionServiceMock('', '')
+}));
 
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
@@ -74,7 +73,7 @@ describe('SouthOracle with authentication', () => {
         name: 'item1',
         enabled: true,
         settings: {
-          query: 'SELECT * FROM table',
+          query: 'query1',
           requestTimeout: 1000,
           dateTimeFields: [
             {
@@ -110,7 +109,7 @@ describe('SouthOracle with authentication', () => {
         name: 'item2',
         enabled: true,
         settings: {
-          query: 'SELECT * FROM table',
+          query: 'query2',
           requestTimeout: 1000,
           dateTimeFields: null,
           serialization: {
@@ -129,7 +128,7 @@ describe('SouthOracle with authentication', () => {
         name: 'item3',
         enabled: true,
         settings: {
-          query: 'SELECT * FROM table',
+          query: 'query3',
           requestTimeout: 1000,
           dateTimeFields: [
             {
@@ -176,7 +175,6 @@ describe('SouthOracle with authentication', () => {
     south = new SouthOracle(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,
@@ -408,7 +406,7 @@ describe('SouthOracle without authentication but with thick mode', () => {
         name: 'item1',
         enabled: true,
         settings: {
-          query: 'SELECT * FROM table',
+          query: 'query1',
           requestTimeout: 1000,
           dateTimeFields: [
             {
@@ -444,7 +442,7 @@ describe('SouthOracle without authentication but with thick mode', () => {
         name: 'item2',
         enabled: true,
         settings: {
-          query: 'SELECT * FROM table',
+          query: 'query2',
           requestTimeout: 1000,
           dateTimeFields: null,
           serialization: {
@@ -463,7 +461,7 @@ describe('SouthOracle without authentication but with thick mode', () => {
         name: 'item3',
         enabled: true,
         settings: {
-          query: 'SELECT * FROM table',
+          query: 'query3',
           requestTimeout: 1000,
           dateTimeFields: [
             {
@@ -507,7 +505,6 @@ describe('SouthOracle without authentication but with thick mode', () => {
     south = new SouthOracle(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,
@@ -567,7 +564,7 @@ describe('SouthOracle test connection', () => {
         name: 'item1',
         enabled: true,
         settings: {
-          query: 'SELECT * FROM table',
+          query: 'query1',
           requestTimeout: 1000,
           dateTimeFields: [
             {
@@ -603,7 +600,7 @@ describe('SouthOracle test connection', () => {
         name: 'item2',
         enabled: true,
         settings: {
-          query: 'SELECT * FROM table',
+          query: 'query2',
           requestTimeout: 1000,
           dateTimeFields: null,
           serialization: {
@@ -622,7 +619,7 @@ describe('SouthOracle test connection', () => {
         name: 'item3',
         enabled: true,
         settings: {
-          query: 'SELECT * FROM table',
+          query: 'query3',
           requestTimeout: 1000,
           dateTimeFields: [
             {
@@ -687,7 +684,6 @@ describe('SouthOracle test connection', () => {
     south = new SouthOracle(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,

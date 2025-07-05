@@ -161,7 +161,6 @@ const CERT_FOLDER = 'certs';
     repositoryService.oianalyticsRegistrationRepository,
     repositoryService.certificateRepository,
     oIAnalyticsMessageService,
-    encryptionService,
     connectionService,
     dataStreamEngine
   );
