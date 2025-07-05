@@ -3,7 +3,6 @@ import { QoS } from 'mqtt-packet';
 
 import objectPath from 'object-path';
 import SouthConnector from '../south-connector';
-import EncryptionService from '../../service/encryption.service';
 
 import pino from 'pino';
 import fs from 'node:fs/promises';
@@ -24,6 +23,7 @@ import SouthCacheRepository from '../../repository/cache/south-cache.repository'
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import { BaseFolders } from '../../model/types';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import { encryptionService } from '../../service/encryption.service';
 
 /**
  * Class SouthMQTT - Subscribe to data topic from a MQTT broker
@@ -39,23 +39,13 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
   constructor(
     connector: SouthConnectorEntity<SouthMQTTSettings, SouthMQTTItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
-    encryptionService: EncryptionService,
     southConnectorRepository: SouthConnectorRepository,
     southCacheRepository: SouthCacheRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolders: BaseFolders
   ) {
-    super(
-      connector,
-      engineAddContentCallback,
-      encryptionService,
-      southConnectorRepository,
-      southCacheRepository,
-      scanModeRepository,
-      logger,
-      baseFolders
-    );
+    super(connector, engineAddContentCallback, southConnectorRepository, southCacheRepository, scanModeRepository, logger, baseFolders);
   }
 
   override async connect(): Promise<void> {
@@ -232,7 +222,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
     };
     if (this.connector.settings.authentication.type === 'basic') {
       options.username = this.connector.settings.authentication.username;
-      options.password = Buffer.from(await this.encryptionService.decryptText(this.connector.settings.authentication.password!)).toString();
+      options.password = Buffer.from(await encryptionService.decryptText(this.connector.settings.authentication.password!)).toString();
     } else if (this.connector.settings.authentication.type === 'cert') {
       options.cert = this.connector.settings.authentication.certFilePath
         ? await fs.readFile(path.resolve(this.connector.settings.authentication.certFilePath))

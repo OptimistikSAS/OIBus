@@ -108,7 +108,6 @@ export default class SouthOPCUA
   constructor(
     connector: SouthConnectorEntity<SouthOPCUASettings, SouthOPCUAItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
-    encryptionService: EncryptionService,
     southConnectorRepository: SouthConnectorRepository,
     southCacheRepository: SouthCacheRepository,
     scanModeRepository: ScanModeRepository,
@@ -119,7 +118,6 @@ export default class SouthOPCUA
     super(
       connector,
       engineAddContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,
@@ -164,7 +162,7 @@ export default class SouthOPCUA
       const { options, userIdentity } = await this.createSessionConfigs(
         this.connector.settings,
         clientCertificateManager,
-        this.encryptionService,
+        encryptionService,
         'OIBus Connector test'
       );
       session = await OPCUAClient.createSession(this.connector.settings.url, userIdentity, options);
@@ -231,7 +229,7 @@ export default class SouthOPCUA
       const { options, userIdentity } = await this.createSessionConfigs(
         this.connector.settings,
         clientCertificateManager,
-        this.encryptionService,
+        encryptionService,
         'OIBus Connector test'
       );
       session = await OPCUAClient.createSession(this.connector.settings.url, userIdentity, options);
@@ -274,7 +272,7 @@ export default class SouthOPCUA
       const { options, userIdentity } = await this.createSessionConfigs(
         this.connector.settings,
         this.clientCertificateManager!,
-        this.encryptionService,
+        encryptionService,
         clientName
       );
 
