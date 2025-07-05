@@ -22,7 +22,6 @@ import { getFilenameWithoutRandomId } from '../../service/utils';
 import Stream from 'node:stream';
 import net from 'node:net';
 import fs from 'node:fs/promises';
-import { AttributeIds } from 'node-opcua';
 
 jest.mock('node:fs/promises');
 jest.mock('node:net');
@@ -107,7 +106,6 @@ describe('NorthModbus', () => {
 
     north = new NorthModbus(
       configuration,
-      encryptionService,
       transformerService,
       northConnectorRepository,
       scanModeRepository,
@@ -321,7 +319,6 @@ describe('NorthModbus test connection', () => {
   it('Connecting to socket successfully', async () => {
     north = new NorthModbus(
       configuration,
-      encryptionService,
       transformerService,
       northConnectorRepository,
       scanModeRepository,
@@ -365,7 +362,6 @@ describe('NorthModbus test connection', () => {
   it('should fail to connect', async () => {
     north = new NorthModbus(
       configuration,
-      encryptionService,
       transformerService,
       northConnectorRepository,
       scanModeRepository,
