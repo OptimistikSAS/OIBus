@@ -93,6 +93,18 @@ describe('Repository with populated database', () => {
           end: testData.constants.dates.DATE_2
         }).totalElements
       ).toEqual(1);
+
+      expect(
+        repository.search({
+          levels: [],
+          scopeIds: [],
+          scopeTypes: [],
+          messageContent: '',
+          page: 0,
+          start: testData.constants.dates.DATE_1,
+          end: testData.constants.dates.DATE_2
+        }).totalElements
+      ).toEqual(4);
     });
 
     it('should delete logs', () => {

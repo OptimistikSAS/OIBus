@@ -17,6 +17,8 @@ import NorthConnectorMetricsService from '../service/metrics/north-connector-met
 import NorthConnectorMetricsServiceMock from '../tests/__mocks__/service/metrics/north-connector-metrics-service.mock';
 import SouthConnectorMetricsService from '../service/metrics/south-connector-metrics.service';
 import SouthConnectorMetricsServiceMock from '../tests/__mocks__/service/metrics/south-connector-metrics-service.mock';
+import { SouthConnectorEntity } from '../model/south-connector.model';
+import { NorthConnectorEntity } from '../model/north-connector.model';
 
 jest.mock('../south/south-mqtt/south-mqtt');
 jest.mock('../service/south.service');
@@ -105,6 +107,19 @@ describe('DataStreamEngine', () => {
     await engine.stop();
 
     expect(mockedNorth1.stop).toHaveBeenCalledTimes(1);
+  });
+
+  it('it should start and stop without south 2 and north 2', async () => {
+    mockedNorth2['settings']['enabled'] = false;
+    mockedSouth2['settings']['enabled'] = false;
+    engine.startNorth = jest.fn();
+    engine.startSouth = jest.fn();
+    await engine.start([mockedNorth1, mockedNorth2], [mockedSouth1, mockedSouth2]);
+
+    expect(engine.startNorth).toHaveBeenCalledTimes(1);
+    expect(engine.startNorth).toHaveBeenCalledWith(testData.north.list[0].id);
+    expect(engine.startSouth).toHaveBeenCalledTimes(1);
+    expect(engine.startSouth).toHaveBeenCalledWith(testData.south.list[0].id);
   });
 
   it('should add content', async () => {
@@ -309,6 +324,24 @@ describe('DataStreamEngine', () => {
     (mockedSouth1.queriesHistory as unknown as jest.Mock).mockReturnValueOnce(true);
     await engine.reloadSouth(testData.south.list[0]);
     expect(mockedSouth1.manageSouthCacheOnChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('should properly reload south if disabled', async () => {
+    await engine.start([], [mockedSouth1]);
+    const south = JSON.parse(JSON.stringify(testData.south.list[0])) as SouthConnectorEntity<SouthSettings, SouthItemSettings>;
+    south.enabled = false;
+    engine.startSouth = jest.fn();
+    await engine.reloadSouth(south);
+    expect(engine.startSouth).not.toHaveBeenCalled();
+  });
+
+  it('should properly reload north if disabled', async () => {
+    await engine.start([mockedNorth1], []);
+    const north = JSON.parse(JSON.stringify(testData.north.list[0])) as NorthConnectorEntity<NorthSettings>;
+    north.enabled = false;
+    engine.startNorth = jest.fn();
+    await engine.reloadNorth(north);
+    expect(engine.startNorth).not.toHaveBeenCalled();
   });
 
   it('should properly get stream', async () => {

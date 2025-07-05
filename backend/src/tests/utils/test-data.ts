@@ -142,6 +142,27 @@ const transformers: Array<Transformer> = [
         wrapInBox: false
       }
     }
+  },
+  {
+    id: 'transformerId3',
+    type: 'custom',
+    name: 'my transformer 3',
+    description: 'description',
+    inputType: 'setpoint',
+    outputType: 'any',
+    customCode: 'console.log("Hello World");',
+    customManifest: {
+      type: 'object',
+      key: 'transformers.options',
+      translationKey: '',
+      attributes: [],
+      enablingConditions: [],
+      validators: [],
+      displayProperties: {
+        visible: true,
+        wrapInBox: false
+      }
+    }
   }
 ];
 
@@ -631,7 +652,8 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
     ],
     transformers: [
       { transformer: transformers[0], options: {}, inputType: transformers[0].inputType },
-      { transformer: transformers[1], options: {}, inputType: transformers[1].inputType }
+      { transformer: transformers[1], options: {}, inputType: transformers[1].inputType },
+      { transformer: transformers[2], options: {}, inputType: transformers[2].inputType }
     ]
   },
   {
@@ -1711,6 +1733,10 @@ const oibusContent: Array<OIBusContent> = [
     type: 'any',
     filePath: 'path/another-file.csv',
     content: 'my raw content'
+  },
+  {
+    type: 'setpoint',
+    content: [{ reference: 'ref', value: 123 }]
   }
 ];
 
