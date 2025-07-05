@@ -19,11 +19,12 @@ import {
   OPCUACertificateManager,
   OPCUAClient,
   OPCUAClientOptions,
+  resolveNodeId,
   UserIdentityInfo,
   UserTokenType
 } from 'node-opcua';
 import { randomUUID } from 'crypto';
-import { OIBusOPCUAValue } from '../../service/transformers/oibus-time-values-to-opcua-transformer';
+import { OIBusOPCUAValue } from '../../service/transformers/connector-types.model';
 
 function toOPCUASecurityMode(securityMode: SouthOPCUASettingsSecurityMode) {
   switch (securityMode) {
@@ -58,39 +59,6 @@ function toOPCUASecurityPolicy(securityPolicy: SouthOPCUASettingsSecurityPolicy 
       return 'PubSub_Aes256_CTR';
     default:
       return undefined;
-  }
-}
-
-function toOPCUADataTypes(dataType: string) {
-  switch (dataType) {
-    case 'boolean':
-      return DataType.Boolean;
-    case 's-byte':
-      return DataType.SByte;
-    case 'byte':
-      return DataType.Byte;
-    case 'int16':
-      return DataType.Int16;
-    case 'uint16':
-      return DataType.UInt16;
-    case 'int32':
-      return DataType.Int32;
-    case 'uint32':
-      return DataType.UInt32;
-    case 'int64':
-      return DataType.Int64;
-    case 'uint64':
-      return DataType.UInt64;
-    case 'float':
-      return DataType.Float;
-    case 'double':
-      return DataType.Double;
-    case 'string':
-      return DataType.String;
-    case 'date-time':
-      return DataType.DateTime;
-    default:
-      return null;
   }
 }
 
@@ -316,18 +284,35 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
     }
 
     for (const value of values) {
-      const dataType = toOPCUADataTypes(value.dataType);
-      if (!dataType) {
-        this.logger.trace(`Data type "${value.dataType}" unrecognized. ${value.nodeId}: ${value.value}`);
+      let nodeId;
+      try {
+        nodeId = resolveNodeId(value.nodeId);
+      } catch (error: unknown) {
+        this.logger.error(`Error when parsing node ID ${value.nodeId}: ${(error as Error).message}`);
+        continue;
+      }
+
+      // Read the DataType attribute of the node
+      const dataValue = await this.client.read({
+        nodeId,
+        attributeId: AttributeIds.DataType
+      });
+
+      // Extract the data type from the DataValue
+      const dataType = dataValue.value.value.value as DataType;
+
+      // Ensure that the dataType is valid
+      if (!Object.values(DataType).includes(dataType)) {
+        this.logger.error(`Invalid data type for node ID ${nodeId}`);
         continue;
       }
       // Write the value to the node
       const writeResult = await this.client.write({
-        nodeId: value.nodeId,
+        nodeId,
         attributeId: AttributeIds.Value,
         value: {
           value: {
-            dataType: dataType, // DataType.Int32
+            dataType,
             value: value.value
           }
         }

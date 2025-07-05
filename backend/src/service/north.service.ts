@@ -57,14 +57,13 @@ import path from 'node:path';
 import fs from 'node:fs/promises';
 import { BaseFolders } from '../model/types';
 import { ReadStream } from 'node:fs';
-import { CacheMetadata, CacheSearchParam, OIBusTimeValueContent } from '../../shared/model/engine.model';
+import { CacheMetadata, CacheSearchParam, OIBusSetpointContent } from '../../shared/model/engine.model';
 import TransformerService, { toTransformerDTO } from './transformer.service';
 import { TransformerDTO } from '../../shared/model/transformer.model';
 import NorthOPCUA from '../north/north-opcua/north-opcua';
 import NorthMQTT from '../north/north-mqtt/north-mqtt';
 import NorthModbus from '../north/north-modbus/north-modbus';
 import { Transformer } from '../model/transformer.model';
-import { DateTime } from 'luxon';
 
 export const northManifestList: Array<NorthConnectorManifest> = [
   consoleManifest,
@@ -478,20 +477,12 @@ export default class NorthService {
       throw new Error(`North connector ${northConnectorId} not found`);
     }
 
-    const timeValuesContent: OIBusTimeValueContent = {
-      type: 'time-values',
-      content: [
-        {
-          pointId: commandContent[0].reference,
-          timestamp: DateTime.now().toUTC().toISO()!,
-          data: {
-            value: commandContent[0].value
-          }
-        }
-      ]
+    const setpointContent: OIBusSetpointContent = {
+      type: 'setpoint',
+      content: commandContent
     };
 
-    await northConnector.cacheContent(timeValuesContent, 'oianalytics');
+    await northConnector.cacheContent(setpointContent, 'oianalytics');
 
     callback(`Setpoint ${JSON.stringify(commandContent)} properly sent into the cache of ${northConnectorId}`);
   }

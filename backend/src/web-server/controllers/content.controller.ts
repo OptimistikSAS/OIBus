@@ -11,6 +11,8 @@ export default class ContentController extends AbstractController {
       ids.push(northId);
     } else if (Array.isArray(northId)) {
       ids.push(...northId);
+    } else {
+      return ctx.badRequest('northId must be specified in query params');
     }
 
     let content: OIBusContent;
