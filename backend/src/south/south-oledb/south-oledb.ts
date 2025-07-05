@@ -1,5 +1,4 @@
 import path from 'node:path';
-
 import SouthConnector from '../south-connector';
 import {
   convertDelimiter,
@@ -9,7 +8,6 @@ import {
   logQuery,
   persistResults
 } from '../../service/utils';
-import EncryptionService from '../../service/encryption.service';
 import pino from 'pino';
 import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
@@ -36,23 +34,13 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
   constructor(
     connector: SouthConnectorEntity<SouthOLEDBSettings, SouthOLEDBItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
-    encryptionService: EncryptionService,
     southConnectorRepository: SouthConnectorRepository,
     southCacheRepository: SouthCacheRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolders: BaseFolders
   ) {
-    super(
-      connector,
-      engineAddContentCallback,
-      encryptionService,
-      southConnectorRepository,
-      southCacheRepository,
-      scanModeRepository,
-      logger,
-      baseFolders
-    );
+    super(connector, engineAddContentCallback, southConnectorRepository, southCacheRepository, scanModeRepository, logger, baseFolders);
     this.tmpFolder = path.resolve(this.baseFolders.cache, 'tmp');
   }
 
