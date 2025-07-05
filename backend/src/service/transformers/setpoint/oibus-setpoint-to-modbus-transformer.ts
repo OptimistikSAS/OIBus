@@ -1,25 +1,20 @@
-import OIBusTransformer from './oibus-transformer';
+import OIBusTransformer from '../oibus-transformer';
 import { ReadStream } from 'node:fs';
 import { pipeline, Readable, Transform } from 'node:stream';
-import { CacheMetadata, OIBusTimeValue } from '../../../shared/model/engine.model';
+import { CacheMetadata, OIBusSetpoint } from '../../../../shared/model/engine.model';
 import { promisify } from 'node:util';
-import { OIBusObjectAttribute } from '../../../shared/model/form.model';
-import { generateRandomId } from '../utils';
+import { generateRandomId } from '../../utils';
+import { OIBusObjectAttribute } from '../../../../shared/model/form.model';
+import { OIBusModbusValue } from '../connector-types.model';
 
 const pipelineAsync = promisify(pipeline);
 
-export interface OIBusOPCUAValue {
-  nodeId: string;
-  value: string | number;
-  dataType: string;
-}
-
 interface TransformerOptions {
-  mapping: Array<{ pointId: string; nodeId: string; dataType: string }>;
+  mapping: Array<{ reference: string; address: string; modbusType: 'coil' | 'register' }>;
 }
 
-export default class OIBusTimeValuesToOPCUATransformer extends OIBusTransformer {
-  public static transformerName = 'time-values-to-opcua';
+export default class OIBusSetpointToModbusTransformer extends OIBusTransformer {
+  public static transformerName = 'setpoint-to-modbus';
 
   async transform(
     data: ReadStream | Readable,
@@ -39,24 +34,25 @@ export default class OIBusTimeValuesToOPCUATransformer extends OIBusTransformer 
     );
     const stringContent = Buffer.concat(chunks).toString('utf-8');
     // Combine the chunks into a single buffer
-    const content: Array<OIBusOPCUAValue> = (JSON.parse(stringContent) as Array<OIBusTimeValue>)
+    const content: Array<OIBusModbusValue> = (JSON.parse(stringContent) as Array<OIBusSetpoint>)
       .map(element => {
-        const mappedElement = this.options.mapping.find(matchingElement => matchingElement.pointId === element.pointId);
+        const mappedElement = this.options.mapping.find(matchingElement => matchingElement.reference === element.reference);
         if (!mappedElement) return null;
+
         return {
-          nodeId: mappedElement.nodeId,
-          value: element.data.value,
-          dataType: mappedElement.dataType
+          address: mappedElement.address,
+          value: mappedElement.modbusType === 'coil' ? Boolean(element.value) : parseInt(element.value as string),
+          modbusType: mappedElement.modbusType
         };
       })
-      .filter((mappedElement): mappedElement is OIBusOPCUAValue => mappedElement !== null);
+      .filter((mappedElement): mappedElement is OIBusModbusValue => mappedElement !== null);
 
     const metadata: CacheMetadata = {
       contentFile: `${generateRandomId(10)}.json`,
       contentSize: 0, // It will be set outside the transformer, once the file is written
       createdAt: '', // It will be set outside the transformer, once the file is written
       numberOfElement: content.length,
-      contentType: 'opcua',
+      contentType: 'modbus',
       source,
       options: {}
     };
@@ -96,8 +92,8 @@ export default class OIBusTimeValuesToOPCUATransformer extends OIBusTransformer 
             attributes: [
               {
                 type: 'string',
-                key: 'pointId',
-                translationKey: 'configuration.oibus.manifest.transformers.mapping.point-id',
+                key: 'reference',
+                translationKey: 'configuration.oibus.manifest.transformers.mapping.reference',
                 defaultValue: null,
                 validators: [
                   {
@@ -113,8 +109,8 @@ export default class OIBusTimeValuesToOPCUATransformer extends OIBusTransformer 
               },
               {
                 type: 'string',
-                key: 'nodeId',
-                translationKey: 'configuration.oibus.manifest.transformers.mapping.opcua.node-id',
+                key: 'address',
+                translationKey: 'configuration.oibus.manifest.transformers.mapping.modbus.address',
                 defaultValue: null,
                 validators: [
                   {
@@ -130,24 +126,10 @@ export default class OIBusTimeValuesToOPCUATransformer extends OIBusTransformer 
               },
               {
                 type: 'string-select',
-                key: 'dataType',
-                translationKey: 'configuration.oibus.manifest.transformers.mapping.opcua.data-type',
-                defaultValue: 'uint16',
-                selectableValues: [
-                  'boolean',
-                  's-byte',
-                  'byte',
-                  'int16',
-                  'uint16',
-                  'int32',
-                  'uint32',
-                  'int64',
-                  'uint64',
-                  'float',
-                  'double',
-                  'string',
-                  'date-time'
-                ],
+                key: 'modbusType',
+                translationKey: 'configuration.oibus.manifest.transformers.mapping.modbus.modbus-type',
+                defaultValue: 'register',
+                selectableValues: ['coil', 'register'],
                 validators: [
                   {
                     type: 'REQUIRED',

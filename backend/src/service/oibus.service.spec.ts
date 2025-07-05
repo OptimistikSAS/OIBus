@@ -96,6 +96,7 @@ describe('OIBus Service', () => {
     expect(historyQueryEngine.start).toHaveBeenCalled();
     expect(logger.info).toHaveBeenCalled();
     expect(service.getProxyServer()).toBeDefined();
+    expect(ipFilterService.findAll).toHaveBeenCalledTimes(1);
 
     const settingsWithoutOIAlog: EngineSettings = JSON.parse(JSON.stringify(testData.engine.settings));
     settingsWithoutOIAlog.logParameters.oia.level = 'silent';
@@ -120,6 +121,18 @@ describe('OIBus Service', () => {
 
     expect(dataStreamEngine.stop).toHaveBeenCalled();
     expect(historyQueryEngine.stop).toHaveBeenCalled();
+  });
+
+  it('should start OIBus without proxy', async () => {
+    (northService.findAll as jest.Mock).mockReturnValue([]);
+    (southService.findAll as jest.Mock).mockReturnValue([]);
+    (historyQueryService.findAll as jest.Mock).mockReturnValue([]);
+    const settingsWithoutProxy: EngineSettings = JSON.parse(JSON.stringify(testData.engine.settings));
+    settingsWithoutProxy.proxyEnabled = false;
+    (engineRepository.get as jest.Mock).mockReturnValue(settingsWithoutProxy);
+
+    await service.startOIBus();
+    expect(ipFilterService.findAll).not.toHaveBeenCalled();
   });
 
   it('should stop OIBus without starting', async () => {
@@ -171,6 +184,9 @@ describe('OIBus Service', () => {
   it('should correctly update settings without encrypting password', async () => {
     const specificTestCommand: Omit<EngineSettings, 'id' | 'version'> = JSON.parse(JSON.stringify(testData.engine.command));
     specificTestCommand.logParameters.loki.password = '';
+    specificTestCommand.proxyEnabled = false;
+
+    (engineRepository.get as jest.Mock).mockReturnValueOnce(testData.engine.settings).mockReturnValueOnce(specificTestCommand);
     await service.updateEngineSettings(specificTestCommand);
 
     expect(engineRepository.get).toHaveBeenCalledTimes(3);

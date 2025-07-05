@@ -3,15 +3,18 @@ import { TransformerSearchParam } from '../../../shared/model/transformer.model'
 import { generateRandomId } from '../../service/utils';
 import { CustomTransformer, StandardTransformer, Transformer } from '../../model/transformer.model';
 import { Page } from '../../../shared/model/types';
-import OIBusTimeValuesToCsvTransformer from '../../service/transformers/oibus-time-values-to-csv-transformer';
+import OIBusTimeValuesToCsvTransformer from '../../service/transformers/time-values/oibus-time-values-to-csv-transformer';
 import IsoTransformer from '../../service/transformers/iso-transformer';
 import { OIBusDataType } from '../../../shared/model/engine.model';
-import OIBusTimeValuesToJSONTransformer from '../../service/transformers/oibus-time-values-to-json-transformer';
-import OIBusTimeValuesToMQTTTransformer from '../../service/transformers/oibus-time-values-to-mqtt-transformer';
-import OIBusTimeValuesToOPCUATransformer from '../../service/transformers/oibus-time-values-to-opcua-transformer';
-import OIBusTimeValuesToModbusTransformer from '../../service/transformers/oibus-time-values-to-modbus-transformer';
+import OIBusTimeValuesToJSONTransformer from '../../service/transformers/time-values/oibus-time-values-to-json-transformer';
+import OIBusTimeValuesToMQTTTransformer from '../../service/transformers/time-values/oibus-time-values-to-mqtt-transformer';
+import OIBusTimeValuesToOPCUATransformer from '../../service/transformers/time-values/oibus-time-values-to-opcua-transformer';
+import OIBusTimeValuesToModbusTransformer from '../../service/transformers/time-values/oibus-time-values-to-modbus-transformer';
 import IgnoreTransformer from '../../service/transformers/ignore-transformer';
 import { OIBusObjectAttribute } from '../../../shared/model/form.model';
+import OIBusSetpointToModbusTransformer from '../../service/transformers/setpoint/oibus-setpoint-to-modbus-transformer';
+import OIBusSetpointToOPCUATransformer from '../../service/transformers/setpoint/oibus-setpoint-to-opcua-transformer';
+import OIBusSetpointToMQTTTransformer from '../../service/transformers/setpoint/oibus-setpoint-to-mqtt-transformer';
 
 const TRANSFORMERS_TABLE = 'transformers';
 const PAGE_SIZE = 10;
@@ -185,6 +188,36 @@ export default class TransformerRepository {
         functionName: OIBusTimeValuesToModbusTransformer.transformerName,
         inputType: 'time-values',
         outputType: 'modbus'
+      };
+      this.createStandardTransformer(standardTransformer);
+    }
+    if (!this.findByFunctionName(OIBusSetpointToModbusTransformer.transformerName)) {
+      const standardTransformer: StandardTransformer = {
+        id: generateRandomId(6),
+        type: 'standard',
+        functionName: OIBusSetpointToModbusTransformer.transformerName,
+        inputType: 'setpoint',
+        outputType: 'modbus'
+      };
+      this.createStandardTransformer(standardTransformer);
+    }
+    if (!this.findByFunctionName(OIBusSetpointToOPCUATransformer.transformerName)) {
+      const standardTransformer: StandardTransformer = {
+        id: generateRandomId(6),
+        type: 'standard',
+        functionName: OIBusSetpointToOPCUATransformer.transformerName,
+        inputType: 'setpoint',
+        outputType: 'opcua'
+      };
+      this.createStandardTransformer(standardTransformer);
+    }
+    if (!this.findByFunctionName(OIBusSetpointToMQTTTransformer.transformerName)) {
+      const standardTransformer: StandardTransformer = {
+        id: generateRandomId(6),
+        type: 'standard',
+        functionName: OIBusSetpointToMQTTTransformer.transformerName,
+        inputType: 'setpoint',
+        outputType: 'mqtt'
       };
       this.createStandardTransformer(standardTransformer);
     }
