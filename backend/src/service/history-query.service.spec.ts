@@ -1,3 +1,4 @@
+import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
 import HistoryQueryService from './history-query.service';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
 import ScanModeRepositoryMock from '../tests/__mocks__/repository/config/scan-mode-repository.mock';
@@ -12,8 +13,6 @@ import SouthServiceMock from '../tests/__mocks__/service/south-service.mock';
 import NorthServiceMock from '../tests/__mocks__/service/north-service.mock';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import OIAnalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
-import EncryptionService from './encryption.service';
-import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import HistoryQueryEngine from '../engine/history-query-engine';
 import HistoryQueryEngineMock from '../tests/__mocks__/history-query-engine.mock';
@@ -33,10 +32,14 @@ import NorthConnectorRepositoryMock from '../tests/__mocks__/repository/config/n
 import { filesExists, stringToBoolean } from './utils';
 import TransformerService from './transformer.service';
 import TransformerServiceMock from '../tests/__mocks__/service/transformer-service.mock';
+
 jest.mock('papaparse');
 jest.mock('node:fs/promises');
 jest.mock('../web-server/controllers/validators/joi.validator');
 jest.mock('./utils');
+jest.mock('./encryption.service', () => ({
+  encryptionService: new EncryptionServiceMock('', '')
+}));
 
 const validator = new JoiValidator();
 const logger: pino.Logger = new PinoLogger();
@@ -49,7 +52,6 @@ const historyQueryMetricsRepository: HistoryQueryMetricsRepository = new History
 const southService: SouthService = new SouthServiceMock();
 const northService: NorthService = new NorthServiceMock();
 const oIAnalyticsMessageService: OIAnalyticsMessageService = new OIAnalyticsMessageServiceMock();
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const historyQueryEngine: HistoryQueryEngine = new HistoryQueryEngineMock(logger);
 const transformerService: TransformerService = new TransformerServiceMock();
 
@@ -69,7 +71,6 @@ describe('History Query service', () => {
       northService,
       transformerService,
       oIAnalyticsMessageService,
-      encryptionService,
       historyQueryEngine
     );
   });

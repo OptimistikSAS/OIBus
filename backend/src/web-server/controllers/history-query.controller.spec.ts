@@ -41,12 +41,12 @@ describe('History query controller', () => {
 
     await historyQueryController.findById(ctx);
     expect(ctx.app.historyQueryService.findById).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
-    expect(ctx.ok).toHaveBeenCalledWith(toHistoryQueryDTO(testData.historyQueries.list[0], ctx.app.encryptionService));
+    expect(ctx.ok).toHaveBeenCalledWith(toHistoryQueryDTO(testData.historyQueries.list[0]));
 
     ctx.params.id = testData.historyQueries.list[1].id;
     await historyQueryController.findById(ctx);
     expect(ctx.app.historyQueryService.findById).toHaveBeenCalledWith(testData.historyQueries.list[1].id);
-    expect(ctx.ok).toHaveBeenCalledWith(toHistoryQueryDTO(testData.historyQueries.list[1], ctx.app.encryptionService));
+    expect(ctx.ok).toHaveBeenCalledWith(toHistoryQueryDTO(testData.historyQueries.list[1]));
   });
 
   it('findById() should return not found when history query is not found', async () => {
@@ -65,7 +65,7 @@ describe('History query controller', () => {
     (ctx.app.historyQueryService.createHistoryQuery as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0]);
     await historyQueryController.createHistoryQuery(ctx);
 
-    expect(ctx.created).toHaveBeenCalledWith(toHistoryQueryDTO(testData.historyQueries.list[0], ctx.app.encryptionService));
+    expect(ctx.created).toHaveBeenCalledWith(toHistoryQueryDTO(testData.historyQueries.list[0]));
   });
 
   it('create() should throw bad request on create error', async () => {
@@ -307,9 +307,7 @@ describe('History query controller', () => {
       name: 'name'
     };
     ctx.app.historyQueryService.searchHistoryQueryItems.mockReturnValue({
-      content: testData.historyQueries.list[0].items.map(item =>
-        toHistoryQueryItemDTO(item, testData.historyQueries.list[0].southType, ctx.app.encryptionService)
-      ),
+      content: testData.historyQueries.list[0].items.map(item => toHistoryQueryItemDTO(item, testData.historyQueries.list[0].southType)),
       totalElements: testData.historyQueries.list[0].items.length,
       size: 25,
       number: 1,
@@ -322,9 +320,7 @@ describe('History query controller', () => {
     expect(ctx.app.historyQueryService.findById).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
     expect(ctx.app.historyQueryService.searchHistoryQueryItems).toHaveBeenCalledWith(testData.historyQueries.list[0].id, searchParams);
     expect(ctx.ok).toHaveBeenCalledWith({
-      content: testData.historyQueries.list[0].items.map(item =>
-        toHistoryQueryItemDTO(item, testData.historyQueries.list[0].southType, ctx.app.encryptionService)
-      ),
+      content: testData.historyQueries.list[0].items.map(item => toHistoryQueryItemDTO(item, testData.historyQueries.list[0].southType)),
       totalElements: testData.historyQueries.list[0].items.length,
       size: 25,
       number: 1,
@@ -340,9 +336,7 @@ describe('History query controller', () => {
     };
     ctx.app.historyQueryService.findById.mockReturnValueOnce(testData.historyQueries.list[0]);
     ctx.app.historyQueryService.searchHistoryQueryItems.mockReturnValue({
-      content: testData.historyQueries.list[0].items.map(item =>
-        toHistoryQueryItemDTO(item, testData.historyQueries.list[0].southType, ctx.app.encryptionService)
-      ),
+      content: testData.historyQueries.list[0].items.map(item => toHistoryQueryItemDTO(item, testData.historyQueries.list[0].southType)),
       totalElements: testData.historyQueries.list[0].items.length,
       size: 25,
       number: 1,
@@ -354,9 +348,7 @@ describe('History query controller', () => {
     expect(ctx.app.historyQueryService.findById).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
     expect(ctx.app.historyQueryService.searchHistoryQueryItems).toHaveBeenCalledWith(testData.historyQueries.list[0].id, searchParams);
     expect(ctx.ok).toHaveBeenCalledWith({
-      content: testData.historyQueries.list[0].items.map(item =>
-        toHistoryQueryItemDTO(item, testData.historyQueries.list[0].southType, ctx.app.encryptionService)
-      ),
+      content: testData.historyQueries.list[0].items.map(item => toHistoryQueryItemDTO(item, testData.historyQueries.list[0].southType)),
       totalElements: testData.historyQueries.list[0].items.length,
       size: 25,
       number: 1,
@@ -428,7 +420,7 @@ describe('History query controller', () => {
       testData.historyQueries.itemCommand
     );
     expect(ctx.created).toHaveBeenCalledWith(
-      toHistoryQueryItemDTO(testData.historyQueries.list[0].items[0], testData.historyQueries.list[0].southType, ctx.app.encryptionService)
+      toHistoryQueryItemDTO(testData.historyQueries.list[0].items[0], testData.historyQueries.list[0].southType)
     );
   });
 
