@@ -6,7 +6,7 @@ export type ScopeType = (typeof SCOPE_TYPES)[number];
 export const LOG_LEVELS = ['silent', 'error', 'warn', 'info', 'debug', 'trace'];
 export type LogLevel = (typeof LOG_LEVELS)[number];
 
-export const OIBUS_DATA_TYPES = ['any', 'time-values'] as const;
+export const OIBUS_DATA_TYPES = ['any', 'time-values', 'setpoint'] as const;
 export type OIBusDataType = (typeof OIBUS_DATA_TYPES)[number];
 
 /**
@@ -303,10 +303,19 @@ export interface OIBusTimeValue {
   };
 }
 
-// OIBusTimeValueContent is currently called OIBusDataValue
 export interface OIBusTimeValueContent extends BaseOIBusContent {
   type: 'time-values';
   content: Array<OIBusTimeValue>;
+}
+
+export interface OIBusSetpoint {
+  reference: string;
+  value: string | number | boolean;
+}
+
+export interface OIBusSetpointContent extends BaseOIBusContent {
+  type: 'setpoint';
+  content: Array<OIBusSetpoint>;
 }
 
 export interface OIBusRawContent extends BaseOIBusContent {
@@ -315,7 +324,7 @@ export interface OIBusRawContent extends BaseOIBusContent {
   content?: string;
 }
 
-export type OIBusContent = OIBusTimeValueContent | OIBusRawContent;
+export type OIBusContent = OIBusTimeValueContent | OIBusRawContent | OIBusSetpointContent;
 
 export interface CacheMetadata {
   contentFile: string;

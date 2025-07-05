@@ -890,7 +890,7 @@ describe('History Query service', () => {
       {
         name: 'item',
         enabled: 'true',
-        settings_query: 'SELECT * FROM table',
+        settings_query: 'query',
         settings_dateTimeFields: '[]',
         settings_serialization: JSON.stringify({
           type: 'csv',
@@ -920,7 +920,7 @@ describe('History Query service', () => {
           name: csvData[0].name,
           enabled: csvData[0].enabled.toLowerCase() === 'true',
           settings: {
-            query: 'SELECT * FROM table',
+            query: 'query',
             dateTimeFields: [],
             serialization: {
               type: 'csv',
@@ -1078,6 +1078,34 @@ describe('History Query service', () => {
       southType: south.type,
       southSettings: south.settings,
       items: south.items,
+      northType: north.type,
+      northSettings: north.settings
+    });
+  });
+
+  it('retrieveSecrets() should retrieve secrets from south only', () => {
+    const south = JSON.parse(JSON.stringify(testData.south.list[0]));
+    south.type = southManifestList[4].id;
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(south);
+
+    const result = service.retrieveSecrets(testData.south.list[0].id, null, null, southManifestList[4], northManifestList[4]);
+
+    expect(result).toEqual({
+      southType: south.type,
+      southSettings: south.settings,
+      items: south.items
+    });
+  });
+
+  it('retrieveSecrets() should retrieve secrets from north only', () => {
+    const north = JSON.parse(JSON.stringify(testData.north.list[0]));
+    north.type = northManifestList[4].id;
+    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValueOnce(north);
+
+    const result = service.retrieveSecrets(null, testData.north.list[0].id, null, southManifestList[4], northManifestList[4]);
+
+    expect(result).toEqual({
+      items: [],
       northType: north.type,
       northSettings: north.settings
     });

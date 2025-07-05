@@ -53,15 +53,15 @@ export default class OIAnalyticsRegistrationService {
     }
 
     const oibusInfo = getOIBusInfo(engineSettings);
-    // Generate RSA key pair
+    // Generate an RSA key pair
     const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
       modulusLength: 4096,
       publicKeyEncoding: {
-        type: 'spki', // Recommended format for public key
+        type: 'spki', // Recommended format for a public key
         format: 'pem' // Output format for the key
       },
       privateKeyEncoding: {
-        type: 'pkcs8', // Recommended format for private key
+        type: 'pkcs8', // Recommended format for a private key
         format: 'pem' // Output format for the key
       }
     });

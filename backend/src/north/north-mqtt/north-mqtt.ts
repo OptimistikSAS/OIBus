@@ -11,8 +11,8 @@ import TransformerService from '../../service/transformer.service';
 import mqtt from 'mqtt';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { OIBusMQTTValue } from '../../service/transformers/oibus-time-values-to-mqtt-transformer';
 import { QoS } from 'mqtt-packet';
+import { OIBusMQTTValue } from '../../service/transformers/connector-types.model';
 
 /**
  * Class NorthOPCUA - Write values in an OPCUA server

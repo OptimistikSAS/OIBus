@@ -1,20 +1,20 @@
 import { Readable } from 'stream';
 import pino from 'pino';
-import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import testData from '../../tests/utils/test-data';
-import { flushPromises } from '../../tests/utils/test-utils';
-import { OIBusTimeValue } from '../../../shared/model/engine.model';
+import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock';
+import testData from '../../../tests/utils/test-data';
+import { flushPromises } from '../../../tests/utils/test-utils';
+import { OIBusSetpoint } from '../../../../shared/model/engine.model';
 import csv from 'papaparse';
-import OIBusTimeValuesToMQTTTransformer from './oibus-time-values-to-mqtt-transformer';
+import OIBusSetpointToMQTTTransformer from './oibus-setpoint-to-mqtt-transformer';
 
-jest.mock('../utils', () => ({
+jest.mock('../../utils', () => ({
   generateRandomId: jest.fn().mockReturnValue('randomId')
 }));
 jest.mock('papaparse');
 
 const logger: pino.Logger = new PinoLogger();
 
-describe('OIBusTimeValuesToMQTTTransformer', () => {
+describe('OIBusSetpointToMQTTTransformer', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
@@ -25,35 +25,25 @@ describe('OIBusTimeValuesToMQTTTransformer', () => {
 
     const options = {
       mapping: [
-        { pointId: 'reference1', topic: '/oibus/reference1' },
-        { pointId: 'reference2', topic: '/oibus/reference2' }
+        { reference: 'reference1', topic: '/oibus/reference1' },
+        { reference: 'reference2', topic: '/oibus/reference2' }
       ]
     };
     // Arrange
-    const transformer = new OIBusTimeValuesToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
+    const transformer = new OIBusSetpointToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
     const source = 'test-source';
-    const dataChunks: Array<OIBusTimeValue> = [
+    const dataChunks: Array<OIBusSetpoint> = [
       {
-        pointId: 'reference1',
-        timestamp: testData.constants.dates.DATE_1,
-        data: {
-          value: '1'
-        }
+        reference: 'reference1',
+        value: 1
       },
       {
-        pointId: 'reference2',
-        timestamp: testData.constants.dates.DATE_2,
-        data: {
-          value: '2',
-          quality: 'good'
-        }
+        reference: 'reference2',
+        value: '2'
       },
       {
-        pointId: 'reference3',
-        timestamp: testData.constants.dates.DATE_3,
-        data: {
-          value: 'value1'
-        }
+        reference: 'reference3',
+        value: 'value1'
       }
     ];
 
@@ -70,8 +60,8 @@ describe('OIBusTimeValuesToMQTTTransformer', () => {
     // Assert
     expect(result).toEqual({
       output: JSON.stringify([
-        { topic: '/oibus/reference1', payload: JSON.stringify({ value: '1', timestamp: testData.constants.dates.DATE_1 }) },
-        { topic: '/oibus/reference2', payload: JSON.stringify({ value: '2', quality: 'good', timestamp: testData.constants.dates.DATE_2 }) }
+        { topic: '/oibus/reference1', payload: 1 },
+        { topic: '/oibus/reference2', payload: '2' }
       ]),
       metadata: {
         contentFile: 'randomId.json',
@@ -86,7 +76,7 @@ describe('OIBusTimeValuesToMQTTTransformer', () => {
   });
 
   it('should return manifest', () => {
-    expect(OIBusTimeValuesToMQTTTransformer.manifestSettings).toEqual({
+    expect(OIBusSetpointToMQTTTransformer.manifestSettings).toEqual({
       type: 'object',
       key: 'options',
       translationKey: 'configuration.oibus.manifest.transformers.options',
@@ -111,8 +101,8 @@ describe('OIBusTimeValuesToMQTTTransformer', () => {
             attributes: [
               {
                 type: 'string',
-                key: 'pointId',
-                translationKey: 'configuration.oibus.manifest.transformers.mapping.point-id',
+                key: 'reference',
+                translationKey: 'configuration.oibus.manifest.transformers.mapping.reference',
                 defaultValue: null,
                 validators: [
                   {

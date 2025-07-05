@@ -468,6 +468,19 @@ describe('south service', () => {
     expect(dataStreamEngine.startSouth).toHaveBeenCalled();
   });
 
+  it('createSouth() should not create South connector if disabled', async () => {
+    service.runSouth = jest.fn().mockReturnValue(mockedSouth1);
+    (scanModeRepository.findAll as jest.Mock).mockReturnValue(testData.scanMode.list);
+    const command = JSON.parse(JSON.stringify(testData.south.command));
+    command.items = [];
+    command.enabled = false;
+    await service.createSouth(command, null);
+    expect(southConnectorRepository.saveSouthConnector).toHaveBeenCalled();
+    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
+    expect(createBaseFolders).toHaveBeenCalledTimes(1);
+    expect(dataStreamEngine.startSouth).not.toHaveBeenCalled();
+  });
+
   it('createSouth() should create South connector and retrieve secrets from another connector', async () => {
     service.runSouth = jest.fn().mockReturnValue(mockedSouth1);
     (scanModeRepository.findAll as jest.Mock).mockReturnValue(testData.scanMode.list);

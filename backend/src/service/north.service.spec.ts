@@ -29,6 +29,8 @@ import { createBaseFolders, filesExists } from './utils';
 import fs from 'node:fs/promises';
 import TransformerServiceMock from '../tests/__mocks__/service/transformer-service.mock';
 import TransformerService, { toTransformerDTO } from './transformer.service';
+import { NorthConnectorCommandDTO } from '../../shared/model/north-connector.model';
+import { NorthSettings } from '../../shared/model/north-settings.model';
 
 jest.mock('./encryption.service');
 jest.mock('./utils');
@@ -297,6 +299,21 @@ describe('north service', () => {
     expect(createBaseFolders).toHaveBeenCalledTimes(1);
     expect(dataStreamEngine.createNorth).toHaveBeenCalledWith(mockedNorth1);
     expect(dataStreamEngine.startNorth).toHaveBeenCalled();
+  });
+
+  it('createNorth() should create North connector and not start it if disabled', async () => {
+    service.runNorth = jest.fn().mockReturnValue(mockedNorth1);
+    (scanModeRepository.findAll as jest.Mock).mockReturnValueOnce(testData.scanMode.list);
+    (transformerService.findAll as jest.Mock).mockReturnValueOnce(testData.transformers.list);
+    (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValueOnce([]);
+    const command = JSON.parse(JSON.stringify(testData.north.command)) as NorthConnectorCommandDTO<NorthSettings>;
+    command.enabled = false;
+    command.subscriptions = [];
+    await service.createNorth(command, null);
+    expect(northConnectorRepository.saveNorthConnector).toHaveBeenCalled();
+    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
+    expect(createBaseFolders).toHaveBeenCalledTimes(1);
+    expect(dataStreamEngine.startNorth).not.toHaveBeenCalled();
   });
 
   it('createNorth() should not create North connector if subscription not found', async () => {
@@ -650,14 +667,11 @@ describe('north service', () => {
     await service.executeSetpoint('northId', commandContent, callback);
     expect(northMock.cacheContent).toHaveBeenCalledWith(
       {
-        type: 'time-values',
+        type: 'setpoint',
         content: [
           {
-            pointId: commandContent[0].reference,
-            timestamp: testData.constants.dates.FAKE_NOW,
-            data: {
-              value: commandContent[0].value
-            }
+            reference: commandContent[0].reference,
+            value: commandContent[0].value
           }
         ]
       },

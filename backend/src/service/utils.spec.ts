@@ -1082,7 +1082,7 @@ describe('Service utils', () => {
       jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
     });
 
-    it('should properly concert items into csv', () => {
+    it('should properly convert items into csv', () => {
       (csv.unparse as jest.Mock).mockReturnValue('csv content');
 
       expect(
@@ -1096,6 +1096,23 @@ describe('Service utils', () => {
           ],
           ',',
           testData.scanMode.list
+        )
+      ).toEqual('csv content');
+    });
+
+    it('should properly convert without scan modes', () => {
+      (csv.unparse as jest.Mock).mockReturnValue('csv content');
+
+      expect(
+        itemToFlattenedCSV(
+          [
+            ...testData.south.list[2].items.map(item => ({ ...item, settings: { ...item.settings, objectSettings: {} } })),
+            {
+              ...testData.south.list[2].items[0],
+              scanModeId: 'bad id'
+            }
+          ],
+          ','
         )
       ).toEqual('csv content');
     });

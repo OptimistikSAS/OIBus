@@ -10,13 +10,16 @@ import { NorthSettings } from '../../shared/model/north-settings.model';
 import pino from 'pino';
 import OibusTransformer from './transformers/oibus-transformer';
 import IsoTransformer from './transformers/iso-transformer';
-import OIBusTimeValuesToCsvTransformer from './transformers/oibus-time-values-to-csv-transformer';
-import OIBusTimeValuesToJSONTransformer from './transformers/oibus-time-values-to-json-transformer';
-import OIBusTimeValuesToMQTTTransformer from './transformers/oibus-time-values-to-mqtt-transformer';
-import OIBusTimeValuesToOPCUATransformer from './transformers/oibus-time-values-to-opcua-transformer';
-import OIBusTimeValuesToModbusTransformer from './transformers/oibus-time-values-to-modbus-transformer';
+import OIBusTimeValuesToCsvTransformer from './transformers/time-values/oibus-time-values-to-csv-transformer';
+import OIBusTimeValuesToJSONTransformer from './transformers/time-values/oibus-time-values-to-json-transformer';
+import OIBusTimeValuesToMQTTTransformer from './transformers/time-values/oibus-time-values-to-mqtt-transformer';
+import OIBusTimeValuesToOPCUATransformer from './transformers/time-values/oibus-time-values-to-opcua-transformer';
+import OIBusTimeValuesToModbusTransformer from './transformers/time-values/oibus-time-values-to-modbus-transformer';
 import IgnoreTransformer from './transformers/ignore-transformer';
 import { OIBusObjectAttribute } from '../../shared/model/form.model';
+import OIBusSetpointToModbusTransformer from './transformers/setpoint/oibus-setpoint-to-modbus-transformer';
+import OIBusSetpointToMQTTTransformer from './transformers/setpoint/oibus-setpoint-to-mqtt-transformer';
+import OIBusSetpointToOPCUATransformer from './transformers/setpoint/oibus-setpoint-to-opcua-transformer';
 
 export default class TransformerService {
   constructor(
@@ -159,6 +162,30 @@ export const createTransformer = (
           transformerWithOptions.options
         );
       }
+      case OIBusSetpointToModbusTransformer.transformerName: {
+        return new OIBusSetpointToModbusTransformer(
+          logger,
+          transformerWithOptions.transformer,
+          northConnector,
+          transformerWithOptions.options
+        );
+      }
+      case OIBusSetpointToMQTTTransformer.transformerName: {
+        return new OIBusSetpointToMQTTTransformer(
+          logger,
+          transformerWithOptions.transformer,
+          northConnector,
+          transformerWithOptions.options
+        );
+      }
+      case OIBusSetpointToOPCUATransformer.transformerName: {
+        return new OIBusSetpointToOPCUATransformer(
+          logger,
+          transformerWithOptions.transformer,
+          northConnector,
+          transformerWithOptions.options
+        );
+      }
     }
   }
   throw new Error(`Transformer ${transformerWithOptions.transformer.id} (${transformerWithOptions.transformer.type}) not implemented`);
@@ -186,6 +213,15 @@ export const getStandardManifest = (functionName: string): OIBusObjectAttribute 
     }
     case OIBusTimeValuesToModbusTransformer.transformerName: {
       return OIBusTimeValuesToModbusTransformer.manifestSettings;
+    }
+    case OIBusSetpointToModbusTransformer.transformerName: {
+      return OIBusSetpointToModbusTransformer.manifestSettings;
+    }
+    case OIBusSetpointToMQTTTransformer.transformerName: {
+      return OIBusSetpointToMQTTTransformer.manifestSettings;
+    }
+    case OIBusSetpointToOPCUATransformer.transformerName: {
+      return OIBusSetpointToOPCUATransformer.manifestSettings;
     }
     default:
       throw new Error(`Could not find manifest for ${functionName} transformer`);
