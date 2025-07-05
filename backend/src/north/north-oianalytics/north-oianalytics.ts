@@ -1,6 +1,6 @@
 import NorthConnector from '../north-connector';
 
-import EncryptionService from '../../service/encryption.service';
+import { encryptionService } from '../../service/encryption.service';
 import pino from 'pino';
 import { createReadStream } from 'node:fs';
 import zlib from 'node:zlib';
@@ -35,7 +35,6 @@ import TransformerService from '../../service/transformer.service';
 export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSettings> {
   constructor(
     connector: NorthConnectorEntity<NorthOIAnalyticsSettings>,
-    encryptionService: EncryptionService,
     transformerService: TransformerService,
     northConnectorRepository: NorthConnectorRepository,
     scanModeRepository: ScanModeRepository,
@@ -44,7 +43,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     logger: pino.Logger,
     baseFolders: BaseFolders
   ) {
-    super(connector, encryptionService, transformerService, northConnectorRepository, scanModeRepository, logger, baseFolders);
+    super(connector, transformerService, northConnectorRepository, scanModeRepository, logger, baseFolders);
   }
 
   override async testConnection(): Promise<void> {
@@ -274,11 +273,11 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
         const clientSecretCredential = new ClientSecretCredential(
           specificSettings.tenantId!,
           specificSettings.clientId!,
-          await this.encryptionService.decryptText(specificSettings.clientSecret!)
+          await encryptionService.decryptText(specificSettings.clientSecret!)
         );
         const result = await clientSecretCredential.getToken(specificSettings.scope!);
         // Note: token needs to be encrypted when adding it to proxy options
-        const token = await this.encryptionService.encryptText(`Bearer ${Buffer.from(result.token)}`);
+        const token = await encryptionService.encryptText(`Bearer ${Buffer.from(result.token)}`);
         return {
           type: 'bearer',
           token
@@ -289,13 +288,13 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
         const certificate = this.certificateRepository.findById(specificSettings.certificateId!);
         if (certificate === null) return;
 
-        const decryptedPrivateKey = await this.encryptionService.decryptText(certificate.privateKey);
+        const decryptedPrivateKey = await encryptionService.decryptText(certificate.privateKey);
         const clientCertificateCredential = new ClientCertificateCredential(specificSettings.tenantId!, specificSettings.clientId!, {
           certificate: `${certificate.certificate}\n${decryptedPrivateKey}`
         });
         const result = await clientCertificateCredential.getToken(specificSettings.scope!);
         // Note: token needs to be encrypted when adding it to proxy options
-        const token = await this.encryptionService.encryptText(`Bearer ${Buffer.from(result.token)}`);
+        const token = await encryptionService.encryptText(`Bearer ${Buffer.from(result.token)}`);
         return {
           type: 'bearer',
           token

@@ -73,14 +73,13 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
 
   constructor(
     connector: NorthConnectorEntity<NorthOPCUASettings>,
-    encryptionService: EncryptionService,
     transformerService: TransformerService,
     northConnectorRepository: NorthConnectorRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolders: BaseFolders
   ) {
-    super(connector, encryptionService, transformerService, northConnectorRepository, scanModeRepository, logger, baseFolders);
+    super(connector, transformerService, northConnectorRepository, scanModeRepository, logger, baseFolders);
   }
 
   override async start(dataStream = true): Promise<void> {
@@ -117,7 +116,7 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
       const { options, userIdentity } = await this.createSessionConfigs(
         this.connector.settings,
         clientCertificateManager,
-        this.encryptionService,
+        encryptionService,
         'OIBus Connector test'
       );
       session = await OPCUAClient.createSession(this.connector.settings.url, userIdentity, options);
@@ -174,7 +173,7 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
       const { options, userIdentity } = await this.createSessionConfigs(
         this.connector.settings,
         this.clientCertificateManager!,
-        this.encryptionService,
+        encryptionService,
         clientName
       );
 
