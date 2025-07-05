@@ -36,6 +36,9 @@ jest.mock('./encryption.service');
 jest.mock('./utils');
 jest.mock('./metrics/north-connector-metrics.service');
 jest.mock('node:fs/promises');
+jest.mock('./encryption.service', () => ({
+  encryptionService: new EncryptionServiceMock('', '')
+}));
 
 const validator = new JoiValidator();
 const logger: pino.Logger = new PinoLogger();
@@ -139,7 +142,6 @@ describe('north service', () => {
       certificateRepository,
       oIAnalyticsRegistrationRepository,
       oIAnalyticsMessageService,
-      encryptionService,
       transformerService,
       dataStreamEngine
     );
