@@ -1,24 +1,20 @@
-import OIBusTransformer from './oibus-transformer';
+import OIBusTransformer from '../oibus-transformer';
 import { ReadStream } from 'node:fs';
 import { pipeline, Readable, Transform } from 'node:stream';
-import { CacheMetadata, OIBusTimeValue } from '../../../shared/model/engine.model';
+import { CacheMetadata, OIBusTimeValue } from '../../../../shared/model/engine.model';
 import { promisify } from 'node:util';
-import { OIBusObjectAttribute } from '../../../shared/model/form.model';
-import { generateRandomId } from '../utils';
+import { OIBusObjectAttribute } from '../../../../shared/model/form.model';
+import { generateRandomId } from '../../utils';
+import { OIBusOPCUAValue } from '../connector-types.model';
 
 const pipelineAsync = promisify(pipeline);
 
-export interface OIBusMQTTValue {
-  topic: string;
-  payload: string;
-}
-
 interface TransformerOptions {
-  mapping: Array<{ pointId: string; topic: string }>;
+  mapping: Array<{ pointId: string; nodeId: string }>;
 }
 
-export default class OIBusTimeValuesToMQTTTransformer extends OIBusTransformer {
-  public static transformerName = 'time-values-to-mqtt';
+export default class OIBusTimeValuesToOPCUATransformer extends OIBusTransformer {
+  public static transformerName = 'time-values-to-opcua';
 
   async transform(
     data: ReadStream | Readable,
@@ -38,23 +34,23 @@ export default class OIBusTimeValuesToMQTTTransformer extends OIBusTransformer {
     );
     const stringContent = Buffer.concat(chunks).toString('utf-8');
     // Combine the chunks into a single buffer
-    const content: Array<OIBusMQTTValue> = (JSON.parse(stringContent) as Array<OIBusTimeValue>)
+    const content: Array<OIBusOPCUAValue> = (JSON.parse(stringContent) as Array<OIBusTimeValue>)
       .map(element => {
         const mappedElement = this.options.mapping.find(matchingElement => matchingElement.pointId === element.pointId);
         if (!mappedElement) return null;
         return {
-          topic: mappedElement.topic,
-          payload: JSON.stringify({ ...element.data, timestamp: element.timestamp })
+          nodeId: mappedElement.nodeId,
+          value: element.data.value as number | string | boolean
         };
       })
-      .filter((mappedElement): mappedElement is OIBusMQTTValue => mappedElement !== null);
+      .filter((mappedElement): mappedElement is OIBusOPCUAValue => mappedElement !== null);
 
     const metadata: CacheMetadata = {
       contentFile: `${generateRandomId(10)}.json`,
       contentSize: 0, // It will be set outside the transformer, once the file is written
       createdAt: '', // It will be set outside the transformer, once the file is written
       numberOfElement: content.length,
-      contentType: 'mqtt',
+      contentType: 'opcua',
       source,
       options: {}
     };
@@ -111,8 +107,8 @@ export default class OIBusTimeValuesToMQTTTransformer extends OIBusTransformer {
               },
               {
                 type: 'string',
-                key: 'topic',
-                translationKey: 'configuration.oibus.manifest.transformers.mapping.mqtt.topic',
+                key: 'nodeId',
+                translationKey: 'configuration.oibus.manifest.transformers.mapping.opcua.node-id',
                 defaultValue: null,
                 validators: [
                   {

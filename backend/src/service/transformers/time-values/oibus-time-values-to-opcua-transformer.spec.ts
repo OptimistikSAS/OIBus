@@ -1,20 +1,20 @@
 import { Readable } from 'stream';
 import pino from 'pino';
-import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import testData from '../../tests/utils/test-data';
-import { flushPromises } from '../../tests/utils/test-utils';
-import { OIBusTimeValue } from '../../../shared/model/engine.model';
+import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock';
+import testData from '../../../tests/utils/test-data';
+import { flushPromises } from '../../../tests/utils/test-utils';
+import { OIBusTimeValue } from '../../../../shared/model/engine.model';
 import csv from 'papaparse';
-import OIBusTimeValuesToModbusTransformer from './oibus-time-values-to-modbus-transformer';
+import OIBusTimeValuesToOPCUATransformer from './oibus-time-values-to-opcua-transformer';
 
-jest.mock('../utils', () => ({
+jest.mock('../../utils', () => ({
   generateRandomId: jest.fn().mockReturnValue('randomId')
 }));
 jest.mock('papaparse');
 
 const logger: pino.Logger = new PinoLogger();
 
-describe('OIBusTimeValuesToModbusTransformer', () => {
+describe('OIBusTimeValuesToOPCUATransformer', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
@@ -25,12 +25,12 @@ describe('OIBusTimeValuesToModbusTransformer', () => {
 
     const options = {
       mapping: [
-        { pointId: 'reference1', address: 0x0001, modbusType: 'coil' },
-        { pointId: 'reference2', address: 0x0002, modbusType: 'holding-register' }
+        { pointId: 'reference1', nodeId: 'ns=3;i=1001' },
+        { pointId: 'reference2', nodeId: 'ns=3;i=1002' }
       ]
     };
     // Arrange
-    const transformer = new OIBusTimeValuesToModbusTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
+    const transformer = new OIBusTimeValuesToOPCUATransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
     const source = 'test-source';
     const dataChunks: Array<OIBusTimeValue> = [
       {
@@ -70,15 +70,15 @@ describe('OIBusTimeValuesToModbusTransformer', () => {
     // Assert
     expect(result).toEqual({
       output: JSON.stringify([
-        { address: 1, value: true, modbusType: 'coil' },
-        { address: 2, value: 2, modbusType: 'holding-register' }
+        { nodeId: 'ns=3;i=1001', value: '1' },
+        { nodeId: 'ns=3;i=1002', value: '2' }
       ]),
       metadata: {
         contentFile: 'randomId.json',
         contentSize: 0,
         createdAt: '',
         numberOfElement: 2,
-        contentType: 'modbus',
+        contentType: 'opcua',
         source,
         options: {}
       }
@@ -86,7 +86,7 @@ describe('OIBusTimeValuesToModbusTransformer', () => {
   });
 
   it('should return manifest', () => {
-    expect(OIBusTimeValuesToModbusTransformer.manifestSettings).toEqual({
+    expect(OIBusTimeValuesToOPCUATransformer.manifestSettings).toEqual({
       type: 'object',
       key: 'options',
       translationKey: 'configuration.oibus.manifest.transformers.options',
@@ -128,27 +128,9 @@ describe('OIBusTimeValuesToModbusTransformer', () => {
               },
               {
                 type: 'string',
-                key: 'address',
-                translationKey: 'configuration.oibus.manifest.transformers.mapping.modbus.address',
+                key: 'nodeId',
+                translationKey: 'configuration.oibus.manifest.transformers.mapping.opcua.node-id',
                 defaultValue: null,
-                validators: [
-                  {
-                    type: 'REQUIRED',
-                    arguments: []
-                  }
-                ],
-                displayProperties: {
-                  row: 0,
-                  columns: 4,
-                  displayInViewMode: true
-                }
-              },
-              {
-                type: 'string-select',
-                key: 'modbusType',
-                translationKey: 'configuration.oibus.manifest.transformers.mapping.modbus.modbus-type',
-                defaultValue: 'register',
-                selectableValues: ['coil', 'register'],
                 validators: [
                   {
                     type: 'REQUIRED',

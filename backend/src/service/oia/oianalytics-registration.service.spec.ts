@@ -69,15 +69,21 @@ describe('OIAnalytics Registration Service', () => {
   });
 
   it('should register', async () => {
-    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.registration.completed);
-    (getOIBusInfo as jest.Mock).mockReturnValueOnce(testData.engine.oIBusInfo);
+    (oIAnalyticsRegistrationRepository.get as jest.Mock)
+      .mockReturnValueOnce(testData.oIAnalytics.registration.completed)
+      .mockReturnValueOnce(testData.oIAnalytics.registration.completed);
+    (getOIBusInfo as jest.Mock).mockReturnValueOnce(testData.engine.oIBusInfo).mockReturnValueOnce(testData.engine.oIBusInfo);
     const result = {
       redirectUrl: 'http://localhost:4200/api/oianalytics/oibus/check-registration?id=id',
       expirationDate: testData.constants.dates.FAKE_NOW,
       activationCode: '123ABC'
     };
-    (oIAnalyticsClient.register as jest.Mock).mockReturnValueOnce(result);
-    (crypto.generateKeyPairSync as jest.Mock).mockReturnValueOnce({ publicKey: 'public key', privateKey: 'private key' });
+    (oIAnalyticsClient.register as jest.Mock).mockReturnValueOnce(result).mockReturnValueOnce(result);
+    (crypto.generateKeyPairSync as jest.Mock)
+      .mockReturnValueOnce({ publicKey: 'public key', privateKey: 'private key' })
+      .mockReturnValueOnce({ publicKey: 'public key', privateKey: 'private key' });
+
+    service.checkRegistration = jest.fn();
 
     await service.register(testData.oIAnalytics.registration.command);
 
@@ -93,6 +99,12 @@ describe('OIAnalytics Registration Service', () => {
       'public key',
       'private key'
     );
+
+    jest.advanceTimersByTime(10_000);
+    expect(service.checkRegistration).toHaveBeenCalledTimes(1);
+    await service.register(testData.oIAnalytics.registration.command);
+    jest.advanceTimersByTime(10_000);
+    expect(service.checkRegistration).toHaveBeenCalledTimes(2);
   });
 
   it('should register with proxy', async () => {
@@ -275,7 +287,7 @@ describe('OIAnalytics Registration Service', () => {
     const result = { status: 'COMPLETED', expired: true, accessToken: 'access_token' };
     (oIAnalyticsClient.checkRegistration as jest.Mock).mockReturnValueOnce(result);
 
-    service.start(); // start with pending registration to set interval
+    service.start(); // start with pending registration to a set interval
     await service.checkRegistration();
 
     expect(oIAnalyticsClient.checkRegistration).toHaveBeenCalledTimes(1);

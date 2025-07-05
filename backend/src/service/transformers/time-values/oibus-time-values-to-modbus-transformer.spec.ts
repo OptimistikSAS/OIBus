@@ -1,20 +1,20 @@
 import { Readable } from 'stream';
 import pino from 'pino';
-import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import testData from '../../tests/utils/test-data';
-import { flushPromises } from '../../tests/utils/test-utils';
-import { OIBusTimeValue } from '../../../shared/model/engine.model';
+import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock';
+import testData from '../../../tests/utils/test-data';
+import { flushPromises } from '../../../tests/utils/test-utils';
+import { OIBusTimeValue } from '../../../../shared/model/engine.model';
 import csv from 'papaparse';
-import OIBusTimeValuesToOPCUATransformer from './oibus-time-values-to-opcua-transformer';
+import OIBusTimeValuesToModbusTransformer from './oibus-time-values-to-modbus-transformer';
 
-jest.mock('../utils', () => ({
+jest.mock('../../utils', () => ({
   generateRandomId: jest.fn().mockReturnValue('randomId')
 }));
 jest.mock('papaparse');
 
 const logger: pino.Logger = new PinoLogger();
 
-describe('OIBusTimeValuesToOPCUATransformer', () => {
+describe('OIBusTimeValuesToModbusTransformer', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
@@ -25,12 +25,12 @@ describe('OIBusTimeValuesToOPCUATransformer', () => {
 
     const options = {
       mapping: [
-        { pointId: 'reference1', nodeId: 'ns=3;i=1001', dataType: 'uint32' },
-        { pointId: 'reference2', nodeId: 'ns=3;i=1002', dataType: 'uint32' }
+        { pointId: 'reference1', address: 0x0001, modbusType: 'coil' },
+        { pointId: 'reference2', address: 0x0002, modbusType: 'holding-register' }
       ]
     };
     // Arrange
-    const transformer = new OIBusTimeValuesToOPCUATransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
+    const transformer = new OIBusTimeValuesToModbusTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
     const source = 'test-source';
     const dataChunks: Array<OIBusTimeValue> = [
       {
@@ -70,15 +70,15 @@ describe('OIBusTimeValuesToOPCUATransformer', () => {
     // Assert
     expect(result).toEqual({
       output: JSON.stringify([
-        { nodeId: 'ns=3;i=1001', value: '1', dataType: 'uint32' },
-        { nodeId: 'ns=3;i=1002', value: '2', dataType: 'uint32' }
+        { address: 1, value: true, modbusType: 'coil' },
+        { address: 2, value: 2, modbusType: 'holding-register' }
       ]),
       metadata: {
         contentFile: 'randomId.json',
         contentSize: 0,
         createdAt: '',
         numberOfElement: 2,
-        contentType: 'opcua',
+        contentType: 'modbus',
         source,
         options: {}
       }
@@ -86,7 +86,7 @@ describe('OIBusTimeValuesToOPCUATransformer', () => {
   });
 
   it('should return manifest', () => {
-    expect(OIBusTimeValuesToOPCUATransformer.manifestSettings).toEqual({
+    expect(OIBusTimeValuesToModbusTransformer.manifestSettings).toEqual({
       type: 'object',
       key: 'options',
       translationKey: 'configuration.oibus.manifest.transformers.options',
@@ -128,8 +128,8 @@ describe('OIBusTimeValuesToOPCUATransformer', () => {
               },
               {
                 type: 'string',
-                key: 'nodeId',
-                translationKey: 'configuration.oibus.manifest.transformers.mapping.opcua.node-id',
+                key: 'address',
+                translationKey: 'configuration.oibus.manifest.transformers.mapping.modbus.address',
                 defaultValue: null,
                 validators: [
                   {
@@ -145,24 +145,10 @@ describe('OIBusTimeValuesToOPCUATransformer', () => {
               },
               {
                 type: 'string-select',
-                key: 'dataType',
-                translationKey: 'configuration.oibus.manifest.transformers.mapping.opcua.data-type',
-                defaultValue: 'uint16',
-                selectableValues: [
-                  'boolean',
-                  's-byte',
-                  'byte',
-                  'int16',
-                  'uint16',
-                  'int32',
-                  'uint32',
-                  'int64',
-                  'uint64',
-                  'float',
-                  'double',
-                  'string',
-                  'date-time'
-                ],
+                key: 'modbusType',
+                translationKey: 'configuration.oibus.manifest.transformers.mapping.modbus.modbus-type',
+                defaultValue: 'register',
+                selectableValues: ['coil', 'register'],
                 validators: [
                   {
                     type: 'REQUIRED',
