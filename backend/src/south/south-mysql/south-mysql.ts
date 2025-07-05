@@ -12,7 +12,7 @@ import {
   logQuery,
   persistResults
 } from '../../service/utils';
-import EncryptionService from '../../service/encryption.service';
+import { encryptionService } from '../../service/encryption.service';
 import pino from 'pino';
 import { Instant } from '../../../shared/model/types';
 import { QueriesHistory } from '../south-interface';
@@ -35,23 +35,13 @@ export default class SouthMySQL extends SouthConnector<SouthMySQLSettings, South
   constructor(
     connector: SouthConnectorEntity<SouthMySQLSettings, SouthMySQLItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
-    encryptionService: EncryptionService,
     southConnectorRepository: SouthConnectorRepository,
     southCacheRepository: SouthCacheRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolders: BaseFolders
   ) {
-    super(
-      connector,
-      engineAddContentCallback,
-      encryptionService,
-      southConnectorRepository,
-      southCacheRepository,
-      scanModeRepository,
-      logger,
-      baseFolders
-    );
+    super(connector, engineAddContentCallback, southConnectorRepository, southCacheRepository, scanModeRepository, logger, baseFolders);
     this.tmpFolder = path.resolve(this.baseFolders.cache, 'tmp');
   }
 
@@ -70,7 +60,7 @@ export default class SouthMySQL extends SouthConnector<SouthMySQLSettings, South
       host: this.connector.settings.host,
       port: this.connector.settings.port,
       user: this.connector.settings.username || undefined,
-      password: this.connector.settings.password ? await this.encryptionService.decryptText(this.connector.settings.password) : undefined,
+      password: this.connector.settings.password ? await encryptionService.decryptText(this.connector.settings.password) : undefined,
       database: this.connector.settings.database,
       connectTimeout: this.connector.settings.connectionTimeout,
       timezone: 'Z'
