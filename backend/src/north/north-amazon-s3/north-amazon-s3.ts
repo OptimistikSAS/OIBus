@@ -4,7 +4,7 @@ import { NodeHttpHandler } from '@smithy/node-http-handler';
 
 import { HeadBucketCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import NorthConnector from '../north-connector';
-import EncryptionService from '../../service/encryption.service';
+import { encryptionService } from '../../service/encryption.service';
 import pino from 'pino';
 import { NorthAmazonS3Settings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata } from '../../../shared/model/engine.model';
@@ -23,14 +23,13 @@ export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings>
 
   constructor(
     connector: NorthConnectorEntity<NorthAmazonS3Settings>,
-    encryptionService: EncryptionService,
     transformerService: TransformerService,
     northConnectorRepository: NorthConnectorRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolders: BaseFolders
   ) {
-    super(connector, encryptionService, transformerService, northConnectorRepository, scanModeRepository, logger, baseFolders);
+    super(connector, transformerService, northConnectorRepository, scanModeRepository, logger, baseFolders);
   }
 
   /**
@@ -49,7 +48,7 @@ export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings>
         // Insert username and password into the proxy URL
         const url = new URL(proxyUrl);
         url.username = this.connector.settings.proxyUsername;
-        url.password = await this.encryptionService.decryptText(this.connector.settings.proxyPassword);
+        url.password = await encryptionService.decryptText(this.connector.settings.proxyPassword);
         proxyUrl = url.toString();
       }
       proxyAgent = new HttpsProxyAgent(proxyUrl);
@@ -59,9 +58,7 @@ export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings>
       region: this.connector.settings.region,
       credentials: {
         accessKeyId: this.connector.settings.accessKey,
-        secretAccessKey: this.connector.settings.secretKey
-          ? await this.encryptionService.decryptText(this.connector.settings.secretKey)
-          : ''
+        secretAccessKey: this.connector.settings.secretKey ? await encryptionService.decryptText(this.connector.settings.secretKey) : ''
       },
       requestHandler: proxyAgent
         ? new NodeHttpHandler({

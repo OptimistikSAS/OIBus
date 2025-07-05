@@ -1,9 +1,8 @@
 import fsSync from 'node:fs';
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import NorthOIAnalytics from './north-oianalytics';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import EncryptionService from '../../service/encryption.service';
-import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import { compress, filesExists } from '../../service/utils';
 import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
 import { NorthOIAnalyticsSettings, NorthOIAnalyticsSettingsSpecificSettings } from '../../../shared/model/north-settings.model';
@@ -50,9 +49,11 @@ jest.mock('@azure/identity', () => ({
   }))
 }));
 jest.mock('../../service/http-request.utils');
+jest.mock('../../service/encryption.service', () => ({
+  encryptionService: new EncryptionServiceMock('', '')
+}));
 
 const logger: pino.Logger = new PinoLogger();
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const certificateRepository: CertificateRepository = new CertificateRepositoryMock();
@@ -170,7 +171,6 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
 
     north = new NorthOIAnalytics(
       configuration,
-      encryptionService,
       transformerService,
       northConnectorRepository,
       scanModeRepository,
@@ -618,7 +618,6 @@ describe('NorthOIAnalytics with Azure Active Directory', () => {
 
       north = new NorthOIAnalytics(
         configuration,
-        encryptionService,
         transformerService,
         northConnectorRepository,
         scanModeRepository,
@@ -722,7 +721,6 @@ describe('NorthOIAnalytics with Azure Active Directory', () => {
 
       north = new NorthOIAnalytics(
         configuration,
-        encryptionService,
         transformerService,
         northConnectorRepository,
         scanModeRepository,
@@ -807,7 +805,6 @@ describe('NorthOIAnalytics with OIA module', () => {
     } as OIAnalyticsRegistration;
     north = new NorthOIAnalytics(
       configuration,
-      encryptionService,
       transformerService,
       northConnectorRepository,
       scanModeRepository,
