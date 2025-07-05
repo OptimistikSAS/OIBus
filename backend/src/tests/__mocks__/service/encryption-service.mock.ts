@@ -13,6 +13,12 @@ export default jest.fn().mockImplementation((keyFolder: string, certsFolder: str
     encryptText: jest.fn(pass => pass),
     decryptText: jest.fn(pass => pass),
     decryptTextWithPrivateKey: jest.fn(pass => pass),
-    decryptSecretsWithPrivateKey: jest.fn(secrets => secrets)
+    decryptSecretsWithPrivateKey: jest.fn(secrets => secrets),
+    getCert: jest.fn().mockReturnValue('cert.pem'),
+    getCertPath: jest.fn().mockReturnValue('cert.pem'),
+    getPrivateKey: jest.fn().mockReturnValue('privateKey.pem'),
+    getPrivateKeyPath: jest.fn().mockReturnValue('privateKey.pem'),
+    getPublicKey: jest.fn().mockReturnValue('publicKey.pem'),
+    getPublicKeyPath: jest.fn().mockReturnValue('publicKey.pem')
   };
 });

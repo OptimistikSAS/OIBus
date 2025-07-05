@@ -4,7 +4,7 @@ import { BlobServiceClient, StorageSharedKeyCredential } from '@azure/storage-bl
 import { ClientSecretCredential, DefaultAzureCredential } from '@azure/identity';
 import { DataLakeServiceClient, StorageSharedKeyCredential as DataLakeStorageSharedKeyCredential } from '@azure/storage-file-datalake';
 import NorthConnector from '../north-connector';
-import EncryptionService from '../../service/encryption.service';
+import { encryptionService } from '../../service/encryption.service';
 import { NorthAzureBlobSettings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
@@ -23,14 +23,13 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
 
   constructor(
     connector: NorthConnectorEntity<NorthAzureBlobSettings>,
-    encryptionService: EncryptionService,
     transformerService: TransformerService,
     northConnectorRepository: NorthConnectorRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolders: BaseFolders
   ) {
-    super(connector, encryptionService, transformerService, northConnectorRepository, scanModeRepository, logger, baseFolders);
+    super(connector, transformerService, northConnectorRepository, scanModeRepository, logger, baseFolders);
   }
 
   async start(dataStream = true): Promise<void> {
@@ -73,7 +72,7 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
         port: proxyPort,
         username: this.connector.settings.proxyUsername || undefined,
         password: this.connector.settings.proxyPassword
-          ? await this.encryptionService.decryptText(this.connector.settings.proxyPassword)
+          ? await encryptionService.decryptText(this.connector.settings.proxyPassword)
           : undefined
       };
     }
@@ -86,7 +85,7 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
         : `https://${this.connector.settings.account}.blob.core.windows.net`;
     switch (this.connector.settings.authentication) {
       case 'sas-token':
-        const decryptedToken = await this.encryptionService.decryptText(this.connector.settings.sasToken!);
+        const decryptedToken = await encryptionService.decryptText(this.connector.settings.sasToken!);
         if (this.connector.settings.useADLS) {
           this.dataLakeClient = new DataLakeServiceClient(`${url}?${decryptedToken}`, undefined, { proxyOptions });
         } else {
@@ -94,7 +93,7 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
         }
         break;
       case 'access-key':
-        const decryptedAccessKey = await this.encryptionService.decryptText(this.connector.settings.accessKey!);
+        const decryptedAccessKey = await encryptionService.decryptText(this.connector.settings.accessKey!);
         if (this.connector.settings.useADLS) {
           const dataLakeSharedKeyCredential = new DataLakeStorageSharedKeyCredential(this.connector.settings.account!, decryptedAccessKey);
           this.dataLakeClient = new DataLakeServiceClient(url, dataLakeSharedKeyCredential, {
@@ -111,7 +110,7 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
         const clientSecretCredential = new ClientSecretCredential(
           this.connector.settings.tenantId!,
           this.connector.settings.clientId!,
-          await this.encryptionService.decryptText(this.connector.settings.clientSecret!)
+          await encryptionService.decryptText(this.connector.settings.clientSecret!)
         );
         if (this.connector.settings.useADLS) {
           this.dataLakeClient = new DataLakeServiceClient(url, clientSecretCredential, { proxyOptions });

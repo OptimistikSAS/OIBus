@@ -1,8 +1,8 @@
-import NorthOPCUA from './north-opcua';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
+import { encryptionService } from '../../service/encryption.service';
+import NorthOPCUA from './north-opcua';
 import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
 import csv from 'papaparse';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
@@ -50,9 +50,11 @@ jest.mock('crypto', () => ({
 }));
 jest.mock('node:fs/promises');
 jest.mock('../../service/utils');
+jest.mock('../../service/encryption.service', () => ({
+  encryptionService: new EncryptionServiceMock('', '')
+}));
 
 const logger: pino.Logger = new PinoLogger();
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const cacheService: CacheService = new CacheServiceMock();
@@ -96,7 +98,6 @@ describe('NorthOPCUA', () => {
 
     north = new NorthOPCUA(
       configuration,
-      encryptionService,
       transformerService,
       northConnectorRepository,
       scanModeRepository,
@@ -321,7 +322,6 @@ describe('NorthOPCUA test connection', () => {
 
     north = new NorthOPCUA(
       configuration,
-      encryptionService,
       transformerService,
       northConnectorRepository,
       scanModeRepository,
