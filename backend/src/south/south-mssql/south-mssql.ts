@@ -11,7 +11,7 @@ import {
   logQuery,
   persistResults
 } from '../../service/utils';
-import EncryptionService from '../../service/encryption.service';
+import EncryptionService, { encryptionService } from '../../service/encryption.service';
 import pino from 'pino';
 import { Instant } from '../../../shared/model/types';
 import { QueriesHistory } from '../south-interface';
@@ -34,23 +34,13 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
   constructor(
     connector: SouthConnectorEntity<SouthMSSQLSettings, SouthMSSQLItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
-    encryptionService: EncryptionService,
     southConnectorRepository: SouthConnectorRepository,
     southCacheRepository: SouthCacheRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolders: BaseFolders
   ) {
-    super(
-      connector,
-      engineAddContentCallback,
-      encryptionService,
-      southConnectorRepository,
-      southCacheRepository,
-      scanModeRepository,
-      logger,
-      baseFolders
-    );
+    super(connector, engineAddContentCallback, southConnectorRepository, southCacheRepository, scanModeRepository, logger, baseFolders);
     this.tmpFolder = path.resolve(this.baseFolders.cache, 'tmp');
   }
 
@@ -67,7 +57,7 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
   async createConnectionOptions(): Promise<config> {
     const config: config = {
       user: this.connector.settings.username || undefined,
-      password: this.connector.settings.password ? await this.encryptionService.decryptText(this.connector.settings.password) : undefined,
+      password: this.connector.settings.password ? await encryptionService.decryptText(this.connector.settings.password) : undefined,
       server: this.connector.settings.host,
       port: this.connector.settings.port,
       database: this.connector.settings.database,
