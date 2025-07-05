@@ -1,10 +1,8 @@
 import fs from 'node:fs/promises';
-
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import NorthAzureBlob from './north-azure-blob';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import EncryptionService from '../../service/encryption.service';
-import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import { BlobServiceClient, StorageSharedKeyCredential } from '@azure/storage-blob';
 import { DataLakeServiceClient, StorageSharedKeyCredential as DataLakeStorageSharedKeyCredential } from '@azure/storage-file-datalake';
 import { ClientSecretCredential, DefaultAzureCredential } from '@azure/identity';
@@ -67,9 +65,11 @@ jest.mock('papaparse');
 jest.mock('node:fs/promises');
 jest.mock('../../service/utils');
 jest.mock('../../service/transformer.service');
+jest.mock('../../service/encryption.service', () => ({
+  encryptionService: new EncryptionServiceMock('', '')
+}));
 
 const logger: pino.Logger = new PinoLogger();
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const cacheService: CacheService = new CacheServiceMock();
@@ -125,7 +125,6 @@ describe('NorthAzureBlob without proxy', () => {
     configuration.settings.sasToken = 'sas token';
     north = new NorthAzureBlob(
       configuration,
-      encryptionService,
       transformerService,
       northConnectorRepository,
       scanModeRepository,
@@ -165,7 +164,6 @@ describe('NorthAzureBlob without proxy', () => {
     configuration.settings.useADLS = true;
     north = new NorthAzureBlob(
       configuration,
-      encryptionService,
       transformerService,
       northConnectorRepository,
       scanModeRepository,
@@ -205,7 +203,6 @@ describe('NorthAzureBlob without proxy', () => {
     configuration.settings.accessKey = 'access key';
     north = new NorthAzureBlob(
       configuration,
-      encryptionService,
       transformerService,
       northConnectorRepository,
       scanModeRepository,
@@ -246,7 +243,6 @@ describe('NorthAzureBlob without proxy', () => {
     configuration.settings.useADLS = true;
     north = new NorthAzureBlob(
       configuration,
-      encryptionService,
       transformerService,
       northConnectorRepository,
       scanModeRepository,
@@ -290,7 +286,6 @@ describe('NorthAzureBlob without proxy', () => {
     configuration.settings.clientSecret = 'clientSecret';
     north = new NorthAzureBlob(
       configuration,
-      encryptionService,
       transformerService,
       northConnectorRepository,
       scanModeRepository,
@@ -335,7 +330,6 @@ describe('NorthAzureBlob without proxy', () => {
     configuration.settings.clientSecret = 'clientSecret';
     north = new NorthAzureBlob(
       configuration,
-      encryptionService,
       transformerService,
       northConnectorRepository,
       scanModeRepository,
@@ -376,7 +370,6 @@ describe('NorthAzureBlob without proxy', () => {
 
     north = new NorthAzureBlob(
       configuration,
-      encryptionService,
       transformerService,
       northConnectorRepository,
       scanModeRepository,
@@ -419,7 +412,6 @@ describe('NorthAzureBlob without proxy', () => {
     configuration.settings.useADLS = true;
     north = new NorthAzureBlob(
       configuration,
-      encryptionService,
       transformerService,
       northConnectorRepository,
       scanModeRepository,
@@ -457,7 +449,6 @@ describe('NorthAzureBlob without proxy', () => {
     configuration.settings.path = 'my path';
     north = new NorthAzureBlob(
       configuration,
-      encryptionService,
       transformerService,
       northConnectorRepository,
       scanModeRepository,
@@ -488,7 +479,6 @@ describe('NorthAzureBlob without proxy', () => {
     configuration.settings.path = 'my path';
     north = new NorthAzureBlob(
       configuration,
-      encryptionService,
       transformerService,
       northConnectorRepository,
       scanModeRepository,
@@ -517,7 +507,6 @@ describe('NorthAzureBlob without proxy', () => {
     configuration.settings.useADLS = true;
     north = new NorthAzureBlob(
       configuration,
-      encryptionService,
       transformerService,
       northConnectorRepository,
       scanModeRepository,
@@ -543,7 +532,6 @@ describe('NorthAzureBlob without proxy', () => {
     configuration.settings.useADLS = true;
     north = new NorthAzureBlob(
       configuration,
-      encryptionService,
       transformerService,
       northConnectorRepository,
       scanModeRepository,
@@ -570,7 +558,6 @@ describe('NorthAzureBlob without proxy', () => {
     configuration.settings.authentication = 'external';
     north = new NorthAzureBlob(
       configuration,
-      encryptionService,
       transformerService,
       northConnectorRepository,
       scanModeRepository,
@@ -595,7 +582,6 @@ describe('NorthAzureBlob without proxy', () => {
     });
     north = new NorthAzureBlob(
       configuration,
-      encryptionService,
       transformerService,
       northConnectorRepository,
       scanModeRepository,
@@ -616,7 +602,6 @@ describe('NorthAzureBlob without proxy', () => {
     configuration.settings.authentication = 'bad';
     north = new NorthAzureBlob(
       configuration,
-      encryptionService,
       transformerService,
       northConnectorRepository,
       scanModeRepository,
@@ -671,7 +656,6 @@ describe('NorthAzureBlob with proxy', () => {
     configuration.settings.sasToken = 'sas token';
     north = new NorthAzureBlob(
       configuration,
-      encryptionService,
       transformerService,
       northConnectorRepository,
       scanModeRepository,
@@ -714,7 +698,6 @@ describe('NorthAzureBlob with proxy', () => {
     configuration.settings.useADLS = true;
     north = new NorthAzureBlob(
       configuration,
-      encryptionService,
       transformerService,
       northConnectorRepository,
       scanModeRepository,
@@ -759,7 +742,6 @@ describe('NorthAzureBlob with proxy', () => {
     configuration.settings.proxyUrl = 'https://proxy.com';
     north = new NorthAzureBlob(
       configuration,
-      encryptionService,
       transformerService,
       northConnectorRepository,
       scanModeRepository,
@@ -801,7 +783,6 @@ describe('NorthAzureBlob with proxy', () => {
     configuration.settings.useADLS = true;
     north = new NorthAzureBlob(
       configuration,
-      encryptionService,
       transformerService,
       northConnectorRepository,
       scanModeRepository,
@@ -838,7 +819,6 @@ describe('NorthAzureBlob with proxy', () => {
   it('should properly parse proxy url', async () => {
     north = new NorthAzureBlob(
       configuration,
-      encryptionService,
       transformerService,
       northConnectorRepository,
       scanModeRepository,

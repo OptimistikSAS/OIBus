@@ -1,5 +1,5 @@
 import NorthConnector from '../north-connector';
-import EncryptionService from '../../service/encryption.service';
+import { encryptionService } from '../../service/encryption.service';
 import pino from 'pino';
 import { NorthMQTTSettings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata } from '../../../shared/model/engine.model';
@@ -23,14 +23,13 @@ export default class NorthMQTT extends NorthConnector<NorthMQTTSettings> {
 
   constructor(
     configuration: NorthConnectorEntity<NorthMQTTSettings>,
-    encryptionService: EncryptionService,
     transformerService: TransformerService,
     northConnectorRepository: NorthConnectorRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolders: BaseFolders
   ) {
-    super(configuration, encryptionService, transformerService, northConnectorRepository, scanModeRepository, logger, baseFolders);
+    super(configuration, transformerService, northConnectorRepository, scanModeRepository, logger, baseFolders);
   }
 
   override async connect(): Promise<void> {
@@ -111,7 +110,7 @@ export default class NorthMQTT extends NorthConnector<NorthMQTTSettings> {
     };
     if (this.connector.settings.authentication.type === 'basic') {
       options.username = this.connector.settings.authentication.username;
-      options.password = Buffer.from(await this.encryptionService.decryptText(this.connector.settings.authentication.password!)).toString();
+      options.password = Buffer.from(await encryptionService.decryptText(this.connector.settings.authentication.password!)).toString();
     } else if (this.connector.settings.authentication.type === 'cert') {
       options.cert = this.connector.settings.authentication.certFilePath
         ? await fs.readFile(path.resolve(this.connector.settings.authentication.certFilePath))

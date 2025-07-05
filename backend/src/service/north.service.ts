@@ -1,4 +1,4 @@
-import EncryptionService from './encryption.service';
+import EncryptionService, { encryptionService } from './encryption.service';
 import pino from 'pino';
 import NorthConnector from '../north/north-connector';
 import NorthConsole from '../north/north-console/north-console';
@@ -89,7 +89,6 @@ export default class NorthService {
     private readonly certificateRepository: CertificateRepository,
     private readonly oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
     private oIAnalyticsMessageService: OIAnalyticsMessageService,
-    private readonly encryptionService: EncryptionService,
     private readonly transformerService: TransformerService,
     private readonly dataStreamEngine: DataStreamEngine
   ) {}
@@ -105,7 +104,6 @@ export default class NorthService {
       case 'aws-s3':
         return new NorthAmazonS3(
           settings as NorthConnectorEntity<NorthAmazonS3Settings>,
-          this.encryptionService,
           this.transformerService,
           this.northConnectorRepository,
           this.scanModeRepository,
@@ -115,7 +113,6 @@ export default class NorthService {
       case 'azure-blob':
         return new NorthAzureBlob(
           settings as NorthConnectorEntity<NorthAzureBlobSettings>,
-          this.encryptionService,
           this.transformerService,
           this.northConnectorRepository,
           this.scanModeRepository,
@@ -125,7 +122,6 @@ export default class NorthService {
       case 'console':
         return new NorthConsole(
           settings as NorthConnectorEntity<NorthConsoleSettings>,
-          this.encryptionService,
           this.transformerService,
           this.northConnectorRepository,
           this.scanModeRepository,
@@ -135,7 +131,6 @@ export default class NorthService {
       case 'file-writer':
         return new NorthFileWriter(
           settings as NorthConnectorEntity<NorthFileWriterSettings>,
-          this.encryptionService,
           this.transformerService,
           this.northConnectorRepository,
           this.scanModeRepository,
@@ -145,7 +140,6 @@ export default class NorthService {
       case 'oianalytics':
         return new NorthOIAnalytics(
           settings as NorthConnectorEntity<NorthOIAnalyticsSettings>,
-          this.encryptionService,
           this.transformerService,
           this.northConnectorRepository,
           this.scanModeRepository,
@@ -157,7 +151,6 @@ export default class NorthService {
       case 'sftp':
         return new NorthSFTP(
           settings as NorthConnectorEntity<NorthSFTPSettings>,
-          this.encryptionService,
           this.transformerService,
           this.northConnectorRepository,
           this.scanModeRepository,
@@ -167,7 +160,6 @@ export default class NorthService {
       case 'rest':
         return new NorthREST(
           settings as NorthConnectorEntity<NorthRESTSettings>,
-          this.encryptionService,
           this.transformerService,
           this.northConnectorRepository,
           this.scanModeRepository,
@@ -177,7 +169,6 @@ export default class NorthService {
       case 'opcua':
         return new NorthOPCUA(
           settings as NorthConnectorEntity<NorthOPCUASettings>,
-          this.encryptionService,
           this.transformerService,
           this.northConnectorRepository,
           this.scanModeRepository,
@@ -187,7 +178,6 @@ export default class NorthService {
       case 'mqtt':
         return new NorthMQTT(
           settings as NorthConnectorEntity<NorthMQTTSettings>,
-          this.encryptionService,
           this.transformerService,
           this.northConnectorRepository,
           this.scanModeRepository,
@@ -197,7 +187,6 @@ export default class NorthService {
       case 'modbus':
         return new NorthModbus(
           settings as NorthConnectorEntity<NorthModbusSettings>,
-          this.encryptionService,
           this.transformerService,
           this.northConnectorRepository,
           this.scanModeRepository,
@@ -229,11 +218,7 @@ export default class NorthService {
       id: northConnector?.id || 'test',
       ...command,
       caching: { ...command.caching, trigger: { ...command.caching.trigger, scanModeId: command.caching.trigger.scanModeId! } },
-      settings: await this.encryptionService.encryptConnectorSecrets<N>(
-        command.settings,
-        northConnector?.settings || null,
-        manifest.settings
-      ),
+      settings: await encryptionService.encryptConnectorSecrets<N>(command.settings, northConnector?.settings || null, manifest.settings),
       name: northConnector ? northConnector.name : `${command!.type}:test-connection`,
       subscriptions: [],
       transformers: []
@@ -270,7 +255,6 @@ export default class NorthService {
       northEntity,
       command,
       this.retrieveSecretsFromNorth(retrieveSecretsFromNorth, manifest),
-      this.encryptionService,
       this.scanModeRepository.findAll(),
       this.southConnectorRepository.findAllSouth(),
       this.transformerService.findAll()
@@ -357,7 +341,6 @@ export default class NorthService {
       northEntity,
       command,
       previousSettings,
-      this.encryptionService,
       this.scanModeRepository.findAll(),
       this.southConnectorRepository.findAllSouth(),
       this.transformerService.findAll()
@@ -592,7 +575,6 @@ export const copyNorthConnectorCommandToNorthEntity = async <N extends NorthSett
   northEntity: NorthConnectorEntity<N>,
   command: NorthConnectorCommandDTO<N>,
   currentSettings: NorthConnectorEntity<N> | null,
-  encryptionService: EncryptionService,
   scanModes: Array<ScanMode>,
   southConnectors: Array<SouthConnectorLightDTO>,
   transformers: Array<Transformer>

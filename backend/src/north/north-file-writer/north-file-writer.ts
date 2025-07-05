@@ -2,7 +2,6 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import NorthConnector from '../north-connector';
-import EncryptionService from '../../service/encryption.service';
 import pino from 'pino';
 import { DateTime } from 'luxon';
 import { NorthFileWriterSettings } from '../../../shared/model/north-settings.model';
@@ -20,14 +19,13 @@ import { getFilenameWithoutRandomId } from '../../service/utils';
 export default class NorthFileWriter extends NorthConnector<NorthFileWriterSettings> {
   constructor(
     configuration: NorthConnectorEntity<NorthFileWriterSettings>,
-    encryptionService: EncryptionService,
     transformerService: TransformerService,
     northConnectorRepository: NorthConnectorRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolders: BaseFolders
   ) {
-    super(configuration, encryptionService, transformerService, northConnectorRepository, scanModeRepository, logger, baseFolders);
+    super(configuration, transformerService, northConnectorRepository, scanModeRepository, logger, baseFolders);
   }
 
   async handleContent(cacheMetadata: CacheMetadata): Promise<void> {
