@@ -5,7 +5,6 @@ import { createBaseFolders, delay, generateIntervals, validateCronExpression } f
 import { SouthCache, SouthConnectorItemTestingSettings } from '../../shared/model/south-connector.model';
 import { Instant, Interval } from '../../shared/model/types';
 import pino from 'pino';
-import EncryptionService from '../service/encryption.service';
 import DeferredPromise from '../service/deferred-promise';
 import { DateTime } from 'luxon';
 import SouthCacheService from '../service/south-cache.service';
@@ -62,7 +61,6 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   protected constructor(
     protected connector: SouthConnectorEntity<T, I>,
     private engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
-    protected readonly encryptionService: EncryptionService,
     private readonly southConnectorRepository: SouthConnectorRepository,
     private readonly southCacheRepository: SouthCacheRepository,
     private readonly scanModeRepository: ScanModeRepository,

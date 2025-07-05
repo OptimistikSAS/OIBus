@@ -1,13 +1,9 @@
 import path from 'node:path';
 import fs from 'node:fs/promises';
-
 import SouthSQLite from './south-sqlite';
 import * as utils from '../../service/utils';
 import pino from 'pino';
-
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import EncryptionService from '../../service/encryption.service';
-import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import { DateTime } from 'luxon';
 import {
   SouthSQLiteItemSettings,
@@ -44,7 +40,6 @@ const DatabaseMock = jest.fn().mockImplementation(() => {
 const mockDatabase = new DatabaseMock();
 jest.mock('better-sqlite3', () => () => mockDatabase);
 
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
@@ -118,7 +113,7 @@ describe('SouthSQLite', () => {
         name: 'item2',
         enabled: true,
         settings: {
-          query: 'SELECT * FROM table',
+          query: 'query 2',
           dateTimeFields: null,
           serialization: {
             type: 'csv',
@@ -136,7 +131,7 @@ describe('SouthSQLite', () => {
         name: 'item3',
         enabled: true,
         settings: {
-          query: 'SELECT * FROM table',
+          query: 'query 3',
           dateTimeFields: [
             {
               fieldName: 'anotherTimestamp',
@@ -182,7 +177,6 @@ describe('SouthSQLite', () => {
     south = new SouthSQLite(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,
@@ -341,7 +335,7 @@ describe('SouthSQLite test connection', () => {
         name: 'item1',
         enabled: true,
         settings: {
-          query: 'SELECT * FROM table WHERE timestamp > @StartTime and timestamp < @EndTime',
+          query: 'query1',
           dateTimeFields: [
             {
               fieldName: 'anotherTimestamp',
@@ -376,7 +370,7 @@ describe('SouthSQLite test connection', () => {
         name: 'item2',
         enabled: true,
         settings: {
-          query: 'SELECT * FROM table',
+          query: 'query2',
           dateTimeFields: null,
           serialization: {
             type: 'csv',
@@ -394,7 +388,7 @@ describe('SouthSQLite test connection', () => {
         name: 'item3',
         enabled: true,
         settings: {
-          query: 'SELECT * FROM table',
+          query: 'query3',
           dateTimeFields: [
             {
               fieldName: 'anotherTimestamp',
@@ -434,7 +428,6 @@ describe('SouthSQLite test connection', () => {
     south = new SouthSQLite(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,

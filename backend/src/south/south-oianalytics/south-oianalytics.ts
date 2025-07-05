@@ -2,7 +2,7 @@ import path from 'node:path';
 
 import SouthConnector from '../south-connector';
 import { createFolder, formatQueryParams, persistResults } from '../../service/utils';
-import EncryptionService from '../../service/encryption.service';
+import { encryptionService } from '../../service/encryption.service';
 import pino from 'pino';
 import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
@@ -48,7 +48,6 @@ export default class SouthOIAnalytics
   constructor(
     connector: SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIAnalyticsItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
-    encryptionService: EncryptionService,
     southConnectorRepository: SouthConnectorRepository,
     southCacheRepository: SouthCacheRepository,
     scanModeRepository: ScanModeRepository,
@@ -57,16 +56,7 @@ export default class SouthOIAnalytics
     logger: pino.Logger,
     baseFolders: BaseFolders
   ) {
-    super(
-      connector,
-      engineAddContentCallback,
-      encryptionService,
-      southConnectorRepository,
-      southCacheRepository,
-      scanModeRepository,
-      logger,
-      baseFolders
-    );
+    super(connector, engineAddContentCallback, southConnectorRepository, southCacheRepository, scanModeRepository, logger, baseFolders);
     this.tmpFolder = path.resolve(this.baseFolders.cache, 'tmp');
   }
 
@@ -282,11 +272,11 @@ export default class SouthOIAnalytics
         const clientSecretCredential = new ClientSecretCredential(
           specificSettings.tenantId!,
           specificSettings.clientId!,
-          await this.encryptionService.decryptText(specificSettings.clientSecret!)
+          await encryptionService.decryptText(specificSettings.clientSecret!)
         );
         const result = await clientSecretCredential.getToken(specificSettings.scope!);
         // Note: token needs to be encrypted when adding it to proxy options
-        const token = await this.encryptionService.encryptText(`Bearer ${Buffer.from(result.token)}`);
+        const token = await encryptionService.encryptText(`Bearer ${Buffer.from(result.token)}`);
         return {
           type: 'bearer',
           token
@@ -297,13 +287,13 @@ export default class SouthOIAnalytics
         const certificate = this.certificateRepository.findById(specificSettings.certificateId!);
         if (certificate === null) return;
 
-        const decryptedPrivateKey = await this.encryptionService.decryptText(certificate.privateKey);
+        const decryptedPrivateKey = await encryptionService.decryptText(certificate.privateKey);
         const clientCertificateCredential = new ClientCertificateCredential(specificSettings.tenantId!, specificSettings.clientId!, {
           certificate: `${certificate.certificate}\n${decryptedPrivateKey}`
         });
         const result = await clientCertificateCredential.getToken(specificSettings.scope!);
         // Note: token needs to be encrypted when adding it to proxy options
-        const token = await this.encryptionService.encryptText(`Bearer ${Buffer.from(result.token)}`);
+        const token = await encryptionService.encryptText(`Bearer ${Buffer.from(result.token)}`);
         return {
           type: 'bearer',
           token
