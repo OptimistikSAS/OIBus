@@ -1,10 +1,9 @@
-import NorthSftp from './north-sftp';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
+import { encryptionService } from '../../service/encryption.service';
+import NorthSftp from './north-sftp';
 import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
-
 import csv from 'papaparse';
 import { NorthSFTPSettings } from '../../../shared/model/north-settings.model';
 import sftpClient from 'ssh2-sftp-client';
@@ -25,13 +24,15 @@ import { getFilenameWithoutRandomId } from '../../service/utils';
 jest.mock('node:fs/promises');
 
 const logger: pino.Logger = new PinoLogger();
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const cacheService: CacheService = new CacheServiceMock();
 const transformerService: TransformerService = new TransformerServiceMock();
 const oiBusTransformer: OIBusTransformer = new OIBusTransformerMock() as unknown as OIBusTransformer;
 
+jest.mock('../../service/encryption.service', () => ({
+  encryptionService: new EncryptionServiceMock('', '')
+}));
 jest.mock(
   '../../service/cache/cache.service',
   () =>
@@ -80,7 +81,6 @@ describe('NorthSFTP', () => {
 
     north = new NorthSftp(
       configuration,
-      encryptionService,
       transformerService,
       northConnectorRepository,
       scanModeRepository,
@@ -171,7 +171,6 @@ describe('NorthSFTP without suffix or prefix', () => {
 
     north = new NorthSftp(
       configuration,
-      encryptionService,
       transformerService,
       northConnectorRepository,
       scanModeRepository,
