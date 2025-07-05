@@ -1,8 +1,7 @@
-import { Client, AdsDataType } from 'ads-client';
+import { AdsDataType, Client } from 'ads-client';
 import SouthConnector from '../south-connector';
 import { DateTime } from 'luxon';
 import { Instant } from '../../../shared/model/types';
-import EncryptionService from '../../service/encryption.service';
 import pino from 'pino';
 import { QueriesLastPoint } from '../south-interface';
 import { SouthADSItemSettings, SouthADSSettings } from '../../../shared/model/south-settings.model';
@@ -36,23 +35,13 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
   constructor(
     connector: SouthConnectorEntity<SouthADSSettings, SouthADSItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
-    encryptionService: EncryptionService,
     southConnectorRepository: SouthConnectorRepository,
     southCacheRepository: SouthCacheRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolders: BaseFolders
   ) {
-    super(
-      connector,
-      engineAddContentCallback,
-      encryptionService,
-      southConnectorRepository,
-      southCacheRepository,
-      scanModeRepository,
-      logger,
-      baseFolders
-    );
+    super(connector, engineAddContentCallback, southConnectorRepository, southCacheRepository, scanModeRepository, logger, baseFolders);
   }
 
   /**

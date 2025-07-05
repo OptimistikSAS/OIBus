@@ -1,14 +1,11 @@
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import path from 'node:path';
-
 import SouthODBC from './south-odbc';
 import * as utils from '../../service/utils';
 import { convertDateTimeToInstant, convertDelimiter, formatInstant, persistResults } from '../../service/utils';
-
 import pino from 'pino';
 import { loadOdbc } from './odbc-loader';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import EncryptionService from '../../service/encryption.service';
-import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import { SouthODBCItemSettings, SouthODBCItemSettingsDateTimeFields, SouthODBCSettings } from '../../../shared/model/south-settings.model';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import SouthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/south-connector-repository.mock';
@@ -29,7 +26,6 @@ jest.mock('node:fs/promises');
 jest.mock('../../service/utils');
 jest.mock('./odbc-loader.ts');
 
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
@@ -42,6 +38,9 @@ jest.mock(
       return southCacheService;
     }
 );
+jest.mock('../../service/encryption.service', () => ({
+  encryptionService: new EncryptionServiceMock('', '')
+}));
 
 const logger: pino.Logger = new PinoLogger();
 const addContentCallback = jest.fn();
@@ -77,7 +76,7 @@ describe('SouthODBC odbc driver with authentication', () => {
         name: 'item1',
         enabled: true,
         settings: {
-          query: 'SELECT * FROM table',
+          query: 'query1',
           dateTimeFields: [
             {
               fieldName: 'anotherTimestamp',
@@ -112,7 +111,7 @@ describe('SouthODBC odbc driver with authentication', () => {
         name: 'item2',
         enabled: true,
         settings: {
-          query: 'SELECT * FROM table',
+          query: 'query2',
           dateTimeFields: null,
           serialization: {
             type: 'csv',
@@ -130,7 +129,7 @@ describe('SouthODBC odbc driver with authentication', () => {
         name: 'item3',
         enabled: true,
         settings: {
-          query: 'SELECT * FROM table',
+          query: 'query3',
           dateTimeFields: [
             {
               fieldName: 'anotherTimestamp',
@@ -173,9 +172,7 @@ describe('SouthODBC odbc driver with authentication', () => {
     south = new SouthODBC(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
-
       southCacheRepository,
       scanModeRepository,
       logger,
@@ -437,7 +434,7 @@ describe('SouthODBC odbc driver without authentication', () => {
         name: 'item1',
         enabled: true,
         settings: {
-          query: 'SELECT * FROM table',
+          query: 'query1',
           dateTimeFields: [
             {
               fieldName: 'anotherTimestamp',
@@ -472,7 +469,7 @@ describe('SouthODBC odbc driver without authentication', () => {
         name: 'item2',
         enabled: true,
         settings: {
-          query: 'SELECT * FROM table',
+          query: 'query2',
           dateTimeFields: null,
           serialization: {
             type: 'csv',
@@ -490,7 +487,7 @@ describe('SouthODBC odbc driver without authentication', () => {
         name: 'item3',
         enabled: true,
         settings: {
-          query: 'SELECT * FROM table',
+          query: 'query3',
           dateTimeFields: [
             {
               fieldName: 'anotherTimestamp',
@@ -531,7 +528,6 @@ describe('SouthODBC odbc driver without authentication', () => {
     south = new SouthODBC(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,
@@ -631,7 +627,7 @@ describe('SouthODBC odbc driver test connection', () => {
         name: 'item1',
         enabled: true,
         settings: {
-          query: 'SELECT * FROM table',
+          query: 'query1',
           dateTimeFields: [
             {
               fieldName: 'anotherTimestamp',
@@ -666,7 +662,7 @@ describe('SouthODBC odbc driver test connection', () => {
         name: 'item2',
         enabled: true,
         settings: {
-          query: 'SELECT * FROM table',
+          query: 'query2',
           dateTimeFields: null,
           serialization: {
             type: 'csv',
@@ -684,7 +680,7 @@ describe('SouthODBC odbc driver test connection', () => {
         name: 'item3',
         enabled: true,
         settings: {
-          query: 'SELECT * FROM table',
+          query: 'query3',
           dateTimeFields: [
             {
               fieldName: 'anotherTimestamp',
@@ -797,7 +793,6 @@ describe('SouthODBC odbc driver test connection', () => {
     south = new SouthODBC(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,
@@ -909,7 +904,7 @@ describe('SouthODBC odbc remote with authentication', () => {
         name: 'item1',
         enabled: true,
         settings: {
-          query: 'SELECT * FROM table',
+          query: 'query1',
           dateTimeFields: [
             {
               fieldName: 'anotherTimestamp',
@@ -944,7 +939,7 @@ describe('SouthODBC odbc remote with authentication', () => {
         name: 'item2',
         enabled: true,
         settings: {
-          query: 'SELECT * FROM table',
+          query: 'query2',
           dateTimeFields: null,
           serialization: {
             type: 'csv',
@@ -962,7 +957,7 @@ describe('SouthODBC odbc remote with authentication', () => {
         name: 'item3',
         enabled: true,
         settings: {
-          query: 'SELECT * FROM table',
+          query: 'query3',
           dateTimeFields: [
             {
               fieldName: 'anotherTimestamp',
@@ -1006,7 +1001,6 @@ describe('SouthODBC odbc remote with authentication', () => {
     south = new SouthODBC(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,
@@ -1196,11 +1190,11 @@ describe('SouthODBC odbc remote with authentication', () => {
         method: 'PUT',
         body: JSON.stringify({
           connectionString: configuration.settings.connectionString,
-          sql: configuration.items[0].settings.query,
+          sql: configuration.items[1].settings.query,
           readTimeout: configuration.settings.requestTimeout,
-          delimiter: configuration.items[0].settings.serialization.delimiter,
-          outputTimestampFormat: configuration.items[0].settings.serialization.outputTimestampFormat,
-          outputTimezone: configuration.items[0].settings.serialization.outputTimezone
+          delimiter: configuration.items[1].settings.serialization.delimiter,
+          outputTimestampFormat: configuration.items[1].settings.serialization.outputTimestampFormat,
+          outputTimezone: configuration.items[1].settings.serialization.outputTimezone
         }),
         headers: {
           'Content-Type': 'application/json'
@@ -1289,7 +1283,7 @@ describe('SouthODBC odbc remote test connection', () => {
         name: 'item1',
         enabled: true,
         settings: {
-          query: 'SELECT * FROM table',
+          query: 'query1',
           dateTimeFields: [
             {
               fieldName: 'anotherTimestamp',
@@ -1324,7 +1318,7 @@ describe('SouthODBC odbc remote test connection', () => {
         name: 'item2',
         enabled: true,
         settings: {
-          query: 'SELECT * FROM table',
+          query: 'query2',
           dateTimeFields: null,
           serialization: {
             type: 'csv',
@@ -1342,7 +1336,7 @@ describe('SouthODBC odbc remote test connection', () => {
         name: 'item3',
         enabled: true,
         settings: {
-          query: 'SELECT * FROM table',
+          query: 'query3',
           dateTimeFields: [
             {
               fieldName: 'anotherTimestamp',
@@ -1383,7 +1377,6 @@ describe('SouthODBC odbc remote test connection', () => {
     south = new SouthODBC(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,
