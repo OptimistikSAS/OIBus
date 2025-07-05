@@ -252,6 +252,7 @@ describe('NorthConnector', () => {
     expect(north.disconnect).toHaveBeenCalledTimes(1);
     expect(logger.info).toHaveBeenCalledWith(`"${testData.north.list[0].name}" stopped`);
   });
+
   it('should check if North caches are empty', async () => {
     (cacheService.cacheIsEmpty as jest.Mock).mockReturnValueOnce(true);
     expect(north.isCacheEmpty()).toBeTruthy();
@@ -554,6 +555,27 @@ describe('NorthConnector', () => {
     );
     expect(cacheService.addCacheContentToQueue).toHaveBeenCalledWith({ metadataFilename: '1234567890.json', metadata: metadata1 });
     expect(cacheService.addCacheContentToQueue).toHaveBeenCalledWith({ metadataFilename: '0987654321.json', metadata: metadata2 });
+  });
+
+  it('should cache setpoint content', async () => {
+    (fsAsync.stat as jest.Mock).mockReturnValueOnce({ size: 100, ctimeMs: 123 });
+    (generateRandomId as jest.Mock).mockReturnValueOnce('1234567890');
+    (createReadStream as jest.Mock).mockReturnValueOnce('readStream');
+    const metadata: CacheMetadata = {
+      contentFile: '1234567890.json',
+      contentSize: 0,
+      numberOfElement: 1,
+      createdAt: DateTime.fromMillis(123).toUTC().toISO()!,
+      contentType: 'setpoint',
+      source: 'south',
+      options: {}
+    };
+    (oiBusTransformer.transform as jest.Mock).mockReturnValueOnce({ metadata, output: 'output' });
+    (transformerService.findById as jest.Mock).mockReturnValueOnce(testData.transformers.list[2]);
+    north.persistDataInCache = jest.fn();
+    await north.cacheContent(testData.oibusContent[3], 'south');
+
+    expect(north.persistDataInCache).toHaveBeenCalledWith(metadata, 'output');
   });
 
   it('should cache file content', async () => {
