@@ -4,8 +4,6 @@ import fsSync from 'node:fs';
 import NorthREST from './north-rest';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import EncryptionService from '../../service/encryption.service';
-import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 
 import { HTTPRequest, ReqAuthOptions, ReqOptions, ReqProxyOptions } from '../../service/http-request.utils';
 import { createMockResponse } from '../../tests/__mocks__/undici.mock';
@@ -39,7 +37,6 @@ jest.mock('../../service/transformer.service');
 jest.mock('../../service/http-request.utils');
 
 const logger: pino.Logger = new PinoLogger();
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const transformerService: TransformerService = new TransformerServiceMock();
@@ -214,7 +211,6 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
 
     north = new NorthREST(
       configuration,
-      encryptionService,
       transformerService,
       northConnectorRepository,
       scanModeRepository,
