@@ -34,6 +34,8 @@ import { Certificate } from '../../model/certificate.model';
 import { OIBusLog } from '../../model/logs.model';
 import { CertificateCommandDTO } from '../../../shared/model/certificate.model';
 import { LogStreamCommandDTO } from '../../../shared/model/logs.model';
+import { CustomTransformerCommand } from '../../../shared/model/transformer.model';
+import { Transformer } from '../../model/transformer.model';
 
 const constants = {
   dates: {
@@ -75,6 +77,92 @@ const ipFilters: Array<IPFilter> = [
     id: 'ipFilterId2',
     address: '*',
     description: 'All ips'
+  }
+];
+
+const transformerCommandDTO: CustomTransformerCommand = {
+  type: 'custom',
+  name: 'my new transformer',
+  description: 'description',
+  inputType: 'time-values',
+  outputType: 'any',
+  customCode: 'console.log("Hello World");',
+  customManifest: {
+    type: 'object',
+    key: 'transformers.options',
+    translationKey: '',
+    attributes: [],
+    enablingConditions: [],
+    validators: [],
+    displayProperties: {
+      visible: true,
+      wrapInBox: false
+    }
+  }
+};
+const transformers: Array<Transformer> = [
+  {
+    id: 'transformerId1',
+    type: 'custom',
+    name: 'my transformer 1',
+    description: 'description',
+    inputType: 'time-values',
+    outputType: 'any',
+    customCode: 'console.log("Hello World");',
+    customManifest: {
+      type: 'object',
+      key: 'transformers.options',
+      translationKey: '',
+      attributes: [],
+      enablingConditions: [],
+      validators: [],
+      displayProperties: {
+        visible: true,
+        wrapInBox: false
+      }
+    }
+  },
+  {
+    id: 'transformerId2',
+    type: 'custom',
+    name: 'my transformer 2',
+    description: 'description',
+    inputType: 'any',
+    outputType: 'any',
+    customCode: 'console.log("Hello World");',
+    customManifest: {
+      type: 'object',
+      key: 'transformers.options',
+      translationKey: '',
+      attributes: [],
+      enablingConditions: [],
+      validators: [],
+      displayProperties: {
+        visible: true,
+        wrapInBox: false
+      }
+    }
+  },
+  {
+    id: 'transformerId3',
+    type: 'custom',
+    name: 'my transformer 3',
+    description: 'description',
+    inputType: 'setpoint',
+    outputType: 'any',
+    customCode: 'console.log("Hello World");',
+    customManifest: {
+      type: 'object',
+      key: 'transformers.options',
+      translationKey: '',
+      attributes: [],
+      enablingConditions: [],
+      validators: [],
+      displayProperties: {
+        visible: true,
+        wrapInBox: false
+      }
+    }
   }
 ];
 
@@ -177,28 +265,152 @@ const southTestManifest: SouthConnectorManifest = {
     lastFile: true,
     history: true
   },
-  settings: [],
+  settings: {
+    type: 'object',
+    key: 'settings',
+    translationKey: 'configuration.oibus.manifest.south.settings',
+    attributes: [],
+    enablingConditions: [],
+    validators: [],
+    displayProperties: {
+      visible: true,
+      wrapInBox: false
+    }
+  },
   items: {
-    scanMode: 'POLL',
-    settings: [
-      {
-        key: 'objectArray',
-        type: 'OibArray',
-        translationKey: 'Array',
-        content: []
+    type: 'array',
+    key: 'items',
+    translationKey: 'configuration.oibus.manifest.south.items.title',
+    paginate: true,
+    numberOfElementPerPage: 20,
+    validators: [],
+    rootAttribute: {
+      type: 'object',
+      key: 'item',
+      translationKey: 'configuration.oibus.manifest.south.items.item',
+      displayProperties: {
+        visible: true,
+        wrapInBox: false
       },
-      {
-        key: 'objectSettings',
-        type: 'OibFormGroup',
-        translationKey: 'Group',
-        content: []
-      },
-      {
-        key: 'objectValue',
-        type: 'OibNumber',
-        translationKey: 'Number'
-      }
-    ]
+      enablingConditions: [],
+      validators: [],
+      attributes: [
+        {
+          type: 'string',
+          key: 'name',
+          translationKey: 'configuration.oibus.manifest.south.items.name',
+          defaultValue: null,
+          validators: [
+            {
+              type: 'REQUIRED',
+              arguments: []
+            }
+          ],
+          displayProperties: {
+            row: 0,
+            columns: 4,
+            displayInViewMode: true
+          }
+        },
+        {
+          type: 'boolean',
+          key: 'enabled',
+          translationKey: 'configuration.oibus.manifest.south.items.enabled',
+          defaultValue: true,
+          validators: [
+            {
+              type: 'REQUIRED',
+              arguments: []
+            }
+          ],
+          displayProperties: {
+            row: 0,
+            columns: 4,
+            displayInViewMode: true
+          }
+        },
+        {
+          type: 'scan-mode',
+          key: 'scanModeId',
+          acceptableType: 'POLL',
+          translationKey: 'configuration.oibus.manifest.south.items.scan-mode',
+          validators: [
+            {
+              type: 'REQUIRED',
+              arguments: []
+            }
+          ],
+          displayProperties: {
+            row: 0,
+            columns: 4,
+            displayInViewMode: true
+          }
+        },
+        {
+          type: 'object',
+          key: 'settings',
+          translationKey: 'configuration.oibus.manifest.south.items.settings',
+          displayProperties: {
+            visible: true,
+            wrapInBox: true
+          },
+          enablingConditions: [],
+          validators: [],
+          attributes: [
+            {
+              type: 'array',
+              key: 'objectArray',
+              translationKey: 'configuration.oibus.manifest.south.items.settings',
+              paginate: true,
+              numberOfElementPerPage: 20,
+              validators: [],
+              rootAttribute: {
+                type: 'object',
+                key: 'item',
+                translationKey: 'configuration.oibus.manifest.south.items.item',
+                displayProperties: {
+                  visible: true,
+                  wrapInBox: false
+                },
+                enablingConditions: [],
+                validators: [],
+                attributes: []
+              }
+            },
+            {
+              type: 'object',
+              key: 'objectSettings',
+              translationKey: 'configuration.oibus.manifest.south.items.settings',
+              displayProperties: {
+                visible: true,
+                wrapInBox: false
+              },
+              enablingConditions: [],
+              validators: [],
+              attributes: []
+            },
+            {
+              type: 'number',
+              key: 'objectValue',
+              translationKey: 'configuration.oibus.manifest.south.items.settings',
+              defaultValue: 1,
+              unit: null,
+              validators: [
+                {
+                  type: 'REQUIRED',
+                  arguments: []
+                }
+              ],
+              displayProperties: {
+                row: 0,
+                columns: 4,
+                displayInViewMode: true
+              }
+            }
+          ]
+        }
+      ]
+    }
   }
 };
 const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettings>> = [
@@ -375,11 +587,19 @@ const itemTestingSettings: SouthConnectorItemTestingSettings = {
 const northTestManifest: NorthConnectorManifest = {
   id: 'console',
   category: 'debug',
-  modes: {
-    files: true,
-    points: true
-  },
-  settings: []
+  types: ['any', 'time-values'],
+  settings: {
+    type: 'object',
+    key: 'settings',
+    translationKey: 'configuration.oibus.manifest.north.settings',
+    displayProperties: {
+      visible: true,
+      wrapInBox: true
+    },
+    enablingConditions: [],
+    validators: [],
+    attributes: []
+  }
 };
 const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
   {
@@ -429,6 +649,11 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
         description: southConnectors[1].description,
         enabled: southConnectors[1].enabled
       }
+    ],
+    transformers: [
+      { transformer: transformers[0], options: {}, inputType: transformers[0].inputType },
+      { transformer: transformers[1], options: {}, inputType: transformers[1].inputType },
+      { transformer: transformers[2], options: {}, inputType: transformers[2].inputType }
     ]
   },
   {
@@ -471,7 +696,8 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
         description: southConnectors[0].description,
         enabled: southConnectors[0].enabled
       }
-    ]
+    ],
+    transformers: []
   }
 ];
 const northConnectorCommand: NorthConnectorCommandDTO<NorthSettings> = {
@@ -506,7 +732,11 @@ const northConnectorCommand: NorthConnectorCommandDTO<NorthSettings> = {
       retentionDuration: 0
     }
   },
-  subscriptions: [southConnectors[0].id]
+  subscriptions: [southConnectors[0].id],
+  transformers: [
+    { transformerId: transformers[0].id, options: {}, inputType: transformers[0].inputType },
+    { transformerId: transformers[1].id, options: {}, inputType: transformers[1].inputType }
+  ]
 };
 
 const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>> = [
@@ -575,6 +805,10 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
         enabled: true,
         settings: {} as SouthItemSettings
       }
+    ],
+    northTransformers: [
+      { transformer: transformers[0], options: {}, inputType: transformers[0].inputType },
+      { transformer: transformers[1], options: {}, inputType: transformers[1].inputType }
     ]
   },
   {
@@ -636,7 +870,8 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
         enabled: true,
         settings: {} as SouthItemSettings
       }
-    ]
+    ],
+    northTransformers: []
   }
 ];
 const historyQueryCommand: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings> = {
@@ -697,6 +932,10 @@ const historyQueryCommand: HistoryQueryCommandDTO<SouthSettings, NorthSettings, 
       enabled: true,
       settings: {} as SouthItemSettings
     }
+  ],
+  northTransformers: [
+    { transformerId: transformers[0].id, options: {}, inputType: transformers[0].inputType },
+    { transformerId: transformers[1].id, options: {}, inputType: transformers[1].inputType }
   ]
 };
 const historyQueryItemCommand: HistoryQueryItemCommandDTO<SouthItemSettings> = {
@@ -1010,7 +1249,8 @@ const oIAnalyticsRegistrationRegistered: OIAnalyticsRegistration = {
     createNorth: true,
     updateNorth: true,
     deleteNorth: true,
-    testNorthConnection: true
+    testNorthConnection: true,
+    setpoint: true
   }
 };
 const oIAnalyticsRegistrationPending: OIAnalyticsRegistration = {
@@ -1063,7 +1303,8 @@ const oIAnalyticsRegistrationPending: OIAnalyticsRegistration = {
     createNorth: true,
     updateNorth: true,
     deleteNorth: true,
-    testNorthConnection: true
+    testNorthConnection: true,
+    setpoint: true
   }
 };
 const oIAnalyticsRegistrationCommand: OIAnalyticsRegistrationEditCommand = {
@@ -1107,7 +1348,8 @@ const oIAnalyticsRegistrationCommand: OIAnalyticsRegistrationEditCommand = {
     createNorth: true,
     updateNorth: true,
     deleteNorth: true,
-    testNorthConnection: true
+    testNorthConnection: true,
+    setpoint: true
   }
 };
 
@@ -1333,7 +1575,8 @@ const oIBusCommands: Array<OIBusCommand> = [
         createNorth: true,
         updateNorth: true,
         deleteNorth: true,
-        testNorthConnection: true
+        testNorthConnection: true,
+        setpoint: true
       }
     }
   }
@@ -1483,13 +1726,17 @@ const oibusContent: Array<OIBusContent> = [
     ]
   },
   {
-    type: 'raw',
+    type: 'any',
     filePath: 'path/file.csv'
   },
   {
-    type: 'raw',
+    type: 'any',
     filePath: 'path/another-file.csv',
     content: 'my raw content'
+  },
+  {
+    type: 'setpoint',
+    content: [{ reference: 'ref', value: 123 }]
   }
 ];
 
@@ -1527,6 +1774,10 @@ export default Object.freeze({
   scanMode: {
     list: scanModes,
     command: scanModeCommandDTO
+  },
+  transformers: {
+    list: transformers,
+    command: transformerCommandDTO
   },
   north: {
     list: northConnectors,

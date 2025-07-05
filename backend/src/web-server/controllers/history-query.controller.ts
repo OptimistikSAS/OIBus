@@ -41,7 +41,7 @@ export default class HistoryQueryController extends AbstractController {
     if (!historyQuery) {
       return ctx.notFound();
     }
-    return ctx.ok(toHistoryQueryDTO(historyQuery, ctx.app.encryptionService));
+    return ctx.ok(toHistoryQueryDTO(historyQuery));
   }
 
   async createHistoryQuery(
@@ -57,8 +57,7 @@ export default class HistoryQueryController extends AbstractController {
           (ctx.query.fromSouth as string) || null,
           (ctx.query.fromNorth as string) || null,
           (ctx.query.duplicate as string) || null
-        ),
-        ctx.app.encryptionService
+        )
       );
       ctx.created(historyQuery);
     } catch (error: unknown) {
@@ -181,7 +180,7 @@ export default class HistoryQueryController extends AbstractController {
     };
     const page = ctx.app.historyQueryService.searchHistoryQueryItems(ctx.params.historyQueryId, searchParams);
     ctx.ok({
-      content: page.content.map(item => toHistoryQueryItemDTO(item, historyQuery.southType, ctx.app.encryptionService)),
+      content: page.content.map(item => toHistoryQueryItemDTO(item, historyQuery.southType)),
       totalElements: page.totalElements,
       size: page.size,
       number: page.number,
@@ -197,7 +196,7 @@ export default class HistoryQueryController extends AbstractController {
 
     const historyQueryItem = ctx.app.historyQueryService.findHistoryQueryItem(ctx.params.historyQueryId, ctx.params.id);
     if (historyQueryItem) {
-      ctx.ok(toHistoryQueryItemDTO(historyQueryItem, historyQuery.southType, ctx.app.encryptionService));
+      ctx.ok(toHistoryQueryItemDTO(historyQueryItem, historyQuery.southType));
     } else {
       ctx.notFound();
     }
@@ -212,7 +211,7 @@ export default class HistoryQueryController extends AbstractController {
     }
     try {
       const item = await ctx.app.historyQueryService.createHistoryQueryItem(ctx.params.historyQueryId, ctx.request.body!);
-      ctx.created(toHistoryQueryItemDTO(item, historyQuery.southType, ctx.app.encryptionService));
+      ctx.created(toHistoryQueryItemDTO(item, historyQuery.southType));
     } catch (error: unknown) {
       ctx.badRequest((error as Error).message);
     }
@@ -281,7 +280,7 @@ export default class HistoryQueryController extends AbstractController {
     const items: Array<HistoryQueryItemDTO<SouthItemSettings>> = JSON.parse((await fs.readFile(files['items'][0].path)).toString('utf8'));
 
     ctx.body = itemToFlattenedCSV(
-      items.map(item => toHistoryQueryItemDTO(item, manifest.id, ctx.app.encryptionService)),
+      items.map(item => toHistoryQueryItemDTO(item, manifest.id)),
       ctx.request.body!.delimiter
     );
     ctx.set('Content-disposition', 'attachment; filename=items.csv');
@@ -297,7 +296,7 @@ export default class HistoryQueryController extends AbstractController {
 
     ctx.body = itemToFlattenedCSV(
       historyQuery.items.map(item => {
-        return toHistoryQueryItemDTO(item, historyQuery.southType, ctx.app.encryptionService);
+        return toHistoryQueryItemDTO(item, historyQuery.southType);
       }),
       ctx.request.body!.delimiter
     );

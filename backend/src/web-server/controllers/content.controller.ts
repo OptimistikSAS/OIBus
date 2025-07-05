@@ -11,11 +11,13 @@ export default class ContentController extends AbstractController {
       ids.push(northId);
     } else if (Array.isArray(northId)) {
       ids.push(...northId);
+    } else {
+      return ctx.badRequest('northId must be specified in query params');
     }
 
     let content: OIBusContent;
     if (ctx.request.file) {
-      content = { type: 'raw', filePath: ctx.request.file.path };
+      content = { type: 'any', filePath: ctx.request.file.path };
     } else {
       const body = ctx.request.body! as OIBusTimeValueContent;
       content = { type: 'time-values', content: body.content };

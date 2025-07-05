@@ -1,9 +1,8 @@
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import fs from 'node:fs/promises';
 import SouthOPCUA, { MAX_NUMBER_OF_NODE_TO_LOG } from './south-opcua';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import EncryptionService from '../../service/encryption.service';
-import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import { randomUUID } from 'crypto';
 import path from 'node:path';
 import { SouthOPCUAItemSettings, SouthOPCUASettings } from '../../../shared/model/south-settings.model';
@@ -23,7 +22,6 @@ import nodeOPCUAClient, {
   Variant,
   resolveNodeId
 } from 'node-opcua';
-
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import SouthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/south-connector-repository.mock';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
@@ -35,6 +33,7 @@ import testData from '../../tests/utils/test-data';
 import { mockBaseFolders } from '../../tests/utils/test-utils';
 import { SouthConnectorEntity } from '../../model/south-connector.model';
 import { DateTime } from 'luxon';
+import { encryptionService } from '../../service/encryption.service';
 
 class CustomStream extends Stream {
   constructor() {
@@ -72,7 +71,6 @@ jest.mock('crypto', () => ({
 jest.mock('node:fs/promises');
 jest.mock('../../service/utils');
 
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
@@ -85,6 +83,9 @@ jest.mock(
       return southCacheService;
     }
 );
+jest.mock('../../service/encryption.service', () => ({
+  encryptionService: new EncryptionServiceMock('', '')
+}));
 
 const logger: pino.Logger = new PinoLogger();
 const addContentCallback = jest.fn();
@@ -109,9 +110,7 @@ describe('SouthOPCUA', () => {
       retryInterval: 10000,
       readTimeout: 15000,
       authentication: {
-        type: 'none',
-        password: null,
-        keyFilePath: null
+        type: 'none'
       },
       securityMode: 'none',
       securityPolicy: 'none',
@@ -205,7 +204,6 @@ describe('SouthOPCUA', () => {
     south = new SouthOPCUA(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,
@@ -1103,7 +1101,6 @@ describe('SouthOPCUA with basic auth', () => {
         certFilePath: ''
       },
       securityMode: 'none',
-      securityPolicy: null,
       keepSessionAlive: false
     },
     items: [
@@ -1191,7 +1188,6 @@ describe('SouthOPCUA with basic auth', () => {
     south = new SouthOPCUA(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,
@@ -1349,7 +1345,6 @@ describe('SouthOPCUA with certificate', () => {
     south = new SouthOPCUA(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,
@@ -1507,9 +1502,7 @@ describe('SouthOPCUA test connection', () => {
       retryInterval: 10000,
       readTimeout: 15000,
       authentication: {
-        type: 'none',
-        password: null,
-        keyFilePath: null
+        type: 'none'
       },
       securityMode: 'sign-and-encrypt',
       securityPolicy: 'none',
@@ -1629,7 +1622,6 @@ describe('SouthOPCUA test connection', () => {
     south = new SouthOPCUA(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,
@@ -1787,9 +1779,7 @@ describe('SouthOPCUA with shared connection', () => {
       retryInterval: 10000,
       readTimeout: 15000,
       authentication: {
-        type: 'none',
-        password: null,
-        keyFilePath: null
+        type: 'none'
       },
       securityMode: 'none',
       securityPolicy: 'none',
@@ -1879,7 +1869,6 @@ describe('SouthOPCUA with shared connection', () => {
     south = new SouthOPCUA(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,

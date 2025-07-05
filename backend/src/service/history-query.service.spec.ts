@@ -1,3 +1,4 @@
+import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
 import HistoryQueryService from './history-query.service';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
 import ScanModeRepositoryMock from '../tests/__mocks__/repository/config/scan-mode-repository.mock';
@@ -12,8 +13,6 @@ import SouthServiceMock from '../tests/__mocks__/service/south-service.mock';
 import NorthServiceMock from '../tests/__mocks__/service/north-service.mock';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import OIAnalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
-import EncryptionService from './encryption.service';
-import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import HistoryQueryEngine from '../engine/history-query-engine';
 import HistoryQueryEngineMock from '../tests/__mocks__/history-query-engine.mock';
@@ -31,10 +30,16 @@ import NorthConnectorRepository from '../repository/config/north-connector.repos
 import SouthConnectorRepositoryMock from '../tests/__mocks__/repository/config/south-connector-repository.mock';
 import NorthConnectorRepositoryMock from '../tests/__mocks__/repository/config/north-connector-repository.mock';
 import { filesExists, stringToBoolean } from './utils';
+import TransformerService from './transformer.service';
+import TransformerServiceMock from '../tests/__mocks__/service/transformer-service.mock';
+
 jest.mock('papaparse');
 jest.mock('node:fs/promises');
 jest.mock('../web-server/controllers/validators/joi.validator');
 jest.mock('./utils');
+jest.mock('./encryption.service', () => ({
+  encryptionService: new EncryptionServiceMock('', '')
+}));
 
 const validator = new JoiValidator();
 const logger: pino.Logger = new PinoLogger();
@@ -47,8 +52,8 @@ const historyQueryMetricsRepository: HistoryQueryMetricsRepository = new History
 const southService: SouthService = new SouthServiceMock();
 const northService: NorthService = new NorthServiceMock();
 const oIAnalyticsMessageService: OIAnalyticsMessageService = new OIAnalyticsMessageServiceMock();
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const historyQueryEngine: HistoryQueryEngine = new HistoryQueryEngineMock(logger);
+const transformerService: TransformerService = new TransformerServiceMock();
 
 let service: HistoryQueryService;
 describe('History Query service', () => {
@@ -64,8 +69,8 @@ describe('History Query service', () => {
       historyQueryMetricsRepository,
       southService,
       northService,
+      transformerService,
       oIAnalyticsMessageService,
-      encryptionService,
       historyQueryEngine
     );
   });
@@ -356,6 +361,7 @@ describe('History Query service', () => {
         ...southManifestList[4] // mssql
       }
     ]);
+    (transformerService.findAll as jest.Mock).mockReturnValueOnce(testData.transformers.list);
     service.retrieveSecrets = jest.fn();
 
     await service.createHistoryQuery(testData.historyQueries.command, testData.historyQueries.list[0].id, null, null);
@@ -396,6 +402,25 @@ describe('History Query service', () => {
     );
   });
 
+  it('createHistoryQuery() should fail to create a history query when transformer is not found', async () => {
+    (northService.getInstalledNorthManifests as jest.Mock).mockReturnValueOnce([
+      {
+        ...northManifestList[4] // file-writer
+      }
+    ]);
+    (southService.getInstalledSouthManifests as jest.Mock).mockReturnValueOnce([
+      {
+        ...southManifestList[4] // mssql
+      }
+    ]);
+    (transformerService.findAll as jest.Mock).mockReturnValueOnce([]);
+    service.retrieveSecrets = jest.fn();
+
+    await expect(service.createHistoryQuery(testData.historyQueries.command, null, null, null)).rejects.toThrow(
+      `Could not find OIBus Transformer ${testData.transformers.list[0].id}`
+    );
+  });
+
   it('should get history query data stream', () => {
     service.getHistoryQueryDataStream(testData.historyQueries.list[0].id);
     expect(historyQueryEngine.getHistoryQueryDataStream).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
@@ -403,6 +428,7 @@ describe('History Query service', () => {
 
   it('updateHistoryQuery() should create a history query', async () => {
     (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0]);
+    (transformerService.findAll as jest.Mock).mockReturnValueOnce(testData.transformers.list);
     (northService.getInstalledNorthManifests as jest.Mock).mockReturnValueOnce([
       {
         ...northManifestList[4] // file-writer
@@ -865,7 +891,7 @@ describe('History Query service', () => {
       {
         name: 'item',
         enabled: 'true',
-        settings_query: 'SELECT * FROM table',
+        settings_query: 'query',
         settings_dateTimeFields: '[]',
         settings_serialization: JSON.stringify({
           type: 'csv',
@@ -895,7 +921,7 @@ describe('History Query service', () => {
           name: csvData[0].name,
           enabled: csvData[0].enabled.toLowerCase() === 'true',
           settings: {
-            query: 'SELECT * FROM table',
+            query: 'query',
             dateTimeFields: [],
             serialization: {
               type: 'csv',
@@ -1053,6 +1079,34 @@ describe('History Query service', () => {
       southType: south.type,
       southSettings: south.settings,
       items: south.items,
+      northType: north.type,
+      northSettings: north.settings
+    });
+  });
+
+  it('retrieveSecrets() should retrieve secrets from south only', () => {
+    const south = JSON.parse(JSON.stringify(testData.south.list[0]));
+    south.type = southManifestList[4].id;
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(south);
+
+    const result = service.retrieveSecrets(testData.south.list[0].id, null, null, southManifestList[4], northManifestList[4]);
+
+    expect(result).toEqual({
+      southType: south.type,
+      southSettings: south.settings,
+      items: south.items
+    });
+  });
+
+  it('retrieveSecrets() should retrieve secrets from north only', () => {
+    const north = JSON.parse(JSON.stringify(testData.north.list[0]));
+    north.type = northManifestList[4].id;
+    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValueOnce(north);
+
+    const result = service.retrieveSecrets(null, testData.north.list[0].id, null, southManifestList[4], northManifestList[4]);
+
+    expect(result).toEqual({
+      items: [],
       northType: north.type,
       northSettings: north.settings
     });

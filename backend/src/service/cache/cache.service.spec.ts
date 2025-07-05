@@ -49,7 +49,7 @@ const fileList: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [
       contentSize: 100,
       numberOfElement: 0,
       createdAt: testData.constants.dates.DATE_3,
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     }
@@ -73,7 +73,7 @@ const fileList: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [
       contentSize: 100,
       numberOfElement: 0,
       createdAt: testData.constants.dates.FAKE_NOW,
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     }
@@ -168,7 +168,7 @@ describe('CacheService', () => {
   });
 
   it('should add, get and remove element in queue', async () => {
-    const element = { metadataFilename: 'file.json', metadata: { contentType: 'raw', source: 'south', options: {} } as CacheMetadata };
+    const element = { metadataFilename: 'file.json', metadata: { contentType: 'any', source: 'south', options: {} } as CacheMetadata };
     expect(service.cacheIsEmpty()).toBeTruthy();
     service.addCacheContentToQueue(element);
     expect(service.cacheIsEmpty()).toBeFalsy();
@@ -308,7 +308,7 @@ describe('CacheService', () => {
     expect(service.removeCacheContent).toHaveBeenCalledTimes(fileList.length);
   });
 
-  it('should properly move cache content', async () => {
+  it('should properly move cache content into error', async () => {
     (fs.rename as jest.Mock).mockImplementationOnce(() => Promise.resolve()).mockImplementationOnce(() => Promise.resolve());
     service.removeCacheContentFromQueue = jest.fn();
 
@@ -326,6 +326,29 @@ describe('CacheService', () => {
 
     expect(logger.trace).toHaveBeenCalledWith(
       `Files "${fileList[0].metadataFilename}" and "${fileList[0].metadata.contentFile}" moved from cache to error`
+    );
+  });
+
+  it('should properly move error content into cache', async () => {
+    (fs.rename as jest.Mock).mockImplementationOnce(() => Promise.resolve()).mockImplementationOnce(() => Promise.resolve());
+    service.removeCacheContentFromQueue = jest.fn();
+    service.addCacheContentToQueue = jest.fn();
+
+    await service.moveCacheContent('error', 'cache', fileList[0]);
+    expect(service.removeCacheContentFromQueue).not.toHaveBeenCalled();
+    expect(service.addCacheContentToQueue).toHaveBeenCalledTimes(1);
+    expect(fs.rename).toHaveBeenCalledTimes(2);
+    expect(fs.rename).toHaveBeenCalledWith(
+      path.join(service.errorFolder, service.METADATA_FOLDER, fileList[0].metadataFilename),
+      path.join(service.cacheFolder, service.METADATA_FOLDER, fileList[0].metadataFilename)
+    );
+    expect(fs.rename).toHaveBeenCalledWith(
+      path.join(service.errorFolder, service.CONTENT_FOLDER, fileList[0].metadata.contentFile),
+      path.join(service.cacheFolder, service.CONTENT_FOLDER, fileList[0].metadata.contentFile)
+    );
+
+    expect(logger.trace).toHaveBeenCalledWith(
+      `Files "${fileList[0].metadataFilename}" and "${fileList[0].metadata.contentFile}" moved from error to cache`
     );
   });
 
@@ -447,7 +470,7 @@ describe('CacheService', () => {
         contentSize: 100,
         numberOfElement: 0,
         createdAt: testData.constants.dates.DATE_3,
-        contentType: 'raw',
+        contentType: 'any',
         source: 'south',
         options: {}
       }
@@ -471,7 +494,7 @@ describe('CacheService', () => {
         contentSize: 100,
         numberOfElement: 0,
         createdAt: testData.constants.dates.FAKE_NOW,
-        contentType: 'raw',
+        contentType: 'any',
         source: 'south',
         options: {}
       }
@@ -576,7 +599,7 @@ describe('CacheService', () => {
         contentSize: 100,
         numberOfElement: 0,
         createdAt: testData.constants.dates.DATE_3,
-        contentType: 'raw',
+        contentType: 'any',
         source: 'south',
         options: {}
       }
@@ -588,7 +611,7 @@ describe('CacheService', () => {
         contentSize: 100,
         numberOfElement: 0,
         createdAt: testData.constants.dates.FAKE_NOW,
-        contentType: 'raw',
+        contentType: 'any',
         source: 'south',
         options: {}
       }

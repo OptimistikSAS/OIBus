@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { BehaviorSubject, defer, finalize, Observable } from 'rxjs';
-import { AsyncPipe, NgClass } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { BehaviorSubject, defer, finalize, Observable, switchMap } from 'rxjs';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { TranslateDirective } from '@ngx-translate/core';
+import { AsyncPipe, NgClass } from '@angular/common';
 
 /**
  * A class that holds the state of an observable,
@@ -29,20 +30,29 @@ export class ObservableState {
 }
 
 @Component({
-  selector: 'oib-save-button',
+  // eslint-disable-next-line @angular-eslint/component-selector
+  selector: 'button[oib-save-button]',
   templateUrl: './save-button.component.html',
   styleUrl: './save-button.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [AsyncPipe, NgClass, TranslateDirective]
+  host: {
+    class: 'btn btn-primary',
+    '[attr.form]': 'form()',
+    '[attr.id]': 'id()',
+    '[disabled]': 'isDisabled()'
+  },
+  imports: [NgClass, TranslateDirective, AsyncPipe]
 })
 export class SaveButtonComponent {
-  readonly form = input('form');
+  readonly form = input<string>();
   readonly translationKey = input('common.save');
   readonly iconClass = input('fa-save');
-  readonly buttonId = input('save-button');
-  readonly state = input(new ObservableState());
-  readonly disabled = input(false);
-  // input to indicate if the button is part of a button group with a cancel button
-  // if not then it is rounded all the way
-  readonly insideOfGroup = input(true);
+  readonly id = input('save-button');
+  readonly state = input.required<ObservableState>({ alias: 'oib-save-button' });
+  private readonly isPending = toSignal(toObservable(this.state).pipe(switchMap(state => state.isPending)));
+  readonly forceDisabled = input(false);
+
+  readonly isDisabled = computed(() => {
+    return this.isPending() || this.forceDisabled();
+  });
 }
