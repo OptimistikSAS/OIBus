@@ -1,4 +1,4 @@
-import EncryptionService from './encryption.service';
+import { encryptionService } from './encryption.service';
 import pino from 'pino';
 
 // South imports
@@ -136,7 +136,6 @@ export default class SouthService {
     private readonly oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
     private readonly certificateRepository: CertificateRepository,
     private readonly oIAnalyticsMessageService: OIAnalyticsMessageService,
-    private readonly encryptionService: EncryptionService,
     private readonly _connectionService: ConnectionService,
     private readonly dataStreamEngine: DataStreamEngine
   ) {}
@@ -154,7 +153,6 @@ export default class SouthService {
         return new SouthADS(
           settings as SouthConnectorEntity<SouthADSSettings, SouthADSItemSettings>,
           addContent,
-          this.encryptionService,
           this.southConnectorRepository,
           this.southCacheRepository,
           this.scanModeRepository,
@@ -165,7 +163,6 @@ export default class SouthService {
         return new SouthFolderScanner(
           settings as SouthConnectorEntity<SouthFolderScannerSettings, SouthFolderScannerItemSettings>,
           addContent,
-          this.encryptionService,
           this.southConnectorRepository,
           this.southCacheRepository,
           this.scanModeRepository,
@@ -176,7 +173,6 @@ export default class SouthService {
         return new SouthModbus(
           settings as SouthConnectorEntity<SouthModbusSettings, SouthModbusItemSettings>,
           addContent,
-          this.encryptionService,
           this.southConnectorRepository,
           this.southCacheRepository,
           this.scanModeRepository,
@@ -187,7 +183,6 @@ export default class SouthService {
         return new SouthMQTT(
           settings as SouthConnectorEntity<SouthMQTTSettings, SouthMQTTItemSettings>,
           addContent,
-          this.encryptionService,
           this.southConnectorRepository,
           this.southCacheRepository,
           this.scanModeRepository,
@@ -198,7 +193,6 @@ export default class SouthService {
         return new SouthMSSQL(
           settings as SouthConnectorEntity<SouthMSSQLSettings, SouthMSSQLItemSettings>,
           addContent,
-          this.encryptionService,
           this.southConnectorRepository,
           this.southCacheRepository,
           this.scanModeRepository,
@@ -209,7 +203,6 @@ export default class SouthService {
         return new SouthMySQL(
           settings as SouthConnectorEntity<SouthMySQLSettings, SouthMySQLItemSettings>,
           addContent,
-          this.encryptionService,
           this.southConnectorRepository,
           this.southCacheRepository,
           this.scanModeRepository,
@@ -220,7 +213,6 @@ export default class SouthService {
         return new SouthODBC(
           settings as SouthConnectorEntity<SouthODBCSettings, SouthODBCItemSettings>,
           addContent,
-          this.encryptionService,
           this.southConnectorRepository,
           this.southCacheRepository,
           this.scanModeRepository,
@@ -231,7 +223,6 @@ export default class SouthService {
         return new SouthOIAnalytics(
           settings as SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIAnalyticsItemSettings>,
           addContent,
-          this.encryptionService,
           this.southConnectorRepository,
           this.southCacheRepository,
           this.scanModeRepository,
@@ -244,7 +235,6 @@ export default class SouthService {
         return new SouthOLEDB(
           settings as SouthConnectorEntity<SouthOLEDBSettings, SouthOLEDBItemSettings>,
           addContent,
-          this.encryptionService,
           this.southConnectorRepository,
           this.southCacheRepository,
           this.scanModeRepository,
@@ -255,7 +245,6 @@ export default class SouthService {
         return new SouthOPC(
           settings as SouthConnectorEntity<SouthOPCSettings, SouthOPCItemSettings>,
           addContent,
-          this.encryptionService,
           this.southConnectorRepository,
           this.southCacheRepository,
           this.scanModeRepository,
@@ -266,7 +255,6 @@ export default class SouthService {
         return new SouthOPCUA(
           settings as SouthConnectorEntity<SouthOPCUASettings, SouthOPCUAItemSettings>,
           addContent,
-          this.encryptionService,
           this.southConnectorRepository,
           this.southCacheRepository,
           this.scanModeRepository,
@@ -278,7 +266,6 @@ export default class SouthService {
         return new SouthOracle(
           settings as SouthConnectorEntity<SouthOracleSettings, SouthOracleItemSettings>,
           addContent,
-          this.encryptionService,
           this.southConnectorRepository,
           this.southCacheRepository,
           this.scanModeRepository,
@@ -289,7 +276,6 @@ export default class SouthService {
         return new SouthPI(
           settings as SouthConnectorEntity<SouthPISettings, SouthPIItemSettings>,
           addContent,
-          this.encryptionService,
           this.southConnectorRepository,
           this.southCacheRepository,
           this.scanModeRepository,
@@ -300,7 +286,6 @@ export default class SouthService {
         return new SouthPostgreSQL(
           settings as SouthConnectorEntity<SouthPostgreSQLSettings, SouthPostgreSQLItemSettings>,
           addContent,
-          this.encryptionService,
           this.southConnectorRepository,
           this.southCacheRepository,
           this.scanModeRepository,
@@ -311,7 +296,6 @@ export default class SouthService {
         return new SouthSFTP(
           settings as SouthConnectorEntity<SouthSFTPSettings, SouthSFTPItemSettings>,
           addContent,
-          this.encryptionService,
           this.southConnectorRepository,
           this.southCacheRepository,
           this.scanModeRepository,
@@ -322,7 +306,6 @@ export default class SouthService {
         return new SouthSQLite(
           settings as SouthConnectorEntity<SouthSQLiteSettings, SouthSQLiteItemSettings>,
           addContent,
-          this.encryptionService,
           this.southConnectorRepository,
           this.southCacheRepository,
           this.scanModeRepository,
@@ -355,11 +338,7 @@ export default class SouthService {
     const testToRun: SouthConnectorEntity<SouthSettings, SouthItemSettings> = {
       id: southConnector?.id || 'test',
       ...command,
-      settings: await this.encryptionService.encryptConnectorSecrets<S>(
-        command.settings,
-        southConnector?.settings || null,
-        manifest.settings
-      ),
+      settings: await encryptionService.encryptConnectorSecrets<S>(command.settings, southConnector?.settings || null, manifest.settings),
       name: southConnector ? southConnector.name : `${command!.type}:test-connection`,
       items: []
     };
@@ -404,16 +383,12 @@ export default class SouthService {
       enabled: itemCommand.enabled,
       name: itemCommand.name,
       scanModeId: itemCommand.scanModeId!,
-      settings: await this.encryptionService.encryptConnectorSecrets(itemCommand.settings, null, itemSettingsManifest)
+      settings: await encryptionService.encryptConnectorSecrets(itemCommand.settings, null, itemSettingsManifest)
     };
     const testConnectorToRun: SouthConnectorEntity<SouthSettings, SouthItemSettings> = {
       id: southConnector?.id || 'test',
       ...command,
-      settings: await this.encryptionService.encryptConnectorSecrets<S>(
-        command.settings,
-        southConnector?.settings || null,
-        manifest.settings
-      ),
+      settings: await encryptionService.encryptConnectorSecrets<S>(command.settings, southConnector?.settings || null, manifest.settings),
       name: southConnector ? southConnector.name : `${command!.type}:test-connection`,
       items: [testItemToRun]
     };
@@ -462,7 +437,6 @@ export default class SouthService {
       southEntity,
       command,
       this.retrieveSecretsFromSouth(retrieveSecretsFromSouth, manifest),
-      this.encryptionService,
       this.scanModeRepository.findAll(),
       !!retrieveSecretsFromSouth
     );
@@ -503,13 +477,7 @@ export default class SouthService {
     await this.validator.validateSettings(manifest.settings, command.settings);
 
     const southEntity = { id: previousSettings.id } as SouthConnectorEntity<S, I>;
-    await copySouthConnectorCommandToSouthEntity(
-      southEntity,
-      command,
-      previousSettings,
-      this.encryptionService,
-      this.scanModeRepository.findAll()
-    );
+    await copySouthConnectorCommandToSouthEntity(southEntity, command, previousSettings, this.scanModeRepository.findAll());
     this.southConnectorRepository.saveSouthConnector(southEntity);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     await this.dataStreamEngine.reloadSouth(southEntity);
@@ -588,14 +556,7 @@ export default class SouthService {
     await this.validator.validateSettings(itemSettingsManifest, command.settings);
 
     const southItemEntity = {} as SouthConnectorItemEntity<I>;
-    await copySouthItemCommandToSouthItemEntity<I>(
-      southItemEntity,
-      command,
-      null,
-      southConnector.type,
-      this.encryptionService,
-      this.scanModeRepository.findAll()
-    );
+    await copySouthItemCommandToSouthItemEntity<I>(southItemEntity, command, null, southConnector.type, this.scanModeRepository.findAll());
     this.southConnectorRepository.saveItem<I>(southConnector.id, southItemEntity);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     await this.dataStreamEngine.reloadItems(southConnector.id);
@@ -628,7 +589,6 @@ export default class SouthService {
       command,
       previousSettings,
       southConnector.type,
-      this.encryptionService,
       this.scanModeRepository.findAll()
     );
     this.southConnectorRepository.saveItem<I>(southConnectorId, southItemEntity);
@@ -802,14 +762,7 @@ export default class SouthService {
     for (const itemCommand of items) {
       await this.validator.validateSettings(itemSettingsManifest, itemCommand.settings);
       const southItemEntity = {} as SouthConnectorItemEntity<I>;
-      await copySouthItemCommandToSouthItemEntity(
-        southItemEntity,
-        itemCommand,
-        null,
-        southConnector.type,
-        this.encryptionService,
-        scanModes
-      );
+      await copySouthItemCommandToSouthItemEntity(southItemEntity, itemCommand, null, southConnector.type, scanModes);
       itemsToAdd.push(southItemEntity);
     }
 
@@ -881,7 +834,6 @@ const copySouthConnectorCommandToSouthEntity = async <S extends SouthSettings, I
   southEntity: SouthConnectorEntity<S, I>,
   command: SouthConnectorCommandDTO<S, I>,
   currentSettings: SouthConnectorEntity<S, I> | null,
-  encryptionService: EncryptionService,
   scanModes: Array<ScanMode>,
   retrieveSecretsFromSouth = false
 ): Promise<void> => {
@@ -903,7 +855,6 @@ const copySouthConnectorCommandToSouthEntity = async <S extends SouthSettings, I
         itemCommand,
         currentSettings?.items.find(element => element.id === itemCommand.id) || null,
         southEntity.type,
-        encryptionService,
         scanModes,
         retrieveSecretsFromSouth
       );
@@ -917,7 +868,6 @@ const copySouthItemCommandToSouthItemEntity = async <I extends SouthItemSettings
   command: SouthConnectorItemCommandDTO<I>,
   currentSettings: SouthConnectorItemEntity<I> | null,
   southType: string,
-  encryptionService: EncryptionService,
   scanModes: Array<ScanMode>,
   retrieveSecretsFromSouth = false
 ): Promise<void> => {
@@ -937,8 +887,7 @@ const copySouthItemCommandToSouthItemEntity = async <I extends SouthItemSettings
 };
 
 export const toSouthConnectorDTO = <S extends SouthSettings, I extends SouthItemSettings>(
-  southEntity: SouthConnectorEntity<S, I>,
-  encryptionService: EncryptionService
+  southEntity: SouthConnectorEntity<S, I>
 ): SouthConnectorDTO<S, I> => {
   const manifest = southManifestList.find(element => element.id === southEntity.type)!;
   return {
@@ -948,14 +897,13 @@ export const toSouthConnectorDTO = <S extends SouthSettings, I extends SouthItem
     description: southEntity.description,
     enabled: southEntity.enabled,
     settings: encryptionService.filterSecrets<S>(southEntity.settings, manifest.settings),
-    items: southEntity.items.map(item => toSouthConnectorItemDTO<I>(item, southEntity.type, encryptionService))
+    items: southEntity.items.map(item => toSouthConnectorItemDTO<I>(item, southEntity.type))
   };
 };
 
 export const toSouthConnectorItemDTO = <I extends SouthItemSettings>(
   entity: SouthConnectorItemEntity<I>,
-  southType: string,
-  encryptionService: EncryptionService
+  southType: string
 ): SouthConnectorItemDTO<I> => {
   const manifest = southManifestList.find(element => element.id === southType)!;
   const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(

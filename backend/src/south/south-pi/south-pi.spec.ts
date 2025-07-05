@@ -1,8 +1,6 @@
 import SouthPi from './south-pi';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import EncryptionService from '../../service/encryption.service';
-import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import { SouthPIItemSettings, SouthPISettings } from '../../../shared/model/south-settings.model';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import SouthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/south-connector-repository.mock';
@@ -21,7 +19,6 @@ jest.mock('../../service/http-request.utils');
 jest.mock('node:fs/promises');
 jest.mock('../../service/utils');
 
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
@@ -88,7 +85,6 @@ describe('South PI', () => {
     south = new SouthPi(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,

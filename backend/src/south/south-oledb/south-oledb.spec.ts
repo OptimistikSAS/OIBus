@@ -3,8 +3,6 @@ import pino from 'pino';
 import * as utils from '../../service/utils';
 import { convertDateTimeToInstant, convertDelimiter, formatInstant, persistResults } from '../../service/utils';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import EncryptionService from '../../service/encryption.service';
-import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import {
   SouthOLEDBItemSettings,
   SouthOLEDBItemSettingsDateTimeFields,
@@ -28,7 +26,6 @@ jest.mock('node:fs/promises');
 jest.mock('../../service/http-request.utils');
 jest.mock('../../service/utils');
 
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
@@ -71,7 +68,7 @@ describe('SouthOLEDB', () => {
         name: 'item1',
         enabled: true,
         settings: {
-          query: 'SELECT * FROM table',
+          query: 'query1',
           dateTimeFields: [
             {
               fieldName: 'anotherTimestamp',
@@ -106,7 +103,7 @@ describe('SouthOLEDB', () => {
         name: 'item2',
         enabled: true,
         settings: {
-          query: 'SELECT * FROM table',
+          query: 'query2',
           dateTimeFields: null,
           serialization: {
             type: 'csv',
@@ -124,7 +121,7 @@ describe('SouthOLEDB', () => {
         name: 'item3',
         enabled: true,
         settings: {
-          query: 'SELECT * FROM table',
+          query: 'query3',
           dateTimeFields: [
             {
               fieldName: 'anotherTimestamp',
@@ -169,7 +166,6 @@ describe('SouthOLEDB', () => {
     south = new SouthOLEDB(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,
@@ -308,7 +304,7 @@ describe('SouthOLEDB', () => {
         method: 'PUT',
         body: JSON.stringify({
           connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
-          sql: 'SELECT * FROM table',
+          sql: 'query1',
           readTimeout: 1000,
           timeColumn: 'timestamp',
           datasourceTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
@@ -364,7 +360,7 @@ describe('SouthOLEDB', () => {
         method: 'PUT',
         body: JSON.stringify({
           connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
-          sql: 'SELECT * FROM table',
+          sql: 'query2',
           readTimeout: 1000,
           delimiter: 'COMMA',
           outputTimestampFormat: configuration.items[1].settings.serialization.outputTimestampFormat,
@@ -456,7 +452,7 @@ describe('SouthOLEDB', () => {
         method: 'PUT',
         body: JSON.stringify({
           connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
-          sql: 'SELECT * FROM table',
+          sql: 'query1',
           readTimeout: 1000,
           timeColumn: 'timestamp',
           datasourceTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
