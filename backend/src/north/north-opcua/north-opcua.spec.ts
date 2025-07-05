@@ -18,11 +18,12 @@ import TransformerService, { createTransformer } from '../../service/transformer
 import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';
 import OIBusTransformer from '../../service/transformers/oibus-transformer';
 import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
-import nodeOPCUAClient, { AttributeIds, DataType, OPCUACertificateManager, OPCUAClient } from 'node-opcua';
+import nodeOPCUAClient, { AttributeIds, DataType, OPCUACertificateManager, OPCUAClient, resolveNodeId } from 'node-opcua';
 import { SouthOPCUASettings } from '../../../shared/model/south-settings.model';
 import { randomUUID } from 'crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { OIBusOPCUAValue } from '../../service/transformers/connector-types.model';
 
 // Mock node-opcua-client
 jest.mock('node-opcua', () => ({
@@ -39,7 +40,8 @@ jest.mock('node-opcua', () => ({
   ReadRawModifiedDetails: jest.fn(() => ({})),
   HistoryReadRequest: jest.requireActual('node-opcua').HistoryReadRequest,
   ReadProcessedDetails: jest.fn(() => ({})),
-  OPCUACertificateManager: jest.fn(() => ({}))
+  OPCUACertificateManager: jest.fn(() => ({})),
+  resolveNodeId: jest.fn(nodeId => nodeId)
 }));
 // Mock only the randomUUID function because other functions are used by OPCUA
 jest.mock('crypto', () => ({
@@ -148,20 +150,39 @@ describe('NorthOPCUA', () => {
   });
 
   it('should handle content', async () => {
-    const values = [
+    const values: Array<OIBusOPCUAValue> = [
       {
         nodeId: 'nodeId1',
-        value: 123,
-        dataType: 'uint16'
+        value: 123
       },
       {
         nodeId: 'nodeId2',
-        value: 456,
-        dataType: 'uint16'
+        value: 456
+      },
+      {
+        nodeId: 'nodeId3',
+        value: 789
+      },
+      {
+        nodeId: 'nodeId4',
+        value: 321
       }
     ];
     (fs.readFile as jest.Mock).mockReturnValueOnce(JSON.stringify(values));
 
+    (resolveNodeId as jest.Mock)
+      .mockImplementationOnce(node => node)
+      .mockImplementationOnce(node => node)
+      .mockImplementationOnce(node => node)
+      .mockImplementationOnce(() => {
+        throw new Error('bad node id');
+      });
+
+    const readFn = jest
+      .fn()
+      .mockReturnValueOnce({ value: { value: { value: DataType.Int32 } } })
+      .mockReturnValueOnce({ value: { value: { value: DataType.Int32 } } })
+      .mockReturnValueOnce({ value: { value: { value: 'bad data type' } } });
     const writeFn = jest
       .fn()
       .mockReturnValueOnce({ isGood: jest.fn().mockReturnValueOnce(true) })
@@ -169,7 +190,8 @@ describe('NorthOPCUA', () => {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
     north['client'] = {
-      write: writeFn
+      write: writeFn,
+      read: readFn
     };
 
     await north.handleContent({
@@ -180,6 +202,16 @@ describe('NorthOPCUA', () => {
       contentType: 'opcua',
       source: 'south',
       options: {}
+    });
+
+    expect(resolveNodeId).toHaveBeenCalledTimes(4);
+    expect(logger.error).toHaveBeenCalledWith(`Error when parsing node ID nodeId4: bad node id`);
+
+    expect(readFn).toHaveBeenCalledTimes(3);
+    expect(logger.error).toHaveBeenCalledWith(`Invalid data type for node ID nodeId3`);
+    expect(readFn).toHaveBeenCalledWith({
+      nodeId: 'nodeId1',
+      attributeId: AttributeIds.DataType
     });
 
     expect(writeFn).toHaveBeenCalledTimes(2);
@@ -188,7 +220,7 @@ describe('NorthOPCUA', () => {
       attributeId: AttributeIds.Value,
       value: {
         value: {
-          dataType: DataType.UInt16,
+          dataType: DataType.Int32,
           value: values[0].value
         }
       }
@@ -198,7 +230,7 @@ describe('NorthOPCUA', () => {
       attributeId: AttributeIds.Value,
       value: {
         value: {
-          dataType: DataType.UInt16,
+          dataType: DataType.Int32,
           value: values[1].value
         }
       }
@@ -206,258 +238,6 @@ describe('NorthOPCUA', () => {
 
     expect(logger.trace).toHaveBeenCalledWith(`Value ${values[0].value} written successfully on nodeId ${values[0].nodeId}`);
     expect(logger.error).toHaveBeenCalledWith(`Failed to write value ${values[1].value} on nodeId ${values[1].nodeId}: error`);
-  });
-
-  it('should handle content with different opcua data types', async () => {
-    const values = [
-      {
-        nodeId: 'nodeId1',
-        value: true,
-        dataType: 'boolean'
-      },
-      {
-        nodeId: 'nodeId2',
-        value: 1,
-        dataType: 's-byte'
-      },
-      {
-        nodeId: 'nodeId3',
-        value: 2,
-        dataType: 'byte'
-      },
-      {
-        nodeId: 'nodeId4',
-        value: 3,
-        dataType: 'int16'
-      },
-      {
-        nodeId: 'nodeId5',
-        value: 4,
-        dataType: 'uint16'
-      },
-      {
-        nodeId: 'nodeId6',
-        value: 5,
-        dataType: 'int32'
-      },
-      {
-        nodeId: 'nodeId7',
-        value: 6,
-        dataType: 'uint32'
-      },
-      {
-        nodeId: 'nodeId8',
-        value: 7,
-        dataType: 'int64'
-      },
-      {
-        nodeId: 'nodeId9',
-        value: 8,
-        dataType: 'uint64'
-      },
-      {
-        nodeId: 'nodeId10',
-        value: 9,
-        dataType: 'float'
-      },
-      {
-        nodeId: 'nodeId11',
-        value: 10,
-        dataType: 'double'
-      },
-      {
-        nodeId: 'nodeId12',
-        value: 'my value',
-        dataType: 'string'
-      },
-      {
-        nodeId: 'nodeId13',
-        value: testData.constants.dates.DATE_1,
-        dataType: 'date-time'
-      }
-    ];
-    (fs.readFile as jest.Mock).mockReturnValueOnce(JSON.stringify(values));
-
-    const writeFn = jest.fn().mockReturnValue({ isGood: jest.fn().mockReturnValueOnce(true) });
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error
-    north['client'] = {
-      write: writeFn
-    };
-
-    await north.handleContent({
-      contentFile: 'path/to/file/example-123456789.json',
-      contentSize: 1234,
-      numberOfElement: 1,
-      createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'opcua',
-      source: 'south',
-      options: {}
-    });
-
-    expect(writeFn).toHaveBeenCalledTimes(13);
-    expect(writeFn).toHaveBeenCalledWith({
-      nodeId: values[0].nodeId,
-      attributeId: AttributeIds.Value,
-      value: {
-        value: {
-          dataType: DataType.Boolean,
-          value: values[0].value
-        }
-      }
-    });
-    expect(writeFn).toHaveBeenCalledWith({
-      nodeId: values[1].nodeId,
-      attributeId: AttributeIds.Value,
-      value: {
-        value: {
-          dataType: DataType.SByte,
-          value: values[1].value
-        }
-      }
-    });
-    expect(writeFn).toHaveBeenCalledWith({
-      nodeId: values[2].nodeId,
-      attributeId: AttributeIds.Value,
-      value: {
-        value: {
-          dataType: DataType.Byte,
-          value: values[2].value
-        }
-      }
-    });
-    expect(writeFn).toHaveBeenCalledWith({
-      nodeId: values[3].nodeId,
-      attributeId: AttributeIds.Value,
-      value: {
-        value: {
-          dataType: DataType.Int16,
-          value: values[3].value
-        }
-      }
-    });
-    expect(writeFn).toHaveBeenCalledWith({
-      nodeId: values[4].nodeId,
-      attributeId: AttributeIds.Value,
-      value: {
-        value: {
-          dataType: DataType.UInt16,
-          value: values[4].value
-        }
-      }
-    });
-    expect(writeFn).toHaveBeenCalledWith({
-      nodeId: values[5].nodeId,
-      attributeId: AttributeIds.Value,
-      value: {
-        value: {
-          dataType: DataType.Int32,
-          value: values[5].value
-        }
-      }
-    });
-    expect(writeFn).toHaveBeenCalledWith({
-      nodeId: values[6].nodeId,
-      attributeId: AttributeIds.Value,
-      value: {
-        value: {
-          dataType: DataType.UInt32,
-          value: values[6].value
-        }
-      }
-    });
-    expect(writeFn).toHaveBeenCalledWith({
-      nodeId: values[7].nodeId,
-      attributeId: AttributeIds.Value,
-      value: {
-        value: {
-          dataType: DataType.Int64,
-          value: values[7].value
-        }
-      }
-    });
-    expect(writeFn).toHaveBeenCalledWith({
-      nodeId: values[8].nodeId,
-      attributeId: AttributeIds.Value,
-      value: {
-        value: {
-          dataType: DataType.UInt64,
-          value: values[8].value
-        }
-      }
-    });
-    expect(writeFn).toHaveBeenCalledWith({
-      nodeId: values[9].nodeId,
-      attributeId: AttributeIds.Value,
-      value: {
-        value: {
-          dataType: DataType.Float,
-          value: values[9].value
-        }
-      }
-    });
-    expect(writeFn).toHaveBeenCalledWith({
-      nodeId: values[10].nodeId,
-      attributeId: AttributeIds.Value,
-      value: {
-        value: {
-          dataType: DataType.Double,
-          value: values[10].value
-        }
-      }
-    });
-    expect(writeFn).toHaveBeenCalledWith({
-      nodeId: values[11].nodeId,
-      attributeId: AttributeIds.Value,
-      value: {
-        value: {
-          dataType: DataType.String,
-          value: values[11].value
-        }
-      }
-    });
-    expect(writeFn).toHaveBeenCalledWith({
-      nodeId: values[12].nodeId,
-      attributeId: AttributeIds.Value,
-      value: {
-        value: {
-          dataType: DataType.DateTime,
-          value: values[12].value
-        }
-      }
-    });
-  });
-
-  it('should handle content with bad opcua data types', async () => {
-    const values = [
-      {
-        nodeId: 'nodeId1',
-        value: 1,
-        dataType: 'bad-type'
-      }
-    ];
-    (fs.readFile as jest.Mock).mockReturnValueOnce(JSON.stringify(values));
-
-    const writeFn = jest.fn();
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error
-    north['client'] = {
-      write: writeFn
-    };
-
-    await north.handleContent({
-      contentFile: 'path/to/file/example-123456789.json',
-      contentSize: 1234,
-      numberOfElement: 1,
-      createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'opcua',
-      source: 'south',
-      options: {}
-    });
-
-    expect(writeFn).not.toHaveBeenCalled();
-
-    expect(logger.trace).toHaveBeenCalledWith(`Data type "${values[0].dataType}" unrecognized. ${values[0].nodeId}: ${values[0].value}`);
   });
 
   it('should throw error if client is not set when handling content', async () => {

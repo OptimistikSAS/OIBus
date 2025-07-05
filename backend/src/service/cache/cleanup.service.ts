@@ -79,7 +79,7 @@ export default class CleanupService {
   }
 
   async scanMainFolder(mainFolder: 'cache' | 'archive' | 'error') {
-    // Read cache folder and exclude cache.db file
+    // Read the cache folder and exclude cache.db file
     const cacheFolders =
       mainFolder === 'cache'
         ? (await fs.readdir(this.getFolder(mainFolder))).filter(element => element !== CACHE_DATABASE)
@@ -114,34 +114,28 @@ export default class CleanupService {
           this.logger.error(`Could not remove "${folderPath}": ${(error as Error).message}`);
         }
       } else {
+        if (mainFolder === 'cache') {
+          continue;
+        }
         const fileList = await this.readCacheMetadataFiles(folderPath);
         if (fileList.length === 0) {
           continue;
         }
-        if (mainFolder === 'archive') {
-          if (!north.caching.archive.enabled) {
-            await this.dataStreamEngine.removeCacheContent(
-              north.id,
-              'archive',
-              fileList.map(file => file.metadataFilename)
-            );
-          } else if (north.caching.archive.retentionDuration > 0) {
-            await this.dataStreamEngine.removeCacheContent(
-              north.id,
-              'archive',
-              fileList
-                .filter(file => this.shouldDeleteFile(file, north.caching.archive.retentionDuration))
-                .map(file => file.metadataFilename)
-            );
-          }
-        } else if (mainFolder === 'error') {
-          if (north.caching.error.retentionDuration > 0) {
-            await this.dataStreamEngine.removeCacheContent(
-              north.id,
-              'error',
-              fileList.filter(file => this.shouldDeleteFile(file, north.caching.error.retentionDuration)).map(file => file.metadataFilename)
-            );
-          }
+
+        const retentionDuration =
+          mainFolder === 'archive' ? north.caching.archive.retentionDuration : north.caching.error.retentionDuration;
+        if (mainFolder === 'archive' && !north.caching.archive.enabled) {
+          await this.dataStreamEngine.removeCacheContent(
+            north.id,
+            'archive',
+            fileList.map(file => file.metadataFilename)
+          );
+        } else if (retentionDuration > 0) {
+          await this.dataStreamEngine.removeCacheContent(
+            north.id,
+            mainFolder,
+            fileList.filter(file => this.shouldDeleteFile(file, retentionDuration)).map(file => file.metadataFilename)
+          );
         }
       }
     }
@@ -161,37 +155,30 @@ export default class CleanupService {
           this.logger.error(`Could not remove "${folderPath}": ${(error as Error).message}`);
         }
       } else {
+        if (mainFolder === 'cache') {
+          continue;
+        }
+
         const northFolderPath = path.join(folderPath, 'north');
         const fileList = await this.readCacheMetadataFiles(northFolderPath);
         if (fileList.length === 0) {
           continue;
         }
-        if (mainFolder === 'archive') {
-          if (!historyQuery.caching.archive.enabled) {
-            await this.historyQueryEngine.removeCacheContent(
-              historyQuery.id,
-              'archive',
-              fileList.map(file => file.metadataFilename)
-            );
-          } else if (historyQuery.caching.archive.retentionDuration > 0) {
-            await this.historyQueryEngine.removeCacheContent(
-              historyQuery.id,
-              'archive',
-              fileList
-                .filter(file => this.shouldDeleteFile(file, historyQuery.caching.archive.retentionDuration))
-                .map(file => file.metadataFilename)
-            );
-          }
-        } else if (mainFolder === 'error') {
-          if (historyQuery.caching.error.retentionDuration > 0) {
-            await this.historyQueryEngine.removeCacheContent(
-              historyQuery.id,
-              'error',
-              fileList
-                .filter(file => this.shouldDeleteFile(file, historyQuery.caching.error.retentionDuration))
-                .map(file => file.metadataFilename)
-            );
-          }
+
+        const retentionDuration =
+          mainFolder === 'archive' ? historyQuery.caching.archive.retentionDuration : historyQuery.caching.error.retentionDuration;
+        if (mainFolder === 'archive' && !historyQuery.caching.archive.enabled) {
+          await this.historyQueryEngine.removeCacheContent(
+            historyQuery.id,
+            'archive',
+            fileList.map(file => file.metadataFilename)
+          );
+        } else if (retentionDuration > 0) {
+          await this.historyQueryEngine.removeCacheContent(
+            historyQuery.id,
+            mainFolder,
+            fileList.filter(file => this.shouldDeleteFile(file, retentionDuration)).map(file => file.metadataFilename)
+          );
         }
       }
     }
