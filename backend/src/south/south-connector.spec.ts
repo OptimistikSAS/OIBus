@@ -2,7 +2,6 @@ import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
 
 import pino from 'pino';
-import EncryptionService from '../service/encryption.service';
 import { CronJob } from 'cron';
 import { delay, generateIntervals, validateCronExpression } from '../service/utils';
 import { OIBusTimeValue } from '../../shared/model/engine.model';
@@ -24,14 +23,13 @@ import SouthConnectorRepositoryMock from '../tests/__mocks__/repository/config/s
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
 import SouthCacheRepositoryMock from '../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../tests/__mocks__/service/south-cache-service.mock';
-import { flushPromises } from '../tests/utils/test-utils';
+import { flushPromises, mockBaseFolders } from '../tests/utils/test-utils';
 import SouthOPCUA from './south-opcua/south-opcua';
 import ConnectionService from '../service/connection.service';
 import ConnectionServiceMock from '../tests/__mocks__/service/connection-service.mock';
 import SouthMSSQL from './south-mssql/south-mssql';
 import { DateTime } from 'luxon';
 import { Instant } from '../model/types';
-import { mockBaseFolders } from '../tests/utils/test-utils';
 
 // Mock fs
 jest.mock('node:fs/promises');
@@ -59,7 +57,10 @@ jest.mock('node-opcua-certificate-manager', () => ({ OPCUACertificateManager: je
 // Mock services
 jest.mock('../service/utils');
 
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
+jest.mock('../service/encryption.service', () => ({
+  encryptionService: new EncryptionServiceMock('', '')
+}));
+
 const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
@@ -100,7 +101,6 @@ describe('SouthConnector with file query', () => {
     south = new SouthFolderScanner(
       testData.south.list[0] as SouthConnectorEntity<SouthFolderScannerSettings, SouthFolderScannerItemSettings>,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,
@@ -267,7 +267,6 @@ describe('SouthConnector disabled', () => {
     south = new SouthMSSQL(
       testData.south.list[1] as SouthConnectorEntity<SouthMSSQLSettings, SouthMSSQLItemSettings>,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,
@@ -335,7 +334,6 @@ describe('SouthConnector with history and max instant per item', () => {
     south = new SouthOPCUA(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,
@@ -617,7 +615,6 @@ describe('SouthConnector with history and subscription', () => {
     south = new SouthOPCUA(
       testData.south.list[2] as SouthConnectorEntity<SouthOPCUASettings, SouthOPCUAItemSettings>,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,

@@ -11,7 +11,6 @@ import {
   logQuery,
   persistResults
 } from '../../service/utils';
-import EncryptionService from '../../service/encryption.service';
 import pino from 'pino';
 import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
@@ -26,6 +25,7 @@ import { BaseFolders } from '../../model/types';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { loadOdbc } from './odbc-loader';
 import { HTTPRequest, ReqOptions } from '../../service/http-request.utils';
+import { encryptionService } from '../../service/encryption.service';
 
 /**
  * Class SouthODBC - Retrieve data from SQL databases with ODBC driver and send them to the cache as CSV files.
@@ -38,23 +38,13 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
   constructor(
     connector: SouthConnectorEntity<SouthODBCSettings, SouthODBCItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
-    encryptionService: EncryptionService,
     southConnectorRepository: SouthConnectorRepository,
     southCacheRepository: SouthCacheRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolders: BaseFolders
   ) {
-    super(
-      connector,
-      engineAddContentCallback,
-      encryptionService,
-      southConnectorRepository,
-      southCacheRepository,
-      scanModeRepository,
-      logger,
-      baseFolders
-    );
+    super(connector, engineAddContentCallback, southConnectorRepository, southCacheRepository, scanModeRepository, logger, baseFolders);
     this.tmpFolder = path.resolve(this.baseFolders.cache, 'tmp');
   }
 
@@ -457,7 +447,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
       if (!connectionString.endsWith(';')) {
         connectionString += ';';
       }
-      connectionString += `PWD=${await this.encryptionService.decryptText(settings.password)};`;
+      connectionString += `PWD=${await encryptionService.decryptText(settings.password)};`;
     } else {
       this.logger.debug(`Connecting with connection string ${connectionString}`);
     }
