@@ -303,6 +303,29 @@ describe('CacheService', () => {
     );
   });
 
+  it('clean up should do nothing if folder does not contain any files', async () => {
+    service['shouldDeleteFile'] = jest.fn().mockReturnValue(true);
+    service['readCacheMetadataFiles'] = jest.fn().mockReturnValue([]);
+    (fs.readdir as jest.Mock).mockReturnValueOnce(['north-id1', 'history-id2']);
+
+    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValueOnce({
+      id: 'id1',
+      caching: { archive: { enabled: true, retentionDuration: 1 } }
+    });
+    (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce({
+      id: 'id2',
+      caching: { archive: { enabled: true, retentionDuration: 1 } }
+    });
+
+    await service.scanMainFolder('archive');
+
+    expect(northConnectorRepository.findNorthById).toHaveBeenCalledTimes(1);
+    expect(dataStreamEngine.removeCacheContent).not.toHaveBeenCalled();
+
+    expect(historyQueryRepository.findHistoryQueryById).toHaveBeenCalledTimes(1);
+    expect(historyQueryEngine.removeCacheContent).not.toHaveBeenCalled();
+  });
+
   it('should clean up error folder', async () => {
     service['shouldDeleteFile'] = jest.fn().mockReturnValue(true);
     service['readCacheMetadataFiles'] = jest.fn().mockReturnValue(fileList);

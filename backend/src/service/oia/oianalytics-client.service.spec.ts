@@ -299,6 +299,38 @@ describe('OIAnalytics Client', () => {
     ).rejects.toThrow('400 - "error"');
   });
 
+  it('should download file without proxy user', async () => {
+    (HTTPRequest as jest.Mock).mockResolvedValueOnce(createMockResponse(200, Buffer.from('buffer').buffer));
+
+    await service.downloadFile(
+      {
+        ...testData.oIAnalytics.registration.completed,
+        host: `${testData.oIAnalytics.registration.completed.host}/`,
+        proxyUrl: 'http://localhost:3128',
+        proxyUsername: '',
+        proxyPassword: '',
+        useProxy: true
+      },
+      'assetId',
+      'filename.zip'
+    );
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        href: `${testData.oIAnalytics.registration.completed.host}/api/oianalytics/oibus/upgrade/asset`
+      }),
+      {
+        method: 'GET',
+        query: { assetId: 'assetId' },
+        acceptUnauthorized: false,
+        auth: { type: 'bearer', token: testData.oIAnalytics.registration.completed.token },
+        proxy: {
+          url: 'http://localhost:3128'
+        },
+        timeout: 900_000
+      }
+    );
+  });
+
   it('should not dowload file without registration token', async () => {
     await expect(
       service.downloadFile(

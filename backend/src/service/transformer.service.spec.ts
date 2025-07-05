@@ -6,16 +6,19 @@ import TransformerRepository from '../repository/config/transformer.repository';
 import TransformerRepositoryMock from '../tests/__mocks__/repository/config/transformer-repository.mock';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import OianalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
-import { StandardTransformer } from '../model/transformer.model';
+import { CustomTransformer, StandardTransformer } from '../model/transformer.model';
 import pino from 'pino';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import IsoTransformer from './transformers/iso-transformer';
-import OIBusTimeValuesToJSONTransformer from './transformers/oibus-time-values-to-json-transformer';
-import OIBusTimeValuesToCsvTransformer from './transformers/oibus-time-values-to-csv-transformer';
-import OIBusTimeValuesToModbusTransformer from './transformers/oibus-time-values-to-modbus-transformer';
-import OIBusTimeValuesToOPCUATransformer from './transformers/oibus-time-values-to-opcua-transformer';
-import OIBusTimeValuesToMQTTTransformer from './transformers/oibus-time-values-to-mqtt-transformer';
+import OIBusTimeValuesToJSONTransformer from './transformers/time-values/oibus-time-values-to-json-transformer';
+import OIBusTimeValuesToCsvTransformer from './transformers/time-values/oibus-time-values-to-csv-transformer';
+import OIBusTimeValuesToModbusTransformer from './transformers/time-values/oibus-time-values-to-modbus-transformer';
+import OIBusTimeValuesToOPCUATransformer from './transformers/time-values/oibus-time-values-to-opcua-transformer';
+import OIBusTimeValuesToMQTTTransformer from './transformers/time-values/oibus-time-values-to-mqtt-transformer';
 import IgnoreTransformer from './transformers/ignore-transformer';
+import OIBusSetpointToMQTTTransformer from './transformers/setpoint/oibus-setpoint-to-mqtt-transformer';
+import OIBusSetpointToModbusTransformer from './transformers/setpoint/oibus-setpoint-to-modbus-transformer';
+import OIBusSetpointToOPCUATransformer from './transformers/setpoint/oibus-setpoint-to-opcua-transformer';
 
 jest.mock('papaparse');
 jest.mock('./utils');
@@ -172,10 +175,31 @@ describe('Transformer Service', () => {
       OIBusTimeValuesToMQTTTransformer
     );
 
+    transformer.functionName = 'setpoint-to-mqtt';
+    expect(createTransformer({ transformer, options: {}, inputType: 'setpoint' }, testData.north.list[0], logger)).toBeInstanceOf(
+      OIBusSetpointToMQTTTransformer
+    );
+
+    transformer.functionName = 'setpoint-to-modbus';
+    expect(createTransformer({ transformer, options: {}, inputType: 'setpoint' }, testData.north.list[0], logger)).toBeInstanceOf(
+      OIBusSetpointToModbusTransformer
+    );
+
+    transformer.functionName = 'setpoint-to-opcua';
+    expect(createTransformer({ transformer, options: {}, inputType: 'setpoint' }, testData.north.list[0], logger)).toBeInstanceOf(
+      OIBusSetpointToOPCUATransformer
+    );
+
     transformer.functionName = 'bad-id';
     expect(() => createTransformer({ transformer, options: {}, inputType: 'any' }, testData.north.list[0], logger)).toThrow(
       'Transformer transformerId1 (standard) not implemented'
     );
+
+    const customTransformer: CustomTransformer = JSON.parse(JSON.stringify(testData.transformers.list[0]));
+    customTransformer.type = 'custom';
+    expect(() =>
+      createTransformer({ transformer: customTransformer, options: {}, inputType: 'any' }, testData.north.list[0], logger)
+    ).toThrow('Transformer transformerId1 (custom) not implemented');
   });
 
   it('getStandardManifest() should get standard manifest', async () => {
@@ -186,6 +210,9 @@ describe('Transformer Service', () => {
     expect(getStandardManifest('time-values-to-modbus')).toEqual(OIBusTimeValuesToModbusTransformer.manifestSettings);
     expect(getStandardManifest('time-values-to-opcua')).toEqual(OIBusTimeValuesToOPCUATransformer.manifestSettings);
     expect(getStandardManifest('time-values-to-mqtt')).toEqual(OIBusTimeValuesToMQTTTransformer.manifestSettings);
+    expect(getStandardManifest('setpoint-to-mqtt')).toEqual(OIBusSetpointToMQTTTransformer.manifestSettings);
+    expect(getStandardManifest('setpoint-to-modbus')).toEqual(OIBusSetpointToModbusTransformer.manifestSettings);
+    expect(getStandardManifest('setpoint-to-opcua')).toEqual(OIBusSetpointToOPCUATransformer.manifestSettings);
     expect(() => getStandardManifest('bad-id')).toThrow(`Could not find manifest for bad-id transformer`);
   });
 });
