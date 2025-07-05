@@ -49,7 +49,7 @@ export default class SouthConnectorController {
     if (!southConnector) {
       return ctx.notFound();
     }
-    ctx.ok(toSouthConnectorDTO(southConnector, ctx.app.encryptionService));
+    ctx.ok(toSouthConnectorDTO(southConnector));
   }
 
   async createSouth(
@@ -57,8 +57,7 @@ export default class SouthConnectorController {
   ): Promise<void> {
     try {
       const southConnector = toSouthConnectorDTO(
-        await ctx.app.southService.createSouth(ctx.request.body!, (ctx.query.duplicate as string) || null),
-        ctx.app.encryptionService
+        await ctx.app.southService.createSouth(ctx.request.body!, (ctx.query.duplicate as string) || null)
       );
       ctx.created(southConnector);
     } catch (error: unknown) {
@@ -163,7 +162,7 @@ export default class SouthConnectorController {
     }
     const southItems = ctx.app.southService
       .getSouthItems(ctx.params.southId)
-      .map(item => toSouthConnectorItemDTO(item, southConnector.type, ctx.app.encryptionService));
+      .map(item => toSouthConnectorItemDTO(item, southConnector.type));
     ctx.ok(southItems);
   }
 
@@ -178,7 +177,7 @@ export default class SouthConnectorController {
     };
     const page = ctx.app.southService.searchSouthItems(ctx.params.southId, searchParams);
     ctx.ok({
-      content: page.content.map(item => toSouthConnectorItemDTO(item, southConnector.type, ctx.app.encryptionService)),
+      content: page.content.map(item => toSouthConnectorItemDTO(item, southConnector.type)),
       totalElements: page.totalElements,
       size: page.size,
       number: page.number,
@@ -193,7 +192,7 @@ export default class SouthConnectorController {
     }
     const item = ctx.app.southService.findSouthConnectorItemById(ctx.params.southId, ctx.params.id);
     if (item) {
-      ctx.ok(toSouthConnectorItemDTO(item, southConnector.type, ctx.app.encryptionService));
+      ctx.ok(toSouthConnectorItemDTO(item, southConnector.type));
     } else {
       ctx.notFound();
     }
@@ -208,7 +207,7 @@ export default class SouthConnectorController {
     }
     try {
       const item = await ctx.app.southService.createItem(ctx.params.southId!, ctx.request.body!);
-      ctx.created(toSouthConnectorItemDTO(item, southConnector.type, ctx.app.encryptionService));
+      ctx.created(toSouthConnectorItemDTO(item, southConnector.type));
     } catch (error: unknown) {
       ctx.badRequest((error as Error).message);
     }
@@ -277,7 +276,7 @@ export default class SouthConnectorController {
     const items: Array<SouthConnectorItemDTO<SouthItemSettings>> = JSON.parse((await fs.readFile(files['items'][0].path)).toString('utf8'));
 
     ctx.body = itemToFlattenedCSV(
-      items.map(item => toSouthConnectorItemDTO(item, manifest.id, ctx.app.encryptionService)),
+      items.map(item => toSouthConnectorItemDTO(item, manifest.id)),
       ctx.request.body!.delimiter,
       ctx.app.scanModeService.findAll()
     );
@@ -293,7 +292,7 @@ export default class SouthConnectorController {
     }
 
     ctx.body = itemToFlattenedCSV(
-      southConnector.items.map(item => toSouthConnectorItemDTO(item, southConnector.type, ctx.app.encryptionService)),
+      southConnector.items.map(item => toSouthConnectorItemDTO(item, southConnector.type)),
       ctx.request.body!.delimiter,
       ctx.app.scanModeService.findAll()
     );
