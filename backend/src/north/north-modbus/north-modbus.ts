@@ -12,7 +12,7 @@ import net from 'node:net';
 import ModbusTCPClient from 'jsmodbus/dist/modbus-tcp-client';
 import { client } from 'jsmodbus';
 import fs from 'node:fs/promises';
-import { OIBusModbusValue } from '../../service/transformers/oibus-time-values-to-modbus-transformer';
+import { OIBusModbusValue } from '../../service/transformers/connector-types.model';
 
 /**
  * Class NorthOPCUA - Write values in an OPCUA server

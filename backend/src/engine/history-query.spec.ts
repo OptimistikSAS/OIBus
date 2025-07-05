@@ -204,6 +204,10 @@ describe('HistoryQuery enabled', () => {
       northMetricsEventRemoved = performance.now();
     };
 
+    await historyQuery.resetCache();
+    expect(mockedNorth1.resetCache).not.toHaveBeenCalled();
+    expect(mockedSouth1.resetCache).not.toHaveBeenCalled();
+
     await historyQuery.start();
     mockedSouth1.connectedEvent.emit('connected');
     await historyQuery.stop();
