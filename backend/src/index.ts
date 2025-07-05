@@ -176,7 +176,6 @@ const CERT_FOLDER = 'certs';
     northService,
     transformerService,
     oIAnalyticsMessageService,
-    encryptionService,
     historyQueryEngine
   );
 
