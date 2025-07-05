@@ -49,6 +49,14 @@ describe('Content controller', () => {
     expect(ctx.noContent).not.toHaveBeenCalled();
   });
 
+  it('should return bad request if north Id not specified', async () => {
+    ctx.request.body = content;
+    ctx.request.query = { northId: undefined };
+    await oibusController.addContent(ctx);
+    expect(ctx.badRequest).toHaveBeenCalledWith('northId must be specified in query params');
+    expect(ctx.noContent).not.toHaveBeenCalled();
+  });
+
   it('should add file', async () => {
     ctx.request.query = { northId: 'northId' };
     ctx.request.body = fileContent;
