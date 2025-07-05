@@ -1,7 +1,7 @@
 import path from 'node:path';
 
 import NorthConnector from '../north-connector';
-import EncryptionService from '../../service/encryption.service';
+import { encryptionService } from '../../service/encryption.service';
 import pino from 'pino';
 import { DateTime } from 'luxon';
 import { NorthSFTPSettings } from '../../../shared/model/north-settings.model';
@@ -22,14 +22,13 @@ import { getFilenameWithoutRandomId } from '../../service/utils';
 export default class NorthSFTP extends NorthConnector<NorthSFTPSettings> {
   constructor(
     configuration: NorthConnectorEntity<NorthSFTPSettings>,
-    encryptionService: EncryptionService,
     transformerService: TransformerService,
     northConnectorRepository: NorthConnectorRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolders: BaseFolders
   ) {
-    super(configuration, encryptionService, transformerService, northConnectorRepository, scanModeRepository, logger, baseFolders);
+    super(configuration, transformerService, northConnectorRepository, scanModeRepository, logger, baseFolders);
   }
 
   async handleContent(cacheMetadata: CacheMetadata): Promise<void> {
@@ -91,7 +90,7 @@ export default class NorthSFTP extends NorthConnector<NorthSFTPSettings> {
           port: this.connector.settings.port,
           username: this.connector.settings.username,
           privateKey: await fs.readFile(this.connector.settings.privateKey!, 'utf8'),
-          passphrase: this.connector.settings.passphrase ? await this.encryptionService.decryptText(this.connector.settings.passphrase) : ''
+          passphrase: this.connector.settings.passphrase ? await encryptionService.decryptText(this.connector.settings.passphrase) : ''
         };
       case 'password':
       default:
@@ -99,7 +98,7 @@ export default class NorthSFTP extends NorthConnector<NorthSFTPSettings> {
           host: this.connector.settings.host,
           port: this.connector.settings.port,
           username: this.connector.settings.username,
-          password: this.connector.settings.password ? await this.encryptionService.decryptText(this.connector.settings.password) : ''
+          password: this.connector.settings.password ? await encryptionService.decryptText(this.connector.settings.password) : ''
         };
     }
   }

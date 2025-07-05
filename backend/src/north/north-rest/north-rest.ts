@@ -3,7 +3,6 @@ import { createReadStream } from 'node:fs';
 
 import NorthConnector from '../north-connector';
 import pino from 'pino';
-import EncryptionService from '../../service/encryption.service';
 import { NorthRESTSettings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
@@ -23,14 +22,13 @@ import TransformerService from '../../service/transformer.service';
 export default class NorthREST extends NorthConnector<NorthRESTSettings> {
   constructor(
     configuration: NorthConnectorEntity<NorthRESTSettings>,
-    encryptionService: EncryptionService,
     transformerService: TransformerService,
     northConnectorRepository: NorthConnectorRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolders: BaseFolders
   ) {
-    super(configuration, encryptionService, transformerService, northConnectorRepository, scanModeRepository, logger, baseFolders);
+    super(configuration, transformerService, northConnectorRepository, scanModeRepository, logger, baseFolders);
   }
 
   async handleContent(cacheMetadata: CacheMetadata): Promise<void> {

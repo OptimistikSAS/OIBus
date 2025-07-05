@@ -1,5 +1,4 @@
 import NorthConnector from '../north-connector';
-import EncryptionService from '../../service/encryption.service';
 import pino from 'pino';
 import { NorthModbusSettings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata } from '../../../shared/model/engine.model';
@@ -25,14 +24,13 @@ export default class NorthModbus extends NorthConnector<NorthModbusSettings> {
 
   constructor(
     configuration: NorthConnectorEntity<NorthModbusSettings>,
-    encryptionService: EncryptionService,
     transformerService: TransformerService,
     northConnectorRepository: NorthConnectorRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolders: BaseFolders
   ) {
-    super(configuration, encryptionService, transformerService, northConnectorRepository, scanModeRepository, logger, baseFolders);
+    super(configuration, transformerService, northConnectorRepository, scanModeRepository, logger, baseFolders);
   }
 
   async handleContent(cacheMetadata: CacheMetadata): Promise<void> {

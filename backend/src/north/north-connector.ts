@@ -1,5 +1,4 @@
 import pino from 'pino';
-import EncryptionService from '../service/encryption.service';
 import { CronJob } from 'cron';
 import { EventEmitter } from 'node:events';
 import DeferredPromise from '../service/deferred-promise';
@@ -67,7 +66,6 @@ export default abstract class NorthConnector<T extends NorthSettings> {
 
   protected constructor(
     protected connector: NorthConnectorEntity<T>,
-    protected readonly encryptionService: EncryptionService,
     protected readonly transformerService: TransformerService,
     protected readonly northConnectorRepository: NorthConnectorRepository,
     protected readonly scanModeRepository: ScanModeRepository,

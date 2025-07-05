@@ -1,12 +1,10 @@
 import { createReadStream, ReadStream } from 'node:fs';
 import fs from 'node:fs/promises';
-
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import { S3Client } from '@aws-sdk/client-s3';
 import NorthAmazonS3 from './north-amazon-s3';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import EncryptionService from '../../service/encryption.service';
-import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
 import { NorthAmazonS3Settings } from '../../../shared/model/north-settings.model';
 import csv from 'papaparse';
@@ -18,7 +16,6 @@ import testData from '../../tests/utils/test-data';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import { mockBaseFolders } from '../../tests/utils/test-utils';
 import CacheService from '../../service/cache/cache.service';
-import { OIBusTimeValue } from '../../../shared/model/engine.model';
 import TransformerService, { createTransformer } from '../../service/transformer.service';
 import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';
 import OIBusTransformer from '../../service/transformers/oibus-transformer';
@@ -38,9 +35,11 @@ jest.mock('papaparse');
 jest.mock('../../service/transformer.service');
 jest.mock('../../service/utils');
 (fs.stat as jest.Mock).mockReturnValue({ size: 123 });
+jest.mock('../../service/encryption.service', () => ({
+  encryptionService: new EncryptionServiceMock('', '')
+}));
 
 const logger: pino.Logger = new PinoLogger();
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const cacheService: CacheService = new CacheServiceMock();
@@ -54,14 +53,6 @@ jest.mock(
       return cacheService;
     }
 );
-
-const timeValues: Array<OIBusTimeValue> = [
-  {
-    pointId: 'pointId',
-    timestamp: testData.constants.dates.FAKE_NOW,
-    data: { value: '666', quality: 'good' }
-  }
-];
 
 let north: NorthAmazonS3;
 let configuration: NorthConnectorEntity<NorthAmazonS3Settings>;
@@ -91,7 +82,6 @@ describe('NorthAmazonS3', () => {
 
       north = new NorthAmazonS3(
         configuration,
-        encryptionService,
         transformerService,
         northConnectorRepository,
         scanModeRepository,
@@ -173,7 +163,6 @@ describe('NorthAmazonS3', () => {
 
       north = new NorthAmazonS3(
         configuration,
-        encryptionService,
         transformerService,
         northConnectorRepository,
         scanModeRepository,
@@ -221,7 +210,6 @@ describe('NorthAmazonS3', () => {
 
       north = new NorthAmazonS3(
         configuration,
-        encryptionService,
         transformerService,
         northConnectorRepository,
         scanModeRepository,

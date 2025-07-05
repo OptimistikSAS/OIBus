@@ -2,7 +2,6 @@ import fs from 'node:fs/promises';
 
 import NorthConnector from '../north-connector';
 import pino from 'pino';
-import EncryptionService from '../../service/encryption.service';
 import { NorthConsoleSettings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
@@ -17,14 +16,13 @@ import TransformerService from '../../service/transformer.service';
 export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
   constructor(
     configuration: NorthConnectorEntity<NorthConsoleSettings>,
-    encryptionService: EncryptionService,
     transformerService: TransformerService,
     northConnectorRepository: NorthConnectorRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolders: BaseFolders
   ) {
-    super(configuration, encryptionService, transformerService, northConnectorRepository, scanModeRepository, logger, baseFolders);
+    super(configuration, transformerService, northConnectorRepository, scanModeRepository, logger, baseFolders);
   }
 
   async handleContent(cacheMetadata: CacheMetadata): Promise<void> {
