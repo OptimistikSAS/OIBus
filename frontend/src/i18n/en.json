@@ -210,7 +210,8 @@
     },
     "oibus-data-type": {
       "any": "Any",
-      "time-values": "OIBus time values"
+      "time-values": "OIBus time values",
+      "setpoint": "Setpoint"
     },
     "oibus-north-category": {
       "debug": "Debug",
@@ -838,11 +839,14 @@
           "standard": {
             "ignore": "Ignore",
             "iso": "No transform",
-            "time-values-to-csv": "To CSV (convert time values into CSV)",
-            "time-values-to-json": "To JSON (convert time values into raw JSON)",
-            "time-values-to-mqtt": "To MQTT payloads (convert time values into MQTT payloads)",
-            "time-values-to-opcua": "To OPCUA values (convert time values into OPCUA values)",
-            "time-values-to-modbus": "To Modbus values (convert time values into Modbus values)"
+            "time-values-to-csv": "OIBus time values into CSV",
+            "time-values-to-json": "OIBus time values into raw JSON",
+            "time-values-to-mqtt": "OIBus time values into MQTT payloads",
+            "time-values-to-opcua": "OIBus time values into OPCUA values",
+            "time-values-to-modbus": "OIBus time values into Modbus values",
+            "setpoint-to-mqtt": "Setpoints into MQTT payloads",
+            "setpoint-to-opcua": "Setpoints into OPCUA values",
+            "setpoint-to-modbus": "Setpoints into Modbus values"
           },
           "choose-transformer-modal": {
             "title": "Choose how to handle payloads",
@@ -852,6 +856,7 @@
           "mapping": {
             "title": "Mapping table",
             "point-id": "Point ID (Reference)",
+            "reference": "Reference",
             "mqtt": {
               "topic": "MQTT Topic"
             },

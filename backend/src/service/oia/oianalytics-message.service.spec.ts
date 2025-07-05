@@ -118,6 +118,7 @@ describe('OIAnalytics Message Service', () => {
     });
 
     await service.stop();
+    service.resolveDeferredPromise();
     expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
     expect(logger.debug).toHaveBeenCalledWith(`Stopping OIAnalytics message service...`);
     expect(logger.debug).toHaveBeenCalledWith(`OIAnalytics message service stopped`);

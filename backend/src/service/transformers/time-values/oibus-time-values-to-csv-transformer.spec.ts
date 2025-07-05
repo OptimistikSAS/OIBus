@@ -1,20 +1,20 @@
 import { Readable } from 'stream';
 import pino from 'pino';
-import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import testData from '../../tests/utils/test-data';
-import { flushPromises } from '../../tests/utils/test-utils';
-import { OIBusTimeValue } from '../../../shared/model/engine.model';
+import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock';
+import testData from '../../../tests/utils/test-data';
+import { flushPromises } from '../../../tests/utils/test-utils';
+import OIBusTimeValuesToCsvTransformer from './oibus-time-values-to-csv-transformer';
+import { OIBusTimeValue } from '../../../../shared/model/engine.model';
 import csv from 'papaparse';
-import OIBusTimeValuesToJSONTransformer from './oibus-time-values-to-json-transformer';
 
-jest.mock('../utils', () => ({
+jest.mock('../../utils', () => ({
   generateRandomId: jest.fn().mockReturnValue('randomId')
 }));
 jest.mock('papaparse');
 
 const logger: pino.Logger = new PinoLogger();
 
-describe('OIBusTimeValuesToJSONTransformer', () => {
+describe('OIBusTimeValuesToCsvTransformer', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
@@ -24,7 +24,7 @@ describe('OIBusTimeValuesToJSONTransformer', () => {
     (csv.unparse as jest.Mock).mockReturnValue('csv content');
 
     // Arrange
-    const transformer = new OIBusTimeValuesToJSONTransformer(logger, testData.transformers.list[0], testData.north.list[0], {});
+    const transformer = new OIBusTimeValuesToCsvTransformer(logger, testData.transformers.list[0], testData.north.list[0], {});
     const source = 'test-source';
     const dataChunks: Array<OIBusTimeValue> = [
       {
@@ -63,12 +63,12 @@ describe('OIBusTimeValuesToJSONTransformer', () => {
     const result = await promise;
     // Assert
     expect(result).toEqual({
-      output: JSON.stringify(dataChunks),
+      output: 'csv content',
       metadata: {
-        contentFile: 'randomId.json',
+        contentFile: 'randomId.csv',
         contentSize: 0,
         createdAt: '',
-        numberOfElement: 3,
+        numberOfElement: 0,
         contentType: 'any',
         source,
         options: {}
@@ -77,7 +77,7 @@ describe('OIBusTimeValuesToJSONTransformer', () => {
   });
 
   it('should return manifest', () => {
-    expect(OIBusTimeValuesToJSONTransformer.manifestSettings).toEqual({
+    expect(OIBusTimeValuesToCsvTransformer.manifestSettings).toEqual({
       type: 'object',
       key: 'options',
       translationKey: 'configuration.oibus.manifest.transformers.options',
