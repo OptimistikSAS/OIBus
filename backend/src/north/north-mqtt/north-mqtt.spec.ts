@@ -1,9 +1,7 @@
-import NorthOpcua from './north-mqtt';
-import NorthMQTT from './north-mqtt';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
+import NorthMQTT from './north-mqtt';
 import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import NorthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/north-connector-repository.mock';
@@ -24,9 +22,10 @@ import Stream from 'node:stream';
 import fs from 'node:fs/promises';
 
 jest.mock('node:fs/promises');
-
+jest.mock('../../service/encryption.service', () => ({
+  encryptionService: new EncryptionServiceMock('', '')
+}));
 const logger: pino.Logger = new PinoLogger();
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const cacheService: CacheService = new CacheServiceMock();
@@ -92,9 +91,8 @@ describe('NorthMQTT', () => {
     (getFilenameWithoutRandomId as jest.Mock).mockReturnValue('example.file');
     (mqtt.connect as jest.Mock).mockImplementation(() => mqttStream);
 
-    north = new NorthOpcua(
+    north = new NorthMQTT(
       configuration,
-      encryptionService,
       transformerService,
       northConnectorRepository,
       scanModeRepository,
