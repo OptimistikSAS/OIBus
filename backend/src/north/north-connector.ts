@@ -332,21 +332,31 @@ export default abstract class NorthConnector<T extends NorthSettings> {
       `Transforming data of type ${data.type} into ${transformerWithOptions.transformer.outputType} type with transformer ${transformerWithOptions.transformer.id}`
     );
     const transformer = createTransformer(transformerWithOptions, this.connector, this.logger);
-    if (data.type === 'time-values') {
-      if (this.connector.caching.throttling.maxNumberOfElements > 0) {
-        for (let i = 0; i < data.content.length; i += this.connector.caching.throttling.maxNumberOfElements) {
-          const chunks: Array<object> = data.content.slice(i, i + this.connector.caching.throttling.maxNumberOfElements);
-          const { metadata, output } = await transformer.transform(Readable.from(JSON.stringify(chunks)), source, null);
+    switch (data.type) {
+      case 'time-values':
+        if (this.connector.caching.throttling.maxNumberOfElements > 0) {
+          for (let i = 0; i < data.content.length; i += this.connector.caching.throttling.maxNumberOfElements) {
+            const chunks: Array<object> = data.content.slice(i, i + this.connector.caching.throttling.maxNumberOfElements);
+            const { metadata, output } = await transformer.transform(Readable.from(JSON.stringify(chunks)), source, null);
+            await this.persistDataInCache(metadata, output);
+          }
+        } else {
+          const { metadata, output } = await transformer.transform(Readable.from(JSON.stringify(data.content)), source, null);
           await this.persistDataInCache(metadata, output);
         }
-      } else {
-        const { metadata, output } = await transformer.transform(Readable.from(JSON.stringify(data.content)), source, null);
+        break;
+      case 'setpoint':
+        {
+          const { metadata, output } = await transformer.transform(Readable.from(JSON.stringify(data.content)), source, null);
+          await this.persistDataInCache(metadata, output);
+        }
+        break;
+      case 'any':
+        const { metadata, output } = await transformer.transform(createReadStream(data.filePath), source, path.parse(data.filePath).base);
         await this.persistDataInCache(metadata, output);
-      }
-    } else {
-      const { metadata, output } = await transformer.transform(createReadStream(data.filePath), source, path.parse(data.filePath).base);
-      await this.persistDataInCache(metadata, output);
+        break;
     }
+
     await this.triggerRunIfNecessary(0); // No delay needed here, we check for trigger right now, once the cache is updated
   }
 

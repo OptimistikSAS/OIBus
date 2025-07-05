@@ -66,13 +66,16 @@ import {
 import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO } from '../../../shared/model/history-query.model';
 import TransformerRepository from './transformer.repository';
 import { CustomTransformer, StandardTransformer } from '../../model/transformer.model';
-import OIBusTimeValuesToCsvTransformer from '../../service/transformers/oibus-time-values-to-csv-transformer';
+import OIBusTimeValuesToCsvTransformer from '../../service/transformers/time-values/oibus-time-values-to-csv-transformer';
 import IsoTransformer from '../../service/transformers/iso-transformer';
-import OIBusTimeValuesToJSONTransformer from '../../service/transformers/oibus-time-values-to-json-transformer';
-import OIBusTimeValuesToMQTTTransformer from '../../service/transformers/oibus-time-values-to-mqtt-transformer';
-import OIBusTimeValuesToOPCUATransformer from '../../service/transformers/oibus-time-values-to-opcua-transformer';
-import OIBusTimeValuesToModbusTransformer from '../../service/transformers/oibus-time-values-to-modbus-transformer';
+import OIBusTimeValuesToJSONTransformer from '../../service/transformers/time-values/oibus-time-values-to-json-transformer';
+import OIBusTimeValuesToMQTTTransformer from '../../service/transformers/time-values/oibus-time-values-to-mqtt-transformer';
+import OIBusTimeValuesToOPCUATransformer from '../../service/transformers/time-values/oibus-time-values-to-opcua-transformer';
+import OIBusTimeValuesToModbusTransformer from '../../service/transformers/time-values/oibus-time-values-to-modbus-transformer';
 import IgnoreTransformer from '../../service/transformers/ignore-transformer';
+import OIBusSetpointToModbusTransformer from '../../service/transformers/setpoint/oibus-setpoint-to-modbus-transformer';
+import OIBusSetpointToMQTTTransformer from '../../service/transformers/setpoint/oibus-setpoint-to-mqtt-transformer';
+import OIBusSetpointToOPCUATransformer from '../../service/transformers/setpoint/oibus-setpoint-to-opcua-transformer';
 
 jest.mock('../../service/utils');
 jest.mock('argon2');
@@ -164,6 +167,27 @@ describe('Repository with populated database', () => {
         inputType: 'time-values',
         functionName: OIBusTimeValuesToModbusTransformer.transformerName,
         outputType: 'modbus',
+        type: 'standard'
+      },
+      {
+        id: 'standardTransformer7',
+        inputType: 'setpoint',
+        functionName: OIBusSetpointToModbusTransformer.transformerName,
+        outputType: 'modbus',
+        type: 'standard'
+      },
+      {
+        id: 'standardTransformer8',
+        inputType: 'setpoint',
+        functionName: OIBusSetpointToOPCUATransformer.transformerName,
+        outputType: 'opcua',
+        type: 'standard'
+      },
+      {
+        id: 'standardTransformer9',
+        inputType: 'setpoint',
+        functionName: OIBusSetpointToMQTTTransformer.transformerName,
+        outputType: 'mqtt',
         type: 'standard'
       }
     ];
@@ -493,6 +517,16 @@ describe('Repository with populated database', () => {
           0
         )
       );
+
+      expect(
+        repository.search(
+          {
+            types: [],
+            status: []
+          },
+          0
+        )
+      ).toEqual(createPageFromArray(testData.oIAnalytics.commands.oIBusList, 50, 0));
     });
 
     it('should properly search commands and list them', () => {
@@ -509,6 +543,12 @@ describe('Repository with populated database', () => {
           element => ['update-version'].includes(element.type) && ['RUNNING'].includes(element.status)
         )
       );
+      expect(
+        repository.list({
+          types: [],
+          status: []
+        })
+      ).toEqual(testData.oIAnalytics.commands.oIBusList);
     });
 
     it('should properly find by id', () => {
@@ -1412,6 +1452,15 @@ describe('Repository with populated database', () => {
           0
         )
       );
+      expect(
+        repository.search(
+          {
+            types: [],
+            status: []
+          },
+          0
+        )
+      ).toEqual(createPageFromArray(testData.oIAnalytics.messages.oIBusList, 50, 0));
     });
 
     it('should properly get messages list by search criteria', () => {
@@ -1427,6 +1476,12 @@ describe('Repository with populated database', () => {
           element => ['full-config'].includes(element.type) && ['PENDING'].includes(element.status)
         )
       );
+      expect(
+        repository.list({
+          types: [],
+          status: []
+        })
+      ).toEqual(testData.oIAnalytics.messages.oIBusList);
     });
 
     it('should create full-config message', () => {
@@ -1636,22 +1691,26 @@ describe('Repository with populated database', () => {
     });
 
     it('should list items', () => {
-      const results = repository.listItems(testData.south.list[1].id, {
-        scanModeId: testData.scanMode.list[0].id,
-        enabled: true,
-        name: 'item'
-      });
-      expect(results.length).toEqual(2);
+      expect(
+        repository.listItems(testData.south.list[1].id, {
+          scanModeId: testData.scanMode.list[0].id,
+          enabled: true,
+          name: 'item'
+        }).length
+      ).toEqual(2);
+
+      expect(repository.listItems(testData.south.list[1].id, {}).length).toEqual(2);
     });
 
     it('should search items', () => {
-      const results = repository.searchItems(testData.south.list[1].id, {
-        scanModeId: testData.scanMode.list[0].id,
-        enabled: true,
-        name: 'item',
-        page: 0
-      });
-      expect(results.totalElements).toEqual(2);
+      expect(
+        repository.searchItems(testData.south.list[1].id, {
+          scanModeId: testData.scanMode.list[0].id,
+          enabled: true,
+          name: 'item',
+          page: 0
+        }).totalElements
+      ).toEqual(2);
 
       expect(
         repository.searchItems(testData.south.list[1].id, {
@@ -1660,6 +1719,8 @@ describe('Repository with populated database', () => {
           name: 'item'
         }).totalElements
       ).toEqual(2);
+
+      expect(repository.searchItems(testData.south.list[1].id, {}).totalElements).toEqual(2);
     });
 
     it('should find items', () => {
@@ -1940,27 +2001,26 @@ describe('Repository with populated database', () => {
     });
 
     it('should list items', () => {
-      const results = repository.listHistoryQueryItems(testData.historyQueries.list[1].id, {
-        enabled: true,
-        name: 'item'
-      });
-      expect(results.length).toEqual(2);
+      expect(
+        repository.listHistoryQueryItems(testData.historyQueries.list[1].id, {
+          enabled: true,
+          name: 'item'
+        }).length
+      ).toEqual(2);
+
+      expect(repository.listHistoryQueryItems(testData.historyQueries.list[1].id, {}).length).toEqual(2);
     });
 
     it('should search items', () => {
-      const results = repository.searchHistoryQueryItems(testData.historyQueries.list[1].id, {
-        enabled: true,
-        name: 'item',
-        page: 0
-      });
-      expect(results.totalElements).toEqual(2);
-
       expect(
         repository.searchHistoryQueryItems(testData.historyQueries.list[1].id, {
           enabled: true,
-          name: 'item'
+          name: 'item',
+          page: 0
         }).totalElements
       ).toEqual(2);
+
+      expect(repository.searchHistoryQueryItems(testData.historyQueries.list[1].id, {}).totalElements).toEqual(2);
     });
 
     it('should find items', () => {

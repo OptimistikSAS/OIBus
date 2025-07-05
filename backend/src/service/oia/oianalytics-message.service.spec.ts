@@ -105,6 +105,17 @@ describe('OIAnalytics Message Service', () => {
     await flushPromises();
   });
 
+  it('should properly create full config message on registration', () => {
+    service.createFullConfigMessageIfNotPending = jest.fn();
+    service.start();
+    expect(service.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
+    oIAnalyticsRegistrationService.registrationEvent.emit('updated');
+    expect(service.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(2);
+    (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.registration.pending);
+    oIAnalyticsRegistrationService.registrationEvent.emit('updated');
+    expect(service.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(2);
+  });
+
   it('should properly start and stop', async () => {
     service.run = jest.fn();
     service.start();
@@ -115,16 +126,9 @@ describe('OIAnalytics Message Service', () => {
     });
 
     await service.stop();
+    service.resolveDeferredPromise();
     expect(logger.debug).toHaveBeenCalledWith(`Stopping OIAnalytics message service...`);
     expect(logger.debug).toHaveBeenCalledWith(`OIAnalytics message service stopped`);
-  });
-
-  it('should properly create full config message on registration', () => {
-    service.createFullConfigMessageIfNotPending = jest.fn();
-    service.start();
-    expect(service.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
-    oIAnalyticsRegistrationService.registrationEvent.emit('updated');
-    expect(service.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(2);
   });
 
   it('should properly catch command exception', async () => {

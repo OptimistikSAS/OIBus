@@ -1,15 +1,16 @@
-import OIBusTransformer from './oibus-transformer';
+import OIBusTransformer from '../oibus-transformer';
+import csv from 'papaparse';
+import { CacheMetadata, OIBusTimeValue } from '../../../../shared/model/engine.model';
 import { ReadStream } from 'node:fs';
 import { pipeline, Readable, Transform } from 'node:stream';
-import { CacheMetadata } from '../../../shared/model/engine.model';
 import { promisify } from 'node:util';
-import { OIBusObjectAttribute } from '../../../shared/model/form.model';
-import { generateRandomId } from '../utils';
+import { OIBusObjectAttribute } from '../../../../shared/model/form.model';
+import { generateRandomId } from '../../utils';
 
 const pipelineAsync = promisify(pipeline);
 
-export default class OIBusTimeValuesToJSONTransformer extends OIBusTransformer {
-  public static transformerName = 'time-values-to-json';
+export default class OIBusTimeValuesToCsvTransformer extends OIBusTransformer {
+  public static transformerName = 'time-values-to-csv';
 
   async transform(
     data: ReadStream | Readable,
@@ -27,21 +28,29 @@ export default class OIBusTimeValuesToJSONTransformer extends OIBusTransformer {
         }
       })
     );
-    const stringContent = Buffer.concat(chunks).toString('utf-8');
-    // Combine the chunks into a single buffer
-    const content: Array<object> = JSON.parse(Buffer.concat(chunks).toString('utf-8'));
+    const jsonData: Array<OIBusTimeValue> = JSON.parse(Buffer.concat(chunks).toString('utf-8'));
 
     const metadata: CacheMetadata = {
-      contentFile: `${generateRandomId(10)}.json`,
+      contentFile: `${generateRandomId(10)}.csv`,
       contentSize: 0, // It will be set outside the transformer, once the file is written
       createdAt: '', // It will be set outside the transformer, once the file is written
-      numberOfElement: content.length,
+      numberOfElement: 0,
       contentType: 'any',
       source,
       options: {}
     };
     return {
-      output: stringContent,
+      output: csv.unparse(
+        jsonData.map(value => ({
+          pointId: value.pointId,
+          timestamp: value.timestamp,
+          value: value.data.value
+        })),
+        {
+          header: true,
+          delimiter: ';'
+        }
+      ),
       metadata
     };
   }
