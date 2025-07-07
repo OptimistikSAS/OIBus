@@ -15,6 +15,8 @@ import { UserCommandDTO } from '../../../shared/model/user.model';
 import { IPFilterCommandDTO } from '../../../shared/model/ip-filter.model';
 import { ScanModeCommandDTO } from '../../../shared/model/scan-mode.model';
 import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO, HistoryQueryStatus } from '../../../shared/model/history-query.model';
+import { TransformerCommandDTO } from '../../../shared/model/transformer.model';
+import { OIBusObjectAttribute } from '../../../shared/model/form.model';
 
 export interface OIAnalyticsScanModeCommandDTO {
   oIBusInternalId: string | null;
@@ -34,6 +36,13 @@ export interface OIAnalyticsCertificateCommandDTO {
 export interface OIAnalyticsUserCommandDTO {
   oIBusInternalId: string;
   settings: UserCommandDTO;
+}
+
+export interface OIAnalyticsTransformerCommandDTO {
+  oIBusInternalId: string;
+  type: 'custom' | 'standard';
+  settings: Omit<TransformerCommandDTO, 'type'>;
+  manifest: OIBusObjectAttribute;
 }
 
 export interface OIAnalyticsRegistrationCommandDTO {
@@ -103,6 +112,7 @@ export interface OIBusFullConfigurationCommandDTO {
   southConnectors: Array<OIAnalyticsSouthCommandDTO>;
   northConnectors: Array<OIAnalyticsNorthCommandDTO>;
   users: Array<OIAnalyticsUserCommandDTO>;
+  transformers: Array<OIAnalyticsTransformerCommandDTO>;
 }
 
 export interface OIBusHistoryQueriesCommandDTO {
@@ -147,7 +157,8 @@ export const OIANALYTICS_FETCH_COMMAND_TYPES = [
   'test-history-query-south-connection',
   'test-history-query-south-item',
   'create-or-update-history-query-south-items-from-csv',
-  'update-history-query-status'
+  'update-history-query-status',
+  'setpoint'
 ] as const;
 export type OIAnalyticsFetchCommandType = (typeof OIANALYTICS_FETCH_COMMAND_TYPES)[number];
 
@@ -362,6 +373,15 @@ export interface OIAnalyticsFetchUpdateHistoryQueryStatusCommandDTO extends Base
   historyQueryStatus: HistoryQueryStatus;
 }
 
+export interface OIAnalyticsFetchSetpointCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'setpoint';
+  northConnectorId: string;
+  commandContent: {
+    pointId: string;
+    value: string;
+  };
+}
+
 export type OIAnalyticsFetchCommandDTO =
   | OIAnalyticsFetchUpdateVersionCommandDTO
   | OIAnalyticsFetchRestartEngineCommandDTO
@@ -394,4 +414,5 @@ export type OIAnalyticsFetchCommandDTO =
   | OIAnalyticsFetchTestHistoryQuerySouthConnectionCommandDTO
   | OIAnalyticsFetchTestHistoryQuerySouthItemConnectionCommandDTO
   | OIAnalyticsFetchCreateOrUpdateHistoryQuerySouthItemsFromCSVCommandDTO
-  | OIAnalyticsFetchUpdateHistoryQueryStatusCommandDTO;
+  | OIAnalyticsFetchUpdateHistoryQueryStatusCommandDTO
+  | OIAnalyticsFetchSetpointCommandDTO;

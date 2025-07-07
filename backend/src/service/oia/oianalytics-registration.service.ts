@@ -38,7 +38,7 @@ export default class OIAnalyticsRegistrationService {
   }
 
   /**
-   * First step, the user want to register: the service try to reach OIAnalytics to send
+   * First step, the user wants to register: the service try to reach OIAnalytics to send
    * the activation code. On success, it runs an interval to regularly check if it has been accepted on OIAnalytics
    */
   async register(command: RegistrationSettingsCommandDTO): Promise<void> {
@@ -53,15 +53,15 @@ export default class OIAnalyticsRegistrationService {
     }
 
     const oibusInfo = getOIBusInfo(engineSettings);
-    // Generate RSA key pair
+    // Generate an RSA key pair
     const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
       modulusLength: 4096,
       publicKeyEncoding: {
-        type: 'spki', // Recommended format for public key
+        type: 'spki', // Recommended format for a public key
         format: 'pem' // Output format for the key
       },
       privateKeyEncoding: {
-        type: 'pkcs8', // Recommended format for private key
+        type: 'pkcs8', // Recommended format for a private key
         format: 'pem' // Output format for the key
       }
     });

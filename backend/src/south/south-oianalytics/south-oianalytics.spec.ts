@@ -1,10 +1,8 @@
-import SouthOianalytics from './south-oianalytics';
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import * as utils from '../../service/utils';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-
 import pino from 'pino';
-import EncryptionService from '../../service/encryption.service';
-import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
+import SouthOianalytics from './south-oianalytics';
 import path from 'node:path';
 import { SouthOIAnalyticsItemSettings, SouthOIAnalyticsSettings } from '../../../shared/model/south-settings.model';
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
@@ -49,7 +47,6 @@ jest.mock('@azure/identity', () => ({
 jest.mock('../../service/http-request.utils');
 jest.mock('node:fs/promises');
 
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
@@ -64,6 +61,9 @@ jest.mock(
       return southCacheService;
     }
 );
+jest.mock('../../service/encryption.service', () => ({
+  encryptionService: new EncryptionServiceMock('', '')
+}));
 
 const logger: pino.Logger = new PinoLogger();
 const addContentCallback = jest.fn();
@@ -166,7 +166,6 @@ describe('SouthOIAnalytics with Basic auth', () => {
     south = new SouthOianalytics(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,
@@ -389,7 +388,6 @@ describe('SouthOIAnalytics with proxy', () => {
     south = new SouthOianalytics(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,
@@ -471,7 +469,6 @@ describe('SouthOIAnalytics with proxy but without proxy password', () => {
     south = new SouthOianalytics(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,
@@ -555,7 +552,6 @@ describe('SouthOIAnalytics with aad-client-secret', () => {
     south = new SouthOianalytics(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,
@@ -628,7 +624,6 @@ describe('SouthOIAnalytics with aad-certificate', () => {
     south = new SouthOianalytics(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,
@@ -713,7 +708,6 @@ describe('SouthOIAnalytics with OIA module', () => {
     south = new SouthOianalytics(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,
@@ -864,7 +858,6 @@ describe('SouthOIAnalytics with edge cases', () => {
     south = new SouthOianalytics(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,

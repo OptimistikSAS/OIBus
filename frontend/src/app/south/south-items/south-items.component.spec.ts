@@ -5,9 +5,13 @@ import {
   SouthConnectorCommandDTO,
   SouthConnectorDTO,
   SouthConnectorItemCommandDTO,
-  SouthConnectorItemDTO,
-  SouthConnectorManifest
+  SouthConnectorItemDTO
 } from '../../../../../backend/shared/model/south-connector.model';
+import {
+  SouthItemSettings,
+  SouthSettings,
+  SouthSQLiteItemSettingsSerialization
+} from '../../../../../backend/shared/model/south-settings.model';
 import { of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
@@ -15,15 +19,11 @@ import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
 import { SouthItemsComponent } from './south-items.component';
 import { Component } from '@angular/core';
-import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
-import {
-  SouthItemSettings,
-  SouthSettings,
-  SouthSQLiteItemSettingsSerialization
-} from '../../../../../backend/shared/model/south-settings.model';
+import testData from '../../../../../backend/src/tests/utils/test-data';
 import { ImportItemModalComponent } from '../../shared/import-item-modal/import-item-modal.component';
 import { ModalService } from '../../shared/modal.service';
-import { ImportSouthItemsModalComponent } from '../import-south-items-modal/import-south-items-modal.component';
+import { ImportSouthItemsModalComponent } from './import-south-items-modal/import-south-items-modal.component';
+import { OIBusBooleanAttribute, OIBusNumberAttribute, OIBusStringAttribute } from '../../../../../backend/shared/model/form.model';
 
 const testSouthConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> = {
   id: 'southId',
@@ -64,50 +64,23 @@ const testSouthConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> = 
     [southId]="southConnector.id"
     [southConnector]="southConnector"
     [scanModes]="scanModes"
+    [certificates]="[]"
     [southManifest]="manifest"
+    [southConnectorCommand]="southCommand"
     [saveChangesDirectly]="saveChangesDirectly"
-    [southConnectorCommand]="southConnectorCommand"
     (inMemoryItems)="updateInMemoryItems($event)"
   />`,
   imports: [SouthItemsComponent]
 })
 class TestComponent {
   _southConnectorService!: SouthConnectorService;
-
   southConnector = structuredClone(testSouthConnector);
-  scanModes: Array<ScanModeDTO> = [
-    {
-      id: 'scanModeId1',
-      name: 'Every mn',
-      description: '',
-      cron: ''
-    }
-  ];
-  manifest: SouthConnectorManifest = {
-    id: 'mssql',
-    category: 'database',
-    settings: [],
-    items: {
-      scanMode: 'POLL',
-      settings: [
-        {
-          translationKey: 'south.items.mssql.query',
-          key: 'query',
-          displayInViewMode: true,
-          type: 'OibText'
-        }
-      ]
-    },
-    modes: {
-      subscription: false,
-      history: true,
-      lastFile: true,
-      lastPoint: false
-    }
-  };
+  scanModes = testData.scanMode.list;
+  manifest = testData.south.manifest;
   saveChangesDirectly!: boolean;
   inMemoryItems: Array<SouthConnectorItemCommandDTO<SouthItemSettings>> = [];
   southConnectorCommand = {} as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
+  southCommand = testData.south.command;
 
   updateInMemoryItems(items: Array<SouthConnectorItemCommandDTO<SouthItemSettings>> | null) {
     if (items) {
@@ -115,7 +88,7 @@ class TestComponent {
     } else {
       this._southConnectorService.get(this.southConnector!.id).subscribe(southConnector => {
         this.southConnector!.items = southConnector.items;
-        this.southConnector = JSON.parse(JSON.stringify(this.southConnector)); // Used to force a refresh in south item list
+        this.southConnector = JSON.parse(JSON.stringify(this.southConnector)); // Used to force a refresh in a south item list
       });
     }
   }
@@ -137,10 +110,6 @@ class SouthItemsComponentTester extends ComponentTester<TestComponent> {
 
   get deleteAllButton() {
     return this.button('#delete-all')!;
-  }
-
-  get importButton() {
-    return this.button('#import-button')!;
   }
 
   get southItems() {
@@ -207,19 +176,18 @@ describe('SouthItemsComponent with saving changes directly', () => {
     expect(tester.southItems.length).toBe(3);
     const item = tester.southItems[0];
     expect(item.elements('td')[1]).toContainText(testSouthConnector.items[0].name);
-    expect(item.elements('td')[2]).toContainText('Every mn');
-    expect(item.elements('td')[3]).toContainText('sql');
+    expect(item.elements('td')[2]).toContainText('scanMode1');
   });
 
   it('should enable south item', () => {
-    const btnIdx = 1; // second one is disabled by default
+    const btnIdx = 1; // the second one is disabled by default
     tester.toggleButtons[btnIdx].click();
     expect(southConnectorService.enableItem).toHaveBeenCalledWith('southId', testSouthConnector.items[btnIdx].id);
     expect(notificationService.success).toHaveBeenCalledWith('south.items.enabled', { name: testSouthConnector.items[btnIdx].name });
   });
 
   it('should disable south item', () => {
-    const btnIdx = 0; // first one is enabled by default
+    const btnIdx = 0; // the first one is enabled by default
     tester.toggleButtons[btnIdx].click();
     expect(southConnectorService.disableItem).toHaveBeenCalledWith('southId', testSouthConnector.items[btnIdx].id);
     expect(notificationService.success).toHaveBeenCalledWith('south.items.disabled', { name: testSouthConnector.items[btnIdx].name });
@@ -401,8 +369,7 @@ describe('SouthItemsComponent without saving changes directly', () => {
     expect(tester.southItems.length).toBe(3);
     const item = tester.southItems[0];
     expect(item.elements('td')[1]).toContainText(testSouthConnector.items[0].name);
-    expect(item.elements('td')[2]).toContainText('Every mn');
-    expect(item.elements('td')[3]).toContainText('sql');
+    expect(item.elements('td')[2]).toContainText('scanMode1');
   });
 
   it('should not have option to enable/disable south item', () => {
@@ -585,7 +552,14 @@ describe('SouthItemsComponent CSV Import Tests', () => {
       expect(modalService.open).toHaveBeenCalledWith(ImportItemModalComponent, { backdrop: 'static' });
 
       const modalRef = (modalService.open as jasmine.Spy).calls.mostRecent().returnValue as { componentInstance: any };
-      expect(modalRef.componentInstance.expectedHeaders).toEqual(['name', 'enabled', 'scanMode', 'settings_query']);
+      expect(modalRef.componentInstance.expectedHeaders).toEqual([
+        'name',
+        'enabled',
+        'scanMode',
+        'settings_objectArray',
+        'settings_objectSettings',
+        'settings_objectValue'
+      ]);
     });
 
     it('should set expected headers without scanMode when no scan modes available', () => {
@@ -598,7 +572,7 @@ describe('SouthItemsComponent CSV Import Tests', () => {
       expect(modalService.open).toHaveBeenCalledWith(ImportItemModalComponent, { backdrop: 'static' });
 
       const modalRef = (modalService.open as jasmine.Spy).calls.mostRecent().returnValue as { componentInstance: any };
-      const expectedHeaders = ['name', 'enabled', 'settings_query'];
+      const expectedHeaders = ['name', 'enabled', 'settings_objectArray', 'settings_objectSettings', 'settings_objectValue'];
       expect(modalRef.componentInstance.expectedHeaders).toEqual(expectedHeaders);
     });
 
@@ -630,7 +604,11 @@ describe('SouthItemsComponent CSV Import Tests', () => {
           enabled: true,
           scanModeId: 'scanModeId1',
           scanModeName: null,
-          settings: { query: 'SELECT 1', dateTimeFields: [], serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization }
+          settings: {
+            query: 'SELECT 1',
+            dateTimeFields: [],
+            serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization
+          }
         }
       ];
       const mockErrors = [{ item: mockItems[0], error: 'Invalid query' }];
@@ -650,11 +628,14 @@ describe('SouthItemsComponent CSV Import Tests', () => {
 
       tester.button('#import-button')!.click();
 
-      expect(modalService.open).toHaveBeenCalledWith(ImportSouthItemsModalComponent, { size: 'xl', backdrop: 'static' });
+      expect(modalService.open).toHaveBeenCalledWith(ImportSouthItemsModalComponent, {
+        size: 'xl',
+        backdrop: 'static'
+      });
 
       const lastModal = (modalService.open as jasmine.Spy).calls.mostRecent().returnValue as { componentInstance: any };
       expect(lastModal.componentInstance.prepare).toHaveBeenCalledWith(
-        tester.componentInstance.manifest.items,
+        tester.componentInstance.manifest,
         jasmine.any(Array),
         mockItems,
         mockErrors,
@@ -670,7 +651,11 @@ describe('SouthItemsComponent CSV Import Tests', () => {
           enabled: true,
           scanModeId: 'scanModeId1',
           scanModeName: null,
-          settings: { query: 'SELECT 1', dateTimeFields: [], serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization }
+          settings: {
+            query: 'SELECT 1',
+            dateTimeFields: [],
+            serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization
+          }
         }
       ];
 
@@ -703,7 +688,11 @@ describe('SouthItemsComponent CSV Import Tests', () => {
           enabled: true,
           scanModeId: 'scanModeId1',
           scanModeName: null,
-          settings: { query: 'SELECT 1', dateTimeFields: [], serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization }
+          settings: {
+            query: 'SELECT 1',
+            dateTimeFields: [],
+            serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization
+          }
         }
       ];
 
@@ -740,7 +729,11 @@ describe('SouthItemsComponent CSV Import Tests', () => {
           enabled: true,
           scanModeId: 'scanModeId1',
           scanModeName: null,
-          settings: { query: 'SELECT 1', dateTimeFields: [], serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization }
+          settings: {
+            query: 'SELECT 1',
+            dateTimeFields: [],
+            serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization
+          }
         }
       ];
 
@@ -773,7 +766,11 @@ describe('SouthItemsComponent CSV Import Tests', () => {
           enabled: true,
           scanModeId: 'scanModeId1',
           scanModeName: null,
-          settings: { query: 'SELECT 1', dateTimeFields: [], serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization }
+          settings: {
+            query: 'SELECT 1',
+            dateTimeFields: [],
+            serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization
+          }
         }
       ];
 
@@ -800,26 +797,39 @@ describe('SouthItemsComponent CSV Import Tests', () => {
   describe('Expected headers generation', () => {
     beforeEach(() => {
       tester.componentInstance.saveChangesDirectly = true;
-      tester.componentInstance.manifest.items.settings = [
+      const specificManifest = structuredClone(testData.south.manifest);
+      specificManifest.items.rootAttribute.attributes = [
         {
-          key: 'query',
-          type: 'OibText',
-          translationKey: 'south.items.mssql.query',
-          displayInViewMode: true
-        },
-        {
-          key: 'timeout',
-          type: 'OibNumber',
-          translationKey: 'south.items.mssql.query',
-          displayInViewMode: true
-        },
-        {
-          key: 'enabled',
-          type: 'OibCheckbox',
-          translationKey: 'south.items.mssql.query',
-          displayInViewMode: true
+          type: 'object',
+          key: 'settings',
+          translationKey: 'configuration.oibus.manifest.south.items.settings',
+          displayProperties: {
+            visible: true,
+            wrapInBox: true
+          },
+          enablingConditions: [],
+          validators: [],
+          attributes: [
+            {
+              key: 'query',
+              type: 'string',
+              translationKey: 'configuration.oibus.manifest.south.items.settings'
+            } as OIBusStringAttribute,
+            {
+              key: 'timeout',
+              type: 'number',
+              translationKey: 'configuration.oibus.manifest.south.items.settings'
+            } as OIBusNumberAttribute,
+            {
+              key: 'enabled',
+              type: 'boolean',
+              translationKey: 'configuration.oibus.manifest.south.items.settings'
+            } as OIBusBooleanAttribute
+          ]
         }
       ];
+
+      tester.componentInstance.manifest = specificManifest;
       tester.detectChanges();
     });
 

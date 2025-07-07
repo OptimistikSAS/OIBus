@@ -2,13 +2,13 @@ import fs from 'node:fs/promises';
 
 import NorthConnector from '../north-connector';
 import pino from 'pino';
-import EncryptionService from '../../service/encryption.service';
 import { NorthConsoleSettings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import { BaseFolders } from '../../model/types';
+import TransformerService from '../../service/transformer.service';
 
 /**
  * Class Console - display values and file path into the console
@@ -16,18 +16,22 @@ import { BaseFolders } from '../../model/types';
 export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
   constructor(
     configuration: NorthConnectorEntity<NorthConsoleSettings>,
-    encryptionService: EncryptionService,
+    transformerService: TransformerService,
     northConnectorRepository: NorthConnectorRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolders: BaseFolders
   ) {
-    super(configuration, encryptionService, northConnectorRepository, scanModeRepository, logger, baseFolders);
+    super(configuration, transformerService, northConnectorRepository, scanModeRepository, logger, baseFolders);
   }
 
   async handleContent(cacheMetadata: CacheMetadata): Promise<void> {
+    if (!this.supportedTypes().includes(cacheMetadata.contentType)) {
+      throw new Error(`Unsupported data type: ${cacheMetadata.contentType} (file ${cacheMetadata.contentFile})`);
+    }
+
     switch (cacheMetadata.contentType) {
-      case 'raw':
+      case 'any':
         return this.handleFile(cacheMetadata.contentFile);
 
       case 'time-values':
@@ -77,5 +81,9 @@ export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
     }
 
     return Promise.resolve();
+  }
+
+  supportedTypes(): Array<string> {
+    return ['any', 'time-values'];
   }
 }

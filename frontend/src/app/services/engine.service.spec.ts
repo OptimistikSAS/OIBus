@@ -2,9 +2,9 @@ import { TestBed } from '@angular/core/testing';
 
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { EngineService } from './engine.service';
-import { EngineSettingsCommandDTO, EngineSettingsDTO, OIBusInfo } from '../../../../backend/shared/model/engine.model';
+import { EngineSettingsDTO, OIBusInfo } from '../../../../backend/shared/model/engine.model';
 import { provideHttpClient } from '@angular/common/http';
-import { RegistrationSettingsCommandDTO } from '../../../../backend/shared/model/engine.model';
+import testData from '../../../../backend/src/tests/utils/test-data';
 
 describe('EngineService', () => {
   let http: HttpTestingController;
@@ -32,9 +32,7 @@ describe('EngineService', () => {
 
   it('should update engine settings', () => {
     let done = false;
-    const command: EngineSettingsCommandDTO = {
-      name: 'my engine settings'
-    } as EngineSettingsCommandDTO;
+    const command = testData.engine.command;
 
     service.updateEngineSettings(command).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'PUT', url: '/api/engine' });
@@ -45,7 +43,7 @@ describe('EngineService', () => {
 
   it('should get info', () => {
     let expectedInfo: OIBusInfo | null = null;
-    const engineInfo = { version: 'version' } as OIBusInfo;
+    const engineInfo = testData.engine.oIBusInfo;
 
     service.getInfo().subscribe(c => (expectedInfo = c));
 
@@ -74,50 +72,7 @@ describe('EngineService', () => {
 
   it('should edit registration', () => {
     let done = false;
-    const command: RegistrationSettingsCommandDTO = {
-      host: 'host',
-      useProxy: false,
-      acceptUnauthorized: false,
-      proxyUrl: null,
-      proxyUsername: null,
-      proxyPassword: null,
-      commandRefreshInterval: 10,
-      commandRetryInterval: 5,
-      messageRetryInterval: 5,
-      commandPermissions: {
-        updateVersion: true,
-        restartEngine: true,
-        regenerateCipherKeys: true,
-        updateEngineSettings: true,
-        updateRegistrationSettings: true,
-        createScanMode: true,
-        updateScanMode: true,
-        deleteScanMode: true,
-        createIpFilter: true,
-        updateIpFilter: true,
-        deleteIpFilter: true,
-        createCertificate: true,
-        updateCertificate: true,
-        deleteCertificate: true,
-        createHistoryQuery: true,
-        updateHistoryQuery: true,
-        deleteHistoryQuery: true,
-        createOrUpdateHistoryItemsFromCsv: true,
-        testHistoryNorthConnection: true,
-        testHistorySouthConnection: true,
-        testHistorySouthItem: true,
-        createSouth: true,
-        updateSouth: true,
-        deleteSouth: true,
-        createOrUpdateSouthItemsFromCsv: true,
-        testSouthConnection: true,
-        testSouthItem: true,
-        createNorth: true,
-        updateNorth: true,
-        deleteNorth: true,
-        testNorthConnection: true
-      }
-    };
+    const command = testData.oIAnalytics.registration.command;
     service.editRegistrationSettings(command).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'PUT', url: '/api/registration/edit' });
     testRequest.flush(null);

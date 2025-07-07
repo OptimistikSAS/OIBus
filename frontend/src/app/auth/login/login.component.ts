@@ -1,12 +1,12 @@
 import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { NonNullableFormBuilder, Validators } from '@angular/forms';
+import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RequestedUrlService } from '../authentication.guard';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
-import { formDirectives } from '../../shared/form-directives';
 import { CurrentUserService } from '../../shared/current-user.service';
 import { TranslateDirective } from '@ngx-translate/core';
 import { WindowService } from '../../shared/window.service';
+import { OI_FORM_VALIDATION_DIRECTIVES } from '../../shared/form/form-validation-directives';
 
 /**
  * The login component, displaying the password-based auth form.
@@ -15,7 +15,7 @@ import { WindowService } from '../../shared/window.service';
   selector: 'oib-login',
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
-  imports: [...formDirectives, TranslateDirective, NgbCollapse]
+  imports: [ReactiveFormsModule, TranslateDirective, NgbCollapse, OI_FORM_VALIDATION_DIRECTIVES]
 })
 export class LoginComponent {
   private currentUserService = inject(CurrentUserService);
