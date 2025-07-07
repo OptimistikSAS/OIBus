@@ -49,6 +49,34 @@ class RegisterOibusModalComponentTester extends ComponentTester<RegisterOibusMod
     return this.input('#message-retry-interval')!;
   }
 
+  get enableAllPermissionsButton() {
+    return this.button('button[translate="oia-module.registration.enable-all"]')!;
+  }
+
+  get disableAllPermissionsButton() {
+    return this.button('button[translate="oia-module.registration.disable-all"]')!;
+  }
+
+  get updateVersionPermission() {
+    return this.input('#update-version')!;
+  }
+
+  get restartEnginePermission() {
+    return this.input('#restart-engine')!;
+  }
+
+  get createScanModePermission() {
+    return this.input('#create-scan-mode')!;
+  }
+
+  get createNorthPermission() {
+    return this.input('#create-north')!;
+  }
+
+  get testSouthConnectionPermission() {
+    return this.input('#test-south-connection')!;
+  }
+
   get validationErrors() {
     return this.elements('val-errors div');
   }
@@ -59,6 +87,21 @@ class RegisterOibusModalComponentTester extends ComponentTester<RegisterOibusMod
 
   get cancel() {
     return this.button('#cancel-button')!;
+  }
+
+  get allPermissionCheckboxes() {
+    const checkboxes = Array.from((this.fixture.nativeElement as HTMLElement).querySelectorAll('input[type="checkbox"]'));
+    if (!checkboxes || checkboxes.length === 0) {
+      return [];
+    }
+    return checkboxes.filter(
+      (checkbox: Element) =>
+        (checkbox as HTMLInputElement).id.includes('update-version') ||
+        (checkbox as HTMLInputElement).id.includes('restart-engine') ||
+        (checkbox as HTMLInputElement).id.includes('create-scan-mode') ||
+        (checkbox as HTMLInputElement).id.includes('create-north') ||
+        (checkbox as HTMLInputElement).id.includes('test-south-connection')
+    );
   }
 }
 
@@ -281,5 +324,96 @@ describe('RegisterOibusModalComponent', () => {
     tester.detectChanges();
     tester.cancel.click();
     expect(fakeActiveModal.dismiss).toHaveBeenCalled();
+  });
+
+  describe('Permission buttons', () => {
+    beforeEach(() => {
+      tester.componentInstance.prepare({ host: 'http://localhost:4200' } as RegistrationSettingsDTO, 'register');
+      tester.detectChanges();
+    });
+
+    it('should have enable all and disable all buttons', () => {
+      expect(tester.enableAllPermissionsButton).toBeTruthy();
+      expect(tester.disableAllPermissionsButton).toBeTruthy();
+    });
+
+    it('should enable all permissions when enable all button is clicked', () => {
+      tester.updateVersionPermission.uncheck();
+      tester.restartEnginePermission.uncheck();
+      tester.createScanModePermission.uncheck();
+      tester.detectChanges();
+
+      expect(tester.updateVersionPermission).not.toBeChecked();
+      expect(tester.restartEnginePermission).not.toBeChecked();
+      expect(tester.createScanModePermission).not.toBeChecked();
+
+      tester.enableAllPermissionsButton.click();
+      tester.detectChanges();
+
+      expect(tester.updateVersionPermission).toBeChecked();
+      expect(tester.restartEnginePermission).toBeChecked();
+      expect(tester.createScanModePermission).toBeChecked();
+      expect(tester.createNorthPermission).toBeChecked();
+      expect(tester.testSouthConnectionPermission).toBeChecked();
+    });
+
+    it('should disable all permissions when disable all button is clicked', () => {
+      expect(tester.updateVersionPermission).toBeChecked();
+      expect(tester.restartEnginePermission).toBeChecked();
+      expect(tester.createScanModePermission).toBeChecked();
+
+      tester.disableAllPermissionsButton.click();
+      tester.detectChanges();
+
+      expect(tester.updateVersionPermission).not.toBeChecked();
+      expect(tester.restartEnginePermission).not.toBeChecked();
+      expect(tester.createScanModePermission).not.toBeChecked();
+      expect(tester.createNorthPermission).not.toBeChecked();
+      expect(tester.testSouthConnectionPermission).not.toBeChecked();
+    });
+
+    it('should disable enable all button when all permissions are already enabled', () => {
+      expect(tester.enableAllPermissionsButton.nativeElement.disabled).toBeTrue();
+      expect(tester.disableAllPermissionsButton.nativeElement.disabled).toBeFalse();
+    });
+
+    it('should disable disable all button when all permissions are already disabled', () => {
+      tester.disableAllPermissionsButton.click();
+      tester.detectChanges();
+
+      expect(tester.disableAllPermissionsButton.nativeElement.disabled).toBeTrue();
+      expect(tester.enableAllPermissionsButton.nativeElement.disabled).toBeFalse();
+    });
+
+    it('should enable both buttons when some permissions are enabled and some are disabled', () => {
+      tester.updateVersionPermission.uncheck();
+      tester.restartEnginePermission.uncheck();
+      tester.detectChanges();
+
+      expect(tester.enableAllPermissionsButton.nativeElement.disabled).toBeFalse();
+      expect(tester.disableAllPermissionsButton.nativeElement.disabled).toBeFalse();
+    });
+
+    it('should correctly identify when all permissions are enabled', () => {
+      expect(tester.componentInstance.allPermissionsEnabled).toBe(true);
+      expect(tester.componentInstance.allPermissionsDisabled).toBe(false);
+    });
+
+    it('should correctly identify when all permissions are disabled', () => {
+      tester.componentInstance.disableAllPermissions();
+      tester.detectChanges();
+
+      expect(tester.componentInstance.allPermissionsEnabled).toBe(false);
+      expect(tester.componentInstance.allPermissionsDisabled).toBe(true);
+    });
+
+    it('should correctly identify when some permissions are enabled and some are disabled', () => {
+      tester.updateVersionPermission.uncheck();
+      tester.restartEnginePermission.uncheck();
+      tester.detectChanges();
+
+      expect(tester.componentInstance.allPermissionsEnabled).toBe(false);
+      expect(tester.componentInstance.allPermissionsDisabled).toBe(false);
+    });
   });
 });
