@@ -8,11 +8,17 @@ import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
 import { Component } from '@angular/core';
 import { HistoryQueryItemsComponent } from './history-query-items.component';
-import { HistoryQueryDTO, HistoryQueryItemCommandDTO } from '../../../../../backend/shared/model/history-query.model';
+import { HistoryQueryDTO, HistoryQueryItemCommandDTO, HistoryQueryItemDTO } from '../../../../../backend/shared/model/history-query.model';
 import { HistoryQueryService } from '../../services/history-query.service';
-import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
+import {
+  SouthItemSettings,
+  SouthSettings,
+  SouthSQLiteItemSettingsSerialization
+} from '../../../../../backend/shared/model/south-settings.model';
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 import { ModalService } from '../../shared/modal.service';
+import { ImportItemModalComponent } from '../../shared/import-item-modal/import-item-modal.component';
+import { ImportHistoryQueryItemsModalComponent } from '../import-history-query-items-modal/import-history-query-items-modal.component';
 
 const testHistoryQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings> = {
   id: 'historyId',
@@ -525,4 +531,388 @@ describe('HistoryQueryItemsComponent without saving changes directly', () => {
     tester.detectChanges();
     expect(tester.tableItemNames).toEqual(['item1', 'item1-copy']);
   }));
+});
+
+describe('HistoryQueryItemsComponent CSV Import Tests', () => {
+  let tester: HistoryQueryItemsComponentTester;
+  let historyQueryService: jasmine.SpyObj<HistoryQueryService>;
+  let confirmationService: jasmine.SpyObj<ConfirmationService>;
+  let notificationService: jasmine.SpyObj<NotificationService>;
+  let modalService: jasmine.SpyObj<ModalService>;
+
+  beforeEach(() => {
+    historyQueryService = createMock(HistoryQueryService);
+    confirmationService = createMock(ConfirmationService);
+    notificationService = createMock(NotificationService);
+    modalService = createMock(ModalService);
+
+    TestBed.configureTestingModule({
+      providers: [
+        provideI18nTesting(),
+        provideHttpClient(),
+        { provide: HistoryQueryService, useValue: historyQueryService },
+        { provide: ConfirmationService, useValue: confirmationService },
+        { provide: NotificationService, useValue: notificationService },
+        { provide: ModalService, useValue: modalService }
+      ]
+    });
+
+    historyQueryService.get.and.returnValue(of(testHistoryQuery));
+    historyQueryService.checkImportItems.and.returnValue(
+      of({
+        items: [] as Array<HistoryQueryItemDTO<SouthItemSettings>>,
+        errors: [] as Array<{ item: HistoryQueryItemDTO<SouthItemSettings>; error: string }>
+      })
+    );
+    historyQueryService.importItems.and.returnValue(of(undefined));
+
+    const mockModalRef = {
+      componentInstance: {
+        expectedHeaders: [],
+        prepare: jasmine.createSpy('prepare')
+      },
+      result: of({ file: new File([''], 'test.csv'), delimiter: ',' })
+    };
+    modalService.open.and.returnValue(mockModalRef as any);
+
+    tester = new HistoryQueryItemsComponentTester(historyQueryService);
+  });
+
+  describe('with saveChangesDirectly = true', () => {
+    beforeEach(() => {
+      tester.componentInstance.saveChangesDirectly = true;
+      tester.detectChanges();
+    });
+
+    it('should open import modal and set expected headers', () => {
+      const importButton = tester.button('#import-button')!;
+      importButton.click();
+
+      expect(modalService.open).toHaveBeenCalledWith(ImportItemModalComponent, { backdrop: 'static' });
+
+      const modalRef = (modalService.open as jasmine.Spy).calls.mostRecent().returnValue as { componentInstance: any };
+      expect(modalRef.componentInstance.expectedHeaders).toEqual(['name', 'enabled', 'settings_query']);
+    });
+
+    it('should call checkImportItems when file is selected', () => {
+      const mockFile = new File(['name,enabled\ntest,true'], 'test.csv');
+      const mockModalRef = {
+        componentInstance: { expectedHeaders: [] },
+        result: of({ file: mockFile, delimiter: ',' })
+      };
+      modalService.open.and.returnValue(mockModalRef as any);
+
+      const importButton = tester.button('#import-button')!;
+      importButton.click();
+
+      expect(historyQueryService.checkImportItems).toHaveBeenCalledWith(
+        tester.componentInstance.manifest.id,
+        tester.componentInstance.historyQuery.id,
+        jasmine.any(Array),
+        mockFile,
+        ','
+      );
+    });
+
+    it('should open ImportHistoryQueryItemsModalComponent after successful check', () => {
+      const mockItems: Array<HistoryQueryItemDTO<SouthItemSettings>> = [
+        {
+          id: 'new1',
+          name: 'newItem1',
+          enabled: true,
+          settings: { query: 'SELECT 1', dateTimeFields: [], serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization }
+        }
+      ];
+      const mockErrors = [{ item: mockItems[0], error: 'Invalid query' }];
+
+      historyQueryService.checkImportItems.and.returnValue(of({ items: mockItems, errors: mockErrors }));
+
+      modalService.open.and.returnValues(
+        {
+          componentInstance: { expectedHeaders: [] },
+          result: of({ file: new File([''], 'test.csv'), delimiter: ',' })
+        } as any,
+        {
+          componentInstance: { prepare: jasmine.createSpy('prepare') },
+          result: of(mockItems)
+        } as any
+      );
+
+      tester.button('#import-button')!.click();
+
+      expect(modalService.open).toHaveBeenCalledWith(ImportHistoryQueryItemsModalComponent, { size: 'xl', backdrop: 'static' });
+
+      const lastModal = (modalService.open as jasmine.Spy).calls.mostRecent().returnValue as { componentInstance: any };
+      expect(lastModal.componentInstance.prepare).toHaveBeenCalledWith(
+        tester.componentInstance.manifest.items,
+        jasmine.any(Array),
+        mockItems,
+        mockErrors
+      );
+    });
+
+    it('should call importItems service when import is confirmed', () => {
+      const mockItems: Array<HistoryQueryItemDTO<SouthItemSettings>> = [
+        {
+          id: 'new1',
+          name: 'newItem1',
+          enabled: true,
+          settings: { query: 'SELECT 1', dateTimeFields: [], serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization }
+        }
+      ];
+
+      const mockCommandItems: Array<HistoryQueryItemCommandDTO<SouthItemSettings>> = [
+        {
+          id: 'new1',
+          name: 'newItem1',
+          enabled: true,
+          settings: { query: 'SELECT 1', dateTimeFields: [], serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization }
+        }
+      ];
+
+      historyQueryService.checkImportItems.and.returnValue(of({ items: mockItems, errors: [] }));
+
+      modalService.open.and.returnValues(
+        {
+          componentInstance: { expectedHeaders: [] },
+          result: of({ file: new File([''], 'test.csv'), delimiter: ',' })
+        } as any,
+        {
+          componentInstance: { prepare: jasmine.createSpy('prepare') },
+          result: of(mockCommandItems)
+        } as any
+      );
+
+      tester.button('#import-button')!.click();
+
+      expect(historyQueryService.importItems).toHaveBeenCalledWith(tester.componentInstance.historyQuery.id, mockCommandItems);
+      expect(notificationService.success).toHaveBeenCalledWith('history-query.items.imported');
+    });
+
+    it('should emit null inMemoryItems after successful import', () => {
+      spyOn(tester.componentInstance, 'updateInMemoryItems');
+
+      const mockItems: Array<HistoryQueryItemDTO<SouthItemSettings>> = [
+        {
+          id: 'new1',
+          name: 'newItem1',
+          enabled: true,
+          settings: { query: 'SELECT 1', dateTimeFields: [], serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization }
+        }
+      ];
+
+      const mockCommandItems: Array<HistoryQueryItemCommandDTO<SouthItemSettings>> = [
+        {
+          id: 'new1',
+          name: 'newItem1',
+          enabled: true,
+          settings: { query: 'SELECT 1', dateTimeFields: [], serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization }
+        }
+      ];
+
+      historyQueryService.checkImportItems.and.returnValue(of({ items: mockItems, errors: [] }));
+
+      modalService.open.and.returnValues(
+        {
+          componentInstance: { expectedHeaders: [] },
+          result: of({ file: new File([''], 'test.csv'), delimiter: ',' })
+        } as any,
+        {
+          componentInstance: { prepare: jasmine.createSpy('prepare') },
+          result: of(mockCommandItems)
+        } as any
+      );
+
+      tester.button('#import-button')!.click();
+
+      expect(tester.componentInstance.updateInMemoryItems).toHaveBeenCalledWith(null);
+    });
+  });
+
+  describe('with saveChangesDirectly = false', () => {
+    beforeEach(() => {
+      tester.componentInstance.saveChangesDirectly = false;
+      tester.detectChanges();
+    });
+
+    it('should add items to allItems array instead of calling service', () => {
+      const mockItems: Array<HistoryQueryItemDTO<SouthItemSettings>> = [
+        {
+          id: 'new1',
+          name: 'newItem1',
+          enabled: true,
+          settings: { query: 'SELECT 1', dateTimeFields: [], serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization }
+        },
+        {
+          id: 'new2',
+          name: 'newItem2',
+          enabled: false,
+          settings: { query: 'SELECT 1', dateTimeFields: [], serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization }
+        }
+      ];
+
+      const mockCommandItems: Array<HistoryQueryItemCommandDTO<SouthItemSettings>> = [
+        {
+          id: 'new1',
+          name: 'newItem1',
+          enabled: true,
+          settings: { query: 'SELECT 1', dateTimeFields: [], serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization }
+        },
+        {
+          id: 'new2',
+          name: 'newItem2',
+          enabled: false,
+          settings: { query: 'SELECT 1', dateTimeFields: [], serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization }
+        }
+      ];
+
+      historyQueryService.checkImportItems.and.returnValue(of({ items: mockItems, errors: [] }));
+
+      modalService.open.and.returnValues(
+        {
+          componentInstance: { expectedHeaders: [] },
+          result: of({ file: new File([''], 'test.csv'), delimiter: ',' })
+        } as any,
+        {
+          componentInstance: { prepare: jasmine.createSpy('prepare') },
+          result: of(mockCommandItems)
+        } as any
+      );
+
+      spyOn(tester.componentInstance, 'updateInMemoryItems');
+      tester.button('#import-button')!.click();
+
+      expect(historyQueryService.importItems).not.toHaveBeenCalled();
+      expect(notificationService.success).not.toHaveBeenCalled();
+      expect(tester.componentInstance.updateInMemoryItems).toHaveBeenCalledWith(jasmine.any(Array));
+    });
+
+    it('should not call backend services in memory mode', () => {
+      const mockItems: Array<HistoryQueryItemDTO<SouthItemSettings>> = [
+        {
+          id: 'new1',
+          name: 'newItem1',
+          enabled: true,
+          settings: { query: 'SELECT 1', dateTimeFields: [], serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization }
+        }
+      ];
+
+      const mockCommandItems: Array<HistoryQueryItemCommandDTO<SouthItemSettings>> = [
+        {
+          id: 'new1',
+          name: 'newItem1',
+          enabled: true,
+          settings: { query: 'SELECT 1', dateTimeFields: [], serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization }
+        }
+      ];
+
+      historyQueryService.checkImportItems.and.returnValue(of({ items: mockItems, errors: [] }));
+
+      modalService.open.and.returnValues(
+        {
+          componentInstance: { expectedHeaders: [] },
+          result: of({ file: new File([''], 'test.csv'), delimiter: ',' })
+        } as any,
+        {
+          componentInstance: { prepare: jasmine.createSpy('prepare') },
+          result: of(mockCommandItems)
+        } as any
+      );
+
+      tester.button('#import-button')!.click();
+
+      expect(historyQueryService.importItems).not.toHaveBeenCalled();
+      expect(notificationService.success).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Expected headers generation', () => {
+    beforeEach(() => {
+      tester.componentInstance.saveChangesDirectly = true;
+      tester.componentInstance.manifest.items.settings = [
+        {
+          key: 'query',
+          type: 'OibText',
+          translationKey: 'south.items.mssql.query',
+          displayInViewMode: true
+        },
+        {
+          key: 'timeout',
+          type: 'OibNumber',
+          translationKey: 'south.items.mssql.query',
+          displayInViewMode: true
+        },
+        {
+          key: 'enabled',
+          type: 'OibCheckbox',
+          translationKey: 'south.items.mssql.query',
+          displayInViewMode: true
+        }
+      ];
+      tester.detectChanges();
+    });
+
+    it('should include all manifest settings in expected headers', () => {
+      tester.button('#import-button')!.click();
+
+      expect(modalService.open).toHaveBeenCalledWith(ImportItemModalComponent, { backdrop: 'static' });
+
+      const modalRef = (modalService.open as jasmine.Spy).calls.mostRecent().returnValue as { componentInstance: any };
+      expect(modalRef.componentInstance.expectedHeaders).toEqual([
+        'name',
+        'enabled',
+        'settings_query',
+        'settings_timeout',
+        'settings_enabled'
+      ]);
+    });
+
+    it('should not include scanMode in headers since history query items do not have scan modes', () => {
+      tester.button('#import-button')!.click();
+      const modalRef = (modalService.open as jasmine.Spy).calls.mostRecent().returnValue as { componentInstance: any };
+
+      expect(modalRef.componentInstance.expectedHeaders).not.toContain('scanMode');
+    });
+  });
+
+  describe('Modal cancellation', () => {
+    beforeEach(() => {
+      tester.componentInstance.saveChangesDirectly = true;
+      tester.detectChanges();
+    });
+
+    it('should not proceed with import when modal is cancelled', () => {
+      const mockModalRef = {
+        componentInstance: { expectedHeaders: [] },
+        result: of(null)
+      };
+      modalService.open.and.returnValue(mockModalRef as any);
+
+      tester.button('#import-button')!.click();
+
+      expect(historyQueryService.checkImportItems).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Error handling', () => {
+    beforeEach(() => {
+      tester.componentInstance.saveChangesDirectly = true;
+      tester.detectChanges();
+    });
+
+    it('should handle service errors gracefully', () => {
+      const mockFile = new File(['name,enabled\ntest,true'], 'test.csv');
+      const mockModalRef = {
+        componentInstance: { expectedHeaders: [] },
+        result: of({ file: mockFile, delimiter: ',' })
+      };
+
+      historyQueryService.checkImportItems.and.throwError('Service error');
+      modalService.open.and.returnValue(mockModalRef as any);
+
+      expect(() => {
+        tester.button('#import-button')!.click();
+      }).not.toThrow();
+    });
+  });
 });

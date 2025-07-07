@@ -243,7 +243,7 @@ export default class SouthOPCUA
         } catch (error: unknown) {
           throw new Error(`Error when parsing node ID ${item.settings.nodeId} for item ${item.name}: ${(error as Error).message}`);
         }
-        content = await this.getDAValues([{ nodeId, name: item.name }], session);
+        content = await this.getDAValues([{ nodeId, name: item.name, settings: item.settings }], session);
       } else {
         content = (await this.getHAValues(
           [item],
@@ -325,7 +325,10 @@ export default class SouthOPCUA
   ): Promise<Instant | OIBusContent | null> {
     try {
       let maxTimestamp: number | null = null;
-      const itemsByAggregates = new Map<Aggregate, Map<Resampling | undefined, Array<{ nodeId: NodeId; itemName: string }>>>();
+      const itemsByAggregates = new Map<
+        Aggregate,
+        Map<Resampling | undefined, Array<{ nodeId: NodeId; name: string; settings: SouthOPCUAItemSettings }>>
+      >();
 
       for (const item of items) {
         let nodeId;
@@ -343,16 +346,19 @@ export default class SouthOPCUA
               Resampling,
               Array<{
                 nodeId: NodeId;
-                itemName: string;
+                name: string;
+                settings: SouthOPCUAItemSettings;
               }>
             >()
           );
         }
         if (!itemsByAggregates.get(item.settings.haMode!.aggregate!)!.has(item.settings.haMode!.resampling)) {
-          itemsByAggregates.get(item.settings.haMode!.aggregate)!.set(item.settings.haMode!.resampling, [{ itemName: item.name, nodeId }]);
+          itemsByAggregates
+            .get(item.settings.haMode!.aggregate)!
+            .set(item.settings.haMode!.resampling, [{ name: item.name, nodeId, settings: item.settings }]);
         } else {
           const currentList = itemsByAggregates.get(item.settings.haMode!.aggregate)!.get(item.settings.haMode!.resampling)!;
-          currentList.push({ itemName: item.name, nodeId });
+          currentList.push({ name: item.name, nodeId, settings: item.settings });
           itemsByAggregates.get(item.settings.haMode!.aggregate)!.set(item.settings.haMode!.resampling, currentList);
         }
       }
@@ -395,10 +401,10 @@ export default class SouthOPCUA
                     if (!logs.has(result.statusCode.name)) {
                       logs.set(result.statusCode.name, {
                         description: result.statusCode.description,
-                        affectedNodes: [associatedItem.itemName]
+                        affectedNodes: [associatedItem.name]
                       });
                     } else {
-                      logs.get(result.statusCode.name)!.affectedNodes.push(associatedItem.itemName);
+                      logs.get(result.statusCode.name)!.affectedNodes.push(associatedItem.name);
                     }
                   } else if (result.historyData && (result.historyData as HistoryDataOptions).dataValues) {
                     const historyDataValues = (result.historyData as HistoryDataOptions).dataValues!.filter(
@@ -410,7 +416,7 @@ export default class SouthOPCUA
                         `${result.statusCode.name}, continuation point is ${result.continuationPoint}`
                     );
                     for (const historyValue of historyDataValues) {
-                      const value = this.parseOPCUAValue(associatedItem.itemName, historyValue.value);
+                      const value = this.parseOPCUAValue(associatedItem.name, historyValue.value);
                       if (!value) {
                         continue;
                       }
@@ -418,7 +424,7 @@ export default class SouthOPCUA
                       maxTimestamp =
                         !maxTimestamp || selectedTimestamp!.getTime() > maxTimestamp ? selectedTimestamp!.getTime() : maxTimestamp;
                       dataByItems.push({
-                        pointId: associatedItem.itemName,
+                        pointId: associatedItem.name,
                         timestamp: selectedTimestamp!.toISOString(),
                         data: {
                           value,
@@ -655,13 +661,13 @@ export default class SouthOPCUA
       return;
     }
 
-    const nodesToRead: Array<{ nodeId: NodeId; name: string }> = [];
+    const nodesToRead: Array<{ nodeId: NodeId; name: string; settings: SouthOPCUAItemSettings }> = [];
     for (const item of items) {
       if (item.settings.mode === 'da') {
         let nodeId;
         try {
           nodeId = resolveNodeId(item.settings.nodeId);
-          nodesToRead.push({ nodeId, name: item.name });
+          nodesToRead.push({ nodeId, name: item.name, settings: item.settings });
         } catch (error: unknown) {
           this.logger.error(`Error when parsing node ID ${item.settings.nodeId} for item ${item.name}: ${(error as Error).message}`);
         }
@@ -686,7 +692,10 @@ export default class SouthOPCUA
     }
   }
 
-  async getDAValues(nodesToRead: Array<{ nodeId: NodeId; name: string }>, session: ClientSession): Promise<OIBusContent> {
+  async getDAValues(
+    nodesToRead: Array<{ nodeId: NodeId; name: string; settings: SouthOPCUAItemSettings }>,
+    session: ClientSession
+  ): Promise<OIBusContent> {
     try {
       const startRequest = DateTime.now().toMillis();
       const dataValues = await session.read(nodesToRead);
@@ -698,13 +707,13 @@ export default class SouthOPCUA
         );
       }
 
-      const defaultTimestamp = DateTime.now().toUTC().toISO();
+      const oibusTimestamp = DateTime.now().toUTC().toISO();
       const values = dataValues
         .map((dataValue: DataValue, i) => {
-          const selectedTimestamp = dataValue.sourceTimestamp ?? dataValue.serverTimestamp;
+          const selectedTimestamp = this.getTimestamp(dataValue, nodesToRead[i].settings, oibusTimestamp);
           return {
             pointId: nodesToRead[i].name,
-            timestamp: selectedTimestamp ? selectedTimestamp.toISOString() : defaultTimestamp,
+            timestamp: selectedTimestamp,
             data: {
               value: this.parseOPCUAValue(nodesToRead[i].name, dataValue.value),
               quality: dataValue.statusCode.name
@@ -719,6 +728,17 @@ export default class SouthOPCUA
         await this.connect();
       }
       throw error;
+    }
+  }
+
+  private getTimestamp(dataValue: DataValue, settings: SouthOPCUAItemSettings, oibusTimestamp: Instant): Instant {
+    switch (settings.timestampOrigin) {
+      case 'point':
+        return dataValue.sourceTimestamp ? dataValue.sourceTimestamp.toISOString() : oibusTimestamp;
+      case 'server':
+        return dataValue.serverTimestamp ? dataValue.serverTimestamp.toISOString() : oibusTimestamp;
+      default:
+        return oibusTimestamp;
     }
   }
 

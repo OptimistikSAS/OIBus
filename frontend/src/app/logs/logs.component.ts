@@ -17,6 +17,7 @@ import {
   exhaustMap,
   map,
   Observable,
+  startWith,
   Subscription,
   switchMap,
   tap,
@@ -38,11 +39,13 @@ import { NgbAccordionModule, NgbTypeahead, NgbTypeaheadSelectItemEvent } from '@
 import { PillComponent } from '../shared/pill/pill.component';
 import { LegendComponent } from '../shared/legend/legend.component';
 import { NgClass } from '@angular/common';
-
+import { TranslateModule } from '@ngx-translate/core';
+import { toObservable } from '@angular/core/rxjs-interop';
 @Component({
   selector: 'oib-logs',
   imports: [
     TranslateDirective,
+    TranslateModule,
     ...formDirectives,
     PaginationComponent,
     MultiSelectComponent,
@@ -100,6 +103,7 @@ export class LogsComponent implements OnInit, OnDestroy {
   subscription = new Subscription();
   logs = signal<Page<LogDTO>>(emptyPage());
   noLogMatchingWarning = signal(false);
+  autoReloadPaused = signal(false);
 
   scopeTypeahead = (text$: Observable<string>) =>
     text$.pipe(
@@ -111,6 +115,8 @@ export class LogsComponent implements OnInit, OnDestroy {
       })
     );
   scopeFormatter = (scope: Scope) => scope.scopeName;
+
+  private autoReloadPaused$ = toObservable(this.autoReloadPaused);
 
   ngOnInit(): void {
     const searchParams = this.toSearchParams(this.route);
@@ -134,11 +140,11 @@ export class LogsComponent implements OnInit, OnDestroy {
       });
     }
     this.subscription.add(
-      this.pageLoader.pageLoads$
+      combineLatest([this.pageLoader.pageLoads$, this.autoReloadPaused$.pipe(startWith(this.autoReloadPaused()))])
         .pipe(
-          switchMap(page => {
-            // only reload the page if the page is 0 and no end date is set
-            if (page === 0 && !this.searchForm.value.end) {
+          switchMap(([page, autoReloadPaused]) => {
+            // only reload the page if the page is 0, no end date is set and auto-reload is not paused
+            if (page === 0 && !this.searchForm.value.end && !autoReloadPaused) {
               return timer(0, 10_000).pipe(map(() => page));
             }
             return [page];
@@ -217,5 +223,20 @@ export class LogsComponent implements OnInit, OnDestroy {
       return foundElement.class;
     }
     return 'red-dot';
+  }
+
+  toggleAutoReload() {
+    const isPaused = this.autoReloadPaused();
+
+    if (!isPaused) {
+      if (!this.searchForm.value.end) {
+        this.searchForm.controls.end.setValue(DateTime.now().toISO());
+      }
+    } else {
+      this.searchForm.controls.end.setValue(null);
+      this.pageLoader.loadPage(this.logs(), 0);
+    }
+
+    this.autoReloadPaused.set(!isPaused);
   }
 }

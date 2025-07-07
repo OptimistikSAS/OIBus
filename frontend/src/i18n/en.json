@@ -332,7 +332,9 @@
       "not-registered": "OIBus is not registered to OIAnalytics. Click on the button below to register.",
       "pending": "Registration pending. Activate it on OIAnalytics with the following activation code",
       "expiration-date": "Expired on",
-      "registered": "OIBus registered on {{ activationDate }}"
+      "registered": "OIBus registered on {{ activationDate }}",
+      "enable-all": "Enable All",
+      "disable-all": "Disable All"
     },
     "commands": {
       "title": "Command list",
@@ -931,7 +933,13 @@
         "error-title": "These items have errors and won't be imported",
         "error": "Error",
         "valid-title": "These items will be created",
-        "csv-file": "CSV File"
+        "csv-file": "CSV File",
+        "format-error-title": "CSV Format Error",
+        "format-error-description": "The selected CSV file format does not match the expected format for this connector type.",
+        "missing-columns": "Missing columns:",
+        "extra-columns": "Extra columns:",
+        "expected-format": "Expected format:",
+        "actual-format": "Actual format:"
       },
       "test": {
         "title": "Result for item {{name}}"
@@ -1304,6 +1312,12 @@
             "1h": "1 hour",
             "1d": "1 day"
           }
+        },
+        "timestamp-origin": {
+          "title": "Timestamp origin",
+          "oibus": "OIBus",
+          "point": "Point",
+          "server": "Server"
         }
       },
       "oracle": {
@@ -1681,9 +1695,11 @@
         "bearer": "Bearer Auth"
       },
       "auth": {
-        "title": "Authentication type",
-        "basic": "Basic Auth",
-        "bearer": "Bearer Auth",
+        "auth-type": {
+          "title": "Authentication type",
+          "basic": "Basic Auth",
+          "bearer": "Bearer Auth"
+        },
         "bearer-token": "Bearer token",
         "basic-username": "Username",
         "basic-password": "Password"
@@ -1693,16 +1709,18 @@
         "key": "Key",
         "value": "Value"
       },
-      "proxy": {
-        "title": "Use proxy",
-        "url": "Proxy URL",
-        "username": "Proxy username",
-        "password": "Proxy password"
-      }
+      "use-proxy": "Use proxy",
+      "proxy-url": "Proxy URL",
+      "proxy-username": "Proxy username",
+      "proxy-password": "Proxy password"
     }
   },
   "logs": {
     "title": "Logs",
+    "auto-reload": {
+      "pause": "Pause auto-reload",
+      "resume": "Resume auto-reload"
+    },
     "search": {
       "start": "Start",
       "end": "End",

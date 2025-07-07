@@ -19,21 +19,15 @@
         "enabled": false
       }
     },
-    // group all minor dependencies, once a week
     {
-      "matchPackagePatterns": [
-        "*"
-      ],
-      "matchUpdateTypes": [
-        "minor",
-        "patch"
-      ],
-      "matchCurrentVersion": ">=1",
+      "matchPackageNames": ["node", "npm"],
+      "enabled": false
+    },
+    {
+      "matchUpdateTypes": ["minor", "patch"],
       "groupName": "all non-major dependencies",
       "groupSlug": "all-minor-patch",
-      "schedule": [
-        "before 3am on Monday"
-      ]
+      "schedule": ["before 3am on Monday"]
     }
   ]
 }

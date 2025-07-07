@@ -1,5 +1,5 @@
 import { FormControl } from '@angular/forms';
-import { uniqueFieldNamesValidator, singleTrueValidator } from './validators';
+import { uniqueFieldNamesValidator, singleTrueValidator, validateCsvHeaders } from './validators';
 
 describe('Custom Validators', () => {
   describe('uniqueFieldNamesValidator', () => {
@@ -192,6 +192,221 @@ describe('Custom Validators', () => {
 
       expect(uniqueValidator(multipleTrueControl)).toBeNull();
       expect(singleTrueValidator_(multipleTrueControl)).toEqual({ onlyOneReference: true });
+    });
+  });
+
+  describe('validateCsvHeaders', () => {
+    const createMockFile = (content: string): File => {
+      const blob = new Blob([content], { type: 'text/csv' });
+      return new File([blob], 'test.csv', { type: 'text/csv' });
+    };
+
+    describe('when expectedHeaders is empty', () => {
+      it('should return null', async () => {
+        const file = createMockFile('header1,header2\nvalue1,value2');
+        const result = await validateCsvHeaders(file, ',', []);
+        expect(result).toBeNull();
+      });
+    });
+
+    describe('when file is empty', () => {
+      it('should return validation error with missing headers', async () => {
+        const file = createMockFile('');
+        const expectedHeaders = ['header1', 'header2'];
+        const result = await validateCsvHeaders(file, ',', expectedHeaders);
+
+        expect(result).toEqual({
+          expectedHeaders,
+          actualHeaders: [],
+          missingHeaders: expectedHeaders,
+          extraHeaders: []
+        });
+      });
+    });
+
+    describe('when file has only empty lines', () => {
+      it('should return validation error with missing headers', async () => {
+        const file = createMockFile('\n\n\n');
+        const expectedHeaders = ['header1', 'header2'];
+        const result = await validateCsvHeaders(file, ',', expectedHeaders);
+
+        expect(result).toEqual({
+          expectedHeaders,
+          actualHeaders: [],
+          missingHeaders: expectedHeaders,
+          extraHeaders: []
+        });
+      });
+    });
+
+    describe('when first line is empty', () => {
+      it('should return validation error with missing headers', async () => {
+        const file = createMockFile('   \nvalue1,value2');
+        const expectedHeaders = ['header1', 'header2'];
+        const result = await validateCsvHeaders(file, ',', expectedHeaders);
+
+        expect(result).toEqual({
+          expectedHeaders,
+          actualHeaders: [],
+          missingHeaders: expectedHeaders,
+          extraHeaders: []
+        });
+      });
+    });
+
+    describe('when headers match exactly', () => {
+      it('should return null', async () => {
+        const file = createMockFile('header1,header2\nvalue1,value2');
+        const expectedHeaders = ['header1', 'header2'];
+        const result = await validateCsvHeaders(file, ',', expectedHeaders);
+
+        expect(result).toBeNull();
+      });
+    });
+
+    describe('when headers match with different order', () => {
+      it('should return null', async () => {
+        const file = createMockFile('header2,header1\nvalue2,value1');
+        const expectedHeaders = ['header1', 'header2'];
+        const result = await validateCsvHeaders(file, ',', expectedHeaders);
+
+        expect(result).toBeNull();
+      });
+    });
+
+    describe('when headers have extra whitespace', () => {
+      it('should trim headers and validate correctly', async () => {
+        const file = createMockFile(' header1 , header2 \nvalue1,value2');
+        const expectedHeaders = ['header1', 'header2'];
+        const result = await validateCsvHeaders(file, ',', expectedHeaders);
+
+        expect(result).toBeNull();
+      });
+    });
+
+    describe('when file has missing headers', () => {
+      it('should return validation error with missing headers', async () => {
+        const file = createMockFile('header1\nvalue1');
+        const expectedHeaders = ['header1', 'header2', 'header3'];
+        const result = await validateCsvHeaders(file, ',', expectedHeaders);
+
+        expect(result).toEqual({
+          expectedHeaders,
+          actualHeaders: ['header1'],
+          missingHeaders: ['header2', 'header3'],
+          extraHeaders: []
+        });
+      });
+    });
+
+    describe('when file has extra headers', () => {
+      it('should return validation error with extra headers', async () => {
+        const file = createMockFile('header1,header2,header3\nvalue1,value2,value3');
+        const expectedHeaders = ['header1', 'header2'];
+        const result = await validateCsvHeaders(file, ',', expectedHeaders);
+
+        expect(result).toEqual({
+          expectedHeaders,
+          actualHeaders: ['header1', 'header2', 'header3'],
+          missingHeaders: [],
+          extraHeaders: ['header3']
+        });
+      });
+    });
+
+    describe('when file has both missing and extra headers', () => {
+      it('should return validation error with both missing and extra headers', async () => {
+        const file = createMockFile('header1,header3\nvalue1,value3');
+        const expectedHeaders = ['header1', 'header2'];
+        const result = await validateCsvHeaders(file, ',', expectedHeaders);
+
+        expect(result).toEqual({
+          expectedHeaders,
+          actualHeaders: ['header1', 'header3'],
+          missingHeaders: ['header2'],
+          extraHeaders: ['header3']
+        });
+      });
+    });
+
+    describe('when using different delimiters', () => {
+      it('should handle semicolon delimiter', async () => {
+        const file = createMockFile('header1;header2\nvalue1;value2');
+        const expectedHeaders = ['header1', 'header2'];
+        const result = await validateCsvHeaders(file, ';', expectedHeaders);
+
+        expect(result).toBeNull();
+      });
+
+      it('should handle pipe delimiter', async () => {
+        const file = createMockFile('header1|header2\nvalue1|value2');
+        const expectedHeaders = ['header1', 'header2'];
+        const result = await validateCsvHeaders(file, '|', expectedHeaders);
+
+        expect(result).toBeNull();
+      });
+
+      it('should handle tab delimiter', async () => {
+        const file = createMockFile('header1\theader2\nvalue1\tvalue2');
+        const expectedHeaders = ['header1', 'header2'];
+        const result = await validateCsvHeaders(file, '\t', expectedHeaders);
+
+        expect(result).toBeNull();
+      });
+    });
+
+    describe('when file reading fails', () => {
+      it('should return validation error with missing headers', async () => {
+        const mockFile = {
+          text: () => Promise.reject(new Error('File read error'))
+        } as unknown as File;
+
+        const expectedHeaders = ['header1', 'header2'];
+        const result = await validateCsvHeaders(mockFile, ',', expectedHeaders);
+
+        expect(result).toEqual({
+          expectedHeaders,
+          actualHeaders: [],
+          missingHeaders: expectedHeaders,
+          extraHeaders: []
+        });
+      });
+    });
+
+    describe('edge cases', () => {
+      it('should handle single header file', async () => {
+        const file = createMockFile('header1\nvalue1');
+        const expectedHeaders = ['header1'];
+        const result = await validateCsvHeaders(file, ',', expectedHeaders);
+
+        expect(result).toBeNull();
+      });
+
+      it('should handle empty header names', async () => {
+        const file = createMockFile('header1,,header3\nvalue1,,value3');
+        const expectedHeaders = ['header1', 'header3'];
+        const result = await validateCsvHeaders(file, ',', expectedHeaders);
+
+        expect(result).toEqual({
+          expectedHeaders,
+          actualHeaders: ['header1', '', 'header3'],
+          missingHeaders: [],
+          extraHeaders: ['']
+        });
+      });
+
+      it('should handle case-sensitive header comparison', async () => {
+        const file = createMockFile('Header1,HEADER2\nvalue1,value2');
+        const expectedHeaders = ['header1', 'header2'];
+        const result = await validateCsvHeaders(file, ',', expectedHeaders);
+
+        expect(result).toEqual({
+          expectedHeaders,
+          actualHeaders: ['Header1', 'HEADER2'],
+          missingHeaders: ['header1', 'header2'],
+          extraHeaders: ['Header1', 'HEADER2']
+        });
+      });
     });
   });
 });

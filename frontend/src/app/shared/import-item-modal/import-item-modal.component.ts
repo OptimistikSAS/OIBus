@@ -1,10 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
 import { CsvCharacter, ALL_CSV_CHARACTERS } from '../../../../../backend/shared/model/types';
 import { NonNullableFormBuilder, Validators } from '@angular/forms';
 import { inject, OnInit } from '@angular/core';
 import { formDirectives } from '../form-directives';
+import { CsvValidationError, validateCsvHeaders } from '../validators';
 
 @Component({
   selector: 'oib-import-item-modal',
@@ -14,13 +15,16 @@ import { formDirectives } from '../form-directives';
 })
 export class ImportItemModalComponent implements OnInit {
   private modal = inject(NgbActiveModal);
+  private fb = inject(NonNullableFormBuilder);
+
+  @Input() expectedHeaders: Array<string> = [];
+  @Input() optionalHeaders: Array<string> = [];
 
   readonly csvDelimiters = ALL_CSV_CHARACTERS;
   initializeFile = new File([''], 'Choose a file');
-  selectedDelimiter = 'COMMA';
   selectedFile: File = this.initializeFile;
+  validationError: CsvValidationError | null = null;
 
-  private fb = inject(NonNullableFormBuilder);
   importForm = this.fb.group({
     delimiter: ['COMMA' as CsvCharacter, Validators.required]
   });
@@ -32,13 +36,39 @@ export class ImportItemModalComponent implements OnInit {
     this.importForm.patchValue(settings);
   }
 
+  get canSave(): boolean {
+    return this.selectedFile !== this.initializeFile && !this.validationError && this.importForm.valid;
+  }
+
+  public async onFileSelected(file: File): Promise<void> {
+    this.selectedFile = file;
+    this.validationError = null;
+
+    if (file !== this.initializeFile) {
+      const delimiter = this.findCorrespondingDelimiter(this.importForm.get('delimiter')?.value as CsvCharacter);
+      this.validationError = await validateCsvHeaders(file, delimiter, this.expectedHeaders, this.optionalHeaders);
+    }
+  }
+
+  async onDelimiterChange(): Promise<void> {
+    if (this.selectedFile !== this.initializeFile) {
+      const delimiter = this.findCorrespondingDelimiter(this.importForm.get('delimiter')?.value as CsvCharacter);
+      this.validationError = await validateCsvHeaders(this.selectedFile, delimiter, this.expectedHeaders, this.optionalHeaders);
+    }
+  }
+
   save() {
-    if (!this.importForm.valid || this.selectedFile === this.initializeFile) {
+    if (!this.canSave) {
       return;
     }
+
     const formValue = this.importForm.value;
-    this.selectedDelimiter = this.findCorrespondingDelimiter(formValue.delimiter!);
-    this.modal.close({ delimiter: this.selectedDelimiter, file: this.selectedFile });
+    const selectedDelimiter = this.findCorrespondingDelimiter(formValue.delimiter!);
+
+    this.modal.close({
+      delimiter: selectedDelimiter,
+      file: this.selectedFile
+    });
   }
 
   cancel() {
@@ -49,17 +79,21 @@ export class ImportItemModalComponent implements OnInit {
     e.preventDefault();
   }
 
-  onImportDrop(e: DragEvent) {
+  async onImportDrop(e: DragEvent) {
     e.preventDefault();
     const file = e.dataTransfer!.files![0];
-    this.selectedFile = file;
+    if (file) {
+      await this.onFileSelected(file);
+    }
   }
 
-  onImportClick(e: Event) {
+  async onImportClick(e: Event) {
     const fileInput = e.target as HTMLInputElement;
     const file = fileInput!.files![0];
-    this.selectedFile = file;
-    fileInput.value = '';
+    if (file) {
+      await this.onFileSelected(file);
+      fileInput.value = '';
+    }
   }
 
   findCorrespondingDelimiter(delimiter: CsvCharacter) {
