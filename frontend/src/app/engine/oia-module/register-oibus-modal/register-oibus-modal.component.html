@@ -100,7 +100,25 @@
         </div>
       </div>
     </div>
+    <!-- Command permissions -->
     <oib-box boxTitle="oia-module.commands.permissions">
+      <div slot="title-actions" class="ms-auto py-2">
+        <button
+          type="button"
+          class="btn btn-primary btn-sm me-2"
+          (click)="enableAllPermissions()"
+          [disabled]="allPermissionsEnabled"
+          translate="oia-module.registration.enable-all"
+        ></button>
+        <button
+          type="button"
+          class="btn btn-secondary btn-sm"
+          (click)="disableAllPermissions()"
+          [disabled]="allPermissionsDisabled"
+          translate="oia-module.registration.disable-all"
+        ></button>
+      </div>
+
       <div formGroupName="commandPermissions">
         <div class="row mb-2">
           <label class="form-label" translate="oia-module.commands.engine"></label>

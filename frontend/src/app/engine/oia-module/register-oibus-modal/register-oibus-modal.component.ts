@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { NonNullableFormBuilder, Validators } from '@angular/forms';
+import { NonNullableFormBuilder, Validators, FormGroup, FormControl } from '@angular/forms';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { TranslateDirective } from '@ngx-translate/core';
 import { formDirectives } from '../../../shared/form-directives';
@@ -100,52 +100,54 @@ export class RegisterOibusModalComponent {
     }
 
     const formValue = this.form.value;
+    const commandHost = this.mode === 'edit' ? this.host : formValue.host!;
+
+    const command: RegistrationSettingsCommandDTO = {
+      host: commandHost,
+      acceptUnauthorized: formValue.acceptUnauthorized!,
+      useProxy: formValue.useProxy!,
+      proxyUrl: formValue.proxyUrl!,
+      proxyUsername: formValue.proxyUsername!,
+      proxyPassword: formValue.proxyPassword!,
+      commandRefreshInterval: formValue.commandRefreshInterval!,
+      commandRetryInterval: formValue.commandRetryInterval!,
+      messageRetryInterval: formValue.messageRetryInterval!,
+      commandPermissions: {
+        updateVersion: formValue.commandPermissions!.updateVersion!,
+        restartEngine: formValue.commandPermissions!.restartEngine!,
+        regenerateCipherKeys: formValue.commandPermissions!.regenerateCipherKeys!,
+        updateEngineSettings: formValue.commandPermissions!.updateEngineSettings!,
+        updateRegistrationSettings: formValue.commandPermissions!.updateRegistrationSettings!,
+        createScanMode: formValue.commandPermissions!.createScanMode!,
+        updateScanMode: formValue.commandPermissions!.updateScanMode!,
+        deleteScanMode: formValue.commandPermissions!.deleteScanMode!,
+        createIpFilter: formValue.commandPermissions!.createIpFilter!,
+        updateIpFilter: formValue.commandPermissions!.updateIpFilter!,
+        deleteIpFilter: formValue.commandPermissions!.deleteIpFilter!,
+        createCertificate: formValue.commandPermissions!.createCertificate!,
+        updateCertificate: formValue.commandPermissions!.updateCertificate!,
+        deleteCertificate: formValue.commandPermissions!.deleteCertificate!,
+        createHistoryQuery: formValue.commandPermissions!.createHistoryQuery!,
+        updateHistoryQuery: formValue.commandPermissions!.updateHistoryQuery!,
+        deleteHistoryQuery: formValue.commandPermissions!.deleteHistoryQuery!,
+        createOrUpdateHistoryItemsFromCsv: formValue.commandPermissions!.createOrUpdateHistoryItemsFromCsv!,
+        testHistoryNorthConnection: formValue.commandPermissions!.testHistoryNorthConnection!,
+        testHistorySouthConnection: formValue.commandPermissions!.testHistorySouthConnection!,
+        testHistorySouthItem: formValue.commandPermissions!.testHistorySouthItem!,
+        createSouth: formValue.commandPermissions!.createSouth!,
+        updateSouth: formValue.commandPermissions!.updateSouth!,
+        deleteSouth: formValue.commandPermissions!.deleteSouth!,
+        createOrUpdateSouthItemsFromCsv: formValue.commandPermissions!.createOrUpdateSouthItemsFromCsv!,
+        testSouthConnection: formValue.commandPermissions!.testSouthConnection!,
+        testSouthItem: formValue.commandPermissions!.testSouthItem!,
+        createNorth: formValue.commandPermissions!.createNorth!,
+        updateNorth: formValue.commandPermissions!.updateNorth!,
+        deleteNorth: formValue.commandPermissions!.deleteNorth!,
+        testNorthConnection: formValue.commandPermissions!.testNorthConnection!
+      }
+    };
 
     if (this.mode === 'register') {
-      const command: RegistrationSettingsCommandDTO = {
-        host: formValue.host!,
-        acceptUnauthorized: formValue.acceptUnauthorized!,
-        useProxy: formValue.useProxy!,
-        proxyUrl: formValue.proxyUrl!,
-        proxyUsername: formValue.proxyUsername!,
-        proxyPassword: formValue.proxyPassword!,
-        commandRefreshInterval: formValue.commandRefreshInterval!,
-        commandRetryInterval: formValue.commandRetryInterval!,
-        messageRetryInterval: formValue.messageRetryInterval!,
-        commandPermissions: {
-          updateVersion: formValue.commandPermissions!.updateVersion!,
-          restartEngine: formValue.commandPermissions!.restartEngine!,
-          regenerateCipherKeys: formValue.commandPermissions!.regenerateCipherKeys!,
-          updateEngineSettings: formValue.commandPermissions!.updateEngineSettings!,
-          updateRegistrationSettings: formValue.commandPermissions!.updateRegistrationSettings!,
-          createScanMode: formValue.commandPermissions!.createScanMode!,
-          updateScanMode: formValue.commandPermissions!.updateScanMode!,
-          deleteScanMode: formValue.commandPermissions!.deleteScanMode!,
-          createIpFilter: formValue.commandPermissions!.createIpFilter!,
-          updateIpFilter: formValue.commandPermissions!.updateIpFilter!,
-          deleteIpFilter: formValue.commandPermissions!.deleteIpFilter!,
-          createCertificate: formValue.commandPermissions!.createCertificate!,
-          updateCertificate: formValue.commandPermissions!.updateCertificate!,
-          deleteCertificate: formValue.commandPermissions!.deleteCertificate!,
-          createHistoryQuery: formValue.commandPermissions!.createHistoryQuery!,
-          updateHistoryQuery: formValue.commandPermissions!.updateHistoryQuery!,
-          deleteHistoryQuery: formValue.commandPermissions!.deleteHistoryQuery!,
-          createOrUpdateHistoryItemsFromCsv: formValue.commandPermissions!.createOrUpdateHistoryItemsFromCsv!,
-          testHistoryNorthConnection: formValue.commandPermissions!.testHistoryNorthConnection!,
-          testHistorySouthConnection: formValue.commandPermissions!.testHistorySouthConnection!,
-          testHistorySouthItem: formValue.commandPermissions!.testHistorySouthItem!,
-          createSouth: formValue.commandPermissions!.createSouth!,
-          updateSouth: formValue.commandPermissions!.updateSouth!,
-          deleteSouth: formValue.commandPermissions!.deleteSouth!,
-          createOrUpdateSouthItemsFromCsv: formValue.commandPermissions!.createOrUpdateSouthItemsFromCsv!,
-          testSouthConnection: formValue.commandPermissions!.testSouthConnection!,
-          testSouthItem: formValue.commandPermissions!.testSouthItem!,
-          createNorth: formValue.commandPermissions!.createNorth!,
-          updateNorth: formValue.commandPermissions!.updateNorth!,
-          deleteNorth: formValue.commandPermissions!.deleteNorth!,
-          testNorthConnection: formValue.commandPermissions!.testNorthConnection!
-        }
-      };
       this.oibusService
         .updateRegistrationSettings(command)
         .pipe(this.state.pendingUntilFinalization())
@@ -153,50 +155,6 @@ export class RegisterOibusModalComponent {
           this.modal.close();
         });
     } else {
-      const command: RegistrationSettingsCommandDTO = {
-        host: this.host,
-        acceptUnauthorized: formValue.acceptUnauthorized!,
-        useProxy: formValue.useProxy!,
-        proxyUrl: formValue.proxyUrl!,
-        proxyUsername: formValue.proxyUsername!,
-        proxyPassword: formValue.proxyPassword!,
-        commandRefreshInterval: formValue.commandRefreshInterval!,
-        commandRetryInterval: formValue.commandRetryInterval!,
-        messageRetryInterval: formValue.messageRetryInterval!,
-        commandPermissions: {
-          updateVersion: formValue.commandPermissions!.updateVersion!,
-          restartEngine: formValue.commandPermissions!.restartEngine!,
-          regenerateCipherKeys: formValue.commandPermissions!.regenerateCipherKeys!,
-          updateEngineSettings: formValue.commandPermissions!.updateEngineSettings!,
-          updateRegistrationSettings: formValue.commandPermissions!.updateRegistrationSettings!,
-          createScanMode: formValue.commandPermissions!.createScanMode!,
-          updateScanMode: formValue.commandPermissions!.updateScanMode!,
-          deleteScanMode: formValue.commandPermissions!.deleteScanMode!,
-          createIpFilter: formValue.commandPermissions!.createIpFilter!,
-          updateIpFilter: formValue.commandPermissions!.updateIpFilter!,
-          deleteIpFilter: formValue.commandPermissions!.deleteIpFilter!,
-          createCertificate: formValue.commandPermissions!.createCertificate!,
-          updateCertificate: formValue.commandPermissions!.updateCertificate!,
-          deleteCertificate: formValue.commandPermissions!.deleteCertificate!,
-          createHistoryQuery: formValue.commandPermissions!.createHistoryQuery!,
-          updateHistoryQuery: formValue.commandPermissions!.updateHistoryQuery!,
-          deleteHistoryQuery: formValue.commandPermissions!.deleteHistoryQuery!,
-          createOrUpdateHistoryItemsFromCsv: formValue.commandPermissions!.createOrUpdateHistoryItemsFromCsv!,
-          testHistoryNorthConnection: formValue.commandPermissions!.testHistoryNorthConnection!,
-          testHistorySouthConnection: formValue.commandPermissions!.testHistorySouthConnection!,
-          testHistorySouthItem: formValue.commandPermissions!.testHistorySouthItem!,
-          createSouth: formValue.commandPermissions!.createSouth!,
-          updateSouth: formValue.commandPermissions!.updateSouth!,
-          deleteSouth: formValue.commandPermissions!.deleteSouth!,
-          createOrUpdateSouthItemsFromCsv: formValue.commandPermissions!.createOrUpdateSouthItemsFromCsv!,
-          testSouthConnection: formValue.commandPermissions!.testSouthConnection!,
-          testSouthItem: formValue.commandPermissions!.testSouthItem!,
-          createNorth: formValue.commandPermissions!.createNorth!,
-          updateNorth: formValue.commandPermissions!.updateNorth!,
-          deleteNorth: formValue.commandPermissions!.deleteNorth!,
-          testNorthConnection: formValue.commandPermissions!.testNorthConnection!
-        }
-      };
       this.oibusService
         .editRegistrationSettings(command)
         .pipe(this.state.pendingUntilFinalization())
@@ -204,5 +162,36 @@ export class RegisterOibusModalComponent {
           this.modal.close();
         });
     }
+  }
+  get commandPermissionsFormGroup(): FormGroup {
+    return this.form.controls.commandPermissions as FormGroup;
+  }
+
+  get allPermissionsEnabled(): boolean {
+    const permissions = this.commandPermissionsFormGroup.value;
+    return Object.values(permissions).every(value => value === true);
+  }
+
+  get allPermissionsDisabled(): boolean {
+    const permissions = this.commandPermissionsFormGroup.value;
+    return Object.values(permissions).every(value => value === false);
+  }
+
+  enableAllPermissions() {
+    Object.keys(this.commandPermissionsFormGroup.controls).forEach(key => {
+      const control = this.commandPermissionsFormGroup.get(key);
+      if (control instanceof FormControl) {
+        control.setValue(true);
+      }
+    });
+  }
+
+  disableAllPermissions() {
+    Object.keys(this.commandPermissionsFormGroup.controls).forEach(key => {
+      const control = this.commandPermissionsFormGroup.get(key);
+      if (control instanceof FormControl) {
+        control.setValue(false);
+      }
+    });
   }
 }
