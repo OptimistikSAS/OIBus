@@ -14,6 +14,7 @@ import { ConfirmationService } from '../shared/confirmation.service';
 import { NotificationService } from '../shared/notification.service';
 import { ScanModeService } from '../services/scan-mode.service';
 import { IpFilterService } from '../services/ip-filter.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 class EngineComponentTester extends ComponentTester<EngineDetailComponent> {
   constructor() {
@@ -86,6 +87,7 @@ describe('EngineDetailComponent', () => {
         provideI18nTesting(),
         provideRouter([]),
         provideHttpClient(),
+        provideHttpClientTesting(),
         { provide: EngineService, useValue: engineService },
         { provide: ScanModeService, useValue: scanModeService },
         { provide: IpFilterService, useValue: ipFilterService },

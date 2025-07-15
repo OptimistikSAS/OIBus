@@ -12,6 +12,7 @@ import { NorthConnectorService } from '../../services/north-connector.service';
 import { NorthConnectorDTO, NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
 import { CertificateService } from '../../services/certificate.service';
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 class EditNorthComponentTester extends ComponentTester<EditNorthComponent> {
   constructor() {
@@ -42,6 +43,7 @@ class EditNorthComponentTester extends ComponentTester<EditNorthComponent> {
     return this.element(FormComponent);
   }
 }
+
 describe('EditNorthComponent', () => {
   let tester: EditNorthComponentTester;
   let northConnectorService: jasmine.SpyObj<NorthConnectorService>;
@@ -58,6 +60,7 @@ describe('EditNorthComponent', () => {
         provideI18nTesting(),
         provideRouter([]),
         provideHttpClient(),
+        provideHttpClientTesting(),
         { provide: NorthConnectorService, useValue: northConnectorService },
         { provide: ScanModeService, useValue: scanModeService },
         { provide: CertificateService, useValue: certificateService }

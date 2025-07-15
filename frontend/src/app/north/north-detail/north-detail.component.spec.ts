@@ -13,6 +13,7 @@ import { NotificationService } from '../../shared/notification.service';
 import { EngineService } from '../../services/engine.service';
 import { OIBusInfo } from '../../../../../backend/shared/model/engine.model';
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 class NorthDetailComponentTester extends ComponentTester<NorthDetailComponent> {
   constructor() {
@@ -123,6 +124,7 @@ describe('NorthDetailComponent', () => {
         provideI18nTesting(),
         provideRouter([]),
         provideHttpClient(),
+        provideHttpClientTesting(),
         {
           provide: ActivatedRoute,
           useValue: stubRoute({
