@@ -34,8 +34,8 @@
   },
   "devDependencies": {
     "@types/minimist": "1.2.5",
-    "@types/node": "22.15.34",
-    "eslint": "9.30.0",
+    "@types/node": "22.16.3",
+    "eslint": "9.31.0",
     "eslint-config-prettier": "10.1.5",
     "eslint-plugin-prettier": "5.5.1",
     "prettier": "3.6.2",
@@ -43,7 +43,7 @@
     "rimraf": "6.0.1",
     "tslib": "2.8.1",
     "typescript": "5.4.5",
-    "typescript-eslint": "8.35.1"
+    "typescript-eslint": "8.37.0"
   },
   "pkg": {}
 }
