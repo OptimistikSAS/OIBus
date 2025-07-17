@@ -1,0 +1,12 @@
+<div class="form-group">
+  <label [for]="numberAttribute().key" class="form-label" [translate]="numberAttribute().translationKey"></label>
+  @if (numberAttribute().unit) {
+    <div class="input-group">
+      <input [id]="numberAttribute().key" class="form-control" type="number" [formControlName]="numberAttribute().key" />
+      <span class="input-group-text">{{ numberAttribute().unit }}</span>
+    </div>
+  } @else {
+    <input [id]="numberAttribute().key" class="form-control" type="number" [formControlName]="numberAttribute().key" />
+  }
+  <val-errors [controlName]="numberAttribute().key" />
+</div>

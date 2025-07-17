@@ -1,14 +1,12 @@
-import NorthSftp from './north-sftp';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
+import { encryptionService } from '../../service/encryption.service';
+import NorthSftp from './north-sftp';
 import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
-
 import csv from 'papaparse';
 import { NorthSFTPSettings } from '../../../shared/model/north-settings.model';
 import sftpClient from 'ssh2-sftp-client';
-import { OIBusTimeValue } from '../../../shared/model/engine.model';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import NorthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/north-connector-repository.mock';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
@@ -17,16 +15,24 @@ import { NorthConnectorEntity } from '../../model/north-connector.model';
 import testData from '../../tests/utils/test-data';
 import { mockBaseFolders } from '../../tests/utils/test-utils';
 import CacheService from '../../service/cache/cache.service';
-import fs from 'node:fs/promises';
+import TransformerService, { createTransformer } from '../../service/transformer.service';
+import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';
+import OIBusTransformer from '../../service/transformers/oibus-transformer';
+import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
+import { getFilenameWithoutRandomId } from '../../service/utils';
 
 jest.mock('node:fs/promises');
 
 const logger: pino.Logger = new PinoLogger();
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const cacheService: CacheService = new CacheServiceMock();
+const transformerService: TransformerService = new TransformerServiceMock();
+const oiBusTransformer: OIBusTransformer = new OIBusTransformerMock() as unknown as OIBusTransformer;
 
+jest.mock('../../service/encryption.service', () => ({
+  encryptionService: new EncryptionServiceMock('', '')
+}));
 jest.mock(
   '../../service/cache/cache.service',
   () =>
@@ -45,20 +51,8 @@ const mockSftpClient = {
 };
 jest.mock('ssh2-sftp-client');
 jest.mock('../../service/utils');
+jest.mock('../../service/transformer.service');
 jest.mock('papaparse');
-
-const timeValues: Array<OIBusTimeValue> = [
-  {
-    pointId: 'pointId1',
-    timestamp: testData.constants.dates.FAKE_NOW,
-    data: { value: '666', quality: 'good' }
-  },
-  {
-    pointId: 'pointId2',
-    timestamp: testData.constants.dates.FAKE_NOW,
-    data: { value: '777', quality: 'good' }
-  }
-];
 
 let configuration: NorthConnectorEntity<NorthSFTPSettings>;
 let north: NorthSftp;
@@ -80,13 +74,14 @@ describe('NorthSFTP', () => {
     };
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
     (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
-
     (sftpClient as jest.Mock).mockImplementation(() => mockSftpClient);
     (csv.unparse as jest.Mock).mockReturnValue('csv content');
+    (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
+    (getFilenameWithoutRandomId as jest.Mock).mockReturnValue('example.file');
 
     north = new NorthSftp(
       configuration,
-      encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
       logger,
@@ -99,46 +94,6 @@ describe('NorthSFTP', () => {
     cacheService.cacheSizeEventEmitter.removeAllListeners();
   });
 
-  it('should properly handle values', async () => {
-    north.sendToSftpServer = jest.fn();
-    csv.unparse = jest.fn().mockReturnValue('csv content');
-
-    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify(timeValues));
-    await north.handleContent({
-      contentFile: '/path/to/file/example-123.json',
-      contentSize: 1234,
-      numberOfElement: 1,
-      createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'time-values',
-      source: 'south',
-      options: {}
-    });
-    const expectedFileName = `${configuration.settings.prefix}${new Date().getTime()}${configuration.settings.suffix}.csv`;
-    expect(north.sendToSftpServer).toHaveBeenCalledWith(
-      Buffer.from('csv content', 'utf8'),
-      `${configuration.settings.remoteFolder}/${expectedFileName}`
-    );
-  });
-
-  it('should properly catch handle values error', async () => {
-    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify(timeValues));
-
-    north.sendToSftpServer = jest.fn().mockImplementationOnce(() => {
-      throw new Error('Error handling values');
-    });
-    await expect(
-      north.handleContent({
-        contentFile: '/path/to/file/example-123.json',
-        contentSize: 1234,
-        numberOfElement: 1,
-        createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'time-values',
-        source: 'south',
-        options: {}
-      })
-    ).rejects.toThrow('Error handling values');
-  });
-
   it('should properly handle files', async () => {
     north.sendToSftpServer = jest.fn();
     const expectedFileName = `${configuration.settings.prefix}example${configuration.settings.suffix}.file`;
@@ -147,7 +102,7 @@ describe('NorthSFTP', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     });
@@ -167,7 +122,7 @@ describe('NorthSFTP', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'raw',
+        contentType: 'any',
         source: 'south',
         options: {}
       })
@@ -183,7 +138,7 @@ describe('NorthSFTP', () => {
   });
 
   it('should send content into SFTP server without user and password', async () => {
-    configuration.settings.username = null;
+    configuration.settings.username = '';
     configuration.settings.password = null;
     await north.sendToSftpServer('myFile.csv', 'remoteFolder/target');
     expect(mockSftpClient.connect).toHaveBeenCalledTimes(1);
@@ -211,12 +166,12 @@ describe('NorthSFTP without suffix or prefix', () => {
     };
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
     (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
-
     (sftpClient as jest.Mock).mockImplementation(() => mockSftpClient);
+    (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
 
     north = new NorthSftp(
       configuration,
-      encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
       logger,
@@ -228,33 +183,6 @@ describe('NorthSFTP without suffix or prefix', () => {
     cacheService.cacheSizeEventEmitter.removeAllListeners();
   });
 
-  it('should properly handle values', async () => {
-    north.sendToSftpServer = jest.fn();
-    csv.unparse = jest.fn().mockReturnValue('csv content');
-
-    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify(timeValues));
-    await north.handleContent({
-      contentFile: '/path/to/file/example-123.json',
-      contentSize: 1234,
-      numberOfElement: 1,
-      createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'time-values',
-      source: 'south',
-      options: {}
-    });
-
-    const expectedFileName = `${new Date().getTime()}.csv`;
-    expect(north.sendToSftpServer).toHaveBeenCalledWith(
-      Buffer.from('csv content', 'utf8'),
-      `${configuration.settings.remoteFolder}/${expectedFileName}`
-    );
-
-    expect(north.sendToSftpServer).toHaveBeenCalledWith(
-      Buffer.from('csv content', 'utf8'),
-      `${configuration.settings.remoteFolder}/${new Date().getTime()}.csv`
-    );
-  });
-
   it('should properly handle files', async () => {
     north.sendToSftpServer = jest.fn();
     await north.handleContent({
@@ -262,7 +190,7 @@ describe('NorthSFTP without suffix or prefix', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     });
@@ -316,5 +244,19 @@ describe('NorthSFTP without suffix or prefix', () => {
     expect(mockSftpClient.exists).toHaveBeenCalledTimes(1);
     expect(mockSftpClient.end).not.toHaveBeenCalled();
     expect(encryptionService.decryptText).not.toHaveBeenCalled();
+  });
+
+  it('should ignore data if bad content type', async () => {
+    await expect(
+      north.handleContent({
+        contentFile: 'path/to/file/example-123456789.file',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'time-values',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow(`Unsupported data type: time-values (file path/to/file/example-123456789.file)`);
   });
 });

@@ -1,6 +1,6 @@
 import NorthConnector from '../north-connector';
 
-import EncryptionService from '../../service/encryption.service';
+import { encryptionService } from '../../service/encryption.service';
 import pino from 'pino';
 import { createReadStream } from 'node:fs';
 import zlib from 'node:zlib';
@@ -26,6 +26,7 @@ import CertificateRepository from '../../repository/config/certificate.repositor
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import { OIBusError } from '../../model/engine.model';
 import { BaseFolders } from '../../model/types';
+import TransformerService from '../../service/transformer.service';
 
 /**
  * Class NorthOIAnalytics - Send files to a POST Multipart HTTP request and values as JSON payload
@@ -34,7 +35,7 @@ import { BaseFolders } from '../../model/types';
 export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSettings> {
   constructor(
     connector: NorthConnectorEntity<NorthOIAnalyticsSettings>,
-    encryptionService: EncryptionService,
+    transformerService: TransformerService,
     northConnectorRepository: NorthConnectorRepository,
     scanModeRepository: ScanModeRepository,
     private readonly certificateRepository: CertificateRepository,
@@ -42,7 +43,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     logger: pino.Logger,
     baseFolders: BaseFolders
   ) {
-    super(connector, encryptionService, northConnectorRepository, scanModeRepository, logger, baseFolders);
+    super(connector, transformerService, northConnectorRepository, scanModeRepository, logger, baseFolders);
   }
 
   override async testConnection(): Promise<void> {
@@ -69,8 +70,12 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
   }
 
   async handleContent(cacheMetadata: CacheMetadata): Promise<void> {
+    if (!this.supportedTypes().includes(cacheMetadata.contentType)) {
+      throw new Error(`Unsupported data type: ${cacheMetadata.contentType} (file ${cacheMetadata.contentFile})`);
+    }
+
     switch (cacheMetadata.contentType) {
-      case 'raw':
+      case 'any':
         return this.handleFile(cacheMetadata.contentFile);
 
       case 'time-values':
@@ -268,11 +273,11 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
         const clientSecretCredential = new ClientSecretCredential(
           specificSettings.tenantId!,
           specificSettings.clientId!,
-          await this.encryptionService.decryptText(specificSettings.clientSecret!)
+          await encryptionService.decryptText(specificSettings.clientSecret!)
         );
         const result = await clientSecretCredential.getToken(specificSettings.scope!);
         // Note: token needs to be encrypted when adding it to proxy options
-        const token = await this.encryptionService.encryptText(`Bearer ${Buffer.from(result.token)}`);
+        const token = await encryptionService.encryptText(`Bearer ${Buffer.from(result.token)}`);
         return {
           type: 'bearer',
           token
@@ -283,13 +288,13 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
         const certificate = this.certificateRepository.findById(specificSettings.certificateId!);
         if (certificate === null) return;
 
-        const decryptedPrivateKey = await this.encryptionService.decryptText(certificate.privateKey);
+        const decryptedPrivateKey = await encryptionService.decryptText(certificate.privateKey);
         const clientCertificateCredential = new ClientCertificateCredential(specificSettings.tenantId!, specificSettings.clientId!, {
           certificate: `${certificate.certificate}\n${decryptedPrivateKey}`
         });
         const result = await clientCertificateCredential.getToken(specificSettings.scope!);
         // Note: token needs to be encrypted when adding it to proxy options
-        const token = await this.encryptionService.encryptText(`Bearer ${Buffer.from(result.token)}`);
+        const token = await encryptionService.encryptText(`Bearer ${Buffer.from(result.token)}`);
         return {
           type: 'bearer',
           token
@@ -313,5 +318,9 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     }
 
     return host;
+  }
+
+  supportedTypes(): Array<string> {
+    return ['any', 'time-values'];
   }
 }

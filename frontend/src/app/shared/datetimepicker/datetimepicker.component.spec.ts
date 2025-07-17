@@ -1,23 +1,24 @@
 import { TestBed } from '@angular/core/testing';
 
 import { Component, inject } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ComponentTester } from 'ngx-speculoos';
 import { TestDatetimepicker } from './datetimepicker.test-utils';
-import { noAnimation } from '../test-utils';
-import { provideDatepicker } from '../datepicker.providers';
+import { DatepickerContainerComponent } from '../datepicker-container/datepicker-container.component';
+import { DatetimepickerComponent } from './datetimepicker.component';
+import { NgbInputDatepicker, NgbTimepicker } from '@ng-bootstrap/ng-bootstrap';
+import { provideNgbConfigTesting } from '../form/oi-ngb-testing';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { provideCurrentUser } from '../current-user-testing';
-import { DatetimepickerComponent } from './datetimepicker.component';
-import { DatepickerContainerComponent } from '../datepicker-container/datepicker-container.component';
-import { NgbInputDatepicker, NgbTimepicker } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
   template: '',
-  providers: [noAnimation, provideDatepicker()]
+  imports: [ReactiveFormsModule]
 })
 class TestComponent {
-  readonly form = inject(FormBuilder).group({
+  private fb = inject(NonNullableFormBuilder);
+
+  form = this.fb.group({
     from: null as string | null
   });
 }
@@ -31,7 +32,7 @@ class TestComponentTester extends ComponentTester<TestComponent> {
     return this.custom('oib-datetimepicker', TestDatetimepicker)!;
   }
 
-  get toggle() {
+  get toggler() {
     return this.element<HTMLSpanElement>('.fa-calendar')!;
   }
 
@@ -45,7 +46,7 @@ describe('DatetimepickerComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideI18nTesting(), provideCurrentUser()]
+      providers: [provideNgbConfigTesting(), provideI18nTesting(), provideCurrentUser()]
     });
   });
 
@@ -59,8 +60,8 @@ describe('DatetimepickerComponent', () => {
         </form>`
       );
       TestBed.overrideComponent(TestComponent, {
-        set: {
-          imports: [DatetimepickerComponent, ReactiveFormsModule]
+        add: {
+          imports: [DatetimepickerComponent]
         }
       });
       tester = new TestComponentTester();
@@ -124,7 +125,7 @@ describe('DatetimepickerComponent', () => {
     });
   });
 
-  describe('with timeZone', () => {
+  describe('with timezone', () => {
     beforeEach(() => {
       TestBed.overrideTemplate(
         TestComponent,
@@ -134,8 +135,8 @@ describe('DatetimepickerComponent', () => {
         </form>`
       );
       TestBed.overrideComponent(TestComponent, {
-        set: {
-          imports: [DatetimepickerComponent, ReactiveFormsModule]
+        add: {
+          imports: [DatetimepickerComponent]
         }
       });
       tester = new TestComponentTester();
@@ -175,8 +176,8 @@ describe('DatetimepickerComponent', () => {
         </form>`
       );
       TestBed.overrideComponent(TestComponent, {
-        set: {
-          imports: [DatetimepickerComponent, DatepickerContainerComponent, NgbInputDatepicker, NgbTimepicker, ReactiveFormsModule]
+        add: {
+          imports: [DatetimepickerComponent, DatepickerContainerComponent, NgbInputDatepicker, NgbTimepicker]
         }
       });
       tester = new TestComponentTester();
@@ -187,7 +188,7 @@ describe('DatetimepickerComponent', () => {
       expect(tester.datetimepicker.second).toBeTruthy();
       expect(tester.datetimepicker.second).toHaveValue('00');
 
-      tester.toggle.click();
+      tester.toggler.click();
       expect(tester.firstWeekDay).toContainText('S');
     });
   });

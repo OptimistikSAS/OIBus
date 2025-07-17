@@ -20,6 +20,7 @@ import OianalyticsRegistrationRepository from '../repository/config/oianalytics-
 import OianalyticsCommandRepository from '../repository/config/oianalytics-command.repository';
 import OianalyticsMessageRepository from '../repository/config/oianalytics-message.repository';
 import HistoryQueryMetricsRepository from '../repository/logs/history-query-metrics.repository';
+import TransformerRepository from '../repository/config/transformer.repository';
 
 jest.mock('better-sqlite3', () => jest.fn(() => 'sqlite database'));
 jest.mock('../repository/crypto/crypto.repository');
@@ -40,6 +41,7 @@ jest.mock('../repository/config/certificate.repository');
 jest.mock('../repository/config/oianalytics-registration.repository');
 jest.mock('../repository/config/oianalytics-command.repository');
 jest.mock('../repository/config/oianalytics-message.repository');
+jest.mock('../repository/config/transformer.repository');
 
 describe('Repository service', () => {
   it('should properly initialize service', () => {
@@ -66,6 +68,7 @@ describe('Repository service', () => {
     expect(CertificateRepository).toHaveBeenCalledWith('sqlite database');
     expect(OianalyticsCommandRepository).toHaveBeenCalledWith('sqlite database');
     expect(OianalyticsMessageRepository).toHaveBeenCalledWith('sqlite database');
+    expect(TransformerRepository).toHaveBeenCalledWith('sqlite database');
 
     expect(repositoryService.engineRepository).toBeDefined();
     expect(repositoryService.cryptoRepository).toBeDefined();
@@ -85,5 +88,6 @@ describe('Repository service', () => {
     expect(repositoryService.certificateRepository).toBeDefined();
     expect(repositoryService.oianalyticsCommandRepository).toBeDefined();
     expect(repositoryService.oianalyticsMessageRepository).toBeDefined();
+    expect(repositoryService.transformerRepository).toBeDefined();
   });
 });

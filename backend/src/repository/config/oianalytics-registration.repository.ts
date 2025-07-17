@@ -49,7 +49,8 @@ export default class OIAnalyticsRegistrationRepository {
         createNorth: true,
         updateNorth: true,
         deleteNorth: true,
-        testNorthConnection: true
+        testNorthConnection: true,
+        setpoint: true
       }
     });
   }
@@ -65,7 +66,7 @@ export default class OIAnalyticsRegistrationRepository {
       `command_create_history_query, command_update_history_query, command_delete_history_query, command_create_or_update_history_items_from_csv, ` +
       `command_test_history_north_connection, command_test_history_south_connection, command_test_history_south_item, ` +
       `command_create_south, command_update_south, command_delete_south, command_create_or_update_south_items_from_csv, command_test_south_connection, command_test_south_item, ` +
-      `command_create_north, command_update_north, command_delete_north, command_test_north_connection ` +
+      `command_create_north, command_update_north, command_delete_north, command_test_north_connection, command_setpoint ` +
       `FROM ${REGISTRATIONS_TABLE};`;
     const results = this.database.prepare(query).all();
 
@@ -102,7 +103,7 @@ export default class OIAnalyticsRegistrationRepository {
       `command_create_history_query = ?, command_update_history_query = ?, command_delete_history_query = ?, ` +
       `command_create_or_update_history_items_from_csv = ?, command_test_history_north_connection = ?, command_test_history_south_connection = ?, command_test_history_south_item = ?, ` +
       `command_create_south = ?, command_update_south = ?, command_delete_south = ?, command_create_or_update_south_items_from_csv = ?, command_test_south_connection = ?, command_test_south_item = ?, ` +
-      `command_create_north = ?, command_update_north = ?, command_delete_north = ?, command_test_north_connection = ? ` +
+      `command_create_north = ?, command_update_north = ?, command_delete_north = ?, command_test_north_connection = ?, command_setpoint = ? ` +
       `WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
     this.database
       .prepare(query)
@@ -151,7 +152,8 @@ export default class OIAnalyticsRegistrationRepository {
         +command.commandPermissions.createNorth,
         +command.commandPermissions.updateNorth,
         +command.commandPermissions.deleteNorth,
-        +command.commandPermissions.testNorthConnection
+        +command.commandPermissions.testNorthConnection,
+        +command.commandPermissions.setpoint
       );
   }
 
@@ -180,7 +182,7 @@ export default class OIAnalyticsRegistrationRepository {
       `command_create_history_query = ?, command_update_history_query = ?, command_delete_history_query = ?, ` +
       `command_create_or_update_history_items_from_csv = ?, command_test_history_north_connection = ?, command_test_history_south_connection = ?, command_test_history_south_item = ?,` +
       `command_create_south = ?, command_update_south = ?, command_delete_south = ?, command_create_or_update_south_items_from_csv = ?, command_test_south_connection = ?, command_test_south_item = ?,` +
-      `command_create_north = ?, command_update_north = ?, command_delete_north = ?, command_test_north_connection = ? ` +
+      `command_create_north = ?, command_update_north = ?, command_delete_north = ?, command_test_north_connection = ?, command_setpoint = ? ` +
       `WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
     this.database
       .prepare(query)
@@ -223,7 +225,8 @@ export default class OIAnalyticsRegistrationRepository {
         +command.commandPermissions.createNorth,
         +command.commandPermissions.updateNorth,
         +command.commandPermissions.deleteNorth,
-        +command.commandPermissions.testNorthConnection
+        +command.commandPermissions.testNorthConnection,
+        +command.commandPermissions.setpoint
       );
   }
 
@@ -247,8 +250,8 @@ export default class OIAnalyticsRegistrationRepository {
       `command_test_history_north_connection, command_test_history_south_connection, command_test_history_south_item, ` +
       `command_create_south, command_update_south, command_delete_south, command_create_or_update_south_items_from_csv, ` +
       `command_test_south_connection, command_test_south_item, ` +
-      `command_create_north, command_update_north, command_delete_north, command_test_north_connection ` +
-      `) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
+      `command_create_north, command_update_north, command_delete_north, command_test_north_connection, command_setpoint ` +
+      `) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
     this.database
       .prepare(query)
       .run(
@@ -288,7 +291,8 @@ export default class OIAnalyticsRegistrationRepository {
         +command.commandPermissions.createNorth,
         +command.commandPermissions.updateNorth,
         +command.commandPermissions.deleteNorth,
-        +command.commandPermissions.testNorthConnection
+        +command.commandPermissions.testNorthConnection,
+        +command.commandPermissions.setpoint
       );
   }
 
@@ -343,7 +347,8 @@ export default class OIAnalyticsRegistrationRepository {
         createNorth: Boolean(result.command_create_north),
         updateNorth: Boolean(result.command_update_north),
         deleteNorth: Boolean(result.command_delete_north),
-        testNorthConnection: Boolean(result.command_test_north_connection)
+        testNorthConnection: Boolean(result.command_test_north_connection),
+        setpoint: Boolean(result.command_setpoint)
       }
     };
   }

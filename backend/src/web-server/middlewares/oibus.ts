@@ -13,6 +13,7 @@ import HomeMetricsService from '../../service/metrics/home-metrics.service';
 import UserService from '../../service/user.service';
 import CertificateService from '../../service/certificate.service';
 import LogService from '../../service/log.service';
+import TransformerService from '../../service/transformer.service';
 
 /**
  * OIBus middleware for Koa
@@ -28,6 +29,7 @@ const oibus = (
   oibusService: OIBusService,
   southService: SouthService,
   northService: NorthService,
+  transformerService: TransformerService,
   historyQueryService: HistoryQueryService,
   homeMetricsService: HomeMetricsService,
   encryptionService: EncryptionService,
@@ -45,6 +47,7 @@ const oibus = (
     ctx.app.oIBusService = oibusService;
     ctx.app.southService = southService;
     ctx.app.northService = northService;
+    ctx.app.transformerService = transformerService;
     ctx.app.historyQueryService = historyQueryService;
     ctx.app.homeMetricsService = homeMetricsService;
     ctx.app.encryptionService = encryptionService;

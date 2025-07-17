@@ -6,11 +6,13 @@ import { SouthConnectorService } from '../../services/south-connector.service';
 import { of } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
-import { FormComponent } from '../../shared/form/form.component';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { provideHttpClient } from '@angular/common/http';
-import { SouthConnectorDTO, SouthConnectorManifest } from '../../../../../backend/shared/model/south-connector.model';
+import { SouthConnectorDTO } from '../../../../../backend/shared/model/south-connector.model';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
+import testData from '../../../../../backend/src/tests/utils/test-data';
+import { OIBusObjectFormControlComponent } from '../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
+import { CertificateService } from '../../services/certificate.service';
 
 class EditSouthComponentTester extends ComponentTester<EditSouthComponent> {
   constructor() {
@@ -42,50 +44,34 @@ class EditSouthComponentTester extends ComponentTester<EditSouthComponent> {
   }
 
   get specificForm() {
-    return this.element(FormComponent);
+    return this.element(OIBusObjectFormControlComponent);
   }
 }
 describe('EditSouthComponent', () => {
   let tester: EditSouthComponentTester;
   let southConnectorService: jasmine.SpyObj<SouthConnectorService>;
   let scanModeService: jasmine.SpyObj<ScanModeService>;
+  let certificateService: jasmine.SpyObj<CertificateService>;
 
   beforeEach(() => {
     southConnectorService = createMock(SouthConnectorService);
     scanModeService = createMock(ScanModeService);
+    certificateService = createMock(CertificateService);
 
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
         provideHttpClient(),
         { provide: SouthConnectorService, useValue: southConnectorService },
-        { provide: ScanModeService, useValue: scanModeService }
+        { provide: ScanModeService, useValue: scanModeService },
+        { provide: CertificateService, useValue: certificateService }
       ]
     });
 
     scanModeService.list.and.returnValue(of([]));
+    certificateService.list.and.returnValue(of([]));
 
-    southConnectorService.getSouthConnectorTypeManifest.and.returnValue(
-      of({
-        id: 'mssql',
-        category: 'database',
-        name: 'SQL',
-        description: 'SQL description',
-        modes: {
-          subscription: false,
-          lastPoint: false,
-          lastFile: false,
-          history: true
-        },
-        items: {
-          scanMode: 'POLL',
-          settings: [],
-          schema: {} as unknown
-        },
-        settings: [],
-        schema: {} as unknown
-      } as SouthConnectorManifest)
-    );
+    southConnectorService.getSouthConnectorTypeManifest.and.returnValue(of(testData.south.manifest));
   });
 
   describe('create mode', () => {
@@ -97,7 +83,7 @@ describe('EditSouthComponent', () => {
     });
 
     it('should display general settings', () => {
-      expect(tester.title).toContainText('Create Microsoft SQL Server™ south connector');
+      expect(tester.title).toContainText('Create Folder scanner south connector');
       expect(tester.enabled).toBeChecked();
       expect(tester.description).toHaveValue('');
       expect(tester.specificForm).toBeDefined();
@@ -131,7 +117,7 @@ describe('EditSouthComponent', () => {
       expect(tester.enabled).toBeChecked();
       expect(tester.description).toHaveValue('My South connector description');
       expect(tester.specificForm).toBeDefined();
-      expect(tester.specificTitle).toContainText('Microsoft SQL Server™ settings');
+      expect(tester.specificTitle).toContainText('Folder scanner settings');
     });
   });
 });

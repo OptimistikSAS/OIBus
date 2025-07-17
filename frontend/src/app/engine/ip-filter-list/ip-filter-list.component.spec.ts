@@ -5,9 +5,10 @@ import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { ComponentTester, createMock, TestButton } from 'ngx-speculoos';
 import { of } from 'rxjs';
 import { IpFilterService } from '../../services/ip-filter.service';
-import { IPFilterDTO } from '../../../../../backend/shared/model/ip-filter.model';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
+import { provideModalTesting } from '../../shared/mock-modal.service.spec';
+import testData from '../../../../../backend/src/tests/utils/test-data';
 import { ModalService } from '../../shared/modal.service';
 
 class IpFilterListComponentTester extends ComponentTester<IpFilterListComponent> {
@@ -47,7 +48,7 @@ describe('IpFilterListComponent', () => {
   let notificationService: jasmine.SpyObj<NotificationService>;
   let modalService: jasmine.SpyObj<ModalService>;
 
-  let ipFilters: Array<IPFilterDTO>;
+  const ipFilters = testData.ipFilters.list;
 
   beforeEach(() => {
     ipFilterService = createMock(IpFilterService);
@@ -58,25 +59,13 @@ describe('IpFilterListComponent', () => {
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
+        provideModalTesting(),
         { provide: IpFilterService, useValue: ipFilterService },
         { provide: ConfirmationService, useValue: confirmationService },
         { provide: NotificationService, useValue: notificationService },
         { provide: ModalService, useValue: modalService }
       ]
     });
-
-    ipFilters = [
-      {
-        id: 'id1',
-        address: 'http://localhost',
-        description: 'My IP filter 1'
-      },
-      {
-        id: 'id2',
-        address: 'http://localhost',
-        description: 'My IP filter 2'
-      }
-    ];
 
     tester = new IpFilterListComponentTester();
 
@@ -86,7 +75,7 @@ describe('IpFilterListComponent', () => {
         prepareForEdition: jasmine.createSpy(),
         canDismiss: jasmine.createSpy().and.returnValue(true)
       },
-      result: of({})
+      result: of({ address: 'new-address' })
     } as any);
   });
 
@@ -100,8 +89,22 @@ describe('IpFilterListComponent', () => {
       expect(tester.title).toContainText('IP filters');
       expect(tester.ipFilters.length).toEqual(2);
       expect(tester.ipFilters[0].elements('td').length).toEqual(3);
-      expect(tester.ipFilters[1].elements('td')[0]).toContainText('http://localhost');
-      expect(tester.ipFilters[1].elements('td')[1]).toContainText('My IP filter 2');
+      expect(tester.ipFilters[1].elements('td')[0]).toContainText('*');
+      expect(tester.ipFilters[1].elements('td')[1]).toContainText('All ips');
+    });
+
+    it('should delete an ip filter', () => {
+      ipFilterService.list.calls.reset();
+
+      confirmationService.confirm.and.returnValue(of(undefined));
+      ipFilterService.delete.and.returnValue(of(undefined));
+      tester.deleteButtons[0].click();
+
+      // confirm, delete, notify and refresh
+      expect(confirmationService.confirm).toHaveBeenCalled();
+      expect(ipFilterService.delete).toHaveBeenCalledWith('ipFilterId1');
+      expect(ipFilterService.list).toHaveBeenCalledTimes(1);
+      expect(notificationService.success).toHaveBeenCalledWith('engine.ip-filter.deleted', { address: '192.168.1.1' });
     });
 
     it('should open edit modal with beforeDismiss configuration', () => {
@@ -113,20 +116,20 @@ describe('IpFilterListComponent', () => {
           beforeDismiss: jasmine.any(Function)
         })
       );
+      expect(ipFilterService.list).toHaveBeenCalledTimes(2);
+      expect(notificationService.success).toHaveBeenCalledWith('engine.ip-filter.updated', { address: 'new-address' });
     });
 
     it('should open add modal with beforeDismiss configuration', () => {
-      const addButton = tester.element('#add-ip-filter');
-
-      expect(addButton).toBeTruthy();
-
-      (addButton as TestButton)!.click();
+      tester.addIpFilter.click();
       expect(modalService.open).toHaveBeenCalledWith(
         jasmine.any(Function),
         jasmine.objectContaining({
           beforeDismiss: jasmine.any(Function)
         })
       );
+      expect(ipFilterService.list).toHaveBeenCalledTimes(2);
+      expect(notificationService.success).toHaveBeenCalledWith('engine.ip-filter.created', { address: 'new-address' });
     });
   });
 

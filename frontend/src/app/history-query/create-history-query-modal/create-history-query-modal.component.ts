@@ -1,23 +1,30 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
-import { formDirectives } from '../../shared/form-directives';
 
 import { NorthConnectorLightDTO, NorthType } from '../../../../../backend/shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { SouthConnectorLightDTO, SouthType } from '../../../../../backend/shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { combineLatest } from 'rxjs';
-import { NonNullableFormBuilder, Validators } from '@angular/forms';
+import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
 import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
+import { OI_FORM_VALIDATION_DIRECTIVES } from '../../shared/form/form-validation-directives';
 
 @Component({
   selector: 'oib-create-history-query-modal',
   templateUrl: './create-history-query-modal.component.html',
   styleUrl: './create-history-query-modal.component.scss',
-  imports: [...formDirectives, TranslateDirective, SaveButtonComponent, OIBusSouthTypeEnumPipe, OIBusNorthTypeEnumPipe]
+  imports: [
+    ReactiveFormsModule,
+    TranslateDirective,
+    OIBusSouthTypeEnumPipe,
+    OIBusNorthTypeEnumPipe,
+    OI_FORM_VALIDATION_DIRECTIVES,
+    SaveButtonComponent
+  ]
 })
 export class CreateHistoryQueryModalComponent implements OnInit {
   private modal = inject(NgbActiveModal);

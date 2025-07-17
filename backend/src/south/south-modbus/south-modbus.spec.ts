@@ -1,8 +1,6 @@
 import SouthModbus from './south-modbus';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import EncryptionService from '../../service/encryption.service';
-import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import net from 'node:net';
 import Stream from 'node:stream';
 import {
@@ -19,8 +17,7 @@ import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/sou
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import testData from '../../tests/utils/test-data';
-import { flushPromises } from '../../tests/utils/test-utils';
-import { mockBaseFolders } from '../../tests/utils/test-utils';
+import { flushPromises, mockBaseFolders } from '../../tests/utils/test-utils';
 
 jest.mock('node:fs/promises');
 jest.mock('node:net');
@@ -40,7 +37,6 @@ jest.mock('jsmodbus', () => ({
 }));
 jest.mock('../../service/utils');
 
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
@@ -188,7 +184,6 @@ describe('South Modbus', () => {
     south = new SouthModbus(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,
@@ -548,7 +543,6 @@ describe('SouthModbus test connection', () => {
     south = new SouthModbus(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,
@@ -593,7 +587,6 @@ describe('SouthModbus test connection', () => {
     south = new SouthModbus(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,
@@ -620,7 +613,6 @@ describe('SouthModbus test connection', () => {
     south = new SouthModbus(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,
@@ -669,7 +661,6 @@ describe('SouthModbus test connection', () => {
     south = new SouthModbus(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,
