@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.6.3](https://github.com/OptimistikSAS/OIBus/compare/v3.6.2...v3.6.3) (2025-07-17)
+
+
+### Bug Fixes
+
+* add missing provideHttpClientTesting in tests ([b4a5cac](https://github.com/OptimistikSAS/OIBus/commit/b4a5cac1b1f6b490793ad4a3ff6043c08f6ba4aa))
+* **frontend:** add enable/disable all permissions buttons for OIBus registration ([afb0cb5](https://github.com/OptimistikSAS/OIBus/commit/afb0cb58e29ddf001984a783a0d92506716ec5f9))
+* **frontend:** implemented CSV import modal, south-item component and validation tests ([2ef3089](https://github.com/OptimistikSAS/OIBus/commit/2ef30898fe96dc121bd4cdbd903fdf7303c87ce8))
+* **frontend:** pause/resume functionality for autoloading logs ([f242758](https://github.com/OptimistikSAS/OIBus/commit/f242758fdecc44839c32d2b91b3dfa0ace14a92c))
+* **opcua:** choose timestamp in DA mode ([cb5a0c8](https://github.com/OptimistikSAS/OIBus/commit/cb5a0c82787c49bcffeec2e13e7863df8cba7f2e))
+
 ## [3.6.2](https://github.com/OptimistikSAS/OIBus/compare/v3.6.1...v3.6.2) (2025-06-25)
 
 
