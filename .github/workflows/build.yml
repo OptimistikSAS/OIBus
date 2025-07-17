@@ -34,8 +34,8 @@ jobs:
         if: ${{ matrix.config['platform'] == 'win-x64' }}
         shell: pwsh
         run: |
-          Invoke-WebRequest -Uri https://jrsoftware.org/download.php/is.exe -OutFile D:\\is.exe
-          Start-Process -FilePath D:\\is.exe -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART" -Wait
+          Invoke-WebRequest -Uri https://jrsoftware.org/download.php/is.exe -OutFile C:\\is.exe
+          Start-Process -FilePath C:\\is.exe -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART" -Wait
 
       - name: Get release info
         id: release_info
