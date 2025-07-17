@@ -4,6 +4,8 @@
 
 import { Timezone } from './types';
 
+import { SharedConnection } from './engine.model';
+
 export const SOUTH_A_D_S_SETTINGS_ENUM_AS_TEXTS = ['text', 'integer'] as const;
 export type SouthADSSettingsEnumAsText = (typeof SOUTH_A_D_S_SETTINGS_ENUM_AS_TEXTS)[number];
 
@@ -193,13 +195,14 @@ export type SouthOPCItemSettingsAggregate = (typeof SOUTH_O_P_C_ITEM_SETTINGS_AG
 export const SOUTH_O_P_C_ITEM_SETTINGS_RESAMPLINGS = ['none', '1s', '10s', '30s', '1min', '1h', '1d'] as const;
 export type SouthOPCItemSettingsResampling = (typeof SOUTH_O_P_C_ITEM_SETTINGS_RESAMPLINGS)[number];
 
-export const SOUTH_O_P_C_U_A_SETTINGS_AUTHENTICATION_TYPES = ['none', 'basic', 'cert'] as const;
-export type SouthOPCUASettingsAuthenticationType = (typeof SOUTH_O_P_C_U_A_SETTINGS_AUTHENTICATION_TYPES)[number];
+export const SOUTH_O_P_C_U_A_SETTINGS_CONNECTION_SETTINGS_AUTHENTICATION_TYPES = ['none', 'basic', 'cert'] as const;
+export type SouthOPCUASettingsConnectionSettingsAuthenticationType =
+  (typeof SOUTH_O_P_C_U_A_SETTINGS_CONNECTION_SETTINGS_AUTHENTICATION_TYPES)[number];
 
-export const SOUTH_O_P_C_U_A_SETTINGS_SECURITY_MODES = ['none', 'sign', 'sign-and-encrypt'] as const;
-export type SouthOPCUASettingsSecurityMode = (typeof SOUTH_O_P_C_U_A_SETTINGS_SECURITY_MODES)[number];
+export const SOUTH_O_P_C_U_A_SETTINGS_CONNECTION_SETTINGS_SECURITY_MODES = ['none', 'sign', 'sign-and-encrypt'] as const;
+export type SouthOPCUASettingsConnectionSettingsSecurityMode = (typeof SOUTH_O_P_C_U_A_SETTINGS_CONNECTION_SETTINGS_SECURITY_MODES)[number];
 
-export const SOUTH_O_P_C_U_A_SETTINGS_SECURITY_POLICYS = [
+export const SOUTH_O_P_C_U_A_SETTINGS_CONNECTION_SETTINGS_SECURITY_POLICYS = [
   'none',
   'basic128',
   'basic192',
@@ -210,7 +213,8 @@ export const SOUTH_O_P_C_U_A_SETTINGS_SECURITY_POLICYS = [
   'pub-sub-aes-128-ctr',
   'pub-sub-aes-256-ctr'
 ] as const;
-export type SouthOPCUASettingsSecurityPolicy = (typeof SOUTH_O_P_C_U_A_SETTINGS_SECURITY_POLICYS)[number];
+export type SouthOPCUASettingsConnectionSettingsSecurityPolicy =
+  (typeof SOUTH_O_P_C_U_A_SETTINGS_CONNECTION_SETTINGS_SECURITY_POLICYS)[number];
 
 export const SOUTH_O_P_C_U_A_ITEM_SETTINGS_HA_MODE_AGGREGATES = ['raw', 'average', 'minimum', 'maximum', 'count'] as const;
 export type SouthOPCUAItemSettingsHaModeAggregate = (typeof SOUTH_O_P_C_U_A_ITEM_SETTINGS_HA_MODE_AGGREGATES)[number];
@@ -276,7 +280,7 @@ export type SouthSFTPSettingsAuthentication = (typeof SOUTH_S_F_T_P_SETTINGS_AUT
 export const SOUTH_F_T_P_SETTINGS_AUTHENTICATIONS = ['none', 'password'] as const;
 export type SouthFTPSettingsAuthentication = (typeof SOUTH_F_T_P_SETTINGS_AUTHENTICATIONS)[number];
 
-export const SOUTH_S_Q_LITE_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'] as const;
+export const SOUTH_S_Q_LITE_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'] as const;
 export type SouthSQLiteItemSettingsDateTimeFieldsType = (typeof SOUTH_S_Q_LITE_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
 
 export const SOUTH_S_Q_LITE_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv'] as const;
@@ -369,12 +373,20 @@ export interface SouthOPCUASettingsThrottling {
   maxInstantPerItem: boolean;
 }
 
-export interface SouthOPCUASettingsAuthentication {
-  type: SouthOPCUASettingsAuthenticationType;
+export interface SouthOPCUASettingsConnectionSettingsAuthentication {
+  type: SouthOPCUASettingsConnectionSettingsAuthenticationType;
   username?: string;
   password?: string | null;
   certFilePath?: string;
   keyFilePath?: string;
+}
+
+export interface SouthOPCUASettingsConnectionSettings {
+  url: string;
+  keepSessionAlive: boolean;
+  securityMode: SouthOPCUASettingsConnectionSettingsSecurityMode;
+  securityPolicy?: SouthOPCUASettingsConnectionSettingsSecurityPolicy;
+  authentication: SouthOPCUASettingsConnectionSettingsAuthentication;
 }
 
 export interface SouthOracleSettingsThrottling {
@@ -506,14 +518,12 @@ export interface SouthOPCSettings {
 
 export interface SouthOPCUASettings {
   throttling: SouthOPCUASettingsThrottling;
-  sharedConnection: boolean;
-  url: string;
-  keepSessionAlive: boolean;
   readTimeout: number;
+  maxNumberOfMessages: number;
+  flushMessageTimeout: number;
+  sharedConnection: SharedConnection | null;
   retryInterval: number;
-  securityMode: SouthOPCUASettingsSecurityMode;
-  securityPolicy?: SouthOPCUASettingsSecurityPolicy;
-  authentication: SouthOPCUASettingsAuthentication;
+  connectionSettings?: SouthOPCUASettingsConnectionSettings;
 }
 
 export interface SouthOracleSettings {

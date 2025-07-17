@@ -67,6 +67,9 @@
               </ng-template>
               <div class="row" formGroupName="settings">
                 <oib-oibus-object-form-control
+                  [currentConnector]="{ type: southType, id: southConnector?.id, connectorType: 'south' }"
+                  [southConnectors]="southConnectors"
+                  [northConnectors]="northConnectors"
                   [scanModes]="scanModes"
                   [certificates]="certificates"
                   [group]="form.controls.settings"

@@ -488,16 +488,20 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         readDelay: 200,
         overlap: 10
       },
-      sharedConnection: false,
-      url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
-      retryInterval: 10000,
+      sharedConnection: null,
       readTimeout: 15000,
-      authentication: {
-        type: 'none'
+      retryInterval: 10000,
+      connectionSettings: {
+        url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
+        authentication: {
+          type: 'none'
+        },
+        securityMode: 'none',
+        securityPolicy: 'none',
+        keepSessionAlive: false
       },
-      securityMode: 'none',
-      securityPolicy: 'none',
-      keepSessionAlive: false
+      flushMessageTimeout: 1000,
+      maxNumberOfMessages: 1000
     },
     items: [
       {

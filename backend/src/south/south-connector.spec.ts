@@ -1,6 +1,6 @@
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
-
+import nodeOPCUAMock from '../tests/__mocks__/node-opcua.mock';
 import pino from 'pino';
 import { CronJob } from 'cron';
 import { delay, generateIntervals, validateCronExpression } from '../service/utils';
@@ -8,6 +8,8 @@ import { OIBusTimeValue } from '../../shared/model/engine.model';
 import testData from '../tests/utils/test-data';
 import SouthFolderScanner from './south-folder-scanner/south-folder-scanner';
 import {
+  SouthADSItemSettings,
+  SouthADSSettings,
   SouthFolderScannerItemSettings,
   SouthFolderScannerSettings,
   SouthMSSQLItemSettings,
@@ -25,37 +27,20 @@ import SouthCacheRepositoryMock from '../tests/__mocks__/repository/cache/south-
 import SouthCacheServiceMock from '../tests/__mocks__/service/south-cache-service.mock';
 import { flushPromises, mockBaseFolders } from '../tests/utils/test-utils';
 import SouthOPCUA from './south-opcua/south-opcua';
-import ConnectionService from '../service/connection.service';
-import ConnectionServiceMock from '../tests/__mocks__/service/connection-service.mock';
 import SouthMSSQL from './south-mssql/south-mssql';
 import { DateTime } from 'luxon';
 import { Instant } from '../model/types';
+import { ScanMode } from '../model/scan-mode.model';
+import SouthADS from './south-ads/south-ads';
 
 // Mock fs
 jest.mock('node:fs/promises');
 jest.mock('cron');
 
 // Mock node-opcua-client
-jest.mock('node-opcua-client', () => ({
-  OPCUAClient: { createSession: jest.fn(() => ({})) },
-  ClientSubscription: { create: jest.fn() },
-  ClientMonitoredItem: { create: jest.fn() },
-  MessageSecurityMode: { None: 1 },
-  DataType: jest.requireActual('node-opcua-client').DataType,
-  StatusCodes: jest.requireActual('node-opcua-client').StatusCodes,
-  SecurityPolicy: jest.requireActual('node-opcua-client').SecurityPolicy,
-  AttributeIds: jest.requireActual('node-opcua-client').AttributeIds,
-  UserTokenType: jest.requireActual('node-opcua-client').UserTokenType,
-  TimestampsToReturn: jest.requireActual('node-opcua-client').TimestampsToReturn,
-  AggregateFunction: jest.requireActual('node-opcua-client').AggregateFunction,
-  ReadRawModifiedDetails: jest.fn(() => ({})),
-  HistoryReadRequest: jest.requireActual('node-opcua-client').HistoryReadRequest,
-  ReadProcessedDetails: jest.fn(() => ({}))
-}));
-jest.mock('node-opcua-certificate-manager', () => ({ OPCUACertificateManager: jest.fn(() => ({})) }));
-
-// Mock services
+jest.mock('node-opcua', () => nodeOPCUAMock);
 jest.mock('../service/utils');
+jest.mock('../service/utils-opcua');
 
 jest.mock('../service/encryption.service', () => ({
   encryptionService: new EncryptionServiceMock('', '')
@@ -64,7 +49,6 @@ jest.mock('../service/encryption.service', () => ({
 const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
-const connectionService: ConnectionService = new ConnectionServiceMock();
 const southCacheService = new SouthCacheServiceMock();
 
 jest.mock(
@@ -114,6 +98,8 @@ describe('SouthConnector with file query', () => {
     south.run = jest.fn();
 
     await south.onItemChange();
+    await south.onItemChange();
+    expect(validateCronExpression).toHaveBeenCalledTimes(2);
     south.addToQueue(testData.scanMode.list[0]);
     expect(south.run).toHaveBeenCalledWith(
       testData.scanMode.list[0].id,
@@ -135,6 +121,14 @@ describe('SouthConnector with file query', () => {
 
     await south.onItemChange();
     south.addToQueue(testData.scanMode.list[0]);
+    expect(south.run).not.toHaveBeenCalled();
+  });
+
+  it('should properly add to queue a new task and not trigger if not the only task', async () => {
+    south.run = jest.fn();
+    south['taskJobQueue'].push(testData.scanMode.list[0]);
+
+    south.addToQueue(testData.scanMode.list[1]);
     expect(south.run).not.toHaveBeenCalled();
   });
 
@@ -169,7 +163,8 @@ describe('SouthConnector with file query', () => {
     await south.stop();
     expect(anotherLogger.info).toHaveBeenCalledTimes(1);
     expect(logger.info).not.toHaveBeenCalled();
-    south.queriesSubscription();
+    expect(south.queriesSubscription()).toBeFalsy();
+    expect(south.sharableConnection()).toBeFalsy();
   });
 
   it('should reset cache', async () => {
@@ -194,7 +189,7 @@ describe('SouthConnector with file query', () => {
 
   it('should properly update cron', async () => {
     south.createCronJob(testData.scanMode.list[0]);
-    await south.updateScanMode(testData.scanMode.list[0]);
+    south.updateScanMode(testData.scanMode.list[0]);
     expect(logger.debug).toHaveBeenCalledWith(
       `Creating South cron job for scan mode "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron})`
     );
@@ -326,7 +321,6 @@ describe('SouthConnector with history and max instant per item', () => {
 
     configuration = JSON.parse(JSON.stringify(testData.south.list[2]));
     configuration.settings.throttling.maxInstantPerItem = true;
-    configuration.settings.sharedConnection = true;
     (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
     (southConnectorRepository.findAllItemsForSouth as jest.Mock).mockReturnValue(configuration.items);
     (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
@@ -338,19 +332,14 @@ describe('SouthConnector with history and max instant per item', () => {
       southCacheRepository,
       scanModeRepository,
       logger,
-      mockBaseFolders(testData.south.list[2].id),
-      connectionService
+      mockBaseFolders(testData.south.list[2].id)
     );
 
     await south.start();
   });
 
-  it('should delegate connection', async () => {
-    expect(connectionService.create).toHaveBeenCalled();
-  });
-
   it('should manage history query with several intervals with max instant per item', async () => {
-    const historyStartTime = '2019-02-02T02:02:02.222Z';
+    const historyStartTime = '2020-02-02T02:02:02.222Z';
     const historyEndTime = '2023-02-02T02:02:02.222Z';
     const intervals = [
       { start: '2020-02-02T02:02:02.222Z', end: '2021-02-02T02:02:02.222Z' },
@@ -361,23 +350,13 @@ describe('SouthConnector with history and max instant per item', () => {
       .minus({ milliseconds: configuration.settings.throttling.overlap })
       .toUTC()
       .toISO();
-    (generateIntervals as jest.Mock).mockImplementation(
-      function (this: { generateIntervals: jest.Mock }) {
-        // first return intervals between: startTimeFromCache - historyEndTime (intervals needed to be done)
-        if (this.generateIntervals.mock.calls.length % 2 != 0) {
-          return intervals;
-        }
-        // then return the intervals between: historyStartTime - startTimeFromCache (intervals already done)
-        else {
-          return [{ start: '2019-02-02T02:02:02.222Z', end: '2020-02-02T02:02:02.222Z' }];
-        }
-      }.bind({ generateIntervals: generateIntervals as jest.Mock })
-    );
+    (generateIntervals as jest.Mock).mockReturnValue({ intervals, numberOfIntervalsDone: 1 });
     south.historyQuery = jest
       .fn()
       .mockReturnValueOnce('2021-02-02T02:02:02.222Z')
       .mockReturnValueOnce('2022-02-02T02:02:02.222Z')
-      .mockReturnValueOnce('2023-02-02T02:02:02.222Z');
+      .mockReturnValueOnce('2023-02-02T02:02:02.222Z')
+      .mockReturnValueOnce(null);
 
     await south.historyQueryHandler(
       configuration.items as Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>,
@@ -392,15 +371,15 @@ describe('SouthConnector with history and max instant per item', () => {
       south.settings.settings.throttling.overlap
     );
 
-    expect(generateIntervals).toHaveBeenCalledWith(startTimeFromCache, historyEndTime, south.settings.settings.throttling.maxReadInterval);
     expect(generateIntervals).toHaveBeenCalledWith(
       historyStartTime,
       startTimeFromCache,
+      historyEndTime,
       south.settings.settings.throttling.maxReadInterval
     );
-    expect(generateIntervals).toHaveBeenCalledTimes(4);
-    expect(south.historyQuery).toHaveBeenCalledTimes(6);
-    expect(delay).toHaveBeenCalledTimes(5);
+    expect(generateIntervals).toHaveBeenCalledTimes(2);
+    expect(south.historyQuery).toHaveBeenCalledTimes(4);
+    expect(delay).toHaveBeenCalledTimes(3);
     expect(southCacheService.saveSouthCache).toHaveBeenCalledTimes(3);
     expect(southCacheService.saveSouthCache).toHaveBeenCalledWith({
       scanModeId: testData.scanMode.list[0].id,
@@ -418,132 +397,7 @@ describe('SouthConnector with history and max instant per item', () => {
       scanModeId: testData.scanMode.list[0].id,
       maxInstant: '2023-02-02T02:02:02.222Z',
       southId: configuration.id,
-      itemId: configuration.items[0].id
-    });
-  });
-
-  it('should manage history query with 2 intervals with max instant per item', async () => {
-    const intervals = [
-      { start: '2020-02-02T02:02:02.222Z', end: '2021-02-02T02:02:02.222Z' },
-      { start: '2022-02-02T02:02:02.222Z', end: '2023-02-02T02:02:02.222Z' }
-    ];
-    (generateIntervals as jest.Mock).mockReturnValue(intervals);
-    south.historyQuery = jest.fn().mockReturnValueOnce('2021-02-02T02:02:02.222Z').mockReturnValueOnce('2023-02-02T02:02:02.222Z');
-
-    await south.historyQueryHandler(
-      configuration.items,
-      '2020-02-02T02:02:02.222Z',
-      '2023-02-02T02:02:02.222Z',
-      testData.scanMode.list[0].id,
-      {
-        readDelay: south.settings.settings.throttling.readDelay,
-        maxReadInterval: south.settings.settings.throttling.maxReadInterval
-      },
-      south.settings.settings.throttling.maxInstantPerItem,
-      south.settings.settings.throttling.overlap
-    );
-    expect(generateIntervals).toHaveBeenCalledWith(
-      DateTime.fromISO(testData.constants.dates.FAKE_NOW)
-        .minus({ milliseconds: south.settings.settings.throttling.overlap })
-        .toUTC()
-        .toISO(),
-      '2023-02-02T02:02:02.222Z',
-      south.settings.settings.throttling.maxReadInterval
-    );
-    expect(logger.trace).toHaveBeenCalledWith(
-      `Interval split in ${intervals.length} sub-intervals: \r\n` +
-        `[${JSON.stringify(intervals[0], null, 2)}\r\n` +
-        `${JSON.stringify(intervals[1], null, 2)}]`
-    );
-    expect(generateIntervals).toHaveBeenCalledTimes(4);
-    expect(south.historyQuery).toHaveBeenCalledTimes(4);
-    expect(delay).toHaveBeenCalledTimes(3);
-    expect(southCacheService.saveSouthCache).toHaveBeenCalledTimes(2);
-    expect(southCacheService.saveSouthCache).toHaveBeenCalledWith({
-      scanModeId: testData.scanMode.list[0].id,
-      maxInstant: '2021-02-02T02:02:02.222Z',
-      southId: configuration.id,
-      itemId: configuration.items[0].id
-    });
-    expect(southCacheService.saveSouthCache).toHaveBeenCalledWith({
-      scanModeId: testData.scanMode.list[0].id,
-      maxInstant: '2023-02-02T02:02:02.222Z',
-      southId: configuration.id,
-      itemId: configuration.items[0].id
-    });
-  });
-
-  it('should manage history query with 1 interval with max instant per item', async () => {
-    const intervals = [{ start: '2020-02-02T02:02:02.222Z', end: '2023-02-02T02:02:02.222Z' }];
-    (generateIntervals as jest.Mock).mockReturnValue(intervals);
-    south.historyQuery = jest.fn().mockReturnValueOnce('2023-02-02T02:02:02.222Z');
-
-    await south.historyQueryHandler(
-      configuration.items,
-      '2020-02-02T02:02:02.222Z',
-      '2023-02-02T02:02:02.222Z',
-      testData.scanMode.list[0].id,
-      {
-        readDelay: south.settings.settings.throttling.readDelay,
-        maxReadInterval: south.settings.settings.throttling.maxReadInterval
-      },
-      south.settings.settings.throttling.maxInstantPerItem,
-      south.settings.settings.throttling.overlap
-    );
-    expect(generateIntervals).toHaveBeenCalledWith(
-      DateTime.fromISO(testData.constants.dates.FAKE_NOW)
-        .minus({ milliseconds: south.settings.settings.throttling.overlap })
-        .toUTC()
-        .toISO(),
-      '2023-02-02T02:02:02.222Z',
-      south.settings.settings.throttling.maxReadInterval
-    );
-    expect(logger.trace).toHaveBeenCalledWith(`Querying interval: ${JSON.stringify(intervals[0], null, 2)}`);
-    expect(south.historyQuery).toHaveBeenCalledTimes(2);
-    expect(delay).toHaveBeenCalledTimes(1);
-    expect(southCacheService.saveSouthCache).toHaveBeenCalledTimes(1);
-    expect(southCacheService.saveSouthCache).toHaveBeenCalledWith({
-      scanModeId: testData.scanMode.list[0].id,
-      maxInstant: '2023-02-02T02:02:02.222Z',
-      southId: configuration.id,
-      itemId: configuration.items[0].id
-    });
-  });
-
-  it('should manage history query with 1 interval with 1 item and max instant per item', async () => {
-    const intervals = [{ start: '2020-02-02T02:02:02.222Z', end: '2023-02-02T02:02:02.222Z' }];
-    (generateIntervals as jest.Mock).mockReturnValue(intervals);
-    south.historyQuery = jest.fn().mockReturnValueOnce('2023-02-02T02:02:02.222Z');
-
-    await south.historyQueryHandler(
-      [configuration.items[0]],
-      '2020-02-02T02:02:02.222Z',
-      '2023-02-02T02:02:02.222Z',
-      testData.scanMode.list[0].id,
-      {
-        readDelay: south.settings.settings.throttling.readDelay,
-        maxReadInterval: south.settings.settings.throttling.maxReadInterval
-      },
-      south.settings.settings.throttling.maxInstantPerItem,
-      south.settings.settings.throttling.overlap
-    );
-    expect(generateIntervals).toHaveBeenCalledWith(
-      DateTime.fromISO(testData.constants.dates.FAKE_NOW)
-        .minus({ milliseconds: south.settings.settings.throttling.overlap })
-        .toUTC()
-        .toISO(),
-      '2023-02-02T02:02:02.222Z',
-      south.settings.settings.throttling.maxReadInterval
-    );
-    expect(logger.trace).toHaveBeenCalledWith(`Querying interval: ${JSON.stringify(intervals[0], null, 2)}`);
-    expect(south.historyQuery).toHaveBeenCalledTimes(1);
-    expect(delay).not.toHaveBeenCalled();
-    expect(southCacheService.saveSouthCache).toHaveBeenCalledTimes(1);
-    expect(southCacheService.saveSouthCache).toHaveBeenCalledWith({
-      scanModeId: testData.scanMode.list[0].id,
-      maxInstant: '2023-02-02T02:02:02.222Z',
-      southId: configuration.id,
-      itemId: configuration.items[0].id
+      itemId: configuration.items[3].id
     });
   });
 
@@ -553,8 +407,9 @@ describe('SouthConnector with history and max instant per item', () => {
       { start: '2021-02-02T02:02:02.222Z', end: '2022-02-02T02:02:02.222Z' },
       { start: '2022-02-02T02:02:02.222Z', end: '2023-02-02T02:02:02.222Z' }
     ];
-    (generateIntervals as jest.Mock).mockReturnValueOnce(intervals);
+    (generateIntervals as jest.Mock).mockReturnValueOnce({ intervals, numberOfIntervalsDone: 0 });
 
+    south.disconnect = jest.fn();
     south.historyQuery = jest.fn(
       () =>
         new Promise<string>(resolve => {
@@ -592,6 +447,40 @@ describe('SouthConnector with history and max instant per item', () => {
     );
     expect(south.historyQuery).toHaveBeenCalledTimes(1);
   });
+
+  it('should log interval query', () => {
+    const intervals3 = [
+      { start: '2020-02-02T02:02:02.222Z', end: '2021-02-02T02:02:02.222Z' },
+      { start: '2021-02-02T02:02:02.222Z', end: '2022-02-02T02:02:02.222Z' },
+      { start: '2022-02-02T02:02:02.222Z', end: '2023-02-02T02:02:02.222Z' }
+    ];
+    const intervals2 = [
+      { start: '2020-02-02T02:02:02.222Z', end: '2021-02-02T02:02:02.222Z' },
+      { start: '2021-02-02T02:02:02.222Z', end: '2022-02-02T02:02:02.222Z' }
+    ];
+    const intervals1 = [{ start: '2020-02-02T02:02:02.222Z', end: '2021-02-02T02:02:02.222Z' }];
+    south['logIntervals'](intervals3);
+    expect(logger.trace).toHaveBeenCalledWith(
+      `Interval split in ${intervals3.length} sub-intervals: \r\n` +
+        `[${JSON.stringify(intervals3[0], null, 2)}\r\n` +
+        `${JSON.stringify(intervals3[1], null, 2)}\r\n` +
+        '...\r\n' +
+        `${JSON.stringify(intervals3[intervals3.length - 1], null, 2)}]`
+    );
+    south['logIntervals'](intervals2);
+    expect(logger.trace).toHaveBeenCalledWith(
+      `Interval split in ${intervals2.length} sub-intervals: \r\n` +
+        `[${JSON.stringify(intervals2[0], null, 2)}\r\n` +
+        `${JSON.stringify(intervals2[1], null, 2)}]`
+    );
+    south['logIntervals'](intervals1);
+    expect(logger.trace).toHaveBeenCalledWith(`Querying interval: ${JSON.stringify(intervals1[0], null, 2)}`);
+  });
+
+  it('should calculate interval progress', () => {
+    expect(south['calculateIntervalProgress'](12, 12)).toEqual(1);
+    expect(south['calculateIntervalProgress'](12, 3)).toEqual(0.25);
+  });
 });
 
 describe('SouthConnector with history and subscription', () => {
@@ -619,8 +508,7 @@ describe('SouthConnector with history and subscription', () => {
       southCacheRepository,
       scanModeRepository,
       logger,
-      mockBaseFolders(testData.scanMode.list[0].id),
-      connectionService
+      mockBaseFolders(testData.scanMode.list[0].id)
     );
 
     south.connect = jest.fn();
@@ -725,7 +613,7 @@ describe('SouthConnector with history and subscription', () => {
       { start: '2021-02-02T02:02:02.222Z', end: '2022-02-02T02:02:02.222Z' },
       { start: '2022-02-02T02:02:02.222Z', end: '2023-02-02T02:02:02.222Z' }
     ];
-    (generateIntervals as jest.Mock).mockReturnValueOnce(intervals);
+    (generateIntervals as jest.Mock).mockReturnValueOnce({ intervals, numberOfIntervalsDone: 0 });
     south.historyQuery = jest
       .fn()
       .mockReturnValueOnce('2021-02-02T02:02:02.222Z')
@@ -751,19 +639,13 @@ describe('SouthConnector with history and subscription', () => {
       south.settings.settings.throttling.overlap
     );
     expect(generateIntervals).toHaveBeenCalledWith(
+      '2020-02-02T02:02:02.222Z',
       DateTime.fromISO(testData.constants.dates.FAKE_NOW)
         .minus({ milliseconds: south.settings.settings.throttling.overlap })
         .toUTC()
         .toISO(),
       '2023-02-02T02:02:02.222Z',
       south.settings.settings.throttling.maxReadInterval
-    );
-    expect(logger.trace).toHaveBeenCalledWith(
-      `Interval split in ${intervals.length} sub-intervals: \r\n` +
-        `[${JSON.stringify(intervals[0], null, 2)}\r\n` +
-        `${JSON.stringify(intervals[1], null, 2)}\r\n` +
-        '...\r\n' +
-        `${JSON.stringify(intervals[intervals.length - 1], null, 2)}]`
     );
     expect(south.historyQuery).toHaveBeenCalledTimes(3);
     expect(delay).toHaveBeenCalledTimes(2);
@@ -785,107 +667,13 @@ describe('SouthConnector with history and subscription', () => {
     });
   });
 
-  it('should manage history query with 2 intervals', async () => {
-    const intervals = [
-      { start: '2020-02-02T02:02:02.222Z', end: '2021-02-02T02:02:02.222Z' },
-      { start: '2022-02-02T02:02:02.222Z', end: '2023-02-02T02:02:02.222Z' }
-    ];
-    (generateIntervals as jest.Mock).mockReturnValueOnce(intervals);
-    south.historyQuery = jest.fn().mockReturnValueOnce('2021-02-02T02:02:02.222Z').mockReturnValueOnce('2023-02-02T02:02:02.222Z');
-    southCacheService.getSouthCache.mockReturnValueOnce({
-      scanModeId: 'id1',
-      maxInstant: testData.constants.dates.FAKE_NOW,
-      southId: testData.south.list[2].id
-    });
-
-    await south.historyQueryHandler(
-      testData.south.list[2].items as Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>,
-      '2020-02-02T02:02:02.222Z',
-      '2023-02-02T02:02:02.222Z',
-      'scanModeId1',
-      {
-        readDelay: south.settings.settings.throttling.readDelay,
-        maxReadInterval: south.settings.settings.throttling.maxReadInterval
-      },
-      south.settings.settings.throttling.maxInstantPerItem,
-      south.settings.settings.throttling.overlap
-    );
-    expect(generateIntervals).toHaveBeenCalledWith(
-      DateTime.fromISO(testData.constants.dates.FAKE_NOW)
-        .minus({ milliseconds: south.settings.settings.throttling.overlap })
-        .toUTC()
-        .toISO(),
-      '2023-02-02T02:02:02.222Z',
-      south.settings.settings.throttling.maxReadInterval
-    );
-    expect(logger.trace).toHaveBeenCalledWith(
-      `Interval split in ${intervals.length} sub-intervals: \r\n` +
-        `[${JSON.stringify(intervals[0], null, 2)}\r\n` +
-        `${JSON.stringify(intervals[1], null, 2)}]`
-    );
-    expect(south.historyQuery).toHaveBeenCalledTimes(2);
-    expect(delay).toHaveBeenCalledTimes(1);
-    expect(southCacheService.saveSouthCache).toHaveBeenCalledTimes(2);
-    expect(southCacheService.saveSouthCache).toHaveBeenCalledWith({
-      scanModeId: 'id1',
-      maxInstant: '2021-02-02T02:02:02.222Z',
-      southId: testData.south.list[2].id
-    });
-    expect(southCacheService.saveSouthCache).toHaveBeenCalledWith({
-      scanModeId: 'id1',
-      maxInstant: '2023-02-02T02:02:02.222Z',
-      southId: testData.south.list[2].id
-    });
-  });
-
-  it('should manage history query with 1 interval', async () => {
-    const intervals = [{ start: '2020-02-02T02:02:02.222Z', end: '2023-02-02T02:02:02.222Z' }];
-    (generateIntervals as jest.Mock).mockReturnValueOnce(intervals);
-    south.historyQuery = jest.fn().mockReturnValueOnce('2023-02-02T02:02:02.222Z');
-    southCacheService.getSouthCache.mockReturnValueOnce({
-      scanModeId: 'id1',
-      maxInstant: testData.constants.dates.FAKE_NOW,
-      southId: testData.south.list[2].id
-    });
-
-    await south.historyQueryHandler(
-      testData.south.list[2].items as Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>,
-      '2020-02-02T02:02:02.222Z',
-      '2023-02-02T02:02:02.222Z',
-      testData.scanMode.list[0].id,
-      {
-        readDelay: south.settings.settings.throttling.readDelay,
-        maxReadInterval: south.settings.settings.throttling.maxReadInterval
-      },
-      south.settings.settings.throttling.maxInstantPerItem,
-      south.settings.settings.throttling.overlap
-    );
-    expect(generateIntervals).toHaveBeenCalledWith(
-      DateTime.fromISO(testData.constants.dates.FAKE_NOW)
-        .minus({ milliseconds: south.settings.settings.throttling.overlap })
-        .toUTC()
-        .toISO(),
-      '2023-02-02T02:02:02.222Z',
-      south.settings.settings.throttling.maxReadInterval
-    );
-    expect(logger.trace).toHaveBeenCalledWith(`Querying interval: ${JSON.stringify(intervals[0], null, 2)}`);
-    expect(south.historyQuery).toHaveBeenCalledTimes(1);
-    expect(delay).not.toHaveBeenCalled();
-    expect(southCacheService.saveSouthCache).toHaveBeenCalledTimes(1);
-    expect(southCacheService.saveSouthCache).toHaveBeenCalledWith({
-      scanModeId: 'id1',
-      maxInstant: '2023-02-02T02:02:02.222Z',
-      southId: testData.south.list[2].id
-    });
-  });
-
   it('should manage history query with several intervals when stopping', async () => {
     const intervals = [
       { start: '2020-02-02T02:02:02.222Z', end: '2021-02-02T02:02:02.222Z' },
       { start: '2021-02-02T02:02:02.222Z', end: '2022-02-02T02:02:02.222Z' },
       { start: '2022-02-02T02:02:02.222Z', end: '2023-02-02T02:02:02.222Z' }
     ];
-    (generateIntervals as jest.Mock).mockReturnValueOnce(intervals);
+    (generateIntervals as jest.Mock).mockReturnValueOnce({ intervals, numberOfIntervalsDone: 0 });
 
     south.historyQuery = jest.fn(
       () =>
@@ -1113,5 +901,92 @@ describe('SouthConnector with history and subscription', () => {
     await south.onItemChange();
     await south.onItemChange();
     expect(logger.error).toHaveBeenCalledWith(`Error when unsubscribing from items. ${new Error('unsubscription error')}`);
+  });
+});
+
+describe('SouthConnector OPCUA in test mode', () => {
+  let south: SouthOPCUA;
+  let configuration: SouthConnectorEntity<SouthOPCUASettings, SouthOPCUAItemSettings>;
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+
+    (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
+    configuration = JSON.parse(JSON.stringify(testData.south.list[2])) as SouthConnectorEntity<SouthOPCUASettings, SouthOPCUAItemSettings>;
+    configuration.id = 'test';
+
+    south = new SouthOPCUA(
+      configuration,
+      addContentCallback,
+      southConnectorRepository,
+      southCacheRepository,
+      scanModeRepository,
+      logger,
+      mockBaseFolders(testData.scanMode.list[0].id)
+    );
+  });
+
+  it('should start and stop in test mode outside datastream', async () => {
+    await south.start(false);
+    expect(south['cacheService']).toBeNull();
+    expect(southConnectorRepository.findSouthById).not.toHaveBeenCalled();
+    expect(logger.info).toHaveBeenCalledWith(`South connector "${configuration.name}" of type ${configuration.type} started`);
+
+    south.resolveDeferredPromise();
+
+    south.disconnect = jest.fn();
+    await south.stop(false);
+    expect(south.disconnect).toHaveBeenCalledTimes(1);
+    expect(southConnectorRepository.findSouthById).not.toHaveBeenCalled();
+
+    expect(south.sharableConnection()).toBeTruthy();
+  });
+
+  it('should not update scan mode if not found', () => {
+    south.createCronJob = jest.fn();
+    south.updateScanMode({ id: 'bad scan mode' } as ScanMode);
+    expect(south.createCronJob).not.toHaveBeenCalled();
+  });
+});
+
+describe('SouthConnector ADS in test mode', () => {
+  let south: SouthADS;
+  let configuration: SouthConnectorEntity<SouthADSSettings, SouthADSItemSettings>;
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+
+    (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
+    configuration = JSON.parse(JSON.stringify(testData.south.list[2])) as SouthConnectorEntity<SouthADSSettings, SouthADSItemSettings>;
+
+    (southConnectorRepository.findSouthById as jest.Mock).mockImplementation(id => testData.south.list.find(element => element.id === id));
+
+    south = new SouthADS(
+      configuration,
+      addContentCallback,
+      southConnectorRepository,
+      southCacheRepository,
+      scanModeRepository,
+      logger,
+      mockBaseFolders(testData.scanMode.list[0].id)
+    );
+  });
+
+  it('should start and stop connector without start override', async () => {
+    await south.start();
+    expect(south['cacheService']).not.toBeNull();
+    expect(southConnectorRepository.findSouthById).toHaveBeenCalledWith(configuration.id);
+    expect(logger.info).toHaveBeenCalledWith(`South connector "${configuration.name}" of type ${configuration.type} started`);
+
+    south.resolveDeferredPromise();
+
+    south.disconnect = jest.fn();
+    await south.stop();
+    expect(south.disconnect).toHaveBeenCalledTimes(1);
+    expect(southConnectorRepository.findSouthById).toHaveBeenCalledTimes(2);
+
+    expect(south.sharableConnection()).toBeFalsy();
   });
 });

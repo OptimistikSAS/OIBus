@@ -1,8 +1,8 @@
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import { getOIBusInfo } from '../utils';
 import testData from '../../tests/utils/test-data';
-import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import OIAnalyticsMessageService from './oianalytics-message.service';
 import { flushPromises } from '../../tests/utils/test-utils';
 import { DateTime } from 'luxon';
@@ -35,10 +35,10 @@ import { StandardTransformer } from '../../model/transformer.model';
 import IsoTransformer from '../transformers/iso-transformer';
 
 jest.mock('node:fs/promises');
-jest.mock('../utils');
 jest.mock('../encryption.service', () => ({
   encryptionService: new EncryptionServiceMock('', '')
 }));
+jest.mock('../utils');
 
 const oIAnalyticsMessageRepository: OIAnalyticsMessageRepository = new OIAnalyticsMessageRepositoryMock();
 const oIAnalyticsRegistrationService: OIAnalyticsRegistrationService = new OIAnalyticsRegistrationServiceMock();

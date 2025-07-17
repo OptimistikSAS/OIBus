@@ -8,6 +8,9 @@
     <form [id]="'edit-array-element-form-' + elementManifest.key" [formGroup]="form" (ngSubmit)="submit()">
       <ng-container [formGroupName]="elementManifest.key">
         <oib-oibus-object-form-control
+          [currentConnector]="currentConnector"
+          [northConnectors]="northConnectors"
+          [southConnectors]="southConnectors"
           [scanModes]="scanModes"
           [certificates]="certificates"
           [group]="asFormGroup(form.controls[elementManifest.key])"

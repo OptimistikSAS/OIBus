@@ -341,3 +341,8 @@ export interface CacheSearchParam {
   end: string | null;
   nameContains: string | null;
 }
+
+export interface SharedConnection {
+  connectorType: 'north' | 'south';
+  connectorId: string;
+}

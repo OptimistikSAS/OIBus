@@ -33,6 +33,7 @@ export function addAttributeToForm(fb: NonNullableFormBuilder, formGroup: FormGr
     case 'scan-mode':
     case 'certificate':
     case 'timezone':
+    case 'sharable-connector':
       formGroup.addControl(attribute.key, createControl(fb, attribute));
       return true;
   }
@@ -55,6 +56,8 @@ export function createControl(fb: NonNullableFormBuilder, attribute: OIBusContro
     case 'scan-mode':
     case 'certificate':
       return fb.control<string | null>(null, buildValidators(attribute.validators));
+    case 'sharable-connector':
+      return fb.control<{ connectorType: 'north' | 'south'; connectorId: string } | null>(null, buildValidators(attribute.validators));
   }
 }
 
@@ -73,7 +76,7 @@ export function addEnablingConditions(form: FormGroup, enablingConditions: Array
       targetControl.disable();
     }
     referenceControl.valueChanges.subscribe(newValue => {
-      if (condition.values.includes(newValue)) {
+      if (condition.values.includes(newValue) && targetControl.parent && targetControl.parent.enabled) {
         targetControl.enable();
       } else {
         targetControl.disable();
@@ -153,6 +156,7 @@ export function isDisplayableAttribute(attribute: OIBusAttribute): attribute is 
     case 'array':
     case 'code':
       return false;
+    case 'sharable-connector':
     case 'string':
     case 'string-select':
     case 'timezone':

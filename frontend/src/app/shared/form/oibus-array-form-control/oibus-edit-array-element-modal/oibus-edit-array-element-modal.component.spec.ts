@@ -51,6 +51,8 @@ describe('OIBusEditArrayElementModalComponent', () => {
   };
   const scanModes = testData.scanMode.list;
   const certificates = testData.certificates.list;
+  const south = testData.south.list;
+  const north = testData.north.list;
 
   beforeEach(() => {
     fakeActiveModal = createMock(NgbActiveModal);
@@ -70,7 +72,7 @@ describe('OIBusEditArrayElementModalComponent', () => {
   });
 
   it('should create an element', () => {
-    tester.componentInstance.prepareForCreation(scanModes, certificates, form, objectAttribute);
+    tester.componentInstance.prepareForCreation(scanModes, certificates, undefined, south, north, form, objectAttribute);
     tester.detectChanges();
     expect(tester.title).toContainText('Create an element');
     expect(tester.settings).toBeDefined();
@@ -79,7 +81,7 @@ describe('OIBusEditArrayElementModalComponent', () => {
   });
 
   it('should edit an element', () => {
-    tester.componentInstance.prepareForEdition(scanModes, certificates, form, {}, objectAttribute);
+    tester.componentInstance.prepareForEdition(scanModes, certificates, undefined, south, north, form, {}, objectAttribute);
     tester.detectChanges();
     expect(tester.title).toContainText('Edit an element');
     expect(tester.settings).toBeDefined();
@@ -88,7 +90,7 @@ describe('OIBusEditArrayElementModalComponent', () => {
   });
 
   it('should copy an element', () => {
-    tester.componentInstance.prepareForCopy(scanModes, certificates, form, {}, objectAttribute);
+    tester.componentInstance.prepareForCopy(scanModes, certificates, undefined, south, north, form, {}, objectAttribute);
     tester.detectChanges();
     expect(tester.title).toContainText('Create an element');
     expect(tester.settings).toBeDefined();
