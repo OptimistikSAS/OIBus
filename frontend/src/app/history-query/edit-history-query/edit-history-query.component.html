@@ -211,6 +211,9 @@
               </ng-template>
               <div formGroupName="northSettings" class="row">
                 <oib-oibus-object-form-control
+                  [currentConnector]="{ type: northType, connectorType: 'north', id: undefined }"
+                  [southConnectors]="southConnectors"
+                  [northConnectors]="northConnectors"
                   [scanModes]="scanModes"
                   [certificates]="certificates"
                   [group]="form.controls.northSettings"
@@ -242,6 +245,9 @@
               </ng-template>
               <div formGroupName="southSettings" class="row">
                 <oib-oibus-object-form-control
+                  [currentConnector]="{ type: southType, connectorType: 'south', id: undefined }"
+                  [southConnectors]="southConnectors"
+                  [northConnectors]="northConnectors"
                   [scanModes]="scanModes"
                   [certificates]="certificates"
                   [group]="form.controls.southSettings"

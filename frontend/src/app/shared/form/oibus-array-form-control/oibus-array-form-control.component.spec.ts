@@ -19,6 +19,8 @@ import { OIBusEditArrayElementModalComponent } from './oibus-edit-array-element-
         [parentGroup]="parentGroup"
         [scanModes]="scanModes"
         [certificates]="certificates"
+        [southConnectors]="south"
+        [northConnectors]="north"
       />
     </ng-container>
   </form>`,
@@ -35,6 +37,8 @@ class TestComponent {
   parentGroup = new FormGroup<any>({});
   scanModes = testData.scanMode.list;
   certificates = testData.certificates.list;
+  south = testData.south.list;
+  north = testData.north.list;
   arrayAttribute: OIBusArrayAttribute = {
     type: 'array',
     paginate: true,
@@ -101,6 +105,9 @@ describe('OIBusArrayFormControlComponent', () => {
     expect(fakeModalComponent.prepareForCreation).toHaveBeenCalledWith(
       tester.componentInstance.scanModes,
       tester.componentInstance.certificates,
+      undefined,
+      tester.componentInstance.south,
+      tester.componentInstance.north,
       tester.componentInstance.parentGroup,
       tester.componentInstance.arrayAttribute.rootAttribute
     );
@@ -117,6 +124,9 @@ describe('OIBusArrayFormControlComponent', () => {
     expect(fakeModalComponent.prepareForEdition).toHaveBeenCalledWith(
       tester.componentInstance.scanModes,
       tester.componentInstance.certificates,
+      undefined,
+      tester.componentInstance.south,
+      tester.componentInstance.north,
       tester.componentInstance.parentGroup,
       {},
       tester.componentInstance.arrayAttribute.rootAttribute
@@ -134,6 +144,9 @@ describe('OIBusArrayFormControlComponent', () => {
     expect(fakeModalComponent.prepareForCopy).toHaveBeenCalledWith(
       tester.componentInstance.scanModes,
       tester.componentInstance.certificates,
+      undefined,
+      tester.componentInstance.south,
+      tester.componentInstance.north,
       tester.componentInstance.parentGroup,
       {},
       tester.componentInstance.arrayAttribute.rootAttribute

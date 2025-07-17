@@ -21,6 +21,7 @@ import NorthConnectorMetricsRepository from '../repository/metrics/north-connect
 import NorthConnectorMetricsService from '../service/metrics/north-connector-metrics.service';
 import { PassThrough } from 'node:stream';
 import { ReadStream } from 'node:fs';
+import { connectionService } from '../service/connection.service';
 
 const CACHE_FOLDER = './cache';
 const ARCHIVE_FOLDER = './archive';
@@ -44,6 +45,7 @@ export default class DataStreamEngine {
       archive: path.resolve(ARCHIVE_FOLDER),
       error: path.resolve(ERROR_FOLDER)
     };
+    connectionService.init(this);
   }
 
   get logger() {
@@ -216,7 +218,6 @@ export default class DataStreamEngine {
    */
   async deleteSouth(south: SouthConnectorEntity<SouthSettings, SouthItemSettings>): Promise<void> {
     await this.stopSouth(south.id);
-    // this.homeMetricsService.removeSouth(southId);
     this.southConnectors.delete(south.id);
   }
 
@@ -225,8 +226,33 @@ export default class DataStreamEngine {
    */
   async deleteNorth(north: NorthConnectorEntity<NorthSettings>): Promise<void> {
     await this.stopNorth(north.id);
-    // this.homeMetricsService.removeNorth(northId);
     this.northConnectors.delete(north.id);
+  }
+
+  isConnectionUsed(connectorType: 'north' | 'south', connectorId: string, currentConnectorId: string): boolean {
+    for (const north of this.northConnectors.values()) {
+      if (north.isEnabled() && north.sharableConnection()) {
+        if (
+          north.getSharedConnectionSettings().connectorType === connectorType &&
+          north.getSharedConnectionSettings().connectorId === connectorId &&
+          north.settings.id !== currentConnectorId
+        ) {
+          return true;
+        }
+      }
+    }
+    for (const south of this.southConnectors.values()) {
+      if (south.isEnabled() && south.sharableConnection()) {
+        if (
+          south.getSharedConnectionSettings().connectorType === connectorType &&
+          south.getSharedConnectionSettings().connectorId === connectorId &&
+          south.settings.id !== currentConnectorId
+        ) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   setLogger(value: pino.Logger) {
@@ -289,13 +315,13 @@ export default class DataStreamEngine {
     await this.northConnectors.get(northId)?.moveAllCacheContent(originFolder, destinationFolder);
   }
 
-  async updateScanMode(scanMode: ScanMode): Promise<void> {
+  updateScanMode(scanMode: ScanMode) {
     for (const south of this.southConnectors.values()) {
-      await south.updateScanMode(scanMode);
+      south.updateScanMode(scanMode);
     }
 
     for (const north of this.northConnectors.values()) {
-      await north.updateScanMode(scanMode);
+      north.updateScanMode(scanMode);
     }
   }
 
@@ -340,5 +366,9 @@ export default class DataStreamEngine {
 
   getNorth(northId: string): NorthConnector<NorthSettings> | undefined {
     return this.northConnectors.get(northId);
+  }
+
+  getSouth(southId: string): SouthConnector<SouthSettings, SouthItemSettings> | undefined {
+    return this.southConnectors.get(southId);
   }
 }

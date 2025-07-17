@@ -41,7 +41,7 @@ export default class ScanModeService {
     this.scanModeRepository.update(scanModeId, command);
     const newScanMode = this.scanModeRepository.findById(scanModeId)!;
     if (oldScanMode.cron !== newScanMode.cron) {
-      await this.dataStreamEngine.updateScanMode(newScanMode);
+      this.dataStreamEngine.updateScanMode(newScanMode);
     }
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }

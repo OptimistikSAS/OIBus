@@ -10,7 +10,7 @@ import { ValdemortConfig } from 'ngx-valdemort';
  * and the error message appear together).
  */
 @Directive({
-  selector: '.form-control,.form-select'
+  selector: '.form-control,.form-select,oib-datetimepicker'
 })
 export class FormControlValidationDirective {
   private ngControl = inject(NgControl, { optional: true });

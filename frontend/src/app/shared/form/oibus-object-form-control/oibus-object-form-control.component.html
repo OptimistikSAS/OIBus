@@ -38,6 +38,14 @@
                     @case ('certificate') {
                       <oib-oibus-certificate-form-control [certificates]="certificates()" [certificateAttribute]="column.attribute" />
                     }
+                    @case ('sharable-connector') {
+                      <oib-oibus-shared-connection-form-control
+                        [currentConnector]="currentConnector()"
+                        [northConnectors]="northConnectors()"
+                        [southConnectors]="southConnectors()"
+                        [sharedConnectionAttribute]="column.attribute"
+                      />
+                    }
                     @case ('timezone') {
                       <oib-oibus-timezone-form-control [timezoneAttribute]="column.attribute" />
                     }
@@ -48,27 +56,32 @@
           </div>
         } @else {
           @if (group().get(row.columns[0].attribute.key)!.enabled) {
-            @switch (row.columns[0].attribute.type) {
-              @case ('object') {
-                <ng-container [formGroupName]="row.columns[0].attribute.key">
+            <ng-container [formGroupName]="row.columns[0].attribute.key">
+              @switch (row.columns[0].attribute.type) {
+                @case ('object') {
                   <oib-oibus-object-form-control
+                    [currentConnector]="currentConnector()"
+                    [northConnectors]="northConnectors()"
+                    [southConnectors]="southConnectors()"
                     [scanModes]="scanModes()"
                     [certificates]="certificates()"
                     [group]="asFormGroup(group().controls[row.columns[0].attribute.key])"
                     [objectAttribute]="row.columns[0].attribute"
                   />
-                </ng-container>
+                }
+                @case ('array') {
+                  <oib-oibus-array-form-control
+                    [northConnectors]="northConnectors()"
+                    [southConnectors]="southConnectors()"
+                    [scanModes]="scanModes()"
+                    [certificates]="certificates()"
+                    [parentGroup]="group()"
+                    [control]="asFormControl(group().controls[row.columns[0].attribute.key])"
+                    [arrayAttribute]="row.columns[0].attribute"
+                  />
+                }
               }
-              @case ('array') {
-                <oib-oibus-array-form-control
-                  [scanModes]="scanModes()"
-                  [certificates]="certificates()"
-                  [parentGroup]="group()"
-                  [control]="asFormControl(group().controls[row.columns[0].attribute.key])"
-                  [arrayAttribute]="row.columns[0].attribute"
-                />
-              }
-            }
+            </ng-container>
           }
         }
       }
@@ -108,6 +121,14 @@
                   @case ('certificate') {
                     <oib-oibus-certificate-form-control [certificates]="certificates()" [certificateAttribute]="column.attribute" />
                   }
+                  @case ('sharable-connector') {
+                    <oib-oibus-shared-connection-form-control
+                      [currentConnector]="currentConnector()"
+                      [northConnectors]="northConnectors()"
+                      [southConnectors]="southConnectors()"
+                      [sharedConnectionAttribute]="column.attribute"
+                    />
+                  }
                   @case ('timezone') {
                     <oib-oibus-timezone-form-control [timezoneAttribute]="column.attribute" />
                   }
@@ -118,27 +139,32 @@
         </div>
       } @else {
         @if (group().get(row.columns[0].attribute.key)!.enabled) {
-          @switch (row.columns[0].attribute.type) {
-            @case ('object') {
-              <ng-container [formGroupName]="row.columns[0].attribute.key">
+          <ng-container [formGroupName]="row.columns[0].attribute.key">
+            @switch (row.columns[0].attribute.type) {
+              @case ('object') {
                 <oib-oibus-object-form-control
+                  [currentConnector]="currentConnector()"
+                  [northConnectors]="northConnectors()"
+                  [southConnectors]="southConnectors()"
                   [scanModes]="scanModes()"
                   [certificates]="certificates()"
                   [group]="asFormGroup(group().controls[row.columns[0].attribute.key])"
                   [objectAttribute]="row.columns[0].attribute"
                 />
-              </ng-container>
+              }
+              @case ('array') {
+                <oib-oibus-array-form-control
+                  [northConnectors]="northConnectors()"
+                  [southConnectors]="southConnectors()"
+                  [scanModes]="scanModes()"
+                  [certificates]="certificates()"
+                  [parentGroup]="group()"
+                  [control]="asFormControl(group().controls[row.columns[0].attribute.key])"
+                  [arrayAttribute]="row.columns[0].attribute"
+                />
+              }
             }
-            @case ('array') {
-              <oib-oibus-array-form-control
-                [scanModes]="scanModes()"
-                [certificates]="certificates()"
-                [parentGroup]="group()"
-                [control]="asFormControl(group().controls[row.columns[0].attribute.key])"
-                [arrayAttribute]="row.columns[0].attribute"
-              />
-            }
-          }
+          </ng-container>
         }
       }
     }

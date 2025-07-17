@@ -15,6 +15,7 @@ import { TransformerService } from '../../services/transformer.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import testData from '../../../../../backend/src/tests/utils/test-data';
 import { OIBusObjectFormControlComponent } from '../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
+import { SouthConnectorService } from '../../services/south-connector.service';
 
 class EditNorthComponentTester extends ComponentTester<EditNorthComponent> {
   constructor() {
@@ -49,12 +50,14 @@ class EditNorthComponentTester extends ComponentTester<EditNorthComponent> {
 describe('EditNorthComponent', () => {
   let tester: EditNorthComponentTester;
   let northConnectorService: jasmine.SpyObj<NorthConnectorService>;
+  let southConnectorService: jasmine.SpyObj<SouthConnectorService>;
   let scanModeService: jasmine.SpyObj<ScanModeService>;
   let certificateService: jasmine.SpyObj<CertificateService>;
   let transformerService: jasmine.SpyObj<TransformerService>;
 
   beforeEach(() => {
     northConnectorService = createMock(NorthConnectorService);
+    southConnectorService = createMock(SouthConnectorService);
     scanModeService = createMock(ScanModeService);
     certificateService = createMock(CertificateService);
     transformerService = createMock(TransformerService);
@@ -66,6 +69,7 @@ describe('EditNorthComponent', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: NorthConnectorService, useValue: northConnectorService },
+        { provide: SouthConnectorService, useValue: southConnectorService },
         { provide: ScanModeService, useValue: scanModeService },
         { provide: CertificateService, useValue: certificateService },
         { provide: TransformerService, useValue: transformerService }
@@ -75,6 +79,8 @@ describe('EditNorthComponent', () => {
     scanModeService.list.and.returnValue(of([]));
     certificateService.list.and.returnValue(of([]));
     transformerService.list.and.returnValue(of([]));
+    northConnectorService.list.and.returnValue(of(testData.north.list));
+    southConnectorService.list.and.returnValue(of(testData.south.list));
 
     northConnectorService.getNorthConnectorTypeManifest.and.returnValue(of(testData.north.manifest));
   });

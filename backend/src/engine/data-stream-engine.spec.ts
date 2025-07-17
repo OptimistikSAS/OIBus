@@ -104,6 +104,35 @@ describe('DataStreamEngine', () => {
     mockedSouth1.connectedEvent.emit('connected');
     expect(mockedSouth1.onItemChange).toHaveBeenCalled();
 
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-expect-error
+    mockedNorth1.getSharedConnectionSettings = jest
+      .fn()
+      .mockReturnValue({ connectorType: 'south', connectorId: testData.south.list[0].id });
+    mockedNorth1.sharableConnection = jest.fn().mockReturnValue(true);
+    (mockedNorth1.isEnabled as unknown as jest.Mock).mockReturnValue(true);
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-expect-error
+    mockedSouth1.getSharedConnectionSettings = jest
+      .fn()
+      .mockReturnValue({ connectorType: 'south', connectorId: testData.south.list[0].id });
+    mockedSouth1.sharableConnection = jest.fn().mockReturnValue(true);
+    (mockedSouth1.isEnabled as unknown as jest.Mock).mockReturnValue(true);
+    expect(engine.isConnectionUsed('south', testData.south.list[0].id, testData.north.list[0].id)).toBeTruthy();
+
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-expect-error
+    mockedSouth1.getSharedConnectionSettings = jest
+      .fn()
+      .mockReturnValue({ connectorType: 'north', connectorId: testData.north.list[0].id });
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-expect-error
+    mockedNorth1.getSharedConnectionSettings = jest
+      .fn()
+      .mockReturnValue({ connectorType: 'north', connectorId: testData.north.list[0].id });
+    expect(engine.isConnectionUsed('north', testData.north.list[0].id, testData.south.list[0].id)).toBeTruthy();
+    expect(engine.isConnectionUsed('north', 'another north', testData.south.list[0].id)).toBeFalsy();
+
     await engine.stop();
 
     expect(mockedNorth1.stop).toHaveBeenCalledTimes(1);
@@ -290,10 +319,17 @@ describe('DataStreamEngine', () => {
     expect(engine.getNorth('bad id')).toBeUndefined();
   });
 
+  it('should get South', async () => {
+    await engine.start([], [mockedSouth1]);
+
+    expect(engine.getSouth(testData.south.list[0].id)).toEqual(mockedSouth1);
+    expect(engine.getSouth('bad id')).toBeUndefined();
+  });
+
   it('should update scan mode', async () => {
     await engine.start([mockedNorth1], [mockedSouth1]);
 
-    await engine.updateScanMode(testData.scanMode.list[0]);
+    engine.updateScanMode(testData.scanMode.list[0]);
     expect(mockedSouth1.updateScanMode).toHaveBeenCalled();
     expect(mockedNorth1.updateScanMode).toHaveBeenCalled();
   });

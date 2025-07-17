@@ -1,8 +1,8 @@
 import { Knex } from 'knex';
 import {
-  SouthOPCUASettingsAuthentication,
-  SouthOPCUASettingsSecurityMode,
-  SouthOPCUASettingsSecurityPolicy
+  SouthOPCUASettingsConnectionSettingsAuthentication,
+  SouthOPCUASettingsConnectionSettingsSecurityMode,
+  SouthOPCUASettingsConnectionSettingsSecurityPolicy
 } from '../../../shared/model/south-settings.model';
 
 const SOUTH_CONNECTORS_TABLE = 'south_connectors';
@@ -12,9 +12,9 @@ export interface OldSouthOPCUASettings {
   url: string;
   keepSessionAlive: boolean;
   retryInterval: number;
-  securityMode: SouthOPCUASettingsSecurityMode;
-  securityPolicy?: SouthOPCUASettingsSecurityPolicy | null;
-  authentication: SouthOPCUASettingsAuthentication;
+  securityMode: SouthOPCUASettingsConnectionSettingsSecurityMode;
+  securityPolicy?: SouthOPCUASettingsConnectionSettingsSecurityPolicy | null;
+  authentication: SouthOPCUASettingsConnectionSettingsAuthentication;
 }
 
 export interface NewSouthOPCUASettings {
@@ -22,9 +22,9 @@ export interface NewSouthOPCUASettings {
   keepSessionAlive: boolean;
   retryInterval: number;
   readTimeout: number;
-  securityMode: SouthOPCUASettingsSecurityMode;
-  securityPolicy?: SouthOPCUASettingsSecurityPolicy | null;
-  authentication: SouthOPCUASettingsAuthentication;
+  securityMode: SouthOPCUASettingsConnectionSettingsSecurityMode;
+  securityPolicy?: SouthOPCUASettingsConnectionSettingsSecurityPolicy | null;
+  authentication: SouthOPCUASettingsConnectionSettingsAuthentication;
 }
 
 export async function up(knex: Knex): Promise<void> {

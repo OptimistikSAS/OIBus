@@ -19,9 +19,9 @@ const manifest: SouthConnectorManifest = {
     },
     enablingConditions: [
       {
-        referralPathFromRoot: 'securityMode',
-        targetPathFromRoot: 'securityPolicy',
-        values: ['sign', 'sign-and-encrypt']
+        referralPathFromRoot: 'sharedConnection',
+        targetPathFromRoot: 'connectionSettings',
+        values: [null]
       }
     ],
     validators: [],
@@ -128,61 +128,6 @@ const manifest: SouthConnectorManifest = {
         ]
       },
       {
-        type: 'boolean',
-        key: 'sharedConnection',
-        translationKey: 'configuration.oibus.manifest.south.opcua.shared-connection',
-        defaultValue: false,
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
-          }
-        ],
-        displayProperties: {
-          row: 0,
-          columns: 8,
-          displayInViewMode: false
-        }
-      },
-      {
-        type: 'string',
-        key: 'url',
-        translationKey: 'configuration.oibus.manifest.south.opcua.url',
-        defaultValue: 'opc.tcp://hostname:53530/OPCUA/SimulationServer',
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
-          },
-          {
-            type: 'PATTERN',
-            arguments: ['^(http:\\/\\/|opc.tcp:\\/\\/).*']
-          }
-        ],
-        displayProperties: {
-          row: 1,
-          columns: 8,
-          displayInViewMode: true
-        }
-      },
-      {
-        type: 'boolean',
-        key: 'keepSessionAlive',
-        translationKey: 'configuration.oibus.manifest.south.opcua.keep-session-alive',
-        defaultValue: false,
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
-          }
-        ],
-        displayProperties: {
-          row: 1,
-          columns: 4,
-          displayInViewMode: true
-        }
-      },
-      {
         type: 'number',
         key: 'readTimeout',
         translationKey: 'configuration.oibus.manifest.south.opcua.read-timeout',
@@ -203,9 +148,72 @@ const manifest: SouthConnectorManifest = {
           }
         ],
         displayProperties: {
-          row: 2,
+          row: 1,
           columns: 4,
           displayInViewMode: true
+        }
+      },
+      {
+        type: 'number',
+        key: 'maxNumberOfMessages',
+        translationKey: 'configuration.oibus.manifest.south.opcua.max-number-of-messages',
+        defaultValue: 1000,
+        unit: null,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          },
+          {
+            type: 'MINIMUM',
+            arguments: ['1']
+          },
+          {
+            type: 'MAXIMUM',
+            arguments: ['1000000']
+          }
+        ],
+        displayProperties: {
+          row: 1,
+          columns: 4,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'number',
+        key: 'flushMessageTimeout',
+        translationKey: 'configuration.oibus.manifest.south.opcua.flush-message-timeout',
+        unit: 'ms',
+        defaultValue: 1000,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          },
+          {
+            type: 'MINIMUM',
+            arguments: ['1']
+          },
+          {
+            type: 'MAXIMUM',
+            arguments: ['1000000']
+          }
+        ],
+        displayProperties: {
+          row: 1,
+          columns: 4,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'sharable-connector',
+        key: 'sharedConnection',
+        translationKey: 'configuration.oibus.manifest.south.opcua.shared-connection',
+        validators: [],
+        displayProperties: {
+          row: 2,
+          columns: 8,
+          displayInViewMode: false
         }
       },
       {
@@ -213,7 +221,7 @@ const manifest: SouthConnectorManifest = {
         key: 'retryInterval',
         translationKey: 'configuration.oibus.manifest.south.opcua.retry-interval',
         unit: 'ms',
-        defaultValue: 10000,
+        defaultValue: 10_000,
         validators: [
           {
             type: 'REQUIRED',
@@ -235,79 +243,18 @@ const manifest: SouthConnectorManifest = {
         }
       },
       {
-        type: 'string-select',
-        key: 'securityMode',
-        translationKey: 'configuration.oibus.manifest.south.opcua.security-mode',
-        defaultValue: 'none',
-        selectableValues: ['none', 'sign', 'sign-and-encrypt'],
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
-          }
-        ],
-        displayProperties: {
-          row: 3,
-          columns: 6,
-          displayInViewMode: true
-        }
-      },
-      {
-        type: 'string-select',
-        key: 'securityPolicy',
-        translationKey: 'configuration.oibus.manifest.south.opcua.security-policy',
-        defaultValue: 'none',
-        selectableValues: [
-          'none',
-          'basic128',
-          'basic192',
-          'basic192-rsa15',
-          'basic256-rsa15',
-          'basic256-sha256',
-          'aes128-sha256-rsa-oaep',
-          'pub-sub-aes-128-ctr',
-          'pub-sub-aes-256-ctr'
-        ],
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
-          }
-        ],
-        displayProperties: {
-          row: 3,
-          columns: 6,
-          displayInViewMode: true
-        }
-      },
-      {
         type: 'object',
-        key: 'authentication',
-        translationKey: 'configuration.oibus.manifest.south.opcua.authentication.title',
+        key: 'connectionSettings',
+        translationKey: 'configuration.oibus.manifest.south.opcua.connection-settings.authentication.title',
         displayProperties: {
           visible: true,
           wrapInBox: false
         },
         enablingConditions: [
           {
-            referralPathFromRoot: 'type',
-            targetPathFromRoot: 'username',
-            values: ['basic']
-          },
-          {
-            referralPathFromRoot: 'type',
-            targetPathFromRoot: 'password',
-            values: ['basic']
-          },
-          {
-            referralPathFromRoot: 'type',
-            targetPathFromRoot: 'certFilePath',
-            values: ['cert']
-          },
-          {
-            referralPathFromRoot: 'type',
-            targetPathFromRoot: 'keyFilePath',
-            values: ['cert']
+            referralPathFromRoot: 'securityMode',
+            targetPathFromRoot: 'securityPolicy',
+            values: ['sign', 'sign-and-encrypt']
           }
         ],
         validators: [
@@ -318,11 +265,49 @@ const manifest: SouthConnectorManifest = {
         ],
         attributes: [
           {
+            type: 'string',
+            key: 'url',
+            translationKey: 'configuration.oibus.manifest.south.opcua.url',
+            defaultValue: 'opc.tcp://hostname:53530/OPCUA/SimulationServer',
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              },
+              {
+                type: 'PATTERN',
+                arguments: ['^(http:\\/\\/|opc.tcp:\\/\\/).*']
+              }
+            ],
+            displayProperties: {
+              row: 0,
+              columns: 12,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'boolean',
+            key: 'keepSessionAlive',
+            translationKey: 'configuration.oibus.manifest.south.opcua.keep-session-alive',
+            defaultValue: false,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              }
+            ],
+            displayProperties: {
+              row: 1,
+              columns: 4,
+              displayInViewMode: true
+            }
+          },
+          {
             type: 'string-select',
-            key: 'type',
-            translationKey: 'configuration.oibus.manifest.south.opcua.authentication',
+            key: 'securityMode',
+            translationKey: 'configuration.oibus.manifest.south.opcua.security-mode',
             defaultValue: 'none',
-            selectableValues: ['none', 'basic', 'cert'],
+            selectableValues: ['none', 'sign', 'sign-and-encrypt'],
             validators: [
               {
                 type: 'REQUIRED',
@@ -330,16 +315,27 @@ const manifest: SouthConnectorManifest = {
               }
             ],
             displayProperties: {
-              row: 0,
-              columns: 4,
+              row: 2,
+              columns: 6,
               displayInViewMode: true
             }
           },
           {
-            type: 'string',
-            key: 'username',
-            translationKey: 'configuration.oibus.manifest.south.opcua.username',
-            defaultValue: null,
+            type: 'string-select',
+            key: 'securityPolicy',
+            translationKey: 'configuration.oibus.manifest.south.opcua.security-policy',
+            defaultValue: 'none',
+            selectableValues: [
+              'none',
+              'basic128',
+              'basic192',
+              'basic192-rsa15',
+              'basic256-rsa15',
+              'basic256-sha256',
+              'aes128-sha256-rsa-oaep',
+              'pub-sub-aes-128-ctr',
+              'pub-sub-aes-256-ctr'
+            ],
             validators: [
               {
                 type: 'REQUIRED',
@@ -347,55 +343,129 @@ const manifest: SouthConnectorManifest = {
               }
             ],
             displayProperties: {
-              row: 0,
-              columns: 4,
+              row: 2,
+              columns: 6,
               displayInViewMode: true
             }
           },
           {
-            type: 'secret',
-            key: 'password',
-            translationKey: 'configuration.oibus.manifest.south.opcua.password',
-            validators: [],
+            type: 'object',
+            key: 'authentication',
+            translationKey: 'configuration.oibus.manifest.south.opcua.authentication.title',
             displayProperties: {
-              row: 0,
-              columns: 4,
-              displayInViewMode: true
-            }
-          },
-          {
-            type: 'string',
-            key: 'certFilePath',
-            translationKey: 'configuration.oibus.manifest.south.opcua.cert-file-path',
-            defaultValue: null,
+              visible: true,
+              wrapInBox: false
+            },
+            enablingConditions: [
+              {
+                referralPathFromRoot: 'type',
+                targetPathFromRoot: 'username',
+                values: ['basic']
+              },
+              {
+                referralPathFromRoot: 'type',
+                targetPathFromRoot: 'password',
+                values: ['basic']
+              },
+              {
+                referralPathFromRoot: 'type',
+                targetPathFromRoot: 'certFilePath',
+                values: ['cert']
+              },
+              {
+                referralPathFromRoot: 'type',
+                targetPathFromRoot: 'keyFilePath',
+                values: ['cert']
+              }
+            ],
             validators: [
               {
                 type: 'REQUIRED',
                 arguments: []
               }
             ],
-            displayProperties: {
-              row: 0,
-              columns: 4,
-              displayInViewMode: true
-            }
-          },
-          {
-            type: 'string',
-            key: 'keyFilePath',
-            translationKey: 'configuration.oibus.manifest.south.opcua.key-file-path',
-            defaultValue: null,
-            validators: [
+            attributes: [
               {
-                type: 'REQUIRED',
-                arguments: []
+                type: 'string-select',
+                key: 'type',
+                translationKey: 'configuration.oibus.manifest.south.opcua.authentication',
+                defaultValue: 'none',
+                selectableValues: ['none', 'basic', 'cert'],
+                validators: [
+                  {
+                    type: 'REQUIRED',
+                    arguments: []
+                  }
+                ],
+                displayProperties: {
+                  row: 0,
+                  columns: 4,
+                  displayInViewMode: true
+                }
+              },
+              {
+                type: 'string',
+                key: 'username',
+                translationKey: 'configuration.oibus.manifest.south.opcua.username',
+                defaultValue: null,
+                validators: [
+                  {
+                    type: 'REQUIRED',
+                    arguments: []
+                  }
+                ],
+                displayProperties: {
+                  row: 0,
+                  columns: 4,
+                  displayInViewMode: true
+                }
+              },
+              {
+                type: 'secret',
+                key: 'password',
+                translationKey: 'configuration.oibus.manifest.south.opcua.password',
+                validators: [],
+                displayProperties: {
+                  row: 0,
+                  columns: 4,
+                  displayInViewMode: true
+                }
+              },
+              {
+                type: 'string',
+                key: 'certFilePath',
+                translationKey: 'configuration.oibus.manifest.south.opcua.cert-file-path',
+                defaultValue: null,
+                validators: [
+                  {
+                    type: 'REQUIRED',
+                    arguments: []
+                  }
+                ],
+                displayProperties: {
+                  row: 0,
+                  columns: 4,
+                  displayInViewMode: true
+                }
+              },
+              {
+                type: 'string',
+                key: 'keyFilePath',
+                translationKey: 'configuration.oibus.manifest.south.opcua.key-file-path',
+                defaultValue: null,
+                validators: [
+                  {
+                    type: 'REQUIRED',
+                    arguments: []
+                  }
+                ],
+                displayProperties: {
+                  row: 0,
+                  columns: 4,
+                  displayInViewMode: true
+                }
               }
-            ],
-            displayProperties: {
-              row: 0,
-              columns: 4,
-              displayInViewMode: true
-            }
+            ]
           }
         ]
       }

@@ -38,6 +38,8 @@
       @if (manifest) {
         <ng-container formGroupName="options">
           <oib-oibus-object-form-control
+            [southConnectors]="[]"
+            [northConnectors]="[]"
             [scanModes]="scanModes"
             [certificates]="certificates"
             [group]="form.controls.options"

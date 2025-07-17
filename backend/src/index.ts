@@ -21,7 +21,6 @@ import {
 } from './migration/migration-service';
 import OIAnalyticsCommandService from './service/oia/oianalytics-command.service';
 import OianalyticsRegistrationService from './service/oia/oianalytics-registration.service';
-import ConnectionService from './service/connection.service';
 import OIAnalyticsMessageService from './service/oia/oianalytics-message.service';
 import JoiValidator from './web-server/controllers/validators/joi.validator';
 import ScanModeService from './service/scan-mode.service';
@@ -137,7 +136,6 @@ const CERT_FOLDER = 'certs';
 
   const transformerService = new TransformerService(new JoiValidator(), repositoryService.transformerRepository, oIAnalyticsMessageService);
 
-  const connectionService = new ConnectionService(loggerService.logger!);
   const northService = new NorthService(
     new JoiValidator(),
     repositoryService.northConnectorRepository,
@@ -161,7 +159,6 @@ const CERT_FOLDER = 'certs';
     repositoryService.oianalyticsRegistrationRepository,
     repositoryService.certificateRepository,
     oIAnalyticsMessageService,
-    connectionService,
     dataStreamEngine
   );
   const historyQueryService = new HistoryQueryService(

@@ -25,6 +25,8 @@
       </div>
       <ng-container formGroupName="settings">
         <oib-oibus-object-form-control
+          [southConnectors]="[]"
+          [northConnectors]="[]"
           [scanModes]="[]"
           [certificates]="[]"
           [group]="form.controls.settings"
