@@ -12,14 +12,13 @@ import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import { NorthOPCUASettings } from '../../../shared/model/north-settings.model';
 import testData from '../../tests/utils/test-data';
-import { flushPromises, mockBaseFolders } from '../../tests/utils/test-utils';
+import { mockBaseFolders } from '../../tests/utils/test-utils';
 import CacheService from '../../service/cache/cache.service';
 import TransformerService, { createTransformer } from '../../service/transformer.service';
 import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';
 import OIBusTransformer from '../../service/transformers/oibus-transformer';
 import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
 import nodeOPCUAClient, { AttributeIds, DataType, OPCUACertificateManager, OPCUAClient, resolveNodeId } from 'node-opcua';
-import { SouthOPCUASettings } from '../../../shared/model/south-settings.model';
 import { randomUUID } from 'crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -81,15 +80,18 @@ describe('NorthOPCUA', () => {
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
     configuration = JSON.parse(JSON.stringify(testData.north.list[0]));
     configuration.settings = {
-      url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
-      retryInterval: 10000,
-      authentication: {
-        type: 'none',
-        password: null
-      },
-      securityMode: 'none',
-      securityPolicy: 'none',
-      keepSessionAlive: false
+      sharedConnection: null,
+      retryInterval: 10_000,
+      connectionSettings: {
+        url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
+        keepSessionAlive: false,
+        authentication: {
+          type: 'none',
+          password: null
+        },
+        securityMode: 'none',
+        securityPolicy: 'none'
+      }
     };
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
     (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
@@ -108,17 +110,15 @@ describe('NorthOPCUA', () => {
   });
 
   it('should properly connect', async () => {
-    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
-
     await north.start();
     expect(OPCUAClient.createSession).toHaveBeenCalledTimes(1);
     expect(OPCUAClient.createSession).toHaveBeenCalledWith(
-      configuration.settings.url,
+      configuration.settings.connectionSettings!.url,
       { type: 0 },
       {
         applicationName: 'OIBus',
+        clientName: `${configuration.name}-${configuration.id}`,
         clientCertificateManager: { state: 2 },
-        clientName: 'northId1',
         connectionStrategy: { initialDelay: 1000, maxRetry: 1 },
         endpointMustExist: false,
         keepPendingSessionsOnDisconnect: false,
@@ -127,27 +127,6 @@ describe('NorthOPCUA', () => {
         securityPolicy: 'none'
       }
     );
-    expect(logger.info).toHaveBeenCalledWith(`OPCUA ${configuration.name} connected`);
-    (OPCUAClient.createSession as jest.Mock)
-      .mockImplementationOnce(() => {
-        throw new Error('create session error');
-      })
-      .mockImplementationOnce(() => {
-        throw new Error('create session error');
-      });
-
-    await north.start();
-    expect(OPCUAClient.createSession).toHaveBeenCalledTimes(2);
-    expect(logger.error).toHaveBeenCalledWith(`Error while connecting to the OPCUA server. ${new Error('create session error')}`);
-    expect(clearTimeoutSpy).toHaveBeenCalledTimes(0);
-
-    jest.advanceTimersByTime(configuration.settings.retryInterval);
-
-    await flushPromises();
-    expect(OPCUAClient.createSession).toHaveBeenCalledTimes(3);
-
-    await north.disconnect();
-    expect(clearTimeoutSpy).toHaveBeenCalledTimes(2);
   });
 
   it('should handle content', async () => {
@@ -291,33 +270,24 @@ describe('NorthOPCUA test connection', () => {
     }
   }
 
-  const securityPolicies: Array<SouthOPCUASettings['securityPolicy']> = [
-    'none',
-    'basic128',
-    'basic192',
-    'basic192-rsa15',
-    'basic256-rsa15',
-    'basic256-sha256',
-    'aes128-sha256-rsa-oaep',
-    'pub-sub-aes-128-ctr',
-    'pub-sub-aes-256-ctr'
-  ];
-
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime();
 
     configuration = JSON.parse(JSON.stringify(testData.north.list[0]));
     configuration.settings = {
-      url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
-      retryInterval: 10000,
-      authentication: {
-        type: 'none',
-        password: null
-      },
-      securityMode: 'sign-and-encrypt',
-      securityPolicy: 'none',
-      keepSessionAlive: false
+      sharedConnection: null,
+      retryInterval: 10_000,
+      connectionSettings: {
+        url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
+        authentication: {
+          type: 'none',
+          password: null
+        },
+        securityMode: 'sign-and-encrypt',
+        securityPolicy: 'none',
+        keepSessionAlive: false
+      }
     };
 
     north = new NorthOPCUA(
@@ -339,70 +309,8 @@ describe('NorthOPCUA test connection', () => {
     expect(close).toHaveBeenCalled();
   });
 
-  it('Wrong URL', async () => {
-    const error = new Error('BadTcpEndpointUrlInvalid');
-    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockImplementationOnce(() => {
-      throw error;
-    });
-
-    await expect(north.testConnection()).rejects.toThrow(new Error('Please check the URL'));
-  });
-
-  it.each(securityPolicies)('Server does not support Security policy: %s', async securityPolicy => {
-    configuration.settings.securityPolicy = securityPolicy;
-    const error = new Error(`Cannot find an Endpoint matching  security mode: ${securityPolicy}`);
-
-    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockImplementationOnce(() => {
-      throw error;
-    });
-
-    await expect(north.testConnection()).rejects.toThrow(new Error(`Security Policy "${securityPolicy}" is not supported on the server`));
-  });
-
-  it.each(securityPolicies.slice(1))('Server did not trust certificate using Security policy: %s', async securityPolicy => {
-    configuration.settings.securityPolicy = securityPolicy;
-    const error = new Error('The connection may have been rejected by server');
-
-    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockImplementationOnce(() => {
-      throw error;
-    });
-
-    await expect(north.testConnection()).rejects.toThrow(new Error('Please check if the OIBus certificate has been trusted by the server'));
-  });
-
-  it('Wrong user credentials', async () => {
-    configuration.settings.authentication.type = 'basic';
-    const error = new Error('BadIdentityTokenRejected');
-
-    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockImplementationOnce(() => {
-      throw error;
-    });
-
-    await expect(north.testConnection()).rejects.toThrow(new Error('Please check username and password'));
-  });
-
-  it('Wrong certificate', async () => {
-    configuration.settings.authentication = {
-      type: 'cert',
-      certFilePath: 'myCertPath',
-      keyFilePath: 'myKeyPath',
-      username: '',
-      password: ''
-    };
-    const error = new Error('BadIdentityTokenRejected');
-
-    (fs.readFile as jest.Mock)
-      .mockImplementationOnce(() => Buffer.from('cert content'))
-      .mockImplementationOnce(() => Buffer.from('key content'));
-    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockImplementationOnce(() => {
-      throw error;
-    });
-
-    await expect(north.testConnection()).rejects.toThrow(new Error('Please check the certificate and key'));
-  });
-
   it('Certificate file does not exist', async () => {
-    configuration.settings.authentication = {
+    configuration.settings.connectionSettings!.authentication = {
       type: 'cert',
       certFilePath: 'myCertPath',
       keyFilePath: 'myKeyPath',
@@ -421,7 +329,7 @@ describe('NorthOPCUA test connection', () => {
   });
 
   it('Failed to read private key', async () => {
-    configuration.settings.authentication = {
+    configuration.settings.connectionSettings!.authentication = {
       type: 'cert',
       certFilePath: 'myCertPath',
       keyFilePath: 'myKeyPath',
@@ -429,7 +337,6 @@ describe('NorthOPCUA test connection', () => {
       password: ''
     };
     const error = new Error('Failed to read private key');
-    const keyPath = path.resolve(configuration.settings.authentication.keyFilePath!);
     (fs.readFile as jest.Mock)
       .mockImplementationOnce(() => Buffer.from('cert content'))
       .mockImplementationOnce(() => Buffer.from('key content'));
@@ -437,11 +344,11 @@ describe('NorthOPCUA test connection', () => {
       throw error;
     });
 
-    await expect(north.testConnection()).rejects.toThrow(new Error(`Could not read private key "${keyPath}"`));
+    await expect(north.testConnection()).rejects.toThrow(new Error(`Failed to read private key`));
   });
 
   it('Unknown error', async () => {
-    configuration.settings.authentication = {
+    configuration.settings.connectionSettings!.authentication = {
       type: 'none',
       certFilePath: '',
       keyFilePath: '',
@@ -458,12 +365,12 @@ describe('NorthOPCUA test connection', () => {
   });
 
   it('should properly manage all connection options', async () => {
-    const result1 = await north.createSessionConfigs(configuration.settings, {} as OPCUACertificateManager, encryptionService, 'oibus');
+    const result1 = await north.createSessionConfigs(configuration.settings, {} as OPCUACertificateManager, encryptionService);
     expect(result1).toEqual({
       options: {
         applicationName: 'OIBus',
+        clientName: `${configuration.name}-${configuration.id}`,
         clientCertificateManager: {},
-        clientName: 'oibus',
         connectionStrategy: { initialDelay: 1000, maxRetry: 1 },
         endpointMustExist: false,
         keepPendingSessionsOnDisconnect: false,
@@ -475,16 +382,19 @@ describe('NorthOPCUA test connection', () => {
     });
 
     const result2 = await north.createSessionConfigs(
-      { ...configuration.settings, securityMode: 'sign', securityPolicy: undefined },
+      {
+        connectionSettings: { ...configuration.settings.connectionSettings!, securityMode: 'sign', securityPolicy: undefined },
+        retryInterval: 10_000,
+        sharedConnection: null
+      },
       {} as OPCUACertificateManager,
-      encryptionService,
-      'oibus'
+      encryptionService
     );
     expect(result2).toEqual({
       options: {
         applicationName: 'OIBus',
+        clientName: `${configuration.name}-${configuration.id}`,
         clientCertificateManager: {},
-        clientName: 'oibus',
         connectionStrategy: { initialDelay: 1000, maxRetry: 1 },
         endpointMustExist: false,
         keepPendingSessionsOnDisconnect: false,

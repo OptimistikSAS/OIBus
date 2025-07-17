@@ -1,7 +1,11 @@
 import NorthConnector from '../north-connector';
 import EncryptionService, { encryptionService } from '../../service/encryption.service';
 import pino from 'pino';
-import { NorthOPCUASettings } from '../../../shared/model/north-settings.model';
+import {
+  NorthOPCUASettings,
+  NorthOPCUASettingsConnectionSettingsSecurityMode,
+  NorthOPCUASettingsConnectionSettingsSecurityPolicy
+} from '../../../shared/model/north-settings.model';
 import { CacheMetadata } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
@@ -11,7 +15,6 @@ import TransformerService from '../../service/transformer.service';
 import path from 'node:path';
 import { createFolder } from '../../service/utils';
 import fs from 'node:fs/promises';
-import { SouthOPCUASettingsSecurityMode, SouthOPCUASettingsSecurityPolicy } from '../../../shared/model/south-settings.model';
 import {
   AttributeIds,
   ClientSession,
@@ -25,8 +28,10 @@ import {
 } from 'node-opcua';
 import { randomUUID } from 'crypto';
 import { OIBusOPCUAValue } from '../../service/transformers/connector-types.model';
+import { SharableConnection } from '../../south/south-interface';
+import { connectionService } from '../../service/connection.service';
 
-function toOPCUASecurityMode(securityMode: SouthOPCUASettingsSecurityMode) {
+function toOPCUASecurityMode(securityMode: NorthOPCUASettingsConnectionSettingsSecurityMode) {
   switch (securityMode) {
     case 'none':
       return 1;
@@ -37,7 +42,7 @@ function toOPCUASecurityMode(securityMode: SouthOPCUASettingsSecurityMode) {
   }
 }
 
-function toOPCUASecurityPolicy(securityPolicy: SouthOPCUASettingsSecurityPolicy | null | undefined) {
+function toOPCUASecurityPolicy(securityPolicy: NorthOPCUASettingsConnectionSettingsSecurityPolicy | null | undefined) {
   switch (securityPolicy) {
     case 'none':
       return 'none';
@@ -65,11 +70,11 @@ function toOPCUASecurityPolicy(securityPolicy: SouthOPCUASettingsSecurityPolicy 
 /**
  * Class NorthOPCUA - Write values in an OPCUA server
  */
-export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
+export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> implements SharableConnection<ClientSession> {
   private clientCertificateManager: OPCUACertificateManager | null = null;
-  private disconnecting = false;
-  client: ClientSession | null = null;
+  private client: ClientSession | null = null;
   private reconnectTimeout: NodeJS.Timeout | null = null;
+  private disconnecting = false;
 
   constructor(
     connector: NorthConnectorEntity<NorthOPCUASettings>,
@@ -97,7 +102,21 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
   }
 
   override async connect(): Promise<void> {
-    await this.createSession();
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+      this.reconnectTimeout = null;
+    }
+    try {
+      this.client = await this.getSession();
+      this.logger.info(`OPCUA ${this.connector.name} connected`);
+      await super.connect();
+    } catch (error) {
+      this.logger.error(`Error while connecting to the OPCUA server. ${error}`);
+      await this.disconnect();
+      if (!this.disconnecting && this.connector.enabled) {
+        this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
+      }
+    }
   }
 
   override async testConnection(): Promise<void> {
@@ -111,105 +130,76 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
     // It is useful for offline instances of OIBus where downloading openssl is not possible
     clientCertificateManager.state = 2;
 
-    let session;
     try {
-      const { options, userIdentity } = await this.createSessionConfigs(
-        this.connector.settings,
-        clientCertificateManager,
-        encryptionService,
-        'OIBus Connector test'
-      );
-      session = await OPCUAClient.createSession(this.connector.settings.url, userIdentity, options);
-    } catch (error: unknown) {
-      const message = (error as Error).message;
-
-      if (/BadTcpEndpointUrlInvalid/i.test(message)) {
-        throw new Error('Please check the URL');
-      }
-
-      // Security policy
-      if (/Cannot find an Endpoint matching {1,2}security mode/i.test(message) && this.connector.settings.securityPolicy) {
-        throw new Error(`Security Policy "${this.connector.settings.securityPolicy}" is not supported on the server`);
-      }
-      if (/The connection may have been rejected by server/i.test(message) && this.connector.settings.securityPolicy !== 'none') {
-        throw new Error('Please check if the OIBus certificate has been trusted by the server');
-      }
-
-      // Authentication
-      if (/BadIdentityTokenRejected/i.test(message)) {
-        if (this.connector.settings.authentication.type === 'basic') {
-          throw new Error('Please check username and password');
-        }
-
-        if (this.connector.settings.authentication.type === 'cert') {
-          throw new Error('Please check the certificate and key');
-        }
-      }
-
-      if (/Failed to read private key/i.test(message)) {
-        const keyPath = path.resolve(this.connector.settings.authentication.keyFilePath!);
-        throw new Error(`Could not read private key "${keyPath}"`);
-      }
-
-      // Unhandled errors
-      throw new Error((error as Error).message);
+      await this.getSession();
     } finally {
-      await fs.rm(tempCertFolder, { recursive: true, force: true });
+      await fs.rm(path.resolve(tempCertFolder), { recursive: true, force: true });
+      await this.disconnect();
+    }
+  }
 
-      if (session) {
-        await session.close();
-        session = null;
+  async getSession(): Promise<ClientSession> {
+    if (!this.client) {
+      if (!this.connector.settings.sharedConnection) {
+        this.client = await this.createSession();
+      } else {
+        this.client = await connectionService.getConnection<ClientSession>(
+          this.connector.settings.sharedConnection.connectorType,
+          this.connector.settings.sharedConnection.connectorId
+        );
       }
     }
+    if (!this.client) {
+      throw new Error('Could not connect client');
+    }
+    return this.client;
   }
 
-  async createSession(): Promise<void> {
-    if (this.reconnectTimeout) {
-      clearTimeout(this.reconnectTimeout);
-      this.reconnectTimeout = null;
-    }
-    try {
-      const clientName = this.connector.id;
-      const { options, userIdentity } = await this.createSessionConfigs(
-        this.connector.settings,
-        this.clientCertificateManager!,
-        encryptionService,
-        clientName
-      );
-
-      this.logger.debug(`Connecting to OPCUA on ${this.connector.settings.url}`);
-      this.client = await OPCUAClient.createSession(this.connector.settings.url, userIdentity, options);
-      this.logger.info(`OPCUA ${this.connector.name} connected`);
-      await super.connect();
-    } catch (error) {
-      this.logger.error(`Error while connecting to the OPCUA server. ${error}`);
-      await this.disconnect();
-      this.reconnectTimeout = setTimeout(this.createSession.bind(this), this.connector.settings.retryInterval);
-    }
+  getSharedConnectionSettings(): { connectorType: 'north' | 'south' | undefined; connectorId: string | undefined } {
+    return {
+      connectorType: this.connector.settings.sharedConnection?.connectorType,
+      connectorId: this.connector.settings.sharedConnection?.connectorId
+    };
   }
 
-  override async disconnect(): Promise<void> {
+  async createSession(): Promise<ClientSession> {
+    const { options, userIdentity } = await this.createSessionConfigs(
+      this.connector.settings,
+      this.clientCertificateManager!,
+      encryptionService
+    );
+
+    this.logger.debug(`Connecting to OPCUA on ${this.connector.settings.connectionSettings!.url}`);
+    return await OPCUAClient.createSession(this.connector.settings.connectionSettings!.url, userIdentity, options);
+  }
+
+  override async disconnect(error?: Error): Promise<void> {
     this.disconnecting = true;
-
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);
       this.reconnectTimeout = null;
     }
-
-    if (this.client) {
-      await this.client.close();
+    if (this.client && !connectionService.isConnectionUsed('north', this.connector.id, this.connector.id)) {
+      if (!this.connector.settings.sharedConnection) {
+        await this.client.close();
+      } else {
+        await connectionService.disconnect(
+          this.connector.settings.sharedConnection.connectorType,
+          this.connector.settings.sharedConnection.connectorId,
+          this.connector.id,
+          error !== undefined
+        );
+      }
       this.client = null;
     }
-
-    await super.disconnect();
+    await super.disconnect(error);
     this.disconnecting = false;
   }
 
   async createSessionConfigs(
     settings: NorthOPCUASettings,
     clientCertificateManager: OPCUACertificateManager,
-    encryptionService: EncryptionService,
-    clientName: string
+    encryptionService: EncryptionService
   ) {
     const options: OPCUAClientOptions = {
       applicationName: 'OIBus',
@@ -217,27 +207,27 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
         initialDelay: 1000,
         maxRetry: 1
       },
-      securityMode: toOPCUASecurityMode(settings.securityMode),
-      securityPolicy: toOPCUASecurityPolicy(settings.securityPolicy),
+      securityMode: toOPCUASecurityMode(settings.connectionSettings!.securityMode),
+      securityPolicy: toOPCUASecurityPolicy(settings.connectionSettings!.securityPolicy),
       endpointMustExist: false,
-      keepSessionAlive: settings.keepSessionAlive,
+      keepSessionAlive: settings.connectionSettings!.keepSessionAlive,
       keepPendingSessionsOnDisconnect: false,
-      clientName,
+      clientName: `${this.connector.name}-${this.connector.id}`,
       clientCertificateManager
     };
 
     let userIdentity: UserIdentityInfo;
-    switch (settings.authentication.type) {
+    switch (settings.connectionSettings!.authentication.type) {
       case 'basic':
         userIdentity = {
           type: UserTokenType.UserName,
-          userName: settings.authentication.username!,
-          password: await encryptionService.decryptText(settings.authentication.password!)
+          userName: settings.connectionSettings!.authentication.username!,
+          password: await encryptionService.decryptText(settings.connectionSettings!.authentication.password!)
         };
         break;
       case 'cert':
-        const certContent = await fs.readFile(path.resolve(settings.authentication.certFilePath!));
-        const privateKeyContent = await fs.readFile(path.resolve(settings.authentication.keyFilePath!));
+        const certContent = await fs.readFile(path.resolve(settings.connectionSettings!.authentication.certFilePath!));
+        const privateKeyContent = await fs.readFile(path.resolve(settings.connectionSettings!.authentication.keyFilePath!));
         userIdentity = {
           type: UserTokenType.Certificate,
           certificateData: certContent,
@@ -273,7 +263,7 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
     if (!this.supportedTypes().includes(cacheMetadata.contentType)) {
       throw new Error(`Unsupported data type: ${cacheMetadata.contentType} (file ${cacheMetadata.contentFile})`);
     }
-    return this.handleValues(JSON.parse(await fs.readFile(cacheMetadata.contentFile, { encoding: 'utf-8' })) as Array<OIBusOPCUAValue>);
+    await this.handleValues(JSON.parse(await fs.readFile(cacheMetadata.contentFile, { encoding: 'utf-8' })) as Array<OIBusOPCUAValue>);
   }
 
   private async handleValues(values: Array<OIBusOPCUAValue>) {
@@ -291,36 +281,60 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
         continue;
       }
 
-      // Read the DataType attribute of the node
-      const dataValue = await this.client.read({
-        nodeId,
-        attributeId: AttributeIds.DataType
-      });
-
-      // Extract the data type from the DataValue
-      const dataType = dataValue.value.value.value as DataType;
-
-      // Ensure that the dataType is valid
-      if (!Object.values(DataType).includes(dataType)) {
-        this.logger.error(`Invalid data type for node ID ${nodeId}`);
-        continue;
-      }
-      // Write the value to the node
-      const writeResult = await this.client.write({
-        nodeId,
-        attributeId: AttributeIds.Value,
-        value: {
-          value: {
-            dataType,
-            value: value.value
-          }
+      try {
+        // Read the DataType attribute of the node
+        const dataValue = await this.client.read({
+          nodeId,
+          attributeId: AttributeIds.DataType
+        });
+        // Extract the data type from the DataValue
+        const dataType = dataValue.value.value.value as DataType;
+        // Ensure that the dataType is valid
+        if (!Object.values(DataType).includes(dataType)) {
+          this.logger.error(`Invalid data type for node ID ${nodeId}`);
+          continue;
         }
-      });
+        // Write the value to the node
+        const writeResult = await this.client.write({
+          nodeId,
+          attributeId: AttributeIds.Value,
+          value: {
+            value: {
+              dataType,
+              value: value.value
+            }
+          }
+        });
 
-      if (writeResult.isGood()) {
-        this.logger.trace(`Value ${value.value} written successfully on nodeId ${value.nodeId}`);
-      } else {
-        this.logger.error(`Failed to write value ${value.value} on nodeId ${value.nodeId}: ${writeResult.name}`);
+        if (writeResult.isGood()) {
+          this.logger.trace(`Value ${value.value} written successfully on nodeId ${value.nodeId}`);
+        } else {
+          this.logger.error(`Failed to write value ${value.value} on nodeId ${value.nodeId}: ${writeResult.name}`);
+        }
+      } catch (error: unknown) {
+        // Network errors might include ECONNREFUSED, ECONNRESET, etc.
+        if ((error as Error).message.includes('ECONNREFUSED') || (error as Error).message.includes('ECONNRESET')) {
+          this.logger.error(`Network error occurred while processing nodeId ${nodeId}: ${(error as Error).message}`);
+          await this.disconnect(error as Error);
+          if (!this.disconnecting && this.connector.enabled) {
+            this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
+          }
+          throw error;
+        }
+        // Check for specific write errors
+        else if ((error as Error).message.includes('BadNodeIdUnknown') || (error as Error).message.includes('BadAttributeIdInvalid')) {
+          this.logger.error(`Write error on nodeId ${nodeId}: ${(error as Error).message}`);
+          // Continue to the next iteration or operation
+        }
+        // Handle any other unexpected errors
+        else {
+          this.logger.error(`Unexpected error on nodeId ${nodeId}: ${(error as Error).message}`);
+          await this.disconnect(error as Error);
+          if (!this.disconnecting && this.connector.enabled) {
+            this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
+          }
+          throw error;
+        }
       }
     }
   }

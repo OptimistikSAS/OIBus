@@ -25,8 +25,6 @@ import SouthCacheRepositoryMock from '../tests/__mocks__/repository/cache/south-
 import SouthCacheServiceMock from '../tests/__mocks__/service/south-cache-service.mock';
 import { flushPromises, mockBaseFolders } from '../tests/utils/test-utils';
 import SouthOPCUA from './south-opcua/south-opcua';
-import ConnectionService from '../service/connection.service';
-import ConnectionServiceMock from '../tests/__mocks__/service/connection-service.mock';
 import SouthMSSQL from './south-mssql/south-mssql';
 import { DateTime } from 'luxon';
 import { Instant } from '../model/types';
@@ -64,7 +62,6 @@ jest.mock('../service/encryption.service', () => ({
 const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
-const connectionService: ConnectionService = new ConnectionServiceMock();
 const southCacheService = new SouthCacheServiceMock();
 
 jest.mock(
@@ -326,7 +323,6 @@ describe('SouthConnector with history and max instant per item', () => {
 
     configuration = JSON.parse(JSON.stringify(testData.south.list[2]));
     configuration.settings.throttling.maxInstantPerItem = true;
-    configuration.settings.sharedConnection = true;
     (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
     (southConnectorRepository.findAllItemsForSouth as jest.Mock).mockReturnValue(configuration.items);
     (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
@@ -338,15 +334,10 @@ describe('SouthConnector with history and max instant per item', () => {
       southCacheRepository,
       scanModeRepository,
       logger,
-      mockBaseFolders(testData.south.list[2].id),
-      connectionService
+      mockBaseFolders(testData.south.list[2].id)
     );
 
     await south.start();
-  });
-
-  it('should delegate connection', async () => {
-    expect(connectionService.create).toHaveBeenCalled();
   });
 
   it('should manage history query with several intervals with max instant per item', async () => {
@@ -555,6 +546,7 @@ describe('SouthConnector with history and max instant per item', () => {
     ];
     (generateIntervals as jest.Mock).mockReturnValueOnce(intervals);
 
+    south.disconnect = jest.fn();
     south.historyQuery = jest.fn(
       () =>
         new Promise<string>(resolve => {
@@ -619,8 +611,7 @@ describe('SouthConnector with history and subscription', () => {
       southCacheRepository,
       scanModeRepository,
       logger,
-      mockBaseFolders(testData.scanMode.list[0].id),
-      connectionService
+      mockBaseFolders(testData.scanMode.list[0].id)
     );
 
     south.connect = jest.fn();

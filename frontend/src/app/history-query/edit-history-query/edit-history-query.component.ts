@@ -11,6 +11,7 @@ import { ScanModeService } from '../../services/scan-mode.service';
 import {
   NorthConnectorCommandDTO,
   NorthConnectorDTO,
+  NorthConnectorLightDTO,
   NorthConnectorManifest,
   OIBusNorthType
 } from '../../../../../backend/shared/model/north-connector.model';
@@ -24,6 +25,7 @@ import {
   OIBusSouthType,
   SouthConnectorCommandDTO,
   SouthConnectorDTO,
+  SouthConnectorLightDTO,
   SouthConnectorManifest
 } from '../../../../../backend/shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
@@ -99,6 +101,8 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
   scanModes: Array<ScanModeDTO> = [];
   transformers: Array<TransformerDTO> = [];
   certificates: Array<CertificateDTO> = [];
+  southConnectors: Array<SouthConnectorLightDTO> = [];
+  northConnectors: Array<NorthConnectorLightDTO> = [];
   northManifest: NorthConnectorManifest | null = null;
   southManifest: SouthConnectorManifest | null = null;
   southType = '';
@@ -155,6 +159,8 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
 
   ngOnInit() {
     combineLatest([
+      this.southConnectorService.list(),
+      this.northConnectorService.list(),
       this.scanModeService.list(),
       this.certificateService.list(),
       this.transformerService.list(),
@@ -162,7 +168,9 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
       this.route.queryParamMap
     ])
       .pipe(
-        switchMap(([scanModes, certificates, transformers, params, queryParams]) => {
+        switchMap(([southConnectors, northConnectors, scanModes, certificates, transformers, params, queryParams]) => {
+          this.southConnectors = southConnectors;
+          this.northConnectors = northConnectors;
           this.scanModes = scanModes.filter(scanMode => scanMode.id !== 'subscription');
           this.certificates = certificates;
           this.transformers = transformers;

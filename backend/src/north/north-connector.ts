@@ -21,6 +21,7 @@ import fsAsync from 'node:fs/promises';
 import TransformerService, { createTransformer } from '../service/transformer.service';
 import IgnoreTransformer from '../service/transformers/ignore-transformer';
 import IsoTransformer from '../service/transformers/iso-transformer';
+import { SharableConnection } from '../south/south-interface';
 
 /**
  * Class NorthConnector: provides general attributes and methods for north connectors.
@@ -490,7 +491,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
    * Method called by Engine to stop a North connector. This method can be surcharged in the
    * North connector implementation to allow disconnecting to a third party application for example.
    */
-  async disconnect(): Promise<void> {
+  async disconnect(_error?: Error): Promise<void> {
     this.logger.info(`"${this.connector.name}" (${this.connector.id}) disconnected`);
   }
 
@@ -578,4 +579,8 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   abstract handleContent(cacheMetadata: CacheMetadata): Promise<void>;
 
   abstract supportedTypes(): Array<string>;
+
+  sharableConnection<T>(): this is SharableConnection<T> {
+    return 'getSession' in this && 'getSharedConnectionSettings' in this;
+  }
 }

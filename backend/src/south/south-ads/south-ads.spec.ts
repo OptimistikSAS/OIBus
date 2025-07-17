@@ -491,12 +491,12 @@ describe('South ADS', () => {
     await south.disconnect();
     expect(logger.error).toHaveBeenCalledWith(`ADS disconnect error. ${new Error('disconnect error')}`);
     expect(logger.info).toHaveBeenCalledWith(`ADS client disconnected from ${configuration.settings.netId}:${configuration.settings.port}`);
-    expect(logger.info).toHaveBeenCalledTimes(4);
+    expect(logger.info).toHaveBeenCalledTimes(3);
 
     await south.connect();
 
     await south.disconnect();
-    expect(logger.info).toHaveBeenCalledTimes(8);
+    expect(logger.info).toHaveBeenCalledTimes(6);
   });
 
   it('should test item and sucess', async () => {

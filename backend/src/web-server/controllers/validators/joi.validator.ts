@@ -11,6 +11,7 @@ import {
   OIBusObjectAttribute,
   OIBusScanModeAttribute,
   OIBusSecretAttribute,
+  OIBusSharableConnectorAttribute,
   OIBusStringAttribute,
   OIBusStringSelectAttribute,
   OIBusTimezoneAttribute
@@ -48,6 +49,8 @@ export default class JoiValidator {
         return this.generateSelectJoiSchema(oibFormControl);
       case 'boolean':
         return this.generateBooleanJoiSchema(oibFormControl);
+      case 'sharable-connector':
+        return this.generateSharableConnectorJoiSchema(oibFormControl);
       case 'object':
         return this.generateFormGroupJoiSchema(oibFormControl);
       case 'array':
@@ -63,6 +66,7 @@ export default class JoiValidator {
       | OIBusCertificateAttribute
       | OIBusScanModeAttribute
       | OIBusTimezoneAttribute
+      | OIBusSharableConnectorAttribute
       | OIBusInstantAttribute
   ): Record<string, AnySchema> {
     let schema = Joi.string();
@@ -136,6 +140,29 @@ export default class JoiValidator {
       }
     });
     schema = schema.falsy(0).truthy(1);
+    return {
+      [formControl.key]: schema
+    };
+  }
+
+  private generateSharableConnectorJoiSchema(formControl: OIBusSharableConnectorAttribute): Record<string, AnySchema> {
+    let schema = Joi.object({
+      connectorId: Joi.string().required(),
+      connectorType: Joi.string().required().valid('north', 'south')
+    });
+    let isRequired = false;
+    formControl.validators?.forEach(validator => {
+      switch (validator.type) {
+        case 'REQUIRED':
+          schema = schema.required();
+          isRequired = true;
+          break;
+      }
+    });
+    if (!isRequired) {
+      schema = schema.allow(null, '');
+    }
+
     return {
       [formControl.key]: schema
     };

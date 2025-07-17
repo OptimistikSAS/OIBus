@@ -2,7 +2,6 @@ import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import pino from 'pino';
 import SouthService from './south.service';
-import ConnectionService from './connection.service';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
 import ScanModeRepositoryMock from '../tests/__mocks__/repository/config/scan-mode-repository.mock';
@@ -16,7 +15,6 @@ import SouthConnectorMetricsRepository from '../repository/logs/south-connector-
 import SouthMetricsRepositoryMock from '../tests/__mocks__/repository/log/south-metrics-repository.mock';
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
 import SouthCacheRepositoryMock from '../tests/__mocks__/repository/cache/south-cache-repository.mock';
-import ConnectionServiceMock from '../tests/__mocks__/service/connection-service.mock';
 import testData from '../tests/utils/test-data';
 import { mockBaseFolders } from '../tests/utils/test-utils';
 import CertificateRepository from '../repository/config/certificate.repository';
@@ -51,7 +49,6 @@ const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository = new OIAnalyticsRegistrationRepositoryMock();
 const certificateRepository: CertificateRepository = new CertificateRepositoryMock();
 const oIAnalyticsMessageService: OIAnalyticsMessageService = new OIAnalyticsMessageServiceMock();
-const connectionService: ConnectionService = new ConnectionServiceMock();
 const dataStreamEngine: DataStreamEngine = new DataStreamEngineMock(logger);
 
 const mockedSouth1 = new SouthConnectorMock(testData.south.list[0]);
@@ -182,7 +179,6 @@ describe('south service', () => {
       oIAnalyticsRegistrationRepository,
       certificateRepository,
       oIAnalyticsMessageService,
-      connectionService,
       dataStreamEngine
     );
   });

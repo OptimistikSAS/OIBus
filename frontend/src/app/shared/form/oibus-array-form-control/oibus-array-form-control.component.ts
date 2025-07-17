@@ -15,6 +15,8 @@ import { OIBusEditArrayElementModalComponent } from './oibus-edit-array-element-
 import { isDisplayableAttribute } from '../dynamic-form.builder';
 import { ValErrorDelayDirective } from '../val-error-delay.directive';
 import { ValidationErrorsComponent } from 'ngx-valdemort';
+import { SouthConnectorLightDTO } from '../../../../../../backend/shared/model/south-connector.model';
+import { NorthConnectorLightDTO } from '../../../../../../backend/shared/model/north-connector.model';
 
 interface Column {
   path: Array<string>;
@@ -49,6 +51,9 @@ export class OIBusArrayFormControlComponent {
 
   scanModes = input.required<Array<ScanModeDTO>>();
   certificates = input.required<Array<CertificateDTO>>();
+  currentConnector = input<{ connectorType: 'north' | 'south'; id: string | undefined; type: string }>();
+  southConnectors = input.required<Array<SouthConnectorLightDTO>>();
+  northConnectors = input.required<Array<NorthConnectorLightDTO>>();
   parentGroup = input.required<FormGroup>();
   control = input.required<FormControl<Array<any>>>();
   arrayAttribute = input.required<OIBusArrayAttribute>();
@@ -68,6 +73,9 @@ export class OIBusArrayFormControlComponent {
     modal.componentInstance.prepareForCreation(
       this.scanModes(),
       this.certificates(),
+      this.currentConnector(),
+      this.southConnectors(),
+      this.northConnectors(),
       this.parentGroup(),
       this.arrayAttribute().rootAttribute
     );
@@ -83,6 +91,9 @@ export class OIBusArrayFormControlComponent {
     modal.componentInstance.prepareForCopy(
       this.scanModes(),
       this.certificates(),
+      this.currentConnector(),
+      this.southConnectors(),
+      this.northConnectors(),
       this.parentGroup(),
       element,
       this.arrayAttribute().rootAttribute
@@ -99,6 +110,9 @@ export class OIBusArrayFormControlComponent {
     modal.componentInstance.prepareForEdition(
       this.scanModes(),
       this.certificates(),
+      this.currentConnector(),
+      this.southConnectors(),
+      this.northConnectors(),
       this.parentGroup(),
       element,
       this.arrayAttribute().rootAttribute
@@ -139,6 +153,7 @@ export class OIBusArrayFormControlComponent {
           case 'string':
           case 'code':
           case 'string-select':
+          case 'sharable-connector':
             return [{ path: [...prefix, attribute.key], type: attribute.type, translationKey: attribute.translationKey }];
           case 'object':
             return this.buildColumn(attribute, [...prefix, attribute.key]);
@@ -157,6 +172,8 @@ export class OIBusArrayFormControlComponent {
     switch (type) {
       case 'object':
       case 'array':
+      case 'certificate':
+      case 'sharable-connector':
         return '';
       case 'string-select':
         return this.translateService.instant(`${translationKey}.${value}`);

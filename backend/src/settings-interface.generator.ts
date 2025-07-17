@@ -9,6 +9,7 @@ const NORTH_SETTINGS_DESTINATION_PATH = 'shared/model/north-settings.model.ts';
 
 const SCAN_MODE_IMPORT = 'import { ScanModeDTO } from "./scan-mode.model";';
 const TIMEZONE_IMPORT = "import { Timezone } from './types';\n";
+const SHARED_CONNECTION_IMPORT = "import { SharedConnection } from './engine.model';\n";
 
 type ConnectorType = 'South' | 'North';
 
@@ -200,6 +201,14 @@ function generateInterface(interfaceName: string, settings: OIBusObjectAttribute
         break;
       case 'certificate':
         attributes.push({ key: setting.key, type: 'string', ...checkIfNullableOrUndefined(setting, settings.enablingConditions) });
+        break;
+      case 'sharable-connector':
+        typesToGenerate.imports.add(SHARED_CONNECTION_IMPORT);
+        attributes.push({
+          key: setting.key,
+          type: 'SharedConnection',
+          ...checkIfNullableOrUndefined(setting, settings.enablingConditions)
+        });
         break;
       case 'timezone':
         typesToGenerate.imports.add(TIMEZONE_IMPORT);

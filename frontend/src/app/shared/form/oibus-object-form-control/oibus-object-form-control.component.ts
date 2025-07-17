@@ -1,6 +1,5 @@
 import { Component, computed, input } from '@angular/core';
 import { AbstractControl, ControlContainer, FormControl, FormGroup, FormGroupName, ReactiveFormsModule } from '@angular/forms';
-
 import { TranslateDirective } from '@ngx-translate/core';
 import { OIBusAttribute, OIBusObjectAttribute } from '../../../../../../backend/shared/model/form.model';
 import { BoxComponent, BoxTitleDirective } from '../../box/box.component';
@@ -18,6 +17,9 @@ import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.mo
 import { CertificateDTO } from '../../../../../../backend/shared/model/certificate.model';
 import { OIBusArrayFormControlComponent } from '../oibus-array-form-control/oibus-array-form-control.component';
 import { addEnablingConditions } from '../dynamic-form.builder';
+import { OibusSharedConnectionFormControlComponent } from '../oibus-shared-connection-form-control/oibus-shared-connection-form-control.component';
+import { SouthConnectorLightDTO } from '../../../../../../backend/shared/model/south-connector.model';
+import { NorthConnectorLightDTO } from '../../../../../../backend/shared/model/north-connector.model';
 
 interface FormRow {
   columns: Array<FormColumn>;
@@ -49,18 +51,22 @@ interface FormColumn {
     OIBusInstantFormControlComponent,
     OIBusBooleanFormControlComponent,
     OIBusArrayFormControlComponent,
-    OIBusScanModeFormControlComponent,
     OIBusSecretFormControlComponent,
+    OIBusScanModeFormControlComponent,
     OIBusStringSelectFormControlComponent,
     OIBusTimezoneFormControlComponent,
     OibusCertificateFormControlComponent,
     OIBusCodeFormControlComponent,
-    OIBusArrayFormControlComponent
+    OIBusArrayFormControlComponent,
+    OibusSharedConnectionFormControlComponent
   ]
 })
 export class OIBusObjectFormControlComponent {
   scanModes = input.required<Array<ScanModeDTO>>();
   certificates = input.required<Array<CertificateDTO>>();
+  currentConnector = input<{ connectorType: 'north' | 'south'; id: string | undefined; type: string }>();
+  southConnectors = input.required<Array<SouthConnectorLightDTO>>();
+  northConnectors = input.required<Array<NorthConnectorLightDTO>>();
   group = input.required<FormGroup>();
   objectAttribute = input.required<OIBusObjectAttribute>();
 
@@ -84,6 +90,7 @@ export class OIBusObjectFormControlComponent {
         case 'secret':
         case 'scan-mode':
         case 'certificate':
+        case 'sharable-connector':
         case 'timezone':
           if (!rows[attribute.displayProperties.row]) {
             rows[attribute.displayProperties.row] = { columns: [], wrapInRow: true };

@@ -11,6 +11,7 @@ export const OIBUS_ATTRIBUTE_TYPES = [
   'certificate',
   'timezone',
   'array',
+  'sharable-connector',
   'object'
 ] as const;
 export type OIBusAttributeType = (typeof OIBUS_ATTRIBUTE_TYPES)[number];
@@ -46,7 +47,7 @@ interface OIBusObjectDisplayProperties {
 export interface OIBusEnablingCondition {
   targetPathFromRoot: string;
   referralPathFromRoot: string;
-  values: Array<string | number | boolean>;
+  values: Array<string | number | boolean | null>;
 }
 
 interface BaseOIBusAttribute {
@@ -112,6 +113,10 @@ export interface OIBusCertificateAttribute extends BaseOIBusDisplayableAttribute
   type: 'certificate';
 }
 
+export interface OIBusSharableConnectorAttribute extends BaseOIBusDisplayableAttribute {
+  type: 'sharable-connector';
+}
+
 export interface OIBusArrayAttribute extends BaseOIBusAttribute {
   type: 'array';
   paginate: boolean;
@@ -135,6 +140,7 @@ export type OIBusAttribute =
   | OIBusInstantAttribute
   | OIBusScanModeAttribute
   | OIBusCertificateAttribute
+  | OIBusSharableConnectorAttribute
   | OIBusTimezoneAttribute
   | OIBusArrayAttribute;
 
@@ -145,6 +151,7 @@ export type OIBusControlAttribute =
   | OIBusSecretAttribute
   | OIBusNumberAttribute
   | OIBusBooleanAttribute
+  | OIBusSharableConnectorAttribute
   | OIBusInstantAttribute
   | OIBusScanModeAttribute
   | OIBusTimezoneAttribute
@@ -159,4 +166,5 @@ export type OIBusDisplayableAttribute =
   | OIBusInstantAttribute
   | OIBusScanModeAttribute
   | OIBusCertificateAttribute
+  | OIBusSharableConnectorAttribute
   | OIBusTimezoneAttribute;
