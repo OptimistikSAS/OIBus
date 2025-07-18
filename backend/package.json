@@ -71,7 +71,7 @@
     "mongodb": "6.17.0",
     "mqtt": "5.13.2",
     "mssql": "11.0.1",
-    "multer": "2.0.1",
+    "multer": "2.0.2",
     "mysql2": "3.14.2",
     "node-opcua": "2.156.0",
     "object-path": "0.11.8",
