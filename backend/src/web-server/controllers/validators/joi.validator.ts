@@ -190,6 +190,11 @@ export default class JoiValidator {
 
     schema = this.applyCustomArrayValidators(schema, customValidators);
     schema = this.applyArrayLevelValidators(schema, formControl.validators);
+
+    if (this.isMqttItemsArray(formControl)) {
+      schema = schema.custom(this.mqttTopicOverlapValidator, 'MQTT topic overlap validation');
+    }
+
     schema = this.handleConditionalDisplay(formControl, schema) as Joi.ArraySchema;
 
     return {
@@ -285,5 +290,87 @@ export default class JoiValidator {
       });
     }
     return schema;
+  }
+
+  private isMqttItemsArray(formControl: OibArrayFormControl): boolean {
+    return formControl.content.some(control => control.key === 'topic');
+  }
+
+  private mqttTopicOverlapValidator: Joi.CustomValidator = (value: Array<Record<string, unknown>>, helpers: Joi.CustomHelpers) => {
+    if (!Array.isArray(value)) {
+      return value;
+    }
+
+    const topics = value.map(item => item.topic).filter((topic): topic is string => typeof topic === 'string' && topic.trim().length > 0);
+
+    const conflicts: Array<{ topic1: string; topic2: string }> = [];
+
+    for (let i = 0; i < topics.length; i++) {
+      for (let j = i + 1; j < topics.length; j++) {
+        const topic1 = topics[i];
+        const topic2 = topics[j];
+
+        if (this.doMqttTopicsOverlap(topic1, topic2)) {
+          conflicts.push({ topic1, topic2 });
+        }
+      }
+    }
+
+    return conflicts.length > 0
+      ? helpers.message({
+          custom: `MQTT topic subscriptions cannot overlap. Conflicting topics: ${conflicts.map(c => `"${c.topic1}" and "${c.topic2}"`).join(', ')}`
+        })
+      : value;
+  };
+
+  private doMqttTopicsOverlap(topic1: string, topic2: string): boolean {
+    if (topic1 === topic2) {
+      return true;
+    }
+    return this.mqttTopicMatches(topic1, topic2) || this.mqttTopicMatches(topic2, topic1);
+  }
+
+  private mqttTopicMatches(topic: string, pattern: string): boolean {
+    if (!pattern.includes('+') && !pattern.includes('#')) {
+      return topic === pattern;
+    }
+
+    if (pattern.includes('#')) {
+      const hashIndex = pattern.indexOf('#');
+      const prefix = pattern.substring(0, hashIndex);
+
+      if (hashIndex === pattern.length - 1 || pattern.charAt(hashIndex + 1) === '') {
+        if (hashIndex === 0 || pattern.charAt(hashIndex - 1) === '/') {
+          return topic.startsWith(prefix);
+        }
+      }
+    }
+
+    const topicParts = topic.split('/');
+    const patternParts = pattern.split('/');
+
+    if (patternParts[patternParts.length - 1] === '#') {
+      if (topicParts.length < patternParts.length - 1) {
+        return false;
+      }
+      for (let i = 0; i < patternParts.length - 1; i++) {
+        if (patternParts[i] !== '+' && patternParts[i] !== topicParts[i]) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    if (topicParts.length !== patternParts.length) {
+      return false;
+    }
+
+    for (let i = 0; i < patternParts.length; i++) {
+      if (patternParts[i] !== '+' && patternParts[i] !== topicParts[i]) {
+        return false;
+      }
+    }
+
+    return true;
   }
 }
