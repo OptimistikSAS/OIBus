@@ -98,4 +98,13 @@
   <ng-template valError="onlyOneReference">
     <span translate="common.validation-errors.only-one-reference"></span>
   </ng-template>
+  <ng-template valError="mqttTopicOverlap" let-error="error" let-label>
+    <span
+      translate="common.validation-errors.mqtt-topic-overlap"
+      [translateParams]="{
+        label: label || ('common.validation-errors.this-field' | translate),
+        conflictingTopics: error.conflictingTopics
+      }"
+    ></span>
+  </ng-template>
 </val-default-errors>

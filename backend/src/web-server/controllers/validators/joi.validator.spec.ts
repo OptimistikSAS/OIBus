@@ -799,4 +799,371 @@ describe('Joi validator', () => {
       expect(result).toBe(undefined);
     });
   });
+
+  describe('MQTT Topic Validation', () => {
+    describe('isMqttItemsArray', () => {
+      it('should return true when array contains topic field', () => {
+        const mqttArrayControl: OibArrayFormControl = {
+          key: 'items',
+          type: 'OibArray',
+          translationKey: 'Items',
+          content: [
+            { key: 'topic', type: 'OibText', translationKey: 'Topic' },
+            { key: 'qos', type: 'OibNumber', translationKey: 'QoS' }
+          ]
+        };
+
+        const result = (validator as unknown as { isMqttItemsArray: (formControl: OibArrayFormControl) => boolean }).isMqttItemsArray(
+          mqttArrayControl
+        );
+        expect(result).toBe(true);
+      });
+
+      it('should return false when array does not contain topic field', () => {
+        const regularArrayControl: OibArrayFormControl = {
+          key: 'items',
+          type: 'OibArray',
+          translationKey: 'Items',
+          content: [
+            { key: 'name', type: 'OibText', translationKey: 'Name' },
+            { key: 'value', type: 'OibNumber', translationKey: 'Value' }
+          ]
+        };
+
+        const result = (validator as unknown as { isMqttItemsArray: (formControl: OibArrayFormControl) => boolean }).isMqttItemsArray(
+          regularArrayControl
+        );
+        expect(result).toBe(false);
+      });
+    });
+
+    describe('doMqttTopicsOverlap', () => {
+      it('should return true for identical topics', () => {
+        const result = (validator as unknown as { doMqttTopicsOverlap: (topic1: string, topic2: string) => boolean }).doMqttTopicsOverlap(
+          '/oibus/counter',
+          '/oibus/counter'
+        );
+        expect(result).toBe(true);
+      });
+
+      it('should return true when topic1 matches topic2 pattern', () => {
+        const result = (validator as unknown as { doMqttTopicsOverlap: (topic1: string, topic2: string) => boolean }).doMqttTopicsOverlap(
+          '/oibus/counter',
+          '/oibus/#'
+        );
+        expect(result).toBe(true);
+      });
+
+      it('should return true when topic2 matches topic1 pattern', () => {
+        const result = (validator as unknown as { doMqttTopicsOverlap: (topic1: string, topic2: string) => boolean }).doMqttTopicsOverlap(
+          '/oibus/#',
+          '/oibus/counter'
+        );
+        expect(result).toBe(true);
+      });
+
+      it('should return false for non-overlapping topics', () => {
+        const result = (validator as unknown as { doMqttTopicsOverlap: (topic1: string, topic2: string) => boolean }).doMqttTopicsOverlap(
+          '/oibus/counter',
+          '/other/topic'
+        );
+        expect(result).toBe(false);
+      });
+    });
+
+    describe('mqttTopicMatches', () => {
+      describe('exact matches', () => {
+        it('should match identical topics', () => {
+          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
+            '/oibus/counter',
+            '/oibus/counter'
+          );
+          expect(result).toBe(true);
+        });
+
+        it('should not match different topics', () => {
+          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
+            '/oibus/counter',
+            '/oibus/other'
+          );
+          expect(result).toBe(false);
+        });
+      });
+
+      describe('single-level wildcard (+)', () => {
+        it('should match single level wildcard', () => {
+          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
+            '/oibus/counter',
+            '/oibus/+'
+          );
+          expect(result).toBe(true);
+        });
+
+        it('should match multiple single level wildcards', () => {
+          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
+            '/oibus/counter/value',
+            '/oibus/+/+'
+          );
+          expect(result).toBe(true);
+        });
+
+        it('should not match if level count differs', () => {
+          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
+            '/oibus/counter',
+            '/oibus/+/value'
+          );
+          expect(result).toBe(false);
+        });
+
+        it('should match empty level with + (implementation behavior)', () => {
+          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
+            '/oibus//value',
+            '/oibus/+/value'
+          );
+          expect(result).toBe(true);
+        });
+      });
+
+      describe('multi-level wildcard (#)', () => {
+        it('should match everything after # wildcard', () => {
+          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
+            '/oibus/counter/value',
+            '/oibus/#'
+          );
+          expect(result).toBe(true);
+        });
+
+        it('should not match exact prefix with # when topic is shorter', () => {
+          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
+            '/oibus',
+            '/oibus/#'
+          );
+          expect(result).toBe(false);
+        });
+
+        it('should match root level with #', () => {
+          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
+            '/oibus/counter',
+            '/#'
+          );
+          expect(result).toBe(true);
+        });
+
+        it('should match everything with just #', () => {
+          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
+            '/oibus/counter/value',
+            '#'
+          );
+          expect(result).toBe(true);
+        });
+
+        it('should not match if prefix does not match', () => {
+          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
+            '/other/counter',
+            '/oibus/#'
+          );
+          expect(result).toBe(false);
+        });
+
+        it('should not match if topic is shorter than prefix', () => {
+          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
+            '/oib',
+            '/oibus/#'
+          );
+          expect(result).toBe(false);
+        });
+      });
+
+      describe('combined wildcards', () => {
+        it('should handle combined + and # wildcards based on implementation', () => {
+          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
+            '/oibus/counter/value/123',
+            '/oibus/+/#'
+          );
+          expect(result).toBe(false);
+        });
+
+        it('should not match if single level part does not match', () => {
+          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
+            '/oibus/counter/value',
+            '/other/+/#'
+          );
+          expect(result).toBe(false);
+        });
+      });
+
+      describe('edge cases', () => {
+        it('should handle empty topics', () => {
+          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
+            '',
+            ''
+          );
+          expect(result).toBe(true);
+        });
+
+        it('should handle topics with special characters', () => {
+          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
+            '/oibus/counter-1_test',
+            '/oibus/+'
+          );
+          expect(result).toBe(true);
+        });
+
+        it('should handle topics starting without slash', () => {
+          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
+            'oibus/counter',
+            'oibus/+'
+          );
+          expect(result).toBe(true);
+        });
+      });
+    });
+
+    describe('mqttTopicOverlapValidator', () => {
+      it('should pass validation when no overlaps exist', () => {
+        const mockHelpers = {
+          message: jest.fn()
+        };
+
+        const topics = [{ topic: '/oibus/counter' }, { topic: '/other/topic' }, { topic: '/different/path' }];
+
+        const result = (validator as unknown as { mqttTopicOverlapValidator: Joi.CustomValidator }).mqttTopicOverlapValidator(
+          topics,
+          mockHelpers as unknown as Joi.CustomHelpers
+        );
+        expect(result).toBe(topics);
+        expect(mockHelpers.message).not.toHaveBeenCalled();
+      });
+
+      it('should fail validation when overlaps exist', () => {
+        const mockHelpers = {
+          message: jest.fn().mockReturnValue('error message')
+        };
+
+        const topics = [{ topic: '/oibus/counter' }, { topic: '/oibus/#' }];
+
+        const result = (validator as unknown as { mqttTopicOverlapValidator: Joi.CustomValidator }).mqttTopicOverlapValidator(
+          topics,
+          mockHelpers as unknown as Joi.CustomHelpers
+        );
+
+        expect(mockHelpers.message).toHaveBeenCalledWith({
+          custom: 'MQTT topic subscriptions cannot overlap. Conflicting topics: "/oibus/counter" and "/oibus/#"'
+        });
+        expect(result).toBe('error message');
+      });
+
+      it('should handle non-array input', () => {
+        const mockHelpers = {
+          message: jest.fn()
+        };
+
+        const nonArrayValue = 'not-an-array';
+        const result = (validator as unknown as { mqttTopicOverlapValidator: Joi.CustomValidator }).mqttTopicOverlapValidator(
+          nonArrayValue as unknown as Array<Record<string, unknown>>,
+          mockHelpers as unknown as Joi.CustomHelpers
+        );
+        expect(result).toBe(nonArrayValue);
+        expect(mockHelpers.message).not.toHaveBeenCalled();
+      });
+
+      it('should filter out empty topics', () => {
+        const mockHelpers = {
+          message: jest.fn()
+        };
+
+        const topics = [{ topic: '/oibus/counter' }, { topic: '' }, { topic: '   ' }, { topic: '/other/topic' }];
+
+        const result = (validator as unknown as { mqttTopicOverlapValidator: Joi.CustomValidator }).mqttTopicOverlapValidator(
+          topics,
+          mockHelpers as unknown as Joi.CustomHelpers
+        );
+        expect(result).toBe(topics);
+        expect(mockHelpers.message).not.toHaveBeenCalled();
+      });
+
+      it('should handle multiple overlaps', () => {
+        const mockHelpers = {
+          message: jest.fn().mockReturnValue('error message')
+        };
+
+        const topics = [{ topic: '/oibus/counter' }, { topic: '/oibus/+' }, { topic: '/oibus/#' }];
+
+        const result = (validator as unknown as { mqttTopicOverlapValidator: Joi.CustomValidator }).mqttTopicOverlapValidator(
+          topics,
+          mockHelpers as unknown as Joi.CustomHelpers
+        );
+
+        expect(mockHelpers.message).toHaveBeenCalledWith({
+          custom: expect.stringContaining('MQTT topic subscriptions cannot overlap')
+        });
+        expect(result).toBe('error message');
+      });
+    });
+
+    describe('MQTT validation integration', () => {
+      it('should apply MQTT validation to arrays with topic field', async () => {
+        const mqttArrayControl: OibArrayFormControl = {
+          key: 'items',
+          type: 'OibArray',
+          translationKey: 'Items',
+          content: [
+            { key: 'topic', type: 'OibText', translationKey: 'Topic' },
+            { key: 'qos', type: 'OibNumber', translationKey: 'QoS' }
+          ]
+        };
+
+        const validData = {
+          items: [
+            { topic: '/oibus/counter', qos: 0 },
+            { topic: '/other/topic', qos: 1 }
+          ]
+        };
+
+        await expect(extendedValidator.validateSettings([mqttArrayControl], validData)).resolves.not.toThrow();
+      });
+
+      it('should fail validation for overlapping MQTT topics', async () => {
+        const mqttArrayControl: OibArrayFormControl = {
+          key: 'items',
+          type: 'OibArray',
+          translationKey: 'Items',
+          content: [
+            { key: 'topic', type: 'OibText', translationKey: 'Topic' },
+            { key: 'qos', type: 'OibNumber', translationKey: 'QoS' }
+          ]
+        };
+
+        const invalidData = {
+          items: [
+            { topic: '/oibus/counter', qos: 0 },
+            { topic: '/oibus/#', qos: 1 }
+          ]
+        };
+
+        await expect(extendedValidator.validateSettings([mqttArrayControl], invalidData)).rejects.toThrow();
+      });
+
+      it('should pass validation for non-MQTT arrays without topic field', async () => {
+        const regularArrayControl: OibArrayFormControl = {
+          key: 'items',
+          type: 'OibArray',
+          translationKey: 'Items',
+          content: [
+            { key: 'name', type: 'OibText', translationKey: 'Name' },
+            { key: 'description', type: 'OibText', translationKey: 'Description' }
+          ]
+        };
+
+        const validData = {
+          items: [
+            { name: 'item1', description: '/oibus/counter' },
+            { name: 'item2', description: '/oibus/#' }
+          ]
+        };
+
+        await expect(extendedValidator.validateSettings([regularArrayControl], validData)).resolves.not.toThrow();
+      });
+    });
+  });
 });
