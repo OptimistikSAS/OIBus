@@ -196,3 +196,84 @@ export async function validateCsvHeaders(
     };
   }
 }
+/**
+ * Checks if two MQTT topics would create overlapping subscriptions
+ */
+export function doMqttTopicsOverlap(topic1: string, topic2: string): boolean {
+  if (topic1 === topic2) {
+    return true;
+  }
+
+  return mqttTopicMatches(topic1, topic2) || mqttTopicMatches(topic2, topic1);
+}
+
+/**
+ * Checks if a topic matches a pattern (with wildcards)
+ */
+function mqttTopicMatches(topic: string, pattern: string): boolean {
+  if (!pattern.includes('+') && !pattern.includes('#')) {
+    return topic === pattern;
+  }
+
+  if (pattern.includes('#')) {
+    const hashIndex = pattern.indexOf('#');
+    const prefix = pattern.substring(0, hashIndex);
+
+    if (hashIndex === pattern.length - 1) {
+      if (hashIndex === 0 || pattern.charAt(hashIndex - 1) === '/') {
+        return topic.startsWith(prefix);
+      }
+    }
+  }
+
+  const topicParts = topic.split('/');
+  const patternParts = pattern.split('/');
+
+  if (patternParts[patternParts.length - 1] === '#') {
+    if (topicParts.length < patternParts.length - 1) {
+      return false;
+    }
+    for (let i = 0; i < patternParts.length - 1; i++) {
+      if (patternParts[i] !== '+' && patternParts[i] !== topicParts[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  if (topicParts.length !== patternParts.length) {
+    return false;
+  }
+
+  for (let i = 0; i < patternParts.length; i++) {
+    if (patternParts[i] !== '+' && patternParts[i] !== topicParts[i]) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+/**
+ * Creates a validator function to check for MQTT topic overlaps
+ */
+export function mqttTopicOverlapValidator(existingTopics: Array<string>): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const currentTopic = control.value;
+
+    if (!currentTopic || typeof currentTopic !== 'string' || !currentTopic.trim()) {
+      return null;
+    }
+
+    const conflictingTopics = existingTopics.filter(existingTopic => doMqttTopicsOverlap(currentTopic, existingTopic));
+
+    if (conflictingTopics.length > 0) {
+      return {
+        mqttTopicOverlap: {
+          conflictingTopics: conflictingTopics.join(', ')
+        }
+      };
+    }
+    return null;
+  };
+}

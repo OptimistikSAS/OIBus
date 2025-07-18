@@ -45,6 +45,7 @@ class EditSouthComponentTester extends ComponentTester<EditSouthComponent> {
     return this.element(FormComponent);
   }
 }
+
 describe('EditSouthComponent', () => {
   let tester: EditSouthComponentTester;
   let southConnectorService: jasmine.SpyObj<SouthConnectorService>;
@@ -90,7 +91,9 @@ describe('EditSouthComponent', () => {
 
   describe('create mode', () => {
     beforeEach(() => {
-      TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute({ queryParams: { type: 'SQL' } }) });
+      TestBed.overrideProvider(ActivatedRoute, {
+        useValue: stubRoute({ queryParams: { type: 'SQL' } })
+      });
 
       tester = new EditSouthComponentTester();
       tester.detectChanges();
@@ -118,7 +121,12 @@ describe('EditSouthComponent', () => {
     };
 
     beforeEach(() => {
-      TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute({ params: { southId: 'id1' }, queryParams: { type: 'SQL' } }) });
+      TestBed.overrideProvider(ActivatedRoute, {
+        useValue: stubRoute({
+          params: { southId: 'id1' },
+          queryParams: { type: 'SQL' }
+        })
+      });
 
       southConnectorService.get.and.returnValue(of(southConnector));
       tester = new EditSouthComponentTester();
@@ -132,6 +140,65 @@ describe('EditSouthComponent', () => {
       expect(tester.description).toHaveValue('My South connector description');
       expect(tester.specificForm).toBeDefined();
       expect(tester.specificTitle).toContainText('Microsoft SQL Server™ settings');
+    });
+  });
+
+  describe('MQTT connector specific behavior', () => {
+    beforeEach(() => {
+      southConnectorService.getSouthConnectorTypeManifest.and.returnValue(
+        of({
+          id: 'mqtt',
+          category: 'iot',
+          name: 'MQTT',
+          description: 'MQTT description',
+          modes: {
+            subscription: true,
+            lastPoint: false,
+            lastFile: false,
+            history: false
+          },
+          items: {
+            scanMode: 'SUBSCRIPTION',
+            settings: [
+              {
+                key: 'topic',
+                type: 'OibText',
+                translationKey: 'Topic',
+                validators: [{ key: 'required' }]
+              },
+              {
+                key: 'qos',
+                type: 'OibNumber',
+                translationKey: 'QoS',
+                defaultValue: 0
+              }
+            ],
+            schema: {} as unknown
+          },
+          settings: [],
+          schema: {} as unknown
+        } as SouthConnectorManifest)
+      );
+
+      TestBed.overrideProvider(ActivatedRoute, {
+        useValue: stubRoute({ queryParams: { type: 'MQTT' } })
+      });
+    });
+
+    it('should load MQTT connector manifest', () => {
+      tester = new EditSouthComponentTester();
+      tester.detectChanges();
+
+      expect(tester.title).toContainText('Create MQTT south connector');
+      expect(southConnectorService.getSouthConnectorTypeManifest).toHaveBeenCalledWith('MQTT');
+    });
+
+    it('should display MQTT-specific settings form', () => {
+      tester = new EditSouthComponentTester();
+      tester.detectChanges();
+
+      expect(tester.specificForm).toBeDefined();
+      expect(tester.specificTitle).toContainText('MQTT settings');
     });
   });
 });

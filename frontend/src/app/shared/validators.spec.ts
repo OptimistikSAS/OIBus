@@ -1,5 +1,11 @@
 import { FormControl } from '@angular/forms';
-import { uniqueFieldNamesValidator, singleTrueValidator, validateCsvHeaders } from './validators';
+import {
+  uniqueFieldNamesValidator,
+  singleTrueValidator,
+  validateCsvHeaders,
+  doMqttTopicsOverlap,
+  mqttTopicOverlapValidator
+} from './validators';
 
 describe('Custom Validators', () => {
   describe('uniqueFieldNamesValidator', () => {
@@ -406,6 +412,141 @@ describe('Custom Validators', () => {
           missingHeaders: ['header1', 'header2'],
           extraHeaders: ['Header1', 'HEADER2']
         });
+      });
+    });
+  });
+
+  describe('MQTT Topic Validation', () => {
+    describe('doMqttTopicsOverlap', () => {
+      it('should return true for identical topics', () => {
+        expect(doMqttTopicsOverlap('/oibus/counter', '/oibus/counter')).toBe(true);
+      });
+
+      it('should return true for overlapping wildcard patterns', () => {
+        expect(doMqttTopicsOverlap('/oibus/counter', '/oibus/#')).toBe(true);
+        expect(doMqttTopicsOverlap('/oibus/#', '/oibus/counter')).toBe(true);
+        expect(doMqttTopicsOverlap('/oibus/counter', '/oibus/+')).toBe(true);
+        expect(doMqttTopicsOverlap('/oibus/+', '/oibus/counter')).toBe(true);
+      });
+
+      it('should return false for non-overlapping topics', () => {
+        expect(doMqttTopicsOverlap('/oibus/counter', '/other/topic')).toBe(false);
+        expect(doMqttTopicsOverlap('/oibus/counter', '/oibus/other')).toBe(false);
+      });
+
+      it('should handle edge cases', () => {
+        expect(doMqttTopicsOverlap('', '')).toBe(true);
+        expect(doMqttTopicsOverlap('topic', 'topic')).toBe(true);
+        expect(doMqttTopicsOverlap('topic', '#')).toBe(true);
+      });
+    });
+
+    describe('mqttTopicOverlapValidator', () => {
+      it('should return null when no conflicts exist', () => {
+        const existingTopics = ['/oibus/counter', '/other/topic'];
+        const validator = mqttTopicOverlapValidator(existingTopics);
+        const control = new FormControl('/different/topic');
+
+        expect(validator(control)).toBeNull();
+      });
+
+      it('should return error when conflict exists', () => {
+        const existingTopics = ['/oibus/counter', '/oibus/#'];
+        const validator = mqttTopicOverlapValidator(existingTopics);
+        const control = new FormControl('/oibus/temperature');
+
+        const result = validator(control);
+        expect(result).toEqual({
+          mqttTopicOverlap: {
+            conflictingTopics: '/oibus/#'
+          }
+        });
+      });
+
+      it('should return error for multiple conflicts', () => {
+        const existingTopics = ['/oibus/+', '/oibus/#'];
+        const validator = mqttTopicOverlapValidator(existingTopics);
+        const control = new FormControl('/oibus/counter');
+
+        const result = validator(control);
+        expect(result).toEqual({
+          mqttTopicOverlap: {
+            conflictingTopics: '/oibus/+, /oibus/#'
+          }
+        });
+      });
+
+      it('should return null for empty current topic', () => {
+        const existingTopics = ['/oibus/counter'];
+        const validator = mqttTopicOverlapValidator(existingTopics);
+        const control = new FormControl('');
+
+        expect(validator(control)).toBeNull();
+      });
+
+      it('should return null for null current topic', () => {
+        const existingTopics = ['/oibus/counter'];
+        const validator = mqttTopicOverlapValidator(existingTopics);
+        const control = new FormControl(null);
+
+        expect(validator(control)).toBeNull();
+      });
+
+      it('should return null for whitespace-only topic', () => {
+        const existingTopics = ['/oibus/counter'];
+        const validator = mqttTopicOverlapValidator(existingTopics);
+        const control = new FormControl('   ');
+
+        expect(validator(control)).toBeNull();
+      });
+
+      it('should handle non-string current topic', () => {
+        const existingTopics = ['/oibus/counter'];
+        const validator = mqttTopicOverlapValidator(existingTopics);
+        const control = new FormControl(123);
+
+        expect(validator(control)).toBeNull();
+      });
+
+      it('should handle empty existing topics array', () => {
+        const validator = mqttTopicOverlapValidator([]);
+        const control = new FormControl('/oibus/counter');
+
+        expect(validator(control)).toBeNull();
+      });
+
+      it('should handle wildcard patterns correctly', () => {
+        const existingTopics = ['/oibus/+'];
+        const validator = mqttTopicOverlapValidator(existingTopics);
+        const control = new FormControl('/oibus/counter');
+
+        const result = validator(control);
+        expect(result).toEqual({
+          mqttTopicOverlap: {
+            conflictingTopics: '/oibus/+'
+          }
+        });
+      });
+
+      it('should handle multi-level wildcard patterns', () => {
+        const existingTopics = ['/oibus/#'];
+        const validator = mqttTopicOverlapValidator(existingTopics);
+        const control = new FormControl('/oibus/counter/value');
+
+        const result = validator(control);
+        expect(result).toEqual({
+          mqttTopicOverlap: {
+            conflictingTopics: '/oibus/#'
+          }
+        });
+      });
+
+      it('should not conflict with non-overlapping wildcards', () => {
+        const existingTopics = ['/other/+'];
+        const validator = mqttTopicOverlapValidator(existingTopics);
+        const control = new FormControl('/oibus/counter');
+
+        expect(validator(control)).toBeNull();
       });
     });
   });

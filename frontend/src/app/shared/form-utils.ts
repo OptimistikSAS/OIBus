@@ -1,6 +1,6 @@
 import { FormComponentValidator, OibFormControl } from '../../../../backend/shared/model/form.model';
 import { FormControl, FormGroup, NonNullableFormBuilder, ValidatorFn, Validators } from '@angular/forms';
-import { singleTrueValidator, uniqueFieldNamesValidator } from './validators';
+import { mqttTopicOverlapValidator, singleTrueValidator, uniqueFieldNamesValidator } from './validators';
 
 /**
  * Create the validators associated to an input from the settings schema
@@ -22,6 +22,7 @@ export const getValidators = (validators: Array<FormComponentValidator>): Array<
         return Validators.maxLength(validator.params.maxLength);
       case 'unique':
       case 'singleTrue':
+      case 'mqttTopicOverlap':
         // Note: These are handled at the array level, not individual field level
         return Validators.nullValidator;
       default:
@@ -136,4 +137,26 @@ export const getArrayValidators = (content: Array<OibFormControl>): Array<Valida
   });
 
   return validators;
+};
+
+export const createFormGroupWithMqttValidation = (
+  formDescription: Array<OibFormControl>,
+  fb: NonNullableFormBuilder,
+  existingMqttTopics: Array<string> = []
+): FormGroup => {
+  const formGroup = fb.group({});
+  formDescription.forEach(setting => {
+    let formControl = createFormControl(setting, fb);
+
+    if (setting.key === 'topic' && existingMqttTopics.length > 0) {
+      const validators = getValidators(setting.validators || []);
+      validators.push(mqttTopicOverlapValidator(existingMqttTopics));
+      formControl = fb.control(setting.defaultValue, validators);
+    }
+
+    formGroup.addControl(setting.key, formControl);
+  });
+
+  handleConditionalDisplay(formGroup, formDescription);
+  return formGroup;
 };

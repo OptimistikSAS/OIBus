@@ -1,6 +1,13 @@
-import { byIdComparisonFn, getArrayValidators, getValidators, groupFormControlsByRow } from './form-utils';
+import {
+  byIdComparisonFn,
+  createFormGroupWithMqttValidation,
+  getArrayValidators,
+  getValidators,
+  groupFormControlsByRow
+} from './form-utils';
 import { FormComponentValidator, OibFormControl } from '../../../../backend/shared/model/form.model';
-import { Validators } from '@angular/forms';
+import { FormBuilder, NonNullableFormBuilder, Validators } from '@angular/forms';
+import { TestBed } from '@angular/core/testing';
 
 describe('form-utils', () => {
   describe('getValidators', () => {
@@ -277,6 +284,145 @@ describe('form-utils', () => {
         ]
       ];
       expect(groupFormControlsByRow(arraySettings)).toEqual(expectedRowList);
+    });
+  });
+
+  describe('createFormGroupWithMqttValidation', () => {
+    let fb: NonNullableFormBuilder;
+
+    beforeEach(() => {
+      TestBed.configureTestingModule({});
+      fb = TestBed.inject(FormBuilder).nonNullable;
+    });
+
+    it('should create form group without MQTT validation when no existing topics', () => {
+      const formDescription: Array<OibFormControl> = [
+        {
+          key: 'topic',
+          type: 'OibText',
+          translationKey: 'Topic',
+          validators: [{ key: 'required' }]
+        },
+        {
+          key: 'qos',
+          type: 'OibNumber',
+          translationKey: 'QoS',
+          defaultValue: 0
+        }
+      ];
+
+      const formGroup = createFormGroupWithMqttValidation(formDescription, fb);
+
+      expect(formGroup.get('topic')).toBeDefined();
+      expect(formGroup.get('qos')).toBeDefined();
+      expect(formGroup.get('topic')?.hasError('required')).toBe(true);
+    });
+
+    it('should create form group with MQTT validation when existing topics provided', () => {
+      const formDescription: Array<OibFormControl> = [
+        {
+          key: 'topic',
+          type: 'OibText',
+          translationKey: 'Topic',
+          validators: [{ key: 'required' }]
+        },
+        {
+          key: 'qos',
+          type: 'OibNumber',
+          translationKey: 'QoS',
+          defaultValue: 0
+        }
+      ];
+
+      const existingTopics = ['/oibus/counter', '/oibus/#'];
+      const formGroup = createFormGroupWithMqttValidation(formDescription, fb, existingTopics);
+
+      expect(formGroup.get('topic')).toBeDefined();
+      expect(formGroup.get('qos')).toBeDefined();
+
+      formGroup.get('topic')?.setValue('/oibus/temperature');
+      expect(formGroup.get('topic')?.hasError('mqttTopicOverlap')).toBe(true);
+
+      formGroup.get('topic')?.setValue('/other/topic');
+      expect(formGroup.get('topic')?.hasError('mqttTopicOverlap')).toBe(false);
+    });
+
+    it('should only add MQTT validation to topic field', () => {
+      const formDescription: Array<OibFormControl> = [
+        {
+          key: 'topic',
+          type: 'OibText',
+          translationKey: 'Topic'
+        },
+        {
+          key: 'name',
+          type: 'OibText',
+          translationKey: 'Name'
+        },
+        {
+          key: 'qos',
+          type: 'OibNumber',
+          translationKey: 'QoS'
+        }
+      ];
+
+      const existingTopics = ['/oibus/counter'];
+      const formGroup = createFormGroupWithMqttValidation(formDescription, fb, existingTopics);
+
+      formGroup.get('topic')?.setValue('/oibus/counter');
+      expect(formGroup.get('topic')?.hasError('mqttTopicOverlap')).toBe(true);
+
+      formGroup.get('name')?.setValue('/oibus/counter');
+      expect(formGroup.get('name')?.hasError('mqttTopicOverlap')).toBe(false);
+    });
+
+    it('should handle conditional display with MQTT validation', () => {
+      const formDescription: Array<OibFormControl> = [
+        {
+          key: 'mode',
+          type: 'OibSelect',
+          translationKey: 'Mode',
+          options: ['subscribe', 'publish']
+        },
+        {
+          key: 'topic',
+          type: 'OibText',
+          translationKey: 'Topic',
+          conditionalDisplay: { field: 'mode', values: ['subscribe'] }
+        }
+      ];
+
+      const existingTopics = ['/oibus/counter'];
+      const formGroup = createFormGroupWithMqttValidation(formDescription, fb, existingTopics);
+
+      formGroup.get('mode')?.setValue('subscribe');
+
+      formGroup.get('topic')?.setValue('/oibus/counter');
+      expect(formGroup.get('topic')?.hasError('mqttTopicOverlap')).toBe(true);
+    });
+
+    it('should preserve existing validators when adding MQTT validation', () => {
+      const formDescription: Array<OibFormControl> = [
+        {
+          key: 'topic',
+          type: 'OibText',
+          translationKey: 'Topic',
+          validators: [{ key: 'required' }, { key: 'minLength', params: { minLength: 5 } }]
+        }
+      ];
+
+      const existingTopics = ['/oibus/counter'];
+      const formGroup = createFormGroupWithMqttValidation(formDescription, fb, existingTopics);
+
+      const topicControl = formGroup.get('topic');
+
+      expect(topicControl?.hasError('required')).toBe(true);
+
+      topicControl?.setValue('abc');
+      expect(topicControl?.hasError('minlength')).toBe(true);
+
+      topicControl?.setValue('/oibus/counter');
+      expect(topicControl?.hasError('mqttTopicOverlap')).toBe(true);
     });
   });
 });
