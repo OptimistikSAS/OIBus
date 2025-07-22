@@ -21,6 +21,7 @@ import {
 import { Modal, ModalService } from '../../shared/modal.service';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
+import { DateRange } from '../../shared/date-range-selector/date-range-selector.component';
 
 class EditHistoryQueryComponentTester extends ComponentTester<EditHistoryQueryComponent> {
   constructor() {
@@ -39,12 +40,8 @@ class EditHistoryQueryComponentTester extends ComponentTester<EditHistoryQueryCo
     return this.input('#history-query-description');
   }
 
-  get startTime() {
-    return this.element('#startTime');
-  }
-
-  get endTime() {
-    return this.element('#endTime');
+  get dateRangeSelector() {
+    return this.element('oib-date-range-selector');
   }
 
   get northSpecificTitle() {
@@ -199,6 +196,14 @@ describe('EditHistoryQueryComponent', () => {
     expect(tester.sharedConnection).toBeNull();
   });
 
+  it('should display date range selector', () => {
+    expect(tester.dateRangeSelector).toBeDefined();
+    expect(tester.componentInstance.historyQueryForm?.controls.dateRange.value).toEqual({
+      startTime: '2023-01-01T00:00:00.000Z',
+      endTime: '2023-02-01T00:00:00.000Z'
+    });
+  });
+
   it('should display south sharing input when connection can be shared', () => {
     southConnectorService.getSouthConnectorTypeManifest.and.returnValue(
       of({
@@ -272,27 +277,73 @@ describe('EditHistoryQueryComponent', () => {
     expect(spy).toHaveBeenCalledWith('south', command, 'id1', null);
   });
 
-  it('should validate start and end time', () => {
-    // Should throw error
-    historyQuery.startTime = '2024-01-01T00:00:00.000Z';
-    historyQuery.endTime = '2023-01-01T00:00:00.000Z';
-    tester = new EditHistoryQueryComponentTester();
+  it('should validate date range properly', () => {
+    const validDateRange: DateRange = {
+      startTime: '2023-01-01T00:00:00.000Z',
+      endTime: '2024-01-01T00:00:00.000Z'
+    };
+
+    tester.componentInstance.historyQueryForm?.controls.dateRange.setValue(validDateRange);
     tester.detectChanges();
 
-    expect(tester.componentInstance.historyQueryForm?.controls.startTime.errors).toEqual({
-      badStartDateRange: true
-    });
-    expect(tester.componentInstance.historyQueryForm?.controls.endTime.errors).toEqual({
-      badEndDateRange: true
+    expect(tester.componentInstance.historyQueryForm?.controls.dateRange.errors).toBeFalsy();
+  });
+
+  it('should save with date range values', () => {
+    const dateRange: DateRange = {
+      startTime: '2023-01-01T00:00:00.000Z',
+      endTime: '2024-01-01T00:00:00.000Z'
+    };
+
+    tester.componentInstance.historyQueryForm?.patchValue({
+      name: 'Test Query',
+      description: 'Test Description',
+      dateRange: dateRange
     });
 
-    // Should not throw error
-    historyQuery.startTime = '2023-01-01T00:00:00.000Z';
-    historyQuery.endTime = '2024-01-01T00:00:00.000Z';
-    tester = new EditHistoryQueryComponentTester();
-    tester.detectChanges();
+    historyQueryService.update.and.returnValue(of(undefined));
+    historyQueryService.get.and.returnValue(of(historyQuery));
+    modalService.open.and.returnValue({
+      result: of(false)
+    } as Modal<boolean>);
 
-    expect(tester.componentInstance.historyQueryForm?.controls.startTime.errors).toEqual(null);
-    expect(tester.componentInstance.historyQueryForm?.controls.endTime.errors).toEqual(null);
+    tester.componentInstance.save();
+
+    expect(historyQueryService.update).toHaveBeenCalledWith(
+      'id1',
+      jasmine.objectContaining({
+        startTime: dateRange.startTime,
+        endTime: dateRange.endTime
+      }),
+      false
+    );
+  });
+
+  it('should convert existing startTime/endTime to DateRange on load', () => {
+    const expectedDateRange: DateRange = {
+      startTime: historyQuery.startTime,
+      endTime: historyQuery.endTime
+    };
+
+    expect(tester.componentInstance.historyQueryForm?.controls.dateRange.value).toEqual(expectedDateRange);
+  });
+
+  it('should handle form validation correctly', () => {
+    tester.componentInstance.historyQueryForm?.patchValue({
+      name: '',
+      dateRange: undefined
+    });
+
+    expect(tester.componentInstance.historyQueryForm?.valid).toBeFalsy();
+
+    tester.componentInstance.historyQueryForm?.patchValue({
+      name: 'Valid Name',
+      dateRange: {
+        startTime: '2023-01-01T00:00:00.000Z',
+        endTime: '2024-01-01T00:00:00.000Z'
+      }
+    });
+
+    expect(tester.componentInstance.historyQueryForm?.valid).toBeTruthy();
   });
 });
