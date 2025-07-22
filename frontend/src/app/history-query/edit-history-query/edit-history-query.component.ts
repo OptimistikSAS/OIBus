@@ -1,5 +1,4 @@
 import { Component, OnInit, inject } from '@angular/core';
-
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { formDirectives } from '../../shared/form-directives';
@@ -33,8 +32,6 @@ import {
 } from '../../../../../backend/shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { HistoryQueryService } from '../../services/history-query.service';
-import { Instant } from '../../../../../backend/shared/model/types';
-import { DatetimepickerComponent } from '../../shared/datetimepicker/datetimepicker.component';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { HistoryQueryItemsComponent } from '../history-query-items/history-query-items.component';
@@ -45,11 +42,11 @@ import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { ResetCacheHistoryQueryModalComponent } from '../reset-cache-history-query-modal/reset-cache-history-query-modal.component';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
-import { dateTimeRangeValidatorBuilder } from '../../shared/validators';
 import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
 import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
 import { CanComponentDeactivate } from '../../shared/unsaved-changes.guard';
 import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
+import { DateRange, DateRangeSelectorComponent } from '../../shared/date-range-selector/date-range-selector.component';
 
 @Component({
   selector: 'oib-edit-history-query',
@@ -59,7 +56,7 @@ import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-
     SaveButtonComponent,
     FormComponent,
     OibScanModeComponent,
-    DatetimepickerComponent,
+    DateRangeSelectorComponent,
     BackNavigationDirective,
     BoxComponent,
     BoxTitleDirective,
@@ -103,8 +100,7 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
   historyQueryForm: FormGroup<{
     name: FormControl<string>;
     description: FormControl<string>;
-    startTime: FormControl<Instant>;
-    endTime: FormControl<Instant>;
+    dateRange: FormControl<DateRange>;
     caching: FormGroup<{
       trigger: FormGroup<{
         scanModeId: FormControl<string | null>;
@@ -193,7 +189,7 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
             if (!this.saveItemChangesDirectly) {
               this.inMemoryItems = historyQuery.items.map(item => ({
                 ...item,
-                id: null // we need to remove the exiting ids
+                id: null // we need to remove the existing ids
               }));
             }
           }
@@ -204,7 +200,7 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
               this.fromSouthId = southConnector.id;
               this.inMemoryItems = southConnector.items.map(item => ({
                 ...item,
-                id: null // we need to remove the exiting ids
+                id: null // we need to remove the existing ids
               }));
             }
             if (northConnector) {
@@ -230,8 +226,13 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
         this.historyQueryForm = this.fb.group({
           name: ['', Validators.required],
           description: '',
-          startTime: [DateTime.now().minus({ days: 1 }).toUTC().toISO()!, [dateTimeRangeValidatorBuilder('start')]],
-          endTime: [DateTime.now().toUTC().toISO()!, [dateTimeRangeValidatorBuilder('end')]],
+          dateRange: [
+            {
+              startTime: DateTime.now().minus({ days: 1 }).toUTC().toISO()!,
+              endTime: DateTime.now().toUTC().toISO()!
+            } as DateRange,
+            Validators.required
+          ],
           caching: this.fb.group({
             trigger: this.fb.group({
               scanModeId: this.fb.control<string | null>(null, Validators.required),
@@ -258,7 +259,15 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
         });
 
         if (this.historyQuery) {
-          this.historyQueryForm.patchValue(this.historyQuery);
+          const dateRange: DateRange = {
+            startTime: this.historyQuery.startTime,
+            endTime: this.historyQuery.endTime
+          };
+
+          this.historyQueryForm.patchValue({
+            ...this.historyQuery,
+            dateRange
+          });
         } else {
           if (southConnector) {
             this.historyQueryForm.controls.southSettings.patchValue(southConnector.settings);
@@ -271,14 +280,6 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
 
         // we should provoke all value changes to make sure fields are properly hidden and disabled
         this.historyQueryForm.setValue(this.historyQueryForm.getRawValue());
-
-        // when changing one of the dates the other should re-evaluate errors
-        this.historyQueryForm.controls.startTime.valueChanges.subscribe(() => {
-          this.historyQueryForm?.controls.endTime.updateValueAndValidity({ emitEvent: false });
-        });
-        this.historyQueryForm.controls.endTime.valueChanges.subscribe(() => {
-          this.historyQueryForm?.controls.startTime.updateValueAndValidity({ emitEvent: false });
-        });
       });
   }
 
@@ -295,11 +296,13 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
     }
 
     const formValue = this.historyQueryForm!.value;
+    const dateRange = formValue.dateRange!;
+
     const command: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings> = {
       name: formValue.name!,
       description: formValue.description!,
-      startTime: formValue.startTime!,
-      endTime: formValue.endTime!,
+      startTime: dateRange.startTime,
+      endTime: dateRange.endTime,
       northType: this.northType as OIBusNorthType,
       southType: this.southType as OIBusSouthType,
       southSettings: formValue.southSettings,
@@ -336,6 +339,7 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
             }))
           : this.inMemoryItems
     };
+
     if (this.mode === 'edit') {
       const modalRef = this.modalService.open(ResetCacheHistoryQueryModalComponent);
       modalRef.result.subscribe(resetCache => {
@@ -352,7 +356,9 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
     if (this.mode === 'edit') {
       createOrUpdate = this.historyQueryService.update(this.historyQuery!.id, command, resetCache).pipe(
         tap(() => {
-          this.notificationService.success('history-query.updated', { name: command.name });
+          this.notificationService.success('history-query.updated', {
+            name: command.name
+          });
           this.historyQueryForm?.markAsPristine();
         }),
         switchMap(() => this.historyQueryService.get(this.historyQuery!.id))
@@ -360,7 +366,9 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
     } else {
       createOrUpdate = this.historyQueryService.create(command, this.fromSouthId, this.fromNorthId, this.duplicateId).pipe(
         tap(() => {
-          this.notificationService.success('history-query.created', { name: command.name });
+          this.notificationService.success('history-query.created', {
+            name: command.name
+          });
           this.historyQueryForm?.markAsPristine();
         })
       );

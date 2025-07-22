@@ -7,21 +7,19 @@ import {
 } from '../../../../../backend/shared/model/south-connector.model';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { DatetimepickerComponent } from '../../shared/datetimepicker/datetimepicker.component';
 import { ValErrorDelayDirective } from '../../shared/val-error-delay.directive';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { catchError, of, Subscription } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { getMessageFromHttpErrorResponse } from '../../shared/error-interceptor.service';
 import { formDirectives } from '../../shared/form-directives';
-import { FormControl, FormGroup, NonNullableFormBuilder } from '@angular/forms';
-import { Instant } from '../../../../../backend/shared/model/types';
-import { dateTimeRangeValidatorBuilder } from '../../shared/validators';
+import { FormControl, FormGroup, NonNullableFormBuilder, Validators } from '@angular/forms';
 import { DateTime } from 'luxon';
 import { HistoryQueryService } from '../../services/history-query.service';
 import { HistoryQueryItemCommandDTO } from '../../../../../backend/shared/model/history-query.model';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { ContentDisplayMode, ItemTestResultComponent } from './item-test-result/item-test-result.component';
+import { DateRange, DateRangeSelectorComponent } from '../../shared/date-range-selector/date-range-selector.component';
 
 @Component({
   selector: 'oib-south-item-test',
@@ -30,7 +28,7 @@ import { ContentDisplayMode, ItemTestResultComponent } from './item-test-result/
   imports: [
     ...formDirectives,
     TranslateDirective,
-    DatetimepickerComponent,
+    DateRangeSelectorComponent,
     ValErrorDelayDirective,
     NgbDropdownModule,
     TranslatePipe,
@@ -68,8 +66,7 @@ export class SouthItemTestComponent<TItemType extends 'south' | 'history-south'>
   isTestRunning = false;
   testingSettingsForm: FormGroup<{
     history?: FormGroup<{
-      startTime: FormControl<Instant>;
-      endTime: FormControl<Instant>;
+      dateRange: FormControl<DateRange>;
     }>;
   }> | null = null;
 
@@ -98,7 +95,18 @@ export class SouthItemTestComponent<TItemType extends 'south' | 'history-south'>
       return {};
     }
 
-    return this.testingSettingsForm.value as SouthConnectorItemTestingSettings;
+    const formValue = this.testingSettingsForm.value;
+
+    if (formValue.history?.dateRange) {
+      return {
+        history: {
+          startTime: formValue.history.dateRange.startTime,
+          endTime: formValue.history.dateRange.endTime
+        }
+      };
+    }
+
+    return formValue as SouthConnectorItemTestingSettings;
   }
 
   testItem() {
@@ -175,11 +183,15 @@ export class SouthItemTestComponent<TItemType extends 'south' | 'history-south'>
     this.testingSettingsForm = this.fb.group({});
 
     if (this.supportsHistorySettings) {
+      const defaultDateRange: DateRange = {
+        startTime: DateTime.now().minus({ minutes: 10 }).toUTC().toISO()!,
+        endTime: DateTime.now().toUTC().toISO()!
+      };
+
       this.testingSettingsForm.addControl(
         'history',
         this.fb.group({
-          startTime: [DateTime.now().minus({ minutes: 10 }).toUTC().toISO()!, [dateTimeRangeValidatorBuilder('start')]],
-          endTime: [DateTime.now().toUTC().toISO()!, [dateTimeRangeValidatorBuilder('end')]]
+          dateRange: [defaultDateRange, Validators.required]
         })
       );
     }

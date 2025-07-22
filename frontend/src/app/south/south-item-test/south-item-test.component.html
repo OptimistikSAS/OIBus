@@ -56,21 +56,14 @@
   @if (testingSettingsForm) {
     <form [formGroup]="testingSettingsForm" id="testing-settings-form">
       @if (supportsHistorySettings) {
-        <div class="row form-group" formGroupName="history" id="history">
-          <div class="col">
-            <div class="form-group" id="startTime">
-              <label class="col-auto col-form-label" translate="south.test-item.query-start"></label>
-              <oib-datetimepicker formControlName="startTime" />
-              <val-errors controlName="startTime" />
-            </div>
-          </div>
-          <div class="col">
-            <div class="form-group" id="endTime">
-              <label class="col-auto col-form-label" translate="south.test-item.query-end"></label>
-              <oib-datetimepicker formControlName="endTime" />
-              <val-errors controlName="endTime" />
-            </div>
-          </div>
+        <div class="form-group" formGroupName="history" id="history">
+          <oib-date-range-selector
+            formControlName="dateRange"
+            [startLabel]="'south.test-item.query-start'"
+            [endLabel]="'south.test-item.query-end'"
+            [defaultRange]="'last-10-minutes'"
+          />
+          <val-errors controlName="dateRange" />
         </div>
       }
     </form>

@@ -80,36 +80,12 @@ class SouthItemTestComponentTester extends ComponentTester<TestComponent> {
     } as SouthConnectorManifest;
   }
 
-  get startTime() {
-    return this.element<HTMLDivElement>('div#startTime');
+  get historyGroup() {
+    return this.element<HTMLDivElement>('div#history');
   }
 
-  get startTimeDate() {
-    return this.elements('oib-datetimepicker')[0].elements<HTMLInputElement>('input')[0];
-  }
-
-  get startTimeHour() {
-    return this.elements('oib-datetimepicker')[0].elements<HTMLInputElement>('input')[1];
-  }
-
-  get startTimeMinutes() {
-    return this.elements('oib-datetimepicker')[0].elements<HTMLInputElement>('input')[2];
-  }
-
-  get endTime() {
-    return this.element<HTMLDivElement>('div#endTime');
-  }
-
-  get endTimeDate() {
-    return this.elements('oib-datetimepicker')[1].elements<HTMLInputElement>('input')[0];
-  }
-
-  get endTimeHour() {
-    return this.elements('oib-datetimepicker')[1].elements<HTMLInputElement>('input')[1];
-  }
-
-  get endTimeMinutes() {
-    return this.elements('oib-datetimepicker')[1].elements<HTMLInputElement>('input')[2];
+  get dateRangeSelector() {
+    return this.element('oib-date-range-selector');
   }
 
   get testButton() {
@@ -127,6 +103,17 @@ class SouthItemTestComponentTester extends ComponentTester<TestComponent> {
   get testResultViewComponent() {
     return this.componentInstance.testedComponent.testResultView();
   }
+
+  setDateRange(startTime: string, endTime: string) {
+    // Update the form control directly since we're testing the component logic
+    const historyGroup = this.testingSettingsForm.get('history');
+    if (historyGroup) {
+      historyGroup.get('dateRange')?.setValue({
+        startTime,
+        endTime
+      });
+    }
+  }
 }
 
 describe('SouthItemTestComponent', () => {
@@ -136,7 +123,7 @@ describe('SouthItemTestComponent', () => {
   const historyQueryService: jasmine.SpyObj<HistoryQueryService> = createMock(HistoryQueryService);
 
   // Force DateTime to use the date mocked by Jasmine
-  // This works becaus we mock the date before creating the component,
+  // This works because we mock the date before creating the component,
   // and all 'new Date()' calls will resolve in the mocked date
   beforeAll(() => {
     Settings.now = () => {
@@ -192,16 +179,16 @@ describe('SouthItemTestComponent', () => {
       tester.changeSupportsHistory(true);
       tester.detectChanges();
 
-      expect(tester.startTime).toBeDefined();
-      expect(tester.endTime).toBeDefined();
+      expect(tester.historyGroup).toBeDefined();
+      expect(tester.dateRangeSelector).toBeDefined();
     });
 
     it(`[${testCase.type}] should hide history related settings`, () => {
       tester.changeSupportsHistory(false);
       tester.detectChanges();
 
-      expect(tester.startTime).toBeNull();
-      expect(tester.endTime).toBeNull();
+      expect(tester.historyGroup).toBeNull();
+      expect(tester.dateRangeSelector).toBeNull();
     });
 
     it(`[${testCase.type}] should test the item with default history settings`, () => {
@@ -214,11 +201,21 @@ describe('SouthItemTestComponent', () => {
 
       const formValues = tester.testingSettingsForm?.value;
       const expectedSettings = {
-        // by deafault it should query the last 10 seconds
-        history: { startTime: '2024-01-01T00:00:00.000Z', endTime: '2024-01-01T00:10:00.000Z' }
+        // by default it should query the last 10 minutes
+        history: {
+          startTime: '2024-01-01T00:00:00.000Z',
+          endTime: '2024-01-01T00:10:00.000Z'
+        }
       };
 
-      expect(formValues).toEqual(expectedSettings);
+      expect(formValues).toEqual({
+        history: {
+          dateRange: {
+            startTime: '2024-01-01T00:00:00.000Z',
+            endTime: '2024-01-01T00:10:00.000Z'
+          }
+        }
+      });
 
       expect(testCase.service.testItem).toHaveBeenCalledWith(
         tester.componentInstance.entityId,
@@ -239,23 +236,26 @@ describe('SouthItemTestComponent', () => {
 
       const formValues = tester.testingSettingsForm?.value;
       const defaultSettings = {
-        // by deafault it should query the last 10 seconds
-        history: { startTime: '2024-01-01T00:00:00.000Z', endTime: '2024-01-01T00:10:00.000Z' }
+        history: {
+          dateRange: {
+            startTime: '2024-01-01T00:00:00.000Z',
+            endTime: '2024-01-01T00:10:00.000Z'
+          }
+        }
       };
 
       const expectedSettings = {
-        history: { startTime: '2023-01-01T00:00:00.000Z', endTime: '2023-01-01T00:10:00.000Z' }
+        history: {
+          startTime: '2023-01-01T00:00:00.000Z',
+          endTime: '2023-01-01T00:10:00.000Z'
+        }
       };
 
       expect(formValues).toEqual(defaultSettings);
 
-      tester.startTimeDate.fillWith('2023-01-01');
-      tester.startTimeHour.fillWith('00');
-      tester.startTimeMinutes.fillWith('00');
-
-      tester.endTimeDate.fillWith('2023-01-01');
-      tester.endTimeHour.fillWith('10');
-      tester.endTimeMinutes.fillWith('00');
+      // Set custom date range
+      tester.setDateRange('2023-01-01T00:00:00.000Z', '2023-01-01T00:10:00.000Z');
+      tester.detectChanges();
 
       tester.testButton.click();
 
@@ -468,8 +468,12 @@ describe('SouthItemTestComponent', () => {
       tester.changeEntityId(testCase.entityId);
       tester.detectChanges();
 
-      tester.startTimeDate.fillWith('2025-01-01');
-      tester.endTimeDate.fillWith('2020-01-01');
+      const historyGroup = tester.testingSettingsForm.get('history');
+      if (historyGroup) {
+        historyGroup.get('dateRange')?.setValue(null);
+        historyGroup.get('dateRange')?.markAsTouched();
+      }
+      tester.detectChanges();
 
       tester.testButton.click();
 

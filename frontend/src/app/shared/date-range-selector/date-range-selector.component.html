@@ -1,0 +1,48 @@
+<div [formGroup]="internalForm">
+  <div class="row">
+    <div class="col-12 mb-3">
+      <label class="form-label" translate="date-range.range-type"> </label>
+      <select formControlName="rangeType" class="form-select" id="range-type-select">
+        @for (range of predefinedRanges; track range.key) {
+          <option [value]="range.key">
+            {{ range.translationKey | translate }}
+          </option>
+        }
+        <option value="custom">
+          {{ 'date-range.custom' | translate }}
+        </option>
+      </select>
+      <val-errors controlName="rangeType" />
+    </div>
+  </div>
+
+  @if (internalForm.controls.rangeType.value === 'custom') {
+    <div class="row">
+      <div class="col-6">
+        <div class="form-group">
+          <label class="form-label" [translate]="startLabel"></label>
+          <oib-datetimepicker formControlName="startTime" />
+          <val-errors controlName="startTime" />
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="form-group">
+          <label class="form-label" [translate]="endLabel"></label>
+          <oib-datetimepicker formControlName="endTime" />
+          <val-errors controlName="endTime" />
+        </div>
+      </div>
+    </div>
+  } @else {
+    <div class="row">
+      <div class="col-12">
+        <div class="alert alert-info">
+          <small>
+            <span class="me-1">{{ 'date-range.calculated-info' | translate }}</span>
+            <strong>{{ getCurrentRangeDescription() }}</strong>
+          </small>
+        </div>
+      </div>
+    </div>
+  }
+</div>

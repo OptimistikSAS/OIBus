@@ -44,6 +44,8 @@
       "resolve-pending-changes": "Please validate or discard pending changes before saving",
       "bad-start-date-range": "Start time must be before end time",
       "bad-end-date-range": "End time must be after start time",
+      "date-range-required": "Date range is required",
+      "invalid-date-range": "Invalid date range selected",
       "duplicate-field-names": "Duplicate field names detected",
       "only-one-reference": "Only one element can be marked as reference",
       "mqtt-topic-overlap": "MQTT topic subscriptions cannot overlap. Conflicting topics: {{ conflictingTopics }}"
@@ -76,6 +78,15 @@
   "datepicker": {
     "parse-pattern": "d/M/yyyy",
     "format-pattern": "dd/MM/yyyy"
+  },
+  "date-range": {
+    "range-type": "Date Range",
+    "last-minute": "Last minute",
+    "last-10-minutes": "Last 10 minutes",
+    "last-hour": "Last hour",
+    "last-day": "Last day",
+    "custom": "Custom",
+    "calculated-info": "Range will be calculated when action is performed:"
   },
   "duration-pipe": {
     "long": {
