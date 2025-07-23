@@ -460,6 +460,10 @@ export default class NorthService {
       throw new Error(`North connector ${northConnectorId} not found`);
     }
 
+    if (!northConnector.isEnabled()) {
+      throw new Error(`North connector ${northConnectorId} disabled`);
+    }
+
     const setpointContent: OIBusSetpointContent = {
       type: 'setpoint',
       content: commandContent
