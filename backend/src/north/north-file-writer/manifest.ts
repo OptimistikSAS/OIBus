@@ -3,7 +3,7 @@ import { NorthConnectorManifest } from '../../../shared/model/north-connector.mo
 const manifest: NorthConnectorManifest = {
   id: 'file-writer',
   category: 'file',
-  types: ['any'],
+  types: ['any', 'time-values', 'setpoint'],
   settings: {
     type: 'object',
     key: 'settings',
