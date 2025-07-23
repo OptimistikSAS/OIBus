@@ -1,6 +1,5 @@
 import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
-import EncryptionService from './encryption.service';
 import NorthService, { getTransformer } from './north.service';
 import pino from 'pino';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
@@ -50,7 +49,6 @@ const logRepository: LogRepository = new LogRepositoryMock();
 const certificateRepository: CertificateRepository = new CertificateRepositoryMock();
 const oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository = new OianalyticsRegistrationRepositoryMock();
 const oIAnalyticsMessageService: OIAnalyticsMessageService = new OIAnalyticsMessageServiceMock();
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const dataStreamEngine: DataStreamEngine = new DataStreamEngineMock(logger);
 const transformerService: TransformerService = new TransformerServiceMock();
 
@@ -663,6 +661,7 @@ describe('north service', () => {
 
   it('executeSetpoint() should cache content in north', async () => {
     const northMock = new NorthConnectorMock(testData.north.list[0]);
+    (northMock.isEnabled as jest.Mock).mockReturnValueOnce(true);
     (dataStreamEngine.getNorth as jest.Mock).mockReturnValue(northMock);
     const callback = jest.fn();
     const commandContent = [{ reference: 'reference', value: '123456' }];
@@ -682,6 +681,17 @@ describe('north service', () => {
     expect(callback).toHaveBeenCalledWith(
       `Setpoint ${JSON.stringify([{ reference: 'reference', value: '123456' }])} properly sent into the cache of northId`
     );
+  });
+
+  it('executeSetpoint() should not cache content if north disabled', async () => {
+    const northMock = new NorthConnectorMock(testData.north.list[0]);
+    (northMock.isEnabled as jest.Mock).mockReturnValueOnce(false);
+    (dataStreamEngine.getNorth as jest.Mock).mockReturnValue(northMock);
+    const callback = jest.fn();
+    await expect(service.executeSetpoint('northId', [{ reference: 'reference', value: '123456' }], callback)).rejects.toThrow(
+      `North connector northId disabled`
+    );
+    expect(callback).not.toHaveBeenCalled();
   });
 
   it('executeSetpoint() should not cache content if north not found', async () => {

@@ -63,6 +63,6 @@ export default class NorthFileWriter extends NorthConnector<NorthFileWriterSetti
   }
 
   supportedTypes(): Array<string> {
-    return ['any'];
+    return ['any', 'setpoint', 'time-values'];
   }
 }
