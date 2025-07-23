@@ -94,7 +94,25 @@ describe('NorthConsole with verbose mode', () => {
     expect(process.stdout.write).not.toHaveBeenCalled();
   });
 
-  it('should properly handle values in verbose mode', async () => {
+  it('should properly handle setpoints in verbose mode', async () => {
+    const setpoints = [{ reference: 'reference', value: '123456' }];
+    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify(setpoints));
+    await north.handleContent({
+      contentFile: '/path/to/file/example-123.json',
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'setpoint',
+      source: 'south',
+      options: {}
+    });
+    expect(fs.readFile).toHaveBeenCalledWith('/path/to/file/example-123.json', { encoding: 'utf-8' });
+
+    expect(console.table).toHaveBeenCalledWith(setpoints, ['reference', 'value']);
+    expect(process.stdout.write).not.toHaveBeenCalled();
+  });
+
+  it('should properly handle files in verbose mode', async () => {
     (fs.stat as jest.Mock).mockImplementationOnce(() => Promise.resolve({ size: 666 }));
     await north.handleContent({
       contentFile: 'path/to/file/example.file',
@@ -152,6 +170,24 @@ describe('NorthConsole without verbose mode', () => {
     expect(fs.readFile).toHaveBeenCalledWith('/path/to/file/example-123.json', { encoding: 'utf-8' });
 
     expect(process.stdout.write).toHaveBeenCalledWith('North Console sent 1 values.\r\n');
+    expect(console.table).not.toHaveBeenCalled();
+  });
+
+  it('should properly handle setpoints in non verbose mode', async () => {
+    const setpoints = [{ reference: 'reference', value: '123456' }];
+    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify(setpoints));
+    await north.handleContent({
+      contentFile: '/path/to/file/example-123.json',
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'setpoint',
+      source: 'south',
+      options: {}
+    });
+    expect(fs.readFile).toHaveBeenCalledWith('/path/to/file/example-123.json', { encoding: 'utf-8' });
+
+    expect(process.stdout.write).toHaveBeenCalledWith('North Console sent 1 setpoint.\r\n');
     expect(console.table).not.toHaveBeenCalled();
   });
 
