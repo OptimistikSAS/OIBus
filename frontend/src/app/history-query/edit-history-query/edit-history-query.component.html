@@ -32,23 +32,23 @@
                   </div>
                 </div>
               </div>
+
+              <!-- Date Range Selector -->
               <div class="row">
-                <div class="col">
-                  <div class="form-group" id="startTime">
-                    <label class="col-auto col-form-label" translate="history-query.start"></label>
-                    <oib-datetimepicker formControlName="startTime" />
-                    <val-errors controlName="startTime" />
-                  </div>
-                </div>
-                <div class="col">
-                  <div class="form-group" id="endTime">
-                    <label class="col-auto col-form-label" translate="history-query.end"></label>
-                    <oib-datetimepicker formControlName="endTime" />
-                    <val-errors controlName="endTime" />
+                <div class="col-12">
+                  <div class="form-group">
+                    <oib-date-range-selector
+                      formControlName="dateRange"
+                      [startLabel]="'history-query.start'"
+                      [endLabel]="'history-query.end'"
+                      [defaultRange]="'last-day'"
+                    />
+                    <val-errors controlName="dateRange" />
                   </div>
                 </div>
               </div>
             </oib-box>
+
             <!-- Cache settings -->
             <oib-box
               boxTitle="north.caching.title"
@@ -186,6 +186,7 @@
                 </div>
               </div>
             </oib-box>
+
             <!-- North settings -->
             <oib-box>
               <ng-template oibBoxTitle>
@@ -216,6 +217,7 @@
                 />
               }
             </oib-box>
+
             <!-- South settings -->
             <oib-box>
               <ng-template oibBoxTitle>
