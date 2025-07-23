@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import NorthConnector from '../north-connector';
 import pino from 'pino';
 import { NorthConsoleSettings } from '../../../shared/model/north-settings.model';
-import { CacheMetadata, OIBusTimeValue } from '../../../shared/model/engine.model';
+import { CacheMetadata, OIBusSetpoint, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
@@ -36,6 +36,11 @@ export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
 
       case 'time-values':
         return this.handleValues(JSON.parse(await fs.readFile(cacheMetadata.contentFile, { encoding: 'utf-8' })) as Array<OIBusTimeValue>);
+
+      case 'setpoint':
+        return this.handleSetpoints(
+          JSON.parse(await fs.readFile(cacheMetadata.contentFile, { encoding: 'utf-8' })) as Array<OIBusSetpoint>
+        );
     }
   }
 
@@ -47,6 +52,17 @@ export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
       console.table(values, ['pointId', 'timestamp', 'data']);
     } else {
       process.stdout.write(`North Console sent ${values.length} values.\r\n`);
+    }
+  }
+
+  /**
+   * Handle values by printing them to the console.
+   */
+  async handleSetpoints(values: Array<OIBusSetpoint>): Promise<void> {
+    if (this.connector.settings.verbose) {
+      console.table(values, ['reference', 'value']);
+    } else {
+      process.stdout.write(`North Console sent ${values.length} setpoint.\r\n`);
     }
   }
 
@@ -84,6 +100,6 @@ export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
   }
 
   supportedTypes(): Array<string> {
-    return ['any', 'time-values'];
+    return ['any', 'time-values', 'setpoint'];
   }
 }
