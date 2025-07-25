@@ -40,7 +40,7 @@ export default class OIBusSetpointToMQTTTransformer extends OIBusTransformer {
         if (!mappedElement) return null;
         return {
           topic: mappedElement.topic,
-          payload: element.value
+          payload: typeof element.value === 'string' ? element.value : JSON.stringify(element.value)
         };
       })
       .filter((mappedElement): mappedElement is OIBusMQTTValue => mappedElement !== null);
