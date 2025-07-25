@@ -177,6 +177,9 @@ describe('NorthConnector', () => {
 
     expect(logger.debug).toHaveBeenCalledWith(`Task "${testData.scanMode.list[0].name}" is already in queue`);
     expect(north.run).toHaveBeenCalledTimes(1);
+
+    north.addTaskToQueue({ id: 'other id', name: testData.scanMode.list[0].name });
+    expect(north.run).toHaveBeenCalledTimes(1);
   });
 
   it('should properly run a task', async () => {
@@ -223,6 +226,16 @@ describe('NorthConnector', () => {
     expect(logger.debug).toHaveBeenCalledWith(`Stopping "${testData.north.list[0].name}" (${testData.north.list[0].id})...`);
     expect(north.disconnect).toHaveBeenCalledTimes(1);
     expect(logger.info(`North connector "${testData.north.list[0].name}" stopped`));
+    expect(northConnectorRepository.findNorthById).toHaveBeenCalledWith(testData.north.list[0].id);
+  });
+
+  it('should properly stop when not data stream', async () => {
+    north.disconnect = jest.fn();
+    await north.stop(false);
+    expect(logger.debug).toHaveBeenCalledWith(`Stopping "${testData.north.list[0].name}" (${testData.north.list[0].id})...`);
+    expect(north.disconnect).toHaveBeenCalledTimes(1);
+    expect(logger.info(`North connector "${testData.north.list[0].name}" stopped`));
+    expect(northConnectorRepository.findNorthById).not.toHaveBeenCalled();
   });
 
   it('should properly stop with running task ', async () => {
@@ -395,6 +408,22 @@ describe('NorthConnector', () => {
       contentFile: path.join('cache', 'content', 'file1-123456.json')
     });
     expect(cacheService.removeCacheContent).toHaveBeenCalledWith('cache', contentToHandle);
+    expect(cacheService.moveCacheContent).not.toHaveBeenCalled();
+  });
+
+  it('handleContentWrapper should not retrieve content if content already being sent', async () => {
+    north['contentBeingSent'] = contentToHandle;
+    north.handleContent = jest.fn().mockImplementationOnce(() => {
+      throw new Error('error');
+    });
+    north.createOIBusError = jest.fn().mockReturnValueOnce(new OIBusError('error', true));
+    await north.handleContentWrapper();
+    expect(cacheService.getCacheContentToSend).not.toHaveBeenCalled();
+    expect(north.handleContent).toHaveBeenCalledWith({
+      ...contentToHandle.metadata,
+      contentFile: path.join('cache', 'content', 'file1-123456.json')
+    });
+    expect(cacheService.removeCacheContent).not.toHaveBeenCalled();
     expect(cacheService.moveCacheContent).not.toHaveBeenCalled();
   });
 
@@ -636,6 +665,8 @@ describe('NorthConnector', () => {
     expect(logger.warn).toHaveBeenCalledWith(
       `North cache is exceeding the maximum allowed size (2 MB >= ${north['connector'].caching.throttling.maxSize} MB). Values will be discarded until the cache is emptied (by sending files/values or manual removal)`
     );
+    await north.cacheContent(testData.oibusContent[0], 'south');
+    expect(logger.warn).toHaveBeenCalledTimes(1);
     expect(createTransformer).not.toHaveBeenCalled();
   });
 
@@ -795,11 +826,12 @@ describe('NorthConnector', () => {
 });
 
 describe('NorthConnector test id', () => {
+  const northTest: NorthConnectorEntity<NorthFileWriterSettings> = JSON.parse(JSON.stringify(testData.north.list[0]));
+
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
-    const northTest: NorthConnectorEntity<NorthFileWriterSettings> = JSON.parse(JSON.stringify(testData.north.list[0]));
     northTest.id = 'test';
 
     north = new NorthFileWriter(
@@ -821,5 +853,10 @@ describe('NorthConnector test id', () => {
     expect(northConnectorRepository.findNorthById).not.toHaveBeenCalled();
     expect(cacheService.start).toHaveBeenCalledTimes(1);
     expect(north.connect).toHaveBeenCalledTimes(1);
+  });
+
+  it('should properly connect with test it', async () => {
+    await north.connect();
+    expect(logger.info).toHaveBeenCalledWith(`North connector "${northTest.name}" of type ${northTest.type} started`);
   });
 });
