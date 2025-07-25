@@ -4,7 +4,6 @@ import path from 'node:path';
 import SouthConnector from '../south-connector';
 import { compress, createFolder } from '../../service/utils';
 import pino from 'pino';
-import EncryptionService from '../../service/encryption.service';
 import { QueriesFile } from '../south-interface';
 import { SouthFolderScannerItemSettings, SouthFolderScannerSettings } from '../../../shared/model/south-settings.model';
 import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
@@ -17,7 +16,7 @@ import { BaseFolders, Instant } from '../../model/types';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 
 /**
- * Class SouthFolderScanner - Retrieve file from a local or remote folder
+ * Class SouthFolderScanner - Retrieve files from a local or remote folder
  */
 export default class SouthFolderScanner
   extends SouthConnector<SouthFolderScannerSettings, SouthFolderScannerItemSettings>
@@ -31,23 +30,13 @@ export default class SouthFolderScanner
   constructor(
     connector: SouthConnectorEntity<SouthFolderScannerSettings, SouthFolderScannerItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
-    encryptionService: EncryptionService,
     southConnectorRepository: SouthConnectorRepository,
     southCacheRepository: SouthCacheRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolders: BaseFolders
   ) {
-    super(
-      connector,
-      engineAddContentCallback,
-      encryptionService,
-      southConnectorRepository,
-      southCacheRepository,
-      scanModeRepository,
-      logger,
-      baseFolders
-    );
+    super(connector, engineAddContentCallback, southConnectorRepository, southCacheRepository, scanModeRepository, logger, baseFolders);
     this.tmpFolder = path.resolve(this.baseFolders.cache, 'tmp');
   }
 
@@ -208,7 +197,7 @@ export default class SouthFolderScanner
         // Compress and send the compressed file
         const gzipPath = path.resolve(this.tmpFolder, `${filename}.gz`);
         await compress(filePath, gzipPath);
-        await this.addContent({ type: 'raw', filePath: gzipPath });
+        await this.addContent({ type: 'any', filePath: gzipPath });
         try {
           await fs.unlink(gzipPath);
         } catch (unlinkError) {
@@ -216,10 +205,10 @@ export default class SouthFolderScanner
         }
       } catch (error: unknown) {
         this.logger.error(`Error compressing file "${filePath}": ${(error as Error).message}. Sending it raw instead.`);
-        await this.addContent({ type: 'raw', filePath });
+        await this.addContent({ type: 'any', filePath });
       }
     } else {
-      await this.addContent({ type: 'raw', filePath });
+      await this.addContent({ type: 'any', filePath });
     }
 
     // Delete original file if preserveFile is not set

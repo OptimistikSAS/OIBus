@@ -27,6 +27,7 @@ import {
   OIBusDeleteSouthConnectorCommand,
   OIBusRegenerateCipherKeysCommand,
   OIBusRestartEngineCommand,
+  OIBusSetpointCommand,
   OIBusTestHistoryQueryNorthConnectionCommand,
   OIBusTestHistoryQuerySouthConnectionCommand,
   OIBusTestHistoryQuerySouthItemConnectionCommand,
@@ -60,6 +61,7 @@ import HistoryQueryService from '../history-query.service';
 import { HistoryQueryCommandDTO } from '../../../shared/model/history-query.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
+import { OIBusObjectAttribute } from '../../../shared/model/form.model';
 
 const UPDATE_SETTINGS_FILE = 'update.json';
 
@@ -414,6 +416,9 @@ export default class OIAnalyticsCommandService {
         case 'update-history-query-status':
           await this.executeUpdateHistoryQueryStatusCommand(command);
           break;
+        case 'setpoint':
+          await this.executeSetpointCommand(command);
+          break;
       }
     } catch (error: unknown) {
       this.ongoingExecuteCommand = false;
@@ -626,7 +631,10 @@ export default class OIAnalyticsCommandService {
           : registration.commandPermissions.deleteNorth,
         testNorthConnection: registration.commandPermissions.testNorthConnection
           ? command.commandContent.commandPermissions.testNorthConnection
-          : registration.commandPermissions.testNorthConnection
+          : registration.commandPermissions.testNorthConnection,
+        setpoint: registration.commandPermissions.setpoint
+          ? command.commandContent.commandPermissions.setpoint
+          : registration.commandPermissions.setpoint
       }
     };
     await this.oIAnalyticsRegistrationService.editConnectionSettings(registrationCommand);
@@ -688,6 +696,9 @@ export default class OIAnalyticsCommandService {
     privateKey: string
   ) {
     const manifest = this.southService.getInstalledSouthManifests().find(element => element.id === command.commandContent.type)!;
+    const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
+      attribute => attribute.key === 'settings'
+    )! as OIBusObjectAttribute;
     command.commandContent.settings = await encryptionService.decryptSecretsWithPrivateKey(
       command.commandContent.settings,
       manifest.settings,
@@ -698,7 +709,7 @@ export default class OIAnalyticsCommandService {
         id: item.id,
         enabled: item.enabled,
         name: item.name,
-        settings: await encryptionService.decryptSecretsWithPrivateKey(item.settings, manifest.items.settings, privateKey),
+        settings: await encryptionService.decryptSecretsWithPrivateKey(item.settings, itemSettingsManifest, privateKey),
         scanModeId: item.scanModeId,
         scanModeName: item.scanModeName
       }))
@@ -709,6 +720,9 @@ export default class OIAnalyticsCommandService {
     const manifest = this.southService
       .getInstalledSouthManifests()
       .find(element => element.id === command.commandContent.southCommand.type)!;
+    const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
+      attribute => attribute.key === 'settings'
+    )! as OIBusObjectAttribute;
     command.commandContent.southCommand.settings = await encryptionService.decryptSecretsWithPrivateKey(
       command.commandContent.southCommand.settings,
       manifest.settings,
@@ -716,7 +730,7 @@ export default class OIAnalyticsCommandService {
     );
     command.commandContent.itemCommand.settings = await encryptionService.decryptSecretsWithPrivateKey(
       command.commandContent.itemCommand.settings,
-      manifest.items.settings,
+      itemSettingsManifest,
       privateKey
     );
   }
@@ -828,6 +842,9 @@ export default class OIAnalyticsCommandService {
   ) {
     const northManifest = this.northService.getInstalledNorthManifests().find(element => element.id === command.northType)!;
     const southManifest = this.southService.getInstalledSouthManifests().find(element => element.id === command.southType)!;
+    const itemSettingsManifest = southManifest.items.rootAttribute.attributes.find(
+      attribute => attribute.key === 'settings'
+    )! as OIBusObjectAttribute;
     command.northSettings = await encryptionService.decryptSecretsWithPrivateKey(command.northSettings, northManifest.settings, privateKey);
     command.southSettings = await encryptionService.decryptSecretsWithPrivateKey(command.southSettings, southManifest.settings, privateKey);
     command.items = await Promise.all(
@@ -835,7 +852,7 @@ export default class OIAnalyticsCommandService {
         id: item.id,
         enabled: item.enabled,
         name: item.name,
-        settings: await encryptionService.decryptSecretsWithPrivateKey(item.settings, southManifest.items.settings, privateKey)
+        settings: await encryptionService.decryptSecretsWithPrivateKey(item.settings, itemSettingsManifest, privateKey)
       }))
     );
   }
@@ -844,6 +861,9 @@ export default class OIAnalyticsCommandService {
     const manifest = this.southService
       .getInstalledSouthManifests()
       .find(element => element.id === command.commandContent.historyCommand.southType)!;
+    const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
+      attribute => attribute.key === 'settings'
+    )! as OIBusObjectAttribute;
     command.commandContent.historyCommand.southSettings = await encryptionService.decryptSecretsWithPrivateKey(
       command.commandContent.historyCommand.southSettings,
       manifest.settings,
@@ -851,7 +871,7 @@ export default class OIAnalyticsCommandService {
     );
     command.commandContent.itemCommand.settings = await encryptionService.decryptSecretsWithPrivateKey(
       command.commandContent.itemCommand.settings,
-      manifest.items.settings,
+      itemSettingsManifest,
       privateKey
     );
   }
@@ -924,7 +944,8 @@ export default class OIAnalyticsCommandService {
         enabled: true,
         settings: command.commandContent.northSettings,
         caching: command.commandContent.caching,
-        subscriptions: []
+        subscriptions: [],
+        transformers: []
       },
       this.logger
     );
@@ -999,6 +1020,12 @@ export default class OIAnalyticsCommandService {
     }
   }
 
+  private async executeSetpointCommand(command: OIBusSetpointCommand) {
+    await this.northService.executeSetpoint(command.northConnectorId, command.commandContent, result => {
+      this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), result);
+    });
+  }
+
   private checkCommandPermission(command: OIBusCommand, registration: OIAnalyticsRegistration) {
     switch (command.type) {
       case 'update-version':
@@ -1065,6 +1092,8 @@ export default class OIAnalyticsCommandService {
         return registration.commandPermissions.createOrUpdateHistoryItemsFromCsv;
       case 'update-history-query-status':
         return registration.commandPermissions.updateHistoryQuery;
+      case 'setpoint':
+        return registration.commandPermissions.setpoint;
     }
   }
 }
@@ -1103,6 +1132,7 @@ export const toOIBusCommandDTO = (command: OIBusCommand): OIBusCommandDTO => {
     case 'test-history-query-south-item':
     case 'create-or-update-history-query-south-items-from-csv':
     case 'update-history-query-status':
+    case 'setpoint':
       return command;
   }
 };

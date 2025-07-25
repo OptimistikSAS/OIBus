@@ -1,13 +1,11 @@
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-
 import SouthSftp from './south-sftp';
-
 import { compress } from '../../service/utils';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import EncryptionService from '../../service/encryption.service';
-import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
+import { encryptionService } from '../../service/encryption.service';
 import { SouthSFTPItemSettings, SouthSFTPSettings } from '../../../shared/model/south-settings.model';
 import sftpClient, { FileInfo } from 'ssh2-sftp-client';
 import { DateTime } from 'luxon';
@@ -34,7 +32,6 @@ const mockSftpClient = {
 jest.mock('ssh2-sftp-client');
 jest.mock('../../service/utils');
 
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
@@ -47,6 +44,9 @@ jest.mock(
       return southCacheService;
     }
 );
+jest.mock('../../service/encryption.service', () => ({
+  encryptionService: new EncryptionServiceMock('', '')
+}));
 
 const logger: pino.Logger = new PinoLogger();
 const addContentCallback = jest.fn();
@@ -118,7 +118,6 @@ describe('SouthSFTP', () => {
     south = new SouthSftp(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,
@@ -204,7 +203,7 @@ describe('SouthSFTP', () => {
     expect(mockSftpClient.delete as jest.Mock).toHaveBeenCalledTimes(1);
     expect(mockSftpClient.end as jest.Mock).toHaveBeenCalledTimes(1);
     expect(south.addContent).toHaveBeenCalledWith({
-      type: 'raw',
+      type: 'any',
       filePath: path.resolve(mockBaseFolders(configuration.id).cache, 'tmp', fileInfo.name)
     });
     expect(fs.unlink).not.toHaveBeenCalled();
@@ -248,7 +247,7 @@ describe('SouthSFTP', () => {
       callback(fileInfo);
       return [fileInfo];
     });
-    configuration.settings.username = null;
+    configuration.settings.username = '';
     configuration.settings.password = '';
     const result = await south.listFiles(configuration.items[0]);
     expect(encryptionService.decryptText).not.toHaveBeenCalled();
@@ -344,7 +343,6 @@ describe('SouthFTP with preserve file and compression', () => {
     south = new SouthSftp(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,
@@ -399,7 +397,7 @@ describe('SouthFTP with preserve file and compression', () => {
       `${path.resolve(mockBaseFolders(configuration.id).cache, 'tmp', 'myFile1')}.gz`
     );
     expect(south.addContent).toHaveBeenCalledWith({
-      type: 'raw',
+      type: 'any',
       filePath: path.resolve(mockBaseFolders(configuration.id).cache, 'tmp', `${fileInfo.name}.gz`)
     });
     expect(logger.error).not.toHaveBeenCalled();
@@ -410,7 +408,7 @@ describe('SouthFTP with preserve file and compression', () => {
     fileInfo.name = 'myFile2';
     await south.getFile(fileInfo, configuration.items[1]);
     expect(south.addContent).toHaveBeenCalledWith({
-      type: 'raw',
+      type: 'any',
       filePath: `${path.resolve(mockBaseFolders(configuration.id).cache, 'tmp', 'myFile2')}.gz`
     });
     expect(logger.error).toHaveBeenCalledWith(
@@ -422,7 +420,7 @@ describe('SouthFTP with preserve file and compression', () => {
     });
     await south.getFile(fileInfo, configuration.items[1]);
     expect(south.addContent).toHaveBeenCalledWith({
-      type: 'raw',
+      type: 'any',
       filePath: path.resolve(mockBaseFolders(configuration.id).cache, 'tmp', 'myFile2')
     });
 
@@ -446,7 +444,7 @@ describe('SouthSFTP test connection with private key', () => {
       authentication: 'private-key',
       privateKey: 'myPrivateKey',
       passphrase: 'myPassphrase',
-      username: null,
+      username: '',
       compression: false
     },
     items: [
@@ -501,7 +499,6 @@ describe('SouthSFTP test connection with private key', () => {
     south = new SouthSftp(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,

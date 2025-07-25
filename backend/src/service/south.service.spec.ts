@@ -1,6 +1,5 @@
 import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
-import EncryptionService from './encryption.service';
 import pino from 'pino';
 import SouthService from './south.service';
 import ConnectionService from './connection.service';
@@ -38,6 +37,9 @@ jest.mock('node:fs/promises');
 jest.mock('papaparse');
 jest.mock('./utils');
 jest.mock('../web-server/controllers/validators/joi.validator');
+jest.mock('./encryption.service', () => ({
+  encryptionService: new EncryptionServiceMock('', '')
+}));
 
 const validator = new JoiValidator();
 const logger: pino.Logger = new PinoLogger();
@@ -49,7 +51,6 @@ const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository = new OIAnalyticsRegistrationRepositoryMock();
 const certificateRepository: CertificateRepository = new CertificateRepositoryMock();
 const oIAnalyticsMessageService: OIAnalyticsMessageService = new OIAnalyticsMessageServiceMock();
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const connectionService: ConnectionService = new ConnectionServiceMock();
 const dataStreamEngine: DataStreamEngine = new DataStreamEngineMock(logger);
 
@@ -181,7 +182,6 @@ describe('south service', () => {
       oIAnalyticsRegistrationRepository,
       certificateRepository,
       oIAnalyticsMessageService,
-      encryptionService,
       connectionService,
       dataStreamEngine
     );
@@ -466,6 +466,19 @@ describe('south service', () => {
     expect(createBaseFolders).toHaveBeenCalledTimes(1);
     expect(dataStreamEngine.createSouth).toHaveBeenCalledWith(mockedSouth1);
     expect(dataStreamEngine.startSouth).toHaveBeenCalled();
+  });
+
+  it('createSouth() should not create South connector if disabled', async () => {
+    service.runSouth = jest.fn().mockReturnValue(mockedSouth1);
+    (scanModeRepository.findAll as jest.Mock).mockReturnValue(testData.scanMode.list);
+    const command = JSON.parse(JSON.stringify(testData.south.command));
+    command.items = [];
+    command.enabled = false;
+    await service.createSouth(command, null);
+    expect(southConnectorRepository.saveSouthConnector).toHaveBeenCalled();
+    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
+    expect(createBaseFolders).toHaveBeenCalledTimes(1);
+    expect(dataStreamEngine.startSouth).not.toHaveBeenCalled();
   });
 
   it('createSouth() should create South connector and retrieve secrets from another connector', async () => {
@@ -916,7 +929,7 @@ describe('south service', () => {
       {
         name: 'item',
         enabled: 'true',
-        settings_query: 'SELECT * FROM table',
+        settings_query: 'query1',
         settings_dateTimeFields: '[]',
         settings_serialization: JSON.stringify({
           type: 'csv',
@@ -947,7 +960,7 @@ describe('south service', () => {
           scanModeId: 'scanModeId1',
           scanModeName: null,
           settings: {
-            query: 'SELECT * FROM table',
+            query: 'query1',
             dateTimeFields: [],
             serialization: {
               type: 'csv',
