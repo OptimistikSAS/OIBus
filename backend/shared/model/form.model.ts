@@ -24,7 +24,8 @@ export const FORM_COMPONENT_VALIDATOR_TYPES = [
   'minLength',
   'maxLength',
   'unique',
-  'singleTrue'
+  'singleTrue',
+  'mqttTopicOverlap'
 ] as const;
 export type FormComponentValidatorType = (typeof FORM_COMPONENT_VALIDATOR_TYPES)[number];
 
@@ -78,6 +79,13 @@ interface SingleTrueValidator extends Validator {
   key: 'singleTrue';
 }
 
+interface MqttTopicOverlapValidator extends Validator {
+  key: 'mqttTopicOverlap';
+  params: {
+    conflictingTopics: string;
+  };
+}
+
 export type FormComponentValidator =
   | RequiredValidator
   | MinValidator
@@ -86,7 +94,8 @@ export type FormComponentValidator =
   | MinLengthValidator
   | MaxLengthValidator
   | UniqueValidator
-  | SingleTrueValidator;
+  | SingleTrueValidator
+  | MqttTopicOverlapValidator;
 
 export interface BaseOibFormControl<T> {
   key: string;

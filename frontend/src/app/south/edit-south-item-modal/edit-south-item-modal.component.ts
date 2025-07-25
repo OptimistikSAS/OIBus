@@ -14,7 +14,7 @@ import {
 } from '../../../../../backend/shared/model/south-connector.model';
 import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 
-import { createFormGroup, groupFormControlsByRow } from '../../shared/form-utils';
+import { createFormGroup, createFormGroupWithMqttValidation, groupFormControlsByRow } from '../../shared/form-utils';
 import { OibScanModeComponent } from '../../shared/form/oib-scan-mode/oib-scan-mode.component';
 import { Timezone } from '../../../../../backend/shared/model/types';
 import { inMemoryTypeahead } from '../../shared/typeahead';
@@ -104,12 +104,45 @@ export class EditSouthItemModalComponent {
     };
   }
 
+  private getExistingMqttTopics(): Array<string> {
+    let existingTopics: Array<string> = [];
+
+    switch (this.mode) {
+      case 'copy':
+      case 'create':
+        existingTopics = this.itemList
+          .map(item => (item.settings as any)?.topic)
+          .filter(topic => topic && typeof topic === 'string' && topic.trim());
+        break;
+      case 'edit':
+        if (this.item?.id) {
+          existingTopics = this.itemList
+            .filter(item => item.id && item.id !== this.item?.id)
+            .map(item => (item.settings as any)?.topic)
+            .filter(topic => topic && typeof topic === 'string' && topic.trim());
+        } else {
+          existingTopics = this.itemList
+            .filter((_, index) => index !== this.tableIndex)
+            .map(item => (item.settings as any)?.topic)
+            .filter(topic => topic && typeof topic === 'string' && topic.trim());
+        }
+        break;
+    }
+
+    return existingTopics;
+  }
+
   private createForm(item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings> | null) {
+    const existingTopics = this.southManifest?.id === 'mqtt' ? this.getExistingMqttTopics() : [];
+
     this.form = this.fb.group({
       name: ['', [Validators.required, this.checkUniqueness()]],
       enabled: [true, Validators.required],
       scanModeId: this.fb.control<string | null>(null, Validators.required),
-      settings: createFormGroup(this.southItemSchema!.settings, this.fb)
+      settings:
+        this.southManifest?.id === 'mqtt'
+          ? createFormGroupWithMqttValidation(this.southItemSchema!.settings, this.fb, existingTopics)
+          : createFormGroup(this.southItemSchema!.settings, this.fb)
     });
 
     if (this.southItemSchema!.scanMode === 'SUBSCRIPTION') {
