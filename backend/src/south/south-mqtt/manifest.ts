@@ -15,7 +15,7 @@ const manifest: SouthConnectorManifest = {
     translationKey: 'configuration.oibus.manifest.south.settings',
     displayProperties: {
       visible: true,
-      wrapInBox: true
+      wrapInBox: false
     },
     enablingConditions: [
       {
