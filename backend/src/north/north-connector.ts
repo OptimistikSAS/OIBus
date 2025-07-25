@@ -304,6 +304,8 @@ export default abstract class NorthConnector<T extends NorthSettings> {
         this.logger.trace(`Data type "${data.type}" not supported by the connector. Data will be ignored.`);
       } else {
         await this.cacheWithoutTransform(data, source);
+        // No delay needed here, we check for trigger right now, once the cache is updated
+        await this.triggerRunIfNecessary(0);
       }
       return;
     }
@@ -322,6 +324,8 @@ export default abstract class NorthConnector<T extends NorthSettings> {
       transformerWithOptions.transformer.functionName === IsoTransformer.transformerName
     ) {
       await this.cacheWithoutTransform(data, source);
+      // No delay needed here, we check for trigger right now, once the cache is updated
+      await this.triggerRunIfNecessary(0);
       return;
     }
 
@@ -355,7 +359,8 @@ export default abstract class NorthConnector<T extends NorthSettings> {
         break;
     }
 
-    await this.triggerRunIfNecessary(0); // No delay needed here, we check for trigger right now, once the cache is updated
+    // No delay needed here, we check for trigger right now, once the cache is updated
+    await this.triggerRunIfNecessary(0);
   }
 
   private async cacheWithoutTransform(data: OIBusContent, source: string) {
@@ -495,7 +500,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     this.taskRunnerEvent.removeAllListeners();
 
     if (dataStream) {
-      // Reload the settings only on data stream case, otherwise let the history query manage the settings
+      // Reload the settings only on a data stream case, otherwise let the history query manage the settings
       this.connector = this.northConnectorRepository.findNorthById(this.connector.id)!;
     }
 

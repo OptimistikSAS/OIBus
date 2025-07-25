@@ -60,7 +60,7 @@ describe('OIBusSetpointToMQTTTransformer', () => {
     // Assert
     expect(result).toEqual({
       output: JSON.stringify([
-        { topic: '/oibus/reference1', payload: 1 },
+        { topic: '/oibus/reference1', payload: '1' },
         { topic: '/oibus/reference2', payload: '2' }
       ]),
       metadata: {
