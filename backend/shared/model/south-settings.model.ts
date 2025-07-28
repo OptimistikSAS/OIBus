@@ -4,6 +4,8 @@
 
 import { Timezone } from './types';
 
+import { SharedConnection } from './engine.model';
+
 export const SOUTH_A_D_S_SETTINGS_ENUM_AS_TEXTS = ['text', 'integer'] as const;
 export type SouthADSSettingsEnumAsText = (typeof SOUTH_A_D_S_SETTINGS_ENUM_AS_TEXTS)[number];
 
@@ -57,15 +59,15 @@ export const SOUTH_M_Q_T_T_ITEM_SETTINGS_VALUE_TYPES = ['number', 'string', 'jso
 export type SouthMQTTItemSettingsValueType = (typeof SOUTH_M_Q_T_T_ITEM_SETTINGS_VALUE_TYPES)[number];
 
 export const SOUTH_M_S_S_Q_L_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = [
-  'string',
-  'Date',
-  'DateTime',
-  'DateTime2',
-  'DateTimeOffset',
-  'SmallDateTime',
   'iso-string',
   'unix-epoch',
-  'unix-epoch-ms'
+  'unix-epoch-ms',
+  'string',
+  'Date',
+  'SmallDateTime',
+  'DateTime',
+  'DateTime2',
+  'DateTimeOffset'
 ] as const;
 export type SouthMSSQLItemSettingsDateTimeFieldsType = (typeof SOUTH_M_S_S_Q_L_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
 
@@ -102,7 +104,7 @@ export const SOUTH_MY_S_Q_L_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = [
 ] as const;
 export type SouthMySQLItemSettingsSerializationDelimiter = (typeof SOUTH_MY_S_Q_L_ITEM_SETTINGS_SERIALIZATION_DELIMITERS)[number];
 
-export const SOUTH_O_D_B_C_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'] as const;
+export const SOUTH_O_D_B_C_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'] as const;
 export type SouthODBCItemSettingsDateTimeFieldsType = (typeof SOUTH_O_D_B_C_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
 
 export const SOUTH_O_D_B_C_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv'] as const;
@@ -140,7 +142,7 @@ export const SOUTH_O_I_ANALYTICS_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = [
 export type SouthOIAnalyticsItemSettingsSerializationDelimiter =
   (typeof SOUTH_O_I_ANALYTICS_ITEM_SETTINGS_SERIALIZATION_DELIMITERS)[number];
 
-export const SOUTH_O_L_E_D_B_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'] as const;
+export const SOUTH_O_L_E_D_B_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'] as const;
 export type SouthOLEDBItemSettingsDateTimeFieldsType = (typeof SOUTH_O_L_E_D_B_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
 
 export const SOUTH_O_L_E_D_B_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv'] as const;
@@ -158,7 +160,7 @@ export const SOUTH_O_L_E_D_B_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = [
 ] as const;
 export type SouthOLEDBItemSettingsSerializationDelimiter = (typeof SOUTH_O_L_E_D_B_ITEM_SETTINGS_SERIALIZATION_DELIMITERS)[number];
 
-export const SOUTH_O_P_C_SETTINGS_MODES = ['da', 'hda'] as const;
+export const SOUTH_O_P_C_SETTINGS_MODES = ['hda', 'da'] as const;
 export type SouthOPCSettingsMode = (typeof SOUTH_O_P_C_SETTINGS_MODES)[number];
 
 export const SOUTH_O_P_C_ITEM_SETTINGS_AGGREGATES = [
@@ -193,13 +195,14 @@ export type SouthOPCItemSettingsAggregate = (typeof SOUTH_O_P_C_ITEM_SETTINGS_AG
 export const SOUTH_O_P_C_ITEM_SETTINGS_RESAMPLINGS = ['none', '1s', '10s', '30s', '1min', '1h', '1d'] as const;
 export type SouthOPCItemSettingsResampling = (typeof SOUTH_O_P_C_ITEM_SETTINGS_RESAMPLINGS)[number];
 
-export const SOUTH_O_P_C_U_A_SETTINGS_AUTHENTICATION_TYPES = ['none', 'basic', 'cert'] as const;
-export type SouthOPCUASettingsAuthenticationType = (typeof SOUTH_O_P_C_U_A_SETTINGS_AUTHENTICATION_TYPES)[number];
+export const SOUTH_O_P_C_U_A_SETTINGS_CONNECTION_SETTINGS_AUTHENTICATION_TYPES = ['none', 'basic', 'cert'] as const;
+export type SouthOPCUASettingsConnectionSettingsAuthenticationType =
+  (typeof SOUTH_O_P_C_U_A_SETTINGS_CONNECTION_SETTINGS_AUTHENTICATION_TYPES)[number];
 
-export const SOUTH_O_P_C_U_A_SETTINGS_SECURITY_MODES = ['none', 'sign', 'sign-and-encrypt'] as const;
-export type SouthOPCUASettingsSecurityMode = (typeof SOUTH_O_P_C_U_A_SETTINGS_SECURITY_MODES)[number];
+export const SOUTH_O_P_C_U_A_SETTINGS_CONNECTION_SETTINGS_SECURITY_MODES = ['none', 'sign', 'sign-and-encrypt'] as const;
+export type SouthOPCUASettingsConnectionSettingsSecurityMode = (typeof SOUTH_O_P_C_U_A_SETTINGS_CONNECTION_SETTINGS_SECURITY_MODES)[number];
 
-export const SOUTH_O_P_C_U_A_SETTINGS_SECURITY_POLICYS = [
+export const SOUTH_O_P_C_U_A_SETTINGS_CONNECTION_SETTINGS_SECURITY_POLICYS = [
   'none',
   'basic128',
   'basic192',
@@ -210,7 +213,8 @@ export const SOUTH_O_P_C_U_A_SETTINGS_SECURITY_POLICYS = [
   'pub-sub-aes-128-ctr',
   'pub-sub-aes-256-ctr'
 ] as const;
-export type SouthOPCUASettingsSecurityPolicy = (typeof SOUTH_O_P_C_U_A_SETTINGS_SECURITY_POLICYS)[number];
+export type SouthOPCUASettingsConnectionSettingsSecurityPolicy =
+  (typeof SOUTH_O_P_C_U_A_SETTINGS_CONNECTION_SETTINGS_SECURITY_POLICYS)[number];
 
 export const SOUTH_O_P_C_U_A_ITEM_SETTINGS_HA_MODE_AGGREGATES = ['raw', 'average', 'minimum', 'maximum', 'count'] as const;
 export type SouthOPCUAItemSettingsHaModeAggregate = (typeof SOUTH_O_P_C_U_A_ITEM_SETTINGS_HA_MODE_AGGREGATES)[number];
@@ -224,7 +228,7 @@ export type SouthOPCUAItemSettingsMode = (typeof SOUTH_O_P_C_U_A_ITEM_SETTINGS_M
 export const SOUTH_O_P_C_U_A_ITEM_SETTINGS_TIMESTAMP_ORIGINS = ['oibus', 'point', 'server'] as const;
 export type SouthOPCUAItemSettingsTimestampOrigin = (typeof SOUTH_O_P_C_U_A_ITEM_SETTINGS_TIMESTAMP_ORIGINS)[number];
 
-export const SOUTH_ORACLE_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'] as const;
+export const SOUTH_ORACLE_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'] as const;
 export type SouthOracleItemSettingsDateTimeFieldsType = (typeof SOUTH_ORACLE_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
 
 export const SOUTH_ORACLE_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv'] as const;
@@ -273,7 +277,7 @@ export type SouthPostgreSQLItemSettingsSerializationDelimiter = (typeof SOUTH_PO
 export const SOUTH_S_F_T_P_SETTINGS_AUTHENTICATIONS = ['password', 'private-key'] as const;
 export type SouthSFTPSettingsAuthentication = (typeof SOUTH_S_F_T_P_SETTINGS_AUTHENTICATIONS)[number];
 
-export const SOUTH_S_Q_LITE_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'] as const;
+export const SOUTH_S_Q_LITE_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'] as const;
 export type SouthSQLiteItemSettingsDateTimeFieldsType = (typeof SOUTH_S_Q_LITE_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
 
 export const SOUTH_S_Q_LITE_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv'] as const;
@@ -301,8 +305,8 @@ export interface SouthMQTTSettingsAuthentication {
   username?: string;
   password?: string | null;
   certFilePath?: string;
-  keyFilePath?: string | null;
-  caFilePath?: string | null;
+  keyFilePath?: string;
+  caFilePath?: string;
 }
 
 export interface SouthMSSQLSettingsThrottling {
@@ -335,14 +339,14 @@ export interface SouthOIAnalyticsSettingsSpecificSettings {
   authentication: SouthOIAnalyticsSettingsSpecificSettingsAuthentication;
   accessKey?: string;
   secretKey?: string | null;
-  tenantId?: string | null;
+  tenantId?: string;
   clientId?: string;
   clientSecret?: string | null;
-  certificateId?: string | null;
-  scope?: string | null;
+  certificateId?: string;
+  scope?: string;
   useProxy: boolean;
   proxyUrl?: string;
-  proxyUsername?: string | null;
+  proxyUsername?: string;
   proxyPassword?: string | null;
 }
 
@@ -366,12 +370,20 @@ export interface SouthOPCUASettingsThrottling {
   maxInstantPerItem: boolean;
 }
 
-export interface SouthOPCUASettingsAuthentication {
-  type: SouthOPCUASettingsAuthenticationType;
+export interface SouthOPCUASettingsConnectionSettingsAuthentication {
+  type: SouthOPCUASettingsConnectionSettingsAuthenticationType;
   username?: string;
   password?: string | null;
   certFilePath?: string;
-  keyFilePath?: string | null;
+  keyFilePath?: string;
+}
+
+export interface SouthOPCUASettingsConnectionSettings {
+  url: string;
+  keepSessionAlive: boolean;
+  securityMode: SouthOPCUASettingsConnectionSettingsSecurityMode;
+  securityPolicy?: SouthOPCUASettingsConnectionSettingsSecurityPolicy;
+  authentication: SouthOPCUASettingsConnectionSettingsAuthentication;
 }
 
 export interface SouthOracleSettingsThrottling {
@@ -503,14 +515,12 @@ export interface SouthOPCSettings {
 
 export interface SouthOPCUASettings {
   throttling: SouthOPCUASettingsThrottling;
-  sharedConnection: boolean;
-  url: string;
-  keepSessionAlive: boolean;
   readTimeout: number;
+  maxNumberOfMessages: number;
+  flushMessageTimeout: number;
+  sharedConnection: SharedConnection | null;
   retryInterval: number;
-  securityMode: SouthOPCUASettingsSecurityMode;
-  securityPolicy?: SouthOPCUASettingsSecurityPolicy | null;
-  authentication: SouthOPCUASettingsAuthentication;
+  connectionSettings?: SouthOPCUASettingsConnectionSettings;
 }
 
 export interface SouthOracleSettings {
@@ -546,7 +556,7 @@ export interface SouthSFTPSettings {
   host: string;
   port: number;
   authentication: SouthSFTPSettingsAuthentication;
-  username: string | null;
+  username: string;
   password?: string | null;
   privateKey?: string;
   passphrase?: string | null;
@@ -596,10 +606,10 @@ export interface SouthMQTTItemSettingsJsonPayloadOtherFields {
 
 export interface SouthMQTTItemSettingsJsonPayload {
   useArray: boolean;
-  dataArrayPath?: string | null;
+  dataArrayPath?: string;
   valuePath: string;
   pointIdOrigin: SouthMQTTItemSettingsJsonPayloadPointIdOrigin;
-  pointIdPath?: string | null;
+  pointIdPath?: string;
   timestampOrigin: SouthMQTTItemSettingsJsonPayloadTimestampOrigin;
   timestampPayload?: SouthMQTTItemSettingsJsonPayloadTimestampPayload | null;
   otherFields: Array<SouthMQTTItemSettingsJsonPayloadOtherFields> | null;
@@ -764,7 +774,7 @@ export interface SouthFolderScannerItemSettings {
 export interface SouthModbusItemSettings {
   address: string;
   modbusType: SouthModbusItemSettingsModbusType;
-  data?: SouthModbusItemSettingsData;
+  data?: SouthModbusItemSettingsData | null;
 }
 
 export interface SouthMQTTItemSettings {

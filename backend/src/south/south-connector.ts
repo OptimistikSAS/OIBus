@@ -5,15 +5,13 @@ import { createBaseFolders, delay, generateIntervals, validateCronExpression } f
 import { SouthCache, SouthConnectorItemTestingSettings } from '../../shared/model/south-connector.model';
 import { Instant, Interval } from '../../shared/model/types';
 import pino from 'pino';
-import EncryptionService from '../service/encryption.service';
 import DeferredPromise from '../service/deferred-promise';
 import { DateTime } from 'luxon';
 import SouthCacheService from '../service/south-cache.service';
-import { DelegatesConnection, QueriesFile, QueriesHistory, QueriesLastPoint, QueriesSubscription } from './south-interface';
+import { QueriesFile, QueriesHistory, QueriesLastPoint, QueriesSubscription, SharableConnection } from './south-interface';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { OIBusContent, OIBusRawContent, OIBusTimeValueContent } from '../../shared/model/engine.model';
 import path from 'node:path';
-import ConnectionService, { ManagedConnectionDTO } from '../service/connection.service';
 import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../model/south-connector.model';
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
@@ -62,14 +60,11 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   protected constructor(
     protected connector: SouthConnectorEntity<T, I>,
     private engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
-    protected readonly encryptionService: EncryptionService,
     private readonly southConnectorRepository: SouthConnectorRepository,
     private readonly southCacheRepository: SouthCacheRepository,
     private readonly scanModeRepository: ScanModeRepository,
     protected logger: pino.Logger,
-    protected readonly baseFolders: BaseFolders,
-    // The value is null in order to incrementally refactor connectors to use the ConnectionService
-    private readonly connectionService: ConnectionService | null = null
+    protected readonly baseFolders: BaseFolders
   ) {
     if (this.connector.id !== 'test') {
       this.cacheService = new SouthCacheService(this.southCacheRepository);
@@ -98,27 +93,15 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       await createBaseFolders(this.baseFolders);
     }
     if (dataStream) {
-      // Reload the settings only on data stream case, otherwise let the history query manage the settings
+      // Reload the settings only on a data stream case, otherwise let the history query manage the settings
       this.connector = this.southConnectorRepository.findSouthById(this.connector.id)!;
     }
     this.logger.debug(`South connector ${this.connector.name} enabled. Starting services...`);
     await this.connect();
+    this.logger.info(`South connector "${this.connector.name}" of type ${this.connector.type} started`);
   }
 
   async connect(): Promise<void> {
-    if (this.delegatesConnection()) {
-      const connectionDTO: ManagedConnectionDTO<unknown> = {
-        type: this.connector.type,
-        connectorSettings: this.connector.settings,
-        createSessionFn: this.createSession.bind(this),
-        settings: this.connectionSettings
-      };
-
-      this.connection = this.connectionService!.create(this.connector.id, connectionDTO);
-    }
-
-    this.logger.info(`South connector "${this.connector.name}" of type ${this.connector.type} started`);
-
     for (const cronJob of this.cronByScanModeIds.values()) {
       cronJob.stop();
     }
@@ -387,7 +370,6 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     }
 
     this.logger.trace(`Querying history for ${itemsToRead.length} items`);
-
     this.historyIsRunning = true;
     if (maxInstantPerItem) {
       for (const [index, item] of itemsToRead.entries()) {
@@ -426,7 +408,6 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
         numberOfIntervalsDone = generateIntervals(startTime, startTimeFromCache, throttling.maxReadInterval).length;
       }
       this.logIntervals(intervals);
-
       await this.queryIntervals(intervals, itemsToRead, southCache, startTime, throttling.readDelay, numberOfIntervalsDone);
     }
     this.metricsEvent.emit('history-query-stop', {
@@ -530,7 +511,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     switch (data.type) {
       case 'time-values':
         return this.addValues(data);
-      case 'raw':
+      case 'any':
         return this.addFile(data);
     }
   }
@@ -564,17 +545,12 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
    * Method called by Engine to stop a South connector. This method can be surcharged in the
    * South connector implementation to allow disconnecting to a third party application for example.
    */
-  async disconnect(): Promise<void> {
+  async disconnect(_error?: Error): Promise<void> {
     for (const cronJob of this.cronByScanModeIds.values()) {
       cronJob.stop();
     }
     this.cronByScanModeIds.clear();
     this.taskJobQueue = [];
-
-    if (this.delegatesConnection()) {
-      await this.connectionService!.remove(this.connector.type, this.connector.id);
-    }
-
     this.logger.debug(`South connector "${this.connector.name}" (${this.connector.id}) disconnected`);
   }
 
@@ -625,8 +601,8 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     return 'subscribe' in this && 'unsubscribe' in this;
   }
 
-  delegatesConnection<T>(): this is DelegatesConnection<T> {
-    return 'connectionSettings' in this && 'createSession' in this;
+  sharableConnection<T>(): this is SharableConnection<T> {
+    return 'getSession' in this && 'getSharedConnectionSettings' in this;
   }
 
   get settings(): SouthConnectorEntity<T, I> {

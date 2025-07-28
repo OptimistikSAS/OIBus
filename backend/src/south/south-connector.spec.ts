@@ -2,7 +2,6 @@ import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
 
 import pino from 'pino';
-import EncryptionService from '../service/encryption.service';
 import { CronJob } from 'cron';
 import { delay, generateIntervals, validateCronExpression } from '../service/utils';
 import { OIBusTimeValue } from '../../shared/model/engine.model';
@@ -24,14 +23,11 @@ import SouthConnectorRepositoryMock from '../tests/__mocks__/repository/config/s
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
 import SouthCacheRepositoryMock from '../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../tests/__mocks__/service/south-cache-service.mock';
-import { flushPromises } from '../tests/utils/test-utils';
+import { flushPromises, mockBaseFolders } from '../tests/utils/test-utils';
 import SouthOPCUA from './south-opcua/south-opcua';
-import ConnectionService from '../service/connection.service';
-import ConnectionServiceMock from '../tests/__mocks__/service/connection-service.mock';
 import SouthMSSQL from './south-mssql/south-mssql';
 import { DateTime } from 'luxon';
 import { Instant } from '../model/types';
-import { mockBaseFolders } from '../tests/utils/test-utils';
 
 // Mock fs
 jest.mock('node:fs/promises');
@@ -59,11 +55,13 @@ jest.mock('node-opcua-certificate-manager', () => ({ OPCUACertificateManager: je
 // Mock services
 jest.mock('../service/utils');
 
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
+jest.mock('../service/encryption.service', () => ({
+  encryptionService: new EncryptionServiceMock('', '')
+}));
+
 const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
-const connectionService: ConnectionService = new ConnectionServiceMock();
 const southCacheService = new SouthCacheServiceMock();
 
 jest.mock(
@@ -100,7 +98,6 @@ describe('SouthConnector with file query', () => {
     south = new SouthFolderScanner(
       testData.south.list[0] as SouthConnectorEntity<SouthFolderScannerSettings, SouthFolderScannerItemSettings>,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,
@@ -267,7 +264,6 @@ describe('SouthConnector disabled', () => {
     south = new SouthMSSQL(
       testData.south.list[1] as SouthConnectorEntity<SouthMSSQLSettings, SouthMSSQLItemSettings>,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,
@@ -327,7 +323,6 @@ describe('SouthConnector with history and max instant per item', () => {
 
     configuration = JSON.parse(JSON.stringify(testData.south.list[2]));
     configuration.settings.throttling.maxInstantPerItem = true;
-    configuration.settings.sharedConnection = true;
     (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
     (southConnectorRepository.findAllItemsForSouth as jest.Mock).mockReturnValue(configuration.items);
     (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
@@ -335,20 +330,14 @@ describe('SouthConnector with history and max instant per item', () => {
     south = new SouthOPCUA(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,
       logger,
-      mockBaseFolders(testData.south.list[2].id),
-      connectionService
+      mockBaseFolders(testData.south.list[2].id)
     );
 
     await south.start();
-  });
-
-  it('should delegate connection', async () => {
-    expect(connectionService.create).toHaveBeenCalled();
   });
 
   it('should manage history query with several intervals with max instant per item', async () => {
@@ -557,6 +546,7 @@ describe('SouthConnector with history and max instant per item', () => {
     ];
     (generateIntervals as jest.Mock).mockReturnValueOnce(intervals);
 
+    south.disconnect = jest.fn();
     south.historyQuery = jest.fn(
       () =>
         new Promise<string>(resolve => {
@@ -617,13 +607,11 @@ describe('SouthConnector with history and subscription', () => {
     south = new SouthOPCUA(
       testData.south.list[2] as SouthConnectorEntity<SouthOPCUASettings, SouthOPCUAItemSettings>,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,
       logger,
-      mockBaseFolders(testData.scanMode.list[0].id),
-      connectionService
+      mockBaseFolders(testData.scanMode.list[0].id)
     );
 
     south.connect = jest.fn();
@@ -717,9 +705,9 @@ describe('SouthConnector with history and subscription', () => {
   });
 
   it('should add file', async () => {
-    await south.addContent({ type: 'raw', filePath: 'file.csv' });
+    await south.addContent({ type: 'any', filePath: 'file.csv' });
     expect(logger.debug).toHaveBeenCalledWith(`Add file "file.csv" to cache from South "${testData.south.list[2].name}"`);
-    expect(addContentCallback).toHaveBeenCalledWith(testData.south.list[2].id, { type: 'raw', filePath: 'file.csv' });
+    expect(addContentCallback).toHaveBeenCalledWith(testData.south.list[2].id, { type: 'any', filePath: 'file.csv' });
   });
 
   it('should manage history query with several intervals', async () => {

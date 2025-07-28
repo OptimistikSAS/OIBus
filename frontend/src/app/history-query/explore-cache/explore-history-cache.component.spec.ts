@@ -70,7 +70,8 @@ describe('ExploreHistoryCacheComponent', () => {
     },
     northSettings: {} as NorthSettings,
     southSettings: {} as SouthSettings,
-    items: []
+    items: [],
+    northTransformers: []
   } as HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings>;
 
   beforeEach(() => {

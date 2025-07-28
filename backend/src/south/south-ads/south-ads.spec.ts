@@ -2,8 +2,6 @@ import ads, { AdsDataType } from 'ads-client';
 import SouthADS from './south-ads';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import EncryptionService from '../../service/encryption.service';
-import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import { SouthADSItemSettings, SouthADSSettings } from '../../../shared/model/south-settings.model';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import SouthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/south-connector-repository.mock';
@@ -36,7 +34,6 @@ jest.mock('ads-client', () => ({
 }));
 jest.mock('../../service/utils');
 
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
@@ -113,7 +110,6 @@ describe('South ADS', () => {
     south = new SouthADS(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,
@@ -495,12 +491,12 @@ describe('South ADS', () => {
     await south.disconnect();
     expect(logger.error).toHaveBeenCalledWith(`ADS disconnect error. ${new Error('disconnect error')}`);
     expect(logger.info).toHaveBeenCalledWith(`ADS client disconnected from ${configuration.settings.netId}:${configuration.settings.port}`);
-    expect(logger.info).toHaveBeenCalledTimes(4);
+    expect(logger.info).toHaveBeenCalledTimes(3);
 
     await south.connect();
 
     await south.disconnect();
-    expect(logger.info).toHaveBeenCalledTimes(8);
+    expect(logger.info).toHaveBeenCalledTimes(6);
   });
 
   it('should test item and sucess', async () => {

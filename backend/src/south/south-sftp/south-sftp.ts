@@ -5,7 +5,6 @@ import SouthConnector from '../south-connector';
 import { compress, createFolder } from '../../service/utils';
 
 import pino from 'pino';
-import EncryptionService from '../../service/encryption.service';
 import { QueriesFile } from '../south-interface';
 import { SouthSFTPItemSettings, SouthSFTPSettings } from '../../../shared/model/south-settings.model';
 import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
@@ -17,6 +16,7 @@ import SouthCacheRepository from '../../repository/cache/south-cache.repository'
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import { BaseFolders } from '../../model/types';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import { encryptionService } from '../../service/encryption.service';
 
 /**
  * Class SouthSFTP - Retrieve files from remote SFTP instance
@@ -30,23 +30,13 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
   constructor(
     connector: SouthConnectorEntity<SouthSFTPSettings, SouthSFTPItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
-    encryptionService: EncryptionService,
     southConnectorRepository: SouthConnectorRepository,
     southCacheRepository: SouthCacheRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolders: BaseFolders
   ) {
-    super(
-      connector,
-      engineAddContentCallback,
-      encryptionService,
-      southConnectorRepository,
-      southCacheRepository,
-      scanModeRepository,
-      logger,
-      baseFolders
-    );
+    super(connector, engineAddContentCallback, southConnectorRepository, southCacheRepository, scanModeRepository, logger, baseFolders);
     this.tmpFolder = path.resolve(this.baseFolders.cache, 'tmp');
   }
 
@@ -194,7 +184,7 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
         // Compress and send the compressed file
         const gzipPath = path.resolve(this.tmpFolder, `${file.name}.gz`);
         await compress(resultingFile, gzipPath);
-        await this.addContent({ type: 'raw', filePath: gzipPath });
+        await this.addContent({ type: 'any', filePath: gzipPath });
         try {
           await fs.unlink(resultingFile);
           await fs.unlink(gzipPath);
@@ -203,10 +193,10 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
         }
       } catch {
         this.logger.error(`Error compressing file "${resultingFile}". Sending it raw instead`);
-        await this.addContent({ type: 'raw', filePath: resultingFile });
+        await this.addContent({ type: 'any', filePath: resultingFile });
       }
     } else {
-      await this.addContent({ type: 'raw', filePath: resultingFile });
+      await this.addContent({ type: 'any', filePath: resultingFile });
     }
 
     await client.end();
@@ -218,17 +208,17 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
         return {
           host: this.connector.settings.host,
           port: this.connector.settings.port,
-          username: this.connector.settings.username || '',
+          username: this.connector.settings.username,
           privateKey: await fs.readFile(this.connector.settings.privateKey!, 'utf8'),
-          passphrase: this.connector.settings.passphrase ? await this.encryptionService.decryptText(this.connector.settings.passphrase) : ''
+          passphrase: this.connector.settings.passphrase ? await encryptionService.decryptText(this.connector.settings.passphrase) : ''
         };
       case 'password':
       default:
         return {
           host: this.connector.settings.host,
           port: this.connector.settings.port,
-          username: this.connector.settings.username || '',
-          password: this.connector.settings.password ? await this.encryptionService.decryptText(this.connector.settings.password) : ''
+          username: this.connector.settings.username,
+          password: this.connector.settings.password ? await encryptionService.decryptText(this.connector.settings.password) : ''
         };
     }
   }

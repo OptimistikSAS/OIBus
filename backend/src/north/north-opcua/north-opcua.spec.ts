@@ -1,0 +1,407 @@
+import pino from 'pino';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
+import { encryptionService } from '../../service/encryption.service';
+import NorthOPCUA from './north-opcua';
+import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
+import csv from 'papaparse';
+import NorthConnectorRepository from '../../repository/config/north-connector.repository';
+import NorthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/north-connector-repository.mock';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
+import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
+import { NorthConnectorEntity } from '../../model/north-connector.model';
+import { NorthOPCUASettings } from '../../../shared/model/north-settings.model';
+import testData from '../../tests/utils/test-data';
+import { mockBaseFolders } from '../../tests/utils/test-utils';
+import CacheService from '../../service/cache/cache.service';
+import TransformerService, { createTransformer } from '../../service/transformer.service';
+import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';
+import OIBusTransformer from '../../service/transformers/oibus-transformer';
+import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
+import nodeOPCUAClient, { AttributeIds, DataType, OPCUACertificateManager, OPCUAClient, resolveNodeId } from 'node-opcua';
+import { randomUUID } from 'crypto';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { OIBusOPCUAValue } from '../../service/transformers/connector-types.model';
+
+// Mock node-opcua-client
+jest.mock('node-opcua', () => ({
+  OPCUAClient: { createSession: jest.fn(() => ({ close: jest.fn() })) },
+  ClientSubscription: { create: jest.fn() },
+  ClientMonitoredItem: { create: jest.fn() },
+  DataType: jest.requireActual('node-opcua').DataType,
+  StatusCodes: jest.requireActual('node-opcua').StatusCodes,
+  SecurityPolicy: jest.requireActual('node-opcua').SecurityPolicy,
+  AttributeIds: jest.requireActual('node-opcua').AttributeIds,
+  UserTokenType: jest.requireActual('node-opcua').UserTokenType,
+  TimestampsToReturn: jest.requireActual('node-opcua').TimestampsToReturn,
+  AggregateFunction: jest.requireActual('node-opcua').AggregateFunction,
+  ReadRawModifiedDetails: jest.fn(() => ({})),
+  HistoryReadRequest: jest.requireActual('node-opcua').HistoryReadRequest,
+  ReadProcessedDetails: jest.fn(() => ({})),
+  OPCUACertificateManager: jest.fn(() => ({})),
+  resolveNodeId: jest.fn(nodeId => nodeId)
+}));
+// Mock only the randomUUID function because other functions are used by OPCUA
+jest.mock('crypto', () => ({
+  ...jest.requireActual('crypto'),
+  randomUUID: jest.fn()
+}));
+jest.mock('node:fs/promises');
+jest.mock('../../service/utils');
+jest.mock('../../service/encryption.service', () => ({
+  encryptionService: new EncryptionServiceMock('', '')
+}));
+
+const logger: pino.Logger = new PinoLogger();
+const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
+const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
+const cacheService: CacheService = new CacheServiceMock();
+const transformerService: TransformerService = new TransformerServiceMock();
+const oiBusTransformer: OIBusTransformer = new OIBusTransformerMock() as unknown as OIBusTransformer;
+
+jest.mock(
+  '../../service/cache/cache.service',
+  () =>
+    function () {
+      return cacheService;
+    }
+);
+jest.mock('../../service/utils');
+jest.mock('../../service/transformer.service');
+jest.mock('papaparse');
+
+describe('NorthOPCUA', () => {
+  let configuration: NorthConnectorEntity<NorthOPCUASettings>;
+  let north: NorthOPCUA;
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    configuration = JSON.parse(JSON.stringify(testData.north.list[0]));
+    configuration.settings = {
+      sharedConnection: null,
+      retryInterval: 10_000,
+      connectionSettings: {
+        url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
+        keepSessionAlive: false,
+        authentication: {
+          type: 'none',
+          password: null
+        },
+        securityMode: 'none',
+        securityPolicy: 'none'
+      }
+    };
+    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
+    (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
+    (csv.unparse as jest.Mock).mockReturnValue('csv content');
+    (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
+
+    north = new NorthOPCUA(
+      configuration,
+      transformerService,
+      northConnectorRepository,
+      scanModeRepository,
+      logger,
+      mockBaseFolders(testData.north.list[0].id)
+    );
+    north.createCronJob = jest.fn();
+  });
+
+  it('should properly connect', async () => {
+    await north.start();
+    expect(OPCUAClient.createSession).toHaveBeenCalledTimes(1);
+    expect(OPCUAClient.createSession).toHaveBeenCalledWith(
+      configuration.settings.connectionSettings!.url,
+      { type: 0 },
+      {
+        applicationName: 'OIBus',
+        clientName: `${configuration.name}-${configuration.id}`,
+        clientCertificateManager: { state: 2 },
+        connectionStrategy: { initialDelay: 1000, maxRetry: 1 },
+        endpointMustExist: false,
+        keepPendingSessionsOnDisconnect: false,
+        keepSessionAlive: false,
+        securityMode: 1,
+        securityPolicy: 'none'
+      }
+    );
+  });
+
+  it('should handle content', async () => {
+    const values: Array<OIBusOPCUAValue> = [
+      {
+        nodeId: 'nodeId1',
+        value: 123
+      },
+      {
+        nodeId: 'nodeId2',
+        value: 456
+      },
+      {
+        nodeId: 'nodeId3',
+        value: 789
+      },
+      {
+        nodeId: 'nodeId4',
+        value: 321
+      }
+    ];
+    (fs.readFile as jest.Mock).mockReturnValueOnce(JSON.stringify(values));
+
+    (resolveNodeId as jest.Mock)
+      .mockImplementationOnce(node => node)
+      .mockImplementationOnce(node => node)
+      .mockImplementationOnce(node => node)
+      .mockImplementationOnce(() => {
+        throw new Error('bad node id');
+      });
+
+    const readFn = jest
+      .fn()
+      .mockReturnValueOnce({ value: { value: { value: DataType.Int32 } } })
+      .mockReturnValueOnce({ value: { value: { value: DataType.Int32 } } })
+      .mockReturnValueOnce({ value: { value: { value: 'bad data type' } } });
+    const writeFn = jest
+      .fn()
+      .mockReturnValueOnce({ isGood: jest.fn().mockReturnValueOnce(true) })
+      .mockReturnValueOnce({ isGood: jest.fn().mockReturnValueOnce(false), name: 'error' });
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-expect-error
+    north['client'] = {
+      write: writeFn,
+      read: readFn
+    };
+
+    await north.handleContent({
+      contentFile: 'path/to/file/example-123456789.json',
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'opcua',
+      source: 'south',
+      options: {}
+    });
+
+    expect(resolveNodeId).toHaveBeenCalledTimes(4);
+    expect(logger.error).toHaveBeenCalledWith(`Error when parsing node ID nodeId4: bad node id`);
+
+    expect(readFn).toHaveBeenCalledTimes(3);
+    expect(logger.error).toHaveBeenCalledWith(`Invalid data type for node ID nodeId3`);
+    expect(readFn).toHaveBeenCalledWith({
+      nodeId: 'nodeId1',
+      attributeId: AttributeIds.DataType
+    });
+
+    expect(writeFn).toHaveBeenCalledTimes(2);
+    expect(writeFn).toHaveBeenCalledWith({
+      nodeId: values[0].nodeId,
+      attributeId: AttributeIds.Value,
+      value: {
+        value: {
+          dataType: DataType.Int32,
+          value: values[0].value
+        }
+      }
+    });
+    expect(writeFn).toHaveBeenCalledWith({
+      nodeId: values[1].nodeId,
+      attributeId: AttributeIds.Value,
+      value: {
+        value: {
+          dataType: DataType.Int32,
+          value: values[1].value
+        }
+      }
+    });
+
+    expect(logger.trace).toHaveBeenCalledWith(`Value ${values[0].value} written successfully on nodeId ${values[0].nodeId}`);
+    expect(logger.error).toHaveBeenCalledWith(`Failed to write value ${values[1].value} on nodeId ${values[1].nodeId}: error`);
+  });
+
+  it('should throw error if client is not set when handling content', async () => {
+    (fs.readFile as jest.Mock).mockReturnValueOnce('[{}]');
+    await north.handleContent({
+      contentFile: 'path/to/file/example-123456789.json',
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'opcua',
+      source: 'south',
+      options: {}
+    });
+    expect(logger.error).toHaveBeenCalledWith(`OPCUA session not set. The connector cannot write values`);
+  });
+
+  it('should ignore data if bad content type', async () => {
+    await expect(
+      north.handleContent({
+        contentFile: 'path/to/file/example-123456789.file',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'any',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow(`Unsupported data type: any (file path/to/file/example-123456789.file)`);
+  });
+});
+
+describe('NorthOPCUA test connection', () => {
+  let north: NorthOPCUA;
+  let configuration: NorthConnectorEntity<NorthOPCUASettings>;
+
+  // Mock UUID
+  const uuid = 'test-uuid';
+  (randomUUID as jest.Mock).mockReturnValue(uuid);
+
+  class FileError extends Error {
+    public code: string;
+    public path: string;
+
+    constructor(message: string, code = '', path = '') {
+      super();
+      this.name = 'FileError';
+      this.message = message;
+      this.code = code;
+      this.path = path;
+    }
+  }
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime();
+
+    configuration = JSON.parse(JSON.stringify(testData.north.list[0]));
+    configuration.settings = {
+      sharedConnection: null,
+      retryInterval: 10_000,
+      connectionSettings: {
+        url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
+        authentication: {
+          type: 'none',
+          password: null
+        },
+        securityMode: 'sign-and-encrypt',
+        securityPolicy: 'none',
+        keepSessionAlive: false
+      }
+    };
+
+    north = new NorthOPCUA(
+      configuration,
+      transformerService,
+      northConnectorRepository,
+      scanModeRepository,
+      logger,
+      mockBaseFolders(testData.north.list[0].id)
+    );
+  });
+
+  it('Connection settings are correct', async () => {
+    const close = jest.fn();
+    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({ close });
+
+    await expect(north.testConnection()).resolves.not.toThrow();
+
+    expect(close).toHaveBeenCalled();
+  });
+
+  it('Certificate file does not exist', async () => {
+    configuration.settings.connectionSettings!.authentication = {
+      type: 'cert',
+      certFilePath: 'myCertPath',
+      keyFilePath: 'myKeyPath',
+      username: '',
+      password: ''
+    };
+    const error = new FileError('Wrong file', 'ENOENT', './foo/bar');
+    (fs.readFile as jest.Mock)
+      .mockImplementationOnce(() => Buffer.from('cert content'))
+      .mockImplementationOnce(() => Buffer.from('key content'));
+    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockImplementationOnce(() => {
+      throw error;
+    });
+
+    await expect(north.testConnection()).rejects.toThrow(new Error(`Wrong file`));
+  });
+
+  it('Failed to read private key', async () => {
+    configuration.settings.connectionSettings!.authentication = {
+      type: 'cert',
+      certFilePath: 'myCertPath',
+      keyFilePath: 'myKeyPath',
+      username: '',
+      password: ''
+    };
+    const error = new Error('Failed to read private key');
+    (fs.readFile as jest.Mock)
+      .mockImplementationOnce(() => Buffer.from('cert content'))
+      .mockImplementationOnce(() => Buffer.from('key content'));
+    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockImplementationOnce(() => {
+      throw error;
+    });
+
+    await expect(north.testConnection()).rejects.toThrow(new Error(`Failed to read private key`));
+  });
+
+  it('Unknown error', async () => {
+    configuration.settings.connectionSettings!.authentication = {
+      type: 'none',
+      certFilePath: '',
+      keyFilePath: '',
+      username: '',
+      password: ''
+    };
+
+    const error = new Error('Unknown error');
+    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockImplementation(() => {
+      throw error;
+    });
+
+    await expect(north.testConnection()).rejects.toThrow(new Error('Unknown error'));
+  });
+
+  it('should properly manage all connection options', async () => {
+    const result1 = await north.createSessionConfigs(configuration.settings, {} as OPCUACertificateManager, encryptionService);
+    expect(result1).toEqual({
+      options: {
+        applicationName: 'OIBus',
+        clientName: `${configuration.name}-${configuration.id}`,
+        clientCertificateManager: {},
+        connectionStrategy: { initialDelay: 1000, maxRetry: 1 },
+        endpointMustExist: false,
+        keepPendingSessionsOnDisconnect: false,
+        keepSessionAlive: false,
+        securityMode: 3,
+        securityPolicy: 'none'
+      },
+      userIdentity: { type: 0 }
+    });
+
+    const result2 = await north.createSessionConfigs(
+      {
+        connectionSettings: { ...configuration.settings.connectionSettings!, securityMode: 'sign', securityPolicy: undefined },
+        retryInterval: 10_000,
+        sharedConnection: null
+      },
+      {} as OPCUACertificateManager,
+      encryptionService
+    );
+    expect(result2).toEqual({
+      options: {
+        applicationName: 'OIBus',
+        clientName: `${configuration.name}-${configuration.id}`,
+        clientCertificateManager: {},
+        connectionStrategy: { initialDelay: 1000, maxRetry: 1 },
+        endpointMustExist: false,
+        keepPendingSessionsOnDisconnect: false,
+        keepSessionAlive: false,
+        securityMode: 2
+      },
+      userIdentity: { type: 0 }
+    });
+  });
+});

@@ -14,7 +14,6 @@ import OIBusService from './service/oibus.service';
 import { migrateCrypto, migrateDataFolder, migrateEntities, migrateLogsAndMetrics, migrateSouthCache } from './migration/migration-service';
 import OIAnalyticsCommandService from './service/oia/oianalytics-command.service';
 import OianalyticsRegistrationService from './service/oia/oianalytics-registration.service';
-import ConnectionService from './service/connection.service';
 import OIAnalyticsMessageService from './service/oia/oianalytics-message.service';
 import JoiValidator from './web-server/controllers/validators/joi.validator';
 import ScanModeService from './service/scan-mode.service';
@@ -25,6 +24,7 @@ import CertificateService from './service/certificate.service';
 import UserService from './service/user.service';
 import LogService from './service/log.service';
 import CleanupService from './service/cache/cleanup.service';
+import TransformerService from './service/transformer.service';
 
 const CONFIG_DATABASE = 'oibus.db';
 const CRYPTO_DATABASE = 'crypto.db';
@@ -119,11 +119,13 @@ const CERT_FOLDER = 'certs';
     repositoryService.southConnectorRepository,
     repositoryService.northConnectorRepository,
     repositoryService.historyQueryRepository,
+    repositoryService.transformerRepository,
     oIAnalyticsClient,
     loggerService.logger!
   );
 
-  const connectionService = new ConnectionService(loggerService.logger!);
+  const transformerService = new TransformerService(new JoiValidator(), repositoryService.transformerRepository, oIAnalyticsMessageService);
+
   const northService = new NorthService(
     new JoiValidator(),
     repositoryService.northConnectorRepository,
@@ -134,7 +136,7 @@ const CERT_FOLDER = 'certs';
     repositoryService.certificateRepository,
     repositoryService.oianalyticsRegistrationRepository,
     oIAnalyticsMessageService,
-    encryptionService,
+    transformerService,
     dataStreamEngine
   );
   const southService = new SouthService(
@@ -147,8 +149,6 @@ const CERT_FOLDER = 'certs';
     repositoryService.oianalyticsRegistrationRepository,
     repositoryService.certificateRepository,
     oIAnalyticsMessageService,
-    encryptionService,
-    connectionService,
     dataStreamEngine
   );
   const historyQueryService = new HistoryQueryService(
@@ -161,8 +161,8 @@ const CERT_FOLDER = 'certs';
     repositoryService.historyQueryMetricsRepository,
     southService,
     northService,
+    transformerService,
     oIAnalyticsMessageService,
-    encryptionService,
     historyQueryEngine
   );
 
@@ -250,6 +250,7 @@ const CERT_FOLDER = 'certs';
     oIBusService,
     southService,
     northService,
+    transformerService,
     historyQueryService,
     homeMetricsService,
     ignoreIpFilters,

@@ -1,10 +1,8 @@
 import fs from 'node:fs/promises';
-
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import NorthAzureBlob from './north-azure-blob';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import EncryptionService from '../../service/encryption.service';
-import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import { BlobServiceClient, StorageSharedKeyCredential } from '@azure/storage-blob';
 import { DataLakeServiceClient, StorageSharedKeyCredential as DataLakeStorageSharedKeyCredential } from '@azure/storage-file-datalake';
 import { ClientSecretCredential, DefaultAzureCredential } from '@azure/identity';
@@ -19,7 +17,11 @@ import { NorthConnectorEntity } from '../../model/north-connector.model';
 import testData from '../../tests/utils/test-data';
 import { mockBaseFolders } from '../../tests/utils/test-utils';
 import CacheService from '../../service/cache/cache.service';
-import { OIBusTimeValue } from '../../../shared/model/engine.model';
+import TransformerService, { createTransformer } from '../../service/transformer.service';
+import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';
+import OIBusTransformer from '../../service/transformers/oibus-transformer';
+import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
+import { getFilenameWithoutRandomId } from '../../service/utils';
 
 const uploadMock = jest.fn().mockReturnValue(Promise.resolve({ requestId: 'requestId' }));
 const deleteMock = jest.fn();
@@ -62,12 +64,17 @@ jest.mock('@azure/identity', () => ({
 jest.mock('papaparse');
 jest.mock('node:fs/promises');
 jest.mock('../../service/utils');
+jest.mock('../../service/transformer.service');
+jest.mock('../../service/encryption.service', () => ({
+  encryptionService: new EncryptionServiceMock('', '')
+}));
 
 const logger: pino.Logger = new PinoLogger();
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const cacheService: CacheService = new CacheServiceMock();
+const transformerService: TransformerService = new TransformerServiceMock();
+const oiBusTransformer: OIBusTransformer = new OIBusTransformerMock() as unknown as OIBusTransformer;
 
 jest.mock(
   '../../service/cache/cache.service',
@@ -77,14 +84,6 @@ jest.mock(
     }
 );
 
-const timeValues: Array<OIBusTimeValue> = [
-  {
-    pointId: 'pointId',
-    timestamp: testData.constants.dates.FAKE_NOW,
-    data: { value: '666', quality: 'good' }
-  }
-];
-
 let configuration: NorthConnectorEntity<NorthAzureBlobSettings>;
 let north: NorthAzureBlob;
 describe('NorthAzureBlob without proxy', () => {
@@ -92,6 +91,9 @@ describe('NorthAzureBlob without proxy', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
     (csv.unparse as jest.Mock).mockReturnValue('csv content');
+    (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
+    (getFilenameWithoutRandomId as jest.Mock).mockReturnValue('example.file');
+
     configuration = JSON.parse(JSON.stringify(testData.north.list[0]));
     configuration.settings = {
       useCustomUrl: false,
@@ -123,7 +125,7 @@ describe('NorthAzureBlob without proxy', () => {
     configuration.settings.sasToken = 'sas token';
     north = new NorthAzureBlob(
       configuration,
-      encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
       logger,
@@ -136,7 +138,7 @@ describe('NorthAzureBlob without proxy', () => {
       contentSize: 1234,
       numberOfElement: 0,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     });
@@ -162,7 +164,7 @@ describe('NorthAzureBlob without proxy', () => {
     configuration.settings.useADLS = true;
     north = new NorthAzureBlob(
       configuration,
-      encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
       logger,
@@ -174,7 +176,7 @@ describe('NorthAzureBlob without proxy', () => {
       contentSize: 1234,
       numberOfElement: 0,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     });
@@ -190,68 +192,6 @@ describe('NorthAzureBlob without proxy', () => {
     expect(bufferFlushMock).toHaveBeenCalledWith('content'.length);
   });
 
-  it('should properly handle values using Shared Access Signature authentication', async () => {
-    north = new NorthAzureBlob(
-      configuration,
-      encryptionService,
-      northConnectorRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(testData.north.list[0].id)
-    );
-
-    await north.start();
-    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify(timeValues));
-    await north.handleContent({
-      contentFile: '/path/to/file/example-123.json',
-      contentSize: 1234,
-      numberOfElement: 1,
-      createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'time-values',
-      source: 'south',
-      options: {}
-    });
-    expect(BlobServiceClient).toHaveBeenCalledWith(
-      `https://${configuration.settings.account}.blob.core.windows.net?${configuration.settings.sasToken}`,
-      undefined,
-      { proxyOptions: undefined }
-    );
-    expect(getContainerClientMock).toHaveBeenCalledWith(configuration.settings.container);
-    expect(getBlockBlobClientMock).toHaveBeenCalledWith(`${configuration.name}-2021_01_02_00_00_00_000.csv`);
-    expect(uploadMock).toHaveBeenCalledWith('csv content', 11);
-  });
-
-  it('should properly handle values on Azure Data Lake Storage using Shared Access Signature authentication', async () => {
-    configuration.settings.useADLS = true;
-    north = new NorthAzureBlob(
-      configuration,
-      encryptionService,
-      northConnectorRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(testData.north.list[0].id)
-    );
-    await north.start();
-    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify(timeValues));
-    await north.handleContent({
-      contentFile: '/path/to/file/example-123.json',
-      contentSize: 1234,
-      numberOfElement: 1,
-      createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'time-values',
-      source: 'south',
-      options: {}
-    });
-    expect(DataLakeServiceClient).toHaveBeenCalledWith(
-      `https://${configuration.settings.account}.dfs.core.windows.net?${configuration.settings.sasToken}`,
-      undefined,
-      { proxyOptions: undefined }
-    );
-    expect(getFileSystemClientMock).toHaveBeenCalledWith(configuration.settings.container);
-    expect(getFileClientMock).toHaveBeenCalledWith(`${configuration.name}-2021_01_02_00_00_00_000.csv`);
-    expect(bufferFlushMock).toHaveBeenCalledWith('csv content'.length);
-  });
-
   it('should properly handle files using Access Key authentication', async () => {
     const filePath = '/path/to/file/example-123.file';
     (fs.stat as jest.Mock).mockImplementationOnce(() => Promise.resolve({ size: 666 }));
@@ -263,7 +203,7 @@ describe('NorthAzureBlob without proxy', () => {
     configuration.settings.accessKey = 'access key';
     north = new NorthAzureBlob(
       configuration,
-      encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
       logger,
@@ -271,7 +211,15 @@ describe('NorthAzureBlob without proxy', () => {
     );
 
     await north.start();
-    await north.handleFile(filePath);
+    await north.handleContent({
+      contentFile: filePath,
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'any',
+      source: 'south',
+      options: {}
+    });
 
     expect(fs.stat).toHaveBeenCalledWith(filePath);
     expect(fs.readFile).toHaveBeenCalledWith(filePath);
@@ -295,14 +243,22 @@ describe('NorthAzureBlob without proxy', () => {
     configuration.settings.useADLS = true;
     north = new NorthAzureBlob(
       configuration,
-      encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
       logger,
       mockBaseFolders(testData.north.list[0].id)
     );
     await north.start();
-    await north.handleFile(filePath);
+    await north.handleContent({
+      contentFile: filePath,
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'any',
+      source: 'south',
+      options: {}
+    });
     expect(fs.stat).toHaveBeenCalledWith(filePath);
     expect(fs.readFile).toHaveBeenCalledWith(filePath);
     expect(DataLakeStorageSharedKeyCredential).toHaveBeenCalledWith(configuration.settings.account, configuration.settings.accessKey);
@@ -330,7 +286,7 @@ describe('NorthAzureBlob without proxy', () => {
     configuration.settings.clientSecret = 'clientSecret';
     north = new NorthAzureBlob(
       configuration,
-      encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
       logger,
@@ -338,7 +294,15 @@ describe('NorthAzureBlob without proxy', () => {
     );
 
     await north.start();
-    await north.handleFile(filePath);
+    await north.handleContent({
+      contentFile: filePath,
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'any',
+      source: 'south',
+      options: {}
+    });
 
     expect(fs.stat).toHaveBeenCalledWith(filePath);
     expect(fs.readFile).toHaveBeenCalledWith(filePath);
@@ -366,14 +330,22 @@ describe('NorthAzureBlob without proxy', () => {
     configuration.settings.clientSecret = 'clientSecret';
     north = new NorthAzureBlob(
       configuration,
-      encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
       logger,
       mockBaseFolders(testData.north.list[0].id)
     );
     await north.start();
-    await north.handleFile(filePath);
+    await north.handleContent({
+      contentFile: filePath,
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'any',
+      source: 'south',
+      options: {}
+    });
     expect(fs.stat).toHaveBeenCalledWith(filePath);
     expect(fs.readFile).toHaveBeenCalledWith(filePath);
     expect(ClientSecretCredential).toHaveBeenCalled();
@@ -398,7 +370,7 @@ describe('NorthAzureBlob without proxy', () => {
 
     north = new NorthAzureBlob(
       configuration,
-      encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
       logger,
@@ -406,7 +378,15 @@ describe('NorthAzureBlob without proxy', () => {
     );
 
     await north.start();
-    await north.handleFile(filePath);
+    await north.handleContent({
+      contentFile: filePath,
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'any',
+      source: 'south',
+      options: {}
+    });
 
     expect(fs.stat).toHaveBeenCalledWith(filePath);
     expect(fs.readFile).toHaveBeenCalledWith(filePath);
@@ -432,14 +412,22 @@ describe('NorthAzureBlob without proxy', () => {
     configuration.settings.useADLS = true;
     north = new NorthAzureBlob(
       configuration,
-      encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
       logger,
       mockBaseFolders(testData.north.list[0].id)
     );
     await north.start();
-    await north.handleFile(filePath);
+    await north.handleContent({
+      contentFile: filePath,
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'any',
+      source: 'south',
+      options: {}
+    });
     expect(fs.stat).toHaveBeenCalledWith(filePath);
     expect(fs.readFile).toHaveBeenCalledWith(filePath);
     expect(DefaultAzureCredential).toHaveBeenCalled();
@@ -452,75 +440,7 @@ describe('NorthAzureBlob without proxy', () => {
     expect(getFileClientMock).toHaveBeenCalledWith('my path/example.file');
     expect(bufferFlushMock).toHaveBeenCalledWith('content'.length);
   });
-  it('should properly handle values using external auth', async () => {
-    const defaultAzureCredential = jest.fn();
-    (DefaultAzureCredential as jest.Mock).mockImplementationOnce(() => defaultAzureCredential);
 
-    configuration.settings.authentication = 'external';
-    configuration.settings.path = 'my path';
-
-    north = new NorthAzureBlob(
-      configuration,
-      encryptionService,
-      northConnectorRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(testData.north.list[0].id)
-    );
-    await north.start();
-    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify(timeValues));
-    await north.handleContent({
-      contentFile: '/path/to/file/example-123.json',
-      contentSize: 1234,
-      numberOfElement: 1,
-      createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'time-values',
-      source: 'south',
-      options: {}
-    });
-    expect(BlobServiceClient).toHaveBeenCalledWith(
-      `https://${configuration.settings.account}.blob.core.windows.net`,
-      defaultAzureCredential,
-      { proxyOptions: undefined }
-    );
-    expect(getContainerClientMock).toHaveBeenCalledWith(configuration.settings.container);
-    expect(getBlockBlobClientMock).toHaveBeenCalledWith(`my path/${configuration.name}-2021_01_02_00_00_00_000.csv`);
-    expect(uploadMock).toHaveBeenCalledWith('csv content', 11);
-  });
-  it('should properly handle values on Azure Data Lake Storage using external auth', async () => {
-    const defaultAzureCredential = jest.fn();
-    (DefaultAzureCredential as jest.Mock).mockImplementationOnce(() => defaultAzureCredential);
-    configuration.settings.authentication = 'external';
-    configuration.settings.path = 'my path';
-    configuration.settings.useADLS = true;
-    north = new NorthAzureBlob(
-      configuration,
-      encryptionService,
-      northConnectorRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(testData.north.list[0].id)
-    );
-    await north.start();
-    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify(timeValues));
-    await north.handleContent({
-      contentFile: '/path/to/file/example-123.json',
-      contentSize: 1234,
-      numberOfElement: 1,
-      createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'time-values',
-      source: 'south',
-      options: {}
-    });
-    expect(DataLakeServiceClient).toHaveBeenCalledWith(
-      `https://${configuration.settings.account}.dfs.core.windows.net`,
-      defaultAzureCredential,
-      { proxyOptions: undefined }
-    );
-    expect(getFileSystemClientMock).toHaveBeenCalledWith(configuration.settings.container);
-    expect(getFileClientMock).toHaveBeenCalledWith(`my path/${configuration.name}-2021_01_02_00_00_00_000.csv`);
-    expect(bufferFlushMock).toHaveBeenCalledWith('csv content'.length);
-  });
   it('should successfully test', async () => {
     const defaultAzureCredential = jest.fn();
     (DefaultAzureCredential as jest.Mock).mockImplementationOnce(() => defaultAzureCredential);
@@ -529,7 +449,7 @@ describe('NorthAzureBlob without proxy', () => {
     configuration.settings.path = 'my path';
     north = new NorthAzureBlob(
       configuration,
-      encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
       logger,
@@ -559,7 +479,7 @@ describe('NorthAzureBlob without proxy', () => {
     configuration.settings.path = 'my path';
     north = new NorthAzureBlob(
       configuration,
-      encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
       logger,
@@ -587,7 +507,7 @@ describe('NorthAzureBlob without proxy', () => {
     configuration.settings.useADLS = true;
     north = new NorthAzureBlob(
       configuration,
-      encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
       logger,
@@ -612,7 +532,7 @@ describe('NorthAzureBlob without proxy', () => {
     configuration.settings.useADLS = true;
     north = new NorthAzureBlob(
       configuration,
-      encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
       logger,
@@ -638,7 +558,7 @@ describe('NorthAzureBlob without proxy', () => {
     configuration.settings.authentication = 'external';
     north = new NorthAzureBlob(
       configuration,
-      encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
       logger,
@@ -662,7 +582,7 @@ describe('NorthAzureBlob without proxy', () => {
     });
     north = new NorthAzureBlob(
       configuration,
-      encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
       logger,
@@ -682,7 +602,7 @@ describe('NorthAzureBlob without proxy', () => {
     configuration.settings.authentication = 'bad';
     north = new NorthAzureBlob(
       configuration,
-      encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
       logger,
@@ -719,6 +639,8 @@ describe('NorthAzureBlob with proxy', () => {
     };
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
     (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
+    (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
+    (getFilenameWithoutRandomId as jest.Mock).mockReturnValue('example.file');
   });
 
   afterEach(() => {
@@ -734,7 +656,7 @@ describe('NorthAzureBlob with proxy', () => {
     configuration.settings.sasToken = 'sas token';
     north = new NorthAzureBlob(
       configuration,
-      encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
       logger,
@@ -742,7 +664,15 @@ describe('NorthAzureBlob with proxy', () => {
     );
 
     await north.start();
-    await north.handleFile(filePath);
+    await north.handleContent({
+      contentFile: filePath,
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'any',
+      source: 'south',
+      options: {}
+    });
 
     expect(fs.stat).toHaveBeenCalledWith(filePath);
     expect(fs.readFile).toHaveBeenCalledWith(filePath);
@@ -768,14 +698,22 @@ describe('NorthAzureBlob with proxy', () => {
     configuration.settings.useADLS = true;
     north = new NorthAzureBlob(
       configuration,
-      encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
       logger,
       mockBaseFolders(testData.north.list[0].id)
     );
     await north.start();
-    await north.handleFile(filePath);
+    await north.handleContent({
+      contentFile: filePath,
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'any',
+      source: 'south',
+      options: {}
+    });
     expect(fs.stat).toHaveBeenCalledWith(filePath);
     expect(fs.readFile).toHaveBeenCalledWith(filePath);
     expect(DataLakeServiceClient).toHaveBeenCalledWith(
@@ -804,7 +742,7 @@ describe('NorthAzureBlob with proxy', () => {
     configuration.settings.proxyUrl = 'https://proxy.com';
     north = new NorthAzureBlob(
       configuration,
-      encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
       logger,
@@ -812,7 +750,15 @@ describe('NorthAzureBlob with proxy', () => {
     );
 
     await north.start();
-    await north.handleFile(filePath);
+    await north.handleContent({
+      contentFile: filePath,
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'any',
+      source: 'south',
+      options: {}
+    });
 
     expect(fs.stat).toHaveBeenCalledWith(filePath);
     expect(fs.readFile).toHaveBeenCalledWith(filePath);
@@ -837,14 +783,22 @@ describe('NorthAzureBlob with proxy', () => {
     configuration.settings.useADLS = true;
     north = new NorthAzureBlob(
       configuration,
-      encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
       logger,
       mockBaseFolders(testData.north.list[0].id)
     );
     await north.start();
-    await north.handleFile(filePath);
+    await north.handleContent({
+      contentFile: filePath,
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'any',
+      source: 'south',
+      options: {}
+    });
     expect(fs.stat).toHaveBeenCalledWith(filePath);
     expect(fs.readFile).toHaveBeenCalledWith(filePath);
     expect(DataLakeServiceClient).toHaveBeenCalledWith(
@@ -865,7 +819,7 @@ describe('NorthAzureBlob with proxy', () => {
   it('should properly parse proxy url', async () => {
     north = new NorthAzureBlob(
       configuration,
-      encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
       logger,
@@ -885,5 +839,19 @@ describe('NorthAzureBlob with proxy', () => {
     expect(proxy3.proxyPort).toBe(3128);
 
     expect(() => north.parseProxyUrl('http://127.0.0.1:3128:3128')).toThrow('Bad proxy url http://127.0.0.1:3128:3128');
+  });
+
+  it('should ignore data if bad content type', async () => {
+    await expect(
+      north.handleContent({
+        contentFile: 'path/to/file/example-123456789.file',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'time-values',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow(`Unsupported data type: time-values (file path/to/file/example-123456789.file)`);
   });
 });

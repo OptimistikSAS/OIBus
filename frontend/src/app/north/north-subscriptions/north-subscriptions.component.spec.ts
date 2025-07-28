@@ -3,13 +3,12 @@ import { TestBed } from '@angular/core/testing';
 import { NorthSubscriptionsComponent } from './north-subscriptions.component';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { ComponentTester, createMock } from 'ngx-speculoos';
-import { of } from 'rxjs';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { SouthConnectorService } from '../../services/south-connector.service';
-import { SouthConnectorLightDTO } from '../../../../../backend/shared/model/south-connector.model';
 import { Component } from '@angular/core';
 import { NorthConnectorDTO } from '../../../../../backend/shared/model/north-connector.model';
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
+import { of } from 'rxjs';
 
 @Component({
   template: `<oib-north-subscriptions [northConnector]="northConnector" />`,
@@ -51,10 +50,6 @@ class NorthSubscriptionsComponentTester extends ComponentTester<TestComponent> {
     return this.button('#add-subscription')!;
   }
 
-  get noSubscriptions() {
-    return this.element('#no-subscription');
-  }
-
   get subscriptions() {
     return this.elements('tbody tr');
   }
@@ -64,17 +59,6 @@ describe('NorthSubscriptionsComponent', () => {
   let tester: NorthSubscriptionsComponentTester;
   let northService: jasmine.SpyObj<NorthConnectorService>;
   let southService: jasmine.SpyObj<SouthConnectorService>;
-
-  const southConnectors: Array<SouthConnectorLightDTO> = [
-    {
-      id: 'id1',
-      name: 'south1'
-    } as SouthConnectorLightDTO,
-    {
-      id: 'id2',
-      name: 'south2'
-    } as SouthConnectorLightDTO
-  ];
 
   beforeEach(() => {
     northService = createMock(NorthConnectorService);
@@ -88,7 +72,7 @@ describe('NorthSubscriptionsComponent', () => {
       ]
     });
 
-    southService.list.and.returnValue(of(southConnectors));
+    southService.list.and.returnValue(of([]));
 
     tester = new NorthSubscriptionsComponentTester();
   });

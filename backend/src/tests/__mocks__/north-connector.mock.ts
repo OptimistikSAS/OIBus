@@ -34,6 +34,8 @@ export default class NorthConnectorMock {
   moveAllCacheContent = jest.fn();
   metadataFileListToCacheContentList = jest.fn();
   testConnection = jest.fn();
+  sharableConnection = jest.fn();
+  getSession = jest.fn();
   settings;
   metricsEvent = new EventEmitter();
 }

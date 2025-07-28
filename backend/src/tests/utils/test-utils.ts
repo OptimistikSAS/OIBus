@@ -30,7 +30,7 @@ import {
   SouthConnectorMetrics
 } from '../../../shared/model/engine.model';
 import { BaseFolders } from 'src/model/types';
-import { Readable, Writable } from 'node:stream';
+import { Transformer } from '../../model/transformer.model';
 
 const CONFIG_TEST_DATABASE = path.resolve('src', 'tests', 'test-config.db');
 const CRYPTO_TEST_DATABASE = path.resolve('src', 'tests', 'test-crypto.db');
@@ -38,27 +38,6 @@ const LOGS_TEST_DATABASE = path.resolve('src', 'tests', 'test-logs.db');
 const CACHE_TEST_DATABASE = path.resolve('src', 'tests', 'test-cache.db');
 
 export const flushPromises = () => new Promise(jest.requireActual('timers').setImmediate);
-
-export function createMockWriteStream(): Writable & { data: Array<string> } {
-  const writtenData: Array<string> = [];
-
-  const stream = new Writable({
-    write(chunk, _encoding, callback) {
-      writtenData.push(chunk.toString()); // Store received data
-      callback(); // Notify that writing is done
-    }
-  });
-
-  return Object.assign(stream, { data: writtenData });
-}
-
-export function createMockReadStream(): Readable {
-  return new Readable({
-    read() {
-      return;
-    } // No need to override, just push data externally
-  });
-}
 
 export const initDatabase = async (database: 'config' | 'crypto' | 'cache' | 'logs', populate = true) => {
   switch (database) {
@@ -289,6 +268,9 @@ const populateConfigDatabase = async () => {
   for (const element of testData.scanMode.list) {
     await createScanMode(testDatabase, element);
   }
+  for (const element of testData.transformers.list) {
+    await createTransformer(testDatabase, element);
+  }
   for (const element of testData.south.list) {
     await createSouth(testDatabase, element);
   }
@@ -387,7 +369,8 @@ const createOIAnalyticsRegistration = async (database: knex.Knex, registration: 
       command_create_north: registration.commandPermissions.createNorth,
       command_update_north: registration.commandPermissions.updateNorth,
       command_delete_north: registration.commandPermissions.deleteNorth,
-      command_test_north_connection: registration.commandPermissions.testNorthConnection
+      command_test_north_connection: registration.commandPermissions.testNorthConnection,
+      command_setpoint: registration.commandPermissions.setpoint
     })
     .into('registrations');
 };
@@ -467,6 +450,15 @@ const createNorth = async (database: knex.Knex, north: NorthConnectorEntity<Nort
 
   for (const element of north.subscriptions) {
     await createSubscription(database, north.id, element.id);
+  }
+  for (const transformerWithOptions of north.transformers) {
+    await createNorthTransformer(
+      database,
+      north.id,
+      transformerWithOptions.transformer.id,
+      transformerWithOptions.options,
+      transformerWithOptions.transformer.inputType
+    );
   }
 };
 
@@ -591,6 +583,16 @@ const createHistoryQuery = async (
   for (const item of historyQuery.items) {
     await createHistoryQueryItem(database, historyQuery.id, item);
   }
+
+  for (const transformerWithOptions of historyQuery.northTransformers) {
+    await createHistoryQueryTransformer(
+      database,
+      historyQuery.id,
+      transformerWithOptions.transformer.id,
+      transformerWithOptions.options,
+      transformerWithOptions.transformer.inputType
+    );
+  }
 };
 
 const createHistoryQueryItem = async (database: knex.Knex, historyQueryId: string, item: HistoryQueryItemEntity<SouthItemSettings>) => {
@@ -603,4 +605,51 @@ const createHistoryQueryItem = async (database: knex.Knex, historyQueryId: strin
       settings: JSON.stringify(item.settings)
     })
     .into('history_items');
+};
+
+const createTransformer = async (database: knex.Knex, transformer: Transformer) => {
+  switch (transformer.type) {
+    case 'custom':
+      await database
+        .insert({
+          id: transformer.id,
+          type: transformer.type,
+          input_type: transformer.inputType,
+          output_type: transformer.outputType,
+          name: transformer.name,
+          description: transformer.description,
+          custom_code: transformer.customCode,
+          custom_manifest: JSON.stringify(transformer.customManifest)
+        })
+        .into('transformers');
+      break;
+    case 'standard':
+      await database
+        .insert({
+          id: transformer.id,
+          type: transformer.type,
+          input_type: transformer.inputType,
+          output_type: transformer.outputType,
+          function_name: transformer.functionName
+        })
+        .into('transformers');
+  }
+};
+
+const createNorthTransformer = async (database: knex.Knex, northId: string, transformerId: string, options: object, inputType: string) => {
+  await database
+    .insert({ north_id: northId, transformer_id: transformerId, options: JSON.stringify(options), input_type: inputType })
+    .into('north_transformers');
+};
+
+const createHistoryQueryTransformer = async (
+  database: knex.Knex,
+  historyId: string,
+  transformerId: string,
+  options: object,
+  inputType: string
+) => {
+  await database
+    .insert({ history_id: historyId, transformer_id: transformerId, options: JSON.stringify(options), input_type: inputType })
+    .into('history_query_transformers');
 };

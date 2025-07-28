@@ -8,6 +8,8 @@ import { CertificateService } from '../../services/certificate.service';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
 import { provideHttpClient } from '@angular/common/http';
+import { provideModalTesting } from '../../shared/mock-modal.service.spec';
+import testData from '../../../../../backend/src/tests/utils/test-data';
 import { ModalService } from '../../shared/modal.service';
 
 class CertificateListComponentTester extends ComponentTester<CertificateListComponent> {
@@ -17,6 +19,10 @@ class CertificateListComponentTester extends ComponentTester<CertificateListComp
 
   get title() {
     return this.element('#title')!;
+  }
+
+  get addCertificate() {
+    return this.button('#add-certificate')!;
   }
 
   get deleteButtons() {
@@ -43,6 +49,8 @@ describe('CertificateListComponent', () => {
   let notificationService: jasmine.SpyObj<NotificationService>;
   let modalService: jasmine.SpyObj<ModalService>;
 
+  const certificates = testData.certificates.list;
+
   beforeEach(() => {
     certificateService = createMock(CertificateService);
     confirmationService = createMock(ConfirmationService);
@@ -53,6 +61,7 @@ describe('CertificateListComponent', () => {
       providers: [
         provideI18nTesting(),
         provideHttpClient(),
+        provideModalTesting(),
         { provide: CertificateService, useValue: certificateService },
         { provide: ConfirmationService, useValue: confirmationService },
         { provide: NotificationService, useValue: notificationService },
@@ -66,32 +75,13 @@ describe('CertificateListComponent', () => {
         prepareForEdition: jasmine.createSpy(),
         canDismiss: jasmine.createSpy().and.returnValue(true)
       },
-      result: of({})
+      result: of({ name: 'new-name' })
     } as any);
   });
 
   describe('with certificate', () => {
     beforeEach(() => {
-      certificateService.list.and.returnValue(
-        of([
-          {
-            id: 'id1',
-            name: 'http://localhost',
-            description: 'My certificate 1',
-            publicKey: 'pub1',
-            certificate: 'cert1',
-            expiry: '2033-01-01T12:00:00Z'
-          },
-          {
-            id: 'id2',
-            name: 'Cert2',
-            description: 'My certificate 2',
-            publicKey: 'pub2',
-            certificate: 'cert2',
-            expiry: '2033-01-01T12:00:00Z'
-          }
-        ])
-      );
+      certificateService.list.and.returnValue(of(certificates));
       tester = new CertificateListComponentTester();
       tester.detectChanges();
     });
@@ -100,13 +90,27 @@ describe('CertificateListComponent', () => {
       expect(tester.title).toContainText('Certificates');
       expect(tester.certificates.length).toEqual(2);
       expect(tester.certificates[0].elements('td').length).toEqual(8);
-      expect(tester.certificates[1].elements('td')[0]).toContainText('Cert2');
-      expect(tester.certificates[1].elements('td')[1]).toContainText('My certificate 2');
-      expect(tester.certificates[1].elements('td')[2]).toContainText('pub2');
-      expect(tester.certificates[1].elements('td')[4]).toContainText('cert2');
-      expect(tester.certificates[1].elements('td')[6]).toContainText('1 Jan 2033');
+      expect(tester.certificates[1].elements('td')[0]).toContainText('Certificate 2');
+      expect(tester.certificates[1].elements('td')[1]).toHaveText('');
+      expect(tester.certificates[1].elements('td')[2]).toContainText('public key');
+      expect(tester.certificates[1].elements('td')[4]).toContainText('certificate');
+      expect(tester.certificates[1].elements('td')[6]).toContainText('20 Mar 2020');
       expect(tester.editButtons.length).toBe(2);
       expect(tester.deleteButtons.length).toBe(2);
+    });
+
+    it('should delete a certificate', () => {
+      certificateService.list.calls.reset();
+
+      confirmationService.confirm.and.returnValue(of(undefined));
+      certificateService.delete.and.returnValue(of(undefined));
+      tester.deleteButtons[0].click();
+
+      // confirm, delete, notify and refresh
+      expect(confirmationService.confirm).toHaveBeenCalled();
+      expect(certificateService.delete).toHaveBeenCalledWith('certificate1');
+      expect(certificateService.list).toHaveBeenCalledTimes(1);
+      expect(notificationService.success).toHaveBeenCalledWith('engine.certificate.deleted', { name: 'Certificate 1' });
     });
 
     it('should open edit modal with beforeDismiss configuration', () => {
@@ -119,12 +123,12 @@ describe('CertificateListComponent', () => {
           beforeDismiss: jasmine.any(Function)
         })
       );
+      expect(certificateService.list).toHaveBeenCalledTimes(2);
+      expect(notificationService.success).toHaveBeenCalledWith('engine.certificate.updated', { name: 'new-name' });
     });
 
     it('should open add modal with beforeDismiss configuration', () => {
-      const addButton = tester.element('#add-certificate')!;
-      (addButton as TestButton)!.click();
-
+      tester.addCertificate.click();
       expect(modalService.open).toHaveBeenCalledWith(
         jasmine.any(Function),
         jasmine.objectContaining({
@@ -132,6 +136,8 @@ describe('CertificateListComponent', () => {
           beforeDismiss: jasmine.any(Function)
         })
       );
+      expect(certificateService.list).toHaveBeenCalledTimes(2);
+      expect(notificationService.success).toHaveBeenCalledWith('engine.certificate.created', { name: 'new-name' });
     });
   });
 

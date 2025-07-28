@@ -1,13 +1,13 @@
 import { Component, inject } from '@angular/core';
 import { NgbActiveModal, NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
-import { AbstractControl, NonNullableFormBuilder, ValidationErrors, Validators } from '@angular/forms';
+import { AbstractControl, NonNullableFormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { NotificationService } from '../../shared/notification.service';
 import { ChangePasswordCommand } from '../../../../../backend/shared/model/user.model';
 import { UserSettingsService } from '../../services/user-settings.service';
-import { formDirectives } from '../../shared/form-directives';
 
 import { TranslateDirective } from '@ngx-translate/core';
 import { switchMap } from 'rxjs';
+import { OI_FORM_VALIDATION_DIRECTIVES } from '../../shared/form/form-validation-directives';
 
 interface NewPasswordFormValue {
   newPassword: string;
@@ -25,7 +25,7 @@ function samePasswordValidator(newPasswordForm: AbstractControl): ValidationErro
   selector: 'oib-change-password-modal',
   templateUrl: './change-password-modal.component.html',
   styleUrl: './change-password-modal.component.scss',
-  imports: [...formDirectives, TranslateDirective, NgbCollapse]
+  imports: [TranslateDirective, NgbCollapse, ReactiveFormsModule, OI_FORM_VALIDATION_DIRECTIVES]
 })
 export class ChangePasswordModalComponent {
   private modal = inject(NgbActiveModal);

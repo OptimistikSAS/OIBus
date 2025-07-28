@@ -3,8 +3,6 @@ import fs from 'node:fs/promises';
 import NorthConsole from './north-console';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import EncryptionService from '../../service/encryption.service';
-import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
 import { NorthConsoleSettings } from '../../../shared/model/north-settings.model';
 import { OIBusTimeValue } from '../../../shared/model/engine.model';
@@ -16,17 +14,23 @@ import { NorthConnectorEntity } from '../../model/north-connector.model';
 import testData from '../../tests/utils/test-data';
 import { mockBaseFolders } from '../../tests/utils/test-utils';
 import CacheService from '../../service/cache/cache.service';
+import TransformerService, { createTransformer } from '../../service/transformer.service';
+import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';
+import OIBusTransformer from '../../service/transformers/oibus-transformer';
+import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
 
 jest.mock('node:fs/promises');
+jest.mock('../../service/transformer.service');
 // Spy on console table and info
 jest.spyOn(global.console, 'table').mockImplementation(() => ({}));
 jest.spyOn(process.stdout, 'write').mockImplementation(() => true);
 
 const logger: pino.Logger = new PinoLogger();
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const cacheService: CacheService = new CacheServiceMock();
+const transformerService: TransformerService = new TransformerServiceMock();
+const oiBusTransformer: OIBusTransformer = new OIBusTransformerMock() as unknown as OIBusTransformer;
 
 jest.mock(
   '../../service/cache/cache.service',
@@ -57,10 +61,11 @@ describe('NorthConsole with verbose mode', () => {
     };
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
     (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
+    (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
 
     north = new NorthConsole(
       configuration,
-      encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
       logger,
@@ -89,14 +94,32 @@ describe('NorthConsole with verbose mode', () => {
     expect(process.stdout.write).not.toHaveBeenCalled();
   });
 
-  it('should properly handle values in verbose mode', async () => {
+  it('should properly handle setpoints in verbose mode', async () => {
+    const setpoints = [{ reference: 'reference', value: '123456' }];
+    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify(setpoints));
+    await north.handleContent({
+      contentFile: '/path/to/file/example-123.json',
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'setpoint',
+      source: 'south',
+      options: {}
+    });
+    expect(fs.readFile).toHaveBeenCalledWith('/path/to/file/example-123.json', { encoding: 'utf-8' });
+
+    expect(console.table).toHaveBeenCalledWith(setpoints, ['reference', 'value']);
+    expect(process.stdout.write).not.toHaveBeenCalled();
+  });
+
+  it('should properly handle files in verbose mode', async () => {
     (fs.stat as jest.Mock).mockImplementationOnce(() => Promise.resolve({ size: 666 }));
     await north.handleContent({
       contentFile: 'path/to/file/example.file',
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     });
@@ -117,10 +140,11 @@ describe('NorthConsole without verbose mode', () => {
     };
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
     (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
+    (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
 
     north = new NorthConsole(
       configuration,
-      encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
       logger,
@@ -149,6 +173,24 @@ describe('NorthConsole without verbose mode', () => {
     expect(console.table).not.toHaveBeenCalled();
   });
 
+  it('should properly handle setpoints in non verbose mode', async () => {
+    const setpoints = [{ reference: 'reference', value: '123456' }];
+    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify(setpoints));
+    await north.handleContent({
+      contentFile: '/path/to/file/example-123.json',
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'setpoint',
+      source: 'south',
+      options: {}
+    });
+    expect(fs.readFile).toHaveBeenCalledWith('/path/to/file/example-123.json', { encoding: 'utf-8' });
+
+    expect(process.stdout.write).toHaveBeenCalledWith('North Console sent 1 setpoint.\r\n');
+    expect(console.table).not.toHaveBeenCalled();
+  });
+
   it('should properly handle file in non verbose mode', async () => {
     (fs.stat as jest.Mock).mockImplementationOnce(() => Promise.resolve({ size: 666 }));
     await north.handleContent({
@@ -156,7 +198,7 @@ describe('NorthConsole without verbose mode', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     });
@@ -195,5 +237,19 @@ describe('NorthConsole without verbose mode', () => {
     await expect(north.testConnection()).rejects.toThrow(new Error(`Node process is unable to write to STDOUT. ${error}`));
     expect(process.stdout.write).toHaveBeenCalled();
     expect(console.table).not.toHaveBeenCalled();
+  });
+
+  it('should ignore data if bad content type', async () => {
+    await expect(
+      north.handleContent({
+        contentFile: 'path/to/file/example-123456789.file',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'bad-type',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow(`Unsupported data type: bad-type (file path/to/file/example-123456789.file)`);
   });
 });
