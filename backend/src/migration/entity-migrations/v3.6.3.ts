@@ -39,7 +39,7 @@ async function updateSouthOPCUAItemSettings(knex: Knex) {
           ...oldItemSettings,
           timestampOrigin: 'oibus'
         };
-        await knex(SOUTH_CONNECTORS_TABLE)
+        await knex(SOUTH_ITEMS_TABLE)
           .update({ settings: JSON.stringify(newItemSettings) })
           .where('id', item.id);
       }
