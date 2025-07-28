@@ -22,7 +22,6 @@ import nodeOPCUAClient, { AttributeIds, DataType, OPCUACertificateManager, OPCUA
 import { SouthOPCUASettings } from '../../../shared/model/south-settings.model';
 import { randomUUID } from 'crypto';
 import fs from 'node:fs/promises';
-import path from 'node:path';
 import { OIBusOPCUAValue } from '../../service/transformers/connector-types.model';
 
 // Mock node-opcua-client
@@ -241,6 +240,82 @@ describe('NorthOPCUA', () => {
     expect(logger.error).toHaveBeenCalledWith(`Failed to write value ${values[1].value} on nodeId ${values[1].nodeId}: error`);
   });
 
+  it('should manage handle content errors', async () => {
+    const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
+
+    const values: Array<OIBusOPCUAValue> = [
+      {
+        nodeId: 'nodeId1',
+        value: 123
+      },
+      {
+        nodeId: 'nodeId2',
+        value: 456
+      }
+    ];
+    (fs.readFile as jest.Mock).mockReturnValueOnce(JSON.stringify(values)).mockReturnValueOnce(JSON.stringify([values[0]]));
+
+    (resolveNodeId as jest.Mock)
+      .mockImplementationOnce(node => node)
+      .mockImplementationOnce(node => node)
+      .mockImplementationOnce(node => node);
+
+    const readFn = jest
+      .fn()
+      .mockImplementationOnce(() => {
+        throw new Error('BadAttributeIdInvalid');
+      })
+      .mockImplementationOnce(() => {
+        throw new Error('another error1');
+      })
+      .mockImplementationOnce(() => {
+        throw new Error('another error2');
+      });
+    const writeFn = jest.fn();
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-expect-error
+    north['client'] = {
+      write: writeFn,
+      read: readFn
+    };
+    north.disconnect = jest.fn();
+
+    await expect(
+      north.handleContent({
+        contentFile: 'path/to/file/example-123456789.json',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'opcua',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow(new Error('another error1'));
+
+    expect(logger.error).toHaveBeenCalledWith(`Write error on nodeId nodeId1: BadAttributeIdInvalid`);
+
+    expect(north.disconnect).toHaveBeenCalledTimes(1);
+    expect(setTimeoutSpy).toHaveBeenCalledTimes(1);
+    expect(logger.error).toHaveBeenCalledWith(`Unexpected error on nodeId nodeId2: another error1`);
+
+    north['connector'].enabled = false;
+
+    await expect(
+      north.handleContent({
+        contentFile: 'path/to/file/example-123456789.json',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'opcua',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow(new Error('another error2'));
+    expect(logger.error).toHaveBeenCalledWith(`Unexpected error on nodeId nodeId1: another error2`);
+    expect(north.disconnect).toHaveBeenCalledTimes(2);
+    expect(setTimeoutSpy).toHaveBeenCalledTimes(1);
+  });
+
   it('should throw error if client is not set when handling content', async () => {
     (fs.readFile as jest.Mock).mockReturnValueOnce('[{}]');
     await north.handleContent({
@@ -339,24 +414,15 @@ describe('NorthOPCUA test connection', () => {
     expect(close).toHaveBeenCalled();
   });
 
-  it('Wrong URL', async () => {
-    const error = new Error('BadTcpEndpointUrlInvalid');
-    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockImplementationOnce(() => {
-      throw error;
-    });
-
-    await expect(north.testConnection()).rejects.toThrow(new Error('Please check the URL'));
-  });
-
   it.each(securityPolicies)('Server does not support Security policy: %s', async securityPolicy => {
     configuration.settings.securityPolicy = securityPolicy;
-    const error = new Error(`Cannot find an Endpoint matching  security mode: ${securityPolicy}`);
+    const error = new Error(`Cannot find an Endpoint matching security mode: ${securityPolicy}`);
 
     (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockImplementationOnce(() => {
       throw error;
     });
 
-    await expect(north.testConnection()).rejects.toThrow(new Error(`Security Policy "${securityPolicy}" is not supported on the server`));
+    await expect(north.testConnection()).rejects.toThrow(error);
   });
 
   it.each(securityPolicies.slice(1))('Server did not trust certificate using Security policy: %s', async securityPolicy => {
@@ -367,7 +433,7 @@ describe('NorthOPCUA test connection', () => {
       throw error;
     });
 
-    await expect(north.testConnection()).rejects.toThrow(new Error('Please check if the OIBus certificate has been trusted by the server'));
+    await expect(north.testConnection()).rejects.toThrow(error);
   });
 
   it('Wrong user credentials', async () => {
@@ -378,7 +444,7 @@ describe('NorthOPCUA test connection', () => {
       throw error;
     });
 
-    await expect(north.testConnection()).rejects.toThrow(new Error('Please check username and password'));
+    await expect(north.testConnection()).rejects.toThrow(error);
   });
 
   it('Wrong certificate', async () => {
@@ -398,7 +464,7 @@ describe('NorthOPCUA test connection', () => {
       throw error;
     });
 
-    await expect(north.testConnection()).rejects.toThrow(new Error('Please check the certificate and key'));
+    await expect(north.testConnection()).rejects.toThrow(error);
   });
 
   it('Certificate file does not exist', async () => {
@@ -429,7 +495,6 @@ describe('NorthOPCUA test connection', () => {
       password: ''
     };
     const error = new Error('Failed to read private key');
-    const keyPath = path.resolve(configuration.settings.authentication.keyFilePath!);
     (fs.readFile as jest.Mock)
       .mockImplementationOnce(() => Buffer.from('cert content'))
       .mockImplementationOnce(() => Buffer.from('key content'));
@@ -437,7 +502,7 @@ describe('NorthOPCUA test connection', () => {
       throw error;
     });
 
-    await expect(north.testConnection()).rejects.toThrow(new Error(`Could not read private key "${keyPath}"`));
+    await expect(north.testConnection()).rejects.toThrow(new Error(`Failed to read private key`));
   });
 
   it('Unknown error', async () => {

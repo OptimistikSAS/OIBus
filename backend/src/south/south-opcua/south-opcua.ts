@@ -166,41 +166,8 @@ export default class SouthOPCUA
         'OIBus Connector test'
       );
       session = await OPCUAClient.createSession(this.connector.settings.url, userIdentity, options);
-    } catch (error: unknown) {
-      const message = (error as Error).message;
-
-      if (/BadTcpEndpointUrlInvalid/i.test(message)) {
-        throw new Error('Please check the URL');
-      }
-
-      // Security policy
-      if (/Cannot find an Endpoint matching {1,2}security mode/i.test(message) && this.connector.settings.securityPolicy) {
-        throw new Error(`Security Policy "${this.connector.settings.securityPolicy}" is not supported on the server`);
-      }
-      if (/The connection may have been rejected by server/i.test(message) && this.connector.settings.securityPolicy !== 'none') {
-        throw new Error('Please check if the OIBus certificate has been trusted by the server');
-      }
-
-      // Authentication
-      if (/BadIdentityTokenRejected/i.test(message)) {
-        if (this.connector.settings.authentication.type === 'basic') {
-          throw new Error('Please check username and password');
-        }
-
-        if (this.connector.settings.authentication.type === 'cert') {
-          throw new Error('Please check the certificate and key');
-        }
-      }
-
-      if (/Failed to read private key/i.test(message)) {
-        const keyPath = path.resolve(this.connector.settings.authentication.keyFilePath!);
-        throw new Error(`Could not read private key "${keyPath}"`);
-      }
-
-      // Unhandled errors
-      throw new Error((error as Error).message);
     } finally {
-      await fs.rm(tempCertFolder, { recursive: true, force: true });
+      await fs.rm(path.resolve(tempCertFolder), { recursive: true, force: true });
 
       if (session) {
         await session.close();
@@ -767,6 +734,9 @@ export default class SouthOPCUA
     }
 
     for (const item of items) {
+      if (this.monitoredItems.has(item.id)) {
+        continue;
+      }
       let nodeId;
       try {
         nodeId = resolveNodeId(item.settings.nodeId);
