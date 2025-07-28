@@ -284,4 +284,97 @@ describe('ImportSouthItemModalComponent', () => {
     expect(comp.validationError).toBeTruthy();
     expect(comp.validationError?.missingHeaders).toEqual(['name', 'enabled']);
   });
+
+  describe('MQTT Topic Validation', () => {
+    beforeEach(() => {
+      tester.detectChanges();
+    });
+
+    it('should not show MQTT validation error when not an MQTT connector', async () => {
+      const comp = tester.componentInstance;
+      comp.expectedHeaders = ['name', 'enabled', 'settings_topic'];
+      comp.isMqttConnector = false;
+      comp.existingMqttTopics = ['/oibus/counter'];
+
+      const file = createMockFile('name,enabled,settings_topic\ntest,true,/oibus/counter');
+      await comp.onFileSelected(file);
+      tester.detectChanges();
+
+      expect(comp.mqttValidationError).toBeNull();
+    });
+
+    it('should show MQTT validation error for overlapping topics', async () => {
+      const comp = tester.componentInstance;
+      comp.expectedHeaders = ['name', 'enabled', 'settings_topic'];
+      comp.isMqttConnector = true;
+      comp.existingMqttTopics = ['/oibus/#'];
+
+      const file = createMockFile('name,enabled,settings_topic\ntest,true,/oibus/counter');
+      await comp.onFileSelected(file);
+      tester.detectChanges();
+
+      expect(comp.mqttValidationError).toBeTruthy();
+      expect(comp.mqttValidationError?.topicErrors[0].conflictingTopics).toContain('/oibus/counter');
+    });
+
+    it('should not show MQTT validation error when no overlapping topics', async () => {
+      const comp = tester.componentInstance;
+      comp.expectedHeaders = ['name', 'enabled', 'settings_topic'];
+      comp.isMqttConnector = true;
+      comp.existingMqttTopics = ['/other/topic'];
+
+      const file = createMockFile('name,enabled,settings_topic\ntest,true,/oibus/counter');
+      await comp.onFileSelected(file);
+      tester.detectChanges();
+
+      expect(comp.mqttValidationError).toBeNull();
+    });
+
+    it('should detect overlapping topics within CSV file', async () => {
+      const comp = tester.componentInstance;
+      comp.expectedHeaders = ['name', 'enabled', 'settings_topic'];
+      comp.isMqttConnector = true;
+      comp.existingMqttTopics = [];
+
+      const file = createMockFile('name,enabled,settings_topic\ntest1,true,/oibus/#\ntest2,true,/oibus/counter');
+      await comp.onFileSelected(file);
+      tester.detectChanges();
+
+      expect(comp.mqttValidationError).toBeTruthy();
+      expect(comp.mqttValidationError?.topicErrors[0].conflictingTopics).toContain('/oibus/#');
+      expect(comp.mqttValidationError?.topicErrors[0].conflictingTopics).toContain('/oibus/counter');
+    });
+
+    it('should disable save button when MQTT validation error exists', async () => {
+      const comp = tester.componentInstance;
+      comp.expectedHeaders = ['name', 'enabled', 'settings_topic'];
+      comp.isMqttConnector = true;
+      comp.existingMqttTopics = ['/oibus/#'];
+
+      const file = createMockFile('name,enabled,settings_topic\ntest,true,/oibus/counter');
+      await comp.onFileSelected(file);
+      tester.detectChanges();
+
+      expect(tester.saveButton.disabled).toBeTrue();
+    });
+
+    it('should clear MQTT validation error when file changes', async () => {
+      const comp = tester.componentInstance;
+      comp.expectedHeaders = ['name', 'enabled', 'settings_topic'];
+      comp.isMqttConnector = true;
+      comp.existingMqttTopics = ['/oibus/#'];
+
+      // First file with error
+      const errorFile = createMockFile('name,enabled,settings_topic\ntest,true,/oibus/counter');
+      await comp.onFileSelected(errorFile);
+      tester.detectChanges();
+      expect(comp.mqttValidationError).toBeTruthy();
+
+      // Second file without error
+      const validFile = createMockFile('name,enabled,settings_topic\ntest,true,/different/topic');
+      await comp.onFileSelected(validFile);
+      tester.detectChanges();
+      expect(comp.mqttValidationError).toBeNull();
+    });
+  });
 });

@@ -14,6 +14,12 @@ export interface CsvValidationError {
   extraHeaders: Array<string>;
 }
 
+export interface MqttTopicValidationError {
+  topicErrors: Array<{
+    conflictingTopics: Array<string>;
+  }>;
+}
+
 /**
  * Validator to check if a number is a positive integer
  * { invalidPositiveInteger: true } if the number is not
@@ -276,4 +282,62 @@ export function mqttTopicOverlapValidator(existingTopics: Array<string>): Valida
     }
     return null;
   };
+}
+
+/**
+ * Validates MQTT topics in CSV content for overlaps
+ * Returns Promise<MqttTopicValidationError | null>
+ */
+export async function validateCsvMqttTopics(
+  file: File,
+  delimiter: string,
+  existingMqttTopics: Array<string> = []
+): Promise<MqttTopicValidationError | null> {
+  try {
+    const text = await file.text();
+    const lines = text.split('\n').filter(line => line.trim());
+
+    if (lines.length <= 1) {
+      return null;
+    }
+
+    const headers = lines[0].split(delimiter).map(h => h.trim());
+    const topicColumnIndex = headers.indexOf('settings_topic');
+
+    if (topicColumnIndex === -1) {
+      return null;
+    }
+
+    const csvTopics: Array<string> = [];
+    const conflictingTopics = new Set<string>();
+
+    for (let i = 1; i < lines.length; i++) {
+      const columns = lines[i].split(delimiter).map(c => c.trim());
+      if (columns.length > topicColumnIndex) {
+        const topic = columns[topicColumnIndex];
+        if (topic && topic.trim()) {
+          csvTopics.push(topic.trim());
+        }
+      }
+    }
+
+    csvTopics.forEach(topic => {
+      // Check against existing topics
+      existingMqttTopics.forEach(existingTopic => {
+        if (doMqttTopicsOverlap(topic, existingTopic)) {
+          conflictingTopics.add(topic);
+        }
+      });
+
+      csvTopics.forEach(otherTopic => {
+        if (topic !== otherTopic && doMqttTopicsOverlap(topic, otherTopic)) {
+          conflictingTopics.add(topic);
+        }
+      });
+    });
+
+    return conflictingTopics.size > 0 ? { topicErrors: [{ conflictingTopics: Array.from(conflictingTopics) }] } : null;
+  } catch (_error) {
+    return null;
+  }
 }

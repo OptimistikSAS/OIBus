@@ -4,7 +4,8 @@ import {
   singleTrueValidator,
   validateCsvHeaders,
   doMqttTopicsOverlap,
-  mqttTopicOverlapValidator
+  mqttTopicOverlapValidator,
+  validateCsvMqttTopics
 } from './validators';
 
 describe('Custom Validators', () => {
@@ -548,6 +549,57 @@ describe('Custom Validators', () => {
 
         expect(validator(control)).toBeNull();
       });
+    });
+  });
+
+  describe('validateCsvMqttTopics', () => {
+    const createMockFile = (content: string): File => {
+      const blob = new Blob([content], { type: 'text/csv' });
+      return new File([blob], 'test.csv', { type: 'text/csv' });
+    };
+
+    it('should return null when no existing MQTT topics', async () => {
+      const file = createMockFile('name,settings_topic\ntest,/oibus/counter');
+      const result = await validateCsvMqttTopics(file, ',', []);
+      expect(result).toBeNull();
+    });
+
+    it('should return null when no settings_topic column', async () => {
+      const file = createMockFile('name,enabled\ntest,true');
+      const result = await validateCsvMqttTopics(file, ',', ['/existing/topic']);
+      expect(result).toBeNull();
+    });
+
+    it('should detect conflicts with existing topics', async () => {
+      const file = createMockFile('name,settings_topic\ntest,/oibus/counter');
+      const result = await validateCsvMqttTopics(file, ',', ['/oibus/#']);
+
+      expect(result).toBeTruthy();
+      expect(result?.topicErrors[0].conflictingTopics).toContain('/oibus/counter');
+    });
+
+    it('should detect conflicts within CSV file', async () => {
+      const file = createMockFile('name,settings_topic\ntest1,/oibus/#\ntest2,/oibus/counter');
+      const result = await validateCsvMqttTopics(file, ',', []);
+
+      expect(result).toBeTruthy();
+      expect(result?.topicErrors[0].conflictingTopics).toContain('/oibus/#');
+      expect(result?.topicErrors[0].conflictingTopics).toContain('/oibus/counter');
+    });
+
+    it('should handle empty CSV file', async () => {
+      const file = createMockFile('');
+      const result = await validateCsvMqttTopics(file, ',', ['/existing/topic']);
+      expect(result).toBeNull();
+    });
+
+    it('should handle file reading error', async () => {
+      const mockFile = {
+        text: () => Promise.reject(new Error('File read error'))
+      } as unknown as File;
+
+      const result = await validateCsvMqttTopics(mockFile, ',', ['/existing/topic']);
+      expect(result).toBeNull();
     });
   });
 });

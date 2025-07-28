@@ -35,7 +35,22 @@
       </div>
     </div>
   }
-
+  @if (mqttValidationError) {
+    <div class="alert alert-danger" role="alert">
+      <h6>
+        <i class="fa fa-solid fa-exclamation-triangle me-2"></i>
+        <span translate="south.items.import.mqtt-topic-overlap-title"></span>
+      </h6>
+      <p translate="south.items.import.mqtt-topic-overlap-description"></p>
+      <div class="mt-2">
+        <span
+          translate="common.validation-errors.mqtt-topic-overlap"
+          [translateParams]="{ conflictingTopics: mqttValidationError.topicErrors[0].conflictingTopics.join(', ') }"
+        >
+        </span>
+      </div>
+    </div>
+  }
   <div class="row justify-content-center mb-3">
     <div class="text-center">
       <label class="form-label" for="file" translate="south.items.import.csv-file"></label>
@@ -43,7 +58,7 @@
     <button
       type="button"
       class="m-1 w-50 btn btn-secondary"
-      [class.btn-danger]="validationError"
+      [class.btn-danger]="validationError || mqttValidationError"
       (click)="fileInput.click()"
       (drop)="onImportDrop($event)"
       (dragover)="onImportDragOver($event)"
