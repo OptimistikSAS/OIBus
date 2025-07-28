@@ -26,7 +26,7 @@ import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-c
 import { encryptionService } from '../../service/encryption.service';
 
 /**
- * Class SouthMQTT - Subscribe to data topic from a MQTT broker
+ * Class SouthMQTT - Subscribe to a data topic from a MQTT broker
  */
 export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQTTItemSettings> implements QueriesSubscription {
   private client: mqtt.MqttClient | null = null;
