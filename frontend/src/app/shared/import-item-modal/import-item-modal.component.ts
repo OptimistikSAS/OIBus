@@ -5,7 +5,7 @@ import { CsvCharacter, ALL_CSV_CHARACTERS } from '../../../../../backend/shared/
 import { NonNullableFormBuilder, Validators } from '@angular/forms';
 import { inject, OnInit } from '@angular/core';
 import { formDirectives } from '../form-directives';
-import { CsvValidationError, validateCsvHeaders } from '../validators';
+import { CsvValidationError, MqttTopicValidationError, validateCsvHeaders, validateCsvMqttTopics } from '../validators';
 
 @Component({
   selector: 'oib-import-item-modal',
@@ -19,11 +19,14 @@ export class ImportItemModalComponent implements OnInit {
 
   @Input() expectedHeaders: Array<string> = [];
   @Input() optionalHeaders: Array<string> = [];
+  @Input() existingMqttTopics: Array<string> = [];
+  @Input() isMqttConnector = false;
 
   readonly csvDelimiters = ALL_CSV_CHARACTERS;
   initializeFile = new File([''], 'Choose a file');
   selectedFile: File = this.initializeFile;
   validationError: CsvValidationError | null = null;
+  mqttValidationError: MqttTopicValidationError | null = null;
 
   importForm = this.fb.group({
     delimiter: ['COMMA' as CsvCharacter, Validators.required]
@@ -37,23 +40,36 @@ export class ImportItemModalComponent implements OnInit {
   }
 
   get canSave(): boolean {
-    return this.selectedFile !== this.initializeFile && !this.validationError && this.importForm.valid;
+    return this.selectedFile !== this.initializeFile && !this.validationError && !this.mqttValidationError && this.importForm.valid;
   }
 
   public async onFileSelected(file: File): Promise<void> {
     this.selectedFile = file;
     this.validationError = null;
+    this.mqttValidationError = null;
 
     if (file !== this.initializeFile) {
       const delimiter = this.findCorrespondingDelimiter(this.importForm.get('delimiter')?.value as CsvCharacter);
+
       this.validationError = await validateCsvHeaders(file, delimiter, this.expectedHeaders, this.optionalHeaders);
+
+      if (!this.validationError && this.isMqttConnector) {
+        this.mqttValidationError = await validateCsvMqttTopics(file, delimiter, this.existingMqttTopics);
+      }
     }
   }
 
   async onDelimiterChange(): Promise<void> {
     if (this.selectedFile !== this.initializeFile) {
       const delimiter = this.findCorrespondingDelimiter(this.importForm.get('delimiter')?.value as CsvCharacter);
+
       this.validationError = await validateCsvHeaders(this.selectedFile, delimiter, this.expectedHeaders, this.optionalHeaders);
+
+      if (!this.validationError && this.isMqttConnector) {
+        this.mqttValidationError = await validateCsvMqttTopics(this.selectedFile, delimiter, this.existingMqttTopics);
+      } else {
+        this.mqttValidationError = null;
+      }
     }
   }
 

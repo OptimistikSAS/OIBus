@@ -352,6 +352,13 @@ export class SouthItemsComponent implements OnInit {
     modalRef.componentInstance.expectedHeaders = expectedHeaders;
     modalRef.componentInstance.optionalHeaders = optionalHeaders;
 
+    if (this.southManifest().id === 'mqtt') {
+      modalRef.componentInstance.isMqttConnector = true;
+      modalRef.componentInstance.existingMqttTopics = this.allItems
+        .map(item => (item.settings as any)?.topic)
+        .filter(topic => topic && typeof topic === 'string' && topic.trim());
+    }
+
     modalRef.result.subscribe(response => {
       if (!response) return;
       this.checkImportItems(response.file, response.delimiter);

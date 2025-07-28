@@ -940,7 +940,9 @@
         "missing-columns": "Missing columns:",
         "extra-columns": "Extra columns:",
         "expected-format": "Expected format:",
-        "actual-format": "Actual format:"
+        "actual-format": "Actual format:",
+        "mqtt-topic-overlap-title": "MQTT Topic Overlap Error",
+        "mqtt-topic-overlap-description": "The CSV file contains MQTT topics that would create overlapping subscriptions. These conflicts must be resolved before importing."
       },
       "test": {
         "title": "Result for item {{name}}"
