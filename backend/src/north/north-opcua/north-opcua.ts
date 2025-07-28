@@ -120,41 +120,8 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
         'OIBus Connector test'
       );
       session = await OPCUAClient.createSession(this.connector.settings.url, userIdentity, options);
-    } catch (error: unknown) {
-      const message = (error as Error).message;
-
-      if (/BadTcpEndpointUrlInvalid/i.test(message)) {
-        throw new Error('Please check the URL');
-      }
-
-      // Security policy
-      if (/Cannot find an Endpoint matching {1,2}security mode/i.test(message) && this.connector.settings.securityPolicy) {
-        throw new Error(`Security Policy "${this.connector.settings.securityPolicy}" is not supported on the server`);
-      }
-      if (/The connection may have been rejected by server/i.test(message) && this.connector.settings.securityPolicy !== 'none') {
-        throw new Error('Please check if the OIBus certificate has been trusted by the server');
-      }
-
-      // Authentication
-      if (/BadIdentityTokenRejected/i.test(message)) {
-        if (this.connector.settings.authentication.type === 'basic') {
-          throw new Error('Please check username and password');
-        }
-
-        if (this.connector.settings.authentication.type === 'cert') {
-          throw new Error('Please check the certificate and key');
-        }
-      }
-
-      if (/Failed to read private key/i.test(message)) {
-        const keyPath = path.resolve(this.connector.settings.authentication.keyFilePath!);
-        throw new Error(`Could not read private key "${keyPath}"`);
-      }
-
-      // Unhandled errors
-      throw new Error((error as Error).message);
     } finally {
-      await fs.rm(tempCertFolder, { recursive: true, force: true });
+      await fs.rm(path.resolve(tempCertFolder), { recursive: true, force: true });
 
       if (session) {
         await session.close();
@@ -291,36 +258,49 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
         continue;
       }
 
-      // Read the DataType attribute of the node
-      const dataValue = await this.client.read({
-        nodeId,
-        attributeId: AttributeIds.DataType
-      });
-
-      // Extract the data type from the DataValue
-      const dataType = dataValue.value.value.value as DataType;
-
-      // Ensure that the dataType is valid
-      if (!Object.values(DataType).includes(dataType)) {
-        this.logger.error(`Invalid data type for node ID ${nodeId}`);
-        continue;
-      }
-      // Write the value to the node
-      const writeResult = await this.client.write({
-        nodeId,
-        attributeId: AttributeIds.Value,
-        value: {
-          value: {
-            dataType,
-            value: value.value
-          }
+      try {
+        // Read the DataType attribute of the node
+        const dataValue = await this.client.read({
+          nodeId,
+          attributeId: AttributeIds.DataType
+        });
+        // Extract the data type from the DataValue
+        const dataType = dataValue.value.value.value as DataType;
+        // Ensure that the dataType is valid
+        if (!Object.values(DataType).includes(dataType)) {
+          this.logger.error(`Invalid data type for node ID ${nodeId}`);
+          continue;
         }
-      });
+        // Write the value to the node
+        const writeResult = await this.client.write({
+          nodeId,
+          attributeId: AttributeIds.Value,
+          value: {
+            value: {
+              dataType,
+              value: value.value
+            }
+          }
+        });
 
-      if (writeResult.isGood()) {
-        this.logger.trace(`Value ${value.value} written successfully on nodeId ${value.nodeId}`);
-      } else {
-        this.logger.error(`Failed to write value ${value.value} on nodeId ${value.nodeId}: ${writeResult.name}`);
+        if (writeResult.isGood()) {
+          this.logger.trace(`Value ${value.value} written successfully on nodeId ${value.nodeId}`);
+        } else {
+          this.logger.error(`Failed to write value ${value.value} on nodeId ${value.nodeId}: ${writeResult.name}`);
+        }
+      } catch (error: unknown) {
+        // Check for specific write errors
+        if ((error as Error).message.includes('BadNodeIdUnknown') || (error as Error).message.includes('BadAttributeIdInvalid')) {
+          this.logger.error(`Write error on nodeId ${nodeId}: ${(error as Error).message}`);
+          // Continue to the next iteration or operation
+        } else {
+          this.logger.error(`Unexpected error on nodeId ${nodeId}: ${(error as Error).message}`);
+          await this.disconnect();
+          if (!this.disconnecting && this.connector.enabled) {
+            this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
+          }
+          throw error;
+        }
       }
     }
   }
