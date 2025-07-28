@@ -211,7 +211,7 @@
     "oibus-data-type": {
       "any": "Any",
       "time-values": "OIBus time values",
-      "setpoint": "Setpoint"
+      "setpoint": "Setpoints"
     },
     "oibus-north-category": {
       "debug": "Debug",
@@ -706,13 +706,13 @@
               "title": "Authentication",
               "none": "None",
               "basic": "User",
-              "cert": "Certificate"
+              "cert": "Certificate",
+              "username": "Username",
+              "password": "Password",
+              "cert-file-path": "Cert file path",
+              "key-file-path": "Key file path",
+              "ca-file-path": "CA file path"
             },
-            "username": "Username",
-            "password": "Password",
-            "cert-file-path": "Cert file path",
-            "key-file-path": "Key file path",
-            "ca-file-path": "CA file path",
             "reject-unauthorized": "Reject unauthorized connection",
             "reconnect-period": "Reconnect period",
             "connect-timeout": "Connect timeout"

@@ -15,11 +15,12 @@ import { QoS } from 'mqtt-packet';
 import { OIBusMQTTValue } from '../../service/transformers/connector-types.model';
 
 /**
- * Class NorthOPCUA - Write values in an OPCUA server
+ * Class NorthOPCUA - Write values in a MQTT broker
  */
 export default class NorthMQTT extends NorthConnector<NorthMQTTSettings> {
   private client: mqtt.MqttClient | null = null;
   private reconnectTimeout: NodeJS.Timeout | null = null;
+  private disconnecting = false;
 
   constructor(
     configuration: NorthConnectorEntity<NorthMQTTSettings>,
@@ -61,6 +62,14 @@ export default class NorthMQTT extends NorthConnector<NorthMQTTSettings> {
         this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.reconnectPeriod);
         resolve(); // No need to reject, but need to resolve to not block thread
       });
+      this.client.once('close', () => {
+        if (this.disconnecting) {
+          this.logger.debug('MQTT Client intentionally disconnected');
+        } else {
+          this.logger.debug(`MQTT Client closed unintentionally`);
+          this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.reconnectPeriod);
+        }
+      });
     });
   }
 
@@ -69,14 +78,15 @@ export default class NorthMQTT extends NorthConnector<NorthMQTTSettings> {
       clearTimeout(this.reconnectTimeout);
       this.reconnectTimeout = null;
     }
+    this.disconnecting = true;
     if (this.client) {
       this.client.removeAllListeners();
-      this.client.end(true, { cmd: 'disconnect', properties: { sessionExpiryInterval: 60 } });
+      this.client.end(true);
       this.logger.info(`Disconnected from ${this.connector.settings.url}...`);
       this.client = null;
     }
-
     await super.disconnect();
+    this.disconnecting = false;
   }
 
   override async testConnection(): Promise<void> {
@@ -141,7 +151,16 @@ export default class NorthMQTT extends NorthConnector<NorthMQTTSettings> {
     }
 
     for (const value of values) {
-      await this.client.publishAsync(value.topic, value.payload, { qos: parseInt(this.connector.settings.qos) as QoS });
+      try {
+        await this.client.publishAsync(value.topic, value.payload, { qos: parseInt(this.connector.settings.qos) as QoS });
+      } catch (error: unknown) {
+        this.logger.error(`Unexpected error on topic ${value.topic}: ${(error as Error).message}`);
+        await this.disconnect();
+        if (!this.disconnecting && this.connector.enabled) {
+          this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.reconnectPeriod);
+        }
+        throw error;
+      }
     }
   }
 
