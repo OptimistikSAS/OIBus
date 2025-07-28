@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.6.4](https://github.com/OptimistikSAS/OIBus/compare/v3.6.3...v3.6.4) (2025-07-28)
+
+
+### Bug Fixes
+
+* **mqtt:** implemented MQTT topic overlap validation and related tests ([2a77c88](https://github.com/OptimistikSAS/OIBus/commit/2a77c884eb44b33a6bb110c3a4eba46a8a691e90))
+* **mqtt:** implemented MQTT topic overlap validation and related tests in the import modal ([b092559](https://github.com/OptimistikSAS/OIBus/commit/b092559a696c53473db2f549ff3f19db50b4609e))
+* **opcua:** fix migration of items ([813d2a3](https://github.com/OptimistikSAS/OIBus/commit/813d2a34be7ead86e9616a23a919a3d6e080d2d0))
+
 ## [3.6.3](https://github.com/OptimistikSAS/OIBus/compare/v3.6.2...v3.6.3) (2025-07-17)
 
 
