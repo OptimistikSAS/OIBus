@@ -20,6 +20,7 @@ import { getFilenameWithoutRandomId } from '../../service/utils';
 import mqtt from 'mqtt';
 import Stream from 'node:stream';
 import fs from 'node:fs/promises';
+import { OIBusMQTTValue } from '../../service/transformers/connector-types.model';
 
 jest.mock('node:fs/promises');
 jest.mock('../../service/encryption.service', () => ({
@@ -157,6 +158,38 @@ describe('NorthMQTT', () => {
     expect(logger.error).toHaveBeenCalledWith(`MQTT Client error: ${new Error('error')}`);
   });
 
+  it('should properly manage reconnection on connection close', async () => {
+    north.connect = jest.fn();
+    north.disconnect = jest.fn().mockImplementationOnce(() => Promise.resolve());
+    north.connectToBroker({
+      clean: !configuration.settings.persistent,
+      clientId: configuration.id,
+      rejectUnauthorized: false,
+      connectTimeout: 1000,
+      reconnectPeriod: 1000,
+      queueQoSZero: false
+    });
+    north['disconnecting'] = true;
+    mqttStream.emit('close');
+    await flushPromises();
+    expect(north['reconnectTimeout']).toBeNull();
+    expect(logger.debug).toHaveBeenCalledWith('MQTT Client intentionally disconnected');
+
+    north.connectToBroker({
+      clean: !configuration.settings.persistent,
+      clientId: configuration.id,
+      rejectUnauthorized: false,
+      connectTimeout: 1000,
+      reconnectPeriod: 1000,
+      queueQoSZero: false
+    });
+    north['disconnecting'] = false;
+    mqttStream.emit('close');
+    await flushPromises();
+    expect(north['reconnectTimeout']).not.toBeNull();
+    expect(logger.debug).toHaveBeenCalledWith(`MQTT Client closed unintentionally`);
+  });
+
   it('should properly test connection', async () => {
     const expectedOptions = {
       clientId: 'northId1',
@@ -254,10 +287,10 @@ describe('NorthMQTT', () => {
   });
 
   it('should handle content', async () => {
-    const values = [
+    const values: Array<OIBusMQTTValue> = [
       {
         topic: 'topic1',
-        payload: 123
+        payload: '123'
       },
       {
         topic: 'topic2',
@@ -293,6 +326,71 @@ describe('NorthMQTT', () => {
     expect(publishAsyncFn).toHaveBeenCalledWith(values[1].topic, values[1].payload, {
       qos: parseInt(configuration.settings.qos)
     });
+  });
+
+  it('should manage handle content errors', async () => {
+    const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
+
+    const values: Array<OIBusMQTTValue> = [
+      {
+        topic: 'topic1',
+        payload: '123'
+      },
+      {
+        topic: 'topic2',
+        payload: 'my payload'
+      }
+    ];
+    (fs.readFile as jest.Mock).mockReturnValueOnce(JSON.stringify(values)).mockReturnValueOnce(JSON.stringify([values[0]]));
+
+    const publishAsyncFn = jest
+      .fn()
+      .mockImplementationOnce(() => {
+        throw new Error('error1');
+      })
+      .mockImplementationOnce(() => {
+        throw new Error('error2');
+      });
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-expect-error
+    north['client'] = {
+      publishAsync: publishAsyncFn
+    };
+
+    north.disconnect = jest.fn();
+
+    await expect(
+      north.handleContent({
+        contentFile: 'path/to/file/example-123456789.json',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'mqtt',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow(new Error('error1'));
+
+    expect(logger.error).toHaveBeenCalledWith(`Unexpected error on topic topic1: error1`);
+    expect(north.disconnect).toHaveBeenCalledTimes(1);
+    expect(setTimeoutSpy).toHaveBeenCalledTimes(1);
+
+    north['connector'].enabled = false;
+
+    await expect(
+      north.handleContent({
+        contentFile: 'path/to/file/example-123456789.json',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'mqtt',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow(new Error('error2'));
+    expect(logger.error).toHaveBeenCalledWith(`Unexpected error on topic topic1: error2`);
+    expect(north.disconnect).toHaveBeenCalledTimes(2);
+    expect(setTimeoutSpy).toHaveBeenCalledTimes(1);
   });
 
   it('should throw error if client is not set when handling content', async () => {
