@@ -992,6 +992,88 @@ describe('Joi validator', () => {
         });
       });
 
+      describe('additional pattern matching', () => {
+        it('should not match when # is not at the end of pattern', () => {
+          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
+            '/oibus/counter',
+            '/oibus/#/something'
+          );
+          expect(result).toBe(false);
+        });
+
+        it('should not match when # is not preceded by / and not at beginning', () => {
+          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
+            '/oibus/counter',
+            '/oibus#'
+          );
+          expect(result).toBe(false);
+        });
+
+        it('should match when # is at beginning of pattern', () => {
+          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
+            'oibus/counter',
+            '#'
+          );
+          expect(result).toBe(true);
+        });
+
+        it('should match exact topic and pattern without wildcards - final return', () => {
+          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
+            'level1/level2/level3',
+            'level1/level2/level3'
+          );
+          expect(result).toBe(true);
+        });
+
+        it('should match topic with + wildcards in all positions - final return', () => {
+          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
+            'level1/level2/level3',
+            '+/+/+'
+          );
+          expect(result).toBe(true);
+        });
+
+        it('should handle pattern with # followed by non-empty character', () => {
+          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
+            '/oibus/counter',
+            '/oibus/#extra'
+          );
+          expect(result).toBe(false);
+        });
+
+        it('should not match when topic is shorter than required parts before #', () => {
+          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
+            'a',
+            'a#/b/#'
+          );
+          expect(result).toBe(false);
+        });
+
+        it('should not match when parts before # do not match', () => {
+          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
+            'a#/different/extra',
+            'a#/b/#'
+          );
+          expect(result).toBe(false);
+        });
+
+        it('should match when parts before # match correctly', () => {
+          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
+            'a#/b/extra/parts',
+            'a#/b/#'
+          );
+          expect(result).toBe(true);
+        });
+
+        it('should match with + wildcard before # in split pattern', () => {
+          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
+            'a#/anything/extra',
+            'a#/+/#'
+          );
+          expect(result).toBe(true);
+        });
+      });
+
       describe('edge cases', () => {
         it('should handle empty topics', () => {
           const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
