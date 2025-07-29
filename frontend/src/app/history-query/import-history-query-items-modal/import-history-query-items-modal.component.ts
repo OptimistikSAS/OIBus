@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ObservableState } from '../../shared/save-button/save-button.component';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { SouthConnectorItemManifest } from '../../../../../backend/shared/model/south-connector.model';
@@ -17,7 +17,7 @@ const PAGE_SIZE = 20;
   selector: 'oib-import-history-query-items-modal',
   templateUrl: './import-history-query-items-modal.component.html',
   styleUrl: './import-history-query-items-modal.component.scss',
-  imports: [TranslateDirective, PaginationComponent, TranslatePipe]
+  imports: [TranslateDirective, PaginationComponent, TranslatePipe, NgbTooltip]
 })
 export class ImportHistoryQueryItemsModalComponent {
   private modal = inject(NgbActiveModal);
