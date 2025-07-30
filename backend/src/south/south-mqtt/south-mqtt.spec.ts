@@ -1,13 +1,10 @@
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import Stream from 'node:stream';
 import fs from 'node:fs/promises';
-
 import mqtt from 'mqtt';
-
 import SouthMQTT from './south-mqtt';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import EncryptionService from '../../service/encryption.service';
-import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import { SouthConnectorDTO } from '../../../shared/model/south-connector.model';
 import { SouthMQTTItemSettings, SouthMQTTSettings } from '../../../shared/model/south-settings.model';
 import * as utils from '../../service/utils';
@@ -25,7 +22,6 @@ jest.mock('mqtt');
 jest.mock('node:fs/promises');
 jest.mock('../../service/utils');
 
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
@@ -38,6 +34,9 @@ jest.mock(
       return southCacheService;
     }
 );
+jest.mock('../../service/encryption.service', () => ({
+  encryptionService: new EncryptionServiceMock('', '')
+}));
 
 const logger: pino.Logger = new PinoLogger();
 const addContentCallback = jest.fn();
@@ -208,7 +207,6 @@ describe('SouthMQTT without authentication', () => {
     south = new SouthMQTT(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,
@@ -253,10 +251,33 @@ describe('SouthMQTT without authentication', () => {
     expect(logger.error).toHaveBeenCalledWith(`MQTT Client error: ${new Error('error')}`); // Not called because promise is already resolved
   });
 
+  it('should not flush message if limit is not trigger', async () => {
+    south['connector'].settings.maxNumberOfMessages = 2;
+    south.subscribe = jest.fn();
+    south.flushMessages = jest.fn();
+    south.start();
+    await flushPromises();
+    mqttStream.emit('connect');
+    mqttStream.emit('message', 'myTopic', 'myMessage', { dup: false, qos: 1, retain: false });
+    await flushPromises(); // Flush disconnect promise
+    expect(south.flushMessages).not.toHaveBeenCalled();
+
+    mqttStream.emit('message', 'myTopic', 'myMessage', { dup: false, qos: 1, retain: false });
+    await flushPromises(); // Flush disconnect promise
+    expect(south.flushMessages).toHaveBeenCalledTimes(1);
+  });
+
   it('should properly disconnect', async () => {
+    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+
     await south.disconnect();
 
     expect(logger.info).not.toHaveBeenCalledWith('Disconnecting from mqtt://localhost:1883...');
+    expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
+
+    south.flushMessages = jest.fn();
+    await south.disconnect();
+    expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
   });
 
   it('should properly manage clear timeout', async () => {
@@ -471,7 +492,6 @@ describe('SouthMQTT with Basic Auth', () => {
     south = new SouthMQTT(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,
@@ -1010,7 +1030,6 @@ describe('SouthMQTT with Cert', () => {
     south = new SouthMQTT(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,
@@ -1193,7 +1212,6 @@ describe('SouthMQTT without Cert', () => {
     south = new SouthMQTT(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,

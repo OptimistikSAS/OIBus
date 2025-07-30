@@ -70,7 +70,7 @@ describe('South connector controller', () => {
     await southConnectorController.findById(ctx);
 
     expect(ctx.app.southService.findById).toHaveBeenCalledWith(testData.south.list[0].id);
-    expect(ctx.ok).toHaveBeenCalledWith(toSouthConnectorDTO(testData.south.list[0], ctx.app.encryptionService));
+    expect(ctx.ok).toHaveBeenCalledWith(toSouthConnectorDTO(testData.south.list[0]));
   });
 
   it('findById() should return not found when South connector not found', async () => {
@@ -90,7 +90,7 @@ describe('South connector controller', () => {
     await southConnectorController.createSouth(ctx);
 
     expect(ctx.app.southService.createSouth).toHaveBeenCalledWith(ctx.request.body, null);
-    expect(ctx.created).toHaveBeenCalledWith(toSouthConnectorDTO(testData.south.list[0], ctx.app.encryptionService));
+    expect(ctx.created).toHaveBeenCalledWith(toSouthConnectorDTO(testData.south.list[0]));
   });
 
   it('create() should return bad request', async () => {
@@ -231,9 +231,7 @@ describe('South connector controller', () => {
       name: 'name'
     };
     ctx.app.southService.searchSouthItems.mockReturnValue({
-      content: testData.south.list[0].items.map(item =>
-        toSouthConnectorItemDTO(item, testData.south.list[0].type, ctx.app.encryptionService)
-      ),
+      content: testData.south.list[0].items.map(item => toSouthConnectorItemDTO(item, testData.south.list[0].type)),
       totalElements: testData.south.list[0].items.length,
       size: 25,
       number: 1,
@@ -246,9 +244,7 @@ describe('South connector controller', () => {
 
     expect(ctx.app.southService.searchSouthItems).toHaveBeenCalledWith(testData.south.list[0].id, searchParams);
     expect(ctx.ok).toHaveBeenCalledWith({
-      content: testData.south.list[0].items.map(item =>
-        toSouthConnectorItemDTO(item, testData.south.list[0].type, ctx.app.encryptionService)
-      ),
+      content: testData.south.list[0].items.map(item => toSouthConnectorItemDTO(item, testData.south.list[0].type)),
       totalElements: testData.south.list[0].items.length,
       size: 25,
       number: 1,
@@ -267,9 +263,7 @@ describe('South connector controller', () => {
     };
     ctx.app.southService.findById.mockReturnValueOnce(testData.south.list[0]);
     ctx.app.southService.searchSouthItems.mockReturnValue({
-      content: testData.south.list[0].items.map(item =>
-        toSouthConnectorItemDTO(item, testData.south.list[0].type, ctx.app.encryptionService)
-      ),
+      content: testData.south.list[0].items.map(item => toSouthConnectorItemDTO(item, testData.south.list[0].type)),
       totalElements: testData.south.list[0].items.length,
       size: 25,
       number: 0,
@@ -281,9 +275,7 @@ describe('South connector controller', () => {
 
     expect(ctx.app.southService.searchSouthItems).toHaveBeenCalledWith(testData.south.list[0].id, searchParams);
     expect(ctx.ok).toHaveBeenCalledWith({
-      content: testData.south.list[0].items.map(item =>
-        toSouthConnectorItemDTO(item, testData.south.list[0].type, ctx.app.encryptionService)
-      ),
+      content: testData.south.list[0].items.map(item => toSouthConnectorItemDTO(item, testData.south.list[0].type)),
       totalElements: testData.south.list[0].items.length,
       size: 25,
       number: 0,

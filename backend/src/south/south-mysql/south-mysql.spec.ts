@@ -1,13 +1,10 @@
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import path from 'node:path';
-
 import SouthMySQL from './south-mysql';
 import * as utils from '../../service/utils';
 import { generateReplacementParameters } from '../../service/utils';
 import pino from 'pino';
-
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import EncryptionService from '../../service/encryption.service';
-import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import { SouthConnectorDTO } from '../../../shared/model/south-connector.model';
 import mysql from 'mysql2/promise';
 import {
@@ -28,7 +25,6 @@ import { mockBaseFolders } from '../../tests/utils/test-utils';
 jest.mock('mysql2/promise');
 jest.mock('../../service/utils');
 
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
@@ -41,6 +37,9 @@ jest.mock(
       return southCacheService;
     }
 );
+jest.mock('../../service/encryption.service', () => ({
+  encryptionService: new EncryptionServiceMock('', '')
+}));
 
 const logger: pino.Logger = new PinoLogger();
 const addContentCallback = jest.fn();
@@ -72,7 +71,7 @@ describe('SouthMySQL with authentication', () => {
         name: 'item1',
         enabled: true,
         settings: {
-          query: 'SELECT * FROM table',
+          query: 'query1',
           requestTimeout: 1000,
           dateTimeFields: [
             {
@@ -108,7 +107,7 @@ describe('SouthMySQL with authentication', () => {
         name: 'item2',
         enabled: true,
         settings: {
-          query: 'SELECT * FROM table',
+          query: 'query2',
           requestTimeout: 1000,
           dateTimeFields: null,
           serialization: {
@@ -127,7 +126,7 @@ describe('SouthMySQL with authentication', () => {
         name: 'item3',
         enabled: true,
         settings: {
-          query: 'SELECT * FROM table',
+          query: 'query3',
           requestTimeout: 1000,
           dateTimeFields: [
             {
@@ -173,7 +172,6 @@ describe('SouthMySQL with authentication', () => {
     south = new SouthMySQL(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,
@@ -399,7 +397,7 @@ describe('SouthMySQL without authentication', () => {
         name: 'item1',
         enabled: true,
         settings: {
-          query: 'SELECT * FROM table',
+          query: 'query1',
           requestTimeout: 1000,
           dateTimeFields: [
             {
@@ -435,7 +433,7 @@ describe('SouthMySQL without authentication', () => {
         name: 'item2',
         enabled: true,
         settings: {
-          query: 'SELECT * FROM table',
+          query: 'query2',
           requestTimeout: 1000,
           dateTimeFields: null,
           serialization: {
@@ -454,7 +452,7 @@ describe('SouthMySQL without authentication', () => {
         name: 'item3',
         enabled: true,
         settings: {
-          query: 'SELECT * FROM table',
+          query: 'query3',
           requestTimeout: 1000,
           dateTimeFields: [
             {
@@ -496,7 +494,6 @@ describe('SouthMySQL without authentication', () => {
     south = new SouthMySQL(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,
@@ -560,7 +557,7 @@ describe('SouthMySQL test connection', () => {
         name: 'item1',
         enabled: true,
         settings: {
-          query: 'SELECT * FROM table',
+          query: 'query1',
           requestTimeout: 1000,
           dateTimeFields: [
             {
@@ -596,7 +593,7 @@ describe('SouthMySQL test connection', () => {
         name: 'item2',
         enabled: true,
         settings: {
-          query: 'SELECT * FROM table',
+          query: 'query2',
           requestTimeout: 1000,
           dateTimeFields: null,
           serialization: {
@@ -615,7 +612,7 @@ describe('SouthMySQL test connection', () => {
         name: 'item3',
         enabled: true,
         settings: {
-          query: 'SELECT * FROM table',
+          query: 'query3',
           requestTimeout: 1000,
           dateTimeFields: [
             {
@@ -681,7 +678,6 @@ describe('SouthMySQL test connection', () => {
     south = new SouthMySQL(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,

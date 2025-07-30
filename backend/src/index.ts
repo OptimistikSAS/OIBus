@@ -32,6 +32,7 @@ import CertificateService from './service/certificate.service';
 import UserService from './service/user.service';
 import LogService from './service/log.service';
 import CleanupService from './service/cache/cleanup.service';
+import TransformerService from './service/transformer.service';
 
 const CONFIG_DATABASE = 'oibus.db';
 const CRYPTO_DATABASE = 'crypto.db';
@@ -129,9 +130,12 @@ const CERT_FOLDER = 'certs';
     repositoryService.southConnectorRepository,
     repositoryService.northConnectorRepository,
     repositoryService.historyQueryRepository,
+    repositoryService.transformerRepository,
     oIAnalyticsClient,
     loggerService.logger!
   );
+
+  const transformerService = new TransformerService(new JoiValidator(), repositoryService.transformerRepository, oIAnalyticsMessageService);
 
   const connectionService = new ConnectionService(loggerService.logger!);
   const northService = new NorthService(
@@ -144,7 +148,7 @@ const CERT_FOLDER = 'certs';
     repositoryService.certificateRepository,
     repositoryService.oianalyticsRegistrationRepository,
     oIAnalyticsMessageService,
-    encryptionService,
+    transformerService,
     dataStreamEngine
   );
   const southService = new SouthService(
@@ -157,7 +161,6 @@ const CERT_FOLDER = 'certs';
     repositoryService.oianalyticsRegistrationRepository,
     repositoryService.certificateRepository,
     oIAnalyticsMessageService,
-    encryptionService,
     connectionService,
     dataStreamEngine
   );
@@ -171,8 +174,8 @@ const CERT_FOLDER = 'certs';
     repositoryService.historyQueryMetricsRepository,
     southService,
     northService,
+    transformerService,
     oIAnalyticsMessageService,
-    encryptionService,
     historyQueryEngine
   );
 
@@ -260,6 +263,7 @@ const CERT_FOLDER = 'certs';
     oIBusService,
     southService,
     northService,
+    transformerService,
     historyQueryService,
     homeMetricsService,
     ignoreIpFilters,

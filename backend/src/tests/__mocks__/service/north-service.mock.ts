@@ -23,5 +23,6 @@ export default jest.fn().mockImplementation(() => ({
   checkSubscription: jest.fn(),
   createSubscription: jest.fn(),
   deleteSubscription: jest.fn(),
-  deleteAllSubscriptionsByNorth: jest.fn()
+  deleteAllSubscriptionsByNorth: jest.fn(),
+  executeSetpoint: jest.fn()
 }));

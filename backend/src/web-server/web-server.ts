@@ -28,6 +28,7 @@ import HomeMetricsService from '../service/metrics/home-metrics.service';
 import CertificateService from '../service/certificate.service';
 import UserService from '../service/user.service';
 import LogService from '../service/log.service';
+import TransformerService from '../service/transformer.service';
 
 /**
  * Class Server - Provides the web client and establish socket connections.
@@ -53,6 +54,7 @@ export default class WebServer {
     private readonly oIBusService: OIBusService,
     private readonly southService: SouthService,
     private readonly northService: NorthService,
+    private readonly transformerService: TransformerService,
     private readonly historyQueryService: HistoryQueryService,
     private readonly homeMetricsService: HomeMetricsService,
     private readonly ignoreIpFilters: boolean,
@@ -91,6 +93,7 @@ export default class WebServer {
         this.oIBusService,
         this.southService,
         this.northService,
+        this.transformerService,
         this.historyQueryService,
         this.homeMetricsService,
         this.encryptionService,

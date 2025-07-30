@@ -1,19 +1,18 @@
 import fs from 'node:fs/promises';
-import path from 'node:path';
 import pino from 'pino';
 import { BlobServiceClient, StorageSharedKeyCredential } from '@azure/storage-blob';
 import { ClientSecretCredential, DefaultAzureCredential } from '@azure/identity';
 import { DataLakeServiceClient, StorageSharedKeyCredential as DataLakeStorageSharedKeyCredential } from '@azure/storage-file-datalake';
 import NorthConnector from '../north-connector';
-import EncryptionService from '../../service/encryption.service';
+import { encryptionService } from '../../service/encryption.service';
 import { NorthAzureBlobSettings } from '../../../shared/model/north-settings.model';
-import { CacheMetadata, OIBusTimeValue } from '../../../shared/model/engine.model';
-import { DateTime } from 'luxon';
-import csv from 'papaparse';
+import { CacheMetadata } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import { BaseFolders } from '../../model/types';
+import TransformerService from '../../service/transformer.service';
+import { getFilenameWithoutRandomId } from '../../service/utils';
 import type { ProxySettings } from '@azure/core-rest-pipeline/dist/browser';
 
 const TEST_FILE = 'oibus-azure-test.txt';
@@ -24,13 +23,13 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
 
   constructor(
     connector: NorthConnectorEntity<NorthAzureBlobSettings>,
-    encryptionService: EncryptionService,
+    transformerService: TransformerService,
     northConnectorRepository: NorthConnectorRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolders: BaseFolders
   ) {
-    super(connector, encryptionService, northConnectorRepository, scanModeRepository, logger, baseFolders);
+    super(connector, transformerService, northConnectorRepository, scanModeRepository, logger, baseFolders);
   }
 
   async start(dataStream = true): Promise<void> {
@@ -73,7 +72,7 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
         port: proxyPort,
         username: this.connector.settings.proxyUsername || undefined,
         password: this.connector.settings.proxyPassword
-          ? await this.encryptionService.decryptText(this.connector.settings.proxyPassword)
+          ? await encryptionService.decryptText(this.connector.settings.proxyPassword)
           : undefined
       };
     }
@@ -86,7 +85,7 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
         : `https://${this.connector.settings.account}.blob.core.windows.net`;
     switch (this.connector.settings.authentication) {
       case 'sas-token':
-        const decryptedToken = await this.encryptionService.decryptText(this.connector.settings.sasToken!);
+        const decryptedToken = await encryptionService.decryptText(this.connector.settings.sasToken!);
         if (this.connector.settings.useADLS) {
           this.dataLakeClient = new DataLakeServiceClient(`${url}?${decryptedToken}`, undefined, { proxyOptions });
         } else {
@@ -94,7 +93,7 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
         }
         break;
       case 'access-key':
-        const decryptedAccessKey = await this.encryptionService.decryptText(this.connector.settings.accessKey!);
+        const decryptedAccessKey = await encryptionService.decryptText(this.connector.settings.accessKey!);
         if (this.connector.settings.useADLS) {
           const dataLakeSharedKeyCredential = new DataLakeStorageSharedKeyCredential(this.connector.settings.account!, decryptedAccessKey);
           this.dataLakeClient = new DataLakeServiceClient(url, dataLakeSharedKeyCredential, {
@@ -111,7 +110,7 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
         const clientSecretCredential = new ClientSecretCredential(
           this.connector.settings.tenantId!,
           this.connector.settings.clientId!,
-          await this.encryptionService.decryptText(this.connector.settings.clientSecret!)
+          await encryptionService.decryptText(this.connector.settings.clientSecret!)
         );
         if (this.connector.settings.useADLS) {
           this.dataLakeClient = new DataLakeServiceClient(url, clientSecretCredential, { proxyOptions });
@@ -132,36 +131,28 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
     }
   }
 
-  async handleContent(cacheMetadata: CacheMetadata): Promise<void> {
-    switch (cacheMetadata.contentType) {
-      case 'raw':
-        return this.handleFile(cacheMetadata.contentFile);
-
-      case 'time-values':
-        return this.handleValues(JSON.parse(await fs.readFile(cacheMetadata.contentFile, { encoding: 'utf-8' })) as Array<OIBusTimeValue>);
-    }
-  }
-
   /**
    * Handle the file by uploading it to Azure Blob Storage.
    */
-  async handleFile(filePath: string): Promise<void> {
+  async handleContent(cacheMetadata: CacheMetadata): Promise<void> {
+    if (!this.supportedTypes().includes(cacheMetadata.contentType)) {
+      throw new Error(`Unsupported data type: ${cacheMetadata.contentType} (file ${cacheMetadata.contentFile})`);
+    }
+
     const container = this.connector.settings.container;
     const blobPath = this.connector.settings.path ? `${this.connector.settings.path}/` : '';
     this.logger.info(
-      `Uploading file "${filePath}" to ${this.connector.settings.useADLS ? 'Azure Data Lake Storage' : 'Azure Blob Storage'}  for container ${container} and path ${blobPath}.`
+      `Uploading file "${cacheMetadata.contentFile}" to ${this.connector.settings.useADLS ? 'Azure Data Lake Storage' : 'Azure Blob Storage'}  for container ${container} and path ${blobPath}.`
     );
-    const { name, ext } = path.parse(filePath);
-    const filename = name.slice(0, name.lastIndexOf('-'));
-    const blobName = `${blobPath}${filename}${ext}`;
-    const stats = await fs.stat(filePath);
-    const content = await fs.readFile(filePath);
+    const blobName = `${blobPath}${getFilenameWithoutRandomId(cacheMetadata.contentFile)}`;
+    const stats = await fs.stat(cacheMetadata.contentFile);
+    const content = await fs.readFile(cacheMetadata.contentFile);
 
     if (this.connector.settings.useADLS) {
       const fileSystemClient = this.dataLakeClient!.getFileSystemClient(container);
       const fileClient = fileSystemClient.getFileClient(blobName);
       let requestId = (await fileClient.createIfNotExists()).requestId;
-      if (content.length != 0) {
+      if (content.length !== 0) {
         await fileClient.append(content, 0, content.length);
         requestId = (await fileClient.flush(content.length)).requestId;
       }
@@ -170,42 +161,6 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
       const blockBlobClient = this.blobClient!.getContainerClient(container).getBlockBlobClient(blobName);
       const uploadBlobResponse = await blockBlobClient.upload(content, stats.size);
       this.logger.info(`Upload block blob "${blobName}" successfully with requestId: ${uploadBlobResponse.requestId}`);
-    }
-  }
-
-  async handleValues(values: Array<OIBusTimeValue>): Promise<void> {
-    const filename = `${this.connector.name}-${DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS')}.csv`;
-    const container = this.connector.settings.container;
-    const blobPath = this.connector.settings.path ? `${this.connector.settings.path}/${filename}` : filename;
-
-    this.logger.info(
-      `Uploading file "${filename}" to ${!this.connector.settings.useADLS ? 'Azure Data Lake Storage' : 'Azure Blob Storage'} for container ${container} and path ${blobPath}.`
-    );
-    const csvContent = csv.unparse(
-      values.map(value => ({
-        pointId: value.pointId,
-        timestamp: value.timestamp,
-        value: value.data.value
-      })),
-      {
-        header: true,
-        delimiter: ';'
-      }
-    );
-
-    if (this.connector.settings.useADLS) {
-      const fileSystemClient = this.dataLakeClient!.getFileSystemClient(container);
-      const fileClient = fileSystemClient.getFileClient(blobPath);
-      let requestId = (await fileClient.createIfNotExists()).requestId;
-      if (csvContent.length != 0) {
-        await fileClient.append(csvContent, 0, csvContent.length);
-        requestId = (await fileClient.flush(csvContent.length)).requestId;
-      }
-      this.logger.info(`Uploaded successfully "${blobPath}" to Azure Data Lake Storage with requestId: ${requestId}.`);
-    } else {
-      const blockBlobClient = this.blobClient!.getContainerClient(container).getBlockBlobClient(blobPath);
-      const uploadBlobResponse = await blockBlobClient.upload(csvContent, csvContent.length);
-      this.logger.info(`Upload block blob "${blobPath}" successfully with requestId: ${uploadBlobResponse.requestId}`);
     }
   }
 
@@ -243,5 +198,9 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
     if (!result) {
       throw new Error(`Container ${this.connector.settings.container} and path ${blobPath} does not exist`);
     }
+  }
+
+  supportedTypes(): Array<string> {
+    return ['any'];
   }
 }

@@ -5,22 +5,19 @@ import { ComponentTester, createMock, stubRoute } from 'ngx-speculoos';
 import { of } from 'rxjs';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
-import { FormComponent } from '../../shared/form/form.component';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { provideHttpClient } from '@angular/common/http';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { HistoryQueryService } from '../../services/history-query.service';
 import { HistoryQueryDTO } from '../../../../../backend/shared/model/history-query.model';
-import { NorthConnectorCommandDTO, NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
-import {
-  SouthConnectorCommandDTO,
-  SouthConnectorItemDTO,
-  SouthConnectorManifest
-} from '../../../../../backend/shared/model/south-connector.model';
 import { Modal, ModalService } from '../../shared/modal.service';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
+import { TransformerService } from '../../services/transformer.service';
+import { CertificateService } from '../../services/certificate.service';
+import testData from '../../../../../backend/src/tests/utils/test-data';
+import { OIBusObjectFormControlComponent } from '../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
 import { DateRange } from '../../shared/date-range-selector/date-range-selector.component';
 
 class EditHistoryQueryComponentTester extends ComponentTester<EditHistoryQueryComponent> {
@@ -53,7 +50,7 @@ class EditHistoryQueryComponentTester extends ComponentTester<EditHistoryQueryCo
   }
 
   get specificForm() {
-    return this.element(FormComponent);
+    return this.element(OIBusObjectFormControlComponent);
   }
 
   get save() {
@@ -71,6 +68,8 @@ describe('EditHistoryQueryComponent', () => {
   let southConnectorService: jasmine.SpyObj<SouthConnectorService>;
   let historyQueryService: jasmine.SpyObj<HistoryQueryService>;
   let scanModeService: jasmine.SpyObj<ScanModeService>;
+  let certificateService: jasmine.SpyObj<CertificateService>;
+  let transformerService: jasmine.SpyObj<TransformerService>;
   let modalService: jasmine.SpyObj<ModalService>;
 
   const historyQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings> = {
@@ -114,7 +113,8 @@ describe('EditHistoryQueryComponent', () => {
           query: 'sql'
         } as SouthItemSettings
       }
-    ]
+    ],
+    northTransformers: []
   };
 
   beforeEach(() => {
@@ -122,6 +122,8 @@ describe('EditHistoryQueryComponent', () => {
     southConnectorService = createMock(SouthConnectorService);
     historyQueryService = createMock(HistoryQueryService);
     scanModeService = createMock(ScanModeService);
+    certificateService = createMock(CertificateService);
+    transformerService = createMock(TransformerService);
     modalService = createMock(ModalService);
 
     TestBed.configureTestingModule({
@@ -133,6 +135,8 @@ describe('EditHistoryQueryComponent', () => {
         { provide: SouthConnectorService, useValue: southConnectorService },
         { provide: HistoryQueryService, useValue: historyQueryService },
         { provide: ScanModeService, useValue: scanModeService },
+        { provide: CertificateService, useValue: certificateService },
+        { provide: TransformerService, useValue: transformerService },
         {
           provide: ActivatedRoute,
           useValue: stubRoute({
@@ -146,41 +150,12 @@ describe('EditHistoryQueryComponent', () => {
     });
 
     scanModeService.list.and.returnValue(of([]));
+    certificateService.list.and.returnValue(of([]));
+    transformerService.list.and.returnValue(of([]));
 
     historyQueryService.get.and.returnValue(of(historyQuery));
-    northConnectorService.getNorthConnectorTypeManifest.and.returnValue(
-      of({
-        id: 'console',
-        category: 'debug',
-        modes: {
-          files: true,
-          points: true
-        },
-        settings: [],
-        schema: {} as unknown
-      } as NorthConnectorManifest)
-    );
-    southConnectorService.getSouthConnectorTypeManifest.and.returnValue(
-      of({
-        id: 'mssql',
-        category: 'database',
-        modes: {
-          history: true,
-          lastFile: false,
-          lastPoint: false,
-          subscription: false,
-          forceMaxInstantPerItem: false,
-          sharedConnection: false
-        },
-        settings: [],
-        items: {
-          scanMode: 'POLL',
-          settings: [],
-          schema: {} as unknown
-        },
-        schema: {} as unknown
-      } as SouthConnectorManifest)
-    );
+    northConnectorService.getNorthConnectorTypeManifest.and.returnValue(of(testData.north.manifest));
+    southConnectorService.getSouthConnectorTypeManifest.and.returnValue(of(testData.south.manifest));
 
     tester = new EditHistoryQueryComponentTester();
     tester.detectChanges();
@@ -192,56 +167,28 @@ describe('EditHistoryQueryComponent', () => {
     expect(tester.description).toHaveValue('My History query description');
     expect(tester.specificForm).toBeDefined();
     expect(tester.northSpecificTitle).toContainText('Console settings');
-    expect(tester.southSpecificTitle).toContainText('Microsoft SQL Server™ settings');
+    expect(tester.southSpecificTitle).toContainText('Folder scanner settings');
     expect(tester.sharedConnection).toBeNull();
   });
 
   it('should display date range selector', () => {
     expect(tester.dateRangeSelector).toBeDefined();
-    expect(tester.componentInstance.historyQueryForm?.controls.dateRange.value).toEqual({
+    expect(tester.componentInstance.form?.controls.dateRange.value).toEqual({
       startTime: '2023-01-01T00:00:00.000Z',
       endTime: '2023-02-01T00:00:00.000Z'
     });
   });
 
   it('should display south sharing input when connection can be shared', () => {
-    southConnectorService.getSouthConnectorTypeManifest.and.returnValue(
-      of({
-        id: 'mssql',
-        category: 'database',
-        name: 'SQL',
-        description: 'SQL description',
-        modes: {
-          history: true,
-          lastFile: false,
-          lastPoint: false,
-          subscription: false,
-          forceMaxInstantPerItem: false,
-          sharedConnection: true
-        },
-        settings: [],
-        items: {
-          scanMode: 'POLL',
-          settings: [],
-          schema: {} as unknown
-        },
-        schema: {} as unknown
-      } as SouthConnectorManifest)
-    );
+    southConnectorService.getSouthConnectorTypeManifest.and.returnValue(of(testData.south.manifest));
     tester = new EditHistoryQueryComponentTester();
     tester.detectChanges();
     expect(tester.sharedConnection).toBeDefined();
   });
 
   it('should test north connection', () => {
-    tester.componentInstance.northManifest = { id: 'console', modes: {} } as NorthConnectorManifest;
+    tester.componentInstance.northManifest = testData.north.manifest;
     tester.componentInstance.historyQuery = historyQuery;
-
-    const command = {
-      type: 'console',
-      settings: historyQuery.northSettings,
-      caching: historyQuery.caching
-    } as NorthConnectorCommandDTO<NorthSettings>;
 
     const spy = jasmine.createSpy();
     modalService.open.and.returnValue({
@@ -252,19 +199,26 @@ describe('EditHistoryQueryComponent', () => {
 
     tester.componentInstance.test('north');
     tester.detectChanges();
-    expect(spy).toHaveBeenCalledWith('north', command, 'id1', null);
+    expect(spy).toHaveBeenCalledWith(
+      'north',
+      {
+        type: 'console',
+        settings: {},
+        caching: {
+          trigger: { scanModeId: 'scanModeId1', numberOfElements: 1000, numberOfFiles: 1 },
+          throttling: { runMinDelay: 200, maxSize: 30, maxNumberOfElements: 10000 },
+          error: { retryInterval: 1000, retryCount: 3, retentionDuration: 24 },
+          archive: { enabled: false, retentionDuration: 0 }
+        }
+      },
+      'id1',
+      null
+    );
   });
 
   it('should test south connection', () => {
-    tester.componentInstance.southManifest = { id: 'mssql', modes: {} } as SouthConnectorManifest;
+    tester.componentInstance.southManifest = testData.south.manifest;
     tester.componentInstance.historyQuery = historyQuery;
-
-    const command = {
-      type: 'mssql',
-      settings: historyQuery.southSettings,
-      items: [] as Array<SouthConnectorItemDTO<SouthItemSettings>>
-    } as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
-
     const spy = jasmine.createSpy();
     modalService.open.and.returnValue({
       componentInstance: {
@@ -274,7 +228,7 @@ describe('EditHistoryQueryComponent', () => {
 
     tester.componentInstance.test('south');
     tester.detectChanges();
-    expect(spy).toHaveBeenCalledWith('south', command, 'id1', null);
+    expect(spy).toHaveBeenCalledWith('south', { type: 'folder-scanner', settings: {}, items: [] }, 'id1', null);
   });
 
   it('should validate date range properly', () => {
@@ -283,10 +237,10 @@ describe('EditHistoryQueryComponent', () => {
       endTime: '2024-01-01T00:00:00.000Z'
     };
 
-    tester.componentInstance.historyQueryForm?.controls.dateRange.setValue(validDateRange);
+    tester.componentInstance.form?.controls.dateRange.setValue(validDateRange);
     tester.detectChanges();
 
-    expect(tester.componentInstance.historyQueryForm?.controls.dateRange.errors).toBeFalsy();
+    expect(tester.componentInstance.form?.controls.dateRange.errors).toBeFalsy();
   });
 
   it('should save with date range values', () => {
@@ -295,7 +249,7 @@ describe('EditHistoryQueryComponent', () => {
       endTime: '2024-01-01T00:00:00.000Z'
     };
 
-    tester.componentInstance.historyQueryForm?.patchValue({
+    tester.componentInstance.form?.patchValue({
       name: 'Test Query',
       description: 'Test Description',
       dateRange: dateRange
@@ -325,18 +279,18 @@ describe('EditHistoryQueryComponent', () => {
       endTime: historyQuery.endTime
     };
 
-    expect(tester.componentInstance.historyQueryForm?.controls.dateRange.value).toEqual(expectedDateRange);
+    expect(tester.componentInstance.form?.controls.dateRange.value).toEqual(expectedDateRange);
   });
 
   it('should handle form validation correctly', () => {
-    tester.componentInstance.historyQueryForm?.patchValue({
+    tester.componentInstance.form?.patchValue({
       name: '',
       dateRange: undefined
     });
 
-    expect(tester.componentInstance.historyQueryForm?.valid).toBeFalsy();
+    expect(tester.componentInstance.form?.valid).toBeFalsy();
 
-    tester.componentInstance.historyQueryForm?.patchValue({
+    tester.componentInstance.form?.patchValue({
       name: 'Valid Name',
       dateRange: {
         startTime: '2023-01-01T00:00:00.000Z',
@@ -344,6 +298,6 @@ describe('EditHistoryQueryComponent', () => {
       }
     });
 
-    expect(tester.componentInstance.historyQueryForm?.valid).toBeTruthy();
+    expect(tester.componentInstance.form?.valid).toBeTruthy();
   });
 });
