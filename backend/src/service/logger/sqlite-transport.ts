@@ -35,6 +35,7 @@ class SqliteTransport {
     try {
       this.numberOfLogs = this.repository.count();
       console.info(`${this.numberOfLogs} logs in database`);
+      this.deleteOldLogsIfDatabaseTooLarge();
       this.repository.vacuum();
     } catch (error: unknown) {
       console.error(`Error while vacuuming logs: ${(error as Error).message}`);
