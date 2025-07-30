@@ -11,8 +11,8 @@ import testData from '../tests/utils/test-data';
 import HistoryQueryRepository from '../repository/config/history-query.repository';
 import HistoryQueryRepositoryMock from '../tests/__mocks__/repository/config/history-query-repository.mock';
 import HistoryQueryMock from '../tests/__mocks__/history-query.mock';
-import HistoryQueryMetricsRepository from '../repository/logs/history-query-metrics.repository';
-import HistoryQueryMetricsRepositoryMock from '../tests/__mocks__/repository/log/history-query-metrics-repository.mock';
+import HistoryQueryMetricsRepository from '../repository/metrics/history-query-metrics.repository';
+import HistoryQueryMetricsRepositoryMock from '../tests/__mocks__/repository/metrics/history-query-metrics-repository.mock';
 
 jest.mock('../service/south.service');
 jest.mock('../service/north.service');

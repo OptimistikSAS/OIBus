@@ -9,17 +9,23 @@ import LogRepository from '../repository/logs/log.repository';
 import HistoryQueryRepository from '../repository/config/history-query.repository';
 import UserRepository from '../repository/config/user.repository';
 import CryptoRepository from '../repository/crypto/crypto.repository';
-import SouthConnectorMetricsRepository from '../repository/logs/south-connector-metrics.repository';
-import NorthConnectorMetricsRepository from '../repository/logs/north-connector-metrics.repository';
+import SouthConnectorMetricsRepository from '../repository/metrics/south-connector-metrics.repository';
+import NorthConnectorMetricsRepository from '../repository/metrics/north-connector-metrics.repository';
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
-import EngineMetricsRepository from '../repository/logs/engine-metrics.repository';
+import EngineMetricsRepository from '../repository/metrics/engine-metrics.repository';
 import CertificateRepository from '../repository/config/certificate.repository';
 import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
 import OIAnalyticsCommandRepository from '../repository/config/oianalytics-command.repository';
 import OIAnalyticsMessageRepository from '../repository/config/oianalytics-message.repository';
-import HistoryQueryMetricsRepository from '../repository/logs/history-query-metrics.repository';
+import HistoryQueryMetricsRepository from '../repository/metrics/history-query-metrics.repository';
 
 export default class RepositoryService {
+  private readonly oibusDatabase;
+  private readonly logsDatabase;
+  private readonly metricsDatabase;
+  private readonly cryptoDatabase;
+  private readonly cacheDatabase;
+
   private readonly _engineRepository: EngineRepository;
   private readonly _cryptoRepository: CryptoRepository;
   private readonly _ipFilterRepository: IpFilterRepository;
@@ -42,37 +48,42 @@ export default class RepositoryService {
   constructor(
     oibusDatabasePath: string,
     logsDatabasePath: string,
+    metricsDatabasePath: string,
     cryptoDatabasePath: string,
     cacheDatabasePath: string,
     launcherVersion: string
   ) {
-    const oibusDatabase = Database(oibusDatabasePath);
-    const logsDatabase = Database(logsDatabasePath);
-    const cryptoDatabase = Database(cryptoDatabasePath);
-    const cacheDatabase = Database(cacheDatabasePath);
+    this.oibusDatabase = Database(oibusDatabasePath);
+    this.metricsDatabase = Database(metricsDatabasePath);
+    this.cryptoDatabase = Database(cryptoDatabasePath);
+    this.cacheDatabase = Database(cacheDatabasePath);
+    this.logsDatabase = Database(logsDatabasePath);
+    // Enable WAL mode and set busy timeout because this database is used in two separates threads (main thread and logger)
+    this.logsDatabase.pragma('journal_mode = WAL');
+    this.logsDatabase.pragma('busy_timeout = 5000');
 
-    this._ipFilterRepository = new IpFilterRepository(oibusDatabase);
-    this._scanModeRepository = new ScanModeRepository(oibusDatabase);
-    this._certificateRepository = new CertificateRepository(oibusDatabase);
-    this._engineRepository = new EngineRepository(oibusDatabase, launcherVersion);
-    this._northConnectorRepository = new NorthConnectorRepository(oibusDatabase);
-    this._southConnectorRepository = new SouthConnectorRepository(oibusDatabase);
-    this._historyQueryRepository = new HistoryQueryRepository(oibusDatabase);
-    this._userRepository = new UserRepository(oibusDatabase);
-    this._oianalyticsRegistrationRepository = new OIAnalyticsRegistrationRepository(oibusDatabase);
-    this._oianalyticsCommandRepository = new OIAnalyticsCommandRepository(oibusDatabase);
-    this._oianalyticsMessageRepository = new OIAnalyticsMessageRepository(oibusDatabase);
+    this._ipFilterRepository = new IpFilterRepository(this.oibusDatabase);
+    this._scanModeRepository = new ScanModeRepository(this.oibusDatabase);
+    this._certificateRepository = new CertificateRepository(this.oibusDatabase);
+    this._engineRepository = new EngineRepository(this.oibusDatabase, launcherVersion);
+    this._northConnectorRepository = new NorthConnectorRepository(this.oibusDatabase);
+    this._southConnectorRepository = new SouthConnectorRepository(this.oibusDatabase);
+    this._historyQueryRepository = new HistoryQueryRepository(this.oibusDatabase);
+    this._userRepository = new UserRepository(this.oibusDatabase);
+    this._oianalyticsRegistrationRepository = new OIAnalyticsRegistrationRepository(this.oibusDatabase);
+    this._oianalyticsCommandRepository = new OIAnalyticsCommandRepository(this.oibusDatabase);
+    this._oianalyticsMessageRepository = new OIAnalyticsMessageRepository(this.oibusDatabase);
 
-    this._cryptoRepository = new CryptoRepository(cryptoDatabase);
+    this._cryptoRepository = new CryptoRepository(this.cryptoDatabase);
 
-    this._southCacheRepository = new SouthCacheRepository(cacheDatabase);
+    this._southCacheRepository = new SouthCacheRepository(this.cacheDatabase);
 
-    this._logRepository = new LogRepository(logsDatabase);
-    this._engineMetricsRepository = new EngineMetricsRepository(logsDatabase);
-    this._southMetricsRepository = new SouthConnectorMetricsRepository(logsDatabase);
-    this._northMetricsRepository = new NorthConnectorMetricsRepository(logsDatabase);
-    this._historyQueryMetricsRepository = new HistoryQueryMetricsRepository(logsDatabase);
-    this._logRepository = new LogRepository(logsDatabase);
+    this._logRepository = new LogRepository(this.logsDatabase);
+
+    this._engineMetricsRepository = new EngineMetricsRepository(this.metricsDatabase);
+    this._southMetricsRepository = new SouthConnectorMetricsRepository(this.metricsDatabase);
+    this._northMetricsRepository = new NorthConnectorMetricsRepository(this.metricsDatabase);
+    this._historyQueryMetricsRepository = new HistoryQueryMetricsRepository(this.metricsDatabase);
   }
 
   get cryptoRepository(): CryptoRepository {
@@ -145,5 +156,13 @@ export default class RepositoryService {
 
   get historyQueryRepository(): HistoryQueryRepository {
     return this._historyQueryRepository;
+  }
+
+  close(): void {
+    this.oibusDatabase.close();
+    this.metricsDatabase.close();
+    this.cryptoDatabase.close();
+    this.cacheDatabase.close();
+    this.logsDatabase.close();
   }
 }

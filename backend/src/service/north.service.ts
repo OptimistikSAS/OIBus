@@ -19,7 +19,7 @@ import { NorthConnectorEntity, NorthConnectorEntityLight } from '../model/north-
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import NorthConnectorRepository from '../repository/config/north-connector.repository';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
-import NorthConnectorMetricsRepository from '../repository/logs/north-connector-metrics.repository';
+import NorthConnectorMetricsRepository from '../repository/metrics/north-connector-metrics.repository';
 import LogRepository from '../repository/logs/log.repository';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import { checkScanMode, createBaseFolders, filesExists } from './utils';

@@ -17,8 +17,8 @@ import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import HistoryQueryEngine from '../engine/history-query-engine';
 import HistoryQueryEngineMock from '../tests/__mocks__/history-query-engine.mock';
-import HistoryQueryMetricsRepository from '../repository/logs/history-query-metrics.repository';
-import HistoryQueryMetricsRepositoryMock from '../tests/__mocks__/repository/log/history-query-metrics-repository.mock';
+import HistoryQueryMetricsRepository from '../repository/metrics/history-query-metrics.repository';
+import HistoryQueryMetricsRepositoryMock from '../tests/__mocks__/repository/metrics/history-query-metrics-repository.mock';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import testData from '../tests/utils/test-data';
 import { mockBaseFolders } from '../tests/utils/test-utils';

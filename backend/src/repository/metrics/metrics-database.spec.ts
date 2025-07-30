@@ -1,0 +1,347 @@
+import { Database } from 'better-sqlite3';
+import { emptyDatabase, initDatabase } from '../../tests/utils/test-utils';
+import testData from '../../tests/utils/test-data';
+import EngineMetricsRepository from './engine-metrics.repository';
+import NorthConnectorMetricsRepository from './north-connector-metrics.repository';
+import SouthConnectorMetricsRepository from './south-connector-metrics.repository';
+import { EngineMetrics, HistoryQueryMetrics, NorthConnectorMetrics, SouthConnectorMetrics } from '../../../shared/model/engine.model';
+import HistoryQueryMetricsRepository from './history-query-metrics.repository';
+
+let database: Database;
+describe('Repository with populated database', () => {
+  beforeAll(async () => {
+    database = await initDatabase('metrics');
+  });
+
+  afterAll(async () => {
+    await emptyDatabase('metrics');
+  });
+
+  describe('Engine Metrics', () => {
+    let repository: EngineMetricsRepository;
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+
+      repository = new EngineMetricsRepository(database);
+    });
+
+    it('should get metrics', () => {
+      repository.initMetrics(testData.engine.settings.id);
+      const result = repository.getMetrics(testData.engine.settings.id);
+      expect(result).toEqual(testData.engine.metrics);
+    });
+
+    it('should update metrics', () => {
+      const newMetrics: EngineMetrics = JSON.parse(JSON.stringify(testData.engine.metrics));
+      newMetrics.metricsStart = testData.constants.dates.DATE_1;
+      newMetrics.freeMemory = 3_000_000;
+      newMetrics.maxHeapUsed = 10;
+      repository.updateMetrics(testData.engine.settings.id, newMetrics);
+
+      const result = repository.getMetrics(testData.engine.settings.id)!;
+      expect(result.metricsStart).toEqual(newMetrics.metricsStart);
+      expect(result.freeMemory).toEqual(newMetrics.freeMemory);
+      expect(result.maxHeapUsed).toEqual(newMetrics.maxHeapUsed);
+    });
+
+    it('should remove metrics', () => {
+      repository.removeMetrics(testData.engine.settings.id);
+      expect(repository.getMetrics(testData.engine.settings.id)).toEqual(null);
+    });
+  });
+
+  describe('North Connector Metrics', () => {
+    let repository: NorthConnectorMetricsRepository;
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+
+      repository = new NorthConnectorMetricsRepository(database);
+    });
+
+    it('should get metrics', () => {
+      repository.initMetrics(testData.north.list[0].id);
+      const result = repository.getMetrics(testData.north.list[0].id);
+      expect(result).toEqual(testData.north.metrics);
+    });
+
+    it('should update metrics', () => {
+      const newMetrics: NorthConnectorMetrics = JSON.parse(JSON.stringify(testData.north.metrics));
+      newMetrics.metricsStart = testData.constants.dates.DATE_1;
+      newMetrics.contentSentSize = 45;
+      newMetrics.contentCachedSize = 90;
+      newMetrics.lastContentSent = 'file.json';
+      repository.updateMetrics(testData.north.list[0].id, newMetrics);
+
+      const result = repository.getMetrics(testData.north.list[0].id)!;
+      expect(result.metricsStart).toEqual(newMetrics.metricsStart);
+      expect(result.contentSentSize).toEqual(newMetrics.contentSentSize);
+      expect(result.contentCachedSize).toEqual(newMetrics.contentCachedSize);
+      expect(result.contentErroredSize).toEqual(newMetrics.contentErroredSize);
+      expect(result.contentArchivedSize).toEqual(newMetrics.contentArchivedSize);
+      expect(result.lastContentSent).toEqual(newMetrics.lastContentSent);
+
+      newMetrics.lastContentSent = null;
+      repository.updateMetrics(testData.north.list[0].id, newMetrics);
+      const resultWithoutValue = repository.getMetrics(testData.north.list[0].id)!;
+      expect(resultWithoutValue.lastContentSent).toEqual(null);
+    });
+
+    it('should remove metrics', () => {
+      repository.removeMetrics(testData.north.list[0].id);
+      expect(repository.getMetrics(testData.north.list[0].id)).toEqual(null);
+    });
+  });
+
+  describe('South Connector Metrics', () => {
+    let repository: SouthConnectorMetricsRepository;
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+
+      repository = new SouthConnectorMetricsRepository(database);
+    });
+
+    it('should get metrics', () => {
+      repository.initMetrics(testData.south.list[0].id);
+      const result = repository.getMetrics(testData.south.list[0].id);
+      expect(result).toEqual(testData.south.metrics);
+    });
+
+    it('should update metrics', () => {
+      const newMetrics: SouthConnectorMetrics = JSON.parse(JSON.stringify(testData.south.metrics));
+      newMetrics.metricsStart = testData.constants.dates.DATE_1;
+      newMetrics.numberOfFilesRetrieved = 45;
+      newMetrics.lastValueRetrieved = {
+        pointId: 'my reference',
+        timestamp: testData.constants.dates.DATE_3,
+        data: {
+          value: 'my value'
+        }
+      };
+      repository.updateMetrics(testData.south.list[0].id, newMetrics);
+
+      const result = repository.getMetrics(testData.south.list[0].id)!;
+      expect(result.metricsStart).toEqual(newMetrics.metricsStart);
+      expect(result.numberOfFilesRetrieved).toEqual(newMetrics.numberOfFilesRetrieved);
+      expect(result.lastValueRetrieved).toEqual(newMetrics.lastValueRetrieved);
+
+      newMetrics.lastValueRetrieved = null;
+      repository.updateMetrics(testData.south.list[0].id, newMetrics);
+      const resultWithoutValue = repository.getMetrics(testData.south.list[0].id)!;
+      expect(resultWithoutValue.lastValueRetrieved).toEqual(null);
+    });
+
+    it('should remove metrics', () => {
+      repository.removeMetrics(testData.south.list[0].id);
+      expect(repository.getMetrics(testData.south.list[0].id)).toEqual(null);
+    });
+  });
+
+  describe('History Query Metrics', () => {
+    let repository: HistoryQueryMetricsRepository;
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+
+      repository = new HistoryQueryMetricsRepository(database);
+    });
+
+    it('should get metrics', () => {
+      repository.initMetrics(testData.historyQueries.list[0].id);
+      const result = repository.getMetrics(testData.historyQueries.list[0].id);
+      expect(result).toEqual(testData.historyQueries.metrics);
+    });
+
+    it('should update metrics', () => {
+      const newMetrics: HistoryQueryMetrics = JSON.parse(JSON.stringify(testData.historyQueries.metrics));
+      newMetrics.metricsStart = testData.constants.dates.DATE_1;
+      newMetrics.south.numberOfFilesRetrieved = 45;
+      newMetrics.south.lastValueRetrieved = {
+        pointId: 'my reference',
+        timestamp: testData.constants.dates.DATE_3,
+        data: {
+          value: 'my value'
+        }
+      };
+      newMetrics.north.lastContentSent = 'file.csv';
+      repository.updateMetrics(testData.historyQueries.list[0].id, newMetrics);
+
+      const result = repository.getMetrics(testData.historyQueries.list[0].id)!;
+      expect(result.metricsStart).toEqual(newMetrics.metricsStart);
+      expect(result.south.numberOfFilesRetrieved).toEqual(newMetrics.south.numberOfFilesRetrieved);
+      expect(result.south.lastValueRetrieved).toEqual(newMetrics.south.lastValueRetrieved);
+
+      newMetrics.south.lastValueRetrieved = null;
+      newMetrics.north.lastContentSent = null;
+      repository.updateMetrics(testData.historyQueries.list[0].id, newMetrics);
+      const resultWithoutValue = repository.getMetrics(testData.historyQueries.list[0].id)!;
+      expect(resultWithoutValue.south.lastValueRetrieved).toEqual(null);
+      expect(resultWithoutValue.north.lastContentSent).toEqual(null);
+    });
+
+    it('should remove metrics', () => {
+      repository.removeMetrics(testData.historyQueries.list[0].id);
+      expect(repository.getMetrics(testData.historyQueries.list[0].id)).toEqual(null);
+    });
+  });
+});
+
+describe('Repository with empty database', () => {
+  beforeAll(async () => {
+    await initDatabase('metrics', false);
+  });
+
+  afterAll(async () => {
+    await emptyDatabase('metrics');
+  });
+
+  describe('Engine Metrics', () => {
+    let repository: EngineMetricsRepository;
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+
+      repository = new EngineMetricsRepository(database);
+    });
+
+    it('should init and get metrics', () => {
+      repository.initMetrics(testData.engine.settings.id);
+      const result = repository.getMetrics(testData.engine.settings.id);
+      expect(result).toEqual({
+        metricsStart: testData.constants.dates.FAKE_NOW,
+        processCpuUsageInstant: 0,
+        processCpuUsageAverage: 0,
+        processUptime: 0,
+        freeMemory: 0,
+        totalMemory: 0,
+        minRss: 0,
+        currentRss: 0,
+        maxRss: 0,
+        minHeapTotal: 0,
+        currentHeapTotal: 0,
+        maxHeapTotal: 0,
+        minHeapUsed: 0,
+        currentHeapUsed: 0,
+        maxHeapUsed: 0,
+        minExternal: 0,
+        currentExternal: 0,
+        maxExternal: 0,
+        minArrayBuffers: 0,
+        currentArrayBuffers: 0,
+        maxArrayBuffers: 0
+      });
+    });
+  });
+
+  describe('South Connector Metrics', () => {
+    let repository: SouthConnectorMetricsRepository;
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+
+      repository = new SouthConnectorMetricsRepository(database);
+    });
+
+    it('should init and get metrics', () => {
+      repository.initMetrics(testData.south.list[0].id);
+      const result = repository.getMetrics(testData.south.list[0].id);
+      expect(result).toEqual({
+        metricsStart: testData.constants.dates.FAKE_NOW,
+        lastConnection: null,
+        lastRunStart: null,
+        lastRunDuration: null,
+        numberOfValuesRetrieved: 0,
+        numberOfFilesRetrieved: 0,
+        lastValueRetrieved: null,
+        lastFileRetrieved: null
+      });
+    });
+  });
+
+  describe('North Connector Metrics', () => {
+    let repository: NorthConnectorMetricsRepository;
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+
+      repository = new NorthConnectorMetricsRepository(database);
+    });
+
+    it('should init and get metrics', () => {
+      repository.initMetrics(testData.north.list[0].id);
+      const result = repository.getMetrics(testData.north.list[0].id);
+      expect(result).toEqual({
+        metricsStart: testData.constants.dates.FAKE_NOW,
+        lastConnection: null,
+        lastRunStart: null,
+        lastRunDuration: null,
+        contentSentSize: 0,
+        contentCachedSize: 0,
+        contentErroredSize: 0,
+        contentArchivedSize: 0,
+        lastContentSent: null,
+        currentCacheSize: 0,
+        currentErrorSize: 0,
+        currentArchiveSize: 0
+      });
+    });
+  });
+
+  describe('History Query Metrics', () => {
+    let repository: HistoryQueryMetricsRepository;
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+
+      repository = new HistoryQueryMetricsRepository(database);
+    });
+
+    it('should init and get metrics', () => {
+      repository.initMetrics(testData.historyQueries.list[0].id);
+      const result = repository.getMetrics(testData.historyQueries.list[0].id);
+      expect(result).toEqual({
+        metricsStart: testData.constants.dates.FAKE_NOW,
+        north: {
+          lastConnection: null,
+          lastRunStart: null,
+          lastRunDuration: null,
+          contentSentSize: 0,
+          contentCachedSize: 0,
+          contentErroredSize: 0,
+          contentArchivedSize: 0,
+          lastContentSent: null,
+          currentCacheSize: 0,
+          currentErrorSize: 0,
+          currentArchiveSize: 0
+        },
+        south: {
+          lastConnection: null,
+          lastRunStart: null,
+          lastRunDuration: null,
+          numberOfValuesRetrieved: 0,
+          numberOfFilesRetrieved: 0,
+          lastValueRetrieved: null,
+          lastFileRetrieved: null
+        },
+        historyMetrics: {
+          running: false,
+          intervalProgress: 0,
+          currentIntervalStart: null,
+          currentIntervalEnd: null,
+          currentIntervalNumber: 0,
+          numberOfIntervals: 0
+        }
+      });
+    });
+  });
+});

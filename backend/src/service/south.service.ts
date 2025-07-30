@@ -36,7 +36,7 @@ import { SouthConnectorEntity, SouthConnectorEntityLight, SouthConnectorItemEnti
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
 import LogRepository from '../repository/logs/log.repository';
-import SouthConnectorMetricsRepository from '../repository/logs/south-connector-metrics.repository';
+import SouthConnectorMetricsRepository from '../repository/metrics/south-connector-metrics.repository';
 import { Page } from '../../shared/model/types';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
