@@ -6,7 +6,7 @@ import { SouthConnectorLightDTO } from './south-connector.model';
 export const OIBUS_NORTH_CATEGORIES = ['debug', 'api', 'file'] as const;
 export type OIBusNorthCategory = (typeof OIBUS_NORTH_CATEGORIES)[number];
 
-export const OIBUS_NORTH_TYPES = ['azure-blob', 'aws-s3', 'console', 'file-writer', 'oianalytics', 'sftp', 'rest'] as const;
+export const OIBUS_NORTH_TYPES = ['azure-blob', 'aws-s3', 'console', 'file-writer', 'metroscope-lithium', 'oianalytics', 'sftp', 'rest'] as const;
 export type OIBusNorthType = (typeof OIBUS_NORTH_TYPES)[number];
 
 export interface NorthType {

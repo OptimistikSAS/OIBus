@@ -15,6 +15,7 @@ import consoleManifest from '../north/north-console/manifest';
 import amazonManifest from '../north/north-amazon-s3/manifest';
 import sftpManifest from '../north/north-sftp/manifest';
 import restManifest from '../north/north-rest/manifest';
+import metroscopeLithiumManifest from '../north/north-metroscope-lithium/manifest';
 import { NorthConnectorEntity, NorthConnectorEntityLight } from '../model/north-connector.model';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import NorthConnectorRepository from '../repository/config/north-connector.repository';
@@ -31,6 +32,7 @@ import {
   NorthAzureBlobSettings,
   NorthConsoleSettings,
   NorthFileWriterSettings,
+  NorthMetroscopeLithiumSettings,
   NorthOIAnalyticsSettings,
   NorthRESTSettings,
   NorthSettings,
@@ -41,6 +43,7 @@ import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-
 import NorthAmazonS3 from '../north/north-amazon-s3/north-amazon-s3';
 import NorthAzureBlob from '../north/north-azure-blob/north-azure-blob';
 import NorthFileWriter from '../north/north-file-writer/north-file-writer';
+import NorthMetroscopeLithium from '../north/north-metroscope-lithium/north-metroscope-lithium';
 import NorthOIAnalytics from '../north/north-oianalytics/north-oianalytics';
 import NorthSFTP from '../north/north-sftp/north-sftp';
 import NorthREST from '../north/north-rest/north-rest';
@@ -59,6 +62,7 @@ export const northManifestList: Array<NorthConnectorManifest> = [
   azureManifest,
   amazonManifest,
   fileWriterManifest,
+  metroscopeLithiumManifest,
   sftpManifest,
   restManifest
 ];
@@ -136,6 +140,15 @@ export default class NorthService {
       case 'sftp':
         return new NorthSFTP(
           settings as NorthConnectorEntity<NorthSFTPSettings>,
+          this.encryptionService,
+          this.northConnectorRepository,
+          this.scanModeRepository,
+          logger,
+          northBaseFolders
+        );
+      case 'metroscope-lithium':
+        return new NorthMetroscopeLithium(
+          settings as NorthConnectorEntity<NorthMetroscopeLithiumSettings>,
           this.encryptionService,
           this.northConnectorRepository,
           this.scanModeRepository,

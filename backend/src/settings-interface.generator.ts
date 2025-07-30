@@ -287,6 +287,8 @@ function buildNorthInterfaceName(connectorId: string): string {
       return 'NorthConsoleSettings';
     case 'file-writer':
       return 'NorthFileWriterSettings';
+    case 'metroscope-lithium':
+      return 'NorthMetroscopeLithiumSettings';
     case 'oianalytics':
       return 'NorthOIAnalyticsSettings';
     case 'rest':
