@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.6.5](https://github.com/OptimistikSAS/OIBus/compare/v3.6.4...v3.6.5) (2025-07-30)
+
+
+### Bug Fixes
+
+* **backend:** improved code coverage in joi validators ([8737b03](https://github.com/OptimistikSAS/OIBus/commit/8737b03d3104c2b7befcd97afde3b59530ab6695))
+* **frontend:** truncated long import modal fields with ellipsis and tooltips ([bbc96a3](https://github.com/OptimistikSAS/OIBus/commit/bbc96a3964665969784aeb444ba459ea8e67922a))
+* **logs:** fix database is locked when the logs.db file is too big ([67cc310](https://github.com/OptimistikSAS/OIBus/commit/67cc3103b9de92a186577f203f3f6a11864b71d4))
+* **logs:** vacuum logs.db at startup ([1be70b9](https://github.com/OptimistikSAS/OIBus/commit/1be70b9e1b7db176982cd576b47544ee20caa0bc))
+
 ## [3.6.4](https://github.com/OptimistikSAS/OIBus/compare/v3.6.3...v3.6.4) (2025-07-28)
 
 
