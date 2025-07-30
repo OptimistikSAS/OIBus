@@ -1,10 +1,10 @@
 import build from 'pino-abstract-transport';
 import LogRepository from '../../repository/logs/log.repository';
-import db from 'better-sqlite3';
+import Database from 'better-sqlite3';
 import { PinoLog } from '../../../shared/model/logs.model';
 
 const DEFAULT_MAX_NUMBER_OF_LOGS = 2_000_000;
-const BATCH_TEMPO = 700; // Store logs in database every x ms
+const BATCH_TEMPO = 700; // Store logs in the database every x ms
 const VACUUM_THRESHOLD = 10; // After 10 deletions, run VACUUM
 
 interface SqliteOptions {
@@ -22,13 +22,23 @@ class SqliteTransport {
   private numberOfLogs = 0;
   private numberOfDeletion = 0;
   private readonly maxNumberOfLogs;
+  private readonly logsDatabase;
 
   constructor(private readonly options: SqliteOptions) {
-    this.repository = new LogRepository(db(this.options.filename));
+    this.logsDatabase = Database(this.options.filename);
+    // Enable WAL mode and set busy timeout because this database is used in two separates threads (main thread and logger)
+    this.logsDatabase.pragma('journal_mode = WAL');
+    this.logsDatabase.pragma('busy_timeout = 2000');
+    this.repository = new LogRepository(this.logsDatabase);
+
     this.maxNumberOfLogs = this.options.maxNumberOfLogs || DEFAULT_MAX_NUMBER_OF_LOGS;
-    this.numberOfLogs = this.repository.count();
-    console.info(`${this.numberOfLogs} logs in database`);
-    this.repository.vacuum();
+    try {
+      this.numberOfLogs = this.repository.count();
+      console.info(`${this.numberOfLogs} logs in database`);
+      this.repository.vacuum();
+    } catch (error: unknown) {
+      console.error(`Error while vacuuming logs: ${(error as Error).message}`);
+    }
     this.storeLogsInterval = setTimeout(this.writeLogs.bind(this), BATCH_TEMPO);
   }
 
@@ -79,6 +89,7 @@ class SqliteTransport {
    */
   end = async () => {
     this.writeLogs(true);
+    this.logsDatabase.close();
   };
 }
 

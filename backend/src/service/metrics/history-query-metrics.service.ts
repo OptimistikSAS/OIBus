@@ -1,7 +1,7 @@
 import { CacheMetadata, HistoryQueryMetrics, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { PassThrough } from 'node:stream';
 import HistoryQuery from '../../engine/history-query';
-import HistoryQueryMetricsRepository from '../../repository/logs/history-query-metrics.repository';
+import HistoryQueryMetricsRepository from '../../repository/metrics/history-query-metrics.repository';
 import { DateTime } from 'luxon';
 import { Instant } from '../../model/types';
 

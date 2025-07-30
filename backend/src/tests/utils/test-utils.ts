@@ -1,5 +1,5 @@
 import Database from 'better-sqlite3';
-import { migrateCrypto, migrateEntities, migrateLogsAndMetrics, migrateSouthCache } from '../../migration/migration-service';
+import { migrateCrypto, migrateEntities, migrateLogs, migrateMetrics, migrateSouthCache } from '../../migration/migration-service';
 import path from 'node:path';
 import knex from 'knex';
 import testData from './test-data';
@@ -35,6 +35,7 @@ import { Readable, Writable } from 'node:stream';
 const CONFIG_TEST_DATABASE = path.resolve('src', 'tests', 'test-config.db');
 const CRYPTO_TEST_DATABASE = path.resolve('src', 'tests', 'test-crypto.db');
 const LOGS_TEST_DATABASE = path.resolve('src', 'tests', 'test-logs.db');
+const METRICS_TEST_DATABASE = path.resolve('src', 'tests', 'test-metrics.db');
 const CACHE_TEST_DATABASE = path.resolve('src', 'tests', 'test-cache.db');
 
 export const flushPromises = () => new Promise(jest.requireActual('timers').setImmediate);
@@ -60,7 +61,7 @@ export function createMockReadStream(): Readable {
   });
 }
 
-export const initDatabase = async (database: 'config' | 'crypto' | 'cache' | 'logs', populate = true) => {
+export const initDatabase = async (database: 'config' | 'crypto' | 'cache' | 'logs' | 'metrics', populate = true) => {
   switch (database) {
     case 'crypto':
       await emptyDatabase('crypto');
@@ -78,13 +79,17 @@ export const initDatabase = async (database: 'config' | 'crypto' | 'cache' | 'lo
       return new Database(CONFIG_TEST_DATABASE);
     case 'logs':
       await emptyDatabase('logs');
-      await migrateLogsAndMetrics(LOGS_TEST_DATABASE);
-      if (populate) await populateLogsAndMetricsDatabase();
+      await migrateLogs(LOGS_TEST_DATABASE);
       return new Database(LOGS_TEST_DATABASE);
+    case 'metrics':
+      await emptyDatabase('metrics');
+      await migrateMetrics(METRICS_TEST_DATABASE);
+      if (populate) await populateMetricsDatabase();
+      return new Database(METRICS_TEST_DATABASE);
   }
 };
 
-export const emptyDatabase = async (database: 'config' | 'crypto' | 'cache' | 'logs') => {
+export const emptyDatabase = async (database: 'config' | 'crypto' | 'cache' | 'logs' | 'metrics') => {
   let databasePath = '';
   switch (database) {
     case 'crypto':
@@ -98,6 +103,9 @@ export const emptyDatabase = async (database: 'config' | 'crypto' | 'cache' | 'l
       break;
     case 'logs':
       databasePath = LOGS_TEST_DATABASE;
+      break;
+    case 'metrics':
+      databasePath = METRICS_TEST_DATABASE;
       break;
   }
 
@@ -132,11 +140,11 @@ export const mockBaseFolders = (id: string): BaseFolders => ({
   error: path.resolve('errorBaseFolder', id)
 });
 
-const populateLogsAndMetricsDatabase = async () => {
+const populateMetricsDatabase = async () => {
   const testDatabase = knex({
     client: 'better-sqlite3',
     connection: {
-      filename: LOGS_TEST_DATABASE
+      filename: METRICS_TEST_DATABASE
     },
     useNullAsDefault: true
   });

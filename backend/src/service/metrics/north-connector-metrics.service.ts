@@ -2,7 +2,7 @@ import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { PassThrough } from 'node:stream';
 import { CacheMetadata, NorthConnectorMetrics } from '../../../shared/model/engine.model';
-import NorthConnectorMetricsRepository from '../../repository/logs/north-connector-metrics.repository';
+import NorthConnectorMetricsRepository from '../../repository/metrics/north-connector-metrics.repository';
 import NorthConnector from '../../north/north-connector';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 

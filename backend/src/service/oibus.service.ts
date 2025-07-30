@@ -14,7 +14,7 @@ import { DateTime } from 'luxon';
 import process from 'node:process';
 import os from 'node:os';
 import { PassThrough } from 'node:stream';
-import EngineMetricsRepository from '../repository/logs/engine-metrics.repository';
+import EngineMetricsRepository from '../repository/metrics/engine-metrics.repository';
 import { getOIBusInfo } from './utils';
 import SouthService from './south.service';
 import NorthService from './north.service';

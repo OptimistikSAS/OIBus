@@ -5,7 +5,7 @@ import { HistoryQueryEntity } from '../model/histor-query.model';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { NorthSettings } from '../../shared/model/north-settings.model';
 import HistoryQueryMetricsService from '../service/metrics/history-query-metrics.service';
-import HistoryQueryMetricsRepository from '../repository/logs/history-query-metrics.repository';
+import HistoryQueryMetricsRepository from '../repository/metrics/history-query-metrics.repository';
 import { PassThrough } from 'node:stream';
 import { BaseFolders } from '../model/types';
 import { CacheMetadata, CacheSearchParam } from '../../shared/model/engine.model';

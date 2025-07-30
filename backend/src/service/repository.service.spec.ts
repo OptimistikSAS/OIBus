@@ -11,28 +11,33 @@ import LogRepository from '../repository/logs/log.repository';
 import HistoryQueryRepository from '../repository/config/history-query.repository';
 import UserRepository from '../repository/config/user.repository';
 import CryptoRepository from '../repository/crypto/crypto.repository';
-import SouthConnectorMetricsRepository from '../repository/logs/south-connector-metrics.repository';
-import EngineMetricsRepository from '../repository/logs/engine-metrics.repository';
+import SouthConnectorMetricsRepository from '../repository/metrics/south-connector-metrics.repository';
+import EngineMetricsRepository from '../repository/metrics/engine-metrics.repository';
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
-import NorthConnectorMetricsRepository from '../repository/logs/north-connector-metrics.repository';
+import NorthConnectorMetricsRepository from '../repository/metrics/north-connector-metrics.repository';
 import CertificateRepository from '../repository/config/certificate.repository';
 import OianalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
 import OianalyticsCommandRepository from '../repository/config/oianalytics-command.repository';
 import OianalyticsMessageRepository from '../repository/config/oianalytics-message.repository';
-import HistoryQueryMetricsRepository from '../repository/logs/history-query-metrics.repository';
+import HistoryQueryMetricsRepository from '../repository/metrics/history-query-metrics.repository';
 
-jest.mock('better-sqlite3', () => jest.fn(() => 'sqlite database'));
+const mockedDatabase = {
+  file: 'mocked-db.db',
+  pragma: jest.fn(),
+  close: jest.fn()
+};
+jest.mock('better-sqlite3', () => jest.fn(() => mockedDatabase));
 jest.mock('../repository/crypto/crypto.repository');
 jest.mock('../repository/config/ip-filter.repository');
 jest.mock('../repository/config/scan-mode.repository');
 jest.mock('../repository/config/engine.repository');
 jest.mock('../repository/config/north-connector.repository');
-jest.mock('../repository/logs/north-connector-metrics.repository');
+jest.mock('../repository/metrics/north-connector-metrics.repository');
 jest.mock('../repository/config/south-connector.repository');
 jest.mock('../repository/cache/south-cache.repository');
-jest.mock('../repository/logs/south-connector-metrics.repository');
-jest.mock('../repository/logs/history-query-metrics.repository');
-jest.mock('../repository/logs/engine-metrics.repository');
+jest.mock('../repository/metrics/south-connector-metrics.repository');
+jest.mock('../repository/metrics/history-query-metrics.repository');
+jest.mock('../repository/metrics/engine-metrics.repository');
 jest.mock('../repository/logs/log.repository');
 jest.mock('../repository/config/history-query.repository');
 jest.mock('../repository/config/user.repository');
@@ -43,29 +48,39 @@ jest.mock('../repository/config/oianalytics-message.repository');
 
 describe('Repository service', () => {
   it('should properly initialize service', () => {
-    const repositoryService = new RepositoryService('myConfigDatabase', 'myLogDatabase', 'myCryptoDatabase', 'myCacheDatabase', '3.5.0');
+    const repositoryService = new RepositoryService(
+      'myConfigDatabase',
+      'myLogDatabase',
+      'myMetricsDatabase',
+      'myCryptoDatabase',
+      'myCacheDatabase',
+      '3.5.0'
+    );
     expect(db).toHaveBeenCalledWith('myConfigDatabase');
-    expect(db).toHaveBeenCalledWith('myLogDatabase');
     expect(db).toHaveBeenCalledWith('myCryptoDatabase');
     expect(db).toHaveBeenCalledWith('myCacheDatabase');
-    expect(EngineRepository).toHaveBeenCalledWith('sqlite database', '3.5.0');
-    expect(CryptoRepository).toHaveBeenCalledWith('sqlite database');
-    expect(IpFilterRepository).toHaveBeenCalledWith('sqlite database');
-    expect(ScanModeRepository).toHaveBeenCalledWith('sqlite database');
-    expect(NorthConnectorRepository).toHaveBeenCalledWith('sqlite database');
-    expect(NorthConnectorMetricsRepository).toHaveBeenCalledWith('sqlite database');
-    expect(SouthConnectorRepository).toHaveBeenCalledWith('sqlite database');
-    expect(SouthConnectorMetricsRepository).toHaveBeenCalledWith('sqlite database');
-    expect(HistoryQueryMetricsRepository).toHaveBeenCalledWith('sqlite database');
-    expect(EngineMetricsRepository).toHaveBeenCalledWith('sqlite database');
-    expect(SouthCacheRepository).toHaveBeenCalledWith('sqlite database');
-    expect(LogRepository).toHaveBeenCalledWith('sqlite database');
-    expect(HistoryQueryRepository).toHaveBeenCalledWith('sqlite database');
-    expect(UserRepository).toHaveBeenCalledWith('sqlite database');
-    expect(OianalyticsRegistrationRepository).toHaveBeenCalledWith('sqlite database');
-    expect(CertificateRepository).toHaveBeenCalledWith('sqlite database');
-    expect(OianalyticsCommandRepository).toHaveBeenCalledWith('sqlite database');
-    expect(OianalyticsMessageRepository).toHaveBeenCalledWith('sqlite database');
+    expect(db).toHaveBeenCalledWith('myMetricsDatabase');
+    expect(db).toHaveBeenCalledWith('myLogDatabase');
+    expect(mockedDatabase.pragma).toHaveBeenCalledWith('journal_mode = WAL');
+    expect(mockedDatabase.pragma).toHaveBeenCalledWith('busy_timeout = 5000');
+    expect(EngineRepository).toHaveBeenCalledWith(mockedDatabase, '3.5.0');
+    expect(CryptoRepository).toHaveBeenCalledWith(mockedDatabase);
+    expect(IpFilterRepository).toHaveBeenCalledWith(mockedDatabase);
+    expect(ScanModeRepository).toHaveBeenCalledWith(mockedDatabase);
+    expect(NorthConnectorRepository).toHaveBeenCalledWith(mockedDatabase);
+    expect(NorthConnectorMetricsRepository).toHaveBeenCalledWith(mockedDatabase);
+    expect(SouthConnectorRepository).toHaveBeenCalledWith(mockedDatabase);
+    expect(SouthConnectorMetricsRepository).toHaveBeenCalledWith(mockedDatabase);
+    expect(HistoryQueryMetricsRepository).toHaveBeenCalledWith(mockedDatabase);
+    expect(EngineMetricsRepository).toHaveBeenCalledWith(mockedDatabase);
+    expect(SouthCacheRepository).toHaveBeenCalledWith(mockedDatabase);
+    expect(LogRepository).toHaveBeenCalledWith(mockedDatabase);
+    expect(HistoryQueryRepository).toHaveBeenCalledWith(mockedDatabase);
+    expect(UserRepository).toHaveBeenCalledWith(mockedDatabase);
+    expect(OianalyticsRegistrationRepository).toHaveBeenCalledWith(mockedDatabase);
+    expect(CertificateRepository).toHaveBeenCalledWith(mockedDatabase);
+    expect(OianalyticsCommandRepository).toHaveBeenCalledWith(mockedDatabase);
+    expect(OianalyticsMessageRepository).toHaveBeenCalledWith(mockedDatabase);
 
     expect(repositoryService.engineRepository).toBeDefined();
     expect(repositoryService.cryptoRepository).toBeDefined();
@@ -85,5 +100,19 @@ describe('Repository service', () => {
     expect(repositoryService.certificateRepository).toBeDefined();
     expect(repositoryService.oianalyticsCommandRepository).toBeDefined();
     expect(repositoryService.oianalyticsMessageRepository).toBeDefined();
+  });
+
+  it('should properly close', () => {
+    const repositoryService = new RepositoryService(
+      'myConfigDatabase',
+      'myLogDatabase',
+      'myMetricsDatabase',
+      'myCryptoDatabase',
+      'myCacheDatabase',
+      '3.5.0'
+    );
+
+    repositoryService.close();
+    expect(mockedDatabase.close).toHaveBeenCalledTimes(5);
   });
 });

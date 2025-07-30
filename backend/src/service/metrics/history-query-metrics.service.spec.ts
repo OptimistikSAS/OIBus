@@ -1,7 +1,7 @@
 import HistoryQueryMetricsService from './history-query-metrics.service';
 import testData from '../../tests/utils/test-data';
-import HistoryQueryMetricsRepository from '../../repository/logs/history-query-metrics.repository';
-import HistoryQueryMetricsRepositoryMock from '../../tests/__mocks__/repository/log/history-query-metrics-repository.mock';
+import HistoryQueryMetricsRepository from '../../repository/metrics/history-query-metrics.repository';
+import HistoryQueryMetricsRepositoryMock from '../../tests/__mocks__/repository/metrics/history-query-metrics-repository.mock';
 import HistoryQuery from '../../engine/history-query';
 import HistoryQueryMock from '../../tests/__mocks__/history-query.mock';
 

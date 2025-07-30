@@ -11,7 +11,14 @@ import DataStreamEngine from './engine/data-stream-engine';
 import HistoryQueryEngine from './engine/history-query-engine';
 import HistoryQueryService from './service/history-query.service';
 import OIBusService from './service/oibus.service';
-import { migrateCrypto, migrateDataFolder, migrateEntities, migrateLogsAndMetrics, migrateSouthCache } from './migration/migration-service';
+import {
+  migrateCrypto,
+  migrateDataFolder,
+  migrateEntities,
+  migrateLogs,
+  migrateMetrics,
+  migrateSouthCache
+} from './migration/migration-service';
 import OIAnalyticsCommandService from './service/oia/oianalytics-command.service';
 import OianalyticsRegistrationService from './service/oia/oianalytics-registration.service';
 import ConnectionService from './service/connection.service';
@@ -32,6 +39,7 @@ const CACHE_FOLDER = './cache';
 const CACHE_DATABASE = 'cache.db';
 const LOG_FOLDER_NAME = 'logs';
 const LOG_DB_NAME = 'logs.db';
+const METRICS_DB_NAME = 'metrics.db';
 const CERT_FOLDER = 'certs';
 
 (async () => {
@@ -52,13 +60,15 @@ const CERT_FOLDER = 'certs';
   // run migrations
   await migrateDataFolder(path.resolve(CONFIG_DATABASE));
   await migrateEntities(path.resolve(CONFIG_DATABASE));
-  await migrateLogsAndMetrics(path.resolve(LOG_FOLDER_NAME, LOG_DB_NAME));
+  await migrateLogs(path.resolve(LOG_FOLDER_NAME, LOG_DB_NAME));
+  await migrateMetrics(path.resolve(LOG_FOLDER_NAME, METRICS_DB_NAME));
   await migrateCrypto(path.resolve(CRYPTO_DATABASE));
   await migrateSouthCache(path.resolve(CACHE_FOLDER, CACHE_DATABASE));
 
   const repositoryService = new RepositoryService(
     path.resolve(CONFIG_DATABASE),
     path.resolve(LOG_FOLDER_NAME, LOG_DB_NAME),
+    path.resolve(LOG_FOLDER_NAME, METRICS_DB_NAME),
     path.resolve(CRYPTO_DATABASE),
     path.resolve(CACHE_FOLDER, CACHE_DATABASE),
     launcherVersion

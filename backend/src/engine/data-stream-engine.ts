@@ -16,8 +16,8 @@ import { SouthItemSettings, SouthSettings } from '../../shared/model/south-setti
 import { SouthConnectorEntity } from '../model/south-connector.model';
 import { NorthConnectorEntity } from '../model/north-connector.model';
 import SouthConnectorMetricsService from '../service/metrics/south-connector-metrics.service';
-import SouthConnectorMetricsRepository from '../repository/logs/south-connector-metrics.repository';
-import NorthConnectorMetricsRepository from '../repository/logs/north-connector-metrics.repository';
+import SouthConnectorMetricsRepository from '../repository/metrics/south-connector-metrics.repository';
+import NorthConnectorMetricsRepository from '../repository/metrics/north-connector-metrics.repository';
 import NorthConnectorMetricsService from '../service/metrics/north-connector-metrics.service';
 import { PassThrough } from 'node:stream';
 import { ReadStream } from 'node:fs';

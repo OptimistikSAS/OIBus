@@ -1,6 +1,6 @@
 import SouthConnectorMetricsService from './south-connector-metrics.service';
-import SouthMetricsRepositoryMock from '../../tests/__mocks__/repository/log/south-metrics-repository.mock';
-import SouthConnectorMetricsRepository from '../../repository/logs/south-connector-metrics.repository';
+import SouthMetricsRepositoryMock from '../../tests/__mocks__/repository/metrics/south-metrics-repository.mock';
+import SouthConnectorMetricsRepository from '../../repository/metrics/south-connector-metrics.repository';
 import testData from '../../tests/utils/test-data';
 import SouthConnector from '../../south/south-connector';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';

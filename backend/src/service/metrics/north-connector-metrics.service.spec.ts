@@ -1,6 +1,6 @@
 import NorthConnectorMetricsService from './north-connector-metrics.service';
-import NorthMetricsRepositoryMock from '../../tests/__mocks__/repository/log/north-metrics-repository.mock';
-import NorthConnectorMetricsRepository from '../../repository/logs/north-connector-metrics.repository';
+import NorthMetricsRepositoryMock from '../../tests/__mocks__/repository/metrics/north-metrics-repository.mock';
+import NorthConnectorMetricsRepository from '../../repository/metrics/north-connector-metrics.repository';
 import testData from '../../tests/utils/test-data';
 import NorthConnector from '../../north/north-connector';
 import { NorthSettings } from '../../../shared/model/north-settings.model';

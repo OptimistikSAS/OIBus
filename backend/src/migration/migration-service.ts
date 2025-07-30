@@ -16,7 +16,7 @@ export async function migrateEntities(dbPath: string): Promise<void> {
   await knexConfig.destroy();
 }
 
-export async function migrateLogsAndMetrics(dbPath: string): Promise<void> {
+export async function migrateLogs(dbPath: string): Promise<void> {
   const knexConfig = knex({
     client: 'better-sqlite3',
     connection: {
@@ -27,7 +27,22 @@ export async function migrateLogsAndMetrics(dbPath: string): Promise<void> {
       tableName: 'migrations'
     }
   });
-  await knexConfig.migrate.latest({ directory: path.resolve(__dirname, 'logs-and-metrics-migrations') });
+  await knexConfig.migrate.latest({ directory: path.resolve(__dirname, 'logs-migrations') });
+  await knexConfig.destroy();
+}
+
+export async function migrateMetrics(dbPath: string): Promise<void> {
+  const knexConfig = knex({
+    client: 'better-sqlite3',
+    connection: {
+      filename: dbPath
+    },
+    useNullAsDefault: true,
+    migrations: {
+      tableName: 'migrations'
+    }
+  });
+  await knexConfig.migrate.latest({ directory: path.resolve(__dirname, 'metrics-migrations') });
   await knexConfig.destroy();
 }
 

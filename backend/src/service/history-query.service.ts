@@ -34,7 +34,7 @@ import path from 'node:path';
 import csv from 'papaparse';
 import HistoryQueryEngine from '../engine/history-query-engine';
 import HistoryQuery from '../engine/history-query';
-import HistoryQueryMetricsRepository from '../repository/logs/history-query-metrics.repository';
+import HistoryQueryMetricsRepository from '../repository/metrics/history-query-metrics.repository';
 import { PassThrough } from 'node:stream';
 import { BaseFolders } from '../model/types';
 import NorthConnectorRepository from '../repository/config/north-connector.repository';
