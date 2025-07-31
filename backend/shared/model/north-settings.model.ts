@@ -77,7 +77,7 @@ export interface NorthFileWriterSettings {
   suffix: string | null;
 }
 
-export interface NorthMetroscopeLithiumSettings {
+export interface  {
   endpoint: string;
   apiKey: string;
   sourceId: string;
@@ -130,7 +130,7 @@ export type NorthSettings =
   | NorthAzureBlobSettings
   | NorthConsoleSettings
   | NorthFileWriterSettings
-  | NorthMetroscopeLithiumSettings
+  | 
   | NorthOIAnalyticsSettings
   | NorthRESTSettings
   | NorthSFTPSettings
