@@ -43,7 +43,7 @@
     "@azure/storage-file-datalake": "12.27.0",
     "@koa/cors": "5.0.0",
     "@koa/multer": "4.0.0",
-    "@koa/router": "13.1.1",
+    "@koa/router": "14.0.0",
     "@smithy/node-http-handler": "4.1.0",
     "adm-zip": "0.5.16",
     "ads-client": "2.1.0",
