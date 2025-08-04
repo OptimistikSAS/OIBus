@@ -9,7 +9,13 @@
   <div class="d-flex align-items-center">
     <ng-content />
     @if (removable()) {
-      <button tabindex="-1" type="button" class="btn btn-link py-0 my-0 px-1 text-white" (click)="remove()">
+      <button
+        tabindex="-1"
+        type="button"
+        class="btn btn-link py-0 my-0 px-1 text-white"
+        [ngbTooltip]="'common.tooltips.remove' | translate"
+        (click)="remove()"
+      >
         <span class="fa fa-remove"></span>
       </button>
     }

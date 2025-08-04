@@ -2,10 +2,11 @@ import { TestBed } from '@angular/core/testing';
 import { Component } from '@angular/core';
 import { ComponentTester } from 'ngx-speculoos';
 import { PillComponent } from './pill.component';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   template: ` <oib-pill [type]="type" [removable]="removable" (removed)="removed = true">Pill content</oib-pill>`,
-  imports: [PillComponent]
+  imports: [PillComponent, TranslateModule]
 })
 class TestComponent {
   type = 'primary' as const;
@@ -32,7 +33,7 @@ describe('PillComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [TestComponent]
+      imports: [TestComponent, TranslateModule.forRoot()]
     });
 
     tester = new TestComponentTester();

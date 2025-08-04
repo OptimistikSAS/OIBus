@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule, FormControl, Validators, FormBuilder } from '@angular/forms';
-import { TranslatePipe, TranslateDirective } from '@ngx-translate/core';
+import { TranslatePipe, TranslateDirective, TranslateModule } from '@ngx-translate/core';
 import { Component, Input, Directive, Pipe, PipeTransform } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { DateTime } from 'luxon';
@@ -29,7 +29,7 @@ class MockTranslateDirective {
     </form>
   `,
   standalone: true,
-  imports: [ReactiveFormsModule, DateRangeSelectorComponent]
+  imports: [ReactiveFormsModule, DateRangeSelectorComponent, TranslateModule]
 })
 class TestHostComponent {
   testForm = TestBed.inject(FormBuilder).group({
@@ -48,7 +48,14 @@ describe('DateRangeSelectorComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ReactiveFormsModule, DateRangeSelectorComponent, TestHostComponent, MockTranslatePipe, MockTranslateDirective],
+      imports: [
+        ReactiveFormsModule,
+        DateRangeSelectorComponent,
+        TestHostComponent,
+        MockTranslatePipe,
+        MockTranslateDirective,
+        TranslateModule.forRoot()
+      ],
       providers: [provideHttpClient(), provideHttpClientTesting()],
       schemas: [CUSTOM_ELEMENTS_SCHEMA]
     })

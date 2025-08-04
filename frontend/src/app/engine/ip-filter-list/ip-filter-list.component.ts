@@ -10,10 +10,12 @@ import { IPFilterDTO } from '../../../../../backend/shared/model/ip-filter.model
 import { EditIpFilterModalComponent } from '../edit-ip-filter-modal/edit-ip-filter-modal.component';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'oib-ip-filter-list',
-  imports: [TranslateDirective, BoxComponent, BoxTitleDirective, OibHelpComponent],
+  imports: [TranslateDirective, BoxComponent, BoxTitleDirective, OibHelpComponent, NgbTooltip, TranslateModule],
   templateUrl: './ip-filter-list.component.html',
   styleUrl: './ip-filter-list.component.scss'
 })

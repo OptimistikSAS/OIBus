@@ -28,6 +28,7 @@ import { LogsComponent } from '../../logs/logs.component';
 import { SouthConnectorLightDTO } from '../../../../../backend/shared/model/south-connector.model';
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
   selector: 'oib-north-detail',
@@ -43,7 +44,8 @@ import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe'
     ClipboardModule,
     LogsComponent,
     OIBusNorthTypeEnumPipe,
-    TranslatePipe
+    TranslatePipe,
+    NgbTooltip
   ],
   templateUrl: './north-detail.component.html',
   styleUrl: './north-detail.component.scss',

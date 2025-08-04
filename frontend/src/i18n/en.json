@@ -73,11 +73,20 @@
       "s": "s",
       "hr": "hr",
       "MB": "MB"
+    },
+    "tooltips": {
+      "help": "Help",
+      "save": "Save changes",
+      "discard": "Discard changes",
+      "remove": "Remove"
     }
   },
   "datepicker": {
     "parse-pattern": "d/M/yyyy",
-    "format-pattern": "dd/MM/yyyy"
+    "format-pattern": "dd/MM/yyyy",
+    "tooltips": {
+      "open-calendar": "Open calendar"
+    }
   },
   "date-range": {
     "range-type": "Date Range",
@@ -276,6 +285,9 @@
     "account": {
       "logout": "Logout",
       "settings": "Settings"
+    },
+    "tooltips": {
+      "documentation": "Documentation"
     }
   },
   "login": {
@@ -496,7 +508,10 @@
       "external": "External memory (min / current / max)",
       "array-buffer": "Array buffer (min / current / max)",
       "reset-metrics": "Reset metrics",
-      "since": "since {{ date }}"
+      "since": "since {{ date }}",
+      "tooltips": {
+        "view-metrics": "View engine metrics"
+      }
     },
     "proxy": {
       "list": "Proxies",
@@ -526,7 +541,12 @@
       "description": "Description",
       "cron": "Cron",
       "cron-meaning": "Cron meaning:",
-      "cron-next-occurrences": "Next occurrences:"
+      "cron-next-occurrences": "Next occurrences:",
+      "tooltips": {
+        "add": "Add a new scan mode",
+        "edit": "Edit scan mode",
+        "delete": "Delete scan mode"
+      }
     },
     "certificate": {
       "list": "Certificates",
@@ -549,7 +569,15 @@
       "locality-name": "Locality name",
       "organization-name": "Organization name",
       "key-size": "Key size",
-      "days-before-expiry": "Days before expiry"
+      "days-before-expiry": "Days before expiry",
+      "tooltips": {
+        "add": "Add a new certificate",
+        "edit": "Edit certificate",
+        "delete": "Delete certificate",
+        "copy-public-key": "Copy public key to clipboard",
+        "copy-certificate": "Copy certificate to clipboard",
+        "download": "Download certificate file"
+      }
     },
     "ip-filter": {
       "list": "IP filters",
@@ -562,7 +590,12 @@
       "none": "No IP filter",
       "name": "Name",
       "description": "Description",
-      "address": "Address"
+      "address": "Address",
+      "tooltips": {
+        "add": "Add a new IP filter",
+        "edit": "Edit IP filter",
+        "delete": "Delete IP filter"
+      }
     },
     "external-source": {
       "list": "External sources",
@@ -576,6 +609,9 @@
       "name": "Name",
       "description": "Description",
       "reference": "Reference"
+    },
+    "tooltips": {
+      "edit": "Edit engine settings"
     }
   },
   "south": {
@@ -1472,6 +1508,12 @@
           "output-timestamp-format": "Output date time format",
           "output-timezone": "Output timezone"
         }
+      },
+      "tooltips": {
+        "add": "Add a new item",
+        "edit": "Edit item",
+        "duplicate": "Duplicate item",
+        "delete": "Delete item"
       }
     },
     "monitoring": {
@@ -1489,6 +1531,17 @@
       "last-value-content": "{{ pointId }} at {{ timestamp }} with content {{ data }}",
       "last-run-start": "Last run",
       "last-run-duration": "Last run duration"
+    },
+    "tooltips": {
+      "add": "Create a new south connector",
+      "start": "Start south connector",
+      "stop": "Stop south connector",
+      "view": "View south connector details",
+      "edit": "Edit south connector",
+      "duplicate": "Duplicate south connector",
+      "delete": "Delete south connector",
+      "view-metrics": "View south connector metrics",
+      "copy-cache-path": "Copy cache path to clipboard"
     }
   },
   "north": {
@@ -1592,7 +1645,10 @@
       "edit-mode-info": "The changes to the subscriptions will be committed on save",
       "created": "The connector is now subscribed to {{ name }}",
       "confirm-deletion": "Are you sure you want to unsubscribe from {{ name }}?",
-      "deleted": "The connector is not subscribed to {{ name }} anymore"
+      "deleted": "The connector is not subscribed to {{ name }} anymore",
+      "tooltips": {
+        "delete": "Remove subscription"
+      }
     },
     "monitoring": {
       "title": "{{ name }} metrics",
@@ -1727,6 +1783,17 @@
       "proxy-url": "Proxy URL",
       "proxy-username": "Proxy username",
       "proxy-password": "Proxy password"
+    },
+    "tooltips": {
+      "add": "Create a new north connector",
+      "start": "Start north connector",
+      "stop": "Stop north connector",
+      "view": "View north connector details",
+      "edit": "Edit north connector",
+      "duplicate": "Duplicate north connector",
+      "delete": "Delete north connector",
+      "copy-cache-path": "Copy cache path to clipboard",
+      "view-metrics": "View north connector metrics"
     }
   },
   "logs": {
@@ -1748,7 +1815,11 @@
     "scope-type": "Type",
     "scope": "Scope",
     "message": "Message",
-    "none": "No log found"
+    "none": "No log found",
+    "tooltips": {
+      "pause-auto-reload": "Pause auto-reload",
+      "resume-auto-reload": "Resume auto-reload"
+    }
   },
   "history-query": {
     "list": "History queries",
@@ -1809,6 +1880,12 @@
       "disabled": "History item {{ name }} disabled",
       "search": {
         "name": "Name"
+      },
+      "tooltips": {
+        "add": "Add a new item",
+        "edit": "Edit item",
+        "duplicate": "Duplicate item",
+        "delete": "Delete item"
       }
     },
     "monitoring": {
@@ -1846,6 +1923,18 @@
         "data-retrieved": "Data retrieved",
         "interval-progress": "Interval progress"
       }
+    },
+    "tooltips": {
+      "add": "Create a new history query",
+      "start": "Start history query",
+      "pause": "Pause history query",
+      "resume": "Resume history query",
+      "restart": "Restart history query",
+      "view": "View history query details",
+      "edit": "Edit history query",
+      "duplicate": "Duplicate history query",
+      "delete": "Delete history query",
+      "copy-cache-path": "Copy cache path to clipboard"
     }
   },
   "scan-mode": {
@@ -1854,6 +1943,12 @@
     "subscription": "Subscribe"
   },
   "oib-array": {
-    "no-elements": "No elements has been added"
+    "no-elements": "No elements has been added",
+    "tooltips": {
+      "add": "Add new element",
+      "edit": "Edit element",
+      "duplicate": "Duplicate element",
+      "delete": "Delete element"
+    }
   }
 }

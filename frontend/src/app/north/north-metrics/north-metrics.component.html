@@ -10,7 +10,12 @@
           ></span>
           <!-- Display button -->
           @if (displayButton()) {
-            <a class="btn btn-link display-north px-1 py-0" id="display-link" (click)="navigateToDisplay()">
+            <a
+              class="btn btn-link display-north px-1 py-0"
+              id="display-link"
+              [ngbTooltip]="'north.tooltips.view-metrics' | translate"
+              (click)="navigateToDisplay()"
+            >
               <span class="fa fa-search"></span>
             </a>
           } @else {
