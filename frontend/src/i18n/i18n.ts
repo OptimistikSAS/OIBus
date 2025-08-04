@@ -1,5 +1,5 @@
 import { inject, LOCALE_ID, provideEnvironmentInitializer } from '@angular/core';
-import { provideTranslateService, TranslateLoader, TranslateService } from '@ngx-translate/core';
+import { provideTranslateService, provideTranslateLoader, TranslateService } from '@ngx-translate/core';
 import { ModuleTranslateLoader } from './module-translate-loader';
 
 import { DEFAULT_TZ, Language, Timezone } from '../../../backend/shared/model/types';
@@ -33,17 +33,14 @@ export function storeTimezone(timezone: Timezone) {
 export const provideI18n = () => {
   return [
     provideTranslateService({
-      loader: {
-        provide: TranslateLoader,
-        useClass: ModuleTranslateLoader
-      }
+      loader: provideTranslateLoader(ModuleTranslateLoader)
     }),
     { provide: LOCALE_ID, useValue: languageToUse() },
     // provideEnvironmentInitializer allows us to run code when the app starts
     provideEnvironmentInitializer(() => {
       const translateService = inject(TranslateService);
       // this language will be used as a fallback when a translation isn't found in the current language
-      translateService.setDefaultLang('en');
+      translateService.setFallbackLang('en');
       // the lang to use, if the lang isn't available, it will use the current loader to get them
       const locale = inject(LOCALE_ID);
       translateService.use(locale);
