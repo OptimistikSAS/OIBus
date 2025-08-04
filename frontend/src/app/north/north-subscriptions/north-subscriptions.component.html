@@ -48,7 +48,12 @@
                 <td class="text-nowrap action-buttons">
                   <div class="pull-right">
                     <!-- Delete button -->
-                    <button type="button" class="btn btn-link delete-scan-mode px-1 py-0" (click)="deleteSubscription(subscription)">
+                    <button
+                      type="button"
+                      class="btn btn-link delete-scan-mode px-1 py-0"
+                      [ngbTooltip]="'north.subscriptions.tooltips.delete' | translate"
+                      (click)="deleteSubscription(subscription)"
+                    >
                       <span class="fa fa-trash"></span>
                     </button>
                   </div>
@@ -62,7 +67,12 @@
                 <td class="text-nowrap action-buttons">
                   <div class="pull-right">
                     <!-- Delete button -->
-                    <button type="button" class="btn btn-link delete-scan-mode px-1 py-0" (click)="deleteSubscription(subscription)">
+                    <button
+                      type="button"
+                      class="btn btn-link delete-scan-mode px-1 py-0"
+                      [ngbTooltip]="'north.subscriptions.tooltips.delete' | translate"
+                      (click)="deleteSubscription(subscription)"
+                    >
                       <span class="fa fa-trash"></span>
                     </button>
                   </div>

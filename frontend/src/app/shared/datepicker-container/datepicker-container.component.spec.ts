@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { Component } from '@angular/core';
 import { NgbDatepicker, NgbInputDatepicker } from '@ng-bootstrap/ng-bootstrap';
 import { ComponentTester } from 'ngx-speculoos';
+import { TranslateModule } from '@ngx-translate/core';
 import { noAnimation } from '../test-utils';
 import { DatepickerContainerComponent } from './datepicker-container.component';
 import { formDirectives } from '../form-directives';
@@ -13,7 +14,7 @@ import { formDirectives } from '../form-directives';
       <input class="form-control" [formControl]="dateCtrl" ngbDatepicker />
     </oib-datepicker-container>
   `,
-  imports: [DatepickerContainerComponent, ...formDirectives, NgbInputDatepicker]
+  imports: [DatepickerContainerComponent, ...formDirectives, NgbInputDatepicker, TranslateModule]
 })
 class TestComponent {
   dateCtrl = new UntypedFormControl();
@@ -46,6 +47,7 @@ describe('DatepickerContainerComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
+      imports: [TranslateModule.forRoot()],
       providers: [noAnimation]
     });
 

@@ -12,12 +12,13 @@ import {
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { EditElementComponent } from './edit-element/edit-element.component';
 import { OibFormControl } from '../../../../../../backend/shared/model/form.model';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
   selector: 'oib-array',
   templateUrl: './oib-array.component.html',
   styleUrl: './oib-array.component.scss',
-  imports: [TranslateDirective, forwardRef(() => EditElementComponent), TranslatePipe],
+  imports: [TranslateDirective, forwardRef(() => EditElementComponent), TranslatePipe, NgbTooltip],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

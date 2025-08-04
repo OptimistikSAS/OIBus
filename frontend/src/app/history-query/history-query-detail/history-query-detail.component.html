@@ -5,7 +5,7 @@
         <div class="oib-header-container mb-3">
           <h1 id="title" translate="history-query.title" [translateParams]="{ name: historyQuery.name }">
             <span class="ms-2">
-              <button class="btn btn-primary" id="edit-link" routerLink="edit">
+              <button class="btn btn-primary" id="edit-link" routerLink="edit" [ngbTooltip]="'history-query.tooltips.edit' | translate">
                 <i class="fa fa-pencil"></i>
               </button>
               <button class="ms-2 btn btn-cancel" translate="common.back" id="cancel-edit-button" oibBackButton></button>
@@ -13,6 +13,7 @@
                 <button
                   class="btn btn-primary pull-right me-2"
                   id="history-query-start"
+                  [ngbTooltip]="'history-query.tooltips.start' | translate"
                   (click)="toggleHistoryQuery('RUNNING')"
                   [disabled]="state.isPending | async"
                 >
@@ -28,6 +29,7 @@
                 <button
                   class="btn btn-primary pull-right me-2"
                   id="history-query-pause"
+                  [ngbTooltip]="'history-query.tooltips.pause' | translate"
                   (click)="toggleHistoryQuery('PAUSED')"
                   [disabled]="state.isPending | async"
                 >
@@ -43,6 +45,7 @@
                 <button
                   class="btn btn-primary pull-right me-2"
                   id="history-query-unpause"
+                  [ngbTooltip]="'history-query.tooltips.resume' | translate"
                   (click)="toggleHistoryQuery('RUNNING')"
                   [disabled]="state.isPending | async"
                 >
@@ -58,6 +61,7 @@
                 <button
                   class="btn btn-primary pull-right me-2"
                   id="history-query-restart"
+                  [ngbTooltip]="'history-query.tooltips.restart' | translate"
                   (click)="toggleHistoryQuery('RUNNING')"
                   [disabled]="state.isPending | async"
                 >
@@ -76,6 +80,7 @@
             <i
               class="fa fa-copy"
               role="button"
+              [ngbTooltip]="'history-query.tooltips.copy-cache-path' | translate"
               [cdkCopyToClipboard]="oibusInfo!.dataDirectory + '/cache/history-query/history-' + historyQuery.id"
               (cdkCopyToClipboardCopied)="onClipboardCopy($event)"
             ></i>
