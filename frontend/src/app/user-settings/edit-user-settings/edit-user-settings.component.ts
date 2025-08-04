@@ -93,7 +93,7 @@ export class EditUserSettingsComponent implements CanComponentDeactivate {
         }),
         switchMap(() => this.loadSettingsAndPopulate()),
         switchMap(settings => {
-          if (settings.language === this.translateService.currentLang && settings.timezone === this.currentUserService.getTimezone()) {
+          if (settings.language === this.translateService.getCurrentLang() && settings.timezone === this.currentUserService.getTimezone()) {
             return of(settings);
           } else {
             return timer(500).pipe(

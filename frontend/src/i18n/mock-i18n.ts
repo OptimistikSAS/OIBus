@@ -1,12 +1,18 @@
 import { inject, LOCALE_ID, provideEnvironmentInitializer } from '@angular/core';
-import { MissingTranslationHandler, MissingTranslationHandlerParams, provideTranslateService, TranslateService } from '@ngx-translate/core';
+import {
+  MissingTranslationHandler,
+  MissingTranslationHandlerParams,
+  provideTranslateService,
+  provideMissingTranslationHandler,
+  TranslateService
+} from '@ngx-translate/core';
 import EN_TRANSLATIONS from './en.json';
 
 /**
  * Custom missing translation handler that throws an error when a translation is missing.
  */
 export class CustomMissingTranslationHandler implements MissingTranslationHandler {
-  handle(params: MissingTranslationHandlerParams) {
+  handle(params: MissingTranslationHandlerParams): string {
     throw new Error(`Missing translation for key ${params.key}`);
   }
 }
@@ -18,8 +24,7 @@ export class CustomMissingTranslationHandler implements MissingTranslationHandle
 export const provideI18nTesting = () => {
   return [
     provideTranslateService({
-      useDefaultLang: false,
-      missingTranslationHandler: { provide: MissingTranslationHandler, useClass: CustomMissingTranslationHandler }
+      missingTranslationHandler: provideMissingTranslationHandler(CustomMissingTranslationHandler)
     }),
     { provide: LOCALE_ID, useValue: 'en' },
     // provideEnvironmentInitializer allows us to run code when the app starts
