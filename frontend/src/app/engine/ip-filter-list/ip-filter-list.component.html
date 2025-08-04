@@ -8,7 +8,12 @@
         }
       </div>
       <div>
-        <button type="button" class="btn btn-primary btn-sm oib-box-btn" (click)="addIpFilter()">
+        <button
+          type="button"
+          class="btn btn-primary btn-sm oib-box-btn"
+          [ngbTooltip]="'engine.ip-filter.tooltips.add' | translate"
+          (click)="addIpFilter()"
+        >
           <span class="fa fa-plus" id="add-ip-filter"></span>
         </button>
 
@@ -38,10 +43,22 @@
               <div class="pull-right">
                 <!-- Edit button -->
                 <button type="button" class="btn btn-link edit-ip-filter px-1 py-0" (click)="editIpFilter(ipFilter)">
-                  <span class="fa fa-pencil"></span>
+                  <button
+                    type="button"
+                    class="btn btn-link edit-ip-filter px-1 py-0"
+                    [ngbTooltip]="'engine.ip-filter.tooltips.edit' | translate"
+                    (click)="editIpFilter(ipFilter)"
+                  >
+                    <span class="fa fa-pencil"></span>
+                  </button>
                 </button>
                 <!-- Delete button -->
-                <button type="button" class="btn btn-link delete-ip-filter px-1 py-0" (click)="deleteIpFilter(ipFilter)">
+                <button
+                  type="button"
+                  class="btn btn-link delete-ip-filter px-1 py-0"
+                  [ngbTooltip]="'engine.ip-filter.tooltips.delete' | translate"
+                  (click)="deleteIpFilter(ipFilter)"
+                >
                   <span class="fa fa-trash"></span>
                 </button>
               </div>

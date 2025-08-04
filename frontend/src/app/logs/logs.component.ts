@@ -35,7 +35,7 @@ import { DatetimepickerComponent } from '../shared/datetimepicker/datetimepicker
 import { DatetimePipe } from '../shared/datetime.pipe';
 import { ScopeTypesEnumPipe } from '../shared/scope-types-enum.pipe';
 import { TYPEAHEAD_DEBOUNCE_TIME } from '../shared/typeahead';
-import { NgbAccordionModule, NgbTypeahead, NgbTypeaheadSelectItemEvent } from '@ng-bootstrap/ng-bootstrap';
+import { NgbAccordionModule, NgbTooltip, NgbTypeahead, NgbTypeaheadSelectItemEvent } from '@ng-bootstrap/ng-bootstrap';
 import { PillComponent } from '../shared/pill/pill.component';
 import { LegendComponent } from '../shared/legend/legend.component';
 import { NgClass } from '@angular/common';
@@ -58,7 +58,8 @@ import { toObservable } from '@angular/core/rxjs-interop';
     PillComponent,
     LegendComponent,
     NgClass,
-    NgbAccordionModule
+    NgbAccordionModule,
+    NgbTooltip
   ],
   templateUrl: './logs.component.html',
   styleUrl: './logs.component.scss',

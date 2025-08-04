@@ -1,5 +1,5 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { TranslateDirective } from '@ngx-translate/core';
+import { TranslateDirective, TranslateModule } from '@ngx-translate/core';
 import { AsyncPipe } from '@angular/common';
 import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs';
 import { ConfirmationService } from '../shared/confirmation.service';
@@ -18,6 +18,7 @@ import { LoadingSpinnerComponent } from '../shared/loading-spinner/loading-spinn
 import { DatetimePipe } from '../shared/datetime.pipe';
 import { ObservableState } from '../shared/save-button/save-button.component';
 import { LegendComponent } from '../shared/legend/legend.component';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 const PAGE_SIZE = 15;
 
@@ -33,7 +34,9 @@ const PAGE_SIZE = 15;
     LoadingSpinnerComponent,
     DatetimePipe,
     AsyncPipe,
-    LegendComponent
+    LegendComponent,
+    NgbTooltip,
+    TranslateModule
   ],
   templateUrl: './history-query-list.component.html',
   styleUrl: './history-query-list.component.scss'

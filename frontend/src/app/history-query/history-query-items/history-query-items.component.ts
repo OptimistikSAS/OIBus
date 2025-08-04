@@ -21,6 +21,7 @@ import { EditHistoryQueryItemModalComponent } from '../edit-history-query-item-m
 import { ImportHistoryQueryItemsModalComponent } from '../import-history-query-items-modal/import-history-query-items-modal.component';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 const PAGE_SIZE = 20;
 
@@ -44,7 +45,8 @@ export interface TableData {
     BoxComponent,
     BoxTitleDirective,
     OibHelpComponent,
-    TranslatePipe
+    TranslatePipe,
+    NgbTooltip
   ],
   templateUrl: './history-query-items.component.html',
   styleUrl: './history-query-items.component.scss'

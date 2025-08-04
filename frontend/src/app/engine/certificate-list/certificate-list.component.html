@@ -8,7 +8,12 @@
         }
       </div>
       <div>
-        <button type="button" class="btn btn-primary btn-sm oib-box-btn" (click)="addCertificate()">
+        <button
+          type="button"
+          class="btn btn-primary btn-sm oib-box-btn"
+          [ngbTooltip]="'engine.certificate.tooltips.add' | translate"
+          (click)="addCertificate()"
+        >
           <span class="fa fa-plus" id="add-certificate"></span>
         </button>
         <oib-help url="https://oibus.optimistik.com/docs/guide/engine/engine-settings" />
@@ -40,17 +45,31 @@
             <td>{{ certificate.description }}</td>
             <td>{{ certificate.publicKey }}</td>
             <td>
-              <button class="btn btn-link px-1" [string]="certificate.publicKey" oibClipboardCopy>
+              <button
+                class="btn btn-link px-1"
+                [string]="certificate.publicKey"
+                [ngbTooltip]="'engine.certificate.tooltips.copy-public-key' | translate"
+                oibClipboardCopy
+              >
                 <span class="fa fa-copy"></span>
               </button>
             </td>
             <td>{{ certificate.certificate }}</td>
             <td>
               <div>
-                <button class="btn btn-link px-1 py-0" [string]="certificate.certificate" oibClipboardCopy>
+                <button
+                  class="btn btn-link px-1 py-0"
+                  [string]="certificate.certificate"
+                  [ngbTooltip]="'engine.certificate.tooltips.copy-certificate' | translate"
+                  oibClipboardCopy
+                >
                   <span class="fa fa-copy"></span>
                 </button>
-                <button class="btn btn-link px-1 py-0" (click)="downloadCertificate(certificate)">
+                <button
+                  class="btn btn-link px-1 py-0"
+                  [ngbTooltip]="'engine.certificate.tooltips.download' | translate"
+                  (click)="downloadCertificate(certificate)"
+                >
                   <span class="fa fa-download"></span>
                 </button>
               </div>
@@ -59,11 +78,21 @@
             <td class="text-nowrap action-buttons">
               <div class="pull-right">
                 <!-- Edit button -->
-                <button type="button" class="btn btn-link edit-certificate px-1 py-0" (click)="editCertificate(certificate)">
+                <button
+                  type="button"
+                  class="btn btn-link edit-certificate px-1 py-0"
+                  [ngbTooltip]="'engine.certificate.tooltips.edit' | translate"
+                  (click)="editCertificate(certificate)"
+                >
                   <span class="fa fa-pencil"></span>
                 </button>
                 <!-- Delete button -->
-                <button type="button" class="btn btn-link delete-certificate px-1 py-0" (click)="deleteCertificate(certificate)">
+                <button
+                  type="button"
+                  class="btn btn-link delete-certificate px-1 py-0"
+                  [ngbTooltip]="'engine.certificate.tooltips.delete' | translate"
+                  (click)="deleteCertificate(certificate)"
+                >
                   <span class="fa fa-trash"></span>
                 </button>
               </div>

@@ -1,5 +1,5 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { TranslateDirective } from '@ngx-translate/core';
+import { TranslateDirective, TranslateModule } from '@ngx-translate/core';
 import { SouthConnectorLightDTO } from '../../../../backend/shared/model/south-connector.model';
 import { SouthConnectorService } from '../services/south-connector.service';
 import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs';
@@ -18,6 +18,7 @@ import { PaginationComponent } from '../shared/pagination/pagination.component';
 import { ObservableState } from '../shared/save-button/save-button.component';
 import { LegendComponent } from '../shared/legend/legend.component';
 import { OIBusSouthTypeEnumPipe } from '../shared/oibus-south-type-enum.pipe';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 const PAGE_SIZE = 15;
 
 @Component({
@@ -32,7 +33,9 @@ const PAGE_SIZE = 15;
     PaginationComponent,
     AsyncPipe,
     LegendComponent,
-    OIBusSouthTypeEnumPipe
+    OIBusSouthTypeEnumPipe,
+    NgbTooltip,
+    TranslateModule
   ],
   templateUrl: './south-list.component.html',
   styleUrl: './south-list.component.scss'
