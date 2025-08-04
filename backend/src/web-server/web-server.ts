@@ -108,7 +108,7 @@ export default class WebServer {
 
     this.app.use(webClient);
 
-    // Password protect middleware
+    // Password protection middleware
     this.app.use(auth());
 
     this.app.use(sse());
@@ -123,7 +123,7 @@ export default class WebServer {
         jsonLimit: '20mb',
         strict: true,
         onerror(err, ctx) {
-          ctx.throw('body parse error', 422);
+          ctx.throw(422, 'body parse error');
         }
       })
     );
