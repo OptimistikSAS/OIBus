@@ -10,7 +10,7 @@
       <h1 class="oib-title">
         <span translate="north.list"></span>
         <span class="ms-4">
-          <button class="btn btn-primary" id="create-modal" (click)="createNorth()">
+          <button class="btn btn-primary" id="create-modal" [ngbTooltip]="'north.tooltips.add' | translate" (click)="createNorth()">
             <span class="fa fa-plus"></span>
           </button>
         </span>
@@ -75,6 +75,7 @@
                     <button
                       class="btn btn-link py-0 px-1 m-0"
                       id="north-enable"
+                      [ngbTooltip]="(north.enabled ? 'north.tooltips.stop' : 'north.tooltips.start') | translate"
                       (click)="toggleConnector(north.id, north.name, !north.enabled)"
                       [disabled]="states.get(north.id)?.isPending | async"
                     >
@@ -89,19 +90,39 @@
                       }
                     </button>
                     <!-- Display button -->
-                    <a class="btn btn-link display-north px-1 py-0" id="display-link" [routerLink]="[north.id]">
+                    <a
+                      class="btn btn-link display-north px-1 py-0"
+                      id="display-link"
+                      [ngbTooltip]="'north.tooltips.view' | translate"
+                      [routerLink]="[north.id]"
+                    >
                       <span class="fa fa-search"></span>
                     </a>
                     <!-- Edit button -->
-                    <a class="btn btn-link edit-north px-1 py-0" id="edit-link" [routerLink]="[north.id, 'edit']">
+                    <a
+                      class="btn btn-link edit-north px-1 py-0"
+                      id="edit-link"
+                      [ngbTooltip]="'north.tooltips.edit' | translate"
+                      [routerLink]="[north.id, 'edit']"
+                    >
                       <span class="fa fa-pencil"></span>
                     </a>
                     <!-- Duplicate button -->
-                    <a class="btn btn-link duplicate-north px-1 py-0" routerLink="create" [queryParams]="{ duplicate: north.id }">
+                    <a
+                      class="btn btn-link duplicate-north px-1 py-0"
+                      [ngbTooltip]="'north.tooltips.duplicate' | translate"
+                      routerLink="create"
+                      [queryParams]="{ duplicate: north.id }"
+                    >
                       <span class="fa fa-copy"></span>
                     </a>
                     <!-- Delete button -->
-                    <button type="button" class="btn btn-link delete-north px-1 py-0" (click)="deleteNorth(north)">
+                    <button
+                      type="button"
+                      class="btn btn-link delete-north px-1 py-0"
+                      [ngbTooltip]="'north.tooltips.delete' | translate"
+                      (click)="deleteNorth(north)"
+                    >
                       <span class="fa fa-trash"></span>
                     </button>
                   </div>

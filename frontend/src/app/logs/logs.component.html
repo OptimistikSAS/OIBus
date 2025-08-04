@@ -102,8 +102,8 @@
                           class="btn btn-primary"
                           id="auto-reload-toggle"
                           (click)="toggleAutoReload()"
-                          [attr.title]="
-                            autoReloadPaused() ? ('logs.auto-reload.resume' | translate) : ('logs.auto-reload.pause' | translate)
+                          [ngbTooltip]="
+                            (autoReloadPaused() ? 'logs.tooltips.resume-auto-reload' : 'logs.tooltips.pause-auto-reload') | translate
                           "
                         >
                           @if (autoReloadPaused()) {

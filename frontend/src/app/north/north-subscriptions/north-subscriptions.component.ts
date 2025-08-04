@@ -3,7 +3,7 @@ import { Component, OnInit, inject, output, input } from '@angular/core';
 import { of, switchMap, tap } from 'rxjs';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
-import { TranslateDirective } from '@ngx-translate/core';
+import { TranslateDirective, TranslateModule } from '@ngx-translate/core';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { NorthConnectorDTO } from '../../../../../backend/shared/model/north-connector.model';
 import { SouthConnectorLightDTO } from '../../../../../backend/shared/model/south-connector.model';
@@ -13,10 +13,11 @@ import { CreateNorthSubscriptionModalComponent } from '../create-north-subscript
 import { Modal, ModalService } from '../../shared/modal.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
   selector: 'oib-north-subscriptions',
-  imports: [TranslateDirective, BoxComponent, BoxTitleDirective, OibHelpComponent],
+  imports: [TranslateDirective, BoxComponent, BoxTitleDirective, OibHelpComponent, NgbTooltip, TranslateModule],
   templateUrl: './north-subscriptions.component.html',
   styleUrl: './north-subscriptions.component.scss'
 })

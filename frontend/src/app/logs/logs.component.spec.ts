@@ -231,7 +231,6 @@ describe('LogsComponent', () => {
 
       expect(tester.pauseIcon).toBeTruthy();
       expect(tester.playIcon).toBeFalsy();
-      expect(tester.autoReloadButton?.nativeElement.title).toBe('Pause auto-reload');
     }));
 
     it('should display play icon when auto-reload is paused', fakeAsync(() => {
@@ -242,7 +241,6 @@ describe('LogsComponent', () => {
       expect(tester.autoReloadButton).toBeTruthy();
       expect(tester.pauseIcon).toBeFalsy();
       expect(tester.playIcon).toBeTruthy();
-      expect(tester.autoReloadButton?.nativeElement.title).toBe('Resume auto-reload');
     }));
 
     it('should toggle auto-reload state when button is clicked', fakeAsync(() => {

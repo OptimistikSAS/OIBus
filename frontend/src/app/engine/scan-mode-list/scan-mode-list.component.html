@@ -8,7 +8,13 @@
         }
       </div>
       <div>
-        <button type="button" class="btn btn-primary btn-sm oib-box-btn" (click)="addScanMode()" id="add-scan-mode">
+        <button
+          type="button"
+          class="btn btn-primary btn-sm oib-box-btn"
+          [ngbTooltip]="'engine.scan-mode.tooltips.add' | translate"
+          (click)="addScanMode()"
+          id="add-scan-mode"
+        >
           <span class="fa fa-plus"></span>
         </button>
         <oib-help url="https://oibus.optimistik.com/docs/guide/engine/scan-modes" />
@@ -38,11 +44,21 @@
             <td class="text-nowrap action-buttons">
               <div class="pull-right">
                 <!-- Edit button -->
-                <button type="button" class="btn btn-link edit-scan-mode px-1 py-0" (click)="editScanMode(scanMode)">
+                <button
+                  type="button"
+                  class="btn btn-link edit-scan-mode px-1 py-0"
+                  [ngbTooltip]="'engine.scan-mode.tooltips.edit' | translate"
+                  (click)="editScanMode(scanMode)"
+                >
                   <span class="fa fa-pencil"></span>
                 </button>
                 <!-- Delete button -->
-                <button type="button" class="btn btn-link delete-scan-mode px-1 py-0" (click)="deleteScanMode(scanMode)">
+                <button
+                  type="button"
+                  class="btn btn-link delete-scan-mode px-1 py-0"
+                  [ngbTooltip]="'engine.scan-mode.tooltips.delete' | translate"
+                  (click)="deleteScanMode(scanMode)"
+                >
                   <span class="fa fa-trash"></span>
                 </button>
               </div>

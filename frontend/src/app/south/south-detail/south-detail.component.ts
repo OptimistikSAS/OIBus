@@ -28,6 +28,7 @@ import { ClipboardModule } from '@angular/cdk/clipboard';
 import { LogsComponent } from '../../logs/logs.component';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
   selector: 'oib-south-detail',
@@ -43,7 +44,8 @@ import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe'
     ClipboardModule,
     LogsComponent,
     OIBusSouthTypeEnumPipe,
-    TranslatePipe
+    TranslatePipe,
+    NgbTooltip
   ],
   templateUrl: './south-detail.component.html',
   styleUrl: './south-detail.component.scss',

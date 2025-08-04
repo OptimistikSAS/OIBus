@@ -4,12 +4,14 @@ import { formDirectives } from '../../../form-directives';
 import { OibFormControl } from '../../../../../../../backend/shared/model/form.model';
 import { createFormGroup, groupFormControlsByRow } from '../../../form-utils';
 import { FormComponent } from '../../form.component';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'oib-edit-element',
   templateUrl: './edit-element.component.html',
   styleUrl: './edit-element.component.scss',
-  imports: [...formDirectives, forwardRef(() => FormComponent)]
+  imports: [...formDirectives, forwardRef(() => FormComponent), NgbTooltip, TranslateModule]
 })
 export class EditElementComponent implements OnInit {
   private fb = inject(NonNullableFormBuilder);

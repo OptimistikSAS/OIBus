@@ -13,10 +13,21 @@ import { ClipboardCopyDirective } from '../../shared/clipboard-copy-directive';
 import { DownloadService } from '../../services/download.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'oib-certificate-list',
-  imports: [TranslateDirective, BoxComponent, BoxTitleDirective, DatetimePipe, ClipboardCopyDirective, OibHelpComponent],
+  imports: [
+    TranslateDirective,
+    BoxComponent,
+    BoxTitleDirective,
+    DatetimePipe,
+    ClipboardCopyDirective,
+    OibHelpComponent,
+    NgbTooltip,
+    TranslateModule
+  ],
   templateUrl: './certificate-list.component.html',
   styleUrl: './certificate-list.component.scss'
 })

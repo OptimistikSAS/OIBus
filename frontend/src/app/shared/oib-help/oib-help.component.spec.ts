@@ -2,10 +2,11 @@ import { TestBed } from '@angular/core/testing';
 import { Component } from '@angular/core';
 import { ComponentTester } from 'ngx-speculoos';
 import { OibHelpComponent } from './oib-help.component';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   template: ` <oib-help [url]="url" />`,
-  imports: [OibHelpComponent]
+  imports: [OibHelpComponent, TranslateModule]
 })
 class TestComponent {
   url = 'https://oibus.optimistik.com' as const;
@@ -26,7 +27,7 @@ describe('OibHelpComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [TestComponent]
+      imports: [TestComponent, TranslateModule.forRoot()]
     });
 
     tester = new TestComponentTester();

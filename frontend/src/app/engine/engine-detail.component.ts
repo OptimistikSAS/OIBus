@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { TranslateDirective } from '@ngx-translate/core';
+import { TranslateDirective, TranslateModule } from '@ngx-translate/core';
 import { EngineService } from '../services/engine.service';
 import { EngineMetrics, EngineSettingsDTO } from '../../../../backend/shared/model/engine.model';
 import { AsyncPipe } from '@angular/common';
@@ -14,6 +14,7 @@ import { EngineMetricsComponent } from './engine-metrics/engine-metrics.componen
 import { WindowService } from '../shared/window.service';
 import { RouterLink } from '@angular/router';
 import { CertificateListComponent } from './certificate-list/certificate-list.component';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
   selector: 'oib-engine-detail',
@@ -25,7 +26,9 @@ import { CertificateListComponent } from './certificate-list/certificate-list.co
     AsyncPipe,
     BoxComponent,
     EngineMetricsComponent,
-    RouterLink
+    RouterLink,
+    NgbTooltip,
+    TranslateModule
   ],
   templateUrl: './engine-detail.component.html',
   styleUrl: './engine-detail.component.scss'
