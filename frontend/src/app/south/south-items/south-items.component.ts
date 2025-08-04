@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, output, input, effect } from '@angular/core';
-import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { TranslateDirective, TranslateModule, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
@@ -26,6 +26,7 @@ import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
 import { ImportItemModalComponent } from '../../shared/import-item-modal/import-item-modal.component';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 const PAGE_SIZE = 20;
 
@@ -50,7 +51,9 @@ export interface TableData {
     BoxTitleDirective,
     PaginationComponent,
     OibHelpComponent,
-    TranslatePipe
+    TranslatePipe,
+    TranslateModule,
+    NgbTooltip
   ],
   templateUrl: './south-items.component.html',
   styleUrl: './south-items.component.scss'

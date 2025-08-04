@@ -5,12 +5,17 @@
         <div class="oib-header-container mb-3">
           <h1 id="title" translate="south.title" [translateParams]="{ name: southConnector.name, type: southConnector.type }">
             <span class="ms-2">
-              <button class="btn btn-primary" id="edit-link" routerLink="edit">
+              <button class="btn btn-primary" id="edit-link" routerLink="edit" [ngbTooltip]="'south.tooltips.edit' | translate">
                 <i class="fa fa-pencil"></i>
               </button>
             </span>
             <button class="ms-2 btn btn-cancel" translate="common.back" id="cancel-edit-button" oibBackButton></button>
-            <button class="btn btn-primary pull-right me-2" id="south-enabled" (click)="toggleConnector(!southConnector.enabled)">
+            <button
+              class="btn btn-primary pull-right me-2"
+              id="south-enabled"
+              [ngbTooltip]="(southConnector.enabled ? 'south.tooltips.stop' : 'south.tooltips.start') | translate"
+              (click)="toggleConnector(!southConnector.enabled)"
+            >
               <i [class]="southConnector.enabled ? 'fa fa-pause' : 'fa fa-play'"></i>
             </button>
           </h1>
@@ -19,6 +24,7 @@
             <i
               class="fa fa-copy ms-1"
               role="button"
+              [ngbTooltip]="'south.tooltips.copy-cache-path' | translate"
               [cdkCopyToClipboard]="oibusInfo!.dataDirectory + '/cache/data-stream/south-' + southConnector.id"
               (cdkCopyToClipboardCopied)="onClipboardCopy($event)"
             ></i>

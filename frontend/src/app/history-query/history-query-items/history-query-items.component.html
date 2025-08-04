@@ -27,7 +27,12 @@
         />
       </div>
       <div class="ms-3">
-        <button type="button" class="btn btn-primary btn-sm" (click)="addItem()">
+        <button
+          type="button"
+          class="btn btn-primary btn-sm"
+          [ngbTooltip]="'history-query.items.tooltips.add' | translate"
+          (click)="addItem()"
+        >
           <span class="fa fa-plus"></span>
         </button>
         <button
@@ -95,15 +100,30 @@
               <td class="text-nowrap action-buttons">
                 <div class="pull-right">
                   <!-- Edit button -->
-                  <button type="button" class="btn btn-link edit-south-item px-1 py-0" (click)="editItem(item)">
+                  <button
+                    type="button"
+                    class="btn btn-link edit-south-item px-1 py-0"
+                    [ngbTooltip]="'history-query.items.tooltips.edit' | translate"
+                    (click)="editItem(item)"
+                  >
                     <span class="fa fa-pencil"></span>
                   </button>
                   <!-- Duplicate button -->
-                  <button type="button" class="btn btn-link duplicate-south-item px-1 py-0" (click)="duplicateItem(item)">
+                  <button
+                    type="button"
+                    class="btn btn-link duplicate-south-item px-1 py-0"
+                    [ngbTooltip]="'history-query.items.tooltips.duplicate' | translate"
+                    (click)="duplicateItem(item)"
+                  >
                     <span class="fa fa-copy"></span>
                   </button>
                   <!-- Delete button -->
-                  <button type="button" class="btn btn-link delete-south-item px-1 py-0" (click)="deleteItem(item)">
+                  <button
+                    type="button"
+                    class="btn btn-link delete-south-item px-1 py-0"
+                    [ngbTooltip]="'history-query.items.tooltips.delete' | translate"
+                    (click)="deleteItem(item)"
+                  >
                     <span class="fa fa-trash"></span>
                   </button>
                 </div>

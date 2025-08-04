@@ -7,7 +7,12 @@
       <h1 class="oib-title">
         <span translate="history-query.list"></span>
         <span class="ms-4">
-          <button class="btn btn-primary" id="create-history-query-button" (click)="createHistoryQuery()">
+          <button
+            class="btn btn-primary"
+            id="create-history-query-button"
+            [ngbTooltip]="'history-query.tooltips.add' | translate"
+            (click)="createHistoryQuery()"
+          >
             <span class="fa fa-plus"></span>
           </button>
         </span>
@@ -73,6 +78,7 @@
                       <button
                         class="btn btn-link py-0 px-1 m-0"
                         id="history-query-start"
+                        [ngbTooltip]="'history-query.tooltips.start' | translate"
                         (click)="toggleHistoryQuery(query, 'RUNNING')"
                         [disabled]="states.get(query.id)?.isPending | async"
                       >
@@ -88,6 +94,7 @@
                       <button
                         class="btn btn-link py-0 px-1 m-0"
                         id="history-query-pause"
+                        [ngbTooltip]="'history-query.tooltips.pause' | translate"
                         (click)="toggleHistoryQuery(query, 'PAUSED')"
                         [disabled]="states.get(query.id)?.isPending | async"
                       >
@@ -103,6 +110,7 @@
                       <button
                         class="btn btn-link py-0 px-1 m-0"
                         id="history-query-unpause"
+                        [ngbTooltip]="'history-query.tooltips.resume' | translate"
                         (click)="toggleHistoryQuery(query, 'RUNNING')"
                         [disabled]="states.get(query.id)?.isPending | async"
                       >
@@ -118,6 +126,7 @@
                       <button
                         class="btn btn-link py-0 px-1 m-0"
                         id="history-query-restart"
+                        [ngbTooltip]="'history-query.tooltips.restart' | translate"
                         (click)="toggleHistoryQuery(query, 'RUNNING')"
                         [disabled]="states.get(query.id)?.isPending | async"
                       >
@@ -130,19 +139,39 @@
                       </button>
                     }
                     <!-- Display button -->
-                    <a class="btn btn-link display-history-query px-1 py-0" id="display-link" [routerLink]="[query.id]">
+                    <a
+                      class="btn btn-link display-history-query px-1 py-0"
+                      id="display-link"
+                      [ngbTooltip]="'history-query.tooltips.view' | translate"
+                      [routerLink]="[query.id]"
+                    >
                       <span class="fa fa-search"></span>
                     </a>
                     <!-- Edit button -->
-                    <a class="btn btn-link edit-history-query px-1 py-0" id="edit-link" [routerLink]="[query.id, 'edit']">
+                    <a
+                      class="btn btn-link edit-history-query px-1 py-0"
+                      id="edit-link"
+                      [ngbTooltip]="'history-query.tooltips.edit' | translate"
+                      [routerLink]="[query.id, 'edit']"
+                    >
                       <span class="fa fa-pencil"></span>
                     </a>
                     <!-- Duplicate button -->
-                    <a class="btn btn-link duplicate-history-query px-1 py-0" routerLink="create" [queryParams]="{ duplicate: query.id }">
+                    <a
+                      class="btn btn-link duplicate-history-query px-1 py-0"
+                      [ngbTooltip]="'history-query.tooltips.duplicate' | translate"
+                      routerLink="create"
+                      [queryParams]="{ duplicate: query.id }"
+                    >
                       <span class="fa fa-copy"></span>
                     </a>
                     <!-- Delete button -->
-                    <button type="button" class="btn btn-link delete-history-query px-1 py-0" (click)="delete(query)">
+                    <button
+                      type="button"
+                      class="btn btn-link delete-history-query px-1 py-0"
+                      [ngbTooltip]="'history-query.tooltips.delete' | translate"
+                      (click)="delete(query)"
+                    >
                       <span class="fa fa-trash"></span>
                     </button>
                   </div>

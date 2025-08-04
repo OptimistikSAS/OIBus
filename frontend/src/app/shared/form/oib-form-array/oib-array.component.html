@@ -2,7 +2,13 @@
   <span>
     <b>{{ label() | translate }}</b>
   </span>
-  <button type="button" [disabled]="editedElement" class="btn btn-link ms-2 py-0 add-button" (click)="editNewElement()">
+  <button
+    type="button"
+    [disabled]="editedElement"
+    class="btn btn-link ms-2 py-0 add-button"
+    [ngbTooltip]="'oib-array.tooltips.add' | translate"
+    (click)="editNewElement()"
+  >
     <span class="fa fa-plus-circle"></span>&ngsp;
   </button>
 </div>
@@ -39,7 +45,13 @@
               <div class="col-2">{{ getFieldValue(element, field.key) }}</div>
             }
             <div class="col-2 text-end text-nowrap">
-              <button type="button" [disabled]="editDisabled" class="btn btn-link px-1 py-0 edit-button" (click)="edit(element)">
+              <button
+                type="button"
+                [disabled]="editDisabled"
+                class="btn btn-link px-1 py-0 edit-button"
+                [ngbTooltip]="'oib-array.tooltips.edit' | translate"
+                (click)="edit(element)"
+              >
                 <span class="fa fa-pencil"></span>
               </button>
 
@@ -48,13 +60,20 @@
                   type="button"
                   [disabled]="editDisabled"
                   class="btn btn-link duplicate-south-item duplicate-button px-1 py-0"
+                  [ngbTooltip]="'oib-array.tooltips.duplicate' | translate"
                   (click)="duplicate(element)"
                 >
                   <span class="fa fa-copy"></span>
                 </button>
               }
 
-              <button type="button" [disabled]="editDisabled" class="btn btn-link px-1 py-0 delete-button" (click)="remove($index)">
+              <button
+                type="button"
+                [disabled]="editDisabled"
+                class="btn btn-link px-1 py-0 delete-button"
+                [ngbTooltip]="'oib-array.tooltips.delete' | translate"
+                (click)="remove($index)"
+              >
                 <span class="fa fa-trash"></span>
               </button>
             </div>

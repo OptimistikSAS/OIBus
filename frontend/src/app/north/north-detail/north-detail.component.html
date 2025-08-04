@@ -5,12 +5,17 @@
         <div class="oib-header-container mb-3">
           <h1 id="title" translate="north.title" [translateParams]="{ name: northConnector.name, type: manifest.id | oIBusNorthTypeEnum }">
             <span class="ms-3">
-              <button class="btn btn-primary" id="edit-link" routerLink="edit">
+              <button class="btn btn-primary" id="edit-link" routerLink="edit" [ngbTooltip]="'north.tooltips.edit' | translate">
                 <i class="fa fa-pencil"></i>
               </button>
             </span>
             <button class="ms-2 btn btn-cancel" translate="common.back" id="cancel-edit-button" oibBackButton></button>
-            <button class="btn btn-primary pull-right me-2" id="north-enabled" (click)="toggleConnector(!northConnector.enabled)">
+            <button
+              class="btn btn-primary pull-right me-2"
+              id="north-enabled"
+              [ngbTooltip]="(northConnector.enabled ? 'north.tooltips.stop' : 'north.tooltips.start') | translate"
+              (click)="toggleConnector(!northConnector.enabled)"
+            >
               <i [class]="northConnector.enabled ? 'fa fa-pause' : 'fa fa-play'"></i>
             </button>
           </h1>
@@ -19,6 +24,7 @@
             <i
               class="fa fa-copy ms-1"
               role="button"
+              [ngbTooltip]="'north.tooltips.copy-cache-path' | translate"
               [cdkCopyToClipboard]="oibusInfo!.dataDirectory + '/cache/data-stream/north-' + northConnector.id"
               (cdkCopyToClipboardCopied)="onClipboardCopy($event)"
             ></i>
