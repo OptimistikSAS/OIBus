@@ -7,7 +7,7 @@ import { NotificationService } from '../../shared/notification.service';
 import { TranslateDirective } from '@ngx-translate/core';
 import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
-import { EditScanModeModalComponent } from '../edit-scan-mode-modal/edit-scan-mode-modal.component';
+import { EditScanModeModalComponent } from './edit-scan-mode-modal/edit-scan-mode-modal.component';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';

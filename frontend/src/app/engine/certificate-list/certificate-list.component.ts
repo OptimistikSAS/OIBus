@@ -6,7 +6,7 @@ import { NotificationService } from '../../shared/notification.service';
 import { TranslateDirective } from '@ngx-translate/core';
 import { CertificateService } from '../../services/certificate.service';
 import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
-import { EditCertificateModalComponent } from '../edit-certificate-modal/edit-certificate-modal.component';
+import { EditCertificateModalComponent } from './edit-certificate-modal/edit-certificate-modal.component';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { DatetimePipe } from '../../shared/datetime.pipe';
 import { ClipboardCopyDirective } from '../../shared/clipboard-copy-directive';

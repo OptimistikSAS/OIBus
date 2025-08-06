@@ -13,11 +13,11 @@ import { PaginationComponent } from '../shared/pagination/pagination.component';
 import { createPageFromArray, Page } from '../../../../backend/shared/model/types';
 import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { emptyPage } from '../shared/test-utils';
-import { FormControlValidationDirective } from '../shared/form-control-validation.directive';
 import { LoadingSpinnerComponent } from '../shared/loading-spinner/loading-spinner.component';
 import { DatetimePipe } from '../shared/datetime.pipe';
 import { ObservableState } from '../shared/save-button/save-button.component';
 import { LegendComponent } from '../shared/legend/legend.component';
+import { OI_FORM_VALIDATION_DIRECTIVES } from '../shared/form/form-validation-directives';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 const PAGE_SIZE = 15;
@@ -28,7 +28,6 @@ const PAGE_SIZE = 15;
     TranslateDirective,
     RouterLink,
     PaginationComponent,
-    FormControlValidationDirective,
     FormsModule,
     ReactiveFormsModule,
     LoadingSpinnerComponent,
@@ -36,7 +35,9 @@ const PAGE_SIZE = 15;
     AsyncPipe,
     LegendComponent,
     NgbTooltip,
-    TranslateModule
+    TranslateModule,
+    LegendComponent,
+    OI_FORM_VALIDATION_DIRECTIVES
   ],
   templateUrl: './history-query-list.component.html',
   styleUrl: './history-query-list.component.scss'

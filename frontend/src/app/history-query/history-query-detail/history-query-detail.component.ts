@@ -34,6 +34,9 @@ import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
 import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
+import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
+import { CertificateService } from '../../services/certificate.service';
+import { isDisplayableAttribute } from '../../shared/form/dynamic-form.builder';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
@@ -65,6 +68,7 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
   private southConnectorService = inject(SouthConnectorService);
   private notificationService = inject(NotificationService);
   private scanModeService = inject(ScanModeService);
+  private certificateService = inject(CertificateService);
   private modalService = inject(ModalService);
   private engineService = inject(EngineService);
   protected router = inject(Router);
@@ -78,6 +82,7 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
   southDisplayedSettings: Array<{ key: string; value: string }> = [];
 
   scanModes: Array<ScanModeDTO> = [];
+  certificates: Array<CertificateDTO> = [];
   searchParams: SouthConnectorItemSearchParam | null = null;
   northManifest: NorthConnectorManifest | null = null;
   southManifest: SouthConnectorManifest | null = null;
@@ -89,10 +94,13 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
   historyQueryId: string | null = null;
 
   ngOnInit() {
-    combineLatest([this.scanModeService.list(), this.engineService.getInfo()]).subscribe(([scanModes, engineInfo]) => {
-      this.scanModes = scanModes.filter(scanMode => scanMode.id !== 'subscription');
-      this.oibusInfo = engineInfo;
-    });
+    combineLatest([this.scanModeService.list(), this.certificateService.list(), this.engineService.getInfo()]).subscribe(
+      ([scanModes, certificates, engineInfo]) => {
+        this.scanModes = scanModes.filter(scanMode => scanMode.id !== 'subscription');
+        this.certificates = certificates;
+        this.oibusInfo = engineInfo;
+      }
+    );
     this.route.paramMap
       .pipe(
         switchMap(params => {
@@ -118,44 +126,53 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
         if (!northManifest || !southManifest) {
           return;
         }
-
+        this.northManifest = northManifest;
+        this.southManifest = southManifest;
         this.connectToEventSource();
 
-        this.northManifest = northManifest;
         const northSettings: Record<string, string> = JSON.parse(JSON.stringify(this.historyQuery!.northSettings));
-        this.northDisplayedSettings = northManifest.settings
-          .filter(setting => setting.displayInViewMode)
+        this.northDisplayedSettings = northManifest.settings.attributes
+          .filter(setting => isDisplayableAttribute(setting))
           .filter(setting => {
-            if (setting.conditionalDisplay) {
-              return setting.conditionalDisplay.values.includes(northSettings[setting.conditionalDisplay.field]);
-            }
-            return true;
+            const condition = northManifest.settings.enablingConditions.find(
+              enablingCondition => enablingCondition.targetPathFromRoot === setting.key
+            );
+            return (
+              !condition ||
+              (condition &&
+                northSettings[condition.referralPathFromRoot] &&
+                condition.values.includes(northSettings[condition.referralPathFromRoot]))
+            );
           })
           .map(setting => {
             return {
-              key: setting.type === 'OibSelect' ? setting.translationKey + '.title' : setting.translationKey,
+              key: setting.type === 'string-select' ? setting.translationKey + '.title' : setting.translationKey,
               value:
-                setting.type === 'OibSelect'
+                setting.type === 'string-select'
                   ? this.translateService.instant(setting.translationKey + '.' + northSettings[setting.key])
                   : northSettings[setting.key]
             };
           });
 
-        this.southManifest = southManifest;
         const southSettings: Record<string, string> = JSON.parse(JSON.stringify(this.historyQuery!.southSettings));
-        this.southDisplayedSettings = southManifest.settings
-          .filter(setting => setting.displayInViewMode)
+        this.southDisplayedSettings = southManifest.settings.attributes
+          .filter(setting => isDisplayableAttribute(setting))
           .filter(setting => {
-            if (setting.conditionalDisplay) {
-              return setting.conditionalDisplay.values.includes(southSettings[setting.conditionalDisplay.field]);
-            }
-            return true;
+            const condition = southManifest.settings.enablingConditions.find(
+              enablingCondition => enablingCondition.targetPathFromRoot === setting.key
+            );
+            return (
+              !condition ||
+              (condition &&
+                southSettings[condition.referralPathFromRoot] &&
+                condition.values.includes(southSettings[condition.referralPathFromRoot]))
+            );
           })
           .map(setting => {
             return {
-              key: setting.type === 'OibSelect' ? setting.translationKey + '.title' : setting.translationKey,
+              key: setting.type === 'string-select' ? setting.translationKey + '.title' : setting.translationKey,
               value:
-                setting.type === 'OibSelect'
+                setting.type === 'string-select'
                   ? this.translateService.instant(setting.translationKey + '.' + southSettings[setting.key])
                   : southSettings[setting.key]
             };

@@ -168,8 +168,8 @@ describe('HistoryQuery enabled', () => {
   it('should cache file', async () => {
     await historyQuery.start();
 
-    await historyQuery.addContent('southId', { type: 'raw', filePath: 'myFile' });
-    expect(mockedNorth1.cacheContent).toHaveBeenCalledWith({ type: 'raw', filePath: 'myFile' }, 'southId');
+    await historyQuery.addContent('southId', { type: 'any', filePath: 'myFile' });
+    expect(mockedNorth1.cacheContent).toHaveBeenCalledWith({ type: 'any', filePath: 'myFile' }, 'southId');
   });
 
   it('should properly stop', async () => {
@@ -203,6 +203,10 @@ describe('HistoryQuery enabled', () => {
     mockedNorth1.metricsEvent.removeAllListeners = () => {
       northMetricsEventRemoved = performance.now();
     };
+
+    await historyQuery.resetCache();
+    expect(mockedNorth1.resetCache).not.toHaveBeenCalled();
+    expect(mockedSouth1.resetCache).not.toHaveBeenCalled();
 
     await historyQuery.start();
     mockedSouth1.connectedEvent.emit('connected');
@@ -381,7 +385,7 @@ describe('HistoryQuery disabled', () => {
   });
 
   it('should not cache file if north is not defined', async () => {
-    await historyQuery.addContent('southId', { type: 'raw', filePath: 'filePath' });
+    await historyQuery.addContent('southId', { type: 'any', filePath: 'filePath' });
     expect(logger.info).not.toHaveBeenCalled();
   });
 

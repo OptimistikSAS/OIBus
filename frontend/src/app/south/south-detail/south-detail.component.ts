@@ -13,7 +13,7 @@ import { combineLatest, of, switchMap, tap } from 'rxjs';
 import { PageLoader } from '../../shared/page-loader.service';
 import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
-import { SouthMetricsComponent } from '../south-metrics/south-metrics.component';
+import { SouthMetricsComponent } from './south-metrics/south-metrics.component';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { EnabledEnumPipe } from '../../shared/enabled-enum.pipe';
 import { SouthItemsComponent } from '../south-items/south-items.component';
@@ -28,6 +28,9 @@ import { ClipboardModule } from '@angular/cdk/clipboard';
 import { LogsComponent } from '../../logs/logs.component';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
+import { isDisplayableAttribute } from '../../shared/form/dynamic-form.builder';
+import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
+import { CertificateService } from '../../services/certificate.service';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
@@ -55,6 +58,7 @@ export class SouthDetailComponent implements OnInit, OnDestroy {
   private windowService = inject(WindowService);
   private southConnectorService = inject(SouthConnectorService);
   private scanModeService = inject(ScanModeService);
+  private certificateService = inject(CertificateService);
   private notificationService = inject(NotificationService);
   private modalService = inject(ModalService);
   private engineService = inject(EngineService);
@@ -67,6 +71,7 @@ export class SouthDetailComponent implements OnInit, OnDestroy {
   southConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> | null = null;
   displayedSettings: Array<{ key: string; value: string }> = [];
   scanModes: Array<ScanModeDTO> = [];
+  certificates: Array<CertificateDTO> = [];
   manifest: SouthConnectorManifest | null = null;
   connectorMetrics: SouthConnectorMetrics | null = null;
   connectorStream: EventSource | null = null;
@@ -74,10 +79,13 @@ export class SouthDetailComponent implements OnInit, OnDestroy {
   southId: string | null = null;
 
   ngOnInit() {
-    combineLatest([this.scanModeService.list(), this.engineService.getInfo()]).subscribe(([scanModes, engineInfo]) => {
-      this.scanModes = scanModes.filter(scanMode => scanMode.id !== 'subscription');
-      this.oibusInfo = engineInfo;
-    });
+    combineLatest([this.scanModeService.list(), this.certificateService.list(), this.engineService.getInfo()]).subscribe(
+      ([scanModes, certificates, engineInfo]) => {
+        this.scanModes = scanModes.filter(scanMode => scanMode.id !== 'subscription');
+        this.certificates = certificates;
+        this.oibusInfo = engineInfo;
+      }
+    );
 
     this.route.paramMap
       .pipe(
@@ -105,19 +113,24 @@ export class SouthDetailComponent implements OnInit, OnDestroy {
         this.connectToEventSource();
 
         const southSettings: Record<string, string> = JSON.parse(JSON.stringify(this.southConnector!.settings));
-        this.displayedSettings = manifest.settings
-          .filter(setting => setting.displayInViewMode)
+        this.displayedSettings = manifest.settings.attributes
+          .filter(setting => isDisplayableAttribute(setting))
           .filter(setting => {
-            if (setting.conditionalDisplay) {
-              return setting.conditionalDisplay.values.includes(southSettings[setting.conditionalDisplay.field]);
-            }
-            return true;
+            const condition = manifest.settings.enablingConditions.find(
+              enablingCondition => enablingCondition.targetPathFromRoot === setting.key
+            );
+            return (
+              !condition ||
+              (condition &&
+                southSettings[condition.referralPathFromRoot] &&
+                condition.values.includes(southSettings[condition.referralPathFromRoot]))
+            );
           })
           .map(setting => {
             return {
-              key: setting.type === 'OibSelect' ? setting.translationKey + '.title' : setting.translationKey,
+              key: setting.type === 'string-select' ? setting.translationKey + '.title' : setting.translationKey,
               value:
-                setting.type === 'OibSelect'
+                setting.type === 'string-select'
                   ? this.translateService.instant(setting.translationKey + '.' + southSettings[setting.key])
                   : southSettings[setting.key]
             };

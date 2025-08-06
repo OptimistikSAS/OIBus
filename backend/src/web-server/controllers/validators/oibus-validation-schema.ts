@@ -57,14 +57,14 @@ const engineSchema: Joi.ObjectSchema = Joi.object({
 });
 
 const contentSchema: Joi.ObjectSchema = Joi.object({
-  type: Joi.string().required().allow('raw', 'time-values'),
+  type: Joi.string().required().allow('any', 'time-values'),
   content: Joi.array().when('type', {
     is: Joi.string().valid('time-values'),
     then: Joi.required(),
     otherwise: Joi.allow('').optional()
   }),
   filePath: Joi.string().when('type', {
-    is: Joi.string().valid('raw'),
+    is: Joi.string().valid('any'),
     then: Joi.required(),
     otherwise: Joi.allow('').optional()
   })
@@ -111,7 +111,8 @@ const registrationSchema: Joi.ObjectSchema = Joi.object({
     createNorth: Joi.boolean().required(),
     updateNorth: Joi.boolean().required(),
     deleteNorth: Joi.boolean().required(),
-    testNorthConnection: Joi.boolean().required()
+    testNorthConnection: Joi.boolean().required(),
+    setpoint: Joi.boolean().required()
   }).required()
 });
 
@@ -155,6 +156,14 @@ const logSchema: Joi.ObjectSchema = Joi.object({
   )
 });
 
+const transformerSchema: Joi.ObjectSchema = Joi.object({
+  name: Joi.string().required(),
+  description: Joi.string().required().allow(null, ''),
+  inputType: Joi.string().required(),
+  outputType: Joi.string().required(),
+  code: Joi.string().required()
+});
+
 function cronValidator(value: string, helper: Joi.CustomHelpers) {
   const cronValidation = validateCronExpression(value);
   return cronValidation.isValid ? true : helper.message({ custom: cronValidation.errorMessage });
@@ -170,5 +179,6 @@ export {
   historyQuerySchema,
   logSchema,
   commandSchema,
-  contentSchema
+  contentSchema,
+  transformerSchema
 };

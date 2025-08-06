@@ -71,6 +71,7 @@ import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-c
 import HistoryQueryService from '../history-query.service';
 import HistoryQueryServiceMock from '../../tests/__mocks__/service/history-query-service.mock';
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
+import { OIAnalyticsFetchSetpointCommandDTO } from './oianalytics.model';
 
 jest.mock('node:crypto');
 jest.mock('node:fs/promises');
@@ -256,6 +257,17 @@ describe('OIAnalytics Command Service', () => {
     expect(logger.trace).toHaveBeenCalledWith(`No command retrieved to check`);
   });
 
+  it('should check retrieved command and cancel nothing', async () => {
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.commands.oIBusList);
+    (oIAnalyticsClient.retrieveCancelledCommands as jest.Mock).mockReturnValueOnce([]);
+
+    await service.checkRetrievedCommands(testData.oIAnalytics.registration.completed);
+
+    expect(oIAnalyticsClient.retrieveCancelledCommands).toHaveBeenCalledTimes(1);
+    expect(oIAnalyticsCommandRepository.cancel).not.toHaveBeenCalled();
+    expect(logger.trace).not.toHaveBeenCalled();
+  });
+
   it('should retrieve commands', async () => {
     (oIAnalyticsClient.retrievePendingCommands as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.commands.oIAnalyticsList);
 
@@ -271,6 +283,16 @@ describe('OIAnalytics Command Service', () => {
     await expect(service.retrieveCommands(testData.oIAnalytics.registration.completed)).rejects.toThrow(
       `Error while retrieving commands: error`
     );
+  });
+
+  it('should retrieve commands and do nothing', async () => {
+    (oIAnalyticsClient.retrievePendingCommands as jest.Mock).mockReturnValueOnce([]);
+
+    await service.retrieveCommands(testData.oIAnalytics.registration.completed);
+
+    expect(oIAnalyticsClient.retrievePendingCommands).toHaveBeenCalledTimes(1);
+    expect(oIAnalyticsCommandRepository.create).not.toHaveBeenCalled();
+    expect(logger.trace).not.toHaveBeenCalled();
   });
 
   it('should execute update-version command without updating launcher', async () => {
@@ -489,7 +511,8 @@ describe('OIAnalytics Command Service', () => {
         createNorth: false,
         updateNorth: false,
         deleteNorth: false,
-        testNorthConnection: false
+        testNorthConnection: false,
+        setpoint: false
       }
     };
 
@@ -1261,7 +1284,8 @@ describe('OIAnalytics Command Service', () => {
         enabled: true,
         settings: command.commandContent.northSettings,
         caching: command.commandContent.caching,
-        subscriptions: []
+        subscriptions: [],
+        transformers: []
       },
       logger
     );
@@ -1409,6 +1433,30 @@ describe('OIAnalytics Command Service', () => {
       command.id,
       `History query status of ${command.historyQueryId} can not be updated to ${command.commandContent.historyQueryStatus}`
     );
+  });
+
+  it('should execute setpoint command', async () => {
+    const command: OIAnalyticsFetchSetpointCommandDTO = {
+      id: 'setpointCommandId',
+      targetVersion: testData.engine.settings.version,
+      type: 'setpoint',
+      northConnectorId: 'n1',
+      commandContent: {
+        pointId: 'reference',
+        value: '123456'
+      }
+    };
+
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    (northService.executeSetpoint as jest.Mock).mockImplementationOnce((_northId, _commandContent, callback) => {
+      callback('ok');
+    });
+
+    await service.executeCommand();
+
+    expect(northService.executeSetpoint).toHaveBeenCalledWith(command.northConnectorId, command.commandContent, expect.anything());
+
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(command.id, testData.constants.dates.FAKE_NOW, 'ok');
   });
 });
 

@@ -1,5 +1,5 @@
 import fs from 'node:fs/promises';
-import { createReadStream, createWriteStream, ReadStream, WriteStream } from 'node:fs';
+import { createReadStream, createWriteStream } from 'node:fs';
 import zlib from 'node:zlib';
 import path from 'node:path';
 
@@ -20,7 +20,6 @@ import { ScanMode } from '../model/scan-mode.model';
 import { HistoryQueryItemDTO } from '../../shared/model/history-query.model';
 import { SouthItemSettings } from '../../shared/model/south-settings.model';
 import { BaseFolders } from '../model/types';
-import { pipeline, Readable, Writable } from 'node:stream';
 
 const COMPRESSION_LEVEL = 9;
 
@@ -104,17 +103,17 @@ export const createBaseFolders = async (baseFolders: BaseFolders) => {
   }
 };
 
-export const pipeTransformers = async (readStream: ReadStream | Readable, writeStream: WriteStream | Writable): Promise<void> => {
-  return new Promise((resolve, reject) => {
-    // Use `pipeline` to safely chain streams
-    pipeline(readStream, writeStream, err => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve();
-      }
-    });
-  });
+/**
+ * Get filename without random ID from file path.
+ * Example: file1-123456.json => file1.json
+ */
+export const getFilenameWithoutRandomId = (filePath: string): string => {
+  const { name, ext } = path.parse(filePath);
+  if (name.lastIndexOf('-') === -1) {
+    return `${name}${ext}`;
+  }
+  const filename = name.slice(0, name.lastIndexOf('-'));
+  return `${filename}${ext}`;
 };
 
 /**
@@ -275,7 +274,7 @@ export const persistResults = async (
         }
 
         logger.debug(`Sending compressed file "${gzipPath}" to Engine`);
-        await addContentFn({ type: 'raw', filePath: gzipPath });
+        await addContentFn({ type: 'any', filePath: gzipPath });
         try {
           await fs.unlink(gzipPath);
           logger.trace(`File "${gzipPath}" deleted`);
@@ -284,7 +283,7 @@ export const persistResults = async (
         }
       } else {
         logger.debug(`Sending file "${filePath}" to Engine`);
-        await addContentFn({ type: 'raw', filePath });
+        await addContentFn({ type: 'any', filePath });
         try {
           await fs.unlink(filePath);
           logger.trace(`File ${filePath} deleted`);
@@ -313,7 +312,7 @@ export const persistResults = async (
         }
 
         logger.debug(`Sending compressed CSV file "${gzipPath}" to Engine`);
-        await addContentFn({ type: 'raw', filePath: gzipPath });
+        await addContentFn({ type: 'any', filePath: gzipPath });
 
         try {
           await fs.unlink(gzipPath);
@@ -323,7 +322,7 @@ export const persistResults = async (
         }
       } else {
         logger.debug(`Sending CSV file "${csvPath}" to Engine`);
-        await addContentFn({ type: 'raw', filePath: csvPath });
+        await addContentFn({ type: 'any', filePath: csvPath });
 
         try {
           await fs.unlink(csvPath);

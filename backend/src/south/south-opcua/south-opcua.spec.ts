@@ -1,9 +1,8 @@
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import fs from 'node:fs/promises';
 import SouthOPCUA, { MAX_NUMBER_OF_NODE_TO_LOG } from './south-opcua';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import EncryptionService from '../../service/encryption.service';
-import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import { randomUUID } from 'crypto';
 import path from 'node:path';
 import { SouthOPCUAItemSettings, SouthOPCUASettings } from '../../../shared/model/south-settings.model';
@@ -13,17 +12,17 @@ import ConnectionService from '../../service/connection.service';
 import { HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_opcua_types';
 import nodeOPCUAClient, {
   AggregateFunction,
+  ClientSession,
   DataType,
+  DataValue,
   HistoryReadRequest,
   ReadProcessedDetails,
   ReadRawModifiedDetails,
+  resolveNodeId,
   StatusCodes,
   TimestampsToReturn,
-  ClientSession,
-  Variant,
-  resolveNodeId
+  Variant
 } from 'node-opcua';
-
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import SouthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/south-connector-repository.mock';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
@@ -35,6 +34,7 @@ import testData from '../../tests/utils/test-data';
 import { mockBaseFolders } from '../../tests/utils/test-utils';
 import { SouthConnectorEntity } from '../../model/south-connector.model';
 import { DateTime } from 'luxon';
+import { encryptionService } from '../../service/encryption.service';
 
 class CustomStream extends Stream {
   constructor() {
@@ -72,7 +72,6 @@ jest.mock('crypto', () => ({
 jest.mock('node:fs/promises');
 jest.mock('../../service/utils');
 
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
@@ -85,6 +84,9 @@ jest.mock(
       return southCacheService;
     }
 );
+jest.mock('../../service/encryption.service', () => ({
+  encryptionService: new EncryptionServiceMock('', '')
+}));
 
 const logger: pino.Logger = new PinoLogger();
 const addContentCallback = jest.fn();
@@ -109,9 +111,7 @@ describe('SouthOPCUA', () => {
       retryInterval: 10000,
       readTimeout: 15000,
       authentication: {
-        type: 'none',
-        password: null,
-        keyFilePath: null
+        type: 'none'
       },
       securityMode: 'none',
       securityPolicy: 'none',
@@ -205,7 +205,6 @@ describe('SouthOPCUA', () => {
     south = new SouthOPCUA(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,
@@ -880,6 +879,7 @@ describe('SouthOPCUA', () => {
     south['MAX_NUMBER_OF_MESSAGES'] = 1;
     await south.start();
     await south.subscribe([configuration.items[0]]);
+    await south.subscribe([configuration.items[0]]);
     expect(session.createSubscription2).toHaveBeenCalledTimes(1);
     expect(monitorFn).toHaveBeenCalledTimes(1);
     stream.emit('changed', { value: { value: 1, dataType: DataType.Null }, sourceTimestamp: DateTime.now(), statusCode: StatusCodes.Good });
@@ -1074,6 +1074,85 @@ describe('SouthOPCUA', () => {
       `Error when parsing node ID ${configuration.items[0].settings.nodeId} for item ${configuration.items[0].name}: bad node id`
     );
   });
+
+  it('getValueHA() should do nothing if no data values', async () => {
+    const historyRead = jest.fn().mockReturnValue({
+      responseHeader: {
+        serviceResult: StatusCodes.Good
+      },
+      results: [
+        {
+          historyData: {},
+          statusCode: StatusCodes.Good,
+          continuationPoint: false
+        }
+      ]
+    });
+    const session = { historyRead } as unknown as ClientSession;
+
+    await south.start();
+    await south.getHAValues([configuration.items[0]], testData.constants.dates.FAKE_NOW, testData.constants.dates.FAKE_NOW, session, true);
+    expect(historyRead).toHaveBeenCalled();
+  });
+
+  it('getTimestamp() should properly retrieve correct timestamp', () => {
+    const dataValueWithTimestamps: DataValue = {
+      sourceTimestamp: new Date(testData.constants.dates.DATE_1),
+      serverTimestamp: new Date(testData.constants.dates.DATE_2)
+    } as DataValue;
+
+    const dataValueWithoutTimestamps: DataValue = {
+      sourceTimestamp: null,
+      serverTimestamp: null
+    } as DataValue;
+
+    expect(
+      south['getTimestamp'](
+        dataValueWithTimestamps,
+        {
+          timestampOrigin: 'point'
+        } as SouthOPCUAItemSettings,
+        testData.constants.dates.FAKE_NOW
+      )
+    ).toEqual(testData.constants.dates.DATE_1);
+    expect(
+      south['getTimestamp'](
+        dataValueWithTimestamps,
+        {
+          timestampOrigin: 'server'
+        } as SouthOPCUAItemSettings,
+        testData.constants.dates.FAKE_NOW
+      )
+    ).toEqual(testData.constants.dates.DATE_2);
+    expect(
+      south['getTimestamp'](
+        dataValueWithTimestamps,
+        {
+          timestampOrigin: 'oibus'
+        } as SouthOPCUAItemSettings,
+        testData.constants.dates.FAKE_NOW
+      )
+    ).toEqual(testData.constants.dates.FAKE_NOW);
+
+    expect(
+      south['getTimestamp'](
+        dataValueWithoutTimestamps,
+        {
+          timestampOrigin: 'point'
+        } as SouthOPCUAItemSettings,
+        testData.constants.dates.FAKE_NOW
+      )
+    ).toEqual(testData.constants.dates.FAKE_NOW);
+    expect(
+      south['getTimestamp'](
+        dataValueWithoutTimestamps,
+        {
+          timestampOrigin: 'server'
+        } as SouthOPCUAItemSettings,
+        testData.constants.dates.FAKE_NOW
+      )
+    ).toEqual(testData.constants.dates.FAKE_NOW);
+  });
 });
 
 describe('SouthOPCUA with basic auth', () => {
@@ -1103,7 +1182,6 @@ describe('SouthOPCUA with basic auth', () => {
         certFilePath: ''
       },
       securityMode: 'none',
-      securityPolicy: null,
       keepSessionAlive: false
     },
     items: [
@@ -1191,7 +1269,6 @@ describe('SouthOPCUA with basic auth', () => {
     south = new SouthOPCUA(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,
@@ -1349,7 +1426,6 @@ describe('SouthOPCUA with certificate', () => {
     south = new SouthOPCUA(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,
@@ -1507,9 +1583,7 @@ describe('SouthOPCUA test connection', () => {
       retryInterval: 10000,
       readTimeout: 15000,
       authentication: {
-        type: 'none',
-        password: null,
-        keyFilePath: null
+        type: 'none'
       },
       securityMode: 'sign-and-encrypt',
       securityPolicy: 'none',
@@ -1629,7 +1703,6 @@ describe('SouthOPCUA test connection', () => {
     south = new SouthOPCUA(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,
@@ -1648,15 +1721,6 @@ describe('SouthOPCUA test connection', () => {
     expect(close).toHaveBeenCalled();
   });
 
-  it('Wrong URL', async () => {
-    const error = new Error('BadTcpEndpointUrlInvalid');
-    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockImplementationOnce(() => {
-      throw error;
-    });
-
-    await expect(south.testConnection()).rejects.toThrow(new Error('Please check the URL'));
-  });
-
   it.each(securityPolicies)('Server does not support Security policy: %s', async securityPolicy => {
     configuration.settings.securityPolicy = securityPolicy;
     const error = new Error(`Cannot find an Endpoint matching  security mode: ${securityPolicy}`);
@@ -1665,7 +1729,7 @@ describe('SouthOPCUA test connection', () => {
       throw error;
     });
 
-    await expect(south.testConnection()).rejects.toThrow(new Error(`Security Policy "${securityPolicy}" is not supported on the server`));
+    await expect(south.testConnection()).rejects.toThrow(error);
   });
 
   it.each(securityPolicies.slice(1))('Server did not trust certificate using Security policy: %s', async securityPolicy => {
@@ -1676,7 +1740,7 @@ describe('SouthOPCUA test connection', () => {
       throw error;
     });
 
-    await expect(south.testConnection()).rejects.toThrow(new Error('Please check if the OIBus certificate has been trusted by the server'));
+    await expect(south.testConnection()).rejects.toThrow(error);
   });
 
   it('Wrong user credentials', async () => {
@@ -1687,7 +1751,7 @@ describe('SouthOPCUA test connection', () => {
       throw error;
     });
 
-    await expect(south.testConnection()).rejects.toThrow(new Error('Please check username and password'));
+    await expect(south.testConnection()).rejects.toThrow(error);
   });
 
   it('Wrong certificate', async () => {
@@ -1707,7 +1771,7 @@ describe('SouthOPCUA test connection', () => {
       throw error;
     });
 
-    await expect(south.testConnection()).rejects.toThrow(new Error('Please check the certificate and key'));
+    await expect(south.testConnection()).rejects.toThrow(error);
   });
 
   it('Certificate file does not exist', async () => {
@@ -1738,7 +1802,6 @@ describe('SouthOPCUA test connection', () => {
       password: ''
     };
     const error = new Error('Failed to read private key');
-    const keyPath = path.resolve(configuration.settings.authentication.keyFilePath!);
     (fs.readFile as jest.Mock)
       .mockImplementationOnce(() => Buffer.from('cert content'))
       .mockImplementationOnce(() => Buffer.from('key content'));
@@ -1746,7 +1809,7 @@ describe('SouthOPCUA test connection', () => {
       throw error;
     });
 
-    await expect(south.testConnection()).rejects.toThrow(new Error(`Could not read private key "${keyPath}"`));
+    await expect(south.testConnection()).rejects.toThrow(new Error(`Failed to read private key`));
   });
 
   it('Unknown error', async () => {
@@ -1787,9 +1850,7 @@ describe('SouthOPCUA with shared connection', () => {
       retryInterval: 10000,
       readTimeout: 15000,
       authentication: {
-        type: 'none',
-        password: null,
-        keyFilePath: null
+        type: 'none'
       },
       securityMode: 'none',
       securityPolicy: 'none',
@@ -1879,7 +1940,6 @@ describe('SouthOPCUA with shared connection', () => {
     south = new SouthOPCUA(
       configuration,
       addContentCallback,
-      encryptionService,
       southConnectorRepository,
       southCacheRepository,
       scanModeRepository,

@@ -9,7 +9,7 @@ import { NorthConnectorDTO } from '../../../../../backend/shared/model/north-con
 import { SouthConnectorLightDTO } from '../../../../../backend/shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
-import { CreateNorthSubscriptionModalComponent } from '../create-north-subscription-modal/create-north-subscription-modal.component';
+import { CreateNorthSubscriptionModalComponent } from './create-north-subscription-modal/create-north-subscription-modal.component';
 import { Modal, ModalService } from '../../shared/modal.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';

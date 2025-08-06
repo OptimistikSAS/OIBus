@@ -27,11 +27,11 @@ import { CurrentUserService } from '../current-user.service';
  * Simple usage:
  *
  * ```
- * <oi-datetimepicker formControlName="from" timeZone="UTC"></oi-datetimepicker>
+ * <oib-datetimepicker formControlName="from" timeZone="UTC"></oib-datetimepicker>
  * ```
  *
  * If inputs need to be passed to the datepicker and/or to the timepicker, then two ng-template (one for the datepicker,
- * one for the timepicker) can be passed as  the content of this component.
+ * one for the timepicker) can be passed as the content of this component.
  * They must have a template variable named `date` and `time`.
  * Both templates accept an implicit contextual argument which is the FormControl bound to the date or time picker.
  *

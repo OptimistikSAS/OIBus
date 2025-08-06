@@ -5,15 +5,55 @@
 export const NORTH_AZURE_BLOB_SETTINGS_AUTHENTICATIONS = ['access-key', 'sas-token', 'aad', 'external'] as const;
 export type NorthAzureBlobSettingsAuthentication = (typeof NORTH_AZURE_BLOB_SETTINGS_AUTHENTICATIONS)[number];
 
+export const NORTH_MODBUS_SETTINGS_ADDRESS_OFFSETS = ['modbus', 'jbus'] as const;
+export type NorthModbusSettingsAddressOffset = (typeof NORTH_MODBUS_SETTINGS_ADDRESS_OFFSETS)[number];
+
+export const NORTH_MODBUS_SETTINGS_ENDIANNESSS = ['big-endian', 'little-endian'] as const;
+export type NorthModbusSettingsEndianness = (typeof NORTH_MODBUS_SETTINGS_ENDIANNESSS)[number];
+
+export const NORTH_M_Q_T_T_SETTINGS_AUTHENTICATION_TYPES = ['none', 'basic', 'cert'] as const;
+export type NorthMQTTSettingsAuthenticationType = (typeof NORTH_M_Q_T_T_SETTINGS_AUTHENTICATION_TYPES)[number];
+
+export const NORTH_M_Q_T_T_SETTINGS_QOSS = ['0', '1', '2'] as const;
+export type NorthMQTTSettingsQos = (typeof NORTH_M_Q_T_T_SETTINGS_QOSS)[number];
+
 export const NORTH_O_I_ANALYTICS_SETTINGS_SPECIFIC_SETTINGS_AUTHENTICATIONS = ['basic', 'aad-client-secret', 'aad-certificate'] as const;
 export type NorthOIAnalyticsSettingsSpecificSettingsAuthentication =
   (typeof NORTH_O_I_ANALYTICS_SETTINGS_SPECIFIC_SETTINGS_AUTHENTICATIONS)[number];
+
+export const NORTH_O_P_C_U_A_SETTINGS_AUTHENTICATION_TYPES = ['none', 'basic', 'cert'] as const;
+export type NorthOPCUASettingsAuthenticationType = (typeof NORTH_O_P_C_U_A_SETTINGS_AUTHENTICATION_TYPES)[number];
+
+export const NORTH_O_P_C_U_A_SETTINGS_SECURITY_MODES = ['none', 'sign', 'sign-and-encrypt'] as const;
+export type NorthOPCUASettingsSecurityMode = (typeof NORTH_O_P_C_U_A_SETTINGS_SECURITY_MODES)[number];
+
+export const NORTH_O_P_C_U_A_SETTINGS_SECURITY_POLICYS = [
+  'none',
+  'basic128',
+  'basic192',
+  'basic192-rsa15',
+  'basic256-rsa15',
+  'basic256-sha256',
+  'aes128-sha256-rsa-oaep',
+  'pub-sub-aes-128-ctr',
+  'pub-sub-aes-256-ctr'
+] as const;
+export type NorthOPCUASettingsSecurityPolicy = (typeof NORTH_O_P_C_U_A_SETTINGS_SECURITY_POLICYS)[number];
 
 export const NORTH_R_E_S_T_SETTINGS_AUTH_TYPES = ['basic', 'bearer'] as const;
 export type NorthRESTSettingsAuthType = (typeof NORTH_R_E_S_T_SETTINGS_AUTH_TYPES)[number];
 
 export const NORTH_S_F_T_P_SETTINGS_AUTHENTICATIONS = ['password', 'private-key'] as const;
 export type NorthSFTPSettingsAuthentication = (typeof NORTH_S_F_T_P_SETTINGS_AUTHENTICATIONS)[number];
+
+export interface NorthMQTTSettingsAuthentication {
+  type: NorthMQTTSettingsAuthenticationType;
+  username?: string;
+  password?: string;
+  certFilePath?: string;
+  keyFilePath?: string;
+  caFilePath?: string;
+}
 
 export interface NorthOIAnalyticsSettingsSpecificSettings {
   host: string;
@@ -32,6 +72,14 @@ export interface NorthOIAnalyticsSettingsSpecificSettings {
   proxyPassword?: string | null;
 }
 
+export interface NorthOPCUASettingsAuthentication {
+  type: NorthOPCUASettingsAuthenticationType;
+  username?: string;
+  password?: string | null;
+  certFilePath?: string;
+  keyFilePath?: string;
+}
+
 export interface NorthRESTSettingsQueryParams {
   key: string;
   value: string;
@@ -44,7 +92,7 @@ export interface NorthAmazonS3Settings {
   accessKey: string;
   secretKey: string | null;
   useProxy: boolean;
-  proxyUrl?: string;
+  proxyUrl?: string | null;
   proxyUsername?: string | null;
   proxyPassword?: string | null;
 }
@@ -55,10 +103,10 @@ export interface NorthAzureBlobSettings {
   account?: string;
   customUrl?: string;
   container: string;
-  path: string | null;
+  path: string;
   authentication: NorthAzureBlobSettingsAuthentication;
-  sasToken?: string | null;
   accessKey?: string | null;
+  sasToken?: string | null;
   tenantId?: string | null;
   clientId?: string | null;
   clientSecret?: string | null;
@@ -78,6 +126,27 @@ export interface NorthFileWriterSettings {
   suffix: string | null;
 }
 
+export interface NorthModbusSettings {
+  host: string;
+  port: number;
+  retryInterval: number;
+  slaveId: number;
+  addressOffset: NorthModbusSettingsAddressOffset;
+  endianness: NorthModbusSettingsEndianness;
+  swapBytesInWords: boolean;
+  swapWordsInDWords: boolean;
+}
+
+export interface NorthMQTTSettings {
+  url: string;
+  qos: NorthMQTTSettingsQos;
+  persistent?: boolean;
+  authentication: NorthMQTTSettingsAuthentication;
+  rejectUnauthorized: boolean;
+  reconnectPeriod: number;
+  connectTimeout: number;
+}
+
 export interface NorthOIAnalyticsSettings {
   useOiaModule: boolean;
   timeout: number;
@@ -85,7 +154,18 @@ export interface NorthOIAnalyticsSettings {
   specificSettings?: NorthOIAnalyticsSettingsSpecificSettings | null;
 }
 
+export interface NorthOPCUASettings {
+  url: string;
+  keepSessionAlive: boolean;
+  retryInterval: number;
+  securityMode: NorthOPCUASettingsSecurityMode;
+  securityPolicy?: NorthOPCUASettingsSecurityPolicy;
+  authentication: NorthOPCUASettingsAuthentication;
+}
+
 export interface NorthRESTSettings {
+  host: string;
+  acceptUnauthorized: boolean;
   endpoint: string;
   testPath: string;
   timeout: number;
@@ -104,7 +184,7 @@ export interface NorthSFTPSettings {
   host: string;
   port: number;
   authentication: NorthSFTPSettingsAuthentication;
-  username: string | null;
+  username: string;
   password?: string | null;
   privateKey?: string;
   passphrase?: string | null;
@@ -118,6 +198,9 @@ export type NorthSettings =
   | NorthAzureBlobSettings
   | NorthConsoleSettings
   | NorthFileWriterSettings
+  | NorthModbusSettings
+  | NorthMQTTSettings
   | NorthOIAnalyticsSettings
+  | NorthOPCUASettings
   | NorthRESTSettings
   | NorthSFTPSettings;
