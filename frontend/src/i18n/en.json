@@ -252,6 +252,7 @@
     "oibus-south-type": {
       "ads": "ADS - TwinCAT®",
       "folder-scanner": "Folder scanner",
+      "ftp": "FTP",
       "modbus": "Modbus",
       "mqtt": "MQTT",
       "mssql": "Microsoft SQL Server™",
@@ -270,6 +271,7 @@
     "oibus-south-type-description": {
       "ads": "The ADS protocol used in TwinCAT® systems",
       "folder-scanner": "Read files from a local or remote folder",
+      "ftp": "Read files from a remote FTP server",
       "modbus": "Access Modbus registers on a PLC",
       "mqtt": "Subscribe to MQTT broker topics",
       "mssql": "Query Microsoft SQL Server™ databases",
@@ -1176,6 +1178,18 @@
             "passphrase": "Passphrase",
             "compression": "Compress files"
           },
+          "ftp": {
+            "host": "Host",
+            "port": "Port",
+            "authentication": {
+              "title": "Authentication",
+              "none": "None",
+              "password": "Password"
+            },
+            "username": "Username",
+            "password": "Password",
+            "compression": "Compress files"
+          },
           "sqlite": {
             "throttling": {
               "title": "Throttling",
@@ -1540,12 +1554,13 @@
                   "1d": "1 day"
                 }
               },
-            "timestamp-origin": {
-          "title": "Timestamp origin",
-          "oibus": "OIBus",
-          "point": "Point",
-          "server": "Server"
-        }},
+              "timestamp-origin": {
+                "title": "Timestamp origin",
+                "oibus": "OIBus",
+                "point": "Point",
+                "server": "Server"
+              }
+            },
             "oracle": {
               "query": "Query",
               "request-timeout": "Request timeout",
@@ -1644,7 +1659,13 @@
               "min-age": "Min age",
               "preserve-files": "Preserve files",
               "ignore-modified-date": "Ignorer modification date"
-
+            },
+            "ftp": {
+              "remote-folder": "Remote folder",
+              "regex": "Regex to pick up files",
+              "min-age": "Min age",
+              "preserve-files": "Preserve files",
+              "ignore-modified-date": "Ignore modification date"
             },
             "sqlite": {
               "query": "Query",

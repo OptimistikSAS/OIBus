@@ -8,6 +8,7 @@ export type OIBusSouthCategory = (typeof OIBUS_SOUTH_CATEGORIES)[number];
 export const OIBUS_SOUTH_TYPES = [
   'ads',
   'folder-scanner',
+  'ftp',
   'modbus',
   'mqtt',
   'mssql',
