@@ -190,9 +190,7 @@ describe('OIAnalytics Command Service', () => {
       throw new Error('retrieve command error');
     });
     service.checkRetrievedCommands = jest.fn();
-    service.sendAckCommands = jest.fn().mockImplementationOnce(() => {
-      throw new Error('ack command error');
-    });
+    service.sendAckCommands = jest.fn();
     (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock)
       .mockReturnValueOnce(testData.oIAnalytics.registration.completed)
       .mockReturnValueOnce(testData.oIAnalytics.registration.completed);
@@ -204,31 +202,45 @@ describe('OIAnalytics Command Service', () => {
     jest.advanceTimersByTime(testData.oIAnalytics.registration.completed.commandRetryInterval * 1000);
     await flushPromises();
     expect(service.sendAckCommands).toHaveBeenCalledTimes(1);
-    expect(logger.error).toHaveBeenCalledTimes(2);
-    expect(logger.error).toHaveBeenCalledWith('ack command error');
-    expect(service.sendAckCommands).toHaveBeenCalledTimes(1);
   });
 
   it('should send ack', async () => {
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.commands.oIBusList);
     await service.sendAckCommands(testData.oIAnalytics.registration.completed);
 
-    expect(oIAnalyticsClient.updateCommandStatus).toHaveBeenCalledTimes(1);
+    expect(oIAnalyticsClient.updateCommandStatus).toHaveBeenCalledTimes(testData.oIAnalytics.commands.oIBusList.length);
     expect(oIAnalyticsCommandRepository.markAsAcknowledged).toHaveBeenCalledTimes(testData.oIAnalytics.commands.oIBusList.length);
-    expect(logger.trace).toHaveBeenCalledWith(`${testData.oIAnalytics.commands.oIBusList.length} commands acknowledged`);
-
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.commands.oIBusList);
-    (oIAnalyticsClient.updateCommandStatus as jest.Mock).mockImplementationOnce(() => {
-      throw new Error('error');
-    });
-    await expect(service.sendAckCommands(testData.oIAnalytics.registration.completed)).rejects.toThrow(
-      `Error while acknowledging ${testData.oIAnalytics.commands.oIBusList.length} commands: error`
+    expect(logger.trace).toHaveBeenCalledWith(
+      `Command ${testData.oIAnalytics.commands.oIBusList[0].id} of type ${testData.oIAnalytics.commands.oIBusList[0].type} acknowledged`
     );
+  });
 
+  it('should send not send ack if no command to ack', async () => {
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([]);
     await service.sendAckCommands(testData.oIAnalytics.registration.completed);
 
     expect(logger.trace).toHaveBeenCalledWith(`No command to ack`);
+  });
+
+  it('should properly manage ack error', async () => {
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([
+      testData.oIAnalytics.commands.oIBusList[0],
+      testData.oIAnalytics.commands.oIBusList[1]
+    ]);
+    (oIAnalyticsClient.updateCommandStatus as jest.Mock)
+      .mockImplementationOnce(() => {
+        throw new Error('error');
+      })
+      .mockImplementationOnce(() => {
+        throw new Error('404 - not found');
+      });
+    await service.sendAckCommands(testData.oIAnalytics.registration.completed);
+    expect(logger.error).toHaveBeenCalledWith(
+      `Error while acknowledging command ${testData.oIAnalytics.commands.oIBusList[0].id} of type ${testData.oIAnalytics.commands.oIBusList[0].type}: error`
+    );
+    expect(logger.error).toHaveBeenCalledTimes(2);
+    expect(oIAnalyticsCommandRepository.markAsAcknowledged).toHaveBeenCalledTimes(1);
+    expect(oIAnalyticsCommandRepository.markAsAcknowledged).toHaveBeenCalledWith(testData.oIAnalytics.commands.oIBusList[1].id);
   });
 
   it('should check retrieved command', async () => {
@@ -256,6 +268,17 @@ describe('OIAnalytics Command Service', () => {
     expect(logger.trace).toHaveBeenCalledWith(`No command retrieved to check`);
   });
 
+  it('should check retrieved command and cancel nothing', async () => {
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.commands.oIBusList);
+    (oIAnalyticsClient.retrieveCancelledCommands as jest.Mock).mockReturnValueOnce([]);
+
+    await service.checkRetrievedCommands(testData.oIAnalytics.registration.completed);
+
+    expect(oIAnalyticsClient.retrieveCancelledCommands).toHaveBeenCalledTimes(1);
+    expect(oIAnalyticsCommandRepository.cancel).not.toHaveBeenCalled();
+    expect(logger.trace).not.toHaveBeenCalled();
+  });
+
   it('should retrieve commands', async () => {
     (oIAnalyticsClient.retrievePendingCommands as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.commands.oIAnalyticsList);
 
@@ -271,6 +294,16 @@ describe('OIAnalytics Command Service', () => {
     await expect(service.retrieveCommands(testData.oIAnalytics.registration.completed)).rejects.toThrow(
       `Error while retrieving commands: error`
     );
+  });
+
+  it('should retrieve commands and do nothing', async () => {
+    (oIAnalyticsClient.retrievePendingCommands as jest.Mock).mockReturnValueOnce([]);
+
+    await service.retrieveCommands(testData.oIAnalytics.registration.completed);
+
+    expect(oIAnalyticsClient.retrievePendingCommands).toHaveBeenCalledTimes(1);
+    expect(oIAnalyticsCommandRepository.create).not.toHaveBeenCalled();
+    expect(logger.trace).not.toHaveBeenCalled();
   });
 
   it('should execute update-version command without updating launcher', async () => {

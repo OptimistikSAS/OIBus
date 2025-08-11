@@ -169,11 +169,8 @@ export default class OIAnalyticsCommandService {
       this.retrieveCommandsInterval = setTimeout(this.checkCommands.bind(this), registration.commandRetryInterval * 1000);
       return;
     }
-    try {
-      await this.sendAckCommands(registration);
-    } catch (error: unknown) {
-      this.logger.error((error as Error).message);
-    }
+
+    await this.sendAckCommands(registration);
     this.ongoingRetrieveCommands = false;
     this.commandEvent.emit('next');
     this.retrieveCommandsInterval = setTimeout(this.checkCommands.bind(this), registration.commandRefreshInterval * 1000);
@@ -190,14 +187,17 @@ export default class OIAnalyticsCommandService {
       return;
     }
 
-    try {
-      await this.oIAnalyticsClient.updateCommandStatus(registration, JSON.stringify(commandsToAck));
-      for (const command of commandsToAck) {
+    for (const command of commandsToAck) {
+      try {
+        await this.oIAnalyticsClient.updateCommandStatus(registration, JSON.stringify([command]));
         this.oIAnalyticsCommandRepository.markAsAcknowledged(command.id);
+        this.logger.trace(`Command ${command.id} of type ${command.type} acknowledged`);
+      } catch (error: unknown) {
+        this.logger.error(`Error while acknowledging command ${command.id} of type ${command.type}: ${(error as Error).message}`);
+        if ((error as Error).message.startsWith('404 - ')) {
+          this.oIAnalyticsCommandRepository.markAsAcknowledged(command.id);
+        }
       }
-      this.logger.trace(`${commandsToAck.length} commands acknowledged`);
-    } catch (error: unknown) {
-      throw new Error(`Error while acknowledging ${commandsToAck.length} commands: ${(error as Error).message}`);
     }
   }
 
