@@ -29,6 +29,7 @@ import {
   persistResults,
   pipeTransformers,
   stringToBoolean,
+  testIPOnFilter,
   unzip,
   validateCronExpression
 } from './utils';
@@ -1156,6 +1157,73 @@ describe('Service utils', () => {
       expect(stringToBoolean('FALSE')).toEqual(false);
       expect(stringToBoolean('0')).toEqual(false);
       expect(stringToBoolean('99')).toEqual(false);
+    });
+  });
+
+  describe('testIPOnFilter', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should return false for an empty filter list', () => {
+      expect(testIPOnFilter([], '192.168.1.1')).toEqual(false);
+    });
+
+    it('should return true for a matching IPv4 address', () => {
+      expect(testIPOnFilter(['192.168.1.*'], '192.168.1.1')).toEqual(true);
+      expect(testIPOnFilter(['192.168.*.*'], '192.168.1.1')).toEqual(true);
+    });
+
+    it('should return true for a matching IPv6-mapped IPv4 address', () => {
+      const ipFilters = ['192.168.1.*'];
+      expect(testIPOnFilter(ipFilters, '::ffff:192.168.1.1')).toEqual(true);
+    });
+
+    it('should return false for a non-matching IPv4 address', () => {
+      const ipFilters = ['192.168.2.*'];
+      expect(testIPOnFilter(ipFilters, '192.168.1.1')).toEqual(false);
+    });
+
+    it('should return false for a non-matching IPv6-mapped IPv4 address', () => {
+      const ipFilters = ['192.168.2.*'];
+      expect(testIPOnFilter(ipFilters, '::ffff:192.168.1.1')).toEqual(false);
+    });
+
+    it('should return true for a direct matching IPv4 address', () => {
+      const ipFilters = ['192.168.1.1'];
+      expect(testIPOnFilter(ipFilters, '192.168.1.1')).toEqual(true);
+    });
+
+    it('should return true for a direct matching IPv6-mapped IPv4 address', () => {
+      const ipFilters = ['192.168.1.1'];
+      expect(testIPOnFilter(ipFilters, '::ffff:192.168.1.1')).toEqual(true);
+    });
+
+    it('should return true for a matching IPv6 address', () => {
+      const ipFilters = ['2001:0db8:85a3:0000:0000:8a2e:0370:*'];
+      expect(testIPOnFilter(ipFilters, '2001:0db8:85a3:0000:0000:8a2e:0370:7334')).toEqual(true);
+    });
+
+    it('should return false for a non-matching IPv6 address', () => {
+      const ipFilters = ['2001:0db8:85a3:0000:0000:8a2e:0370:*'];
+      expect(testIPOnFilter(ipFilters, '2001:0db8:85a3:0000:0000:8a2e:0371:7334')).toEqual(false);
+    });
+
+    it('should return true for localhost IPv4', () => {
+      const ipFilters = ['127.0.0.1'];
+      expect(testIPOnFilter(ipFilters, '127.0.0.1')).toEqual(true);
+    });
+
+    it('should return true for localhost IPv6', () => {
+      const ipFilters = ['::1'];
+      expect(testIPOnFilter(ipFilters, '::1')).toEqual(true);
+    });
+
+    it('should return true for any IP with wildcard *', () => {
+      const ipFilters = ['*'];
+      expect(testIPOnFilter(ipFilters, '192.168.1.1')).toEqual(true);
+      expect(testIPOnFilter(ipFilters, '::ffff:192.168.1.1')).toEqual(true);
+      expect(testIPOnFilter(ipFilters, '2001:0db8:85a3:0000:0000:8a2e:0370:7334')).toEqual(true);
     });
   });
 });

@@ -4,6 +4,7 @@ import httpProxy from 'http-proxy';
 import net from 'node:net';
 import ProxyServer from './proxy-server';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
+import { testIPOnFilter } from '../service/utils';
 
 const httpMock = {
   on: jest.fn(),
@@ -21,6 +22,7 @@ jest.mock('node:http', () => ({
 
 jest.mock('http-proxy');
 jest.mock('node:net');
+jest.mock('../service/utils');
 
 const logger: pino.Logger = new PinoLogger();
 
@@ -30,6 +32,8 @@ describe('ProxyServer', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
+
+    (testIPOnFilter as jest.Mock).mockReturnValue(true);
 
     proxyServer = new ProxyServer(logger, false);
   });
@@ -109,6 +113,7 @@ describe('ProxyServer', () => {
   });
 
   it('should block http requests from non-whitelisted IPs', () => {
+    (testIPOnFilter as jest.Mock).mockReturnValueOnce(false);
     proxyServer.refreshIpFilters(['*.*.*.*']);
     const mockReq = {
       method: 'GET',
@@ -123,6 +128,7 @@ describe('ProxyServer', () => {
 
     proxyServer['handleHttpRequest'](mockReq, mockRes);
 
+    expect(testIPOnFilter).toHaveBeenCalledWith(['127.0.0.1', '::1', '::ffff:127.0.0.1', '*.*.*.*'], mockReq.socket.remoteAddress);
     expect(mockRes.writeHead).toHaveBeenCalledWith(403, { 'Content-Type': 'text/plain' });
     expect(mockRes.end).toHaveBeenCalledWith('Forbidden');
   });
@@ -190,6 +196,7 @@ describe('ProxyServer', () => {
   });
 
   it('should block https requests from non-whitelisted IPs', () => {
+    (testIPOnFilter as jest.Mock).mockReturnValueOnce(false);
     const mockReq = {
       method: 'CONNECT',
       url: 'example.com:443',
@@ -204,6 +211,7 @@ describe('ProxyServer', () => {
 
     proxyServer['handleHttpsRequest'](mockReq, mockClientSocket, Buffer.from(''));
 
+    expect(testIPOnFilter).toHaveBeenCalledWith(['127.0.0.1', '::1', '::ffff:127.0.0.1'], mockReq.socket.remoteAddress);
     expect(mockClientSocket.write).toHaveBeenCalledWith('HTTP/1.1 403 Forbidden\r\n\r\n');
     expect(mockClientSocket.end).toHaveBeenCalled();
   });

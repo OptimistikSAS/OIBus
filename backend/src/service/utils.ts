@@ -642,3 +642,38 @@ export const stringToBoolean = (value: string): boolean => {
   if (['false', 'False', 'FALSE', '0'].includes(value)) return false;
   return false;
 };
+
+const formatRegex = (ip: string) => {
+  // Escape backslashes, then replace . and *
+  return `^${ip.replace(/\\/g, '\\\\').replace(/\./g, '\\.').replace(/\*/g, '.*')}$`;
+};
+
+export const testIPOnFilter = (ipFilters: Array<string>, ipToCheck: string): boolean => {
+  return ipFilters.some(filter => {
+    if (filter === '*') {
+      return true;
+    }
+
+    // Format the regex for IPv4
+    const formattedRegexIPv4 = formatRegex(filter);
+    const regexIPv4 = new RegExp(formattedRegexIPv4);
+
+    // Format the regex for IPv6
+    const formattedRegexIPv6 = formatRegex(filter);
+    const regexIPv6 = new RegExp(formattedRegexIPv6);
+
+    // Test both IPv4 and IPv6 formats
+    if (/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(ipToCheck)) {
+      return regexIPv4.test(ipToCheck) || regexIPv6.test(`::ffff:${ipToCheck}`);
+    } else {
+      // Check if the ipToCheck is an IPv6-mapped IPv4 address
+      const ipv4MappedPattern = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/;
+      const match = ipToCheck.match(ipv4MappedPattern);
+      if (match) {
+        const ipv4Part = match[1];
+        return regexIPv4.test(ipv4Part);
+      }
+      return regexIPv6.test(ipToCheck);
+    }
+  });
+};
