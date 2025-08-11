@@ -273,6 +273,9 @@ export type SouthPostgreSQLItemSettingsSerializationDelimiter = (typeof SOUTH_PO
 export const SOUTH_S_F_T_P_SETTINGS_AUTHENTICATIONS = ['password', 'private-key'] as const;
 export type SouthSFTPSettingsAuthentication = (typeof SOUTH_S_F_T_P_SETTINGS_AUTHENTICATIONS)[number];
 
+export const SOUTH_F_T_P_SETTINGS_AUTHENTICATIONS = ['none', 'password'] as const;
+export type SouthFTPSettingsAuthentication = (typeof SOUTH_F_T_P_SETTINGS_AUTHENTICATIONS)[number];
+
 export const SOUTH_S_Q_LITE_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'] as const;
 export type SouthSQLiteItemSettingsDateTimeFieldsType = (typeof SOUTH_S_Q_LITE_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
 
@@ -553,6 +556,15 @@ export interface SouthSFTPSettings {
   compression: boolean;
 }
 
+export interface SouthFTPSettings {
+  host: string;
+  port: number;
+  authentication: SouthFTPSettingsAuthentication;
+  username: string | null;
+  password?: string | null;
+  compression: boolean;
+}
+
 export interface SouthSQLiteSettings {
   throttling: SouthSQLiteSettingsThrottling;
   databasePath: string;
@@ -574,6 +586,7 @@ export type SouthSettings =
   | SouthPISettings
   | SouthPostgreSQLSettings
   | SouthSFTPSettings
+  | SouthFTPSettings
   | SouthSQLiteSettings;
 
 export interface SouthModbusItemSettingsData {
@@ -844,6 +857,14 @@ export interface SouthSFTPItemSettings {
   ignoreModifiedDate?: boolean;
 }
 
+export interface SouthFTPItemSettings {
+  remoteFolder: string;
+  regex: string;
+  minAge: number;
+  preserveFiles: boolean;
+  ignoreModifiedDate?: boolean;
+}
+
 export interface SouthSQLiteItemSettings {
   query: string;
   dateTimeFields: Array<SouthSQLiteItemSettingsDateTimeFields> | null;
@@ -866,4 +887,5 @@ export type SouthItemSettings =
   | SouthPIItemSettings
   | SouthPostgreSQLItemSettings
   | SouthSFTPItemSettings
+  | SouthFTPItemSettings
   | SouthSQLiteItemSettings;
