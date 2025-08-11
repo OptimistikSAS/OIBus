@@ -109,6 +109,7 @@ describe('ProxyServer', () => {
   });
 
   it('should block http requests from non-whitelisted IPs', () => {
+    proxyServer.refreshIpFilters(['*.*.*.*']);
     const mockReq = {
       method: 'GET',
       url: 'http://example.com',
@@ -129,7 +130,7 @@ describe('ProxyServer', () => {
   it('should block http requests if remote address is not provided', () => {
     const mockReq = {
       method: 'GET',
-      url: 'http://example.com',
+      url: 'example.com',
       socket: { remoteAddress: null }
     } as unknown as http.IncomingMessage;
 
@@ -147,9 +148,8 @@ describe('ProxyServer', () => {
   it('should allow https requests from whitelisted IPs', () => {
     const mockReq = {
       method: 'CONNECT',
-      url: 'https://example.com',
+      url: 'example.com:443',
       socket: { remoteAddress: '127.0.0.1' },
-      headers: { host: 'example.com:443' },
       httpVersion: '1.1'
     } as unknown as http.IncomingMessage;
 
@@ -192,7 +192,7 @@ describe('ProxyServer', () => {
   it('should block https requests from non-whitelisted IPs', () => {
     const mockReq = {
       method: 'CONNECT',
-      url: 'https://example.com',
+      url: 'example.com:443',
       socket: { remoteAddress: '192.168.0.1' },
       httpVersion: '1.1'
     } as unknown as http.IncomingMessage;
@@ -225,7 +225,7 @@ describe('ProxyServer', () => {
   it('should handle httpProxy errors', () => {
     const mockReq = {
       method: 'GET',
-      url: 'http://example.com',
+      url: 'example.com:443',
       socket: { remoteAddress: '127.0.0.1' }
     } as unknown as http.IncomingMessage;
 
@@ -248,7 +248,7 @@ describe('ProxyServer', () => {
   it('should only call httpProxy if the proxy server has been started', () => {
     const mockReq = {
       method: 'GET',
-      url: 'http://example.com',
+      url: 'example.com:443',
       socket: { remoteAddress: '127.0.0.1' }
     } as unknown as http.IncomingMessage;
 
@@ -264,13 +264,12 @@ describe('ProxyServer', () => {
   });
 
   it('should handle https socket errors', () => {
-    const error = new Error();
+    const error = new Error('error');
 
     const mockReq = {
       method: 'CONNECT',
-      url: 'https://example.com',
+      url: 'example.com:443',
       socket: { remoteAddress: '127.0.0.1' },
-      headers: { host: 'example.com:443' },
       httpVersion: '1.1'
     } as unknown as http.IncomingMessage;
 
@@ -308,11 +307,11 @@ describe('ProxyServer', () => {
     expect(mockClientSocket.pipe).toHaveBeenCalledWith(mockTargetSocket);
     expect(mockTargetSocket.pipe).toHaveBeenCalledWith(mockClientSocket);
 
-    expect(logger.error).toHaveBeenCalledWith(`Proxy server error on target socket: ${error}`);
+    expect(logger.error).toHaveBeenCalledWith(`Proxy server error on target socket: ${error.message}`);
     expect(mockClientSocket.write).toHaveBeenCalledWith(`HTTP/${mockReq.httpVersion} 500 Connection error\r\n\r\n`);
     expect(mockClientSocket.end).toHaveBeenCalled();
 
-    expect(logger.error).toHaveBeenCalledWith(`Proxy server error on client socket: ${error}`);
+    expect(logger.error).toHaveBeenCalledWith(`Proxy server error on client socket: ${error.message}`);
     expect(mockTargetSocket.end).toHaveBeenCalled();
   });
 
@@ -321,9 +320,8 @@ describe('ProxyServer', () => {
 
     const mockReq = {
       method: 'CONNECT',
-      url: 'https://example.com',
+      url: 'example.com:443',
       socket: { remoteAddress: null },
-      headers: { host: 'example.com:443' },
       httpVersion: '1.1'
     } as unknown as http.IncomingMessage;
 
@@ -356,5 +354,31 @@ describe('ProxyServer', () => {
     expect(net.createConnection).toHaveBeenCalledWith({ host: 'example.com', port: 443 }, expect.any(Function));
     expect(mockTargetSocket.write).toHaveBeenCalledWith(Buffer.from(''));
     expect(mockClientSocket.write).toHaveBeenCalledWith('HTTP/1.1 200 Connection established\r\n\r\n');
+  });
+
+  it('should catch error on connection error', () => {
+    proxyServer = new ProxyServer(logger, true);
+
+    const mockReq = {
+      method: 'CONNECT',
+      url: 'example.com:443',
+      socket: { remoteAddress: null },
+      httpVersion: '1.1'
+    } as unknown as http.IncomingMessage;
+
+    const mockClientSocket = {
+      write: jest.fn(),
+      pipe: jest.fn().mockImplementation(destStream => destStream),
+      on: jest.fn()
+    } as unknown as net.Socket;
+
+    (net.createConnection as jest.Mock).mockImplementationOnce(() => {
+      throw new Error('connection error');
+    });
+
+    proxyServer['handleHttpsRequest'](mockReq, mockClientSocket, Buffer.from(''));
+
+    expect(net.createConnection).toHaveBeenCalledWith({ host: 'example.com', port: 443 }, expect.any(Function));
+    expect(logger.error).toHaveBeenCalledWith(`Proxy server error: connection error`);
   });
 });
