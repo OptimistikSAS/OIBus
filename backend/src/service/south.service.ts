@@ -30,6 +30,7 @@ import opcManifest from '../south/south-opc/manifest';
 import oledbManifest from '../south/south-oledb/manifest';
 import piManifest from '../south/south-pi/manifest';
 import sftpManifest from '../south/south-sftp/manifest';
+import ftpManifest from '../south/south-ftp/manifest';
 import ConnectionService from './connection.service';
 import { OIBusContent } from '../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorEntityLight, SouthConnectorItemEntity } from '../model/south-connector.model';
@@ -80,6 +81,8 @@ import {
   SouthSettings,
   SouthSFTPItemSettings,
   SouthSFTPSettings,
+  SouthFTPItemSettings,
+  SouthFTPSettings,
   SouthSQLiteItemSettings,
   SouthSQLiteSettings
 } from '../../shared/model/south-settings.model';
@@ -98,6 +101,7 @@ import SouthOracle from '../south/south-oracle/south-oracle';
 import SouthPI from '../south/south-pi/south-pi';
 import SouthPostgreSQL from '../south/south-postgresql/south-postgresql';
 import SouthSFTP from '../south/south-sftp/south-sftp';
+import SouthFTP from '../south/south-ftp/south-ftp';
 import SouthSQLite from '../south/south-sqlite/south-sqlite';
 import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
 import CertificateRepository from '../repository/config/certificate.repository';
@@ -122,7 +126,8 @@ export const southManifestList: Array<SouthConnectorManifest> = [
   modbusManifest,
   oianalyticsManifest,
   piManifest,
-  sftpManifest
+  sftpManifest,
+  ftpManifest
 ];
 
 export default class SouthService {
@@ -295,6 +300,16 @@ export default class SouthService {
       case 'sftp':
         return new SouthSFTP(
           settings as SouthConnectorEntity<SouthSFTPSettings, SouthSFTPItemSettings>,
+          addContent,
+          this.southConnectorRepository,
+          this.southCacheRepository,
+          this.scanModeRepository,
+          logger,
+          southBaseFolders
+        );
+      case 'ftp':
+        return new SouthFTP(
+          settings as SouthConnectorEntity<SouthFTPSettings, SouthFTPItemSettings>,
           addContent,
           this.southConnectorRepository,
           this.southCacheRepository,
