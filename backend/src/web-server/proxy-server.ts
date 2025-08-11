@@ -92,30 +92,32 @@ export default class ProxyServer {
       return;
     }
 
-    const [targetDomain, targetPort] = req.headers.host!.split(':');
+    try {
+      const [targetDomain, targetPort] = req.url!.split(':');
+      this._logger.trace(`Forward ${req.method} request to ${req.url} from IP ${req.socket.remoteAddress}`);
 
-    this._logger.trace(`Forward ${req.method} request to ${req.url} from IP ${req.socket.remoteAddress}`);
+      // Create a new secure socket connection to the target
+      const targetSocket = net.createConnection({ host: targetDomain, port: Number(targetPort) }, () => {
+        targetSocket.write(head);
+        // Let the client know the connection is established
+        clientSocket.write(`HTTP/${req.httpVersion} 200 Connection established\r\n\r\n`);
 
-    // Create a new secure socket connection to the target
-    const targetSocket = net.createConnection({ host: targetDomain, port: Number(targetPort) }, () => {
-      targetSocket.write(head);
-      // Let the client know the connection is established
-      clientSocket.write(`HTTP/${req.httpVersion} 200 Connection established\r\n\r\n`);
+        // Use pipe to handle data flow in both directions
+        clientSocket.pipe(targetSocket).pipe(clientSocket);
+      });
 
-      // Use pipe to handle data flow in both directions
-      clientSocket.pipe(targetSocket).pipe(clientSocket);
-    });
-
-    targetSocket.on('error', error => {
-      this._logger.error(`Proxy server error on target socket: ${error}`);
-      clientSocket.write(`HTTP/${req.httpVersion} 500 Connection error\r\n\r\n`);
-      clientSocket.end();
-    });
-
-    clientSocket.on('error', error => {
-      this._logger.error(`Proxy server error on client socket: ${error}`);
-      targetSocket.end();
-    });
+      targetSocket.on('error', error => {
+        this._logger.error(`Proxy server error on target socket: ${error.message}`);
+        clientSocket.write(`HTTP/${req.httpVersion} 500 Connection error\r\n\r\n`);
+        clientSocket.end();
+      });
+      clientSocket.on('error', error => {
+        this._logger.error(`Proxy server error on client socket: ${error.message}`);
+        targetSocket.end();
+      });
+    } catch (error: unknown) {
+      this._logger.error(`Proxy server error: ${(error as Error).message}`);
+    }
   }
 
   private isIpAddressAllowed(req: http.IncomingMessage) {
@@ -130,12 +132,17 @@ export default class ProxyServer {
       return false;
     }
 
-    const allowed = this.ipFilters.some(ipToTest => {
-      const formattedRegext = `^${ipToTest.replace(/\\/g, '\\\\').replace(/\./g, '\\.').replace(/\*$/g, '.*')}$`;
-      return new RegExp(formattedRegext).test(clientIpAddress);
-    });
-    if (!allowed) {
-      this._logger.trace(`Ignore ${req.method} request to ${req.url} from IP ${clientIpAddress}`);
+    try {
+      const allowed = this.ipFilters.some(ipToTest => {
+        const formattedRegext = `^${ipToTest.replace(/\\/g, '\\\\').replace(/\./g, '\\.').replace(/\*$/g, '.*')}$`;
+        return new RegExp(formattedRegext).test(clientIpAddress);
+      });
+      if (!allowed) {
+        this._logger.trace(`Ignore ${req.method} request to ${req.url} from IP ${clientIpAddress}`);
+        return false;
+      }
+    } catch (error: unknown) {
+      this._logger.trace(`Error filtering client IP address ${clientIpAddress}: ${(error as Error).message}`);
       return false;
     }
 
