@@ -3,6 +3,8 @@ import http from 'node:http';
 import * as stream from 'node:stream';
 import net from 'node:net';
 import httpProxy from 'http-proxy';
+import { testIPOnFilter } from '../service/utils';
+import ipFilter from './middlewares/ip-filter';
 
 /**
  * Class Server - Provides the web client and establish socket connections.
@@ -132,17 +134,9 @@ export default class ProxyServer {
       return false;
     }
 
-    try {
-      const allowed = this.ipFilters.some(ipToTest => {
-        const formattedRegext = `^${ipToTest.replace(/\\/g, '\\\\').replace(/\./g, '\\.').replace(/\*$/g, '.*')}$`;
-        return new RegExp(formattedRegext).test(clientIpAddress);
-      });
-      if (!allowed) {
-        this._logger.trace(`Ignore ${req.method} request to ${req.url} from IP ${clientIpAddress}`);
-        return false;
-      }
-    } catch (error: unknown) {
-      this._logger.trace(`Error filtering client IP address ${clientIpAddress}: ${(error as Error).message}`);
+    const allowed = testIPOnFilter(this.ipFilters, clientIpAddress);
+    if (!allowed) {
+      this._logger.trace(`Ignore ${req.method} request to ${req.url} from IP ${clientIpAddress}`);
       return false;
     }
 
