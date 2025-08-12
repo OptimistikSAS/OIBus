@@ -1,10 +1,10 @@
 import NorthConnectorController from './north-connector.controller';
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
 import JoiValidator from './validators/joi.validator';
-import pino from 'pino';
-import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../tests/utils/test-data';
 import { toNorthConnectorDTO, toNorthConnectorLightDTO } from '../../service/north.service';
+import pino from 'pino';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 
 jest.mock('./validators/joi.validator');
 jest.mock('../../service/utils');
@@ -382,28 +382,116 @@ describe('North connector controller', () => {
     expect(ctx.badRequest).toHaveBeenCalledWith('The destinationFolder must be specified among "cache", "error" or "archive"');
   });
 
-  it('testNorthConnection() should test North connector settings on connector update', async () => {
+  it('testNorthConnection() should test North connector settings', async () => {
     ctx.params.id = testData.north.list[0].id;
-    ctx.request.body = testData.north.command;
-    ctx.app.logger.child = jest.fn().mockImplementation(() => logger);
+    ctx.request.body = testData.north.command.settings;
+    ctx.query.northType = testData.north.command.type;
+    ctx.app.logger.child.mockReturnValueOnce(logger);
+    ctx.app.northService.testNorth.mockResolvedValueOnce(undefined);
 
     await northConnectorController.testNorthConnection(ctx);
 
-    expect(ctx.app.northService.testNorth).toHaveBeenCalledWith(testData.north.list[0].id, testData.north.command, logger);
+    expect(ctx.app.logger.child).toHaveBeenCalledWith(
+      {
+        scopeType: 'north',
+        scopeId: 'test',
+        scopeName: 'test'
+      },
+      { level: 'silent' }
+    );
+    expect(ctx.app.northService.testNorth).toHaveBeenCalledWith(
+      testData.north.list[0].id,
+      testData.north.command.type,
+      testData.north.command.settings,
+      logger
+    );
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
-  it('testNorthConnection() should call badRequest on North test error', async () => {
+  it('testNorthConnection() should return not found when North connector not found', async () => {
     ctx.params.id = testData.north.list[0].id;
-    ctx.request.body = testData.north.command;
-    ctx.app.logger.child = jest.fn().mockImplementation(() => logger);
-    ctx.app.northService.testNorth.mockImplementation(() => {
-      throw new Error('error');
+    ctx.request.body = testData.north.command.settings;
+    ctx.query.northType = testData.north.command.type;
+    ctx.app.logger.child.mockReturnValueOnce(logger);
+    ctx.app.northService.testNorth.mockImplementationOnce(() => {
+      throw new Error('North connector testId1 not found');
     });
+
     await northConnectorController.testNorthConnection(ctx);
 
-    expect(ctx.app.northService.testNorth).toHaveBeenCalledWith(testData.north.list[0].id, testData.north.command, logger);
+    expect(ctx.app.logger.child).toHaveBeenCalledWith(
+      {
+        scopeType: 'north',
+        scopeId: 'test',
+        scopeName: 'test'
+      },
+      { level: 'silent' }
+    );
+    expect(ctx.app.northService.testNorth).toHaveBeenCalledWith(
+      testData.north.list[0].id,
+      testData.north.command.type,
+      testData.north.command.settings,
+      logger
+    );
+    expect(ctx.badRequest).toHaveBeenCalledWith('North connector testId1 not found');
     expect(ctx.noContent).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith('error');
+  });
+
+  it('testNorthConnection() should throw bad request when validation fails', async () => {
+    ctx.params.id = testData.north.list[0].id;
+    ctx.request.body = testData.north.command.settings;
+    ctx.query.northType = testData.north.command.type;
+    ctx.app.logger.child.mockReturnValueOnce(logger);
+    ctx.app.northService.testNorth.mockImplementationOnce(() => {
+      throw new Error('validation error');
+    });
+
+    await northConnectorController.testNorthConnection(ctx);
+
+    expect(ctx.app.logger.child).toHaveBeenCalledWith(
+      {
+        scopeType: 'north',
+        scopeId: 'test',
+        scopeName: 'test'
+      },
+      { level: 'silent' }
+    );
+    expect(ctx.app.northService.testNorth).toHaveBeenCalledWith(
+      testData.north.list[0].id,
+      testData.north.command.type,
+      testData.north.command.settings,
+      logger
+    );
+    expect(ctx.badRequest).toHaveBeenCalledWith('validation error');
+    expect(ctx.noContent).not.toHaveBeenCalled();
+  });
+
+  it('testNorthConnection() should throw bad request when manifest not found', async () => {
+    ctx.params.id = testData.north.list[0].id;
+    ctx.request.body = testData.north.command.settings;
+    ctx.query.northType = testData.north.command.type;
+    ctx.app.logger.child.mockReturnValueOnce(logger);
+    ctx.app.northService.testNorth.mockImplementationOnce(() => {
+      throw new Error(`North manifest ${testData.north.list[0].type} not found`);
+    });
+
+    await northConnectorController.testNorthConnection(ctx);
+
+    expect(ctx.app.logger.child).toHaveBeenCalledWith(
+      {
+        scopeType: 'north',
+        scopeId: 'test',
+        scopeName: 'test'
+      },
+      { level: 'silent' }
+    );
+    expect(ctx.app.northService.testNorth).toHaveBeenCalledWith(
+      testData.north.list[0].id,
+      testData.north.command.type,
+      testData.north.command.settings,
+      logger
+    );
+    expect(ctx.badRequest).toHaveBeenCalledWith(`North manifest ${testData.north.list[0].type} not found`);
+    expect(ctx.noContent).not.toHaveBeenCalled();
   });
 });

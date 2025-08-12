@@ -4,7 +4,9 @@
       <div>
         <span translate="engine.certificate.list" id="title"></span>
         @if (certificates(); as certificates) {
-          <span class="mx-1">({{ certificates.length }})</span>
+          @if (certificates.length > 0) {
+            <span class="mx-1">({{ certificates.length }})</span>
+          }
         }
       </div>
       <div>

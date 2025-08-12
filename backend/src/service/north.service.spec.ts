@@ -35,6 +35,7 @@ jest.mock('./encryption.service');
 jest.mock('./utils');
 jest.mock('./metrics/north-connector-metrics.service');
 jest.mock('node:fs/promises');
+jest.mock('../web-server/controllers/validators/joi.validator');
 jest.mock('./encryption.service', () => ({
   encryptionService: new EncryptionServiceMock('', '')
 }));
@@ -240,7 +241,7 @@ describe('north service', () => {
 
   it('testNorth() should test North connector in creation mode', async () => {
     service.buildNorth = jest.fn().mockReturnValue(mockedNorth1);
-    await service.testNorth('create', testData.north.command, logger);
+    await service.testNorth('create', testData.north.command.type, testData.north.command.settings, logger);
     expect(service.buildNorth).toHaveBeenCalled();
     expect(mockedNorth1.testConnection).toHaveBeenCalled();
   });
@@ -249,14 +250,16 @@ describe('north service', () => {
     service.buildNorth = jest.fn();
     const badCommand = JSON.parse(JSON.stringify(testData.north.command));
     badCommand.type = 'bad';
-    await expect(service.testNorth('create', badCommand, logger)).rejects.toThrow('North manifest bad not found');
+    await expect(service.testNorth('create', badCommand.type, badCommand.settings, logger)).rejects.toThrow(
+      'North manifest "bad" not found'
+    );
     expect(service.buildNorth).not.toHaveBeenCalled();
   });
 
   it('testNorth() should test North connector in edit mode', async () => {
     service.buildNorth = jest.fn().mockReturnValue(mockedNorth1);
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValueOnce(testData.north.list[0]);
-    await service.testNorth(testData.north.list[0].id, testData.north.command, logger);
+    await service.testNorth(testData.north.list[0].id, testData.north.command.type, testData.north.command.settings, logger);
     expect(service.buildNorth).toHaveBeenCalled();
     expect(mockedNorth1.testConnection).toHaveBeenCalled();
   });
@@ -264,9 +267,9 @@ describe('north service', () => {
   it('testNorth() should fail to test North connector in edit mode if north connector not found', async () => {
     service.buildNorth = jest.fn().mockReturnValue(mockedNorth1);
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValueOnce(null);
-    await expect(service.testNorth(testData.north.list[0].id, testData.north.command, logger)).rejects.toThrow(
-      `North connector ${testData.north.list[0].id} not found`
-    );
+    await expect(
+      service.testNorth(testData.north.list[0].id, testData.north.command.type, testData.north.command.settings, logger)
+    ).rejects.toThrow(`North connector "${testData.north.list[0].id}" not found`);
     expect(service.buildNorth).not.toHaveBeenCalled();
   });
 

@@ -518,15 +518,23 @@ describe('Repository with populated database', () => {
         )
       );
 
-      expect(
-        repository.search(
-          {
-            types: [],
-            status: []
-          },
+      const searchResult = repository.search(
+        {
+          types: [],
+          status: []
+        },
+        0
+      );
+      expect({
+        ...searchResult,
+        content: searchResult.content.sort((a, b) => a.id.localeCompare(b.id))
+      }).toEqual(
+        createPageFromArray(
+          testData.oIAnalytics.commands.oIBusList.sort((a, b) => a.id.localeCompare(b.id)),
+          50,
           0
         )
-      ).toEqual(createPageFromArray(testData.oIAnalytics.commands.oIBusList, 50, 0));
+      );
     });
 
     it('should properly search commands and list them', () => {
@@ -543,12 +551,13 @@ describe('Repository with populated database', () => {
           element => ['update-version'].includes(element.type) && ['RUNNING'].includes(element.status)
         )
       );
-      expect(
-        repository.list({
-          types: [],
-          status: []
-        })
-      ).toEqual(testData.oIAnalytics.commands.oIBusList);
+      const listResult = repository.list({
+        types: [],
+        status: []
+      });
+      expect(listResult.sort((a, b) => a.id.localeCompare(b.id))).toEqual(
+        testData.oIAnalytics.commands.oIBusList.sort((a, b) => a.id.localeCompare(b.id))
+      );
     });
 
     it('should properly find by id', () => {

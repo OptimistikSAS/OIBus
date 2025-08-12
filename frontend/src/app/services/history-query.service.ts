@@ -1,6 +1,6 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
-import { Injectable, inject } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import {
   HistoryQueryCommandDTO,
   HistoryQueryDTO,
@@ -10,12 +10,12 @@ import {
   HistoryQueryLightDTO
 } from '../../../../backend/shared/model/history-query.model';
 import { Page } from '../../../../backend/shared/model/types';
-import { SouthConnectorCommandDTO, SouthConnectorItemTestingSettings } from '../../../../backend/shared/model/south-connector.model';
+import { OIBusSouthType, SouthConnectorItemTestingSettings } from '../../../../backend/shared/model/south-connector.model';
 import { DownloadService } from './download.service';
-import { NorthConnectorCommandDTO } from '../../../../backend/shared/model/north-connector.model';
 import { CacheMetadata, CacheSearchParam, OIBusContent } from '../../../../backend/shared/model/engine.model';
 import { SouthItemSettings, SouthSettings } from '../../../../backend/shared/model/south-settings.model';
 import { NorthSettings } from '../../../../backend/shared/model/north-settings.model';
+import { OIBusNorthType } from '../../../../backend/shared/model/north-connector.model';
 
 /**
  * Service used to interact with the backend for CRUD operations on History queries
@@ -170,11 +170,22 @@ export class HistoryQueryService {
 
   testSouthItem(
     historyId: string,
-    south: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>,
+    southType: OIBusSouthType,
+    southSettings: SouthSettings,
     item: HistoryQueryItemCommandDTO<SouthItemSettings>,
     testingSettings: SouthConnectorItemTestingSettings
   ): Observable<OIBusContent> {
-    return this.http.put<OIBusContent>(`/api/history-queries/${historyId}/south/items/test-item`, { south, item, testingSettings });
+    return this.http.put<OIBusContent>(
+      `/api/history-queries/${historyId}/south/items/test-item`,
+      {
+        southSettings,
+        item,
+        testingSettings
+      },
+      {
+        params: { southType }
+      }
+    );
   }
 
   /**
@@ -249,21 +260,23 @@ export class HistoryQueryService {
 
   testSouthConnection(
     historyQueryId: string,
-    settings: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>,
+    settings: SouthSettings,
+    southType: OIBusSouthType,
     fromSouth: string | null = null
   ): Observable<void> {
     return this.http.put<void>(`/api/history-queries/${historyQueryId}/south/test-connection`, settings, {
-      params: fromSouth ? { fromSouth } : {}
+      params: fromSouth ? { fromSouth, southType } : { southType }
     });
   }
 
   testNorthConnection(
     historyQueryId: string,
-    settings: NorthConnectorCommandDTO<NorthSettings>,
+    settings: NorthSettings,
+    northType: OIBusNorthType,
     fromNorth: string | null = null
   ): Observable<void> {
     return this.http.put<void>(`/api/history-queries/${historyQueryId}/north/test-connection`, settings, {
-      params: fromNorth ? { fromNorth } : {}
+      params: fromNorth ? { fromNorth, northType } : { northType }
     });
   }
 

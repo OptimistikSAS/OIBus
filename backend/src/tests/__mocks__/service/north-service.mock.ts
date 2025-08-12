@@ -4,6 +4,7 @@
 export default jest.fn().mockImplementation(() => ({
   buildNorth: jest.fn(),
   testNorth: jest.fn(),
+  validateSettings: jest.fn(),
   findById: jest.fn(),
   findAll: jest.fn(),
   getInstalledNorthManifests: jest.fn(),

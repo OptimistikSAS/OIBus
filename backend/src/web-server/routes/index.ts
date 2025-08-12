@@ -159,9 +159,8 @@ router.get('/api/north-types/:id', (ctx: KoaContext<void, NorthConnectorManifest
 );
 
 router.get('/api/north', (ctx: KoaContext<void, Array<NorthConnectorLightDTO>>) => northConnectorController.findAll(ctx));
-router.put('/api/north/:id/test-connection', (ctx: KoaContext<NorthConnectorCommandDTO<NorthSettings>, void>) =>
-  northConnectorController.testNorthConnection(ctx)
-);
+router.put('/api/north/:id/test-connection', (ctx: KoaContext<NorthSettings, void>) => northConnectorController.testNorthConnection(ctx));
+
 router.get('/api/north/:id', (ctx: KoaContext<void, NorthConnectorDTO<NorthSettings>>) => northConnectorController.findById(ctx));
 router.post('/api/north', (ctx: KoaContext<NorthConnectorCommandDTO<NorthSettings>, NorthConnectorDTO<NorthSettings>>) =>
   northConnectorController.create(ctx)
@@ -201,9 +200,8 @@ router.get('/api/south-types/:id', (ctx: KoaContext<void, SouthConnectorManifest
 );
 
 router.get('/api/south', (ctx: KoaContext<void, Array<SouthConnectorLightDTO>>) => southConnectorController.findAll(ctx));
-router.put('/api/south/:id/test-connection', (ctx: KoaContext<SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>, void>) =>
-  southConnectorController.testSouthConnection(ctx)
-);
+router.put('/api/south/:id/test-connection', (ctx: KoaContext<SouthSettings, void>) => southConnectorController.testSouthConnection(ctx));
+
 router.get('/api/south/:id', (ctx: KoaContext<void, SouthConnectorDTO<SouthSettings, SouthItemSettings>>) =>
   southConnectorController.findById(ctx)
 );
@@ -223,7 +221,7 @@ router.put(
   (
     ctx: KoaContext<
       {
-        south: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
+        southSettings: SouthSettings;
         item: SouthConnectorItemCommandDTO<SouthItemSettings>;
         testingSettings: SouthConnectorItemTestingSettings;
       },
@@ -357,19 +355,20 @@ router.delete('/api/history-queries/:historyQueryId/south-items/all', (ctx: KoaC
 router.delete('/api/history-queries/:historyQueryId/south-items/:id', (ctx: KoaContext<void, void>) =>
   historyQueryController.deleteHistoryQueryItem(ctx)
 );
-router.put(
-  '/api/history-queries/:id/south/test-connection',
-  (ctx: KoaContext<SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>, void>) => historyQueryController.testSouthConnection(ctx)
+router.put('/api/history-queries/:id/south/test-connection', (ctx: KoaContext<SouthSettings, void>) =>
+  historyQueryController.testSouthConnection(ctx)
 );
-router.put('/api/history-queries/:id/north/test-connection', (ctx: KoaContext<NorthConnectorCommandDTO<NorthSettings>, void>) =>
+
+router.put('/api/history-queries/:id/north/test-connection', (ctx: KoaContext<NorthSettings, void>) =>
   historyQueryController.testNorthConnection(ctx)
 );
+
 router.put(
   '/api/history-queries/:id/south/items/test-item',
   (
     ctx: KoaContext<
       {
-        south: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
+        southSettings: SouthSettings;
         item: HistoryQueryItemCommandDTO<SouthItemSettings>;
         testingSettings: SouthConnectorItemTestingSettings;
       },

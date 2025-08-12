@@ -274,9 +274,9 @@ describe('SouthConnectorService', () => {
     let done = false;
     const command = testData.south.command;
 
-    service.testConnection('id1', command).subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'PUT', url: '/api/south/id1/test-connection' });
-    expect(testRequest.request.body).toEqual(command);
+    service.testConnection('id1', command.settings, command.type).subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'PUT', url: '/api/south/id1/test-connection?southType=folder-scanner' });
+    expect(testRequest.request.body).toEqual(command.settings);
     testRequest.flush(null);
     expect(done).toBe(true);
   });

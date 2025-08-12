@@ -543,18 +543,6 @@ img.oib-image-header {
   }
 }
 
-.btn-cancel-edit {
-  height: 27px;
-  border-radius: 0.5rem;
-  border: none;
-  color: $white;
-  background-color: $blue;
-
-  &:hover {
-    background-color: $yellow;
-  }
-}
-
 // override of some bootstrap styles to better fit Optimistik branding
 .btn-danger {
   border-radius: 0.5rem;
