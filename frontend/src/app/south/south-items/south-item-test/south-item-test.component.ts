@@ -164,14 +164,16 @@ export class SouthItemTestComponent<TItemType extends 'south' | 'history-south'>
     if (type === 'south') {
       return this.southConnectorService.testItem(
         this.entityId(),
-        this.connectorCommand(),
+        this.connectorCommand().type,
+        this.connectorCommand().settings,
         this.item() as SouthConnectorItemCommandDTO<SouthItemSettings>,
         this.testingSettings
       );
     } else if (type === 'history-south') {
       return this.historyQueryService.testSouthItem(
         this.entityId(),
-        this.connectorCommand(),
+        this.connectorCommand().type,
+        this.connectorCommand().settings,
         this.item() as HistoryQueryItemCommandDTO<SouthItemSettings>,
         this.testingSettings
       );

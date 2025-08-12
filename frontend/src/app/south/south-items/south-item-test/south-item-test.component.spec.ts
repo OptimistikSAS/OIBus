@@ -177,7 +177,7 @@ describe('SouthItemTestComponent', () => {
 
       const formValues = tester.testingSettingsForm?.value;
       const expectedSettings = {
-        // by default it should query the last 10 minutes
+        // by default, it should query the last 10 minutes
         history: {
           startTime: '2024-01-01T00:00:00.000Z',
           endTime: '2024-01-01T00:10:00.000Z'
@@ -195,7 +195,8 @@ describe('SouthItemTestComponent', () => {
 
       expect(testCase.service.testItem).toHaveBeenCalledWith(
         tester.componentInstance.entityId,
-        tester.componentInstance.connectorCommand,
+        tester.componentInstance.connectorCommand.type,
+        tester.componentInstance.connectorCommand.settings,
         tester.componentInstance.item as SouthConnectorItemCommandDTO<SouthItemSettings>,
         expectedSettings
       );
@@ -237,7 +238,8 @@ describe('SouthItemTestComponent', () => {
 
       expect(testCase.service.testItem).toHaveBeenCalledWith(
         tester.componentInstance.entityId,
-        tester.componentInstance.connectorCommand,
+        tester.componentInstance.connectorCommand.type,
+        tester.componentInstance.connectorCommand.settings,
         tester.componentInstance.item as SouthConnectorItemCommandDTO<SouthItemSettings>,
         expectedSettings
       );
@@ -261,7 +263,8 @@ describe('SouthItemTestComponent', () => {
 
       expect(testCase.service.testItem).toHaveBeenCalledWith(
         tester.componentInstance.entityId,
-        tester.componentInstance.connectorCommand,
+        tester.componentInstance.connectorCommand.type,
+        tester.componentInstance.connectorCommand.settings,
         tester.componentInstance.item as SouthConnectorItemCommandDTO<SouthItemSettings>,
         expectedSettings
       );
@@ -292,7 +295,8 @@ describe('SouthItemTestComponent', () => {
 
       expect(testCase.service.testItem).toHaveBeenCalledWith(
         tester.componentInstance.entityId,
-        tester.componentInstance.connectorCommand,
+        tester.componentInstance.connectorCommand.type,
+        tester.componentInstance.connectorCommand.settings,
         tester.componentInstance.item as SouthConnectorItemCommandDTO<SouthItemSettings>,
         expectedSettings
       );
@@ -334,7 +338,8 @@ describe('SouthItemTestComponent', () => {
 
       expect(testCase.service.testItem).toHaveBeenCalledWith(
         tester.componentInstance.entityId,
-        tester.componentInstance.connectorCommand,
+        tester.componentInstance.connectorCommand.type,
+        tester.componentInstance.connectorCommand.settings,
         tester.componentInstance.item as SouthConnectorItemCommandDTO<SouthItemSettings>,
         expectedSettings
       );
@@ -377,7 +382,8 @@ describe('SouthItemTestComponent', () => {
 
       expect(testCase.service.testItem).toHaveBeenCalledWith(
         tester.componentInstance.entityId,
-        tester.componentInstance.connectorCommand,
+        tester.componentInstance.connectorCommand.type,
+        tester.componentInstance.connectorCommand.settings,
         tester.componentInstance.item as SouthConnectorItemCommandDTO<SouthItemSettings>,
         expectedSettings
       );
@@ -405,7 +411,8 @@ describe('SouthItemTestComponent', () => {
 
       expect(testCase.service.testItem).toHaveBeenCalledWith(
         tester.componentInstance.entityId,
-        tester.componentInstance.connectorCommand,
+        tester.componentInstance.connectorCommand.type,
+        tester.componentInstance.connectorCommand.settings,
         tester.componentInstance.item as SouthConnectorItemCommandDTO<SouthItemSettings>,
         expectedSettings
       );

@@ -122,50 +122,119 @@ describe('History query controller', () => {
     expect(ctx.badRequest).toHaveBeenCalledWith('pause error');
   });
 
-  it('testSouthConnection() should test south connection', async () => {
-    ctx.request.body = testData.south.command;
+  it('testSouthConnection() should test South connector settings', async () => {
     ctx.params.id = testData.historyQueries.list[0].id;
-
+    ctx.request.body = testData.south.command.settings;
+    ctx.query.southType = testData.south.command.type;
+    ctx.app.historyQueryService.findById.mockReturnValueOnce(testData.historyQueries.list[0]);
     ctx.app.logger.child.mockReturnValueOnce(logger);
+    ctx.app.southService.testSouth.mockResolvedValueOnce(undefined);
 
     await historyQueryController.testSouthConnection(ctx);
 
+    expect(ctx.app.historyQueryService.findById).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
+    expect(ctx.app.logger.child).toHaveBeenCalledWith(
+      {
+        scopeType: 'south',
+        scopeId: 'test',
+        scopeName: 'test'
+      },
+      { level: 'silent' }
+    );
     expect(ctx.app.historyQueryService.testSouth).toHaveBeenCalledWith(
       testData.historyQueries.list[0].id,
+      testData.south.command.type,
       null,
-      testData.south.command,
+      testData.south.command.settings,
       logger
     );
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
-  it('testSouthConnection() should return bad request', async () => {
-    ctx.request.body = testData.south.command;
+  it('testSouthConnection() should return not found when history query not found', async () => {
     ctx.params.id = testData.historyQueries.list[0].id;
-    ctx.query.fromSouth = testData.south.list[0].id;
+    ctx.request.body = testData.south.command.settings;
+    ctx.query.southType = testData.south.command.type;
+    ctx.app.historyQueryService.findById.mockReturnValueOnce(null);
 
+    await historyQueryController.testSouthConnection(ctx);
+
+    expect(ctx.app.historyQueryService.findById).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
+    expect(ctx.notFound).toHaveBeenCalled();
+    expect(ctx.noContent).not.toHaveBeenCalled();
+  });
+
+  it('testSouthConnection() should throw bad request when validation fails', async () => {
+    ctx.params.id = testData.historyQueries.list[0].id;
+    ctx.request.body = testData.south.command.settings;
+    ctx.query.southType = testData.south.command.type;
+    ctx.app.historyQueryService.findById.mockReturnValueOnce(testData.historyQueries.list[0]);
     ctx.app.logger.child.mockReturnValueOnce(logger);
     ctx.app.historyQueryService.testSouth.mockImplementationOnce(() => {
-      throw new Error('test error');
+      throw new Error('validation error');
     });
 
     await historyQueryController.testSouthConnection(ctx);
 
+    expect(ctx.app.historyQueryService.findById).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
+    expect(ctx.app.logger.child).toHaveBeenCalledWith(
+      {
+        scopeType: 'south',
+        scopeId: 'test',
+        scopeName: 'test'
+      },
+      { level: 'silent' }
+    );
     expect(ctx.app.historyQueryService.testSouth).toHaveBeenCalledWith(
       testData.historyQueries.list[0].id,
-      testData.south.list[0].id,
-      testData.south.command,
+      testData.south.command.type,
+      null,
+      testData.south.command.settings,
       logger
     );
-    expect(ctx.badRequest).toHaveBeenCalledWith('test error');
+    expect(ctx.badRequest).toHaveBeenCalledWith('validation error');
+    expect(ctx.noContent).not.toHaveBeenCalled();
+  });
+
+  it('testSouthConnection() should throw bad request when manifest not found', async () => {
+    ctx.params.id = testData.historyQueries.list[0].id;
+    ctx.request.body = testData.south.command.settings;
+    ctx.query.southType = testData.south.command.type;
+    ctx.app.historyQueryService.findById.mockReturnValueOnce(testData.historyQueries.list[0]);
+    ctx.app.logger.child.mockReturnValueOnce(logger);
+    ctx.app.historyQueryService.testSouth.mockImplementationOnce(() => {
+      throw new Error(`South manifest ${testData.historyQueries.list[0].southType} not found`);
+    });
+
+    await historyQueryController.testSouthConnection(ctx);
+
+    expect(ctx.app.historyQueryService.findById).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
+    expect(ctx.app.logger.child).toHaveBeenCalledWith(
+      {
+        scopeType: 'south',
+        scopeId: 'test',
+        scopeName: 'test'
+      },
+      { level: 'silent' }
+    );
+    expect(ctx.app.historyQueryService.testSouth).toHaveBeenCalledWith(
+      testData.historyQueries.list[0].id,
+      testData.south.command.type,
+      null,
+      testData.south.command.settings,
+      logger
+    );
+    expect(ctx.badRequest).toHaveBeenCalledWith(`South manifest ${testData.historyQueries.list[0].southType} not found`);
+    expect(ctx.noContent).not.toHaveBeenCalled();
   });
 
   it('testHistoryQueryItem() should test south item', async () => {
     ctx.request.body = {
-      south: testData.south.command,
+      southSettings: testData.south.command.settings,
       item: testData.south.itemCommand,
       testingSettings: testData.south.itemTestingSettings
     };
+    ctx.query.southType = testData.south.command.type;
     ctx.params.id = testData.historyQueries.list[0].id;
     ctx.query.fromSouth = null;
 
@@ -175,8 +244,9 @@ describe('History query controller', () => {
 
     expect(ctx.app.historyQueryService.testSouthItem).toHaveBeenCalledWith(
       testData.historyQueries.list[0].id,
+      testData.south.command.type,
       null,
-      testData.south.command,
+      testData.south.command.settings,
       testData.south.itemCommand,
       testData.south.itemTestingSettings,
       ctx.ok,
@@ -186,10 +256,11 @@ describe('History query controller', () => {
 
   it('testHistoryQueryItem() should return bad request', async () => {
     ctx.request.body = {
-      south: testData.south.command,
+      southSettings: testData.south.command.settings,
       item: testData.south.itemCommand,
       testingSettings: testData.south.itemTestingSettings
     };
+    ctx.query.southType = testData.south.command.type;
     ctx.params.id = testData.historyQueries.list[0].id;
     ctx.query.fromSouth = testData.south.list[0].id;
 
@@ -202,8 +273,9 @@ describe('History query controller', () => {
 
     expect(ctx.app.historyQueryService.testSouthItem).toHaveBeenCalledWith(
       testData.historyQueries.list[0].id,
+      testData.south.command.type,
       testData.south.list[0].id,
-      testData.south.command,
+      testData.south.command.settings,
       testData.south.itemCommand,
       testData.south.itemTestingSettings,
       ctx.ok,
@@ -212,42 +284,110 @@ describe('History query controller', () => {
     expect(ctx.badRequest).toHaveBeenCalledWith('test error');
   });
 
-  it('testNorthConnection() should test north connection', async () => {
-    ctx.request.body = testData.north.command;
+  it('testNorthConnection() should test North connector settings', async () => {
     ctx.params.id = testData.historyQueries.list[0].id;
-
+    ctx.request.body = testData.north.command.settings;
+    ctx.query.northType = testData.north.command.type;
+    ctx.app.historyQueryService.findById.mockReturnValueOnce(testData.historyQueries.list[0]);
     ctx.app.logger.child.mockReturnValueOnce(logger);
+    ctx.app.northService.testNorth.mockResolvedValueOnce(undefined);
 
     await historyQueryController.testNorthConnection(ctx);
 
+    expect(ctx.app.historyQueryService.findById).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
+    expect(ctx.app.logger.child).toHaveBeenCalledWith(
+      {
+        scopeType: 'north',
+        scopeId: 'test',
+        scopeName: 'test'
+      },
+      { level: 'silent' }
+    );
     expect(ctx.app.historyQueryService.testNorth).toHaveBeenCalledWith(
       testData.historyQueries.list[0].id,
+      testData.north.command.type,
       null,
-      testData.north.command,
+      testData.north.command.settings,
       logger
     );
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
-  it('testNorthConnection() should return bad request', async () => {
-    ctx.request.body = testData.north.command;
+  it('testNorthConnection() should return not found when history query not found', async () => {
     ctx.params.id = testData.historyQueries.list[0].id;
-    ctx.query.fromNorth = testData.north.list[0].id;
+    ctx.request.body = testData.north.command.settings;
+    ctx.query.northType = testData.north.command.type;
+    ctx.app.historyQueryService.findById.mockReturnValueOnce(null);
 
+    await historyQueryController.testNorthConnection(ctx);
+
+    expect(ctx.app.historyQueryService.findById).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
+    expect(ctx.notFound).toHaveBeenCalled();
+    expect(ctx.noContent).not.toHaveBeenCalled();
+  });
+
+  it('testNorthConnection() should throw bad request when validation fails', async () => {
+    ctx.params.id = testData.historyQueries.list[0].id;
+    ctx.request.body = testData.north.command.settings;
+    ctx.query.northType = testData.north.command.type;
+    ctx.app.historyQueryService.findById.mockReturnValueOnce(testData.historyQueries.list[0]);
     ctx.app.logger.child.mockReturnValueOnce(logger);
     ctx.app.historyQueryService.testNorth.mockImplementationOnce(() => {
-      throw new Error('test error');
+      throw new Error('validation error');
     });
 
     await historyQueryController.testNorthConnection(ctx);
 
+    expect(ctx.app.historyQueryService.findById).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
+    expect(ctx.app.logger.child).toHaveBeenCalledWith(
+      {
+        scopeType: 'north',
+        scopeId: 'test',
+        scopeName: 'test'
+      },
+      { level: 'silent' }
+    );
     expect(ctx.app.historyQueryService.testNorth).toHaveBeenCalledWith(
       testData.historyQueries.list[0].id,
-      testData.north.list[0].id,
-      testData.north.command,
+      testData.north.command.type,
+      null,
+      testData.north.command.settings,
       logger
     );
-    expect(ctx.badRequest).toHaveBeenCalledWith('test error');
+    expect(ctx.badRequest).toHaveBeenCalledWith('validation error');
+    expect(ctx.noContent).not.toHaveBeenCalled();
+  });
+
+  it('testNorthConnection() should throw bad request when manifest not found', async () => {
+    ctx.params.id = testData.historyQueries.list[0].id;
+    ctx.request.body = testData.north.command.settings;
+    ctx.query.northType = testData.north.command.type;
+    ctx.app.historyQueryService.findById.mockReturnValueOnce(testData.historyQueries.list[0]);
+    ctx.app.logger.child.mockReturnValueOnce(logger);
+    ctx.app.historyQueryService.testNorth.mockImplementationOnce(() => {
+      throw new Error(`North manifest ${testData.historyQueries.list[0].northType} not found`);
+    });
+
+    await historyQueryController.testNorthConnection(ctx);
+
+    expect(ctx.app.historyQueryService.findById).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
+    expect(ctx.app.logger.child).toHaveBeenCalledWith(
+      {
+        scopeType: 'north',
+        scopeId: 'test',
+        scopeName: 'test'
+      },
+      { level: 'silent' }
+    );
+    expect(ctx.app.historyQueryService.testNorth).toHaveBeenCalledWith(
+      testData.historyQueries.list[0].id,
+      testData.north.command.type,
+      null,
+      testData.north.command.settings,
+      logger
+    );
+    expect(ctx.badRequest).toHaveBeenCalledWith(`North manifest ${testData.historyQueries.list[0].northType} not found`);
+    expect(ctx.noContent).not.toHaveBeenCalled();
   });
 
   it('update() should update History Query', async () => {

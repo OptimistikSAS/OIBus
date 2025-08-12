@@ -1,29 +1,14 @@
-@if (northConnector()) {
-  <div class="my-2">
-    <span class="fa fa-warning mx-1" style="color: orange"></span>
-    <span translate="north.subscriptions.edit-mode-info"></span>
-  </div>
-} @else {
-  <div class="my-2">
-    <span class="fa fa-info-circle mx-1" style="color: grey"></span>
-    <span translate="north.subscriptions.display-mode-info"></span>
-  </div>
-}
 <oib-box>
   <ng-template oibBoxTitle>
     <div class="d-flex justify-content-between align-items-center">
       <div>
         <span translate="north.subscriptions.title" id="title"></span>
-        @if (northConnector() ? northConnector()!.subscriptions.length : subscriptions.length) {
-          <span class="mx-1">({{ northConnector() ? northConnector()!.subscriptions.length : subscriptions.length }} )</span>
+        @if (subscriptions.length) {
+          <span class="mx-1">({{ subscriptions.length }})</span>
         }
       </div>
       <div>
-        @if (
-          northConnector()
-            ? southConnectors.length !== northConnector()!.subscriptions.length
-            : southConnectors.length !== subscriptions.length
-        ) {
+        @if (southConnectors.length !== subscriptions.length) {
           <button class="btn btn-primary btn-sm oib-box-btn" (click)="addSubscription($event)" translate="north.subscriptions.add"></button>
         }
         <oib-help url="https://oibus.optimistik.com/docs/guide/north-connectors/common-settings#subscriptions" />
@@ -31,7 +16,7 @@
     </div>
   </ng-template>
 
-  @if (northConnector() ? northConnector()!.subscriptions.length : subscriptions.length) {
+  @if (subscriptions.length) {
     <div class="mb-3">
       <table class="table table-sm table-hover oib-table">
         <thead class="light">
@@ -41,44 +26,23 @@
           </tr>
         </thead>
         <tbody>
-          @if (northConnector(); as northConnector) {
-            @for (subscription of northConnector.subscriptions; track subscription.id) {
-              <tr>
-                <td>{{ subscription.name }} ({{ subscription.type }})</td>
-                <td class="text-nowrap action-buttons">
-                  <div class="pull-right">
-                    <!-- Delete button -->
-                    <button
-                      type="button"
-                      class="btn btn-link delete-scan-mode px-1 py-0"
-                      [ngbTooltip]="'north.subscriptions.tooltips.delete' | translate"
-                      (click)="deleteSubscription(subscription)"
-                    >
-                      <span class="fa fa-trash"></span>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            }
-          } @else {
-            @for (subscription of subscriptions; track subscription.id) {
-              <tr>
-                <td>{{ subscription.name }} ({{ subscription.type }})</td>
-                <td class="text-nowrap action-buttons">
-                  <div class="pull-right">
-                    <!-- Delete button -->
-                    <button
-                      type="button"
-                      class="btn btn-link delete-scan-mode px-1 py-0"
-                      [ngbTooltip]="'north.subscriptions.tooltips.delete' | translate"
-                      (click)="deleteSubscription(subscription)"
-                    >
-                      <span class="fa fa-trash"></span>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            }
+          @for (subscription of subscriptions; track subscription.id) {
+            <tr>
+              <td>{{ subscription.name }} ({{ subscription.type }})</td>
+              <td class="text-nowrap action-buttons">
+                <div class="pull-right">
+                  <!-- Delete button -->
+                  <button
+                    type="button"
+                    class="btn btn-link delete-scan-mode px-1 py-0"
+                    [ngbTooltip]="'north.subscriptions.tooltips.delete' | translate"
+                    (click)="deleteSubscription(subscription)"
+                  >
+                    <span class="fa fa-trash"></span>
+                  </button>
+                </div>
+              </td>
+            </tr>
           }
         </tbody>
       </table>

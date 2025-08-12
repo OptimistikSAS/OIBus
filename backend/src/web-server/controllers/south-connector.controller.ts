@@ -1,5 +1,6 @@
 import { KoaContext } from '../koa';
 import {
+  OIBusSouthType,
   SouthConnectorCommandDTO,
   SouthConnectorDTO,
   SouthConnectorItemCommandDTO,
@@ -106,7 +107,7 @@ export default class SouthConnectorController {
     ctx.noContent();
   }
 
-  async testSouthConnection(ctx: KoaContext<SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>, void>): Promise<void> {
+  async testSouthConnection(ctx: KoaContext<SouthSettings, void>): Promise<void> {
     try {
       const logger = ctx.app.logger.child(
         {
@@ -116,7 +117,7 @@ export default class SouthConnectorController {
         },
         { level: 'silent' }
       );
-      await ctx.app.southService.testSouth(ctx.params.id, ctx.request.body!, logger);
+      await ctx.app.southService.testSouth(ctx.params.id, ctx.query.southType as OIBusSouthType, ctx.request.body!, logger);
       ctx.noContent();
     } catch (error: unknown) {
       ctx.badRequest((error as Error).message);
@@ -126,7 +127,7 @@ export default class SouthConnectorController {
   async testSouthItem(
     ctx: KoaContext<
       {
-        south: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
+        southSettings: SouthSettings;
         item: SouthConnectorItemCommandDTO<SouthItemSettings>;
         testingSettings: SouthConnectorItemTestingSettings;
       },
@@ -144,7 +145,8 @@ export default class SouthConnectorController {
       );
       await ctx.app.southService.testSouthItem(
         ctx.params.id,
-        ctx.request.body!.south,
+        ctx.query.southType as OIBusSouthType,
+        ctx.request.body!.southSettings,
         ctx.request.body!.item,
         ctx.request.body!.testingSettings,
         ctx.ok,

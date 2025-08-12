@@ -3,6 +3,7 @@ import pino from 'pino';
 
 // South imports
 import {
+  OIBusSouthType,
   SouthConnectorCommandDTO,
   SouthConnectorDTO,
   SouthConnectorItemCommandDTO,
@@ -53,6 +54,8 @@ import {
   SouthADSSettings,
   SouthFolderScannerItemSettings,
   SouthFolderScannerSettings,
+  SouthFTPItemSettings,
+  SouthFTPSettings,
   SouthItemSettings,
   SouthModbusItemSettings,
   SouthModbusSettings,
@@ -81,8 +84,6 @@ import {
   SouthSettings,
   SouthSFTPItemSettings,
   SouthSFTPSettings,
-  SouthFTPItemSettings,
-  SouthFTPSettings,
   SouthSQLiteItemSettings,
   SouthSQLiteSettings
 } from '../../shared/model/south-settings.model';
@@ -332,29 +333,27 @@ export default class SouthService {
     }
   }
 
-  async testSouth<S extends SouthSettings, I extends SouthItemSettings>(
-    id: string,
-    command: SouthConnectorCommandDTO<S, I>,
-    logger: pino.Logger
-  ): Promise<void> {
-    let southConnector: SouthConnectorEntity<S, I> | null = null;
+  async testSouth(id: string, southType: OIBusSouthType, settingsToTest: SouthSettings, logger: pino.Logger): Promise<void> {
+    let southConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings> | null = null;
     if (id !== 'create') {
       southConnector = this.southConnectorRepository.findSouthById(id);
       if (!southConnector) {
-        throw new Error(`South connector ${id} not found`);
+        throw new Error(`South connector "${id}" not found`);
       }
     }
-    const manifest = this.getInstalledSouthManifests().find(southManifest => southManifest.id === command.type);
+    const manifest = this.getInstalledSouthManifests().find(southManifest => southManifest.id === southType);
     if (!manifest) {
-      throw new Error(`South manifest ${command.type} not found`);
+      throw new Error(`South manifest "${southType}" not found`);
     }
-    await this.validator.validateSettings(manifest.settings, command.settings);
+    await this.validator.validateSettings(manifest.settings, settingsToTest);
 
     const testToRun: SouthConnectorEntity<SouthSettings, SouthItemSettings> = {
       id: southConnector?.id || 'test',
-      ...command,
-      settings: await encryptionService.encryptConnectorSecrets<S>(command.settings, southConnector?.settings || null, manifest.settings),
-      name: southConnector ? southConnector.name : `${command!.type}:test-connection`,
+      type: southType,
+      description: '',
+      enabled: false,
+      settings: await encryptionService.encryptConnectorSecrets(settingsToTest, southConnector?.settings || null, manifest.settings),
+      name: southConnector ? southConnector.name : `${southType}:test-connection`,
       items: []
     };
 
@@ -368,32 +367,33 @@ export default class SouthService {
     return await south.testConnection();
   }
 
-  async testSouthItem<S extends SouthSettings, I extends SouthItemSettings>(
+  async testSouthItem(
     id: string,
-    command: SouthConnectorCommandDTO<S, I>,
-    itemCommand: SouthConnectorItemCommandDTO<I>,
+    southType: OIBusSouthType,
+    southSettings: SouthSettings,
+    itemCommand: SouthConnectorItemCommandDTO<SouthItemSettings>,
     testingSettings: SouthConnectorItemTestingSettings,
     callback: (data: OIBusContent) => void,
     logger: pino.Logger
   ): Promise<void> {
-    let southConnector: SouthConnectorEntity<S, I> | null = null;
+    let southConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings> | null = null;
     if (id !== 'create') {
       southConnector = this.southConnectorRepository.findSouthById(id);
       if (!southConnector) {
-        throw new Error(`South connector ${id} not found`);
+        throw new Error(`South connector "${id}" not found`);
       }
     }
-    const manifest = this.getInstalledSouthManifests().find(southManifest => southManifest.id === command.type);
+    const manifest = this.getInstalledSouthManifests().find(southManifest => southManifest.id === southType);
     if (!manifest) {
-      throw new Error(`South manifest ${command.type} not found`);
+      throw new Error(`South manifest "${southType}" not found`);
     }
-    await this.validator.validateSettings(manifest.settings, command.settings);
+    await this.validator.validateSettings(manifest.settings, southSettings);
     const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'
     )! as OIBusObjectAttribute;
     await this.validator.validateSettings(itemSettingsManifest, itemCommand.settings);
 
-    const testItemToRun: SouthConnectorItemEntity<I> = {
+    const testItemToRun: SouthConnectorItemEntity<SouthItemSettings> = {
       id: 'test',
       enabled: itemCommand.enabled,
       name: itemCommand.name,
@@ -402,9 +402,11 @@ export default class SouthService {
     };
     const testConnectorToRun: SouthConnectorEntity<SouthSettings, SouthItemSettings> = {
       id: southConnector?.id || 'test',
-      ...command,
-      settings: await encryptionService.encryptConnectorSecrets<S>(command.settings, southConnector?.settings || null, manifest.settings),
-      name: southConnector ? southConnector.name : `${command!.type}:test-connection`,
+      type: southType,
+      enabled: false,
+      description: '',
+      settings: await encryptionService.encryptConnectorSecrets(southSettings, southConnector?.settings || null, manifest.settings),
+      name: southConnector ? southConnector.name : `${southType}:test-connection`,
       items: [testItemToRun]
     };
 

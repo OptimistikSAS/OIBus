@@ -9,11 +9,11 @@ import {
 } from '../../../shared/model/history-query.model';
 import JoiValidator from './validators/joi.validator';
 
-import { SouthConnectorCommandDTO, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import { OIBusSouthType, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { Page } from '../../../shared/model/types';
 import AbstractController from './abstract.controller';
 import Joi from 'joi';
-import { NorthConnectorCommandDTO } from '../../../shared/model/north-connector.model';
+import { OIBusNorthType } from '../../../shared/model/north-connector.model';
 import { toHistoryQueryDTO, toHistoryQueryItemDTO, toHistoryQueryLightDTO } from '../../service/history-query.service';
 import { itemToFlattenedCSV } from '../../service/utils';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
@@ -101,8 +101,12 @@ export default class HistoryQueryController extends AbstractController {
     }
   };
 
-  async testSouthConnection(ctx: KoaContext<SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>, void>) {
+  async testSouthConnection(ctx: KoaContext<SouthSettings, void>) {
     try {
+      const historyQuery = ctx.app.historyQueryService.findById(ctx.params.id);
+      if (!historyQuery) {
+        return ctx.notFound();
+      }
       const logger = ctx.app.logger.child(
         {
           scopeType: 'south',
@@ -111,7 +115,13 @@ export default class HistoryQueryController extends AbstractController {
         },
         { level: 'silent' }
       );
-      await ctx.app.historyQueryService.testSouth(ctx.params.id, (ctx.query.fromSouth as string) || null, ctx.request.body!, logger);
+      await ctx.app.historyQueryService.testSouth(
+        ctx.params.id,
+        ctx.query.southType as OIBusSouthType,
+        (ctx.query.fromSouth as string) || null,
+        ctx.request.body!,
+        logger
+      );
       ctx.noContent();
     } catch (error: unknown) {
       ctx.badRequest((error as Error).message);
@@ -121,7 +131,7 @@ export default class HistoryQueryController extends AbstractController {
   async testHistoryQueryItem(
     ctx: KoaContext<
       {
-        south: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
+        southSettings: SouthSettings;
         item: HistoryQueryItemCommandDTO<SouthItemSettings>;
         testingSettings: SouthConnectorItemTestingSettings;
       },
@@ -139,8 +149,9 @@ export default class HistoryQueryController extends AbstractController {
       );
       await ctx.app.historyQueryService.testSouthItem(
         ctx.params.id,
+        ctx.query.southType as OIBusSouthType,
         (ctx.query.fromSouth as string) || null,
-        ctx.request.body!.south,
+        ctx.request.body!.southSettings,
         ctx.request.body!.item,
         ctx.request.body!.testingSettings,
         ctx.ok,
@@ -151,17 +162,27 @@ export default class HistoryQueryController extends AbstractController {
     }
   }
 
-  async testNorthConnection(ctx: KoaContext<NorthConnectorCommandDTO<NorthSettings>, void>) {
+  async testNorthConnection(ctx: KoaContext<NorthSettings, void>) {
     try {
+      const historyQuery = ctx.app.historyQueryService.findById(ctx.params.id);
+      if (!historyQuery) {
+        return ctx.notFound();
+      }
       const logger = ctx.app.logger.child(
         {
-          scopeType: 'south',
+          scopeType: 'north',
           scopeId: 'test',
           scopeName: 'test'
         },
         { level: 'silent' }
       );
-      await ctx.app.historyQueryService.testNorth(ctx.params.id, (ctx.query.fromNorth as string) || null, ctx.request.body!, logger);
+      await ctx.app.historyQueryService.testNorth(
+        ctx.params.id,
+        ctx.query.northType as OIBusNorthType,
+        (ctx.query.fromNorth as string) || null,
+        ctx.request.body!,
+        logger
+      );
       ctx.noContent();
     } catch (error: unknown) {
       ctx.badRequest((error as Error).message);

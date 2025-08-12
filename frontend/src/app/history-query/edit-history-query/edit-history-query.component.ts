@@ -172,36 +172,28 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
           let northObs: Observable<null | NorthConnectorDTO<NorthSettings>> = of(null);
           let southObs: Observable<null | SouthConnectorDTO<SouthSettings, SouthItemSettings>> = of(null);
 
-          // if there is a History ID, we are editing a South connector
+          // if there is a History ID, we are editing a History Query
           if (paramHistoryQueryId) {
             this.mode = 'edit';
             this.historyId = paramHistoryQueryId;
-            this.saveItemChangesDirectly = true;
             historyQueryObs = this.historyQueryService.get(paramHistoryQueryId);
-          }
-          // fetch the existing history query in case of duplicate
-          else if (paramDuplicateHistoryQueryId) {
+          } else {
             this.mode = 'create';
             this.historyId = 'create';
-            this.duplicateId = paramDuplicateHistoryQueryId;
-            this.saveItemChangesDirectly = false;
-            historyQueryObs = this.historyQueryService.get(paramDuplicateHistoryQueryId);
-          }
-          // otherwise, we are creating one
-          else {
-            // In creation mode, check if we create a history query from new or existing connectors
-            this.mode = 'create';
-            this.historyId = 'create';
-            this.saveItemChangesDirectly = false;
-            if (southId) {
-              southObs = this.southConnectorService.get(southId);
+            if (paramDuplicateHistoryQueryId) {
+              this.duplicateId = paramDuplicateHistoryQueryId;
+              historyQueryObs = this.historyQueryService.get(paramDuplicateHistoryQueryId);
             } else {
-              this.southType = queryParams.get('southType') || '';
-            }
-            if (northId) {
-              northObs = this.northConnectorService.get(northId);
-            } else {
-              this.northType = queryParams.get('northType') || '';
+              if (southId) {
+                southObs = this.southConnectorService.get(southId);
+              } else {
+                this.southType = queryParams.get('southType') || '';
+              }
+              if (northId) {
+                northObs = this.northConnectorService.get(northId);
+              } else {
+                this.northType = queryParams.get('northType') || '';
+              }
             }
           }
           return combineLatest([historyQueryObs, northObs, southObs]);
@@ -218,7 +210,8 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
             if (!this.saveItemChangesDirectly) {
               this.inMemoryItems = historyQuery.items.map(item => ({
                 ...item,
-                id: null // we need to remove the existing ids
+                // In edit mode, keep existing ids; in duplicate/create, ids are reset upstream
+                id: this.mode === 'edit' ? item.id : null
               }));
             }
           }
@@ -238,7 +231,6 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
               this.fromNorthId = northConnector.id;
             }
           }
-
           return combineLatest([
             this.northConnectorService.getNorthConnectorTypeManifest(this.northType),
             this.southConnectorService.getSouthConnectorTypeManifest(this.southType),
@@ -441,10 +433,13 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
   }
 
   test(type: 'south' | 'north') {
-    this.form?.markAllAsTouched();
-
-    if (!this.form?.valid) {
-      return;
+    // Only validate the relevant settings group depending on type
+    if (type === 'south') {
+      this.form?.controls.southSettings.markAllAsTouched();
+      if (!this.form?.controls.southSettings.valid) return;
+    } else {
+      this.form?.controls.northSettings.markAllAsTouched();
+      if (!this.form?.controls.northSettings.valid) return;
     }
 
     const historyQueryId = this.historyQuery?.id ?? null;
@@ -461,7 +456,7 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
 
     const modalRef = this.modalService.open(TestConnectionResultModalComponent);
     const component: TestConnectionResultModalComponent = modalRef.componentInstance;
-    component.runHistoryQueryTest(type, command, historyQueryId, fromConnectorId ? fromConnectorId : null);
+    component.runHistoryQueryTest(type, historyQueryId, command.settings, command.type, fromConnectorId ? fromConnectorId : null);
   }
 
   get southConnectorCommand() {

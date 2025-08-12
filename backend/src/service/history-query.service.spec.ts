@@ -81,8 +81,8 @@ describe('History Query service', () => {
         ...northManifestList[4] // file-writer
       }
     ]);
-    await service.testNorth('create', null, testData.north.command, logger);
-    expect(northService.testNorth).toHaveBeenCalledWith('create', testData.north.command, logger);
+    await service.testNorth('create', testData.north.command.type, null, testData.north.command.settings, logger);
+    expect(northService.testNorth).toHaveBeenCalledWith('create', testData.north.command.type, testData.north.command.settings, logger);
   });
 
   it('testNorth() should throw an error if manifest type is bad', async () => {
@@ -90,8 +90,8 @@ describe('History Query service', () => {
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValueOnce(testData.north.list[0]);
     const badCommand = JSON.parse(JSON.stringify(testData.north.command));
     badCommand.type = 'bad';
-    await expect(service.testNorth('create', testData.north.list[0].id, badCommand, logger)).rejects.toThrow(
-      'North manifest bad not found'
+    await expect(service.testNorth('create', badCommand.type, testData.north.list[0].id, badCommand.settings, logger)).rejects.toThrow(
+      'North manifest "bad" not found'
     );
     expect(northService.testNorth).not.toHaveBeenCalled();
   });
@@ -99,9 +99,9 @@ describe('History Query service', () => {
   it('testNorth() should throw an error if north is not found', async () => {
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValueOnce(null);
 
-    await expect(service.testNorth('create', testData.north.list[0].id, testData.north.command, logger)).rejects.toThrow(
-      `North connector ${testData.north.list[0].id} not found`
-    );
+    await expect(
+      service.testNorth('create', testData.north.command.type, testData.north.list[0].id, testData.north.command.settings, logger)
+    ).rejects.toThrow(`North connector "${testData.north.list[0].id}" not found`);
     expect(northService.testNorth).not.toHaveBeenCalled();
   });
 
@@ -112,15 +112,15 @@ describe('History Query service', () => {
       }
     ]);
     (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0]);
-    await service.testNorth(testData.historyQueries.list[0].id, null, testData.north.command, logger);
+    await service.testNorth(testData.historyQueries.list[0].id, testData.north.command.type, null, testData.north.command.settings, logger);
     expect(northService.testNorth).toHaveBeenCalled();
   });
 
   it('testNorth() should fail to test North connector in edit mode if north connector not found', async () => {
     (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(null);
-    await expect(service.testNorth(testData.historyQueries.list[0].id, null, testData.north.command, logger)).rejects.toThrow(
-      `History query ${testData.historyQueries.list[0].id} not found`
-    );
+    await expect(
+      service.testNorth(testData.historyQueries.list[0].id, testData.north.command.type, null, testData.north.command.settings, logger)
+    ).rejects.toThrow(`History query "${testData.historyQueries.list[0].id}" not found`);
     expect(northService.testNorth).not.toHaveBeenCalled();
   });
 
@@ -130,8 +130,8 @@ describe('History Query service', () => {
         ...southManifestList[0] // folder-scanner
       }
     ]);
-    await service.testSouth('create', null, testData.south.command, logger);
-    expect(southService.testSouth).toHaveBeenCalledWith('create', testData.south.command, logger);
+    await service.testSouth('create', testData.south.command.type, null, testData.south.command.settings, logger);
+    expect(southService.testSouth).toHaveBeenCalledWith('create', testData.south.command.type, testData.south.command.settings, logger);
   });
 
   it('testSouth() should throw an error if manifest type is bad', async () => {
@@ -140,8 +140,8 @@ describe('History Query service', () => {
 
     const badCommand = JSON.parse(JSON.stringify(testData.south.command));
     badCommand.type = 'bad';
-    await expect(service.testSouth('create', testData.south.list[0].id, badCommand, logger)).rejects.toThrow(
-      'South manifest bad not found'
+    await expect(service.testSouth('create', badCommand.type, testData.south.list[0].id, badCommand.settings, logger)).rejects.toThrow(
+      'South manifest "bad" not found'
     );
     expect(southService.testSouth).not.toHaveBeenCalled();
   });
@@ -149,9 +149,9 @@ describe('History Query service', () => {
   it('testSouth() should throw an error if south connector is not found', async () => {
     (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(null);
 
-    await expect(service.testSouth('create', testData.south.list[0].id, testData.south.command, logger)).rejects.toThrow(
-      `South connector ${testData.south.list[0].id} not found`
-    );
+    await expect(
+      service.testSouth('create', testData.south.command.type, testData.south.list[0].id, testData.south.command.settings, logger)
+    ).rejects.toThrow(`South connector "${testData.south.list[0].id}" not found`);
     expect(southService.testSouth).not.toHaveBeenCalled();
   });
 
@@ -162,15 +162,15 @@ describe('History Query service', () => {
       }
     ]);
     (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0]);
-    await service.testSouth(testData.historyQueries.list[0].id, null, testData.south.command, logger);
+    await service.testSouth(testData.historyQueries.list[0].id, testData.south.command.type, null, testData.south.command.settings, logger);
     expect(southService.testSouth).toHaveBeenCalled();
   });
 
   it('testSouth() should fail to test South connector in edit mode if history query not found', async () => {
     (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(null);
-    await expect(service.testSouth(testData.historyQueries.list[0].id, null, testData.south.command, logger)).rejects.toThrow(
-      `History query ${testData.historyQueries.list[0].id} not found`
-    );
+    await expect(
+      service.testSouth(testData.historyQueries.list[0].id, testData.south.command.type, null, testData.south.command.settings, logger)
+    ).rejects.toThrow(`History query "${testData.historyQueries.list[0].id}" not found`);
     expect(southService.testSouth).not.toHaveBeenCalled();
   });
 
@@ -183,8 +183,9 @@ describe('History Query service', () => {
     const callback = jest.fn();
     await service.testSouthItem(
       'create',
+      testData.south.command.type,
       null,
-      testData.south.command,
+      testData.south.command.settings,
       testData.south.itemCommand,
       testData.south.itemTestingSettings,
       callback,
@@ -192,7 +193,8 @@ describe('History Query service', () => {
     );
     expect(southService.testSouthItem).toHaveBeenCalledWith(
       'create',
-      testData.south.command,
+      testData.south.command.type,
+      testData.south.command.settings,
       { ...testData.south.itemCommand, scanModeId: 'history', scanModeName: null },
       testData.south.itemTestingSettings,
       callback,
@@ -209,14 +211,15 @@ describe('History Query service', () => {
     await expect(
       service.testSouthItem(
         'create',
+        badCommand.type,
         testData.south.list[0].id,
-        badCommand,
+        badCommand.settings,
         testData.south.itemCommand,
         testData.south.itemTestingSettings,
         callback,
         logger
       )
-    ).rejects.toThrow('South manifest bad not found');
+    ).rejects.toThrow('South manifest "bad" not found');
 
     expect(southService.testSouthItem).not.toHaveBeenCalled();
   });
@@ -227,14 +230,15 @@ describe('History Query service', () => {
     await expect(
       service.testSouthItem(
         'create',
+        testData.south.command.type,
         testData.south.list[0].id,
-        testData.south.command,
+        testData.south.command.settings,
         testData.south.itemCommand,
         testData.south.itemTestingSettings,
         callback,
         logger
       )
-    ).rejects.toThrow(`South connector ${testData.south.list[0].id} not found`);
+    ).rejects.toThrow(`South connector "${testData.south.list[0].id}" not found`);
 
     expect(southService.testSouthItem).not.toHaveBeenCalled();
   });
@@ -249,8 +253,9 @@ describe('History Query service', () => {
     const callback = jest.fn();
     await service.testSouthItem(
       testData.historyQueries.list[0].id,
+      testData.south.command.type,
       null,
-      testData.south.command,
+      testData.south.command.settings,
       testData.south.itemCommand,
       testData.south.itemTestingSettings,
       callback,
@@ -266,14 +271,15 @@ describe('History Query service', () => {
     await expect(
       service.testSouthItem(
         testData.historyQueries.list[0].id,
+        testData.south.command.type,
         null,
-        testData.south.command,
+        testData.south.command.settings,
         testData.south.itemCommand,
         testData.south.itemTestingSettings,
         callback,
         logger
       )
-    ).rejects.toThrow(`History query ${testData.historyQueries.list[0].id} not found`);
+    ).rejects.toThrow(`History query "${testData.historyQueries.list[0].id}" not found`);
     expect(southService.testSouthItem).not.toHaveBeenCalled();
   });
 
@@ -1194,5 +1200,14 @@ describe('History Query service', () => {
   it('should move all cache content', async () => {
     await service.moveAllCacheContent(testData.historyQueries.list[0].id, 'cache', 'archive');
     expect(historyQueryEngine.moveAllCacheContent).toHaveBeenCalledWith(testData.historyQueries.list[0].id, 'cache', 'archive');
+  });
+
+  it('validateSettings() should validate settings', async () => {
+    const settings = testData.south.manifest.settings;
+    const dto = testData.south.list[0].settings;
+
+    await service.validateSettings(settings, dto);
+
+    expect(validator.validateSettings).toHaveBeenCalledWith(settings, dto);
   });
 });

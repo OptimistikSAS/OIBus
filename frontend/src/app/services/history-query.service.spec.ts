@@ -247,9 +247,9 @@ describe('HistoryQueryService', () => {
     let done = false;
     const command = testData.north.command;
 
-    service.testNorthConnection('id1', command).subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'PUT', url: '/api/history-queries/id1/north/test-connection' });
-    expect(testRequest.request.body).toEqual(command);
+    service.testNorthConnection('id1', command.settings, command.type).subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'PUT', url: '/api/history-queries/id1/north/test-connection?northType=file-writer' });
+    expect(testRequest.request.body).toEqual(command.settings);
     testRequest.flush(null);
     expect(done).toBe(true);
   });
@@ -258,9 +258,9 @@ describe('HistoryQueryService', () => {
     let done = false;
     const command = testData.south.command;
 
-    service.testSouthConnection('id1', command).subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'PUT', url: '/api/history-queries/id1/south/test-connection' });
-    expect(testRequest.request.body).toEqual(command);
+    service.testSouthConnection('id1', command.settings, command.type).subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'PUT', url: '/api/history-queries/id1/south/test-connection?southType=folder-scanner' });
+    expect(testRequest.request.body).toEqual(command.settings);
     testRequest.flush(null);
     expect(done).toBe(true);
   });

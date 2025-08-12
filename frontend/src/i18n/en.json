@@ -1821,8 +1821,6 @@
       "scan-mode": "Schedule",
       "enabled": "South item {{name}} enabled",
       "disabled": "South item {{name}} disabled",
-      "display-mode-info": "The changes to the items below will be saved directly",
-      "edit-mode-info": "The changes to the items will be committed on save",
       "search": {
         "name": "Name"
       },
@@ -1953,9 +1951,7 @@
       "type": "Type",
       "name": "Name",
       "south": "South connector",
-      "display-mode-info": "The changes to the subscriptions will be committed directly",
-      "edit-mode-info": "The changes to the subscriptions will be committed on save",
-      "created": "The connector is now subscribed to {{ name }}",
+      "added": "The connector is now subscribed to {{ name }}",
       "confirm-deletion": "Are you sure you want to unsubscribe from {{ name }}?",
       "deleted": "The connector is not subscribed to {{ name }} anymore",
       "tooltips": {
