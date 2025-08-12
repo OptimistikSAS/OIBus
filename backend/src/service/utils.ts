@@ -671,7 +671,7 @@ export const testIPOnFilter = (ipFilters: Array<string>, ipToCheck: string): boo
       const match = ipToCheck.match(ipv4MappedPattern);
       if (match) {
         const ipv4Part = match[1];
-        return regexIPv4.test(ipv4Part);
+        return regexIPv4.test(ipv4Part) || regexIPv6.test(ipToCheck);
       }
       return regexIPv6.test(ipToCheck);
     }
