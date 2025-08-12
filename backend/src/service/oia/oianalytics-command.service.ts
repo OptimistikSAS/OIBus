@@ -782,7 +782,7 @@ export default class OIAnalyticsCommandService {
 
   private async executeTestSouthConnectionCommand(command: OIBusTestSouthConnectorCommand, privateKey: string) {
     await this.decryptSouthSettings(command, privateKey);
-    await this.southService.testSouth(command.southConnectorId, command.commandContent, this.logger);
+    await this.southService.testSouth(command.southConnectorId, command.commandContent.type, command.commandContent.settings, this.logger);
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'South connection tested successfully');
   }
 
@@ -791,7 +791,8 @@ export default class OIAnalyticsCommandService {
 
     await this.southService.testSouthItem(
       command.southConnectorId,
-      command.commandContent.southCommand,
+      command.commandContent.southCommand.type,
+      command.commandContent.southCommand.settings,
       command.commandContent.itemCommand,
       command.commandContent.testingSettings,
       result => {
@@ -832,7 +833,7 @@ export default class OIAnalyticsCommandService {
 
   private async executeTestNorthConnectionCommand(command: OIBusTestNorthConnectorCommand, privateKey: string) {
     await this.decryptNorthSettings(command, privateKey);
-    await this.northService.testNorth(command.northConnectorId, command.commandContent, this.logger);
+    await this.northService.testNorth(command.northConnectorId, command.commandContent.type, command.commandContent.settings, this.logger);
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'North connection tested successfully');
   }
 
@@ -936,17 +937,9 @@ export default class OIAnalyticsCommandService {
     await this.decryptHistoryQuerySettings(command.commandContent, privateKey);
     await this.historyQueryService.testNorth(
       command.historyQueryId,
+      command.commandContent.northType,
       command.northConnectorId,
-      {
-        name: command.commandContent.name,
-        type: command.commandContent.northType,
-        description: command.commandContent.description,
-        enabled: true,
-        settings: command.commandContent.northSettings,
-        caching: command.commandContent.caching,
-        subscriptions: [],
-        transformers: []
-      },
+      command.commandContent.northSettings,
       this.logger
     );
     this.oIAnalyticsCommandRepository.markAsCompleted(
@@ -960,15 +953,9 @@ export default class OIAnalyticsCommandService {
     await this.decryptHistoryQuerySettings(command.commandContent, privateKey);
     await this.historyQueryService.testSouth(
       command.historyQueryId,
+      command.commandContent.southType,
       command.southConnectorId,
-      {
-        name: command.commandContent.name,
-        type: command.commandContent.southType,
-        description: command.commandContent.description,
-        enabled: true,
-        settings: command.commandContent.southSettings,
-        items: []
-      },
+      command.commandContent.southSettings,
       this.logger
     );
     this.oIAnalyticsCommandRepository.markAsCompleted(
@@ -983,15 +970,9 @@ export default class OIAnalyticsCommandService {
 
     await this.historyQueryService.testSouthItem(
       command.historyQueryId,
+      command.commandContent.historyCommand.southType,
       command.southConnectorId,
-      {
-        name: command.commandContent.historyCommand.name,
-        type: command.commandContent.historyCommand.southType,
-        description: command.commandContent.historyCommand.description,
-        enabled: true,
-        settings: command.commandContent.historyCommand.southSettings,
-        items: []
-      },
+      command.commandContent.historyCommand.southSettings,
       command.commandContent.itemCommand,
       command.commandContent.testingSettings,
       result => {

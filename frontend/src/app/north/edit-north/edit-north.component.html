@@ -9,7 +9,6 @@
           @if (mode === 'edit' && northConnector) {
             <h1 translate="north.edit-title" [translateParams]="{ name: northConnector.name }"></h1>
           }
-          <button class="ms-2 btn btn-cancel-edit" translate="common.back" id="cancel-edit-button" oibBackButton></button>
         </div>
         <form [formGroup]="form" (ngSubmit)="submit('save')" id="north-form" class="mt-3">
           <div class="save-zone">
@@ -58,7 +57,7 @@
                       type="button"
                       class="btn btn-secondary btn-sm oib-box-btn ms-3"
                       id="test-connection"
-                      (click)="form!.markAllAsTouched(); submit('test')"
+                      (click)="form!.controls.settings.markAllAsTouched(); submit('test')"
                       translate="north.test-connection.button"
                     ></button>
                     <oib-help [url]="'https://oibus.optimistik.com/docs/guide/north-connectors/' + northType" />
@@ -213,23 +212,19 @@
               [transformers]="transformers"
             />
           </div>
-          @if (mode === 'edit' && northConnector) {
-            <div id="actions" class="d-flex justify-content-end">
-              <div class="btn-group">
-                <button [oib-save-button]="state" form="north-form"></button>
-              </div>
-            </div>
-          }
           <!-- subscription -->
-          <oib-north-subscriptions [northConnector]="northConnector" (inMemorySubscriptions)="updateInMemorySubscriptions($event)" />
+          <oib-north-subscriptions
+            [northConnector]="northConnector"
+            [saveChangesDirectly]="false"
+            (inMemorySubscriptions)="updateInMemorySubscriptions($event)"
+          />
         </form>
-        @if (mode === 'create') {
-          <div id="actions" class="mt-2 d-flex justify-content-end">
-            <div class="btn-group">
-              <button [oib-save-button]="state" form="north-form"></button>
-            </div>
+        <div id="actions" class="mt-2 mb-3 d-flex justify-content-end">
+          <div class="btn-group">
+            <button [oib-save-button]="state" form="north-form"></button>
+            <button class="btn btn-cancel" translate="common.cancel" id="cancel-button" oibBackButton></button>
           </div>
-        }
+        </div>
       </div>
     }
   </div>

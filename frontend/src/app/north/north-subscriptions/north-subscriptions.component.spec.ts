@@ -9,6 +9,7 @@ import { Component } from '@angular/core';
 import { NorthConnectorDTO } from '../../../../../backend/shared/model/north-connector.model';
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 import { of } from 'rxjs';
+import { NotificationService } from '../../shared/notification.service';
 
 @Component({
   template: `<oib-north-subscriptions [northConnector]="northConnector" />`,
@@ -59,16 +60,19 @@ describe('NorthSubscriptionsComponent', () => {
   let tester: NorthSubscriptionsComponentTester;
   let northService: jasmine.SpyObj<NorthConnectorService>;
   let southService: jasmine.SpyObj<SouthConnectorService>;
+  let notificationService: jasmine.SpyObj<NotificationService>;
 
   beforeEach(() => {
     northService = createMock(NorthConnectorService);
     southService = createMock(SouthConnectorService);
+    notificationService = createMock(NotificationService);
 
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
         { provide: NorthConnectorService, useValue: northService },
-        { provide: SouthConnectorService, useValue: southService }
+        { provide: SouthConnectorService, useValue: southService },
+        { provide: NotificationService, useValue: notificationService }
       ]
     });
 

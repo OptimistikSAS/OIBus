@@ -1004,7 +1004,12 @@ describe('OIAnalytics Command Service', () => {
 
     await service.executeCommand();
 
-    expect(southService.testSouth).toHaveBeenCalledWith(command.southConnectorId, command.commandContent, logger);
+    expect(southService.testSouth).toHaveBeenCalledWith(
+      command.southConnectorId,
+      command.commandContent.type,
+      command.commandContent.settings,
+      logger
+    );
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       command.id,
       testData.constants.dates.FAKE_NOW,
@@ -1028,7 +1033,7 @@ describe('OIAnalytics Command Service', () => {
 
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
     (southService.testSouthItem as jest.Mock).mockImplementationOnce(
-      (_southId, _southCommand, _itemCommand, _testSettings, callback, _logger) => {
+      (_southId, _southType, _southSettings, _itemCommand, _testSettings, callback, _logger) => {
         callback({});
       }
     );
@@ -1043,7 +1048,8 @@ describe('OIAnalytics Command Service', () => {
 
     expect(southService.testSouthItem).toHaveBeenCalledWith(
       command.southConnectorId,
-      command.commandContent.southCommand,
+      command.commandContent.southCommand.type,
+      command.commandContent.southCommand.settings,
       command.commandContent.itemCommand,
       command.commandContent.testingSettings,
       expect.anything(),
@@ -1071,7 +1077,12 @@ describe('OIAnalytics Command Service', () => {
 
     await service.executeCommand();
 
-    expect(northService.testNorth).toHaveBeenCalledWith(command.northConnectorId, command.commandContent, logger);
+    expect(northService.testNorth).toHaveBeenCalledWith(
+      command.northConnectorId,
+      command.commandContent.type,
+      command.commandContent.settings,
+      logger
+    );
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       command.id,
       testData.constants.dates.FAKE_NOW,
@@ -1288,17 +1299,9 @@ describe('OIAnalytics Command Service', () => {
 
     expect(historyQueryService.testNorth).toHaveBeenCalledWith(
       command.historyQueryId,
+      command.commandContent.northType,
       command.northConnectorId,
-      {
-        name: command.commandContent.name,
-        type: command.commandContent.northType,
-        description: command.commandContent.description,
-        enabled: true,
-        settings: command.commandContent.northSettings,
-        caching: command.commandContent.caching,
-        subscriptions: [],
-        transformers: []
-      },
+      command.commandContent.northSettings,
       logger
     );
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
@@ -1336,15 +1339,9 @@ describe('OIAnalytics Command Service', () => {
 
     expect(historyQueryService.testSouth).toHaveBeenCalledWith(
       command.historyQueryId,
+      command.commandContent.southType,
       command.southConnectorId,
-      {
-        name: command.commandContent.name,
-        type: command.commandContent.southType,
-        description: command.commandContent.description,
-        enabled: true,
-        settings: command.commandContent.southSettings,
-        items: []
-      },
+      command.commandContent.southSettings,
       logger
     );
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
@@ -1371,7 +1368,7 @@ describe('OIAnalytics Command Service', () => {
 
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
     (historyQueryService.testSouthItem as jest.Mock).mockImplementationOnce(
-      (_historyId, _southId, _southCommand, _itemCommand, _testSettings, callback, _logger) => {
+      (_historyId, _southType, _southId, _southSettings, _itemCommand, _testSettings, callback, _logger) => {
         callback({});
       }
     );
@@ -1386,15 +1383,9 @@ describe('OIAnalytics Command Service', () => {
 
     expect(historyQueryService.testSouthItem).toHaveBeenCalledWith(
       command.historyQueryId,
+      command.commandContent.historyCommand.southType,
       command.southConnectorId,
-      {
-        name: command.commandContent.historyCommand.name,
-        type: command.commandContent.historyCommand.southType,
-        description: command.commandContent.historyCommand.description,
-        enabled: true,
-        settings: command.commandContent.historyCommand.southSettings,
-        items: []
-      },
+      command.commandContent.historyCommand.southSettings,
       command.commandContent.itemCommand,
       command.commandContent.testingSettings,
       expect.anything(),

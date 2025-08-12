@@ -4,11 +4,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { combineLatest, of, switchMap, tap } from 'rxjs';
 import { PageLoader } from '../../shared/page-loader.service';
-import {
-  NorthConnectorCommandDTO,
-  NorthConnectorDTO,
-  NorthConnectorManifest
-} from '../../../../../backend/shared/model/north-connector.model';
+import { NorthConnectorDTO, NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
@@ -17,7 +13,6 @@ import { NorthMetricsComponent } from '../north-metrics/north-metrics.component'
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { EnabledEnumPipe } from '../../shared/enabled-enum.pipe';
 import { NotificationService } from '../../shared/notification.service';
-import { BackNavigationDirective } from '../../shared/back-navigation.directives';
 import { WindowService } from '../../shared/window.service';
 import { NorthConnectorMetrics, OIBusInfo } from '../../../../../backend/shared/model/engine.model';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
@@ -36,7 +31,6 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
   imports: [
     TranslateDirective,
     RouterLink,
-    BackNavigationDirective,
     NorthSubscriptionsComponent,
     NorthMetricsComponent,
     BoxComponent,
@@ -138,41 +132,9 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
   }
 
   testConnection() {
-    const command: NorthConnectorCommandDTO<NorthSettings> = {
-      name: this.northConnector!.name,
-      type: this.northConnector!.type,
-      description: this.northConnector!.description,
-      enabled: this.northConnector!.enabled,
-      settings: this.northConnector!.settings,
-      caching: {
-        trigger: {
-          scanModeId: this.northConnector!.caching!.trigger!.scanModeId!,
-          scanModeName: null,
-          numberOfElements: this.northConnector!.caching!.trigger!.numberOfElements!,
-          numberOfFiles: this.northConnector!.caching!.trigger!.numberOfFiles!
-        },
-        throttling: {
-          runMinDelay: this.northConnector!.caching!.throttling!.runMinDelay!,
-          maxSize: this.northConnector!.caching!.throttling!.maxSize!,
-          maxNumberOfElements: this.northConnector!.caching!.throttling!.maxNumberOfElements!
-        },
-        error: {
-          retryInterval: this.northConnector!.caching!.error!.retryInterval!,
-          retryCount: this.northConnector!.caching!.error!.retryCount!,
-          retentionDuration: this.northConnector!.caching!.error!.retentionDuration!
-        },
-        archive: {
-          enabled: this.northConnector!.caching!.archive!.enabled!,
-          retentionDuration: this.northConnector!.caching!.archive!.retentionDuration!
-        }
-      },
-      subscriptions: [],
-      transformers: []
-    };
-
     const modalRef = this.modalService.open(TestConnectionResultModalComponent);
     const component: TestConnectionResultModalComponent = modalRef.componentInstance;
-    component.runTest('north', this.northConnector, command);
+    component.runTest('north', this.northConnector!.id, this.northConnector!.settings, this.northConnector!.type);
   }
 
   toggleConnector(value: boolean) {

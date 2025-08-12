@@ -8,7 +8,6 @@
               <button class="btn btn-primary" id="edit-link" routerLink="edit" [ngbTooltip]="'history-query.tooltips.edit' | translate">
                 <i class="fa fa-pencil"></i>
               </button>
-              <button class="ms-2 btn btn-cancel" translate="common.back" id="cancel-edit-button" oibBackButton></button>
               @if (historyQuery.status === 'PENDING') {
                 <button
                   class="btn btn-primary pull-right me-2"

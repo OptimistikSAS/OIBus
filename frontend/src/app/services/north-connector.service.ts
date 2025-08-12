@@ -6,7 +6,8 @@ import {
   NorthConnectorDTO,
   NorthConnectorLightDTO,
   NorthConnectorManifest,
-  NorthType
+  NorthType,
+  OIBusNorthType
 } from '../../../../backend/shared/model/north-connector.model';
 import { SouthConnectorLightDTO } from '../../../../backend/shared/model/south-connector.model';
 import { NorthSettings } from '../../../../backend/shared/model/north-settings.model';
@@ -199,7 +200,9 @@ export class NorthConnectorService {
     return this.http.put<void>(`/api/north/${northId}/stop`, null);
   }
 
-  testConnection(northId: string, settings: NorthConnectorCommandDTO<NorthSettings>): Observable<void> {
-    return this.http.put<void>(`/api/north/${northId}/test-connection`, settings);
+  testConnection(northId: string, settings: NorthSettings, northType: OIBusNorthType): Observable<void> {
+    return this.http.put<void>(`/api/north/${northId}/test-connection`, settings, {
+      params: { northType }
+    });
   }
 }

@@ -1,8 +1,4 @@
-import {
-  SouthConnectorCommandDTO,
-  SouthConnectorItemTestingSettings,
-  SouthConnectorManifest
-} from '../../shared/model/south-connector.model';
+import { OIBusSouthType, SouthConnectorItemTestingSettings, SouthConnectorManifest } from '../../shared/model/south-connector.model';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { HistoryQueryEntity, HistoryQueryEntityLight, HistoryQueryItemEntity } from '../model/histor-query.model';
 import { NorthSettings } from '../../shared/model/north-settings.model';
@@ -14,7 +10,7 @@ import {
   HistoryQueryItemSearchParam,
   HistoryQueryLightDTO
 } from '../../shared/model/history-query.model';
-import { NorthConnectorCommandDTO, NorthConnectorManifest } from '../../shared/model/north-connector.model';
+import { NorthConnectorManifest, OIBusNorthType } from '../../shared/model/north-connector.model';
 import { encryptionService } from './encryption.service';
 import HistoryQueryRepository from '../repository/config/history-query.repository';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
@@ -76,110 +72,118 @@ export default class HistoryQueryService {
 
   async testNorth(
     historyQueryId: string,
+    northType: OIBusNorthType,
     retrieveSecretsFromNorth: string | null,
-    command: NorthConnectorCommandDTO<NorthSettings>,
+    settingsToTest: NorthSettings,
     logger: pino.Logger
   ): Promise<void> {
     let northSettings: NorthSettings | null = null;
     if (historyQueryId !== 'create') {
       const historyQuery = this.historyQueryRepository.findHistoryQueryById(historyQueryId);
       if (!historyQuery) {
-        throw new Error(`History query ${historyQueryId} not found`);
+        throw new Error(`History query "${historyQueryId}" not found`);
       }
       northSettings = historyQuery.northSettings;
     } else if (retrieveSecretsFromNorth) {
       const north = this.northConnectorRepository.findNorthById(retrieveSecretsFromNorth);
       if (!north) {
-        throw new Error(`North connector ${retrieveSecretsFromNorth} not found`);
+        throw new Error(`North connector "${retrieveSecretsFromNorth}" not found`);
       }
       northSettings = north.settings;
     }
-    const manifest = this.northService.getInstalledNorthManifests().find(northManifest => northManifest.id === command.type);
+    const manifest = this.northService.getInstalledNorthManifests().find(northManifest => northManifest.id === northType);
     if (!manifest) {
-      throw new Error(`North manifest ${command.type} not found`);
+      throw new Error(`North manifest "${northType}" not found`);
     }
-
-    await this.validator.validateSettings(manifest.settings, command.settings);
-    command.settings = await encryptionService.decryptConnectorSecrets(
-      await encryptionService.encryptConnectorSecrets(command.settings, northSettings, manifest.settings),
-      manifest.settings
+    await this.validator.validateSettings(manifest.settings, settingsToTest);
+    return await this.northService.testNorth(
+      'create',
+      northType,
+      await encryptionService.decryptConnectorSecrets(
+        await encryptionService.encryptConnectorSecrets(settingsToTest, northSettings, manifest.settings),
+        manifest.settings
+      ),
+      logger
     );
-
-    return await this.northService.testNorth('create', command, logger);
   }
 
   async testSouth(
     historyQueryId: string,
+    southType: OIBusSouthType,
     retrieveSecretsFromSouth: string | null,
-    command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>,
+    settingsToTest: SouthSettings,
     logger: pino.Logger
   ): Promise<void> {
     let southSettings: SouthSettings | null = null;
     if (historyQueryId !== 'create') {
       const historyQuery = this.historyQueryRepository.findHistoryQueryById(historyQueryId);
       if (!historyQuery) {
-        throw new Error(`History query ${historyQueryId} not found`);
+        throw new Error(`History query "${historyQueryId}" not found`);
       }
       southSettings = historyQuery.southSettings;
     } else if (retrieveSecretsFromSouth) {
       const south = this.southConnectorRepository.findSouthById(retrieveSecretsFromSouth);
       if (!south) {
-        throw new Error(`South connector ${retrieveSecretsFromSouth} not found`);
+        throw new Error(`South connector "${retrieveSecretsFromSouth}" not found`);
       }
       southSettings = south.settings;
     }
-    const manifest = this.southService.getInstalledSouthManifests().find(southManifest => southManifest.id === command.type);
+    const manifest = this.southService.getInstalledSouthManifests().find(southManifest => southManifest.id === southType);
     if (!manifest) {
-      throw new Error(`South manifest ${command.type} not found`);
+      throw new Error(`South manifest "${southType}" not found`);
     }
-
-    await this.validator.validateSettings(manifest.settings, command.settings);
-    command.settings = await encryptionService.decryptConnectorSecrets(
-      await encryptionService.encryptConnectorSecrets(command.settings, southSettings, manifest.settings),
-      manifest.settings
+    await this.validator.validateSettings(manifest.settings, settingsToTest);
+    return await this.southService.testSouth(
+      'create',
+      southType,
+      await encryptionService.decryptConnectorSecrets(
+        await encryptionService.encryptConnectorSecrets(settingsToTest, southSettings, manifest.settings),
+        manifest.settings
+      ),
+      logger
     );
-    return await this.southService.testSouth('create', command, logger);
   }
 
   async testSouthItem(
     historyQueryId: string,
+    southType: OIBusSouthType,
     retrieveSecretsFromSouth: string | null,
-    command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>,
+    southSettings: SouthSettings,
     itemCommand: HistoryQueryItemCommandDTO<SouthItemSettings>,
     testingSettings: SouthConnectorItemTestingSettings,
     callback: (data: OIBusContent) => void,
     logger: pino.Logger
   ): Promise<void> {
-    let southSettings: SouthSettings | null = null;
+    let southSettingsFrom: SouthSettings | null = null;
     if (historyQueryId !== 'create') {
       const historyQuery = this.historyQueryRepository.findHistoryQueryById(historyQueryId);
       if (!historyQuery) {
-        throw new Error(`History query ${historyQueryId} not found`);
+        throw new Error(`History query "${historyQueryId}" not found`);
       }
-      southSettings = historyQuery.southSettings;
+      southSettingsFrom = historyQuery.southSettings;
     } else if (retrieveSecretsFromSouth) {
       const south = this.southConnectorRepository.findSouthById(retrieveSecretsFromSouth);
       if (!south) {
-        throw new Error(`South connector ${retrieveSecretsFromSouth} not found`);
+        throw new Error(`South connector "${retrieveSecretsFromSouth}" not found`);
       }
-      southSettings = south.settings;
+      southSettingsFrom = south.settings;
     }
-    const manifest = this.southService.getInstalledSouthManifests().find(southManifest => southManifest.id === command.type);
+    const manifest = this.southService.getInstalledSouthManifests().find(southManifest => southManifest.id === southType);
     if (!manifest) {
-      throw new Error(`South manifest ${command.type} not found`);
+      throw new Error(`South manifest "${southType}" not found`);
     }
-    await this.validator.validateSettings(manifest.settings, command.settings);
+    await this.validator.validateSettings(manifest.settings, southSettings);
     const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'
     )! as OIBusObjectAttribute;
     await this.validator.validateSettings(itemSettingsManifest, itemCommand.settings);
-    command.settings = await encryptionService.decryptConnectorSecrets(
-      await encryptionService.encryptConnectorSecrets(command.settings, southSettings, manifest.settings),
-      manifest.settings
-    );
     return await this.southService.testSouthItem(
       'create',
-      command,
+      southType,
+      await encryptionService.decryptConnectorSecrets(
+        await encryptionService.encryptConnectorSecrets(southSettings, southSettingsFrom, manifest.settings),
+        manifest.settings
+      ),
       { ...itemCommand, scanModeId: 'history', scanModeName: null },
       testingSettings,
       callback,
@@ -571,6 +575,10 @@ export default class HistoryQueryService {
     this.historyQueryRepository.saveAllItems<I>(historyQuery.id, itemsToAdd, deleteItemsNotPresent);
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
     await this.historyQueryEngine.reloadHistoryQuery(historyQuery, false);
+  }
+
+  async validateSettings(settings: OIBusObjectAttribute, dto: object): Promise<void> {
+    await this.validator.validateSettings(settings, dto);
   }
 
   private async deleteBaseFolders(historyQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>) {

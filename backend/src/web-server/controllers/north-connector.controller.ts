@@ -4,7 +4,8 @@ import {
   NorthConnectorDTO,
   NorthConnectorLightDTO,
   NorthConnectorManifest,
-  NorthType
+  NorthType,
+  OIBusNorthType
 } from '../../../shared/model/north-connector.model';
 import JoiValidator from './validators/joi.validator';
 import { toNorthConnectorDTO, toNorthConnectorLightDTO } from '../../service/north.service';
@@ -195,7 +196,7 @@ export default class NorthConnectorController {
     ctx.noContent();
   }
 
-  async testNorthConnection(ctx: KoaContext<NorthConnectorCommandDTO<NorthSettings>, void>): Promise<void> {
+  async testNorthConnection(ctx: KoaContext<NorthSettings, void>): Promise<void> {
     try {
       const logger = ctx.app.logger.child(
         {
@@ -205,7 +206,7 @@ export default class NorthConnectorController {
         },
         { level: 'silent' }
       );
-      await ctx.app.northService.testNorth(ctx.params.id, ctx.request.body!, logger);
+      await ctx.app.northService.testNorth(ctx.params.id, ctx.query.northType as OIBusNorthType, ctx.request.body!, logger);
       ctx.noContent();
     } catch (error: unknown) {
       ctx.badRequest((error as Error).message);
