@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.6.6](https://github.com/OptimistikSAS/OIBus/compare/v3.6.5...v3.6.6) (2025-08-12)
+
+
+### Bug Fixes
+
+* **engine:** test both ipv6 and ipv4 regex when ipv4 pattern ([97b4e36](https://github.com/OptimistikSAS/OIBus/commit/97b4e367a097c063616f437c93d9b41e71a6f226))
+* **logger:** do not remove logs if not necessary ([241c47c](https://github.com/OptimistikSAS/OIBus/commit/241c47c6a723f3d79d397e71fb518fb0ae3e1600))
+* **oianalytics:** adapt ip filtering with ipv4 and ipv6 regex ([736d623](https://github.com/OptimistikSAS/OIBus/commit/736d623f38842d9dd20b11e5afec31ece85af280))
+* **oianalytics:** fix command acknowledgment if not found ([b078131](https://github.com/OptimistikSAS/OIBus/commit/b07813115bb09e87b6013c563df2807f78ac2123))
+* **proxy-server:** fix ip filtering in proxy server and port forwarding ([39e6313](https://github.com/OptimistikSAS/OIBus/commit/39e63137c8767bfc59d48d9d8e730867adb9de75))
+
 ## [3.6.5](https://github.com/OptimistikSAS/OIBus/compare/v3.6.4...v3.6.5) (2025-07-30)
 
 
