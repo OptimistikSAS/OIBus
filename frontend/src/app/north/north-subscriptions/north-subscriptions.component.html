@@ -20,9 +20,7 @@
       </div>
       <div>
         @if (
-          northConnector()
-            ? southConnectors.length !== northConnector()!.subscriptions.length
-            : southConnectors.length !== subscriptions.length
+          southConnectors.length !== (northConnector() ? subscriptions.length : subscriptions.length)
         ) {
           <button class="btn btn-primary btn-sm oib-box-btn" (click)="addSubscription($event)" translate="north.subscriptions.add"></button>
         }
@@ -31,7 +29,7 @@
     </div>
   </ng-template>
 
-  @if (northConnector() ? northConnector()!.subscriptions.length : subscriptions.length) {
+  @if (northConnector() ? subscriptions.length : subscriptions.length) {
     <div class="mb-3">
       <table class="table table-sm table-hover oib-table">
         <thead class="light">
@@ -41,8 +39,8 @@
           </tr>
         </thead>
         <tbody>
-          @if (northConnector(); as northConnector) {
-            @for (subscription of northConnector.subscriptions; track subscription.id) {
+          @if (northConnector()) {
+            @for (subscription of subscriptions; track subscription.id) {
               <tr>
                 <td>{{ subscription.name }} ({{ subscription.type }})</td>
                 <td class="text-nowrap action-buttons">

@@ -109,6 +109,8 @@ export class SouthItemsComponent implements OnInit {
       // initialize/update item list
       this.allItems = southConnector.items.map(item => ({
         ...item,
+        // Keep existing id when editing; when creating/duplicating, ids are handled by parent component
+        id: item.id ?? null,
         scanModeName: null
       }));
 
@@ -248,7 +250,8 @@ export class SouthItemsComponent implements OnInit {
             return this.southConnectorService.updateItem(this.southId(), command.id!, command);
           } else {
             this.allItems = this.allItems.filter(item => item.name !== oldItem.name);
-            this.allItems.push({ ...oldItem, ...command });
+            // Preserve id when present, merge changes otherwise
+            this.allItems.push({ ...oldItem, ...command, id: (oldItem as any).id ?? command.id ?? null });
             return of(null);
           }
         })

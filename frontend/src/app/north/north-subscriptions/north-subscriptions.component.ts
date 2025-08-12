@@ -1,8 +1,7 @@
-import { Component, OnInit, inject, output, input } from '@angular/core';
+import { Component, OnInit, inject, output, input, effect } from '@angular/core';
 
-import { of, switchMap, tap } from 'rxjs';
+import { of, switchMap } from 'rxjs';
 import { ConfirmationService } from '../../shared/confirmation.service';
-import { NotificationService } from '../../shared/notification.service';
 import { TranslateDirective, TranslateModule } from '@ngx-translate/core';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { NorthConnectorDTO } from '../../../../../backend/shared/model/north-connector.model';
@@ -24,7 +23,6 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 export class NorthSubscriptionsComponent implements OnInit {
   private confirmationService = inject(ConfirmationService);
   private modalService = inject(ModalService);
-  private notificationService = inject(NotificationService);
   private northConnectorService = inject(NorthConnectorService);
   private southConnectorService = inject(SouthConnectorService);
 
@@ -34,9 +32,20 @@ export class NorthSubscriptionsComponent implements OnInit {
   readonly northConnector = input<NorthConnectorDTO<NorthSettings> | null>(null);
 
   readonly inMemorySubscriptions = output<Array<SouthConnectorLightDTO> | null>();
+  readonly saveChangesDirectly = input<boolean>(false);
 
   subscriptions: Array<SouthConnectorLightDTO> = []; // Array used to store subscription on north connector creation
   southConnectors: Array<SouthConnectorLightDTO> = [];
+
+  constructor() {
+    // Initialize local subscriptions when editing, and keep them in sync with input
+    effect(() => {
+      const connector = this.northConnector();
+      if (connector) {
+        this.subscriptions = [...connector.subscriptions];
+      }
+    });
+  }
 
   ngOnInit() {
     this.southConnectorService.list().subscribe(southConnectors => {
@@ -70,26 +79,15 @@ export class NorthSubscriptionsComponent implements OnInit {
       .pipe(
         switchMap((southConnector: SouthConnectorLightDTO) => {
           const northConnector = this.northConnector();
-          if (northConnector) {
-            return this.northConnectorService.createSubscription(northConnector.id, southConnector.id).pipe(
-              tap(() =>
-                this.notificationService.success(`north.subscriptions.created`, {
-                  name: southConnector.name
-                })
-              )
-            );
-          } else {
-            this.subscriptions.push(southConnector);
-            return of(null);
+          if (northConnector && this.saveChangesDirectly()) {
+            return this.northConnectorService.createSubscription(northConnector.id, southConnector.id);
           }
+          this.subscriptions = [...this.subscriptions, southConnector];
+          return of(null);
         })
       )
       .subscribe(() => {
-        if (this.northConnector()) {
-          this.inMemorySubscriptions.emit(null);
-        } else {
-          this.inMemorySubscriptions.emit(this.subscriptions);
-        }
+        this.inMemorySubscriptions.emit(this.subscriptions);
       });
   }
 
@@ -104,23 +102,15 @@ export class NorthSubscriptionsComponent implements OnInit {
       .pipe(
         switchMap(() => {
           const northConnector = this.northConnector();
-          if (northConnector) {
+          if (northConnector && this.saveChangesDirectly()) {
             return this.northConnectorService.deleteSubscription(northConnector!.id, subscription!.id);
-          } else {
-            this.subscriptions = this.subscriptions.filter(element => element.id !== subscription.id);
-            return of(null);
           }
+          this.subscriptions = this.subscriptions.filter(element => element.id !== subscription.id);
+          return of(null);
         })
       )
       .subscribe(() => {
-        if (this.northConnector()) {
-          this.notificationService.success(`north.subscriptions.deleted`, {
-            name: subscription.name
-          });
-          this.inMemorySubscriptions.emit(null);
-        } else {
-          this.inMemorySubscriptions.emit(this.subscriptions);
-        }
+        this.inMemorySubscriptions.emit(this.subscriptions);
       });
   }
 }

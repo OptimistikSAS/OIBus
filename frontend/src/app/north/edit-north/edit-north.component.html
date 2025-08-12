@@ -58,7 +58,7 @@
                       type="button"
                       class="btn btn-secondary btn-sm oib-box-btn ms-3"
                       id="test-connection"
-                      (click)="form!.markAllAsTouched(); submit('test')"
+                      (click)="form!.controls.settings.markAllAsTouched(); submit('test')"
                       translate="north.test-connection.button"
                     ></button>
                     <oib-help [url]="'https://oibus.optimistik.com/docs/guide/north-connectors/' + northType" />
@@ -221,7 +221,11 @@
             </div>
           }
           <!-- subscription -->
-          <oib-north-subscriptions [northConnector]="northConnector" (inMemorySubscriptions)="updateInMemorySubscriptions($event)" />
+          <oib-north-subscriptions
+            [northConnector]="northConnector"
+            [saveChangesDirectly]="false"
+            (inMemorySubscriptions)="updateInMemorySubscriptions($event)"
+          />
         </form>
         @if (mode === 'create') {
           <div id="actions" class="mt-2 d-flex justify-content-end">

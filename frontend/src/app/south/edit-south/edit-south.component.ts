@@ -93,7 +93,8 @@ export class EditSouthComponent implements OnInit, CanComponentDeactivate {
           if (paramSouthId) {
             this.mode = 'edit';
             this.southId = paramSouthId;
-            this.saveItemChangesDirectly = true;
+            // In edit mode, item changes should be part of the global save
+            this.saveItemChangesDirectly = false;
             return this.southConnectorService.get(paramSouthId).pipe(this.state.pendingUntilFinalization());
           }
           // fetch the South connector in case of duplicate
@@ -121,7 +122,8 @@ export class EditSouthComponent implements OnInit, CanComponentDeactivate {
             if (!this.saveItemChangesDirectly) {
               this.inMemoryItems = southConnector.items.map(item => ({
                 ...item,
-                id: null, // we need to remove the exiting ids
+                // In edit mode, keep existing ids; in duplicate/create, ids are already reset upstream
+                id: this.mode === 'edit' ? item.id : null,
                 scanModeName: null
               }));
             }
@@ -171,17 +173,22 @@ export class EditSouthComponent implements OnInit, CanComponentDeactivate {
   }
 
   submit(value: 'save' | 'test') {
-    if (!this.form!.valid) {
+    if (value === 'save') {
+      if (!this.form!.valid) {
+        return;
+      }
+      this.createOrUpdateSouthConnector(this.formSouthConnectorCommand);
       return;
     }
 
-    if (value === 'save') {
-      this.createOrUpdateSouthConnector(this.formSouthConnectorCommand);
-    } else {
-      const modalRef = this.modalService.open(TestConnectionResultModalComponent);
-      const component: TestConnectionResultModalComponent = modalRef.componentInstance;
-      component.runTest('south', this.southConnector, this.formSouthConnectorCommand);
+    // Test: only validate the settings section
+    this.form!.controls.settings.markAllAsTouched();
+    if (!this.form!.controls.settings.valid) {
+      return;
     }
+    const modalRef = this.modalService.open(TestConnectionResultModalComponent);
+    const component: TestConnectionResultModalComponent = modalRef.componentInstance;
+    component.runTest('south', this.southConnector, this.formSouthConnectorCommand);
   }
 
   updateInMemoryItems(items: Array<SouthConnectorItemCommandDTO<SouthItemSettings>> | null) {

@@ -216,6 +216,8 @@ export class EditNorthComponent implements OnInit, CanComponentDeactivate {
     // if we have a south connector, we initialize the values
     if (this.northConnector) {
       this.form.patchValue(this.northConnector);
+      // Initialize in-memory subscriptions for edit mode to allow deferring persistence
+      this.inMemorySubscriptions = [...this.northConnector.subscriptions];
     } else {
       // we should provoke all value changes to make sure fields are properly hidden and disabled
       this.form.setValue(this.form.getRawValue());
@@ -253,8 +255,10 @@ export class EditNorthComponent implements OnInit, CanComponentDeactivate {
   }
 
   submit(value: 'save' | 'test') {
-    if (!this.form!.valid) {
-      return;
+    if (value === 'save') {
+      if (!this.form!.valid) {
+        return;
+      }
     }
 
     const formValue = this.form!.value;
@@ -287,9 +291,8 @@ export class EditNorthComponent implements OnInit, CanComponentDeactivate {
           retentionDuration: formValue.caching!.archive!.retentionDuration!
         }
       },
-      subscriptions: this.northConnector
-        ? this.northConnector.subscriptions.map(subscription => subscription.id)
-        : this.inMemorySubscriptions.map(subscription => subscription.id),
+      // Always use in-memory subscriptions, filled either from existing connector or local edits
+      subscriptions: this.inMemorySubscriptions.map(subscription => subscription.id),
       transformers: formValue.transformers!.map(element => ({
         transformerId: element.transformer.id,
         options: element.options,
@@ -299,6 +302,11 @@ export class EditNorthComponent implements OnInit, CanComponentDeactivate {
     if (value === 'save') {
       this.createOrUpdateNorthConnector(command);
     } else {
+      // Test: only validate the settings subsection
+      this.form!.controls.settings.markAllAsTouched();
+      if (!this.form!.controls.settings.valid) {
+        return;
+      }
       const modalRef = this.modalService.open(TestConnectionResultModalComponent);
       const component: TestConnectionResultModalComponent = modalRef.componentInstance;
       component.runTest('north', this.northConnector, command);
@@ -309,9 +317,10 @@ export class EditNorthComponent implements OnInit, CanComponentDeactivate {
     if (subscriptions) {
       this.inMemorySubscriptions = subscriptions;
     } else {
+      // When child signals backend update, refresh current connector view and in-memory cache
       this.northConnectorService.get(this.northConnector!.id).subscribe(northConnector => {
-        this.northConnector!.subscriptions = northConnector.subscriptions;
-        this.northConnector = JSON.parse(JSON.stringify(this.northConnector));
+        this.northConnector = JSON.parse(JSON.stringify(northConnector));
+        this.inMemorySubscriptions = [...northConnector.subscriptions];
       });
     }
   }

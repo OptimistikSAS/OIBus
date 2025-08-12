@@ -129,7 +129,7 @@
           </table>
         </oib-box>
         <!-- subscription -->
-        <oib-north-subscriptions [northConnector]="northConnector" (inMemorySubscriptions)="updateInMemorySubscriptions($event)" />
+        <oib-north-subscriptions [northConnector]="northConnector" [saveChangesDirectly]="true" (inMemorySubscriptions)="updateInMemorySubscriptions($event)" />
         <!-- Logs -->
         <oib-box>
           <ng-template oibBoxTitle>

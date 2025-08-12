@@ -172,11 +172,12 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
           let northObs: Observable<null | NorthConnectorDTO<NorthSettings>> = of(null);
           let southObs: Observable<null | SouthConnectorDTO<SouthSettings, SouthItemSettings>> = of(null);
 
-          // if there is a History ID, we are editing a South connector
+          // if there is a History ID, we are editing a History Query
           if (paramHistoryQueryId) {
             this.mode = 'edit';
             this.historyId = paramHistoryQueryId;
-            this.saveItemChangesDirectly = true;
+            // In edit mode, items changes should be part of the global save
+            this.saveItemChangesDirectly = false;
             historyQueryObs = this.historyQueryService.get(paramHistoryQueryId);
           }
           // fetch the existing history query in case of duplicate
@@ -218,7 +219,8 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
             if (!this.saveItemChangesDirectly) {
               this.inMemoryItems = historyQuery.items.map(item => ({
                 ...item,
-                id: null // we need to remove the existing ids
+                // In edit mode, keep existing ids; in duplicate/create, ids are reset upstream
+                id: this.mode === 'edit' ? item.id : null
               }));
             }
           }
@@ -441,10 +443,13 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
   }
 
   test(type: 'south' | 'north') {
-    this.form?.markAllAsTouched();
-
-    if (!this.form?.valid) {
-      return;
+    // Only validate the relevant settings group depending on type
+    if (type === 'south') {
+      this.form?.controls.southSettings.markAllAsTouched();
+      if (!this.form?.controls.southSettings.valid) return;
+    } else {
+      this.form?.controls.northSettings.markAllAsTouched();
+      if (!this.form?.controls.northSettings.valid) return;
     }
 
     const historyQueryId = this.historyQuery?.id ?? null;
