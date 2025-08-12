@@ -199,21 +199,7 @@ describe('EditHistoryQueryComponent', () => {
 
     tester.componentInstance.test('north');
     tester.detectChanges();
-    expect(spy).toHaveBeenCalledWith(
-      'north',
-      {
-        type: 'console',
-        settings: {},
-        caching: {
-          trigger: { scanModeId: 'scanModeId1', numberOfElements: 1000, numberOfFiles: 1 },
-          throttling: { runMinDelay: 200, maxSize: 30, maxNumberOfElements: 10000 },
-          error: { retryInterval: 1000, retryCount: 3, retentionDuration: 24 },
-          archive: { enabled: false, retentionDuration: 0 }
-        }
-      },
-      'id1',
-      null
-    );
+    expect(spy).toHaveBeenCalledWith('north', 'id1', historyQuery.northSettings, testData.north.manifest.id, null);
   });
 
   it('should test south connection', () => {
@@ -228,7 +214,7 @@ describe('EditHistoryQueryComponent', () => {
 
     tester.componentInstance.test('south');
     tester.detectChanges();
-    expect(spy).toHaveBeenCalledWith('south', { type: 'folder-scanner', settings: {}, items: [] }, 'id1', null);
+    expect(spy).toHaveBeenCalledWith('south', 'id1', historyQuery.southSettings, testData.south.manifest.id, null);
   });
 
   it('should validate date range properly', () => {

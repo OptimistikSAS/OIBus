@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnDestroy, OnInit } from '@angular/core';
 
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
@@ -18,7 +18,6 @@ import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component'
 import { EnabledEnumPipe } from '../../shared/enabled-enum.pipe';
 import { SouthItemsComponent } from '../south-items/south-items.component';
 import { NotificationService } from '../../shared/notification.service';
-import { BackNavigationDirective } from '../../shared/back-navigation.directives';
 import { OIBusInfo, SouthConnectorMetrics } from '../../../../../backend/shared/model/engine.model';
 import { WindowService } from '../../shared/window.service';
 import { ModalService } from '../../shared/modal.service';
@@ -38,7 +37,6 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
   imports: [
     TranslateDirective,
     RouterLink,
-    BackNavigationDirective,
     SouthMetricsComponent,
     BoxComponent,
     BoxTitleDirective,
@@ -151,7 +149,7 @@ export class SouthDetailComponent implements OnInit, OnDestroy {
   testConnection() {
     const modalRef = this.modalService.open(TestConnectionResultModalComponent);
     const component: TestConnectionResultModalComponent = modalRef.componentInstance;
-    component.runTest('south', this.southConnector, this.southConnectorCommand);
+    component.runTest('south', this.southConnector!.id, this.southConnector!.settings, this.southConnector!.type);
   }
 
   toggleConnector(value: boolean) {

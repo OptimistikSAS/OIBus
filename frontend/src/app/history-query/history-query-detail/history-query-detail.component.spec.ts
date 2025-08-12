@@ -8,10 +8,8 @@ import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { HistoryQueryService } from '../../services/history-query.service';
 import { HistoryQueryDTO } from '../../../../../backend/shared/model/history-query.model';
-import { SouthConnectorCommandDTO } from '../../../../../backend/shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { NorthConnectorService } from '../../services/north-connector.service';
-import { NorthConnectorCommandDTO } from '../../../../../backend/shared/model/north-connector.model';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { EngineService } from '../../services/engine.service';
 import { Modal, ModalService } from '../../shared/modal.service';
@@ -178,12 +176,6 @@ describe('HistoryQueryDetailComponent', () => {
     tester.componentInstance.northManifest = northManifest;
     tester.componentInstance.historyQuery = historyQuery;
 
-    const command = {
-      type: northManifest.id,
-      settings: historyQuery.northSettings,
-      caching: historyQuery.caching
-    } as NorthConnectorCommandDTO<NorthSettings>;
-
     const spy = jasmine.createSpy();
     modalService.open.and.returnValue({
       componentInstance: {
@@ -193,17 +185,12 @@ describe('HistoryQueryDetailComponent', () => {
 
     tester.componentInstance.test('north');
     tester.detectChanges();
-    expect(spy).toHaveBeenCalledWith('north', command, 'id1');
+    expect(spy).toHaveBeenCalledWith('north', 'id1', historyQuery.northSettings, historyQuery.northType);
   });
 
   it('should test south connection', () => {
     tester.componentInstance.southManifest = southManifest;
     tester.componentInstance.historyQuery = historyQuery;
-
-    const command = {
-      type: southManifest.id,
-      settings: historyQuery.southSettings
-    } as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
 
     const spy = jasmine.createSpy();
     modalService.open.and.returnValue({
@@ -214,6 +201,6 @@ describe('HistoryQueryDetailComponent', () => {
 
     tester.componentInstance.test('south');
     tester.detectChanges();
-    expect(spy).toHaveBeenCalledWith('south', command, 'id1');
+    expect(spy).toHaveBeenCalledWith('south', 'id1', historyQuery.southSettings, historyQuery.southType);
   });
 });

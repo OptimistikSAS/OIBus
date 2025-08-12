@@ -4,7 +4,7 @@ import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-transl
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { combineLatest, of, switchMap } from 'rxjs';
 import { PageLoader } from '../../shared/page-loader.service';
-import { NorthConnectorCommandDTO, NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
+import { NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
@@ -20,7 +20,6 @@ import { HistoryQueryItemsComponent } from '../history-query-items/history-query
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { ReactiveFormsModule } from '@angular/forms';
 import { HistoryMetricsComponent } from './history-metrics/history-metrics.component';
-import { BackNavigationDirective } from '../../shared/back-navigation.directives';
 import { HistoryQueryMetrics, OIBusInfo } from '../../../../../backend/shared/model/engine.model';
 import { WindowService } from '../../shared/window.service';
 import { NotificationService } from '../../shared/notification.service';
@@ -44,7 +43,6 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
   imports: [
     TranslateDirective,
     RouterLink,
-    BackNavigationDirective,
     HistoryQueryItemsComponent,
     BoxComponent,
     BoxTitleDirective,
@@ -255,16 +253,14 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
   }
 
   test(type: 'south' | 'north') {
-    let command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> | NorthConnectorCommandDTO<NorthSettings>;
-    if (type === 'south') {
-      command = this.southConnectorCommand;
-    } else {
-      command = this.northConnectorCommand;
-    }
-
     const modalRef = this.modalService.open(TestConnectionResultModalComponent, { backdrop: 'static' });
     const component: TestConnectionResultModalComponent = modalRef.componentInstance;
-    component.runHistoryQueryTest(type, command, this.historyQuery!.id);
+    component.runHistoryQueryTest(
+      type,
+      this.historyQuery!.id,
+      type === 'south' ? this.historyQuery!.southSettings : this.historyQuery!.northSettings,
+      type === 'south' ? this.historyQuery!.southType : this.historyQuery!.northType
+    );
   }
 
   get historyQueryFinishedByMetrics() {
@@ -279,13 +275,5 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
       type: this.southManifest!.id,
       settings: this.historyQuery!.southSettings
     } as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
-  }
-
-  get northConnectorCommand() {
-    return {
-      type: this.northManifest!.id,
-      settings: this.historyQuery!.northSettings,
-      caching: this.historyQuery!.caching
-    } as NorthConnectorCommandDTO<NorthSettings>;
   }
 }

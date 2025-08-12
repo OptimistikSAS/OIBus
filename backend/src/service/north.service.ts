@@ -6,7 +6,8 @@ import {
   NorthConnectorCommandDTO,
   NorthConnectorDTO,
   NorthConnectorLightDTO,
-  NorthConnectorManifest
+  NorthConnectorManifest,
+  OIBusNorthType
 } from '../../shared/model/north-connector.model';
 import azureManifest from '../north/north-azure-blob/manifest';
 import oianalyticsManifest from '../north/north-oianalytics/manifest';
@@ -188,31 +189,32 @@ export default class NorthService {
     }
   }
 
-  async testNorth<N extends NorthSettings>(id: string, command: NorthConnectorCommandDTO<N>, logger: pino.Logger): Promise<void> {
-    let northConnector: NorthConnectorEntity<N> | null = null;
+  async testNorth(id: string, northType: OIBusNorthType, settingsToTest: NorthSettings, logger: pino.Logger): Promise<void> {
+    let northConnector: NorthConnectorEntity<NorthSettings> | null = null;
     if (id !== 'create') {
       northConnector = this.northConnectorRepository.findNorthById(id);
       if (!northConnector) {
-        throw new Error(`North connector ${id} not found`);
+        throw new Error(`North connector "${id}" not found`);
       }
     }
 
-    const manifest = this.getInstalledNorthManifests().find(northManifest => northManifest.id === command.type);
+    const manifest = this.getInstalledNorthManifests().find(northManifest => northManifest.id === northType);
     if (!manifest) {
-      throw new Error(`North manifest ${command.type} not found`);
+      throw new Error(`North manifest "${northType}" not found`);
     }
 
-    await this.validator.validateSettings(manifest.settings, command.settings);
+    await this.validator.validateSettings(manifest.settings, settingsToTest);
 
     const testToRun: NorthConnectorEntity<NorthSettings> = {
       id: northConnector?.id || 'test',
-      ...command,
-      caching: { ...command.caching, trigger: { ...command.caching.trigger, scanModeId: command.caching.trigger.scanModeId! } },
-      settings: await encryptionService.encryptConnectorSecrets<N>(command.settings, northConnector?.settings || null, manifest.settings),
-      name: northConnector ? northConnector.name : `${command!.type}:test-connection`,
+      type: northType,
+      description: '',
+      enabled: false,
+      settings: await encryptionService.encryptConnectorSecrets(settingsToTest, northConnector?.settings || null, manifest.settings),
+      name: northConnector ? northConnector.name : `${northType}:test-connection`,
       subscriptions: [],
       transformers: []
-    };
+    } as unknown as NorthConnectorEntity<NorthSettings>; // TODO
 
     const north = this.buildNorth(testToRun, logger, { cache: 'baseCacheFolder', archive: 'baseArchiveFolder', error: 'baseErrorFolder' });
     return await north.testConnection();

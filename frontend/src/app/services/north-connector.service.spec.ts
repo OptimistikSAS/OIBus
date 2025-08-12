@@ -216,9 +216,9 @@ describe('NorthConnectorService', () => {
     let done = false;
     const command = testData.north.command;
 
-    service.testConnection('id1', command).subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'PUT', url: '/api/north/id1/test-connection' });
-    expect(testRequest.request.body).toEqual(command);
+    service.testConnection('id1', command.settings, command.type).subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'PUT', url: '/api/north/id1/test-connection?northType=file-writer' });
+    expect(testRequest.request.body).toEqual(command.settings);
     testRequest.flush(null);
     expect(done).toBe(true);
   });

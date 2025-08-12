@@ -3,7 +3,6 @@
     <div class="col-md-10 col-lg-8">
       <div class="d-flex">
         <h1 translate="engine.edit-title"></h1>
-        <button class="ms-2 btn btn-cancel-edit" translate="common.back" id="cancel-button" oibBackButton></button>
       </div>
 
       <form [formGroup]="engineForm" (ngSubmit)="save()" id="engine-form" class="my-3">
@@ -223,6 +222,7 @@
         <div id="actions" class="d-flex justify-content-end">
           <div class="btn-group">
             <button [oib-save-button]="state" form="engine-form"></button>
+            <button class="btn btn-cancel" translate="common.cancel" id="cancel-button" oibBackButton></button>
           </div>
         </div>
       </form>

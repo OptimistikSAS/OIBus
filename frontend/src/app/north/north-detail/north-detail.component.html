@@ -9,7 +9,6 @@
                 <i class="fa fa-pencil"></i>
               </button>
             </span>
-            <button class="ms-2 btn btn-cancel" translate="common.back" id="cancel-edit-button" oibBackButton></button>
             <button
               class="btn btn-primary pull-right me-2"
               id="north-enabled"
@@ -129,7 +128,11 @@
           </table>
         </oib-box>
         <!-- subscription -->
-        <oib-north-subscriptions [northConnector]="northConnector" (inMemorySubscriptions)="updateInMemorySubscriptions($event)" />
+        <oib-north-subscriptions
+          [northConnector]="northConnector"
+          [saveChangesDirectly]="true"
+          (inMemorySubscriptions)="updateInMemorySubscriptions($event)"
+        />
         <!-- Logs -->
         <oib-box>
           <ng-template oibBoxTitle>

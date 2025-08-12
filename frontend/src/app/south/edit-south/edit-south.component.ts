@@ -65,7 +65,6 @@ export class EditSouthComponent implements OnInit, CanComponentDeactivate {
   southConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> | null = null;
   southType = '';
   duplicateId = '';
-  saveItemChangesDirectly!: boolean;
   state = new ObservableState();
   scanModes: Array<ScanModeDTO> = [];
   certificates: Array<CertificateDTO> = [];
@@ -93,40 +92,32 @@ export class EditSouthComponent implements OnInit, CanComponentDeactivate {
           if (paramSouthId) {
             this.mode = 'edit';
             this.southId = paramSouthId;
-            this.saveItemChangesDirectly = true;
             return this.southConnectorService.get(paramSouthId).pipe(this.state.pendingUntilFinalization());
-          }
-          // fetch the South connector in case of duplicate
-          else if (duplicateSouthId) {
+          } else {
             this.mode = 'create';
             this.southId = 'create';
-            this.duplicateId = duplicateSouthId;
-            this.saveItemChangesDirectly = false;
-            return this.southConnectorService.get(duplicateSouthId).pipe(this.state.pendingUntilFinalization());
-          }
-          // otherwise, we are creating one
-          else {
-            this.mode = 'create';
-            this.southId = 'create';
-            this.saveItemChangesDirectly = false;
-            return of(null);
+            // fetch the South connector in case of duplicate
+            if (duplicateSouthId) {
+              this.duplicateId = duplicateSouthId;
+              return this.southConnectorService.get(duplicateSouthId).pipe(this.state.pendingUntilFinalization());
+            }
+            // otherwise, we are creating one
+            else {
+              return of(null);
+            }
           }
         }),
         switchMap(southConnector => {
           this.southConnector = southConnector;
           if (southConnector) {
             this.southType = southConnector.type;
-
-            // When changes are not saved directly, items come from memory
-            if (!this.saveItemChangesDirectly) {
-              this.inMemoryItems = southConnector.items.map(item => ({
-                ...item,
-                id: null, // we need to remove the exiting ids
-                scanModeName: null
-              }));
-            }
+            this.inMemoryItems = southConnector.items.map(item => ({
+              ...item,
+              // In edit mode, keep existing ids; in duplicate/create, ids are already reset upstream
+              id: this.mode === 'edit' ? item.id : null,
+              scanModeName: null
+            }));
           }
-
           return this.southConnectorService.getSouthConnectorTypeManifest(this.southType);
         })
       )
@@ -134,7 +125,6 @@ export class EditSouthComponent implements OnInit, CanComponentDeactivate {
         if (!manifest) {
           return;
         }
-
         this.manifest = manifest;
         this.buildForm();
       });
@@ -171,17 +161,22 @@ export class EditSouthComponent implements OnInit, CanComponentDeactivate {
   }
 
   submit(value: 'save' | 'test') {
-    if (!this.form!.valid) {
+    if (value === 'save') {
+      if (!this.form!.valid) {
+        return;
+      }
+      this.createOrUpdateSouthConnector(this.formSouthConnectorCommand);
       return;
     }
 
-    if (value === 'save') {
-      this.createOrUpdateSouthConnector(this.formSouthConnectorCommand);
-    } else {
-      const modalRef = this.modalService.open(TestConnectionResultModalComponent);
-      const component: TestConnectionResultModalComponent = modalRef.componentInstance;
-      component.runTest('south', this.southConnector, this.formSouthConnectorCommand);
+    // Test: only validate the settings section
+    this.form!.controls.settings.markAllAsTouched();
+    if (!this.form!.controls.settings.valid) {
+      return;
     }
+    const modalRef = this.modalService.open(TestConnectionResultModalComponent);
+    const component: TestConnectionResultModalComponent = modalRef.componentInstance;
+    component.runTest('south', this.southConnector?.id || null, this.formSouthConnectorCommand.settings, this.southType as OIBusSouthType);
   }
 
   updateInMemoryItems(items: Array<SouthConnectorItemCommandDTO<SouthItemSettings>> | null) {
@@ -223,17 +218,7 @@ export class EditSouthComponent implements OnInit, CanComponentDeactivate {
       description: formValue.description!,
       enabled: formValue.enabled!,
       settings: formValue.settings!,
-      items:
-        this.saveItemChangesDirectly && this.southConnector
-          ? this.southConnector.items.map(item => ({
-              id: item.id,
-              name: item.name,
-              enabled: item.enabled,
-              scanModeId: item.scanModeId,
-              scanModeName: null,
-              settings: item.settings
-            }))
-          : this.inMemoryItems
+      items: this.inMemoryItems
     };
   }
 

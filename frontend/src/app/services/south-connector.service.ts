@@ -10,7 +10,8 @@ import {
   SouthConnectorItemSearchParam,
   SouthType,
   SouthConnectorLightDTO,
-  SouthConnectorItemTestingSettings
+  SouthConnectorItemTestingSettings,
+  OIBusSouthType
 } from '../../../../backend/shared/model/south-connector.model';
 import { Page } from '../../../../backend/shared/model/types';
 import { DownloadService } from './download.service';
@@ -185,11 +186,18 @@ export class SouthConnectorService {
 
   testItem(
     southId: string,
-    south: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> | null,
+    southType: OIBusSouthType,
+    southSettings: SouthSettings,
     item: SouthConnectorItemCommandDTO<SouthItemSettings>,
     testingSettings: SouthConnectorItemTestingSettings
   ): Observable<OIBusContent> {
-    return this.http.put<OIBusContent>(`/api/south/${southId}/items/test-item`, { south, item, testingSettings });
+    return this.http.put<OIBusContent>(
+      `/api/south/${southId}/items/test-item`,
+      { southSettings, item, testingSettings },
+      {
+        params: { southType }
+      }
+    );
   }
 
   /**
@@ -258,8 +266,10 @@ export class SouthConnectorService {
     return this.http.post<void>(`/api/south/${southId}/items/import`, formData);
   }
 
-  testConnection(southId: string, settings: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>): Observable<void> {
-    return this.http.put<void>(`/api/south/${southId}/test-connection`, settings);
+  testConnection(southId: string, settings: SouthSettings, southType: OIBusSouthType): Observable<void> {
+    return this.http.put<void>(`/api/south/${southId}/test-connection`, settings, {
+      params: { southType }
+    });
   }
 
   startSouth(southId: string): Observable<void> {

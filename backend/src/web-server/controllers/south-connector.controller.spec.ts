@@ -668,45 +668,135 @@ describe('South connector controller', () => {
     expect(ctx.badRequest).toHaveBeenCalledWith('Missing file "items"');
   });
 
-  it('testSouthConnection() should test South connector settings on connector update', async () => {
+  it('testSouthConnection() should test South connector settings', async () => {
     ctx.params.id = testData.south.list[0].id;
-    ctx.request.body = testData.south.command;
-    ctx.app.logger.child = jest.fn().mockImplementation(() => logger);
+    ctx.request.body = testData.south.command.settings;
+    ctx.query.southType = testData.south.command.type;
+    ctx.app.logger.child.mockReturnValueOnce(logger);
+    ctx.app.southService.testSouth.mockResolvedValueOnce(undefined);
 
     await southConnectorController.testSouthConnection(ctx);
 
-    expect(ctx.app.southService.testSouth).toHaveBeenCalledWith(testData.south.list[0].id, testData.south.command, logger);
+    expect(ctx.app.logger.child).toHaveBeenCalledWith(
+      {
+        scopeType: 'south',
+        scopeId: 'test',
+        scopeName: 'test'
+      },
+      { level: 'silent' }
+    );
+    expect(ctx.app.southService.testSouth).toHaveBeenCalledWith(
+      testData.south.list[0].id,
+      testData.south.command.type,
+      testData.south.command.settings,
+      logger
+    );
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
-  it('testSouthConnection() should throw bad request if test fails', async () => {
+  it('testSouthConnection() should return not found when South connector not found', async () => {
     ctx.params.id = testData.south.list[0].id;
-    ctx.request.body = testData.south.command;
-    ctx.app.logger.child = jest.fn().mockImplementation(() => logger);
-    (ctx.app.southService.testSouth as jest.Mock).mockImplementation(() => {
-      throw new Error('test error');
+    ctx.request.body = testData.south.command.settings;
+    ctx.query.southType = testData.south.command.type;
+    ctx.app.logger.child.mockReturnValueOnce(logger);
+    ctx.app.southService.testSouth.mockImplementationOnce(() => {
+      throw new Error('South connector testId1 not found');
     });
+
     await southConnectorController.testSouthConnection(ctx);
 
-    expect(ctx.app.southService.testSouth).toHaveBeenCalledWith(testData.south.list[0].id, testData.south.command, logger);
+    expect(ctx.app.logger.child).toHaveBeenCalledWith(
+      {
+        scopeType: 'south',
+        scopeId: 'test',
+        scopeName: 'test'
+      },
+      { level: 'silent' }
+    );
+    expect(ctx.app.southService.testSouth).toHaveBeenCalledWith(
+      testData.south.list[0].id,
+      testData.south.command.type,
+      testData.south.command.settings,
+      logger
+    );
+    expect(ctx.badRequest).toHaveBeenCalledWith('South connector testId1 not found');
     expect(ctx.noContent).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith('test error');
+  });
+
+  it('testSouthConnection() should throw bad request when validation fails', async () => {
+    ctx.params.id = testData.south.list[0].id;
+    ctx.request.body = testData.south.command.settings;
+    ctx.query.southType = testData.south.command.type;
+    ctx.app.logger.child.mockReturnValueOnce(logger);
+    ctx.app.southService.testSouth.mockImplementationOnce(() => {
+      throw new Error('validation error');
+    });
+
+    await southConnectorController.testSouthConnection(ctx);
+
+    expect(ctx.app.logger.child).toHaveBeenCalledWith(
+      {
+        scopeType: 'south',
+        scopeId: 'test',
+        scopeName: 'test'
+      },
+      { level: 'silent' }
+    );
+    expect(ctx.app.southService.testSouth).toHaveBeenCalledWith(
+      testData.south.list[0].id,
+      testData.south.command.type,
+      testData.south.command.settings,
+      logger
+    );
+    expect(ctx.badRequest).toHaveBeenCalledWith('validation error');
+    expect(ctx.noContent).not.toHaveBeenCalled();
+  });
+
+  it('testSouthConnection() should throw bad request when manifest not found', async () => {
+    ctx.params.id = testData.south.list[0].id;
+    ctx.request.body = testData.south.command.settings;
+    ctx.query.southType = testData.south.command.type;
+    ctx.app.logger.child.mockReturnValueOnce(logger);
+    ctx.app.southService.testSouth.mockImplementationOnce(() => {
+      throw new Error(`South manifest folder-scanner not found`);
+    });
+
+    await southConnectorController.testSouthConnection(ctx);
+
+    expect(ctx.app.logger.child).toHaveBeenCalledWith(
+      {
+        scopeType: 'south',
+        scopeId: 'test',
+        scopeName: 'test'
+      },
+      { level: 'silent' }
+    );
+    expect(ctx.app.southService.testSouth).toHaveBeenCalledWith(
+      testData.south.list[0].id,
+      testData.south.command.type,
+      testData.south.command.settings,
+      logger
+    );
+    expect(ctx.badRequest).toHaveBeenCalledWith(`South manifest folder-scanner not found`);
+    expect(ctx.noContent).not.toHaveBeenCalled();
   });
 
   it('testSouthItem() should test South connector settings on connector update', async () => {
     ctx.params.id = testData.south.list[0].id;
     ctx.request.body = {
-      south: testData.south.command,
+      southSettings: testData.south.command.settings,
       item: testData.south.itemCommand,
       testingSettings: testData.south.itemTestingSettings
     };
+    ctx.query.southType = testData.south.command.type;
     ctx.app.logger.child = jest.fn().mockImplementation(() => logger);
 
     await southConnectorController.testSouthItem(ctx);
 
     expect(ctx.app.southService.testSouthItem).toHaveBeenCalledWith(
       testData.south.list[0].id,
-      testData.south.command,
+      testData.south.command.type,
+      testData.south.command.settings,
       testData.south.itemCommand,
       testData.south.itemTestingSettings,
       ctx.ok,
@@ -717,10 +807,11 @@ describe('South connector controller', () => {
   it('testSouthItem() should throw bad request if test fails', async () => {
     ctx.params.id = testData.south.list[0].id;
     ctx.request.body = {
-      south: testData.south.command,
+      southSettings: testData.south.command.settings,
       item: testData.south.itemCommand,
       testingSettings: testData.south.itemTestingSettings
     };
+    ctx.query.southType = testData.south.command.type;
     ctx.app.logger.child = jest.fn().mockImplementation(() => logger);
     (ctx.app.southService.testSouthItem as jest.Mock).mockImplementation(() => {
       throw new Error('test error');
@@ -729,7 +820,8 @@ describe('South connector controller', () => {
 
     expect(ctx.app.southService.testSouthItem).toHaveBeenCalledWith(
       testData.south.list[0].id,
-      testData.south.command,
+      testData.south.command.type,
+      testData.south.command.settings,
       testData.south.itemCommand,
       testData.south.itemTestingSettings,
       ctx.ok,
