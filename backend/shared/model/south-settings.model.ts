@@ -10,6 +10,9 @@ export type SouthADSSettingsEnumAsText = (typeof SOUTH_A_D_S_SETTINGS_ENUM_AS_TE
 export const SOUTH_A_D_S_SETTINGS_BOOL_AS_TEXTS = ['text', 'integer'] as const;
 export type SouthADSSettingsBoolAsText = (typeof SOUTH_A_D_S_SETTINGS_BOOL_AS_TEXTS)[number];
 
+export const SOUTH_F_T_P_SETTINGS_AUTHENTICATIONS = ['none', 'password'] as const;
+export type SouthFTPSettingsAuthentication = (typeof SOUTH_F_T_P_SETTINGS_AUTHENTICATIONS)[number];
+
 export const SOUTH_MODBUS_SETTINGS_ADDRESS_OFFSETS = ['modbus', 'jbus'] as const;
 export type SouthModbusSettingsAddressOffset = (typeof SOUTH_MODBUS_SETTINGS_ADDRESS_OFFSETS)[number];
 
@@ -273,10 +276,7 @@ export type SouthPostgreSQLItemSettingsSerializationDelimiter = (typeof SOUTH_PO
 export const SOUTH_S_F_T_P_SETTINGS_AUTHENTICATIONS = ['password', 'private-key'] as const;
 export type SouthSFTPSettingsAuthentication = (typeof SOUTH_S_F_T_P_SETTINGS_AUTHENTICATIONS)[number];
 
-export const SOUTH_F_T_P_SETTINGS_AUTHENTICATIONS = ['none', 'password'] as const;
-export type SouthFTPSettingsAuthentication = (typeof SOUTH_F_T_P_SETTINGS_AUTHENTICATIONS)[number];
-
-export const SOUTH_S_Q_LITE_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'] as const;
+export const SOUTH_S_Q_LITE_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'] as const;
 export type SouthSQLiteItemSettingsDateTimeFieldsType = (typeof SOUTH_S_Q_LITE_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
 
 export const SOUTH_S_Q_LITE_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv'] as const;
@@ -421,6 +421,15 @@ export interface SouthFolderScannerSettings {
   compression: boolean;
 }
 
+export interface SouthFTPSettings {
+  host: string;
+  port: number;
+  authentication: SouthFTPSettingsAuthentication;
+  username?: string | null;
+  password?: string | null;
+  compression: boolean;
+}
+
 export interface SouthModbusSettings {
   host: string;
   port: number;
@@ -556,15 +565,6 @@ export interface SouthSFTPSettings {
   compression: boolean;
 }
 
-export interface SouthFTPSettings {
-  host: string;
-  port: number;
-  authentication: SouthFTPSettingsAuthentication;
-  username: string | null;
-  password?: string | null;
-  compression: boolean;
-}
-
 export interface SouthSQLiteSettings {
   throttling: SouthSQLiteSettingsThrottling;
   databasePath: string;
@@ -573,6 +573,7 @@ export interface SouthSQLiteSettings {
 export type SouthSettings =
   | SouthADSSettings
   | SouthFolderScannerSettings
+  | SouthFTPSettings
   | SouthModbusSettings
   | SouthMQTTSettings
   | SouthMSSQLSettings
@@ -586,7 +587,6 @@ export type SouthSettings =
   | SouthPISettings
   | SouthPostgreSQLSettings
   | SouthSFTPSettings
-  | SouthFTPSettings
   | SouthSQLiteSettings;
 
 export interface SouthModbusItemSettingsData {
@@ -774,6 +774,14 @@ export interface SouthFolderScannerItemSettings {
   ignoreModifiedDate?: boolean;
 }
 
+export interface SouthFTPItemSettings {
+  remoteFolder: string;
+  regex: string;
+  minAge: number;
+  preserveFiles: boolean;
+  ignoreModifiedDate?: boolean;
+}
+
 export interface SouthModbusItemSettings {
   address: string;
   modbusType: SouthModbusItemSettingsModbusType;
@@ -857,14 +865,6 @@ export interface SouthSFTPItemSettings {
   ignoreModifiedDate?: boolean;
 }
 
-export interface SouthFTPItemSettings {
-  remoteFolder: string;
-  regex: string;
-  minAge: number;
-  preserveFiles: boolean;
-  ignoreModifiedDate?: boolean;
-}
-
 export interface SouthSQLiteItemSettings {
   query: string;
   dateTimeFields: Array<SouthSQLiteItemSettingsDateTimeFields> | null;
@@ -874,6 +874,7 @@ export interface SouthSQLiteItemSettings {
 export type SouthItemSettings =
   | SouthADSItemSettings
   | SouthFolderScannerItemSettings
+  | SouthFTPItemSettings
   | SouthModbusItemSettings
   | SouthMQTTItemSettings
   | SouthMSSQLItemSettings
@@ -887,5 +888,4 @@ export type SouthItemSettings =
   | SouthPIItemSettings
   | SouthPostgreSQLItemSettings
   | SouthSFTPItemSettings
-  | SouthFTPItemSettings
   | SouthSQLiteItemSettings;
