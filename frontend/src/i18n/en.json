@@ -746,6 +746,7 @@
             }
           },
           "opcua": {
+            "shared-connection": "Share the session with other connectors?",
             "url": "URL",
             "keep-session-alive": "Keep session alive",
             "read-timeout": "Read timeout",
@@ -1120,7 +1121,9 @@
             "username": "Username",
             "password": "Password",
             "cert-file-path": "Cert file path",
-            "key-file-path": "Key file path"
+            "key-file-path": "Key file path",
+            "flush-message-timeout": "Delay between flush",
+            "max-number-of-messages": "Number of messages before flush"
           },
           "oracle": {
             "throttling": {
@@ -1708,6 +1711,11 @@
             }
           }
         }
+      },
+      "sharable-connection": {
+        "none": "No",
+        "south": "{{ connectorName }} - South",
+        "north": "{{ connectorName }} - North"
       }
     }
   },

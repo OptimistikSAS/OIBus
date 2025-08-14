@@ -31,7 +31,6 @@ import oledbManifest from '../south/south-oledb/manifest';
 import piManifest from '../south/south-pi/manifest';
 import sftpManifest from '../south/south-sftp/manifest';
 import ftpManifest from '../south/south-ftp/manifest';
-import ConnectionService from './connection.service';
 import { OIBusContent } from '../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorEntityLight, SouthConnectorItemEntity } from '../model/south-connector.model';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
@@ -141,7 +140,6 @@ export default class SouthService {
     private readonly oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
     private readonly certificateRepository: CertificateRepository,
     private readonly oIAnalyticsMessageService: OIAnalyticsMessageService,
-    private readonly _connectionService: ConnectionService,
     private readonly dataStreamEngine: DataStreamEngine
   ) {}
 
@@ -264,8 +262,7 @@ export default class SouthService {
           this.southCacheRepository,
           this.scanModeRepository,
           logger,
-          southBaseFolders,
-          this._connectionService
+          southBaseFolders
         );
       case 'oracle':
         return new SouthOracle(

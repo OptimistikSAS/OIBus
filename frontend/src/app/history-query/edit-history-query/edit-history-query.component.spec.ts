@@ -155,7 +155,9 @@ describe('EditHistoryQueryComponent', () => {
 
     historyQueryService.get.and.returnValue(of(historyQuery));
     northConnectorService.getNorthConnectorTypeManifest.and.returnValue(of(testData.north.manifest));
+    northConnectorService.list.and.returnValue(of(testData.north.list));
     southConnectorService.getSouthConnectorTypeManifest.and.returnValue(of(testData.south.manifest));
+    southConnectorService.list.and.returnValue(of(testData.south.list));
 
     tester = new EditHistoryQueryComponentTester();
     tester.detectChanges();

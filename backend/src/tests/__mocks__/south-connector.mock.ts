@@ -34,6 +34,9 @@ export default class SouthConnectorMock {
   metricsEvent = new EventEmitter();
   queriesHistory = jest.fn();
   manageSouthCacheOnChange = jest.fn();
+  sharableConnection = jest.fn();
+  getSession = jest.fn();
+  closeSession = jest.fn();
   getThrottlingSettings = jest
     .fn()
     .mockImplementation(value => ({ maxReadInterval: value.throttling.maxReadInterval, overlap: value.throttling.overlap }));

@@ -6,11 +6,12 @@ import {
   SouthConnectorCommandDTO,
   SouthConnectorDTO,
   SouthConnectorItemCommandDTO,
+  SouthConnectorLightDTO,
   SouthConnectorManifest
 } from '../../../../../backend/shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
-import { FormControl, FormGroup, NonNullableFormBuilder, Validators } from '@angular/forms';
+import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NotificationService } from '../../shared/notification.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest, Observable, of, switchMap, tap } from 'rxjs';
@@ -24,19 +25,22 @@ import { ModalService } from '../../shared/modal.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
-import { formDirectives } from '../../shared/form/form-directives';
 import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
 import { CertificateService } from '../../services/certificate.service';
 import { addAttributeToForm, addEnablingConditions, asFormGroup } from '../../shared/form/dynamic-form.builder';
 import { OIBusObjectFormControlComponent } from '../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
 import { CanComponentDeactivate } from '../../shared/unsaved-changes.guard';
 import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
+import { NorthConnectorLightDTO } from '../../../../../backend/shared/model/north-connector.model';
+import { NorthConnectorService } from '../../services/north-connector.service';
+import { OI_FORM_VALIDATION_DIRECTIVES } from '../../shared/form/form-validation-directives';
 
 @Component({
   selector: 'oib-edit-south',
   imports: [
     TranslateDirective,
-    ...formDirectives,
+    ReactiveFormsModule,
+    OI_FORM_VALIDATION_DIRECTIVES,
     SaveButtonComponent,
     BackNavigationDirective,
     BoxComponent,
@@ -51,6 +55,7 @@ import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-
 })
 export class EditSouthComponent implements OnInit, CanComponentDeactivate {
   private southConnectorService = inject(SouthConnectorService);
+  private northConnectorService = inject(NorthConnectorService);
   private fb = inject(NonNullableFormBuilder);
   private notificationService = inject(NotificationService);
   private scanModeService = inject(ScanModeService);
@@ -69,6 +74,8 @@ export class EditSouthComponent implements OnInit, CanComponentDeactivate {
   state = new ObservableState();
   scanModes: Array<ScanModeDTO> = [];
   certificates: Array<CertificateDTO> = [];
+  southConnectors: Array<SouthConnectorLightDTO> = [];
+  northConnectors: Array<NorthConnectorLightDTO> = [];
   manifest: SouthConnectorManifest | null = null;
   form: FormGroup<{
     name: FormControl<string>;
@@ -80,9 +87,18 @@ export class EditSouthComponent implements OnInit, CanComponentDeactivate {
   inMemoryItems: Array<SouthConnectorItemCommandDTO<SouthItemSettings>> = [];
 
   ngOnInit() {
-    combineLatest([this.scanModeService.list(), this.certificateService.list(), this.route.paramMap, this.route.queryParamMap])
+    combineLatest([
+      this.southConnectorService.list(),
+      this.northConnectorService.list(),
+      this.scanModeService.list(),
+      this.certificateService.list(),
+      this.route.paramMap,
+      this.route.queryParamMap
+    ])
       .pipe(
-        switchMap(([scanModes, certificates, params, queryParams]) => {
+        switchMap(([southConnectors, northConnectors, scanModes, certificates, params, queryParams]) => {
+          this.southConnectors = southConnectors;
+          this.northConnectors = northConnectors;
           this.scanModes = scanModes.filter(scanMode => scanMode.id !== 'subscription');
           this.certificates = certificates;
           const paramSouthId = params.get('southId');

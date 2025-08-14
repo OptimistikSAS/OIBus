@@ -2,9 +2,7 @@ import path from 'node:path';
 import fs from 'node:fs/promises';
 import fsSync, { Dirent, Stats } from 'node:fs';
 import zlib from 'node:zlib';
-
 import minimist from 'minimist';
-
 import { DateTime } from 'luxon';
 import {
   checkScanMode,
@@ -60,6 +58,8 @@ describe('Service utils', () => {
     });
 
     it('should parse command line arguments without args', () => {
+      const consoleSpy = jest.spyOn(console, 'info').mockImplementationOnce(() => null);
+
       (minimist as unknown as jest.Mock).mockReturnValue({});
       const result = getCommandLineArguments();
       expect(result).toEqual({
@@ -70,9 +70,12 @@ describe('Service utils', () => {
         ignoreRemoteConfig: false,
         launcherVersion: '3.4.0'
       });
+      expect(consoleSpy).toHaveBeenCalledWith(`OIBus starting with the following arguments: ${JSON.stringify({})}`);
     });
 
     it('should parse command line arguments with args', () => {
+      const consoleSpy = jest.spyOn(console, 'info').mockImplementationOnce(() => null);
+
       (minimist as unknown as jest.Mock).mockReturnValue({
         check: true,
         config: 'myConfig.json',
@@ -90,6 +93,16 @@ describe('Service utils', () => {
         ignoreRemoteConfig: true,
         launcherVersion: '3.5.0'
       });
+      expect(consoleSpy).toHaveBeenCalledWith(
+        `OIBus starting with the following arguments: ${JSON.stringify({
+          check: true,
+          config: 'myConfig.json',
+          ignoreIpFilters: true,
+          ignoreRemoteUpdate: true,
+          ignoreRemoteConfig: true,
+          launcherVersion: '3.5.0'
+        })}`
+      );
     });
   });
 
@@ -111,14 +124,17 @@ describe('Service utils', () => {
   describe('generateIntervals', () => {
     it('should return only one interval', () => {
       const startTime = '2020-01-01T00:00:00.000Z';
+      const startTimeFromCache = '2020-01-01T00:00:00.000Z';
       const endTime = '2020-01-01T01:00:00.000Z';
       const expectedIntervals = [{ start: startTime, end: endTime }];
-      const results = generateIntervals(startTime, endTime, 3600);
-      expect(results).toEqual(expectedIntervals);
+      const { intervals, numberOfIntervalsDone } = generateIntervals(startTime, startTimeFromCache, endTime, 3600);
+      expect(intervals).toEqual(expectedIntervals);
+      expect(numberOfIntervalsDone).toEqual(0);
     });
 
     it('should return two intervals', () => {
       const startTime1 = '2020-01-01T00:00:00.000Z';
+      const startTimeFromCache = '2020-01-01T01:00:00.000Z';
       const endTime1 = '2020-01-01T01:00:00.000Z';
       const startTime2 = '2020-01-01T01:00:00.000Z';
       const endTime2 = '2020-01-01T02:00:00.000Z';
@@ -126,8 +142,9 @@ describe('Service utils', () => {
         { start: startTime1, end: endTime1 },
         { start: startTime2, end: endTime2 }
       ];
-      const results = generateIntervals(startTime1, endTime2, 3600);
-      expect(results).toEqual(expectedIntervals);
+      const { intervals, numberOfIntervalsDone } = generateIntervals(startTime1, startTimeFromCache, endTime2, 3600);
+      expect(intervals).toEqual(expectedIntervals);
+      expect(numberOfIntervalsDone).toEqual(1);
     });
   });
 
@@ -942,7 +959,7 @@ describe('Service utils', () => {
 
   describe('validateCronExpression', () => {
     beforeEach(() => {
-      jest.resetAllMocks();
+      jest.clearAllMocks();
       jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
     });
 
@@ -1065,7 +1082,7 @@ describe('Service utils', () => {
 
   describe('checkScanMode', () => {
     beforeEach(() => {
-      jest.resetAllMocks();
+      jest.clearAllMocks();
       jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
     });
 
@@ -1079,7 +1096,7 @@ describe('Service utils', () => {
 
   describe('itemToFlattenedCSV', () => {
     beforeEach(() => {
-      jest.resetAllMocks();
+      jest.clearAllMocks();
       jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
     });
 
@@ -1121,7 +1138,7 @@ describe('Service utils', () => {
 
   describe('stringToBoolean', () => {
     beforeEach(() => {
-      jest.resetAllMocks();
+      jest.clearAllMocks();
       jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
     });
 

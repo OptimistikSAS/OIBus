@@ -11,6 +11,7 @@ import { ScanModeService } from '../../services/scan-mode.service';
 import {
   NorthConnectorCommandDTO,
   NorthConnectorDTO,
+  NorthConnectorLightDTO,
   NorthConnectorManifest,
   OIBusNorthType
 } from '../../../../../backend/shared/model/north-connector.model';
@@ -36,6 +37,7 @@ import { OIBusScanModeFormControlComponent } from '../../shared/form/oibus-scan-
 import { NorthSubscriptionsComponent } from '../north-subscriptions/north-subscriptions.component';
 import { CanComponentDeactivate } from '../../shared/unsaved-changes.guard';
 import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
+import { SouthConnectorService } from '../../services/south-connector.service';
 
 @Component({
   selector: 'oib-edit-north',
@@ -59,6 +61,7 @@ import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-
 })
 export class EditNorthComponent implements OnInit, CanComponentDeactivate {
   private northConnectorService = inject(NorthConnectorService);
+  private southConnectorService = inject(SouthConnectorService);
   private fb = inject(NonNullableFormBuilder);
   private notificationService = inject(NotificationService);
   private scanModeService = inject(ScanModeService);
@@ -79,6 +82,8 @@ export class EditNorthComponent implements OnInit, CanComponentDeactivate {
   scanModes: Array<ScanModeDTO> = [];
   transformers: Array<TransformerDTO> = [];
   certificates: Array<CertificateDTO> = [];
+  southConnectors: Array<SouthConnectorLightDTO> = [];
+  northConnectors: Array<NorthConnectorLightDTO> = [];
   manifest: NorthConnectorManifest | null = null;
 
   form: FormGroup<{
@@ -126,6 +131,8 @@ export class EditNorthComponent implements OnInit, CanComponentDeactivate {
 
   ngOnInit() {
     combineLatest([
+      this.southConnectorService.list(),
+      this.northConnectorService.list(),
       this.scanModeService.list(),
       this.certificateService.list(),
       this.transformerService.list(),
@@ -133,7 +140,9 @@ export class EditNorthComponent implements OnInit, CanComponentDeactivate {
       this.route.queryParamMap
     ])
       .pipe(
-        switchMap(([scanModes, certificates, transformers, params, queryParams]) => {
+        switchMap(([southConnectors, northConnectors, scanModes, certificates, transformers, params, queryParams]) => {
+          this.southConnectors = southConnectors;
+          this.northConnectors = northConnectors;
           this.scanModes = scanModes.filter(scanMode => scanMode.id !== 'subscription');
           this.certificates = certificates;
           this.transformers = transformers;

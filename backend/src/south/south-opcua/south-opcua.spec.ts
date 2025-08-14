@@ -1,16 +1,17 @@
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
+import ConnectionServiceMock from '../../tests/__mocks__/service/connection-service.mock';
+import nodeOPCUAMock from '../../tests/__mocks__/node-opcua.mock';
 import fs from 'node:fs/promises';
 import SouthOPCUA, { MAX_NUMBER_OF_NODE_TO_LOG } from './south-opcua';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import { randomUUID } from 'crypto';
-import path from 'node:path';
 import { SouthOPCUAItemSettings, SouthOPCUASettings } from '../../../shared/model/south-settings.model';
 import Stream from 'node:stream';
-import { createFolder } from '../../service/utils';
-import ConnectionService from '../../service/connection.service';
+import { initOPCUACertificateFolders, toOPCUASecurityPolicy, toOPCUASecurityMode, createSessionConfigs } from '../../service/utils-opcua';
 import { HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_opcua_types';
-import nodeOPCUAClient, {
+import {
+  OPCUAClient,
   AggregateFunction,
   ClientSession,
   DataType,
@@ -34,7 +35,7 @@ import testData from '../../tests/utils/test-data';
 import { mockBaseFolders } from '../../tests/utils/test-utils';
 import { SouthConnectorEntity } from '../../model/south-connector.model';
 import { DateTime } from 'luxon';
-import { encryptionService } from '../../service/encryption.service';
+import { connectionService } from '../../service/connection.service';
 
 class CustomStream extends Stream {
   constructor() {
@@ -48,9 +49,7 @@ class CustomStream extends Stream {
 
 // Mock node-opcua-client
 jest.mock('node-opcua', () => ({
-  OPCUAClient: { createSession: jest.fn(() => ({})) },
-  ClientSubscription: { create: jest.fn() },
-  ClientMonitoredItem: { create: jest.fn() },
+  ...nodeOPCUAMock,
   DataType: jest.requireActual('node-opcua').DataType,
   StatusCodes: jest.requireActual('node-opcua').StatusCodes,
   SecurityPolicy: jest.requireActual('node-opcua').SecurityPolicy,
@@ -58,11 +57,7 @@ jest.mock('node-opcua', () => ({
   UserTokenType: jest.requireActual('node-opcua').UserTokenType,
   TimestampsToReturn: jest.requireActual('node-opcua').TimestampsToReturn,
   AggregateFunction: jest.requireActual('node-opcua').AggregateFunction,
-  ReadRawModifiedDetails: jest.fn(() => ({})),
-  HistoryReadRequest: jest.requireActual('node-opcua').HistoryReadRequest,
-  ReadProcessedDetails: jest.fn(() => ({})),
-  OPCUACertificateManager: jest.fn(() => ({})),
-  resolveNodeId: jest.fn(nodeId => nodeId)
+  HistoryReadRequest: jest.requireActual('node-opcua').HistoryReadRequest
 }));
 // Mock only the randomUUID function because other functions are used by OPCUA
 jest.mock('crypto', () => ({
@@ -71,6 +66,7 @@ jest.mock('crypto', () => ({
 }));
 jest.mock('node:fs/promises');
 jest.mock('../../service/utils');
+jest.mock('../../service/utils-opcua');
 
 const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
@@ -88,8 +84,29 @@ jest.mock('../../service/encryption.service', () => ({
   encryptionService: new EncryptionServiceMock('', '')
 }));
 
+jest.mock('../../service/connection.service', () => ({
+  connectionService: new ConnectionServiceMock('', '')
+}));
+
 const logger: pino.Logger = new PinoLogger();
 const addContentCallback = jest.fn();
+
+const opcuaOptions = {
+  applicationName: 'OIBus',
+  clientName: 'connectorName-connectorId',
+  connectionStrategy: {
+    initialDelay: 1000,
+    maxRetry: 1
+  },
+  securityMode: 1,
+  securityPolicy: 'none',
+  endpointMustExist: false,
+  keepSessionAlive: false,
+  keepPendingSessionsOnDisconnect: false,
+  requestedSessionTimeout: 15000,
+  clientCertificateManager: { state: 2 }
+};
+const opcuaUserIdentity = { type: 0 };
 
 describe('SouthOPCUA', () => {
   let south: SouthOPCUA;
@@ -106,16 +123,20 @@ describe('SouthOPCUA', () => {
         readDelay: 0,
         overlap: 0
       },
-      sharedConnection: false,
-      url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
-      retryInterval: 10000,
-      readTimeout: 15000,
-      authentication: {
-        type: 'none'
+      sharedConnection: null,
+      connectionSettings: {
+        url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
+        authentication: {
+          type: 'none'
+        },
+        securityMode: 'none',
+        securityPolicy: 'none',
+        keepSessionAlive: false
       },
-      securityMode: 'none',
-      securityPolicy: 'none',
-      keepSessionAlive: false
+      retryInterval: 10_000,
+      readTimeout: 15_000,
+      flushMessageTimeout: 1000,
+      maxNumberOfMessages: 1000
     },
     items: [
       {
@@ -200,8 +221,10 @@ describe('SouthOPCUA', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
     (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
+    (toOPCUASecurityPolicy as jest.Mock).mockReturnValue('none');
+    (toOPCUASecurityMode as jest.Mock).mockReturnValue(1);
+    (createSessionConfigs as jest.Mock).mockReturnValue({ options: opcuaOptions, userIdentity: opcuaUserIdentity });
 
-    const connectionService = new ConnectionService(logger);
     south = new SouthOPCUA(
       configuration,
       addContentCallback,
@@ -209,8 +232,7 @@ describe('SouthOPCUA', () => {
       southCacheRepository,
       scanModeRepository,
       logger,
-      mockBaseFolders(configuration.id),
-      connectionService
+      mockBaseFolders(configuration.id)
     );
   });
 
@@ -224,65 +246,65 @@ describe('SouthOPCUA', () => {
   });
 
   it('should be properly initialized', async () => {
-    south.initOpcuaCertificateFolders = jest.fn();
     south.connect = jest.fn();
     south.createSession = jest.fn();
     await south.start();
     await south.start();
-    expect(south.initOpcuaCertificateFolders).toHaveBeenCalledTimes(2);
+    expect(initOPCUACertificateFolders).toHaveBeenCalledTimes(2);
+    expect(initOPCUACertificateFolders).toHaveBeenCalledWith(south['baseFolders'].cache);
     // createSession should not be called right after starting, because
     // it will be eventually called when the first session is needed
     expect(south.createSession).not.toHaveBeenCalled();
     expect(south.connect).toHaveBeenCalledTimes(2);
   });
 
+  it('should not reconnect if disconnecting', async () => {
+    south.getSession = jest.fn().mockImplementation(() => {
+      throw new Error('get session error');
+    });
+    south.disconnect = jest.fn();
+    south['disconnecting'] = true;
+    const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
+    await south.connect();
+    expect(logger.error).toHaveBeenCalledWith('Error while connecting to the OPCUA server: get session error');
+    expect(setTimeoutSpy).not.toHaveBeenCalled();
+    expect(south.disconnect).toHaveBeenCalled();
+  });
+
   it('should properly connect and disconnect to OPCUA server without password', async () => {
     south.disconnect = jest.fn();
     const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
 
-    const expectedOptions = {
-      applicationName: 'OIBus',
-      clientName: 'southId',
-      connectionStrategy: {
-        initialDelay: 1000,
-        maxRetry: 1
-      },
-      securityMode: 1,
-      securityPolicy: 'none',
-      endpointMustExist: false,
-      keepSessionAlive: false,
-      keepPendingSessionsOnDisconnect: false,
-      requestedSessionTimeout: 15000,
-      clientCertificateManager: { state: 2 }
-    };
-    const expectedUserIdentity = { type: 0 };
-
     await south.start();
 
     // retrieving a session to trigger the creation of a session
-    await south.connection.getSession();
-    expect(nodeOPCUAClient.OPCUAClient.createSession).toHaveBeenCalledWith(
-      configuration.settings.url,
-      expectedUserIdentity,
-      expectedOptions
-    );
+    await south.getSession();
+    expect(OPCUAClient.createSession).toHaveBeenCalledWith(configuration.settings.connectionSettings!.url, opcuaUserIdentity, opcuaOptions);
     expect(logger.info).toHaveBeenCalledWith(`OPCUA ${configuration.name} connected`);
     expect(setTimeoutSpy).not.toHaveBeenCalled();
   });
 
   it('should properly manage connection error', async () => {
-    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockImplementationOnce(() => {
+    (OPCUAClient.createSession as jest.Mock).mockImplementationOnce(() => {
       throw new Error('connection error');
     });
 
     await south.start();
 
     try {
-      await south.connection.getSession();
+      await south.getSession();
     } catch {
       expect(logger.error).toHaveBeenCalledWith(`Error while connecting to the OPCUA server. ${new Error('connection error')}`);
       await south.disconnect();
     }
+  });
+
+  it('should close session', async () => {
+    await south.closeSession();
+    const client = { close: jest.fn() } as unknown as ClientSession;
+    south['client'] = client;
+    await south.closeSession();
+    expect(client.close).toHaveBeenCalledTimes(1);
   });
 
   it('should properly manage history query', async () => {
@@ -402,7 +424,7 @@ describe('SouthOPCUA', () => {
           }
         ]
       });
-    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({
+    (OPCUAClient.createSession as jest.Mock).mockReturnValue({
       historyRead,
       close: jest.fn()
     });
@@ -489,7 +511,7 @@ describe('SouthOPCUA', () => {
         }
       }
     });
-    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({
+    (OPCUAClient.createSession as jest.Mock).mockReturnValue({
       historyRead,
       close: jest.fn()
     });
@@ -527,7 +549,7 @@ describe('SouthOPCUA', () => {
       },
       results
     });
-    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({
+    (OPCUAClient.createSession as jest.Mock).mockReturnValue({
       historyRead,
       close: jest.fn()
     });
@@ -567,7 +589,7 @@ describe('SouthOPCUA', () => {
         }
       }
     });
-    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({
+    (OPCUAClient.createSession as jest.Mock).mockReturnValue({
       historyRead,
       close: jest.fn()
     });
@@ -594,14 +616,14 @@ describe('SouthOPCUA', () => {
         setTimeout(() => resolve(), 1000);
       });
     });
-    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({ historyRead, close });
+    (OPCUAClient.createSession as jest.Mock).mockReturnValue({ historyRead, close });
     south.addContent = jest.fn();
 
     await south.start();
     // In order to trigger the call to the 'close' function, there needs to be a session created,
     // because otherwise the 'close' function will not be called
     // If this is not called, the 'disconnect' function will resolve right away, without calling the 'close' function
-    await south.connection.getSession();
+    await south.getSession();
     south.disconnect();
     await expect(
       south.historyQuery(
@@ -624,8 +646,6 @@ describe('SouthOPCUA', () => {
         testData.constants.dates.FAKE_NOW
       )
     ).rejects.toThrow('opcua read error');
-
-    await south.connect();
   });
 
   it('should filter HA items', () => {
@@ -654,7 +674,7 @@ describe('SouthOPCUA', () => {
         statusCode: StatusCodes.Good
       }
     ]);
-    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({ read });
+    (OPCUAClient.createSession as jest.Mock).mockReturnValue({ read });
     south.addContent = jest.fn();
 
     await south.start();
@@ -708,14 +728,14 @@ describe('SouthOPCUA', () => {
         setTimeout(() => resolve(), 1000);
       });
     });
-    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({ read, close });
+    (OPCUAClient.createSession as jest.Mock).mockReturnValue({ read, close });
     south.addContent = jest.fn();
 
     await south.start();
     // In order to trigger the call to the 'close' function, there needs to be a session created,
     // because otherwise the 'close' function will not be called
     // If this is not called, the 'disconnect' function will resolve right away, without calling the 'close' function
-    await south.connection.getSession();
+    await south.getSession();
     south.disconnect();
     await expect(south.lastPointQuery(configuration.items)).rejects.toThrow('opcua read error');
     const expectedItemsToRead = configuration.items.filter(item => item.settings.mode === 'da');
@@ -731,14 +751,11 @@ describe('SouthOPCUA', () => {
     jest.advanceTimersByTime(1000);
     await south.start();
     await expect(south.lastPointQuery(configuration.items)).rejects.toThrow('opcua read error');
-
-    await south.connect();
-    await south.connect();
   });
 
   it('should not query items when no DA items', async () => {
     const read = jest.fn().mockReturnValue(null);
-    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({ read });
+    (OPCUAClient.createSession as jest.Mock).mockReturnValue({ read });
     south.addContent = jest.fn();
 
     await south.start();
@@ -749,7 +766,7 @@ describe('SouthOPCUA', () => {
 
   it('should not query items if bad node id', async () => {
     const read = jest.fn().mockReturnValue(null);
-    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({ read });
+    (OPCUAClient.createSession as jest.Mock).mockReturnValue({ read });
     south.addContent = jest.fn();
     (resolveNodeId as jest.Mock)
       .mockImplementationOnce(() => {
@@ -771,7 +788,7 @@ describe('SouthOPCUA', () => {
 
   it('should properly query one item', async () => {
     const read = jest.fn().mockReturnValue([]);
-    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({ read });
+    (OPCUAClient.createSession as jest.Mock).mockReturnValue({ read });
     south.addContent = jest.fn();
 
     await south.start();
@@ -787,7 +804,7 @@ describe('SouthOPCUA', () => {
       { value: { value: 1, dataType: DataType.Float }, sourceTimestamp: new Date(), statusCode: StatusCodes.Good },
       { value: { value: 2, dataType: DataType.Double }, serverTimestamp: new Date(), statusCode: StatusCodes.Good }
     ]);
-    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({ read });
+    (OPCUAClient.createSession as jest.Mock).mockReturnValue({ read });
     south.addContent = jest.fn();
 
     await south.start();
@@ -822,21 +839,17 @@ describe('SouthOPCUA', () => {
     });
   });
 
-  it('should not query items if session is not set', async () => {
-    south.addContent = jest.fn();
-    await south.lastPointQuery(configuration.items);
-    expect(south.addContent).not.toHaveBeenCalled();
-    expect(logger.error).toHaveBeenCalledWith('OPCUA session not set. The connector cannot read values');
-  });
-
   it('should not subscribe if not items provided', async () => {
     await south.subscribe([]);
     expect(logger.error).not.toHaveBeenCalled();
   });
 
-  it('should not subscribe if session is not set', async () => {
-    await south.subscribe(configuration.items);
-    expect(logger.error).toHaveBeenCalledWith('OPCUA client could not subscribe to items: session not set');
+  it('should not subscribe if getSession fails', async () => {
+    south.getSession = jest.fn().mockImplementationOnce(() => {
+      throw new Error('get session error');
+    });
+    await south.subscribe([configuration.items[0]]);
+    expect(logger.error).toHaveBeenCalledWith(`Error while connecting into OPCUA server: get session error`);
   });
 
   it('should not subscribe if bad node id', async () => {
@@ -847,7 +860,7 @@ describe('SouthOPCUA', () => {
     });
     const monitorFn = jest.fn().mockReturnValue(stream);
     const session = { close: jest.fn(), createSubscription2: jest.fn() };
-    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue(session);
+    (OPCUAClient.createSession as jest.Mock).mockReturnValue(session);
     (session.createSubscription2 as jest.Mock).mockReturnValue({ terminate: jest.fn(), monitor: monitorFn });
     south.addContent = jest.fn();
 
@@ -866,7 +879,7 @@ describe('SouthOPCUA', () => {
     stream.terminate = jest.fn();
     const monitorFn = jest.fn().mockReturnValue(stream);
     const session = { close: jest.fn(), createSubscription2: jest.fn() };
-    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue(session);
+    (OPCUAClient.createSession as jest.Mock).mockReturnValue(session);
     (session.createSubscription2 as jest.Mock).mockReturnValue({ terminate: jest.fn(), monitor: monitorFn });
     south.addContent = jest
       .fn()
@@ -876,7 +889,7 @@ describe('SouthOPCUA', () => {
       })
       .mockImplementationOnce(() => Promise.resolve());
 
-    south['MAX_NUMBER_OF_MESSAGES'] = 1;
+    south['connector'].settings.maxNumberOfMessages = 1;
     await south.start();
     await south.subscribe([configuration.items[0]]);
     await south.subscribe([configuration.items[0]]);
@@ -908,7 +921,7 @@ describe('SouthOPCUA', () => {
       statusCode: StatusCodes.Good
     });
     expect(logger.error).toHaveBeenCalledWith('Error when flushing messages: Error: add content error');
-    south['MAX_NUMBER_OF_MESSAGES'] = 1000;
+    south['connector'].settings.maxNumberOfMessages = 1000;
     stream.emit('changed', {
       value: { value: 1, dataType: DataType.Float },
       serverTimestamp: DateTime.now(),
@@ -926,22 +939,11 @@ describe('SouthOPCUA', () => {
     await south.disconnect();
   });
 
-  it('should copy certificates', async () => {
-    jest.spyOn(fs, 'stat').mockImplementation(() => {
-      throw new Error('does not exist');
-    });
-    jest.spyOn(path, 'join').mockImplementationOnce(() => 'stubFolder');
-    fs.copyFile = jest.fn();
-
-    await south.initOpcuaCertificateFolders('certFolder');
-    expect(createFolder).toHaveBeenCalledTimes(10);
-  });
-
   it('should test DA item', async () => {
     const read = jest.fn();
     const close = jest.fn();
     const session = { read, close };
-    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue(session);
+    (OPCUAClient.createSession as jest.Mock).mockReturnValue(session);
 
     south.getDAValues = jest.fn().mockReturnValue({
       type: 'time-values',
@@ -967,20 +969,15 @@ describe('SouthOPCUA', () => {
     const read = jest.fn();
     const close = jest.fn();
     const session = { read, close };
-    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue(session);
+    (OPCUAClient.createSession as jest.Mock).mockReturnValue(session);
     (resolveNodeId as jest.Mock).mockImplementationOnce(() => {
       throw new Error('bad node id');
     });
     south.getDAValues = jest.fn();
 
     const callback = jest.fn();
-    await expect(south.testItem(configuration.items[3], testData.south.itemTestingSettings, callback)).rejects.toThrow(
-      'Error when parsing node ID ns=3;s=Random for item item1: bad node id'
-    );
+    await expect(south.testItem(configuration.items[3], testData.south.itemTestingSettings, callback)).rejects.toThrow('bad node id');
     expect(south.getDAValues).not.toHaveBeenCalled();
-    expect(logger.error).toHaveBeenCalledWith(
-      'Error when testing item: Error when parsing node ID ns=3;s=Random for item item1: bad node id'
-    );
     expect(callback).not.toHaveBeenCalled();
   });
 
@@ -988,7 +985,7 @@ describe('SouthOPCUA', () => {
     const read = jest.fn();
     const close = jest.fn();
     const session = { read, close };
-    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue(session);
+    (OPCUAClient.createSession as jest.Mock).mockReturnValue(session);
 
     south.disconnect = jest.fn();
     south.getHAValues = jest.fn().mockReturnValue([
@@ -1013,7 +1010,7 @@ describe('SouthOPCUA', () => {
     const read = jest.fn();
     const close = jest.fn();
     const session = { read, close };
-    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue(session);
+    (OPCUAClient.createSession as jest.Mock).mockReturnValue(session);
 
     south.disconnect = jest.fn();
     south.getHAValues = jest.fn().mockImplementationOnce(() => {
@@ -1170,19 +1167,23 @@ describe('SouthOPCUA with basic auth', () => {
         readDelay: 0,
         overlap: 0
       },
-      sharedConnection: false,
-      url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
-      retryInterval: 10000,
-      readTimeout: 15000,
-      authentication: {
-        type: 'basic',
-        username: 'myUser',
-        password: 'pass',
-        keyFilePath: '',
-        certFilePath: ''
+      sharedConnection: null,
+      readTimeout: 15_000,
+      retryInterval: 10_000,
+      connectionSettings: {
+        url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
+        authentication: {
+          type: 'basic',
+          username: 'myUser',
+          password: 'pass',
+          keyFilePath: '',
+          certFilePath: ''
+        },
+        securityMode: 'none',
+        keepSessionAlive: false
       },
-      securityMode: 'none',
-      keepSessionAlive: false
+      flushMessageTimeout: 1000,
+      maxNumberOfMessages: 1000
     },
     items: [
       {
@@ -1264,8 +1265,9 @@ describe('SouthOPCUA with basic auth', () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
     (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
-
-    const connectionService = new ConnectionService(logger);
+    (toOPCUASecurityPolicy as jest.Mock).mockReturnValue('none');
+    (toOPCUASecurityMode as jest.Mock).mockReturnValue(1);
+    (createSessionConfigs as jest.Mock).mockReturnValue({ options: opcuaOptions, userIdentity: opcuaUserIdentity });
     south = new SouthOPCUA(
       configuration,
       addContentCallback,
@@ -1273,41 +1275,14 @@ describe('SouthOPCUA with basic auth', () => {
       southCacheRepository,
       scanModeRepository,
       logger,
-      mockBaseFolders(configuration.id),
-      connectionService
+      mockBaseFolders(configuration.id)
     );
   });
 
   it('should properly connect to OPCUA server with basic auth', async () => {
-    const expectedOptions = {
-      applicationName: 'OIBus',
-      clientName: 'southId',
-      connectionStrategy: {
-        initialDelay: 1000,
-        maxRetry: 1
-      },
-      securityMode: 1,
-      securityPolicy: undefined,
-      endpointMustExist: false,
-      keepSessionAlive: false,
-      keepPendingSessionsOnDisconnect: false,
-      requestedSessionTimeout: 15000,
-      clientCertificateManager: null
-    };
-    const expectedUserIdentity = {
-      type: 1,
-      userName: configuration.settings.authentication.username,
-      password: configuration.settings.authentication.password
-    };
-
     await south.createSession();
 
-    expect(nodeOPCUAClient.OPCUAClient.createSession).toHaveBeenCalledWith(
-      configuration.settings.url,
-      expectedUserIdentity,
-      expectedOptions
-    );
-    expect(logger.info).toHaveBeenCalledWith(`OPCUA ${configuration.name} connected`);
+    expect(OPCUAClient.createSession).toHaveBeenCalledWith(configuration.settings.connectionSettings!.url, opcuaUserIdentity, opcuaOptions);
   });
 });
 
@@ -1326,20 +1301,24 @@ describe('SouthOPCUA with certificate', () => {
         readDelay: 0,
         overlap: 0
       },
-      sharedConnection: false,
-      url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
-      retryInterval: 10000,
-      readTimeout: 15000,
-      authentication: {
-        type: 'cert',
-        certFilePath: 'myCertPath',
-        keyFilePath: 'myKeyPath',
-        username: '',
-        password: ''
+      sharedConnection: null,
+      readTimeout: 15_000,
+      retryInterval: 10_000,
+      connectionSettings: {
+        url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
+        authentication: {
+          type: 'cert',
+          certFilePath: 'myCertPath',
+          keyFilePath: 'myKeyPath',
+          username: '',
+          password: ''
+        },
+        securityMode: 'sign',
+        securityPolicy: 'none',
+        keepSessionAlive: false
       },
-      securityMode: 'sign',
-      securityPolicy: 'none',
-      keepSessionAlive: false
+      flushMessageTimeout: 1000,
+      maxNumberOfMessages: 1000
     },
     items: [
       {
@@ -1421,8 +1400,10 @@ describe('SouthOPCUA with certificate', () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
     (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
+    (toOPCUASecurityPolicy as jest.Mock).mockReturnValue('none');
+    (toOPCUASecurityMode as jest.Mock).mockReturnValue(1);
+    (createSessionConfigs as jest.Mock).mockReturnValue({ options: opcuaOptions, userIdentity: opcuaUserIdentity });
 
-    const connectionService = new ConnectionService(logger);
     south = new SouthOPCUA(
       configuration,
       addContentCallback,
@@ -1430,8 +1411,7 @@ describe('SouthOPCUA with certificate', () => {
       southCacheRepository,
       scanModeRepository,
       logger,
-      mockBaseFolders(configuration.id),
-      connectionService
+      mockBaseFolders(configuration.id)
     );
   });
 
@@ -1441,35 +1421,9 @@ describe('SouthOPCUA with certificate', () => {
       .mockImplementationOnce(() => Buffer.from('key content'));
     const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
 
-    const expectedOptions = {
-      applicationName: 'OIBus',
-      clientName: 'southId',
-      connectionStrategy: {
-        initialDelay: 1000,
-        maxRetry: 1
-      },
-      securityMode: 2,
-      securityPolicy: 'none',
-      endpointMustExist: false,
-      keepSessionAlive: false,
-      requestedSessionTimeout: 15000,
-      keepPendingSessionsOnDisconnect: false,
-      clientCertificateManager: null
-    };
-    const expectedUserIdentity = {
-      type: 2,
-      certificateData: Buffer.from('cert content'),
-      privateKey: Buffer.from('key content').toString('utf8')
-    };
-
     await south.createSession();
 
-    expect(nodeOPCUAClient.OPCUAClient.createSession).toHaveBeenCalledWith(
-      configuration.settings.url,
-      expectedUserIdentity,
-      expectedOptions
-    );
-    expect(logger.info).toHaveBeenCalledWith(`OPCUA ${configuration.name} connected`);
+    expect(OPCUAClient.createSession).toHaveBeenCalledWith(configuration.settings.connectionSettings!.url, opcuaUserIdentity, opcuaOptions);
     expect(setTimeoutSpy).not.toHaveBeenCalled();
   });
 
@@ -1578,16 +1532,20 @@ describe('SouthOPCUA test connection', () => {
         readDelay: 0,
         overlap: 0
       },
-      sharedConnection: false,
-      url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
-      retryInterval: 10000,
-      readTimeout: 15000,
-      authentication: {
-        type: 'none'
+      sharedConnection: null,
+      readTimeout: 15_000,
+      retryInterval: 10_000,
+      connectionSettings: {
+        url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
+        authentication: {
+          type: 'none'
+        },
+        securityMode: 'sign-and-encrypt',
+        securityPolicy: 'none',
+        keepSessionAlive: false
       },
-      securityMode: 'sign-and-encrypt',
-      securityPolicy: 'none',
-      keepSessionAlive: false
+      flushMessageTimeout: 1000,
+      maxNumberOfMessages: 1000
     },
     items: [
       {
@@ -1682,24 +1640,11 @@ describe('SouthOPCUA test connection', () => {
     }
   }
 
-  const securityPolicies: Array<SouthOPCUASettings['securityPolicy']> = [
-    'none',
-    'basic128',
-    'basic192',
-    'basic192-rsa15',
-    'basic256-rsa15',
-    'basic256-sha256',
-    'aes128-sha256-rsa-oaep',
-    'pub-sub-aes-128-ctr',
-    'pub-sub-aes-256-ctr'
-  ];
-
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime();
     (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
 
-    const connectionService = new ConnectionService(logger);
     south = new SouthOPCUA(
       configuration,
       addContentCallback,
@@ -1707,75 +1652,21 @@ describe('SouthOPCUA test connection', () => {
       southCacheRepository,
       scanModeRepository,
       logger,
-      mockBaseFolders(configuration.id),
-      connectionService
+      mockBaseFolders(configuration.id)
     );
   });
 
   it('Connection settings are correct', async () => {
     const close = jest.fn();
-    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({ close });
+    (OPCUAClient.createSession as jest.Mock).mockReturnValue({ close });
 
     await expect(south.testConnection()).resolves.not.toThrow();
 
     expect(close).toHaveBeenCalled();
   });
 
-  it.each(securityPolicies)('Server does not support Security policy: %s', async securityPolicy => {
-    configuration.settings.securityPolicy = securityPolicy;
-    const error = new Error(`Cannot find an Endpoint matching  security mode: ${securityPolicy}`);
-
-    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockImplementationOnce(() => {
-      throw error;
-    });
-
-    await expect(south.testConnection()).rejects.toThrow(error);
-  });
-
-  it.each(securityPolicies.slice(1))('Server did not trust certificate using Security policy: %s', async securityPolicy => {
-    configuration.settings.securityPolicy = securityPolicy;
-    const error = new Error('The connection may have been rejected by server');
-
-    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockImplementationOnce(() => {
-      throw error;
-    });
-
-    await expect(south.testConnection()).rejects.toThrow(error);
-  });
-
-  it('Wrong user credentials', async () => {
-    configuration.settings.authentication.type = 'basic';
-    const error = new Error('BadIdentityTokenRejected');
-
-    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockImplementationOnce(() => {
-      throw error;
-    });
-
-    await expect(south.testConnection()).rejects.toThrow(error);
-  });
-
-  it('Wrong certificate', async () => {
-    configuration.settings.authentication = {
-      type: 'cert',
-      certFilePath: 'myCertPath',
-      keyFilePath: 'myKeyPath',
-      username: '',
-      password: ''
-    };
-    const error = new Error('BadIdentityTokenRejected');
-
-    (fs.readFile as jest.Mock)
-      .mockImplementationOnce(() => Buffer.from('cert content'))
-      .mockImplementationOnce(() => Buffer.from('key content'));
-    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockImplementationOnce(() => {
-      throw error;
-    });
-
-    await expect(south.testConnection()).rejects.toThrow(error);
-  });
-
   it('Certificate file does not exist', async () => {
-    configuration.settings.authentication = {
+    configuration.settings.connectionSettings!.authentication = {
       type: 'cert',
       certFilePath: 'myCertPath',
       keyFilePath: 'myKeyPath',
@@ -1786,7 +1677,7 @@ describe('SouthOPCUA test connection', () => {
     (fs.readFile as jest.Mock)
       .mockImplementationOnce(() => Buffer.from('cert content'))
       .mockImplementationOnce(() => Buffer.from('key content'));
-    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockImplementationOnce(() => {
+    (OPCUAClient.createSession as jest.Mock).mockImplementationOnce(() => {
       throw error;
     });
 
@@ -1794,7 +1685,7 @@ describe('SouthOPCUA test connection', () => {
   });
 
   it('Failed to read private key', async () => {
-    configuration.settings.authentication = {
+    configuration.settings.connectionSettings!.authentication = {
       type: 'cert',
       certFilePath: 'myCertPath',
       keyFilePath: 'myKeyPath',
@@ -1805,7 +1696,7 @@ describe('SouthOPCUA test connection', () => {
     (fs.readFile as jest.Mock)
       .mockImplementationOnce(() => Buffer.from('cert content'))
       .mockImplementationOnce(() => Buffer.from('key content'));
-    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockImplementationOnce(() => {
+    (OPCUAClient.createSession as jest.Mock).mockImplementationOnce(() => {
       throw error;
     });
 
@@ -1813,7 +1704,7 @@ describe('SouthOPCUA test connection', () => {
   });
 
   it('Unknown error', async () => {
-    configuration.settings.authentication = {
+    configuration.settings.connectionSettings!.authentication = {
       type: 'none',
       certFilePath: '',
       keyFilePath: '',
@@ -1822,11 +1713,18 @@ describe('SouthOPCUA test connection', () => {
     };
 
     const error = new Error('Unknown error');
-    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockImplementation(() => {
+    (OPCUAClient.createSession as jest.Mock).mockImplementation(() => {
       throw error;
     });
 
     await expect(south.testConnection()).rejects.toThrow(new Error('Unknown error'));
+  });
+
+  it('getSharedConnectionSettings should retrieve shared connection settings', () => {
+    expect(south.getSharedConnectionSettings()).toEqual({
+      connectorType: undefined,
+      connectorId: undefined
+    });
   });
 });
 
@@ -1839,22 +1737,20 @@ describe('SouthOPCUA with shared connection', () => {
     description: 'my test connector',
     enabled: true,
     settings: {
-      sharedConnection: true,
+      sharedConnection: {
+        connectorId: 'nordId',
+        connectorType: 'north'
+      },
       throttling: {
         maxInstantPerItem: true,
         maxReadInterval: 3600,
         readDelay: 0,
         overlap: 0
       },
-      url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
-      retryInterval: 10000,
       readTimeout: 15000,
-      authentication: {
-        type: 'none'
-      },
-      securityMode: 'none',
-      securityPolicy: 'none',
-      keepSessionAlive: false
+      flushMessageTimeout: 1000,
+      maxNumberOfMessages: 1000,
+      retryInterval: 10000
     },
     items: [
       {
@@ -1936,7 +1832,6 @@ describe('SouthOPCUA with shared connection', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime();
 
-    const connectionService = new ConnectionService(logger);
     south = new SouthOPCUA(
       configuration,
       addContentCallback,
@@ -1944,29 +1839,60 @@ describe('SouthOPCUA with shared connection', () => {
       southCacheRepository,
       scanModeRepository,
       logger,
-      mockBaseFolders(configuration.id),
-      connectionService
+      mockBaseFolders(configuration.id)
     );
   });
 
-  it('should initialize connectionSettings', () => {
-    // Initially sharedConnection is true
-    expect(south.connectionSettings).toEqual({
-      closeFnName: 'close',
-      sharedConnection: true
+  it('should getSession from shared connection', async () => {
+    const client = {};
+    (connectionService.getConnection as jest.Mock).mockReturnValueOnce(client);
+    expect(await south.getSession()).toBe(client);
+    expect(connectionService.getConnection).toHaveBeenCalledWith(
+      configuration.settings.sharedConnection!.connectorType,
+      configuration.settings.sharedConnection!.connectorId
+    );
+  });
+
+  it('should getSession from shared connection and throw error if not found', async () => {
+    (connectionService.getConnection as jest.Mock).mockReturnValueOnce(null);
+    await expect(south.getSession()).rejects.toThrow(new Error('Could not connect client'));
+    expect(connectionService.getConnection).toHaveBeenCalledWith(
+      configuration.settings.sharedConnection!.connectorType,
+      configuration.settings.sharedConnection!.connectorId
+    );
+  });
+
+  it('getSharedConnectionSettings should retrieve shared connection settings', () => {
+    expect(south.getSharedConnectionSettings()).toEqual({
+      connectorType: configuration.settings.sharedConnection!.connectorType,
+      connectorId: configuration.settings.sharedConnection!.connectorId
     });
   });
 
-  it('should properly name the connection', async () => {
-    const createSessionConfigsSpy = jest.spyOn(south, 'createSessionConfigs');
+  it('should properly disconnect with reconnectTimeout', async () => {
+    south['reconnectTimeout'] = setTimeout(() => null);
+    south['client'] = {} as ClientSession;
+    (connectionService.isConnectionUsed as jest.Mock).mockReturnValueOnce(false).mockReturnValueOnce(true);
+    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
 
-    await south.createSession();
+    await south.disconnect();
+    expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
+    expect(connectionService.closeSession).toHaveBeenCalledWith(
+      configuration.settings.sharedConnection!.connectorType,
+      configuration.settings.sharedConnection!.connectorId,
+      configuration.id,
+      false
+    );
+    expect(connectionService.isConnectionUsed).toHaveBeenCalledWith('south', configuration.id, configuration.id);
+    expect(south['client']).toBeNull();
 
-    expect(createSessionConfigsSpy).toHaveBeenCalledWith(
-      configuration.settings,
-      south['clientCertificateManager'],
-      encryptionService,
-      'Shared session'
+    south['client'] = {} as ClientSession;
+    await south.disconnect(new Error('error'));
+    expect(connectionService.closeSession).toHaveBeenCalledWith(
+      configuration.settings.sharedConnection!.connectorType,
+      configuration.settings.sharedConnection!.connectorId,
+      configuration.id,
+      true
     );
   });
 });

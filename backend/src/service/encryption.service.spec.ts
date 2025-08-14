@@ -1,14 +1,10 @@
 import fs from 'node:fs/promises';
 import crypto from 'node:crypto';
-
 import path from 'node:path';
 import selfSigned from 'selfsigned';
 import os from 'node:os';
-
 import EncryptionService, { CERT_FILE_NAME, CERT_PRIVATE_KEY_FILE_NAME, CERT_PUBLIC_KEY_FILE_NAME } from './encryption.service';
-
 import * as utils from './utils';
-
 import { SouthConnectorCommandDTO, SouthConnectorDTO } from '../../shared/model/south-connector.model';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { OIBusArrayAttribute, OIBusObjectAttribute, OIBusSecretAttribute, OIBusStringAttribute } from '../../shared/model/form.model';

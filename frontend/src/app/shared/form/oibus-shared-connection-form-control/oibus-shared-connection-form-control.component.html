@@ -1,0 +1,20 @@
+<div class="form-group">
+  <label [for]="sharedConnectionAttribute().key" class="form-label" [translate]="sharedConnectionAttribute().translationKey"></label>
+  <select
+    class="form-select"
+    [compareWith]="byConnectorIdComparisonFn"
+    [id]="sharedConnectionAttribute().key"
+    [formControlName]="sharedConnectionAttribute().key"
+  >
+    <option [ngValue]="null">{{ 'configuration.oibus.sharable-connection.none' | translate }}</option>
+    @for (connector of selectableConnectors(); track connector.connectorId) {
+      <option [ngValue]="{ connectorId: connector.connectorId, connectorType: connector.connectorType }">
+        <span
+          [translate]="'configuration.oibus.sharable-connection.' + connector.connectorType"
+          [translateParams]="{ connectorName: connector.connectorName }"
+        ></span>
+      </option>
+    }
+  </select>
+  <val-errors [controlName]="sharedConnectionAttribute().key" />
+</div>
