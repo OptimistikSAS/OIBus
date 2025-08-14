@@ -314,6 +314,8 @@ function buildSouthInterfaceName(connectorId: string, itemInterface: boolean): s
       return `SouthADS${prefix}Settings`;
     case 'folder-scanner':
       return `SouthFolderScanner${prefix}Settings`;
+    case 'ftp':
+      return `SouthFTP${prefix}Settings`;
     case 'modbus':
       return `SouthModbus${prefix}Settings`;
     case 'mqtt':
