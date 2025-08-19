@@ -1,5 +1,8 @@
+import { SouthMQTTItemSettingsQos } from '../../../shared/model/south-settings.model';
+
 export interface OIBusMQTTValue {
   topic: string;
+  qos: SouthMQTTItemSettingsQos;
   payload: string;
 }
 

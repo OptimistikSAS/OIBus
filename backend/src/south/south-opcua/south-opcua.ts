@@ -89,7 +89,7 @@ export default class SouthOPCUA
     }
     try {
       await this.getSession();
-      this.logger.info(`OPCUA ${this.connector.name} connected`);
+      this.logger.info(`OPCUA South connector "${this.connector.name}" connected`);
       await super.connect();
     } catch (error: unknown) {
       this.logger.error(`Error while connecting to the OPCUA server: ${(error as Error).message}`);
@@ -418,10 +418,6 @@ export default class SouthOPCUA
       await this.subscription.terminate();
       this.subscription = null;
     }
-    if (this.flushTimeout) {
-      clearTimeout(this.flushTimeout);
-      this.flushTimeout = null;
-    }
     if (this.client && (!connectionService.isConnectionUsed('south', this.connector.id, this.connector.id) || error)) {
       if (!this.connector.settings.sharedConnection) {
         await this.closeSession();
@@ -435,6 +431,11 @@ export default class SouthOPCUA
       }
     }
     this.client = null;
+    await this.flushMessages();
+    if (this.flushTimeout) {
+      clearTimeout(this.flushTimeout);
+      this.flushTimeout = null;
+    }
     await super.disconnect(error);
     this.disconnecting = false;
   }

@@ -280,7 +280,7 @@ describe('SouthOPCUA', () => {
     // retrieving a session to trigger the creation of a session
     await south.getSession();
     expect(OPCUAClient.createSession).toHaveBeenCalledWith(configuration.settings.connectionSettings!.url, opcuaUserIdentity, opcuaOptions);
-    expect(logger.info).toHaveBeenCalledWith(`OPCUA ${configuration.name} connected`);
+    expect(logger.info).toHaveBeenCalledWith(`OPCUA South connector "${configuration.name}" connected`);
     expect(setTimeoutSpy).not.toHaveBeenCalled();
   });
 
@@ -1876,7 +1876,7 @@ describe('SouthOPCUA with shared connection', () => {
     const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
 
     await south.disconnect();
-    expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
+    expect(clearTimeoutSpy).toHaveBeenCalledTimes(2);
     expect(connectionService.closeSession).toHaveBeenCalledWith(
       configuration.settings.sharedConnection!.connectorType,
       configuration.settings.sharedConnection!.connectorId,
