@@ -1,10 +1,4 @@
 import { Knex } from 'knex';
-import {
-  SouthMQTTSettingsAuthentication,
-  SouthMQTTSettingsQos,
-  SouthOPCSettingsMode,
-  SouthOPCSettingsThrottling
-} from '../../../shared/model/south-settings.model';
 
 const OIANALYTICS_MESSAGE_TABLE = 'oianalytics_messages';
 const COMMANDS_TABLE = 'commands';
@@ -18,9 +12,16 @@ const SUBSCRIPTION_TABLE = 'subscription';
 
 interface OldSouthMQTTSettings {
   url: string;
-  qos: SouthMQTTSettingsQos;
+  qos: '0' | '1' | '2';
   persistent?: boolean;
-  authentication: SouthMQTTSettingsAuthentication;
+  authentication: {
+    type: 'none' | 'basic' | 'cert';
+    username?: string;
+    password?: string | null;
+    certFilePath?: string;
+    keyFilePath?: string | null;
+    caFilePath?: string | null;
+  };
   rejectUnauthorized: boolean;
   reconnectPeriod: number;
   connectTimeout: number;
@@ -28,9 +29,16 @@ interface OldSouthMQTTSettings {
 
 interface NewSouthMQTTSettings {
   url: string;
-  qos: SouthMQTTSettingsQos;
+  qos: '0' | '1' | '2';
   persistent?: boolean;
-  authentication: SouthMQTTSettingsAuthentication;
+  authentication: {
+    type: 'none' | 'basic' | 'cert';
+    username?: string;
+    password?: string | null;
+    certFilePath?: string;
+    keyFilePath?: string | null;
+    caFilePath?: string | null;
+  };
   rejectUnauthorized: boolean;
   reconnectPeriod: number;
   connectTimeout: number;
@@ -39,7 +47,12 @@ interface NewSouthMQTTSettings {
 }
 
 interface OldSouthOPCSettings {
-  throttling: SouthOPCSettingsThrottling;
+  throttling: {
+    maxReadInterval: number;
+    readDelay: number;
+    overlap: number;
+    maxInstantPerItem: boolean;
+  };
   agentUrl: string;
   retryInterval: number;
   host: string;
@@ -47,12 +60,17 @@ interface OldSouthOPCSettings {
 }
 
 interface NewSouthOPCSettings {
-  throttling: SouthOPCSettingsThrottling;
+  throttling: {
+    maxReadInterval: number;
+    readDelay: number;
+    overlap: number;
+    maxInstantPerItem: boolean;
+  };
   agentUrl: string;
   retryInterval: number;
   host: string;
   serverName: string;
-  mode: SouthOPCSettingsMode;
+  mode: 'hda' | 'da';
 }
 
 export async function up(knex: Knex): Promise<void> {

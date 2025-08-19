@@ -696,6 +696,8 @@
             "swap-words-in-dwords": "Swap Words?"
           },
           "mqtt": {
+            "shared-connection": "Share the session with other connectors?",
+            "retry-interval": "Retry interval",
             "url": "URL",
             "qos": {
               "title": "QoS",
@@ -716,7 +718,6 @@
               "ca-file-path": "CA file path"
             },
             "reject-unauthorized": "Reject unauthorized connection",
-            "reconnect-period": "Reconnect period",
             "connect-timeout": "Connect timeout"
           },
           "oianalytics": {
@@ -749,7 +750,6 @@
             "shared-connection": "Share the session with other connectors?",
             "url": "URL",
             "keep-session-alive": "Keep session alive",
-            "read-timeout": "Read timeout",
             "retry-interval": "Retry interval",
             "security-mode": {
               "title": "Security mode",
@@ -944,6 +944,9 @@
             "swap-words-in-dwords": "Swap Words?"
           },
           "mqtt": {
+            "shared-connection": "Share the session with other connectors?",
+            "read-timeout": "Read timeout",
+            "retry-interval": "Retry interval",
             "url": "URL",
             "qos": {
               "title": "QoS",

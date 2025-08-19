@@ -13,11 +13,9 @@ export type NorthModbusSettingsAddressOffset = (typeof NORTH_MODBUS_SETTINGS_ADD
 export const NORTH_MODBUS_SETTINGS_ENDIANNESSS = ['big-endian', 'little-endian'] as const;
 export type NorthModbusSettingsEndianness = (typeof NORTH_MODBUS_SETTINGS_ENDIANNESSS)[number];
 
-export const NORTH_M_Q_T_T_SETTINGS_AUTHENTICATION_TYPES = ['none', 'basic', 'cert'] as const;
-export type NorthMQTTSettingsAuthenticationType = (typeof NORTH_M_Q_T_T_SETTINGS_AUTHENTICATION_TYPES)[number];
-
-export const NORTH_M_Q_T_T_SETTINGS_QOSS = ['0', '1', '2'] as const;
-export type NorthMQTTSettingsQos = (typeof NORTH_M_Q_T_T_SETTINGS_QOSS)[number];
+export const NORTH_M_Q_T_T_SETTINGS_CONNECTION_SETTINGS_AUTHENTICATION_TYPES = ['none', 'basic', 'cert'] as const;
+export type NorthMQTTSettingsConnectionSettingsAuthenticationType =
+  (typeof NORTH_M_Q_T_T_SETTINGS_CONNECTION_SETTINGS_AUTHENTICATION_TYPES)[number];
 
 export const NORTH_O_I_ANALYTICS_SETTINGS_SPECIFIC_SETTINGS_AUTHENTICATIONS = ['basic', 'aad-client-secret', 'aad-certificate'] as const;
 export type NorthOIAnalyticsSettingsSpecificSettingsAuthentication =
@@ -50,13 +48,21 @@ export type NorthRESTSettingsAuthType = (typeof NORTH_R_E_S_T_SETTINGS_AUTH_TYPE
 export const NORTH_S_F_T_P_SETTINGS_AUTHENTICATIONS = ['password', 'private-key'] as const;
 export type NorthSFTPSettingsAuthentication = (typeof NORTH_S_F_T_P_SETTINGS_AUTHENTICATIONS)[number];
 
-export interface NorthMQTTSettingsAuthentication {
-  type: NorthMQTTSettingsAuthenticationType;
+export interface NorthMQTTSettingsConnectionSettingsAuthentication {
+  type: NorthMQTTSettingsConnectionSettingsAuthenticationType;
   username?: string;
-  password?: string;
+  password?: string | null;
   certFilePath?: string;
   keyFilePath?: string;
   caFilePath?: string;
+}
+
+export interface NorthMQTTSettingsConnectionSettings {
+  url: string;
+  persistent: boolean;
+  authentication: NorthMQTTSettingsConnectionSettingsAuthentication;
+  rejectUnauthorized: boolean;
+  connectTimeout: number;
 }
 
 export interface NorthOIAnalyticsSettingsSpecificSettings {
@@ -150,13 +156,9 @@ export interface NorthModbusSettings {
 }
 
 export interface NorthMQTTSettings {
-  url: string;
-  qos: NorthMQTTSettingsQos;
-  persistent?: boolean;
-  authentication: NorthMQTTSettingsAuthentication;
-  rejectUnauthorized: boolean;
-  reconnectPeriod: number;
-  connectTimeout: number;
+  sharedConnection: SharedConnection | null;
+  retryInterval: number;
+  connectionSettings?: NorthMQTTSettingsConnectionSettings;
 }
 
 export interface NorthOIAnalyticsSettings {
