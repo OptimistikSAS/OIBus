@@ -1,4 +1,4 @@
-import { Component, forwardRef } from '@angular/core';
+import { Component, forwardRef, input } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 @Component({
@@ -25,6 +25,7 @@ export class OibCodeBlockStubComponent implements ControlValueAccessor {
     this.onTouch = fn;
   }
 
+  readonly language = input('');
   input = '';
 
   writeValue(input: string) {
