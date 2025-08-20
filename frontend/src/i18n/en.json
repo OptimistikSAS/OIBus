@@ -217,10 +217,22 @@
       "update-history-query-status": "Update history query status",
       "setpoint": "Setpoint"
     },
-    "oibus-data-type": {
+    "oibus-input-data-type": {
       "any": "Any",
       "time-values": "OIBus time values",
       "setpoint": "Setpoints"
+    },
+    "oibus-output-data-type": {
+      "any": "Any",
+      "time-values": "OIBus time values",
+      "mqtt": "MQTT",
+      "opcua": "OPCUA",
+      "modbus": "Modbus"
+    },
+    "oibus-transformer-language": {
+      "javascript": "JavaScript",
+      "typescript": "TypeScript",
+      "python": "Python"
     },
     "oibus-north-category": {
       "debug": "Debug",
@@ -851,6 +863,17 @@
           }
         },
         "transformers": {
+          "title": "Transform payloads",
+          "input-type": "Source type",
+          "output-type": "Destination type",
+          "transformer": "Transformer",
+          "add": "Add a transformer",
+          "list": "Custom Transformers",
+          "none": "No Custom Transformer",
+          "created": "Transformer {{ name }} created",
+          "edited": "Transformer {{ name }} edited",
+          "confirm-deletion": "Are you sure you want to delete the custom transformer {{ name }}?",
+          "deleted": "Transformer {{ name }} deleted",
           "standard": {
             "ignore": "Ignore",
             "iso": "No transform",
@@ -863,6 +886,28 @@
             "setpoint-to-modbus": "Setpoints into Modbus values",
             "setpoint-to-mqtt": "Setpoints into MQTT payloads",
             "setpoint-to-opcua": "Setpoints into OPCUA values"
+          },
+          "choose-transformer-modal": {
+            "title": "Choose how to handle payloads",
+            "transformer": "Transformer to apply",
+            "options": "Options"
+          },
+          "edit-transformer-modal": {
+            "create-title": "Create a Custom Transformer",
+            "edit-title": "Edit a Custom Transformer",
+            "input-type": "Input",
+            "output-type": "Output",
+            "name": "Name",
+            "description": "Description",
+            "custom-code": "Code",
+            "language": "Language",
+            "custom-manifest": "Options",
+            "select-language": "Select a programming language first.",
+             "tooltips": {
+               "add": "Add a Custom Transformer",
+               "edit": "Edit this Custom Transformer",
+               "delete": "Delete this Custom Transformer"
+             }
           },
           "time-values-to-csv": {
             "filename": "Filename",

@@ -13,12 +13,20 @@ import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.mo
 import { CertificateDTO } from '../../../../../../backend/shared/model/certificate.model';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { OIBUS_FORM_MODE } from '../../../shared/form/oibus-form-mode.token';
+import { OibusInputDataTypeEnumPipe } from '../../../shared/oibus-input-data-type-enum.pipe';
 
 @Component({
   selector: 'oib-edit-north-transformer-modal',
   templateUrl: './edit-north-transformer-modal.component.html',
   styleUrl: './edit-north-transformer-modal.component.scss',
-  imports: [ReactiveFormsModule, TranslateDirective, SaveButtonComponent, TranslatePipe, OIBusObjectFormControlComponent],
+  imports: [
+    ReactiveFormsModule,
+    TranslateDirective,
+    SaveButtonComponent,
+    TranslatePipe,
+    OIBusObjectFormControlComponent,
+    OibusInputDataTypeEnumPipe
+  ],
   viewProviders: [
     {
       provide: OIBUS_FORM_MODE,
