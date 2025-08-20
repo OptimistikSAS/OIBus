@@ -1,5 +1,8 @@
 import { OIBusObjectAttribute } from './form.model';
 
+export const CUSTOM_TRANSFORMER_LANGUAGES = ['javascript', 'typescript'];
+export type TransformerLanguage = (typeof CUSTOM_TRANSFORMER_LANGUAGES)[number];
+
 /**
  * Base Data Transfer Object for a transformer.
  * Represents the common properties of both custom and standard transformers.
@@ -21,13 +24,13 @@ export interface BaseTransformerDTO {
    * The input data type that the transformer accepts.
    * @example "string"
    */
-  inputType: string;
+  inputType: InputType;
 
   /**
    * The output data type that the transformer produces.
    * @example "number"
    */
-  outputType: string;
+  outputType: OutputType;
 
   /**
    * The manifest describing the transformer's input/output structure and attributes.
@@ -62,6 +65,7 @@ export interface CustomTransformerDTO extends BaseTransformerDTO {
    * @example "function transform(input) { return parseFloat(input); }"
    */
   customCode: string;
+  language: TransformerLanguage;
 }
 
 /**
@@ -95,7 +99,7 @@ export interface TransformerDTOWithOptions {
    * The input data type that the transformer accepts.
    * @example "string"
    */
-  inputType: string;
+  inputType: InputType;
 
   /**
    * The transformer to be applied.
@@ -116,7 +120,7 @@ export interface TransformerDTOWithOptions {
 export interface TransformerIdWithOptions {
   /**
    * The input data type that the transformer accepts.
-   * @example "string"
+   * @example "time-values"
    */
   inputType: string;
 
@@ -176,6 +180,12 @@ export interface CustomTransformerCommandDTO {
    * The manifest describing the transformer's input/output structure and attributes.
    */
   customManifest: OIBusObjectAttribute;
+
+  /**
+   * The language of the custom code
+   * @example "javascript"
+   */
+  language: TransformerLanguage;
 }
 
 /**
