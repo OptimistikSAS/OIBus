@@ -1,11 +1,10 @@
 import { Database } from 'better-sqlite3';
-import { TransformerSearchParam } from '../../../shared/model/transformer.model';
+import { InputType, OutputType, TransformerSearchParam } from '../../../shared/model/transformer.model';
 import { generateRandomId } from '../../service/utils';
 import { CustomTransformer, StandardTransformer, Transformer } from '../../model/transformer.model';
 import { Page } from '../../../shared/model/types';
 import OIBusTimeValuesToCsvTransformer from '../../service/transformers/time-values/oibus-time-values-to-csv-transformer';
 import IsoTransformer from '../../service/transformers/iso-transformer';
-import { OIBusDataType } from '../../../shared/model/engine.model';
 import OIBusTimeValuesToJSONTransformer from '../../service/transformers/time-values/oibus-time-values-to-json-transformer';
 import OIBusTimeValuesToMQTTTransformer from '../../service/transformers/time-values/oibus-time-values-to-mqtt-transformer';
 import OIBusTimeValuesToOPCUATransformer from '../../service/transformers/time-values/oibus-time-values-to-opcua-transformer';
@@ -229,16 +228,16 @@ export const toTransformer = (result: Record<string, string>): Transformer => {
     return {
       id: result.id as string,
       type: 'standard',
-      inputType: result.input_type as OIBusDataType,
-      outputType: result.output_type as OIBusDataType,
+      inputType: result.input_type as InputType,
+      outputType: result.output_type as OutputType,
       functionName: result.function_name as string
     };
   } else {
     return {
       id: result.id as string,
       type: 'custom',
-      inputType: result.input_type as OIBusDataType,
-      outputType: result.output_type as OIBusDataType,
+      inputType: result.input_type as InputType,
+      outputType: result.output_type as OutputType,
       name: result.name as string,
       description: result.description as string,
       customCode: result.custom_code as string,

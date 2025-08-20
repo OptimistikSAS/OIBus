@@ -34,7 +34,7 @@ import { Certificate } from '../../model/certificate.model';
 import { OIBusLog } from '../../model/logs.model';
 import { CertificateCommandDTO } from '../../../shared/model/certificate.model';
 import { LogStreamCommandDTO } from '../../../shared/model/logs.model';
-import { CustomTransformerCommand } from '../../../shared/model/transformer.model';
+import { CustomTransformerCommand, CustomTransformerDTO } from '../../../shared/model/transformer.model';
 import { Transformer } from '../../model/transformer.model';
 
 const constants = {
@@ -152,6 +152,50 @@ const transformers: Array<Transformer> = [
     outputType: 'any',
     customCode: 'console.log("Hello World");',
     customManifest: {
+      type: 'object',
+      key: 'transformers.options',
+      translationKey: '',
+      attributes: [],
+      enablingConditions: [],
+      validators: [],
+      displayProperties: {
+        visible: true,
+        wrapInBox: false
+      }
+    }
+  }
+];
+const customTransformers: Array<CustomTransformerDTO> = [
+  {
+    id: 'transformerId1',
+    type: 'custom',
+    name: 'my transformer 1',
+    description: 'description',
+    inputType: 'time-values',
+    outputType: 'any',
+    customCode: 'console.log("Hello World");',
+    manifest: {
+      type: 'object',
+      key: 'transformers.options',
+      translationKey: '',
+      attributes: [],
+      enablingConditions: [],
+      validators: [],
+      displayProperties: {
+        visible: true,
+        wrapInBox: false
+      }
+    }
+  },
+  {
+    id: 'transformerId2',
+    type: 'custom',
+    name: 'my transformer 2',
+    description: 'description',
+    inputType: 'any',
+    outputType: 'any',
+    customCode: 'console.log("Hello World");',
+    manifest: {
       type: 'object',
       key: 'transformers.options',
       translationKey: '',
@@ -1777,6 +1821,7 @@ export default Object.freeze({
   },
   transformers: {
     list: transformers,
+    customList: customTransformers,
     command: transformerCommandDTO
   },
   north: {
