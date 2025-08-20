@@ -136,11 +136,13 @@ const userSchema: Joi.ObjectSchema = Joi.object({
 });
 
 const transformerSchema: Joi.ObjectSchema = Joi.object({
+  type: Joi.string().required().allow('custom'),
   name: Joi.string().required(),
   description: Joi.string().required().allow(null, ''),
   inputType: Joi.string().required(),
   outputType: Joi.string().required(),
-  code: Joi.string().required()
+  customCode: Joi.string().required(),
+  customManifest: Joi.object().required()
 });
 
 function cronValidator(value: string, helper: Joi.CustomHelpers) {

@@ -15,6 +15,7 @@ import { WindowService } from '../shared/window.service';
 import { RouterLink } from '@angular/router';
 import { CertificateListComponent } from './certificate-list/certificate-list.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TransformerListComponent } from './transformer-list/transformer-list.component';
 
 @Component({
   selector: 'oib-engine-detail',
@@ -28,7 +29,8 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
     EngineMetricsComponent,
     RouterLink,
     NgbTooltip,
-    TranslateModule
+    TranslateModule,
+    TransformerListComponent
   ],
   templateUrl: './engine-detail.component.html',
   styleUrl: './engine-detail.component.scss'
