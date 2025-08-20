@@ -1,6 +1,6 @@
 /* eslint-disable-next-line */
 /// <reference path="../../../../../node_modules/monaco-editor/monaco.d.ts" />
-import { Component, ElementRef, forwardRef, inject, viewChild, input, signal } from '@angular/core';
+import { Component, ElementRef, forwardRef, inject, viewChild, input, effect, signal } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, ReactiveFormsModule } from '@angular/forms';
 import { MonacoEditorLoaderService } from './monaco-editor-loader.service';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../form-validation-directives';
@@ -42,6 +42,10 @@ export class OibCodeBlockComponent implements ControlValueAccessor {
    * Value to write when the loading is complete
    */
   private pendingValueToWrite = signal<string | null>(null);
+  /**
+   * Track the current language to detect changes
+   */
+  private currentLanguage = signal<string | null>(null);
 
   registerOnChange(fn: any): void {
     this.onChange = fn;
@@ -81,6 +85,15 @@ export class OibCodeBlockComponent implements ControlValueAccessor {
       const pendingValueToWrite = this.pendingValueToWrite();
       if (pendingValueToWrite) {
         codeEditor.setValue(pendingValueToWrite);
+      }
+    });
+
+    // Effect to handle language changes
+    effect(() => {
+      const lang = this.language();
+      const editor = this.codeEditorInstance();
+      if (editor && lang !== this.currentLanguage()) {
+        this.changeLanguage(lang);
       }
     });
   }

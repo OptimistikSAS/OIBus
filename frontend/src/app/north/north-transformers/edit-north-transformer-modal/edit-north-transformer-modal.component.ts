@@ -12,12 +12,20 @@ import { OIBusObjectAttribute } from '../../../../../../backend/shared/model/for
 import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.model';
 import { CertificateDTO } from '../../../../../../backend/shared/model/certificate.model';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
+import { OibusInputDataTypeEnumPipe } from '../../../shared/oibus-input-data-type-enum.pipe';
 
 @Component({
   selector: 'oib-edit-north-transformer-modal',
   templateUrl: './edit-north-transformer-modal.component.html',
   styleUrl: './edit-north-transformer-modal.component.scss',
-  imports: [ReactiveFormsModule, TranslateDirective, SaveButtonComponent, TranslatePipe, OIBusObjectFormControlComponent]
+  imports: [
+    ReactiveFormsModule,
+    TranslateDirective,
+    SaveButtonComponent,
+    TranslatePipe,
+    OIBusObjectFormControlComponent,
+    OibusInputDataTypeEnumPipe
+  ]
 })
 export class EditNorthTransformerModalComponent {
   private modal = inject(NgbActiveModal);
