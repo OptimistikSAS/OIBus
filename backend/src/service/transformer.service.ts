@@ -20,6 +20,7 @@ import { OIBusObjectAttribute } from '../../shared/model/form.model';
 import OIBusSetpointToModbusTransformer from './transformers/setpoint/oibus-setpoint-to-modbus-transformer';
 import OIBusSetpointToMQTTTransformer from './transformers/setpoint/oibus-setpoint-to-mqtt-transformer';
 import OIBusSetpointToOPCUATransformer from './transformers/setpoint/oibus-setpoint-to-opcua-transformer';
+import OIBusCustomTransformer from './transformers/oibus-custom-transformer';
 
 export default class TransformerService {
   constructor(
@@ -87,6 +88,7 @@ export const copyTransformerCommandToTransformerEntity = async (
   transformer.inputType = command.inputType;
   transformer.outputType = command.outputType;
   transformer.customCode = command.customCode;
+  transformer.language = command.language;
   transformer.customManifest = command.customManifest;
 };
 
@@ -110,6 +112,7 @@ export const toTransformerDTO = (transformer: Transformer): TransformerDTO => {
         inputType: transformer.inputType,
         outputType: transformer.outputType,
         customCode: transformer.customCode,
+        language: transformer.language,
         manifest: transformer.customManifest
       };
   }
@@ -186,9 +189,15 @@ export const createTransformer = (
           transformerWithOptions.options
         );
       }
+
+      default:
+        throw new Error(
+          `Transformer ${transformerWithOptions.transformer.id} (${transformerWithOptions.transformer.type}) not implemented`
+        );
     }
+  } else {
+    return new OIBusCustomTransformer(logger, transformerWithOptions.transformer, northConnector, transformerWithOptions.options);
   }
-  throw new Error(`Transformer ${transformerWithOptions.transformer.id} (${transformerWithOptions.transformer.type}) not implemented`);
 };
 
 export const getStandardManifest = (functionName: string): OIBusObjectAttribute => {
