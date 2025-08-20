@@ -5,6 +5,8 @@ const HISTORY_QUERIES_TABLE = 'history_queries';
 const SOUTH_CONNECTORS_TABLE = 'south_connectors';
 const SOUTH_ITEMS_TABLE = 'south_items';
 const NORTH_CONNECTORS_TABLE = 'north_connectors';
+const TRANSFORMERS_TABLE = 'transformers';
+const NORTH_TRANSFORMERS_TABLE = 'north_transformers';
 
 interface OldSouthOPCUASettings {
   throttling: {
@@ -255,6 +257,17 @@ interface NewSouthMQTTItemSettings {
   } | null;
 }
 
+interface OldMQTTTransformerOptions {
+  reference: string;
+  topic: string;
+}
+
+interface NewMQTTTransformerOptions {
+  reference: string;
+  topic: string;
+  qos: '0' | '1' | '2';
+}
+
 export async function up(knex: Knex): Promise<void> {
   await updateOPCUAConnectors(knex);
   await updateMQTTConnectors(knex);
@@ -324,6 +337,33 @@ async function updateMQTTConnectors(knex: Knex) {
     await knex(NORTH_CONNECTORS_TABLE)
       .update({ settings: JSON.stringify(newSettings) })
       .where('id', connector.id);
+
+    const transformers: Array<{
+      transformer_id: string;
+      north_id: string;
+      options: string;
+    }> = await knex(NORTH_TRANSFORMERS_TABLE)
+      .join(TRANSFORMERS_TABLE, function () {
+        this.on(`${TRANSFORMERS_TABLE}.id`, '=', `${NORTH_TRANSFORMERS_TABLE}.transformer_id`).andOn(
+          `${TRANSFORMERS_TABLE}.output_type`,
+          '=',
+          'mqtt'
+        );
+      })
+      .select(`${NORTH_TRANSFORMERS_TABLE}.transformer_id`, `${NORTH_TRANSFORMERS_TABLE}.north_id`, `${NORTH_TRANSFORMERS_TABLE}.options`)
+      .where('north_id', connector.id);
+    for (const transformer of transformers) {
+      const oldTransformerOptions: OldMQTTTransformerOptions = JSON.parse(transformer.options);
+
+      const newTransformerOptions: NewMQTTTransformerOptions = {
+        ...oldTransformerOptions,
+        qos: oldSettings.qos
+      };
+      await knex(NORTH_TRANSFORMERS_TABLE)
+        .update({ options: JSON.stringify(newTransformerOptions) })
+        .where('transformer_id', transformer.transformer_id)
+        .andWhere('north_id', transformer.north_id);
+    }
   }
 }
 

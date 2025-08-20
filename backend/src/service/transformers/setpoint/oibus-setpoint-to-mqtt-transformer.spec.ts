@@ -132,6 +132,24 @@ describe('OIBusSetpointToMQTTTransformer', () => {
                   columns: 4,
                   displayInViewMode: true
                 }
+              },
+              {
+                type: 'string-select',
+                key: 'qos',
+                translationKey: 'configuration.oibus.manifest.transformers.mapping.mqtt.qos',
+                defaultValue: '1',
+                selectableValues: ['0', '1', '2'],
+                validators: [
+                  {
+                    type: 'REQUIRED',
+                    arguments: []
+                  }
+                ],
+                displayProperties: {
+                  row: 0,
+                  columns: 4,
+                  displayInViewMode: true
+                }
               }
             ]
           }
