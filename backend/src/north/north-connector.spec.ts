@@ -1,12 +1,13 @@
-import NorthConnector from './north-connector';
-import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
-
+import nodeOPCUAMock from '../tests/__mocks__/node-opcua.mock';
 import pino from 'pino';
+import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
+import fsAsync from 'node:fs/promises';
+import { createReadStream } from 'node:fs';
 import CacheServiceMock from '../tests/__mocks__/service/cache/cache-service.mock';
 import { createBaseFolders, delay, dirSize, generateRandomId, validateCronExpression } from '../service/utils';
 import { CacheMetadata, OIBusRawContent, OIBusTimeValueContent } from '../../shared/model/engine.model';
 import testData from '../tests/utils/test-data';
-import { NorthFileWriterSettings, NorthSettings } from '../../shared/model/north-settings.model';
+import { NorthFileWriterSettings, NorthOPCUASettings, NorthSettings } from '../../shared/model/north-settings.model';
 import NorthFileWriter from './north-file-writer/north-file-writer';
 import { NorthConnectorEntity } from '../model/north-connector.model';
 import { flushPromises, mockBaseFolders } from '../tests/utils/test-utils';
@@ -16,10 +17,8 @@ import NorthConnectorRepositoryMock from '../tests/__mocks__/repository/config/n
 import ScanModeRepositoryMock from '../tests/__mocks__/repository/config/scan-mode-repository.mock';
 import CacheService from '../service/cache/cache.service';
 import { OIBusError } from '../model/engine.model';
-import fsAsync from 'node:fs/promises';
 import path from 'node:path';
 import { DateTime } from 'luxon';
-import { createReadStream } from 'node:fs';
 import { Readable } from 'node:stream';
 import TransformerService, { createTransformer } from '../service/transformer.service';
 import TransformerServiceMock from '../tests/__mocks__/service/transformer-service.mock';
@@ -27,7 +26,10 @@ import OIBusTransformerMock from '../tests/__mocks__/service/transformers/oibus-
 import OIBusTransformer from '../service/transformers/oibus-transformer';
 import IgnoreTransformer from '../service/transformers/ignore-transformer';
 import IsoTransformer from '../service/transformers/iso-transformer';
+import NorthConnector from './north-connector';
+import NorthOPCUA from './north-opcua/north-opcua';
 
+jest.mock('node-opcua', () => nodeOPCUAMock);
 // Mock fs
 jest.mock('node:stream');
 jest.mock('node:fs');
@@ -35,6 +37,7 @@ jest.mock('node:fs/promises');
 
 // Mock services
 jest.mock('../service/utils');
+jest.mock('../service/utils-opcua');
 jest.mock('../service/transformer.service');
 
 const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
@@ -140,8 +143,8 @@ describe('NorthConnector', () => {
     expect(north.addTaskToQueue).toHaveBeenCalledTimes(1);
     expect(north.addTaskToQueue).toHaveBeenCalledWith({ id: testData.scanMode.list[0].id, name: testData.scanMode.list[0].name });
 
-    await north.updateScanMode(testData.scanMode.list[0]);
-    await north.updateScanMode(testData.scanMode.list[1]);
+    north.updateScanMode(testData.scanMode.list[0]);
+    north.updateScanMode(testData.scanMode.list[1]);
     expect(logger.debug).toHaveBeenCalledWith(
       `Creating cron job for scan mode "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron})`
     );
@@ -823,6 +826,10 @@ describe('NorthConnector', () => {
     expect(north.createOIBusError(400)).toEqual(new OIBusError('400', false));
     expect(north.createOIBusError(new OIBusError('error', false))).toEqual(new OIBusError('error', false));
   });
+
+  it('should properly test sharableConnection', () => {
+    expect(north.sharableConnection()).toBeFalsy();
+  });
 });
 
 describe('NorthConnector test id', () => {
@@ -858,5 +865,33 @@ describe('NorthConnector test id', () => {
   it('should properly connect with test it', async () => {
     await north.connect();
     expect(logger.info).toHaveBeenCalledWith(`North connector "${northTest.name}" of type ${northTest.type} started`);
+  });
+
+  it('should properly test sharableConnection', () => {
+    expect(north.sharableConnection()).toBeFalsy();
+  });
+});
+
+describe('NorthConnector with sharable connection', () => {
+  const northTest: NorthConnectorEntity<NorthOPCUASettings> = JSON.parse(JSON.stringify(testData.north.list[0]));
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+
+    northTest.id = 'test';
+
+    north = new NorthOPCUA(
+      northTest,
+      transformerService,
+      northConnectorRepository,
+      scanModeRepository,
+      logger,
+      mockBaseFolders(northTest.id)
+    );
+  });
+
+  it('should properly test sharableConnection', () => {
+    expect(north.sharableConnection()).toBeTruthy();
   });
 });

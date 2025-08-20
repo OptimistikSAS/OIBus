@@ -1,5 +1,6 @@
 export interface OIBusMQTTValue {
   topic: string;
+  qos: '0' | '1' | '2';
   payload: string;
 }
 

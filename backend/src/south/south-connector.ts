@@ -1,6 +1,6 @@
 import { EventEmitter } from 'node:events';
 import { CronJob } from 'cron';
-import { createBaseFolders, delay, generateIntervals, validateCronExpression } from '../service/utils';
+import { delay, generateIntervals, validateCronExpression } from '../service/utils';
 
 import { SouthCache, SouthConnectorItemTestingSettings } from '../../shared/model/south-connector.model';
 import { Instant, Interval } from '../../shared/model/types';
@@ -8,11 +8,10 @@ import pino from 'pino';
 import DeferredPromise from '../service/deferred-promise';
 import { DateTime } from 'luxon';
 import SouthCacheService from '../service/south-cache.service';
-import { DelegatesConnection, QueriesFile, QueriesHistory, QueriesLastPoint, QueriesSubscription } from './south-interface';
+import { QueriesFile, QueriesHistory, QueriesLastPoint, QueriesSubscription, SharableConnection } from './south-interface';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { OIBusContent, OIBusRawContent, OIBusTimeValueContent } from '../../shared/model/engine.model';
 import path from 'node:path';
-import ConnectionService, { ManagedConnectionDTO } from '../service/connection.service';
 import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../model/south-connector.model';
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
@@ -65,9 +64,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     private readonly southCacheRepository: SouthCacheRepository,
     private readonly scanModeRepository: ScanModeRepository,
     protected logger: pino.Logger,
-    protected readonly baseFolders: BaseFolders,
-    // The value is null in order to incrementally refactor connectors to use the ConnectionService
-    private readonly connectionService: ConnectionService | null = null
+    protected readonly baseFolders: BaseFolders
   ) {
     if (this.connector.id !== 'test') {
       this.cacheService = new SouthCacheService(this.southCacheRepository);
@@ -92,31 +89,16 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   }
 
   async start(dataStream = true): Promise<void> {
-    if (this.connector.id !== 'test') {
-      await createBaseFolders(this.baseFolders);
-    }
     if (dataStream) {
       // Reload the settings only on a data stream case, otherwise let the history query manage the settings
       this.connector = this.southConnectorRepository.findSouthById(this.connector.id)!;
     }
     this.logger.debug(`South connector ${this.connector.name} enabled. Starting services...`);
     await this.connect();
+    this.logger.info(`South connector "${this.connector.name}" of type ${this.connector.type} started`);
   }
 
   async connect(): Promise<void> {
-    if (this.delegatesConnection()) {
-      const connectionDTO: ManagedConnectionDTO<unknown> = {
-        type: this.connector.type,
-        connectorSettings: this.connector.settings,
-        createSessionFn: this.createSession.bind(this),
-        settings: this.connectionSettings
-      };
-
-      this.connection = this.connectionService!.create(this.connector.id, connectionDTO);
-    }
-
-    this.logger.info(`South connector "${this.connector.name}" of type ${this.connector.type} started`);
-
     for (const cronJob of this.cronByScanModeIds.values()) {
       cronJob.stop();
     }
@@ -180,7 +162,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     this.connector.items
       .filter(item => item.scanModeId && item.scanModeId !== 'subscription' && item.enabled)
       .forEach(item => {
-        if (!scanModes.get(item.scanModeId!)) {
+        if (!scanModes.has(item.scanModeId!)) {
           const scanMode = this.scanModeRepository.findById(item.scanModeId!)!;
           scanModes.set(scanMode.id, scanMode);
         }
@@ -230,7 +212,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     }
   }
 
-  async updateScanMode(scanMode: ScanMode): Promise<void> {
+  updateScanMode(scanMode: ScanMode) {
     if (this.cronByScanModeIds.get(scanMode.id)) {
       this.createCronJob(scanMode);
     }
@@ -385,7 +367,6 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     }
 
     this.logger.trace(`Querying history for ${itemsToRead.length} items`);
-
     this.historyIsRunning = true;
     if (maxInstantPerItem) {
       for (const [index, item] of itemsToRead.entries()) {
@@ -402,13 +383,9 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
         // maxReadInterval will divide a huge request (for example 1 year of data) into smaller
         // requests. For example only one hour if maxReadInterval is 3600 (in s)
         const startTimeFromCache = DateTime.fromISO(southCache.maxInstant).minus({ milliseconds: overlap }).toUTC().toISO()!;
-        const intervals = generateIntervals(startTimeFromCache, endTime, throttling.maxReadInterval);
-        let numberOfIntervalsDone = 0;
-        if (startTime !== startTimeFromCache) {
-          numberOfIntervalsDone = generateIntervals(startTime, startTimeFromCache, throttling.maxReadInterval).length;
-        }
+        const { intervals, numberOfIntervalsDone } = generateIntervals(startTime, startTimeFromCache, endTime, throttling.maxReadInterval);
         this.logIntervals(intervals);
-        await this.queryIntervals(intervals, [item], southCache, startTimeFromCache, throttling.readDelay, numberOfIntervalsDone);
+        await this.queryIntervals(intervals, [item], southCache, throttling.readDelay, numberOfIntervalsDone);
         if (index !== itemsToRead.length - 1) {
           await delay(throttling.readDelay);
         }
@@ -418,14 +395,9 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       const startTimeFromCache = DateTime.fromISO(southCache.maxInstant).minus({ milliseconds: overlap }).toUTC().toISO()!;
       // maxReadInterval will divide a huge request (for example 1 year of data) into smaller
       // requests. For example only one hour if maxReadInterval is 3600 (in s)
-      const intervals = generateIntervals(startTimeFromCache, endTime, throttling.maxReadInterval);
-      let numberOfIntervalsDone = 0;
-      if (startTime !== startTimeFromCache) {
-        numberOfIntervalsDone = generateIntervals(startTime, startTimeFromCache, throttling.maxReadInterval).length;
-      }
+      const { intervals, numberOfIntervalsDone } = generateIntervals(startTime, startTimeFromCache, endTime, throttling.maxReadInterval);
       this.logIntervals(intervals);
-
-      await this.queryIntervals(intervals, itemsToRead, southCache, startTime, throttling.readDelay, numberOfIntervalsDone);
+      await this.queryIntervals(intervals, itemsToRead, southCache, throttling.readDelay, numberOfIntervalsDone);
     }
     this.metricsEvent.emit('history-query-stop', {
       running: false
@@ -437,16 +409,16 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     intervals: Array<Interval>,
     items: Array<SouthConnectorItemEntity<I>>,
     southCache: SouthCache,
-    startTime: Instant,
     readDelay: number,
     numberOfIntervalsDone: number
   ) {
     this.metricsEvent.emit('history-query-start', {
       running: true,
-      intervalProgress: this.calculateIntervalProgress(intervals, 0, startTime)
+      intervalProgress: this.calculateIntervalProgress(intervals.length, numberOfIntervalsDone)
     });
 
-    for (const [index, interval] of intervals.entries()) {
+    for (let index = numberOfIntervalsDone; index < intervals.length; index++) {
+      const interval = intervals[index];
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-expect-error
       const lastInstantRetrieved = await this.historyQuery(items, interval.start, interval.end);
@@ -464,11 +436,11 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
 
       this.metricsEvent.emit('history-query-interval', {
         running: true,
-        intervalProgress: this.calculateIntervalProgress(intervals, index, startTime),
+        intervalProgress: this.calculateIntervalProgress(intervals.length, index + 1), // this index has been done, so we increment
         currentIntervalStart: interval.start,
         currentIntervalEnd: interval.end,
-        currentIntervalNumber: numberOfIntervalsDone + index + 1,
-        numberOfIntervals: numberOfIntervalsDone + intervals.length
+        currentIntervalNumber: index + 1,
+        numberOfIntervals: intervals.length
       });
 
       if (this.stopping) {
@@ -505,23 +477,12 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   /**
    * Calculate the progress of the current interval
    */
-  private calculateIntervalProgress(intervals: Array<Interval>, currentIntervalIndex: number, startTime: Instant) {
-    // calculate progress based on time
-    const progress =
-      1 -
-      (DateTime.fromISO(intervals[intervals.length - 1].end).toMillis() -
-        DateTime.fromISO(intervals[currentIntervalIndex].start).toMillis()) /
-        (DateTime.fromISO(intervals[intervals.length - 1].end).toMillis() - DateTime.fromISO(startTime).toMillis());
-
-    // round to 2 decimals
-    const roundedProgress = Math.round((progress + Number.EPSILON) * 100) / 100;
-
-    // in the chance that the rounded progress is 0.99, but it's the last interval, we want to return 1
-    if (currentIntervalIndex === intervals.length - 1) {
+  private calculateIntervalProgress(numberOfIntervals: number, currentIntervalIndex: number) {
+    if (currentIntervalIndex === numberOfIntervals) {
       return 1;
     }
-
-    return roundedProgress;
+    // round to 2 decimals
+    return Math.round((currentIntervalIndex / numberOfIntervals + Number.EPSILON) * 100) / 100;
   }
 
   async addContent(data: OIBusContent) {
@@ -562,17 +523,12 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
    * Method called by Engine to stop a South connector. This method can be surcharged in the
    * South connector implementation to allow disconnecting to a third party application for example.
    */
-  async disconnect(): Promise<void> {
+  async disconnect(_error?: Error): Promise<void> {
     for (const cronJob of this.cronByScanModeIds.values()) {
       cronJob.stop();
     }
     this.cronByScanModeIds.clear();
     this.taskJobQueue = [];
-
-    if (this.delegatesConnection()) {
-      await this.connectionService!.remove(this.connector.type, this.connector.id);
-    }
-
     this.logger.debug(`South connector "${this.connector.name}" (${this.connector.id}) disconnected`);
   }
 
@@ -623,8 +579,8 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     return 'subscribe' in this && 'unsubscribe' in this;
   }
 
-  delegatesConnection<T>(): this is DelegatesConnection<T> {
-    return 'connectionSettings' in this && 'createSession' in this;
+  sharableConnection<T>(): this is SharableConnection<T> {
+    return 'getSession' in this && 'closeSession' in this && 'getSharedConnectionSettings' in this;
   }
 
   get settings(): SouthConnectorEntity<T, I> {

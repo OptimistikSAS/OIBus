@@ -19,233 +19,19 @@ const manifest: SouthConnectorManifest = {
     },
     enablingConditions: [
       {
-        referralPathFromRoot: 'qos',
-        targetPathFromRoot: 'persistent',
-        values: ['1', '2']
+        referralPathFromRoot: 'sharedConnection',
+        targetPathFromRoot: 'connectionSettings',
+        values: [null]
       }
     ],
     validators: [],
     attributes: [
       {
-        type: 'string',
-        key: 'url',
-        translationKey: 'configuration.oibus.manifest.south.mqtt.url',
-        defaultValue: null,
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
-          },
-          {
-            type: 'PATTERN',
-            arguments: ['^(mqtt:\\/\\/|mqtts:\\/\\/|tcp:\\/\\/|tls:\\/\\/|ws:\\/\\/|wss:\\/\\/).*']
-          }
-        ],
-        displayProperties: {
-          row: 0,
-          columns: 6,
-          displayInViewMode: true
-        }
-      },
-      {
-        type: 'string-select',
-        key: 'qos',
-        translationKey: 'configuration.oibus.manifest.south.mqtt.qos',
-        defaultValue: '1',
-        selectableValues: ['0', '1', '2'],
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
-          }
-        ],
-        displayProperties: {
-          row: 0,
-          columns: 3,
-          displayInViewMode: true
-        }
-      },
-      {
-        type: 'boolean',
-        key: 'persistent',
-        translationKey: 'configuration.oibus.manifest.south.mqtt.persistent',
-        defaultValue: false,
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
-          }
-        ],
-        displayProperties: {
-          row: 0,
-          columns: 3,
-          displayInViewMode: true
-        }
-      },
-      {
-        type: 'object',
-        key: 'authentication',
-        translationKey: 'configuration.oibus.manifest.south.mqtt.authentication.title',
-        displayProperties: {
-          visible: true,
-          wrapInBox: false
-        },
-        enablingConditions: [
-          {
-            referralPathFromRoot: 'type',
-            targetPathFromRoot: 'username',
-            values: ['basic']
-          },
-          {
-            referralPathFromRoot: 'type',
-            targetPathFromRoot: 'password',
-            values: ['basic']
-          },
-          {
-            referralPathFromRoot: 'type',
-            targetPathFromRoot: 'certFilePath',
-            values: ['cert']
-          },
-          {
-            referralPathFromRoot: 'type',
-            targetPathFromRoot: 'keyFilePath',
-            values: ['cert']
-          },
-          {
-            referralPathFromRoot: 'type',
-            targetPathFromRoot: 'caFilePath',
-            values: ['cert']
-          }
-        ],
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
-          }
-        ],
-        attributes: [
-          {
-            type: 'string-select',
-            key: 'type',
-            translationKey: 'configuration.oibus.manifest.south.mqtt.authentication',
-            defaultValue: 'none',
-            selectableValues: ['none', 'basic', 'cert'],
-            validators: [
-              {
-                type: 'REQUIRED',
-                arguments: []
-              }
-            ],
-            displayProperties: {
-              row: 0,
-              columns: 4,
-              displayInViewMode: true
-            }
-          },
-          {
-            type: 'string',
-            key: 'username',
-            translationKey: 'configuration.oibus.manifest.south.mqtt.authentication.username',
-            defaultValue: null,
-            validators: [
-              {
-                type: 'REQUIRED',
-                arguments: []
-              }
-            ],
-            displayProperties: {
-              row: 1,
-              columns: 4,
-              displayInViewMode: true
-            }
-          },
-          {
-            type: 'secret',
-            key: 'password',
-            translationKey: 'configuration.oibus.manifest.south.mqtt.authentication.password',
-            validators: [],
-            displayProperties: {
-              row: 1,
-              columns: 4,
-              displayInViewMode: true
-            }
-          },
-          {
-            type: 'string',
-            key: 'certFilePath',
-            translationKey: 'configuration.oibus.manifest.south.mqtt.authentication.cert-file-path',
-            defaultValue: null,
-            validators: [
-              {
-                type: 'REQUIRED',
-                arguments: []
-              }
-            ],
-            displayProperties: {
-              row: 1,
-              columns: 4,
-              displayInViewMode: true
-            }
-          },
-          {
-            type: 'string',
-            key: 'keyFilePath',
-            translationKey: 'configuration.oibus.manifest.south.mqtt.authentication.key-file-path',
-            defaultValue: null,
-            validators: [
-              {
-                type: 'REQUIRED',
-                arguments: []
-              }
-            ],
-            displayProperties: {
-              row: 1,
-              columns: 4,
-              displayInViewMode: true
-            }
-          },
-          {
-            type: 'string',
-            key: 'caFilePath',
-            translationKey: 'configuration.oibus.manifest.south.mqtt.authentication.ca-file-path',
-            defaultValue: null,
-            validators: [
-              {
-                type: 'REQUIRED',
-                arguments: []
-              }
-            ],
-            displayProperties: {
-              row: 1,
-              columns: 4,
-              displayInViewMode: true
-            }
-          }
-        ]
-      },
-      {
-        type: 'boolean',
-        key: 'rejectUnauthorized',
-        translationKey: 'configuration.oibus.manifest.south.mqtt.reject-unauthorized',
-        defaultValue: false,
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
-          }
-        ],
-        displayProperties: {
-          row: 2,
-          columns: 4,
-          displayInViewMode: true
-        }
-      },
-      {
         type: 'number',
-        key: 'reconnectPeriod',
-        translationKey: 'configuration.oibus.manifest.south.mqtt.reconnect-period',
+        key: 'readTimeout',
+        translationKey: 'configuration.oibus.manifest.south.mqtt.read-timeout',
         unit: 'ms',
-        defaultValue: 10000,
+        defaultValue: 15000,
         validators: [
           {
             type: 'REQUIRED',
@@ -257,37 +43,11 @@ const manifest: SouthConnectorManifest = {
           },
           {
             type: 'MAXIMUM',
-            arguments: ['30000']
+            arguments: ['3600000']
           }
         ],
         displayProperties: {
-          row: 2,
-          columns: 4,
-          displayInViewMode: true
-        }
-      },
-      {
-        type: 'number',
-        key: 'connectTimeout',
-        translationKey: 'configuration.oibus.manifest.south.mqtt.connect-timeout',
-        unit: 'ms',
-        defaultValue: 10000,
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
-          },
-          {
-            type: 'MINIMUM',
-            arguments: ['100']
-          },
-          {
-            type: 'MAXIMUM',
-            arguments: ['30000']
-          }
-        ],
-        displayProperties: {
-          row: 2,
+          row: 0,
           columns: 4,
           displayInViewMode: true
         }
@@ -313,7 +73,7 @@ const manifest: SouthConnectorManifest = {
           }
         ],
         displayProperties: {
-          row: 3,
+          row: 0,
           columns: 4,
           displayInViewMode: true
         }
@@ -339,10 +99,287 @@ const manifest: SouthConnectorManifest = {
           }
         ],
         displayProperties: {
-          row: 3,
+          row: 0,
           columns: 4,
           displayInViewMode: true
         }
+      },
+      {
+        type: 'sharable-connector',
+        key: 'sharedConnection',
+        translationKey: 'configuration.oibus.manifest.south.mqtt.shared-connection',
+        validators: [],
+        displayProperties: {
+          row: 1,
+          columns: 8,
+          displayInViewMode: false
+        }
+      },
+      {
+        type: 'number',
+        key: 'retryInterval',
+        translationKey: 'configuration.oibus.manifest.south.mqtt.retry-interval',
+        unit: 'ms',
+        defaultValue: 10_000,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          },
+          {
+            type: 'MINIMUM',
+            arguments: ['100']
+          },
+          {
+            type: 'MAXIMUM',
+            arguments: ['30000']
+          }
+        ],
+        displayProperties: {
+          row: 1,
+          columns: 4,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'object',
+        key: 'connectionSettings',
+        translationKey: 'configuration.oibus.manifest.south.mqtt.connection-settings.authentication.title',
+        displayProperties: {
+          visible: true,
+          wrapInBox: false
+        },
+        enablingConditions: [],
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          }
+        ],
+        attributes: [
+          {
+            type: 'string',
+            key: 'url',
+            translationKey: 'configuration.oibus.manifest.south.mqtt.url',
+            defaultValue: null,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              },
+              {
+                type: 'PATTERN',
+                arguments: ['^(mqtt:\\/\\/|mqtts:\\/\\/|tcp:\\/\\/|tls:\\/\\/|ws:\\/\\/|wss:\\/\\/).*']
+              }
+            ],
+            displayProperties: {
+              row: 0,
+              columns: 8,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'boolean',
+            key: 'persistent',
+            translationKey: 'configuration.oibus.manifest.south.mqtt.persistent',
+            defaultValue: false,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              }
+            ],
+            displayProperties: {
+              row: 0,
+              columns: 4,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'object',
+            key: 'authentication',
+            translationKey: 'configuration.oibus.manifest.south.mqtt.authentication.title',
+            displayProperties: {
+              visible: true,
+              wrapInBox: false
+            },
+            enablingConditions: [
+              {
+                referralPathFromRoot: 'type',
+                targetPathFromRoot: 'username',
+                values: ['basic']
+              },
+              {
+                referralPathFromRoot: 'type',
+                targetPathFromRoot: 'password',
+                values: ['basic']
+              },
+              {
+                referralPathFromRoot: 'type',
+                targetPathFromRoot: 'certFilePath',
+                values: ['cert']
+              },
+              {
+                referralPathFromRoot: 'type',
+                targetPathFromRoot: 'keyFilePath',
+                values: ['cert']
+              },
+              {
+                referralPathFromRoot: 'type',
+                targetPathFromRoot: 'caFilePath',
+                values: ['cert']
+              }
+            ],
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              }
+            ],
+            attributes: [
+              {
+                type: 'string-select',
+                key: 'type',
+                translationKey: 'configuration.oibus.manifest.south.mqtt.authentication',
+                defaultValue: 'none',
+                selectableValues: ['none', 'basic', 'cert'],
+                validators: [
+                  {
+                    type: 'REQUIRED',
+                    arguments: []
+                  }
+                ],
+                displayProperties: {
+                  row: 0,
+                  columns: 4,
+                  displayInViewMode: true
+                }
+              },
+              {
+                type: 'string',
+                key: 'username',
+                translationKey: 'configuration.oibus.manifest.south.mqtt.authentication.username',
+                defaultValue: null,
+                validators: [
+                  {
+                    type: 'REQUIRED',
+                    arguments: []
+                  }
+                ],
+                displayProperties: {
+                  row: 1,
+                  columns: 4,
+                  displayInViewMode: true
+                }
+              },
+              {
+                type: 'secret',
+                key: 'password',
+                translationKey: 'configuration.oibus.manifest.south.mqtt.authentication.password',
+                validators: [],
+                displayProperties: {
+                  row: 1,
+                  columns: 4,
+                  displayInViewMode: true
+                }
+              },
+              {
+                type: 'string',
+                key: 'certFilePath',
+                translationKey: 'configuration.oibus.manifest.south.mqtt.authentication.cert-file-path',
+                defaultValue: null,
+                validators: [
+                  {
+                    type: 'REQUIRED',
+                    arguments: []
+                  }
+                ],
+                displayProperties: {
+                  row: 1,
+                  columns: 4,
+                  displayInViewMode: true
+                }
+              },
+              {
+                type: 'string',
+                key: 'keyFilePath',
+                translationKey: 'configuration.oibus.manifest.south.mqtt.authentication.key-file-path',
+                defaultValue: null,
+                validators: [
+                  {
+                    type: 'REQUIRED',
+                    arguments: []
+                  }
+                ],
+                displayProperties: {
+                  row: 1,
+                  columns: 4,
+                  displayInViewMode: true
+                }
+              },
+              {
+                type: 'string',
+                key: 'caFilePath',
+                translationKey: 'configuration.oibus.manifest.south.mqtt.authentication.ca-file-path',
+                defaultValue: null,
+                validators: [
+                  {
+                    type: 'REQUIRED',
+                    arguments: []
+                  }
+                ],
+                displayProperties: {
+                  row: 1,
+                  columns: 4,
+                  displayInViewMode: true
+                }
+              }
+            ]
+          },
+          {
+            type: 'boolean',
+            key: 'rejectUnauthorized',
+            translationKey: 'configuration.oibus.manifest.south.mqtt.reject-unauthorized',
+            defaultValue: false,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              }
+            ],
+            displayProperties: {
+              row: 2,
+              columns: 4,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'number',
+            key: 'connectTimeout',
+            translationKey: 'configuration.oibus.manifest.south.mqtt.connect-timeout',
+            unit: 'ms',
+            defaultValue: 10000,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              },
+              {
+                type: 'MINIMUM',
+                arguments: ['100']
+              },
+              {
+                type: 'MAXIMUM',
+                arguments: ['30000']
+              }
+            ],
+            displayProperties: {
+              row: 2,
+              columns: 4,
+              displayInViewMode: true
+            }
+          }
+        ]
       }
     ]
   },
@@ -445,7 +482,25 @@ const manifest: SouthConnectorManifest = {
               ],
               displayProperties: {
                 row: 0,
-                columns: 8,
+                columns: 6,
+                displayInViewMode: true
+              }
+            },
+            {
+              type: 'string-select',
+              key: 'qos',
+              translationKey: 'configuration.oibus.manifest.south.mqtt.qos',
+              defaultValue: '1',
+              selectableValues: ['0', '1', '2'],
+              validators: [
+                {
+                  type: 'REQUIRED',
+                  arguments: []
+                }
+              ],
+              displayProperties: {
+                row: 0,
+                columns: 3,
                 displayInViewMode: true
               }
             },
@@ -463,7 +518,7 @@ const manifest: SouthConnectorManifest = {
               ],
               displayProperties: {
                 row: 0,
-                columns: 4,
+                columns: 3,
                 displayInViewMode: true
               }
             },

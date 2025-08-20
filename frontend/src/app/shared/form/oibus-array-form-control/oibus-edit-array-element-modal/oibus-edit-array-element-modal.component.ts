@@ -8,6 +8,8 @@ import { OIBusObjectAttribute } from '../../../../../../../backend/shared/model/
 import { ScanModeDTO } from '../../../../../../../backend/shared/model/scan-mode.model';
 import { CertificateDTO } from '../../../../../../../backend/shared/model/certificate.model';
 import { addAttributeToForm } from '../../dynamic-form.builder';
+import { SouthConnectorLightDTO } from '../../../../../../../backend/shared/model/south-connector.model';
+import { NorthConnectorLightDTO } from '../../../../../../../backend/shared/model/north-connector.model';
 
 @Component({
   selector: 'oib-oibus-edit-array-element-modal',
@@ -22,6 +24,9 @@ export class OIBusEditArrayElementModalComponent {
   mode: 'create' | 'edit' = 'create';
   scanModes: Array<ScanModeDTO> = [];
   certificates: Array<CertificateDTO> = [];
+  currentConnector: { connectorType: 'north' | 'south'; id: string | undefined; type: string } | undefined = undefined;
+  southConnectors: Array<SouthConnectorLightDTO> = [];
+  northConnectors: Array<NorthConnectorLightDTO> = [];
   parentGroup: FormGroup<any> | null = null;
 
   state = new ObservableState();
@@ -34,12 +39,18 @@ export class OIBusEditArrayElementModalComponent {
   prepareForCreation(
     scanModes: Array<ScanModeDTO>,
     certificates: Array<CertificateDTO>,
+    currentConnector: { connectorType: 'north' | 'south'; id: string | undefined; type: string } | undefined,
+    southConnectors: Array<SouthConnectorLightDTO>,
+    northConnectors: Array<NorthConnectorLightDTO>,
     parentGroup: FormGroup,
     elementManifest: OIBusObjectAttribute
   ) {
     this.elementManifest = elementManifest;
     this.scanModes = scanModes;
     this.certificates = certificates;
+    this.currentConnector = currentConnector;
+    this.southConnectors = southConnectors;
+    this.northConnectors = northConnectors;
     this.parentGroup = parentGroup;
     this.buildForm();
   }
@@ -47,6 +58,9 @@ export class OIBusEditArrayElementModalComponent {
   prepareForCopy(
     scanModes: Array<ScanModeDTO>,
     certificates: Array<CertificateDTO>,
+    currentConnector: { connectorType: 'north' | 'south'; id: string | undefined; type: string } | undefined,
+    southConnectors: Array<SouthConnectorLightDTO>,
+    northConnectors: Array<NorthConnectorLightDTO>,
     parentGroup: FormGroup<any>,
     value: any,
     elementManifest: OIBusObjectAttribute
@@ -55,6 +69,9 @@ export class OIBusEditArrayElementModalComponent {
     this.elementManifest = elementManifest;
     this.scanModes = scanModes;
     this.certificates = certificates;
+    this.currentConnector = currentConnector;
+    this.southConnectors = southConnectors;
+    this.northConnectors = northConnectors;
     this.parentGroup = parentGroup;
     this.buildForm();
     // we have to wrap the value into the root attribute
@@ -66,6 +83,9 @@ export class OIBusEditArrayElementModalComponent {
   prepareForEdition(
     scanModes: Array<ScanModeDTO>,
     certificates: Array<CertificateDTO>,
+    currentConnector: { connectorType: 'north' | 'south'; id: string | undefined; type: string } | undefined,
+    southConnectors: Array<SouthConnectorLightDTO>,
+    northConnectors: Array<NorthConnectorLightDTO>,
     parentGroup: FormGroup<any>,
     value: any,
     elementManifest: OIBusObjectAttribute
@@ -74,6 +94,9 @@ export class OIBusEditArrayElementModalComponent {
     this.elementManifest = elementManifest;
     this.scanModes = scanModes;
     this.certificates = certificates;
+    this.currentConnector = currentConnector;
+    this.southConnectors = southConnectors;
+    this.northConnectors = northConnectors;
     this.parentGroup = parentGroup;
     this.buildForm();
     // we have to wrap the value into the root attribute

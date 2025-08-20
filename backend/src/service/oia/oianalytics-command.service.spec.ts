@@ -1,6 +1,5 @@
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import ScanModeServiceMock from '../../tests/__mocks__/service/scan-mode-service.mock';
-
 import { encryptionService } from '../encryption.service';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';

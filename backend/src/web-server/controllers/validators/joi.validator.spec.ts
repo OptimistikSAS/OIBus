@@ -9,6 +9,7 @@ import {
   OIBusObjectAttribute,
   OIBusScanModeAttribute,
   OIBusSecretAttribute,
+  OIBusSharableConnectorAttribute,
   OIBusStringAttribute,
   OIBusStringSelectAttribute,
   OIBusTimezoneAttribute
@@ -99,6 +100,11 @@ describe('Joi validator', () => {
           translationKey: 'OibSecret'
         } as OIBusSecretAttribute,
         {
+          key: 'sharedConnector',
+          type: 'sharable-connector',
+          translationKey: 'OibSharableConnector'
+        } as OIBusSharableConnectorAttribute,
+        {
           key: 'block',
           type: 'code',
           contentType: 'json',
@@ -136,11 +142,54 @@ describe('Joi validator', () => {
         number: Joi.number().allow(null),
         select: Joi.string().valid('GET', 'POST', 'PUT', 'PATCH'),
         secret: Joi.string().allow(null, ''),
+        sharedConnector: Joi.object({
+          connectorId: Joi.string().required(),
+          connectorType: Joi.string().required().valid('north', 'south')
+        }).allow(null, ''),
         block: Joi.string().allow(null, ''),
         checkbox: Joi.boolean().falsy(0).truthy(1),
         timezone: Joi.string().allow(null, ''),
         scanMode: Joi.string().allow(null, ''),
         certificate: Joi.string().allow(null, '')
+      })
+    });
+    expect(expectedSchema.describe()).toEqual(generatedSchema.describe());
+  });
+
+  it('generateJoiSchema should properly generate sharable connector Joi schema', async () => {
+    const settings: OIBusObjectAttribute = {
+      type: 'object',
+      key: 'settings',
+      translationKey: 'configuration.oibus.manifest.south.items.settings',
+      displayProperties: {
+        visible: true,
+        wrapInBox: true
+      },
+      enablingConditions: [],
+      validators: [],
+      attributes: [
+        {
+          key: 'sharedConnector',
+          type: 'sharable-connector',
+          translationKey: 'sharedConnection',
+          validators: [{ type: 'REQUIRED', arguments: [] }],
+          displayProperties: {
+            row: 0,
+            columns: 1,
+            displayInViewMode: false
+          }
+        } as OIBusSharableConnectorAttribute
+      ]
+    };
+
+    const generatedSchema = extendedValidator.generateJoiSchema(settings);
+
+    const expectedSchema = Joi.object({
+      settings: Joi.object({
+        sharedConnector: Joi.object({
+          connectorId: Joi.string().required(),
+          connectorType: Joi.string().required().valid('north', 'south')
+        }).required()
       })
     });
     expect(expectedSchema.describe()).toEqual(generatedSchema.describe());

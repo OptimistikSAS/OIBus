@@ -1,15 +1,12 @@
 import path from 'node:path';
 import fsSync from 'node:fs';
-
-import NorthREST from './north-rest';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-
 import { HTTPRequest, ReqAuthOptions, ReqOptions, ReqProxyOptions } from '../../service/http-request.utils';
 import { createMockResponse } from '../../tests/__mocks__/undici.mock';
 import { filesExists } from '../../service/utils';
+import NorthREST from './north-rest';
 import FormData from 'form-data';
-
 import { NorthRESTSettings } from '../../../shared/model/north-settings.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import testData from '../../tests/utils/test-data';

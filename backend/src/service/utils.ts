@@ -59,27 +59,39 @@ export const delay = async (timeout: number): Promise<void> =>
 /**
  * Compute a list of end interval from a start, end and maxInterval.
  */
-export const generateIntervals = (start: Instant, end: Instant, maxInterval: number): Array<Interval> => {
-  const startTime = DateTime.fromISO(start);
-  const endTime = DateTime.fromISO(end);
+export const generateIntervals = (
+  startInstant: Instant,
+  startInstantFromCache: Instant,
+  endInstant: Instant,
+  maxNumberOfSecondsInInterval: number
+): { intervals: Array<Interval>; numberOfIntervalsDone: number } => {
+  const startTime = DateTime.fromISO(startInstant);
+  const startTimeFromCache = DateTime.fromISO(startInstantFromCache);
+  const endTime = DateTime.fromISO(endInstant);
   const originalInterval = endTime.toMillis() - startTime.toMillis();
-  if (maxInterval > 0 && endTime.toMillis() - startTime.toMillis() > 1000 * maxInterval) {
-    const numberOfInterval = originalInterval / (maxInterval * 1000);
+  let numberOfIntervalsDone = 0;
+  if (maxNumberOfSecondsInInterval > 0 && endTime.toMillis() - startTime.toMillis() > 1000 * maxNumberOfSecondsInInterval) {
+    const numberOfInterval = originalInterval / (maxNumberOfSecondsInInterval * 1000);
     const intervalLists: Array<Interval> = [];
     for (let i = 0; i < numberOfInterval; i += 1) {
       // Compute the newStartTime and the newEndTime for each interval
-      const newStartTime = DateTime.fromMillis(startTime.toMillis() + i * 1000 * maxInterval);
-      const newEndTime = DateTime.fromMillis(startTime.toMillis() + (i + 1) * 1000 * maxInterval);
-
+      const newStartTime = DateTime.fromMillis(startTime.toMillis() + i * 1000 * maxNumberOfSecondsInInterval);
+      const newEndTime = DateTime.fromMillis(startTime.toMillis() + (i + 1) * 1000 * maxNumberOfSecondsInInterval);
+      if (newStartTime < startTimeFromCache) {
+        numberOfIntervalsDone += 1;
+      }
       // If the newEndTime is bigger than the original end, the definitive end of the interval must be the end
       intervalLists.push({
         start: newStartTime.toUTC().toISO() as Instant,
         end: newEndTime < endTime ? (newEndTime.toUTC().toISO() as Instant) : (endTime.toUTC().toISO() as Instant)
       });
     }
-    return intervalLists;
+    return { intervals: intervalLists, numberOfIntervalsDone };
   }
-  return [{ start: startTime.toUTC().toISO() as Instant, end: endTime.toUTC().toISO() as Instant }];
+  return {
+    intervals: [{ start: startTime.toUTC().toISO() as Instant, end: endTime.toUTC().toISO() as Instant }],
+    numberOfIntervalsDone
+  };
 };
 
 /**

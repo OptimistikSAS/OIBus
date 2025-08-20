@@ -13,6 +13,7 @@ import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/
 import testData from '../../../../../backend/src/tests/utils/test-data';
 import { OIBusObjectFormControlComponent } from '../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
 import { CertificateService } from '../../services/certificate.service';
+import { NorthConnectorService } from '../../services/north-connector.service';
 
 class EditSouthComponentTester extends ComponentTester<EditSouthComponent> {
   constructor() {
@@ -50,11 +51,13 @@ class EditSouthComponentTester extends ComponentTester<EditSouthComponent> {
 
 describe('EditSouthComponent', () => {
   let tester: EditSouthComponentTester;
+  let northConnectorService: jasmine.SpyObj<NorthConnectorService>;
   let southConnectorService: jasmine.SpyObj<SouthConnectorService>;
   let scanModeService: jasmine.SpyObj<ScanModeService>;
   let certificateService: jasmine.SpyObj<CertificateService>;
 
   beforeEach(() => {
+    northConnectorService = createMock(NorthConnectorService);
     southConnectorService = createMock(SouthConnectorService);
     scanModeService = createMock(ScanModeService);
     certificateService = createMock(CertificateService);
@@ -64,6 +67,7 @@ describe('EditSouthComponent', () => {
         provideI18nTesting(),
         provideHttpClient(),
         { provide: SouthConnectorService, useValue: southConnectorService },
+        { provide: NorthConnectorService, useValue: northConnectorService },
         { provide: ScanModeService, useValue: scanModeService },
         { provide: CertificateService, useValue: certificateService }
       ]
@@ -71,7 +75,8 @@ describe('EditSouthComponent', () => {
 
     scanModeService.list.and.returnValue(of([]));
     certificateService.list.and.returnValue(of([]));
-
+    southConnectorService.list.and.returnValue(of(testData.south.list));
+    northConnectorService.list.and.returnValue(of(testData.north.list));
     southConnectorService.getSouthConnectorTypeManifest.and.returnValue(of(testData.south.manifest));
   });
 

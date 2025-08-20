@@ -1,3 +1,4 @@
+import ConnectionServiceMock from '../../tests/__mocks__/service/connection-service.mock';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
@@ -21,11 +22,11 @@ import mqtt from 'mqtt';
 import Stream from 'node:stream';
 import fs from 'node:fs/promises';
 import { OIBusMQTTValue } from '../../service/transformers/connector-types.model';
+import { createConnectionOptions } from '../../service/utils-mqtt';
+import { connectionService } from '../../service/connection.service';
+import MqttClient from 'mqtt/lib/client';
 
 jest.mock('node:fs/promises');
-jest.mock('../../service/encryption.service', () => ({
-  encryptionService: new EncryptionServiceMock('', '')
-}));
 const logger: pino.Logger = new PinoLogger();
 const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
@@ -40,7 +41,11 @@ jest.mock(
       return cacheService;
     }
 );
+jest.mock('../../service/connection.service', () => ({
+  connectionService: new ConnectionServiceMock('', '')
+}));
 jest.mock('../../service/utils');
+jest.mock('../../service/utils-mqtt');
 jest.mock('../../service/transformer.service');
 jest.mock('mqtt');
 
@@ -71,26 +76,29 @@ describe('NorthMQTT', () => {
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
     configuration = JSON.parse(JSON.stringify(testData.north.list[0]));
     configuration.settings = {
-      url: 'mqtt://localhost:1883',
-      qos: '1',
-      persistent: true,
-      authentication: {
-        type: 'none',
-        username: '',
-        password: '',
-        caFilePath: '',
-        certFilePath: '',
-        keyFilePath: ''
-      },
-      connectTimeout: 1000,
-      reconnectPeriod: 1000,
-      rejectUnauthorized: false
+      sharedConnection: null,
+      retryInterval: 1000,
+      connectionSettings: {
+        url: 'mqtt://localhost:1883',
+        persistent: true,
+        authentication: {
+          type: 'none',
+          username: '',
+          password: '',
+          caFilePath: '',
+          certFilePath: '',
+          keyFilePath: ''
+        },
+        connectTimeout: 1000,
+        rejectUnauthorized: false
+      }
     };
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
     (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
     (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
     (getFilenameWithoutRandomId as jest.Mock).mockReturnValue('example.file');
-    (mqtt.connect as jest.Mock).mockImplementation(() => mqttStream);
+    mqttStream.removeAllListeners();
+    (mqtt.connectAsync as jest.Mock).mockImplementation(() => mqttStream);
 
     north = new NorthMQTT(
       configuration,
@@ -103,198 +111,192 @@ describe('NorthMQTT', () => {
   });
 
   it('should properly connect', async () => {
-    north.start();
-    const expectedOptions = {
-      clean: !configuration.settings.persistent,
-      clientId: configuration.id,
-      rejectUnauthorized: false,
-      connectTimeout: 1000,
-      reconnectPeriod: 0,
-      queueQoSZero: false
+    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+    north.disconnect = jest.fn();
+    (createConnectionOptions as jest.Mock).mockReturnValueOnce({});
+    await north.start();
+    expect(createConnectionOptions).toHaveBeenCalledWith(configuration.id, configuration.settings.connectionSettings, logger);
+    expect(mqtt.connectAsync).toHaveBeenCalledWith(configuration.settings.connectionSettings!.url, {});
+    expect(logger.info).toHaveBeenCalledWith(`Connected to ${configuration.settings.connectionSettings!.url}`);
+
+    mqttStream.emit('error', new Error('error'));
+    await flushPromises(); // Flush disconnect promise
+    expect(logger.error).toHaveBeenCalledWith(`MQTT Client error: ${new Error('error')}`); // Not called because promise is already resolved
+    expect(north.disconnect).toHaveBeenCalledTimes(1);
+    expect(clearTimeoutSpy).not.toHaveBeenCalled();
+  });
+
+  it('should properly connect and clear timeout', async () => {
+    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+    north['reconnectTimeout'] = setTimeout(() => null);
+
+    (createConnectionOptions as jest.Mock).mockReturnValueOnce({});
+    await north.start();
+    expect(mqtt.connectAsync).toHaveBeenCalledWith(configuration.settings.connectionSettings!.url, {});
+    expect(clearTimeoutSpy).toHaveBeenCalledTimes(1); // because of reconnectTimeout
+  });
+
+  it('should properly connect and manage unintentional close event', async () => {
+    const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
+
+    (createConnectionOptions as jest.Mock).mockReturnValueOnce({});
+    await north.connect();
+    expect(mqtt.connectAsync).toHaveBeenCalledWith(configuration.settings.connectionSettings!.url, {});
+    expect(setTimeoutSpy).toHaveBeenCalledTimes(1);
+    mqttStream.emit('close');
+    expect(logger.debug).toHaveBeenCalledWith('MQTT Client closed unintentionally');
+    expect(setTimeoutSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it('should properly connect and manage intentional close event', async () => {
+    const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
+
+    (createConnectionOptions as jest.Mock).mockReturnValueOnce({});
+    await north.connect();
+    expect(mqtt.connectAsync).toHaveBeenCalledWith(configuration.settings.connectionSettings!.url, {});
+    north['disconnecting'] = true;
+    mqttStream.emit('close');
+    expect(setTimeoutSpy).toHaveBeenCalledTimes(1);
+    expect(logger.debug).toHaveBeenCalledWith('MQTT Client intentionally disconnected');
+  });
+
+  it('should properly manage connect error and reconnect', async () => {
+    const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
+    const error = new Error('connect error');
+    north.getSession = jest.fn().mockImplementationOnce(() => {
+      throw error;
+    });
+    north.disconnect = jest.fn();
+
+    await north.start();
+
+    expect(north.disconnect).toHaveBeenCalledTimes(1);
+    expect(north.disconnect).toHaveBeenCalledWith(error);
+    expect(setTimeoutSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('should properly manage connect error and not reconnect if disabled', async () => {
+    const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
+    const error = new Error('connect error');
+    north.getSession = jest.fn().mockImplementationOnce(() => {
+      throw error;
+    });
+    north.disconnect = jest.fn();
+    north['connector'].enabled = false;
+
+    await north.start();
+
+    expect(north.disconnect).toHaveBeenCalledTimes(1);
+    expect(north.disconnect).toHaveBeenCalledWith(error);
+    expect(setTimeoutSpy).not.toHaveBeenCalled();
+  });
+
+  it('should properly get session if shared connection', async () => {
+    north['connector'].settings.sharedConnection = {
+      connectorType: 'north',
+      connectorId: 'northId'
     };
-    await flushPromises();
-    expect(mqtt.connect).toHaveBeenCalledWith(configuration.settings.url, expectedOptions);
-    mqttStream.emit('connect');
-    expect(logger.info).toHaveBeenCalledWith(`Connected to ${configuration.settings.url}`);
+    (connectionService.getConnection as jest.Mock).mockReturnValueOnce({});
+    expect(await north.getSession()).toEqual({});
+    expect(connectionService.getConnection).toHaveBeenCalledWith('north', 'northId');
+  });
+
+  it('should properly get client session if already set', async () => {
+    north.createSession = jest.fn();
+    north['client'] = mqttStream as unknown as MqttClient.MqttClient;
+    expect(await north.getSession()).toEqual(mqttStream);
+    expect(connectionService.getConnection).not.toHaveBeenCalled();
+    expect(north.createSession).not.toHaveBeenCalled();
+  });
+
+  it('should properly throw error if session not retrieved', async () => {
+    north['connector'].settings.sharedConnection = {
+      connectorType: 'north',
+      connectorId: 'northId'
+    };
+    (connectionService.getConnection as jest.Mock).mockReturnValueOnce(null);
+    await expect(north.getSession()).rejects.toThrow(new Error('Could not connect client'));
+    expect(connectionService.getConnection).toHaveBeenCalledWith('north', 'northId');
+  });
+
+  it('should properly close session', async () => {
+    north['client'] = mqttStream as unknown as MqttClient.MqttClient;
+    await north.closeSession();
+    expect(mqttStream.end).toHaveBeenCalledTimes(1);
+
+    north['client'] = null;
+    await north.closeSession();
+    expect(mqttStream.end).toHaveBeenCalledTimes(1);
   });
 
   it('should properly disconnect', async () => {
+    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+
     await north.disconnect();
 
     expect(logger.info).not.toHaveBeenCalledWith('Disconnecting from mqtt://localhost:1883...');
+    expect(clearTimeoutSpy).not.toHaveBeenCalled();
   });
 
-  it('should properly manage clear timeout', async () => {
-    north['reconnectTimeout'] = setTimeout(() => null);
+  it('should properly disconnect and clear timeout', async () => {
     const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
 
-    north.connectToBroker = jest.fn().mockImplementationOnce(() => {
-      throw new Error('connect error');
-    });
-    await north.connect();
+    const client = { end: jest.fn() } as unknown as MqttClient.MqttClient;
+    north.closeSession = jest.fn();
+    north['client'] = client;
+    north['connector'].settings.sharedConnection = null;
+    (connectionService.isConnectionUsed as jest.Mock).mockReturnValueOnce(true);
+    north['reconnectTimeout'] = setTimeout(() => null);
 
+    await north.disconnect(new Error('error'));
+
+    expect(logger.info).not.toHaveBeenCalledWith('Disconnecting from mqtt://localhost:1883...');
+    expect(north.closeSession).toHaveBeenCalledTimes(1);
     expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
-    expect(logger.error).toHaveBeenCalledWith(`Connection error: ${new Error('connect error')}`);
+  });
+
+  it('should properly disconnect with shared connection', async () => {
+    north['client'] = mqttStream as unknown as MqttClient.MqttClient;
+    (connectionService.isConnectionUsed as jest.Mock).mockReturnValueOnce(false);
+    north['connector'].settings.sharedConnection = {
+      connectorType: 'north',
+      connectorId: 'northId'
+    };
+
+    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
 
     north['reconnectTimeout'] = setTimeout(() => null);
     await north.disconnect();
-    expect(clearTimeoutSpy).toHaveBeenCalledTimes(2);
-  });
 
-  it('should properly manage reconnection on connection failure', async () => {
-    north.connect = jest.fn();
-    north.disconnect = jest.fn().mockImplementationOnce(() => Promise.resolve());
-    north.connectToBroker({
-      clean: !configuration.settings.persistent,
-      clientId: configuration.id,
-      rejectUnauthorized: false,
-      connectTimeout: 1000,
-      reconnectPeriod: 1000,
-      queueQoSZero: false
+    expect(north.getSharedConnectionSettings()).toEqual({
+      connectorType: 'north',
+      connectorId: 'northId'
     });
-    mqttStream.emit('error', new Error('error'));
-    await flushPromises();
-    expect(north.disconnect).toHaveBeenCalledTimes(1);
-    expect(logger.error).toHaveBeenCalledWith(`MQTT Client error: ${new Error('error')}`);
-  });
 
-  it('should properly manage reconnection on connection close', async () => {
-    north.connect = jest.fn();
-    north.disconnect = jest.fn().mockImplementationOnce(() => Promise.resolve());
-    north.connectToBroker({
-      clean: !configuration.settings.persistent,
-      clientId: configuration.id,
-      rejectUnauthorized: false,
-      connectTimeout: 1000,
-      reconnectPeriod: 1000,
-      queueQoSZero: false
-    });
-    north['disconnecting'] = true;
-    mqttStream.emit('close');
-    await flushPromises();
-    expect(north['reconnectTimeout']).toBeNull();
-    expect(logger.debug).toHaveBeenCalledWith('MQTT Client intentionally disconnected');
-
-    north.connectToBroker({
-      clean: !configuration.settings.persistent,
-      clientId: configuration.id,
-      rejectUnauthorized: false,
-      connectTimeout: 1000,
-      reconnectPeriod: 1000,
-      queueQoSZero: false
-    });
-    north['disconnecting'] = false;
-    mqttStream.emit('close');
-    await flushPromises();
-    expect(north['reconnectTimeout']).not.toBeNull();
-    expect(logger.debug).toHaveBeenCalledWith(`MQTT Client closed unintentionally`);
+    expect(connectionService.closeSession).toHaveBeenCalledWith('north', 'northId', configuration.id, false);
+    expect(logger.info).not.toHaveBeenCalledWith('Disconnecting from mqtt://localhost:1883...');
+    expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
   });
 
   it('should properly test connection', async () => {
-    const expectedOptions = {
-      clientId: 'northId1',
-      clean: false,
-      rejectUnauthorized: false,
-      connectTimeout: 1000,
-      reconnectPeriod: 0,
-      queueQoSZero: false
-    };
-    north.testConnectionToBroker = jest.fn();
+    north.getSession = jest.fn();
+    north.disconnect = jest.fn();
     await north.testConnection();
-
-    expect(north.testConnectionToBroker).toHaveBeenCalledWith(expectedOptions);
-  });
-
-  it('should properly test connection to broker', async () => {
-    const options = {
-      clientId: 'northId1',
-      clean: false,
-      rejectUnauthorized: false,
-      connectTimeout: 1000,
-      reconnectPeriod: 0,
-      queueQoSZero: false
-    };
-    (mqttStream.end as jest.Mock).mockClear();
-    north.testConnectionToBroker(options).catch(() => null);
-    mqttStream.emit('connect');
-    expect(mqttStream.end).toHaveBeenCalledWith(true);
-    expect(mqttStream.end).toHaveBeenCalledTimes(1);
-    expect(logger.info).toHaveBeenCalledWith(`Connection test to "${configuration.settings.url}" successful`);
-    await flushPromises();
-  });
-
-  it('should properly fail test connection', async () => {
-    const options = {
-      clientId: 'oibus-test',
-      rejectUnauthorized: false,
-      cert: '',
-      key: '',
-      ca: '',
-      connectTimeout: 1000,
-      reconnectPeriod: 1000,
-      queueQoSZero: false
-    };
-    mqttStream.end = jest.fn();
-    north.testConnectionToBroker(options).catch(() => null);
-    mqttStream.emit('error', new Error('connection error'));
-    expect(mqtt.connect).toHaveBeenCalledWith(configuration.settings.url, options);
-    expect(mqttStream.end).toHaveBeenCalledWith(true);
-    expect(logger.error).toHaveBeenCalledWith(`MQTT connection error. ${new Error('connection error')}`);
-    await flushPromises();
-  });
-
-  it('should properly manage all connection options', async () => {
-    const options = {
-      rejectUnauthorized: configuration.settings.rejectUnauthorized,
-      reconnectPeriod: 0, // managed by OIBus
-      connectTimeout: configuration.settings.connectTimeout,
-      clientId: configuration.id,
-      queueQoSZero: false
-    };
-    const result1 = await north.createConnectionOptions();
-    expect(result1).toEqual({ ...options, clean: false });
-
-    north['connector'].settings.authentication = {
-      type: 'basic',
-      username: 'user',
-      password: 'pass'
-    };
-    const result2 = await north.createConnectionOptions();
-    expect(result2).toEqual({ ...options, clean: false, username: 'user', password: 'pass' });
-
-    (fs.readFile as jest.Mock).mockReturnValueOnce('cert content').mockReturnValueOnce('key content').mockReturnValueOnce('ca content');
-    north['connector'].settings.authentication = {
-      type: 'cert',
-      certFilePath: 'cert',
-      keyFilePath: 'key',
-      caFilePath: 'ca'
-    };
-    north['connector'].settings.qos = '0';
-    const result3 = await north.createConnectionOptions();
-    expect(result3).toEqual({ ...options, cert: 'cert content', key: 'key content', ca: 'ca content' });
-    expect(fs.readFile).toHaveBeenCalledTimes(3);
-
-    north['connector'].settings.authentication = {
-      type: 'cert',
-      certFilePath: '',
-      keyFilePath: '',
-      caFilePath: ''
-    };
-    north['connector'].settings.qos = '1';
-    const result4 = await north.createConnectionOptions();
-    expect(result4).toEqual({ ...options, clean: false, cert: '', key: '', ca: '' });
-    expect(fs.readFile).toHaveBeenCalledTimes(3);
+    expect(north.getSession).toHaveBeenCalledTimes(1);
+    expect(north.disconnect).toHaveBeenCalledTimes(1);
   });
 
   it('should handle content', async () => {
     const values: Array<OIBusMQTTValue> = [
       {
         topic: 'topic1',
-        payload: '123'
+        payload: '123',
+        qos: '1'
       },
       {
         topic: 'topic2',
-        payload: 'my payload'
+        payload: 'my payload',
+        qos: '1'
       }
     ];
     (fs.readFile as jest.Mock).mockReturnValueOnce(JSON.stringify(values));
@@ -320,12 +322,8 @@ describe('NorthMQTT', () => {
     });
 
     expect(publishAsyncFn).toHaveBeenCalledTimes(2);
-    expect(publishAsyncFn).toHaveBeenCalledWith(values[0].topic, values[0].payload, {
-      qos: parseInt(configuration.settings.qos)
-    });
-    expect(publishAsyncFn).toHaveBeenCalledWith(values[1].topic, values[1].payload, {
-      qos: parseInt(configuration.settings.qos)
-    });
+    expect(publishAsyncFn).toHaveBeenCalledWith(values[0].topic, values[0].payload, { qos: 1 });
+    expect(publishAsyncFn).toHaveBeenCalledWith(values[1].topic, values[1].payload, { qos: 1 });
   });
 
   it('should manage handle content errors', async () => {
@@ -334,11 +332,13 @@ describe('NorthMQTT', () => {
     const values: Array<OIBusMQTTValue> = [
       {
         topic: 'topic1',
-        payload: '123'
+        payload: '123',
+        qos: '1'
       },
       {
         topic: 'topic2',
-        payload: 'my payload'
+        payload: 'my payload',
+        qos: '1'
       }
     ];
     (fs.readFile as jest.Mock).mockReturnValueOnce(JSON.stringify(values)).mockReturnValueOnce(JSON.stringify([values[0]]));
