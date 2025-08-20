@@ -19,6 +19,7 @@ import IgnoreTransformer from './transformers/ignore-transformer';
 import OIBusSetpointToMQTTTransformer from './transformers/setpoint/oibus-setpoint-to-mqtt-transformer';
 import OIBusSetpointToModbusTransformer from './transformers/setpoint/oibus-setpoint-to-modbus-transformer';
 import OIBusSetpointToOPCUATransformer from './transformers/setpoint/oibus-setpoint-to-opcua-transformer';
+import OIBusCustomTransformer from './transformers/oibus-custom-transformer';
 
 jest.mock('papaparse');
 jest.mock('./utils');
@@ -145,7 +146,7 @@ describe('Transformer Service', () => {
     expect(transformerRepository.save).not.toHaveBeenCalled();
   });
 
-  it('createTransformer() should create the transformer', async () => {
+  it('createTransformer() should create standard transformers', async () => {
     const logger: pino.Logger = new PinoLogger();
 
     const transformer: StandardTransformer = JSON.parse(JSON.stringify(testData.transformers.list[0]));
@@ -194,12 +195,15 @@ describe('Transformer Service', () => {
     expect(() => createTransformer({ transformer, options: {}, inputType: 'any' }, testData.north.list[0], logger)).toThrow(
       'Transformer transformerId1 (standard) not implemented'
     );
+  });
 
-    const customTransformer: CustomTransformer = JSON.parse(JSON.stringify(testData.transformers.list[0]));
-    customTransformer.type = 'custom';
-    expect(() =>
-      createTransformer({ transformer: customTransformer, options: {}, inputType: 'any' }, testData.north.list[0], logger)
-    ).toThrow('Transformer transformerId1 (custom) not implemented');
+  it('createTransformer() should create a custom transformer', async () => {
+    const logger: pino.Logger = new PinoLogger();
+
+    const transformer: CustomTransformer = JSON.parse(JSON.stringify(testData.transformers.list[0]));
+    expect(createTransformer({ transformer, options: {}, inputType: 'time-values' }, testData.north.list[0], logger)).toBeInstanceOf(
+      OIBusCustomTransformer
+    );
   });
 
   it('getStandardManifest() should get standard manifest', async () => {
