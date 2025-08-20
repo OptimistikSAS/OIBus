@@ -10,7 +10,7 @@ import { OIBusMQTTValue } from '../connector-types.model';
 const pipelineAsync = promisify(pipeline);
 
 interface TransformerOptions {
-  mapping: Array<{ reference: string; topic: string }>;
+  mapping: Array<{ reference: string; topic: string; qos: '0' | '1' | '2' }>;
 }
 
 export default class OIBusSetpointToMQTTTransformer extends OIBusTransformer {
@@ -40,7 +40,8 @@ export default class OIBusSetpointToMQTTTransformer extends OIBusTransformer {
         if (!mappedElement) return null;
         return {
           topic: mappedElement.topic,
-          payload: typeof element.value === 'string' ? element.value : JSON.stringify(element.value)
+          payload: typeof element.value === 'string' ? element.value : JSON.stringify(element.value),
+          qos: mappedElement.qos
         };
       })
       .filter((mappedElement): mappedElement is OIBusMQTTValue => mappedElement !== null);
@@ -110,6 +111,24 @@ export default class OIBusSetpointToMQTTTransformer extends OIBusTransformer {
                 key: 'topic',
                 translationKey: 'configuration.oibus.manifest.transformers.mapping.mqtt.topic',
                 defaultValue: null,
+                validators: [
+                  {
+                    type: 'REQUIRED',
+                    arguments: []
+                  }
+                ],
+                displayProperties: {
+                  row: 0,
+                  columns: 4,
+                  displayInViewMode: true
+                }
+              },
+              {
+                type: 'string-select',
+                key: 'qos',
+                translationKey: 'configuration.oibus.manifest.transformers.mapping.mqtt.qos',
+                defaultValue: '1',
+                selectableValues: ['0', '1', '2'],
                 validators: [
                   {
                     type: 'REQUIRED',

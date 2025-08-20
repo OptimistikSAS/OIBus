@@ -857,7 +857,8 @@
             "point-id": "Point ID (Reference)",
             "reference": "Reference",
             "mqtt": {
-              "topic": "MQTT Topic"
+              "topic": "MQTT Topic",
+              "qos": "QoS"
             },
             "modbus": {
               "address": "Modbus address",
