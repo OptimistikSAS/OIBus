@@ -8,6 +8,7 @@ import { NorthConnectorEntity } from '../../model/north-connector.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 import SandboxService from '../sandbox.service';
 import { promisify } from 'node:util';
+import { generateRandomId } from '../utils';
 
 const pipelineAsync = promisify(pipeline);
 
@@ -40,6 +41,12 @@ export default class OIBusCustomTransformer extends OIBusTransformer {
         }
       })
     );
-    return await this.sandboxService.execute(Buffer.concat(chunks).toString('utf-8'), source, filename, this.transformer, this._options);
+    return await this.sandboxService.execute(
+      Buffer.concat(chunks).toString('utf-8'),
+      source,
+      filename || `${generateRandomId(10)}.json`,
+      this.transformer,
+      this._options
+    );
   }
 }
