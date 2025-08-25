@@ -4,6 +4,7 @@ import SandboxService from './sandbox.service';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import { CustomTransformer } from '../model/transformer.model';
 import { OIBusObjectAttribute } from '../../shared/model/form.model';
+import path from 'node:path';
 
 // Javascript sandbox mock
 const transformFnRef = { apply: jest.fn() };
@@ -33,10 +34,11 @@ jest.mock('isolated-vm', () => ({
 
 // Mock Pyodide
 const mockRunPython = jest.fn();
+const mockLoadPackage = jest.fn();
 const loadedPyodide = {
-  runPython: mockRunPython,
+  runPythonAsync: mockRunPython,
   loadedPackages: new Set(),
-  loadPackage: jest.fn()
+  loadPackage: mockLoadPackage
 };
 jest.mock('pyodide', () => {
   const mockLoadPyodide = jest.fn(() => Promise.resolve(loadedPyodide));
@@ -229,7 +231,7 @@ def transform(content, filename, source, options):
     beforeEach(() => {
       // Mock successful execution
       (jest.requireMock('pyodide').loadPyodide as jest.Mock).mockResolvedValue({
-        runPython: mockRunPython.mockImplementation((code: string) => {
+        runPythonAsync: mockRunPython.mockImplementation((code: string) => {
           if (code.includes('call_transform()')) {
             return JSON.stringify({
               data: 'data',
@@ -242,21 +244,28 @@ def transform(content, filename, source, options):
       });
     });
 
-    it('should initialize Pyodide only once', async () => {
+    it('should initialize Pyodide', async () => {
       await sandboxService.execute('"data"', 'source', 'my-file.txt', testTransformer, {});
       await sandboxService.execute('"data"', 'source', 'my-file.txt', testTransformer, {});
-      expect(jest.requireMock('pyodide').loadPyodide).toHaveBeenCalledTimes(1);
+      expect(jest.requireMock('pyodide').loadPyodide).toHaveBeenCalledTimes(2);
     });
 
     it('should execute the transformer code and return the result', async () => {
-      const result = await sandboxService.execute('"data"', 'source', 'my-file.txt', testTransformer, {});
+      const result = await sandboxService.execute('data', 'source', 'my-file.txt', testTransformer, {});
       // Verify Pyodide was initialized
       expect(jest.requireMock('pyodide').loadPyodide).toHaveBeenCalledWith({
-        indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.23.4/full/'
+        indexURL: path.join(__dirname, '../../../../lib/pyodide'),
+        packages: ['numpy', 'pandas', 'python-dateutil', 'pytz', 'six'],
+        stdout: expect.any(Function),
+        stderr: expect.any(Function)
       });
       // Verify the setup code was run
       expect(mockRunPython.mock.calls[0][0]).toContain('import json');
-      expect(mockRunPython.mock.calls[0][0]).toContain('content = json.loads');
+      expect(mockRunPython.mock.calls[0][0]).toContain('import base64');
+      expect(mockRunPython.mock.calls[0][0]).toContain(`content_str = "${Buffer.from('data').toString('base64')}"`);
+      expect(mockRunPython.mock.calls[0][0]).toContain("filename = 'my-file.txt'");
+      expect(mockRunPython.mock.calls[0][0]).toContain("source = 'source'");
+      expect(mockRunPython.mock.calls[0][0]).toContain('options_str = ""');
       // Verify the transform code was run
       expect(mockRunPython.mock.calls[1][0]).toContain('def call_transform():');
       // Verify the result
@@ -265,7 +274,7 @@ def transform(content, filename, source, options):
 
     it('should handle Python execution errors', async () => {
       (jest.requireMock('pyodide').loadPyodide as jest.Mock).mockResolvedValueOnce({
-        runPython: mockRunPython.mockImplementation((code: string) => {
+        runPythonAsync: mockRunPython.mockImplementation((code: string) => {
           if (code.includes('call_transform()')) {
             return JSON.stringify({
               error: 'Test error',
@@ -283,7 +292,7 @@ def transform(content, filename, source, options):
 
     it('should handle invalid JSON in Python output', async () => {
       (jest.requireMock('pyodide').loadPyodide as jest.Mock).mockResolvedValueOnce({
-        runPython: mockRunPython.mockReturnValue('invalid json')
+        runPythonAsync: mockRunPython.mockReturnValue('invalid json')
       });
       await expect(sandboxService.execute('"data"', 'source', 'my-file.txt', testTransformer, {})).rejects.toThrow(
         'Unexpected token \'i\', "invalid json" is not valid JSON'
@@ -306,28 +315,20 @@ def transform(content, filename, source, options):
 
     it('should pass correct arguments to Python code', async () => {
       const options = { key: 'value' };
-      await sandboxService.execute('"data"', 'source', 'my-file.txt', testTransformer, options);
+      await sandboxService.execute('data', 'source', 'my-file.txt', testTransformer, options);
       // Verify the arguments were set correctly
-      const setupCall = mockRunPython.mock.calls[0][0];
-      expect(setupCall).toContain(`content = json.loads(r'''"\\"data\\""''')`);
-      expect(setupCall).toContain(`filename = "my-file.txt"`);
-      expect(setupCall).toContain(`source = "source"`);
-      expect(setupCall).toContain(`options = json.loads(r'''${JSON.stringify(options)}''')`);
-    });
-
-    it('should handle null filename', async () => {
-      const result = await sandboxService.execute('"data"', 'source', null, testTransformer, {});
-      // Verify the filename was handled correctly
-      const setupCall = mockRunPython.mock.calls[0][0];
-      expect(setupCall).toContain('filename = None');
-      // Verify the result still has a default filename
-      expect(result.metadata.contentFile).toBeDefined();
+      expect(mockRunPython.mock.calls[0][0]).toContain('import json');
+      expect(mockRunPython.mock.calls[0][0]).toContain('import base64');
+      expect(mockRunPython.mock.calls[0][0]).toContain(`content_str = "${Buffer.from('data').toString('base64')}"`);
+      expect(mockRunPython.mock.calls[0][0]).toContain("filename = 'my-file.txt'");
+      expect(mockRunPython.mock.calls[0][0]).toContain("source = 'source'");
+      expect(mockRunPython.mock.calls[0][0]).toContain(`options_str = "${Buffer.from(JSON.stringify(options)).toString('base64')}"`);
     });
 
     it('should handle complex data structures', async () => {
       const complexData = '{"key": "value", "array": [1, 2, 3]}';
       (jest.requireMock('pyodide').loadPyodide as jest.Mock).mockResolvedValueOnce({
-        runPython: mockRunPython.mockImplementation((code: string) => {
+        runPythonAsync: mockRunPython.mockImplementation((code: string) => {
           if (code.includes('call_transform()')) {
             return JSON.stringify({
               data: { key: 'value', array: [1, 2, 3] },
@@ -341,6 +342,72 @@ def transform(content, filename, source, options):
       const result = await sandboxService.execute(complexData, 'source', 'my-file.txt', testTransformer, {});
       expect(result.output).toEqual(JSON.stringify({ key: 'value', array: [1, 2, 3] }));
       expect(result.metadata.numberOfElement).toBe(3);
+    });
+  });
+
+  describe('Test Python logger', () => {
+    it('should log stdout messages from Pyodide', async () => {
+      // Mock stdout callback
+      const stdoutMessages = ['Pyodide initialized', 'Loading package: numpy'];
+
+      mockRunPython.mockImplementation((code: string) => {
+        if (code.includes('call_transform()')) {
+          return JSON.stringify({
+            data: { key: 'value', array: [1, 2, 3] },
+            filename: 'my-file.txt',
+            numberOfElement: 3
+          });
+        }
+        return '';
+      });
+      (jest.requireMock('pyodide').loadPyodide as jest.Mock).mockImplementationOnce(config => {
+        // Call the stdout callback with our test messages
+        config.stdout(stdoutMessages[0]);
+        config.stdout(stdoutMessages[1]);
+
+        return Promise.resolve(loadedPyodide);
+      });
+
+      mockRunPython.mockResolvedValueOnce(
+        JSON.stringify({
+          data: 'test data',
+          filename: 'test-file.txt',
+          numberOfElement: 1
+        })
+      );
+
+      await sandboxService.execute('["test"]', 'test-source', 'test-file.txt', testTransformer, {});
+
+      // Verify stdout messages were logged
+      expect(logger.debug).toHaveBeenCalledWith(stdoutMessages[0]);
+      expect(logger.debug).toHaveBeenCalledWith(stdoutMessages[1]);
+    });
+
+    it('should log stderr messages from Pyodide', async () => {
+      // Mock stderr callback
+      const stderrMessages = ['Error loading package', 'Warning: deprecated feature'];
+
+      (jest.requireMock('pyodide').loadPyodide as jest.Mock).mockImplementationOnce(config => {
+        // Call the stderr callback with our test messages
+        config.stderr(stderrMessages[0]);
+        config.stderr(stderrMessages[1]);
+
+        return Promise.resolve(loadedPyodide);
+      });
+
+      mockRunPython.mockResolvedValueOnce(
+        JSON.stringify({
+          data: 'test data',
+          filename: 'test-file.txt',
+          numberOfElement: 1
+        })
+      );
+
+      await sandboxService.execute('["test"]', 'test-source', 'test-file.txt', testTransformer, {});
+
+      // Verify stderr messages were logged
+      expect(logger.error).toHaveBeenCalledWith(stderrMessages[0]);
+      expect(logger.error).toHaveBeenCalledWith(stderrMessages[1]);
     });
   });
 
@@ -361,7 +428,7 @@ def transform(content, filename, source, options):
       };
       const inputData = '{"array": [1, 2, 3, 4, 5]}';
       (jest.requireMock('pyodide').loadPyodide as jest.Mock).mockResolvedValueOnce({
-        runPython: mockRunPython.mockImplementation((code: string) => {
+        runPythonAsync: mockRunPython.mockImplementation((code: string) => {
           if (code.includes('call_transform()')) {
             return JSON.stringify({
               data: [1, 2, 3, 4, 5],
@@ -393,7 +460,7 @@ def transform(content, filename, source, options):
       };
       const inputData = '{"key": "value"}';
       (jest.requireMock('pyodide').loadPyodide as jest.Mock).mockResolvedValueOnce({
-        runPython: mockRunPython.mockImplementation((code: string) => {
+        runPythonAsync: mockRunPython.mockImplementation((code: string) => {
           if (code.includes('call_transform()')) {
             return JSON.stringify({
               data: { key: 'value', modified: true },
@@ -418,7 +485,7 @@ def transform(content, filename, source, options):
 `
       };
       (jest.requireMock('pyodide').loadPyodide as jest.Mock).mockResolvedValueOnce({
-        runPython: mockRunPython.mockImplementation((code: string) => {
+        runPythonAsync: mockRunPython.mockImplementation((code: string) => {
           if (code.includes('call_transform()')) {
             return JSON.stringify({
               error: 'SyntaxError: invalid syntax',
@@ -431,6 +498,37 @@ def transform(content, filename, source, options):
       });
       await expect(sandboxService.execute('"data"', 'source', 'my-file.txt', brokenTransformer, {})).rejects.toThrow(
         'Python execution error: SyntaxError: invalid syntax'
+      );
+    });
+
+    it('should handle Python empty result', async () => {
+      (jest.requireMock('pyodide').loadPyodide as jest.Mock).mockResolvedValueOnce({
+        runPythonAsync: mockRunPython.mockImplementation(() => {
+          return '';
+        })
+      });
+      await expect(sandboxService.execute('"data"', 'source', 'my-file.txt', testTransformer, {})).rejects.toThrow(
+        'Python execution returned no result'
+      );
+    });
+
+    it('should handle Python bad result syntax', async () => {
+      (jest.requireMock('pyodide').loadPyodide as jest.Mock).mockResolvedValueOnce({
+        runPythonAsync: mockRunPython.mockImplementation((code: string) => {
+          if (code.includes('call_transform()')) {
+            return JSON.stringify({
+              data: '',
+              filename: 'my-file.txt'
+            });
+          }
+          return '';
+        })
+      });
+      await expect(sandboxService.execute('"data"', 'source', 'my-file.txt', testTransformer, {})).rejects.toThrow(
+        `Transform function did not return a valid result: ${JSON.stringify({
+          data: '',
+          filename: 'my-file.txt'
+        })}`
       );
     });
   });
