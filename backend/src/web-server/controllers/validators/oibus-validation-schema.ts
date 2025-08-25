@@ -154,6 +154,7 @@ const transformerSchema: Joi.ObjectSchema = Joi.object({
   description: Joi.string().required().allow(null, ''),
   inputType: Joi.string().required(),
   outputType: Joi.string().required(),
+  language: Joi.string().required(),
   customCode: Joi.string().required(),
   customManifest: Joi.object().required()
 });
