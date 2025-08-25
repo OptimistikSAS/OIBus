@@ -84,6 +84,12 @@ describe('OIBusCustomTransformer', () => {
     await flushPromises();
     const result = await promise;
     expect(result).toEqual(sandboxOutput);
-    expect(sandboxService.execute).toHaveBeenCalledWith(JSON.stringify(dataChunks), source, null, testData.transformers.list[0], {});
+    expect(sandboxService.execute).toHaveBeenCalledWith(
+      JSON.stringify(dataChunks),
+      source,
+      'randomId.json',
+      testData.transformers.list[0],
+      {}
+    );
   });
 });
