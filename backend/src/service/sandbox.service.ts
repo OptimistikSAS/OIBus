@@ -1,8 +1,9 @@
 import ivm from 'isolated-vm';
-import { loadPyodide, PyodideAPI } from 'pyodide';
+import { loadPyodide } from 'pyodide';
 import { Logger } from 'pino';
 import { CustomTransformer } from '../model/transformer.model';
 import { CacheMetadata } from '../../shared/model/engine.model';
+import path from 'node:path';
 
 interface ResultOutput<TOutput> {
   data: TOutput;
@@ -11,33 +12,12 @@ interface ResultOutput<TOutput> {
 }
 
 export default class SandboxService {
-  private isolate = new ivm.Isolate();
-  private pyodideReady: Promise<PyodideAPI> | null = null;
-
   constructor(private readonly logger: Logger) {}
 
-  /**
-   * Initialise Pyodide (pour l'exécution de Python)
-   */
-  private async initializePyodide(): Promise<PyodideAPI> {
-    if (!this.pyodideReady) {
-      this.pyodideReady = loadPyodide({
-        indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.23.4/full/'
-      });
-      this.logger.info('Initializing Pyodide...');
-      await this.pyodideReady;
-      this.logger.info('Pyodide initialized');
-    }
-    return this.pyodideReady;
-  }
-
-  /**
-   * Exécute du code dans une sandbox
-   */
   public async execute<TOutput>(
     stringContent: string,
     source: string,
-    filename: string | null,
+    filename: string,
     transformer: CustomTransformer,
     options: object
   ): Promise<{ metadata: CacheMetadata; output: string }> {
@@ -48,20 +28,18 @@ export default class SandboxService {
     }
   }
 
-  /**
-   * Exécute du code JavaScript dans isolated-vm
-   */
   private async executeJavaScript<TOutput>(
     stringContent: string,
     source: string,
-    filename: string | null,
+    filename: string,
     transformer: CustomTransformer,
     options: object
   ): Promise<{ metadata: CacheMetadata; output: string }> {
+    const isolate = new ivm.Isolate();
     let context: ivm.Context | null = null;
     try {
-      const script = await this.isolate.compileScript(transformer.customCode);
-      context = await this.isolate.createContext();
+      const script = await isolate.compileScript(transformer.customCode);
+      context = await isolate.createContext();
 
       const jail = context.global;
       await jail.set('global', jail.derefInto());
@@ -104,74 +82,128 @@ export default class SandboxService {
     }
   }
 
-  /**
-   * Exécute du code Python avec Pyodide
-   */
   private async executePython<TOutput>(
     stringContent: string,
     source: string,
-    filename: string | null,
+    filename: string,
     transformer: CustomTransformer,
     options: object
   ): Promise<{ metadata: CacheMetadata; output: string }> {
-    await this.initializePyodide();
-
-    // Préparer le code Python avec une fonction transform
-    const pythonCode = `
-${transformer.customCode}
-
-# Wrapper pour appeler la fonction transform
-import json
-import sys
-
-def call_transform():
-    try:
-        # Récupérer les arguments depuis l'environnement global
-        content = globals().get('content')
-        filename_arg = globals().get('filename')
-        source_arg = globals().get('source')
-        options = globals().get('options') or {}
-
-        # Appeler la fonction transform
-        result = transform(content, filename_arg, source_arg, options)
-
-        # Retourner le résultat sous forme de JSON
-        return json.dumps({
-            'data': result['data'],
-            'filename': result.get('filename', '${filename || 'output.py'}'),
-            'numberOfElement': result.get('numberOfElement', 0)
-        })
-    except Exception as e:
-        return json.dumps({
-            'error': str(e),
-            'filename': '${filename || 'output.py'}',
-            'numberOfElement': 0
-        })
-`;
-
-    // Créer un environnement global pour Pyodide
-    const pyodide = await this.pyodideReady;
+    const pyodide = await loadPyodide({
+      indexURL: path.join(__dirname, '../../../../lib/pyodide'),
+      packages: ['numpy', 'pandas', 'python-dateutil', 'pytz', 'six'],
+      stdout: msg => this.logger.debug(msg),
+      stderr: msg => this.logger.error(msg)
+    });
     if (!pyodide) {
       throw new Error('Pyodide not initialized');
     }
 
-    // Définir les variables globales pour le script Python
-    pyodide.runPython(`
-        import json
-        content = json.loads(r'''${JSON.stringify(stringContent)}''')
-        filename = ${filename ? JSON.stringify(filename) : 'None'}
-        source = ${JSON.stringify(source)}
-        options = json.loads(r'''${JSON.stringify(options)}''')
-      `);
+    // Prepare the complete Python code with wrapper
+    const completePythonCode = `
+${transformer.customCode}
 
-    // Exécuter le code Python
-    const resultStr = pyodide.runPython(pythonCode);
+import json
+import base64
 
-    // Analyser le résultat
-    const result = JSON.parse(resultStr);
+def call_transform():
+    try:
+        # Retrieve global variables
+        content_str = globals().get('content_str')
+        filename_arg = globals().get('filename')
+        source_arg = globals().get('source')
+        options_str = globals().get('options_str')
+
+        if not content_str:
+            return json.dumps({
+                'error': 'content_str is not defined',
+                'filename': '${filename}'
+            })
+
+        # Decode content from base64
+        try:
+            content = json.loads(base64.b64decode(content_str).decode('utf-8'))
+        except Exception as decode_error:
+            return json.dumps({
+                'error': f'Failed to decode content: {str(decode_error)}',
+                'content_str': content_str[:100] if content_str else 'empty',
+                'filename': '${filename}'
+            })
+
+        # Decode options from base64
+        try:
+            options = json.loads(base64.b64decode(options_str).decode('utf-8')) if options_str and options_str.strip() else {}
+        except Exception as decode_error:
+            return json.dumps({
+                'error': f'Failed to decode options: {str(decode_error)}',
+                'options_str': options_str[:100] if options_str else 'empty',
+                'filename': '${filename}'
+            })
+
+        # Call the transform function from the custom code
+        result = transform(content, filename_arg, source_arg, options)
+
+        # Return the result as JSON
+        if isinstance(result, dict):
+            return json.dumps({
+                'data': result.get('data', result),
+                'filename': result.get('filename', '${filename}'),
+                'numberOfElement': result.get('numberOfElement', 0)
+            })
+        else:
+            return json.dumps({
+                'data': result,
+                'filename': '${filename}'
+            })
+    except Exception as e:
+        import traceback
+        return json.dumps({
+            'error': str(e),
+            'traceback': traceback.format_exc(),
+            'filename': '${filename}'
+        })
+  `;
+
+    // Handle empty options object
+    const optionsString = JSON.stringify(options);
+
+    // Set up the global variables for the Python code
+    // Objects are passed as base64 string to better manage python conversion
+    await pyodide.runPythonAsync(`
+    import json
+    import base64
+
+    content_str = "${Buffer.from(stringContent).toString('base64')}"
+    filename = '${filename}'
+    source = '${source}'
+    options_str = "${optionsString === '{}' ? '' : Buffer.from(optionsString).toString('base64')}"
+  `);
+
+    // First run the complete Python code to define all functions
+    await pyodide.runPythonAsync(completePythonCode);
+
+    // Explicitly call the call_transform function and get its return value
+    const resultStr = await pyodide.runPythonAsync(`
+      result = call_transform()
+      result
+    `);
+    if (!resultStr) {
+      throw new Error('Python execution returned no result');
+    }
+    const result = JSON.parse(resultStr) as {
+      data: TOutput;
+      filename: string;
+      numberOfElement?: number;
+      error?: string;
+      traceback?: string;
+    };
 
     if (result.error) {
-      throw new Error(`Python execution error: ${result.error}`);
+      throw new Error(`Python execution error: ${result.error}\n${result.traceback || ''}`);
+    }
+
+    if (!result.data) {
+      throw new Error(`Transform function did not return a valid result: ${JSON.stringify(result)}`);
     }
 
     return {
