@@ -26,7 +26,7 @@ export class OibCodeBlockComponent implements ControlValueAccessor {
   readonly _editorContainer = viewChild.required<ElementRef<HTMLDivElement>>('editorContainer');
   readonly key = input('');
   readonly language = input('');
-  readonly height = input('12rem');
+  readonly height = input('30rem');
   readonly readOnly = input(false);
   readonly disabled = signal(false);
   readonly chunkedValueProgress = signal(0);
