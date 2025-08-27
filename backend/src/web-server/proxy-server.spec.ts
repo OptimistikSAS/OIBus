@@ -39,7 +39,7 @@ describe('ProxyServer', () => {
   });
 
   it('should initialize with default IP filters', () => {
-    expect(proxyServer['ipFilters']).toEqual(['127.0.0.1', '::1', '::ffff:127.0.0.1']);
+    expect(proxyServer['ipFilters']).toEqual([]);
   });
 
   it('should update the logger', () => {
@@ -50,7 +50,7 @@ describe('ProxyServer', () => {
 
   it('should update IP filters', () => {
     proxyServer.refreshIpFilters(['192.168.0.1', '10.0.0.1']);
-    expect(proxyServer['ipFilters']).toEqual(['127.0.0.1', '::1', '::ffff:127.0.0.1', '192.168.0.1', '10.0.0.1']);
+    expect(proxyServer['ipFilters']).toEqual(['192.168.0.1', '10.0.0.1']);
   });
 
   it('should initialize HTTP proxy and webserver on start', async () => {
@@ -128,7 +128,7 @@ describe('ProxyServer', () => {
 
     proxyServer['handleHttpRequest'](mockReq, mockRes);
 
-    expect(testIPOnFilter).toHaveBeenCalledWith(['127.0.0.1', '::1', '::ffff:127.0.0.1', '*.*.*.*'], mockReq.socket.remoteAddress);
+    expect(testIPOnFilter).toHaveBeenCalledWith(['*.*.*.*'], mockReq.socket.remoteAddress);
     expect(mockRes.writeHead).toHaveBeenCalledWith(403, { 'Content-Type': 'text/plain' });
     expect(mockRes.end).toHaveBeenCalledWith('Forbidden');
   });
@@ -211,7 +211,7 @@ describe('ProxyServer', () => {
 
     proxyServer['handleHttpsRequest'](mockReq, mockClientSocket, Buffer.from(''));
 
-    expect(testIPOnFilter).toHaveBeenCalledWith(['127.0.0.1', '::1', '::ffff:127.0.0.1'], mockReq.socket.remoteAddress);
+    expect(testIPOnFilter).toHaveBeenCalledWith([], mockReq.socket.remoteAddress);
     expect(mockClientSocket.write).toHaveBeenCalledWith('HTTP/1.1 403 Forbidden\r\n\r\n');
     expect(mockClientSocket.end).toHaveBeenCalled();
   });

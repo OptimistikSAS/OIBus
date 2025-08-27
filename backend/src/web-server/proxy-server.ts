@@ -4,7 +4,6 @@ import * as stream from 'node:stream';
 import net from 'node:net';
 import httpProxy from 'http-proxy';
 import { testIPOnFilter } from '../service/utils';
-import ipFilter from './middlewares/ip-filter';
 
 /**
  * Class Server - Provides the web client and establish socket connections.
@@ -32,7 +31,7 @@ export default class ProxyServer {
   }
 
   refreshIpFilters(ipFilters: Array<string>) {
-    this.ipFilters = ['127.0.0.1', '::1', '::ffff:127.0.0.1', ...ipFilters];
+    this.ipFilters = ipFilters;
   }
 
   async start(port: number): Promise<void> {

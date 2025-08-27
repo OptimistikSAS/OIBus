@@ -648,8 +648,10 @@ const formatRegex = (ip: string) => {
   return `^${ip.replace(/\\/g, '\\\\').replace(/\./g, '\\.').replace(/\*/g, '.*')}$`;
 };
 
+const LOCALHOST_ADDRESSES = ['127.0.0.1', '::1', '::ffff:127.0.0.1', '::ffff:7f00:1', '0:0:0:0:0:0:0:1'];
+
 export const testIPOnFilter = (ipFilters: Array<string>, ipToCheck: string): boolean => {
-  return ipFilters.some(filter => {
+  return [...LOCALHOST_ADDRESSES, ...ipFilters].some(filter => {
     if (filter === '*') {
       return true;
     }

@@ -28,7 +28,7 @@ export default class IPFilterService {
     const ipFilter = this.ipFilterRepository.create(command);
     const ipFilters = this.ipFilterRepository.findAll().map(ip => ip.address);
 
-    this.whiteListEvent.emit('update-white-list', ['127.0.0.1', '::1', '::ffff:127.0.0.1', ...ipFilters]);
+    this.whiteListEvent.emit('update-white-list', ipFilters);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     return ipFilter;
   }
@@ -43,7 +43,7 @@ export default class IPFilterService {
     this.ipFilterRepository.update(id, command);
 
     const ipFilters = this.ipFilterRepository.findAll().map(ip => ip.address);
-    this.whiteListEvent.emit('update-white-list', ['127.0.0.1', '::1', '::ffff:127.0.0.1', ...ipFilters]);
+    this.whiteListEvent.emit('update-white-list', ipFilters);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
 
@@ -55,7 +55,7 @@ export default class IPFilterService {
 
     this.ipFilterRepository.delete(id);
     const ipFilters = this.ipFilterRepository.findAll().map(ip => ip.address);
-    this.whiteListEvent.emit('update-white-list', ['127.0.0.1', '::1', '::ffff:127.0.0.1', ...ipFilters]);
+    this.whiteListEvent.emit('update-white-list', ipFilters);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
 }
