@@ -71,13 +71,10 @@ export default class WebServer {
     return this._port;
   }
 
-  /**
-   * Initialise the web server services and middlewares
-   */
   async init(): Promise<void> {
     this.app = new Koa() as KoaApplication;
 
-    this.app.whiteList = ['127.0.0.1', '::1', '::ffff:127.0.0.1', ...this.ipFilterService.findAll().map(filter => filter.address)];
+    this.app.whiteList = this.ipFilterService.findAll().map(filter => filter.address);
 
     this.app.use(
       oibus(
@@ -141,25 +138,26 @@ export default class WebServer {
     this.oIBusService.loggerEvent.on('updated', (logger: pino.Logger) => {
       this._logger = logger;
     });
+
     this.oIBusService.portChangeEvent.on('updated', async (value: number) => {
       this._port = value;
       await this.stop();
       await this.start();
     });
+
     this.ipFilterService.whiteListEvent.on('update-white-list', (newWhiteList: Array<string>) => {
       if (this.app) {
         this.app.whiteList = newWhiteList;
       }
     });
+
     if (!this.app) return;
+
     this.webServer = this.app.listen(this.port, () => {
       this.logger.info(`OIBus web server started on ${this.port}`);
     });
   }
 
-  /**
-   * Stop the web server
-   */
   async stop(): Promise<void> {
     this.webServer?.close();
   }
