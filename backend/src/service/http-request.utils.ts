@@ -1,5 +1,6 @@
 import { request, ProxyAgent, Agent } from 'undici';
 import { encryptionService } from './encryption.service';
+import { version } from '../../package.json';
 
 export type ReqURL = Parameters<typeof request>['0'];
 /**
@@ -59,13 +60,25 @@ export type ReqResponse = Awaited<ReturnType<typeof request>> & {
 };
 
 export async function HTTPRequest(url: ReqURL, options: ReqOptions = {}): Promise<ReqResponse> {
+  if (!options.headers) {
+    options.headers = {};
+  }
+
+  if (!('User-Agent' in options.headers)) {
+    options.headers = { ...options.headers, 'User-Agent': `OIBus/${version} (https://oibus.optimistik.com/)` };
+  }
+  // Remove potential user provided non-capitalized user-agent header to not have the header twice
+  if ('user-agent' in options.headers!) {
+    delete options.headers['user-agent'];
+  }
+
   if (options.auth) {
     const { token, url: authUrl } = await getAuthorization(options.auth, url.toString());
     url = authUrl;
 
     if (token) {
       // Remove potential user provided non-capitalized authorization header to not have the header twice
-      if (options.headers && 'authorization' in options.headers) {
+      if ('authorization' in options.headers!) {
         delete options.headers.authorization;
       }
 

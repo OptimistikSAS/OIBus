@@ -3,6 +3,7 @@ import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service
 import { encryptionService } from './encryption.service';
 import { HTTPRequest, ReqOptions } from './http-request.utils';
 import { createMockResponse } from '../tests/__mocks__/undici.mock';
+import { version } from '../../package.json';
 
 jest.mock('undici', () => ({
   request: jest.fn(),
@@ -51,7 +52,11 @@ describe('HTTPRequest Service', () => {
 
     expect(mockUndiciRequest).toHaveBeenCalledTimes(1);
     // Expect the default empty options object '{}' when no options are passed
-    expect(mockUndiciRequest).toHaveBeenCalledWith(testUrl, {});
+    expect(mockUndiciRequest).toHaveBeenCalledWith(testUrl, {
+      headers: {
+        'User-Agent': `OIBus/${version} (https://oibus.optimistik.com/)`
+      }
+    });
     expect(response.statusCode).toBe(200);
     expect(response.ok).toBe(true);
     expect(mockDecryptText).not.toHaveBeenCalled();
@@ -81,6 +86,7 @@ describe('HTTPRequest Service', () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'User-Agent': 'a custom user agent',
         'X-Custom-Header': 'value123'
       },
       body: JSON.stringify({ data: 'test' }),
@@ -99,7 +105,8 @@ describe('HTTPRequest Service', () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-Custom-Header': 'value123'
+        'X-Custom-Header': 'value123',
+        'User-Agent': `a custom user agent`
       },
       body: JSON.stringify({ data: 'test' }),
       dispatcher: expect.objectContaining({ isMockAgent: true })
@@ -122,6 +129,9 @@ describe('HTTPRequest Service', () => {
     expect(mockAbortSignalTimeout).toHaveBeenCalledTimes(1);
     expect(mockAbortSignalTimeout).toHaveBeenCalledWith(5000);
     expect(mockUndiciRequest).toHaveBeenCalledWith(testUrl, {
+      headers: {
+        'User-Agent': `OIBus/${version} (https://oibus.optimistik.com/)`
+      },
       signal: mockAbortSignal
     });
   });
@@ -134,7 +144,7 @@ describe('HTTPRequest Service', () => {
           username: 'user',
           password: 'encrypted-pass'
         },
-        headers: { 'X-Other': 'value' } // Ensure other headers are kept
+        headers: { 'X-Other': 'value', 'user-agent': 'a user agent' } // Ensure other headers are kept and user-agent is removed
       };
       const expectedToken = 'Basic ' + Buffer.from('user:encrypted-pass-decrypted').toString('base64');
 
@@ -144,6 +154,7 @@ describe('HTTPRequest Service', () => {
       expect(mockDecryptText).toHaveBeenCalledWith('encrypted-pass');
       expect(mockUndiciRequest).toHaveBeenCalledWith(testUrl, {
         headers: {
+          'User-Agent': `OIBus/${version} (https://oibus.optimistik.com/)`,
           'X-Other': 'value', // Existing header
           Authorization: expectedToken // Added header
         }
@@ -166,6 +177,7 @@ describe('HTTPRequest Service', () => {
       expect(mockDecryptText).toHaveBeenCalledWith(null);
       expect(mockUndiciRequest).toHaveBeenCalledWith(testUrl, {
         headers: {
+          'User-Agent': `OIBus/${version} (https://oibus.optimistik.com/)`,
           Authorization: expectedToken
         }
       });
@@ -186,6 +198,7 @@ describe('HTTPRequest Service', () => {
       expect(mockDecryptText).toHaveBeenCalledWith('encrypted-token');
       expect(mockUndiciRequest).toHaveBeenCalledWith(testUrl, {
         headers: {
+          'User-Agent': `OIBus/${version} (https://oibus.optimistik.com/)`,
           Authorization: expectedToken
         }
       });
@@ -208,6 +221,7 @@ describe('HTTPRequest Service', () => {
       expect(mockDecryptText).toHaveBeenCalledWith(encryptedTokenWithPrefix);
       expect(mockUndiciRequest).toHaveBeenCalledWith(testUrl, {
         headers: {
+          'User-Agent': `OIBus/${version} (https://oibus.optimistik.com/)`,
           Authorization: expectedToken
         }
       });
@@ -229,7 +243,11 @@ describe('HTTPRequest Service', () => {
       expect(mockDecryptText).toHaveBeenCalledTimes(1);
       expect(mockDecryptText).toHaveBeenCalledWith('encrypted-urlpass');
       // URL is modified, check it matches the standard URL serialization
-      expect(mockUndiciRequest).toHaveBeenCalledWith(expectedUrl, {});
+      expect(mockUndiciRequest).toHaveBeenCalledWith(expectedUrl, {
+        headers: {
+          'User-Agent': `OIBus/${version} (https://oibus.optimistik.com/)`
+        }
+      });
       // Explicitly check that Authorization header is not be present
       const actualOptionsPassed = mockUndiciRequest.mock.calls[0][1];
       expect(actualOptionsPassed).not.toHaveProperty('Authorization');
@@ -251,7 +269,11 @@ describe('HTTPRequest Service', () => {
       expect(mockDecryptText).toHaveBeenCalledTimes(1);
       expect(mockDecryptText).toHaveBeenCalledWith(null);
       // URL is modified, check it matches the standard URL serialization
-      expect(mockUndiciRequest).toHaveBeenCalledWith(expectedUrl, {});
+      expect(mockUndiciRequest).toHaveBeenCalledWith(expectedUrl, {
+        headers: {
+          'User-Agent': `OIBus/${version} (https://oibus.optimistik.com/)`
+        }
+      });
       // Explicitly check that Authorization header is not be present
       const actualOptionsPassed = mockUndiciRequest.mock.calls[0][1];
       expect(actualOptionsPassed).not.toHaveProperty('Authorization');
@@ -274,6 +296,7 @@ describe('HTTPRequest Service', () => {
 
       expect(mockUndiciRequest).toHaveBeenCalledWith(testUrl, {
         headers: {
+          'User-Agent': `OIBus/${version} (https://oibus.optimistik.com/)`,
           // lowercase 'authorization' should be ignored, and uppercase 'Authorization' set by auth logic
           Authorization: expectedToken
         }
@@ -296,6 +319,7 @@ describe('HTTPRequest Service', () => {
       expect(mockDecryptText).not.toHaveBeenCalled();
       expect(mockUndiciRequest).toHaveBeenCalledWith(testUrl, {
         headers: {
+          'User-Agent': `OIBus/${version} (https://oibus.optimistik.com/)`,
           Authorization: 'Bearer existing-token'
         }
       });
@@ -315,6 +339,9 @@ describe('HTTPRequest Service', () => {
       expect(mockUndiciProxyAgent).toHaveBeenCalledTimes(1);
       expect(mockUndiciProxyAgent).toHaveBeenCalledWith({ uri: testProxyUrl });
       expect(mockUndiciRequest).toHaveBeenCalledWith(testUrl, {
+        headers: {
+          'User-Agent': `OIBus/${version} (https://oibus.optimistik.com/)`
+        },
         dispatcher: expect.objectContaining({ isMockProxyAgent: true }) // Check if our mock instance was passed
       });
       expect(mockDecryptText).not.toHaveBeenCalled(); // No auth decryption needed
@@ -338,6 +365,9 @@ describe('HTTPRequest Service', () => {
         }
       });
       expect(mockUndiciRequest).toHaveBeenCalledWith(testUrl, {
+        headers: {
+          'User-Agent': `OIBus/${version} (https://oibus.optimistik.com/)`
+        },
         dispatcher: expect.objectContaining({ isMockProxyAgent: true }) // Check if our mock instance was passed
       });
       expect(mockDecryptText).not.toHaveBeenCalled(); // No auth decryption needed
@@ -366,6 +396,9 @@ describe('HTTPRequest Service', () => {
         token: expectedToken
       });
       expect(mockUndiciRequest).toHaveBeenCalledWith(testUrl, {
+        headers: {
+          'User-Agent': `OIBus/${version} (https://oibus.optimistik.com/)`
+        },
         dispatcher: expect.objectContaining({ isMockProxyAgent: true })
       });
     });
@@ -392,6 +425,9 @@ describe('HTTPRequest Service', () => {
         token: expectedToken
       });
       expect(mockUndiciRequest).toHaveBeenCalledWith(testUrl, {
+        headers: {
+          'User-Agent': `OIBus/${version} (https://oibus.optimistik.com/)`
+        },
         dispatcher: expect.objectContaining({ isMockProxyAgent: true })
       });
     });
@@ -422,6 +458,9 @@ describe('HTTPRequest Service', () => {
         token: undefined // No separate token for URL auth
       });
       expect(mockUndiciRequest).toHaveBeenCalledWith(testUrl, {
+        headers: {
+          'User-Agent': `OIBus/${version} (https://oibus.optimistik.com/)`
+        },
         dispatcher: expect.objectContaining({ isMockProxyAgent: true })
       });
     });
@@ -452,6 +491,9 @@ describe('HTTPRequest Service', () => {
         token: undefined // No separate token for URL auth
       });
       expect(mockUndiciRequest).toHaveBeenCalledWith(testUrl, {
+        headers: {
+          'User-Agent': `OIBus/${version} (https://oibus.optimistik.com/)`
+        },
         dispatcher: expect.objectContaining({ isMockProxyAgent: true })
       });
     });
