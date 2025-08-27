@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.6.7](https://github.com/OptimistikSAS/OIBus/compare/v3.6.6...v3.6.7) (2025-08-27)
+
+
+### Bug Fixes
+
+* **engine:** add OIBus user agent in HTTP Request utils ([90f8643](https://github.com/OptimistikSAS/OIBus/commit/90f8643e6e0c3784c3c8dd33bca4842963669a41))
+* **engine:** simplify IP filter on localhost ([f899e66](https://github.com/OptimistikSAS/OIBus/commit/f899e66a088e219d84dd8e406f32bd15ec9dd773))
+
 ## [3.6.6](https://github.com/OptimistikSAS/OIBus/compare/v3.6.5...v3.6.6) (2025-08-12)
 
 
