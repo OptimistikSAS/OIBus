@@ -36,6 +36,7 @@ export interface EngineSettings extends BaseEntity {
 }
 
 export class OIBusError extends Error {
+  readonly _isOIBusError = true;
   constructor(
     message: string,
     readonly retry: boolean
