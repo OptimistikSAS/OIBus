@@ -270,7 +270,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
    * The error thrown can be overridden with an OIBusError to force a retry on specific cases
    */
   createOIBusError(error: unknown): OIBusError {
-    if (error instanceof OIBusError) {
+    if (typeof error === 'object' && error !== null && '_isOIBusError' in error) {
       return error as OIBusError;
     } else if (error instanceof Error) {
       return new OIBusError(error.message, false);
