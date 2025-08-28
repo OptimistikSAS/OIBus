@@ -28,3 +28,7 @@
 *.pkl binary
 *.exe binary
 *.dll binary
+*.whl binary
+*.metadata binary
+*.wasm binary
+*.asm binary
