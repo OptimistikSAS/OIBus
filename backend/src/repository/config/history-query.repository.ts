@@ -317,7 +317,7 @@ export default class HistoryQueryRepository {
   }
 
   findTransformersForHistory(historyId: string): Array<TransformerWithOptions> {
-    const query = `SELECT t.id,  t.type,  ht.input_type, t.output_type, t.function_name, t.name, t.description, t.custom_manifest, t.custom_code, ht.options FROM ${HISTORY_TRANSFORMERS_TABLE} ht JOIN ${TRANSFORMERS_TABLE} t ON ht.transformer_id = t.id WHERE ht.history_id = ?;`;
+    const query = `SELECT t.id,  t.type,  ht.input_type, t.output_type, t.function_name, t.name, t.description, t.custom_manifest, t.custom_code, t.language, ht.options FROM ${HISTORY_TRANSFORMERS_TABLE} ht JOIN ${TRANSFORMERS_TABLE} t ON ht.transformer_id = t.id WHERE ht.history_id = ?;`;
     const result = this.database.prepare(query).all(historyId) as Array<Record<string, string>>;
     return result.map(element => ({
       transformer: toTransformer(element),
