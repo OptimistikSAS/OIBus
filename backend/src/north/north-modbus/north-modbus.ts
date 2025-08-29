@@ -6,7 +6,6 @@ import { NorthConnectorEntity } from '../../model/north-connector.model';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import { BaseFolders } from '../../model/types';
-import TransformerService from '../../service/transformer.service';
 import net from 'node:net';
 import ModbusTCPClient from 'jsmodbus/dist/modbus-tcp-client';
 import { client } from 'jsmodbus';
@@ -24,13 +23,12 @@ export default class NorthModbus extends NorthConnector<NorthModbusSettings> {
 
   constructor(
     configuration: NorthConnectorEntity<NorthModbusSettings>,
-    transformerService: TransformerService,
     northConnectorRepository: NorthConnectorRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolders: BaseFolders
   ) {
-    super(configuration, transformerService, northConnectorRepository, scanModeRepository, logger, baseFolders);
+    super(configuration, northConnectorRepository, scanModeRepository, logger, baseFolders);
   }
 
   async handleContent(cacheMetadata: CacheMetadata): Promise<void> {

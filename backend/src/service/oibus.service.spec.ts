@@ -85,9 +85,9 @@ describe('OIBus Service', () => {
     (southService.findAll as jest.Mock).mockReturnValue(testData.south.list);
     (historyQueryService.findAll as jest.Mock).mockReturnValue(testData.historyQueries.list);
     (southService.findById as jest.Mock).mockImplementation(id => testData.south.list.find(element => element.id === id));
-    (southService.runSouth as jest.Mock).mockImplementation(id => testData.south.list.find(element => element.id === id));
+    (southService.buildSouth as jest.Mock).mockImplementation(id => testData.south.list.find(element => element.id === id));
     (northService.findById as jest.Mock).mockImplementation(id => testData.north.list.find(element => element.id === id));
-    (northService.runNorth as jest.Mock).mockImplementation(id => testData.north.list.find(element => element.id === id));
+    (northService.buildNorth as jest.Mock).mockImplementation(id => testData.north.list.find(element => element.id === id));
     (historyQueryService.findById as jest.Mock).mockImplementation(id => testData.historyQueries.list.find(element => element.id === id));
 
     await service.startOIBus();

@@ -26,7 +26,6 @@ import CertificateRepository from '../../repository/config/certificate.repositor
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import { OIBusError } from '../../model/engine.model';
 import { BaseFolders } from '../../model/types';
-import TransformerService from '../../service/transformer.service';
 
 /**
  * Class NorthOIAnalytics - Send files to a POST Multipart HTTP request and values as JSON payload
@@ -35,7 +34,6 @@ import TransformerService from '../../service/transformer.service';
 export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSettings> {
   constructor(
     connector: NorthConnectorEntity<NorthOIAnalyticsSettings>,
-    transformerService: TransformerService,
     northConnectorRepository: NorthConnectorRepository,
     scanModeRepository: ScanModeRepository,
     private readonly certificateRepository: CertificateRepository,
@@ -43,7 +41,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     logger: pino.Logger,
     baseFolders: BaseFolders
   ) {
-    super(connector, transformerService, northConnectorRepository, scanModeRepository, logger, baseFolders);
+    super(connector, northConnectorRepository, scanModeRepository, logger, baseFolders);
   }
 
   override async testConnection(): Promise<void> {

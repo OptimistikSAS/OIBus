@@ -18,7 +18,7 @@ import { BaseFolders } from '../model/types';
 import CacheService from '../service/cache/cache.service';
 import { Readable } from 'node:stream';
 import fsAsync from 'node:fs/promises';
-import TransformerService, { createTransformer } from '../service/transformer.service';
+import { createTransformer } from '../service/transformer.service';
 import IgnoreTransformer from '../service/transformers/ignore-transformer';
 import IsoTransformer from '../service/transformers/iso-transformer';
 
@@ -66,7 +66,6 @@ export default abstract class NorthConnector<T extends NorthSettings> {
 
   protected constructor(
     protected connector: NorthConnectorEntity<T>,
-    protected readonly transformerService: TransformerService,
     protected readonly northConnectorRepository: NorthConnectorRepository,
     protected readonly scanModeRepository: ScanModeRepository,
     protected logger: pino.Logger,

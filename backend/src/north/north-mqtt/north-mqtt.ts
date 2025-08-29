@@ -7,7 +7,6 @@ import { NorthConnectorEntity } from '../../model/north-connector.model';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import { BaseFolders } from '../../model/types';
-import TransformerService from '../../service/transformer.service';
 import mqtt from 'mqtt';
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -24,13 +23,12 @@ export default class NorthMQTT extends NorthConnector<NorthMQTTSettings> {
 
   constructor(
     configuration: NorthConnectorEntity<NorthMQTTSettings>,
-    transformerService: TransformerService,
     northConnectorRepository: NorthConnectorRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolders: BaseFolders
   ) {
-    super(configuration, transformerService, northConnectorRepository, scanModeRepository, logger, baseFolders);
+    super(configuration, northConnectorRepository, scanModeRepository, logger, baseFolders);
   }
 
   override async connect(): Promise<void> {

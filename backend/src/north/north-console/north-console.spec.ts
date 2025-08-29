@@ -14,8 +14,7 @@ import { NorthConnectorEntity } from '../../model/north-connector.model';
 import testData from '../../tests/utils/test-data';
 import { mockBaseFolders } from '../../tests/utils/test-utils';
 import CacheService from '../../service/cache/cache.service';
-import TransformerService, { createTransformer } from '../../service/transformer.service';
-import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';
+import { createTransformer } from '../../service/transformer.service';
 import OIBusTransformer from '../../service/transformers/oibus-transformer';
 import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
 
@@ -29,7 +28,6 @@ const logger: pino.Logger = new PinoLogger();
 const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const cacheService: CacheService = new CacheServiceMock();
-const transformerService: TransformerService = new TransformerServiceMock();
 const oiBusTransformer: OIBusTransformer = new OIBusTransformerMock() as unknown as OIBusTransformer;
 
 jest.mock(
@@ -65,7 +63,6 @@ describe('NorthConsole with verbose mode', () => {
 
     north = new NorthConsole(
       configuration,
-      transformerService,
       northConnectorRepository,
       scanModeRepository,
       logger,
@@ -144,7 +141,6 @@ describe('NorthConsole without verbose mode', () => {
 
     north = new NorthConsole(
       configuration,
-      transformerService,
       northConnectorRepository,
       scanModeRepository,
       logger,

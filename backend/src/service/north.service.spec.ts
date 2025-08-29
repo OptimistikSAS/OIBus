@@ -159,119 +159,119 @@ describe('north service', () => {
   it('runNorth() should run NorthAmazonS3', () => {
     const aws3 = JSON.parse(JSON.stringify(testData.north.list[0]));
     aws3.type = 'aws-s3';
-    const connector = service.runNorth(aws3, logger, mockBaseFolders(aws3.id));
+    const connector = service.buildNorth(aws3, logger, mockBaseFolders(aws3.id));
     expect(connector).toEqual(mockedNorth1);
   });
 
   it('runNorth() should run NorthAzureBlob', () => {
     const azureBlob = JSON.parse(JSON.stringify(testData.north.list[0]));
     azureBlob.type = 'azure-blob';
-    const connector = service.runNorth(azureBlob, logger, mockBaseFolders(azureBlob.id));
+    const connector = service.buildNorth(azureBlob, logger, mockBaseFolders(azureBlob.id));
     expect(connector).toEqual(mockedNorth1);
   });
 
   it('runNorth() should run NorthConsole', () => {
     const consoleConnector = JSON.parse(JSON.stringify(testData.north.list[0]));
     consoleConnector.type = 'console';
-    const connector = service.runNorth(consoleConnector, logger, mockBaseFolders(consoleConnector.id));
+    const connector = service.buildNorth(consoleConnector, logger, mockBaseFolders(consoleConnector.id));
     expect(connector).toEqual(mockedNorth1);
   });
 
   it('runNorth() should run NorthFileWriter', () => {
     const fileWriter = JSON.parse(JSON.stringify(testData.north.list[0]));
     fileWriter.type = 'file-writer';
-    const connector = service.runNorth(fileWriter, logger, mockBaseFolders(fileWriter.id));
+    const connector = service.buildNorth(fileWriter, logger, mockBaseFolders(fileWriter.id));
     expect(connector).toEqual(mockedNorth1);
   });
 
   it('runNorth() should run NorthOIAnalytics', () => {
     const oianalytics = JSON.parse(JSON.stringify(testData.north.list[0]));
     oianalytics.type = 'oianalytics';
-    const connector = service.runNorth(oianalytics, logger, mockBaseFolders(oianalytics.id));
+    const connector = service.buildNorth(oianalytics, logger, mockBaseFolders(oianalytics.id));
     expect(connector).toEqual(mockedNorth1);
   });
 
   it('runNorth() should run NorthSFTP', () => {
     const sftp = JSON.parse(JSON.stringify(testData.north.list[0]));
     sftp.type = 'sftp';
-    const connector = service.runNorth(sftp, logger, mockBaseFolders(sftp.id));
+    const connector = service.buildNorth(sftp, logger, mockBaseFolders(sftp.id));
     expect(connector).toEqual(mockedNorth1);
   });
 
   it('runNorth() should run NorthREST', () => {
     const rest = JSON.parse(JSON.stringify(testData.north.list[0]));
     rest.type = 'rest';
-    const connector = service.runNorth(rest, logger, mockBaseFolders(rest.id));
+    const connector = service.buildNorth(rest, logger, mockBaseFolders(rest.id));
     expect(connector).toEqual(mockedNorth1);
   });
 
   it('runNorth() should run NorthOPCUA', () => {
     const rest = JSON.parse(JSON.stringify(testData.north.list[0]));
     rest.type = 'opcua';
-    const connector = service.runNorth(rest, logger, mockBaseFolders(rest.id));
+    const connector = service.buildNorth(rest, logger, mockBaseFolders(rest.id));
     expect(connector).toEqual(mockedNorth1);
   });
 
   it('runNorth() should run NorthModbus', () => {
     const rest = JSON.parse(JSON.stringify(testData.north.list[0]));
     rest.type = 'modbus';
-    const connector = service.runNorth(rest, logger, mockBaseFolders(rest.id));
+    const connector = service.buildNorth(rest, logger, mockBaseFolders(rest.id));
     expect(connector).toEqual(mockedNorth1);
   });
 
   it('runNorth() should run NorthMQTT', () => {
     const rest = JSON.parse(JSON.stringify(testData.north.list[0]));
     rest.type = 'mqtt';
-    const connector = service.runNorth(rest, logger, mockBaseFolders(rest.id));
+    const connector = service.buildNorth(rest, logger, mockBaseFolders(rest.id));
     expect(connector).toEqual(mockedNorth1);
   });
 
   it('runNorth() should not run connector if bad type', () => {
     const bad = JSON.parse(JSON.stringify(testData.north.list[0]));
     bad.type = 'bad';
-    expect(() => service.runNorth(bad, logger, mockBaseFolders(bad.id))).toThrow('North connector of type bad not installed');
+    expect(() => service.buildNorth(bad, logger, mockBaseFolders(bad.id))).toThrow('North connector of type bad not installed');
   });
 
   it('runNorth() should not run connector if bad type and no folders', () => {
     const bad = JSON.parse(JSON.stringify(testData.north.list[0]));
     bad.type = 'bad';
-    expect(() => service.runNorth(bad, logger)).toThrow('North connector of type bad not installed');
+    expect(() => service.buildNorth(bad, logger)).toThrow('North connector of type bad not installed');
   });
 
   it('testNorth() should test North connector in creation mode', async () => {
-    service.runNorth = jest.fn().mockReturnValue(mockedNorth1);
+    service.buildNorth = jest.fn().mockReturnValue(mockedNorth1);
     await service.testNorth('create', testData.north.command, logger);
-    expect(service.runNorth).toHaveBeenCalled();
+    expect(service.buildNorth).toHaveBeenCalled();
     expect(mockedNorth1.testConnection).toHaveBeenCalled();
   });
 
   it('testNorth() should throw an error if manifest type is bad', async () => {
-    service.runNorth = jest.fn();
+    service.buildNorth = jest.fn();
     const badCommand = JSON.parse(JSON.stringify(testData.north.command));
     badCommand.type = 'bad';
     await expect(service.testNorth('create', badCommand, logger)).rejects.toThrow('North manifest bad not found');
-    expect(service.runNorth).not.toHaveBeenCalled();
+    expect(service.buildNorth).not.toHaveBeenCalled();
   });
 
   it('testNorth() should test North connector in edit mode', async () => {
-    service.runNorth = jest.fn().mockReturnValue(mockedNorth1);
+    service.buildNorth = jest.fn().mockReturnValue(mockedNorth1);
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValueOnce(testData.north.list[0]);
     await service.testNorth(testData.north.list[0].id, testData.north.command, logger);
-    expect(service.runNorth).toHaveBeenCalled();
+    expect(service.buildNorth).toHaveBeenCalled();
     expect(mockedNorth1.testConnection).toHaveBeenCalled();
   });
 
   it('testNorth() should fail to test North connector in edit mode if north connector not found', async () => {
-    service.runNorth = jest.fn().mockReturnValue(mockedNorth1);
+    service.buildNorth = jest.fn().mockReturnValue(mockedNorth1);
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValueOnce(null);
     await expect(service.testNorth(testData.north.list[0].id, testData.north.command, logger)).rejects.toThrow(
       `North connector ${testData.north.list[0].id} not found`
     );
-    expect(service.runNorth).not.toHaveBeenCalled();
+    expect(service.buildNorth).not.toHaveBeenCalled();
   });
 
   it('createNorth() should not create North if manifest is not found', async () => {
-    service.runNorth = jest.fn();
+    service.buildNorth = jest.fn();
     const badCommand = JSON.parse(JSON.stringify(testData.north.command));
     badCommand.type = 'bad';
     await expect(service.createNorth(badCommand, null)).rejects.toThrow('North manifest does not exist for type bad');
@@ -281,7 +281,7 @@ describe('north service', () => {
   });
 
   it('createNorth() should create North connector', async () => {
-    service.runNorth = jest.fn().mockReturnValue(mockedNorth1);
+    service.buildNorth = jest.fn().mockReturnValue(mockedNorth1);
     (scanModeRepository.findAll as jest.Mock).mockReturnValueOnce(testData.scanMode.list);
     (transformerService.findAll as jest.Mock).mockReturnValueOnce(testData.transformers.list);
     (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValueOnce(
@@ -302,7 +302,7 @@ describe('north service', () => {
   });
 
   it('createNorth() should create North connector and not start it if disabled', async () => {
-    service.runNorth = jest.fn().mockReturnValue(mockedNorth1);
+    service.buildNorth = jest.fn().mockReturnValue(mockedNorth1);
     (scanModeRepository.findAll as jest.Mock).mockReturnValueOnce(testData.scanMode.list);
     (transformerService.findAll as jest.Mock).mockReturnValueOnce(testData.transformers.list);
     (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValueOnce([]);
@@ -317,7 +317,7 @@ describe('north service', () => {
   });
 
   it('createNorth() should not create North connector if subscription not found', async () => {
-    service.runNorth = jest.fn().mockReturnValue(mockedNorth1);
+    service.buildNorth = jest.fn().mockReturnValue(mockedNorth1);
     (scanModeRepository.findAll as jest.Mock).mockReturnValueOnce(testData.scanMode.list);
     (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValueOnce(
       testData.south.list.map(element => ({
@@ -334,7 +334,7 @@ describe('north service', () => {
   });
 
   it('createNorth() should not create North connector if transformer is not found', async () => {
-    service.runNorth = jest.fn().mockReturnValue(mockedNorth1);
+    service.buildNorth = jest.fn().mockReturnValue(mockedNorth1);
     (scanModeRepository.findAll as jest.Mock).mockReturnValueOnce(testData.scanMode.list);
     (transformerService.findAll as jest.Mock).mockReturnValueOnce([]);
     (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValueOnce(

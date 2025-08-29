@@ -2,7 +2,7 @@
  * Create a mock object for North Service
  */
 export default jest.fn().mockImplementation(() => ({
-  runNorth: jest.fn(),
+  buildNorth: jest.fn(),
   testNorth: jest.fn(),
   findById: jest.fn(),
   findAll: jest.fn(),

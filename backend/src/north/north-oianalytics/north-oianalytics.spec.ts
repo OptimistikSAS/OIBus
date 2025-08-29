@@ -28,8 +28,7 @@ import FormData from 'form-data';
 import { ClientCertificateCredential, ClientSecretCredential } from '@azure/identity';
 import CacheService from '../../service/cache/cache.service';
 import { OIBusError } from '../../model/engine.model';
-import TransformerService, { createTransformer } from '../../service/transformer.service';
-import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';
+import { createTransformer } from '../../service/transformer.service';
 import OIBusTransformer from '../../service/transformers/oibus-transformer';
 import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
 
@@ -59,7 +58,6 @@ const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const certificateRepository: CertificateRepository = new CertificateRepositoryMock();
 const oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository = new OianalyticsRegistrationRepositoryMock();
 const cacheService: CacheService = new CacheServiceMock();
-const transformerService: TransformerService = new TransformerServiceMock();
 const oiBusTransformer: OIBusTransformer = new OIBusTransformerMock() as unknown as OIBusTransformer;
 
 jest.mock(
@@ -171,7 +169,6 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
 
     north = new NorthOIAnalytics(
       configuration,
-      transformerService,
       northConnectorRepository,
       scanModeRepository,
       certificateRepository,
@@ -618,7 +615,6 @@ describe('NorthOIAnalytics with Azure Active Directory', () => {
 
       north = new NorthOIAnalytics(
         configuration,
-        transformerService,
         northConnectorRepository,
         scanModeRepository,
         certificateRepository,
@@ -721,7 +717,6 @@ describe('NorthOIAnalytics with Azure Active Directory', () => {
 
       north = new NorthOIAnalytics(
         configuration,
-        transformerService,
         northConnectorRepository,
         scanModeRepository,
         certificateRepository,
@@ -805,7 +800,6 @@ describe('NorthOIAnalytics with OIA module', () => {
     } as OIAnalyticsRegistration;
     north = new NorthOIAnalytics(
       configuration,
-      transformerService,
       northConnectorRepository,
       scanModeRepository,
       certificateRepository,
