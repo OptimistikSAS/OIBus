@@ -58,7 +58,7 @@ export default class HistoryQuery {
       error: path.resolve(this.baseFolders.error, 'south')
     };
     await createBaseFolders(southFolders);
-    this.south = this.southService.runSouth(southConfiguration, this.addContent.bind(this), this.logger, southFolders);
+    this.south = this.southService.buildSouth(southConfiguration, this.addContent.bind(this), this.logger, southFolders);
 
     // North
     const northConfiguration: NorthConnectorEntity<NorthSettings> = {
@@ -78,7 +78,7 @@ export default class HistoryQuery {
       error: path.resolve(this.baseFolders.error, 'north')
     };
     await createBaseFolders(northFolders);
-    this.north = this.northService.runNorth(northConfiguration, this.logger, northFolders);
+    this.north = this.northService.buildNorth(northConfiguration, this.logger, northFolders);
 
     if (this.historyConfiguration.status !== 'RUNNING') {
       this.logger.trace(`History Query "${this.historyConfiguration.name}" not enabled`);

@@ -21,8 +21,7 @@ import path from 'node:path';
 import { DateTime } from 'luxon';
 import { createReadStream } from 'node:fs';
 import { Readable } from 'node:stream';
-import TransformerService, { createTransformer } from '../service/transformer.service';
-import TransformerServiceMock from '../tests/__mocks__/service/transformer-service.mock';
+import { createTransformer } from '../service/transformer.service';
 import OIBusTransformerMock from '../tests/__mocks__/service/transformers/oibus-transformer.mock';
 import OIBusTransformer from '../service/transformers/oibus-transformer';
 import IgnoreTransformer from '../service/transformers/ignore-transformer';
@@ -40,7 +39,6 @@ jest.mock('../service/transformer.service');
 const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const cacheService: CacheService = new CacheServiceMock();
-const transformerService: TransformerService = new TransformerServiceMock();
 const oiBusTransformer: OIBusTransformer = new OIBusTransformerMock() as unknown as OIBusTransformer;
 
 jest.mock(
@@ -80,7 +78,6 @@ describe('NorthConnector', () => {
 
     north = new NorthFileWriter(
       testData.north.list[0] as NorthConnectorEntity<NorthFileWriterSettings>,
-      transformerService,
       northConnectorRepository,
       scanModeRepository,
       logger,
@@ -480,7 +477,6 @@ describe('NorthConnector', () => {
       options: {}
     };
     (oiBusTransformer.transform as jest.Mock).mockReturnValueOnce({ metadata, output: 'output' });
-    (transformerService.findById as jest.Mock).mockReturnValueOnce(testData.transformers.list[0]);
     await north.cacheContent(testData.oibusContent[0], 'south');
 
     expect(oiBusTransformer.transform).toHaveBeenCalledWith('readStream', 'south', null);
@@ -530,9 +526,6 @@ describe('NorthConnector', () => {
     (oiBusTransformer.transform as jest.Mock)
       .mockReturnValueOnce({ metadata: metadata1, output: 'output1' })
       .mockReturnValueOnce({ metadata: metadata2, output: 'output2' });
-    (transformerService.findById as jest.Mock)
-      .mockReturnValueOnce(testData.transformers.list[0])
-      .mockReturnValueOnce(testData.transformers.list[0]);
 
     await north.cacheContent(testData.oibusContent[0], 'south');
 
@@ -596,7 +589,6 @@ describe('NorthConnector', () => {
       options: {}
     };
     (oiBusTransformer.transform as jest.Mock).mockReturnValueOnce({ metadata, output: 'output' });
-    (transformerService.findById as jest.Mock).mockReturnValueOnce(testData.transformers.list[2]);
     north.persistDataInCache = jest.fn();
     await north.cacheContent(testData.oibusContent[3], 'south');
 
@@ -617,7 +609,6 @@ describe('NorthConnector', () => {
       options: {}
     };
     (oiBusTransformer.transform as jest.Mock).mockReturnValueOnce({ metadata, output: 'output' });
-    (transformerService.findById as jest.Mock).mockReturnValueOnce(testData.transformers.list[0]);
     await north.cacheContent(testData.oibusContent[1], 'south');
 
     expect(fsAsync.writeFile).toHaveBeenCalledWith(
@@ -834,14 +825,7 @@ describe('NorthConnector test id', () => {
 
     northTest.id = 'test';
 
-    north = new NorthFileWriter(
-      northTest,
-      transformerService,
-      northConnectorRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(northTest.id)
-    );
+    north = new NorthFileWriter(northTest, northConnectorRepository, scanModeRepository, logger, mockBaseFolders(northTest.id));
   });
 
   it('should properly start with test id', async () => {

@@ -2,7 +2,7 @@
  * Create a mock object for South Service
  */
 export default jest.fn().mockImplementation(() => ({
-  runSouth: jest.fn(),
+  buildSouth: jest.fn(),
   testSouth: jest.fn(),
   testSouthItem: jest.fn(),
   findById: jest.fn(),

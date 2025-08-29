@@ -15,8 +15,7 @@ import { NorthConnectorEntity } from '../../model/north-connector.model';
 import testData from '../../tests/utils/test-data';
 import { mockBaseFolders } from '../../tests/utils/test-utils';
 import CacheService from '../../service/cache/cache.service';
-import TransformerService, { createTransformer } from '../../service/transformer.service';
-import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';
+import { createTransformer } from '../../service/transformer.service';
 import OIBusTransformer from '../../service/transformers/oibus-transformer';
 import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
 import { getFilenameWithoutRandomId } from '../../service/utils';
@@ -27,7 +26,6 @@ const logger: pino.Logger = new PinoLogger();
 const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const cacheService: CacheService = new CacheServiceMock();
-const transformerService: TransformerService = new TransformerServiceMock();
 const oiBusTransformer: OIBusTransformer = new OIBusTransformerMock() as unknown as OIBusTransformer;
 
 jest.mock('../../service/encryption.service', () => ({
@@ -79,14 +77,7 @@ describe('NorthSFTP', () => {
     (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
     (getFilenameWithoutRandomId as jest.Mock).mockReturnValue('example.file');
 
-    north = new NorthSftp(
-      configuration,
-      transformerService,
-      northConnectorRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(testData.north.list[0].id)
-    );
+    north = new NorthSftp(configuration, northConnectorRepository, scanModeRepository, logger, mockBaseFolders(testData.north.list[0].id));
     await north.start();
   });
 
@@ -169,14 +160,7 @@ describe('NorthSFTP without suffix or prefix', () => {
     (sftpClient as jest.Mock).mockImplementation(() => mockSftpClient);
     (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
 
-    north = new NorthSftp(
-      configuration,
-      transformerService,
-      northConnectorRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(testData.north.list[0].id)
-    );
+    north = new NorthSftp(configuration, northConnectorRepository, scanModeRepository, logger, mockBaseFolders(testData.north.list[0].id));
   });
 
   afterEach(() => {

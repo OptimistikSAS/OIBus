@@ -24,8 +24,7 @@ import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.
 import fs from 'node:fs/promises';
 import { OIBusTimeValue } from '../../../shared/model/engine.model';
 import csv from 'papaparse';
-import TransformerService, { createTransformer } from '../../service/transformer.service';
-import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';
+import { createTransformer } from '../../service/transformer.service';
 import OIBusTransformer from '../../service/transformers/oibus-transformer';
 import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
 
@@ -39,7 +38,6 @@ jest.mock('../../service/http-request.utils');
 const logger: pino.Logger = new PinoLogger();
 const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
-const transformerService: TransformerService = new TransformerServiceMock();
 const cacheService: CacheService = new CacheServiceMock();
 const oiBusTransformer: OIBusTransformer = new OIBusTransformerMock() as unknown as OIBusTransformer;
 
@@ -209,14 +207,7 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
         }
       : {};
 
-    north = new NorthREST(
-      configuration,
-      transformerService,
-      northConnectorRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(testData.north.list[0].id)
-    );
+    north = new NorthREST(configuration, northConnectorRepository, scanModeRepository, logger, mockBaseFolders(testData.north.list[0].id));
     await north.start();
   });
 
