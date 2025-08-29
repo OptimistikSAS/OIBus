@@ -7,7 +7,6 @@ import { NorthConnectorEntity } from '../../model/north-connector.model';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import { BaseFolders } from '../../model/types';
-import TransformerService from '../../service/transformer.service';
 import path from 'node:path';
 import { createFolder } from '../../service/utils';
 import fs from 'node:fs/promises';
@@ -73,13 +72,12 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
 
   constructor(
     connector: NorthConnectorEntity<NorthOPCUASettings>,
-    transformerService: TransformerService,
     northConnectorRepository: NorthConnectorRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolders: BaseFolders
   ) {
-    super(connector, transformerService, northConnectorRepository, scanModeRepository, logger, baseFolders);
+    super(connector, northConnectorRepository, scanModeRepository, logger, baseFolders);
   }
 
   override async start(dataStream = true): Promise<void> {

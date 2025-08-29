@@ -1,8 +1,6 @@
 import NorthModbus from './north-modbus';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import EncryptionService from '../../service/encryption.service';
-import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
 import csv from 'papaparse';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
@@ -14,8 +12,7 @@ import { NorthModbusSettings } from '../../../shared/model/north-settings.model'
 import testData from '../../tests/utils/test-data';
 import { flushPromises, mockBaseFolders } from '../../tests/utils/test-utils';
 import CacheService from '../../service/cache/cache.service';
-import TransformerService, { createTransformer } from '../../service/transformer.service';
-import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';
+import { createTransformer } from '../../service/transformer.service';
 import OIBusTransformer from '../../service/transformers/oibus-transformer';
 import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
 import { getFilenameWithoutRandomId } from '../../service/utils';
@@ -38,11 +35,9 @@ jest.mock('jsmodbus', () => ({
 jest.mock('../../service/utils');
 
 const logger: pino.Logger = new PinoLogger();
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const cacheService: CacheService = new CacheServiceMock();
-const transformerService: TransformerService = new TransformerServiceMock();
 const oiBusTransformer: OIBusTransformer = new OIBusTransformerMock() as unknown as OIBusTransformer;
 
 jest.mock(
@@ -106,7 +101,6 @@ describe('NorthModbus', () => {
 
     north = new NorthModbus(
       configuration,
-      transformerService,
       northConnectorRepository,
       scanModeRepository,
       logger,
@@ -319,7 +313,6 @@ describe('NorthModbus test connection', () => {
   it('Connecting to socket successfully', async () => {
     north = new NorthModbus(
       configuration,
-      transformerService,
       northConnectorRepository,
       scanModeRepository,
       logger,
@@ -362,7 +355,6 @@ describe('NorthModbus test connection', () => {
   it('should fail to connect', async () => {
     north = new NorthModbus(
       configuration,
-      transformerService,
       northConnectorRepository,
       scanModeRepository,
       logger,

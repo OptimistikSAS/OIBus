@@ -54,8 +54,8 @@ describe('HistoryQuery enabled', () => {
     jest.clearAllMocks();
     jest.useFakeTimers({ doNotFake: ['performance'] }).setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
-    (southService.runSouth as jest.Mock).mockReturnValue(mockedSouth1);
-    (northService.runNorth as jest.Mock).mockReturnValue(mockedNorth1);
+    (southService.buildSouth as jest.Mock).mockReturnValue(mockedSouth1);
+    (northService.buildNorth as jest.Mock).mockReturnValue(mockedNorth1);
 
     (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValue(testData.historyQueries.list[0]);
 
@@ -353,8 +353,8 @@ describe('HistoryQuery disabled', () => {
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
     mockedSouth1.connectedEvent.removeAllListeners();
 
-    (southService.runSouth as jest.Mock).mockReturnValue(mockedSouth1);
-    (northService.runNorth as jest.Mock).mockReturnValue(mockedNorth1);
+    (southService.buildSouth as jest.Mock).mockReturnValue(mockedSouth1);
+    (northService.buildNorth as jest.Mock).mockReturnValue(mockedNorth1);
     (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValue(testData.historyQueries.list[1]);
 
     historyQuery = new HistoryQuery(

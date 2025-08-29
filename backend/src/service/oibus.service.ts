@@ -84,13 +84,13 @@ export default class OIBusService {
 
     await this.dataStreamEngine.start(
       this.northService.findAll().map(element => {
-        return this.northService.runNorth(
+        return this.northService.buildNorth(
           this.northService.findById(element.id)!,
           this.dataStreamEngine.logger.child({ scopeType: 'north', scopeId: element.id, scopeName: element.name })
         );
       }),
       this.southService.findAll().map(element => {
-        return this.southService.runSouth(
+        return this.southService.buildSouth(
           this.southService.findById(element.id)!,
           this.dataStreamEngine.addContent.bind(this.dataStreamEngine),
           this.dataStreamEngine.logger.child({ scopeType: 'south', scopeId: element.id, scopeName: element.name })

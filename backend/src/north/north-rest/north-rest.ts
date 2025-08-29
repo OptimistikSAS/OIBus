@@ -13,8 +13,13 @@ import { filesExists } from '../../service/utils';
 import FormData from 'form-data';
 import { URL } from 'node:url';
 import { OIBusError } from '../../model/engine.model';
-import { HTTPRequest, ReqAuthOptions, ReqProxyOptions, ReqResponse, retryableHttpStatusCodes } from '../../service/http-request.utils';
-import TransformerService from '../../service/transformer.service';
+import {
+  HTTPRequest,
+  ReqAuthOptions,
+  ReqProxyOptions,
+  ReqResponse,
+  retryableHttpStatusCodes
+} from '../../service/http-request.utils';
 
 /**
  * Class Console - display values and file path into the console
@@ -22,13 +27,12 @@ import TransformerService from '../../service/transformer.service';
 export default class NorthREST extends NorthConnector<NorthRESTSettings> {
   constructor(
     configuration: NorthConnectorEntity<NorthRESTSettings>,
-    transformerService: TransformerService,
     northConnectorRepository: NorthConnectorRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolders: BaseFolders
   ) {
-    super(configuration, transformerService, northConnectorRepository, scanModeRepository, logger, baseFolders);
+    super(configuration, northConnectorRepository, scanModeRepository, logger, baseFolders);
   }
 
   async handleContent(cacheMetadata: CacheMetadata): Promise<void> {

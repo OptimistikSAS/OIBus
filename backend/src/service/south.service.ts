@@ -145,7 +145,7 @@ export default class SouthService {
     private readonly dataStreamEngine: DataStreamEngine
   ) {}
 
-  runSouth<S extends SouthSettings, I extends SouthItemSettings>(
+  buildSouth<S extends SouthSettings, I extends SouthItemSettings>(
     settings: SouthConnectorEntity<S, I>,
     addContent: (southId: string, data: OIBusContent) => Promise<void>,
     logger: pino.Logger,
@@ -360,7 +360,7 @@ export default class SouthService {
 
     /* istanbul ignore next */
     const mockedAddContent = async (_southId: string, _content: OIBusContent): Promise<void> => Promise.resolve();
-    const south = this.runSouth(testToRun, mockedAddContent, logger, {
+    const south = this.buildSouth(testToRun, mockedAddContent, logger, {
       cache: 'baseCacheFolder',
       archive: 'baseArchiveFolder',
       error: 'baseErrorFolder'
@@ -410,7 +410,7 @@ export default class SouthService {
 
     /* istanbul ignore next */
     const mockedAddContent = async (_southId: string, _content: OIBusContent): Promise<void> => Promise.resolve();
-    const south = this.runSouth(testConnectorToRun, mockedAddContent, logger, {
+    const south = this.buildSouth(testConnectorToRun, mockedAddContent, logger, {
       cache: 'baseCacheFolder',
       archive: 'baseArchiveFolder',
       error: 'baseErrorFolder'
@@ -461,7 +461,7 @@ export default class SouthService {
     await createBaseFolders(baseFolders);
 
     await this.dataStreamEngine.createSouth(
-      this.runSouth(
+      this.buildSouth(
         this.findById(southEntity.id)!,
         this.dataStreamEngine.addContent.bind(this.dataStreamEngine),
         this.dataStreamEngine.logger.child({ scopeType: 'south', scopeId: southEntity.id, scopeName: southEntity.name })

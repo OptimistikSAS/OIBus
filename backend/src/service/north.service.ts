@@ -93,7 +93,7 @@ export default class NorthService {
     private readonly dataStreamEngine: DataStreamEngine
   ) {}
 
-  runNorth(
+  buildNorth(
     settings: NorthConnectorEntity<NorthSettings>,
     logger: pino.Logger,
     baseFolders: BaseFolders | undefined = undefined
@@ -104,7 +104,6 @@ export default class NorthService {
       case 'aws-s3':
         return new NorthAmazonS3(
           settings as NorthConnectorEntity<NorthAmazonS3Settings>,
-          this.transformerService,
           this.northConnectorRepository,
           this.scanModeRepository,
           logger,
@@ -113,7 +112,6 @@ export default class NorthService {
       case 'azure-blob':
         return new NorthAzureBlob(
           settings as NorthConnectorEntity<NorthAzureBlobSettings>,
-          this.transformerService,
           this.northConnectorRepository,
           this.scanModeRepository,
           logger,
@@ -122,7 +120,6 @@ export default class NorthService {
       case 'console':
         return new NorthConsole(
           settings as NorthConnectorEntity<NorthConsoleSettings>,
-          this.transformerService,
           this.northConnectorRepository,
           this.scanModeRepository,
           logger,
@@ -131,7 +128,6 @@ export default class NorthService {
       case 'file-writer':
         return new NorthFileWriter(
           settings as NorthConnectorEntity<NorthFileWriterSettings>,
-          this.transformerService,
           this.northConnectorRepository,
           this.scanModeRepository,
           logger,
@@ -140,7 +136,6 @@ export default class NorthService {
       case 'oianalytics':
         return new NorthOIAnalytics(
           settings as NorthConnectorEntity<NorthOIAnalyticsSettings>,
-          this.transformerService,
           this.northConnectorRepository,
           this.scanModeRepository,
           this.certificateRepository,
@@ -151,7 +146,6 @@ export default class NorthService {
       case 'sftp':
         return new NorthSFTP(
           settings as NorthConnectorEntity<NorthSFTPSettings>,
-          this.transformerService,
           this.northConnectorRepository,
           this.scanModeRepository,
           logger,
@@ -160,7 +154,6 @@ export default class NorthService {
       case 'rest':
         return new NorthREST(
           settings as NorthConnectorEntity<NorthRESTSettings>,
-          this.transformerService,
           this.northConnectorRepository,
           this.scanModeRepository,
           logger,
@@ -169,7 +162,6 @@ export default class NorthService {
       case 'opcua':
         return new NorthOPCUA(
           settings as NorthConnectorEntity<NorthOPCUASettings>,
-          this.transformerService,
           this.northConnectorRepository,
           this.scanModeRepository,
           logger,
@@ -178,7 +170,6 @@ export default class NorthService {
       case 'mqtt':
         return new NorthMQTT(
           settings as NorthConnectorEntity<NorthMQTTSettings>,
-          this.transformerService,
           this.northConnectorRepository,
           this.scanModeRepository,
           logger,
@@ -187,7 +178,6 @@ export default class NorthService {
       case 'modbus':
         return new NorthModbus(
           settings as NorthConnectorEntity<NorthModbusSettings>,
-          this.transformerService,
           this.northConnectorRepository,
           this.scanModeRepository,
           logger,
@@ -224,7 +214,7 @@ export default class NorthService {
       transformers: []
     };
 
-    const north = this.runNorth(testToRun, logger, { cache: 'baseCacheFolder', archive: 'baseArchiveFolder', error: 'baseErrorFolder' });
+    const north = this.buildNorth(testToRun, logger, { cache: 'baseCacheFolder', archive: 'baseArchiveFolder', error: 'baseErrorFolder' });
     return await north.testConnection();
   }
 
@@ -265,7 +255,7 @@ export default class NorthService {
     await createBaseFolders(baseFolders);
 
     await this.dataStreamEngine.createNorth(
-      this.runNorth(
+      this.buildNorth(
         this.findById(northEntity.id)!,
         this.dataStreamEngine.logger.child({ scopeType: 'north', scopeId: northEntity.id, scopeName: northEntity.name })
       )

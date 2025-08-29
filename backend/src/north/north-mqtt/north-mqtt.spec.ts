@@ -12,8 +12,7 @@ import { NorthMQTTSettings } from '../../../shared/model/north-settings.model';
 import testData from '../../tests/utils/test-data';
 import { flushPromises, mockBaseFolders } from '../../tests/utils/test-utils';
 import CacheService from '../../service/cache/cache.service';
-import TransformerService, { createTransformer } from '../../service/transformer.service';
-import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';
+import { createTransformer } from '../../service/transformer.service';
 import OIBusTransformer from '../../service/transformers/oibus-transformer';
 import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
 import { getFilenameWithoutRandomId } from '../../service/utils';
@@ -30,7 +29,6 @@ const logger: pino.Logger = new PinoLogger();
 const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const cacheService: CacheService = new CacheServiceMock();
-const transformerService: TransformerService = new TransformerServiceMock();
 const oiBusTransformer: OIBusTransformer = new OIBusTransformerMock() as unknown as OIBusTransformer;
 
 jest.mock(
@@ -92,14 +90,7 @@ describe('NorthMQTT', () => {
     (getFilenameWithoutRandomId as jest.Mock).mockReturnValue('example.file');
     (mqtt.connect as jest.Mock).mockImplementation(() => mqttStream);
 
-    north = new NorthMQTT(
-      configuration,
-      transformerService,
-      northConnectorRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(testData.north.list[0].id)
-    );
+    north = new NorthMQTT(configuration, northConnectorRepository, scanModeRepository, logger, mockBaseFolders(testData.north.list[0].id));
   });
 
   it('should properly connect', async () => {
