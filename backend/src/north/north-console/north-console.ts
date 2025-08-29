@@ -8,7 +8,6 @@ import { NorthConnectorEntity } from '../../model/north-connector.model';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import { BaseFolders } from '../../model/types';
-import TransformerService from '../../service/transformer.service';
 
 /**
  * Class Console - display values and file path into the console
@@ -16,13 +15,12 @@ import TransformerService from '../../service/transformer.service';
 export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
   constructor(
     configuration: NorthConnectorEntity<NorthConsoleSettings>,
-    transformerService: TransformerService,
     northConnectorRepository: NorthConnectorRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolders: BaseFolders
   ) {
-    super(configuration, transformerService, northConnectorRepository, scanModeRepository, logger, baseFolders);
+    super(configuration, northConnectorRepository, scanModeRepository, logger, baseFolders);
   }
 
   async handleContent(cacheMetadata: CacheMetadata): Promise<void> {

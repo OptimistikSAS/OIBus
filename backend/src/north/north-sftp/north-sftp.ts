@@ -13,7 +13,6 @@ import { NorthConnectorEntity } from '../../model/north-connector.model';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import { BaseFolders } from '../../model/types';
-import TransformerService from '../../service/transformer.service';
 import { getFilenameWithoutRandomId } from '../../service/utils';
 
 /**
@@ -22,13 +21,12 @@ import { getFilenameWithoutRandomId } from '../../service/utils';
 export default class NorthSFTP extends NorthConnector<NorthSFTPSettings> {
   constructor(
     configuration: NorthConnectorEntity<NorthSFTPSettings>,
-    transformerService: TransformerService,
     northConnectorRepository: NorthConnectorRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolders: BaseFolders
   ) {
-    super(configuration, transformerService, northConnectorRepository, scanModeRepository, logger, baseFolders);
+    super(configuration, northConnectorRepository, scanModeRepository, logger, baseFolders);
   }
 
   async handleContent(cacheMetadata: CacheMetadata): Promise<void> {

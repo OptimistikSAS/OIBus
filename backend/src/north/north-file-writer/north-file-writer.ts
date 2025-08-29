@@ -19,13 +19,12 @@ import { getFilenameWithoutRandomId } from '../../service/utils';
 export default class NorthFileWriter extends NorthConnector<NorthFileWriterSettings> {
   constructor(
     configuration: NorthConnectorEntity<NorthFileWriterSettings>,
-    transformerService: TransformerService,
     northConnectorRepository: NorthConnectorRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolders: BaseFolders
   ) {
-    super(configuration, transformerService, northConnectorRepository, scanModeRepository, logger, baseFolders);
+    super(configuration, northConnectorRepository, scanModeRepository, logger, baseFolders);
   }
 
   async handleContent(cacheMetadata: CacheMetadata): Promise<void> {
