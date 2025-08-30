@@ -128,7 +128,7 @@ export default class SouthConnectorController {
     ctx: KoaContext<
       {
         southSettings: SouthSettings;
-        item: SouthConnectorItemCommandDTO<SouthItemSettings>;
+        itemSettings: SouthItemSettings;
         testingSettings: SouthConnectorItemTestingSettings;
       },
       void
@@ -147,7 +147,7 @@ export default class SouthConnectorController {
         ctx.params.id,
         ctx.query.southType as OIBusSouthType,
         ctx.request.body!.southSettings,
-        ctx.request.body!.item,
+        ctx.request.body!.itemSettings,
         ctx.request.body!.testingSettings,
         ctx.ok,
         logger
@@ -277,11 +277,7 @@ export default class SouthConnectorController {
 
     const items: Array<SouthConnectorItemDTO<SouthItemSettings>> = JSON.parse((await fs.readFile(files['items'][0].path)).toString('utf8'));
 
-    ctx.body = itemToFlattenedCSV(
-      items.map(item => toSouthConnectorItemDTO(item, manifest.id)),
-      ctx.request.body!.delimiter,
-      ctx.app.scanModeService.findAll()
-    );
+    ctx.body = itemToFlattenedCSV(items, ctx.request.body!.delimiter, ctx.app.scanModeService.findAll());
     ctx.set('Content-disposition', 'attachment; filename=items.csv');
     ctx.set('Content-Type', 'application/force-download');
     ctx.ok();
@@ -307,8 +303,8 @@ export default class SouthConnectorController {
     ctx: KoaContext<
       { delimiter: string },
       {
-        items: Array<SouthConnectorItemCommandDTO<SouthItemSettings>>;
-        errors: Array<{ item: SouthConnectorItemCommandDTO<SouthItemSettings>; error: string }>;
+        items: Array<SouthConnectorItemDTO<SouthItemSettings>>;
+        errors: Array<{ item: Record<string, string>; error: string }>;
       }
     >
   ): Promise<void> {

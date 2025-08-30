@@ -80,7 +80,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
         }
         const scanMode = this.taskJobQueue[0];
 
-        const itemsToRun = this.connector.items.filter(item => item.scanModeId === scanMode.id && item.enabled);
+        const itemsToRun = this.connector.items.filter(item => item.scanMode.id === scanMode.id && item.enabled);
         if (itemsToRun.length > 0) {
           this.logger.trace(`Running South with scan mode ${scanMode.name} for ${this.connector.items.length} items`);
           await this.run(scanMode.id, itemsToRun);
@@ -143,18 +143,18 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
 
     const deletedItems = oldSettings.items.filter(item => !newSettings.items.find(element => element.id === item.id));
     for (const item of deletedItems) {
-      this.safeDeleteSouthCacheEntry(newSettings, item.id, item.scanModeId, newMaxInstantPerItem);
+      this.safeDeleteSouthCacheEntry(newSettings, item.id, item.scanMode.id, newMaxInstantPerItem);
     }
 
     const oldScanModeChangedItems = oldSettings.items.filter(item =>
-      newSettings.items.find(element => element.id === item.id && element.scanModeId !== item.scanModeId)
+      newSettings.items.find(element => element.id === item.id && element.scanMode.id !== item.scanMode.id)
     );
     for (const previousItem of oldScanModeChangedItems) {
       this.onSouthItemScanModeChange(
         newSettings,
         newMaxInstantPerItem ? previousItem.id : 'all',
-        previousItem.scanModeId,
-        newSettings.items.find(element => element.id === previousItem.id)!.scanModeId,
+        previousItem.scanMode.id,
+        newSettings.items.find(element => element.id === previousItem.id)!.scanMode.id,
         newMaxInstantPerItem
       );
     }
@@ -178,10 +178,10 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     }
     const scanModes = new Map<string, ScanMode>();
     this.connector.items
-      .filter(item => item.scanModeId && item.scanModeId !== 'subscription' && item.enabled)
+      .filter(item => item.scanMode.id && item.scanMode.id !== 'subscription' && item.enabled)
       .forEach(item => {
-        if (!scanModes.get(item.scanModeId!)) {
-          const scanMode = this.scanModeRepository.findById(item.scanModeId!)!;
+        if (!scanModes.get(item.scanMode.id!)) {
+          const scanMode = this.scanModeRepository.findById(item.scanMode.id!)!;
           scanModes.set(scanMode.id, scanMode);
         }
       });
@@ -198,7 +198,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     }
 
     if (this.queriesSubscription()) {
-      const subscriptionItems = this.connector.items.filter(item => item.scanModeId === 'subscription' && item.enabled);
+      const subscriptionItems = this.connector.items.filter(item => item.scanMode.id === 'subscription' && item.enabled);
       const alreadySubscribedItemIds = new Set(this.subscribedItems.map(item => item.id));
       const allSubscriptionItemIds = new Set(subscriptionItems.map(item => item.id));
 
@@ -627,7 +627,11 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     return 'connectionSettings' in this && 'createSession' in this;
   }
 
-  get settings(): SouthConnectorEntity<T, I> {
+  set connectorConfiguration(connectorConfiguration: SouthConnectorEntity<T, I>) {
+    this.connector = connectorConfiguration;
+  }
+
+  get connectorConfiguration(): SouthConnectorEntity<T, I> {
     return this.connector;
   }
 
@@ -651,7 +655,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     if (maxInstantPerItem) {
       this.southCacheRepository.deleteAllBySouthItem(southItemId);
     } else {
-      const isOldScanModeUnused = !southConnector.items.some(item => item.scanModeId === scanModeId);
+      const isOldScanModeUnused = !southConnector.items.some(item => item.scanMode.id === scanModeId);
       if (isOldScanModeUnused) {
         this.southCacheRepository.delete(southItemId, scanModeId, 'all');
       }
@@ -726,12 +730,12 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       // 2. Create new cache entries for each item
       // The max instant of these new entries, will be the max instant of the previously removed ones, based on scan mode
       for (const item of previousItems) {
-        const maxInstant = maxInstantsByScanMode.get(item.scanModeId);
+        const maxInstant = maxInstantsByScanMode.get(item.scanMode.id);
         if (maxInstant) {
           this.southCacheRepository.save({
             southId: southConnectorId,
             itemId: item.id,
-            scanModeId: item.scanModeId,
+            scanModeId: item.scanMode.id,
             maxInstant
           });
         }

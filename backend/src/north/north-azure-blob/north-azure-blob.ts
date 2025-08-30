@@ -8,8 +8,6 @@ import { encryptionService } from '../../service/encryption.service';
 import { NorthAzureBlobSettings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
-import NorthConnectorRepository from '../../repository/config/north-connector.repository';
-import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import { BaseFolders } from '../../model/types';
 import { getFilenameWithoutRandomId } from '../../service/utils';
 import type { ProxySettings } from '@azure/core-rest-pipeline/dist/browser';
@@ -20,18 +18,12 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
   private blobClient: BlobServiceClient | null = null;
   private dataLakeClient: DataLakeServiceClient | null = null;
 
-  constructor(
-    connector: NorthConnectorEntity<NorthAzureBlobSettings>,
-    northConnectorRepository: NorthConnectorRepository,
-    scanModeRepository: ScanModeRepository,
-    logger: pino.Logger,
-    baseFolders: BaseFolders
-  ) {
-    super(connector, northConnectorRepository, scanModeRepository, logger, baseFolders);
+  constructor(connector: NorthConnectorEntity<NorthAzureBlobSettings>, logger: pino.Logger, baseFolders: BaseFolders) {
+    super(connector, logger, baseFolders);
   }
 
-  async start(dataStream = true): Promise<void> {
-    await super.start(dataStream);
+  async start(): Promise<void> {
+    await super.start();
     await this.prepareConnection();
   }
 

@@ -5,7 +5,6 @@ import * as utils from '../../service/utils';
 import { generateReplacementParameters } from '../../service/utils';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import { SouthConnectorDTO } from '../../../shared/model/south-connector.model';
 import mysql from 'mysql2/promise';
 import {
   SouthMySQLItemSettings,
@@ -21,6 +20,7 @@ import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/sou
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import testData from '../../tests/utils/test-data';
 import { mockBaseFolders } from '../../tests/utils/test-utils';
+import { SouthConnectorEntity } from '../../model/south-connector.model';
 
 jest.mock('mysql2/promise');
 jest.mock('../../service/utils');
@@ -46,7 +46,7 @@ const addContentCallback = jest.fn();
 
 describe('SouthMySQL with authentication', () => {
   let south: SouthMySQL;
-  const configuration: SouthConnectorDTO<SouthMySQLSettings, SouthMySQLItemSettings> = {
+  const configuration: SouthConnectorEntity<SouthMySQLSettings, SouthMySQLItemSettings> = {
     id: 'southId',
     name: 'south',
     type: 'mysql',
@@ -100,7 +100,7 @@ describe('SouthMySQL with authentication', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id2',
@@ -119,7 +119,7 @@ describe('SouthMySQL with authentication', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id3',
@@ -155,7 +155,7 @@ describe('SouthMySQL with authentication', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanModeId: 'scanModeId2'
+        scanMode: testData.scanMode.list[1]
       }
     ]
   };
@@ -372,7 +372,7 @@ describe('SouthMySQL with authentication', () => {
 
 describe('SouthMySQL without authentication', () => {
   let south: SouthMySQL;
-  const configuration: SouthConnectorDTO<SouthMySQLSettings, SouthMySQLItemSettings> = {
+  const configuration: SouthConnectorEntity<SouthMySQLSettings, SouthMySQLItemSettings> = {
     id: 'southId',
     name: 'south',
     type: 'mysql',
@@ -426,7 +426,7 @@ describe('SouthMySQL without authentication', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id2',
@@ -445,7 +445,7 @@ describe('SouthMySQL without authentication', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id3',
@@ -481,7 +481,7 @@ describe('SouthMySQL without authentication', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanModeId: 'scanModeId2'
+        scanMode: testData.scanMode.list[1]
       }
     ]
   };
@@ -532,7 +532,7 @@ describe('SouthMySQL without authentication', () => {
 
 describe('SouthMySQL test connection', () => {
   let south: SouthMySQL;
-  const configuration: SouthConnectorDTO<SouthMySQLSettings, SouthMySQLItemSettings> = {
+  const configuration: SouthConnectorEntity<SouthMySQLSettings, SouthMySQLItemSettings> = {
     id: 'southId',
     name: 'south',
     type: 'mysql',
@@ -586,7 +586,7 @@ describe('SouthMySQL test connection', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id2',
@@ -605,7 +605,7 @@ describe('SouthMySQL test connection', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id3',
@@ -641,7 +641,7 @@ describe('SouthMySQL test connection', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanModeId: 'scanModeId2'
+        scanMode: testData.scanMode.list[1]
       }
     ]
   };

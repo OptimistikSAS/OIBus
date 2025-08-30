@@ -231,7 +231,7 @@ describe('History query controller', () => {
   it('testHistoryQueryItem() should test south item', async () => {
     ctx.request.body = {
       southSettings: testData.south.command.settings,
-      item: testData.south.itemCommand,
+      itemSettings: testData.south.itemCommand.settings,
       testingSettings: testData.south.itemTestingSettings
     };
     ctx.query.southType = testData.south.command.type;
@@ -247,7 +247,7 @@ describe('History query controller', () => {
       testData.south.command.type,
       null,
       testData.south.command.settings,
-      testData.south.itemCommand,
+      testData.south.itemCommand.settings,
       testData.south.itemTestingSettings,
       ctx.ok,
       logger
@@ -257,7 +257,7 @@ describe('History query controller', () => {
   it('testHistoryQueryItem() should return bad request', async () => {
     ctx.request.body = {
       southSettings: testData.south.command.settings,
-      item: testData.south.itemCommand,
+      itemSettings: testData.south.itemCommand.settings,
       testingSettings: testData.south.itemTestingSettings
     };
     ctx.query.southType = testData.south.command.type;
@@ -276,7 +276,7 @@ describe('History query controller', () => {
       testData.south.command.type,
       testData.south.list[0].id,
       testData.south.command.settings,
-      testData.south.itemCommand,
+      testData.south.itemCommand.settings,
       testData.south.itemTestingSettings,
       ctx.ok,
       logger

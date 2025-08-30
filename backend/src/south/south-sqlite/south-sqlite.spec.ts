@@ -106,7 +106,7 @@ describe('SouthSQLite', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id2',
@@ -124,7 +124,7 @@ describe('SouthSQLite', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id3',
@@ -159,7 +159,7 @@ describe('SouthSQLite', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanModeId: 'scanModeId2'
+        scanMode: testData.scanMode.list[1]
       }
     ]
   };
@@ -363,7 +363,7 @@ describe('SouthSQLite test connection', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id2',
@@ -381,7 +381,7 @@ describe('SouthSQLite test connection', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id3',
@@ -416,7 +416,7 @@ describe('SouthSQLite test connection', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanModeId: 'scanModeId2'
+        scanMode: testData.scanMode.list[1]
       }
     ]
   };

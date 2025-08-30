@@ -1,6 +1,7 @@
 import { OIBusArrayAttribute, OIBusObjectAttribute } from './form.model';
 import { BaseEntity, Instant } from './types';
 import { SouthItemSettings, SouthSettings } from './south-settings.model';
+import { ScanModeDTO } from './scan-mode.model';
 
 export const OIBUS_SOUTH_CATEGORIES = ['file', 'iot', 'database', 'api'] as const;
 export type OIBusSouthCategory = (typeof OIBUS_SOUTH_CATEGORIES)[number];
@@ -69,7 +70,7 @@ export interface SouthConnectorItemDTO<T extends SouthItemSettings> extends Base
   name: string;
   enabled: boolean;
   settings: T;
-  scanModeId: string;
+  scanMode: ScanModeDTO;
 }
 
 export interface SouthConnectorItemCommandDTO<T extends SouthItemSettings> {

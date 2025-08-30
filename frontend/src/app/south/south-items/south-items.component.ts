@@ -8,7 +8,6 @@ import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angul
 import {
   SouthConnectorCommandDTO,
   SouthConnectorDTO,
-  SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
   SouthConnectorManifest
 } from '../../../../../backend/shared/model/south-connector.model';
@@ -84,12 +83,12 @@ export class SouthItemsComponent implements OnInit {
     return this.southManifest().items.rootAttribute.attributes.find(attribute => attribute.key === 'scanModeId')! as OIBusScanModeAttribute;
   });
 
-  readonly inMemoryItems = output<Array<SouthConnectorItemCommandDTO<SouthItemSettings>> | null>();
+  readonly inMemoryItems = output<Array<SouthConnectorItemDTO<SouthItemSettings>> | null>();
 
-  allItems: Array<SouthConnectorItemCommandDTO<SouthItemSettings>> = []; // Array used to store item commands on south connector creation
-  filteredItems: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>> = [];
+  allItems: Array<SouthConnectorItemDTO<SouthItemSettings>> = []; // Array used to store item commands on south connector creation
+  filteredItems: Array<SouthConnectorItemDTO<SouthItemSettings>> = [];
 
-  displayedItems: Page<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>> = emptyPage();
+  displayedItems: Page<SouthConnectorItemDTO<SouthItemSettings>> = emptyPage();
   displaySettings: Array<OIBusAttribute> = [];
 
   searchControl = inject(NonNullableFormBuilder).control(null as string | null);
@@ -110,8 +109,7 @@ export class SouthItemsComponent implements OnInit {
       this.allItems = southConnector.items.map(item => ({
         ...item,
         // Keep existing id when editing; when creating/duplicating, ids are handled by parent component
-        id: item.id ?? null,
-        scanModeName: null
+        id: item.id ?? null
       }));
 
       // reset column sorting
@@ -152,12 +150,12 @@ export class SouthItemsComponent implements OnInit {
     this.displayedItems = createPageFromArray(this.filteredItems, PAGE_SIZE, pageNumber);
   }
 
-  filter(): Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>> {
+  filter(): Array<SouthConnectorItemDTO<SouthItemSettings>> {
     const searchText = this.searchControl.value || '';
     return this.allItems.filter(item => item.name.toLowerCase().includes(searchText.toLowerCase()));
   }
 
-  editItem(southItem: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>) {
+  editItem(southItem: SouthConnectorItemDTO<SouthItemSettings>) {
     const modalRef = this.modalService.open(EditSouthItemModalComponent, {
       size: 'xl',
       beforeDismiss: () => {
@@ -209,17 +207,23 @@ export class SouthItemsComponent implements OnInit {
   private refreshAfterCreationModalClosed(modalRef: Modal<any>) {
     modalRef.result
       .pipe(
-        switchMap((command: SouthConnectorItemCommandDTO<SouthItemSettings>) => {
+        switchMap((command: SouthConnectorItemDTO<SouthItemSettings>) => {
           if (this.saveChangesDirectly()) {
-            return this.southConnectorService.createItem(this.southId(), command);
-          } else {
-            this.allItems.push({
-              id: command.id ?? null,
+            return this.southConnectorService.createItem(this.southId(), {
+              id: command.id || null,
               name: command.name,
               enabled: command.enabled,
-              scanModeId: command.scanModeId!,
+              scanModeId: command.scanMode.id,
               scanModeName: null,
-              settings: { ...command.settings }
+              settings: command.settings
+            });
+          } else {
+            this.allItems.push({
+              id: command.id,
+              name: command.name,
+              enabled: command.enabled,
+              scanMode: command.scanMode,
+              settings: command.settings
             });
             return of(null);
           }
@@ -239,15 +243,19 @@ export class SouthItemsComponent implements OnInit {
   /**
    * Refresh the South item list when a South item is edited
    */
-  private refreshAfterEditionModalClosed(
-    modalRef: Modal<any>,
-    oldItem: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>
-  ) {
+  private refreshAfterEditionModalClosed(modalRef: Modal<any>, oldItem: SouthConnectorItemDTO<SouthItemSettings>) {
     modalRef.result
       .pipe(
-        switchMap((command: SouthConnectorItemCommandDTO<SouthItemSettings>) => {
+        switchMap((command: SouthConnectorItemDTO<SouthItemSettings>) => {
           if (this.saveChangesDirectly()) {
-            return this.southConnectorService.updateItem(this.southId(), command.id!, command);
+            return this.southConnectorService.updateItem(this.southId(), command.id!, {
+              id: command.id,
+              enabled: command.enabled,
+              name: command.name,
+              settings: command.settings,
+              scanModeName: null,
+              scanModeId: command.scanMode.id
+            });
           } else {
             this.allItems = this.allItems.filter(item => item.name !== oldItem.name);
             // Preserve id when present, merge changes otherwise
@@ -267,7 +275,7 @@ export class SouthItemsComponent implements OnInit {
       });
   }
 
-  deleteItem(item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>) {
+  deleteItem(item: SouthConnectorItemDTO<SouthItemSettings>) {
     this.confirmationService
       .confirm({
         messageKey: 'south.items.confirm-deletion'
@@ -293,7 +301,7 @@ export class SouthItemsComponent implements OnInit {
       });
   }
 
-  duplicateItem(item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>) {
+  duplicateItem(item: SouthConnectorItemDTO<SouthItemSettings>) {
     const modalRef = this.modalService.open(EditSouthItemModalComponent, { size: 'xl', backdrop: 'static' });
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
     component.prepareForCopy(
@@ -315,7 +323,21 @@ export class SouthItemsComponent implements OnInit {
       if (response && this.southId() !== 'create') {
         this.southConnectorService.exportItems(this.southId(), response.fileName, response.delimiter).subscribe();
       } else if (response && this.southId() === 'create') {
-        this.southConnectorService.itemsToCsv(this.southManifest().id, this.allItems, response.fileName, response.delimiter).subscribe();
+        this.southConnectorService
+          .itemsToCsv(
+            this.southManifest().id,
+            this.allItems.map(item => ({
+              id: item.id,
+              enabled: item.enabled,
+              name: item.name,
+              settings: item.settings,
+              scanModeId: item.scanMode.id,
+              scanModeName: item.scanMode.name
+            })),
+            response.fileName,
+            response.delimiter
+          )
+          .subscribe();
       }
     });
   }
@@ -386,9 +408,9 @@ export class SouthItemsComponent implements OnInit {
   checkImportItems(file: File, delimiter: string) {
     this.southConnectorService.checkImportItems(this.southManifest().id, this.southId(), this.allItems, file, delimiter).subscribe(
       (result: {
-        items: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>>;
+        items: Array<SouthConnectorItemDTO<SouthItemSettings>>;
         errors: Array<{
-          item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>;
+          item: Record<string, string>;
           error: string;
         }>;
       }) => {
@@ -406,9 +428,19 @@ export class SouthItemsComponent implements OnInit {
   private refreshAfterImportModalClosed(modalRef: Modal<any>) {
     modalRef.result
       .pipe(
-        switchMap((newItems: Array<SouthConnectorItemCommandDTO<SouthItemSettings>>) => {
+        switchMap((newItems: Array<SouthConnectorItemDTO<SouthItemSettings>>) => {
           if (this.saveChangesDirectly()) {
-            return this.southConnectorService.importItems(this.southId(), newItems);
+            return this.southConnectorService.importItems(
+              this.southId(),
+              newItems.map(item => ({
+                id: item.id,
+                enabled: item.enabled,
+                name: item.name,
+                settings: item.settings,
+                scanModeId: item.scanMode.id,
+                scanModeName: null
+              }))
+            );
           } else {
             this.allItems.push(...newItems);
             return of(null);
@@ -426,11 +458,7 @@ export class SouthItemsComponent implements OnInit {
       });
   }
 
-  getScanMode(scanModeId: string | null): ScanModeDTO | undefined {
-    return this.scanModes().find(scanMode => scanMode.id === scanModeId);
-  }
-
-  toggleItem(item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>, value: boolean) {
+  toggleItem(item: SouthConnectorItemDTO<SouthItemSettings>, value: boolean) {
     if (value) {
       this.southConnectorService
         .enableItem(this.southId(), item.id!)
@@ -498,8 +526,12 @@ export class SouthItemsComponent implements OnInit {
         case 'scanMode':
           this.filteredItems.sort((a, b) =>
             ascending
-              ? this.getScanMode(a.scanModeId)!.name.localeCompare(this.getScanMode(b.scanModeId)!.name)
-              : this.getScanMode(b.scanModeId)!.name.localeCompare(this.getScanMode(a.scanModeId)!.name)
+              ? (a as SouthConnectorItemDTO<SouthItemSettings>).scanMode.name.localeCompare(
+                  (b as SouthConnectorItemDTO<SouthItemSettings>).scanMode.name
+                )
+              : (b as SouthConnectorItemDTO<SouthItemSettings>).scanMode.name.localeCompare(
+                  (a as SouthConnectorItemDTO<SouthItemSettings>).scanMode.name
+                )
           );
           break;
       }

@@ -62,7 +62,7 @@ describe('South PI', () => {
           type: 'point-id',
           piPoint: 'FACTORY.WORKSHOP.POINT.ID1'
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id2',
@@ -72,7 +72,7 @@ describe('South PI', () => {
           type: 'point-query',
           piQuery: '*'
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       }
     ]
   };

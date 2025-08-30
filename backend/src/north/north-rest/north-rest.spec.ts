@@ -13,10 +13,6 @@ import FormData from 'form-data';
 import { NorthRESTSettings } from '../../../shared/model/north-settings.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import testData from '../../tests/utils/test-data';
-import NorthConnectorRepository from '../../repository/config/north-connector.repository';
-import ScanModeRepository from '../../repository/config/scan-mode.repository';
-import NorthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/north-connector-repository.mock';
-import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
 import { mockBaseFolders } from '../../tests/utils/test-utils';
 import { OIBusError } from '../../model/engine.model';
 import CacheService from '../../service/cache/cache.service';
@@ -36,8 +32,6 @@ jest.mock('../../service/transformer.service');
 jest.mock('../../service/http-request.utils');
 
 const logger: pino.Logger = new PinoLogger();
-const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
-const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const cacheService: CacheService = new CacheServiceMock();
 const oiBusTransformer: OIBusTransformer = new OIBusTransformerMock() as unknown as OIBusTransformer;
 
@@ -56,7 +50,8 @@ const myReadStream = {
     return this;
   }),
   pause: jest.fn(),
-  close: jest.fn()
+  close: jest.fn(),
+  closed: false
 };
 (fsSync.createReadStream as jest.Mock).mockReturnValue(myReadStream);
 
@@ -144,19 +139,14 @@ const testCases: Array<[string, NorthRESTSettings]> = [
       bearerAuthToken: 'auth-token',
       useProxy: true,
       proxyUrl: 'http://localhost',
-      proxyUsername: 'proxy-user',
-      proxyPassword: 'proxy-password'
+      proxyUsername: '',
+      proxyPassword: ''
     }
   ]
 ];
 describe.each(testCases)('NorthREST %s', (_, settings) => {
   let authOptions: ReqAuthOptions | undefined;
   let proxyOptions: { proxy?: ReqProxyOptions };
-
-  async function changeNorthConfig(config: NorthConnectorEntity<NorthRESTSettings>) {
-    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValueOnce(config);
-    await north.start(); // needed to reload the north's config
-  }
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -165,8 +155,6 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
       ...testData.north.list[0],
       settings
     };
-    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
-    (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
     (filesExists as jest.Mock).mockReturnValue(true);
     (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
     (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(200));
@@ -198,16 +186,18 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
       ? {
           proxy: {
             url: settings.proxyUrl,
-            auth: {
-              type: 'basic',
-              username: settings.proxyUsername,
-              password: settings.proxyPassword
-            }
+            auth: settings.proxyUsername
+              ? {
+                  type: 'basic',
+                  username: settings.proxyUsername,
+                  password: settings.proxyPassword
+                }
+              : undefined
           } as ReqProxyOptions
         }
       : {};
 
-    north = new NorthREST(configuration, northConnectorRepository, scanModeRepository, logger, mockBaseFolders(testData.north.list[0].id));
+    north = new NorthREST(configuration, logger, mockBaseFolders(testData.north.list[0].id));
     await north.start();
   });
 
@@ -234,14 +224,15 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
 
     for (const endpoint of ['http://test.ing/file-upload', 'http://test.ing/file-upload/']) {
       for (const testPath of ['test-auth', '/test-auth', 'test-auth/', '/test-auth/']) {
-        await changeNorthConfig({
+        north.connectorConfiguration = {
           ...configuration,
           settings: {
             ...configuration.settings,
             endpoint,
             testPath
           }
-        });
+        };
+        await north.start(); // needed to reload the north's config
 
         await north.testConnection();
 
@@ -307,17 +298,20 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
       options: {}
     });
 
+    expect(myReadStream.close).toHaveBeenCalled();
     expect(HTTPRequest).toHaveBeenCalledWith(new URL(settings.endpoint, settings.host), expectedReqOptions);
   });
 
   it('should properly handle files without query params', async () => {
-    await changeNorthConfig({
+    myReadStream.closed = true;
+    north.connectorConfiguration = {
       ...configuration,
       settings: {
         ...configuration.settings,
         queryParams: null
       }
-    });
+    };
+    await north.start();
     const expectedReqOptions = {
       method: 'POST',
       headers: {
@@ -341,6 +335,8 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
     });
 
     expect(HTTPRequest).toHaveBeenCalledWith(new URL(settings.endpoint, settings.host), expectedReqOptions);
+    expect(myReadStream.close).not.toHaveBeenCalled();
+    myReadStream.closed = false;
   });
 
   it('should properly throw error when file does not exist', async () => {
@@ -389,6 +385,40 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
     ).rejects.toThrow(new OIBusError(`Failed to reach file endpoint ${new URL(settings.endpoint, settings.host)}; message: error`, true));
 
     expect(HTTPRequest).toHaveBeenCalledWith(new URL(settings.endpoint, settings.host), expectedReqOptions);
+    expect(myReadStream.close).toHaveBeenCalled();
+  });
+
+  it('should properly throw fetch error with files and not close read stream if already closed', async () => {
+    myReadStream.closed = true;
+    const expectedReqOptions = {
+      method: 'POST',
+      headers: {
+        'content-type': expect.stringContaining('multipart/form-data; boundary=')
+      },
+      query: { entityId: 'test' },
+      body: expect.any(FormData),
+      auth: authOptions,
+      timeout: 30000,
+      ...proxyOptions
+    };
+
+    (HTTPRequest as jest.Mock).mockRejectedValueOnce(new Error('error'));
+
+    await expect(
+      north.handleContent({
+        contentFile: 'path/to/file/example.file',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'any',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow(new OIBusError(`Failed to reach file endpoint ${new URL(settings.endpoint, settings.host)}; message: error`, true));
+
+    expect(HTTPRequest).toHaveBeenCalledWith(new URL(settings.endpoint, settings.host), expectedReqOptions);
+    expect(myReadStream.close).not.toHaveBeenCalled();
+    myReadStream.closed = false;
   });
 
   it('should properly throw error on file bad response without retrying', async () => {
@@ -573,13 +603,14 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
 
   if (settings.useProxy) {
     it('should throw error when proxy url is not defined', async () => {
-      await changeNorthConfig({
+      north.connectorConfiguration = {
         ...configuration,
         settings: {
           ...configuration.settings,
           proxyUrl: undefined
         }
-      });
+      };
+      await north.start();
 
       await expect(
         north.handleContent({

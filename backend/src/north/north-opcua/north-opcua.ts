@@ -4,8 +4,6 @@ import pino from 'pino';
 import { NorthOPCUASettings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
-import NorthConnectorRepository from '../../repository/config/north-connector.repository';
-import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import { BaseFolders } from '../../model/types';
 import path from 'node:path';
 import { createFolder } from '../../service/utils';
@@ -70,17 +68,11 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
   client: ClientSession | null = null;
   private reconnectTimeout: NodeJS.Timeout | null = null;
 
-  constructor(
-    connector: NorthConnectorEntity<NorthOPCUASettings>,
-    northConnectorRepository: NorthConnectorRepository,
-    scanModeRepository: ScanModeRepository,
-    logger: pino.Logger,
-    baseFolders: BaseFolders
-  ) {
-    super(connector, northConnectorRepository, scanModeRepository, logger, baseFolders);
+  constructor(connector: NorthConnectorEntity<NorthOPCUASettings>, logger: pino.Logger, baseFolders: BaseFolders) {
+    super(connector, logger, baseFolders);
   }
 
-  override async start(dataStream = true): Promise<void> {
+  override async start(): Promise<void> {
     await this.initOpcuaCertificateFolders(this.baseFolders.cache);
     if (!this.clientCertificateManager) {
       this.clientCertificateManager = new OPCUACertificateManager({
@@ -91,7 +83,7 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
       // It is useful for offline instances of OIBus where downloading openssl is not possible
       this.clientCertificateManager.state = 2;
     }
-    await super.start(dataStream);
+    await super.start();
   }
 
   override async connect(): Promise<void> {

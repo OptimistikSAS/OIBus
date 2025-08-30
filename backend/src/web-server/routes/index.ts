@@ -30,7 +30,7 @@ import {
 import OianalyticsCommandController from '../controllers/oianalytics-command.controller';
 import ContentController from '../controllers/content.controller';
 import { Page } from '../../../shared/model/types';
-import { ChangePasswordCommand, UserDTO, UserCommandDTO } from '../../../shared/model/user.model';
+import { ChangePasswordCommand, UserCommandDTO, UserDTO } from '../../../shared/model/user.model';
 import { ScanModeCommandDTO, ScanModeDTO, ValidatedCronExpression } from '../../../shared/model/scan-mode.model';
 import { CertificateCommandDTO, CertificateDTO } from '../../../shared/model/certificate.model';
 import {
@@ -222,7 +222,7 @@ router.put(
     ctx: KoaContext<
       {
         southSettings: SouthSettings;
-        item: SouthConnectorItemCommandDTO<SouthItemSettings>;
+        itemSettings: SouthItemSettings;
         testingSettings: SouthConnectorItemTestingSettings;
       },
       void
@@ -250,8 +250,8 @@ router.post(
     ctx: KoaContext<
       { delimiter: string; currentItems: string },
       {
-        items: Array<SouthConnectorItemCommandDTO<SouthItemSettings>>;
-        errors: Array<{ item: SouthConnectorItemCommandDTO<SouthItemSettings>; error: string }>;
+        items: Array<SouthConnectorItemDTO<SouthItemSettings>>;
+        errors: Array<{ item: Record<string, string>; error: string }>;
       }
     >
   ) => southConnectorController.checkImportSouthItems(ctx)
@@ -369,7 +369,7 @@ router.put(
     ctx: KoaContext<
       {
         southSettings: SouthSettings;
-        item: HistoryQueryItemCommandDTO<SouthItemSettings>;
+        itemSettings: SouthItemSettings;
         testingSettings: SouthConnectorItemTestingSettings;
       },
       void

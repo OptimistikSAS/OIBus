@@ -102,7 +102,7 @@ describe('SouthOracle with authentication', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id2',
@@ -121,7 +121,7 @@ describe('SouthOracle with authentication', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id3',
@@ -157,7 +157,7 @@ describe('SouthOracle with authentication', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanModeId: 'scanModeId2'
+        scanMode: testData.scanMode.list[1]
       }
     ]
   };
@@ -435,7 +435,7 @@ describe('SouthOracle without authentication but with thick mode', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id2',
@@ -454,7 +454,7 @@ describe('SouthOracle without authentication but with thick mode', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id3',
@@ -490,7 +490,7 @@ describe('SouthOracle without authentication but with thick mode', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanModeId: 'scanModeId2'
+        scanMode: testData.scanMode.list[1]
       }
     ]
   };
@@ -593,7 +593,7 @@ describe('SouthOracle test connection', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id2',
@@ -612,7 +612,7 @@ describe('SouthOracle test connection', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id3',
@@ -648,7 +648,7 @@ describe('SouthOracle test connection', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanModeId: 'scanModeId2'
+        scanMode: testData.scanMode.list[1]
       }
     ]
   };

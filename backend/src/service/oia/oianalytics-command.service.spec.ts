@@ -744,7 +744,10 @@ describe('OIAnalytics Command Service', () => {
   it('should execute create-or-update-south-items-from-csv command', async () => {
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([testData.oIAnalytics.commands.oIBusList[14]]); // create-or-update-south-items-from-csv
     (southService.findById as jest.Mock).mockReturnValueOnce(testData.south.list[0]);
-    (southService.checkCsvContentImport as jest.Mock).mockReturnValueOnce({ items: [{}, {}], errors: [] });
+    (southService.checkCsvContentImport as jest.Mock).mockReturnValueOnce({
+      items: [{ scanMode: testData.scanMode.list[0] }, { scanMode: testData.scanMode.list[0] }],
+      errors: []
+    });
 
     await service.executeCommand();
 
@@ -776,7 +779,7 @@ describe('OIAnalytics Command Service', () => {
     );
   });
 
-  it('should execute create-or-update-south-items-from-csv command', async () => {
+  it('should execute create-or-update-south-items-from-csv command with item errors', async () => {
     const command: OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand = JSON.parse(
       JSON.stringify(testData.oIAnalytics.commands.oIBusList[14])
     ); // create-or-update-south-items-from-csv
@@ -1056,7 +1059,7 @@ describe('OIAnalytics Command Service', () => {
       command.southConnectorId,
       command.commandContent.southCommand.type,
       command.commandContent.southCommand.settings,
-      command.commandContent.itemCommand,
+      command.commandContent.itemCommand.settings,
       command.commandContent.testingSettings,
       expect.anything(),
       logger
@@ -1392,7 +1395,7 @@ describe('OIAnalytics Command Service', () => {
       command.commandContent.historyCommand.southType,
       command.southConnectorId,
       command.commandContent.historyCommand.southSettings,
-      command.commandContent.itemCommand,
+      command.commandContent.itemCommand.settings,
       command.commandContent.testingSettings,
       expect.anything(),
       logger

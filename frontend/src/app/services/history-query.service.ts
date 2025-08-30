@@ -172,14 +172,14 @@ export class HistoryQueryService {
     historyId: string,
     southType: OIBusSouthType,
     southSettings: SouthSettings,
-    item: HistoryQueryItemCommandDTO<SouthItemSettings>,
+    itemSettings: SouthItemSettings,
     testingSettings: SouthConnectorItemTestingSettings
   ): Observable<OIBusContent> {
     return this.http.put<OIBusContent>(
       `/api/history-queries/${historyId}/south/items/test-item`,
       {
         southSettings,
-        item,
+        itemSettings,
         testingSettings
       },
       {

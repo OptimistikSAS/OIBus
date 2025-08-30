@@ -10,11 +10,14 @@ import { OIBusNorthType } from '../../../shared/model/north-connector.model';
 import { OIBusSouthType } from '../../../shared/model/south-connector.model';
 import { TransformerWithOptions } from '../../model/transformer.model';
 import { toTransformer } from './transformer.repository';
+import { ScanMode } from '../../model/scan-mode.model';
+import { toScanMode } from './scan-mode.repository';
 
 const HISTORY_QUERIES_TABLE = 'history_queries';
 const HISTORY_ITEMS_TABLE = 'history_items';
 const HISTORY_TRANSFORMERS_TABLE = 'history_query_transformers';
 const TRANSFORMERS_TABLE = 'transformers';
+const SCAN_MODE = 'scan_modes';
 const PAGE_SIZE = 50;
 
 export default class HistoryQueryRepository {
@@ -85,7 +88,7 @@ export default class HistoryQueryRepository {
           historyQuery.northType,
           JSON.stringify(historyQuery.southSettings),
           JSON.stringify(historyQuery.northSettings),
-          historyQuery.caching.trigger.scanModeId,
+          historyQuery.caching.trigger.scanMode.id,
           historyQuery.caching.trigger.numberOfElements,
           historyQuery.caching.trigger.numberOfFiles,
           historyQuery.caching.throttling.runMinDelay,
@@ -117,7 +120,7 @@ export default class HistoryQueryRepository {
             historyQuery.northType,
             JSON.stringify(historyQuery.southSettings),
             JSON.stringify(historyQuery.northSettings),
-            historyQuery.caching.trigger.scanModeId,
+            historyQuery.caching.trigger.scanMode.id,
             historyQuery.caching.trigger.numberOfElements,
             historyQuery.caching.trigger.numberOfFiles,
             historyQuery.caching.throttling.runMinDelay,
@@ -326,6 +329,12 @@ export default class HistoryQueryRepository {
     }));
   }
 
+  findScanModeForHistoryQuery(scanModeId: string): ScanMode {
+    const query = `SELECT id, name, description, cron FROM ${SCAN_MODE} WHERE id = ?;`;
+    const result = this.database.prepare(query).get(scanModeId) as Record<string, string>;
+    return toScanMode(result);
+  }
+
   private toHistoryQueryItemEntity<I extends SouthItemSettings>(result: Record<string, string>): HistoryQueryItemEntity<I> {
     return {
       id: result.id,
@@ -351,7 +360,7 @@ export default class HistoryQueryRepository {
       northSettings: JSON.parse(result.north_settings as string) as N,
       caching: {
         trigger: {
-          scanModeId: result.caching_trigger_schedule as string,
+          scanMode: this.findScanModeForHistoryQuery(result.caching_trigger_schedule as string),
           numberOfElements: result.caching_trigger_number_of_elements as number,
           numberOfFiles: result.caching_trigger_number_of_files as number
         },

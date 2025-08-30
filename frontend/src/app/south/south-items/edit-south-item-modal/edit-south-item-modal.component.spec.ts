@@ -21,7 +21,7 @@ class EditSouthItemModalComponentTester extends ComponentTester<EditSouthItemMod
   }
 
   get scanMode() {
-    return this.select('#scanModeId')!;
+    return this.select('#scan-mode')!;
   }
 
   get enabled() {
@@ -54,14 +54,14 @@ describe('EditSouthItemModalComponent', () => {
       id: 'id1',
       enabled: true,
       name: 'item',
-      scanModeId: 'scanModeId1',
+      scanMode: testData.scanMode.list[0],
       settings: {} as SouthItemSettings
     },
     {
       id: 'id2',
       enabled: true,
       name: 'item2',
-      scanModeId: 'scanModeId1',
+      scanMode: testData.scanMode.list[0],
       settings: {} as SouthItemSettings
     }
   ];
@@ -112,11 +112,10 @@ describe('EditSouthItemModalComponent', () => {
 
       tester.save.click();
       expect(fakeActiveModal.close).toHaveBeenCalledWith({
-        id: null,
+        id: '',
         enabled: true,
         name: 'MyName',
-        scanModeId: 'scanModeId2',
-        scanModeName: null,
+        scanMode: testData.scanMode.list[1],
         settings: {
           objectArray: [],
           objectSettings: {},
@@ -201,7 +200,7 @@ describe('EditSouthItemModalComponent', () => {
       id: 'id1',
       name: 'myName',
       enabled: true,
-      scanModeId: 'scanModeId1',
+      scanMode: testData.scanMode.list[0],
       settings: {} as SouthItemSettings
     };
 
@@ -217,11 +216,10 @@ describe('EditSouthItemModalComponent', () => {
 
       tester.save.click();
       expect(fakeActiveModal.close).toHaveBeenCalledWith({
-        id: null,
+        id: '',
         enabled: true,
         name: 'MyName-2',
-        scanModeId: 'scanModeId2',
-        scanModeName: null,
+        scanMode: testData.scanMode.list[1],
         settings: {
           objectArray: [],
           objectSettings: {},
@@ -236,7 +234,7 @@ describe('EditSouthItemModalComponent', () => {
       id: 'id1',
       name: 'myName',
       enabled: true,
-      scanModeId: 'scanModeId1',
+      scanMode: testData.scanMode.list[0],
       settings: {} as SouthItemSettings
     };
 
@@ -284,8 +282,7 @@ describe('EditSouthItemModalComponent', () => {
         id: 'id1',
         enabled: false,
         name: 'South Item 1 (updated)',
-        scanModeId: 'subscription',
-        scanModeName: null,
+        scanMode: { id: 'subscription', name: 'Subscription', description: 'Subscription', cron: 'subscription' },
         settings: {
           objectArray: [],
           objectSettings: {},
