@@ -3,10 +3,6 @@ import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
 import csv from 'papaparse';
-import NorthConnectorRepository from '../../repository/config/north-connector.repository';
-import NorthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/north-connector-repository.mock';
-import ScanModeRepository from '../../repository/config/scan-mode.repository';
-import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import { NorthModbusSettings } from '../../../shared/model/north-settings.model';
 import testData from '../../tests/utils/test-data';
@@ -35,8 +31,6 @@ jest.mock('jsmodbus', () => ({
 jest.mock('../../service/utils');
 
 const logger: pino.Logger = new PinoLogger();
-const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
-const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const cacheService: CacheService = new CacheServiceMock();
 const oiBusTransformer: OIBusTransformer = new OIBusTransformerMock() as unknown as OIBusTransformer;
 
@@ -83,8 +77,6 @@ describe('NorthModbus', () => {
       swapWordsInDWords: false,
       retryInterval: 10000
     };
-    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
-    (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
     (csv.unparse as jest.Mock).mockReturnValue('csv content');
     (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
     (getFilenameWithoutRandomId as jest.Mock).mockReturnValue('example.file');
@@ -99,13 +91,7 @@ describe('NorthModbus', () => {
       }
     });
 
-    north = new NorthModbus(
-      configuration,
-      northConnectorRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(testData.north.list[0].id)
-    );
+    north = new NorthModbus(configuration, logger, mockBaseFolders(testData.north.list[0].id));
   });
 
   it('should fail to connect and try again', async () => {
@@ -311,13 +297,7 @@ describe('NorthModbus test connection', () => {
   }
 
   it('Connecting to socket successfully', async () => {
-    north = new NorthModbus(
-      configuration,
-      northConnectorRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(testData.north.list[0].id)
-    );
+    north = new NorthModbus(configuration, logger, mockBaseFolders(testData.north.list[0].id));
 
     // Mock node:net Socket constructor and the used function
     (net.Socket as unknown as jest.Mock).mockReturnValue({
@@ -353,13 +333,7 @@ describe('NorthModbus test connection', () => {
   });
 
   it('should fail to connect', async () => {
-    north = new NorthModbus(
-      configuration,
-      northConnectorRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(testData.north.list[0].id)
-    );
+    north = new NorthModbus(configuration, logger, mockBaseFolders(testData.north.list[0].id));
 
     const mockedEmitter = new CustomStream();
     mockedEmitter.connect = (_connectionObject: unknown, _callback: () => Promise<void>) => {

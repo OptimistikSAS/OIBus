@@ -10,10 +10,6 @@ import { NorthFileWriterSettings, NorthSettings } from '../../shared/model/north
 import NorthFileWriter from './north-file-writer/north-file-writer';
 import { NorthConnectorEntity } from '../model/north-connector.model';
 import { flushPromises, mockBaseFolders } from '../tests/utils/test-utils';
-import NorthConnectorRepository from '../repository/config/north-connector.repository';
-import ScanModeRepository from '../repository/config/scan-mode.repository';
-import NorthConnectorRepositoryMock from '../tests/__mocks__/repository/config/north-connector-repository.mock';
-import ScanModeRepositoryMock from '../tests/__mocks__/repository/config/scan-mode-repository.mock';
 import CacheService from '../service/cache/cache.service';
 import { OIBusError } from '../model/engine.model';
 import fsAsync from 'node:fs/promises';
@@ -36,8 +32,6 @@ jest.mock('node:fs/promises');
 jest.mock('../service/utils');
 jest.mock('../service/transformer.service');
 
-const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
-const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const cacheService: CacheService = new CacheServiceMock();
 const oiBusTransformer: OIBusTransformer = new OIBusTransformerMock() as unknown as OIBusTransformer;
 
@@ -71,15 +65,11 @@ describe('NorthConnector', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
-    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(testData.north.list[0]);
-    (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
     (dirSize as jest.Mock).mockReturnValue(123);
     (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
 
     north = new NorthFileWriter(
       testData.north.list[0] as NorthConnectorEntity<NorthFileWriterSettings>,
-      northConnectorRepository,
-      scanModeRepository,
       logger,
       mockBaseFolders(testData.north.list[0].id)
     );
@@ -97,7 +87,7 @@ describe('NorthConnector', () => {
     expect(logger.info).toHaveBeenCalledWith(
       `North connector "${testData.north.list[0].name}" of type ${testData.north.list[0].type} started`
     );
-    expect(north.settings).toEqual(testData.north.list[0]);
+    expect(north.connectorConfiguration).toEqual(testData.north.list[0]);
   });
 
   it('should properly update cache size', () => {
@@ -120,8 +110,6 @@ describe('NorthConnector', () => {
   });
 
   it('should properly create cron job and add to queue', async () => {
-    (scanModeRepository.findById as jest.Mock).mockReturnValue(testData.scanMode.list[0]);
-
     north.addTaskToQueue = jest.fn();
     await north.connect();
     expect(logger.debug).toHaveBeenCalledWith(
@@ -223,16 +211,14 @@ describe('NorthConnector', () => {
     expect(logger.debug).toHaveBeenCalledWith(`Stopping "${testData.north.list[0].name}" (${testData.north.list[0].id})...`);
     expect(north.disconnect).toHaveBeenCalledTimes(1);
     expect(logger.info(`North connector "${testData.north.list[0].name}" stopped`));
-    expect(northConnectorRepository.findNorthById).toHaveBeenCalledWith(testData.north.list[0].id);
   });
 
   it('should properly stop when not data stream', async () => {
     north.disconnect = jest.fn();
-    await north.stop(false);
+    await north.stop();
     expect(logger.debug).toHaveBeenCalledWith(`Stopping "${testData.north.list[0].name}" (${testData.north.list[0].id})...`);
     expect(north.disconnect).toHaveBeenCalledTimes(1);
     expect(logger.info(`North connector "${testData.north.list[0].name}" stopped`));
-    expect(northConnectorRepository.findNorthById).not.toHaveBeenCalled();
   });
 
   it('should properly stop with running task ', async () => {
@@ -265,20 +251,7 @@ describe('NorthConnector', () => {
   });
 
   it('should check if North is subscribed to all South', async () => {
-    (northConnectorRepository.listNorthSubscriptions as jest.Mock).mockReturnValue([]);
-    await north.start();
-    expect(north.isSubscribed('newId')).toBeTruthy();
-  });
-
-  it('should check if North is subscribed to South', async () => {
-    (northConnectorRepository.listNorthSubscriptions as jest.Mock).mockReturnValue(testData.north.list[0].subscriptions);
-    await north.start();
-    expect(north.isSubscribed(testData.north.list[0].subscriptions[0].id)).toBeTruthy();
-  });
-
-  it('should check if North is not subscribed to South', async () => {
-    (northConnectorRepository.listNorthSubscriptions as jest.Mock).mockReturnValue(testData.north.list[0].subscriptions);
-    await north.start();
+    expect(north.isSubscribed('southId1')).toBeTruthy();
     expect(north.isSubscribed('badId')).toBeFalsy();
   });
 
@@ -370,7 +343,9 @@ describe('NorthConnector', () => {
   });
 
   it('should trigger run if necessary because of group count', async () => {
-    (cacheService.getNumberOfElementsInQueue as jest.Mock).mockReturnValueOnce(north.settings.caching.trigger.numberOfElements);
+    (cacheService.getNumberOfElementsInQueue as jest.Mock).mockReturnValueOnce(
+      north.connectorConfiguration.caching.trigger.numberOfElements
+    );
     north.addTaskToQueue = jest.fn();
     north.run = jest.fn();
     await north['triggerRunIfNecessary'](0);
@@ -378,7 +353,7 @@ describe('NorthConnector', () => {
     expect(north.addTaskToQueue).toHaveBeenCalledTimes(1);
     expect(north.addTaskToQueue).toHaveBeenCalledWith({
       id: 'limit-reach',
-      name: `Limit reach: ${north.settings.caching.trigger.numberOfElements} elements in queue >= ${north.settings.caching.trigger.numberOfElements}`
+      name: `Limit reach: ${north.connectorConfiguration.caching.trigger.numberOfElements} elements in queue >= ${north.connectorConfiguration.caching.trigger.numberOfElements}`
     });
     expect(north.run).not.toHaveBeenCalled();
   });
@@ -399,7 +374,7 @@ describe('NorthConnector', () => {
     (cacheService.getCacheContentToSend as jest.Mock).mockReturnValueOnce(contentToHandle);
     north.handleContent = jest.fn();
     await north.handleContentWrapper();
-    expect(cacheService.getCacheContentToSend).toHaveBeenCalledWith(north.settings.caching.throttling.maxNumberOfElements);
+    expect(cacheService.getCacheContentToSend).toHaveBeenCalledWith(north.connectorConfiguration.caching.throttling.maxNumberOfElements);
     expect(north.handleContent).toHaveBeenCalledWith({
       ...contentToHandle.metadata,
       contentFile: path.join('cache', 'content', 'file1-123456.json')
@@ -425,11 +400,11 @@ describe('NorthConnector', () => {
   });
 
   it('should handle content and archive it when handled', async () => {
-    north.settings.caching.archive.enabled = true;
+    north.connectorConfiguration.caching.archive.enabled = true;
     (cacheService.getCacheContentToSend as jest.Mock).mockReturnValueOnce(contentToHandle);
     north.handleContent = jest.fn();
     await north.handleContentWrapper();
-    expect(cacheService.getCacheContentToSend).toHaveBeenCalledWith(north.settings.caching.throttling.maxNumberOfElements);
+    expect(cacheService.getCacheContentToSend).toHaveBeenCalledWith(north.connectorConfiguration.caching.throttling.maxNumberOfElements);
     expect(north.handleContent).toHaveBeenCalledWith({
       ...contentToHandle.metadata,
       contentFile: path.join('cache', 'content', 'file1-123456.json')
@@ -442,18 +417,18 @@ describe('NorthConnector', () => {
     (cacheService.getCacheContentToSend as jest.Mock).mockReturnValueOnce(null);
     north.handleContent = jest.fn();
     await north.handleContentWrapper();
-    expect(cacheService.getCacheContentToSend).toHaveBeenCalledWith(north.settings.caching.throttling.maxNumberOfElements);
+    expect(cacheService.getCacheContentToSend).toHaveBeenCalledWith(north.connectorConfiguration.caching.throttling.maxNumberOfElements);
     expect(north.handleContent).not.toHaveBeenCalled();
   });
 
   it('should handle content and manage errors', async () => {
-    north.settings.caching.error.retryCount = 0;
+    north.connectorConfiguration.caching.error.retryCount = 0;
     (cacheService.getCacheContentToSend as jest.Mock).mockReturnValueOnce(contentToHandle);
     north.handleContent = jest.fn().mockImplementationOnce(() => {
       throw new OIBusError('handle error', false);
     });
     await north.handleContentWrapper();
-    expect(cacheService.getCacheContentToSend).toHaveBeenCalledWith(north.settings.caching.throttling.maxNumberOfElements);
+    expect(cacheService.getCacheContentToSend).toHaveBeenCalledWith(north.connectorConfiguration.caching.throttling.maxNumberOfElements);
     expect(north.handleContent).toHaveBeenCalledWith({
       ...contentToHandle.metadata,
       contentFile: path.join('cache', 'content', 'file1-123456.json')
@@ -825,16 +800,13 @@ describe('NorthConnector test id', () => {
 
     northTest.id = 'test';
 
-    north = new NorthFileWriter(northTest, northConnectorRepository, scanModeRepository, logger, mockBaseFolders(northTest.id));
+    north = new NorthFileWriter(northTest, logger, mockBaseFolders(northTest.id));
   });
 
   it('should properly start with test id', async () => {
-    north.updateConnectorSubscription = jest.fn();
     north.connect = jest.fn();
-    await north.start(false);
+    await north.start();
     expect(createBaseFolders).not.toHaveBeenCalled();
-    expect(north.updateConnectorSubscription).not.toHaveBeenCalled();
-    expect(northConnectorRepository.findNorthById).not.toHaveBeenCalled();
     expect(cacheService.start).toHaveBeenCalledTimes(1);
     expect(north.connect).toHaveBeenCalledTimes(1);
   });

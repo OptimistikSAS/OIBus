@@ -430,14 +430,14 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         name: 'item1',
         enabled: true,
         settings: {} as SouthItemSettings,
-        scanModeId: scanModes[0].id
+        scanMode: scanModes[0]
       },
       {
         id: 'southItemId2',
         name: 'item2',
         enabled: true,
         settings: {} as SouthItemSettings,
-        scanModeId: scanModes[1].id
+        scanMode: scanModes[1]
       }
     ]
   },
@@ -471,7 +471,7 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         name: 'item3',
         enabled: true,
         settings: {} as SouthItemSettings,
-        scanModeId: scanModes[0].id
+        scanMode: scanModes[0]
       }
     ]
   },
@@ -507,7 +507,7 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         settings: {
           mode: 'ha'
         } as SouthItemSettings,
-        scanModeId: scanModes[0].id
+        scanMode: scanModes[0]
       },
       {
         id: 'southItemId5',
@@ -516,7 +516,7 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         settings: {
           mode: 'da'
         } as SouthItemSettings,
-        scanModeId: 'subscription'
+        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
       },
       {
         id: 'southItemId6',
@@ -525,7 +525,7 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         settings: {
           mode: 'da'
         } as SouthItemSettings,
-        scanModeId: scanModes[1].id
+        scanMode: scanModes[1]
       },
       {
         id: 'southItemId7',
@@ -534,7 +534,7 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         settings: {
           mode: 'ha'
         } as SouthItemSettings,
-        scanModeId: scanModes[0].id
+        scanMode: scanModes[0]
       }
     ]
   }
@@ -615,7 +615,7 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
     },
     caching: {
       trigger: {
-        scanModeId: scanModes[0].id,
+        scanMode: scanModes[0],
         numberOfElements: 250,
         numberOfFiles: 1
       },
@@ -669,7 +669,7 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
     },
     caching: {
       trigger: {
-        scanModeId: scanModes[1].id,
+        scanMode: scanModes[1],
         numberOfElements: 1_000,
         numberOfFiles: 1
       },
@@ -773,7 +773,7 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
     },
     caching: {
       trigger: {
-        scanModeId: scanModes[0].id,
+        scanMode: scanModes[0],
         numberOfElements: 100,
         numberOfFiles: 1
       },
@@ -844,7 +844,7 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
     },
     caching: {
       trigger: {
-        scanModeId: scanModes[0].id,
+        scanMode: scanModes[0],
         numberOfElements: 100,
         numberOfFiles: 0
       },

@@ -591,16 +591,18 @@ export const validateCronExpression = (cron: string): ValidatedCronExpression =>
   return response;
 };
 
-export const checkScanMode = (scanModes: Array<ScanMode>, scanModeId: string | null, scanModeName: string | null) => {
-  if (scanModeId) return scanModeId;
-  if (!scanModeName) {
+export const checkScanMode = (scanModes: Array<ScanMode>, scanModeId: string | null, scanModeName: string | null): ScanMode => {
+  if (!scanModeId && !scanModeName) {
     throw new Error(`Scan mode not specified`);
   }
-  const scanMode = scanModes.find(element => element.name === scanModeName);
+
+  const scanMode = scanModeId
+    ? scanModes.find(element => element.id === scanModeId)
+    : scanModes.find(element => element.name === scanModeName);
   if (!scanMode) {
     throw new Error(`Scan mode "${scanModeName}" not found`);
   }
-  return scanMode.id;
+  return scanMode;
 };
 
 export const itemToFlattenedCSV = <I extends SouthItemSettings>(
@@ -616,7 +618,7 @@ export const itemToFlattenedCSV = <I extends SouthItemSettings>(
         ...item
       };
       if (scanModes) {
-        flattenedItem.scanMode = scanModes.find(scanMode => scanMode.id === flattenedItem.scanModeId)?.name ?? '';
+        flattenedItem.scanMode = (item as SouthConnectorItemDTO<I>).scanMode.name;
       }
       for (const [itemSettingsKey, itemSettingsValue] of Object.entries(item.settings)) {
         columns.add(`settings_${itemSettingsKey}`);

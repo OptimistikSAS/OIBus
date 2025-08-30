@@ -7,6 +7,7 @@ import { itemToFlattenedCSV } from '../../service/utils';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import fs from 'node:fs/promises';
+import { toScanModeDTO } from '../../service/scan-mode.service';
 
 jest.mock('node:fs/promises');
 jest.mock('./validators/joi.validator');
@@ -209,7 +210,15 @@ describe('South connector controller', () => {
 
     await southConnectorController.listSouthItems(ctx);
     expect(ctx.app.southService.getSouthItems).toHaveBeenCalledWith(testData.south.list[0].id);
-    expect(ctx.ok).toHaveBeenCalledWith(testData.south.list[0].items);
+    expect(ctx.ok).toHaveBeenCalledWith(
+      testData.south.list[0].items.map(item => ({
+        id: item.id,
+        enabled: item.enabled,
+        name: item.name,
+        settings: item.settings,
+        scanMode: toScanModeDTO(item.scanMode)
+      }))
+    );
   });
 
   it('listSouthItems() should return not found', async () => {
@@ -231,7 +240,7 @@ describe('South connector controller', () => {
       name: 'name'
     };
     ctx.app.southService.searchSouthItems.mockReturnValue({
-      content: testData.south.list[0].items.map(item => toSouthConnectorItemDTO(item, testData.south.list[0].type)),
+      content: testData.south.list[0].items,
       totalElements: testData.south.list[0].items.length,
       size: 25,
       number: 1,
@@ -263,7 +272,7 @@ describe('South connector controller', () => {
     };
     ctx.app.southService.findById.mockReturnValueOnce(testData.south.list[0]);
     ctx.app.southService.searchSouthItems.mockReturnValue({
-      content: testData.south.list[0].items.map(item => toSouthConnectorItemDTO(item, testData.south.list[0].type)),
+      content: testData.south.list[0].items,
       totalElements: testData.south.list[0].items.length,
       size: 25,
       number: 0,
@@ -304,7 +313,13 @@ describe('South connector controller', () => {
       testData.south.list[0].id,
       testData.south.list[0].items[0].id
     );
-    expect(ctx.ok).toHaveBeenCalledWith(testData.south.list[0].items[0]);
+    expect(ctx.ok).toHaveBeenCalledWith({
+      id: testData.south.list[0].items[0].id,
+      enabled: testData.south.list[0].items[0].enabled,
+      name: testData.south.list[0].items[0].name,
+      settings: testData.south.list[0].items[0].settings,
+      scanMode: toScanModeDTO(testData.south.list[0].items[0].scanMode)
+    });
   });
 
   it('getSouthItem() should return not found when South item not found', async () => {
@@ -341,7 +356,13 @@ describe('South connector controller', () => {
     await southConnectorController.createSouthItem(ctx);
 
     expect(ctx.app.southService.createItem).toHaveBeenCalledWith(testData.south.list[0].id, testData.south.itemCommand);
-    expect(ctx.created).toHaveBeenCalledWith(testData.south.list[0].items[0]);
+    expect(ctx.created).toHaveBeenCalledWith({
+      id: testData.south.list[0].items[0].id,
+      enabled: testData.south.list[0].items[0].enabled,
+      name: testData.south.list[0].items[0].name,
+      settings: testData.south.list[0].items[0].settings,
+      scanMode: toScanModeDTO(testData.south.list[0].items[0].scanMode)
+    });
   });
 
   it('createSouthItem() should return bad request', async () => {
@@ -785,7 +806,7 @@ describe('South connector controller', () => {
     ctx.params.id = testData.south.list[0].id;
     ctx.request.body = {
       southSettings: testData.south.command.settings,
-      item: testData.south.itemCommand,
+      itemSettings: testData.south.itemCommand.settings,
       testingSettings: testData.south.itemTestingSettings
     };
     ctx.query.southType = testData.south.command.type;
@@ -797,7 +818,7 @@ describe('South connector controller', () => {
       testData.south.list[0].id,
       testData.south.command.type,
       testData.south.command.settings,
-      testData.south.itemCommand,
+      testData.south.itemCommand.settings,
       testData.south.itemTestingSettings,
       ctx.ok,
       logger
@@ -808,7 +829,7 @@ describe('South connector controller', () => {
     ctx.params.id = testData.south.list[0].id;
     ctx.request.body = {
       southSettings: testData.south.command.settings,
-      item: testData.south.itemCommand,
+      itemSettings: testData.south.itemCommand.settings,
       testingSettings: testData.south.itemTestingSettings
     };
     ctx.query.southType = testData.south.command.type;
@@ -822,7 +843,7 @@ describe('South connector controller', () => {
       testData.south.list[0].id,
       testData.south.command.type,
       testData.south.command.settings,
-      testData.south.itemCommand,
+      testData.south.itemCommand.settings,
       testData.south.itemTestingSettings,
       ctx.ok,
       logger

@@ -65,6 +65,7 @@ import NorthOPCUA from '../north/north-opcua/north-opcua';
 import NorthMQTT from '../north/north-mqtt/north-mqtt';
 import NorthModbus from '../north/north-modbus/north-modbus';
 import { Transformer } from '../model/transformer.model';
+import { toScanModeDTO } from './scan-mode.service';
 
 export const northManifestList: Array<NorthConnectorManifest> = [
   consoleManifest,
@@ -103,89 +104,33 @@ export default class NorthService {
 
     switch (settings.type) {
       case 'aws-s3':
-        return new NorthAmazonS3(
-          settings as NorthConnectorEntity<NorthAmazonS3Settings>,
-          this.northConnectorRepository,
-          this.scanModeRepository,
-          logger,
-          northBaseFolders
-        );
+        return new NorthAmazonS3(settings as NorthConnectorEntity<NorthAmazonS3Settings>, logger, northBaseFolders);
       case 'azure-blob':
-        return new NorthAzureBlob(
-          settings as NorthConnectorEntity<NorthAzureBlobSettings>,
-          this.northConnectorRepository,
-          this.scanModeRepository,
-          logger,
-          northBaseFolders
-        );
+        return new NorthAzureBlob(settings as NorthConnectorEntity<NorthAzureBlobSettings>, logger, northBaseFolders);
       case 'console':
-        return new NorthConsole(
-          settings as NorthConnectorEntity<NorthConsoleSettings>,
-          this.northConnectorRepository,
-          this.scanModeRepository,
-          logger,
-          northBaseFolders
-        );
+        return new NorthConsole(settings as NorthConnectorEntity<NorthConsoleSettings>, logger, northBaseFolders);
       case 'file-writer':
-        return new NorthFileWriter(
-          settings as NorthConnectorEntity<NorthFileWriterSettings>,
-          this.northConnectorRepository,
-          this.scanModeRepository,
-          logger,
-          northBaseFolders
-        );
+        return new NorthFileWriter(settings as NorthConnectorEntity<NorthFileWriterSettings>, logger, northBaseFolders);
+      case 'modbus':
+        return new NorthModbus(settings as NorthConnectorEntity<NorthModbusSettings>, logger, northBaseFolders);
+      case 'mqtt':
+        return new NorthMQTT(settings as NorthConnectorEntity<NorthMQTTSettings>, logger, northBaseFolders);
       case 'oianalytics':
         return new NorthOIAnalytics(
           settings as NorthConnectorEntity<NorthOIAnalyticsSettings>,
-          this.northConnectorRepository,
-          this.scanModeRepository,
           this.certificateRepository,
           this.oIAnalyticsRegistrationRepository,
           logger,
           northBaseFolders
         );
-      case 'sftp':
-        return new NorthSFTP(
-          settings as NorthConnectorEntity<NorthSFTPSettings>,
-          this.northConnectorRepository,
-          this.scanModeRepository,
-          logger,
-          northBaseFolders
-        );
-      case 'rest':
-        return new NorthREST(
-          settings as NorthConnectorEntity<NorthRESTSettings>,
-          this.northConnectorRepository,
-          this.scanModeRepository,
-          logger,
-          northBaseFolders
-        );
       case 'opcua':
-        return new NorthOPCUA(
-          settings as NorthConnectorEntity<NorthOPCUASettings>,
-          this.northConnectorRepository,
-          this.scanModeRepository,
-          logger,
-          northBaseFolders
-        );
-      case 'mqtt':
-        return new NorthMQTT(
-          settings as NorthConnectorEntity<NorthMQTTSettings>,
-          this.northConnectorRepository,
-          this.scanModeRepository,
-          logger,
-          northBaseFolders
-        );
-      case 'modbus':
-        return new NorthModbus(
-          settings as NorthConnectorEntity<NorthModbusSettings>,
-          this.northConnectorRepository,
-          this.scanModeRepository,
-          logger,
-          northBaseFolders
-        );
+        return new NorthOPCUA(settings as NorthConnectorEntity<NorthOPCUASettings>, logger, northBaseFolders);
+      case 'rest':
+        return new NorthREST(settings as NorthConnectorEntity<NorthRESTSettings>, logger, northBaseFolders);
+      case 'sftp':
+        return new NorthSFTP(settings as NorthConnectorEntity<NorthSFTPSettings>, logger, northBaseFolders);
       default:
-        throw Error(`North connector of type ${settings.type} not installed`);
+        throw Error(`North connector of type "${settings.type}" not installed`);
     }
   }
 
@@ -213,8 +158,34 @@ export default class NorthService {
       settings: await encryptionService.encryptConnectorSecrets(settingsToTest, northConnector?.settings || null, manifest.settings),
       name: northConnector ? northConnector.name : `${northType}:test-connection`,
       subscriptions: [],
-      transformers: []
-    } as unknown as NorthConnectorEntity<NorthSettings>; // TODO
+      transformers: [],
+      caching: {
+        trigger: {
+          scanMode: {
+            id: 'test',
+            name: 'test',
+            description: '',
+            cron: ''
+          },
+          numberOfElements: 0,
+          numberOfFiles: 0
+        },
+        throttling: {
+          runMinDelay: 0,
+          maxSize: 0,
+          maxNumberOfElements: 0
+        },
+        error: {
+          retryInterval: 0,
+          retryCount: 0,
+          retentionDuration: 0
+        },
+        archive: {
+          enabled: false,
+          retentionDuration: 0
+        }
+      }
+    };
 
     const north = this.buildNorth(testToRun, logger, { cache: 'baseCacheFolder', archive: 'baseArchiveFolder', error: 'baseErrorFolder' });
     return await north.testConnection();
@@ -409,7 +380,7 @@ export default class NorthService {
 
     this.northConnectorRepository.createSubscription(northId, southId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-    this.dataStreamEngine.updateSubscription(northId);
+    this.dataStreamEngine.updateNorthConfiguration(northId);
   }
 
   async deleteSubscription(northId: string, southId: string): Promise<void> {
@@ -425,7 +396,7 @@ export default class NorthService {
 
     this.northConnectorRepository.deleteSubscription(northId, southId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-    this.dataStreamEngine.updateSubscription(northId);
+    this.dataStreamEngine.updateNorthConfiguration(northId);
   }
 
   async deleteAllSubscriptionsByNorth(northId: string): Promise<void> {
@@ -436,7 +407,7 @@ export default class NorthService {
 
     this.northConnectorRepository.deleteAllSubscriptionsByNorth(northId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-    this.dataStreamEngine.updateSubscription(northId);
+    this.dataStreamEngine.updateNorthConfiguration(northId);
   }
 
   async executeSetpoint(
@@ -529,7 +500,7 @@ export const toNorthConnectorDTO = <N extends NorthSettings>(
     ),
     caching: {
       trigger: {
-        scanModeId: northEntity.caching.trigger.scanModeId,
+        scanMode: toScanModeDTO(northEntity.caching.trigger.scanMode),
         numberOfElements: northEntity.caching.trigger.numberOfElements,
         numberOfFiles: northEntity.caching.trigger.numberOfFiles
       },
@@ -586,7 +557,7 @@ export const copyNorthConnectorCommandToNorthEntity = async <N extends NorthSett
   );
   northEntity.caching = {
     trigger: {
-      scanModeId: checkScanMode(scanModes, command.caching.trigger.scanModeId, command.caching.trigger.scanModeName),
+      scanMode: checkScanMode(scanModes, command.caching.trigger.scanModeId, command.caching.trigger.scanModeName),
       numberOfElements: command.caching.trigger.numberOfElements,
       numberOfFiles: command.caching.trigger.numberOfFiles
     },

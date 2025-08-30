@@ -88,7 +88,7 @@ describe('South ADS', () => {
         settings: {
           address: 'GVL_Test.TestINT1'
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id2',
@@ -97,7 +97,7 @@ describe('South ADS', () => {
         settings: {
           address: 'GVL_Test.TestINT2'
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       }
     ]
   };

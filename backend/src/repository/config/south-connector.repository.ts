@@ -4,14 +4,15 @@ import { SouthConnectorEntity, SouthConnectorEntityLight, SouthConnectorItemEnti
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import { OIBusSouthType, SouthConnectorItemSearchParam } from '../../../shared/model/south-connector.model';
 import { Page } from '../../../shared/model/types';
+import { ScanMode } from '../../model/scan-mode.model';
+import { toScanMode } from './scan-mode.repository';
 
 const SOUTH_CONNECTORS_TABLE = 'south_connectors';
 const SOUTH_ITEMS_TABLE = 'south_items';
 const SUBSCRIPTION_TABLE = 'subscription';
+const SCAN_MODE = 'scan_modes';
 const PAGE_SIZE = 50;
-/**
- * Repository used for South connectors (Data sources)
- */
+
 export default class SouthConnectorRepository {
   constructor(private readonly database: Database) {}
 
@@ -65,9 +66,9 @@ export default class SouthConnectorRepository {
         for (const item of south.items) {
           if (!item.id) {
             item.id = generateRandomId(6);
-            insert.run(item.id, item.name, +item.enabled, south.id, item.scanModeId, JSON.stringify(item.settings));
+            insert.run(item.id, item.name, +item.enabled, south.id, item.scanMode.id, JSON.stringify(item.settings));
           } else {
-            update.run(item.name, +item.enabled, item.scanModeId, JSON.stringify(item.settings), item.id);
+            update.run(item.name, +item.enabled, item.scanMode.id, JSON.stringify(item.settings), item.id);
           }
         }
       } else {
@@ -184,12 +185,12 @@ export default class SouthConnectorRepository {
         `INSERT INTO ${SOUTH_ITEMS_TABLE} (id, name, enabled, connector_id, scan_mode_id, settings) ` + `VALUES (?, ?, ?, ?, ?, ?);`;
       this.database
         .prepare(insertQuery)
-        .run(southItem.id, southItem.name, +southItem.enabled, southConnectorId, southItem.scanModeId, JSON.stringify(southItem.settings));
+        .run(southItem.id, southItem.name, +southItem.enabled, southConnectorId, southItem.scanMode.id, JSON.stringify(southItem.settings));
     } else {
       const query = `UPDATE ${SOUTH_ITEMS_TABLE} SET name = ?, enabled = ?, scan_mode_id = ?, settings = ? WHERE id = ?;`;
       this.database
         .prepare(query)
-        .run(southItem.name, +southItem.enabled, southItem.scanModeId, JSON.stringify(southItem.settings), southItem.id);
+        .run(southItem.name, +southItem.enabled, southItem.scanMode.id, JSON.stringify(southItem.settings), southItem.id);
     }
   }
 
@@ -229,12 +230,18 @@ export default class SouthConnectorRepository {
     this.database.prepare(query).run(id);
   }
 
+  findScanModeForSouth(scanModeId: string): ScanMode {
+    const query = `SELECT id, name, description, cron FROM ${SCAN_MODE} WHERE id = ?;`;
+    const result = this.database.prepare(query).get(scanModeId) as Record<string, string>;
+    return toScanMode(result);
+  }
+
   private toSouthConnectorItemEntity<I extends SouthItemSettings>(result: Record<string, string>): SouthConnectorItemEntity<I> {
     return {
       id: result.id,
       name: result.name,
       enabled: Boolean(result.enabled),
-      scanModeId: result.scan_mode_id,
+      scanMode: this.findScanModeForSouth(result.scan_mode_id as string),
       settings: JSON.parse(result.settings) as I
     };
   }

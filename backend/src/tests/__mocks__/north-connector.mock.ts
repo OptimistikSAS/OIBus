@@ -6,12 +6,12 @@ import { NorthSettings } from '../../../shared/model/north-settings.model';
  * Create a mock object for North Connector
  */
 export default class NorthConnectorMock {
-  constructor(settings: NorthConnectorEntity<NorthSettings>) {
-    this.settings = settings;
+  private connector: NorthConnectorEntity<NorthSettings>;
+  constructor(connector: NorthConnectorEntity<NorthSettings>) {
+    this.connector = connector;
   }
   start = jest.fn().mockImplementation(() => Promise.resolve());
   isEnabled = jest.fn();
-  updateConnectorSubscription = jest.fn();
   connect = jest.fn();
   createCronJob = jest.fn();
   addTaskToQueue = jest.fn();
@@ -34,6 +34,12 @@ export default class NorthConnectorMock {
   moveAllCacheContent = jest.fn();
   metadataFileListToCacheContentList = jest.fn();
   testConnection = jest.fn();
-  settings;
   metricsEvent = new EventEmitter();
+
+  set connectorConfiguration(connectorConfiguration: NorthConnectorEntity<NorthSettings>) {
+    this.connector = connectorConfiguration;
+  }
+  get connectorConfiguration() {
+    return this.connector;
+  }
 }

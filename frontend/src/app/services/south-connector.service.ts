@@ -111,14 +111,14 @@ export class SouthConnectorService {
    * @param southId - the ID of the South connector
    * @param searchParams - The search params
    */
-  searchItems(southId: string, searchParams: SouthConnectorItemSearchParam): Observable<Page<SouthConnectorItemDTO<any>>> {
+  searchItems(southId: string, searchParams: SouthConnectorItemSearchParam): Observable<Page<SouthConnectorItemDTO<SouthItemSettings>>> {
     const params: Record<string, string | Array<string>> = {
       page: `${searchParams.page || 0}`
     };
     if (searchParams.name) {
       params['name'] = searchParams.name;
     }
-    return this.http.get<Page<SouthConnectorItemDTO<any>>>(`/api/south/${southId}/items`, { params });
+    return this.http.get<Page<SouthConnectorItemDTO<SouthItemSettings>>>(`/api/south/${southId}/items`, { params });
   }
 
   /**
@@ -126,8 +126,8 @@ export class SouthConnectorService {
    * @param southId - the ID of the South connector
    * @param southItemId - the ID of the South connector item
    */
-  getItem(southId: string, southItemId: string): Observable<SouthConnectorItemDTO<any>> {
-    return this.http.get<SouthConnectorItemDTO<any>>(`/api/south/${southId}/items/${southItemId}`);
+  getItem(southId: string, southItemId: string): Observable<SouthConnectorItemDTO<SouthItemSettings>> {
+    return this.http.get<SouthConnectorItemDTO<SouthItemSettings>>(`/api/south/${southId}/items/${southItemId}`);
   }
 
   /**
@@ -135,8 +135,11 @@ export class SouthConnectorService {
    * @param southId - the ID of the South connector
    * @param command - The values of the South connector item to create
    */
-  createItem(southId: string, command: SouthConnectorItemCommandDTO<any>): Observable<SouthConnectorItemDTO<any>> {
-    return this.http.post<SouthConnectorItemDTO<any>>(`/api/south/${southId}/items`, command);
+  createItem(
+    southId: string,
+    command: SouthConnectorItemCommandDTO<SouthItemSettings>
+  ): Observable<SouthConnectorItemDTO<SouthItemSettings>> {
+    return this.http.post<SouthConnectorItemDTO<SouthItemSettings>>(`/api/south/${southId}/items`, command);
   }
 
   /**
@@ -145,7 +148,7 @@ export class SouthConnectorService {
    * @param southItemId - the ID of the South connector item
    * @param command - the new values of the selected South connector item
    */
-  updateItem(southId: string, southItemId: string, command: SouthConnectorItemCommandDTO<any>) {
+  updateItem(southId: string, southItemId: string, command: SouthConnectorItemCommandDTO<SouthItemSettings>) {
     return this.http.put<void>(`/api/south/${southId}/items/${southItemId}`, command);
   }
 
@@ -188,12 +191,12 @@ export class SouthConnectorService {
     southId: string,
     southType: OIBusSouthType,
     southSettings: SouthSettings,
-    item: SouthConnectorItemCommandDTO<SouthItemSettings>,
+    itemSettings: SouthItemSettings,
     testingSettings: SouthConnectorItemTestingSettings
   ): Observable<OIBusContent> {
     return this.http.put<OIBusContent>(
       `/api/south/${southId}/items/test-item`,
-      { southSettings, item, testingSettings },
+      { southSettings, itemSettings, testingSettings },
       {
         params: { southType }
       }
@@ -214,7 +217,7 @@ export class SouthConnectorService {
    */
   itemsToCsv(
     southType: string,
-    items: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>>,
+    items: Array<SouthConnectorItemCommandDTO<SouthItemSettings>>,
     fileName: string,
     delimiter: string
   ): Observable<void> {
@@ -235,13 +238,13 @@ export class SouthConnectorService {
   checkImportItems(
     southType: string,
     southId: string,
-    currentItems: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>>,
+    currentItems: Array<SouthConnectorItemDTO<SouthItemSettings>>,
     file: File,
     delimiter: string
   ): Observable<{
-    items: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>>;
+    items: Array<SouthConnectorItemDTO<SouthItemSettings>>;
     errors: Array<{
-      item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>;
+      item: Record<string, string>;
       error: string;
     }>;
   }> {
@@ -253,7 +256,7 @@ export class SouthConnectorService {
     formData.set('delimiter', delimiter);
     return this.http.post<{
       items: Array<SouthConnectorItemDTO<SouthItemSettings>>;
-      errors: Array<{ item: SouthConnectorItemDTO<SouthItemSettings>; error: string }>;
+      errors: Array<{ item: Record<string, string>; error: string }>;
     }>(`/api/south/${southType}/items/check-import/${southId}`, formData);
   }
 

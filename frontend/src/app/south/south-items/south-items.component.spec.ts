@@ -4,7 +4,6 @@ import { SouthConnectorService } from '../../services/south-connector.service';
 import {
   SouthConnectorCommandDTO,
   SouthConnectorDTO,
-  SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO
 } from '../../../../../backend/shared/model/south-connector.model';
 import {
@@ -36,7 +35,7 @@ const testSouthConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> = 
       settings: {
         query: 'sql'
       } as SouthItemSettings,
-      scanModeId: 'scanModeId1'
+      scanMode: testData.scanMode.list[0]
     },
     {
       id: 'id2',
@@ -45,7 +44,7 @@ const testSouthConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> = 
       settings: {
         query: 'sql'
       } as SouthItemSettings,
-      scanModeId: 'scanModeId1'
+      scanMode: testData.scanMode.list[0]
     },
     {
       id: 'id3',
@@ -54,7 +53,7 @@ const testSouthConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> = 
       settings: {
         query: 'sql'
       } as SouthItemSettings,
-      scanModeId: 'scanModeId1'
+      scanMode: testData.scanMode.list[0]
     }
   ]
 } as SouthConnectorDTO<SouthSettings, SouthItemSettings>;
@@ -78,11 +77,11 @@ class TestComponent {
   scanModes = testData.scanMode.list;
   manifest = testData.south.manifest;
   saveChangesDirectly!: boolean;
-  inMemoryItems: Array<SouthConnectorItemCommandDTO<SouthItemSettings>> = [];
+  inMemoryItems: Array<SouthConnectorItemDTO<SouthItemSettings>> = [];
   southConnectorCommand = {} as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
   southCommand = testData.south.command;
 
-  updateInMemoryItems(items: Array<SouthConnectorItemCommandDTO<SouthItemSettings>> | null) {
+  updateInMemoryItems(items: Array<SouthConnectorItemDTO<SouthItemSettings>> | null) {
     if (items) {
       this.inMemoryItems = items;
     } else {
@@ -521,7 +520,7 @@ describe('SouthItemsComponent CSV Import Tests', () => {
     southConnectorService.get.and.returnValue(of(testSouthConnector));
     southConnectorService.checkImportItems.and.returnValue(
       of({
-        items: [] as Array<SouthConnectorItemCommandDTO<SouthItemSettings>>,
+        items: [] as Array<SouthConnectorItemDTO<SouthItemSettings>>,
         errors: []
       })
     );
@@ -597,13 +596,12 @@ describe('SouthItemsComponent CSV Import Tests', () => {
     });
 
     it('should open ImportSouthItemsModalComponent after successful check', () => {
-      const mockItems: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>> = [
+      const mockItems: Array<SouthConnectorItemDTO<SouthItemSettings>> = [
         {
           id: 'new1',
           name: 'newItem1',
           enabled: true,
-          scanModeId: 'scanModeId1',
-          scanModeName: null,
+          scanMode: testData.scanMode.list[0],
           settings: {
             query: 'SELECT 1',
             dateTimeFields: [],
@@ -611,7 +609,7 @@ describe('SouthItemsComponent CSV Import Tests', () => {
           }
         }
       ];
-      const mockErrors = [{ item: mockItems[0], error: 'Invalid query' }];
+      const mockErrors = [{ item: { id: 'new1', name: 'newItem1', enabled: 'true' }, error: 'Invalid query' }];
 
       southConnectorService.checkImportItems.and.returnValue(of({ items: mockItems, errors: mockErrors }));
 
@@ -644,13 +642,12 @@ describe('SouthItemsComponent CSV Import Tests', () => {
     });
 
     it('should call importItems service when import is confirmed', () => {
-      const mockItems: Array<SouthConnectorItemCommandDTO<SouthItemSettings>> = [
+      const mockItems: Array<SouthConnectorItemDTO<SouthItemSettings>> = [
         {
           id: 'new1',
           name: 'newItem1',
           enabled: true,
-          scanModeId: 'scanModeId1',
-          scanModeName: null,
+          scanMode: testData.scanMode.list[0],
           settings: {
             query: 'SELECT 1',
             dateTimeFields: [],
@@ -674,20 +671,29 @@ describe('SouthItemsComponent CSV Import Tests', () => {
 
       tester.button('#import-button')!.click();
 
-      expect(southConnectorService.importItems).toHaveBeenCalledWith(tester.componentInstance.southConnector.id, mockItems);
+      expect(southConnectorService.importItems).toHaveBeenCalledWith(
+        tester.componentInstance.southConnector.id,
+        mockItems.map(item => ({
+          id: item.id,
+          name: item.name,
+          enabled: item.enabled,
+          settings: item.settings,
+          scanModeId: item.scanMode.id,
+          scanModeName: null
+        }))
+      );
       expect(notificationService.success).toHaveBeenCalledWith('south.items.import.imported');
     });
 
     it('should emit null inMemoryItems after successful import', () => {
       spyOn(tester.componentInstance, 'updateInMemoryItems');
 
-      const mockItems: Array<SouthConnectorItemCommandDTO<SouthItemSettings>> = [
+      const mockItems: Array<SouthConnectorItemDTO<SouthItemSettings>> = [
         {
           id: 'new1',
           name: 'newItem1',
           enabled: true,
-          scanModeId: 'scanModeId1',
-          scanModeName: null,
+          scanMode: testData.scanMode.list[0],
           settings: {
             query: 'SELECT 1',
             dateTimeFields: [],
@@ -722,13 +728,12 @@ describe('SouthItemsComponent CSV Import Tests', () => {
     });
 
     it('should add items to allItems array instead of calling service', () => {
-      const mockItems: Array<SouthConnectorItemCommandDTO<SouthItemSettings>> = [
+      const mockItems: Array<SouthConnectorItemDTO<SouthItemSettings>> = [
         {
           id: 'new1',
           name: 'newItem1',
           enabled: true,
-          scanModeId: 'scanModeId1',
-          scanModeName: null,
+          scanMode: testData.scanMode.list[0],
           settings: {
             query: 'SELECT 1',
             dateTimeFields: [],
@@ -759,13 +764,12 @@ describe('SouthItemsComponent CSV Import Tests', () => {
     });
 
     it('should not call backend services in memory mode', () => {
-      const mockItems: Array<SouthConnectorItemCommandDTO<SouthItemSettings>> = [
+      const mockItems: Array<SouthConnectorItemDTO<SouthItemSettings>> = [
         {
           id: 'new1',
           name: 'newItem1',
           enabled: true,
-          scanModeId: 'scanModeId1',
-          scanModeName: null,
+          scanMode: testData.scanMode.list[0],
           settings: {
             query: 'SELECT 1',
             dateTimeFields: [],

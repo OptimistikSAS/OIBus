@@ -442,7 +442,7 @@ const createNorth = async (database: knex.Knex, north: NorthConnectorEntity<Nort
       description: north.description,
       enabled: north.enabled,
       settings: JSON.stringify(north.settings),
-      caching_trigger_schedule: north.caching.trigger.scanModeId,
+      caching_trigger_schedule: north.caching.trigger.scanMode.id,
       caching_trigger_number_of_elements: north.caching.trigger.numberOfElements,
       caching_trigger_number_of_files: north.caching.trigger.numberOfFiles,
       caching_throttling_run_min_delay: north.caching.throttling.runMinDelay,
@@ -496,7 +496,7 @@ const createSouthConnectorItem = async (
     .insert({
       id: item.id,
       connector_id: southConnectorId,
-      scan_mode_id: item.scanModeId,
+      scan_mode_id: item.scanMode.id,
       name: item.name,
       enabled: item.enabled,
       settings: JSON.stringify(item.settings)
@@ -574,7 +574,7 @@ const createHistoryQuery = async (
       north_type: historyQuery.northType,
       south_settings: JSON.stringify(historyQuery.southSettings),
       north_settings: JSON.stringify(historyQuery.northSettings),
-      caching_trigger_schedule: historyQuery.caching.trigger.scanModeId,
+      caching_trigger_schedule: historyQuery.caching.trigger.scanMode.id,
       caching_trigger_number_of_elements: historyQuery.caching.trigger.numberOfElements,
       caching_trigger_number_of_files: historyQuery.caching.trigger.numberOfFiles,
       caching_throttling_run_min_delay: historyQuery.caching.throttling.runMinDelay,

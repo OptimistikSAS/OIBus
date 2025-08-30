@@ -132,7 +132,7 @@ export default class HistoryQueryController extends AbstractController {
     ctx: KoaContext<
       {
         southSettings: SouthSettings;
-        item: HistoryQueryItemCommandDTO<SouthItemSettings>;
+        itemSettings: SouthItemSettings;
         testingSettings: SouthConnectorItemTestingSettings;
       },
       void
@@ -152,7 +152,7 @@ export default class HistoryQueryController extends AbstractController {
         ctx.query.southType as OIBusSouthType,
         (ctx.query.fromSouth as string) || null,
         ctx.request.body!.southSettings,
-        ctx.request.body!.item,
+        ctx.request.body!.itemSettings,
         ctx.request.body!.testingSettings,
         ctx.ok,
         logger

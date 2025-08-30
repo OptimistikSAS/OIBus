@@ -6,33 +6,19 @@ import pino from 'pino';
 import { NorthRESTSettings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
-import NorthConnectorRepository from '../../repository/config/north-connector.repository';
-import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import { BaseFolders } from '../../model/types';
 import { filesExists } from '../../service/utils';
 import FormData from 'form-data';
 import { URL } from 'node:url';
 import { OIBusError } from '../../model/engine.model';
-import {
-  HTTPRequest,
-  ReqAuthOptions,
-  ReqProxyOptions,
-  ReqResponse,
-  retryableHttpStatusCodes
-} from '../../service/http-request.utils';
+import { HTTPRequest, ReqAuthOptions, ReqProxyOptions, ReqResponse, retryableHttpStatusCodes } from '../../service/http-request.utils';
 
 /**
  * Class Console - display values and file path into the console
  */
 export default class NorthREST extends NorthConnector<NorthRESTSettings> {
-  constructor(
-    configuration: NorthConnectorEntity<NorthRESTSettings>,
-    northConnectorRepository: NorthConnectorRepository,
-    scanModeRepository: ScanModeRepository,
-    logger: pino.Logger,
-    baseFolders: BaseFolders
-  ) {
-    super(configuration, northConnectorRepository, scanModeRepository, logger, baseFolders);
+  constructor(configuration: NorthConnectorEntity<NorthRESTSettings>, logger: pino.Logger, baseFolders: BaseFolders) {
+    super(configuration, logger, baseFolders);
   }
 
   async handleContent(cacheMetadata: CacheMetadata): Promise<void> {

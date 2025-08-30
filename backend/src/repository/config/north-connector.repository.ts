@@ -7,16 +7,16 @@ import { SouthConnectorEntityLight } from '../../model/south-connector.model';
 import { OIBusNorthType } from '../../../shared/model/north-connector.model';
 import { toTransformer } from './transformer.repository';
 import { TransformerWithOptions } from '../../model/transformer.model';
+import { ScanMode } from '../../model/scan-mode.model';
+import { toScanMode } from './scan-mode.repository';
 
 const NORTH_CONNECTORS_TABLE = 'north_connectors';
 const SUBSCRIPTION_TABLE = 'subscription';
 const SOUTH_CONNECTORS_TABLE = 'south_connectors';
 const TRANSFORMERS_TABLE = 'transformers';
 const NORTH_TRANSFORMERS_TABLE = 'north_transformers';
+const SCAN_MODE = 'scan_modes';
 
-/**
- * Repository used for North connectors
- */
 export default class NorthConnectorRepository {
   constructor(private readonly database: Database) {}
 
@@ -61,7 +61,7 @@ export default class NorthConnectorRepository {
             north.description,
             +north.enabled,
             JSON.stringify(north.settings),
-            north.caching.trigger.scanModeId,
+            north.caching.trigger.scanMode.id,
             north.caching.trigger.numberOfElements,
             north.caching.trigger.numberOfFiles,
             north.caching.throttling.runMinDelay,
@@ -88,7 +88,7 @@ export default class NorthConnectorRepository {
             north.description,
             +north.enabled,
             JSON.stringify(north.settings),
-            north.caching.trigger.scanModeId,
+            north.caching.trigger.scanMode.id,
             north.caching.trigger.numberOfElements,
             north.caching.trigger.numberOfFiles,
             north.caching.throttling.runMinDelay,
@@ -202,6 +202,12 @@ export default class NorthConnectorRepository {
     }));
   }
 
+  findScanModeForNorth(scanModeId: string): ScanMode {
+    const query = `SELECT id, name, description, cron FROM ${SCAN_MODE} WHERE id = ?;`;
+    const result = this.database.prepare(query).get(scanModeId) as Record<string, string>;
+    return toScanMode(result);
+  }
+
   private toNorthConnectorLight(result: Record<string, string>): NorthConnectorEntityLight {
     return {
       id: result.id,
@@ -222,7 +228,7 @@ export default class NorthConnectorRepository {
       settings: JSON.parse(result.settings as string) as N,
       caching: {
         trigger: {
-          scanModeId: result.caching_trigger_schedule as string,
+          scanMode: this.findScanModeForNorth(result.caching_trigger_schedule as string),
           numberOfElements: result.caching_trigger_number_of_elements as number,
           numberOfFiles: result.caching_trigger_number_of_files as number
         },

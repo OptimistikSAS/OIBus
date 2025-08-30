@@ -772,7 +772,18 @@ export default class OIAnalyticsCommandService {
       }
       throw new Error(stringError);
     }
-    await this.southService.importItems(southConnector.id, items, command.commandContent.deleteItemsNotPresent);
+    await this.southService.importItems(
+      southConnector.id,
+      items.map(item => ({
+        id: item.id,
+        enabled: item.enabled,
+        name: item.name,
+        settings: item.settings,
+        scanModeId: item.scanMode.id,
+        scanModeName: null
+      })),
+      command.commandContent.deleteItemsNotPresent
+    );
     this.oIAnalyticsCommandRepository.markAsCompleted(
       command.id,
       DateTime.now().toUTC().toISO(),
@@ -793,7 +804,7 @@ export default class OIAnalyticsCommandService {
       command.southConnectorId,
       command.commandContent.southCommand.type,
       command.commandContent.southCommand.settings,
-      command.commandContent.itemCommand,
+      command.commandContent.itemCommand.settings,
       command.commandContent.testingSettings,
       result => {
         this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), JSON.stringify(result));
@@ -973,7 +984,7 @@ export default class OIAnalyticsCommandService {
       command.commandContent.historyCommand.southType,
       command.southConnectorId,
       command.commandContent.historyCommand.southSettings,
-      command.commandContent.itemCommand,
+      command.commandContent.itemCommand.settings,
       command.commandContent.testingSettings,
       result => {
         this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), JSON.stringify(result));
