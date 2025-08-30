@@ -149,7 +149,7 @@ export default class HistoryQueryService {
     southType: OIBusSouthType,
     retrieveSecretsFromSouth: string | null,
     southSettings: SouthSettings,
-    itemCommand: HistoryQueryItemCommandDTO<SouthItemSettings>,
+    itemSettings: SouthItemSettings,
     testingSettings: SouthConnectorItemTestingSettings,
     callback: (data: OIBusContent) => void,
     logger: pino.Logger
@@ -176,7 +176,7 @@ export default class HistoryQueryService {
     const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'
     )! as OIBusObjectAttribute;
-    await this.validator.validateSettings(itemSettingsManifest, itemCommand.settings);
+    await this.validator.validateSettings(itemSettingsManifest, itemSettings);
     return await this.southService.testSouthItem(
       'create',
       southType,
@@ -184,7 +184,7 @@ export default class HistoryQueryService {
         await encryptionService.encryptConnectorSecrets(southSettings, southSettingsFrom, manifest.settings),
         manifest.settings
       ),
-      { ...itemCommand, scanModeId: 'history', scanModeName: null },
+      itemSettings,
       testingSettings,
       callback,
       logger
@@ -734,7 +734,7 @@ export const toHistoryQueryDTO = <S extends SouthSettings, N extends NorthSettin
     northSettings: encryptionService.filterSecrets<N>(historyQuery.northSettings, northManifest.settings),
     caching: {
       trigger: {
-        scanModeId: historyQuery.caching.trigger.scanModeId,
+        scanModeId: historyQuery.caching.trigger.scanMode.id,
         numberOfElements: historyQuery.caching.trigger.numberOfElements,
         numberOfFiles: historyQuery.caching.trigger.numberOfFiles
       },
@@ -804,7 +804,7 @@ const copyHistoryQueryCommandToHistoryQueryEntity = async <S extends SouthSettin
   );
   historyQueryEntity.caching = {
     trigger: {
-      scanModeId: checkScanMode(scanModes, command.caching.trigger.scanModeId, command.caching.trigger.scanModeName),
+      scanMode: checkScanMode(scanModes, command.caching.trigger.scanModeId, command.caching.trigger.scanModeName),
       numberOfElements: command.caching.trigger.numberOfElements,
       numberOfFiles: command.caching.trigger.numberOfFiles
     },

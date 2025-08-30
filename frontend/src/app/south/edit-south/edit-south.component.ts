@@ -5,7 +5,7 @@ import {
   OIBusSouthType,
   SouthConnectorCommandDTO,
   SouthConnectorDTO,
-  SouthConnectorItemCommandDTO,
+  SouthConnectorItemDTO,
   SouthConnectorManifest
 } from '../../../../../backend/shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
@@ -76,7 +76,7 @@ export class EditSouthComponent implements OnInit, CanComponentDeactivate {
     settings: FormGroup;
   }> | null = null;
 
-  inMemoryItems: Array<SouthConnectorItemCommandDTO<SouthItemSettings>> = [];
+  inMemoryItems: Array<SouthConnectorItemDTO<SouthItemSettings>> = [];
 
   ngOnInit() {
     combineLatest([this.scanModeService.list(), this.certificateService.list(), this.route.paramMap, this.route.queryParamMap])
@@ -111,12 +111,7 @@ export class EditSouthComponent implements OnInit, CanComponentDeactivate {
           this.southConnector = southConnector;
           if (southConnector) {
             this.southType = southConnector.type;
-            this.inMemoryItems = southConnector.items.map(item => ({
-              ...item,
-              // In edit mode, keep existing ids; in duplicate/create, ids are already reset upstream
-              id: this.mode === 'edit' ? item.id : null,
-              scanModeName: null
-            }));
+            this.inMemoryItems = southConnector.items;
           }
           return this.southConnectorService.getSouthConnectorTypeManifest(this.southType);
         })
@@ -179,7 +174,7 @@ export class EditSouthComponent implements OnInit, CanComponentDeactivate {
     component.runTest('south', this.southConnector?.id || null, this.formSouthConnectorCommand.settings, this.southType as OIBusSouthType);
   }
 
-  updateInMemoryItems(items: Array<SouthConnectorItemCommandDTO<SouthItemSettings>> | null) {
+  updateInMemoryItems(items: Array<SouthConnectorItemDTO<SouthItemSettings>> | null) {
     if (items) {
       this.inMemoryItems = items;
     } else {
@@ -218,7 +213,14 @@ export class EditSouthComponent implements OnInit, CanComponentDeactivate {
       description: formValue.description!,
       enabled: formValue.enabled!,
       settings: formValue.settings!,
-      items: this.inMemoryItems
+      items: this.inMemoryItems.map(item => ({
+        id: item.id,
+        enabled: item.enabled,
+        name: item.name,
+        settings: item.settings,
+        scanModeId: item.scanMode.id,
+        scanModeName: null
+      }))
     };
   }
 

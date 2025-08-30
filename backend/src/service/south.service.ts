@@ -110,6 +110,7 @@ import DataStreamEngine from '../engine/data-stream-engine';
 import { PassThrough } from 'node:stream';
 import { BaseFolders } from '../model/types';
 import { OIBusObjectAttribute } from '../../shared/model/form.model';
+import { toScanModeDTO } from './scan-mode.service';
 
 export const southManifestList: Array<SouthConnectorManifest> = [
   folderScannerManifest,
@@ -371,7 +372,7 @@ export default class SouthService {
     id: string,
     southType: OIBusSouthType,
     southSettings: SouthSettings,
-    itemCommand: SouthConnectorItemCommandDTO<SouthItemSettings>,
+    itemSettings: SouthItemSettings,
     testingSettings: SouthConnectorItemTestingSettings,
     callback: (data: OIBusContent) => void,
     logger: pino.Logger
@@ -391,14 +392,19 @@ export default class SouthService {
     const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'
     )! as OIBusObjectAttribute;
-    await this.validator.validateSettings(itemSettingsManifest, itemCommand.settings);
+    await this.validator.validateSettings(itemSettingsManifest, itemSettings);
 
     const testItemToRun: SouthConnectorItemEntity<SouthItemSettings> = {
       id: 'test',
-      enabled: itemCommand.enabled,
-      name: itemCommand.name,
-      scanModeId: itemCommand.scanModeId!,
-      settings: await encryptionService.encryptConnectorSecrets(itemCommand.settings, null, itemSettingsManifest)
+      enabled: false,
+      name: 'testing',
+      scanMode: {
+        id: '',
+        name: '',
+        description: '',
+        cron: ''
+      },
+      settings: await encryptionService.encryptConnectorSecrets(itemSettings, null, itemSettingsManifest)
     };
     const testConnectorToRun: SouthConnectorEntity<SouthSettings, SouthItemSettings> = {
       id: southConnector?.id || 'test',
@@ -509,7 +515,7 @@ export default class SouthService {
     await this.dataStreamEngine.deleteSouth(southConnector);
     await this.deleteBaseFolders(southConnector);
     this.southConnectorRepository.deleteSouth(southConnector.id);
-    this.dataStreamEngine.updateSubscriptions();
+    this.dataStreamEngine.updateNorthConfigurations();
     this.logRepository.deleteLogsByScopeId('south', southConnector.id);
     this.southMetricsRepository.removeMetrics(southConnector.id);
     this.southCacheRepository.deleteAllBySouthConnector(southConnector.id);
@@ -661,13 +667,11 @@ export default class SouthService {
     delimiter: string,
     existingItems: multer.File
   ): Promise<{
-    items: Array<SouthConnectorItemCommandDTO<SouthItemSettings>>;
-    errors: Array<{ item: SouthConnectorItemCommandDTO<SouthItemSettings>; error: string }>;
+    items: Array<SouthConnectorItemDTO<SouthItemSettings>>;
+    errors: Array<{ item: Record<string, string>; error: string }>;
   }> {
     const fileContent = await fs.readFile(file.path);
-    const existingItemsContent: Array<SouthConnectorItemDTO<I> | SouthConnectorItemCommandDTO<I>> = JSON.parse(
-      (await fs.readFile(existingItems.path)).toString('utf8')
-    );
+    const existingItemsContent: Array<SouthConnectorItemDTO<I>> = JSON.parse((await fs.readFile(existingItems.path)).toString('utf8'));
     return await this.checkCsvContentImport(southType, fileContent.toString('utf8'), delimiter, existingItemsContent);
   }
 
@@ -675,10 +679,10 @@ export default class SouthService {
     southType: string,
     fileContent: string,
     delimiter: string,
-    existingItems: Array<SouthConnectorItemDTO<I> | SouthConnectorItemCommandDTO<I>>
+    existingItems: Array<SouthConnectorItemDTO<I>>
   ): Promise<{
-    items: Array<SouthConnectorItemCommandDTO<SouthItemSettings>>;
-    errors: Array<{ item: SouthConnectorItemCommandDTO<SouthItemSettings>; error: string }>;
+    items: Array<SouthConnectorItemDTO<SouthItemSettings>>;
+    errors: Array<{ item: Record<string, string>; error: string }>;
   }> {
     const manifest = this.getInstalledSouthManifests().find(southManifest => southManifest.id === southType);
     if (!manifest) {
@@ -692,34 +696,31 @@ export default class SouthService {
     }
     const scanModes = this.scanModeRepository.findAll();
 
-    const validItems: Array<SouthConnectorItemCommandDTO<I>> = [];
-    const errors: Array<{ item: SouthConnectorItemCommandDTO<I>; error: string }> = [];
+    const validItems: Array<SouthConnectorItemDTO<I>> = [];
+    const errors: Array<{ item: Record<string, string>; error: string }> = [];
     for (const data of csvContent.data) {
-      const item: SouthConnectorItemCommandDTO<I> = {
+      const foundScanMode = scanModes.find(scanMode => scanMode.name === (data as Record<string, string>).scanMode);
+      if (!foundScanMode) {
+        errors.push({
+          item: data as Record<string, string>,
+          error: `Scan mode "${(data as Record<string, string>).scanMode}" not found for item ${(data as Record<string, string>).name}`
+        });
+        continue;
+      }
+      const item: SouthConnectorItemDTO<I> = {
         id: '',
-        name: (data as unknown as Record<string, string>).name,
-        enabled: stringToBoolean((data as unknown as Record<string, string>).enabled),
-        scanModeId: null as string | null,
-        scanModeName: null,
+        name: (data as Record<string, string>).name,
+        enabled: stringToBoolean((data as Record<string, string>).enabled),
+        scanMode: foundScanMode,
         settings: {} as I
       };
       if (existingItems.find(existingItem => existingItem.name === item.name)) {
         errors.push({
-          item: item,
+          item: data as Record<string, string>,
           error: `Item name "${(data as unknown as Record<string, string>).name}" already used`
         });
         continue;
       }
-
-      const foundScanMode = scanModes.find(scanMode => scanMode.name === (data as unknown as Record<string, string>).scanMode);
-      if (!foundScanMode) {
-        errors.push({
-          item: item,
-          error: `Scan mode "${(data as unknown as Record<string, string>).scanMode}" not found for item ${item.name}`
-        });
-        continue;
-      }
-      item.scanModeId = foundScanMode.id;
 
       let hasSettingsError = false;
       const settings: Record<string, string | object | boolean> = {};
@@ -733,7 +734,7 @@ export default class SouthService {
           if (!manifestSettings) {
             hasSettingsError = true;
             errors.push({
-              item: item,
+              item: data as Record<string, string>,
               error: `Settings "${settingsKey}" not accepted in manifest`
             });
             break;
@@ -754,7 +755,7 @@ export default class SouthService {
         await this.validator.validateSettings(itemSettingsManifest, item.settings);
         validItems.push(item);
       } catch (itemError: unknown) {
-        errors.push({ item, error: (itemError as Error).message });
+        errors.push({ item: data as Record<string, string>, error: (itemError as Error).message });
       }
     }
 
@@ -895,7 +896,7 @@ const copySouthItemCommandToSouthItemEntity = async <I extends SouthItemSettings
   southItemEntity.id = retrieveSecretsFromSouth ? '' : command.id || ''; // reset id if it is a copy from another connector
   southItemEntity.name = command.name;
   southItemEntity.enabled = command.enabled;
-  southItemEntity.scanModeId = checkScanMode(scanModes, command.scanModeId, command.scanModeName);
+  southItemEntity.scanMode = checkScanMode(scanModes, command.scanModeId, command.scanModeName);
   southItemEntity.settings = await encryptionService.encryptConnectorSecrets<I>(
     command.settings,
     currentSettings?.settings || null,
@@ -930,7 +931,7 @@ export const toSouthConnectorItemDTO = <I extends SouthItemSettings>(
     id: entity.id,
     name: entity.name,
     enabled: entity.enabled,
-    scanModeId: entity.scanModeId,
+    scanMode: toScanModeDTO(entity.scanMode),
     settings: encryptionService.filterSecrets<I>(entity.settings, itemSettingsManifest)
   };
 };

@@ -59,7 +59,7 @@ describe('SouthFolderScanner', () => {
           ignoreModifiedDate: false,
           minAge: 1000
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id2',
@@ -71,7 +71,7 @@ describe('SouthFolderScanner', () => {
           ignoreModifiedDate: false,
           minAge: 1000
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id3',
@@ -83,7 +83,7 @@ describe('SouthFolderScanner', () => {
           ignoreModifiedDate: true,
           minAge: 1000
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       }
     ]
   };
@@ -248,7 +248,7 @@ describe('SouthFolderScanner with compression', () => {
           ignoreModifiedDate: false,
           minAge: 1000
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id2',
@@ -260,7 +260,7 @@ describe('SouthFolderScanner with compression', () => {
           ignoreModifiedDate: false,
           minAge: 1000
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id3',
@@ -272,7 +272,7 @@ describe('SouthFolderScanner with compression', () => {
           ignoreModifiedDate: true,
           minAge: 1000
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       }
     ]
   };

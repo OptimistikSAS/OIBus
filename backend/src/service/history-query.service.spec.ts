@@ -186,7 +186,7 @@ describe('History Query service', () => {
       testData.south.command.type,
       null,
       testData.south.command.settings,
-      testData.south.itemCommand,
+      testData.south.itemCommand.settings,
       testData.south.itemTestingSettings,
       callback,
       logger
@@ -195,7 +195,7 @@ describe('History Query service', () => {
       'create',
       testData.south.command.type,
       testData.south.command.settings,
-      { ...testData.south.itemCommand, scanModeId: 'history', scanModeName: null },
+      testData.south.itemCommand.settings,
       testData.south.itemTestingSettings,
       callback,
       logger
@@ -214,7 +214,7 @@ describe('History Query service', () => {
         badCommand.type,
         testData.south.list[0].id,
         badCommand.settings,
-        testData.south.itemCommand,
+        testData.south.itemCommand.settings,
         testData.south.itemTestingSettings,
         callback,
         logger
@@ -233,7 +233,7 @@ describe('History Query service', () => {
         testData.south.command.type,
         testData.south.list[0].id,
         testData.south.command.settings,
-        testData.south.itemCommand,
+        testData.south.itemCommand.settings,
         testData.south.itemTestingSettings,
         callback,
         logger
@@ -256,7 +256,7 @@ describe('History Query service', () => {
       testData.south.command.type,
       null,
       testData.south.command.settings,
-      testData.south.itemCommand,
+      testData.south.itemCommand.settings,
       testData.south.itemTestingSettings,
       callback,
       logger
@@ -264,7 +264,7 @@ describe('History Query service', () => {
     expect(southService.testSouthItem).toHaveBeenCalled();
   });
 
-  it('testSouthItem() should fail to test South connector in edit mode if history querynot found', async () => {
+  it('testSouthItem() should fail to test South connector in edit mode if history query not found', async () => {
     (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(null);
     const callback = jest.fn();
 
@@ -274,7 +274,7 @@ describe('History Query service', () => {
         testData.south.command.type,
         null,
         testData.south.command.settings,
-        testData.south.itemCommand,
+        testData.south.itemCommand.settings,
         testData.south.itemTestingSettings,
         callback,
         logger

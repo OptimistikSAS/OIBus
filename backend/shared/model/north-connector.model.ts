@@ -4,6 +4,7 @@ import { NorthSettings } from './north-settings.model';
 import { SouthConnectorLightDTO } from './south-connector.model';
 import { TransformerDTOWithOptions } from './transformer.model';
 import { OIBusDataType } from './engine.model';
+import { ScanModeDTO } from './scan-mode.model';
 
 export const OIBUS_NORTH_CATEGORIES = ['debug', 'api', 'file', 'iot'] as const;
 export type OIBusNorthCategory = (typeof OIBUS_NORTH_CATEGORIES)[number];
@@ -43,7 +44,7 @@ export interface NorthConnectorDTO<T extends NorthSettings> extends BaseEntity {
   settings: T;
   caching: {
     trigger: {
-      scanModeId: string;
+      scanMode: ScanModeDTO;
       numberOfElements: number;
       numberOfFiles: number;
     };

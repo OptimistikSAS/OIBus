@@ -115,7 +115,7 @@ describe('SouthConnectorService', () => {
   it('should search South connector items', () => {
     let expectedSouthConnectorItems: Page<SouthConnectorItemDTO<any>> | null = null;
     const southConnectorItems = toPage<SouthConnectorItemDTO<any>>([
-      { id: 'southItemId', name: 'MySouthItem', enabled: true, scanModeId: 'scanModeId', settings: {} }
+      { id: 'southItemId', name: 'MySouthItem', enabled: true, scanMode: testData.scanMode.list[0], settings: {} }
     ]);
 
     service.searchItems('id1', { page: 0 }).subscribe(c => (expectedSouthConnectorItems = c));

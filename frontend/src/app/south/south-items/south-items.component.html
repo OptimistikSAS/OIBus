@@ -78,7 +78,7 @@
           </tr>
         </thead>
         <tbody>
-          @for (item of displayedItems.content; track item.id) {
+          @for (item of displayedItems.content; track item.name) {
             <tr class="south-item">
               @if (saveChangesDirectly()) {
                 <td>
@@ -90,10 +90,10 @@
                 <td></td>
               }
               <td>{{ item.name }}</td>
-              @if (scanModeManifest().acceptableType !== 'SUBSCRIPTION' && item.scanModeId !== 'subscription') {
-                <td>{{ getScanMode(item.scanModeId)?.name }}</td>
+              @if (scanModeManifest().acceptableType !== 'SUBSCRIPTION' && item.scanMode.id !== 'subscription') {
+                <td>{{ item.scanMode.name }}</td>
               }
-              @if (scanModeManifest().acceptableType !== 'SUBSCRIPTION' && item.scanModeId === 'subscription') {
+              @if (scanModeManifest().acceptableType !== 'SUBSCRIPTION' && item.scanMode.id === 'subscription') {
                 <td translate="scan-mode.subscription"></td>
               }
               @for (setting of displaySettings; track setting) {

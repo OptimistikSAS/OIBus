@@ -21,6 +21,7 @@ import NorthConnectorMetricsRepository from '../repository/metrics/north-connect
 import NorthConnectorMetricsService from '../service/metrics/north-connector-metrics.service';
 import { PassThrough } from 'node:stream';
 import { ReadStream } from 'node:fs';
+import NorthConnectorRepository from '../repository/config/north-connector.repository';
 
 const CACHE_FOLDER = './cache';
 const ARCHIVE_FOLDER = './archive';
@@ -35,6 +36,7 @@ export default class DataStreamEngine {
   private readonly cacheFolders: BaseFolders;
 
   constructor(
+    private northConnectorRepository: NorthConnectorRepository,
     private northConnectorMetricsRepository: NorthConnectorMetricsRepository,
     private southConnectorMetricsRepository: SouthConnectorMetricsRepository,
     private _logger: pino.Logger
@@ -118,12 +120,12 @@ export default class DataStreamEngine {
     for (const north of northConnectorList) {
       try {
         await this.createNorth(north);
-        if (north.settings.enabled) {
-          await this.startNorth(north.settings.id);
+        if (north.connectorConfiguration.enabled) {
+          await this.startNorth(north.connectorConfiguration.id);
         }
       } catch (error) {
         this._logger.error(
-          `Error while creating North connector "${north.settings.name}" of type "${north.settings.type}" (${north.settings.id}): ${error}`
+          `Error while creating North connector "${north.connectorConfiguration.name}" of type "${north.connectorConfiguration.type}" (${north.connectorConfiguration.id}): ${error}`
         );
       }
     }
@@ -131,12 +133,12 @@ export default class DataStreamEngine {
     for (const south of southConnectorList) {
       try {
         await this.createSouth(south);
-        if (south.settings.enabled) {
-          await this.startSouth(south.settings.id);
+        if (south.connectorConfiguration.enabled) {
+          await this.startSouth(south.connectorConfiguration.id);
         }
       } catch (error) {
         this._logger.error(
-          `Error while creating South connector "${south.settings.name}" of type "${south.settings.type}" (${south.settings.id}): ${error}`
+          `Error while creating South connector "${south.connectorConfiguration.name}" of type "${south.connectorConfiguration.type}" (${south.connectorConfiguration.id}): ${error}`
         );
       }
     }
@@ -158,8 +160,11 @@ export default class DataStreamEngine {
   }
 
   async createSouth<S extends SouthSettings, I extends SouthItemSettings>(south: SouthConnector<S, I>): Promise<void> {
-    this.southConnectors.set(south.settings.id, south);
-    this.southConnectorMetrics.set(south.settings.id, new SouthConnectorMetricsService(south, this.southConnectorMetricsRepository));
+    this.southConnectors.set(south.connectorConfiguration.id, south);
+    this.southConnectorMetrics.set(
+      south.connectorConfiguration.id,
+      new SouthConnectorMetricsService(south, this.southConnectorMetricsRepository)
+    );
   }
 
   async startSouth(southId: string): Promise<void> {
@@ -177,14 +182,17 @@ export default class DataStreamEngine {
     // Do not await here, so it can start all connectors without blocking the thread
     south.start().catch(error => {
       this._logger.error(
-        `Error while starting South connector "${south.settings.name}" of type "${south.settings.type}" (${south.settings.id}): ${error.message}`
+        `Error while starting South connector "${south.connectorConfiguration.name}" of type "${south.connectorConfiguration.type}" (${south.connectorConfiguration.id}): ${error.message}`
       );
     });
   }
 
   async createNorth<N extends NorthSettings>(north: NorthConnector<N>): Promise<void> {
-    this.northConnectors.set(north.settings.id, north);
-    this.northConnectorMetrics.set(north.settings.id, new NorthConnectorMetricsService(north, this.northConnectorMetricsRepository));
+    this.northConnectors.set(north.connectorConfiguration.id, north);
+    this.northConnectorMetrics.set(
+      north.connectorConfiguration.id,
+      new NorthConnectorMetricsService(north, this.northConnectorMetricsRepository)
+    );
   }
 
   async startNorth(northId: string): Promise<void> {
@@ -194,12 +202,14 @@ export default class DataStreamEngine {
       return;
     }
 
-    // Do not await here, so it can start all connectors without blocking the thread
-    north.start().catch(error => {
-      this._logger.error(
-        `Error while starting North connector "${north.settings.name}" of type "${north.settings.type}" (${north.settings.id}): ${error.message}`
-      );
-    });
+    north.connectorConfiguration = this.northConnectorRepository.findNorthById(northId)!;
+    north // Do not await here, so it can start all connectors without blocking the thread
+      .start()
+      .catch(error => {
+        this._logger.error(
+          `Error while starting North connector "${north.connectorConfiguration.name}" of type "${north.connectorConfiguration.type}" (${north.connectorConfiguration.id}): ${error.message}`
+        );
+      });
   }
 
   async stopSouth(southId: string): Promise<void> {
@@ -208,7 +218,11 @@ export default class DataStreamEngine {
   }
 
   async stopNorth(northId: string): Promise<void> {
-    await this.northConnectors.get(northId)?.stop();
+    const north = this.northConnectors.get(northId);
+    if (north) {
+      north.connectorConfiguration = this.northConnectorRepository.findNorthById(northId)!;
+      await north.stop();
+    }
   }
 
   /**
@@ -216,7 +230,6 @@ export default class DataStreamEngine {
    */
   async deleteSouth(south: SouthConnectorEntity<SouthSettings, SouthItemSettings>): Promise<void> {
     await this.stopSouth(south.id);
-    // this.homeMetricsService.removeSouth(southId);
     this.southConnectors.delete(south.id);
   }
 
@@ -225,7 +238,6 @@ export default class DataStreamEngine {
    */
   async deleteNorth(north: NorthConnectorEntity<NorthSettings>): Promise<void> {
     await this.stopNorth(north.id);
-    // this.homeMetricsService.removeNorth(northId);
     this.northConnectors.delete(north.id);
   }
 
@@ -233,11 +245,15 @@ export default class DataStreamEngine {
     this._logger = value;
 
     for (const south of this.southConnectors.values()) {
-      south.setLogger(this._logger.child({ scopeType: 'south', scopeId: south.settings.id, scopeName: south.settings.name }));
+      south.setLogger(
+        this._logger.child({ scopeType: 'south', scopeId: south.connectorConfiguration.id, scopeName: south.connectorConfiguration.name })
+      );
     }
 
     for (const north of this.northConnectors.values()) {
-      north.setLogger(this._logger.child({ scopeType: 'north', scopeId: north.settings.id, scopeName: north.settings.name }));
+      north.setLogger(
+        this._logger.child({ scopeType: 'north', scopeId: north.connectorConfiguration.id, scopeName: north.connectorConfiguration.name })
+      );
     }
   }
 
@@ -308,7 +324,11 @@ export default class DataStreamEngine {
     const south = this.southConnectors.get(southConnector.id);
     if (south) {
       if (south.queriesHistory()) {
-        await south.manageSouthCacheOnChange(south.settings, southConnector, south.getMaxInstantPerItem(south.settings.settings));
+        await south.manageSouthCacheOnChange(
+          south.connectorConfiguration,
+          southConnector,
+          south.getMaxInstantPerItem(south.connectorConfiguration.settings)
+        );
       }
       south.setLogger(this.logger.child({ scopeType: 'south', scopeId: southConnector.id, scopeName: southConnector.name }));
       if (southConnector.enabled) {
@@ -328,14 +348,17 @@ export default class DataStreamEngine {
     }
   }
 
-  updateSubscriptions() {
+  updateNorthConfigurations() {
     for (const north of this.northConnectors.values()) {
-      north.updateConnectorSubscription();
+      north.connectorConfiguration = this.northConnectorRepository.findNorthById(north.connectorConfiguration.id)!;
     }
   }
 
-  updateSubscription(northId: string) {
-    this.northConnectors.get(northId)?.updateConnectorSubscription();
+  updateNorthConfiguration(northId: string) {
+    const north = this.northConnectors.get(northId);
+    if (north) {
+      north.connectorConfiguration = this.northConnectorRepository.findNorthById(northId)!;
+    }
   }
 
   getNorth(northId: string): NorthConnector<NorthSettings> | undefined {

@@ -95,7 +95,15 @@ describe('HistoryQuery enabled', () => {
     expect(mockedSouth1.start).toHaveBeenCalledTimes(1);
     expect(mockedSouth1.historyQueryHandler).toHaveBeenCalledTimes(1);
     expect(mockedSouth1.historyQueryHandler).toHaveBeenCalledWith(
-      testData.historyQueries.list[0].items.map(item => ({ ...item, scanModeId: 'history' })),
+      testData.historyQueries.list[0].items.map(item => ({
+        ...item,
+        scanMode: {
+          cron: '',
+          description: '',
+          id: 'history',
+          name: 'history'
+        }
+      })),
       testData.historyQueries.list[0].startTime,
       testData.historyQueries.list[0].endTime,
       'history',
@@ -134,7 +142,15 @@ describe('HistoryQuery enabled', () => {
     await flushPromises();
     expect(mockedSouth1.historyQueryHandler).toHaveBeenCalledTimes(1);
     expect(mockedSouth1.historyQueryHandler).toHaveBeenCalledWith(
-      testData.historyQueries.list[0].items.map(item => ({ ...item, scanModeId: 'history' })),
+      testData.historyQueries.list[0].items.map(item => ({
+        ...item,
+        scanMode: {
+          cron: '',
+          description: '',
+          id: 'history',
+          name: 'history'
+        }
+      })),
       testData.historyQueries.list[0].startTime,
       testData.historyQueries.list[0].endTime,
       'history',

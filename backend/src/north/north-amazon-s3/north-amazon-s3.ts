@@ -9,8 +9,6 @@ import pino from 'pino';
 import { NorthAmazonS3Settings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
-import NorthConnectorRepository from '../../repository/config/north-connector.repository';
-import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import { BaseFolders } from '../../model/types';
 import { getFilenameWithoutRandomId } from '../../service/utils';
 
@@ -20,21 +18,15 @@ import { getFilenameWithoutRandomId } from '../../service/utils';
 export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings> {
   private s3: S3Client | undefined;
 
-  constructor(
-    connector: NorthConnectorEntity<NorthAmazonS3Settings>,
-    northConnectorRepository: NorthConnectorRepository,
-    scanModeRepository: ScanModeRepository,
-    logger: pino.Logger,
-    baseFolders: BaseFolders
-  ) {
-    super(connector, northConnectorRepository, scanModeRepository, logger, baseFolders);
+  constructor(connector: NorthConnectorEntity<NorthAmazonS3Settings>, logger: pino.Logger, baseFolders: BaseFolders) {
+    super(connector, logger, baseFolders);
   }
 
   /**
    * Initialize services (logger, certificate, status data) at startup
    */
-  async start(dataStream = true): Promise<void> {
-    await super.start(dataStream);
+  async start(): Promise<void> {
+    await super.start();
     await this.prepareConnection();
   }
 

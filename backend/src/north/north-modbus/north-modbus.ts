@@ -3,8 +3,6 @@ import pino from 'pino';
 import { NorthModbusSettings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
-import NorthConnectorRepository from '../../repository/config/north-connector.repository';
-import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import { BaseFolders } from '../../model/types';
 import net from 'node:net';
 import ModbusTCPClient from 'jsmodbus/dist/modbus-tcp-client';
@@ -21,14 +19,8 @@ export default class NorthModbus extends NorthConnector<NorthModbusSettings> {
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private disconnecting = false;
 
-  constructor(
-    configuration: NorthConnectorEntity<NorthModbusSettings>,
-    northConnectorRepository: NorthConnectorRepository,
-    scanModeRepository: ScanModeRepository,
-    logger: pino.Logger,
-    baseFolders: BaseFolders
-  ) {
-    super(configuration, northConnectorRepository, scanModeRepository, logger, baseFolders);
+  constructor(configuration: NorthConnectorEntity<NorthModbusSettings>, logger: pino.Logger, baseFolders: BaseFolders) {
+    super(configuration, logger, baseFolders);
   }
 
   async handleContent(cacheMetadata: CacheMetadata): Promise<void> {

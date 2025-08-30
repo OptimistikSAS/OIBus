@@ -6,10 +6,6 @@ import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
 import { NorthConsoleSettings } from '../../../shared/model/north-settings.model';
 import { OIBusTimeValue } from '../../../shared/model/engine.model';
-import NorthConnectorRepository from '../../repository/config/north-connector.repository';
-import NorthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/north-connector-repository.mock';
-import ScanModeRepository from '../../repository/config/scan-mode.repository';
-import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import testData from '../../tests/utils/test-data';
 import { mockBaseFolders } from '../../tests/utils/test-utils';
@@ -25,8 +21,6 @@ jest.spyOn(global.console, 'table').mockImplementation(() => ({}));
 jest.spyOn(process.stdout, 'write').mockImplementation(() => true);
 
 const logger: pino.Logger = new PinoLogger();
-const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
-const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const cacheService: CacheService = new CacheServiceMock();
 const oiBusTransformer: OIBusTransformer = new OIBusTransformerMock() as unknown as OIBusTransformer;
 
@@ -57,17 +51,9 @@ describe('NorthConsole with verbose mode', () => {
     configuration.settings = {
       verbose: true
     };
-    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
-    (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
     (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
 
-    north = new NorthConsole(
-      configuration,
-      northConnectorRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(testData.north.list[0].id)
-    );
+    north = new NorthConsole(configuration, logger, mockBaseFolders(testData.north.list[0].id));
   });
 
   afterEach(() => {
@@ -135,17 +121,9 @@ describe('NorthConsole without verbose mode', () => {
     configuration.settings = {
       verbose: false
     };
-    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
-    (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
     (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
 
-    north = new NorthConsole(
-      configuration,
-      northConnectorRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(testData.north.list[0].id)
-    );
+    north = new NorthConsole(configuration, logger, mockBaseFolders(testData.north.list[0].id));
   });
 
   afterEach(() => {

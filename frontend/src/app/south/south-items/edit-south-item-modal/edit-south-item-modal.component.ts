@@ -14,7 +14,6 @@ import { ObservableState, SaveButtonComponent } from '../../../shared/save-butto
 import { TranslateDirective } from '@ngx-translate/core';
 import {
   SouthConnectorCommandDTO,
-  SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
   SouthConnectorManifest
 } from '../../../../../../backend/shared/model/south-connector.model';
@@ -54,8 +53,8 @@ export class EditSouthItemModalComponent {
   southId!: string;
   southConnectorCommand!: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
   manifest!: SouthConnectorManifest;
-  item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings> | null = null;
-  itemList: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>> = [];
+  item: SouthConnectorItemDTO<SouthItemSettings> | null = null;
+  itemList: Array<SouthConnectorItemDTO<SouthItemSettings>> = [];
 
   /** Not every item passed will have an id, but we still need to check for uniqueness.
    * This ensures that we have a backup identifier for the currently edited item.
@@ -65,7 +64,7 @@ export class EditSouthItemModalComponent {
 
   form: FormGroup<{
     name: FormControl<string>;
-    scanModeId: FormControl<string | null>;
+    scanMode: FormControl<ScanModeDTO | null>;
     enabled: FormControl<boolean>;
     settings: FormGroup;
   }> | null = null;
@@ -102,7 +101,7 @@ export class EditSouthItemModalComponent {
    * Prepares the component for creation.
    */
   prepareForCreation(
-    itemList: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>>,
+    itemList: Array<SouthConnectorItemDTO<SouthItemSettings>>,
     scanModes: Array<ScanModeDTO>,
     certificates: Array<CertificateDTO>,
     southId: string,
@@ -116,7 +115,7 @@ export class EditSouthItemModalComponent {
     this.itemList = itemList;
     this.scanModes = scanModes;
     this.certificates = certificates;
-    this.buildForm(null);
+    this.buildForm();
   }
 
   /**
@@ -124,10 +123,10 @@ export class EditSouthItemModalComponent {
    * tableIndex is an additional identifier when item ids are not available. This indexes the given itemList param
    */
   prepareForEdition(
-    itemList: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>>,
+    itemList: Array<SouthConnectorItemDTO<SouthItemSettings>>,
     scanModes: Array<ScanModeDTO>,
     certificates: Array<CertificateDTO>,
-    southItem: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>,
+    southItem: SouthConnectorItemDTO<SouthItemSettings>,
     southId: string,
     southConnectorCommand: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>,
     manifest: SouthConnectorManifest,
@@ -142,17 +141,17 @@ export class EditSouthItemModalComponent {
     this.scanModes = scanModes;
     this.certificates = certificates;
     this.tableIndex = tableIndex;
-    this.buildForm(southItem);
+    this.buildForm();
   }
 
   /**
    * Prepares the component to edit
    */
   prepareForCopy(
-    itemList: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>>,
+    itemList: Array<SouthConnectorItemDTO<SouthItemSettings>>,
     scanModes: Array<ScanModeDTO>,
     certificates: Array<CertificateDTO>,
-    item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>,
+    item: SouthConnectorItemDTO<SouthItemSettings>,
     southId: string,
     southConnectorCommand: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>,
     manifest: SouthConnectorManifest
@@ -167,10 +166,8 @@ export class EditSouthItemModalComponent {
     // used to check uniqueness
     this.item = JSON.parse(JSON.stringify(item)) as SouthConnectorItemDTO<SouthItemSettings>;
     this.item.name = `${item.name}-copy`;
-    this.buildForm({
-      ...JSON.parse(JSON.stringify(item)),
-      name: `${item.name}-copy`
-    });
+    this.item.id = '';
+    this.buildForm();
   }
 
   canDismiss(): Observable<boolean> | boolean {
@@ -188,24 +185,21 @@ export class EditSouthItemModalComponent {
     if (!this.form!.valid) {
       return;
     }
-
     this.modal.close(this.formItem);
   }
 
-  get formItem(): SouthConnectorItemCommandDTO<SouthItemSettings> {
+  get formItem(): SouthConnectorItemDTO<SouthItemSettings> {
     const formValue = this.form!.value;
-    let id: string | null = null;
-    if (this.mode === 'edit') {
-      id = this.item?.id || null;
-    }
 
     const scanModeAttribute = this.getScanModeAttribute();
     return {
-      id,
+      id: this.item?.id || '',
       enabled: formValue.enabled!,
       name: formValue.name!,
-      scanModeId: scanModeAttribute.acceptableType === 'SUBSCRIPTION' ? 'subscription' : formValue.scanModeId!,
-      scanModeName: null,
+      scanMode:
+        scanModeAttribute.acceptableType === 'SUBSCRIPTION'
+          ? { id: 'subscription', name: 'subscription', description: '', cron: '' }
+          : formValue.scanMode!,
       settings: formValue.settings!
     };
   }
@@ -231,11 +225,11 @@ export class EditSouthItemModalComponent {
     };
   }
 
-  private buildForm(item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings> | null) {
+  private buildForm() {
     this.form = this.fb.group({
       name: ['', [Validators.required, this.checkUniqueness()]],
       enabled: [true, Validators.required],
-      scanModeId: this.fb.control<string | null>(null, Validators.required),
+      scanMode: this.fb.control<ScanModeDTO | null>(null, Validators.required),
       settings: this.fb.group({})
     });
 
@@ -252,14 +246,15 @@ export class EditSouthItemModalComponent {
 
     const scanModeAttribute = this.getScanModeAttribute();
     if (scanModeAttribute.acceptableType === 'SUBSCRIPTION') {
-      this.form.controls.scanModeId.disable();
+      this.form.controls.scanMode.disable();
     } else {
-      this.form.controls.scanModeId.enable();
+      this.form.controls.scanMode.enable();
     }
 
     // if we have an item, we initialize the values
-    if (item) {
-      this.form.patchValue(item);
+    if (this.item) {
+      const scanMode = this.scanModes.find(element => element.id === this.item!.scanMode.id)!; // used to have the same ref
+      this.form.patchValue({ name: this.item.name, enabled: this.item.enabled, scanMode, settings: this.item.settings });
     } else {
       this.form.setValue(this.form.getRawValue());
     }

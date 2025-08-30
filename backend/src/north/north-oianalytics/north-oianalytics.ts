@@ -20,8 +20,6 @@ import { CacheMetadata, OIBusTimeValue } from '../../../shared/model/engine.mode
 import { ClientCertificateCredential, ClientSecretCredential } from '@azure/identity';
 import fs from 'node:fs/promises';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
-import NorthConnectorRepository from '../../repository/config/north-connector.repository';
-import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import CertificateRepository from '../../repository/config/certificate.repository';
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import { OIBusError } from '../../model/engine.model';
@@ -34,14 +32,12 @@ import { BaseFolders } from '../../model/types';
 export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSettings> {
   constructor(
     connector: NorthConnectorEntity<NorthOIAnalyticsSettings>,
-    northConnectorRepository: NorthConnectorRepository,
-    scanModeRepository: ScanModeRepository,
     private readonly certificateRepository: CertificateRepository,
     private readonly oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
     logger: pino.Logger,
     baseFolders: BaseFolders
   ) {
-    super(connector, northConnectorRepository, scanModeRepository, logger, baseFolders);
+    super(connector, logger, baseFolders);
   }
 
   override async testConnection(): Promise<void> {

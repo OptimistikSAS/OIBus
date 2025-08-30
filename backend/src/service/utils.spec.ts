@@ -1157,10 +1157,10 @@ describe('Service utils', () => {
     });
 
     it('should properly check scan mode', () => {
-      expect(checkScanMode(testData.scanMode.list, 'scanModeId', null)).toEqual('scanModeId');
+      expect(checkScanMode(testData.scanMode.list, 'scanModeId1', null)).toEqual(testData.scanMode.list[0]);
       expect(() => checkScanMode(testData.scanMode.list, null, null)).toThrow('Scan mode not specified');
       expect(() => checkScanMode(testData.scanMode.list, null, 'bad scan mode name')).toThrow('Scan mode "bad scan mode name" not found');
-      expect(checkScanMode(testData.scanMode.list, null, testData.scanMode.list[0].name)).toEqual(testData.scanMode.list[0].id);
+      expect(checkScanMode(testData.scanMode.list, null, testData.scanMode.list[0].name)).toEqual(testData.scanMode.list[0]);
     });
   });
 
@@ -1178,8 +1178,7 @@ describe('Service utils', () => {
           [
             ...testData.south.list[2].items.map(item => ({ ...item, settings: { ...item.settings, objectSettings: {} } })),
             {
-              ...testData.south.list[2].items[0],
-              scanModeId: 'bad id'
+              ...testData.south.list[2].items[0]
             }
           ],
           ',',
@@ -1196,8 +1195,7 @@ describe('Service utils', () => {
           [
             ...testData.south.list[2].items.map(item => ({ ...item, settings: { ...item.settings, objectSettings: {} } })),
             {
-              ...testData.south.list[2].items[0],
-              scanModeId: 'bad id'
+              ...testData.south.list[2].items[0]
             }
           ],
           ','

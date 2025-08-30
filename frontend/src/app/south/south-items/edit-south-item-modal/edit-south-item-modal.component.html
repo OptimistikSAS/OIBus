@@ -14,17 +14,17 @@
           </div>
         </div>
         <!-- Scan mode -->
-        @if (form.controls.scanModeId.enabled) {
+        @if (form.controls.scanMode.enabled) {
           <div class="col-3">
             <div class="form-group">
-              <label for="scanModeId" class="form-label" translate="configuration.oibus.manifest.south.items.scan-mode"></label>
-              <select class="form-select" id="scanModeId" formControlName="scanModeId">
+              <label for="scan-mode" class="form-label" translate="configuration.oibus.manifest.south.items.scan-mode"></label>
+              <select class="form-select" id="scan-mode" formControlName="scanMode">
                 <option [ngValue]="null"></option>
                 @for (scanMode of scanModes; track scanMode.id) {
-                  <option [value]="scanMode.id">{{ scanMode.name }}</option>
+                  <option [ngValue]="scanMode">{{ scanMode.name }}</option>
                 }
               </select>
-              <val-errors controlName="scanModeId" />
+              <val-errors controlName="scanMode" />
             </div>
           </div>
         }

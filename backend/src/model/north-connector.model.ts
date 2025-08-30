@@ -3,6 +3,7 @@ import { NorthSettings } from '../../shared/model/north-settings.model';
 import { SouthConnectorEntityLight } from './south-connector.model';
 import { OIBusNorthType } from '../../shared/model/north-connector.model';
 import { TransformerWithOptions } from './transformer.model';
+import { ScanMode } from './scan-mode.model';
 
 export interface NorthConnectorEntityLight extends BaseEntity {
   name: string;
@@ -19,7 +20,7 @@ export interface NorthConnectorEntity<T extends NorthSettings> extends BaseEntit
   settings: T;
   caching: {
     trigger: {
-      scanModeId: string;
+      scanMode: ScanMode;
       numberOfElements: number;
       numberOfFiles: number;
     };

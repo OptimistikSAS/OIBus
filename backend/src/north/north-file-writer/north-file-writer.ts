@@ -7,24 +7,15 @@ import { DateTime } from 'luxon';
 import { NorthFileWriterSettings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
-import NorthConnectorRepository from '../../repository/config/north-connector.repository';
-import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import { BaseFolders } from '../../model/types';
-import TransformerService from '../../service/transformer.service';
 import { getFilenameWithoutRandomId } from '../../service/utils';
 
 /**
  * Class NorthFileWriter - Write files in an output folder
  */
 export default class NorthFileWriter extends NorthConnector<NorthFileWriterSettings> {
-  constructor(
-    configuration: NorthConnectorEntity<NorthFileWriterSettings>,
-    northConnectorRepository: NorthConnectorRepository,
-    scanModeRepository: ScanModeRepository,
-    logger: pino.Logger,
-    baseFolders: BaseFolders
-  ) {
-    super(configuration, northConnectorRepository, scanModeRepository, logger, baseFolders);
+  constructor(configuration: NorthConnectorEntity<NorthFileWriterSettings>, logger: pino.Logger, baseFolders: BaseFolders) {
+    super(configuration, logger, baseFolders);
   }
 
   async handleContent(cacheMetadata: CacheMetadata): Promise<void> {

@@ -10,8 +10,6 @@ import { CacheMetadata } from '../../../shared/model/engine.model';
 import sftpClient, { ConnectOptions } from 'ssh2-sftp-client';
 import fs from 'node:fs/promises';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
-import NorthConnectorRepository from '../../repository/config/north-connector.repository';
-import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import { BaseFolders } from '../../model/types';
 import { getFilenameWithoutRandomId } from '../../service/utils';
 
@@ -19,14 +17,8 @@ import { getFilenameWithoutRandomId } from '../../service/utils';
  * Class NorthSFTP - Write files in an output folder
  */
 export default class NorthSFTP extends NorthConnector<NorthSFTPSettings> {
-  constructor(
-    configuration: NorthConnectorEntity<NorthSFTPSettings>,
-    northConnectorRepository: NorthConnectorRepository,
-    scanModeRepository: ScanModeRepository,
-    logger: pino.Logger,
-    baseFolders: BaseFolders
-  ) {
-    super(configuration, northConnectorRepository, scanModeRepository, logger, baseFolders);
+  constructor(configuration: NorthConnectorEntity<NorthSFTPSettings>, logger: pino.Logger, baseFolders: BaseFolders) {
+    super(configuration, logger, baseFolders);
   }
 
   async handleContent(cacheMetadata: CacheMetadata): Promise<void> {

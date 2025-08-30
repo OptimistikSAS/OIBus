@@ -8,10 +8,6 @@ import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
 import { NorthAmazonS3Settings } from '../../../shared/model/north-settings.model';
 import csv from 'papaparse';
-import NorthConnectorRepository from '../../repository/config/north-connector.repository';
-import NorthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/north-connector-repository.mock';
-import ScanModeRepository from '../../repository/config/scan-mode.repository';
-import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
 import testData from '../../tests/utils/test-data';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import { mockBaseFolders } from '../../tests/utils/test-utils';
@@ -39,8 +35,6 @@ jest.mock('../../service/encryption.service', () => ({
 }));
 
 const logger: pino.Logger = new PinoLogger();
-const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
-const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const cacheService: CacheService = new CacheServiceMock();
 const oiBusTransformer: OIBusTransformer = new OIBusTransformerMock() as unknown as OIBusTransformer;
 
@@ -73,18 +67,10 @@ describe('NorthAmazonS3', () => {
         proxyPassword: 'proxy-password'
       };
       (csv.unparse as jest.Mock).mockReturnValue('csv content');
-      (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
-      (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
       (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
       (getFilenameWithoutRandomId as jest.Mock).mockReturnValue('example.file');
 
-      north = new NorthAmazonS3(
-        configuration,
-        northConnectorRepository,
-        scanModeRepository,
-        logger,
-        mockBaseFolders(testData.north.list[0].id)
-      );
+      north = new NorthAmazonS3(configuration, logger, mockBaseFolders(testData.north.list[0].id));
     });
 
     afterEach(() => {
@@ -153,18 +139,10 @@ describe('NorthAmazonS3', () => {
         proxyPassword: ''
       };
 
-      (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
-      (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
       (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
       (getFilenameWithoutRandomId as jest.Mock).mockReturnValue('example.file');
 
-      north = new NorthAmazonS3(
-        configuration,
-        northConnectorRepository,
-        scanModeRepository,
-        logger,
-        mockBaseFolders(testData.north.list[0].id)
-      );
+      north = new NorthAmazonS3(configuration, logger, mockBaseFolders(testData.north.list[0].id));
     });
 
     afterEach(() => {
@@ -199,18 +177,10 @@ describe('NorthAmazonS3', () => {
         useProxy: false
       };
 
-      (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
-      (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
       (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
       (getFilenameWithoutRandomId as jest.Mock).mockReturnValue('example.file');
 
-      north = new NorthAmazonS3(
-        configuration,
-        northConnectorRepository,
-        scanModeRepository,
-        logger,
-        mockBaseFolders(testData.north.list[0].id)
-      );
+      north = new NorthAmazonS3(configuration, logger, mockBaseFolders(testData.north.list[0].id));
     });
 
     afterEach(() => {

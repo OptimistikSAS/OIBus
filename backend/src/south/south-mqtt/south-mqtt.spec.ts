@@ -5,7 +5,6 @@ import mqtt from 'mqtt';
 import SouthMQTT from './south-mqtt';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import { SouthConnectorDTO } from '../../../shared/model/south-connector.model';
 import { SouthMQTTItemSettings, SouthMQTTSettings } from '../../../shared/model/south-settings.model';
 import * as utils from '../../service/utils';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
@@ -17,6 +16,7 @@ import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/sou
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import testData from '../../tests/utils/test-data';
 import { flushPromises, mockBaseFolders } from '../../tests/utils/test-utils';
+import { SouthConnectorEntity } from '../../model/south-connector.model';
 
 jest.mock('mqtt');
 jest.mock('node:fs/promises');
@@ -61,7 +61,7 @@ class CustomStream extends Stream {
 
 describe('SouthMQTT without authentication', () => {
   let south: SouthMQTT;
-  const configuration: SouthConnectorDTO<SouthMQTTSettings, SouthMQTTItemSettings> = {
+  const configuration: SouthConnectorEntity<SouthMQTTSettings, SouthMQTTItemSettings> = {
     id: 'southId',
     name: 'south',
     type: 'mqtt',
@@ -94,7 +94,7 @@ describe('SouthMQTT without authentication', () => {
           topic: 'my/first/topic',
           valueType: 'number'
         },
-        scanModeId: 'subscription'
+        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
       },
       {
         id: 'id2',
@@ -104,7 +104,7 @@ describe('SouthMQTT without authentication', () => {
           topic: 'my/+/+/topic/with/wildcard/#',
           valueType: 'string'
         },
-        scanModeId: 'subscription'
+        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
       },
       {
         id: 'id3',
@@ -114,7 +114,7 @@ describe('SouthMQTT without authentication', () => {
           topic: 'my/wrong/topic////',
           valueType: 'string'
         },
-        scanModeId: 'subscription'
+        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
       },
       {
         id: 'id4',
@@ -141,7 +141,7 @@ describe('SouthMQTT without authentication', () => {
             }
           }
         },
-        scanModeId: 'subscription'
+        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
       },
       {
         id: 'id5',
@@ -167,7 +167,7 @@ describe('SouthMQTT without authentication', () => {
             }
           }
         },
-        scanModeId: 'subscription'
+        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
       },
       {
         id: 'id6',
@@ -189,7 +189,7 @@ describe('SouthMQTT without authentication', () => {
             timestampOrigin: 'oibus'
           }
         },
-        scanModeId: 'subscription'
+        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
       }
     ]
   };
@@ -349,7 +349,7 @@ describe('SouthMQTT without authentication', () => {
 
 describe('SouthMQTT with Basic Auth', () => {
   let south: SouthMQTT;
-  const configuration: SouthConnectorDTO<SouthMQTTSettings, SouthMQTTItemSettings> = {
+  const configuration: SouthConnectorEntity<SouthMQTTSettings, SouthMQTTItemSettings> = {
     id: 'southId',
     name: 'south',
     type: 'mqtt',
@@ -378,7 +378,7 @@ describe('SouthMQTT with Basic Auth', () => {
           topic: 'my/first/topic',
           valueType: 'number'
         },
-        scanModeId: 'subscription'
+        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
       },
       {
         id: 'id2',
@@ -388,7 +388,7 @@ describe('SouthMQTT with Basic Auth', () => {
           topic: 'my/+/+/topic/with/wildcard/#',
           valueType: 'string'
         },
-        scanModeId: 'subscription'
+        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
       },
       {
         id: 'id3',
@@ -398,7 +398,7 @@ describe('SouthMQTT with Basic Auth', () => {
           topic: 'my/wrong/topic////',
           valueType: 'string'
         },
-        scanModeId: 'subscription'
+        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
       },
       {
         id: 'id4',
@@ -425,7 +425,7 @@ describe('SouthMQTT with Basic Auth', () => {
             }
           }
         },
-        scanModeId: 'subscription'
+        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
       },
       {
         id: 'id5',
@@ -451,7 +451,7 @@ describe('SouthMQTT with Basic Auth', () => {
             }
           }
         },
-        scanModeId: 'subscription'
+        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
       },
       {
         id: 'id6',
@@ -473,7 +473,7 @@ describe('SouthMQTT with Basic Auth', () => {
             timestampOrigin: 'oibus'
           }
         },
-        scanModeId: 'subscription'
+        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
       }
     ]
   };
@@ -885,7 +885,7 @@ describe('SouthMQTT with Basic Auth', () => {
 
 describe('SouthMQTT with Cert', () => {
   let south: SouthMQTT;
-  const configuration: SouthConnectorDTO<SouthMQTTSettings, SouthMQTTItemSettings> = {
+  const configuration: SouthConnectorEntity<SouthMQTTSettings, SouthMQTTItemSettings> = {
     id: 'southId',
     name: 'south',
     type: 'mqtt',
@@ -917,7 +917,7 @@ describe('SouthMQTT with Cert', () => {
           topic: 'my/first/topic',
           valueType: 'number'
         },
-        scanModeId: 'subscription'
+        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
       },
       {
         id: 'id2',
@@ -927,7 +927,7 @@ describe('SouthMQTT with Cert', () => {
           topic: 'my/+/+/topic/with/wildcard/#',
           valueType: 'string'
         },
-        scanModeId: 'subscription'
+        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
       },
       {
         id: 'id3',
@@ -937,7 +937,7 @@ describe('SouthMQTT with Cert', () => {
           topic: 'my/wrong/topic////',
           valueType: 'string'
         },
-        scanModeId: 'subscription'
+        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
       },
       {
         id: 'id4',
@@ -964,7 +964,7 @@ describe('SouthMQTT with Cert', () => {
             }
           }
         },
-        scanModeId: 'subscription'
+        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
       },
       {
         id: 'id5',
@@ -990,7 +990,7 @@ describe('SouthMQTT with Cert', () => {
             }
           }
         },
-        scanModeId: 'subscription'
+        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
       },
       {
         id: 'id6',
@@ -1012,7 +1012,7 @@ describe('SouthMQTT with Cert', () => {
             timestampOrigin: 'oibus'
           }
         },
-        scanModeId: 'subscription'
+        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
       }
     ]
   };
@@ -1066,7 +1066,7 @@ describe('SouthMQTT with Cert', () => {
 
 describe('SouthMQTT without Cert', () => {
   let south: SouthMQTT;
-  const configuration: SouthConnectorDTO<SouthMQTTSettings, SouthMQTTItemSettings> = {
+  const configuration: SouthConnectorEntity<SouthMQTTSettings, SouthMQTTItemSettings> = {
     id: 'southId',
     name: 'south',
     type: 'mqtt',
@@ -1098,7 +1098,7 @@ describe('SouthMQTT without Cert', () => {
           topic: 'my/first/topic',
           valueType: 'number'
         },
-        scanModeId: 'subscription'
+        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
       },
       {
         id: 'id2',
@@ -1108,7 +1108,7 @@ describe('SouthMQTT without Cert', () => {
           topic: 'my/+/+/topic/with/wildcard/#',
           valueType: 'string'
         },
-        scanModeId: 'subscription'
+        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
       },
       {
         id: 'id3',
@@ -1118,7 +1118,7 @@ describe('SouthMQTT without Cert', () => {
           topic: 'my/wrong/topic////',
           valueType: 'string'
         },
-        scanModeId: 'subscription'
+        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
       },
       {
         id: 'id4',
@@ -1145,7 +1145,7 @@ describe('SouthMQTT without Cert', () => {
             }
           }
         },
-        scanModeId: 'subscription'
+        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
       },
       {
         id: 'id5',
@@ -1171,7 +1171,7 @@ describe('SouthMQTT without Cert', () => {
             }
           }
         },
-        scanModeId: 'subscription'
+        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
       },
       {
         id: 'id6',
@@ -1193,7 +1193,7 @@ describe('SouthMQTT without Cert', () => {
             timestampOrigin: 'oibus'
           }
         },
-        scanModeId: 'subscription'
+        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
       }
     ]
   };

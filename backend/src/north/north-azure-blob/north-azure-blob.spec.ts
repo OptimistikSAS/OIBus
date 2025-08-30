@@ -9,10 +9,6 @@ import { ClientSecretCredential, DefaultAzureCredential } from '@azure/identity'
 import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
 import { NorthAzureBlobSettings } from '../../../shared/model/north-settings.model';
 import csv from 'papaparse';
-import NorthConnectorRepository from '../../repository/config/north-connector.repository';
-import NorthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/north-connector-repository.mock';
-import ScanModeRepository from '../../repository/config/scan-mode.repository';
-import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import testData from '../../tests/utils/test-data';
 import { mockBaseFolders } from '../../tests/utils/test-utils';
@@ -69,8 +65,6 @@ jest.mock('../../service/encryption.service', () => ({
 }));
 
 const logger: pino.Logger = new PinoLogger();
-const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
-const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const cacheService: CacheService = new CacheServiceMock();
 const oiBusTransformer: OIBusTransformer = new OIBusTransformerMock() as unknown as OIBusTransformer;
 
@@ -107,8 +101,6 @@ describe('NorthAzureBlob without proxy', () => {
       clientSecret: '',
       useProxy: false
     };
-    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
-    (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
   });
 
   afterEach(() => {
@@ -121,13 +113,7 @@ describe('NorthAzureBlob without proxy', () => {
 
     configuration.settings.authentication = 'sas-token';
     configuration.settings.sasToken = 'sas token';
-    north = new NorthAzureBlob(
-      configuration,
-      northConnectorRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(testData.north.list[0].id)
-    );
+    north = new NorthAzureBlob(configuration, logger, mockBaseFolders(testData.north.list[0].id));
 
     await north.start();
     await north.handleContent({
@@ -159,13 +145,7 @@ describe('NorthAzureBlob without proxy', () => {
     configuration.settings.authentication = 'sas-token';
     configuration.settings.sasToken = 'sas token';
     configuration.settings.useADLS = true;
-    north = new NorthAzureBlob(
-      configuration,
-      northConnectorRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(testData.north.list[0].id)
-    );
+    north = new NorthAzureBlob(configuration, logger, mockBaseFolders(testData.north.list[0].id));
     await north.start();
     await north.handleContent({
       contentFile: '/path/to/file/example-123.file',
@@ -197,13 +177,7 @@ describe('NorthAzureBlob without proxy', () => {
 
     configuration.settings.authentication = 'access-key';
     configuration.settings.accessKey = 'access key';
-    north = new NorthAzureBlob(
-      configuration,
-      northConnectorRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(testData.north.list[0].id)
-    );
+    north = new NorthAzureBlob(configuration, logger, mockBaseFolders(testData.north.list[0].id));
 
     await north.start();
     await north.handleContent({
@@ -236,13 +210,7 @@ describe('NorthAzureBlob without proxy', () => {
     configuration.settings.authentication = 'access-key';
     configuration.settings.accessKey = 'access key';
     configuration.settings.useADLS = true;
-    north = new NorthAzureBlob(
-      configuration,
-      northConnectorRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(testData.north.list[0].id)
-    );
+    north = new NorthAzureBlob(configuration, logger, mockBaseFolders(testData.north.list[0].id));
     await north.start();
     await north.handleContent({
       contentFile: filePath,
@@ -278,13 +246,7 @@ describe('NorthAzureBlob without proxy', () => {
     configuration.settings.tenantId = 'tenantId';
     configuration.settings.clientId = 'clientId';
     configuration.settings.clientSecret = 'clientSecret';
-    north = new NorthAzureBlob(
-      configuration,
-      northConnectorRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(testData.north.list[0].id)
-    );
+    north = new NorthAzureBlob(configuration, logger, mockBaseFolders(testData.north.list[0].id));
 
     await north.start();
     await north.handleContent({
@@ -313,7 +275,7 @@ describe('NorthAzureBlob without proxy', () => {
   it('should properly handle files on Azure Data Lake Storage using Azure Active Directory authentication', async () => {
     const filePath = '/path/to/file/example-123.file';
     (fs.stat as jest.Mock).mockImplementationOnce(() => Promise.resolve({ size: 666 }));
-    (fs.readFile as jest.Mock).mockImplementationOnce(() => Promise.resolve('content'));
+    (fs.readFile as jest.Mock).mockImplementationOnce(() => Promise.resolve(''));
     const clientSecretCredential = jest.fn();
     (ClientSecretCredential as jest.Mock).mockImplementationOnce(() => clientSecretCredential);
     configuration.settings.useADLS = true;
@@ -321,13 +283,7 @@ describe('NorthAzureBlob without proxy', () => {
     configuration.settings.tenantId = 'tenantId';
     configuration.settings.clientId = 'clientId';
     configuration.settings.clientSecret = 'clientSecret';
-    north = new NorthAzureBlob(
-      configuration,
-      northConnectorRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(testData.north.list[0].id)
-    );
+    north = new NorthAzureBlob(configuration, logger, mockBaseFolders(testData.north.list[0].id));
     await north.start();
     await north.handleContent({
       contentFile: filePath,
@@ -348,8 +304,9 @@ describe('NorthAzureBlob without proxy', () => {
     );
     expect(getFileSystemClientMock).toHaveBeenCalledWith(configuration.settings.container);
     expect(getFileClientMock).toHaveBeenCalledWith('example.file');
-    expect(bufferFlushMock).toHaveBeenCalledWith('content'.length);
+    expect(bufferFlushMock).not.toHaveBeenCalled();
   });
+
   it('should properly handle files using external auth', async () => {
     const filePath = '/path/to/file/example-123.file';
     (fs.stat as jest.Mock).mockImplementationOnce(() => Promise.resolve({ size: 666 }));
@@ -360,13 +317,7 @@ describe('NorthAzureBlob without proxy', () => {
     configuration.settings.authentication = 'external';
     configuration.settings.path = 'my path';
 
-    north = new NorthAzureBlob(
-      configuration,
-      northConnectorRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(testData.north.list[0].id)
-    );
+    north = new NorthAzureBlob(configuration, logger, mockBaseFolders(testData.north.list[0].id));
 
     await north.start();
     await north.handleContent({
@@ -401,13 +352,7 @@ describe('NorthAzureBlob without proxy', () => {
     configuration.settings.authentication = 'external';
     configuration.settings.path = 'my path';
     configuration.settings.useADLS = true;
-    north = new NorthAzureBlob(
-      configuration,
-      northConnectorRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(testData.north.list[0].id)
-    );
+    north = new NorthAzureBlob(configuration, logger, mockBaseFolders(testData.north.list[0].id));
     await north.start();
     await north.handleContent({
       contentFile: filePath,
@@ -437,13 +382,7 @@ describe('NorthAzureBlob without proxy', () => {
     existsMock.mockImplementationOnce(() => true).mockImplementationOnce(() => false);
     configuration.settings.authentication = 'external';
     configuration.settings.path = 'my path';
-    north = new NorthAzureBlob(
-      configuration,
-      northConnectorRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(testData.north.list[0].id)
-    );
+    north = new NorthAzureBlob(configuration, logger, mockBaseFolders(testData.north.list[0].id));
     await north.testConnection();
     expect(DefaultAzureCredential).toHaveBeenCalled();
     expect(BlobServiceClient).toHaveBeenCalledWith(
@@ -466,13 +405,7 @@ describe('NorthAzureBlob without proxy', () => {
     });
     configuration.settings.authentication = 'external';
     configuration.settings.path = 'my path';
-    north = new NorthAzureBlob(
-      configuration,
-      northConnectorRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(testData.north.list[0].id)
-    );
+    north = new NorthAzureBlob(configuration, logger, mockBaseFolders(testData.north.list[0].id));
     await north.testConnection();
     expect(DefaultAzureCredential).toHaveBeenCalled();
     expect(BlobServiceClient).toHaveBeenCalledWith(
@@ -493,13 +426,7 @@ describe('NorthAzureBlob without proxy', () => {
     configuration.settings.authentication = 'external';
     configuration.settings.path = 'my path';
     configuration.settings.useADLS = true;
-    north = new NorthAzureBlob(
-      configuration,
-      northConnectorRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(testData.north.list[0].id)
-    );
+    north = new NorthAzureBlob(configuration, logger, mockBaseFolders(testData.north.list[0].id));
     await north.testConnection();
     expect(DefaultAzureCredential).toHaveBeenCalled();
     expect(DataLakeServiceClient).toHaveBeenCalledWith(
@@ -517,13 +444,7 @@ describe('NorthAzureBlob without proxy', () => {
     configuration.settings.authentication = 'external';
     configuration.settings.path = 'my path';
     configuration.settings.useADLS = true;
-    north = new NorthAzureBlob(
-      configuration,
-      northConnectorRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(testData.north.list[0].id)
-    );
+    north = new NorthAzureBlob(configuration, logger, mockBaseFolders(testData.north.list[0].id));
     await north.testConnection();
     expect(DefaultAzureCredential).toHaveBeenCalled();
     expect(DataLakeServiceClient).toHaveBeenCalledWith(
@@ -542,13 +463,7 @@ describe('NorthAzureBlob without proxy', () => {
     existsMock.mockImplementationOnce(() => true);
     configuration.settings.path = '';
     configuration.settings.authentication = 'external';
-    north = new NorthAzureBlob(
-      configuration,
-      northConnectorRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(testData.north.list[0].id)
-    );
+    north = new NorthAzureBlob(configuration, logger, mockBaseFolders(testData.north.list[0].id));
     await north.testConnection();
     expect(DefaultAzureCredential).toHaveBeenCalled();
     expect(BlobServiceClient).toHaveBeenCalledWith(
@@ -565,13 +480,7 @@ describe('NorthAzureBlob without proxy', () => {
     (getContainerClientMock as jest.Mock).mockImplementationOnce(() => {
       throw new Error('connection error');
     });
-    north = new NorthAzureBlob(
-      configuration,
-      northConnectorRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(testData.north.list[0].id)
-    );
+    north = new NorthAzureBlob(configuration, logger, mockBaseFolders(testData.north.list[0].id));
 
     await expect(north.testConnection()).rejects.toThrow(
       new Error('Connection could not establish. Check path and authentication. Error: connection error')
@@ -584,13 +493,7 @@ describe('NorthAzureBlob without proxy', () => {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
     configuration.settings.authentication = 'bad';
-    north = new NorthAzureBlob(
-      configuration,
-      northConnectorRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(testData.north.list[0].id)
-    );
+    north = new NorthAzureBlob(configuration, logger, mockBaseFolders(testData.north.list[0].id));
 
     await expect(north.start()).rejects.toThrow(
       new Error(`Authentication "${configuration.settings.authentication}" not supported for North "${configuration.name}"`)
@@ -620,8 +523,6 @@ describe('NorthAzureBlob with proxy', () => {
       proxyUsername: 'oibus',
       proxyPassword: 'pass'
     };
-    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
-    (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
     (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
     (getFilenameWithoutRandomId as jest.Mock).mockReturnValue('example.file');
   });
@@ -637,13 +538,7 @@ describe('NorthAzureBlob with proxy', () => {
 
     configuration.settings.authentication = 'sas-token';
     configuration.settings.sasToken = 'sas token';
-    north = new NorthAzureBlob(
-      configuration,
-      northConnectorRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(testData.north.list[0].id)
-    );
+    north = new NorthAzureBlob(configuration, logger, mockBaseFolders(testData.north.list[0].id));
 
     await north.start();
     await north.handleContent({
@@ -678,13 +573,7 @@ describe('NorthAzureBlob with proxy', () => {
     configuration.settings.authentication = 'sas-token';
     configuration.settings.sasToken = 'sas token';
     configuration.settings.useADLS = true;
-    north = new NorthAzureBlob(
-      configuration,
-      northConnectorRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(testData.north.list[0].id)
-    );
+    north = new NorthAzureBlob(configuration, logger, mockBaseFolders(testData.north.list[0].id));
     await north.start();
     await north.handleContent({
       contentFile: filePath,
@@ -721,13 +610,7 @@ describe('NorthAzureBlob with proxy', () => {
     configuration.settings.proxyUsername = '';
     configuration.settings.proxyPassword = '';
     configuration.settings.proxyUrl = 'https://proxy.com';
-    north = new NorthAzureBlob(
-      configuration,
-      northConnectorRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(testData.north.list[0].id)
-    );
+    north = new NorthAzureBlob(configuration, logger, mockBaseFolders(testData.north.list[0].id));
 
     await north.start();
     await north.handleContent({
@@ -761,13 +644,7 @@ describe('NorthAzureBlob with proxy', () => {
     configuration.settings.proxyPassword = '';
     configuration.settings.proxyUrl = 'https://proxy.com';
     configuration.settings.useADLS = true;
-    north = new NorthAzureBlob(
-      configuration,
-      northConnectorRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(testData.north.list[0].id)
-    );
+    north = new NorthAzureBlob(configuration, logger, mockBaseFolders(testData.north.list[0].id));
     await north.start();
     await north.handleContent({
       contentFile: filePath,
@@ -796,13 +673,7 @@ describe('NorthAzureBlob with proxy', () => {
   });
 
   it('should properly parse proxy url', async () => {
-    north = new NorthAzureBlob(
-      configuration,
-      northConnectorRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(testData.north.list[0].id)
-    );
+    north = new NorthAzureBlob(configuration, logger, mockBaseFolders(testData.north.list[0].id));
 
     const proxy1 = north.parseProxyUrl('127.0.0.1');
     expect(proxy1.proxyHost).toBe('127.0.0.1');

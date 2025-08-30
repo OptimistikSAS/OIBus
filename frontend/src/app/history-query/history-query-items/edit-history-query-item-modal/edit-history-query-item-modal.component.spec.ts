@@ -102,7 +102,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
 
       tester.save.click();
       expect(fakeActiveModal.close).toHaveBeenCalledWith({
-        id: null,
+        id: '',
         enabled: true,
         name: 'MyName',
         settings: { objectArray: [], objectSettings: {}, objectValue: 1 }
@@ -134,7 +134,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
 
       tester.save.click();
       expect(fakeActiveModal.close).toHaveBeenCalledWith({
-        id: null,
+        id: '',
         enabled: true,
         name: 'MyName-2',
         settings: { objectArray: [], objectSettings: {}, objectValue: 1 }

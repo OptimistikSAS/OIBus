@@ -2,11 +2,7 @@ import { Component, inject } from '@angular/core';
 import { NgbActiveModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ObservableState } from '../../../shared/save-button/save-button.component';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
-import {
-  SouthConnectorItemCommandDTO,
-  SouthConnectorItemDTO,
-  SouthConnectorManifest
-} from '../../../../../../backend/shared/model/south-connector.model';
+import { SouthConnectorItemDTO, SouthConnectorManifest } from '../../../../../../backend/shared/model/south-connector.model';
 import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.model';
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
 import { createPageFromArray, Page } from '../../../../../../backend/shared/model/types';
@@ -28,26 +24,26 @@ export class ImportSouthItemsModalComponent {
   private translateService = inject(TranslateService);
 
   state = new ObservableState();
-  existingItemList: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>> = [];
-  newItemList: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>> = [];
+  existingItemList: Array<SouthConnectorItemDTO<SouthItemSettings>> = [];
+  newItemList: Array<SouthConnectorItemDTO<SouthItemSettings>> = [];
   errorList: Array<{
-    item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>;
+    item: Record<string, string>;
     error: string;
   }> = [];
   scanModes: Array<ScanModeDTO> = [];
   displaySettings: Array<OIBusAttribute> = [];
-  displayedItemsNew: Page<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>> = emptyPage();
+  displayedItemsNew: Page<SouthConnectorItemDTO<SouthItemSettings>> = emptyPage();
   displayedItemsError: Page<{
-    item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>;
+    item: Record<string, string>;
     error: string;
   }> = emptyPage();
 
   prepare(
     manifest: SouthConnectorManifest,
-    existingItemList: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>>,
-    newItemList: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>>,
+    existingItemList: Array<SouthConnectorItemDTO<SouthItemSettings>>,
+    newItemList: Array<SouthConnectorItemDTO<SouthItemSettings>>,
     errorList: Array<{
-      item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>;
+      item: Record<string, string>;
       error: string;
     }>,
     scanModes: Array<ScanModeDTO>
@@ -92,14 +88,12 @@ export class ImportSouthItemsModalComponent {
     this.displayedItemsError = this.createPageError(pageNumber);
   }
 
-  private createPageNew(
-    pageNumber: number
-  ): Page<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>> {
+  private createPageNew(pageNumber: number): Page<SouthConnectorItemDTO<SouthItemSettings>> {
     return createPageFromArray(this.newItemList, PAGE_SIZE, pageNumber);
   }
 
   private createPageError(pageNumber: number): Page<{
-    item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>;
+    item: Record<string, string>;
     error: string;
   }> {
     return createPageFromArray(this.errorList, PAGE_SIZE, pageNumber);

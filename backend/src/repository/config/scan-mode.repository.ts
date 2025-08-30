@@ -25,20 +25,20 @@ export default class ScanModeRepository {
     return this.database
       .prepare(query)
       .all()
-      .map(result => this.toScanMode(result as Record<string, string>));
+      .map(result => toScanMode(result as Record<string, string>));
   }
 
   findById(id: string): ScanMode | null {
     const query = `SELECT id, name, description, cron FROM ${SCAN_MODES_TABLE} WHERE id = ?;`;
     const result = this.database.prepare(query).get(id);
-    return result ? this.toScanMode(result as Record<string, string>) : null;
+    return result ? toScanMode(result as Record<string, string>) : null;
   }
 
   create(command: Omit<ScanMode, 'id'>, id = generateRandomId(6)): ScanMode {
     const insertQuery = `INSERT INTO ${SCAN_MODES_TABLE} (id, name, description, cron) VALUES (?, ?, ?, ?);`;
     const result = this.database.prepare(insertQuery).run(id, command.name, command.description, command.cron);
     const query = `SELECT id, name, description, cron FROM ${SCAN_MODES_TABLE} WHERE ROWID = ?;`;
-    return this.toScanMode(this.database.prepare(query).get(result.lastInsertRowid) as Record<string, string>);
+    return toScanMode(this.database.prepare(query).get(result.lastInsertRowid) as Record<string, string>);
   }
 
   update(id: string, command: Omit<ScanMode, 'id'>): void {
@@ -50,13 +50,13 @@ export default class ScanModeRepository {
     const query = `DELETE FROM ${SCAN_MODES_TABLE} WHERE id = ?;`;
     this.database.prepare(query).run(id);
   }
-
-  private toScanMode(result: Record<string, string>): ScanMode {
-    return {
-      id: result.id,
-      name: result.name,
-      description: result.description,
-      cron: result.cron
-    };
-  }
 }
+
+export const toScanMode = (result: Record<string, string>): ScanMode => {
+  return {
+    id: result.id,
+    name: result.name,
+    description: result.description,
+    cron: result.cron
+  };
+};

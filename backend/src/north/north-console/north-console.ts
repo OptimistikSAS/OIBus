@@ -5,22 +5,14 @@ import pino from 'pino';
 import { NorthConsoleSettings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata, OIBusSetpoint, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
-import NorthConnectorRepository from '../../repository/config/north-connector.repository';
-import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import { BaseFolders } from '../../model/types';
 
 /**
  * Class Console - display values and file path into the console
  */
 export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
-  constructor(
-    configuration: NorthConnectorEntity<NorthConsoleSettings>,
-    northConnectorRepository: NorthConnectorRepository,
-    scanModeRepository: ScanModeRepository,
-    logger: pino.Logger,
-    baseFolders: BaseFolders
-  ) {
-    super(configuration, northConnectorRepository, scanModeRepository, logger, baseFolders);
+  constructor(configuration: NorthConnectorEntity<NorthConsoleSettings>, logger: pino.Logger, baseFolders: BaseFolders) {
+    super(configuration, logger, baseFolders);
   }
 
   async handleContent(cacheMetadata: CacheMetadata): Promise<void> {

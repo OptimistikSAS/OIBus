@@ -75,7 +75,7 @@ export class EditHistoryQueryItemModalComponent {
     this.historyId = historyId;
     this.southConnectorCommand = southConnectorCommand;
     this.itemList = itemList;
-    this.buildForm(null);
+    this.buildForm();
   }
 
   prepareForEdition(
@@ -93,7 +93,7 @@ export class EditHistoryQueryItemModalComponent {
     this.itemList = itemList;
     this.item = historyQueryItem; // used to check uniqueness
     this.tableIndex = tableIndex;
-    this.buildForm(historyQueryItem);
+    this.buildForm();
   }
 
   prepareForCopy(
@@ -111,10 +111,8 @@ export class EditHistoryQueryItemModalComponent {
     // used to check uniqueness
     this.item = JSON.parse(JSON.stringify(item)) as HistoryQueryItemDTO<SouthItemSettings>;
     this.item.name = `${item.name}-copy`;
-    this.buildForm({
-      ...JSON.parse(JSON.stringify(item)),
-      name: `${item.name}-copy`
-    });
+    this.item.id = '';
+    this.buildForm();
   }
 
   canDismiss(): Observable<boolean> | boolean {
@@ -123,6 +121,7 @@ export class EditHistoryQueryItemModalComponent {
     }
     return true;
   }
+
   cancel() {
     this.modal.dismiss();
   }
@@ -131,25 +130,18 @@ export class EditHistoryQueryItemModalComponent {
     if (!this.form!.valid) {
       return;
     }
-
     this.modal.close(this.formItem);
   }
 
-  get formItem() {
+  get formItem(): HistoryQueryItemDTO<SouthItemSettings> {
     const formValue = this.form!.value;
-    let id: string | null = null;
-    if (this.mode === 'edit') {
-      id = this.item?.id || null;
-    }
 
-    const command: HistoryQueryItemCommandDTO<SouthItemSettings> = {
-      id,
+    return {
+      id: this.item?.id || '',
       enabled: formValue.enabled!,
       name: formValue.name!,
       settings: formValue.settings!
     };
-
-    return command;
   }
 
   private checkUniqueness(): ValidatorFn {
@@ -173,7 +165,7 @@ export class EditHistoryQueryItemModalComponent {
     };
   }
 
-  private buildForm(item: HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings> | null) {
+  private buildForm() {
     this.form = this.fb.group({
       name: ['', [Validators.required, this.checkUniqueness()]],
       enabled: [true, Validators.required],
@@ -187,8 +179,8 @@ export class EditHistoryQueryItemModalComponent {
     addEnablingConditions(this.form.controls.settings, settingsAttribute.enablingConditions);
 
     // if we have an item, we initialize the values
-    if (item) {
-      this.form.patchValue(item);
+    if (this.item) {
+      this.form.patchValue(this.item);
     } else {
       this.form.setValue(this.form.getRawValue());
     }

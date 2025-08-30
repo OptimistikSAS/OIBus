@@ -107,7 +107,7 @@ describe('EditNorthComponent', () => {
       settings: {} as NorthSettings,
       caching: {
         trigger: {
-          scanModeId: 'scanModeId1',
+          scanMode: testData.scanMode.list[0],
           numberOfElements: 1_000,
           numberOfFiles: 1
         },
