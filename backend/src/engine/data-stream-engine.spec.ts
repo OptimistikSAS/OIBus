@@ -19,12 +19,10 @@ import SouthConnectorMetricsService from '../service/metrics/south-connector-met
 import SouthConnectorMetricsServiceMock from '../tests/__mocks__/service/metrics/south-connector-metrics-service.mock';
 import { SouthConnectorEntity } from '../model/south-connector.model';
 import { NorthConnectorEntity } from '../model/north-connector.model';
+import NorthConnectorRepository from '../repository/config/north-connector.repository';
+import NorthConnectorRepositoryMock from '../tests/__mocks__/repository/config/north-connector-repository.mock';
 
 jest.mock('../south/south-mqtt/south-mqtt');
-jest.mock('../service/south.service');
-jest.mock('../service/north.service');
-jest.mock('../service/repository.service');
-jest.mock('../service/encryption.service');
 jest.mock('../service/utils');
 jest.mock('node:fs/promises');
 
@@ -48,23 +46,30 @@ jest.mock(
 
 const southConnectorMetricsRepository: SouthConnectorMetricsRepository = new SouthMetricsRepositoryMock();
 const northConnectorMetricsRepository: NorthConnectorMetricsRepository = new NorthMetricsRepositoryMock();
+const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
 
 const logger: pino.Logger = new PinoLogger();
 const anotherLogger: pino.Logger = new PinoLogger();
 
 describe('DataStreamEngine', () => {
   let engine: DataStreamEngine;
-  const mockedNorth1 = new NorthConnectorMock(testData.north.list[0]) as unknown as NorthConnector<NorthSettings>;
-  const mockedNorth2 = new NorthConnectorMock(testData.north.list[1]) as unknown as NorthConnector<NorthSettings>;
-  const mockedSouth1 = new SouthConnectorMock(testData.south.list[0]) as unknown as SouthConnector<SouthSettings, SouthItemSettings>;
-  const mockedSouth2 = new SouthConnectorMock(testData.south.list[1]) as unknown as SouthConnector<SouthSettings, SouthItemSettings>;
+  let mockedNorth1: NorthConnector<NorthSettings>;
+  let mockedNorth2: NorthConnector<NorthSettings>;
+  let mockedSouth1: SouthConnector<SouthSettings, SouthItemSettings>;
+  let mockedSouth2: SouthConnector<SouthSettings, SouthItemSettings>;
 
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
     (logger.child as jest.Mock).mockReturnValue(logger);
 
-    engine = new DataStreamEngine(northConnectorMetricsRepository, southConnectorMetricsRepository, logger);
+    mockedNorth1 = new NorthConnectorMock(testData.north.list[0]) as unknown as NorthConnector<NorthSettings>;
+    mockedNorth2 = new NorthConnectorMock(testData.north.list[1]) as unknown as NorthConnector<NorthSettings>;
+    mockedSouth1 = new SouthConnectorMock(testData.south.list[0]) as unknown as SouthConnector<SouthSettings, SouthItemSettings>;
+    mockedSouth2 = new SouthConnectorMock(testData.south.list[1]) as unknown as SouthConnector<SouthSettings, SouthItemSettings>;
+
+    (northConnectorRepository.findNorthById as jest.Mock).mockImplementation(id => testData.north.list.find(element => element.id === id));
+    engine = new DataStreamEngine(northConnectorRepository, northConnectorMetricsRepository, southConnectorMetricsRepository, logger);
   });
 
   afterEach(() => {
@@ -80,8 +85,8 @@ describe('DataStreamEngine', () => {
       throw new Error('South error');
     });
 
-    mockedNorth2['settings']['enabled'] = true;
-    mockedSouth2['settings']['enabled'] = true;
+    mockedNorth2.connectorConfiguration = { ...mockedNorth2.connectorConfiguration, enabled: true };
+    mockedSouth2.connectorConfiguration = { ...mockedSouth2.connectorConfiguration, enabled: true };
     await engine.start([mockedNorth1, mockedNorth2], [mockedSouth1, mockedSouth2]);
 
     expect(engine.baseFolders).toBeDefined();
@@ -110,8 +115,8 @@ describe('DataStreamEngine', () => {
   });
 
   it('it should start and stop without south 2 and north 2', async () => {
-    mockedNorth2['settings']['enabled'] = false;
-    mockedSouth2['settings']['enabled'] = false;
+    mockedNorth2.connectorConfiguration = { ...mockedNorth2.connectorConfiguration, enabled: false };
+    mockedSouth2.connectorConfiguration = { ...mockedSouth2.connectorConfiguration, enabled: false };
     engine.startNorth = jest.fn();
     engine.startSouth = jest.fn();
     await engine.start([mockedNorth1, mockedNorth2], [mockedSouth1, mockedSouth2]);
@@ -161,12 +166,12 @@ describe('DataStreamEngine', () => {
 
     await engine.startSouth(testData.south.list[0].id);
     expect(logger.error).toHaveBeenCalledWith(
-      `Error while starting South connector "${mockedSouth1.settings.name}" of type "${mockedSouth1.settings.type}" (${mockedSouth1.settings.id}): start fail`
+      `Error while starting South connector "${mockedSouth1.connectorConfiguration.name}" of type "${mockedSouth1.connectorConfiguration.type}" (${mockedSouth1.connectorConfiguration.id}): start fail`
     );
     await engine.startNorth(testData.north.list[0].id);
 
     expect(logger.error).toHaveBeenCalledWith(
-      `Error while starting North connector "${mockedNorth1.settings.name}" of type "${mockedNorth1.settings.type}" (${mockedNorth1.settings.id}): start fail`
+      `Error while starting North connector "${mockedNorth1.connectorConfiguration.name}" of type "${mockedNorth1.connectorConfiguration.type}" (${mockedNorth1.connectorConfiguration.id}): start fail`
     );
   });
 
@@ -264,23 +269,22 @@ describe('DataStreamEngine', () => {
     expect(mockedSouth1.onItemChange).toHaveBeenCalled();
   });
 
-  it('should update north subscriptions', async () => {
+  it('should update north configurations', async () => {
     await engine.start([mockedNorth1, mockedNorth2], [mockedSouth1]);
 
-    engine.updateSubscriptions();
-    expect(mockedNorth1.updateConnectorSubscription).toHaveBeenCalledTimes(1);
-    expect(mockedNorth2.updateConnectorSubscription).toHaveBeenCalledTimes(1);
+    engine.updateNorthConfigurations();
+    expect(northConnectorRepository.findNorthById).toHaveBeenCalledTimes(3); // 1 call because one of the connector is enabled and 2 because of the update
+    expect(northConnectorRepository.findNorthById).toHaveBeenCalledWith(mockedNorth1.connectorConfiguration.id);
+    expect(northConnectorRepository.findNorthById).toHaveBeenCalledWith(mockedNorth2.connectorConfiguration.id);
   });
 
-  it('should update north subscription', async () => {
+  it('should update north configuration', async () => {
     await engine.start([mockedNorth1, mockedNorth2], [mockedSouth1]);
 
-    engine.updateSubscription(testData.north.list[0].id);
-    expect(mockedNorth1.updateConnectorSubscription).toHaveBeenCalledTimes(1);
-    expect(mockedNorth2.updateConnectorSubscription).toHaveBeenCalledTimes(0);
-    engine.updateSubscription('bad id');
-    expect(mockedNorth1.updateConnectorSubscription).toHaveBeenCalledTimes(1);
-    expect(mockedNorth2.updateConnectorSubscription).toHaveBeenCalledTimes(0);
+    engine.updateNorthConfiguration(mockedNorth1.connectorConfiguration.id);
+    engine.updateNorthConfiguration('bad id');
+    expect(northConnectorRepository.findNorthById).toHaveBeenCalledTimes(2); // 1 call because one of the connector is enabled and 1 because of the update
+    expect(northConnectorRepository.findNorthById).toHaveBeenCalledWith(mockedNorth1.connectorConfiguration.id);
   });
 
   it('should get North', async () => {
@@ -347,28 +351,28 @@ describe('DataStreamEngine', () => {
   it('should properly get stream', async () => {
     await engine.start([mockedNorth1], [mockedSouth1]);
 
-    expect(engine.getNorthDataStream(mockedNorth1.settings.id)).not.toBeNull();
+    expect(engine.getNorthDataStream(mockedNorth1.connectorConfiguration.id)).not.toBeNull();
     expect(engine.getNorthDataStream('bad id')).toBeNull();
 
-    expect(engine.getSouthDataStream(mockedSouth1.settings.id)).not.toBeNull();
+    expect(engine.getSouthDataStream(mockedSouth1.connectorConfiguration.id)).not.toBeNull();
     expect(engine.getSouthDataStream('bad id')).toBeNull();
   });
 
   it('should properly get metrics', async () => {
     await engine.start([mockedNorth1], [mockedSouth1]);
 
-    expect(engine.getNorthConnectorMetrics()).toEqual({ [mockedNorth1.settings.id]: {} });
-    expect(engine.getSouthConnectorMetrics()).toEqual({ [mockedSouth1.settings.id]: {} });
+    expect(engine.getNorthConnectorMetrics()).toEqual({ [mockedNorth1.connectorConfiguration.id]: {} });
+    expect(engine.getSouthConnectorMetrics()).toEqual({ [mockedSouth1.connectorConfiguration.id]: {} });
   });
 
   it('should properly reset metrics', async () => {
     await engine.start([mockedNorth1], [mockedSouth1]);
 
-    engine.resetNorthConnectorMetrics(mockedNorth1.settings.id);
+    engine.resetNorthConnectorMetrics(mockedNorth1.connectorConfiguration.id);
     engine.resetNorthConnectorMetrics('bad id');
     expect(northConnectorMetricsService.resetMetrics).toHaveBeenCalledTimes(1);
 
-    engine.resetSouthConnectorMetrics(mockedSouth1.settings.id);
+    engine.resetSouthConnectorMetrics(mockedSouth1.connectorConfiguration.id);
     engine.resetSouthConnectorMetrics('bad id');
     expect(southConnectorMetricsService.resetMetrics).toHaveBeenCalledTimes(1);
   });

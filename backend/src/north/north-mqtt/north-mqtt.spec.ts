@@ -3,10 +3,6 @@ import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import NorthMQTT from './north-mqtt';
 import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
-import NorthConnectorRepository from '../../repository/config/north-connector.repository';
-import NorthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/north-connector-repository.mock';
-import ScanModeRepository from '../../repository/config/scan-mode.repository';
-import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import { NorthMQTTSettings } from '../../../shared/model/north-settings.model';
 import testData from '../../tests/utils/test-data';
@@ -26,8 +22,6 @@ jest.mock('../../service/encryption.service', () => ({
   encryptionService: new EncryptionServiceMock('', '')
 }));
 const logger: pino.Logger = new PinoLogger();
-const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
-const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const cacheService: CacheService = new CacheServiceMock();
 const oiBusTransformer: OIBusTransformer = new OIBusTransformerMock() as unknown as OIBusTransformer;
 
@@ -84,13 +78,11 @@ describe('NorthMQTT', () => {
       reconnectPeriod: 1000,
       rejectUnauthorized: false
     };
-    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
-    (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
     (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
     (getFilenameWithoutRandomId as jest.Mock).mockReturnValue('example.file');
     (mqtt.connect as jest.Mock).mockImplementation(() => mqttStream);
 
-    north = new NorthMQTT(configuration, northConnectorRepository, scanModeRepository, logger, mockBaseFolders(testData.north.list[0].id));
+    north = new NorthMQTT(configuration, logger, mockBaseFolders(testData.north.list[0].id));
   });
 
   it('should properly connect', async () => {

@@ -66,7 +66,7 @@ describe('South OPC', () => {
           aggregate: 'raw',
           resampling: 'none'
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id2',
@@ -76,7 +76,7 @@ describe('South OPC', () => {
           nodeId: 'ns=3;s=Counter',
           aggregate: 'raw'
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id3',
@@ -87,7 +87,7 @@ describe('South OPC', () => {
           aggregate: 'average',
           resampling: '10s'
         },
-        scanModeId: 'scanModeId2'
+        scanMode: testData.scanMode.list[1]
       }
     ]
   };

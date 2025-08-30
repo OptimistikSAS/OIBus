@@ -1,7 +1,7 @@
 import { AfterContentInit, Component, effect, inject, input, OnInit, viewChild } from '@angular/core';
 import {
   SouthConnectorCommandDTO,
-  SouthConnectorItemCommandDTO,
+  SouthConnectorItemDTO,
   SouthConnectorItemTestingSettings,
   SouthConnectorManifest
 } from '../../../../../../backend/shared/model/south-connector.model';
@@ -15,7 +15,7 @@ import { getMessageFromHttpErrorResponse } from '../../../shared/error-intercept
 import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DateTime } from 'luxon';
 import { HistoryQueryService } from '../../../services/history-query.service';
-import { HistoryQueryItemCommandDTO } from '../../../../../../backend/shared/model/history-query.model';
+import { HistoryQueryItemDTO } from '../../../../../../backend/shared/model/history-query.model';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { ContentDisplayMode, ItemTestResultComponent } from './item-test-result/item-test-result.component';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
@@ -50,9 +50,9 @@ export class SouthItemTestComponent<TItemType extends 'south' | 'history-south'>
   readonly item =
     input.required<
       TItemType extends 'south'
-        ? SouthConnectorItemCommandDTO<SouthItemSettings>
+        ? SouthConnectorItemDTO<SouthItemSettings>
         : TItemType extends 'history-south'
-          ? HistoryQueryItemCommandDTO<SouthItemSettings>
+          ? HistoryQueryItemDTO<SouthItemSettings>
           : never
     >();
 
@@ -166,7 +166,7 @@ export class SouthItemTestComponent<TItemType extends 'south' | 'history-south'>
         this.entityId(),
         this.connectorCommand().type,
         this.connectorCommand().settings,
-        this.item() as SouthConnectorItemCommandDTO<SouthItemSettings>,
+        this.item().settings,
         this.testingSettings
       );
     } else if (type === 'history-south') {
@@ -174,7 +174,7 @@ export class SouthItemTestComponent<TItemType extends 'south' | 'history-south'>
         this.entityId(),
         this.connectorCommand().type,
         this.connectorCommand().settings,
-        this.item() as HistoryQueryItemCommandDTO<SouthItemSettings>,
+        this.item().settings,
         this.testingSettings
       );
     }

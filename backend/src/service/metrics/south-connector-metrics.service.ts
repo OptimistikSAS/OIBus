@@ -50,18 +50,18 @@ export default class SouthConnectorMetricsService {
   }
 
   initMetrics(): void {
-    this.southConnectorMetricsRepository.initMetrics(this.southConnector.settings.id);
-    this._metrics = this.southConnectorMetricsRepository.getMetrics(this.southConnector.settings.id)!;
+    this.southConnectorMetricsRepository.initMetrics(this.southConnector.connectorConfiguration.id);
+    this._metrics = this.southConnectorMetricsRepository.getMetrics(this.southConnector.connectorConfiguration.id)!;
     this._stream?.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
   }
 
   updateMetrics(): void {
-    this.southConnectorMetricsRepository.updateMetrics(this.southConnector.settings.id, this._metrics);
+    this.southConnectorMetricsRepository.updateMetrics(this.southConnector.connectorConfiguration.id, this._metrics);
     this._stream?.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
   }
 
   resetMetrics(): void {
-    this.southConnectorMetricsRepository.removeMetrics(this.southConnector.settings.id);
+    this.southConnectorMetricsRepository.removeMetrics(this.southConnector.connectorConfiguration.id);
     this.initMetrics();
   }
 

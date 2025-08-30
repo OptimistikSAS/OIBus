@@ -104,7 +104,7 @@ describe('SouthODBC odbc driver with authentication', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id2',
@@ -122,7 +122,7 @@ describe('SouthODBC odbc driver with authentication', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id3',
@@ -157,7 +157,7 @@ describe('SouthODBC odbc driver with authentication', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanModeId: 'scanModeId2'
+        scanMode: testData.scanMode.list[1]
       }
     ]
   };
@@ -462,7 +462,7 @@ describe('SouthODBC odbc driver without authentication', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id2',
@@ -480,7 +480,7 @@ describe('SouthODBC odbc driver without authentication', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id3',
@@ -515,7 +515,7 @@ describe('SouthODBC odbc driver without authentication', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanModeId: 'scanModeId2'
+        scanMode: testData.scanMode.list[1]
       }
     ]
   };
@@ -655,7 +655,7 @@ describe('SouthODBC odbc driver test connection', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id2',
@@ -673,7 +673,7 @@ describe('SouthODBC odbc driver test connection', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id3',
@@ -708,7 +708,7 @@ describe('SouthODBC odbc driver test connection', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanModeId: 'scanModeId2'
+        scanMode: testData.scanMode.list[1]
       }
     ]
   };
@@ -932,7 +932,7 @@ describe('SouthODBC odbc remote with authentication', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id2',
@@ -950,7 +950,7 @@ describe('SouthODBC odbc remote with authentication', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id3',
@@ -985,7 +985,7 @@ describe('SouthODBC odbc remote with authentication', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanModeId: 'scanModeId2'
+        scanMode: testData.scanMode.list[1]
       }
     ]
   };
@@ -1311,7 +1311,7 @@ describe('SouthODBC odbc remote test connection', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id2',
@@ -1329,7 +1329,7 @@ describe('SouthODBC odbc remote test connection', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id3',
@@ -1364,7 +1364,7 @@ describe('SouthODBC odbc remote test connection', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanModeId: 'scanModeId2'
+        scanMode: testData.scanMode.list[1]
       }
     ]
   };

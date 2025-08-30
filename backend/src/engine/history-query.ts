@@ -103,13 +103,23 @@ export default class HistoryQuery {
     this.north.metricsEvent.on('cache-content-size', (cachedSize: number) => {
       this.metricsEvent.emit('north-cache-content-size', cachedSize);
     });
-    await this.north.start(false);
+    await this.north.start();
 
     this.south.connectedEvent.on('connected', async () => {
       this.south!.createDeferredPromise();
 
       this.south!.historyQueryHandler(
-        this.historyConfiguration.items.map(item => ({ ...item, scanModeId: 'history' })).filter(item => item.enabled),
+        this.historyConfiguration.items
+          .filter(item => item.enabled)
+          .map(item => ({
+            ...item,
+            scanMode: {
+              id: 'history',
+              name: 'history',
+              description: '',
+              cron: ''
+            }
+          })),
         this.historyConfiguration.startTime,
         this.historyConfiguration.endTime,
         'history',
@@ -190,7 +200,7 @@ export default class HistoryQuery {
       this.south.metricsEvent.removeAllListeners();
     }
     if (this.north) {
-      await this.north.stop(false);
+      await this.north.stop();
       this.north.metricsEvent.removeAllListeners();
     }
     this.stopping = false;

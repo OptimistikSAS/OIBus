@@ -13,10 +13,6 @@ import path from 'node:path';
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import testData from '../../tests/utils/test-data';
-import NorthConnectorRepository from '../../repository/config/north-connector.repository';
-import ScanModeRepository from '../../repository/config/scan-mode.repository';
-import NorthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/north-connector-repository.mock';
-import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
 import CertificateRepository from '../../repository/config/certificate.repository';
 import CertificateRepositoryMock from '../../tests/__mocks__/repository/config/certificate-repository.mock';
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
@@ -53,8 +49,6 @@ jest.mock('../../service/encryption.service', () => ({
 }));
 
 const logger: pino.Logger = new PinoLogger();
-const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
-const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const certificateRepository: CertificateRepository = new CertificateRepositoryMock();
 const oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository = new OianalyticsRegistrationRepositoryMock();
 const cacheService: CacheService = new CacheServiceMock();
@@ -75,7 +69,8 @@ const myReadStream = {
     return this;
   }),
   pause: jest.fn(),
-  close: jest.fn()
+  close: jest.fn(),
+  closed: false
 };
 (fsSync.createReadStream as jest.Mock).mockReturnValue(myReadStream);
 
@@ -143,8 +138,6 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
     configuration = JSON.parse(JSON.stringify(testData.north.list[0]));
     configuration.settings = settings as NorthOIAnalyticsSettings;
-    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
-    (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
     (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(200));
     (filesExists as jest.Mock).mockReturnValue(true);
     (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
@@ -169,8 +162,6 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
 
     north = new NorthOIAnalytics(
       configuration,
-      northConnectorRepository,
-      scanModeRepository,
       certificateRepository,
       oIAnalyticsRegistrationRepository,
       logger,
@@ -448,6 +439,47 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
     expect(fs.unlink).toHaveBeenCalledWith(path.resolve('/path', 'to', 'file', 'example.file-123456.gz'));
   });
 
+  it('should properly handle files and not compress them if already compressed', async () => {
+    const newSettings = structuredClone(north['connector'].settings);
+    newSettings.compress = true;
+    north['connector'].settings = newSettings;
+
+    const expectedReqOptions = {
+      method: 'POST',
+      headers: {
+        'content-type': expect.stringContaining('multipart/form-data; boundary=')
+      },
+      query: { dataSourceId: configuration.name },
+      body: expect.any(FormData),
+      acceptUnauthorized: false,
+      auth: authOptions,
+      timeout: 30000,
+      ...proxyOptions
+    };
+    (filesExists as jest.Mock).mockReturnValueOnce(true).mockReturnValueOnce(true);
+
+    myReadStream.closed = true;
+
+    await north.handleContent({
+      contentFile: '/path/to/file/example-123456.file',
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'any',
+      source: 'south',
+      options: {}
+    });
+
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ href: `${hostname}/api/oianalytics/file-uploads` }),
+      expectedReqOptions
+    );
+    expect(myReadStream.close).not.toHaveBeenCalled();
+    expect(compress).not.toHaveBeenCalled();
+    expect(fs.unlink).toHaveBeenCalledWith(path.resolve('/path', 'to', 'file', 'example.file-123456.gz'));
+    myReadStream.closed = false;
+  });
+
   it('should properly throw error when file does not exist', async () => {
     const filePath = '/path/to/file/example.file';
     (filesExists as jest.Mock).mockReturnValueOnce(false);
@@ -458,10 +490,13 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
     const filePath = '/path/to/file/example.file';
     const error = new Error('error');
     (HTTPRequest as jest.Mock).mockRejectedValueOnce(error);
+    myReadStream.closed = true;
 
     await expect(north.handleFile(filePath)).rejects.toThrow(
       new OIBusError(`Fail to reach file endpoint ${hostname}/api/oianalytics/file-uploads. ${error}`, true)
     );
+    expect(myReadStream.close).not.toHaveBeenCalled();
+    myReadStream.closed = false;
   });
 
   it('should properly throw error on file bad response', async () => {
@@ -597,8 +632,6 @@ describe('NorthOIAnalytics with Azure Active Directory', () => {
         clientId: 'clientId'
       } as NorthOIAnalyticsSettingsSpecificSettings
     };
-    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
-    (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
     (filesExists as jest.Mock).mockReturnValue(true);
     (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(200));
   });
@@ -615,8 +648,6 @@ describe('NorthOIAnalytics with Azure Active Directory', () => {
 
       north = new NorthOIAnalytics(
         configuration,
-        northConnectorRepository,
-        scanModeRepository,
         certificateRepository,
         oIAnalyticsRegistrationRepository,
         logger,
@@ -717,8 +748,6 @@ describe('NorthOIAnalytics with Azure Active Directory', () => {
 
       north = new NorthOIAnalytics(
         configuration,
-        northConnectorRepository,
-        scanModeRepository,
         certificateRepository,
         oIAnalyticsRegistrationRepository,
         logger,
@@ -776,8 +805,6 @@ describe('NorthOIAnalytics with OIA module', () => {
       timeout: 30,
       compress: false
     };
-    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
-    (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
     (filesExists as jest.Mock).mockReturnValue(true);
     (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
     (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(200));
@@ -800,8 +827,6 @@ describe('NorthOIAnalytics with OIA module', () => {
     } as OIAnalyticsRegistration;
     north = new NorthOIAnalytics(
       configuration,
-      northConnectorRepository,
-      scanModeRepository,
       certificateRepository,
       oIAnalyticsRegistrationRepository,
       logger,

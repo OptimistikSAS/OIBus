@@ -1673,7 +1673,7 @@ describe('Repository with populated database', () => {
           id: '',
           name: 'new item',
           enabled: true,
-          scanModeId: testData.scanMode.list[0].id,
+          scanMode: testData.scanMode.list[0],
           settings: {} as SouthItemSettings
         }
       ];
@@ -1768,7 +1768,7 @@ describe('Repository with populated database', () => {
         id: '',
         name: 'new item',
         enabled: false,
-        scanModeId: testData.scanMode.list[0].id,
+        scanMode: testData.scanMode.list[0],
         settings: {} as SouthItemSettings
       });
       itemsToSave[0].name = 'updated name';
@@ -1795,7 +1795,7 @@ describe('Repository with populated database', () => {
         id: '',
         name: 'new item',
         enabled: false,
-        scanModeId: testData.scanMode.list[0].id,
+        scanMode: testData.scanMode.list[0],
         settings: {} as SouthItemSettings
       });
 

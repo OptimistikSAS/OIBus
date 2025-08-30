@@ -4,8 +4,6 @@ import pino from 'pino';
 import { NorthMQTTSettings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
-import NorthConnectorRepository from '../../repository/config/north-connector.repository';
-import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import { BaseFolders } from '../../model/types';
 import mqtt from 'mqtt';
 import fs from 'node:fs/promises';
@@ -21,14 +19,8 @@ export default class NorthMQTT extends NorthConnector<NorthMQTTSettings> {
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private disconnecting = false;
 
-  constructor(
-    configuration: NorthConnectorEntity<NorthMQTTSettings>,
-    northConnectorRepository: NorthConnectorRepository,
-    scanModeRepository: ScanModeRepository,
-    logger: pino.Logger,
-    baseFolders: BaseFolders
-  ) {
-    super(configuration, northConnectorRepository, scanModeRepository, logger, baseFolders);
+  constructor(configuration: NorthConnectorEntity<NorthMQTTSettings>, logger: pino.Logger, baseFolders: BaseFolders) {
+    super(configuration, logger, baseFolders);
   }
 
   override async connect(): Promise<void> {

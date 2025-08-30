@@ -67,18 +67,18 @@ export default class NorthConnectorMetricsService {
   }
 
   initMetrics(): void {
-    this.northConnectorMetricsRepository.initMetrics(this.northConnector.settings.id);
-    this._metrics = this.northConnectorMetricsRepository.getMetrics(this.northConnector.settings.id)!;
+    this.northConnectorMetricsRepository.initMetrics(this.northConnector.connectorConfiguration.id);
+    this._metrics = this.northConnectorMetricsRepository.getMetrics(this.northConnector.connectorConfiguration.id)!;
     this._stream?.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
   }
 
   updateMetrics(): void {
-    this.northConnectorMetricsRepository.updateMetrics(this.northConnector.settings.id, this._metrics);
+    this.northConnectorMetricsRepository.updateMetrics(this.northConnector.connectorConfiguration.id, this._metrics);
     this._stream?.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
   }
 
   resetMetrics(): void {
-    this.northConnectorMetricsRepository.removeMetrics(this.northConnector.settings.id);
+    this.northConnectorMetricsRepository.removeMetrics(this.northConnector.connectorConfiguration.id);
     this.initMetrics();
   }
 

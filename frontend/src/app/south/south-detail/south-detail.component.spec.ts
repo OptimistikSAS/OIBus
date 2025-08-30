@@ -86,7 +86,9 @@ describe('SouthDetailComponent', () => {
     scanModeService.list.and.returnValue(of(testData.scanMode.list));
     certificateService.list.and.returnValue(of(testData.certificates.list));
     engineService.getInfo.and.returnValue(of(engineInfo));
-    southConnectorService.get.and.returnValue(of(southConnector));
+    southConnectorService.get.and.returnValue(
+      of({ ...southConnector, items: southConnector.items.map(element => ({ ...element, scanModeId: element.scanMode.id })) })
+    );
     southConnectorService.getSouthConnectorTypeManifest.and.returnValue(of(manifest));
     southConnectorService.startSouth.and.returnValue(of(undefined));
     southConnectorService.stopSouth.and.returnValue(of(undefined));
@@ -124,7 +126,13 @@ describe('SouthDetailComponent', () => {
   });
 
   it('should start south', () => {
-    southConnectorService.get.and.returnValue(of({ ...southConnector, enabled: false }));
+    southConnectorService.get.and.returnValue(
+      of({
+        ...southConnector,
+        items: southConnector.items.map(element => ({ ...element, scanModeId: element.scanMode.id })),
+        enabled: false
+      })
+    );
     tester.detectChanges();
     tester.toggleButton.click();
     expect(southConnectorService.startSouth).toHaveBeenCalledWith(southConnector.id);

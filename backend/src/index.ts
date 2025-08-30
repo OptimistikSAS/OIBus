@@ -102,6 +102,7 @@ const CERT_FOLDER = 'certs';
   await loggerService.start(oibusSettings, repositoryService.oianalyticsRegistrationRepository.get()!);
 
   const dataStreamEngine = new DataStreamEngine(
+    repositoryService.northConnectorRepository,
     repositoryService.northMetricsRepository,
     repositoryService.southMetricsRepository,
     loggerService.logger!

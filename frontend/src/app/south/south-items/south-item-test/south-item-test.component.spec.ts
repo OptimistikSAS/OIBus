@@ -1,7 +1,7 @@
 import { fakeAsync, flushMicrotasks, TestBed, tick } from '@angular/core/testing';
 import { ComponentTester, createMock } from 'ngx-speculoos';
 import { SouthConnectorService } from '../../../services/south-connector.service';
-import { SouthConnectorItemCommandDTO, SouthConnectorManifest } from '../../../../../../backend/shared/model/south-connector.model';
+import { SouthConnectorItemDTO, SouthConnectorManifest } from '../../../../../../backend/shared/model/south-connector.model';
 import { delay, of, throwError } from 'rxjs';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
@@ -31,7 +31,15 @@ class TestComponent {
   type!: 'south' | 'history-south';
   entityId!: string;
 
-  item = testData.south.itemCommand;
+  item: SouthConnectorItemDTO<SouthItemSettings> = {
+    id: 'id1',
+    name: 'item1',
+    enabled: true,
+    settings: {
+      query: 'sql'
+    } as SouthItemSettings,
+    scanMode: testData.scanMode.list[0]
+  };
   connectorCommand = testData.south.command;
   manifest = testData.south.manifest;
 }
@@ -197,7 +205,9 @@ describe('SouthItemTestComponent', () => {
         tester.componentInstance.entityId,
         tester.componentInstance.connectorCommand.type,
         tester.componentInstance.connectorCommand.settings,
-        tester.componentInstance.item as SouthConnectorItemCommandDTO<SouthItemSettings>,
+        {
+          query: 'sql'
+        } as SouthItemSettings,
         expectedSettings
       );
 
@@ -240,7 +250,9 @@ describe('SouthItemTestComponent', () => {
         tester.componentInstance.entityId,
         tester.componentInstance.connectorCommand.type,
         tester.componentInstance.connectorCommand.settings,
-        tester.componentInstance.item as SouthConnectorItemCommandDTO<SouthItemSettings>,
+        {
+          query: 'sql'
+        } as SouthItemSettings,
         expectedSettings
       );
 
@@ -265,7 +277,9 @@ describe('SouthItemTestComponent', () => {
         tester.componentInstance.entityId,
         tester.componentInstance.connectorCommand.type,
         tester.componentInstance.connectorCommand.settings,
-        tester.componentInstance.item as SouthConnectorItemCommandDTO<SouthItemSettings>,
+        {
+          query: 'sql'
+        } as SouthItemSettings,
         expectedSettings
       );
 
@@ -297,7 +311,9 @@ describe('SouthItemTestComponent', () => {
         tester.componentInstance.entityId,
         tester.componentInstance.connectorCommand.type,
         tester.componentInstance.connectorCommand.settings,
-        tester.componentInstance.item as SouthConnectorItemCommandDTO<SouthItemSettings>,
+        {
+          query: 'sql'
+        } as SouthItemSettings,
         expectedSettings
       );
 
@@ -340,7 +356,9 @@ describe('SouthItemTestComponent', () => {
         tester.componentInstance.entityId,
         tester.componentInstance.connectorCommand.type,
         tester.componentInstance.connectorCommand.settings,
-        tester.componentInstance.item as SouthConnectorItemCommandDTO<SouthItemSettings>,
+        {
+          query: 'sql'
+        } as SouthItemSettings,
         expectedSettings
       );
 
@@ -384,7 +402,9 @@ describe('SouthItemTestComponent', () => {
         tester.componentInstance.entityId,
         tester.componentInstance.connectorCommand.type,
         tester.componentInstance.connectorCommand.settings,
-        tester.componentInstance.item as SouthConnectorItemCommandDTO<SouthItemSettings>,
+        {
+          query: 'sql'
+        } as SouthItemSettings,
         expectedSettings
       );
 
@@ -413,7 +433,9 @@ describe('SouthItemTestComponent', () => {
         tester.componentInstance.entityId,
         tester.componentInstance.connectorCommand.type,
         tester.componentInstance.connectorCommand.settings,
-        tester.componentInstance.item as SouthConnectorItemCommandDTO<SouthItemSettings>,
+        {
+          query: 'sql'
+        } as SouthItemSettings,
         expectedSettings
       );
 

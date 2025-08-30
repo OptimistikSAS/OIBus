@@ -402,7 +402,7 @@ describe('south service', () => {
         'create',
         badCommand.type,
         badCommand.settings,
-        testData.south.itemCommand,
+        testData.south.itemCommand.settings,
         testData.south.itemTestingSettings,
         callback,
         logger
@@ -444,7 +444,7 @@ describe('south service', () => {
         testData.south.list[0].id,
         testData.south.command.type,
         testData.south.command.settings,
-        testData.south.itemCommand,
+        testData.south.itemCommand.settings,
         testData.south.itemTestingSettings,
         callback,
         logger
@@ -887,8 +887,7 @@ describe('south service', () => {
           id: '',
           name: csvData[4].name,
           enabled: true,
-          scanModeId: 'scanModeId1',
-          scanModeName: null,
+          scanMode: testData.scanMode.list[0],
           settings: {
             ignoreModifiedDate: true,
             minAge: 100,
@@ -901,50 +900,50 @@ describe('south service', () => {
         {
           error: 'Item name "item1" already used',
           item: {
-            id: '',
             name: csvData[0].name,
-            enabled: csvData[0].enabled.toLowerCase() === 'true',
-            scanModeId: null,
-            scanModeName: null,
-            settings: {}
+            enabled: csvData[0].enabled,
+            scanMode: csvData[0].scanMode,
+            settings_ignoreModifiedDate: 'false',
+            settings_minAge: 100,
+            settings_preserveFiles: 'true',
+            settings_regex: '*'
           }
         },
         {
           error: 'Scan mode "bad scan mode" not found for item item2bis',
           item: {
-            id: '',
             name: csvData[1].name,
-            enabled: csvData[1].enabled.toLowerCase() === 'true',
-            scanModeId: null,
-            scanModeName: null,
-            settings: {}
+            enabled: csvData[1].enabled,
+            scanMode: csvData[1].scanMode,
+            settings_ignoreModifiedDate: 'false',
+            settings_minAge: 100,
+            settings_preserveFiles: 'true',
+            settings_regex: '*'
           }
         },
         {
           error: 'Settings "badItem" not accepted in manifest',
           item: {
-            id: '',
             name: csvData[2].name,
-            enabled: csvData[2].enabled.toLowerCase() === 'true',
-            scanModeId: 'scanModeId1',
-            scanModeName: null,
-            settings: {}
+            enabled: csvData[2].enabled,
+            scanMode: csvData[2].scanMode,
+            settings_badItem: 100,
+            settings_ignoreModifiedDate: 'false',
+            settings_minAge: 100,
+            settings_preserveFiles: 'true',
+            settings_regex: '*'
           }
         },
         {
           error: 'validation error',
           item: {
-            id: '',
             name: csvData[3].name,
-            enabled: true,
-            scanModeId: 'scanModeId1',
-            scanModeName: null,
-            settings: {
-              ignoreModifiedDate: true,
-              minAge: 100,
-              preserveFiles: true,
-              regex: '*'
-            }
+            enabled: csvData[3].enabled,
+            scanMode: csvData[3].scanMode,
+            settings_ignoreModifiedDate: 12,
+            settings_minAge: 100,
+            settings_preserveFiles: 'true',
+            settings_regex: '*'
           }
         }
       ]
@@ -984,8 +983,7 @@ describe('south service', () => {
           id: '',
           name: csvData[0].name,
           enabled: csvData[0].enabled.toLowerCase() === 'true',
-          scanModeId: 'scanModeId1',
-          scanModeName: null,
+          scanMode: testData.scanMode.list[0],
           settings: {
             query: 'query1',
             dateTimeFields: [],

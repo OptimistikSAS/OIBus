@@ -9,9 +9,6 @@ import path from 'node:path';
 import { NorthSettings } from '../../shared/model/north-settings.model';
 import { createBaseFolders, delay, generateRandomId, validateCronExpression } from '../service/utils';
 import { NorthConnectorEntity } from '../model/north-connector.model';
-import { SouthConnectorEntityLight } from '../model/south-connector.model';
-import NorthConnectorRepository from '../repository/config/north-connector.repository';
-import ScanModeRepository from '../repository/config/scan-mode.repository';
 import { ScanMode } from '../model/scan-mode.model';
 import { OIBusError } from '../model/engine.model';
 import { BaseFolders } from '../model/types';
@@ -41,7 +38,6 @@ import IsoTransformer from '../service/transformers/iso-transformer';
  */
 export default abstract class NorthConnector<T extends NorthSettings> {
   private cacheService: CacheService;
-  private subscribedTo: Array<SouthConnectorEntityLight> = [];
 
   private cacheSize = {
     cacheSize: 0,
@@ -66,8 +62,6 @@ export default abstract class NorthConnector<T extends NorthSettings> {
 
   protected constructor(
     protected connector: NorthConnectorEntity<T>,
-    protected readonly northConnectorRepository: NorthConnectorRepository,
-    protected readonly scanModeRepository: ScanModeRepository,
     protected logger: pino.Logger,
     protected readonly baseFolders: BaseFolders
   ) {
@@ -99,26 +93,25 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     );
   }
 
-  async start(dataStream = true): Promise<void> {
+  set connectorConfiguration(connectorConfiguration: NorthConnectorEntity<T>) {
+    this.connector = connectorConfiguration;
+  }
+
+  get connectorConfiguration() {
+    return this.connector;
+  }
+
+  async start(): Promise<void> {
     if (this.connector.id !== 'test') {
       await createBaseFolders(this.baseFolders);
-      this.updateConnectorSubscription();
       this.taskRunnerEvent.on('run', async (taskDescription: { id: string; name: string }) => {
         await this.run(taskDescription);
       });
       this.logger.debug(`North connector "${this.connector.name}" enabled`);
     }
-    if (dataStream) {
-      // Reload the settings only on data stream case, otherwise let the history query manage the settings
-      this.connector = this.northConnectorRepository.findNorthById(this.connector.id)!;
-    }
     this.cacheSizeWarningHasBeenTriggered = false;
     await this.cacheService.start();
     await this.connect();
-  }
-
-  updateConnectorSubscription() {
-    this.subscribedTo = this.northConnectorRepository.listNorthSubscriptions(this.connector.id);
   }
 
   isEnabled(): boolean {
@@ -134,8 +127,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
       this.metricsEvent.emit('connect', {
         lastConnection: DateTime.now().toUTC().toISO()!
       });
-      const scanMode = this.scanModeRepository.findById(this.connector.caching.trigger.scanModeId)!;
-      this.createCronJob(scanMode);
+      this.createCronJob(this.connector.caching.trigger.scanMode);
       // Check at startup if a run must be triggered
       await this.triggerRunIfNecessary(this.connector.caching.throttling.runMinDelay);
     }
@@ -482,7 +474,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
    * If subscribedTo is not defined or an empty array, the subscription is true.
    */
   isSubscribed(southId: string): boolean {
-    return this.subscribedTo.length === 0 || this.subscribedTo.some(south => south.id === southId);
+    return this.connector.subscriptions.length === 0 || this.connector.subscriptions.some(south => south.id === southId);
   }
 
   /**
@@ -493,15 +485,10 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     this.logger.info(`"${this.connector.name}" (${this.connector.id}) disconnected`);
   }
 
-  async stop(dataStream = true): Promise<void> {
+  async stop(): Promise<void> {
     this.stopping = true;
     this.logger.debug(`Stopping "${this.connector.name}" (${this.connector.id})...`);
     this.taskRunnerEvent.removeAllListeners();
-
-    if (dataStream) {
-      // Reload the settings only on a data stream case, otherwise let the history query manage the settings
-      this.connector = this.northConnectorRepository.findNorthById(this.connector.id)!;
-    }
 
     if (this.runProgress$) {
       this.logger.debug('Waiting for task to finish');
@@ -535,10 +522,6 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     if (this.cronByScanModeIds.get(scanMode.id)) {
       this.createCronJob(scanMode);
     }
-  }
-
-  get settings(): NorthConnectorEntity<T> {
-    return this.connector;
   }
 
   private async triggerRunIfNecessary(timeToWait: number): Promise<void> {

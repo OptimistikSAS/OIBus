@@ -98,7 +98,7 @@ describe('South Modbus', () => {
             multiplierCoefficient: 1
           }
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id2',
@@ -112,7 +112,7 @@ describe('South Modbus', () => {
             multiplierCoefficient: 1
           }
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id3',
@@ -126,7 +126,7 @@ describe('South Modbus', () => {
             multiplierCoefficient: 1
           }
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id4',
@@ -136,7 +136,7 @@ describe('South Modbus', () => {
           address: '0x1E82',
           modbusType: 'discrete-input'
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id5',
@@ -146,7 +146,7 @@ describe('South Modbus', () => {
           address: '0x0E83',
           modbusType: 'coil'
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id6',
@@ -161,7 +161,7 @@ describe('South Modbus', () => {
             multiplierCoefficient: 1
           }
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       }
     ]
   };
@@ -368,7 +368,7 @@ describe('South Modbus', () => {
       id: 'bad',
       enabled: true,
       name: 'Bad Item',
-      scanModeId: 'id',
+      scanMode: testData.scanMode.list[0],
       settings: {
         modbusType: 'bad type' as SouthModbusItemSettingsModbusType,
         address: '1010'
@@ -444,7 +444,7 @@ describe('SouthModbus test connection', () => {
             multiplierCoefficient: 1
           }
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id2',
@@ -458,7 +458,7 @@ describe('SouthModbus test connection', () => {
             multiplierCoefficient: 1
           }
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id3',
@@ -472,7 +472,7 @@ describe('SouthModbus test connection', () => {
             multiplierCoefficient: 1
           }
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id4',
@@ -482,7 +482,7 @@ describe('SouthModbus test connection', () => {
           address: '0x1E82',
           modbusType: 'discrete-input'
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id5',
@@ -492,7 +492,7 @@ describe('SouthModbus test connection', () => {
           address: '0x0E83',
           modbusType: 'coil'
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id6',
@@ -507,7 +507,7 @@ describe('SouthModbus test connection', () => {
             multiplierCoefficient: 1
           }
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       }
     ]
   };

@@ -2,7 +2,6 @@ import { ImportSouthItemsModalComponent } from './import-south-items-modal.compo
 import { ComponentTester, createMock } from 'ngx-speculoos';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { fakeAsync, TestBed } from '@angular/core/testing';
-import { SouthConnectorItemDTO } from '../../../../../../backend/shared/model/south-connector.model';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { SouthItemSettings } from '../../../../../../backend/shared/model/south-settings.model';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
@@ -35,17 +34,17 @@ describe('ImportSouthItemsModalComponent', () => {
     tester = new ImportSouthItemsModalComponentTester();
     tester.componentInstance.prepare(
       testData.south.manifest,
-      testData.south.list[0].items,
+      testData.south.list[0].items.map(element => ({ ...element, scanModeId: element.scanMode.id })),
       [
         {
           id: '',
           name: 'item999',
           enabled: true,
           settings: {} as SouthItemSettings,
-          scanModeId: testData.scanMode.list[0].id
+          scanMode: testData.scanMode.list[0]
         }
       ],
-      [{ item: { name: 'item2' } as SouthConnectorItemDTO<SouthItemSettings>, error: '' }],
+      [{ item: { name: 'item2' }, error: '' }],
       testData.scanMode.list
     );
     tester.detectChanges();
@@ -59,7 +58,7 @@ describe('ImportSouthItemsModalComponent', () => {
         name: 'item999',
         enabled: true,
         settings: {} as SouthItemSettings,
-        scanModeId: testData.scanMode.list[0].id
+        scanMode: testData.scanMode.list[0]
       }
     ]);
   }));

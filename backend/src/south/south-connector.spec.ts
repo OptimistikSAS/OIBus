@@ -117,7 +117,7 @@ describe('SouthConnector with file query', () => {
     south.addToQueue(testData.scanMode.list[0]);
     expect(south.run).toHaveBeenCalledWith(
       testData.scanMode.list[0].id,
-      testData.south.list[0].items.filter(element => element.scanModeId === testData.scanMode.list[0].id)
+      testData.south.list[0].items.filter(element => element.scanMode.id === testData.scanMode.list[0].id)
     );
     expect(south.run).toHaveBeenCalledTimes(1);
 
@@ -126,7 +126,7 @@ describe('SouthConnector with file query', () => {
       `Task job not added in South connector queue for cron "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron}). The previous cron was still running`
     );
     expect(south.run).toHaveBeenCalledTimes(1);
-    expect(south.settings).toEqual(testData.south.list[0]);
+    expect(south.connectorConfiguration).toEqual(testData.south.list[0]);
   });
 
   it('should properly add to queue a new task and not trigger next run if no item', async () => {
@@ -385,18 +385,22 @@ describe('SouthConnector with history and max instant per item', () => {
       historyEndTime,
       testData.scanMode.list[0].id,
       {
-        readDelay: south.settings.settings.throttling.readDelay,
-        maxReadInterval: south.settings.settings.throttling.maxReadInterval
+        readDelay: south.connectorConfiguration.settings.throttling.readDelay,
+        maxReadInterval: south.connectorConfiguration.settings.throttling.maxReadInterval
       },
-      south.settings.settings.throttling.maxInstantPerItem,
-      south.settings.settings.throttling.overlap
+      south.connectorConfiguration.settings.throttling.maxInstantPerItem,
+      south.connectorConfiguration.settings.throttling.overlap
     );
 
-    expect(generateIntervals).toHaveBeenCalledWith(startTimeFromCache, historyEndTime, south.settings.settings.throttling.maxReadInterval);
+    expect(generateIntervals).toHaveBeenCalledWith(
+      startTimeFromCache,
+      historyEndTime,
+      south.connectorConfiguration.settings.throttling.maxReadInterval
+    );
     expect(generateIntervals).toHaveBeenCalledWith(
       historyStartTime,
       startTimeFromCache,
-      south.settings.settings.throttling.maxReadInterval
+      south.connectorConfiguration.settings.throttling.maxReadInterval
     );
     expect(generateIntervals).toHaveBeenCalledTimes(4);
     expect(south.historyQuery).toHaveBeenCalledTimes(6);
@@ -436,19 +440,19 @@ describe('SouthConnector with history and max instant per item', () => {
       '2023-02-02T02:02:02.222Z',
       testData.scanMode.list[0].id,
       {
-        readDelay: south.settings.settings.throttling.readDelay,
-        maxReadInterval: south.settings.settings.throttling.maxReadInterval
+        readDelay: south.connectorConfiguration.settings.throttling.readDelay,
+        maxReadInterval: south.connectorConfiguration.settings.throttling.maxReadInterval
       },
-      south.settings.settings.throttling.maxInstantPerItem,
-      south.settings.settings.throttling.overlap
+      south.connectorConfiguration.settings.throttling.maxInstantPerItem,
+      south.connectorConfiguration.settings.throttling.overlap
     );
     expect(generateIntervals).toHaveBeenCalledWith(
       DateTime.fromISO(testData.constants.dates.FAKE_NOW)
-        .minus({ milliseconds: south.settings.settings.throttling.overlap })
+        .minus({ milliseconds: south.connectorConfiguration.settings.throttling.overlap })
         .toUTC()
         .toISO(),
       '2023-02-02T02:02:02.222Z',
-      south.settings.settings.throttling.maxReadInterval
+      south.connectorConfiguration.settings.throttling.maxReadInterval
     );
     expect(logger.trace).toHaveBeenCalledWith(
       `Interval split in ${intervals.length} sub-intervals: \r\n` +
@@ -484,19 +488,19 @@ describe('SouthConnector with history and max instant per item', () => {
       '2023-02-02T02:02:02.222Z',
       testData.scanMode.list[0].id,
       {
-        readDelay: south.settings.settings.throttling.readDelay,
-        maxReadInterval: south.settings.settings.throttling.maxReadInterval
+        readDelay: south.connectorConfiguration.settings.throttling.readDelay,
+        maxReadInterval: south.connectorConfiguration.settings.throttling.maxReadInterval
       },
-      south.settings.settings.throttling.maxInstantPerItem,
-      south.settings.settings.throttling.overlap
+      south.connectorConfiguration.settings.throttling.maxInstantPerItem,
+      south.connectorConfiguration.settings.throttling.overlap
     );
     expect(generateIntervals).toHaveBeenCalledWith(
       DateTime.fromISO(testData.constants.dates.FAKE_NOW)
-        .minus({ milliseconds: south.settings.settings.throttling.overlap })
+        .minus({ milliseconds: south.connectorConfiguration.settings.throttling.overlap })
         .toUTC()
         .toISO(),
       '2023-02-02T02:02:02.222Z',
-      south.settings.settings.throttling.maxReadInterval
+      south.connectorConfiguration.settings.throttling.maxReadInterval
     );
     expect(logger.trace).toHaveBeenCalledWith(`Querying interval: ${JSON.stringify(intervals[0], null, 2)}`);
     expect(south.historyQuery).toHaveBeenCalledTimes(2);
@@ -521,19 +525,19 @@ describe('SouthConnector with history and max instant per item', () => {
       '2023-02-02T02:02:02.222Z',
       testData.scanMode.list[0].id,
       {
-        readDelay: south.settings.settings.throttling.readDelay,
-        maxReadInterval: south.settings.settings.throttling.maxReadInterval
+        readDelay: south.connectorConfiguration.settings.throttling.readDelay,
+        maxReadInterval: south.connectorConfiguration.settings.throttling.maxReadInterval
       },
-      south.settings.settings.throttling.maxInstantPerItem,
-      south.settings.settings.throttling.overlap
+      south.connectorConfiguration.settings.throttling.maxInstantPerItem,
+      south.connectorConfiguration.settings.throttling.overlap
     );
     expect(generateIntervals).toHaveBeenCalledWith(
       DateTime.fromISO(testData.constants.dates.FAKE_NOW)
-        .minus({ milliseconds: south.settings.settings.throttling.overlap })
+        .minus({ milliseconds: south.connectorConfiguration.settings.throttling.overlap })
         .toUTC()
         .toISO(),
       '2023-02-02T02:02:02.222Z',
-      south.settings.settings.throttling.maxReadInterval
+      south.connectorConfiguration.settings.throttling.maxReadInterval
     );
     expect(logger.trace).toHaveBeenCalledWith(`Querying interval: ${JSON.stringify(intervals[0], null, 2)}`);
     expect(south.historyQuery).toHaveBeenCalledTimes(1);
@@ -572,11 +576,11 @@ describe('SouthConnector with history and max instant per item', () => {
         '2023-02-02T02:02:02.222Z',
         testData.scanMode.list[0].id,
         {
-          readDelay: south.settings.settings.throttling.readDelay,
-          maxReadInterval: south.settings.settings.throttling.maxReadInterval
+          readDelay: south.connectorConfiguration.settings.throttling.readDelay,
+          maxReadInterval: south.connectorConfiguration.settings.throttling.maxReadInterval
         },
-        south.settings.settings.throttling.maxInstantPerItem,
-        south.settings.settings.throttling.overlap
+        south.connectorConfiguration.settings.throttling.maxInstantPerItem,
+        south.connectorConfiguration.settings.throttling.overlap
       )
       .then(() => {
         south.resolveDeferredPromise();
@@ -647,9 +651,12 @@ describe('SouthConnector with history and subscription', () => {
         .toISO()!,
       testData.constants.dates.FAKE_NOW,
       testData.scanMode.list[0].id,
-      { maxReadInterval: south.settings.settings.throttling.maxReadInterval, readDelay: south.settings.settings.throttling.readDelay },
+      {
+        maxReadInterval: south.connectorConfiguration.settings.throttling.maxReadInterval,
+        readDelay: south.connectorConfiguration.settings.throttling.readDelay
+      },
       false,
-      south.settings.settings.throttling.overlap
+      south.connectorConfiguration.settings.throttling.overlap
     );
     expect(south.lastPointQuery).toHaveBeenCalledTimes(1);
     expect(logger.error).toHaveBeenCalledWith(`Error when calling historyQuery. ${new Error('history query error')}`);
@@ -668,7 +675,7 @@ describe('SouthConnector with history and subscription', () => {
       testData.scanMode.list[0].id,
       { maxReadInterval: 0 },
       false,
-      south.settings.settings.throttling.overlap
+      south.connectorConfiguration.settings.throttling.overlap
     );
     expect(south.historyQueryHandler).toHaveBeenCalledTimes(2);
     expect(south.lastPointQuery).toHaveBeenCalledTimes(2);
@@ -744,19 +751,19 @@ describe('SouthConnector with history and subscription', () => {
       '2023-02-02T02:02:02.222Z',
       testData.scanMode.list[0].id,
       {
-        readDelay: south.settings.settings.throttling.readDelay,
-        maxReadInterval: south.settings.settings.throttling.maxReadInterval
+        readDelay: south.connectorConfiguration.settings.throttling.readDelay,
+        maxReadInterval: south.connectorConfiguration.settings.throttling.maxReadInterval
       },
-      south.settings.settings.throttling.maxInstantPerItem,
-      south.settings.settings.throttling.overlap
+      south.connectorConfiguration.settings.throttling.maxInstantPerItem,
+      south.connectorConfiguration.settings.throttling.overlap
     );
     expect(generateIntervals).toHaveBeenCalledWith(
       DateTime.fromISO(testData.constants.dates.FAKE_NOW)
-        .minus({ milliseconds: south.settings.settings.throttling.overlap })
+        .minus({ milliseconds: south.connectorConfiguration.settings.throttling.overlap })
         .toUTC()
         .toISO(),
       '2023-02-02T02:02:02.222Z',
-      south.settings.settings.throttling.maxReadInterval
+      south.connectorConfiguration.settings.throttling.maxReadInterval
     );
     expect(logger.trace).toHaveBeenCalledWith(
       `Interval split in ${intervals.length} sub-intervals: \r\n` +
@@ -804,19 +811,19 @@ describe('SouthConnector with history and subscription', () => {
       '2023-02-02T02:02:02.222Z',
       'scanModeId1',
       {
-        readDelay: south.settings.settings.throttling.readDelay,
-        maxReadInterval: south.settings.settings.throttling.maxReadInterval
+        readDelay: south.connectorConfiguration.settings.throttling.readDelay,
+        maxReadInterval: south.connectorConfiguration.settings.throttling.maxReadInterval
       },
-      south.settings.settings.throttling.maxInstantPerItem,
-      south.settings.settings.throttling.overlap
+      south.connectorConfiguration.settings.throttling.maxInstantPerItem,
+      south.connectorConfiguration.settings.throttling.overlap
     );
     expect(generateIntervals).toHaveBeenCalledWith(
       DateTime.fromISO(testData.constants.dates.FAKE_NOW)
-        .minus({ milliseconds: south.settings.settings.throttling.overlap })
+        .minus({ milliseconds: south.connectorConfiguration.settings.throttling.overlap })
         .toUTC()
         .toISO(),
       '2023-02-02T02:02:02.222Z',
-      south.settings.settings.throttling.maxReadInterval
+      south.connectorConfiguration.settings.throttling.maxReadInterval
     );
     expect(logger.trace).toHaveBeenCalledWith(
       `Interval split in ${intervals.length} sub-intervals: \r\n` +
@@ -854,19 +861,19 @@ describe('SouthConnector with history and subscription', () => {
       '2023-02-02T02:02:02.222Z',
       testData.scanMode.list[0].id,
       {
-        readDelay: south.settings.settings.throttling.readDelay,
-        maxReadInterval: south.settings.settings.throttling.maxReadInterval
+        readDelay: south.connectorConfiguration.settings.throttling.readDelay,
+        maxReadInterval: south.connectorConfiguration.settings.throttling.maxReadInterval
       },
-      south.settings.settings.throttling.maxInstantPerItem,
-      south.settings.settings.throttling.overlap
+      south.connectorConfiguration.settings.throttling.maxInstantPerItem,
+      south.connectorConfiguration.settings.throttling.overlap
     );
     expect(generateIntervals).toHaveBeenCalledWith(
       DateTime.fromISO(testData.constants.dates.FAKE_NOW)
-        .minus({ milliseconds: south.settings.settings.throttling.overlap })
+        .minus({ milliseconds: south.connectorConfiguration.settings.throttling.overlap })
         .toUTC()
         .toISO(),
       '2023-02-02T02:02:02.222Z',
-      south.settings.settings.throttling.maxReadInterval
+      south.connectorConfiguration.settings.throttling.maxReadInterval
     );
     expect(logger.trace).toHaveBeenCalledWith(`Querying interval: ${JSON.stringify(intervals[0], null, 2)}`);
     expect(south.historyQuery).toHaveBeenCalledTimes(1);
@@ -904,11 +911,11 @@ describe('SouthConnector with history and subscription', () => {
         '2023-02-02T02:02:02.222Z',
         testData.scanMode.list[0].id,
         {
-          readDelay: south.settings.settings.throttling.readDelay,
-          maxReadInterval: south.settings.settings.throttling.maxReadInterval
+          readDelay: south.connectorConfiguration.settings.throttling.readDelay,
+          maxReadInterval: south.connectorConfiguration.settings.throttling.maxReadInterval
         },
-        south.settings.settings.throttling.maxInstantPerItem,
-        south.settings.settings.throttling.overlap
+        south.connectorConfiguration.settings.throttling.maxInstantPerItem,
+        south.connectorConfiguration.settings.throttling.overlap
       )
       .then(() => {
         south.resolveDeferredPromise();
@@ -928,7 +935,7 @@ describe('SouthConnector with history and subscription', () => {
   it('should manage south cache on max item change from true to false', async () => {
     const config = JSON.parse(JSON.stringify(testData.south.list[2]));
     const maxInstants = new Map<string, Instant>();
-    maxInstants.set(config.items[0].scanModeId, testData.constants.dates.DATE_2);
+    maxInstants.set(config.items[0].scanMode.id, testData.constants.dates.DATE_2);
     (southCacheRepository.getLatestMaxInstants as jest.Mock).mockReturnValueOnce(maxInstants);
     south.getMaxInstantPerItem = jest.fn().mockReturnValue(true);
     await south.manageSouthCacheOnChange(testData.south.list[2], config, false);
@@ -940,7 +947,7 @@ describe('SouthConnector with history and subscription', () => {
     expect(southCacheRepository.save).toHaveBeenCalledWith({
       southId: config.id,
       itemId: config.items[0].id,
-      scanModeId: config.items[0].scanModeId,
+      scanModeId: config.items[0].scanMode.id,
       maxInstant: testData.constants.dates.DATE_2
     });
   });
@@ -948,7 +955,7 @@ describe('SouthConnector with history and subscription', () => {
   it('should manage south cache on max item change from false to true', async () => {
     const config = JSON.parse(JSON.stringify(testData.south.list[2]));
     const maxInstants = new Map<string, Instant>();
-    maxInstants.set(config.items[0].scanModeId, testData.constants.dates.DATE_2);
+    maxInstants.set(config.items[0].scanMode.id, testData.constants.dates.DATE_2);
     (southCacheRepository.getLatestMaxInstants as jest.Mock).mockReturnValueOnce(maxInstants);
     south.getMaxInstantPerItem = jest.fn().mockReturnValue(false);
     await south.manageSouthCacheOnChange(testData.south.list[2], config, true);
@@ -960,7 +967,7 @@ describe('SouthConnector with history and subscription', () => {
     expect(southCacheRepository.save).toHaveBeenCalledWith({
       southId: config.id,
       itemId: 'all',
-      scanModeId: config.items[0].scanModeId,
+      scanModeId: config.items[0].scanMode.id,
       maxInstant: testData.constants.dates.DATE_2
     });
   });
@@ -995,7 +1002,7 @@ describe('SouthConnector with history and subscription', () => {
 
   it('should manage south cache on item scan mode change without cache entry', async () => {
     const config = JSON.parse(JSON.stringify(testData.south.list[2]));
-    config.items[0].scanModeId = testData.scanMode.list[1].id;
+    config.items[0].scanMode = testData.scanMode.list[1];
     (southCacheRepository.getSouthCache as jest.Mock).mockReturnValue(null);
     south.getMaxInstantPerItem = jest.fn().mockReturnValue(false);
     await south.manageSouthCacheOnChange(testData.south.list[2], config, false);
@@ -1004,7 +1011,7 @@ describe('SouthConnector with history and subscription', () => {
 
   it('should manage south cache on item scan mode change without max instant per item and create new entry', async () => {
     const config = JSON.parse(JSON.stringify(testData.south.list[2]));
-    config.items[0].scanModeId = testData.scanMode.list[1].id;
+    config.items[0].scanMode = testData.scanMode.list[1];
     (southCacheRepository.getSouthCache as jest.Mock)
       .mockReturnValueOnce({
         scanModeId: testData.scanMode.list[0].id,
@@ -1024,7 +1031,7 @@ describe('SouthConnector with history and subscription', () => {
 
   it('should manage south cache on item scan mode change without max instant per item and not create new entry', async () => {
     const config = JSON.parse(JSON.stringify(testData.south.list[2]));
-    config.items[0].scanModeId = testData.scanMode.list[1].id;
+    config.items[0].scanMode = testData.scanMode.list[1];
     (southCacheRepository.getSouthCache as jest.Mock)
       .mockReturnValueOnce({
         scanModeId: testData.scanMode.list[0].id,
@@ -1043,7 +1050,7 @@ describe('SouthConnector with history and subscription', () => {
 
   it('should manage south cache on item scan mode change without max instant per item and create new entry', async () => {
     const config = JSON.parse(JSON.stringify(testData.south.list[2]));
-    config.items[0].scanModeId = testData.scanMode.list[1].id;
+    config.items[0].scanMode = testData.scanMode.list[1];
     (southCacheRepository.getSouthCache as jest.Mock).mockReturnValueOnce({
       scanModeId: testData.scanMode.list[0].id,
       maxInstant: testData.constants.dates.DATE_1,
@@ -1058,30 +1065,6 @@ describe('SouthConnector with history and subscription', () => {
       maxInstant: testData.constants.dates.DATE_1
     });
   });
-
-  // it('should manage south cache on item scan mode change with max instant per item', async () => {
-  //   const config = JSON.parse(JSON.stringify(testData.south.list[2]));
-  //   config.items[0].scanModeId = testData.scanMode.list[1].id;
-  //   southCacheService.getSouthCache
-  //     .mockReturnValueOnce({
-  //       scanModeId: testData.scanMode.list[0].id,
-  //       maxInstant: testData.constants.dates.DATE_1,
-  //       southId: testData.south.list[2].id
-  //     })
-  //     .mockReturnValueOnce({
-  //       scanModeId: testData.scanMode.list[1].id,
-  //       maxInstant: testData.constants.dates.DATE_2,
-  //       southId: testData.south.list[2].id
-  //     });
-  //   south.getMaxInstantPerItem = jest.fn().mockReturnValue(true);
-  //   await south.manageSouthCacheOnChange(testData.south.list[2], config, true);
-  //   expect(southCacheRepository.save).toHaveBeenCalledWith({
-  //     southId: testData.south.list[2].id,
-  //     itemId: config.items[0].id,
-  //     scanModeId: testData.scanMode.list[1].id,
-  //     maxInstant: testData.constants.dates.DATE_1
-  //   });
-  // });
 
   it('should create subscriptions and cron jobs', async () => {
     const subscriptionItem = JSON.parse(JSON.stringify(testData.south.list[2].items[1]));

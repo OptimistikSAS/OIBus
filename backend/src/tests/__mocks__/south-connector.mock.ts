@@ -6,8 +6,9 @@ import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-se
  * Create a mock object for South Connector
  */
 export default class SouthConnectorMock {
-  constructor(settings: SouthConnectorEntity<SouthSettings, SouthItemSettings>) {
-    this.settings = settings;
+  private connector: SouthConnectorEntity<SouthSettings, SouthItemSettings>;
+  constructor(connector: SouthConnectorEntity<SouthSettings, SouthItemSettings>) {
+    this.connector = connector;
   }
 
   start = jest.fn().mockImplementation(() => Promise.resolve());
@@ -29,7 +30,6 @@ export default class SouthConnectorMock {
   testConnection = jest.fn();
   testItem = jest.fn();
   resetMetrics = jest.fn();
-  settings;
   connectedEvent = new EventEmitter();
   metricsEvent = new EventEmitter();
   queriesHistory = jest.fn();
@@ -38,4 +38,11 @@ export default class SouthConnectorMock {
     .fn()
     .mockImplementation(value => ({ maxReadInterval: value.throttling.maxReadInterval, overlap: value.throttling.overlap }));
   getMaxInstantPerItem = jest.fn().mockImplementation(value => value.throttling?.maxInstantPerItem || false);
+
+  set connectorConfiguration(connectorConfiguration: SouthConnectorEntity<SouthSettings, SouthItemSettings>) {
+    this.connector = connectorConfiguration;
+  }
+  get connectorConfiguration() {
+    return this.connector;
+  }
 }

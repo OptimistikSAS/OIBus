@@ -130,7 +130,7 @@ describe('SouthOPCUA', () => {
             resampling: 'none'
           }
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id2',
@@ -144,7 +144,7 @@ describe('SouthOPCUA', () => {
             resampling: 'none'
           }
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id3',
@@ -158,7 +158,7 @@ describe('SouthOPCUA', () => {
             resampling: 'none'
           }
         },
-        scanModeId: 'scanModeId2'
+        scanMode: testData.scanMode.list[1]
       },
       {
         id: 'id1',
@@ -169,7 +169,7 @@ describe('SouthOPCUA', () => {
           mode: 'da',
           timestampOrigin: 'oibus'
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id2',
@@ -180,7 +180,7 @@ describe('SouthOPCUA', () => {
           mode: 'da',
           timestampOrigin: 'point'
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id3',
@@ -191,7 +191,7 @@ describe('SouthOPCUA', () => {
           mode: 'da',
           timestampOrigin: 'server'
         },
-        scanModeId: 'scanModeId2'
+        scanMode: testData.scanMode.list[1]
       }
     ]
   };
@@ -1197,7 +1197,7 @@ describe('SouthOPCUA with basic auth', () => {
             resampling: 'none'
           }
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id2',
@@ -1211,7 +1211,7 @@ describe('SouthOPCUA with basic auth', () => {
             resampling: 'none'
           }
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id3',
@@ -1225,7 +1225,7 @@ describe('SouthOPCUA with basic auth', () => {
             resampling: 'none'
           }
         },
-        scanModeId: 'scanModeId2'
+        scanMode: testData.scanMode.list[1]
       },
       {
         id: 'id1',
@@ -1235,7 +1235,7 @@ describe('SouthOPCUA with basic auth', () => {
           nodeId: 'ns=3;s=Random',
           mode: 'da'
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id2',
@@ -1245,7 +1245,7 @@ describe('SouthOPCUA with basic auth', () => {
           nodeId: 'ns=3;s=Counter',
           mode: 'da'
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id3',
@@ -1255,7 +1255,7 @@ describe('SouthOPCUA with basic auth', () => {
           nodeId: 'ns=3;s=Triangle',
           mode: 'da'
         },
-        scanModeId: 'scanModeId2'
+        scanMode: testData.scanMode.list[1]
       }
     ]
   };
@@ -1354,7 +1354,7 @@ describe('SouthOPCUA with certificate', () => {
             resampling: 'none'
           }
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id2',
@@ -1368,7 +1368,7 @@ describe('SouthOPCUA with certificate', () => {
             resampling: 'none'
           }
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id3',
@@ -1382,7 +1382,7 @@ describe('SouthOPCUA with certificate', () => {
             resampling: 'none'
           }
         },
-        scanModeId: 'scanModeId2'
+        scanMode: testData.scanMode.list[1]
       },
       {
         id: 'id1',
@@ -1392,7 +1392,7 @@ describe('SouthOPCUA with certificate', () => {
           nodeId: 'ns=3;s=Random',
           mode: 'da'
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id2',
@@ -1402,7 +1402,7 @@ describe('SouthOPCUA with certificate', () => {
           nodeId: 'ns=3;s=Counter',
           mode: 'da'
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id3',
@@ -1412,7 +1412,7 @@ describe('SouthOPCUA with certificate', () => {
           nodeId: 'ns=3;s=Triangle',
           mode: 'da'
         },
-        scanModeId: 'scanModeId2'
+        scanMode: testData.scanMode.list[1]
       }
     ]
   };
@@ -1602,7 +1602,7 @@ describe('SouthOPCUA test connection', () => {
             resampling: 'none'
           }
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id2',
@@ -1616,7 +1616,7 @@ describe('SouthOPCUA test connection', () => {
             resampling: 'none'
           }
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id3',
@@ -1630,7 +1630,7 @@ describe('SouthOPCUA test connection', () => {
             resampling: 'none'
           }
         },
-        scanModeId: 'scanModeId2'
+        scanMode: testData.scanMode.list[1]
       },
       {
         id: 'id1',
@@ -1640,7 +1640,7 @@ describe('SouthOPCUA test connection', () => {
           nodeId: 'ns=3;s=Random',
           mode: 'da'
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id2',
@@ -1650,7 +1650,7 @@ describe('SouthOPCUA test connection', () => {
           nodeId: 'ns=3;s=Counter',
           mode: 'da'
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id3',
@@ -1660,7 +1660,7 @@ describe('SouthOPCUA test connection', () => {
           nodeId: 'ns=3;s=Triangle',
           mode: 'da'
         },
-        scanModeId: 'scanModeId2'
+        scanMode: testData.scanMode.list[1]
       }
     ]
   };
@@ -1869,7 +1869,7 @@ describe('SouthOPCUA with shared connection', () => {
             resampling: 'none'
           }
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id2',
@@ -1883,7 +1883,7 @@ describe('SouthOPCUA with shared connection', () => {
             resampling: 'none'
           }
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id3',
@@ -1897,7 +1897,7 @@ describe('SouthOPCUA with shared connection', () => {
             resampling: 'none'
           }
         },
-        scanModeId: 'scanModeId2'
+        scanMode: testData.scanMode.list[1]
       },
       {
         id: 'id1',
@@ -1907,7 +1907,7 @@ describe('SouthOPCUA with shared connection', () => {
           nodeId: 'ns=3;s=Random',
           mode: 'da'
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id2',
@@ -1917,7 +1917,7 @@ describe('SouthOPCUA with shared connection', () => {
           nodeId: 'ns=3;s=Counter',
           mode: 'da'
         },
-        scanModeId: 'scanModeId1'
+        scanMode: testData.scanMode.list[0]
       },
       {
         id: 'id3',
@@ -1927,7 +1927,7 @@ describe('SouthOPCUA with shared connection', () => {
           nodeId: 'ns=3;s=Triangle',
           mode: 'da'
         },
-        scanModeId: 'scanModeId2'
+        scanMode: testData.scanMode.list[1]
       }
     ]
   };

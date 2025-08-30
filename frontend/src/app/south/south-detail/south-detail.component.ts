@@ -4,7 +4,7 @@ import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-transl
 import {
   SouthConnectorCommandDTO,
   SouthConnectorDTO,
-  SouthConnectorItemCommandDTO,
+  SouthConnectorItemDTO,
   SouthConnectorManifest
 } from '../../../../../backend/shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
@@ -136,7 +136,7 @@ export class SouthDetailComponent implements OnInit, OnDestroy {
       });
   }
 
-  updateInMemoryItems(_items: Array<SouthConnectorItemCommandDTO<SouthItemSettings>> | null) {
+  updateInMemoryItems(_items: Array<SouthConnectorItemDTO<SouthItemSettings>> | null) {
     this.southConnectorService.get(this.southConnector!.id).subscribe(southConnector => {
       this.southConnector = southConnector;
     });
@@ -210,7 +210,14 @@ export class SouthDetailComponent implements OnInit, OnDestroy {
   get southConnectorCommand() {
     const command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> = {
       ...this.southConnector!,
-      items: this.southConnector!.items.map(i => ({ ...i, scanModeName: null }))
+      items: this.southConnector!.items.map(item => ({
+        id: item.id,
+        enabled: item.enabled,
+        name: item.name,
+        settings: item.settings,
+        scanModeId: item.scanMode.id,
+        scanModeName: null
+      }))
     };
 
     return command;

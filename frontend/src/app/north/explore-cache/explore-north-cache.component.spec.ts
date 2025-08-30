@@ -8,6 +8,7 @@ import { ActivatedRoute, provideRouter } from '@angular/router';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { provideHttpClient } from '@angular/common/http';
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
+import testData from '../../../../../backend/src/tests/utils/test-data';
 
 class ExploreNorthCacheComponentTester extends ComponentTester<ExploreNorthCacheComponent> {
   constructor() {
@@ -43,7 +44,7 @@ describe('ExploreNorthCacheComponent', () => {
     enabled: true,
     caching: {
       trigger: {
-        scanModeId: 'scanModeId1',
+        scanMode: testData.scanMode.list[0],
         numberOfElements: 1_000,
         numberOfFiles: 1
       },

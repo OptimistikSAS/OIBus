@@ -113,7 +113,7 @@ const baseConfiguration: SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIA
           outputTimezone: 'Europe/Paris'
         }
       },
-      scanModeId: 'scanModeId1'
+      scanMode: testData.scanMode.list[0]
     },
     {
       id: 'id2',
@@ -131,7 +131,7 @@ const baseConfiguration: SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIA
           outputTimezone: 'Europe/Paris'
         }
       },
-      scanModeId: 'scanModeId1'
+      scanMode: testData.scanMode.list[0]
     },
     {
       id: 'id3',
@@ -149,7 +149,7 @@ const baseConfiguration: SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIA
           outputTimezone: 'Europe/Paris'
         }
       },
-      scanModeId: 'scanModeId2'
+      scanMode: testData.scanMode.list[1]
     }
   ]
 };

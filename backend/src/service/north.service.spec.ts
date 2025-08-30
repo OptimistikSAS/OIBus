@@ -230,13 +230,13 @@ describe('north service', () => {
   it('runNorth() should not run connector if bad type', () => {
     const bad = JSON.parse(JSON.stringify(testData.north.list[0]));
     bad.type = 'bad';
-    expect(() => service.buildNorth(bad, logger, mockBaseFolders(bad.id))).toThrow('North connector of type bad not installed');
+    expect(() => service.buildNorth(bad, logger, mockBaseFolders(bad.id))).toThrow('North connector of type "bad" not installed');
   });
 
   it('runNorth() should not run connector if bad type and no folders', () => {
     const bad = JSON.parse(JSON.stringify(testData.north.list[0]));
     bad.type = 'bad';
-    expect(() => service.buildNorth(bad, logger)).toThrow('North connector of type bad not installed');
+    expect(() => service.buildNorth(bad, logger)).toThrow('North connector of type "bad" not installed');
   });
 
   it('testNorth() should test North connector in creation mode', async () => {

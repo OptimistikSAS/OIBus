@@ -265,7 +265,7 @@ export default class OIAnalyticsMessageService {
             southSettings: encryptionService.filterSecrets(historyQuery.southSettings, southManifest.settings),
             caching: {
               trigger: {
-                scanModeId: historyQuery.caching.trigger.scanModeId,
+                scanModeId: historyQuery.caching.trigger.scanMode.id,
                 scanModeName: null,
                 numberOfElements: historyQuery.caching.trigger.numberOfElements,
                 numberOfFiles: historyQuery.caching.trigger.numberOfFiles
@@ -431,7 +431,7 @@ export default class OIAnalyticsMessageService {
             id: item.id,
             name: item.name,
             enabled: item.enabled,
-            scanModeId: item.scanModeId,
+            scanModeId: item.scanMode.id,
             scanModeName: null,
             settings: encryptionService.filterSecrets(item.settings, itemSettingsManifest)
           }))
@@ -456,7 +456,7 @@ export default class OIAnalyticsMessageService {
           settings: encryptionService.filterSecrets(north.settings, manifest.settings),
           caching: {
             trigger: {
-              scanModeId: north.caching.trigger.scanModeId,
+              scanModeId: north.caching.trigger.scanMode.id,
               scanModeName: null,
               numberOfElements: north.caching.trigger.numberOfElements,
               numberOfFiles: north.caching.trigger.numberOfFiles
