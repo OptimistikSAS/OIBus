@@ -7,7 +7,6 @@ import NorthConnectorRepository from '../../repository/config/north-connector.re
 import HistoryQueryRepository from '../../repository/config/history-query.repository';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import DataStreamEngine from '../../engine/data-stream-engine';
-import HistoryQueryEngine from '../../engine/history-query-engine';
 import OIAnalyticsMessageRepository from '../../repository/config/oianalytics-message.repository';
 import OIAnalyticsCommandRepository from '../../repository/config/oianalytics-command.repository';
 
@@ -34,8 +33,7 @@ export default class CleanupService {
     private readonly southConnectorRepository: SouthConnectorRepository,
     private readonly oianalyticsMessageRepository: OIAnalyticsMessageRepository,
     private readonly oianalyticsCommandRepository: OIAnalyticsCommandRepository,
-    private readonly dataStreamEngine: DataStreamEngine,
-    private readonly historyQueryEngine: HistoryQueryEngine
+    private readonly dataStreamEngine: DataStreamEngine
   ) {
     this.logger = logger;
     this.dataFolder = path.resolve(baseCacheFolder);
@@ -126,12 +124,14 @@ export default class CleanupService {
           mainFolder === 'archive' ? north.caching.archive.retentionDuration : north.caching.error.retentionDuration;
         if (mainFolder === 'archive' && !north.caching.archive.enabled) {
           await this.dataStreamEngine.removeCacheContent(
+            'north',
             north.id,
             'archive',
             fileList.map(file => file.metadataFilename)
           );
         } else if (retentionDuration > 0) {
           await this.dataStreamEngine.removeCacheContent(
+            'north',
             north.id,
             mainFolder,
             fileList.filter(file => this.shouldDeleteFile(file, retentionDuration)).map(file => file.metadataFilename)
@@ -168,13 +168,15 @@ export default class CleanupService {
         const retentionDuration =
           mainFolder === 'archive' ? historyQuery.caching.archive.retentionDuration : historyQuery.caching.error.retentionDuration;
         if (mainFolder === 'archive' && !historyQuery.caching.archive.enabled) {
-          await this.historyQueryEngine.removeCacheContent(
+          await this.dataStreamEngine.removeCacheContent(
+            'history',
             historyQuery.id,
             'archive',
             fileList.map(file => file.metadataFilename)
           );
         } else if (retentionDuration > 0) {
-          await this.historyQueryEngine.removeCacheContent(
+          await this.dataStreamEngine.removeCacheContent(
+            'history',
             historyQuery.id,
             mainFolder,
             fileList.filter(file => this.shouldDeleteFile(file, retentionDuration)).map(file => file.metadataFilename)

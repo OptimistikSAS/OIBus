@@ -6,7 +6,7 @@ import HistoryQuery from '../../engine/history-query';
 import HistoryQueryMock from '../../tests/__mocks__/history-query.mock';
 
 const historyQueryMetricsRepository: HistoryQueryMetricsRepository = new HistoryQueryMetricsRepositoryMock();
-const historyQueryMock: HistoryQuery = new HistoryQueryMock(testData.historyQueries.list[0]);
+const historyQueryMock: HistoryQuery = new HistoryQueryMock(testData.historyQueries.list[0]) as unknown as HistoryQuery;
 
 describe('HistoryMetricsService', () => {
   let service: HistoryQueryMetricsService;
@@ -20,6 +20,7 @@ describe('HistoryMetricsService', () => {
   });
 
   it('should be properly initialised', () => {
+    service.initMetrics();
     expect(historyQueryMetricsRepository.initMetrics).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
     expect(service.metrics).toEqual(testData.historyQueries.metrics);
   });

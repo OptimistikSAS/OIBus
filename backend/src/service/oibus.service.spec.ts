@@ -1,7 +1,6 @@
+import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
 import OIBusService from './oibus.service';
 import DataStreamEngine from '../engine/data-stream-engine';
-import HistoryQueryEngine from '../engine/history-query-engine';
-import HistoryQueryEngineMock from '../tests/__mocks__/history-query-engine.mock';
 import pino from 'pino';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
@@ -10,8 +9,7 @@ import EngineMetricsRepositoryMock from '../tests/__mocks__/repository/metrics/e
 import EngineRepositoryMock from '../tests/__mocks__/repository/config/engine-repository.mock';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import OianalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
-import EncryptionService from './encryption.service';
-import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
+import { encryptionService } from './encryption.service';
 import LoggerService from './logger/logger.service';
 import LoggerServiceMock from '../tests/__mocks__/service/logger/logger-service.mock';
 import EngineMetricsRepository from '../repository/metrics/engine-metrics.repository';
@@ -34,21 +32,22 @@ import IpFilterServiceMock from '../tests/__mocks__/service/ip-filter-service.mo
 
 jest.mock('./utils');
 jest.mock('../web-server/proxy-server');
+jest.mock('./encryption.service', () => ({
+  encryptionService: new EncryptionServiceMock('', '')
+}));
 
 const validator = new JoiValidator();
 const engineRepository: EngineRepository = new EngineRepositoryMock();
 const engineMetricsRepository: EngineMetricsRepository = new EngineMetricsRepositoryMock();
 const ipFilterService: IPFilterService = new IpFilterServiceMock();
 const oIAnalyticsRegistrationService: OIAnalyticsRegistrationService = new OIAnalyticsRegistrationServiceMock();
-const encryptionService: EncryptionService = new EncryptionServiceMock();
 const loggerService: LoggerService = new LoggerServiceMock();
 const oIAnalyticsMessageService: OIAnalyticsMessageService = new OianalyticsMessageServiceMock();
 const southService: SouthService = new SouthServiceMock();
 const northService: NorthService = new NorthServiceMock();
 const historyQueryService: HistoryQueryService = new HistoryQueryServiceMock();
 const logger: pino.Logger = new PinoLogger();
-const dataStreamEngine: DataStreamEngine = new DataStreamEngineMock(logger);
-const historyQueryEngine: HistoryQueryEngine = new HistoryQueryEngineMock(logger);
+const engine: DataStreamEngine = new DataStreamEngineMock(logger);
 
 let service: OIBusService;
 describe('OIBus Service', () => {
@@ -68,14 +67,12 @@ describe('OIBus Service', () => {
       engineMetricsRepository,
       ipFilterService,
       oIAnalyticsRegistrationService,
-      encryptionService,
       loggerService,
       oIAnalyticsMessageService,
       southService,
       northService,
       historyQueryService,
-      dataStreamEngine,
-      historyQueryEngine,
+      engine,
       false
     );
   });
@@ -85,16 +82,13 @@ describe('OIBus Service', () => {
     (southService.findAll as jest.Mock).mockReturnValue(testData.south.list);
     (historyQueryService.findAll as jest.Mock).mockReturnValue(testData.historyQueries.list);
     (southService.findById as jest.Mock).mockImplementation(id => testData.south.list.find(element => element.id === id));
-    (southService.buildSouth as jest.Mock).mockImplementation(id => testData.south.list.find(element => element.id === id));
     (northService.findById as jest.Mock).mockImplementation(id => testData.north.list.find(element => element.id === id));
-    (northService.buildNorth as jest.Mock).mockImplementation(id => testData.north.list.find(element => element.id === id));
     (historyQueryService.findById as jest.Mock).mockImplementation(id => testData.historyQueries.list.find(element => element.id === id));
 
     await service.startOIBus();
 
-    expect(dataStreamEngine.start).toHaveBeenCalled();
-    expect(historyQueryEngine.start).toHaveBeenCalled();
-    expect(logger.info).toHaveBeenCalled();
+    expect(engine.start).toHaveBeenCalledWith(testData.north.list, testData.south.list, testData.historyQueries.list);
+    expect(logger.info).toHaveBeenCalledWith('Starting OIBus...');
     expect(service.getProxyServer()).toBeDefined();
     expect(ipFilterService.findAll).toHaveBeenCalledTimes(1);
 
@@ -119,8 +113,7 @@ describe('OIBus Service', () => {
 
     await service.stopOIBus();
 
-    expect(dataStreamEngine.stop).toHaveBeenCalled();
-    expect(historyQueryEngine.stop).toHaveBeenCalled();
+    expect(engine.stop).toHaveBeenCalled();
   });
 
   it('should start OIBus without proxy', async () => {
@@ -137,19 +130,17 @@ describe('OIBus Service', () => {
 
   it('should stop OIBus without starting', async () => {
     await service.stopOIBus();
-    expect(dataStreamEngine.stop).toHaveBeenCalled();
-    expect(historyQueryEngine.stop).toHaveBeenCalled();
+    expect(engine.stop).toHaveBeenCalled();
   });
 
   it('should add content', async () => {
     await service.addExternalContent('northId', { type: 'time-values', content: [] }, 'api');
-    expect(dataStreamEngine.addExternalContent).toHaveBeenCalledWith('northId', { type: 'time-values', content: [] }, 'api');
+    expect(engine.addExternalContent).toHaveBeenCalledWith('northId', { type: 'time-values', content: [] }, 'api');
   });
 
   it('should set logger', () => {
     service.setLogger(logger);
-    expect(dataStreamEngine.setLogger).toHaveBeenCalledWith(logger);
-    expect(historyQueryEngine.setLogger).toHaveBeenCalledWith(logger);
+    expect(engine.setLogger).toHaveBeenCalledWith(logger);
     expect(oIAnalyticsMessageService.setLogger).toHaveBeenCalledWith(logger);
   });
 
@@ -325,11 +316,11 @@ describe('OIBus Service', () => {
 
   it('should reset North Connector Metrics', () => {
     service.resetNorthConnectorMetrics('id');
-    expect(dataStreamEngine.resetNorthConnectorMetrics).toHaveBeenCalledWith('id');
+    expect(engine.resetNorthConnectorMetrics).toHaveBeenCalledWith('id');
   });
 
   it('should reset South Connector Metrics', () => {
     service.resetSouthConnectorMetrics('id');
-    expect(dataStreamEngine.resetSouthConnectorMetrics).toHaveBeenCalledWith('id');
+    expect(engine.resetSouthConnectorMetrics).toHaveBeenCalledWith('id');
   });
 });

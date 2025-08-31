@@ -3,19 +3,13 @@ import * as utils from '../../service/utils';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import pino from 'pino';
 import SouthOianalytics from './south-oianalytics';
-import path from 'node:path';
 import { SouthOIAnalyticsItemSettings, SouthOIAnalyticsSettings } from '../../../shared/model/south-settings.model';
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
-import SouthConnectorRepository from '../../repository/config/south-connector.repository';
-import SouthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/south-connector-repository.mock';
-import ScanModeRepository from '../../repository/config/scan-mode.repository';
-import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import { SouthConnectorEntity } from '../../model/south-connector.model';
 import testData from '../../tests/utils/test-data';
-import { mockBaseFolders } from '../../tests/utils/test-utils';
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import OIAnalyticsRegistrationRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
 import CertificateRepository from '../../repository/config/certificate.repository';
@@ -47,8 +41,6 @@ jest.mock('@azure/identity', () => ({
 jest.mock('../../service/http-request.utils');
 jest.mock('node:fs/promises');
 
-const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
-const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
 const oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository = new OIAnalyticsRegistrationRepositoryMock();
 const certificateRepository: CertificateRepository = new CertificateRepositoryMock();
@@ -161,18 +153,15 @@ describe('SouthOIAnalytics with Basic auth', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
 
     south = new SouthOianalytics(
       configuration,
       addContentCallback,
-      southConnectorRepository,
       southCacheRepository,
-      scanModeRepository,
-      oIAnalyticsRegistrationRepository,
-      certificateRepository,
       logger,
-      mockBaseFolders(configuration.id)
+      'cacheFolder',
+      certificateRepository,
+      oIAnalyticsRegistrationRepository
     );
   });
 
@@ -192,11 +181,6 @@ describe('SouthOIAnalytics with Basic auth', () => {
 
     await expect(south.testConnection()).resolves.not.toThrow();
     await expect(south.testConnection()).rejects.toThrow(`HTTP request failed with status code 401 and message: "Unauthorized"`);
-  });
-
-  it('should log error if temp folder creation fails', async () => {
-    await south.start();
-    expect(utils.createFolder).toHaveBeenCalledWith(path.resolve(mockBaseFolders(configuration.id).cache, 'tmp'));
   });
 
   it('should properly run historyQuery', async () => {
@@ -383,18 +367,15 @@ describe('SouthOIAnalytics with proxy', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
 
     south = new SouthOianalytics(
       configuration,
       addContentCallback,
-      southConnectorRepository,
       southCacheRepository,
-      scanModeRepository,
-      oIAnalyticsRegistrationRepository,
-      certificateRepository,
       logger,
-      mockBaseFolders(configuration.id)
+      'cacheFolder',
+      certificateRepository,
+      oIAnalyticsRegistrationRepository
     );
   });
 
@@ -464,18 +445,15 @@ describe('SouthOIAnalytics with proxy but without proxy password', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
 
     south = new SouthOianalytics(
       configuration,
       addContentCallback,
-      southConnectorRepository,
       southCacheRepository,
-      scanModeRepository,
-      oIAnalyticsRegistrationRepository,
-      certificateRepository,
       logger,
-      mockBaseFolders(configuration.id)
+      'cacheFolder',
+      certificateRepository,
+      oIAnalyticsRegistrationRepository
     );
   });
 
@@ -547,18 +525,15 @@ describe('SouthOIAnalytics with aad-client-secret', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
 
     south = new SouthOianalytics(
       configuration,
       addContentCallback,
-      southConnectorRepository,
       southCacheRepository,
-      scanModeRepository,
-      oIAnalyticsRegistrationRepository,
-      certificateRepository,
       logger,
-      mockBaseFolders(configuration.id)
+      'cacheFolder',
+      certificateRepository,
+      oIAnalyticsRegistrationRepository
     );
     await south.start();
   });
@@ -615,7 +590,6 @@ describe('SouthOIAnalytics with aad-certificate', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
     (certificateRepository.findById as jest.Mock).mockReturnValue({
       privateKey: 'private key',
       certificate: 'certificate'
@@ -624,13 +598,11 @@ describe('SouthOIAnalytics with aad-certificate', () => {
     south = new SouthOianalytics(
       configuration,
       addContentCallback,
-      southConnectorRepository,
       southCacheRepository,
-      scanModeRepository,
-      oIAnalyticsRegistrationRepository,
-      certificateRepository,
       logger,
-      mockBaseFolders(configuration.id)
+      'cacheFolder',
+      certificateRepository,
+      oIAnalyticsRegistrationRepository
     );
     await south.start();
   });
@@ -687,7 +659,6 @@ describe('SouthOIAnalytics with OIA module', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
 
     registrationSettings = {
       id: 'id',
@@ -708,13 +679,11 @@ describe('SouthOIAnalytics with OIA module', () => {
     south = new SouthOianalytics(
       configuration,
       addContentCallback,
-      southConnectorRepository,
       southCacheRepository,
-      scanModeRepository,
-      oIAnalyticsRegistrationRepository,
-      certificateRepository,
       logger,
-      mockBaseFolders(configuration.id)
+      'cacheFolder',
+      certificateRepository,
+      oIAnalyticsRegistrationRepository
     );
     await south.start();
   });
@@ -853,18 +822,15 @@ describe('SouthOIAnalytics with edge cases', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
 
     south = new SouthOianalytics(
       configuration,
       addContentCallback,
-      southConnectorRepository,
       southCacheRepository,
-      scanModeRepository,
-      oIAnalyticsRegistrationRepository,
-      certificateRepository,
       logger,
-      mockBaseFolders(configuration.id)
+      'cacheFolder',
+      certificateRepository,
+      oIAnalyticsRegistrationRepository
     );
     await south.start();
   });

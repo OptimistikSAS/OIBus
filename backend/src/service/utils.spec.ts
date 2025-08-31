@@ -177,12 +177,28 @@ describe('Service utils', () => {
       jest.clearAllMocks();
     });
 
-    it('should properly create base folders', async () => {
+    it('should properly create base folders for north', async () => {
       (fs.stat as jest.Mock).mockImplementation(() => null);
 
-      await createBaseFolders(mockBaseFolders(testData.north.list[0].id));
+      await createBaseFolders(mockBaseFolders(testData.north.list[0].id), 'north');
       expect(fs.mkdir).not.toHaveBeenCalled();
       expect(fs.stat).toHaveBeenCalledTimes(3);
+    });
+
+    it('should properly create base folders for south', async () => {
+      (fs.stat as jest.Mock).mockImplementation(() => null);
+
+      await createBaseFolders(mockBaseFolders(testData.south.list[0].id), 'south');
+      expect(fs.mkdir).not.toHaveBeenCalled();
+      expect(fs.stat).toHaveBeenCalledTimes(3);
+    });
+
+    it('should properly create base folders for history query', async () => {
+      (fs.stat as jest.Mock).mockImplementation(() => null);
+
+      await createBaseFolders(mockBaseFolders(testData.historyQueries.list[0].id), 'history');
+      expect(fs.mkdir).not.toHaveBeenCalled();
+      expect(fs.stat).toHaveBeenCalledTimes(9);
     });
   });
 

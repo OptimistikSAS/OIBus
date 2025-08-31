@@ -8,7 +8,6 @@ import { NorthConsoleSettings } from '../../../shared/model/north-settings.model
 import { OIBusTimeValue } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import testData from '../../tests/utils/test-data';
-import { mockBaseFolders } from '../../tests/utils/test-utils';
 import CacheService from '../../service/cache/cache.service';
 import { createTransformer } from '../../service/transformer.service';
 import OIBusTransformer from '../../service/transformers/oibus-transformer';
@@ -53,7 +52,7 @@ describe('NorthConsole with verbose mode', () => {
     };
     (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
 
-    north = new NorthConsole(configuration, logger, mockBaseFolders(testData.north.list[0].id));
+    north = new NorthConsole(configuration, logger, 'cacheFolder', cacheService);
   });
 
   afterEach(() => {
@@ -123,7 +122,7 @@ describe('NorthConsole without verbose mode', () => {
     };
     (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
 
-    north = new NorthConsole(configuration, logger, mockBaseFolders(testData.north.list[0].id));
+    north = new NorthConsole(configuration, logger, 'cacheFolder', cacheService);
   });
 
   afterEach(() => {

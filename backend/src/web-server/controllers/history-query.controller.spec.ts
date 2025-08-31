@@ -509,11 +509,11 @@ describe('History query controller', () => {
     ctx.params.historyQueryId = testData.historyQueries.list[0].id;
     ctx.params.id = testData.historyQueries.list[0].items[0].id;
     ctx.app.historyQueryService.findById.mockReturnValueOnce(testData.historyQueries.list[0]);
-    ctx.app.historyQueryService.findHistoryQueryItem.mockReturnValueOnce(testData.historyQueries.list[0].items[0]);
+    ctx.app.historyQueryService.findHistoryQueryItemById.mockReturnValueOnce(testData.historyQueries.list[0].items[0]);
 
     await historyQueryController.getHistoryQueryItem(ctx);
 
-    expect(ctx.app.historyQueryService.findHistoryQueryItem).toHaveBeenCalledWith(
+    expect(ctx.app.historyQueryService.findHistoryQueryItemById).toHaveBeenCalledWith(
       testData.historyQueries.list[0].id,
       testData.historyQueries.list[0].items[0].id
     );
@@ -533,11 +533,11 @@ describe('History query controller', () => {
     ctx.params.historyQueryId = testData.historyQueries.list[0].id;
     ctx.params.id = testData.historyQueries.list[0].items[0].id;
     ctx.app.historyQueryService.findById.mockReturnValueOnce(testData.historyQueries.list[0]);
-    ctx.app.historyQueryService.findHistoryQueryItem.mockReturnValueOnce(null);
+    ctx.app.historyQueryService.findHistoryQueryItemById.mockReturnValueOnce(null);
 
     await historyQueryController.getHistoryQueryItem(ctx);
 
-    expect(ctx.app.historyQueryService.findHistoryQueryItem).toHaveBeenCalledWith(
+    expect(ctx.app.historyQueryService.findHistoryQueryItemById).toHaveBeenCalledWith(
       testData.historyQueries.list[0].id,
       testData.historyQueries.list[0].items[0].id
     );

@@ -7,11 +7,10 @@ import { DateTime } from 'luxon';
 import { createReadStream, ReadStream } from 'node:fs';
 import path from 'node:path';
 import { NorthSettings } from '../../shared/model/north-settings.model';
-import { createBaseFolders, delay, generateRandomId, validateCronExpression } from '../service/utils';
+import { delay, generateRandomId, validateCronExpression } from '../service/utils';
 import { NorthConnectorEntity } from '../model/north-connector.model';
 import { ScanMode } from '../model/scan-mode.model';
 import { OIBusError } from '../model/engine.model';
-import { BaseFolders } from '../model/types';
 import CacheService from '../service/cache/cache.service';
 import { Readable } from 'node:stream';
 import fsAsync from 'node:fs/promises';
@@ -37,8 +36,6 @@ import IsoTransformer from '../service/transformers/iso-transformer';
  * - **logger**: to log an event with different levels (error,warning,info,debug,trace)
  */
 export default abstract class NorthConnector<T extends NorthSettings> {
-  private cacheService: CacheService;
-
   private cacheSize = {
     cacheSize: 0,
     errorSize: 0,
@@ -63,10 +60,9 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   protected constructor(
     protected connector: NorthConnectorEntity<T>,
     protected logger: pino.Logger,
-    protected readonly baseFolders: BaseFolders
+    protected cacheFolderPath: string,
+    private cacheService: CacheService
   ) {
-    this.cacheService = new CacheService(this.logger, this.baseFolders.cache, this.baseFolders.error, this.baseFolders.archive);
-
     if (this.connector.id === 'test') {
       return;
     }
@@ -103,7 +99,6 @@ export default abstract class NorthConnector<T extends NorthSettings> {
 
   async start(): Promise<void> {
     if (this.connector.id !== 'test') {
-      await createBaseFolders(this.baseFolders);
       this.taskRunnerEvent.on('run', async (taskDescription: { id: string; name: string }) => {
         await this.run(taskDescription);
       });

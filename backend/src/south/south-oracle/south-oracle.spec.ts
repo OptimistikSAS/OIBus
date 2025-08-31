@@ -12,16 +12,11 @@ import {
   SouthOracleItemSettingsDateTimeFields,
   SouthOracleSettings
 } from '../../../shared/model/south-settings.model';
-import SouthConnectorRepository from '../../repository/config/south-connector.repository';
-import SouthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/south-connector-repository.mock';
-import ScanModeRepository from '../../repository/config/scan-mode.repository';
-import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import { SouthConnectorEntity } from '../../model/south-connector.model';
 import testData from '../../tests/utils/test-data';
-import { mockBaseFolders } from '../../tests/utils/test-utils';
 
 jest.mock('oracledb');
 jest.mock('../../service/utils');
@@ -29,8 +24,6 @@ jest.mock('../../service/encryption.service', () => ({
   encryptionService: new EncryptionServiceMock('', '')
 }));
 
-const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
-const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
 const southCacheService = new SouthCacheServiceMock();
 
@@ -170,17 +163,8 @@ describe('SouthOracle with authentication', () => {
       new Date(testData.constants.dates.FAKE_NOW),
       new Date(testData.constants.dates.FAKE_NOW)
     ]);
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
 
-    south = new SouthOracle(
-      configuration,
-      addContentCallback,
-      southConnectorRepository,
-      southCacheRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(configuration.id)
-    );
+    south = new SouthOracle(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
   it('should get throttling settings', () => {
@@ -190,11 +174,6 @@ describe('SouthOracle with authentication', () => {
     });
     expect(south.getMaxInstantPerItem(configuration.settings)).toEqual(true);
     expect(south.getOverlap(configuration.settings)).toEqual(configuration.settings.throttling.overlap);
-  });
-
-  it('should create temp folder', async () => {
-    await south.start();
-    expect(utils.createFolder).toHaveBeenCalledWith(path.resolve(mockBaseFolders(configuration.id).cache, 'tmp'));
   });
 
   it('should properly run historyQuery', async () => {
@@ -498,19 +477,10 @@ describe('SouthOracle without authentication but with thick mode', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
 
     oracledb.initOracleClient = jest.fn();
 
-    south = new SouthOracle(
-      configuration,
-      addContentCallback,
-      southConnectorRepository,
-      southCacheRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(configuration.id)
-    );
+    south = new SouthOracle(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
   it('should manage connection error', async () => {
@@ -679,17 +649,8 @@ describe('SouthOracle test connection', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
 
-    south = new SouthOracle(
-      configuration,
-      addContentCallback,
-      southConnectorRepository,
-      southCacheRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(configuration.id)
-    );
+    south = new SouthOracle(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
   it('Database is reachable and has tables', async () => {

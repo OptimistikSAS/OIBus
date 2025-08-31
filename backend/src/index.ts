@@ -8,7 +8,6 @@ import RepositoryService from './service/repository.service';
 import NorthService from './service/north.service';
 import SouthService from './service/south.service';
 import DataStreamEngine from './engine/data-stream-engine';
-import HistoryQueryEngine from './engine/history-query-engine';
 import HistoryQueryService from './service/history-query.service';
 import OIBusService from './service/oibus.service';
 import {
@@ -21,7 +20,6 @@ import {
 } from './migration/migration-service';
 import OIAnalyticsCommandService from './service/oia/oianalytics-command.service';
 import OianalyticsRegistrationService from './service/oia/oianalytics-registration.service';
-import ConnectionService from './service/connection.service';
 import OIAnalyticsMessageService from './service/oia/oianalytics-message.service';
 import JoiValidator from './web-server/controllers/validators/joi.validator';
 import ScanModeService from './service/scan-mode.service';
@@ -101,14 +99,6 @@ const CERT_FOLDER = 'certs';
   const loggerService = new LoggerService(path.resolve(LOG_FOLDER_NAME));
   await loggerService.start(oibusSettings, repositoryService.oianalyticsRegistrationRepository.get()!);
 
-  const dataStreamEngine = new DataStreamEngine(
-    repositoryService.northConnectorRepository,
-    repositoryService.northMetricsRepository,
-    repositoryService.southMetricsRepository,
-    loggerService.logger!
-  );
-  const historyQueryEngine = new HistoryQueryEngine(repositoryService.historyQueryMetricsRepository, loggerService.logger!);
-
   const oIAnalyticsClient = new OIAnalyticsClient();
 
   const oIAnalyticsRegistrationService = new OianalyticsRegistrationService(
@@ -136,9 +126,22 @@ const CERT_FOLDER = 'certs';
     loggerService.logger!
   );
 
+  const dataStreamEngine = new DataStreamEngine(
+    repositoryService.northConnectorRepository,
+    repositoryService.northMetricsRepository,
+    repositoryService.southConnectorRepository,
+    repositoryService.southMetricsRepository,
+    repositoryService.historyQueryRepository,
+    repositoryService.historyQueryMetricsRepository,
+    repositoryService.southCacheRepository,
+    repositoryService.certificateRepository,
+    repositoryService.oianalyticsRegistrationRepository,
+    oIAnalyticsMessageService,
+    loggerService.logger!
+  );
+
   const transformerService = new TransformerService(new JoiValidator(), repositoryService.transformerRepository, oIAnalyticsMessageService);
 
-  const connectionService = new ConnectionService(loggerService.logger!);
   const northService = new NorthService(
     new JoiValidator(),
     repositoryService.northConnectorRepository,
@@ -162,7 +165,6 @@ const CERT_FOLDER = 'certs';
     repositoryService.oianalyticsRegistrationRepository,
     repositoryService.certificateRepository,
     oIAnalyticsMessageService,
-    connectionService,
     dataStreamEngine
   );
   const historyQueryService = new HistoryQueryService(
@@ -177,7 +179,7 @@ const CERT_FOLDER = 'certs';
     northService,
     transformerService,
     oIAnalyticsMessageService,
-    historyQueryEngine
+    dataStreamEngine
   );
 
   const ipFilterService = new IPFilterService(new JoiValidator(), repositoryService.ipFilterRepository, oIAnalyticsMessageService);
@@ -187,14 +189,12 @@ const CERT_FOLDER = 'certs';
     repositoryService.engineMetricsRepository,
     ipFilterService,
     oIAnalyticsRegistrationService,
-    encryptionService,
     loggerService,
     oIAnalyticsMessageService,
     southService,
     northService,
     historyQueryService,
     dataStreamEngine,
-    historyQueryEngine,
     ignoreIpFilters
   );
   await oIBusService.startOIBus();
@@ -245,8 +245,7 @@ const CERT_FOLDER = 'certs';
     repositoryService.southConnectorRepository,
     repositoryService.oianalyticsMessageRepository,
     repositoryService.oianalyticsCommandRepository,
-    dataStreamEngine,
-    historyQueryEngine
+    dataStreamEngine
   );
   await cleanupService.start();
 

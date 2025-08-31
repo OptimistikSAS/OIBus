@@ -7,17 +7,12 @@ import pino from 'pino';
 import { loadOdbc } from './odbc-loader';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import { SouthODBCItemSettings, SouthODBCItemSettingsDateTimeFields, SouthODBCSettings } from '../../../shared/model/south-settings.model';
-import SouthConnectorRepository from '../../repository/config/south-connector.repository';
-import SouthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/south-connector-repository.mock';
-import ScanModeRepository from '../../repository/config/scan-mode.repository';
-import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import testData from '../../tests/utils/test-data';
 import { OIBusTimeValue } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity } from '../../model/south-connector.model';
-import { mockBaseFolders } from '../../tests/utils/test-utils';
 import { HTTPRequest } from '../../service/http-request.utils';
 import { createMockResponse } from '../../tests/__mocks__/undici.mock';
 
@@ -26,8 +21,6 @@ jest.mock('node:fs/promises');
 jest.mock('../../service/utils');
 jest.mock('./odbc-loader.ts');
 
-const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
-const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
 const southCacheService = new SouthCacheServiceMock();
 
@@ -165,19 +158,10 @@ describe('SouthODBC odbc driver with authentication', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
 
     (convertDateTimeToInstant as jest.Mock).mockImplementation(value => value);
 
-    south = new SouthODBC(
-      configuration,
-      addContentCallback,
-      southConnectorRepository,
-      southCacheRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(configuration.id)
-    );
+    south = new SouthODBC(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
   it('should get throttling settings', () => {
@@ -187,11 +171,6 @@ describe('SouthODBC odbc driver with authentication', () => {
     });
     expect(south.getMaxInstantPerItem(configuration.settings)).toEqual(true);
     expect(south.getOverlap(configuration.settings)).toEqual(configuration.settings.throttling.overlap);
-  });
-
-  it('should create temp folder', async () => {
-    await south.start();
-    expect(utils.createFolder).toHaveBeenCalledWith(path.resolve('cacheBaseFolder', 'southId', 'tmp'));
   });
 
   it('should do nothing on connect and disconnect', async () => {
@@ -254,7 +233,7 @@ describe('SouthODBC odbc driver with authentication', () => {
       configuration.items[0].settings.serialization,
       configuration.name,
       configuration.items[0].name,
-      path.resolve('cacheBaseFolder', 'southId', 'tmp'),
+      path.resolve('cacheFolder', 'tmp'),
       expect.any(Function),
       logger
     );
@@ -523,17 +502,8 @@ describe('SouthODBC odbc driver without authentication', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
 
-    south = new SouthODBC(
-      configuration,
-      addContentCallback,
-      southConnectorRepository,
-      southCacheRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(configuration.id)
-    );
+    south = new SouthODBC(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
   it('should get data from ODBC without auth', async () => {
@@ -567,7 +537,7 @@ describe('SouthODBC odbc driver without authentication', () => {
       configuration.items[0].settings.serialization,
       configuration.name,
       configuration.items[0].name,
-      path.resolve('cacheBaseFolder', 'southId', 'tmp'),
+      path.resolve('cacheFolder', 'tmp'),
       expect.any(Function),
       logger
     );
@@ -788,17 +758,8 @@ describe('SouthODBC odbc driver test connection', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
 
-    south = new SouthODBC(
-      configuration,
-      addContentCallback,
-      southConnectorRepository,
-      southCacheRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(configuration.id)
-    );
+    south = new SouthODBC(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
   it('Database is reachable and has tables', async () => {
@@ -993,20 +954,11 @@ describe('SouthODBC odbc remote with authentication', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
 
     (convertDateTimeToInstant as jest.Mock).mockImplementation(value => value);
     (convertDelimiter as jest.Mock).mockImplementation(value => value);
 
-    south = new SouthODBC(
-      configuration,
-      addContentCallback,
-      southConnectorRepository,
-      southCacheRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(configuration.id)
-    );
+    south = new SouthODBC(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
   it('should properly connect to remote agent and disconnect ', async () => {
@@ -1159,7 +1111,7 @@ describe('SouthODBC odbc remote with authentication', () => {
       },
       configuration.name,
       configuration.items[0].name,
-      path.resolve('cacheBaseFolder', 'southId', 'tmp'),
+      path.resolve('cacheFolder', 'tmp'),
       expect.any(Function),
       logger
     );
@@ -1372,17 +1324,8 @@ describe('SouthODBC odbc remote test connection', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
 
-    south = new SouthODBC(
-      configuration,
-      addContentCallback,
-      southConnectorRepository,
-      southCacheRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(configuration.id)
-    );
+    south = new SouthODBC(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
   it('should test connection successfully', async () => {

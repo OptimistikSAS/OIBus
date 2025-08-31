@@ -5,14 +5,19 @@ import pino from 'pino';
 import { NorthConsoleSettings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata, OIBusSetpoint, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
-import { BaseFolders } from '../../model/types';
+import CacheService from '../../service/cache/cache.service';
 
 /**
  * Class Console - display values and file path into the console
  */
 export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
-  constructor(configuration: NorthConnectorEntity<NorthConsoleSettings>, logger: pino.Logger, baseFolders: BaseFolders) {
-    super(configuration, logger, baseFolders);
+  constructor(
+    configuration: NorthConnectorEntity<NorthConsoleSettings>,
+    logger: pino.Logger,
+    cacheFolderPath: string,
+    cacheService: CacheService
+  ) {
+    super(configuration, logger, cacheFolderPath, cacheService);
   }
 
   async handleContent(cacheMetadata: CacheMetadata): Promise<void> {

@@ -2,7 +2,6 @@ import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import pino from 'pino';
 import SouthService from './south.service';
-import ConnectionService from './connection.service';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
 import ScanModeRepositoryMock from '../tests/__mocks__/repository/config/scan-mode-repository.mock';
@@ -16,9 +15,7 @@ import SouthConnectorMetricsRepository from '../repository/metrics/south-connect
 import SouthMetricsRepositoryMock from '../tests/__mocks__/repository/metrics/south-metrics-repository.mock';
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
 import SouthCacheRepositoryMock from '../tests/__mocks__/repository/cache/south-cache-repository.mock';
-import ConnectionServiceMock from '../tests/__mocks__/service/connection-service.mock';
 import testData from '../tests/utils/test-data';
-import { mockBaseFolders } from '../tests/utils/test-utils';
 import CertificateRepository from '../repository/config/certificate.repository';
 import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
 import OIAnalyticsRegistrationRepositoryMock from '../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
@@ -27,15 +24,17 @@ import DataStreamEngine from '../engine/data-stream-engine';
 import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
 import fs from 'node:fs/promises';
 import SouthConnectorMock from '../tests/__mocks__/south-connector.mock';
-import { createBaseFolders, filesExists, stringToBoolean } from './utils';
+import { stringToBoolean } from './utils';
 import multer from '@koa/multer';
 import csv from 'papaparse';
+import { buildSouth } from '../south/south-connector-factory';
 
 jest.mock('../south/south-opcua/south-opcua');
 jest.mock('./metrics/south-connector-metrics.service');
 jest.mock('node:fs/promises');
 jest.mock('papaparse');
 jest.mock('./utils');
+jest.mock('../south/south-connector-factory');
 jest.mock('../web-server/controllers/validators/joi.validator');
 jest.mock('./encryption.service', () => ({
   encryptionService: new EncryptionServiceMock('', '')
@@ -51,134 +50,16 @@ const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository = new OIAnalyticsRegistrationRepositoryMock();
 const certificateRepository: CertificateRepository = new CertificateRepositoryMock();
 const oIAnalyticsMessageService: OIAnalyticsMessageService = new OIAnalyticsMessageServiceMock();
-const connectionService: ConnectionService = new ConnectionServiceMock();
-const dataStreamEngine: DataStreamEngine = new DataStreamEngineMock(logger);
+const engine: DataStreamEngine = new DataStreamEngineMock(logger);
 
 const mockedSouth1 = new SouthConnectorMock(testData.south.list[0]);
-jest.mock(
-  '../south/south-ads/south-ads',
-  () =>
-    function () {
-      return mockedSouth1;
-    }
-);
-jest.mock(
-  '../south/south-folder-scanner/south-folder-scanner',
-  () =>
-    function () {
-      return mockedSouth1;
-    }
-);
-jest.mock(
-  '../south/south-modbus/south-modbus',
-  () =>
-    function () {
-      return mockedSouth1;
-    }
-);
-jest.mock(
-  '../south/south-mqtt/south-mqtt',
-  () =>
-    function () {
-      return mockedSouth1;
-    }
-);
-jest.mock(
-  '../south/south-mssql/south-mssql',
-  () =>
-    function () {
-      return mockedSouth1;
-    }
-);
-jest.mock(
-  '../south/south-mysql/south-mysql',
-  () =>
-    function () {
-      return mockedSouth1;
-    }
-);
-jest.mock(
-  '../south/south-odbc/south-odbc',
-  () =>
-    function () {
-      return mockedSouth1;
-    }
-);
-jest.mock(
-  '../south/south-oianalytics/south-oianalytics',
-  () =>
-    function () {
-      return mockedSouth1;
-    }
-);
-jest.mock(
-  '../south/south-oledb/south-oledb',
-  () =>
-    function () {
-      return mockedSouth1;
-    }
-);
-jest.mock(
-  '../south/south-opc/south-opc',
-  () =>
-    function () {
-      return mockedSouth1;
-    }
-);
-jest.mock(
-  '../south/south-opcua/south-opcua',
-  () =>
-    function () {
-      return mockedSouth1;
-    }
-);
-jest.mock(
-  '../south/south-oracle/south-oracle',
-  () =>
-    function () {
-      return mockedSouth1;
-    }
-);
-jest.mock(
-  '../south/south-pi/south-pi',
-  () =>
-    function () {
-      return mockedSouth1;
-    }
-);
-jest.mock(
-  '../south/south-postgresql/south-postgresql',
-  () =>
-    function () {
-      return mockedSouth1;
-    }
-);
-jest.mock(
-  '../south/south-sftp/south-sftp',
-  () =>
-    function () {
-      return mockedSouth1;
-    }
-);
-jest.mock(
-  '../south/south-sqlite/south-sqlite',
-  () =>
-    function () {
-      return mockedSouth1;
-    }
-);
-jest.mock(
-  '../south/south-ftp/south-ftp',
-  () =>
-    function () {
-      return mockedSouth1;
-    }
-);
-
 let service: SouthService;
-describe('south service', () => {
+
+describe('South Service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    (buildSouth as jest.Mock).mockReturnValue(mockedSouth1);
+
     service = new SouthService(
       validator,
       southConnectorRepository,
@@ -189,8 +70,7 @@ describe('south service', () => {
       oIAnalyticsRegistrationRepository,
       certificateRepository,
       oIAnalyticsMessageService,
-      connectionService,
-      dataStreamEngine
+      engine
     );
   });
 
@@ -211,167 +91,38 @@ describe('south service', () => {
     expect(southConnectorRepository.findAllSouth).toHaveBeenCalledTimes(1);
   });
 
-  it('buildSouth() should run ADS South connector', () => {
-    const ads = JSON.parse(JSON.stringify(testData.south.list[0]));
-    ads.type = 'ads';
-    const connector = service.buildSouth(ads, jest.fn(), logger, mockBaseFolders(testData.south.list[0].id));
-    expect(connector).toEqual(mockedSouth1);
-  });
-
-  it('buildSouth() should run FolderScanner South connector', () => {
-    const folderScanner = JSON.parse(JSON.stringify(testData.south.list[0]));
-    folderScanner.type = 'folder-scanner';
-    const connector = service.buildSouth(folderScanner, jest.fn(), logger, mockBaseFolders(testData.south.list[0].id));
-    expect(connector).toEqual(mockedSouth1);
-  });
-
-  it('buildSouth() should run Modbus South connector', () => {
-    const modbus = JSON.parse(JSON.stringify(testData.south.list[0]));
-    modbus.type = 'modbus';
-    const connector = service.buildSouth(modbus, jest.fn(), logger, mockBaseFolders(testData.south.list[0].id));
-    expect(connector).toEqual(mockedSouth1);
-  });
-
-  it('buildSouth() should run MQTT South connector', () => {
-    const mqtt = JSON.parse(JSON.stringify(testData.south.list[0]));
-    mqtt.type = 'mqtt';
-    const connector = service.buildSouth(mqtt, jest.fn(), logger, mockBaseFolders(testData.south.list[0].id));
-    expect(connector).toEqual(mockedSouth1);
-  });
-
-  it('buildSouth() should run MSSQL South connector', () => {
-    const mssql = JSON.parse(JSON.stringify(testData.south.list[0]));
-    mssql.type = 'mssql';
-    const connector = service.buildSouth(mssql, jest.fn(), logger, mockBaseFolders(testData.south.list[0].id));
-    expect(connector).toEqual(mockedSouth1);
-  });
-
-  it('buildSouth() should run MySQL South connector', () => {
-    const mysql = JSON.parse(JSON.stringify(testData.south.list[0]));
-    mysql.type = 'mysql';
-    const connector = service.buildSouth(mysql, jest.fn(), logger, mockBaseFolders(testData.south.list[0].id));
-    expect(connector).toEqual(mockedSouth1);
-  });
-
-  it('buildSouth() should run ODBC South connector', () => {
-    const odbc = JSON.parse(JSON.stringify(testData.south.list[0]));
-    odbc.type = 'odbc';
-    const connector = service.buildSouth(odbc, jest.fn(), logger, mockBaseFolders(testData.south.list[0].id));
-    expect(connector).toEqual(mockedSouth1);
-  });
-
-  it('buildSouth() should run OIAnalytics South connector', () => {
-    const oianalytics = JSON.parse(JSON.stringify(testData.south.list[0]));
-    oianalytics.type = 'oianalytics';
-    const connector = service.buildSouth(oianalytics, jest.fn(), logger, mockBaseFolders(testData.south.list[0].id));
-    expect(connector).toEqual(mockedSouth1);
-  });
-
-  it('buildSouth() should run OLEDB South connector', () => {
-    const oledb = JSON.parse(JSON.stringify(testData.south.list[0]));
-    oledb.type = 'oledb';
-    const connector = service.buildSouth(oledb, jest.fn(), logger, mockBaseFolders(testData.south.list[0].id));
-    expect(connector).toEqual(mockedSouth1);
-  });
-
-  it('buildSouth() should run OPC South connector', () => {
-    const opc = JSON.parse(JSON.stringify(testData.south.list[0]));
-    opc.type = 'opc';
-    const connector = service.buildSouth(opc, jest.fn(), logger, mockBaseFolders(testData.south.list[0].id));
-    expect(connector).toEqual(mockedSouth1);
-  });
-
-  it('buildSouth() should run OPCUA South connector', () => {
-    const opcua = JSON.parse(JSON.stringify(testData.south.list[0]));
-    opcua.type = 'opcua';
-    const connector = service.buildSouth(opcua, jest.fn(), logger, mockBaseFolders(testData.south.list[0].id));
-    expect(connector).toEqual(mockedSouth1);
-  });
-
-  it('buildSouth() should run Oracle South connector', () => {
-    const oracle = JSON.parse(JSON.stringify(testData.south.list[0]));
-    oracle.type = 'oracle';
-    const connector = service.buildSouth(oracle, jest.fn(), logger, mockBaseFolders(testData.south.list[0].id));
-    expect(connector).toEqual(mockedSouth1);
-  });
-
-  it('buildSouth() should run PI South connector', () => {
-    const pi = JSON.parse(JSON.stringify(testData.south.list[0]));
-    pi.type = 'osisoft-pi';
-    const connector = service.buildSouth(pi, jest.fn(), logger, mockBaseFolders(testData.south.list[0].id));
-    expect(connector).toEqual(mockedSouth1);
-  });
-
-  it('buildSouth() should run PostgreSQL South connector', () => {
-    const postgresql = JSON.parse(JSON.stringify(testData.south.list[0]));
-    postgresql.type = 'postgresql';
-    const connector = service.buildSouth(postgresql, jest.fn(), logger, mockBaseFolders(testData.south.list[0].id));
-    expect(connector).toEqual(mockedSouth1);
-  });
-
-  it('buildSouth() should run SFTP South connector', () => {
-    const sftp = JSON.parse(JSON.stringify(testData.south.list[0]));
-    sftp.type = 'sftp';
-    const connector = service.buildSouth(sftp, jest.fn(), logger, mockBaseFolders(testData.south.list[0].id));
-    expect(connector).toEqual(mockedSouth1);
-  });
-
-  it('buildSouth() should run SQLite South connector', () => {
-    const sqlite = JSON.parse(JSON.stringify(testData.south.list[0]));
-    sqlite.type = 'sqlite';
-    const connector = service.buildSouth(sqlite, jest.fn(), logger, mockBaseFolders(testData.south.list[0].id));
-    expect(connector).toEqual(mockedSouth1);
-  });
-
-  it('buildSouth() should not run connector if bad type', () => {
-    const bad = JSON.parse(JSON.stringify(testData.south.list[0]));
-    bad.type = 'bad';
-    expect(() => service.buildSouth(bad, jest.fn(), logger, mockBaseFolders(bad.id))).toThrow('South connector of type bad not installed');
-  });
-
-  it('buildSouth() should not run connector if bad type and no folders', () => {
-    const bad = JSON.parse(JSON.stringify(testData.south.list[0]));
-    bad.type = 'bad';
-    expect(() => service.buildSouth(bad, jest.fn(), logger)).toThrow('South connector of type bad not installed');
-  });
-
   it('testSouth() should test South connector in creation mode', async () => {
-    service.buildSouth = jest.fn().mockReturnValue(mockedSouth1);
     await service.testSouth('create', testData.south.command.type, testData.south.command.settings, logger);
-    expect(service.buildSouth).toHaveBeenCalled();
+    expect(buildSouth).toHaveBeenCalledTimes(1);
     expect(mockedSouth1.testConnection).toHaveBeenCalled();
   });
 
   it('testSouth() should throw an error if manifest type is bad', async () => {
-    service.buildSouth = jest.fn();
     const badCommand = JSON.parse(JSON.stringify(testData.south.command));
     badCommand.type = 'bad';
     await expect(service.testSouth('create', badCommand.type, badCommand.settings, logger)).rejects.toThrow(
       'South manifest "bad" not found'
     );
-    expect(service.buildSouth).not.toHaveBeenCalled();
+    expect(buildSouth).not.toHaveBeenCalled();
   });
 
   it('testSouth() should test South connector in edit mode', async () => {
-    service.buildSouth = jest.fn().mockReturnValue(mockedSouth1);
     (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(testData.south.list[0]);
     await service.testSouth(testData.south.list[0].id, testData.south.command.type, testData.south.command.settings, logger);
-    expect(service.buildSouth).toHaveBeenCalled();
+    expect(buildSouth).toHaveBeenCalledTimes(1);
     expect(mockedSouth1.testConnection).toHaveBeenCalled();
   });
 
   it('testSouth() should fail to test South connector in edit mode if south connector not found', async () => {
-    service.buildSouth = jest.fn().mockReturnValue(mockedSouth1);
     (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(null);
     await expect(
       service.testSouth(testData.south.list[0].id, testData.south.command.type, testData.south.command.settings, logger)
     ).rejects.toThrow(`South connector "${testData.south.list[0].id}" not found`);
-    expect(service.buildSouth).not.toHaveBeenCalled();
+    expect(buildSouth).not.toHaveBeenCalled();
   });
 
   it('testSouthItem() should test South connector in creation mode', async () => {
     const callback = jest.fn();
-    service.buildSouth = jest.fn().mockReturnValue(mockedSouth1);
     const itemCommand = JSON.parse(JSON.stringify(testData.south.itemCommand));
     itemCommand.settings = {
       regex: '*',
@@ -388,13 +139,12 @@ describe('south service', () => {
       callback,
       logger
     );
-    expect(service.buildSouth).toHaveBeenCalled();
+    expect(buildSouth).toHaveBeenCalledTimes(1);
     expect(mockedSouth1.testItem).toHaveBeenCalled();
   });
 
   it('testSouthItem() should throw an error if manifest type is bad', async () => {
     const callback = jest.fn();
-    service.buildSouth = jest.fn();
     const badCommand = JSON.parse(JSON.stringify(testData.south.command));
     badCommand.type = 'bad';
     await expect(
@@ -408,12 +158,11 @@ describe('south service', () => {
         logger
       )
     ).rejects.toThrow('South manifest "bad" not found');
-    expect(service.buildSouth).not.toHaveBeenCalled();
+    expect(buildSouth).not.toHaveBeenCalled();
   });
 
   it('testSouthItem() should test South connector in edit mode', async () => {
     const callback = jest.fn();
-    service.buildSouth = jest.fn().mockReturnValue(mockedSouth1);
     (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(testData.south.list[0]);
     const itemCommand = JSON.parse(JSON.stringify(testData.south.itemCommand));
     itemCommand.settings = {
@@ -431,13 +180,12 @@ describe('south service', () => {
       callback,
       logger
     );
-    expect(service.buildSouth).toHaveBeenCalled();
+    expect(buildSouth).toHaveBeenCalledTimes(1);
     expect(mockedSouth1.testItem).toHaveBeenCalled();
   });
 
   it('testSouthItem() should fail to test South connector in edit mode if south connector not found', async () => {
     const callback = jest.fn();
-    service.buildSouth = jest.fn().mockReturnValue(mockedSouth1);
     (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(null);
     await expect(
       service.testSouthItem(
@@ -450,7 +198,7 @@ describe('south service', () => {
         logger
       )
     ).rejects.toThrow(`South connector "${testData.south.list[0].id}" not found`);
-    expect(service.buildSouth).not.toHaveBeenCalled();
+    expect(buildSouth).not.toHaveBeenCalled();
   });
 
   it('should retrieve a list of south manifest', () => {
@@ -459,17 +207,15 @@ describe('south service', () => {
   });
 
   it('createSouth() should not create South if manifest is not found', async () => {
-    service.buildSouth = jest.fn();
     const badCommand = JSON.parse(JSON.stringify(testData.south.command));
     badCommand.type = 'bad';
-    await expect(service.createSouth(badCommand, null)).rejects.toThrow('South manifest does not exist for type bad');
+    await expect(service.createSouth(badCommand, null)).rejects.toThrow('South manifest does not exist for type "bad"');
     expect(southConnectorRepository.saveSouthConnector).not.toHaveBeenCalled();
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).not.toHaveBeenCalled();
-    expect(dataStreamEngine.createSouth).not.toHaveBeenCalled();
+    expect(engine.createSouth).not.toHaveBeenCalled();
   });
 
   it('createSouth() should create South connector', async () => {
-    service.buildSouth = jest.fn().mockReturnValue(mockedSouth1);
     (scanModeRepository.findAll as jest.Mock).mockReturnValue(testData.scanMode.list);
     const command = JSON.parse(JSON.stringify(testData.south.command));
     command.items = [
@@ -488,28 +234,25 @@ describe('south service', () => {
       }
     ];
     await service.createSouth(command, null);
-    expect(southConnectorRepository.saveSouthConnector).toHaveBeenCalled();
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
-    expect(createBaseFolders).toHaveBeenCalledTimes(1);
-    expect(dataStreamEngine.createSouth).toHaveBeenCalledWith(mockedSouth1);
-    expect(dataStreamEngine.startSouth).toHaveBeenCalled();
+    expect(southConnectorRepository.saveSouthConnector).toHaveBeenCalledTimes(1);
+    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
+    expect(engine.createSouth).toHaveBeenCalledTimes(1);
+    expect(engine.startSouth).toHaveBeenCalledTimes(1);
   });
 
   it('createSouth() should not create South connector if disabled', async () => {
-    service.buildSouth = jest.fn().mockReturnValue(mockedSouth1);
     (scanModeRepository.findAll as jest.Mock).mockReturnValue(testData.scanMode.list);
     const command = JSON.parse(JSON.stringify(testData.south.command));
     command.items = [];
     command.enabled = false;
     await service.createSouth(command, null);
-    expect(southConnectorRepository.saveSouthConnector).toHaveBeenCalled();
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
-    expect(createBaseFolders).toHaveBeenCalledTimes(1);
-    expect(dataStreamEngine.startSouth).not.toHaveBeenCalled();
+    expect(southConnectorRepository.saveSouthConnector).toHaveBeenCalledTimes(1);
+    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
+    expect(engine.createSouth).toHaveBeenCalledTimes(1);
+    expect(engine.startSouth).not.toHaveBeenCalled();
   });
 
   it('createSouth() should create South connector and retrieve secrets from another connector', async () => {
-    service.buildSouth = jest.fn().mockReturnValue(mockedSouth1);
     (scanModeRepository.findAll as jest.Mock).mockReturnValue(testData.scanMode.list);
     service.retrieveSecretsFromSouth = jest.fn();
     const command = JSON.parse(JSON.stringify(testData.south.command));
@@ -534,7 +277,7 @@ describe('south service', () => {
 
   it('should get South data stream', () => {
     service.getSouthDataStream(testData.south.list[0].id);
-    expect(dataStreamEngine.getSouthDataStream).toHaveBeenCalledWith(testData.south.list[0].id);
+    expect(engine.getSouthDataStream).toHaveBeenCalledWith(testData.south.list[0].id);
   });
 
   it('updateSouth() should update South connector', async () => {
@@ -559,7 +302,7 @@ describe('south service', () => {
 
     expect(southConnectorRepository.saveSouthConnector).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(dataStreamEngine.reloadSouth).toHaveBeenCalledTimes(1);
+    expect(engine.reloadSouth).toHaveBeenCalledTimes(1);
   });
 
   it('updateSouth() should throw an error if connector not found', async () => {
@@ -582,7 +325,7 @@ describe('south service', () => {
     (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(testData.south.list[0]);
 
     await service.deleteSouth(testData.south.list[0].id);
-    expect(dataStreamEngine.deleteSouth).toHaveBeenCalledWith(testData.south.list[0]);
+    expect(engine.deleteSouth).toHaveBeenCalledWith(testData.south.list[0]);
     expect(southConnectorRepository.deleteSouth).toHaveBeenCalledWith(testData.south.list[0].id);
     expect(logRepository.deleteLogsByScopeId).toHaveBeenCalledWith('south', testData.south.list[0].id);
     expect(southMetricsRepository.removeMetrics).toHaveBeenCalledWith(testData.south.list[0].id);
@@ -595,20 +338,7 @@ describe('south service', () => {
     await expect(service.deleteSouth(testData.south.list[0].id)).rejects.toThrow(
       `South connector ${testData.south.list[0].id} does not exist`
     );
-    expect(dataStreamEngine.deleteSouth).not.toHaveBeenCalled();
-  });
-
-  it('deleteSouth() should delete even if it fails to remove folders', async () => {
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(testData.south.list[0]);
-    (filesExists as jest.Mock).mockReturnValue(true);
-    (fs.rm as jest.Mock).mockImplementation(() => {
-      throw new Error('rm error');
-    });
-    await service.deleteSouth(testData.south.list[0].id);
-    expect(dataStreamEngine.deleteSouth).toHaveBeenCalled();
-    expect(dataStreamEngine.logger.error).toHaveBeenCalledWith(
-      `Unable to delete South connector "${testData.south.list[0].name}" (${testData.south.list[0].id}) "cache" base folder: rm error`
-    );
+    expect(engine.deleteSouth).not.toHaveBeenCalled();
   });
 
   it('startSouth() should start south', async () => {
@@ -616,7 +346,7 @@ describe('south service', () => {
 
     await service.startSouth(testData.south.list[0].id);
     expect(southConnectorRepository.start).toHaveBeenCalledWith(testData.south.list[0].id);
-    expect(dataStreamEngine.startSouth).toHaveBeenCalledWith(testData.south.list[0].id);
+    expect(engine.startSouth).toHaveBeenCalledWith(testData.south.list[0].id);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
   });
 
@@ -624,7 +354,7 @@ describe('south service', () => {
     (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(null);
 
     await expect(service.startSouth(testData.south.list[0].id)).rejects.toThrow(
-      `South connector ${testData.south.list[0].id} does not exist`
+      `South connector "${testData.south.list[0].id}" does not exist`
     );
     expect(southConnectorRepository.start).not.toHaveBeenCalled();
   });
@@ -634,7 +364,7 @@ describe('south service', () => {
 
     await service.stopSouth(testData.south.list[0].id);
     expect(southConnectorRepository.stop).toHaveBeenCalledWith(testData.south.list[0].id);
-    expect(dataStreamEngine.stopSouth).toHaveBeenCalledWith(testData.south.list[0].id);
+    expect(engine.stopSouth).toHaveBeenCalledWith(testData.south.list[0].id);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
   });
 
@@ -642,7 +372,7 @@ describe('south service', () => {
     (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(null);
 
     await expect(service.stopSouth(testData.south.list[0].id)).rejects.toThrow(
-      `South connector ${testData.south.list[0].id} does not exist`
+      `South connector "${testData.south.list[0].id}" does not exist`
     );
     expect(southConnectorRepository.stop).not.toHaveBeenCalled();
   });
@@ -670,7 +400,7 @@ describe('south service', () => {
     expect(southConnectorRepository.findSouthById).toHaveBeenCalledWith(testData.south.list[0].id);
     expect(southConnectorRepository.saveItem).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(dataStreamEngine.reloadItems).toHaveBeenCalledWith(testData.south.list[0].id);
+    expect(engine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0]);
   });
 
   it('createItem() should throw an error if connector does not exist', async () => {
@@ -683,7 +413,7 @@ describe('south service', () => {
       minAge: 100
     };
     await expect(service.createItem(testData.south.list[0].id, itemCommand)).rejects.toThrow(
-      `South connector ${testData.south.list[0].id} does not exist`
+      `South connector "${testData.south.list[0].id}" does not exist`
     );
   });
 
@@ -698,7 +428,9 @@ describe('south service', () => {
       ignoreModifiedDate: false,
       minAge: 100
     };
-    await expect(service.createItem(testData.south.list[0].id, itemCommand)).rejects.toThrow(`South manifest does not exist for type bad`);
+    await expect(service.createItem(testData.south.list[0].id, itemCommand)).rejects.toThrow(
+      `South manifest does not exist for type "bad"`
+    );
   });
 
   it('updateItem() should update an item', async () => {
@@ -715,7 +447,7 @@ describe('south service', () => {
     expect(southConnectorRepository.findItemById).toHaveBeenCalledWith(testData.south.list[0].id, 'itemId');
     expect(southConnectorRepository.saveItem).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(dataStreamEngine.reloadItems).toHaveBeenCalledWith(testData.south.list[0].id);
+    expect(engine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0]);
   });
 
   it('updateItem() should throw an error if item does not exist', async () => {
@@ -728,7 +460,7 @@ describe('south service', () => {
       minAge: 100
     };
     await expect(service.updateItem(testData.south.list[0].id, 'itemId', itemCommand)).rejects.toThrow(
-      `South item with ID itemId does not exist`
+      `South item with ID "itemId" does not exist`
     );
   });
 
@@ -746,7 +478,7 @@ describe('south service', () => {
       minAge: 100
     };
     await expect(service.updateItem(testData.south.list[0].id, 'itemId', itemCommand)).rejects.toThrow(
-      `South manifest does not exist for type bad`
+      `South manifest does not exist for type "bad"`
     );
   });
 
@@ -757,21 +489,21 @@ describe('south service', () => {
     expect(southConnectorRepository.findItemById).toHaveBeenCalledWith(testData.south.list[0].id, 'itemId');
     expect(southConnectorRepository.deleteItem).toHaveBeenCalledWith(testData.south.list[0].items[0].id);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(dataStreamEngine.reloadItems).toHaveBeenCalledWith(testData.south.list[0].id);
+    expect(engine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0]);
   });
 
   it('deleteItem() should throw an error if item does not exist', async () => {
     (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(testData.south.list[0]);
     (southConnectorRepository.findItemById as jest.Mock).mockReturnValueOnce(null);
 
-    await expect(service.deleteItem(testData.south.list[0].id, 'itemId')).rejects.toThrow(`South item itemId not found`);
+    await expect(service.deleteItem(testData.south.list[0].id, 'itemId')).rejects.toThrow(`South item "itemId" not found`);
   });
 
   it('deleteItem() should throw an error if connector does not exist', async () => {
     (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(null);
 
     await expect(service.deleteItem(testData.south.list[0].id, 'itemId')).rejects.toThrow(
-      `South connector ${testData.south.list[0].id} does not exist`
+      `South connector "${testData.south.list[0].id}" does not exist`
     );
   });
 
@@ -781,43 +513,57 @@ describe('south service', () => {
     expect(southConnectorRepository.deleteAllItemsBySouth).toHaveBeenCalledWith(testData.south.list[0].id);
     expect(southCacheRepository.deleteAllBySouthConnector).toHaveBeenCalledWith(testData.south.list[0].id);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(dataStreamEngine.reloadItems).toHaveBeenCalledWith(testData.south.list[0].id);
+    expect(engine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0]);
   });
 
   it('deleteAllItemsForSouthConnector() should throw an error if connector does not exist', async () => {
     (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(null);
 
     await expect(service.deleteAllItemsForSouthConnector(testData.south.list[0].id)).rejects.toThrow(
-      `South connector ${testData.south.list[0].id} does not exist`
+      `South connector "${testData.south.list[0].id}" does not exist`
     );
   });
 
   it('enableItem() should enable an item', async () => {
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(testData.south.list[0]);
     (southConnectorRepository.findItemById as jest.Mock).mockReturnValueOnce(testData.south.list[0].items[0]);
     await service.enableItem(testData.south.list[0].id, 'itemId');
     expect(southConnectorRepository.findItemById).toHaveBeenCalledWith(testData.south.list[0].id, 'itemId');
     expect(southConnectorRepository.enableItem).toHaveBeenCalledWith(testData.south.list[0].items[0].id);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(dataStreamEngine.reloadItems).toHaveBeenCalledWith(testData.south.list[0].id);
+    expect(engine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0]);
   });
 
   it('enableItem() should throw an error if item is not found', async () => {
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(testData.south.list[0]);
     (southConnectorRepository.findItemById as jest.Mock).mockReturnValueOnce(null);
-    await expect(service.enableItem(testData.south.list[0].id, 'itemId')).rejects.toThrow('South item itemId not found');
+    await expect(service.enableItem(testData.south.list[0].id, 'itemId')).rejects.toThrow('South item "itemId" not found');
+  });
+
+  it('enableItem() should throw an error if south is not found', async () => {
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(null);
+    await expect(service.enableItem(testData.south.list[0].id, 'itemId')).rejects.toThrow('South connector "southId1" does not exist');
   });
 
   it('disableItem() should enable an item', async () => {
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(testData.south.list[0]);
     (southConnectorRepository.findItemById as jest.Mock).mockReturnValueOnce(testData.south.list[0].items[0]);
     await service.disableItem(testData.south.list[0].id, 'itemId');
     expect(southConnectorRepository.findItemById).toHaveBeenCalledWith(testData.south.list[0].id, 'itemId');
     expect(southConnectorRepository.disableItem).toHaveBeenCalledWith(testData.south.list[0].items[0].id);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(dataStreamEngine.reloadItems).toHaveBeenCalledWith(testData.south.list[0].id);
+    expect(engine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0]);
   });
 
   it('disableItem() should throw an error if item is not found', async () => {
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(testData.south.list[0]);
     (southConnectorRepository.findItemById as jest.Mock).mockReturnValueOnce(null);
-    await expect(service.disableItem(testData.south.list[0].id, 'itemId')).rejects.toThrow('South item itemId not found');
+    await expect(service.disableItem(testData.south.list[0].id, 'itemId')).rejects.toThrow('South item "itemId" not found');
+  });
+
+  it('disableItem() should throw an error if south is not found', async () => {
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(null);
+    await expect(service.disableItem(testData.south.list[0].id, 'itemId')).rejects.toThrow('South connector "southId1" does not exist');
   });
 
   it('checkCsvImport() should properly parse csv and check items', async () => {
@@ -910,7 +656,7 @@ describe('south service', () => {
           }
         },
         {
-          error: 'Scan mode "bad scan mode" not found for item item2bis',
+          error: 'Scan mode "bad scan mode" not found for item "item2bis"',
           item: {
             name: csvData[1].name,
             enabled: csvData[1].enabled,
@@ -1004,7 +750,7 @@ describe('south service', () => {
 
   it('checkCsvContentImport() should throw error if manifest not found', async () => {
     await expect(service.checkCsvContentImport('bad', 'fileContent', ',', testData.south.list[0].items)).rejects.toThrow(
-      `South manifest does not exist for type bad`
+      `South manifest does not exist for type "bad"`
     );
   });
 
@@ -1035,10 +781,10 @@ describe('south service', () => {
     await service.importItems(testData.south.list[0].id, [itemCommand]);
     expect(southConnectorRepository.saveAllItems).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(dataStreamEngine.reloadItems).toHaveBeenCalledWith(testData.south.list[0].id);
+    expect(engine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0]);
   });
 
-  it('importItems() should import items', async () => {
+  it('importItems() should not import items if connector does not exist', async () => {
     const itemCommand = JSON.parse(JSON.stringify(testData.south.itemCommand));
     itemCommand.settings = {
       regex: '*',
@@ -1049,7 +795,7 @@ describe('south service', () => {
     (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(null);
 
     await expect(service.importItems(testData.south.list[0].id, [itemCommand])).rejects.toThrow(
-      `South connector ${testData.south.list[0].id} does not exist`
+      `South connector "${testData.south.list[0].id}" does not exist`
     );
   });
 
@@ -1063,34 +809,14 @@ describe('south service', () => {
   it('should throw error if connector not found when retrieving secrets from south', () => {
     (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(null);
     expect(() => service.retrieveSecretsFromSouth('southId', testData.south.manifest)).toThrow(
-      `Could not find south connector southId to retrieve secrets from`
+      `Could not find South connector "southId" to retrieve secrets from`
     );
   });
 
-  it('should throw error if connector not found when retrieving secrets from south', () => {
+  it('should throw error if connector not found when retrieving secrets from bad south type', () => {
     (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(testData.south.list[1]);
     expect(() => service.retrieveSecretsFromSouth('southId', testData.south.manifest)).toThrow(
-      `South connector southId (type ${testData.south.list[1].type}) must be of the type ${testData.south.manifest.id}`
+      `South connector "southId" (type "${testData.south.list[1].type}") must be of the type "${testData.south.manifest.id}"`
     );
-  });
-
-  it('buildSouth() should throw error for unknown connector type', () => {
-    const settings = { ...testData.south.list[0], type: 'unknown' as never };
-    const addContent = jest.fn();
-
-    expect(() => service.buildSouth(settings, addContent, logger)).toThrow('South connector of type unknown not installed');
-  });
-  it('buildSouth() should throw error for completely unknown connector type', () => {
-    const settings = { ...testData.south.list[0], type: 'completely-unknown-type' as never };
-    const addContent = jest.fn();
-
-    expect(() => service.buildSouth(settings, addContent, logger)).toThrow('South connector of type completely-unknown-type not installed');
-  });
-
-  it('buildSouth() should run FTP South connector', () => {
-    const ftp = JSON.parse(JSON.stringify(testData.south.list[0]));
-    ftp.type = 'ftp';
-    const connector = service.buildSouth(ftp, jest.fn(), logger, mockBaseFolders(testData.south.list[0].id));
-    expect(connector).toEqual(mockedSouth1);
   });
 });
