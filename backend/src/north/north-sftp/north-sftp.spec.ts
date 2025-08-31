@@ -9,7 +9,6 @@ import { NorthSFTPSettings } from '../../../shared/model/north-settings.model';
 import sftpClient from 'ssh2-sftp-client';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import testData from '../../tests/utils/test-data';
-import { mockBaseFolders } from '../../tests/utils/test-utils';
 import CacheService from '../../service/cache/cache.service';
 import { createTransformer } from '../../service/transformer.service';
 import OIBusTransformer from '../../service/transformers/oibus-transformer';
@@ -69,7 +68,7 @@ describe('NorthSFTP', () => {
     (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
     (getFilenameWithoutRandomId as jest.Mock).mockReturnValue('example.file');
 
-    north = new NorthSftp(configuration, logger, mockBaseFolders(testData.north.list[0].id));
+    north = new NorthSftp(configuration, logger, 'cacheFolder', cacheService);
     await north.start();
   });
 
@@ -150,7 +149,7 @@ describe('NorthSFTP without suffix or prefix', () => {
     (sftpClient as jest.Mock).mockImplementation(() => mockSftpClient);
     (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
 
-    north = new NorthSftp(configuration, logger, mockBaseFolders(testData.north.list[0].id));
+    north = new NorthSftp(configuration, logger, 'cacheFolder', cacheService);
   });
 
   afterEach(() => {

@@ -4,7 +4,6 @@ import pino from 'pino';
 import { NorthOPCUASettings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
-import { BaseFolders } from '../../model/types';
 import path from 'node:path';
 import { createFolder } from '../../service/utils';
 import fs from 'node:fs/promises';
@@ -22,6 +21,7 @@ import {
 } from 'node-opcua';
 import { randomUUID } from 'crypto';
 import { OIBusOPCUAValue } from '../../service/transformers/connector-types.model';
+import CacheService from '../../service/cache/cache.service';
 
 function toOPCUASecurityMode(securityMode: SouthOPCUASettingsSecurityMode) {
   switch (securityMode) {
@@ -68,15 +68,20 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
   client: ClientSession | null = null;
   private reconnectTimeout: NodeJS.Timeout | null = null;
 
-  constructor(connector: NorthConnectorEntity<NorthOPCUASettings>, logger: pino.Logger, baseFolders: BaseFolders) {
-    super(connector, logger, baseFolders);
+  constructor(
+    connector: NorthConnectorEntity<NorthOPCUASettings>,
+    logger: pino.Logger,
+    cacheFolderPath: string,
+    cacheService: CacheService
+  ) {
+    super(connector, logger, cacheFolderPath, cacheService);
   }
 
   override async start(): Promise<void> {
-    await this.initOpcuaCertificateFolders(this.baseFolders.cache);
+    await this.initOpcuaCertificateFolders(this.cacheFolderPath);
     if (!this.clientCertificateManager) {
       this.clientCertificateManager = new OPCUACertificateManager({
-        rootFolder: path.resolve(this.baseFolders.cache, 'opcua'),
+        rootFolder: path.resolve(this.cacheFolderPath, 'opcua'),
         automaticallyAcceptUnknownCertificate: true
       });
       // Set the state to the CertificateManager to 2 (Initialized) to avoid a call to openssl

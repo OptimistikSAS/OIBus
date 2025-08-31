@@ -9,7 +9,7 @@ import testData from '../tests/utils/test-data';
 import { NorthFileWriterSettings, NorthSettings } from '../../shared/model/north-settings.model';
 import NorthFileWriter from './north-file-writer/north-file-writer';
 import { NorthConnectorEntity } from '../model/north-connector.model';
-import { flushPromises, mockBaseFolders } from '../tests/utils/test-utils';
+import { flushPromises } from '../tests/utils/test-utils';
 import CacheService from '../service/cache/cache.service';
 import { OIBusError } from '../model/engine.model';
 import fsAsync from 'node:fs/promises';
@@ -71,7 +71,8 @@ describe('NorthConnector', () => {
     north = new NorthFileWriter(
       testData.north.list[0] as NorthConnectorEntity<NorthFileWriterSettings>,
       logger,
-      mockBaseFolders(testData.north.list[0].id)
+      'cacheFolder',
+      cacheService
     );
   });
 
@@ -800,7 +801,7 @@ describe('NorthConnector test id', () => {
 
     northTest.id = 'test';
 
-    north = new NorthFileWriter(northTest, logger, mockBaseFolders(northTest.id));
+    north = new NorthFileWriter(northTest, logger, 'cacheFolder', cacheService);
   });
 
   it('should properly start with test id', async () => {

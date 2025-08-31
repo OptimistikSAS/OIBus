@@ -23,15 +23,10 @@ import nodeOPCUAClient, {
   TimestampsToReturn,
   Variant
 } from 'node-opcua';
-import SouthConnectorRepository from '../../repository/config/south-connector.repository';
-import SouthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/south-connector-repository.mock';
-import ScanModeRepository from '../../repository/config/scan-mode.repository';
-import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import testData from '../../tests/utils/test-data';
-import { mockBaseFolders } from '../../tests/utils/test-utils';
 import { SouthConnectorEntity } from '../../model/south-connector.model';
 import { DateTime } from 'luxon';
 import { encryptionService } from '../../service/encryption.service';
@@ -72,8 +67,6 @@ jest.mock('crypto', () => ({
 jest.mock('node:fs/promises');
 jest.mock('../../service/utils');
 
-const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
-const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
 const southCacheService = new SouthCacheServiceMock();
 
@@ -199,19 +192,9 @@ describe('SouthOPCUA', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
 
     const connectionService = new ConnectionService(logger);
-    south = new SouthOPCUA(
-      configuration,
-      addContentCallback,
-      southConnectorRepository,
-      southCacheRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(configuration.id),
-      connectionService
-    );
+    south = new SouthOPCUA(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder', connectionService);
   });
 
   it('should get throttling settings', () => {
@@ -612,10 +595,7 @@ describe('SouthOPCUA', () => {
     ).rejects.toThrow('opcua read error');
     expect(south.addContent).not.toHaveBeenCalled();
     jest.advanceTimersByTime(1000);
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue({
-      ...configuration,
-      enabled: false
-    });
+
     await south.start();
     await expect(
       south.historyQuery(
@@ -724,10 +704,7 @@ describe('SouthOPCUA', () => {
       expectedItemsToRead.map(item => ({ nodeId: item.settings.nodeId, name: item.name, settings: item.settings }))
     );
     expect(south.addContent).not.toHaveBeenCalled();
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue({
-      ...configuration,
-      enabled: false
-    });
+
     jest.advanceTimersByTime(1000);
     await south.start();
     await expect(south.lastPointQuery(configuration.items)).rejects.toThrow('opcua read error');
@@ -827,11 +804,6 @@ describe('SouthOPCUA', () => {
     await south.lastPointQuery(configuration.items);
     expect(south.addContent).not.toHaveBeenCalled();
     expect(logger.error).toHaveBeenCalledWith('OPCUA session not set. The connector cannot read values');
-  });
-
-  it('should not subscribe if not items provided', async () => {
-    await south.subscribe([]);
-    expect(logger.error).not.toHaveBeenCalled();
   });
 
   it('should not subscribe if session is not set', async () => {
@@ -1263,19 +1235,9 @@ describe('SouthOPCUA with basic auth', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
 
     const connectionService = new ConnectionService(logger);
-    south = new SouthOPCUA(
-      configuration,
-      addContentCallback,
-      southConnectorRepository,
-      southCacheRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(configuration.id),
-      connectionService
-    );
+    south = new SouthOPCUA(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder', connectionService);
   });
 
   it('should properly connect to OPCUA server with basic auth', async () => {
@@ -1420,19 +1382,9 @@ describe('SouthOPCUA with certificate', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
 
     const connectionService = new ConnectionService(logger);
-    south = new SouthOPCUA(
-      configuration,
-      addContentCallback,
-      southConnectorRepository,
-      southCacheRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(configuration.id),
-      connectionService
-    );
+    south = new SouthOPCUA(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder', connectionService);
   });
 
   it('should properly connect to OPCUA server with basic auth', async () => {
@@ -1697,19 +1649,9 @@ describe('SouthOPCUA test connection', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime();
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
 
     const connectionService = new ConnectionService(logger);
-    south = new SouthOPCUA(
-      configuration,
-      addContentCallback,
-      southConnectorRepository,
-      southCacheRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(configuration.id),
-      connectionService
-    );
+    south = new SouthOPCUA(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder', connectionService);
   });
 
   it('Connection settings are correct', async () => {
@@ -1937,16 +1879,7 @@ describe('SouthOPCUA with shared connection', () => {
     jest.useFakeTimers().setSystemTime();
 
     const connectionService = new ConnectionService(logger);
-    south = new SouthOPCUA(
-      configuration,
-      addContentCallback,
-      southConnectorRepository,
-      southCacheRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(configuration.id),
-      connectionService
-    );
+    south = new SouthOPCUA(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder', connectionService);
   });
 
   it('should initialize connectionSettings', () => {

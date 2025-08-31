@@ -215,7 +215,7 @@ export default class HistoryQueryController extends AbstractController {
       return ctx.notFound();
     }
 
-    const historyQueryItem = ctx.app.historyQueryService.findHistoryQueryItem(ctx.params.historyQueryId, ctx.params.id);
+    const historyQueryItem = ctx.app.historyQueryService.findHistoryQueryItemById(ctx.params.historyQueryId, ctx.params.id);
     if (historyQueryItem) {
       ctx.ok(toHistoryQueryItemDTO(historyQueryItem, historyQuery.southType));
     } else {

@@ -9,7 +9,6 @@ import csv from 'papaparse';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import { NorthFileWriterSettings } from '../../../shared/model/north-settings.model';
 import testData from '../../tests/utils/test-data';
-import { mockBaseFolders } from '../../tests/utils/test-utils';
 import CacheService from '../../service/cache/cache.service';
 import { createTransformer } from '../../service/transformer.service';
 import OIBusTransformer from '../../service/transformers/oibus-transformer';
@@ -50,7 +49,7 @@ describe('NorthFileWriter', () => {
     (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
     (getFilenameWithoutRandomId as jest.Mock).mockReturnValue('example.file');
 
-    north = new NorthFileWriter(configuration, logger, mockBaseFolders(testData.north.list[0].id));
+    north = new NorthFileWriter(configuration, logger, 'cacheFolder', cacheService);
     await north.start();
   });
 
@@ -102,7 +101,7 @@ describe('NorthFileWriter without suffix or prefix', () => {
     (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
     (getFilenameWithoutRandomId as jest.Mock).mockReturnValue('example.file');
 
-    north = new NorthFileWriter(configuration, logger, mockBaseFolders(testData.north.list[0].id));
+    north = new NorthFileWriter(configuration, logger, 'cacheFolder', cacheService);
   });
 
   it('should properly handle files', async () => {

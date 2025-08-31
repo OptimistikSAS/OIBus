@@ -6,19 +6,24 @@ import pino from 'pino';
 import { NorthRESTSettings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
-import { BaseFolders } from '../../model/types';
 import { filesExists } from '../../service/utils';
 import FormData from 'form-data';
 import { URL } from 'node:url';
 import { OIBusError } from '../../model/engine.model';
 import { HTTPRequest, ReqAuthOptions, ReqProxyOptions, ReqResponse, retryableHttpStatusCodes } from '../../service/http-request.utils';
+import CacheService from '../../service/cache/cache.service';
 
 /**
  * Class Console - display values and file path into the console
  */
 export default class NorthREST extends NorthConnector<NorthRESTSettings> {
-  constructor(configuration: NorthConnectorEntity<NorthRESTSettings>, logger: pino.Logger, baseFolders: BaseFolders) {
-    super(configuration, logger, baseFolders);
+  constructor(
+    configuration: NorthConnectorEntity<NorthRESTSettings>,
+    logger: pino.Logger,
+    cacheFolderPath: string,
+    cacheService: CacheService
+  ) {
+    super(configuration, logger, cacheFolderPath, cacheService);
   }
 
   async handleContent(cacheMetadata: CacheMetadata): Promise<void> {

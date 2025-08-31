@@ -9,8 +9,8 @@ import pino from 'pino';
 import { NorthAmazonS3Settings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
-import { BaseFolders } from '../../model/types';
 import { getFilenameWithoutRandomId } from '../../service/utils';
+import CacheService from '../../service/cache/cache.service';
 
 /**
  * Class NorthAmazonS3 - sends files to Amazon AWS S3
@@ -18,8 +18,13 @@ import { getFilenameWithoutRandomId } from '../../service/utils';
 export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings> {
   private s3: S3Client | undefined;
 
-  constructor(connector: NorthConnectorEntity<NorthAmazonS3Settings>, logger: pino.Logger, baseFolders: BaseFolders) {
-    super(connector, logger, baseFolders);
+  constructor(
+    connector: NorthConnectorEntity<NorthAmazonS3Settings>,
+    logger: pino.Logger,
+    cacheFolderPath: string,
+    cacheService: CacheService
+  ) {
+    super(connector, logger, cacheFolderPath, cacheService);
   }
 
   /**

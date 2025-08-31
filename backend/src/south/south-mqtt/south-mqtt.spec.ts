@@ -7,23 +7,17 @@ import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import { SouthMQTTItemSettings, SouthMQTTSettings } from '../../../shared/model/south-settings.model';
 import * as utils from '../../service/utils';
-import SouthConnectorRepository from '../../repository/config/south-connector.repository';
-import SouthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/south-connector-repository.mock';
-import ScanModeRepository from '../../repository/config/scan-mode.repository';
-import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import testData from '../../tests/utils/test-data';
-import { flushPromises, mockBaseFolders } from '../../tests/utils/test-utils';
+import { flushPromises } from '../../tests/utils/test-utils';
 import { SouthConnectorEntity } from '../../model/south-connector.model';
 
 jest.mock('mqtt');
 jest.mock('node:fs/promises');
 jest.mock('../../service/utils');
 
-const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
-const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
 const southCacheService = new SouthCacheServiceMock();
 
@@ -201,18 +195,9 @@ describe('SouthMQTT without authentication', () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
 
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
     (mqtt.connect as jest.Mock).mockImplementation(() => mqttStream);
 
-    south = new SouthMQTT(
-      configuration,
-      addContentCallback,
-      southConnectorRepository,
-      southCacheRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(configuration.id)
-    );
+    south = new SouthMQTT(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
   it('should properly connect', async () => {
@@ -486,18 +471,9 @@ describe('SouthMQTT with Basic Auth', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
     (mqtt.connect as jest.Mock).mockImplementation(() => mqttStream);
 
-    south = new SouthMQTT(
-      configuration,
-      addContentCallback,
-      southConnectorRepository,
-      southCacheRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(configuration.id)
-    );
+    south = new SouthMQTT(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
   it('should properly connect', async () => {
@@ -830,57 +806,6 @@ describe('SouthMQTT with Basic Auth', () => {
     south.testItem(configuration.items[0], testData.south.itemTestingSettings, callback);
     mqttStream.emit('error', 'connect error');
   });
-
-  it('should get item', async () => {
-    const item = JSON.parse(JSON.stringify(configuration.items[1]));
-    south.wildcardTopic = jest
-      .fn()
-      .mockReturnValueOnce(['bad', 'topic'])
-      .mockReturnValueOnce(null)
-      .mockReturnValueOnce(['+', '+', '#'])
-      .mockReturnValueOnce(['+', '+', '#'])
-      .mockReturnValue([]);
-    (southConnectorRepository.findAllItemsForSouth as jest.Mock)
-      .mockReturnValueOnce([item])
-      .mockReturnValueOnce([item])
-      .mockReturnValueOnce([item, { ...item, id: 'anotherId' }])
-      .mockReturnValueOnce([])
-      .mockReturnValue([configuration.items[0]]);
-
-    south.subscribe = jest.fn();
-    south.unsubscribe = jest.fn();
-    south.start();
-    await flushPromises();
-    await south.onItemChange();
-    expect(() => south.getItem(item.settings.topic)).toThrow(new Error(`Item can't be determined from topic ${item.settings.topic}`));
-
-    south.start();
-    await flushPromises();
-    await south.onItemChange();
-    expect(() => south.getItem(item.settings.topic)).toThrow(new Error(`Item can't be determined from topic ${item.settings.topic}`));
-
-    south.start();
-    await flushPromises();
-    await south.onItemChange();
-    expect(() => south.getItem(item.settings.topic)).toThrow(
-      new Error(
-        `Topic "${item.settings.topic}" should be subscribed only once but it has the following subscriptions: ${JSON.stringify([
-          item,
-          { ...item, id: 'anotherId' }
-        ])}`
-      )
-    );
-
-    south.start();
-    await flushPromises();
-    await south.onItemChange();
-    expect(() => south.getItem(item.settings.topic)).toThrow(new Error(`Item can't be determined from topic ${item.settings.topic}`));
-
-    south.start();
-    await flushPromises();
-    await south.onItemChange();
-    expect(south.getItem(configuration.items[0].settings.topic)).toEqual(configuration.items[0]);
-  });
 });
 
 describe('SouthMQTT with Cert', () => {
@@ -1024,18 +949,9 @@ describe('SouthMQTT with Cert', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
     (mqtt.connect as jest.Mock).mockImplementation(() => mqttStream);
 
-    south = new SouthMQTT(
-      configuration,
-      addContentCallback,
-      southConnectorRepository,
-      southCacheRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(configuration.id)
-    );
+    south = new SouthMQTT(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
   it('should properly connect', async () => {
@@ -1205,19 +1121,10 @@ describe('SouthMQTT without Cert', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
     mqttStream.removeAllListeners();
     (mqtt.connect as jest.Mock).mockImplementation(() => mqttStream);
 
-    south = new SouthMQTT(
-      configuration,
-      addContentCallback,
-      southConnectorRepository,
-      southCacheRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(configuration.id)
-    );
+    south = new SouthMQTT(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
   it('should properly connect', async () => {

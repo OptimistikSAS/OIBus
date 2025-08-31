@@ -1,11 +1,9 @@
-import path from 'node:path';
 import * as pg from 'pg';
 import { ClientConfig } from 'pg';
 
 import SouthConnector from '../south-connector';
 import {
   convertDateTimeToInstant,
-  createFolder,
   formatInstant,
   generateCsvContent,
   generateFilenameForSerialization,
@@ -13,7 +11,7 @@ import {
   logQuery,
   persistResults
 } from '../../service/utils';
-import EncryptionService, { encryptionService } from '../../service/encryption.service';
+import { encryptionService } from '../../service/encryption.service';
 import pino from 'pino';
 import { Instant } from '../../../shared/model/types';
 import { QueriesHistory } from '../south-interface';
@@ -21,10 +19,7 @@ import { DateTime } from 'luxon';
 import { SouthPostgreSQLItemSettings, SouthPostgreSQLSettings } from '../../../shared/model/south-settings.model';
 import { OIBusContent } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
-import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import ScanModeRepository from '../../repository/config/scan-mode.repository';
-import { BaseFolders } from '../../model/types';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 
 /**
@@ -34,29 +29,14 @@ export default class SouthPostgreSQL
   extends SouthConnector<SouthPostgreSQLSettings, SouthPostgreSQLItemSettings>
   implements QueriesHistory
 {
-  private readonly tmpFolder: string;
-
   constructor(
     connector: SouthConnectorEntity<SouthPostgreSQLSettings, SouthPostgreSQLItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
-    southConnectorRepository: SouthConnectorRepository,
     southCacheRepository: SouthCacheRepository,
-    scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
-    baseFolders: BaseFolders
+    cacheFolderPath: string
   ) {
-    super(connector, engineAddContentCallback, southConnectorRepository, southCacheRepository, scanModeRepository, logger, baseFolders);
-    this.tmpFolder = path.resolve(this.baseFolders.cache, 'tmp');
-  }
-
-  /**
-   * Initialize services (logger, certificate, status data) at startup
-   */
-  async start(dataStream = true): Promise<void> {
-    if (this.connector.id !== 'test') {
-      await createFolder(this.tmpFolder);
-    }
-    await super.start(dataStream);
+    super(connector, engineAddContentCallback, southCacheRepository, logger, cacheFolderPath);
   }
 
   async createConnectionOptions(): Promise<ClientConfig> {

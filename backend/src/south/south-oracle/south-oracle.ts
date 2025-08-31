@@ -3,7 +3,6 @@ import path from 'node:path';
 import SouthConnector from '../south-connector';
 import {
   convertDateTimeToInstant,
-  createFolder,
   formatInstant,
   generateCsvContent,
   generateFilenameForSerialization,
@@ -21,42 +20,24 @@ import { OIBusContent } from '../../../shared/model/engine.model';
 
 import oracledb, { ConnectionAttributes } from 'oracledb';
 import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
-import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import ScanModeRepository from '../../repository/config/scan-mode.repository';
-import { BaseFolders } from '../../model/types';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 
 /**
  * Class SouthOracle - Retrieve data from Oracle databases and send them to the cache as CSV files.
  */
 export default class SouthOracle extends SouthConnector<SouthOracleSettings, SouthOracleItemSettings> implements QueriesHistory {
-  private readonly tmpFolder: string;
-
   constructor(
     connector: SouthConnectorEntity<SouthOracleSettings, SouthOracleItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
-    southConnectorRepository: SouthConnectorRepository,
     southCacheRepository: SouthCacheRepository,
-    scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
-    baseFolders: BaseFolders
+    cacheFolderPath: string
   ) {
-    super(connector, engineAddContentCallback, southConnectorRepository, southCacheRepository, scanModeRepository, logger, baseFolders);
-    this.tmpFolder = path.resolve(this.baseFolders.cache, 'tmp');
+    super(connector, engineAddContentCallback, southCacheRepository, logger, cacheFolderPath);
     if (this.connector.settings.thickMode && this.connector.settings.oracleClient) {
       oracledb.initOracleClient({ libDir: path.resolve(this.connector.settings.oracleClient) });
     }
-  }
-
-  /**
-   * Initialize services (logger, certificate, status data) at startup
-   */
-  async start(dataStream = true): Promise<void> {
-    if (this.connector.id !== 'test') {
-      await createFolder(this.tmpFolder);
-    }
-    await super.start(dataStream);
   }
 
   override async testConnection(): Promise<void> {

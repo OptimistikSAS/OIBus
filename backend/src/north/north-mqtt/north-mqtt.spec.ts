@@ -6,7 +6,7 @@ import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import { NorthMQTTSettings } from '../../../shared/model/north-settings.model';
 import testData from '../../tests/utils/test-data';
-import { flushPromises, mockBaseFolders } from '../../tests/utils/test-utils';
+import { flushPromises } from '../../tests/utils/test-utils';
 import CacheService from '../../service/cache/cache.service';
 import { createTransformer } from '../../service/transformer.service';
 import OIBusTransformer from '../../service/transformers/oibus-transformer';
@@ -82,7 +82,7 @@ describe('NorthMQTT', () => {
     (getFilenameWithoutRandomId as jest.Mock).mockReturnValue('example.file');
     (mqtt.connect as jest.Mock).mockImplementation(() => mqttStream);
 
-    north = new NorthMQTT(configuration, logger, mockBaseFolders(testData.north.list[0].id));
+    north = new NorthMQTT(configuration, logger, 'cacheFolder', cacheService);
   });
 
   it('should properly connect', async () => {

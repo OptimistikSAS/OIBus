@@ -1,13 +1,5 @@
-import path from 'node:path';
 import SouthConnector from '../south-connector';
-import {
-  convertDelimiter,
-  createFolder,
-  formatInstant,
-  generateFilenameForSerialization,
-  logQuery,
-  persistResults
-} from '../../service/utils';
+import { convertDelimiter, formatInstant, generateFilenameForSerialization, logQuery, persistResults } from '../../service/utils';
 import pino from 'pino';
 import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
@@ -15,10 +7,7 @@ import { QueriesHistory } from '../south-interface';
 import { SouthOLEDBItemSettings, SouthOLEDBSettings } from '../../../shared/model/south-settings.model';
 import { OIBusContent } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
-import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import ScanModeRepository from '../../repository/config/scan-mode.repository';
-import { BaseFolders } from '../../model/types';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { HTTPRequest, ReqOptions } from '../../service/http-request.utils';
 
@@ -27,31 +16,17 @@ import { HTTPRequest, ReqOptions } from '../../service/http-request.utils';
  */
 
 export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, SouthOLEDBItemSettings> implements QueriesHistory {
-  private readonly tmpFolder: string;
   private connected = false;
   private reconnectTimeout: NodeJS.Timeout | null = null;
 
   constructor(
     connector: SouthConnectorEntity<SouthOLEDBSettings, SouthOLEDBItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
-    southConnectorRepository: SouthConnectorRepository,
     southCacheRepository: SouthCacheRepository,
-    scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
-    baseFolders: BaseFolders
+    cacheFolderPath: string
   ) {
-    super(connector, engineAddContentCallback, southConnectorRepository, southCacheRepository, scanModeRepository, logger, baseFolders);
-    this.tmpFolder = path.resolve(this.baseFolders.cache, 'tmp');
-  }
-
-  /**
-   * Initialize services (logger, certificate, status data) at startup
-   */
-  async start(dataStream = true): Promise<void> {
-    if (this.connector.id !== 'test') {
-      await createFolder(this.tmpFolder);
-    }
-    await super.start(dataStream);
+    super(connector, engineAddContentCallback, southCacheRepository, logger, cacheFolderPath);
   }
 
   override async connect(): Promise<void> {

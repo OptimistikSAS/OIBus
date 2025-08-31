@@ -13,7 +13,6 @@ import {
   SouthConnectorLightDTO,
   SouthConnectorManifest
 } from '../../shared/model/south-connector.model';
-import SouthConnector from '../south/south-connector';
 
 import oianalyticsManifest from '../south/south-oianalytics/manifest';
 import opcuaManifest from '../south/south-opcua/manifest';
@@ -32,7 +31,6 @@ import oledbManifest from '../south/south-oledb/manifest';
 import piManifest from '../south/south-pi/manifest';
 import sftpManifest from '../south/south-sftp/manifest';
 import ftpManifest from '../south/south-ftp/manifest';
-import ConnectionService from './connection.service';
 import { OIBusContent } from '../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorEntityLight, SouthConnectorItemEntity } from '../model/south-connector.model';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
@@ -42,75 +40,22 @@ import SouthConnectorMetricsRepository from '../repository/metrics/south-connect
 import { Page } from '../../shared/model/types';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
-import { checkScanMode, createBaseFolders, filesExists, stringToBoolean } from './utils';
+import { checkScanMode, stringToBoolean } from './utils';
 import { ScanMode } from '../model/scan-mode.model';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
 import fs from 'node:fs/promises';
-import path from 'node:path';
 import csv from 'papaparse';
 import multer from '@koa/multer';
-import {
-  SouthADSItemSettings,
-  SouthADSSettings,
-  SouthFolderScannerItemSettings,
-  SouthFolderScannerSettings,
-  SouthFTPItemSettings,
-  SouthFTPSettings,
-  SouthItemSettings,
-  SouthModbusItemSettings,
-  SouthModbusSettings,
-  SouthMQTTItemSettings,
-  SouthMQTTSettings,
-  SouthMSSQLItemSettings,
-  SouthMSSQLSettings,
-  SouthMySQLItemSettings,
-  SouthMySQLSettings,
-  SouthODBCItemSettings,
-  SouthODBCSettings,
-  SouthOIAnalyticsItemSettings,
-  SouthOIAnalyticsSettings,
-  SouthOLEDBItemSettings,
-  SouthOLEDBSettings,
-  SouthOPCItemSettings,
-  SouthOPCSettings,
-  SouthOPCUAItemSettings,
-  SouthOPCUASettings,
-  SouthOracleItemSettings,
-  SouthOracleSettings,
-  SouthPIItemSettings,
-  SouthPISettings,
-  SouthPostgreSQLItemSettings,
-  SouthPostgreSQLSettings,
-  SouthSettings,
-  SouthSFTPItemSettings,
-  SouthSFTPSettings,
-  SouthSQLiteItemSettings,
-  SouthSQLiteSettings
-} from '../../shared/model/south-settings.model';
-import SouthADS from '../south/south-ads/south-ads';
-import SouthFolderScanner from '../south/south-folder-scanner/south-folder-scanner';
-import SouthModbus from '../south/south-modbus/south-modbus';
-import SouthMQTT from '../south/south-mqtt/south-mqtt';
-import SouthMSSQL from '../south/south-mssql/south-mssql';
-import SouthMySQL from '../south/south-mysql/south-mysql';
-import SouthODBC from '../south/south-odbc/south-odbc';
-import SouthOIAnalytics from '../south/south-oianalytics/south-oianalytics';
-import SouthOLEDB from '../south/south-oledb/south-oledb';
-import SouthOPC from '../south/south-opc/south-opc';
-import SouthOPCUA from '../south/south-opcua/south-opcua';
-import SouthOracle from '../south/south-oracle/south-oracle';
-import SouthPI from '../south/south-pi/south-pi';
-import SouthPostgreSQL from '../south/south-postgresql/south-postgresql';
-import SouthSFTP from '../south/south-sftp/south-sftp';
-import SouthFTP from '../south/south-ftp/south-ftp';
-import SouthSQLite from '../south/south-sqlite/south-sqlite';
+
 import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
 import CertificateRepository from '../repository/config/certificate.repository';
 import DataStreamEngine from '../engine/data-stream-engine';
 import { PassThrough } from 'node:stream';
-import { BaseFolders } from '../model/types';
 import { OIBusObjectAttribute } from '../../shared/model/form.model';
 import { toScanModeDTO } from './scan-mode.service';
+import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
+import { buildSouth } from '../south/south-connector-factory';
+import ConnectionService from './connection.service';
 
 export const southManifestList: Array<SouthConnectorManifest> = [
   folderScannerManifest,
@@ -143,196 +88,8 @@ export default class SouthService {
     private readonly oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
     private readonly certificateRepository: CertificateRepository,
     private readonly oIAnalyticsMessageService: OIAnalyticsMessageService,
-    private readonly _connectionService: ConnectionService,
-    private readonly dataStreamEngine: DataStreamEngine
+    private readonly engine: DataStreamEngine
   ) {}
-
-  buildSouth<S extends SouthSettings, I extends SouthItemSettings>(
-    settings: SouthConnectorEntity<S, I>,
-    addContent: (southId: string, data: OIBusContent) => Promise<void>,
-    logger: pino.Logger,
-    baseFolders: BaseFolders | undefined = undefined
-  ): SouthConnector<SouthSettings, SouthItemSettings> {
-    const southBaseFolders = baseFolders ?? this.getDefaultBaseFolders(settings.id);
-
-    switch (settings.type) {
-      case 'ads':
-        return new SouthADS(
-          settings as SouthConnectorEntity<SouthADSSettings, SouthADSItemSettings>,
-          addContent,
-          this.southConnectorRepository,
-          this.southCacheRepository,
-          this.scanModeRepository,
-          logger,
-          southBaseFolders
-        );
-      case 'folder-scanner':
-        return new SouthFolderScanner(
-          settings as SouthConnectorEntity<SouthFolderScannerSettings, SouthFolderScannerItemSettings>,
-          addContent,
-          this.southConnectorRepository,
-          this.southCacheRepository,
-          this.scanModeRepository,
-          logger,
-          southBaseFolders
-        );
-      case 'modbus':
-        return new SouthModbus(
-          settings as SouthConnectorEntity<SouthModbusSettings, SouthModbusItemSettings>,
-          addContent,
-          this.southConnectorRepository,
-          this.southCacheRepository,
-          this.scanModeRepository,
-          logger,
-          southBaseFolders
-        );
-      case 'mqtt':
-        return new SouthMQTT(
-          settings as SouthConnectorEntity<SouthMQTTSettings, SouthMQTTItemSettings>,
-          addContent,
-          this.southConnectorRepository,
-          this.southCacheRepository,
-          this.scanModeRepository,
-          logger,
-          southBaseFolders
-        );
-      case 'mssql':
-        return new SouthMSSQL(
-          settings as SouthConnectorEntity<SouthMSSQLSettings, SouthMSSQLItemSettings>,
-          addContent,
-          this.southConnectorRepository,
-          this.southCacheRepository,
-          this.scanModeRepository,
-          logger,
-          southBaseFolders
-        );
-      case 'mysql':
-        return new SouthMySQL(
-          settings as SouthConnectorEntity<SouthMySQLSettings, SouthMySQLItemSettings>,
-          addContent,
-          this.southConnectorRepository,
-          this.southCacheRepository,
-          this.scanModeRepository,
-          logger,
-          southBaseFolders
-        );
-      case 'odbc':
-        return new SouthODBC(
-          settings as SouthConnectorEntity<SouthODBCSettings, SouthODBCItemSettings>,
-          addContent,
-          this.southConnectorRepository,
-          this.southCacheRepository,
-          this.scanModeRepository,
-          logger,
-          southBaseFolders
-        );
-      case 'oianalytics':
-        return new SouthOIAnalytics(
-          settings as SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIAnalyticsItemSettings>,
-          addContent,
-          this.southConnectorRepository,
-          this.southCacheRepository,
-          this.scanModeRepository,
-          this.oIAnalyticsRegistrationRepository,
-          this.certificateRepository,
-          logger,
-          southBaseFolders
-        );
-      case 'oledb':
-        return new SouthOLEDB(
-          settings as SouthConnectorEntity<SouthOLEDBSettings, SouthOLEDBItemSettings>,
-          addContent,
-          this.southConnectorRepository,
-          this.southCacheRepository,
-          this.scanModeRepository,
-          logger,
-          southBaseFolders
-        );
-      case 'opc':
-        return new SouthOPC(
-          settings as SouthConnectorEntity<SouthOPCSettings, SouthOPCItemSettings>,
-          addContent,
-          this.southConnectorRepository,
-          this.southCacheRepository,
-          this.scanModeRepository,
-          logger,
-          southBaseFolders
-        );
-      case 'opcua':
-        return new SouthOPCUA(
-          settings as SouthConnectorEntity<SouthOPCUASettings, SouthOPCUAItemSettings>,
-          addContent,
-          this.southConnectorRepository,
-          this.southCacheRepository,
-          this.scanModeRepository,
-          logger,
-          southBaseFolders,
-          this._connectionService
-        );
-      case 'oracle':
-        return new SouthOracle(
-          settings as SouthConnectorEntity<SouthOracleSettings, SouthOracleItemSettings>,
-          addContent,
-          this.southConnectorRepository,
-          this.southCacheRepository,
-          this.scanModeRepository,
-          logger,
-          southBaseFolders
-        );
-      case 'osisoft-pi':
-        return new SouthPI(
-          settings as SouthConnectorEntity<SouthPISettings, SouthPIItemSettings>,
-          addContent,
-          this.southConnectorRepository,
-          this.southCacheRepository,
-          this.scanModeRepository,
-          logger,
-          southBaseFolders
-        );
-      case 'postgresql':
-        return new SouthPostgreSQL(
-          settings as SouthConnectorEntity<SouthPostgreSQLSettings, SouthPostgreSQLItemSettings>,
-          addContent,
-          this.southConnectorRepository,
-          this.southCacheRepository,
-          this.scanModeRepository,
-          logger,
-          southBaseFolders
-        );
-      case 'sftp':
-        return new SouthSFTP(
-          settings as SouthConnectorEntity<SouthSFTPSettings, SouthSFTPItemSettings>,
-          addContent,
-          this.southConnectorRepository,
-          this.southCacheRepository,
-          this.scanModeRepository,
-          logger,
-          southBaseFolders
-        );
-      case 'ftp':
-        return new SouthFTP(
-          settings as SouthConnectorEntity<SouthFTPSettings, SouthFTPItemSettings>,
-          addContent,
-          this.southConnectorRepository,
-          this.southCacheRepository,
-          this.scanModeRepository,
-          logger,
-          southBaseFolders
-        );
-      case 'sqlite':
-        return new SouthSQLite(
-          settings as SouthConnectorEntity<SouthSQLiteSettings, SouthSQLiteItemSettings>,
-          addContent,
-          this.southConnectorRepository,
-          this.southCacheRepository,
-          this.scanModeRepository,
-          logger,
-          southBaseFolders
-        );
-      default:
-        throw Error(`South connector of type ${settings.type} not installed`);
-    }
-  }
 
   async testSouth(id: string, southType: OIBusSouthType, settingsToTest: SouthSettings, logger: pino.Logger): Promise<void> {
     let southConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings> | null = null;
@@ -360,11 +117,16 @@ export default class SouthService {
 
     /* istanbul ignore next */
     const mockedAddContent = async (_southId: string, _content: OIBusContent): Promise<void> => Promise.resolve();
-    const south = this.buildSouth(testToRun, mockedAddContent, logger, {
-      cache: 'baseCacheFolder',
-      archive: 'baseArchiveFolder',
-      error: 'baseErrorFolder'
-    });
+    const south = buildSouth(
+      testToRun,
+      mockedAddContent,
+      logger,
+      '',
+      this.southCacheRepository,
+      this.certificateRepository,
+      this.oIAnalyticsRegistrationRepository,
+      new ConnectionService(logger)
+    );
     return await south.testConnection();
   }
 
@@ -418,11 +180,16 @@ export default class SouthService {
 
     /* istanbul ignore next */
     const mockedAddContent = async (_southId: string, _content: OIBusContent): Promise<void> => Promise.resolve();
-    const south = this.buildSouth(testConnectorToRun, mockedAddContent, logger, {
-      cache: 'baseCacheFolder',
-      archive: 'baseArchiveFolder',
-      error: 'baseErrorFolder'
-    });
+    const south = buildSouth(
+      testConnectorToRun,
+      mockedAddContent,
+      logger,
+      '',
+      this.southCacheRepository,
+      this.certificateRepository,
+      this.oIAnalyticsRegistrationRepository,
+      new ConnectionService(logger)
+    );
     return await south.testItem(testItemToRun, testingSettings, callback);
   }
 
@@ -444,7 +211,7 @@ export default class SouthService {
   ): Promise<SouthConnectorEntity<S, I>> {
     const manifest = this.getInstalledSouthManifests().find(southManifest => southManifest.id === command.type);
     if (!manifest) {
-      throw new Error(`South manifest does not exist for type ${command.type}`);
+      throw new Error(`South manifest does not exist for type "${command.type}"`);
     }
     await this.validator.validateSettings(manifest.settings, command.settings);
     // Check if item settings match the item schema, throw an error otherwise
@@ -465,24 +232,15 @@ export default class SouthService {
     );
     this.southConnectorRepository.saveSouthConnector(southEntity);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-    const baseFolders = this.getDefaultBaseFolders(southEntity.id);
-    await createBaseFolders(baseFolders);
-
-    await this.dataStreamEngine.createSouth(
-      this.buildSouth(
-        this.findById(southEntity.id)!,
-        this.dataStreamEngine.addContent.bind(this.dataStreamEngine),
-        this.dataStreamEngine.logger.child({ scopeType: 'south', scopeId: southEntity.id, scopeName: southEntity.name })
-      )
-    );
+    await this.engine.createSouth(southEntity.id);
     if (southEntity.enabled) {
-      await this.dataStreamEngine.startSouth(southEntity.id);
+      await this.engine.startSouth(southEntity.id);
     }
     return southEntity;
   }
 
   getSouthDataStream(southConnectorId: string): PassThrough | null {
-    return this.dataStreamEngine.getSouthDataStream(southConnectorId);
+    return this.engine.getSouthDataStream(southConnectorId);
   }
 
   async updateSouth<S extends SouthSettings, I extends SouthItemSettings>(
@@ -503,7 +261,7 @@ export default class SouthService {
     await copySouthConnectorCommandToSouthEntity(southEntity, command, previousSettings, this.scanModeRepository.findAll());
     this.southConnectorRepository.saveSouthConnector(southEntity);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-    await this.dataStreamEngine.reloadSouth(southEntity);
+    await this.engine.reloadSouth(southEntity);
   }
 
   async deleteSouth(southConnectorId: string): Promise<void> {
@@ -512,93 +270,86 @@ export default class SouthService {
       throw new Error(`South connector ${southConnectorId} does not exist`);
     }
 
-    await this.dataStreamEngine.deleteSouth(southConnector);
-    await this.deleteBaseFolders(southConnector);
+    await this.engine.deleteSouth(southConnector);
     this.southConnectorRepository.deleteSouth(southConnector.id);
-    this.dataStreamEngine.updateNorthConfigurations();
     this.logRepository.deleteLogsByScopeId('south', southConnector.id);
     this.southMetricsRepository.removeMetrics(southConnector.id);
     this.southCacheRepository.deleteAllBySouthConnector(southConnector.id);
+
+    this.engine.updateNorthSubscriptions(southConnector.id); // Do this once it has been removed from the database to properly reload the subscription list
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
 
-    this.dataStreamEngine.logger.info(`Deleted South connector "${southConnector.name}" (${southConnector.id})`);
+    this.engine.logger.info(`Deleted South connector "${southConnector.name}" (${southConnector.id})`);
   }
 
   async startSouth(southConnectorId: string): Promise<void> {
     const southConnector = this.southConnectorRepository.findSouthById(southConnectorId);
     if (!southConnector) {
-      throw new Error(`South connector ${southConnectorId} does not exist`);
+      throw new Error(`South connector "${southConnectorId}" does not exist`);
     }
 
     this.southConnectorRepository.start(southConnector.id);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-    await this.dataStreamEngine.startSouth(southConnector.id);
+    await this.engine.startSouth(southConnector.id);
   }
 
   async stopSouth(southConnectorId: string): Promise<void> {
     const southConnector = this.southConnectorRepository.findSouthById(southConnectorId);
     if (!southConnector) {
-      throw new Error(`South connector ${southConnectorId} does not exist`);
+      throw new Error(`South connector "${southConnectorId}" does not exist`);
     }
 
     this.southConnectorRepository.stop(southConnector.id);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-    await this.dataStreamEngine.stopSouth(southConnector.id);
+    await this.engine.stopSouth(southConnector.id);
   }
 
-  getSouthItems<I extends SouthItemSettings>(southId: string): Array<SouthConnectorItemEntity<I>> {
-    return this.southConnectorRepository.findAllItemsForSouth<I>(southId);
+  getSouthItems(southId: string): Array<SouthConnectorItemEntity<SouthItemSettings>> {
+    return this.southConnectorRepository.findAllItemsForSouth(southId);
   }
 
-  searchSouthItems<I extends SouthItemSettings>(
-    southId: string,
-    searchParams: SouthConnectorItemSearchParam
-  ): Page<SouthConnectorItemEntity<I>> {
-    return this.southConnectorRepository.searchItems<I>(southId, searchParams);
+  searchSouthItems(southId: string, searchParams: SouthConnectorItemSearchParam): Page<SouthConnectorItemEntity<SouthItemSettings>> {
+    return this.southConnectorRepository.searchItems(southId, searchParams);
   }
 
   findSouthConnectorItemById(southConnectorId: string, itemId: string): SouthConnectorItemEntity<SouthItemSettings> | null {
     return this.southConnectorRepository.findItemById(southConnectorId, itemId);
   }
 
-  async createItem<I extends SouthItemSettings>(
+  async createItem(
     southConnectorId: string,
-    command: SouthConnectorItemCommandDTO<I>
-  ): Promise<SouthConnectorItemEntity<I>> {
+    command: SouthConnectorItemCommandDTO<SouthItemSettings>
+  ): Promise<SouthConnectorItemEntity<SouthItemSettings>> {
     const southConnector = this.southConnectorRepository.findSouthById(southConnectorId);
     if (!southConnector) {
-      throw new Error(`South connector ${southConnectorId} does not exist`);
+      throw new Error(`South connector "${southConnectorId}" does not exist`);
     }
     const manifest = this.getInstalledSouthManifests().find(southManifest => southManifest.id === southConnector.type);
     if (!manifest) {
-      throw new Error(`South manifest does not exist for type ${southConnector.type}`);
+      throw new Error(`South manifest does not exist for type "${southConnector.type}"`);
     }
     const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'
     )! as OIBusObjectAttribute;
     await this.validator.validateSettings(itemSettingsManifest, command.settings);
 
-    const southItemEntity = {} as SouthConnectorItemEntity<I>;
-    await copySouthItemCommandToSouthItemEntity<I>(southItemEntity, command, null, southConnector.type, this.scanModeRepository.findAll());
-    this.southConnectorRepository.saveItem<I>(southConnector.id, southItemEntity);
+    const southItemEntity = {} as SouthConnectorItemEntity<SouthItemSettings>;
+    await copySouthItemCommandToSouthItemEntity(southItemEntity, command, null, southConnector.type, this.scanModeRepository.findAll());
+    this.southConnectorRepository.saveItem(southConnector.id, southItemEntity);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-    await this.dataStreamEngine.reloadItems(southConnector.id);
+    await this.engine.reloadSouthItems(southConnector);
     return southItemEntity;
   }
 
-  async updateItem<I extends SouthItemSettings>(
-    southConnectorId: string,
-    itemId: string,
-    command: SouthConnectorItemCommandDTO<I>
-  ): Promise<void> {
-    const previousSettings = this.southConnectorRepository.findItemById<I>(southConnectorId, itemId);
+  async updateItem(southConnectorId: string, itemId: string, command: SouthConnectorItemCommandDTO<SouthItemSettings>): Promise<void> {
+    const previousSettings = this.southConnectorRepository.findItemById(southConnectorId, itemId);
     if (!previousSettings) {
-      throw new Error(`South item with ID ${itemId} does not exist`);
+      throw new Error(`South item with ID "${itemId}" does not exist`);
     }
     const southConnector = this.southConnectorRepository.findSouthById(southConnectorId)!;
     const manifest = this.getInstalledSouthManifests().find(southManifest => southManifest.id === southConnector.type);
     if (!manifest) {
-      throw new Error(`South manifest does not exist for type ${southConnector.type}`);
+      throw new Error(`South manifest does not exist for type "${southConnector.type}"`);
     }
 
     const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
@@ -606,62 +357,72 @@ export default class SouthService {
     )! as OIBusObjectAttribute;
     await this.validator.validateSettings(itemSettingsManifest, command.settings);
 
-    const southItemEntity = { id: previousSettings.id } as SouthConnectorItemEntity<I>;
-    await copySouthItemCommandToSouthItemEntity<I>(
+    const southItemEntity = { id: previousSettings.id } as SouthConnectorItemEntity<SouthItemSettings>;
+    await copySouthItemCommandToSouthItemEntity(
       southItemEntity,
       command,
       previousSettings,
       southConnector.type,
       this.scanModeRepository.findAll()
     );
-    this.southConnectorRepository.saveItem<I>(southConnectorId, southItemEntity);
+    this.southConnectorRepository.saveItem(southConnectorId, southItemEntity);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-    await this.dataStreamEngine.reloadItems(southConnector.id);
+    await this.engine.reloadSouthItems(southConnector);
   }
 
   async deleteItem(southConnectorId: string, itemId: string): Promise<void> {
     const southConnector = this.southConnectorRepository.findSouthById(southConnectorId);
     if (!southConnector) {
-      throw new Error(`South connector ${southConnectorId} does not exist`);
+      throw new Error(`South connector "${southConnectorId}" does not exist`);
     }
     const southItem = this.southConnectorRepository.findItemById(southConnectorId, itemId);
-    if (!southItem) throw new Error(`South item ${itemId} not found`);
+    if (!southItem) throw new Error(`South item "${itemId}" not found`);
     this.southConnectorRepository.deleteItem(southItem.id);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-    await this.dataStreamEngine.reloadItems(southConnector.id);
+    await this.engine.reloadSouthItems(southConnector);
   }
 
   async deleteAllItemsForSouthConnector(southConnectorId: string): Promise<void> {
     const southConnector = this.southConnectorRepository.findSouthById(southConnectorId);
     if (!southConnector) {
-      throw new Error(`South connector ${southConnectorId} does not exist`);
+      throw new Error(`South connector "${southConnectorId}" does not exist`);
     }
     this.southConnectorRepository.deleteAllItemsBySouth(southConnectorId);
     this.southCacheRepository.deleteAllBySouthConnector(southConnectorId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-
-    await this.dataStreamEngine.reloadItems(southConnector.id);
+    await this.engine.reloadSouthItems(southConnector);
   }
 
   async enableItem(southConnectorId: string, itemId: string): Promise<void> {
+    const southConnector = this.southConnectorRepository.findSouthById(southConnectorId);
+    if (!southConnector) {
+      throw new Error(`South connector "${southConnectorId}" does not exist`);
+    }
     const southItem = this.southConnectorRepository.findItemById(southConnectorId, itemId);
-    if (!southItem) throw new Error(`South item ${itemId} not found`);
+    if (!southItem) {
+      throw new Error(`South item "${itemId}" not found`);
+    }
     this.southConnectorRepository.enableItem(southItem.id);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-
-    await this.dataStreamEngine.reloadItems(southConnectorId);
+    await this.engine.reloadSouthItems(southConnector);
   }
 
   async disableItem(southConnectorId: string, itemId: string): Promise<void> {
+    const southConnector = this.southConnectorRepository.findSouthById(southConnectorId);
+    if (!southConnector) {
+      throw new Error(`South connector "${southConnectorId}" does not exist`);
+    }
     const southItem = this.southConnectorRepository.findItemById(southConnectorId, itemId);
-    if (!southItem) throw new Error(`South item ${itemId} not found`);
+    if (!southItem) {
+      throw new Error(`South item "${itemId}" not found`);
+    }
     this.southConnectorRepository.disableItem(southItem.id);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
 
-    await this.dataStreamEngine.reloadItems(southConnectorId);
+    await this.engine.reloadSouthItems(southConnector);
   }
 
-  async checkCsvFileImport<I extends SouthItemSettings>(
+  async checkCsvFileImport(
     southType: string,
     file: multer.File,
     delimiter: string,
@@ -671,48 +432,49 @@ export default class SouthService {
     errors: Array<{ item: Record<string, string>; error: string }>;
   }> {
     const fileContent = await fs.readFile(file.path);
-    const existingItemsContent: Array<SouthConnectorItemDTO<I>> = JSON.parse((await fs.readFile(existingItems.path)).toString('utf8'));
+    const existingItemsContent: Array<SouthConnectorItemDTO<SouthItemSettings>> = JSON.parse(
+      (await fs.readFile(existingItems.path)).toString('utf8')
+    );
     return await this.checkCsvContentImport(southType, fileContent.toString('utf8'), delimiter, existingItemsContent);
   }
 
-  async checkCsvContentImport<I extends SouthItemSettings>(
+  async checkCsvContentImport(
     southType: string,
     fileContent: string,
     delimiter: string,
-    existingItems: Array<SouthConnectorItemDTO<I>>
+    existingItems: Array<SouthConnectorItemDTO<SouthItemSettings>>
   ): Promise<{
     items: Array<SouthConnectorItemDTO<SouthItemSettings>>;
     errors: Array<{ item: Record<string, string>; error: string }>;
   }> {
     const manifest = this.getInstalledSouthManifests().find(southManifest => southManifest.id === southType);
     if (!manifest) {
-      throw new Error(`South manifest does not exist for type ${southType}`);
+      throw new Error(`South manifest does not exist for type "${southType}"`);
     }
 
     const csvContent = csv.parse(fileContent, { header: true, delimiter, skipEmptyLines: true });
-
     if (csvContent.meta.delimiter !== delimiter) {
       throw new Error(`The entered delimiter "${delimiter}" does not correspond to the file delimiter "${csvContent.meta.delimiter}"`);
     }
     const scanModes = this.scanModeRepository.findAll();
 
-    const validItems: Array<SouthConnectorItemDTO<I>> = [];
+    const validItems: Array<SouthConnectorItemDTO<SouthItemSettings>> = [];
     const errors: Array<{ item: Record<string, string>; error: string }> = [];
     for (const data of csvContent.data) {
       const foundScanMode = scanModes.find(scanMode => scanMode.name === (data as Record<string, string>).scanMode);
       if (!foundScanMode) {
         errors.push({
           item: data as Record<string, string>,
-          error: `Scan mode "${(data as Record<string, string>).scanMode}" not found for item ${(data as Record<string, string>).name}`
+          error: `Scan mode "${(data as Record<string, string>).scanMode}" not found for item "${(data as Record<string, string>).name}"`
         });
         continue;
       }
-      const item: SouthConnectorItemDTO<I> = {
+      const item: SouthConnectorItemDTO<SouthItemSettings> = {
         id: '',
         name: (data as Record<string, string>).name,
         enabled: stringToBoolean((data as Record<string, string>).enabled),
         scanMode: foundScanMode,
-        settings: {} as I
+        settings: {} as SouthItemSettings
       };
       if (existingItems.find(existingItem => existingItem.name === item.name)) {
         errors.push({
@@ -749,7 +511,7 @@ export default class SouthService {
         }
       }
       if (hasSettingsError) continue;
-      item.settings = settings as unknown as I;
+      item.settings = settings as unknown as SouthItemSettings;
 
       try {
         await this.validator.validateSettings(itemSettingsManifest, item.settings);
@@ -758,68 +520,34 @@ export default class SouthService {
         errors.push({ item: data as Record<string, string>, error: (itemError as Error).message });
       }
     }
-
     return { items: validItems, errors };
   }
 
-  async importItems<I extends SouthItemSettings>(
+  async importItems(
     southConnectorId: string,
-    items: Array<SouthConnectorItemCommandDTO<I>>,
+    items: Array<SouthConnectorItemCommandDTO<SouthItemSettings>>,
     deleteItemsNotPresent = false
   ) {
     const southConnector = this.southConnectorRepository.findSouthById(southConnectorId);
     if (!southConnector) {
-      throw new Error(`South connector ${southConnectorId} does not exist`);
+      throw new Error(`South connector "${southConnectorId}" does not exist`);
     }
     const manifest = this.getInstalledSouthManifests().find(southManifest => southManifest.id === southConnector.type)!;
-    const itemsToAdd: Array<SouthConnectorItemEntity<I>> = [];
+    const itemsToAdd: Array<SouthConnectorItemEntity<SouthItemSettings>> = [];
     const scanModes = this.scanModeRepository.findAll();
     const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'
     )! as OIBusObjectAttribute;
     for (const itemCommand of items) {
       await this.validator.validateSettings(itemSettingsManifest, itemCommand.settings);
-      const southItemEntity = {} as SouthConnectorItemEntity<I>;
+      const southItemEntity = {} as SouthConnectorItemEntity<SouthItemSettings>;
       await copySouthItemCommandToSouthItemEntity(southItemEntity, itemCommand, null, southConnector.type, scanModes);
       itemsToAdd.push(southItemEntity);
     }
 
     this.southConnectorRepository.saveAllItems(southConnector.id, itemsToAdd, deleteItemsNotPresent);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-
-    await this.dataStreamEngine.reloadItems(southConnectorId);
-  }
-
-  private async deleteBaseFolders(south: SouthConnectorEntity<SouthSettings, SouthItemSettings>) {
-    const folders = this.getDefaultBaseFolders(south.id);
-
-    for (const type of Object.keys(folders) as Array<keyof BaseFolders>) {
-      const baseFolder = folders[type];
-
-      try {
-        this.dataStreamEngine.logger.trace(
-          `Deleting "${type}" base folder "${baseFolder}" of South connector "${south.name}" (${south.id})`
-        );
-
-        if (await filesExists(baseFolder)) {
-          await fs.rm(baseFolder, { recursive: true });
-        }
-      } catch (error: unknown) {
-        this.dataStreamEngine.logger.error(
-          `Unable to delete South connector "${south.name}" (${south.id}) "${type}" base folder: ${(error as Error).message}`
-        );
-      }
-    }
-  }
-
-  private getDefaultBaseFolders(southId: string) {
-    const folders = structuredClone(this.dataStreamEngine.baseFolders);
-
-    for (const type of Object.keys(this.dataStreamEngine.baseFolders) as Array<keyof BaseFolders>) {
-      folders[type] = path.resolve(folders[type], `south-${southId}`);
-    }
-
-    return folders;
+    await this.engine.reloadSouthItems(southConnector);
   }
 
   retrieveSecretsFromSouth(
@@ -829,10 +557,10 @@ export default class SouthService {
     if (!retrieveSecretsFromSouth) return null;
     const source = this.southConnectorRepository.findSouthById(retrieveSecretsFromSouth);
     if (!source) {
-      throw new Error(`Could not find south connector ${retrieveSecretsFromSouth} to retrieve secrets from`);
+      throw new Error(`Could not find South connector "${retrieveSecretsFromSouth}" to retrieve secrets from`);
     }
     if (source.type !== manifest.id) {
-      throw new Error(`South connector ${retrieveSecretsFromSouth} (type ${source.type}) must be of the type ${manifest.id}`);
+      throw new Error(`South connector "${retrieveSecretsFromSouth}" (type "${source.type}") must be of the type "${manifest.id}"`);
     }
     return source;
   }
