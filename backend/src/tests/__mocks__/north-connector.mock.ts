@@ -39,6 +39,7 @@ export default class NorthConnectorMock {
   set connectorConfiguration(connectorConfiguration: NorthConnectorEntity<NorthSettings>) {
     this.connector = connectorConfiguration;
   }
+
   get connectorConfiguration() {
     return this.connector;
   }

@@ -8,16 +8,12 @@ import {
   SouthModbusItemSettingsModbusType,
   SouthModbusSettings
 } from '../../../shared/model/south-settings.model';
-import SouthConnectorRepository from '../../repository/config/south-connector.repository';
-import SouthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/south-connector-repository.mock';
-import ScanModeRepository from '../../repository/config/scan-mode.repository';
-import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import testData from '../../tests/utils/test-data';
-import { flushPromises, mockBaseFolders } from '../../tests/utils/test-utils';
+import { flushPromises } from '../../tests/utils/test-utils';
 
 jest.mock('node:fs/promises');
 jest.mock('node:net');
@@ -37,8 +33,6 @@ jest.mock('jsmodbus', () => ({
 }));
 jest.mock('../../service/utils');
 
-const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
-const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
 const southCacheService = new SouthCacheServiceMock();
 
@@ -169,8 +163,6 @@ describe('South Modbus', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
-
     // Mock node:net Socket constructor and the used function
     (net.Socket as unknown as jest.Mock).mockReturnValue({
       connect(_connectionObject: unknown, callback: () => Promise<void>): Promise<void> {
@@ -181,15 +173,7 @@ describe('South Modbus', () => {
       }
     });
 
-    south = new SouthModbus(
-      configuration,
-      addContentCallback,
-      southConnectorRepository,
-      southCacheRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(configuration.id)
-    );
+    south = new SouthModbus(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
   it('should fail to connect and try again', async () => {
@@ -515,7 +499,6 @@ describe('SouthModbus test connection', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
   });
 
   // Error codes handled by the test function
@@ -540,15 +523,7 @@ describe('SouthModbus test connection', () => {
   }
 
   it('Connecting to socket successfully', async () => {
-    south = new SouthModbus(
-      configuration,
-      addContentCallback,
-      southConnectorRepository,
-      southCacheRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(configuration.id)
-    );
+    south = new SouthModbus(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
 
     // Mock node:net Socket constructor and the used function
     (net.Socket as unknown as jest.Mock).mockReturnValue({
@@ -584,15 +559,7 @@ describe('SouthModbus test connection', () => {
   });
 
   it('should fail to connect', async () => {
-    south = new SouthModbus(
-      configuration,
-      addContentCallback,
-      southConnectorRepository,
-      southCacheRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(configuration.id)
-    );
+    south = new SouthModbus(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
 
     const mockedEmitter = new CustomStream();
     mockedEmitter.connect = (_connectionObject: unknown, _callback: () => Promise<void>) => {
@@ -610,15 +577,7 @@ describe('SouthModbus test connection', () => {
   });
 
   it('Connecting to socket successfully when testing configuration.items', async () => {
-    south = new SouthModbus(
-      configuration,
-      addContentCallback,
-      southConnectorRepository,
-      southCacheRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(configuration.id)
-    );
+    south = new SouthModbus(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
     const callback = jest.fn();
 
     // Mock node:net Socket constructor and the used function
@@ -658,15 +617,7 @@ describe('SouthModbus test connection', () => {
   });
 
   it('should fail to connect when testing items', async () => {
-    south = new SouthModbus(
-      configuration,
-      addContentCallback,
-      southConnectorRepository,
-      southCacheRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(configuration.id)
-    );
+    south = new SouthModbus(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
     const callback = jest.fn();
 
     const mockedEmitter = new CustomStream();

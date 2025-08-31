@@ -11,8 +11,6 @@ import HistoryQueryRepository from '../../repository/config/history-query.reposi
 import HistoryQueryRepositoryMock from '../../tests/__mocks__/repository/config/history-query-repository.mock';
 import DataStreamEngine from '../../engine/data-stream-engine';
 import DataStreamEngineMock from '../../tests/__mocks__/data-stream-engine.mock';
-import HistoryQueryEngine from '../../engine/history-query-engine';
-import HistoryQueryEngineMock from '../../tests/__mocks__/history-query-engine.mock';
 import { flushPromises } from '../../tests/utils/test-utils';
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -33,8 +31,7 @@ const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRep
 const historyQueryRepository: HistoryQueryRepository = new HistoryQueryRepositoryMock();
 const oianalyticsMessageRepository: OIAnalyticsMessageRepository = new OianalyticsMessageRepositoryMock();
 const oianalyticsCommandRepository: OIAnalyticsCommandRepository = new OianalyticsCommandRepositoryMock();
-const dataStreamEngine: DataStreamEngine = new DataStreamEngineMock();
-const historyQueryEngine: HistoryQueryEngine = new HistoryQueryEngineMock();
+const engine: DataStreamEngine = new DataStreamEngineMock();
 
 const fileList: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [
   {
@@ -126,8 +123,7 @@ describe('CacheService', () => {
       southConnectorRepository,
       oianalyticsMessageRepository,
       oianalyticsCommandRepository,
-      dataStreamEngine,
-      historyQueryEngine
+      engine
     );
   });
 
@@ -278,29 +274,20 @@ describe('CacheService', () => {
     await service.scanMainFolder('archive');
 
     expect(northConnectorRepository.findNorthById).toHaveBeenCalledTimes(3);
-    expect(dataStreamEngine.removeCacheContent).toHaveBeenCalledTimes(2);
-    expect(dataStreamEngine.removeCacheContent).toHaveBeenCalledWith(
+    expect(engine.removeCacheContent).toHaveBeenCalledTimes(4);
+    expect(engine.removeCacheContent).toHaveBeenCalledWith(
+      'north',
       'id1',
       'archive',
       fileList.map(file => file.metadataFilename)
     );
-    expect(dataStreamEngine.removeCacheContent).toHaveBeenCalledWith(
+    expect(engine.removeCacheContent).toHaveBeenCalledWith(
+      'north',
       'id2',
       'archive',
       fileList.map(file => file.metadataFilename)
     );
     expect(historyQueryRepository.findHistoryQueryById).toHaveBeenCalledTimes(3);
-    expect(historyQueryEngine.removeCacheContent).toHaveBeenCalledTimes(2);
-    expect(historyQueryEngine.removeCacheContent).toHaveBeenCalledWith(
-      'id4',
-      'archive',
-      fileList.map(file => file.metadataFilename)
-    );
-    expect(historyQueryEngine.removeCacheContent).toHaveBeenCalledWith(
-      'id5',
-      'archive',
-      fileList.map(file => file.metadataFilename)
-    );
   });
 
   it('clean up should do nothing if folder does not contain any files', async () => {
@@ -320,10 +307,9 @@ describe('CacheService', () => {
     await service.scanMainFolder('archive');
 
     expect(northConnectorRepository.findNorthById).toHaveBeenCalledTimes(1);
-    expect(dataStreamEngine.removeCacheContent).not.toHaveBeenCalled();
+    expect(engine.removeCacheContent).not.toHaveBeenCalled();
 
     expect(historyQueryRepository.findHistoryQueryById).toHaveBeenCalledTimes(1);
-    expect(historyQueryEngine.removeCacheContent).not.toHaveBeenCalled();
   });
 
   it('should clean up error folder', async () => {
@@ -345,8 +331,9 @@ describe('CacheService', () => {
     expect(service['readCacheMetadataFiles']).toHaveBeenCalledTimes(4);
     expect(service['readCacheMetadataFiles']).toHaveBeenCalledWith(path.resolve('baseFolder', 'error', 'north-id1'));
     expect(service['readCacheMetadataFiles']).toHaveBeenCalledWith(path.resolve('baseFolder', 'error', 'north-id2'));
-    expect(dataStreamEngine.removeCacheContent).toHaveBeenCalledTimes(1);
-    expect(dataStreamEngine.removeCacheContent).toHaveBeenCalledWith(
+    expect(engine.removeCacheContent).toHaveBeenCalledTimes(2);
+    expect(engine.removeCacheContent).toHaveBeenCalledWith(
+      'north',
       'id1',
       'error',
       fileList.map(file => file.metadataFilename)
@@ -354,12 +341,6 @@ describe('CacheService', () => {
     expect(historyQueryRepository.findHistoryQueryById).toHaveBeenCalledTimes(2);
     expect(service['readCacheMetadataFiles']).toHaveBeenCalledWith(path.resolve('baseFolder', 'error', 'history-id3', 'north'));
     expect(service['readCacheMetadataFiles']).toHaveBeenCalledWith(path.resolve('baseFolder', 'error', 'history-id4', 'north'));
-    expect(historyQueryEngine.removeCacheContent).toHaveBeenCalledTimes(1);
-    expect(historyQueryEngine.removeCacheContent).toHaveBeenCalledWith(
-      'id3',
-      'error',
-      fileList.map(file => file.metadataFilename)
-    );
   });
 
   it('should delete file', () => {

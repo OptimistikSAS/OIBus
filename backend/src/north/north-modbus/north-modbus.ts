@@ -3,15 +3,15 @@ import pino from 'pino';
 import { NorthModbusSettings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
-import { BaseFolders } from '../../model/types';
 import net from 'node:net';
 import ModbusTCPClient from 'jsmodbus/dist/modbus-tcp-client';
 import { client } from 'jsmodbus';
 import fs from 'node:fs/promises';
 import { OIBusModbusValue } from '../../service/transformers/connector-types.model';
+import CacheService from '../../service/cache/cache.service';
 
 /**
- * Class NorthOPCUA - Write values in an OPCUA server
+ * Class NorthModbus - Write values in a Modbus server
  */
 export default class NorthModbus extends NorthConnector<NorthModbusSettings> {
   private socket: net.Socket | null = null;
@@ -19,8 +19,13 @@ export default class NorthModbus extends NorthConnector<NorthModbusSettings> {
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private disconnecting = false;
 
-  constructor(configuration: NorthConnectorEntity<NorthModbusSettings>, logger: pino.Logger, baseFolders: BaseFolders) {
-    super(configuration, logger, baseFolders);
+  constructor(
+    configuration: NorthConnectorEntity<NorthModbusSettings>,
+    logger: pino.Logger,
+    cacheFolderPath: string,
+    cacheService: CacheService
+  ) {
+    super(configuration, logger, cacheFolderPath, cacheService);
   }
 
   async handleContent(cacheMetadata: CacheMetadata): Promise<void> {

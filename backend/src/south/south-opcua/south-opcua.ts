@@ -17,10 +17,7 @@ import { createFolder } from '../../service/utils';
 import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import ConnectionService, { ManagedConnection, ManagedConnectionSettings } from '../../service/connection.service';
 import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
-import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import ScanModeRepository from '../../repository/config/scan-mode.repository';
-import { BaseFolders } from '../../model/types';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import {
   AggregateFunction,
@@ -108,42 +105,30 @@ export default class SouthOPCUA
   constructor(
     connector: SouthConnectorEntity<SouthOPCUASettings, SouthOPCUAItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
-    southConnectorRepository: SouthConnectorRepository,
     southCacheRepository: SouthCacheRepository,
-    scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
-    baseFolders: BaseFolders,
+    cacheFolderPath: string,
     connectionService: ConnectionService
   ) {
-    super(
-      connector,
-      engineAddContentCallback,
-      southConnectorRepository,
-      southCacheRepository,
-      scanModeRepository,
-      logger,
-      baseFolders,
-      connectionService
-    );
-
+    super(connector, engineAddContentCallback, southCacheRepository, logger, cacheFolderPath, connectionService);
     this.connectionSettings = {
       closeFnName: 'close',
       sharedConnection: connector.settings.sharedConnection
     };
   }
 
-  override async start(dataStream = true): Promise<void> {
-    await this.initOpcuaCertificateFolders(this.baseFolders.cache);
+  override async start(): Promise<void> {
+    await this.initOpcuaCertificateFolders(this.cacheFolderPath);
     if (!this.clientCertificateManager) {
       this.clientCertificateManager = new OPCUACertificateManager({
-        rootFolder: path.resolve(this.baseFolders.cache, 'opcua'),
+        rootFolder: path.resolve(this.cacheFolderPath, 'opcua'),
         automaticallyAcceptUnknownCertificate: true
       });
       // Set the state to the CertificateManager to 2 (Initialized) to avoid a call to openssl
       // It is useful for offline instances of OIBus where downloading openssl is not possible
       this.clientCertificateManager.state = 2;
     }
-    await super.start(dataStream);
+    await super.start();
   }
 
   override async testConnection(): Promise<void> {
@@ -708,10 +693,6 @@ export default class SouthOPCUA
   }
 
   async subscribe(items: Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>): Promise<void> {
-    if (!items.length) {
-      return;
-    }
-
     // Try to get a session
     let session;
     try {

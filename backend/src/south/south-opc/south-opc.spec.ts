@@ -1,16 +1,11 @@
 import SouthOpc from './south-opc';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import SouthConnectorRepository from '../../repository/config/south-connector.repository';
-import SouthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/south-connector-repository.mock';
-import ScanModeRepository from '../../repository/config/scan-mode.repository';
-import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import { SouthConnectorEntity } from '../../model/south-connector.model';
 import { SouthOPCItemSettings, SouthOPCSettings } from '../../../shared/model/south-settings.model';
-import { mockBaseFolders } from '../../tests/utils/test-utils';
 import testData from '../../tests/utils/test-data';
 import { HTTPRequest } from '../../service/http-request.utils';
 import { createMockResponse } from '../../tests/__mocks__/undici.mock';
@@ -19,8 +14,6 @@ jest.mock('../../service/http-request.utils');
 jest.mock('node:fs/promises');
 jest.mock('../../service/utils');
 
-const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
-const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
 const southCacheService = new SouthCacheServiceMock();
 
@@ -95,17 +88,8 @@ describe('South OPC', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
 
-    south = new SouthOpc(
-      configuration,
-      addContentCallback,
-      southConnectorRepository,
-      southCacheRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(configuration.id)
-    );
+    south = new SouthOpc(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
   it('should get throttling settings', () => {

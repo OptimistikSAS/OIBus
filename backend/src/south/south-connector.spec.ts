@@ -16,14 +16,10 @@ import {
   SouthOPCUASettings
 } from '../../shared/model/south-settings.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../model/south-connector.model';
-import ScanModeRepository from '../repository/config/scan-mode.repository';
-import ScanModeRepositoryMock from '../tests/__mocks__/repository/config/scan-mode-repository.mock';
-import SouthConnectorRepository from '../repository/config/south-connector.repository';
-import SouthConnectorRepositoryMock from '../tests/__mocks__/repository/config/south-connector-repository.mock';
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
 import SouthCacheRepositoryMock from '../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../tests/__mocks__/service/south-cache-service.mock';
-import { flushPromises, mockBaseFolders } from '../tests/utils/test-utils';
+import { flushPromises } from '../tests/utils/test-utils';
 import SouthOPCUA from './south-opcua/south-opcua';
 import ConnectionService from '../service/connection.service';
 import ConnectionServiceMock from '../tests/__mocks__/service/connection-service.mock';
@@ -61,8 +57,6 @@ jest.mock('../service/encryption.service', () => ({
   encryptionService: new EncryptionServiceMock('', '')
 }));
 
-const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
-const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
 const connectionService: ConnectionService = new ConnectionServiceMock();
 const southCacheService = new SouthCacheServiceMock();
@@ -92,28 +86,18 @@ describe('SouthConnector with file query', () => {
       scanModeId: testData.scanMode.list[0].id,
       maxInstant: testData.constants.dates.FAKE_NOW
     });
-    (southConnectorRepository.findSouthById as jest.Mock).mockImplementation(id => testData.south.list.find(element => element.id === id));
-    (southConnectorRepository.findAllItemsForSouth as jest.Mock).mockImplementation(
-      id => testData.south.list.find(element => element.id === id)!.items
-    );
-    (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
 
-    south = new SouthFolderScanner(
-      testData.south.list[0] as SouthConnectorEntity<SouthFolderScannerSettings, SouthFolderScannerItemSettings>,
-      addContentCallback,
-      southConnectorRepository,
-      southCacheRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(testData.south.list[0].id)
-    );
+    const config = JSON.parse(JSON.stringify(testData.south.list[0])) as SouthConnectorEntity<
+      SouthFolderScannerSettings,
+      SouthFolderScannerItemSettings
+    >;
+    south = new SouthFolderScanner(config, addContentCallback, southCacheRepository, logger, 'cacheFolder');
     await south.start();
   });
 
   it('should properly add to queue a new task and trigger next run', async () => {
     south.run = jest.fn();
 
-    await south.onItemChange();
     south.addToQueue(testData.scanMode.list[0]);
     expect(south.run).toHaveBeenCalledWith(
       testData.scanMode.list[0].id,
@@ -125,17 +109,28 @@ describe('SouthConnector with file query', () => {
     expect(logger.warn).toHaveBeenCalledWith(
       `Task job not added in South connector queue for cron "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron}). The previous cron was still running`
     );
+    south.addToQueue(testData.scanMode.list[1]);
     expect(south.run).toHaveBeenCalledTimes(1);
     expect(south.connectorConfiguration).toEqual(testData.south.list[0]);
   });
 
   it('should properly add to queue a new task and not trigger next run if no item', async () => {
     south.run = jest.fn();
-    (southConnectorRepository.findAllItemsForSouth as jest.Mock).mockReturnValueOnce([]);
-
-    await south.onItemChange();
+    south['connector'].items = [];
     south.addToQueue(testData.scanMode.list[0]);
     expect(south.run).not.toHaveBeenCalled();
+  });
+
+  it('should not update subscriptions if not compatible', async () => {
+    await south.updateSubscriptions();
+    expect(logger.trace).toHaveBeenCalledWith('This connector does not support subscriptions');
+
+    south.updateSouthCacheOnScanModeAndMaxInstantChanges = jest.fn();
+    south.connectorConfiguration = testData.south.list[0] as SouthConnectorEntity<
+      SouthFolderScannerSettings,
+      SouthFolderScannerItemSettings
+    >;
+    expect(south.updateSouthCacheOnScanModeAndMaxInstantChanges).not.toHaveBeenCalled();
   });
 
   it('should not add to queue if connector is stopping', async () => {
@@ -162,6 +157,19 @@ describe('SouthConnector with file query', () => {
     expect(logger.warn).toHaveBeenCalledWith('A South task is already running');
   });
 
+  it('should update cron jobs', async () => {
+    await south.updateCronJobs();
+    await south.updateCronJobs();
+    expect(south['cronByScanModeIds'].size).toBe(2);
+
+    south.createOrUpdateCronJob = jest.fn();
+    south.updateScanModeIfUsed({ id: 'bad id', cron: '', description: '', name: '' });
+
+    south['connector'].items = [];
+    await south.updateCronJobs();
+    expect(south['cronByScanModeIds'].size).toBe(0);
+  });
+
   it('should use another logger', async () => {
     jest.clearAllMocks();
 
@@ -182,19 +190,19 @@ describe('SouthConnector with file query', () => {
       setTimeout(() => callback(), 1000);
     });
     south.addToQueue = jest.fn();
-    south.createCronJob(testData.scanMode.list[0]);
+    south.createOrUpdateCronJob(testData.scanMode.list[0]);
     jest.advanceTimersByTime(1000);
     expect(south.addToQueue).toHaveBeenCalledTimes(1);
 
-    south.createCronJob(testData.scanMode.list[0]);
+    south.createOrUpdateCronJob(testData.scanMode.list[0]);
     expect(
       `Removing existing South cron job associated to scan mode "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron})`
     );
   });
 
   it('should properly update cron', async () => {
-    south.createCronJob(testData.scanMode.list[0]);
-    await south.updateScanMode(testData.scanMode.list[0]);
+    south.createOrUpdateCronJob(testData.scanMode.list[0]);
+    await south.updateScanModeIfUsed(testData.scanMode.list[0]);
     expect(logger.debug).toHaveBeenCalledWith(
       `Creating South cron job for scan mode "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron})`
     );
@@ -204,7 +212,7 @@ describe('SouthConnector with file query', () => {
 
     await south.connect();
     await south.disconnect();
-    south.createCronJob(testData.scanMode.list[0]);
+    south.createOrUpdateCronJob(testData.scanMode.list[0]);
 
     await south.stop();
   });
@@ -215,7 +223,7 @@ describe('SouthConnector with file query', () => {
       throw error;
     });
 
-    south.createCronJob({ ...testData.scanMode.list[0], cron: '* * * * * *L' });
+    south.createOrUpdateCronJob({ ...testData.scanMode.list[0], cron: '* * * * * *L' });
 
     expect(logger.error).toHaveBeenCalledWith(
       `Error when creating South cron job for scan mode "${testData.scanMode.list[0].name}" (* * * * * *L): ${error.message}`
@@ -252,12 +260,6 @@ describe('SouthConnector disabled', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
-    (southConnectorRepository.findSouthById as jest.Mock).mockImplementation(id => testData.south.list.find(element => element.id === id));
-    (southConnectorRepository.findAllItemsForSouth as jest.Mock).mockImplementation(
-      id => testData.south.list.find(element => element.id === id)!.items
-    );
-    (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
-
     southCacheService.getSouthCache.mockReturnValue({
       southId: testData.south.list[1].id,
       scanModeId: testData.scanMode.list[0].id,
@@ -267,11 +269,9 @@ describe('SouthConnector disabled', () => {
     south = new SouthMSSQL(
       testData.south.list[1] as SouthConnectorEntity<SouthMSSQLSettings, SouthMSSQLItemSettings>,
       addContentCallback,
-      southConnectorRepository,
       southCacheRepository,
-      scanModeRepository,
       logger,
-      mockBaseFolders(testData.south.list[1].id)
+      'cacheFolder'
     );
     await south.start();
   });
@@ -297,15 +297,8 @@ describe('SouthConnector disabled', () => {
       false,
       0
     );
+    south.resolveDeferredPromise();
     expect(logger.trace).toHaveBeenCalledWith('No history items to read. Ignoring historyQuery');
-  });
-
-  it('should not subscribe if queriesSubscription not supported history query when not history items', async () => {
-    (south.queriesSubscription as unknown as jest.Mock) = jest.fn().mockReturnValueOnce(false);
-
-    await south.onItemChange();
-
-    expect(south.queriesSubscription).not.toHaveBeenCalled();
   });
 });
 
@@ -327,26 +320,50 @@ describe('SouthConnector with history and max instant per item', () => {
     configuration = JSON.parse(JSON.stringify(testData.south.list[2]));
     configuration.settings.throttling.maxInstantPerItem = true;
     configuration.settings.sharedConnection = true;
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
-    (southConnectorRepository.findAllItemsForSouth as jest.Mock).mockReturnValue(configuration.items);
-    (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
 
-    south = new SouthOPCUA(
-      configuration,
-      addContentCallback,
-      southConnectorRepository,
-      southCacheRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(testData.south.list[2].id),
-      connectionService
-    );
+    south = new SouthOPCUA(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder', connectionService);
 
     await south.start();
   });
 
   it('should delegate connection', async () => {
     expect(connectionService.create).toHaveBeenCalled();
+
+    south.updateSouthCacheOnScanModeAndMaxInstantChanges = jest.fn();
+    south.connectorConfiguration = configuration;
+    expect(south.updateSouthCacheOnScanModeAndMaxInstantChanges).toHaveBeenCalledTimes(1);
+  });
+
+  it('should update subscriptions', async () => {
+    south['connector'].items = south['connector'].items.map(item => ({ ...item, scanMode: { ...item.scanMode, id: 'subscription' } }));
+    south.unsubscribe = jest.fn();
+    south.subscribe = jest.fn();
+    await south.updateSubscriptions();
+    expect(logger.trace).toHaveBeenCalledWith('Subscribing to 4 new items');
+
+    south['connector'].items = [];
+
+    await south.updateSubscriptions();
+
+    expect(logger.trace).toHaveBeenCalledWith('Unsubscribing from 4 items');
+    expect(logger.error).not.toHaveBeenCalled();
+  });
+
+  it('should update subscriptions and log error', async () => {
+    south['connector'].items = south['connector'].items.map(item => ({ ...item, scanMode: { ...item.scanMode, id: 'subscription' } }));
+    south.unsubscribe = jest.fn().mockImplementationOnce(() => {
+      throw new Error('unsubscribe error');
+    });
+    south.subscribe = jest.fn().mockImplementationOnce(() => {
+      throw new Error('subscribe error');
+    });
+    await south.updateSubscriptions();
+    expect(logger.error).toHaveBeenCalledWith('Error when subscribing to new items: subscribe error');
+    await south.updateSubscriptions(); // call it again to subscribe before unsubscribing
+    south['connector'].items = [];
+
+    await south.updateSubscriptions();
+    expect(logger.error).toHaveBeenCalledWith('Error when unsubscribing from items: unsubscribe error');
   });
 
   it('should manage history query with several intervals with max instant per item', async () => {
@@ -610,20 +627,13 @@ describe('SouthConnector with history and subscription', () => {
       maxInstant: testData.constants.dates.FAKE_NOW,
       southId: testData.south.list[2].id
     });
-    (southConnectorRepository.findSouthById as jest.Mock).mockImplementation(id => testData.south.list.find(element => element.id === id));
-    (southConnectorRepository.findAllItemsForSouth as jest.Mock).mockImplementation(
-      id => testData.south.list.find(element => element.id === id)!.items
-    );
-    (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
 
     south = new SouthOPCUA(
       testData.south.list[2] as SouthConnectorEntity<SouthOPCUASettings, SouthOPCUAItemSettings>,
       addContentCallback,
-      southConnectorRepository,
       southCacheRepository,
-      scanModeRepository,
       logger,
-      mockBaseFolders(testData.scanMode.list[0].id),
+      'cacheFolder',
       connectionService
     );
 
@@ -938,7 +948,7 @@ describe('SouthConnector with history and subscription', () => {
     maxInstants.set(config.items[0].scanMode.id, testData.constants.dates.DATE_2);
     (southCacheRepository.getLatestMaxInstants as jest.Mock).mockReturnValueOnce(maxInstants);
     south.getMaxInstantPerItem = jest.fn().mockReturnValue(true);
-    await south.manageSouthCacheOnChange(testData.south.list[2], config, false);
+    await south.updateSouthCacheOnScanModeAndMaxInstantChanges(testData.south.list[2], config, false);
 
     expect(southCacheRepository.getLatestMaxInstants).toHaveBeenCalledTimes(1);
     expect(southCacheRepository.deleteAllBySouthConnector).toHaveBeenCalledWith(config.id);
@@ -958,7 +968,7 @@ describe('SouthConnector with history and subscription', () => {
     maxInstants.set(config.items[0].scanMode.id, testData.constants.dates.DATE_2);
     (southCacheRepository.getLatestMaxInstants as jest.Mock).mockReturnValueOnce(maxInstants);
     south.getMaxInstantPerItem = jest.fn().mockReturnValue(false);
-    await south.manageSouthCacheOnChange(testData.south.list[2], config, true);
+    await south.updateSouthCacheOnScanModeAndMaxInstantChanges(testData.south.list[2], config, true);
 
     expect(southCacheRepository.getLatestMaxInstants).toHaveBeenCalledTimes(1);
     expect(southCacheRepository.deleteAllBySouthConnector).toHaveBeenCalledWith(config.id);
@@ -976,7 +986,7 @@ describe('SouthConnector with history and subscription', () => {
     const config = JSON.parse(JSON.stringify(testData.south.list[2]));
     (southCacheRepository.getLatestMaxInstants as jest.Mock).mockReturnValueOnce(null);
     south.getMaxInstantPerItem = jest.fn().mockReturnValue(false);
-    await south.manageSouthCacheOnChange(testData.south.list[2], config, true);
+    await south.updateSouthCacheOnScanModeAndMaxInstantChanges(testData.south.list[2], config, true);
 
     expect(southCacheRepository.getLatestMaxInstants).toHaveBeenCalledTimes(1);
     expect(southCacheRepository.save).not.toHaveBeenCalled();
@@ -986,7 +996,7 @@ describe('SouthConnector with history and subscription', () => {
     const config = JSON.parse(JSON.stringify(testData.south.list[2]));
     config.items.pop();
     south.getMaxInstantPerItem = jest.fn().mockReturnValue(true);
-    await south.manageSouthCacheOnChange(testData.south.list[2], config, true);
+    await south.updateSouthCacheOnScanModeAndMaxInstantChanges(testData.south.list[2], config, true);
     expect(southCacheRepository.deleteAllBySouthItem).toHaveBeenCalledTimes(1);
     expect(southCacheRepository.delete).not.toHaveBeenCalled();
   });
@@ -995,7 +1005,7 @@ describe('SouthConnector with history and subscription', () => {
     const config = JSON.parse(JSON.stringify(testData.south.list[2]));
     config.items = [];
     south.getMaxInstantPerItem = jest.fn().mockReturnValue(false);
-    await south.manageSouthCacheOnChange(testData.south.list[2], config, false);
+    await south.updateSouthCacheOnScanModeAndMaxInstantChanges(testData.south.list[2], config, false);
     expect(southCacheRepository.delete).toHaveBeenCalledTimes(4); // We removed the four items of the south connector
     expect(southCacheRepository.deleteAllBySouthItem).not.toHaveBeenCalled();
   });
@@ -1005,7 +1015,7 @@ describe('SouthConnector with history and subscription', () => {
     config.items[0].scanMode = testData.scanMode.list[1];
     (southCacheRepository.getSouthCache as jest.Mock).mockReturnValue(null);
     south.getMaxInstantPerItem = jest.fn().mockReturnValue(false);
-    await south.manageSouthCacheOnChange(testData.south.list[2], config, false);
+    await south.updateSouthCacheOnScanModeAndMaxInstantChanges(testData.south.list[2], config, false);
     expect(southCacheRepository.save).not.toHaveBeenCalled();
   });
 
@@ -1020,7 +1030,7 @@ describe('SouthConnector with history and subscription', () => {
       })
       .mockReturnValueOnce(null);
     south.getMaxInstantPerItem = jest.fn().mockReturnValue(false);
-    await south.manageSouthCacheOnChange(testData.south.list[2], config, false);
+    await south.updateSouthCacheOnScanModeAndMaxInstantChanges(testData.south.list[2], config, false);
     expect(southCacheRepository.save).toHaveBeenCalledWith({
       southId: testData.south.list[2].id,
       itemId: 'all',
@@ -1044,7 +1054,7 @@ describe('SouthConnector with history and subscription', () => {
         southId: testData.south.list[2].id
       });
     south.getMaxInstantPerItem = jest.fn().mockReturnValue(false);
-    await south.manageSouthCacheOnChange(testData.south.list[2], config, false);
+    await south.updateSouthCacheOnScanModeAndMaxInstantChanges(testData.south.list[2], config, false);
     expect(southCacheRepository.save).not.toHaveBeenCalled();
   });
 
@@ -1057,44 +1067,12 @@ describe('SouthConnector with history and subscription', () => {
       southId: testData.south.list[2].id
     });
     south.getMaxInstantPerItem = jest.fn().mockReturnValue(true);
-    await south.manageSouthCacheOnChange(testData.south.list[2], config, true);
+    await south.updateSouthCacheOnScanModeAndMaxInstantChanges(testData.south.list[2], config, true);
     expect(southCacheRepository.save).toHaveBeenCalledWith({
       southId: testData.south.list[2].id,
       itemId: config.items[0].id,
       scanModeId: testData.scanMode.list[1].id,
       maxInstant: testData.constants.dates.DATE_1
     });
-  });
-
-  it('should create subscriptions and cron jobs', async () => {
-    const subscriptionItem = JSON.parse(JSON.stringify(testData.south.list[2].items[1]));
-    south.subscribe = jest.fn();
-    south.unsubscribe = jest.fn();
-    (scanModeRepository.findById as jest.Mock)
-      .mockReturnValueOnce(testData.scanMode.list[0])
-      .mockReturnValueOnce(testData.scanMode.list[1]);
-    await south.onItemChange();
-    expect(south.subscribe).toHaveBeenCalledWith([subscriptionItem]);
-    expect(logger.trace).toHaveBeenCalledWith(`Subscribing to 1 new items`);
-
-    (southConnectorRepository.findAllItemsForSouth as jest.Mock).mockReturnValueOnce([]);
-    await south.onItemChange();
-    expect(south.unsubscribe).toHaveBeenCalledTimes(1);
-
-    south.subscribe = jest.fn().mockImplementationOnce(() => {
-      throw new Error('subscription error');
-    });
-    (southConnectorRepository.findAllItemsForSouth as jest.Mock).mockReturnValueOnce([subscriptionItem]);
-    await south.onItemChange();
-    expect(logger.error).toHaveBeenCalledWith(`Error when subscribing to new items. ${new Error('subscription error')}`);
-
-    south.subscribe = jest.fn();
-    south.unsubscribe = jest.fn().mockImplementationOnce(() => {
-      throw new Error('unsubscription error');
-    });
-    (southConnectorRepository.findAllItemsForSouth as jest.Mock).mockReturnValueOnce([subscriptionItem]).mockReturnValueOnce([]);
-    await south.onItemChange();
-    await south.onItemChange();
-    expect(logger.error).toHaveBeenCalledWith(`Error when unsubscribing from items. ${new Error('unsubscription error')}`);
   });
 });

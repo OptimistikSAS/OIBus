@@ -1,13 +1,7 @@
 import HistoryQuery from './history-query';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
-import SouthServiceMock from '../tests/__mocks__/service/south-service.mock';
-import NorthServiceMock from '../tests/__mocks__/service/north-service.mock';
-
-import SouthService from '../service/south.service';
-import NorthService from '../service/north.service';
 
 import pino from 'pino';
-import { OIBusTimeValue } from '../../shared/model/engine.model';
 import testData from '../tests/utils/test-data';
 import HistoryQueryRepository from '../repository/config/history-query.repository';
 import HistoryQueryRepositoryMock from '../tests/__mocks__/repository/config/history-query-repository.mock';
@@ -17,31 +11,15 @@ import NorthConnectorMock from '../tests/__mocks__/north-connector.mock';
 import SouthConnector from '../south/south-connector';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import SouthConnectorMock from '../tests/__mocks__/south-connector.mock';
-import { flushPromises, mockBaseFolders } from '../tests/utils/test-utils';
-import HistoryQueryMetricsServiceMock from '../tests/__mocks__/service/metrics/history-query-metrics-service.mock';
-import { createBaseFolders } from '../service/utils';
-import path from 'node:path';
+import { flushPromises } from '../tests/utils/test-utils';
 import OIAnalyticsMessageService from '../service/oia/oianalytics-message.service';
 import OianalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
 
-jest.mock('../service/south.service');
-jest.mock('../service/north.service');
-
-const historyQueryMetricsServiceMock = new HistoryQueryMetricsServiceMock();
-jest.mock(
-  '../service/metrics/history-query-metrics.service',
-  () =>
-    function () {
-      return historyQueryMetricsServiceMock;
-    }
-);
 jest.mock('../service/utils');
 
 const logger: pino.Logger = new PinoLogger();
 const anotherLogger: pino.Logger = new PinoLogger();
 
-const southService: SouthService = new SouthServiceMock();
-const northService: NorthService = new NorthServiceMock();
 const historyQueryRepository: HistoryQueryRepository = new HistoryQueryRepositoryMock();
 const oianalyticsMessageService: OIAnalyticsMessageService = new OianalyticsMessageServiceMock();
 
@@ -54,20 +32,9 @@ describe('HistoryQuery enabled', () => {
     jest.clearAllMocks();
     jest.useFakeTimers({ doNotFake: ['performance'] }).setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
-    (southService.buildSouth as jest.Mock).mockReturnValue(mockedSouth1);
-    (northService.buildNorth as jest.Mock).mockReturnValue(mockedNorth1);
-
     (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValue(testData.historyQueries.list[0]);
 
-    historyQuery = new HistoryQuery(
-      testData.historyQueries.list[0],
-      southService,
-      northService,
-      oianalyticsMessageService,
-      historyQueryRepository,
-      mockBaseFolders(testData.historyQueries.list[0].id),
-      logger
-    );
+    historyQuery = new HistoryQuery(testData.historyQueries.list[0], mockedNorth1, mockedSouth1, logger);
   });
 
   afterEach(() => {
@@ -77,10 +44,15 @@ describe('HistoryQuery enabled', () => {
   it('should be properly initialized', async () => {
     await historyQuery.start();
 
-    expect(historyQuery.settings).toBeDefined();
-    expect(createBaseFolders).toHaveBeenCalledWith(mockBaseFolders(path.join(testData.historyQueries.list[0].id, 'south')));
-    expect(createBaseFolders).toHaveBeenCalledWith(mockBaseFolders(path.join(testData.historyQueries.list[0].id, 'north')));
     expect(mockedNorth1.start).toHaveBeenCalledTimes(1);
+    expect(mockedSouth1.start).toHaveBeenCalledTimes(1);
+  });
+
+  it('should not start if not running', async () => {
+    historyQuery['historyConfiguration'].status = 'FINISHED';
+    await historyQuery.start();
+    expect(logger.trace).toHaveBeenCalledWith(`History Query "${testData.historyQueries.list[0].name}" not enabled`);
+    historyQuery['historyConfiguration'].status = 'RUNNING';
   });
 
   it('should start south connector', async () => {
@@ -162,30 +134,12 @@ describe('HistoryQuery enabled', () => {
     expect(mockedSouth1.start).toHaveBeenCalledTimes(2);
     expect(mockedSouth1.stop).toHaveBeenCalledTimes(1);
 
-    (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce({
-      ...testData.historyQueries.list[0],
-      status: 'PENDING'
-    });
-
+    historyQuery.historyQueryConfiguration = { ...testData.historyQueries.list[0], status: 'PENDING' };
     mockedSouth1.connectedEvent.emit('connected');
     await flushPromises();
 
     expect(mockedSouth1.start).toHaveBeenCalledTimes(2);
     expect(mockedSouth1.stop).toHaveBeenCalledTimes(1);
-  });
-
-  it('should cache values', async () => {
-    await historyQuery.start();
-
-    await historyQuery.addContent('southId', { type: 'time-values', content: [{}, {}] as Array<OIBusTimeValue> });
-    expect(mockedNorth1.cacheContent).toHaveBeenCalledWith({ type: 'time-values', content: [{}, {}] as Array<OIBusTimeValue> }, 'southId');
-  });
-
-  it('should cache file', async () => {
-    await historyQuery.start();
-
-    await historyQuery.addContent('southId', { type: 'any', filePath: 'myFile' });
-    expect(mockedNorth1.cacheContent).toHaveBeenCalledWith({ type: 'any', filePath: 'myFile' }, 'southId');
   });
 
   it('should properly stop', async () => {
@@ -219,10 +173,6 @@ describe('HistoryQuery enabled', () => {
     mockedNorth1.metricsEvent.removeAllListeners = () => {
       northMetricsEventRemoved = performance.now();
     };
-
-    await historyQuery.resetCache();
-    expect(mockedNorth1.resetCache).not.toHaveBeenCalled();
-    expect(mockedSouth1.resetCache).not.toHaveBeenCalled();
 
     await historyQuery.start();
     mockedSouth1.connectedEvent.emit('connected');
@@ -274,8 +224,9 @@ describe('HistoryQuery enabled', () => {
 
     mockedSouth1.historyIsRunning = false;
     await historyQuery.finish();
-    expect(oianalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(logger.info).toHaveBeenCalledWith(`Finish "${testData.historyQueries.list[0].name}" (${testData.historyQueries.list[0].id})`);
+    expect(logger.info).toHaveBeenCalledWith(
+      `Finish History query "${testData.historyQueries.list[0].name}" (${testData.historyQueries.list[0].id})`
+    );
   });
 
   it('should properly set another logger', async () => {
@@ -322,24 +273,6 @@ describe('HistoryQuery enabled', () => {
       { start: testData.constants.dates.DATE_1, end: testData.constants.dates.DATE_2, nameContains: 'file' },
       'cache'
     );
-    expect(mockedNorth1.searchCacheContent).not.toHaveBeenCalled();
-    await historyQuery.getCacheContentFileStream('cache', 'file');
-    expect(mockedNorth1.searchCacheContent).not.toHaveBeenCalled();
-    await historyQuery.removeCacheContent('cache', ['file']);
-    expect(mockedNorth1.removeCacheContent).not.toHaveBeenCalled();
-    expect(mockedNorth1.metadataFileListToCacheContentList).not.toHaveBeenCalled();
-    await historyQuery.removeAllCacheContent('cache');
-    expect(mockedNorth1.removeAllCacheContent).not.toHaveBeenCalled();
-    await historyQuery.moveCacheContent('cache', 'error', ['file']);
-    expect(mockedNorth1.moveCacheContent).not.toHaveBeenCalled();
-    await historyQuery.moveAllCacheContent('cache', 'error');
-    expect(mockedNorth1.moveAllCacheContent).not.toHaveBeenCalled();
-
-    await historyQuery.start();
-    await historyQuery.searchCacheContent(
-      { start: testData.constants.dates.DATE_1, end: testData.constants.dates.DATE_2, nameContains: 'file' },
-      'cache'
-    );
     expect(mockedNorth1.searchCacheContent).toHaveBeenCalledWith(
       { start: testData.constants.dates.DATE_1, end: testData.constants.dates.DATE_2, nameContains: 'file' },
       'cache'
@@ -356,63 +289,5 @@ describe('HistoryQuery enabled', () => {
     expect(mockedNorth1.moveCacheContent).toHaveBeenCalledWith('cache', 'error', []);
     await historyQuery.moveAllCacheContent('cache', 'error');
     expect(mockedNorth1.moveAllCacheContent).toHaveBeenCalledWith('cache', 'error');
-  });
-});
-
-describe('HistoryQuery disabled', () => {
-  let historyQuery: HistoryQuery;
-  const mockedNorth1 = new NorthConnectorMock(testData.north.list[0]) as unknown as NorthConnector<NorthSettings>;
-  const mockedSouth1 = new SouthConnectorMock(testData.south.list[0]) as unknown as SouthConnector<SouthSettings, SouthItemSettings>;
-
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    mockedSouth1.connectedEvent.removeAllListeners();
-
-    (southService.buildSouth as jest.Mock).mockReturnValue(mockedSouth1);
-    (northService.buildNorth as jest.Mock).mockReturnValue(mockedNorth1);
-    (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValue(testData.historyQueries.list[1]);
-
-    historyQuery = new HistoryQuery(
-      testData.historyQueries.list[0],
-      southService,
-      northService,
-      oianalyticsMessageService,
-      historyQueryRepository,
-      mockBaseFolders(testData.historyQueries.list[1].id),
-      logger
-    );
-  });
-
-  afterEach(() => {
-    mockedSouth1.connectedEvent.removeAllListeners();
-  });
-
-  it('should be properly initialized', async () => {
-    await historyQuery.start();
-    expect(logger.trace).toHaveBeenCalledWith(`History Query "${testData.historyQueries.list[1].name}" not enabled`);
-    expect(mockedNorth1.start).not.toHaveBeenCalled();
-    expect(mockedNorth1.connect).not.toHaveBeenCalled();
-  });
-
-  it('should not cache values if north is not defined', async () => {
-    await historyQuery.addContent('southId', { type: 'time-values', content: [] });
-    expect(logger.info).not.toHaveBeenCalled();
-  });
-
-  it('should not cache file if north is not defined', async () => {
-    await historyQuery.addContent('southId', { type: 'any', filePath: 'filePath' });
-    expect(logger.info).not.toHaveBeenCalled();
-  });
-
-  it('should properly stop', async () => {
-    const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
-
-    await historyQuery.stop();
-    expect(clearIntervalSpy).not.toHaveBeenCalled();
-    expect(mockedSouth1.stop).not.toHaveBeenCalled();
-    expect(mockedSouth1.resetCache).not.toHaveBeenCalled();
-    expect(mockedNorth1.stop).not.toHaveBeenCalled();
-    expect(mockedNorth1.resetCache).not.toHaveBeenCalled();
   });
 });

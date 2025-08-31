@@ -1,7 +1,5 @@
 import EncryptionService, { encryptionService } from './encryption.service';
 import pino from 'pino';
-import NorthConnector from '../north/north-connector';
-import NorthConsole from '../north/north-console/north-console';
 import {
   NorthConnectorCommandDTO,
   NorthConnectorDTO,
@@ -26,46 +24,23 @@ import ScanModeRepository from '../repository/config/scan-mode.repository';
 import NorthConnectorMetricsRepository from '../repository/metrics/north-connector-metrics.repository';
 import LogRepository from '../repository/logs/log.repository';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
-import { checkScanMode, createBaseFolders, filesExists } from './utils';
+import { checkScanMode } from './utils';
 import { ScanMode } from '../model/scan-mode.model';
 import { SouthConnectorLightDTO } from '../../shared/model/south-connector.model';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
-import {
-  NorthAmazonS3Settings,
-  NorthAzureBlobSettings,
-  NorthConsoleSettings,
-  NorthFileWriterSettings,
-  NorthModbusSettings,
-  NorthMQTTSettings,
-  NorthOIAnalyticsSettings,
-  NorthOPCUASettings,
-  NorthRESTSettings,
-  NorthSettings,
-  NorthSFTPSettings
-} from '../../shared/model/north-settings.model';
+import { NorthSettings } from '../../shared/model/north-settings.model';
 import CertificateRepository from '../repository/config/certificate.repository';
 import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
-import NorthAmazonS3 from '../north/north-amazon-s3/north-amazon-s3';
-import NorthAzureBlob from '../north/north-azure-blob/north-azure-blob';
-import NorthFileWriter from '../north/north-file-writer/north-file-writer';
-import NorthOIAnalytics from '../north/north-oianalytics/north-oianalytics';
-import NorthSFTP from '../north/north-sftp/north-sftp';
-import NorthREST from '../north/north-rest/north-rest';
 import DataStreamEngine from '../engine/data-stream-engine';
 import { SouthConnectorEntityLight } from '../model/south-connector.model';
 import { PassThrough } from 'node:stream';
-import path from 'node:path';
-import fs from 'node:fs/promises';
-import { BaseFolders } from '../model/types';
 import { ReadStream } from 'node:fs';
 import { CacheMetadata, CacheSearchParam, OIBusSetpointContent } from '../../shared/model/engine.model';
 import TransformerService, { toTransformerDTO } from './transformer.service';
 import { TransformerDTO } from '../../shared/model/transformer.model';
-import NorthOPCUA from '../north/north-opcua/north-opcua';
-import NorthMQTT from '../north/north-mqtt/north-mqtt';
-import NorthModbus from '../north/north-modbus/north-modbus';
 import { Transformer } from '../model/transformer.model';
 import { toScanModeDTO } from './scan-mode.service';
+import { buildNorth } from '../north/north-connector-factory';
 
 export const northManifestList: Array<NorthConnectorManifest> = [
   consoleManifest,
@@ -92,47 +67,8 @@ export default class NorthService {
     private readonly oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
     private oIAnalyticsMessageService: OIAnalyticsMessageService,
     private readonly transformerService: TransformerService,
-    private readonly dataStreamEngine: DataStreamEngine
+    private readonly engine: DataStreamEngine
   ) {}
-
-  buildNorth(
-    settings: NorthConnectorEntity<NorthSettings>,
-    logger: pino.Logger,
-    baseFolders: BaseFolders | undefined = undefined
-  ): NorthConnector<NorthSettings> {
-    const northBaseFolders = baseFolders ?? this.getDefaultBaseFolders(settings.id);
-
-    switch (settings.type) {
-      case 'aws-s3':
-        return new NorthAmazonS3(settings as NorthConnectorEntity<NorthAmazonS3Settings>, logger, northBaseFolders);
-      case 'azure-blob':
-        return new NorthAzureBlob(settings as NorthConnectorEntity<NorthAzureBlobSettings>, logger, northBaseFolders);
-      case 'console':
-        return new NorthConsole(settings as NorthConnectorEntity<NorthConsoleSettings>, logger, northBaseFolders);
-      case 'file-writer':
-        return new NorthFileWriter(settings as NorthConnectorEntity<NorthFileWriterSettings>, logger, northBaseFolders);
-      case 'modbus':
-        return new NorthModbus(settings as NorthConnectorEntity<NorthModbusSettings>, logger, northBaseFolders);
-      case 'mqtt':
-        return new NorthMQTT(settings as NorthConnectorEntity<NorthMQTTSettings>, logger, northBaseFolders);
-      case 'oianalytics':
-        return new NorthOIAnalytics(
-          settings as NorthConnectorEntity<NorthOIAnalyticsSettings>,
-          this.certificateRepository,
-          this.oIAnalyticsRegistrationRepository,
-          logger,
-          northBaseFolders
-        );
-      case 'opcua':
-        return new NorthOPCUA(settings as NorthConnectorEntity<NorthOPCUASettings>, logger, northBaseFolders);
-      case 'rest':
-        return new NorthREST(settings as NorthConnectorEntity<NorthRESTSettings>, logger, northBaseFolders);
-      case 'sftp':
-        return new NorthSFTP(settings as NorthConnectorEntity<NorthSFTPSettings>, logger, northBaseFolders);
-      default:
-        throw Error(`North connector of type "${settings.type}" not installed`);
-    }
-  }
 
   async testNorth(id: string, northType: OIBusNorthType, settingsToTest: NorthSettings, logger: pino.Logger): Promise<void> {
     let northConnector: NorthConnectorEntity<NorthSettings> | null = null;
@@ -187,7 +123,7 @@ export default class NorthService {
       }
     };
 
-    const north = this.buildNorth(testToRun, logger, { cache: 'baseCacheFolder', archive: 'baseArchiveFolder', error: 'baseErrorFolder' });
+    const north = buildNorth(testToRun, logger, '', '', '', this.certificateRepository, this.oIAnalyticsRegistrationRepository);
     return await north.testConnection();
   }
 
@@ -203,17 +139,17 @@ export default class NorthService {
     return northManifestList;
   }
 
-  async createNorth<N extends NorthSettings>(
-    command: NorthConnectorCommandDTO<N>,
+  async createNorth(
+    command: NorthConnectorCommandDTO<NorthSettings>,
     retrieveSecretsFromNorth: string | null
-  ): Promise<NorthConnectorEntity<N>> {
+  ): Promise<NorthConnectorEntity<NorthSettings>> {
     const manifest = this.getInstalledNorthManifests().find(northManifest => northManifest.id === command.type);
     if (!manifest) {
       throw new Error(`North manifest does not exist for type ${command.type}`);
     }
     await this.validator.validateSettings(manifest.settings, command.settings);
 
-    const northEntity = {} as NorthConnectorEntity<N>;
+    const northEntity = {} as NorthConnectorEntity<NorthSettings>;
     await copyNorthConnectorCommandToNorthEntity(
       northEntity,
       command,
@@ -224,23 +160,16 @@ export default class NorthService {
     );
     this.northConnectorRepository.saveNorthConnector(northEntity);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-    const baseFolders = this.getDefaultBaseFolders(northEntity.id);
-    await createBaseFolders(baseFolders);
 
-    await this.dataStreamEngine.createNorth(
-      this.buildNorth(
-        this.findById(northEntity.id)!,
-        this.dataStreamEngine.logger.child({ scopeType: 'north', scopeId: northEntity.id, scopeName: northEntity.name })
-      )
-    );
+    await this.engine.createNorth(northEntity.id);
     if (northEntity.enabled) {
-      await this.dataStreamEngine.startNorth(northEntity.id);
+      await this.engine.startNorth(northEntity.id);
     }
     return northEntity;
   }
 
   getNorthDataStream(northConnectorId: string): PassThrough | null {
-    return this.dataStreamEngine.getNorthDataStream(northConnectorId);
+    return this.engine.getNorthDataStream(northConnectorId);
   }
 
   async searchCacheContent(
@@ -248,7 +177,7 @@ export default class NorthService {
     searchParams: CacheSearchParam,
     folder: 'cache' | 'archive' | 'error'
   ): Promise<Array<{ metadataFilename: string; metadata: CacheMetadata }>> {
-    return await this.dataStreamEngine.searchCacheContent(northConnectorId, searchParams, folder);
+    return await this.engine.searchCacheContent('north', northConnectorId, searchParams, folder);
   }
 
   async getCacheContentFileStream(
@@ -256,7 +185,7 @@ export default class NorthService {
     folder: 'cache' | 'archive' | 'error',
     filename: string
   ): Promise<ReadStream | null> {
-    return await this.dataStreamEngine.getCacheContentFileStream(northConnectorId, folder, filename);
+    return await this.engine.getCacheContentFileStream('north', northConnectorId, folder, filename);
   }
 
   async removeCacheContent(
@@ -264,11 +193,11 @@ export default class NorthService {
     folder: 'cache' | 'archive' | 'error',
     metadataFilenameList: Array<string>
   ): Promise<void> {
-    return await this.dataStreamEngine.removeCacheContent(northConnectorId, folder, metadataFilenameList);
+    return await this.engine.removeCacheContent('north', northConnectorId, folder, metadataFilenameList);
   }
 
   async removeAllCacheContent(northConnectorId: string, folder: 'cache' | 'archive' | 'error'): Promise<void> {
-    return await this.dataStreamEngine.removeAllCacheContent(northConnectorId, folder);
+    return await this.engine.removeAllCacheContent('north', northConnectorId, folder);
   }
 
   async moveCacheContent(
@@ -277,7 +206,7 @@ export default class NorthService {
     destinationFolder: 'cache' | 'archive' | 'error',
     cacheContentList: Array<string>
   ): Promise<void> {
-    return await this.dataStreamEngine.moveCacheContent(northConnectorId, originFolder, destinationFolder, cacheContentList);
+    return await this.engine.moveCacheContent('north', northConnectorId, originFolder, destinationFolder, cacheContentList);
   }
 
   async moveAllCacheContent(
@@ -285,7 +214,7 @@ export default class NorthService {
     originFolder: 'cache' | 'archive' | 'error',
     destinationFolder: 'cache' | 'archive' | 'error'
   ): Promise<void> {
-    return await this.dataStreamEngine.moveAllCacheContent(northConnectorId, originFolder, destinationFolder);
+    return await this.engine.moveAllCacheContent('north', northConnectorId, originFolder, destinationFolder);
   }
 
   async updateNorth<N extends NorthSettings>(northConnectorId: string, command: NorthConnectorCommandDTO<N>) {
@@ -310,7 +239,7 @@ export default class NorthService {
     );
     this.northConnectorRepository.saveNorthConnector(northEntity);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-    await this.dataStreamEngine.reloadNorth(northEntity);
+    await this.engine.reloadNorth(northEntity);
   }
 
   async deleteNorth(northConnectorId: string) {
@@ -318,14 +247,13 @@ export default class NorthService {
     if (!northConnector) {
       throw new Error(`North connector ${northConnectorId} does not exist`);
     }
-    await this.dataStreamEngine.deleteNorth(northConnector);
-    await this.deleteBaseFolders(northConnector);
+    await this.engine.deleteNorth(northConnector);
     this.northConnectorRepository.deleteNorth(northConnectorId);
     this.logRepository.deleteLogsByScopeId('north', northConnector.id);
     this.northMetricsRepository.removeMetrics(northConnector.id);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
 
-    this.dataStreamEngine.logger.info(`Deleted North connector "${northConnector.name}" (${northConnector.id})`);
+    this.engine.logger.info(`Deleted North connector "${northConnector.name}" (${northConnector.id})`);
   }
 
   async startNorth(northConnectorId: string) {
@@ -336,7 +264,7 @@ export default class NorthService {
 
     this.northConnectorRepository.startNorth(northConnectorId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-    await this.dataStreamEngine.startNorth(northConnector.id);
+    await this.engine.startNorth(northConnector.id);
   }
 
   async stopNorth(northConnectorId: string) {
@@ -347,7 +275,7 @@ export default class NorthService {
 
     this.northConnectorRepository.stopNorth(northConnectorId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-    await this.dataStreamEngine.stopNorth(northConnector.id);
+    await this.engine.stopNorth(northConnector.id);
   }
 
   async findSubscriptionsByNorth(northId: string): Promise<Array<SouthConnectorEntityLight>> {
@@ -380,7 +308,7 @@ export default class NorthService {
 
     this.northConnectorRepository.createSubscription(northId, southId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-    this.dataStreamEngine.updateNorthConfiguration(northId);
+    this.engine.updateNorthConfiguration(northId);
   }
 
   async deleteSubscription(northId: string, southId: string): Promise<void> {
@@ -396,7 +324,7 @@ export default class NorthService {
 
     this.northConnectorRepository.deleteSubscription(northId, southId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-    this.dataStreamEngine.updateNorthConfiguration(northId);
+    this.engine.updateNorthConfiguration(northId);
   }
 
   async deleteAllSubscriptionsByNorth(northId: string): Promise<void> {
@@ -407,7 +335,7 @@ export default class NorthService {
 
     this.northConnectorRepository.deleteAllSubscriptionsByNorth(northId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-    this.dataStreamEngine.updateNorthConfiguration(northId);
+    this.engine.updateNorthConfiguration(northId);
   }
 
   async executeSetpoint(
@@ -418,7 +346,7 @@ export default class NorthService {
     }>,
     callback: (result: string) => void
   ) {
-    const northConnector = this.dataStreamEngine.getNorth(northConnectorId);
+    const northConnector = this.engine.getNorth(northConnectorId);
     if (!northConnector) {
       throw new Error(`North connector ${northConnectorId} not found`);
     }
@@ -435,37 +363,6 @@ export default class NorthService {
     await northConnector.cacheContent(setpointContent, 'oianalytics');
 
     callback(`Setpoint ${JSON.stringify(commandContent)} properly sent into the cache of ${northConnectorId}`);
-  }
-
-  private async deleteBaseFolders(north: NorthConnectorEntity<NorthSettings>) {
-    const folders = this.getDefaultBaseFolders(north.id);
-
-    for (const type of Object.keys(folders) as Array<keyof BaseFolders>) {
-      try {
-        const baseFolder = folders[type];
-        this.dataStreamEngine.logger.trace(
-          `Deleting "${type}" base folder "${baseFolder}" of North connector "${north.name}" (${north.id})`
-        );
-
-        if (await filesExists(baseFolder)) {
-          await fs.rm(baseFolder, { recursive: true });
-        }
-      } catch (error: unknown) {
-        this.dataStreamEngine.logger.error(
-          `Unable to delete North connector "${north.name}" (${north.id}) "${type}" base folder: ${(error as Error).message}`
-        );
-      }
-    }
-  }
-
-  private getDefaultBaseFolders(northId: string): BaseFolders {
-    const folders = structuredClone(this.dataStreamEngine.baseFolders);
-
-    for (const type of Object.keys(this.dataStreamEngine.baseFolders) as Array<keyof BaseFolders>) {
-      folders[type] = path.resolve(folders[type], `north-${northId}`);
-    }
-
-    return folders;
   }
 
   retrieveSecretsFromNorth(
@@ -579,14 +476,14 @@ export const copyNorthConnectorCommandToNorthEntity = async <N extends NorthSett
   northEntity.subscriptions = command.subscriptions.map(subscriptionId => {
     const subscription = southConnectors.find(southConnector => southConnector.id === subscriptionId);
     if (!subscription) {
-      throw new Error(`Could not find South Connector ${subscriptionId}`);
+      throw new Error(`Could not find South connector "${subscriptionId}"`);
     }
     return subscription;
   });
   northEntity.transformers = command.transformers.map(transformerIdWithOptions => {
     const foundTransformer = transformers.find(transformer => transformer.id === transformerIdWithOptions.transformerId);
     if (!foundTransformer) {
-      throw new Error(`Could not find OIBus Transformer ${transformerIdWithOptions.transformerId}`);
+      throw new Error(`Could not find OIBus Transformer "${transformerIdWithOptions.transformerId}"`);
     }
     return { transformer: foundTransformer, options: transformerIdWithOptions.options, inputType: transformerIdWithOptions.inputType };
   });
