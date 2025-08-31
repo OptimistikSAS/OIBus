@@ -13,7 +13,6 @@ import FormData from 'form-data';
 import { NorthRESTSettings } from '../../../shared/model/north-settings.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import testData from '../../tests/utils/test-data';
-import { mockBaseFolders } from '../../tests/utils/test-utils';
 import { OIBusError } from '../../model/engine.model';
 import CacheService from '../../service/cache/cache.service';
 import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
@@ -197,7 +196,7 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
         }
       : {};
 
-    north = new NorthREST(configuration, logger, mockBaseFolders(testData.north.list[0].id));
+    north = new NorthREST(configuration, logger, 'cacheFolder', cacheService);
     await north.start();
   });
 

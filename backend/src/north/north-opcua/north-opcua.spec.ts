@@ -8,7 +8,7 @@ import csv from 'papaparse';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import { NorthOPCUASettings } from '../../../shared/model/north-settings.model';
 import testData from '../../tests/utils/test-data';
-import { flushPromises, mockBaseFolders } from '../../tests/utils/test-utils';
+import { flushPromises } from '../../tests/utils/test-utils';
 import CacheService from '../../service/cache/cache.service';
 import { createTransformer } from '../../service/transformer.service';
 import OIBusTransformer from '../../service/transformers/oibus-transformer';
@@ -85,7 +85,7 @@ describe('NorthOPCUA', () => {
     (csv.unparse as jest.Mock).mockReturnValue('csv content');
     (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
 
-    north = new NorthOPCUA(configuration, logger, mockBaseFolders(testData.north.list[0].id));
+    north = new NorthOPCUA(configuration, logger, 'cacheFolder', cacheService);
     north.createCronJob = jest.fn();
   });
 
@@ -378,7 +378,7 @@ describe('NorthOPCUA test connection', () => {
       keepSessionAlive: false
     };
 
-    north = new NorthOPCUA(configuration, logger, mockBaseFolders(testData.north.list[0].id));
+    north = new NorthOPCUA(configuration, logger, 'cacheFolder', cacheService);
   });
 
   it('Connection settings are correct', async () => {

@@ -10,16 +10,11 @@ import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import { SouthFTPItemSettings, SouthFTPSettings } from '../../../shared/model/south-settings.model';
 import { Client as FTPClient, FileInfo } from 'basic-ftp';
 import { DateTime } from 'luxon';
-import SouthConnectorRepository from '../../repository/config/south-connector.repository';
-import SouthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/south-connector-repository.mock';
-import ScanModeRepository from '../../repository/config/scan-mode.repository';
-import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import { SouthConnectorEntity } from '../../model/south-connector.model';
 import testData from '../../tests/utils/test-data';
-import { mockBaseFolders } from '../../tests/utils/test-utils';
 
 jest.mock('node:fs/promises');
 
@@ -38,9 +33,6 @@ jest.mock('../../service/encryption.service', () => ({
   }
 }));
 
-// const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
-const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
-const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
 const southCacheService = new SouthCacheServiceMock();
 
@@ -131,7 +123,6 @@ describe('SouthFTP', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
     (FTPClient as jest.MockedClass<typeof FTPClient>).mockImplementation(() => mockFtpClient as unknown as InstanceType<typeof FTPClient>);
     (fs.mkdir as jest.Mock).mockReturnValue(undefined);
     (fs.unlink as jest.Mock).mockReturnValue(undefined);
@@ -147,15 +138,7 @@ describe('SouthFTP', () => {
     mockFtpClient.remove.mockReset();
     mockFtpClient.close.mockReset();
 
-    south = new SouthFtp(
-      configuration,
-      addContentCallback,
-      southConnectorRepository,
-      southCacheRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(configuration.id)
-    );
+    south = new SouthFtp(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
   describe('with valid configuration', () => {
@@ -164,7 +147,7 @@ describe('SouthFTP', () => {
     });
 
     it('should properly start', () => {
-      expect(southCacheService.createCustomTable).toHaveBeenCalledWith('ftp_southId', 'filename TEXT PRIMARY KEY, mtime_ms INTEGER');
+      expect(southCacheService.createCustomTable).toHaveBeenCalledWith('south_ftp_southId', 'filename TEXT PRIMARY KEY, mtime_ms INTEGER');
     });
 
     it('should test connection', async () => {
@@ -306,14 +289,11 @@ describe('SouthFTP', () => {
       const item = configuration.items[0]; // preserveFiles: false
       await south.getFile(fileInfo, item);
 
-      expect(mockFtpClient.downloadTo).toHaveBeenCalledWith(
-        path.resolve(mockBaseFolders(configuration.id).cache, 'tmp', 'test.csv'),
-        'input/test.csv'
-      );
+      expect(mockFtpClient.downloadTo).toHaveBeenCalledWith(path.resolve('cacheFolder', 'tmp', 'test.csv'), 'input/test.csv');
       expect(mockFtpClient.remove).toHaveBeenCalledWith('input/test.csv');
       expect(addContentCallback).toHaveBeenCalledWith('southId', {
         type: 'any',
-        filePath: path.resolve(mockBaseFolders(configuration.id).cache, 'tmp', 'test.csv')
+        filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
       });
     });
 
@@ -329,17 +309,12 @@ describe('SouthFTP', () => {
         settings: { ...configuration.settings, compression: true }
       };
 
-      // Update the repository mock to return the configuration with compression
-      (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configurationWithCompression);
-
       const southWithCompression = new SouthFtp(
         configurationWithCompression,
         addContentCallback,
-        southConnectorRepository,
         southCacheRepository,
-        scanModeRepository,
         logger,
-        mockBaseFolders(configuration.id)
+        'cacheFolder'
       );
       await southWithCompression.start();
 
@@ -347,12 +322,12 @@ describe('SouthFTP', () => {
       await southWithCompression.getFile(fileInfo, item);
 
       expect(compress).toHaveBeenCalledWith(
-        path.resolve(mockBaseFolders(configuration.id).cache, 'tmp', 'test.csv'),
-        path.resolve(mockBaseFolders(configuration.id).cache, 'tmp', 'test.csv.gz')
+        path.resolve('cacheFolder', 'tmp', 'test.csv'),
+        path.resolve('cacheFolder', 'tmp', 'test.csv.gz')
       );
       expect(addContentCallback).toHaveBeenCalledWith('southId', {
         type: 'any',
-        filePath: path.resolve(mockBaseFolders(configuration.id).cache, 'tmp', 'test.csv.gz')
+        filePath: path.resolve('cacheFolder', 'tmp', 'test.csv.gz')
       });
     });
 
@@ -367,7 +342,7 @@ describe('SouthFTP', () => {
 
       expect(mockFtpClient.remove).not.toHaveBeenCalled();
       expect(southCacheService.runQueryOnCustomTable).toHaveBeenCalledWith(
-        'INSERT INTO "ftp_southId" (filename, mtime_ms) VALUES (?, ?) ON CONFLICT(filename) DO UPDATE SET mtime_ms = ?',
+        'INSERT INTO "south_ftp_southId" (filename, mtime_ms) VALUES (?, ?) ON CONFLICT(filename) DO UPDATE SET mtime_ms = ?',
         ['test.log', fileInfo.modifiedAt!.getTime(), fileInfo.modifiedAt!.getTime()]
       );
     });
@@ -384,7 +359,7 @@ describe('SouthFTP', () => {
       expect(mockFtpClient.remove).toHaveBeenCalledWith('input/test.csv');
       expect(addContentCallback).toHaveBeenCalledWith('southId', {
         type: 'any',
-        filePath: path.resolve(mockBaseFolders(configuration.id).cache, 'tmp', 'test.csv')
+        filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
       });
     });
 
@@ -402,12 +377,9 @@ describe('SouthFTP', () => {
       const southWithCompression = new SouthFtp(
         configurationWithCompression,
         addContentCallback,
-
-        southConnectorRepository,
         southCacheRepository,
-        scanModeRepository,
         logger,
-        mockBaseFolders(configuration.id)
+        'cacheFolder'
       );
       await southWithCompression.start();
 
@@ -416,7 +388,7 @@ describe('SouthFTP', () => {
 
       expect(addContentCallback).toHaveBeenCalledWith('southId', {
         type: 'any',
-        filePath: path.resolve(mockBaseFolders(configuration.id).cache, 'tmp', 'test.csv')
+        filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
       });
     });
 
@@ -430,13 +402,10 @@ describe('SouthFTP', () => {
       await south.fileQuery([configuration.items[0]]);
 
       expect(mockFtpClient.list).toHaveBeenCalledWith('input');
-      expect(mockFtpClient.downloadTo).toHaveBeenCalledWith(
-        path.resolve(mockBaseFolders(configuration.id).cache, 'tmp', 'test.csv'),
-        'input/test.csv'
-      );
+      expect(mockFtpClient.downloadTo).toHaveBeenCalledWith(path.resolve('cacheFolder', 'tmp', 'test.csv'), 'input/test.csv');
       expect(addContentCallback).toHaveBeenCalledWith('southId', {
         type: 'any',
-        filePath: path.resolve(mockBaseFolders(configuration.id).cache, 'tmp', 'test.csv')
+        filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
       });
     });
 
@@ -449,23 +418,12 @@ describe('SouthFTP', () => {
         id: 'southId-not-test'
       };
 
-      (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configWithDifferentId);
-
-      const newSouth = new SouthFtp(
-        configWithDifferentId,
-        addContentCallback,
-
-        southConnectorRepository,
-        southCacheRepository,
-        scanModeRepository,
-        logger,
-        mockBaseFolders(configWithDifferentId.id)
-      );
+      const newSouth = new SouthFtp(configWithDifferentId, addContentCallback, southCacheRepository, logger, 'cacheFolder');
 
       await newSouth.start();
 
       expect(southCacheService.createCustomTable).toHaveBeenCalledWith(
-        'ftp_southId-not-test',
+        'south_ftp_southId-not-test',
         'filename TEXT PRIMARY KEY, mtime_ms INTEGER'
       );
     });
@@ -543,18 +501,12 @@ describe('SouthFTP', () => {
         settings: { ...configuration.settings, compression: true }
       };
 
-      // Update the repository mock to return the configuration with compression
-      (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configurationWithCompression);
-
       const southWithCompression = new SouthFtp(
         configurationWithCompression,
         addContentCallback,
-
-        southConnectorRepository,
         southCacheRepository,
-        scanModeRepository,
         logger,
-        mockBaseFolders(configuration.id)
+        'cacheFolder'
       );
       await southWithCompression.start();
 
@@ -564,7 +516,7 @@ describe('SouthFTP', () => {
       // Should send the compressed file even if unlink fails
       expect(addContentCallback).toHaveBeenCalledWith('southId', {
         type: 'any',
-        filePath: path.resolve(mockBaseFolders(configuration.id).cache, 'tmp', 'test.csv.gz')
+        filePath: path.resolve('cacheFolder', 'tmp', 'test.csv.gz')
       });
     });
 
@@ -594,12 +546,9 @@ describe('SouthFTP', () => {
       const southWithoutCredentials = new SouthFtp(
         configWithoutCredentials,
         addContentCallback,
-
-        southConnectorRepository,
         southCacheRepository,
-        scanModeRepository,
         logger,
-        mockBaseFolders(configuration.id)
+        'cacheFolder'
       );
 
       mockFtpClient.access.mockResolvedValue(undefined);
@@ -640,113 +589,13 @@ describe('SouthFTP', () => {
       expect(result).toBe(false);
     });
 
-    it('should handle start method when connector id is test', async () => {
-      const testConfig = {
-        ...configuration,
-        id: 'test' // This will skip the createFolder call and cacheService creation
-      };
-
-      // Update the repository mock to return the test configuration
-      (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(testConfig);
-
-      const testSouth = new SouthFtp(
-        testConfig,
-        addContentCallback,
-
-        southConnectorRepository,
-        southCacheRepository,
-        scanModeRepository,
-        logger,
-        mockBaseFolders(testConfig.id)
-      );
-
-      // Clear previous calls to createCustomTable
-      southCacheService.createCustomTable.mockClear();
-
-      await testSouth.start();
-
-      // When connector id is 'test', cacheService is null, so createCustomTable should not be called
-      expect(southCacheService.createCustomTable).not.toHaveBeenCalled();
-    });
-
-    it('should handle start method when cacheService is null', async () => {
-      const testConfig = {
-        ...configuration,
-        id: 'test' // This will make cacheService null
-      };
-
-      // Update the repository mock to return the test configuration
-      (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(testConfig);
-
-      const testSouth = new SouthFtp(
-        testConfig,
-        addContentCallback,
-
-        southConnectorRepository,
-        southCacheRepository,
-        scanModeRepository,
-        logger,
-        mockBaseFolders(testConfig.id)
-      );
-
-      // Clear previous calls to createCustomTable
-      southCacheService.createCustomTable.mockClear();
-
-      await testSouth.start();
-
-      // When cacheService is null, createCustomTable should not be called
-      expect(southCacheService.createCustomTable).not.toHaveBeenCalled();
-    });
-
-    it('should handle start method when connector id equals test', async () => {
-      const testConfig = {
-        ...configuration,
-        id: 'test' // This will make this.connector.id !== 'test' false
-      };
-
-      // Update the repository mock to return the test configuration
-      (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(testConfig);
-
-      const testSouth = new SouthFtp(
-        testConfig,
-        addContentCallback,
-
-        southConnectorRepository,
-        southCacheRepository,
-        scanModeRepository,
-        logger,
-        mockBaseFolders(testConfig.id)
-      );
-
-      // Clear previous calls to createCustomTable
-      southCacheService.createCustomTable.mockClear();
-
-      await testSouth.start();
-
-      // When connector id is 'test', the condition this.connector.id !== 'test' should be false
-      // and createCustomTable should not be called because cacheService is null
-      expect(southCacheService.createCustomTable).not.toHaveBeenCalled();
-    });
-
     it('should handle start method when connector id is not test', async () => {
       const nonTestConfig = {
         ...configuration,
         id: 'southId-not-test'
       };
 
-      // Update the repository mock to return the non-test configuration
-      (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(nonTestConfig);
-
-      const nonTestSouth = new SouthFtp(
-        nonTestConfig,
-        addContentCallback,
-
-        southConnectorRepository,
-        southCacheRepository,
-        scanModeRepository,
-        logger,
-        mockBaseFolders(nonTestConfig.id)
-      );
+      const nonTestSouth = new SouthFtp(nonTestConfig, addContentCallback, southCacheRepository, logger, 'cacheFolder');
 
       // Clear previous calls to createCustomTable
       southCacheService.createCustomTable.mockClear();
@@ -755,7 +604,7 @@ describe('SouthFTP', () => {
 
       // When connector id is not 'test', createCustomTable should be called
       expect(southCacheService.createCustomTable).toHaveBeenCalledWith(
-        'ftp_southId-not-test',
+        'south_ftp_southId-not-test',
         'filename TEXT PRIMARY KEY, mtime_ms INTEGER'
       );
     });
@@ -766,22 +615,10 @@ describe('SouthFTP', () => {
         id: 'southId-not-test'
       };
 
-      // Update the repository mock to return the non-test configuration
-      (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(nonTestConfig);
-
       // Mock createFolder to succeed
       (fs.mkdir as jest.Mock).mockResolvedValue(undefined);
 
-      const nonTestSouth = new SouthFtp(
-        nonTestConfig,
-        addContentCallback,
-
-        southConnectorRepository,
-        southCacheRepository,
-        scanModeRepository,
-        logger,
-        mockBaseFolders(nonTestConfig.id)
-      );
+      const nonTestSouth = new SouthFtp(nonTestConfig, addContentCallback, southCacheRepository, logger, 'cacheFolder');
 
       // Clear previous calls to createCustomTable
       southCacheService.createCustomTable.mockClear();
@@ -791,7 +628,7 @@ describe('SouthFTP', () => {
       // When connector id is not 'test', the condition this.connector.id !== 'test' should be true
       // and createCustomTable should be called
       expect(southCacheService.createCustomTable).toHaveBeenCalledWith(
-        'ftp_southId-not-test',
+        'south_ftp_southId-not-test',
         'filename TEXT PRIMARY KEY, mtime_ms INTEGER'
       );
     });
@@ -824,7 +661,7 @@ describe('SouthFTP', () => {
 
       expect(result).toBe(123456789);
       expect(southCacheService.getQueryOnCustomTable).toHaveBeenCalledWith(
-        'SELECT mtime_ms AS mtimeMs FROM "ftp_southId" WHERE filename = ?',
+        'SELECT mtime_ms AS mtimeMs FROM "south_ftp_southId" WHERE filename = ?',
         ['test.csv']
       );
     });
@@ -872,12 +709,9 @@ describe('SouthFTP', () => {
       const southWithCompression = new SouthFtp(
         configurationWithCompression,
         addContentCallback,
-
-        southConnectorRepository,
         southCacheRepository,
-        scanModeRepository,
         logger,
-        mockBaseFolders(configuration.id)
+        'cacheFolder'
       );
       await southWithCompression.start();
 
@@ -887,7 +721,7 @@ describe('SouthFTP', () => {
       // Should send the original file when compression fails
       expect(addContentCallback).toHaveBeenCalledWith('southId', {
         type: 'any',
-        filePath: path.resolve(mockBaseFolders(configuration.id).cache, 'tmp', 'test.csv')
+        filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
       });
     });
 
@@ -906,11 +740,9 @@ describe('SouthFTP', () => {
       const southWithEncryptedPassword = new SouthFtp(
         configWithEncryptedPassword,
         addContentCallback,
-        southConnectorRepository,
         southCacheRepository,
-        scanModeRepository,
         logger,
-        mockBaseFolders(configuration.id)
+        'cacheFolder'
       );
 
       mockFtpClient.access.mockResolvedValue(undefined);
@@ -1009,7 +841,7 @@ describe('SouthFTP', () => {
       // Should still send the file even if unlink fails
       expect(addContentCallback).toHaveBeenCalledWith('southId', {
         type: 'any',
-        filePath: path.resolve(mockBaseFolders(configuration.id).cache, 'tmp', 'test.csv')
+        filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
       });
     });
 
@@ -1020,7 +852,7 @@ describe('SouthFTP', () => {
       south.updateModifiedTime(filename, mtimeMs);
 
       expect(southCacheService.runQueryOnCustomTable).toHaveBeenCalledWith(
-        'INSERT INTO "ftp_southId" (filename, mtime_ms) VALUES (?, ?) ON CONFLICT(filename) DO UPDATE SET mtime_ms = ?',
+        'INSERT INTO "south_ftp_southId" (filename, mtime_ms) VALUES (?, ?) ON CONFLICT(filename) DO UPDATE SET mtime_ms = ?',
         [filename, mtimeMs, mtimeMs]
       );
     });
@@ -1043,18 +875,12 @@ describe('SouthFTP', () => {
         settings: { ...configuration.settings, compression: true }
       };
 
-      // Update the repository mock to return the configuration with compression
-      (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configurationWithCompression);
-
       const southWithCompression = new SouthFtp(
         configurationWithCompression,
         addContentCallback,
-
-        southConnectorRepository,
         southCacheRepository,
-        scanModeRepository,
         logger,
-        mockBaseFolders(configuration.id)
+        'cacheFolder'
       );
       await southWithCompression.start();
 
@@ -1064,7 +890,7 @@ describe('SouthFTP', () => {
       // Should send the original file when compression fails
       expect(addContentCallback).toHaveBeenCalledWith('southId', {
         type: 'any',
-        filePath: path.resolve(mockBaseFolders(configuration.id).cache, 'tmp', 'test.csv')
+        filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
       });
     });
   });

@@ -1,85 +1,33 @@
-import path from 'node:path';
-
-import { createBaseFolders, delay } from '../service/utils';
+import { delay } from '../service/utils';
 import pino from 'pino';
-import SouthService from '../service/south.service';
-import NorthService from '../service/north.service';
 import NorthConnector from '../north/north-connector';
 import SouthConnector from '../south/south-connector';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { NorthSettings } from '../../shared/model/north-settings.model';
-import { CacheMetadata, CacheSearchParam, OIBusContent, OIBusTimeValue } from '../../shared/model/engine.model';
-import { SouthConnectorEntity } from '../model/south-connector.model';
-import { NorthConnectorEntity } from '../model/north-connector.model';
+import { CacheMetadata, CacheSearchParam, OIBusTimeValue } from '../../shared/model/engine.model';
 import { HistoryQueryEntity } from '../model/histor-query.model';
-import HistoryQueryRepository from '../repository/config/history-query.repository';
 import { EventEmitter } from 'node:events';
-import { BaseFolders, Instant } from '../model/types';
+import { Instant } from '../model/types';
 import { QueriesHistory } from '../south/south-interface';
 import { ReadStream } from 'node:fs';
-import OIAnalyticsMessageService from '../service/oia/oianalytics-message.service';
 
 const FINISH_INTERVAL = 5000;
 
 export default class HistoryQuery {
-  private north: NorthConnector<NorthSettings> | null = null;
-  private south: SouthConnector<SouthSettings, SouthItemSettings> | null = null;
   private finishInterval: NodeJS.Timeout | null = null;
   private stopping = false;
 
   public metricsEvent: EventEmitter = new EventEmitter();
+  public finishEvent: EventEmitter = new EventEmitter();
 
   constructor(
     private historyConfiguration: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>,
-    private readonly southService: SouthService,
-    private readonly northService: NorthService,
-    private readonly oianalyticsMessageService: OIAnalyticsMessageService,
-    private readonly historyQueryRepository: HistoryQueryRepository,
-    private readonly baseFolders: BaseFolders,
+    private north: NorthConnector<NorthSettings>,
+    private south: SouthConnector<SouthSettings, SouthItemSettings>,
     private logger: pino.Logger
   ) {}
 
   async start(): Promise<void> {
-    this.historyConfiguration = this.historyQueryRepository.findHistoryQueryById(this.historyConfiguration.id)!;
-
-    // South
-    const southConfiguration: SouthConnectorEntity<SouthSettings, SouthItemSettings> = {
-      id: this.historyConfiguration.id,
-      name: this.historyConfiguration.name,
-      description: '',
-      enabled: true,
-      type: this.historyConfiguration.southType,
-      settings: this.historyConfiguration.southSettings,
-      items: []
-    };
-    const southFolders: BaseFolders = {
-      cache: path.resolve(this.baseFolders.cache, 'south'),
-      archive: path.resolve(this.baseFolders.archive, 'south'),
-      error: path.resolve(this.baseFolders.error, 'south')
-    };
-    await createBaseFolders(southFolders);
-    this.south = this.southService.buildSouth(southConfiguration, this.addContent.bind(this), this.logger, southFolders);
-
-    // North
-    const northConfiguration: NorthConnectorEntity<NorthSettings> = {
-      id: this.historyConfiguration.id,
-      name: this.historyConfiguration.name,
-      description: '',
-      enabled: true,
-      type: this.historyConfiguration.northType,
-      settings: this.historyConfiguration.northSettings,
-      caching: this.historyConfiguration.caching,
-      subscriptions: [],
-      transformers: this.historyConfiguration.northTransformers
-    };
-    const northFolders: BaseFolders = {
-      cache: path.resolve(this.baseFolders.cache, 'north'),
-      archive: path.resolve(this.baseFolders.archive, 'north'),
-      error: path.resolve(this.baseFolders.error, 'north')
-    };
-    await createBaseFolders(northFolders);
-    this.north = this.northService.buildNorth(northConfiguration, this.logger, northFolders);
-
     if (this.historyConfiguration.status !== 'RUNNING') {
       this.logger.trace(`History Query "${this.historyConfiguration.name}" not enabled`);
       return;
@@ -134,10 +82,9 @@ export default class HistoryQuery {
           this.logger.error(`Error while executing history query. ${error}`);
           this.south!.resolveDeferredPromise();
           await delay(FINISH_INTERVAL);
-          this.historyConfiguration = this.historyQueryRepository.findHistoryQueryById(this.historyConfiguration.id)!;
           if (this.historyConfiguration.status === 'RUNNING' && !this.stopping) {
-            await this.south!.stop(false);
-            await this.south!.start(false);
+            await this.south!.stop();
+            await this.south!.start();
           }
         });
       if (this.finishInterval) {
@@ -179,13 +126,7 @@ export default class HistoryQuery {
     this.south.metricsEvent.on('add-file', (data: { lastFileRetrieved: string }) => {
       this.metricsEvent.emit('south-add-file', data);
     });
-    await this.south.start(false);
-  }
-
-  async addContent(historyId: string, data: OIBusContent) {
-    if (this.north) {
-      return await this.north.cacheContent(data, historyId);
-    }
+    await this.south.start();
   }
 
   async stop(): Promise<void> {
@@ -194,37 +135,26 @@ export default class HistoryQuery {
       clearInterval(this.finishInterval);
       this.finishInterval = null;
     }
-    if (this.south) {
-      this.south.connectedEvent.removeAllListeners();
-      await this.south.stop(false);
-      this.south.metricsEvent.removeAllListeners();
-    }
-    if (this.north) {
-      await this.north.stop();
-      this.north.metricsEvent.removeAllListeners();
-    }
+
+    this.south.connectedEvent.removeAllListeners();
+    await this.south.stop();
+    this.south.metricsEvent.removeAllListeners();
+    await this.north.stop();
+    this.north.metricsEvent.removeAllListeners();
+
     this.stopping = false;
   }
 
   async resetCache(): Promise<void> {
-    if (this.south) {
-      await this.south.resetCache();
-    }
-    if (this.north) {
-      await this.north.resetCache();
-    }
+    await this.south.resetCache();
+    await this.north.resetCache();
   }
 
-  /**
-   * Finish HistoryQuery.
-   */
   async finish(): Promise<void> {
-    if (!this.north || !this.south || (this.north.isCacheEmpty() && !this.south.historyIsRunning)) {
-      this.logger.info(`Finish "${this.historyConfiguration.name}" (${this.historyConfiguration.id})`);
+    if (this.north.isCacheEmpty() && !this.south.historyIsRunning) {
+      this.logger.info(`Finish History query "${this.historyConfiguration.name}" (${this.historyConfiguration.id})`);
       await this.stop();
-      this.historyQueryRepository.updateHistoryQueryStatus(this.historyConfiguration.id, 'FINISHED');
-      this.historyConfiguration = this.historyQueryRepository.findHistoryQueryById(this.historyConfiguration.id)!;
-      this.oianalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
+      this.finishEvent.emit('finished');
     } else {
       this.logger.debug(`History query "${this.historyConfiguration.name}" is still running`);
     }
@@ -234,27 +164,51 @@ export default class HistoryQuery {
     this.logger = value;
   }
 
-  get settings(): HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> {
+  get historyQueryConfiguration() {
     return this.historyConfiguration;
+  }
+
+  set historyQueryConfiguration(historyQueryConfiguration: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>) {
+    this.historyConfiguration = historyQueryConfiguration;
+    this.south.connectorConfiguration = {
+      id: historyQueryConfiguration.id,
+      name: historyQueryConfiguration.name,
+      description: historyQueryConfiguration.description,
+      enabled: true,
+      type: historyQueryConfiguration.southType,
+      settings: historyQueryConfiguration.southSettings,
+      items: []
+    };
+    this.north.connectorConfiguration = {
+      id: historyQueryConfiguration.id,
+      name: historyQueryConfiguration.name,
+      description: historyQueryConfiguration.description,
+      enabled: true,
+      type: historyQueryConfiguration.northType,
+      settings: historyQueryConfiguration.northSettings,
+      caching: historyQueryConfiguration.caching,
+      subscriptions: [],
+      transformers: historyQueryConfiguration.northTransformers
+    };
   }
 
   async searchCacheContent(
     searchParams: CacheSearchParam,
     folder: 'cache' | 'archive' | 'error'
   ): Promise<Array<{ metadataFilename: string; metadata: CacheMetadata }>> {
-    return (await this.north?.searchCacheContent(searchParams, folder)) || [];
+    return (await this.north.searchCacheContent(searchParams, folder)) || [];
   }
 
   async getCacheContentFileStream(folder: 'cache' | 'archive' | 'error', filename: string): Promise<ReadStream | null> {
-    return (await this.north?.getCacheContentFileStream(folder, filename)) || null;
+    return (await this.north.getCacheContentFileStream(folder, filename)) || null;
   }
 
   async removeCacheContent(folder: 'cache' | 'archive' | 'error', metadataFilenameList: Array<string>): Promise<void> {
-    await this.north?.removeCacheContent(folder, await this.north!.metadataFileListToCacheContentList(folder, metadataFilenameList));
+    await this.north.removeCacheContent(folder, await this.north.metadataFileListToCacheContentList(folder, metadataFilenameList));
   }
 
   async removeAllCacheContent(folder: 'cache' | 'archive' | 'error'): Promise<void> {
-    await this.north?.removeAllCacheContent(folder);
+    await this.north.removeAllCacheContent(folder);
   }
 
   async moveCacheContent(
@@ -262,14 +216,14 @@ export default class HistoryQuery {
     destinationFolder: 'cache' | 'archive' | 'error',
     cacheContentList: Array<string>
   ): Promise<void> {
-    await this.north?.moveCacheContent(
+    await this.north.moveCacheContent(
       originFolder,
       destinationFolder,
-      await this.north!.metadataFileListToCacheContentList(originFolder, cacheContentList)
+      await this.north.metadataFileListToCacheContentList(originFolder, cacheContentList)
     );
   }
 
   async moveAllCacheContent(originFolder: 'cache' | 'archive' | 'error', destinationFolder: 'cache' | 'archive' | 'error'): Promise<void> {
-    await this.north?.moveAllCacheContent(originFolder, destinationFolder);
+    await this.north.moveAllCacheContent(originFolder, destinationFolder);
   }
 }

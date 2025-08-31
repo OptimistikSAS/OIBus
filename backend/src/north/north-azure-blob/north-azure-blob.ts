@@ -8,9 +8,9 @@ import { encryptionService } from '../../service/encryption.service';
 import { NorthAzureBlobSettings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
-import { BaseFolders } from '../../model/types';
 import { getFilenameWithoutRandomId } from '../../service/utils';
 import type { ProxySettings } from '@azure/core-rest-pipeline/dist/browser';
+import CacheService from '../../service/cache/cache.service';
 
 const TEST_FILE = 'oibus-azure-test.txt';
 
@@ -18,8 +18,13 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
   private blobClient: BlobServiceClient | null = null;
   private dataLakeClient: DataLakeServiceClient | null = null;
 
-  constructor(connector: NorthConnectorEntity<NorthAzureBlobSettings>, logger: pino.Logger, baseFolders: BaseFolders) {
-    super(connector, logger, baseFolders);
+  constructor(
+    connector: NorthConnectorEntity<NorthAzureBlobSettings>,
+    logger: pino.Logger,
+    cacheFolderPath: string,
+    cacheService: CacheService
+  ) {
+    super(connector, logger, cacheFolderPath, cacheService);
   }
 
   async start(): Promise<void> {

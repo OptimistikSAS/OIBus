@@ -10,7 +10,6 @@ import { NorthAmazonS3Settings } from '../../../shared/model/north-settings.mode
 import csv from 'papaparse';
 import testData from '../../tests/utils/test-data';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
-import { mockBaseFolders } from '../../tests/utils/test-utils';
 import CacheService from '../../service/cache/cache.service';
 import { createTransformer } from '../../service/transformer.service';
 import OIBusTransformer from '../../service/transformers/oibus-transformer';
@@ -70,7 +69,7 @@ describe('NorthAmazonS3', () => {
       (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
       (getFilenameWithoutRandomId as jest.Mock).mockReturnValue('example.file');
 
-      north = new NorthAmazonS3(configuration, logger, mockBaseFolders(testData.north.list[0].id));
+      north = new NorthAmazonS3(configuration, logger, 'cacheFolder', cacheService);
     });
 
     afterEach(() => {
@@ -142,7 +141,7 @@ describe('NorthAmazonS3', () => {
       (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
       (getFilenameWithoutRandomId as jest.Mock).mockReturnValue('example.file');
 
-      north = new NorthAmazonS3(configuration, logger, mockBaseFolders(testData.north.list[0].id));
+      north = new NorthAmazonS3(configuration, logger, 'cacheFolder', cacheService);
     });
 
     afterEach(() => {
@@ -180,7 +179,7 @@ describe('NorthAmazonS3', () => {
       (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
       (getFilenameWithoutRandomId as jest.Mock).mockReturnValue('example.file');
 
-      north = new NorthAmazonS3(configuration, logger, mockBaseFolders(testData.north.list[0].id));
+      north = new NorthAmazonS3(configuration, logger, 'cacheFolder', cacheService);
     });
 
     afterEach(() => {

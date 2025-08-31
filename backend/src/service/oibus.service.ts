@@ -1,12 +1,11 @@
 import DataStreamEngine from '../engine/data-stream-engine';
-import HistoryQueryEngine from '../engine/history-query-engine';
 import pino from 'pino';
 import { EngineMetrics, EngineSettingsDTO, OIBusContent, OIBusInfo } from '../../shared/model/engine.model';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import EngineRepository from '../repository/config/engine.repository';
 import { EngineSettings } from '../model/engine.model';
 import { engineSchema } from '../web-server/controllers/validators/oibus-validation-schema';
-import EncryptionService from './encryption.service';
+import { encryptionService } from './encryption.service';
 import LoggerService from './logger/logger.service';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import ProxyServer from '../web-server/proxy-server';
@@ -47,14 +46,12 @@ export default class OIBusService {
     private engineMetricsRepository: EngineMetricsRepository,
     private ipFilterService: IPFilterService,
     private oIAnalyticsRegistrationService: OIAnalyticsRegistrationService,
-    private encryptionService: EncryptionService,
     private loggerService: LoggerService,
     private oIAnalyticsMessageService: OIAnalyticsMessageService,
     private southService: SouthService,
     private northService: NorthService,
     private historyQueryService: HistoryQueryService,
-    private dataStreamEngine: DataStreamEngine,
-    private historyQueryEngine: HistoryQueryEngine,
+    private engine: DataStreamEngine,
     private readonly ignoreIpFilters: boolean
   ) {
     this.metrics = this.engineMetricsRepository.getMetrics(this.getEngineSettings().id)!;
@@ -82,26 +79,7 @@ export default class OIBusService {
     const start = DateTime.now().toMillis();
     this.logger.info('Starting OIBus...');
 
-    await this.dataStreamEngine.start(
-      this.northService.findAll().map(element => {
-        return this.northService.buildNorth(
-          this.northService.findById(element.id)!,
-          this.dataStreamEngine.logger.child({ scopeType: 'north', scopeId: element.id, scopeName: element.name })
-        );
-      }),
-      this.southService.findAll().map(element => {
-        return this.southService.buildSouth(
-          this.southService.findById(element.id)!,
-          this.dataStreamEngine.addContent.bind(this.dataStreamEngine),
-          this.dataStreamEngine.logger.child({ scopeType: 'south', scopeId: element.id, scopeName: element.name })
-        );
-      })
-    );
-    await this.historyQueryEngine.start(
-      this.historyQueryService.findAll().map(element => {
-        return this.historyQueryService.runHistoryQuery(element);
-      })
-    );
+    await this.engine.start(this.northService.findAll(), this.southService.findAll(), this.historyQueryService.findAll());
 
     const settings = this.getEngineSettings();
     this.cpuUsageRefInstant = DateTime.now().toMillis(); // Reference between two dates for cpu usage calculation
@@ -150,7 +128,7 @@ export default class OIBusService {
     if (!command.logParameters.loki.password) {
       command.logParameters.loki.password = oldEngineSettings.logParameters.loki.password;
     } else {
-      command.logParameters.loki.password = await this.encryptionService.encryptText(command.logParameters.loki.password);
+      command.logParameters.loki.password = await encryptionService.encryptText(command.logParameters.loki.password);
     }
     this.engineRepository.update(command);
     const settings = this.getEngineSettings();
@@ -195,8 +173,7 @@ export default class OIBusService {
   async stopOIBus(): Promise<void> {
     const start = DateTime.now().toMillis();
     this.logger.info('Stopping OIBus...');
-    await this.dataStreamEngine.stop();
-    await this.historyQueryEngine.stop();
+    await this.engine.stop();
     if (this.healthSignalInterval) {
       clearInterval(this.healthSignalInterval);
       this.healthSignalInterval = null;
@@ -212,13 +189,12 @@ export default class OIBusService {
   }
 
   async addExternalContent(northId: string, content: OIBusContent, source: string): Promise<void> {
-    await this.dataStreamEngine.addExternalContent(northId, content, source);
+    await this.engine.addExternalContent(northId, content, source);
   }
 
   setLogger(logger: pino.Logger) {
     this.logger = logger;
-    this.dataStreamEngine.setLogger(logger);
-    this.historyQueryEngine.setLogger(logger);
+    this.engine.setLogger(logger);
     this.proxyServer.setLogger(logger);
     this.oIAnalyticsMessageService.setLogger(logger);
   }
@@ -282,11 +258,11 @@ export default class OIBusService {
   }
 
   resetNorthConnectorMetrics(northConnectorId: string): void {
-    this.dataStreamEngine.resetNorthConnectorMetrics(northConnectorId);
+    this.engine.resetNorthConnectorMetrics(northConnectorId);
   }
 
   resetSouthConnectorMetrics(southConnectorId: string): void {
-    this.dataStreamEngine.resetSouthConnectorMetrics(southConnectorId);
+    this.engine.resetSouthConnectorMetrics(southConnectorId);
   }
 
   /**

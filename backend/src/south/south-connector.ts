@@ -1,6 +1,6 @@
 import { EventEmitter } from 'node:events';
 import { CronJob } from 'cron';
-import { createBaseFolders, delay, generateIntervals, validateCronExpression } from '../service/utils';
+import { delay, generateIntervals, validateCronExpression } from '../service/utils';
 
 import { SouthCache, SouthConnectorItemTestingSettings } from '../../shared/model/south-connector.model';
 import { Instant, Interval } from '../../shared/model/types';
@@ -15,10 +15,7 @@ import path from 'node:path';
 import ConnectionService, { ManagedConnectionDTO } from '../service/connection.service';
 import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../model/south-connector.model';
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
-import SouthConnectorRepository from '../repository/config/south-connector.repository';
-import ScanModeRepository from '../repository/config/scan-mode.repository';
 import { ScanMode } from '../model/scan-mode.model';
-import { BaseFolders } from '../model/types';
 
 /**
  * Class SouthConnector : provides general attributes and methods for south connectors.
@@ -49,29 +46,24 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   private runProgress$: DeferredPromise | null = null;
   private subscribedItems: Array<SouthConnectorItemEntity<I>> = [];
   protected cacheService: SouthCacheService | null = null;
+  protected readonly tmpFolder: string;
 
   public connectedEvent: EventEmitter = new EventEmitter();
   public metricsEvent: EventEmitter = new EventEmitter();
 
   historyIsRunning = false;
 
-  /**
-   * Constructor for SouthConnector
-   */
   protected constructor(
     protected connector: SouthConnectorEntity<T, I>,
     private engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
-    private readonly southConnectorRepository: SouthConnectorRepository,
     private readonly southCacheRepository: SouthCacheRepository,
-    private readonly scanModeRepository: ScanModeRepository,
     protected logger: pino.Logger,
-    protected readonly baseFolders: BaseFolders,
+    protected cacheFolderPath: string,
     // The value is null in order to incrementally refactor connectors to use the ConnectionService
     private readonly connectionService: ConnectionService | null = null
   ) {
-    if (this.connector.id !== 'test') {
-      this.cacheService = new SouthCacheService(this.southCacheRepository);
-    }
+    this.cacheService = new SouthCacheService(this.southCacheRepository);
+    this.tmpFolder = path.resolve(cacheFolderPath, 'tmp');
     this.taskRunner.on('next', async () => {
       if (this.taskJobQueue.length > 0) {
         if (this.runProgress$) {
@@ -79,7 +71,6 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
           return;
         }
         const scanMode = this.taskJobQueue[0];
-
         const itemsToRun = this.connector.items.filter(item => item.scanMode.id === scanMode.id && item.enabled);
         if (itemsToRun.length > 0) {
           this.logger.trace(`Running South with scan mode ${scanMode.name} for ${this.connector.items.length} items`);
@@ -91,14 +82,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     });
   }
 
-  async start(dataStream = true): Promise<void> {
-    if (this.connector.id !== 'test') {
-      await createBaseFolders(this.baseFolders);
-    }
-    if (dataStream) {
-      // Reload the settings only on a data stream case, otherwise let the history query manage the settings
-      this.connector = this.southConnectorRepository.findSouthById(this.connector.id)!;
-    }
+  async start(): Promise<void> {
     this.logger.debug(`South connector ${this.connector.name} enabled. Starting services...`);
     await this.connect();
   }
@@ -122,15 +106,14 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     }
     this.cronByScanModeIds.clear();
     this.subscribedItems = [];
-    if (this.connector.id !== 'test') {
-      this.metricsEvent.emit('connect', {
-        lastConnection: DateTime.now().toUTC().toISO()!
-      });
-    }
+    this.metricsEvent.emit('connect', {
+      lastConnection: DateTime.now().toUTC().toISO()!
+    });
+
     this.connectedEvent.emit('connected');
   }
 
-  async manageSouthCacheOnChange(
+  updateSouthCacheOnScanModeAndMaxInstantChanges(
     oldSettings: SouthConnectorEntity<SouthSettings, SouthItemSettings>,
     newSettings: SouthConnectorEntity<SouthSettings, SouthItemSettings>,
     previousMaxInstantPerItem: boolean
@@ -160,114 +143,98 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     }
   }
 
-  /**
-   * Reset the cron and subscriptions if necessary on item changes
-   */
-  async onItemChange(): Promise<void> {
-    if (this.queriesHistory()) {
-      await this.manageSouthCacheOnChange(
-        this.connector,
-        this.southConnectorRepository.findSouthById(this.connector.id)!,
-        this.getMaxInstantPerItem(this.connector.settings)
-      );
-    }
-    this.connector.items = this.southConnectorRepository.findAllItemsForSouth(this.connector.id);
-
-    if (!this.connector.enabled) {
-      return;
-    }
+  updateCronJobs(): void {
+    // Collect all unique scan modes from enabled items (excluding 'subscription')
     const scanModes = new Map<string, ScanMode>();
     this.connector.items
       .filter(item => item.scanMode.id && item.scanMode.id !== 'subscription' && item.enabled)
-      .forEach(item => {
-        if (!scanModes.get(item.scanMode.id!)) {
-          const scanMode = this.scanModeRepository.findById(item.scanMode.id!)!;
-          scanModes.set(scanMode.id, scanMode);
-        }
-      });
-    for (const scanMode of scanModes.values()) {
+      .forEach(item => scanModes.set(item.scanMode.id!, item.scanMode));
+
+    // Create cron jobs for new scan modes
+    scanModes.forEach(scanMode => {
       if (!this.cronByScanModeIds.has(scanMode.id!)) {
-        this.createCronJob(scanMode);
+        this.createOrUpdateCronJob(scanMode);
       }
-    }
-    for (const [cronScanModeId, cron] of this.cronByScanModeIds.entries()) {
+    });
+
+    // Stop and remove cron jobs for scan modes no longer in use
+    this.cronByScanModeIds.forEach((cron, cronScanModeId) => {
       if (!scanModes.has(cronScanModeId)) {
         cron.stop();
         this.cronByScanModeIds.delete(cronScanModeId);
       }
-    }
-
-    if (this.queriesSubscription()) {
-      const subscriptionItems = this.connector.items.filter(item => item.scanMode.id === 'subscription' && item.enabled);
-      const alreadySubscribedItemIds = new Set(this.subscribedItems.map(item => item.id));
-      const allSubscriptionItemIds = new Set(subscriptionItems.map(item => item.id));
-
-      // Determine items to subscribe and unsubscribe
-      const itemsToSubscribe = subscriptionItems.filter(item => !alreadySubscribedItemIds.has(item.id));
-      const itemsToUnsubscribe = this.subscribedItems.filter(item => !allSubscriptionItemIds.has(item.id));
-
-      // Unsubscribe from items no longer needed
-      if (itemsToUnsubscribe.length > 0) {
-        try {
-          this.logger.trace(`Unsubscribing from ${itemsToUnsubscribe.length} items`);
-          await this.unsubscribe(itemsToUnsubscribe);
-          this.subscribedItems = this.subscribedItems.filter(item => !itemsToUnsubscribe.includes(item));
-        } catch (error) {
-          this.logger.error(`Error when unsubscribing from items. ${error}`);
-        }
-      }
-
-      // Subscribe to new items
-      if (itemsToSubscribe.length > 0) {
-        try {
-          this.logger.trace(`Subscribing to ${itemsToSubscribe.length} new items`);
-          await this.subscribe(itemsToSubscribe);
-          this.subscribedItems.push(...itemsToSubscribe);
-        } catch (error) {
-          this.logger.error(`Error when subscribing to new items. ${error}`);
-        }
-      }
-    }
-  }
-
-  async updateScanMode(scanMode: ScanMode): Promise<void> {
-    if (this.cronByScanModeIds.get(scanMode.id)) {
-      this.createCronJob(scanMode);
-    }
-  }
-
-  isEnabled(): boolean {
-    return this.connector.enabled;
+    });
   }
 
   /**
-   * Create a job used to populate the queue where each element of the queue is a job to call, associated to its scan mode
+   * Used when the cron of a scan mode is changed in the Engine
+   * The cron expression must be propagated to each South
    */
-  createCronJob(scanMode: ScanMode): void {
+  updateScanModeIfUsed(scanMode: ScanMode): void {
+    if (this.cronByScanModeIds.get(scanMode.id)) {
+      this.createOrUpdateCronJob(scanMode);
+    }
+  }
+
+  createOrUpdateCronJob(scanMode: ScanMode): void {
     const existingCronJob = this.cronByScanModeIds.get(scanMode.id);
     if (existingCronJob) {
       this.logger.debug(`Removing existing South cron job associated to scan mode "${scanMode.name}" (${scanMode.cron})`);
       existingCronJob.stop();
       this.cronByScanModeIds.delete(scanMode.id);
     }
-    this.logger.debug(`Creating South cron job for scan mode "${scanMode.name}" (${scanMode.cron})`);
 
+    this.logger.debug(`Creating South cron job for scan mode "${scanMode.name}" (${scanMode.cron})`);
     try {
       validateCronExpression(scanMode.cron);
-      const job = new CronJob(
-        scanMode.cron,
-        () => {
-          this.addToQueue.bind(this).call(this, scanMode);
-        },
-        null,
-        true
-      );
+      const job = new CronJob(scanMode.cron, this.addToQueue.bind(this, scanMode), null, true);
       this.cronByScanModeIds.set(scanMode.id, job);
     } catch (error: unknown) {
       this.logger.error(
         `Error when creating South cron job for scan mode "${scanMode.name}" (${scanMode.cron}): ${(error as Error).message}`
       );
     }
+  }
+
+  async updateSubscriptions(): Promise<void> {
+    if (!this.queriesSubscription()) {
+      this.logger.trace('This connector does not support subscriptions');
+      return;
+    }
+    // Get all subscription items
+    const subscriptionItems = this.connector.items.filter(item => item.scanMode.id === 'subscription' && item.enabled);
+    // Get the IDs of currently subscribed items
+    const subscribedIds = new Set(this.subscribedItems.map(item => item.id));
+
+    // Items to unsubscribe: those in subscribedItems but not in subscriptionItems
+    const itemsToUnsubscribe = this.subscribedItems.filter(item => !subscriptionItems.some(subItem => subItem.id === item.id));
+    // Items to subscribe: those in subscriptionItems but not already subscribed
+    const itemsToSubscribe = subscriptionItems.filter(item => !subscribedIds.has(item.id));
+
+    // Unsubscribe from items no longer needed
+    if (itemsToUnsubscribe.length > 0) {
+      try {
+        this.logger.trace(`Unsubscribing from ${itemsToUnsubscribe.length} items`);
+        await this.unsubscribe(itemsToUnsubscribe);
+        this.subscribedItems = this.subscribedItems.filter(item => !itemsToUnsubscribe.includes(item));
+      } catch (error: unknown) {
+        this.logger.error(`Error when unsubscribing from items: ${(error as Error).message}`);
+      }
+    }
+    // Subscribe to new items
+    if (itemsToSubscribe.length > 0) {
+      try {
+        this.logger.trace(`Subscribing to ${itemsToSubscribe.length} new items`);
+        await this.subscribe(itemsToSubscribe);
+        this.subscribedItems.push(...itemsToSubscribe);
+      } catch (error: unknown) {
+        this.logger.error(`Error when subscribing to new items: ${(error as Error).message}`);
+      }
+    }
+  }
+
+  isEnabled(): boolean {
+    return this.connector.enabled;
   }
 
   addToQueue(scanMode: ScanMode): void {
@@ -502,9 +469,6 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     }
   }
 
-  /**
-   * Calculate the progress of the current interval
-   */
   private calculateIntervalProgress(intervals: Array<Interval>, currentIntervalIndex: number, startTime: Instant) {
     // calculate progress based on time
     const progress =
@@ -533,9 +497,6 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     }
   }
 
-  /**
-   * Add new values to the South connector buffer.
-   */
   private async addValues(data: OIBusTimeValueContent): Promise<void> {
     if (data.content.length > 0 && this.connector.id !== 'test') {
       this.logger.debug(`Add ${data.content.length} values to cache from South "${this.connector.name}"`);
@@ -547,9 +508,6 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     }
   }
 
-  /**
-   * Add a new file to the Engine.
-   */
   private async addFile(data: OIBusRawContent): Promise<void> {
     this.logger.debug(`Add file "${data.filePath}" to cache from South "${this.connector.name}"`);
     await this.engineAddContentCallback(this.connector.id, data);
@@ -558,10 +516,6 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     });
   }
 
-  /**
-   * Method called by Engine to stop a South connector. This method can be surcharged in the
-   * South connector implementation to allow disconnecting to a third party application for example.
-   */
   async disconnect(): Promise<void> {
     for (const cronJob of this.cronByScanModeIds.values()) {
       cronJob.stop();
@@ -576,14 +530,9 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     this.logger.debug(`South connector "${this.connector.name}" (${this.connector.id}) disconnected`);
   }
 
-  async stop(dataStream = true): Promise<void> {
+  async stop(): Promise<void> {
     this.stopping = true;
     this.logger.debug(`Stopping South "${this.connector.name}" (${this.connector.id})...`);
-
-    if (dataStream) {
-      // Reload the settings only on data stream case, otherwise let the history query manage the settings
-      this.connector = this.southConnectorRepository.findSouthById(this.connector.id)!;
-    }
 
     if (this.runProgress$) {
       this.logger.debug('Waiting for South task to finish');
@@ -628,6 +577,13 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   }
 
   set connectorConfiguration(connectorConfiguration: SouthConnectorEntity<T, I>) {
+    if (this.queriesHistory()) {
+      this.updateSouthCacheOnScanModeAndMaxInstantChanges(
+        this.connector,
+        connectorConfiguration,
+        this.getMaxInstantPerItem(this.connector.settings)
+      );
+    }
     this.connector = connectorConfiguration;
   }
 

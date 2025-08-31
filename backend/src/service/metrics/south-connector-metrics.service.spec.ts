@@ -21,6 +21,7 @@ describe('SouthConnectorMetricsService', () => {
   });
 
   it('should be properly initialised', () => {
+    service.initMetrics();
     expect(southConnectorMetricsRepository.initMetrics).toHaveBeenCalledWith(testData.south.list[0].id);
     expect(service.metrics).toEqual(testData.south.metrics);
   });

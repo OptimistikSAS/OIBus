@@ -138,18 +138,18 @@ export default class HistoryQueryMetricsService {
   }
 
   initMetrics(): void {
-    this.historyQueryMetricsRepository.initMetrics(this.historyQuery.settings.id);
-    this._metrics = this.historyQueryMetricsRepository.getMetrics(this.historyQuery.settings.id)!;
+    this.historyQueryMetricsRepository.initMetrics(this.historyQuery.historyQueryConfiguration.id);
+    this._metrics = this.historyQueryMetricsRepository.getMetrics(this.historyQuery.historyQueryConfiguration.id)!;
     this._stream?.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
   }
 
   updateMetrics(): void {
-    this.historyQueryMetricsRepository.updateMetrics(this.historyQuery.settings.id, this._metrics);
+    this.historyQueryMetricsRepository.updateMetrics(this.historyQuery.historyQueryConfiguration.id, this._metrics);
     this._stream?.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
   }
 
   resetMetrics(): void {
-    this.historyQueryMetricsRepository.removeMetrics(this.historyQuery.settings.id);
+    this.historyQueryMetricsRepository.removeMetrics(this.historyQuery.historyQueryConfiguration.id);
     this.initMetrics();
   }
 

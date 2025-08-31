@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import SouthConnector from '../south-connector';
-import { compress, createFolder } from '../../service/utils';
+import { compress } from '../../service/utils';
 
 import pino from 'pino';
 import { QueriesFile } from '../south-interface';
@@ -11,10 +11,7 @@ import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model
 import { DateTime } from 'luxon';
 import sftpClient, { ConnectOptions, FileInfo } from 'ssh2-sftp-client';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
-import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import ScanModeRepository from '../../repository/config/scan-mode.repository';
-import { BaseFolders } from '../../model/types';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { encryptionService } from '../../service/encryption.service';
 
@@ -22,22 +19,14 @@ import { encryptionService } from '../../service/encryption.service';
  * Class SouthSFTP - Retrieve files from remote SFTP instance
  */
 export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSFTPItemSettings> implements QueriesFile {
-  private readonly tmpFolder: string;
-
-  /**
-   * Constructor for SouthFolderScanner
-   */
   constructor(
     connector: SouthConnectorEntity<SouthSFTPSettings, SouthSFTPItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
-    southConnectorRepository: SouthConnectorRepository,
     southCacheRepository: SouthCacheRepository,
-    scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
-    baseFolders: BaseFolders
+    cacheFolderPath: string
   ) {
-    super(connector, engineAddContentCallback, southConnectorRepository, southCacheRepository, scanModeRepository, logger, baseFolders);
-    this.tmpFolder = path.resolve(this.baseFolders.cache, 'tmp');
+    super(connector, engineAddContentCallback, southCacheRepository, logger, cacheFolderPath);
   }
 
   override async testConnection(): Promise<void> {
@@ -67,13 +56,10 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
     callback({ type: 'time-values', content: values });
   }
 
-  async start(dataStream = true): Promise<void> {
-    if (this.connector.id !== 'test') {
-      await createFolder(this.tmpFolder);
-    }
-    await super.start(dataStream);
+  async start(): Promise<void> {
+    await super.start();
     // Create a custom table in the south cache database to manage file already sent when preserve file is set to true
-    this.cacheService!.createCustomTable(`folder_scanner_${this.connector.id}`, 'filename TEXT PRIMARY KEY, mtime_ms INTEGER');
+    this.cacheService!.createCustomTable(`south_sftp_${this.connector.id}`, 'filename TEXT PRIMARY KEY, mtime_ms INTEGER');
   }
 
   /**
@@ -129,7 +115,7 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
   }
 
   getModifiedTime(filename: string): number {
-    const query = `SELECT mtime_ms AS mtimeMs FROM "sftp_${this.connector.id}" WHERE filename = ?`;
+    const query = `SELECT mtime_ms AS mtimeMs FROM "south_sftp_${this.connector.id}" WHERE filename = ?`;
     const result: { mtimeMs: string } | null = this.cacheService!.getQueryOnCustomTable(query, [filename]) as {
       mtimeMs: string;
     } | null;
@@ -137,14 +123,13 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
   }
 
   updateModifiedTime(filename: string, mtimeMs: number): void {
-    const query = `INSERT INTO "sftp_${this.connector.id}" (filename, mtime_ms) VALUES (?, ?) ON CONFLICT(filename) DO UPDATE SET mtime_ms = ?`;
+    const query = `INSERT INTO "south_sftp_${this.connector.id}" (filename, mtime_ms) VALUES (?, ?) ON CONFLICT(filename) DO UPDATE SET mtime_ms = ?`;
     this.cacheService!.runQueryOnCustomTable(query, [filename, mtimeMs, mtimeMs]);
   }
 
   /**
    * Retrieve a file from a SFTP server and send it to the Engine.
    */
-
   async listFiles(item: SouthConnectorItemEntity<SouthSFTPItemSettings>): Promise<Array<FileInfo>> {
     const connectionOptions = await this.createConnectionOptions();
     const client = new sftpClient();

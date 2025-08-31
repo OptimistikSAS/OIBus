@@ -97,9 +97,13 @@ export const createFolder = async (folder: string): Promise<void> => {
 /**
  * Create folders defined by the BaseFolders type
  */
-export const createBaseFolders = async (baseFolders: BaseFolders) => {
+export const createBaseFolders = async (baseFolders: BaseFolders, entityType: 'south' | 'north' | 'history') => {
   for (const type of Object.keys(baseFolders) as Array<keyof BaseFolders>) {
     await createFolder(baseFolders[type]);
+    if (entityType === 'history') {
+      await createFolder(path.resolve(baseFolders[type], 'north'));
+      await createFolder(path.resolve(baseFolders[type], 'south'));
+    }
   }
 };
 

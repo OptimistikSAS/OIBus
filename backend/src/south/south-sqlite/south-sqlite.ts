@@ -6,7 +6,6 @@ import pino from 'pino';
 import SouthConnector from '../south-connector';
 import {
   convertDateTimeToInstant,
-  createFolder,
   formatInstant,
   generateCsvContent,
   generateFilenameForSerialization,
@@ -19,39 +18,21 @@ import { QueriesHistory } from '../south-interface';
 import { SouthSQLiteItemSettings, SouthSQLiteSettings } from '../../../shared/model/south-settings.model';
 import { OIBusContent } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
-import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import ScanModeRepository from '../../repository/config/scan-mode.repository';
-import { BaseFolders } from '../../model/types';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 
 /**
  * Class SouthSQLite - Retrieve data from SQLite databases and send them to the cache as CSV files.
  */
 export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, SouthSQLiteItemSettings> implements QueriesHistory {
-  private readonly tmpFolder: string;
-
   constructor(
     connector: SouthConnectorEntity<SouthSQLiteSettings, SouthSQLiteItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
-    southConnectorRepository: SouthConnectorRepository,
     southCacheRepository: SouthCacheRepository,
-    scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
-    baseFolders: BaseFolders
+    cacheFolderPath: string
   ) {
-    super(connector, engineAddContentCallback, southConnectorRepository, southCacheRepository, scanModeRepository, logger, baseFolders);
-    this.tmpFolder = path.resolve(this.baseFolders.cache, 'tmp');
-  }
-
-  /**
-   * Initialize services (logger, certificate, status data) at startup
-   */
-  async start(dataStream = true): Promise<void> {
-    if (this.connector.id !== 'test') {
-      await createFolder(this.tmpFolder);
-    }
-    await super.start(dataStream);
+    super(connector, engineAddContentCallback, southCacheRepository, logger, cacheFolderPath);
   }
 
   override async testConnection(): Promise<void> {

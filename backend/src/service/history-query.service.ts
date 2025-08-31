@@ -15,7 +15,7 @@ import { encryptionService } from './encryption.service';
 import HistoryQueryRepository from '../repository/config/history-query.repository';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
-import { checkScanMode, createBaseFolders, filesExists, stringToBoolean } from './utils';
+import { checkScanMode, stringToBoolean } from './utils';
 import SouthService, { southManifestList } from './south.service';
 import NorthService, { northManifestList } from './north.service';
 import LogRepository from '../repository/logs/log.repository';
@@ -26,19 +26,16 @@ import { ScanMode } from '../model/scan-mode.model';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import multer from '@koa/multer';
 import fs from 'node:fs/promises';
-import path from 'node:path';
 import csv from 'papaparse';
-import HistoryQueryEngine from '../engine/history-query-engine';
-import HistoryQuery from '../engine/history-query';
 import HistoryQueryMetricsRepository from '../repository/metrics/history-query-metrics.repository';
 import { PassThrough } from 'node:stream';
-import { BaseFolders } from '../model/types';
 import NorthConnectorRepository from '../repository/config/north-connector.repository';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
 import { ReadStream } from 'node:fs';
 import TransformerService, { toTransformerDTO } from './transformer.service';
 import { Transformer } from '../model/transformer.model';
 import { OIBusObjectAttribute } from '../../shared/model/form.model';
+import DataStreamEngine from '../engine/data-stream-engine';
 
 export default class HistoryQueryService {
   constructor(
@@ -53,22 +50,8 @@ export default class HistoryQueryService {
     private readonly northService: NorthService,
     private readonly transformerService: TransformerService,
     private readonly oIAnalyticsMessageService: OIAnalyticsMessageService,
-    private readonly historyQueryEngine: HistoryQueryEngine
+    private readonly dataStreamEngine: DataStreamEngine
   ) {}
-
-  runHistoryQuery(settings: HistoryQueryEntityLight, baseFolders: BaseFolders | undefined = undefined) {
-    const historyQueryBaseFolders = baseFolders ?? this.getDefaultBaseFolders(settings.id);
-
-    return new HistoryQuery(
-      this.findById(settings.id)!,
-      this.southService,
-      this.northService,
-      this.oIAnalyticsMessageService,
-      this.historyQueryRepository,
-      historyQueryBaseFolders,
-      this.historyQueryEngine.logger.child({ scopeType: 'history-query', scopeId: settings.id, scopeName: settings.name })
-    );
-  }
 
   async testNorth(
     historyQueryId: string,
@@ -191,29 +174,27 @@ export default class HistoryQueryService {
     );
   }
 
-  findById<S extends SouthSettings, N extends NorthSettings, I extends SouthItemSettings>(
-    historyQueryId: string
-  ): HistoryQueryEntity<S, N, I> | null {
-    return this.historyQueryRepository.findHistoryQueryById<S, N, I>(historyQueryId);
+  findById(historyQueryId: string): HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> | null {
+    return this.historyQueryRepository.findHistoryQueryById<SouthSettings, NorthSettings, SouthItemSettings>(historyQueryId);
   }
 
   findAll(): Array<HistoryQueryEntityLight> {
     return this.historyQueryRepository.findAllHistoryQueriesLight();
   }
 
-  async createHistoryQuery<S extends SouthSettings, N extends NorthSettings, I extends SouthItemSettings>(
-    command: HistoryQueryCommandDTO<S, N, I>,
+  async createHistoryQuery(
+    command: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>,
     retrieveSecretsFromSouth: string | null,
     retrieveSecretsFromNorth: string | null,
     retrieveSecretsFromHistoryQuery: string | null
-  ): Promise<HistoryQueryEntity<S, N, I>> {
+  ): Promise<HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>> {
     const southManifest = this.southService.getInstalledSouthManifests().find(southManifest => southManifest.id === command.southType);
     if (!southManifest) {
-      throw new Error(`South manifest ${command.southType} does not exist`);
+      throw new Error(`South manifest "${command.southType}" does not exist`);
     }
     const northManifest = this.northService.getInstalledNorthManifests().find(southManifest => southManifest.id === command.northType);
     if (!northManifest) {
-      throw new Error(`North manifest ${command.northType} does not exist`);
+      throw new Error(`North manifest "${command.northType}" does not exist`);
     }
     await this.validator.validateSettings(northManifest.settings, command.northSettings);
     await this.validator.validateSettings(southManifest.settings, command.southSettings);
@@ -226,7 +207,7 @@ export default class HistoryQueryService {
       item.id = null;
     }
 
-    const historyQuery = {} as HistoryQueryEntity<S, N, I>;
+    const historyQuery = {} as HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>;
     await copyHistoryQueryCommandToHistoryQueryEntity(
       historyQuery,
       command,
@@ -244,15 +225,12 @@ export default class HistoryQueryService {
     this.historyQueryRepository.saveHistoryQuery(historyQuery);
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
 
-    const baseFolders = this.getDefaultBaseFolders(historyQuery.id);
-    await createBaseFolders(baseFolders);
-
-    await this.historyQueryEngine.createHistoryQuery(this.runHistoryQuery(historyQuery));
+    await this.dataStreamEngine.createHistoryQuery(historyQuery.id);
     return historyQuery;
   }
 
   getHistoryQueryDataStream(historyQueryId: string): PassThrough | null {
-    return this.historyQueryEngine.getHistoryQueryDataStream(historyQueryId);
+    return this.dataStreamEngine.getHistoryQueryDataStream(historyQueryId);
   }
 
   async updateHistoryQuery<S extends SouthSettings, N extends NorthSettings, I extends SouthItemSettings>(
@@ -262,15 +240,15 @@ export default class HistoryQueryService {
   ): Promise<void> {
     const previousSettings = this.historyQueryRepository.findHistoryQueryById<S, N, I>(historyQueryId);
     if (!previousSettings) {
-      throw new Error(`History query ${historyQueryId} not found`);
+      throw new Error(`History query "${historyQueryId}" not found`);
     }
     const southManifest = this.southService.getInstalledSouthManifests().find(manifest => manifest.id === command.southType);
     if (!southManifest) {
-      throw new Error(`South manifest not found for type ${command.southType}`);
+      throw new Error(`South manifest not found for type "${command.southType}"`);
     }
     const northManifest = this.northService.getInstalledNorthManifests().find(manifest => manifest.id === command.northType);
     if (!northManifest) {
-      throw new Error(`North manifest not found for type ${command.northType}`);
+      throw new Error(`North manifest not found for type "${command.northType}"`);
     }
     await this.validator.validateSettings(northManifest.settings, previousSettings.northSettings);
     await this.validator.validateSettings(southManifest.settings, previousSettings.southSettings);
@@ -293,220 +271,214 @@ export default class HistoryQueryService {
     this.historyQueryRepository.saveHistoryQuery(historyQuery);
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
 
-    await this.historyQueryEngine.reloadHistoryQuery(historyQuery, resetCache);
+    await this.dataStreamEngine.reloadHistoryQuery(historyQuery, resetCache);
   }
 
   async deleteHistoryQuery(historyQueryId: string): Promise<void> {
     const historyQuery = this.historyQueryRepository.findHistoryQueryById(historyQueryId);
     if (!historyQuery) {
-      throw new Error(`History query ${historyQueryId} not found`);
+      throw new Error(`History query "${historyQueryId}" not found`);
     }
 
-    await this.historyQueryEngine.deleteHistoryQuery(historyQuery);
-    await this.deleteBaseFolders(historyQuery);
+    await this.dataStreamEngine.deleteHistoryQuery(historyQuery);
     this.historyQueryRepository.deleteHistoryQuery(historyQuery.id);
-    this.historyQueryMetricsRepository.removeMetrics(historyQuery.id);
     this.logRepository.deleteLogsByScopeId('history-query', historyQuery.id);
+    this.historyQueryMetricsRepository.removeMetrics(historyQuery.id);
+
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
 
-    this.historyQueryEngine.logger.info(`Deleted History query "${historyQuery.name}" (${historyQuery.id})`);
+    this.dataStreamEngine.logger.info(`Deleted History query "${historyQuery.name}" (${historyQuery.id})`);
   }
 
   async startHistoryQuery(historyQueryId: string): Promise<void> {
     const historyQuery = this.historyQueryRepository.findHistoryQueryById(historyQueryId);
     if (!historyQuery) {
-      throw new Error(`History query ${historyQueryId} not found`);
+      throw new Error(`History query "${historyQueryId}" not found`);
     }
 
     this.historyQueryRepository.updateHistoryQueryStatus(historyQueryId, 'RUNNING');
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
-    await this.historyQueryEngine.reloadHistoryQuery(historyQuery, historyQuery.status === 'FINISHED' || historyQuery.status === 'ERRORED');
+    await this.dataStreamEngine.reloadHistoryQuery(historyQuery, historyQuery.status === 'FINISHED' || historyQuery.status === 'ERRORED');
   }
 
   async pauseHistoryQuery(historyQueryId: string): Promise<void> {
     const historyQuery = this.historyQueryRepository.findHistoryQueryById(historyQueryId);
     if (!historyQuery) {
-      throw new Error(`History query ${historyQueryId} not found`);
+      throw new Error(`History query "${historyQueryId}" not found`);
     }
 
     this.historyQueryRepository.updateHistoryQueryStatus(historyQueryId, 'PAUSED');
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
-    await this.historyQueryEngine.stopHistoryQuery(historyQuery.id);
+    await this.dataStreamEngine.stopHistoryQuery(historyQuery.id);
   }
 
-  listItems<I extends SouthItemSettings>(
+  getHistoryQueryItems(historyQueryId: string): Array<HistoryQueryItemEntity<SouthItemSettings>> {
+    return this.historyQueryRepository.findAllItemsForHistoryQuery(historyQueryId);
+  }
+
+  searchHistoryQueryItems(
     historyQueryId: string,
     searchParams: HistoryQueryItemSearchParam
-  ): Array<HistoryQueryItemEntity<I>> {
-    return this.historyQueryRepository.listHistoryQueryItems<I>(historyQueryId, searchParams);
+  ): Page<HistoryQueryItemEntity<SouthItemSettings>> {
+    return this.historyQueryRepository.searchHistoryQueryItems(historyQueryId, searchParams);
   }
 
-  searchHistoryQueryItems<I extends SouthItemSettings>(
-    historyQueryId: string,
-    searchParams: HistoryQueryItemSearchParam
-  ): Page<HistoryQueryItemEntity<I>> {
-    return this.historyQueryRepository.searchHistoryQueryItems<I>(historyQueryId, searchParams);
-  }
-
-  findAllItemsForHistoryQuery<I extends SouthItemSettings>(historyQueryId: string): Array<HistoryQueryItemEntity<I>> {
-    return this.historyQueryRepository.findAllItemsForHistoryQuery<I>(historyQueryId);
-  }
-
-  findHistoryQueryItem(historyQueryId: string, historyQueryItemId: string): HistoryQueryItemEntity<SouthItemSettings> | null {
+  findHistoryQueryItemById(historyQueryId: string, historyQueryItemId: string): HistoryQueryItemEntity<SouthItemSettings> | null {
     return this.historyQueryRepository.findHistoryQueryItemById(historyQueryId, historyQueryItemId);
   }
 
-  async createHistoryQueryItem<I extends SouthItemSettings>(
+  async createHistoryQueryItem(
     historyQueryId: string,
-    command: HistoryQueryItemCommandDTO<I>
-  ): Promise<HistoryQueryItemEntity<I>> {
+    command: HistoryQueryItemCommandDTO<SouthItemSettings>
+  ): Promise<HistoryQueryItemEntity<SouthItemSettings>> {
     const historyQuery = this.historyQueryRepository.findHistoryQueryById(historyQueryId);
     if (!historyQuery) {
-      throw new Error(`History Query ${historyQueryId} does not exist`);
+      throw new Error(`History query "${historyQueryId}" does not exist`);
     }
     const manifest = this.southService.getInstalledSouthManifests().find(southManifest => southManifest.id === historyQuery.southType);
     if (!manifest) {
-      throw new Error(`South manifest does not exist for type ${historyQuery.southType}`);
+      throw new Error(`South manifest does not exist for type "${historyQuery.southType}"`);
     }
     const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'
     )! as OIBusObjectAttribute;
     await this.validator.validateSettings(itemSettingsManifest, command.settings);
 
-    const historyQueryItemEntity = {} as HistoryQueryItemEntity<I>;
-    await copyHistoryQueryItemCommandToHistoryQueryItemEntity<I>(historyQueryItemEntity, command, null, historyQuery.southType);
-    this.historyQueryRepository.saveHistoryQueryItem<I>(historyQuery.id, historyQueryItemEntity);
-
+    const historyQueryItemEntity = {} as HistoryQueryItemEntity<SouthItemSettings>;
+    await copyHistoryQueryItemCommandToHistoryQueryItemEntity(historyQueryItemEntity, command, null, historyQuery.southType);
+    this.historyQueryRepository.saveHistoryQueryItem(historyQuery.id, historyQueryItemEntity);
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
-    await this.historyQueryEngine.reloadHistoryQuery(historyQuery, false);
+    await this.dataStreamEngine.reloadHistoryQuery(historyQuery, false);
     return historyQueryItemEntity;
   }
 
-  async updateHistoryQueryItem<I extends SouthItemSettings>(
+  async updateHistoryQueryItem(
     historyQueryId: string,
     historyQueryItemId: string,
-    command: HistoryQueryItemCommandDTO<I>
+    command: HistoryQueryItemCommandDTO<SouthItemSettings>
   ): Promise<void> {
-    const previousSettings = this.historyQueryRepository.findHistoryQueryItemById<I>(historyQueryId, historyQueryItemId);
+    const previousSettings = this.historyQueryRepository.findHistoryQueryItemById(historyQueryId, historyQueryItemId);
     if (!previousSettings) {
-      throw new Error(`History query item with ID ${historyQueryItemId} does not exist`);
+      throw new Error(`History query item with ID "${historyQueryItemId}" does not exist`);
     }
     const historyQuery = this.historyQueryRepository.findHistoryQueryById(historyQueryId);
     if (!historyQuery) {
-      throw new Error(`History query ${historyQueryId} does not exist`);
+      throw new Error(`History query "${historyQueryId}" does not exist`);
     }
     const manifest = this.southService.getInstalledSouthManifests().find(southManifest => southManifest.id === historyQuery.southType);
     if (!manifest) {
-      throw new Error(`South manifest does not exist for type ${historyQuery.southType}`);
+      throw new Error(`South manifest does not exist for type "${historyQuery.southType}"`);
     }
     const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'
     )! as OIBusObjectAttribute;
     await this.validator.validateSettings(itemSettingsManifest, command.settings);
 
-    const historyQueryItemEntity = { id: previousSettings.id } as HistoryQueryItemEntity<I>;
-    await copyHistoryQueryItemCommandToHistoryQueryItemEntity<I>(historyQueryItemEntity, command, previousSettings, historyQuery.southType);
-    this.historyQueryRepository.saveHistoryQueryItem<I>(historyQuery.id, historyQueryItemEntity);
+    const historyQueryItemEntity = { id: previousSettings.id } as HistoryQueryItemEntity<SouthItemSettings>;
+    await copyHistoryQueryItemCommandToHistoryQueryItemEntity(historyQueryItemEntity, command, previousSettings, historyQuery.southType);
+    this.historyQueryRepository.saveHistoryQueryItem(historyQuery.id, historyQueryItemEntity);
 
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
-    await this.historyQueryEngine.reloadHistoryQuery(historyQuery, false);
+    await this.dataStreamEngine.reloadHistoryQuery(historyQuery, false);
   }
 
   async deleteHistoryQueryItem(historyQueryId: string, historyQueryItemId: string): Promise<void> {
     const historyQuery = this.historyQueryRepository.findHistoryQueryById(historyQueryId);
     if (!historyQuery) {
-      throw new Error(`History query ${historyQueryId} does not exist`);
+      throw new Error(`History query "${historyQueryId}" does not exist`);
     }
     const historyQueryItem = this.historyQueryRepository.findHistoryQueryItemById(historyQueryId, historyQueryItemId);
-    if (!historyQueryItem) throw new Error(`History query item ${historyQueryItemId} not found`);
-
+    if (!historyQueryItem) throw new Error(`History query item "${historyQueryItemId}" not found`);
     this.historyQueryRepository.deleteHistoryQueryItem(historyQueryItem.id);
-
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
-    await this.historyQueryEngine.reloadHistoryQuery(historyQuery, false);
+    await this.dataStreamEngine.reloadHistoryQuery(historyQuery, false);
   }
 
   async deleteAllItemsForHistoryQuery(historyQueryId: string): Promise<void> {
     const historyQuery = this.historyQueryRepository.findHistoryQueryById(historyQueryId);
     if (!historyQuery) {
-      throw new Error(`History query ${historyQueryId} not found`);
+      throw new Error(`History query "${historyQueryId}" not found`);
     }
     this.historyQueryRepository.deleteAllHistoryQueryItemsByHistoryQuery(historyQueryId);
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
-    await this.historyQueryEngine.reloadHistoryQuery(historyQuery, true);
+    await this.dataStreamEngine.reloadHistoryQuery(historyQuery, true);
   }
 
   async enableHistoryQueryItem(historyQueryId: string, historyQueryItemId: string): Promise<void> {
+    const historyQuery = this.historyQueryRepository.findHistoryQueryById(historyQueryId);
+    if (!historyQuery) {
+      throw new Error(`History query "${historyQueryId}" does not exist`);
+    }
     const historyQueryItem = this.historyQueryRepository.findHistoryQueryItemById(historyQueryId, historyQueryItemId);
     if (!historyQueryItem) {
-      throw new Error(`History query item ${historyQueryItemId} not found`);
+      throw new Error(`History query item "${historyQueryItemId}" not found`);
     }
-
     this.historyQueryRepository.enableHistoryQueryItem(historyQueryItem.id);
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
-    await this.historyQueryEngine.reloadHistoryQuery(this.historyQueryRepository.findHistoryQueryById(historyQueryId)!, false);
+    await this.dataStreamEngine.reloadHistoryQuery(historyQuery, false);
   }
 
   async disableHistoryQueryItem(historyQueryId: string, historyQueryItemId: string): Promise<void> {
+    const historyQuery = this.historyQueryRepository.findHistoryQueryById(historyQueryId);
+    if (!historyQuery) {
+      throw new Error(`History query "${historyQueryId}" does not exist`);
+    }
     const historyQueryItem = this.historyQueryRepository.findHistoryQueryItemById(historyQueryId, historyQueryItemId);
     if (!historyQueryItem) {
-      throw new Error(`History query item ${historyQueryItemId} not found`);
+      throw new Error(`History query item "${historyQueryItemId}" not found`);
     }
-
     this.historyQueryRepository.disableHistoryQueryItem(historyQueryItem.id);
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
-    await this.historyQueryEngine.reloadHistoryQuery(this.historyQueryRepository.findHistoryQueryById(historyQueryId)!, false);
+    await this.dataStreamEngine.reloadHistoryQuery(historyQuery, false);
   }
 
-  async checkCsvFileImport<I extends SouthItemSettings>(
+  async checkCsvFileImport(
     southType: string,
     file: multer.File,
     delimiter: string,
     existingItems: multer.File
   ): Promise<{
-    items: Array<HistoryQueryItemCommandDTO<SouthItemSettings>>;
-    errors: Array<{ item: HistoryQueryItemCommandDTO<SouthItemSettings>; error: string }>;
+    items: Array<HistoryQueryItemDTO<SouthItemSettings>>;
+    errors: Array<{ item: Record<string, string>; error: string }>;
   }> {
     const fileContent = await fs.readFile(file.path);
-    const existingItemsContent: Array<HistoryQueryItemDTO<I> | HistoryQueryItemCommandDTO<I>> = JSON.parse(
+    const existingItemsContent: Array<HistoryQueryItemDTO<SouthItemSettings>> = JSON.parse(
       (await fs.readFile(existingItems.path)).toString('utf8')
     );
-
     return await this.checkCsvContentImport(southType, fileContent.toString('utf8'), delimiter, existingItemsContent);
   }
 
-  async checkCsvContentImport<I extends SouthItemSettings>(
+  async checkCsvContentImport(
     southType: string,
     fileContent: string,
     delimiter: string,
-    existingItems: Array<HistoryQueryItemDTO<I> | HistoryQueryItemCommandDTO<I>>
+    existingItems: Array<HistoryQueryItemDTO<SouthItemSettings>>
   ): Promise<{
-    items: Array<HistoryQueryItemCommandDTO<SouthItemSettings>>;
-    errors: Array<{ item: HistoryQueryItemCommandDTO<SouthItemSettings>; error: string }>;
+    items: Array<HistoryQueryItemDTO<SouthItemSettings>>;
+    errors: Array<{ item: Record<string, string>; error: string }>;
   }> {
     const manifest = this.southService.getInstalledSouthManifests().find(southManifest => southManifest.id === southType);
     if (!manifest) {
-      throw new Error(`South manifest does not exist for type ${southType}`);
+      throw new Error(`South manifest does not exist for type "${southType}"`);
     }
 
     const csvContent = csv.parse(fileContent, { header: true, delimiter, skipEmptyLines: true });
-
     if (csvContent.meta.delimiter !== delimiter) {
       throw new Error(`The entered delimiter "${delimiter}" does not correspond to the file delimiter "${csvContent.meta.delimiter}"`);
     }
 
-    const validItems: Array<HistoryQueryItemCommandDTO<I>> = [];
-    const errors: Array<{ item: HistoryQueryItemCommandDTO<I>; error: string }> = [];
+    const validItems: Array<HistoryQueryItemDTO<SouthItemSettings>> = [];
+    const errors: Array<{ item: Record<string, string>; error: string }> = [];
     for (const data of csvContent.data) {
-      const item: HistoryQueryItemCommandDTO<I> = {
+      const item: HistoryQueryItemDTO<SouthItemSettings> = {
         id: '',
         name: (data as unknown as Record<string, string>).name,
         enabled: stringToBoolean((data as unknown as Record<string, string>).enabled),
-        settings: {} as I
+        settings: {} as SouthItemSettings
       };
       if (existingItems.find(existingItem => existingItem.name === item.name)) {
         errors.push({
-          item: item,
+          item: data as Record<string, string>,
           error: `Item name "${(data as unknown as Record<string, string>).name}" already used`
         });
         continue;
@@ -524,7 +496,7 @@ export default class HistoryQueryService {
           if (!fieldManifest) {
             hasSettingsError = true;
             errors.push({
-              item: item,
+              item: data as Record<string, string>,
               error: `Settings "${settingsKey}" not accepted in manifest`
             });
             break;
@@ -539,67 +511,38 @@ export default class HistoryQueryService {
         }
       }
       if (hasSettingsError) continue;
-      item.settings = settings as unknown as I;
+      item.settings = settings as unknown as SouthItemSettings;
 
       try {
         await this.validator.validateSettings(itemSettingsManifest, item.settings);
         validItems.push(item);
       } catch (itemError: unknown) {
-        errors.push({ item, error: (itemError as Error).message });
+        errors.push({ item: data as Record<string, string>, error: (itemError as Error).message });
       }
     }
-
     return { items: validItems, errors };
   }
 
-  async importItems<S extends SouthSettings, N extends NorthSettings, I extends SouthItemSettings>(
-    historyQueryId: string,
-    items: Array<HistoryQueryItemCommandDTO<I>>,
-    deleteItemsNotPresent = false
-  ) {
-    const historyQuery = this.historyQueryRepository.findHistoryQueryById<S, N, I>(historyQueryId);
+  async importItems(historyQueryId: string, items: Array<HistoryQueryItemCommandDTO<SouthItemSettings>>, deleteItemsNotPresent = false) {
+    const historyQuery = this.historyQueryRepository.findHistoryQueryById(historyQueryId);
     if (!historyQuery) {
-      throw new Error(`History query ${historyQueryId} does not exist`);
+      throw new Error(`History query "${historyQueryId}" does not exist`);
     }
     const manifest = this.southService.getInstalledSouthManifests().find(southManifest => southManifest.id === historyQuery.southType)!;
-    const itemsToAdd: Array<HistoryQueryItemEntity<I>> = [];
+    const itemsToAdd: Array<HistoryQueryItemEntity<SouthItemSettings>> = [];
     const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'
     )! as OIBusObjectAttribute;
     for (const itemCommand of items) {
       await this.validator.validateSettings(itemSettingsManifest, itemCommand.settings);
-      const historyQueryItemEntity = {} as HistoryQueryItemEntity<I>;
-      await copyHistoryQueryItemCommandToHistoryQueryItemEntity<I>(historyQueryItemEntity, itemCommand, null, historyQuery.southType);
+      const historyQueryItemEntity = {} as HistoryQueryItemEntity<SouthItemSettings>;
+      await copyHistoryQueryItemCommandToHistoryQueryItemEntity(historyQueryItemEntity, itemCommand, null, historyQuery.southType);
       itemsToAdd.push(historyQueryItemEntity);
     }
-    this.historyQueryRepository.saveAllItems<I>(historyQuery.id, itemsToAdd, deleteItemsNotPresent);
+
+    this.historyQueryRepository.saveAllItems(historyQuery.id, itemsToAdd, deleteItemsNotPresent);
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
-    await this.historyQueryEngine.reloadHistoryQuery(historyQuery, false);
-  }
-
-  async validateSettings(settings: OIBusObjectAttribute, dto: object): Promise<void> {
-    await this.validator.validateSettings(settings, dto);
-  }
-
-  private async deleteBaseFolders(historyQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>) {
-    const folders = this.getDefaultBaseFolders(historyQuery.id);
-
-    for (const type of Object.keys(folders) as Array<keyof BaseFolders>) {
-      const baseFolder = folders[type];
-
-      try {
-        this.historyQueryEngine.logger.trace(
-          `Deleting "${type}" base folder "${baseFolder}" of History query "${historyQuery.name}" (${historyQuery.id})`
-        );
-        if (await filesExists(baseFolder)) {
-          await fs.rm(baseFolder, { recursive: true });
-        }
-      } catch (error) {
-        this.historyQueryEngine.logger.error(
-          `Unable to delete History query "${historyQuery.name}" (${historyQuery.id}) "${type}" base folder: ${error}`
-        );
-      }
-    }
+    await this.dataStreamEngine.reloadHistoryQuery(historyQuery, false);
   }
 
   async searchCacheContent(
@@ -607,7 +550,7 @@ export default class HistoryQueryService {
     searchParams: CacheSearchParam,
     folder: 'cache' | 'archive' | 'error'
   ): Promise<Array<{ metadataFilename: string; metadata: CacheMetadata }>> {
-    return await this.historyQueryEngine.searchCacheContent(historyQueryId, searchParams, folder);
+    return await this.dataStreamEngine.searchCacheContent('history', historyQueryId, searchParams, folder);
   }
 
   async getCacheContentFileStream(
@@ -615,7 +558,7 @@ export default class HistoryQueryService {
     folder: 'cache' | 'archive' | 'error',
     filename: string
   ): Promise<ReadStream | null> {
-    return await this.historyQueryEngine.getCacheContentFileStream(historyQueryId, folder, filename);
+    return await this.dataStreamEngine.getCacheContentFileStream('history', historyQueryId, folder, filename);
   }
 
   async removeCacheContent(
@@ -623,11 +566,11 @@ export default class HistoryQueryService {
     folder: 'cache' | 'archive' | 'error',
     metadataFilenameList: Array<string>
   ): Promise<void> {
-    return await this.historyQueryEngine.removeCacheContent(historyQueryId, folder, metadataFilenameList);
+    return await this.dataStreamEngine.removeCacheContent('history', historyQueryId, folder, metadataFilenameList);
   }
 
   async removeAllCacheContent(historyQueryId: string, folder: 'cache' | 'archive' | 'error'): Promise<void> {
-    return await this.historyQueryEngine.removeAllCacheContent(historyQueryId, folder);
+    return await this.dataStreamEngine.removeAllCacheContent('history', historyQueryId, folder);
   }
 
   async moveCacheContent(
@@ -636,7 +579,7 @@ export default class HistoryQueryService {
     destinationFolder: 'cache' | 'archive' | 'error',
     cacheContentList: Array<string>
   ): Promise<void> {
-    return await this.historyQueryEngine.moveCacheContent(historyQueryId, originFolder, destinationFolder, cacheContentList);
+    return await this.dataStreamEngine.moveCacheContent('history', historyQueryId, originFolder, destinationFolder, cacheContentList);
   }
 
   async moveAllCacheContent(
@@ -644,17 +587,7 @@ export default class HistoryQueryService {
     originFolder: 'cache' | 'archive' | 'error',
     destinationFolder: 'cache' | 'archive' | 'error'
   ): Promise<void> {
-    return await this.historyQueryEngine.moveAllCacheContent(historyQueryId, originFolder, destinationFolder);
-  }
-
-  private getDefaultBaseFolders(historyId: string) {
-    const folders = structuredClone(this.historyQueryEngine.baseFolders);
-
-    for (const type of Object.keys(this.historyQueryEngine.baseFolders) as Array<keyof BaseFolders>) {
-      folders[type] = path.resolve(folders[type], `history-${historyId}`);
-    }
-
-    return folders;
+    return await this.dataStreamEngine.moveAllCacheContent('history', historyQueryId, originFolder, destinationFolder);
   }
 
   retrieveSecrets(
@@ -667,16 +600,16 @@ export default class HistoryQueryService {
     if (retrieveSecretsFromHistoryQuery) {
       const source = this.historyQueryRepository.findHistoryQueryById(retrieveSecretsFromHistoryQuery);
       if (!source) {
-        throw new Error(`Could not find history query ${retrieveSecretsFromHistoryQuery} to retrieve secrets from`);
+        throw new Error(`Could not find History query "${retrieveSecretsFromHistoryQuery}" to retrieve secrets from`);
       }
       if (source.southType !== southManifest.id) {
         throw new Error(
-          `History query ${retrieveSecretsFromHistoryQuery} (south type ${source.southType}) must be of the south type ${southManifest.id}`
+          `History query "${retrieveSecretsFromHistoryQuery}" (South type "${source.southType}") must be of the South type "${southManifest.id}"`
         );
       }
       if (source.northType !== northManifest.id) {
         throw new Error(
-          `History query ${retrieveSecretsFromHistoryQuery} (north type ${source.northType}) must be of the north type ${northManifest.id}`
+          `History query "${retrieveSecretsFromHistoryQuery}" (North type "${source.northType}") must be of the North type "${northManifest.id}"`
         );
       }
       return source;
@@ -690,10 +623,10 @@ export default class HistoryQueryService {
       if (retrieveSecretsFromSouth) {
         const south = this.southConnectorRepository.findSouthById(retrieveSecretsFromSouth);
         if (!south) {
-          throw new Error(`Could not find south connector ${retrieveSecretsFromSouth} to retrieve secrets from`);
+          throw new Error(`Could not find South connector "${retrieveSecretsFromSouth}" to retrieve secrets from`);
         }
         if (south.type !== southManifest.id) {
-          throw new Error(`South connector ${retrieveSecretsFromSouth} (type ${south.type}) must be of the type ${southManifest.id}`);
+          throw new Error(`South connector "${retrieveSecretsFromSouth}" (type "${south.type}") must be of the type "${southManifest.id}"`);
         }
         source.southType = south.type;
         source.items = south.items;
@@ -702,10 +635,10 @@ export default class HistoryQueryService {
       if (retrieveSecretsFromNorth) {
         const north = this.northConnectorRepository.findNorthById(retrieveSecretsFromNorth);
         if (!north) {
-          throw new Error(`Could not find north connector ${retrieveSecretsFromNorth} to retrieve secrets from`);
+          throw new Error(`Could not find North connector "${retrieveSecretsFromNorth}" to retrieve secrets from`);
         }
         if (north.type !== northManifest.id) {
-          throw new Error(`North connector ${retrieveSecretsFromNorth} (type ${north.type}) must be of the type ${northManifest.id}`);
+          throw new Error(`North connector "${retrieveSecretsFromNorth}" (type "${north.type}") must be of the type "${northManifest.id}"`);
         }
         source.northType = north.type;
         source.northSettings = north.settings;
@@ -826,7 +759,7 @@ const copyHistoryQueryCommandToHistoryQueryEntity = async <S extends SouthSettin
   historyQueryEntity.northTransformers = command.northTransformers.map(transformerIdWithOptions => {
     const foundTransformer = transformers.find(transformer => transformer.id === transformerIdWithOptions.transformerId);
     if (!foundTransformer) {
-      throw new Error(`Could not find OIBus Transformer ${transformerIdWithOptions.transformerId}`);
+      throw new Error(`Could not find OIBus Transformer "${transformerIdWithOptions.transformerId}"`);
     }
     return { transformer: foundTransformer, options: transformerIdWithOptions.options, inputType: transformerIdWithOptions.inputType };
   });

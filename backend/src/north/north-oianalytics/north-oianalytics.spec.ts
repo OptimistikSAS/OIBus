@@ -17,7 +17,6 @@ import CertificateRepository from '../../repository/config/certificate.repositor
 import CertificateRepositoryMock from '../../tests/__mocks__/repository/config/certificate-repository.mock';
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import OianalyticsRegistrationRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
-import { mockBaseFolders } from '../../tests/utils/test-utils';
 import { HTTPRequest, ReqAuthOptions, ReqOptions, ReqProxyOptions } from '../../service/http-request.utils';
 import { createMockResponse } from '../../tests/__mocks__/undici.mock';
 import FormData from 'form-data';
@@ -162,10 +161,11 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
 
     north = new NorthOIAnalytics(
       configuration,
-      certificateRepository,
-      oIAnalyticsRegistrationRepository,
       logger,
-      mockBaseFolders(testData.north.list[0].id)
+      'cacheFolder',
+      cacheService,
+      certificateRepository,
+      oIAnalyticsRegistrationRepository
     );
     await north.start();
   });
@@ -648,10 +648,11 @@ describe('NorthOIAnalytics with Azure Active Directory', () => {
 
       north = new NorthOIAnalytics(
         configuration,
-        certificateRepository,
-        oIAnalyticsRegistrationRepository,
         logger,
-        mockBaseFolders(testData.north.list[0].id)
+        'cacheFolder',
+        cacheService,
+        certificateRepository,
+        oIAnalyticsRegistrationRepository
       );
       await north.start();
     });
@@ -748,10 +749,11 @@ describe('NorthOIAnalytics with Azure Active Directory', () => {
 
       north = new NorthOIAnalytics(
         configuration,
-        certificateRepository,
-        oIAnalyticsRegistrationRepository,
         logger,
-        mockBaseFolders(testData.north.list[0].id)
+        'cacheFolder',
+        cacheService,
+        certificateRepository,
+        oIAnalyticsRegistrationRepository
       );
       await north.start();
     });
@@ -827,10 +829,11 @@ describe('NorthOIAnalytics with OIA module', () => {
     } as OIAnalyticsRegistration;
     north = new NorthOIAnalytics(
       configuration,
-      certificateRepository,
-      oIAnalyticsRegistrationRepository,
       logger,
-      mockBaseFolders(testData.north.list[0].id)
+      'cacheFolder',
+      cacheService,
+      certificateRepository,
+      oIAnalyticsRegistrationRepository
     );
     await north.start();
   });

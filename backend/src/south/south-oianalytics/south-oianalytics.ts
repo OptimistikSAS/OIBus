@@ -1,7 +1,5 @@
-import path from 'node:path';
-
 import SouthConnector from '../south-connector';
-import { createFolder, formatQueryParams, persistResults } from '../../service/utils';
+import { formatQueryParams, persistResults } from '../../service/utils';
 import { encryptionService } from '../../service/encryption.service';
 import pino from 'pino';
 import { Instant } from '../../../shared/model/types';
@@ -11,12 +9,9 @@ import { SouthOIAnalyticsItemSettings, SouthOIAnalyticsSettings } from '../../..
 import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { ClientCertificateCredential, ClientSecretCredential } from '@azure/identity';
 import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
-import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import CertificateRepository from '../../repository/config/certificate.repository';
-import { BaseFolders } from '../../model/types';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { HTTPRequest, ReqAuthOptions, ReqOptions, ReqProxyOptions, ReqResponse } from '../../service/http-request.utils';
 
@@ -43,31 +38,16 @@ export default class SouthOIAnalytics
   extends SouthConnector<SouthOIAnalyticsSettings, SouthOIAnalyticsItemSettings>
   implements QueriesHistory
 {
-  private readonly tmpFolder: string;
-
   constructor(
     connector: SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIAnalyticsItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
-    southConnectorRepository: SouthConnectorRepository,
     southCacheRepository: SouthCacheRepository,
-    scanModeRepository: ScanModeRepository,
-    private readonly oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
-    private readonly certificateRepository: CertificateRepository,
     logger: pino.Logger,
-    baseFolders: BaseFolders
+    cacheFolderPath: string,
+    private readonly certificateRepository: CertificateRepository,
+    private readonly oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository
   ) {
-    super(connector, engineAddContentCallback, southConnectorRepository, southCacheRepository, scanModeRepository, logger, baseFolders);
-    this.tmpFolder = path.resolve(this.baseFolders.cache, 'tmp');
-  }
-
-  /**
-   * Initialize services (logger, certificate, status data) at startup
-   */
-  async start(dataStream = true): Promise<void> {
-    if (this.connector.id !== 'test') {
-      await createFolder(this.tmpFolder);
-    }
-    await super.start(dataStream);
+    super(connector, engineAddContentCallback, southCacheRepository, logger, cacheFolderPath);
   }
 
   override async testConnection(): Promise<void> {

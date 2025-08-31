@@ -1,4 +1,3 @@
-import path from 'node:path';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import SouthPostgreSQL from './south-postgresql';
 import * as utils from '../../service/utils';
@@ -12,23 +11,16 @@ import {
   SouthPostgreSQLItemSettingsDateTimeFields,
   SouthPostgreSQLSettings
 } from '../../../shared/model/south-settings.model';
-import SouthConnectorRepository from '../../repository/config/south-connector.repository';
-import SouthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/south-connector-repository.mock';
-import ScanModeRepository from '../../repository/config/scan-mode.repository';
-import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import { SouthConnectorEntity } from '../../model/south-connector.model';
 import testData from '../../tests/utils/test-data';
-import { mockBaseFolders } from '../../tests/utils/test-utils';
 
 jest.mock('pg');
 
 jest.mock('../../service/utils');
 
-const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
-const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
 const southCacheService = new SouthCacheServiceMock();
 
@@ -163,22 +155,13 @@ describe('SouthPostgreSQL with authentication', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
 
     (utils.generateReplacementParameters as jest.Mock).mockReturnValue([
       new Date(testData.constants.dates.FAKE_NOW),
       new Date(testData.constants.dates.FAKE_NOW)
     ]);
 
-    south = new SouthPostgreSQL(
-      configuration,
-      addContentCallback,
-      southConnectorRepository,
-      southCacheRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(configuration.id)
-    );
+    south = new SouthPostgreSQL(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
   it('should get throttling settings', () => {
@@ -188,11 +171,6 @@ describe('SouthPostgreSQL with authentication', () => {
     });
     expect(south.getMaxInstantPerItem(configuration.settings)).toEqual(true);
     expect(south.getOverlap(configuration.settings)).toEqual(configuration.settings.throttling.overlap);
-  });
-
-  it('should create temp folder', async () => {
-    await south.start();
-    expect(utils.createFolder).toHaveBeenCalledWith(path.resolve(mockBaseFolders(configuration.id).cache, 'tmp'));
   });
 
   it('should properly run historyQuery', async () => {
@@ -482,17 +460,8 @@ describe('SouthPostgreSQL without authentication', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
 
-    south = new SouthPostgreSQL(
-      configuration,
-      addContentCallback,
-      southConnectorRepository,
-      southCacheRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(configuration.id)
-    );
+    south = new SouthPostgreSQL(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
   it('should manage connection error', async () => {
@@ -656,17 +625,8 @@ describe('SouthPostgreSQL test connection', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
 
-    south = new SouthPostgreSQL(
-      configuration,
-      addContentCallback,
-      southConnectorRepository,
-      southCacheRepository,
-      scanModeRepository,
-      logger,
-      mockBaseFolders(configuration.id)
-    );
+    south = new SouthPostgreSQL(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
   it('Database is reachable and has tables', async () => {

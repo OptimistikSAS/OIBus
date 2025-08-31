@@ -2,17 +2,15 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import SouthConnector from '../south-connector';
-import { compress, createFolder } from '../../service/utils';
+import { compress } from '../../service/utils';
 import pino from 'pino';
 import { QueriesFile } from '../south-interface';
 import { SouthFolderScannerItemSettings, SouthFolderScannerSettings } from '../../../shared/model/south-settings.model';
 import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { DateTime } from 'luxon';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
-import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import ScanModeRepository from '../../repository/config/scan-mode.repository';
-import { BaseFolders, Instant } from '../../model/types';
+import { Instant } from '../../model/types';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 
 /**
@@ -22,22 +20,14 @@ export default class SouthFolderScanner
   extends SouthConnector<SouthFolderScannerSettings, SouthFolderScannerItemSettings>
   implements QueriesFile
 {
-  private readonly tmpFolder: string;
-
-  /**
-   * Constructor for SouthFolderScanner
-   */
   constructor(
     connector: SouthConnectorEntity<SouthFolderScannerSettings, SouthFolderScannerItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
-    southConnectorRepository: SouthConnectorRepository,
     southCacheRepository: SouthCacheRepository,
-    scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
-    baseFolders: BaseFolders
+    cacheFolderPath: string
   ) {
-    super(connector, engineAddContentCallback, southConnectorRepository, southCacheRepository, scanModeRepository, logger, baseFolders);
-    this.tmpFolder = path.resolve(this.baseFolders.cache, 'tmp');
+    super(connector, engineAddContentCallback, southCacheRepository, logger, cacheFolderPath);
   }
 
   override async testConnection(): Promise<void> {
@@ -85,11 +75,8 @@ export default class SouthFolderScanner
     callback({ type: 'time-values', content: values });
   }
 
-  async start(dataStream = true): Promise<void> {
-    if (this.connector.id !== 'test') {
-      await createFolder(this.tmpFolder);
-    }
-    await super.start(dataStream);
+  async start(): Promise<void> {
+    await super.start();
     // Create a custom table in the south cache database to manage file already sent when preserve file is set to true
     this.cacheService!.createCustomTable(`folder_scanner_${this.connector.id}`, 'filename TEXT PRIMARY KEY, mtime_ms INTEGER');
   }

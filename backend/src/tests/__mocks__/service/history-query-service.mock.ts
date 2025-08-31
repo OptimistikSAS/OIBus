@@ -16,7 +16,7 @@ export default jest.fn().mockImplementation(() => ({
   listItems: jest.fn(),
   searchHistoryQueryItems: jest.fn(),
   findAllItemsForHistoryQuery: jest.fn(),
-  findHistoryQueryItem: jest.fn(),
+  findHistoryQueryItemById: jest.fn(),
   createHistoryQueryItem: jest.fn(),
   updateHistoryQueryItem: jest.fn(),
   deleteHistoryQueryItem: jest.fn(),

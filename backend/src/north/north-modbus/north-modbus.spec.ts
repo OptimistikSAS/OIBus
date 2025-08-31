@@ -6,7 +6,7 @@ import csv from 'papaparse';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import { NorthModbusSettings } from '../../../shared/model/north-settings.model';
 import testData from '../../tests/utils/test-data';
-import { flushPromises, mockBaseFolders } from '../../tests/utils/test-utils';
+import { flushPromises } from '../../tests/utils/test-utils';
 import CacheService from '../../service/cache/cache.service';
 import { createTransformer } from '../../service/transformer.service';
 import OIBusTransformer from '../../service/transformers/oibus-transformer';
@@ -91,7 +91,7 @@ describe('NorthModbus', () => {
       }
     });
 
-    north = new NorthModbus(configuration, logger, mockBaseFolders(testData.north.list[0].id));
+    north = new NorthModbus(configuration, logger, 'cacheFolder', cacheService);
   });
 
   it('should fail to connect and try again', async () => {
@@ -297,7 +297,7 @@ describe('NorthModbus test connection', () => {
   }
 
   it('Connecting to socket successfully', async () => {
-    north = new NorthModbus(configuration, logger, mockBaseFolders(testData.north.list[0].id));
+    north = new NorthModbus(configuration, logger, 'cacheFolder', cacheService);
 
     // Mock node:net Socket constructor and the used function
     (net.Socket as unknown as jest.Mock).mockReturnValue({
@@ -333,7 +333,7 @@ describe('NorthModbus test connection', () => {
   });
 
   it('should fail to connect', async () => {
-    north = new NorthModbus(configuration, logger, mockBaseFolders(testData.north.list[0].id));
+    north = new NorthModbus(configuration, logger, 'cacheFolder', cacheService);
 
     const mockedEmitter = new CustomStream();
     mockedEmitter.connect = (_connectionObject: unknown, _callback: () => Promise<void>) => {

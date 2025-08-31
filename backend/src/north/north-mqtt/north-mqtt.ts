@@ -4,12 +4,12 @@ import pino from 'pino';
 import { NorthMQTTSettings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
-import { BaseFolders } from '../../model/types';
 import mqtt from 'mqtt';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { QoS } from 'mqtt-packet';
 import { OIBusMQTTValue } from '../../service/transformers/connector-types.model';
+import CacheService from '../../service/cache/cache.service';
 
 /**
  * Class NorthOPCUA - Write values in a MQTT broker
@@ -19,8 +19,13 @@ export default class NorthMQTT extends NorthConnector<NorthMQTTSettings> {
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private disconnecting = false;
 
-  constructor(configuration: NorthConnectorEntity<NorthMQTTSettings>, logger: pino.Logger, baseFolders: BaseFolders) {
-    super(configuration, logger, baseFolders);
+  constructor(
+    configuration: NorthConnectorEntity<NorthMQTTSettings>,
+    logger: pino.Logger,
+    cacheFolderPath: string,
+    cacheService: CacheService
+  ) {
+    super(configuration, logger, cacheFolderPath, cacheService);
   }
 
   override async connect(): Promise<void> {
