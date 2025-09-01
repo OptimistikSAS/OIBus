@@ -8,6 +8,7 @@ import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/sou
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import { SouthConnectorEntity } from '../../model/south-connector.model';
 import testData from '../../tests/utils/test-data';
+import fs from 'node:fs';
 
 jest.mock('node:fs/promises');
 const readValue = jest.fn();
@@ -116,6 +117,20 @@ describe('South ADS', () => {
     });
   });
 
+  it('should properly create connection options', async () => {
+    south.connectorConfiguration = JSON.parse(JSON.stringify(south.connectorConfiguration));
+    south.connectorConfiguration.settings.clientAmsNetId = null;
+    south.connectorConfiguration.settings.clientAdsPort = null;
+    south.connectorConfiguration.settings.routerAddress = null;
+    south.connectorConfiguration.settings.routerTcpPort = null;
+    const result = south.createConnectionOptions();
+    expect(result).toEqual({
+      targetAmsNetId: south.connectorConfiguration.settings.netId,
+      targetAdsPort: south.connectorConfiguration.settings.port,
+      autoReconnect: false
+    });
+  });
+
   it('should retry to connect in case of failure', async () => {
     const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
 
@@ -125,10 +140,24 @@ describe('South ADS', () => {
 
     south.disconnectAdsClient = jest.fn();
     await south.connect();
-    expect(logger.error).toHaveBeenCalledTimes(1);
+    expect(logger.error).toHaveBeenCalledWith(`ADS connect error: connection error`);
 
     await south.disconnect();
     expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('should not retry to connect if disconnecting', async () => {
+    const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
+
+    connect.mockImplementationOnce(() => {
+      throw new Error('connection error');
+    });
+    south.disconnect = jest.fn();
+    south['disconnecting'] = true;
+    await south.connect();
+    expect(logger.error).toHaveBeenCalledWith(`ADS connect error: connection error`);
+    expect(south.disconnect).toHaveBeenCalledTimes(1);
+    expect(setTimeoutSpy).not.toHaveBeenCalled();
   });
 
   it('should parse BYTE value', () => {

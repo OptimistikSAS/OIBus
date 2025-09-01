@@ -255,8 +255,8 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
         `Connected to the ${result.targetAmsNetId} with local AmsNetId ${result.localAmsNetId} and local port ${result.localAdsPort}`
       );
       await super.connect();
-    } catch (error) {
-      this.logger.error(`ADS connect error: ${JSON.stringify(error)}`);
+    } catch (error: unknown) {
+      this.logger.error(`ADS connect error: ${(error as Error).message}`);
       await this.disconnect();
       if (!this.disconnecting && this.connector.enabled && !this.reconnectTimeout) {
         this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);

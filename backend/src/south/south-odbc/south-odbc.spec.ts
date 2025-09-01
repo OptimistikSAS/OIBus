@@ -179,6 +179,16 @@ describe('SouthODBC odbc driver with authentication', () => {
     expect(HTTPRequest).not.toHaveBeenCalled();
   });
 
+  it('should not add ; if  present', async () => {
+    south.connectorConfiguration = JSON.parse(JSON.stringify(south.connectorConfiguration));
+    south.connectorConfiguration.settings.connectionString += ';';
+    const result = await south.createConnectionConfig(south.connectorConfiguration.settings);
+    expect(result).toEqual({
+      connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes;PWD=password;',
+      connectionTimeout: 1000
+    });
+  });
+
   it('should properly run historyQuery', async () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     south.queryOdbcData = jest.fn().mockReturnValueOnce('2023-02-01T00:00:00.000Z').mockReturnValue('2023-02-01T00:00:00.000Z');
@@ -203,8 +213,8 @@ describe('SouthODBC odbc driver with authentication', () => {
       query: jest
         .fn()
         .mockReturnValueOnce([
-          { value: 1, timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2020-02-01T00:00:00.000Z' },
-          { value: 2, timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2020-03-01T00:00:00.000Z' }
+          { value: 2, timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2020-03-01T00:00:00.000Z' },
+          { value: 1, timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2020-02-01T00:00:00.000Z' }
         ])
         .mockReturnValueOnce([])
     };
@@ -227,8 +237,8 @@ describe('SouthODBC odbc driver with authentication', () => {
     expect(result).toEqual('2020-03-01T00:00:00.000Z');
     expect(persistResults).toHaveBeenCalledWith(
       [
-        { value: 1, timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2020-02-01T00:00:00.000Z' },
-        { value: 2, timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2020-03-01T00:00:00.000Z' }
+        { value: 2, timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2020-03-01T00:00:00.000Z' },
+        { value: 1, timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2020-02-01T00:00:00.000Z' }
       ],
       configuration.items[0].settings.serialization,
       configuration.name,
@@ -238,8 +248,9 @@ describe('SouthODBC odbc driver with authentication', () => {
       logger
     );
 
-    await south.queryOdbcData(configuration.items[0], startTime, endTime);
+    const noResult = await south.queryOdbcData(configuration.items[0], startTime, endTime);
     expect(logger.debug).toHaveBeenCalledWith(`No result found for item ${configuration.items[0].name}. Request done in 0 ms`);
+    expect(noResult).toEqual(null);
   });
 
   it('should get data from ODBC without datetime reference', async () => {

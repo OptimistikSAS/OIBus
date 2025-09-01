@@ -126,6 +126,19 @@ describe('South PI', () => {
     expect(HTTPRequest).toHaveBeenCalledTimes(2);
   });
 
+  it('should not reconnect when disconnecting ', async () => {
+    (HTTPRequest as unknown as jest.Mock).mockRejectedValueOnce(new Error('connection failed'));
+    const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
+
+    south.disconnect = jest.fn();
+    south['disconnecting'] = true;
+
+    await south.connect();
+
+    expect(south.disconnect).not.toHaveBeenCalled();
+    expect(setTimeoutSpy).not.toHaveBeenCalled();
+  });
+
   it('should properly clear reconnect timeout on disconnect when not connected', async () => {
     (HTTPRequest as unknown as jest.Mock).mockRejectedValueOnce(new Error('connection failed'));
 
@@ -197,6 +210,14 @@ describe('South PI', () => {
       )
       .mockResolvedValueOnce(
         createMockResponse(200, {
+          recordCount: 1,
+          content: [{ timestamp: '2020-02-01T00:00:00.000Z' }],
+          logs: [],
+          maxInstantRetrieved: '2020-02-01T00:00:00.000Z'
+        })
+      )
+      .mockResolvedValueOnce(
+        createMockResponse(200, {
           recordCount: 0,
           content: [],
           logs: [],
@@ -231,6 +252,9 @@ describe('South PI', () => {
     });
     expect(logger.warn).toHaveBeenCalledWith('log1');
     expect(logger.warn).toHaveBeenCalledWith('log2');
+
+    const resultNoUpdateInstant = await south.historyQuery(configuration.items, result!, endTime);
+    expect(resultNoUpdateInstant).toEqual(null);
 
     const noResult = await south.historyQuery(configuration.items, startTime, endTime);
     expect(noResult).toEqual(null);
