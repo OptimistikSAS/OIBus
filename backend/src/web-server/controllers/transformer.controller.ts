@@ -1,16 +1,21 @@
 import { KoaContext } from '../koa';
 import AbstractController from './abstract.controller';
-import { CustomTransformerCommand, TransformerDTO, TransformerSearchParam } from '../../../shared/model/transformer.model';
+import {
+  CustomTransformerCommand,
+  InputType,
+  OutputType,
+  TransformerDTO,
+  TransformerSearchParam
+} from '../../../shared/model/transformer.model';
 import { toTransformerDTO } from '../../service/transformer.service';
 import { Page } from '../../../shared/model/types';
-import { OIBusDataType } from '../../../shared/model/engine.model';
 
 export default class TransformerController extends AbstractController {
   async search(ctx: KoaContext<void, Page<TransformerDTO>>): Promise<void> {
     const searchParams: TransformerSearchParam = {
       type: ctx.query.type as 'standard' | 'custom',
-      inputType: ctx.query.inputType as OIBusDataType,
-      outputType: ctx.query.outputType as OIBusDataType
+      inputType: ctx.query.inputType as InputType,
+      outputType: ctx.query.outputType as OutputType
     };
 
     const page = ctx.app.transformerService.search(searchParams);
