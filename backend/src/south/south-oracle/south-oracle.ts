@@ -74,7 +74,7 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
       }
     }
 
-    let table_count;
+    let table_count = 0;
     try {
       oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
       const { rows } = await connection.execute(`
@@ -88,7 +88,7 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
       }
     } catch (error: unknown) {
       await connection.close();
-      throw new Error(`Unable to read tables in database "${this.connector.settings.database}". ${(error as Error).message}`);
+      throw new Error(`Unable to read tables in database "${this.connector.settings.database}": ${(error as Error).message}`);
     }
 
     await connection.close();

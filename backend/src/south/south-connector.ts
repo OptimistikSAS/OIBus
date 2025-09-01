@@ -352,7 +352,6 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     }
 
     this.logger.trace(`Querying history for ${itemsToRead.length} items`);
-
     this.historyIsRunning = true;
     if (maxInstantPerItem) {
       for (const [index, item] of itemsToRead.entries()) {
@@ -369,13 +368,9 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
         // maxReadInterval will divide a huge request (for example 1 year of data) into smaller
         // requests. For example only one hour if maxReadInterval is 3600 (in s)
         const startTimeFromCache = DateTime.fromISO(southCache.maxInstant).minus({ milliseconds: overlap }).toUTC().toISO()!;
-        const intervals = generateIntervals(startTimeFromCache, endTime, throttling.maxReadInterval);
-        let numberOfIntervalsDone = 0;
-        if (startTime !== startTimeFromCache) {
-          numberOfIntervalsDone = generateIntervals(startTime, startTimeFromCache, throttling.maxReadInterval).length;
-        }
+        const { intervals, numberOfIntervalsDone } = generateIntervals(startTime, startTimeFromCache, endTime, throttling.maxReadInterval);
         this.logIntervals(intervals);
-        await this.queryIntervals(intervals, [item], southCache, startTimeFromCache, throttling.readDelay, numberOfIntervalsDone);
+        await this.queryIntervals(intervals, [item], southCache, throttling.readDelay, numberOfIntervalsDone);
         if (index !== itemsToRead.length - 1) {
           await delay(throttling.readDelay);
         }
@@ -385,14 +380,9 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       const startTimeFromCache = DateTime.fromISO(southCache.maxInstant).minus({ milliseconds: overlap }).toUTC().toISO()!;
       // maxReadInterval will divide a huge request (for example 1 year of data) into smaller
       // requests. For example only one hour if maxReadInterval is 3600 (in s)
-      const intervals = generateIntervals(startTimeFromCache, endTime, throttling.maxReadInterval);
-      let numberOfIntervalsDone = 0;
-      if (startTime !== startTimeFromCache) {
-        numberOfIntervalsDone = generateIntervals(startTime, startTimeFromCache, throttling.maxReadInterval).length;
-      }
+      const { intervals, numberOfIntervalsDone } = generateIntervals(startTime, startTimeFromCache, endTime, throttling.maxReadInterval);
       this.logIntervals(intervals);
-
-      await this.queryIntervals(intervals, itemsToRead, southCache, startTime, throttling.readDelay, numberOfIntervalsDone);
+      await this.queryIntervals(intervals, itemsToRead, southCache, throttling.readDelay, numberOfIntervalsDone);
     }
     this.metricsEvent.emit('history-query-stop', {
       running: false
@@ -404,16 +394,16 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     intervals: Array<Interval>,
     items: Array<SouthConnectorItemEntity<I>>,
     southCache: SouthCache,
-    startTime: Instant,
     readDelay: number,
     numberOfIntervalsDone: number
   ) {
     this.metricsEvent.emit('history-query-start', {
       running: true,
-      intervalProgress: this.calculateIntervalProgress(intervals, 0, startTime)
+      intervalProgress: this.calculateIntervalProgress(intervals.length, numberOfIntervalsDone)
     });
 
-    for (const [index, interval] of intervals.entries()) {
+    for (let index = numberOfIntervalsDone; index < intervals.length; index++) {
+      const interval = intervals[index];
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-expect-error
       const lastInstantRetrieved = await this.historyQuery(items, interval.start, interval.end);
@@ -431,11 +421,11 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
 
       this.metricsEvent.emit('history-query-interval', {
         running: true,
-        intervalProgress: this.calculateIntervalProgress(intervals, index, startTime),
+        intervalProgress: this.calculateIntervalProgress(intervals.length, index + 1), // this index has been done, so we increment
         currentIntervalStart: interval.start,
         currentIntervalEnd: interval.end,
-        currentIntervalNumber: numberOfIntervalsDone + index + 1,
-        numberOfIntervals: numberOfIntervalsDone + intervals.length
+        currentIntervalNumber: index + 1,
+        numberOfIntervals: intervals.length
       });
 
       if (this.stopping) {
@@ -469,23 +459,12 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     }
   }
 
-  private calculateIntervalProgress(intervals: Array<Interval>, currentIntervalIndex: number, startTime: Instant) {
-    // calculate progress based on time
-    const progress =
-      1 -
-      (DateTime.fromISO(intervals[intervals.length - 1].end).toMillis() -
-        DateTime.fromISO(intervals[currentIntervalIndex].start).toMillis()) /
-        (DateTime.fromISO(intervals[intervals.length - 1].end).toMillis() - DateTime.fromISO(startTime).toMillis());
-
-    // round to 2 decimals
-    const roundedProgress = Math.round((progress + Number.EPSILON) * 100) / 100;
-
-    // in the chance that the rounded progress is 0.99, but it's the last interval, we want to return 1
-    if (currentIntervalIndex === intervals.length - 1) {
+  private calculateIntervalProgress(numberOfIntervals: number, currentIntervalIndex: number) {
+    if (currentIntervalIndex === numberOfIntervals) {
       return 1;
     }
-
-    return roundedProgress;
+    // round to 2 decimals
+    return Math.round((currentIntervalIndex / numberOfIntervals + Number.EPSILON) * 100) / 100;
   }
 
   async addContent(data: OIBusContent) {

@@ -101,7 +101,7 @@ describe('South OPC', () => {
     expect(south.getOverlap(configuration.settings)).toEqual(configuration.settings.throttling.overlap);
   });
 
-  it('should properly connect to remote agent and disconnect ', async () => {
+  it('should properly connect to remote agent and disconnect', async () => {
     await south.connect();
     expect(HTTPRequest).toHaveBeenCalledWith(
       expect.objectContaining({ href: `${configuration.settings.agentUrl}/api/opc/${configuration.id}/connect` }),
@@ -127,7 +127,7 @@ describe('South OPC', () => {
     );
   });
 
-  it('should properly reconnect to when connection fails ', async () => {
+  it('should properly reconnect to when connection fails', async () => {
     (HTTPRequest as unknown as jest.Mock).mockRejectedValueOnce(new Error('connection failed'));
 
     await south.connect();
@@ -149,6 +149,19 @@ describe('South OPC', () => {
     expect(HTTPRequest).toHaveBeenCalledTimes(1);
     jest.advanceTimersByTime(configuration.settings.retryInterval);
     expect(HTTPRequest).toHaveBeenCalledTimes(2);
+  });
+
+  it('should not reconnect when disconnecting ', async () => {
+    (HTTPRequest as unknown as jest.Mock).mockRejectedValueOnce(new Error('connection failed'));
+    const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
+
+    south.disconnect = jest.fn();
+    south['disconnecting'] = true;
+
+    await south.connect();
+
+    expect(south.disconnect).not.toHaveBeenCalled();
+    expect(setTimeoutSpy).not.toHaveBeenCalled();
   });
 
   it('should properly clear reconnect timeout on disconnect when not connected', async () => {
@@ -229,6 +242,13 @@ describe('South OPC', () => {
           content: [],
           maxInstantRetrieved: '2020-03-01T00:00:00.000Z'
         })
+      )
+      .mockResolvedValueOnce(
+        createMockResponse(200, {
+          recordCount: 1,
+          content: [{ timestamp: '2020-02-01T00:00:00.000Z' }],
+          maxInstantRetrieved: '2020-02-01T00:00:00.000Z'
+        })
       );
 
     const result = await south.historyQuery(configuration.items, startTime, endTime);
@@ -287,6 +307,9 @@ describe('South OPC', () => {
     });
 
     expect(logger.debug).toHaveBeenCalledWith(`No result found. Request done in 0 ms`);
+
+    const noUpdateInstant = await south.historyQuery([configuration.items[0]], result!, endTime);
+    expect(noUpdateInstant).toEqual(null);
   });
 
   it('should manage query error', async () => {
@@ -301,11 +324,13 @@ describe('South OPC', () => {
       `Error occurred when querying remote agent with status 400: "bad request"`
     );
     expect(logger.error).toHaveBeenCalledWith(`Error occurred when querying remote agent with status 400: "bad request"`);
-
+    (south.connect as jest.Mock).mockClear();
+    south['disconnecting'] = true;
     await expect(south.historyQuery(configuration.items, startTime, endTime)).rejects.toThrow(
       `Error occurred when querying remote agent with status 500`
     );
     expect(logger.error).toHaveBeenCalledWith(`Error occurred when querying remote agent with status 500`);
+    expect(south.connect).not.toHaveBeenCalled();
   });
 
   it('should manage fetch error', async () => {
