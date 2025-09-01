@@ -111,14 +111,17 @@ describe('Service utils', () => {
   describe('generateIntervals', () => {
     it('should return only one interval', () => {
       const startTime = '2020-01-01T00:00:00.000Z';
+      const startTimeFromCache = '2020-01-01T00:00:00.000Z';
       const endTime = '2020-01-01T01:00:00.000Z';
       const expectedIntervals = [{ start: startTime, end: endTime }];
-      const results = generateIntervals(startTime, endTime, 3600);
-      expect(results).toEqual(expectedIntervals);
+      const { intervals, numberOfIntervalsDone } = generateIntervals(startTime, startTimeFromCache, endTime, 3600);
+      expect(intervals).toEqual(expectedIntervals);
+      expect(numberOfIntervalsDone).toEqual(0);
     });
 
     it('should return two intervals', () => {
       const startTime1 = '2020-01-01T00:00:00.000Z';
+      const startTimeFromCache = '2020-01-01T01:00:00.000Z';
       const endTime1 = '2020-01-01T01:00:00.000Z';
       const startTime2 = '2020-01-01T01:00:00.000Z';
       const endTime2 = '2020-01-01T02:00:00.000Z';
@@ -126,8 +129,9 @@ describe('Service utils', () => {
         { start: startTime1, end: endTime1 },
         { start: startTime2, end: endTime2 }
       ];
-      const results = generateIntervals(startTime1, endTime2, 3600);
-      expect(results).toEqual(expectedIntervals);
+      const { intervals, numberOfIntervalsDone } = generateIntervals(startTime1, startTimeFromCache, endTime2, 3600);
+      expect(intervals).toEqual(expectedIntervals);
+      expect(numberOfIntervalsDone).toEqual(1);
     });
   });
 

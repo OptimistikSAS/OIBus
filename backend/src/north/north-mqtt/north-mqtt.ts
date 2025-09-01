@@ -1,15 +1,14 @@
 import NorthConnector from '../north-connector';
-import { encryptionService } from '../../service/encryption.service';
 import pino from 'pino';
 import { NorthMQTTSettings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import mqtt from 'mqtt';
 import fs from 'node:fs/promises';
-import path from 'node:path';
 import { QoS } from 'mqtt-packet';
 import { OIBusMQTTValue } from '../../service/transformers/connector-types.model';
 import CacheService from '../../service/cache/cache.service';
+import { createConnectionOptions } from '../../service/utils-mqtt';
 
 /**
  * Class NorthOPCUA - Write values in a MQTT broker
@@ -29,33 +28,18 @@ export default class NorthMQTT extends NorthConnector<NorthMQTTSettings> {
   }
 
   override async connect(): Promise<void> {
-    const options = await this.createConnectionOptions();
+    const options = await createConnectionOptions(this.connector.id, this.connector.settings, this.logger);
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);
       this.reconnectTimeout = null;
     }
     try {
-      await this.connectToBroker(options);
-      await super.connect();
-    } catch (error) {
-      this.logger.error(`Connection error: ${error}`);
-    }
-  }
-
-  async connectToBroker(options: mqtt.IClientOptions): Promise<void> {
-    return new Promise(resolve => {
       this.logger.info(`Connecting to "${this.connector.settings.url}"`);
-      this.client = mqtt.connect(this.connector.settings.url, options);
-
-      this.client.once('connect', async () => {
-        this.logger.info(`Connected to ${this.connector.settings.url}`);
-        resolve();
-      });
+      this.client = await mqtt.connectAsync(this.connector.settings.url, options);
       this.client.once('error', async error => {
         await this.disconnect();
         this.logger.error(`MQTT Client error: ${error}`);
         this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.reconnectPeriod);
-        resolve(); // No need to reject, but need to resolve to not block thread
       });
       this.client.once('close', () => {
         if (this.disconnecting) {
@@ -65,19 +49,27 @@ export default class NorthMQTT extends NorthConnector<NorthMQTTSettings> {
           this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.reconnectPeriod);
         }
       });
-    });
+      this.logger.info(`MQTT North connector "${this.connector.name}" connected`);
+      await super.connect();
+    } catch (error: unknown) {
+      this.logger.error(`Error while connecting to the MQTT broker: ${(error as Error).message}`);
+      await this.disconnect();
+      if (!this.disconnecting && this.connector.enabled) {
+        this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.reconnectPeriod);
+      }
+    }
   }
 
   override async disconnect(): Promise<void> {
+    this.disconnecting = true;
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);
       this.reconnectTimeout = null;
     }
-    this.disconnecting = true;
     if (this.client) {
       this.client.removeAllListeners();
       this.client.end(true);
-      this.logger.info(`Disconnected from ${this.connector.settings.url}...`);
+      this.logger.info(`Disconnected from ${this.connector.settings.url}`);
       this.client = null;
     }
     await super.disconnect();
@@ -85,52 +77,9 @@ export default class NorthMQTT extends NorthConnector<NorthMQTTSettings> {
   }
 
   override async testConnection(): Promise<void> {
-    const options = await this.createConnectionOptions();
-    await this.testConnectionToBroker(options);
-  }
-
-  async testConnectionToBroker(options: mqtt.IClientOptions): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const client = mqtt.connect(this.connector.settings.url, options);
-      client.once('connect', () => {
-        this.logger.info(`Connection test to "${this.connector.settings.url}" successful`);
-        client.end(true);
-        resolve();
-      });
-      client.once('error', error => {
-        this.logger.error(`MQTT connection error. ${error}`);
-        client.end(true);
-        reject(`MQTT connection error. ${error}`);
-      });
-    });
-  }
-
-  async createConnectionOptions(): Promise<mqtt.IClientOptions> {
-    const options: mqtt.IClientOptions = {
-      rejectUnauthorized: this.connector.settings.rejectUnauthorized,
-      reconnectPeriod: 0, // managed by OIBus
-      connectTimeout: this.connector.settings.connectTimeout,
-      clientId: this.connector.id,
-      queueQoSZero: false
-    };
-    if (this.connector.settings.authentication.type === 'basic') {
-      options.username = this.connector.settings.authentication.username;
-      options.password = Buffer.from(await encryptionService.decryptText(this.connector.settings.authentication.password!)).toString();
-    } else if (this.connector.settings.authentication.type === 'cert') {
-      options.cert = this.connector.settings.authentication.certFilePath
-        ? await fs.readFile(path.resolve(this.connector.settings.authentication.certFilePath))
-        : '';
-      options.key = this.connector.settings.authentication.keyFilePath
-        ? await fs.readFile(path.resolve(this.connector.settings.authentication.keyFilePath))
-        : '';
-      options.ca = this.connector.settings.authentication.caFilePath
-        ? await fs.readFile(path.resolve(this.connector.settings.authentication.caFilePath))
-        : '';
-    }
-    if (this.connector.settings.qos === '1' || this.connector.settings.qos === '2') {
-      options.clean = !this.connector.settings.persistent;
-    }
-    return options;
+    const options = await createConnectionOptions(this.connector.id, this.connector.settings, this.logger);
+    const client = await mqtt.connectAsync(this.connector.settings.url, options);
+    client.end(true, { cmd: 'disconnect', properties: { sessionExpiryInterval: 60 } });
   }
 
   async handleContent(cacheMetadata: CacheMetadata): Promise<void> {
