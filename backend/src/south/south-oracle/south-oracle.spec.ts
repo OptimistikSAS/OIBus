@@ -181,8 +181,8 @@ describe('SouthOracle with authentication', () => {
     south.queryData = jest
       .fn()
       .mockReturnValueOnce([
-        { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
-        { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
+        { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 },
+        { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 }
       ])
       .mockReturnValueOnce([
         { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
@@ -656,13 +656,14 @@ describe('SouthOracle test connection', () => {
   it('Database is reachable and has tables', async () => {
     const result = [{ TABLE_COUNT: 21 }];
     const oracleConnection = {
-      execute: jest.fn().mockReturnValueOnce({ rows: result }),
+      execute: jest.fn().mockReturnValueOnce({ rows: result }).mockReturnValueOnce({ rows: 0 }),
       ping: jest.fn(),
       close: jest.fn()
     };
     (oracledb.getConnection as jest.Mock).mockReturnValue(oracleConnection);
 
     await expect(south.testConnection()).resolves.not.toThrow();
+    await expect(south.testConnection()).rejects.toThrow();
 
     expect(oracleConnection.close).toHaveBeenCalled();
   });
@@ -712,7 +713,7 @@ describe('SouthOracle test connection', () => {
     (oracledb.getConnection as jest.Mock).mockReturnValue(oracleConnection);
 
     await expect(south.testConnection()).rejects.toThrow(
-      new Error(`Unable to read tables in database "${configuration.settings.database}". ${errorMessage}`)
+      new Error(`Unable to read tables in database "${configuration.settings.database}": ${errorMessage}`)
     );
     expect(oracleConnection.close).toHaveBeenCalled();
   });

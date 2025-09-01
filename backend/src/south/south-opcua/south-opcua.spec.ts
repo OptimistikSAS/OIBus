@@ -679,7 +679,7 @@ describe('SouthOPCUA', () => {
     });
   });
 
-  it('should properly query items and catch read error', async () => {
+  it('should properly query items and catch error without reconnecting', async () => {
     const read = jest.fn().mockImplementation(() => {
       throw new Error('opcua read error');
     });
@@ -707,10 +707,12 @@ describe('SouthOPCUA', () => {
 
     jest.advanceTimersByTime(1000);
     await south.start();
+    south['disconnecting'] = true;
+    south.connect = jest.fn();
+    south.disconnect = jest.fn();
     await expect(south.lastPointQuery(configuration.items)).rejects.toThrow('opcua read error');
-
-    await south.connect();
-    await south.connect();
+    expect(south.disconnect).toHaveBeenCalled();
+    expect(south.connect).not.toHaveBeenCalled();
   });
 
   it('should not query items when no DA items', async () => {
@@ -1065,6 +1067,24 @@ describe('SouthOPCUA', () => {
     await south.start();
     await south.getHAValues([configuration.items[0]], testData.constants.dates.FAKE_NOW, testData.constants.dates.FAKE_NOW, session, true);
     expect(historyRead).toHaveBeenCalled();
+  });
+
+  it('getValueHA() should not reconnect if disconnecting', async () => {
+    const historyRead = jest.fn().mockImplementationOnce(() => {
+      throw new Error('history error');
+    });
+    const session = { historyRead } as unknown as ClientSession;
+
+    await south.start();
+    south['disconnecting'] = true;
+    south.connect = jest.fn();
+    south.disconnect = jest.fn();
+    await expect(
+      south.getHAValues([configuration.items[0]], testData.constants.dates.FAKE_NOW, testData.constants.dates.FAKE_NOW, session, true)
+    ).rejects.toThrow();
+    expect(historyRead).toHaveBeenCalled();
+    expect(south.disconnect).toHaveBeenCalled();
+    expect(south.connect).not.toHaveBeenCalled();
   });
 
   it('getTimestamp() should properly retrieve correct timestamp', () => {

@@ -46,6 +46,7 @@ describe('HistoryQuery enabled', () => {
 
     expect(mockedNorth1.start).toHaveBeenCalledTimes(1);
     expect(mockedSouth1.start).toHaveBeenCalledTimes(1);
+    expect(historyQuery.historyQueryConfiguration).toEqual(testData.historyQueries.list[0]);
   });
 
   it('should not start if not running', async () => {
