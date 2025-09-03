@@ -1063,11 +1063,11 @@
             "string": "String",
             "timestamp": "Timestamp",
             "timestamptz": "Timestamp with timezone",
-            "DateTime": "DateTime",
-            "DateTime2": "DateTime2",
-            "DateTimeOffset": "DateTime Offset",
-            "SmallDateTime": "Small DateTime",
-            "Date": "Date"
+            "date-time": "DateTime",
+            "date-time-2": "DateTime2",
+            "date-time-offset": "DateTime Offset",
+            "small-date-time": "Small DateTime",
+            "date": "Date"
           },
           "timezone": "Timezone",
           "format": "Format",
@@ -1108,7 +1108,8 @@
             "iso-string": "ISO String",
             "unix-epoch": "UNIX epoch (s)",
             "unix-epoch-ms": "UNIX epoch (ms)",
-            "string": "String"
+            "string": "String",
+            "date-time": "DateTime"
           },
           "timezone": "Timezone",
           "format": "Format",

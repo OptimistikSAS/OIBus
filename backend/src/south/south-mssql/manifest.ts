@@ -179,11 +179,11 @@ const manifest: SouthConnectorManifest = {
             defaultValue: 'string',
             options: [
               'string',
-              'Date',
-              'DateTime',
-              'DateTime2',
-              'DateTimeOffset',
-              'SmallDateTime',
+              'date',
+              'date-time',
+              'date-time-2',
+              'date-time-offset',
+              'small-date-time',
               'iso-string',
               'unix-epoch',
               'unix-epoch-ms'
@@ -199,7 +199,7 @@ const manifest: SouthConnectorManifest = {
             newRow: true,
             validators: [{ key: 'required' }],
             displayInViewMode: true,
-            conditionalDisplay: { field: 'type', values: ['string', 'timestamp', 'DateTime', 'DateTime2', 'SmallDateTime', 'Date'] }
+            conditionalDisplay: { field: 'type', values: ['string', 'timestamp', 'date-time', 'date-time-2', 'small-date-time', 'date'] }
           },
           {
             key: 'format',

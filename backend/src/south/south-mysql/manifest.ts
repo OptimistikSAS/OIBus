@@ -154,7 +154,7 @@ const manifest: SouthConnectorManifest = {
             translationKey: 'south.items.mysql.date-time-fields.type',
             type: 'OibSelect',
             defaultValue: 'string',
-            options: ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'],
+            options: ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms', 'date-time'],
             displayInViewMode: true,
             validators: [{ key: 'required' }]
           },
@@ -166,7 +166,7 @@ const manifest: SouthConnectorManifest = {
             newRow: true,
             validators: [{ key: 'required' }],
             displayInViewMode: true,
-            conditionalDisplay: { field: 'type', values: ['string', 'timestamp', 'DateTime', 'DateTime2', 'SmallDateTime', 'Date'] }
+            conditionalDisplay: { field: 'type', values: ['string', 'timestamp', 'date-time'] }
           },
           {
             key: 'format',

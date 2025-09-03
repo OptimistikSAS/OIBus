@@ -3,7 +3,6 @@ import { OibFormControl } from './form.model';
 export type Instant = string;
 export type LocalDate = string;
 export type LocalTime = string;
-export type LocalDateTime = string;
 export type Timezone = string;
 
 export const DEFAULT_TZ: Timezone = 'Europe/Paris';
@@ -63,11 +62,11 @@ export const DATE_TIME_TYPES = [
   'unix-epoch',
   'unix-epoch-ms',
   'string',
-  'Date',
-  'SmallDateTime',
-  'DateTime',
-  'DateTime2',
-  'DateTimeOffset',
+  'date',
+  'small-date-time',
+  'date-time',
+  'date-time-2',
+  'date-time-offset',
   'timestamp',
   'timestamptz'
 ] as const;
