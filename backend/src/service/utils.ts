@@ -388,15 +388,15 @@ export const formatInstant = (
       });
     case 'iso-string':
       return instant;
-    case 'Date':
+    case 'date':
       return DateTime.fromISO(instant, { zone: options.timezone }).toFormat('yyyy-MM-dd');
-    case 'SmallDateTime':
+    case 'small-date-time':
       return DateTime.fromISO(instant, { zone: options.timezone }).toFormat('yyyy-MM-dd HH:mm:ss');
-    case 'DateTime':
-    case 'DateTime2':
+    case 'date-time':
+    case 'date-time-2':
     case 'timestamp':
       return DateTime.fromISO(instant, { zone: options.timezone }).toFormat('yyyy-MM-dd HH:mm:ss.SSS');
-    case 'DateTimeOffset':
+    case 'date-time-offset':
     case 'timestamptz':
     default:
       return instant;
@@ -405,46 +405,70 @@ export const formatInstant = (
 
 export const convertDateTimeToInstant = (
   dateTime: string | number | Date,
-  options: { type: DateTimeType; timezone?: Timezone; format?: string; locale?: string }
-): Instant => {
+  options: { type?: DateTimeType; timezone?: string; format?: string; locale?: string }
+): string => {
+  // Early return if no conversion is needed (assume input is already an ISO string)
   if (!options.type) {
-    return dateTime as Instant;
+    if (typeof dateTime === 'string' && DateTime.fromISO(dateTime).isValid) {
+      return dateTime;
+    }
+    throw new Error(`The value must be a valid ISO string if no type is provided: "${dateTime}"`);
   }
-  switch (options.type) {
-    case 'unix-epoch':
-      return DateTime.fromMillis(parseInt(dateTime as string, 10) * 1000)
-        .toUTC()
-        .toISO()!;
-    case 'unix-epoch-ms':
-      return DateTime.fromMillis(parseInt(dateTime as string, 10))
-        .toUTC()
-        .toISO()!;
-    case 'iso-string':
-      return DateTime.fromISO(dateTime as string)
-        .toUTC()
-        .toISO()!;
-    case 'string':
-      return DateTime.fromFormat(dateTime as string, options.format!, {
-        zone: options.timezone,
-        locale: options.locale
-      })
-        .toUTC()
-        .toISO()!;
-    case 'timestamp':
-    case 'Date':
-    case 'DateTime':
-    case 'DateTime2':
-    case 'SmallDateTime':
-      return DateTime.fromJSDate(dateTime as Date)
-        .toUTC()
-        .setZone(options.timezone, { keepLocalTime: true })
-        .toUTC()
-        .toISO()!;
-    case 'DateTimeOffset':
-    case 'timestamptz':
-      return DateTime.fromJSDate(dateTime as Date)
-        .toUTC()
-        .toISO()!;
+
+  const { type, timezone, format, locale } = options;
+
+  try {
+    switch (type) {
+      case 'unix-epoch': {
+        const epochSeconds = typeof dateTime === 'string' ? parseInt(dateTime, 10) : dateTime;
+        if (typeof epochSeconds !== 'number' || isNaN(epochSeconds)) {
+          throw new Error(`The value must be a number or numeric string for type "unix-epoch": "${dateTime}"`);
+        }
+        return DateTime.fromMillis(epochSeconds * 1000)
+          .toUTC()
+          .toISO()!;
+      }
+      case 'unix-epoch-ms': {
+        const epochMillis = typeof dateTime === 'string' ? parseInt(dateTime, 10) : dateTime;
+        if (typeof epochMillis !== 'number' || isNaN(epochMillis)) {
+          throw new Error(`The value must be a number or numeric string for type "unix-epoch-ms": "${dateTime}"`);
+        }
+        return DateTime.fromMillis(epochMillis).toUTC().toISO()!;
+      }
+      case 'iso-string': {
+        if (typeof dateTime !== 'string') {
+          throw new Error(`The value must be a string for type "iso-string": "${dateTime}"`);
+        }
+        return DateTime.fromISO(dateTime).toUTC().toISO()!;
+      }
+      case 'string': {
+        if (typeof dateTime !== 'string' || !format || !timezone) {
+          throw new Error(`The value must be a string and format must be provided for type "string": "${dateTime}"`);
+        }
+        return DateTime.fromFormat(dateTime, format, { zone: timezone, locale }).toUTC().toISO()!;
+      }
+      case 'date':
+      case 'small-date-time':
+      case 'date-time':
+      case 'date-time-2': {
+        if (!(dateTime instanceof Date) || !timezone) {
+          throw new Error(`The value must be a Date object for type "${type}": "${dateTime}"`);
+        }
+        return DateTime.fromJSDate(dateTime).toUTC().setZone(timezone, { keepLocalTime: true }).toUTC().toISO()!;
+      }
+      case 'date-time-offset':
+      case 'timestamp':
+      case 'timestamptz': {
+        if (!(dateTime instanceof Date)) {
+          throw new Error(`The value must be a Date object for type "${type}": "${dateTime}"`);
+        }
+        return DateTime.fromJSDate(dateTime).toUTC().toISO()!;
+      }
+      default:
+        throw new Error(`Unsupported DateTimeType: "${type}"`);
+    }
+  } catch (error) {
+    throw new Error(`Failed to convert "${dateTime}" to Instant for type "${type}": ${(error as Error).message}`);
   }
 };
 

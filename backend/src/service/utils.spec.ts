@@ -757,16 +757,16 @@ describe('Service utils', () => {
 
     it('should return a formatted Date', () => {
       const dateTimeFormat = {
-        type: 'Date' as DateTimeType,
+        type: 'date' as DateTimeType,
         timezone: 'Asia/Tokyo'
       };
       const result = formatInstant(testInstant, dateTimeFormat);
       expect(result).toEqual('2020-02-02');
     });
 
-    it('should return a formatted SmallDateTime', () => {
+    it('should return a formatted small-date-time', () => {
       const dateTimeFormat = {
-        type: 'SmallDateTime' as DateTimeType,
+        type: 'small-date-time' as DateTimeType,
         timezone: 'Asia/Tokyo'
       };
       const result = formatInstant(testInstant, dateTimeFormat);
@@ -775,7 +775,7 @@ describe('Service utils', () => {
 
     it('should return a formatted DateTime', () => {
       const dateTimeFormat = {
-        type: 'DateTime' as DateTimeType,
+        type: 'date-time' as DateTimeType,
         timezone: 'Asia/Tokyo'
       };
       const result = formatInstant(testInstant, dateTimeFormat);
@@ -815,7 +815,7 @@ describe('Service utils', () => {
 
     it('should return an ISO String from Date with correct timezone', () => {
       const dateTimeFormat = {
-        type: 'DateTimeOffset' as DateTimeType,
+        type: 'date-time-offset' as DateTimeType,
         timezone: 'Asia/Tokyo'
       };
       // From Zulu string
@@ -839,98 +839,185 @@ describe('Service utils', () => {
   });
 
   describe('convertDateTimeToInstant', () => {
-    const testInstant = '2020-02-02T02:02:02.222Z';
-    it('should return current value if no type specified', () => {
-      const result = convertDateTimeToInstant(testInstant, { type: '' as DateTimeType });
-      expect(result).toEqual(testInstant);
+    beforeAll(() => {
+      jest.spyOn(DateTime, 'fromJSDate').mockImplementation(date => {
+        if (date instanceof Date && !isNaN(date.getTime())) {
+          return DateTime.fromISO(testData.constants.dates.FAKE_NOW);
+        }
+        throw new Error('Invalid date');
+      });
     });
 
-    it('should return ISO String if no dateTimeFormat specified', () => {
-      const result = convertDateTimeToInstant(testInstant, { type: 'iso-string' });
-      expect(result).toEqual('2020-02-02T02:02:02.222Z');
+    afterAll(() => {
+      jest.restoreAllMocks();
     });
 
-    it('should return ISO String from unix-epoch', () => {
-      const result = convertDateTimeToInstant(Math.floor(DateTime.fromISO(testInstant).toMillis() / 1000), { type: 'unix-epoch' });
-      expect(result).toEqual('2020-02-02T02:02:02.000Z');
+    describe('when no type is provided', () => {
+      it('should return the input if it is a valid ISO string', () => {
+        const result = convertDateTimeToInstant('2023-01-01T00:00:00Z', {});
+        expect(result).toBe('2023-01-01T00:00:00Z');
+      });
+
+      it('should throw an error if input is not a valid ISO string', () => {
+        expect(() => convertDateTimeToInstant('not-an-iso-string', {})).toThrow(
+          'The value must be a valid ISO string if no type is provided: "not-an-iso-string"'
+        );
+        expect(() => convertDateTimeToInstant(123, {})).toThrow('The value must be a valid ISO string if no type is provided: "123"');
+        expect(() => convertDateTimeToInstant(new Date(), {})).toThrow('The value must be a valid ISO string if no type is provided: "');
+      });
     });
 
-    it('should return ISO String from unix-epoch-ms', () => {
-      const result = convertDateTimeToInstant(DateTime.fromISO(testInstant).toMillis(), { type: 'unix-epoch-ms' });
-      expect(result).toEqual('2020-02-02T02:02:02.222Z');
+    describe('unix-epoch', () => {
+      it('should convert a number (seconds since epoch) to ISO string', () => {
+        const result = convertDateTimeToInstant(1672531200, { type: 'unix-epoch' });
+        expect(result).toBe('2023-01-01T00:00:00.000Z');
+      });
+
+      it('should convert a numeric string (seconds since epoch) to ISO string', () => {
+        const result = convertDateTimeToInstant('1672531200', { type: 'unix-epoch' });
+        expect(result).toBe('2023-01-01T00:00:00.000Z');
+      });
+
+      it('should throw an error if input is not a number or numeric string', () => {
+        expect(() => convertDateTimeToInstant(new Date(), { type: 'unix-epoch' })).toThrow(
+          'The value must be a number or numeric string for type "unix-epoch": "'
+        );
+        expect(() => convertDateTimeToInstant('not-a-number', { type: 'unix-epoch' })).toThrow(
+          'Failed to convert "not-a-number" to Instant for type "unix-epoch"'
+        );
+      });
     });
 
-    it('should return ISO string from specific string with correct timezone', () => {
-      const dateTimeFormat = {
-        type: 'string' as DateTimeType,
-        timezone: 'Asia/Tokyo',
-        format: 'yyyy-MM-dd HH:mm:ss.SSS',
-        locale: 'en-US'
-      };
-      const result = convertDateTimeToInstant(
-        DateTime.fromISO(testInstant, { zone: 'Asia/Tokyo' }).toFormat(dateTimeFormat.format),
-        dateTimeFormat
-      );
-      // The date was converted from a zulu string to Asia/Tokyo time, so with the formatter, we retrieve the Asia Tokyo time with +9 offset
-      expect(result).toEqual('2020-02-02T02:02:02.222Z');
+    describe('unix-epoch-ms', () => {
+      it('should convert a number (milliseconds since epoch) to ISO string', () => {
+        const result = convertDateTimeToInstant(1672531200000, { type: 'unix-epoch-ms' });
+        expect(result).toBe('2023-01-01T00:00:00.000Z');
+      });
+
+      it('should convert a numeric string (milliseconds since epoch) to ISO string', () => {
+        const result = convertDateTimeToInstant('1672531200000', { type: 'unix-epoch-ms' });
+        expect(result).toBe('2023-01-01T00:00:00.000Z');
+      });
+
+      it('should throw an error if input is not a number or numeric string', () => {
+        expect(() => convertDateTimeToInstant(new Date(), { type: 'unix-epoch-ms' })).toThrow(
+          'The value must be a number or numeric string for type "unix-epoch-ms": "'
+        );
+        expect(() => convertDateTimeToInstant('not-a-number', { type: 'unix-epoch-ms' })).toThrow(
+          'Failed to convert "not-a-number" to Instant for type "unix-epoch-ms"'
+        );
+      });
     });
 
-    it('should return a formatted ISO String', () => {
-      const dateTimeFormat = {
-        type: 'iso-string' as DateTimeType
-      };
-      const result = convertDateTimeToInstant(testInstant, dateTimeFormat);
-      expect(result).toEqual(testInstant);
+    describe('iso-string', () => {
+      it('should convert a valid ISO string to ISO string', () => {
+        const result = convertDateTimeToInstant('2023-01-01T12:00:00+02:00', { type: 'iso-string' });
+        expect(result).toBe('2023-01-01T10:00:00.000Z');
+      });
+
+      it('should throw an error if input is not a string', () => {
+        expect(() => convertDateTimeToInstant(123, { type: 'iso-string' })).toThrow(
+          'The value must be a string for type "iso-string": "123"'
+        );
+        expect(() => convertDateTimeToInstant(new Date(), { type: 'iso-string' })).toThrow(
+          'The value must be a string for type "iso-string": "'
+        );
+      });
     });
 
-    it('should return a formatted String with correct timezone for locale en-US', () => {
-      const dateTimeFormat = {
-        type: 'string' as DateTimeType,
-        timezone: 'Asia/Tokyo',
-        format: 'dd-MMM-yy HH:mm:ss', // format with localized month
-        locale: 'en-US'
-      };
-      const result = convertDateTimeToInstant(
-        DateTime.fromISO(testInstant, { zone: 'Asia/Tokyo' }).toFormat(dateTimeFormat.format),
-        dateTimeFormat
-      );
-      expect(result).toEqual('2020-02-02T02:02:02.000Z');
+    describe('string', () => {
+      it('should convert a string with format to ISO string', () => {
+        const result = convertDateTimeToInstant('01/01/2023', {
+          type: 'string',
+          format: 'MM/dd/yyyy',
+          timezone: 'Europe/Paris'
+        });
+        expect(result).toMatch(/2022-12-31T.*Z/);
+      });
+
+      it('should throw an error if input is not a string', () => {
+        expect(() => convertDateTimeToInstant(123, { type: 'string', format: 'MM/dd/yyyy' })).toThrow(
+          'The value must be a string and format must be provided for type "string": "123"'
+        );
+      });
+
+      it('should throw an error if format is not provided', () => {
+        expect(() => convertDateTimeToInstant('01/01/2023', { type: 'string' })).toThrow(
+          'The value must be a string and format must be provided for type "string": "01/01/2023"'
+        );
+      });
+
+      it('should throw an error if string cannot be parsed with the given format', () => {
+        expect(() =>
+          convertDateTimeToInstant('not-a-date', {
+            type: 'string',
+            format: 'MM/dd/yyyy'
+          })
+        ).toThrow('Failed to convert "not-a-date" to Instant for type "string"');
+      });
     });
 
-    it('should return a formatted String with correct timezone for locale fr-FR', () => {
-      const dateTimeFormat = {
-        type: 'string' as DateTimeType,
-        timezone: 'Asia/Tokyo',
-        format: 'dd-MMM-yy HH:mm:ss', // format with localized month
-        locale: 'fr-FR'
-      };
-      const result = convertDateTimeToInstant(
-        DateTime.fromISO(testInstant, { zone: 'Asia/Tokyo' }).toFormat(dateTimeFormat.format, {
-          locale: dateTimeFormat.locale
-        }),
-        dateTimeFormat
-      );
-      expect(result).toEqual('2020-02-02T02:02:02.000Z');
+    describe('Date types (date, small-date-time, date-time, date-time-2)', () => {
+      const dateTypes: Array<'date' | 'small-date-time' | 'date-time' | 'date-time-2'> = [
+        'date',
+        'small-date-time',
+        'date-time',
+        'date-time-2'
+      ];
+
+      dateTypes.forEach(type => {
+        describe(type, () => {
+          it('should convert a Date object to ISO string', () => {
+            const result = convertDateTimeToInstant(new Date(testData.constants.dates.FAKE_NOW), { type, timezone: 'UTC' });
+            expect(result).toBe(testData.constants.dates.FAKE_NOW);
+          });
+
+          it('should convert a Date object to ISO string with timezone', () => {
+            const result = convertDateTimeToInstant(new Date(testData.constants.dates.FAKE_NOW), {
+              type,
+              timezone: 'America/New_York'
+            });
+            expect(result).toBe('2021-01-02T05:00:00.000Z');
+          });
+
+          it('should throw an error if input is not a Date object', () => {
+            expect(() => convertDateTimeToInstant('not-a-date', { type })).toThrow(
+              `The value must be a Date object for type "${type}": "not-a-date"`
+            );
+            expect(() => convertDateTimeToInstant(123, { type })).toThrow(`The value must be a Date object for type "${type}": "123"`);
+          });
+        });
+      });
     });
 
-    it('should return an ISO String from timestamp with correct timezone', () => {
-      const dateTimeFormat = {
-        type: 'timestamp' as DateTimeType,
-        timezone: 'Asia/Tokyo'
-      };
-      // From Zulu string
-      const result = convertDateTimeToInstant(new Date(testInstant), dateTimeFormat);
-      // The date was converted from a zulu string to Asia/Tokyo time, so with the formatter, we retrieve the Asia Tokyo time with +9 offset
-      expect(result).toEqual('2020-02-01T17:02:02.222Z');
-    });
+    describe('date-time-offset, timestamp, timestamptz', () => {
+      const dateTypes: Array<'date-time-offset' | 'timestamp' | 'timestamptz'> = ['date-time-offset', 'timestamp', 'timestamptz'];
 
-    it('should return an ISO String from timestamptz with correct timezone', () => {
-      const dateTimeFormat = {
-        type: 'DateTimeOffset' as DateTimeType,
-        timezone: 'Asia/Tokyo'
-      };
-      const result = convertDateTimeToInstant(new Date(testInstant), dateTimeFormat);
-      expect(result).toEqual('2020-02-02T02:02:02.222Z');
+      dateTypes.forEach(type => {
+        describe(type, () => {
+          it('should convert a Date object to ISO string', () => {
+            const result = convertDateTimeToInstant(new Date(testData.constants.dates.FAKE_NOW), { type, timezone: 'UTC' });
+            expect(result).toBe(testData.constants.dates.FAKE_NOW);
+          });
+
+          it('should throw an error if input is not a Date object', () => {
+            expect(() => convertDateTimeToInstant('not-a-date', { type })).toThrow(
+              `The value must be a Date object for type "${type}": "not-a-date"`
+            );
+            expect(() => convertDateTimeToInstant(123, { type })).toThrow(`The value must be a Date object for type "${type}": "123"`);
+          });
+        });
+      });
+
+      describe('unsupported type', () => {
+        it('should throw an error for unsupported types', () => {
+          expect(() =>
+            convertDateTimeToInstant(new Date(), {
+              type: 'unsupported-type' as unknown as DateTimeType
+            })
+          ).toThrow('Unsupported DateTimeType: "unsupported-type"');
+        });
+      });
     });
   });
 

@@ -58,11 +58,11 @@ export type SouthMQTTItemSettingsValueType = (typeof SOUTH_M_Q_T_T_ITEM_SETTINGS
 
 export const SOUTH_M_S_S_Q_L_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = [
   'string',
-  'Date',
-  'DateTime',
-  'DateTime2',
-  'DateTimeOffset',
-  'SmallDateTime',
+  'date',
+  'date-time',
+  'date-time-2',
+  'date-time-offset',
+  'small-date-time',
   'iso-string',
   'unix-epoch',
   'unix-epoch-ms'
@@ -84,7 +84,13 @@ export const SOUTH_M_S_S_Q_L_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = [
 ] as const;
 export type SouthMSSQLItemSettingsSerializationDelimiter = (typeof SOUTH_M_S_S_Q_L_ITEM_SETTINGS_SERIALIZATION_DELIMITERS)[number];
 
-export const SOUTH_MY_S_Q_L_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'] as const;
+export const SOUTH_MY_S_Q_L_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = [
+  'string',
+  'iso-string',
+  'unix-epoch',
+  'unix-epoch-ms',
+  'date-time'
+] as const;
 export type SouthMySQLItemSettingsDateTimeFieldsType = (typeof SOUTH_MY_S_Q_L_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
 
 export const SOUTH_MY_S_Q_L_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv'] as const;
@@ -224,7 +230,13 @@ export type SouthOPCUAItemSettingsMode = (typeof SOUTH_O_P_C_U_A_ITEM_SETTINGS_M
 export const SOUTH_O_P_C_U_A_ITEM_SETTINGS_TIMESTAMP_ORIGINS = ['oibus', 'point', 'server'] as const;
 export type SouthOPCUAItemSettingsTimestampOrigin = (typeof SOUTH_O_P_C_U_A_ITEM_SETTINGS_TIMESTAMP_ORIGINS)[number];
 
-export const SOUTH_ORACLE_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'] as const;
+export const SOUTH_ORACLE_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = [
+  'string',
+  'iso-string',
+  'unix-epoch',
+  'unix-epoch-ms',
+  'date-time'
+] as const;
 export type SouthOracleItemSettingsDateTimeFieldsType = (typeof SOUTH_ORACLE_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
 
 export const SOUTH_ORACLE_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv'] as const;
