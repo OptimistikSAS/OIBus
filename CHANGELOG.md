@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.6.8](https://github.com/OptimistikSAS/OIBus/compare/v3.6.7...v3.6.8) (2025-09-04)
+
+
+### Bug Fixes
+
+* **north:** fix the way OIBusError is detected ([9e8cf4b](https://github.com/OptimistikSAS/OIBus/commit/9e8cf4b5495f37190a2bbe369c4f652c262563ab))
+* **sql:** fix date time fields types for mysql and mssql ([cd9ea45](https://github.com/OptimistikSAS/OIBus/commit/cd9ea45bf8943193a4b0074ed78f437d2a3770c8))
+
 ## [3.6.7](https://github.com/OptimistikSAS/OIBus/compare/v3.6.6...v3.6.7) (2025-08-27)
 
 
