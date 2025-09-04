@@ -1,4 +1,5 @@
 import { Component, computed, input, linkedSignal, output, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { DatetimePipe } from '../datetime.pipe';
 import { FileSizePipe } from '../file-size.pipe';
@@ -19,7 +20,7 @@ const enum ColumnSortState {
   selector: 'oib-file-table',
   templateUrl: './file-table.component.html',
   styleUrl: './file-table.component.scss',
-  imports: [TranslateDirective, DatetimePipe, FileSizePipe, NgbTooltipModule, TranslatePipe, PaginationComponent]
+  imports: [CommonModule, TranslateDirective, DatetimePipe, FileSizePipe, NgbTooltipModule, TranslatePipe, PaginationComponent]
 })
 export class FileTableComponent {
   readonly cacheType = input.required<'cache' | 'error' | 'archive'>();
@@ -45,20 +46,47 @@ export class FileTableComponent {
     file: { metadataFilename: string; metadata: CacheMetadata };
   }>();
   readonly selectedFiles = output<Array<{ metadataFilename: string; metadata: CacheMetadata }>>();
+  readonly isActionRunning = input<boolean>(false);
 
   /**
-   * Called when the user check or uncheck the main checkbox
+   * Called when the user clicks Select All
    */
-  onFileMainCheckBoxClick(isChecked: boolean) {
+  selectAll() {
     this.files().forEach(errorFile => {
-      this.checkboxByFiles().set(errorFile.metadataFilename, isChecked);
+      this.checkboxByFiles().set(errorFile.metadataFilename, true);
     });
-    if (isChecked) {
-      this.mainFilesCheckboxState.set('CHECKED');
-    } else {
-      this.mainFilesCheckboxState.set('UNCHECKED');
-    }
+    this.mainFilesCheckboxState.set('CHECKED');
     this.selectedFiles.emit(this.files().filter(file => this.checkboxByFiles().get(file.metadataFilename)));
+  }
+
+  /**
+   * Called when the user clicks Unselect All
+   */
+  unselectAll() {
+    this.files().forEach(errorFile => {
+      this.checkboxByFiles().set(errorFile.metadataFilename, false);
+    });
+    this.mainFilesCheckboxState.set('UNCHECKED');
+    this.selectedFiles.emit(this.files().filter(file => this.checkboxByFiles().get(file.metadataFilename)));
+  }
+
+  /**
+   * Called when the user changes the main checkbox
+   */
+  onMainCheckboxChange(event: Event) {
+    const target = event.target as HTMLInputElement;
+    if (target.checked) {
+      this.selectAll();
+    } else {
+      this.unselectAll();
+    }
+  }
+
+  /**
+   * Get the count of selected files
+   */
+  getSelectedFilesCount(): number {
+    return this.files().filter(file => this.checkboxByFiles().get(file.metadataFilename)).length;
   }
 
   onFileCheckboxClick(isChecked: boolean, errorFile: { metadataFilename: string; metadata: CacheMetadata }) {
