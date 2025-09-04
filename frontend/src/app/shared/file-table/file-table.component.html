@@ -1,22 +1,54 @@
 <div class="mb-3">
-  @if (pages().totalElements) {
-    <div class="d-flex flex-row-reverse mt-3">
-      <oib-pagination [page]="pages()" (pageChanged)="currentPage.set($event)" />
+  <!-- Selection Controls - Above the table for better UX -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="d-flex align-items-center selection-controls">
+      <button
+        type="button"
+        class="btn btn-sm"
+        (click)="selectAll()"
+        [disabled]="mainFilesCheckboxState() === 'CHECKED'"
+        id="select-all-button"
+      >
+        <span class="fa fa-check-square me-1"></span>
+        <span translate="north.caching.select-all"></span>
+      </button>
+      <button
+        type="button"
+        class="btn btn-sm"
+        (click)="unselectAll()"
+        [disabled]="mainFilesCheckboxState() === 'UNCHECKED'"
+        id="unselect-all-button"
+      >
+        <span class="fa fa-square-o me-1"></span>
+        <span translate="north.caching.unselect-all"></span>
+      </button>
+      @if (getSelectedFilesCount() > 0) {
+        <span class="badge counter-badge">
+          <span translate="north.caching.selected-files" [translateParams]="{ count: getSelectedFilesCount() }"></span>
+        </span>
+      }
     </div>
-  }
+
+    @if (pages().totalElements) {
+      <oib-pagination [page]="pages()" (pageChanged)="currentPage.set($event)" />
+    }
+  </div>
 
   <table class="table table-sm table-hover oib-table">
     <thead class="light">
       <tr>
-        <th>
-          <input
-            [checked]="mainFilesCheckboxState() === 'CHECKED'"
-            [indeterminate]="mainFilesCheckboxState() === 'INDETERMINATE'"
-            (change)="onFileMainCheckBoxClick(checkbox.checked)"
-            type="checkbox"
-            #checkbox
-            id="toggle-all-parameters"
-          /><label></label>
+        <th style="width: 50px">
+          <div class="d-flex align-items-center justify-content-center">
+            <input
+              type="checkbox"
+              [checked]="mainFilesCheckboxState() === 'CHECKED'"
+              [indeterminate]="mainFilesCheckboxState() === 'INDETERMINATE'"
+              (change)="onMainCheckboxChange($event)"
+              id="toggle-all-parameters"
+              class="form-check-input"
+              style="width: 18px; height: 18px; cursor: pointer"
+            />
+          </div>
         </th>
         <th>
           <button
@@ -74,9 +106,10 @@
               (change)="onFileCheckboxClick(checkbox.checked, file)"
               #checkbox
               [checked]="checkboxByFiles().get(file.metadataFilename)"
-              class="toggle-parameter"
+              class="form-check-input"
               [id]="'error-file-' + file.metadataFilename"
-            /><label></label>
+              style="width: 16px; height: 16px; cursor: pointer"
+            />
           </td>
           <td class="modification-date">{{ file.metadata.createdAt | datetime: 'mediumWithSeconds' }}</td>
           <td class="filename">{{ file.metadata.contentFile }}</td>
@@ -89,6 +122,7 @@
                     type="button"
                     class="btn btn-link px-1 py-0"
                     (click)="onItemActionClick('error', file)"
+                    [disabled]="isActionRunning()"
                     triggers="hover"
                     placement="top"
                     [ngbTooltip]="'north.caching.error-content-action' | translate"
@@ -99,6 +133,7 @@
                     type="button"
                     class="btn btn-link px-1 py-0"
                     (click)="onItemActionClick('archive', file)"
+                    [disabled]="isActionRunning()"
                     triggers="hover"
                     placement="top"
                     [ngbTooltip]="'north.caching.archive-content-action' | translate"
@@ -111,6 +146,7 @@
                     type="button"
                     class="btn btn-link px-1 py-0"
                     (click)="onItemActionClick('retry', file)"
+                    [disabled]="isActionRunning()"
                     triggers="hover"
                     placement="top"
                     [ngbTooltip]="'north.caching.retry-content-action' | translate"
@@ -121,6 +157,7 @@
                     type="button"
                     class="btn btn-link px-1 py-0"
                     (click)="onItemActionClick('archive', file)"
+                    [disabled]="isActionRunning()"
                     triggers="hover"
                     placement="top"
                     [ngbTooltip]="'north.caching.archive-content-action' | translate"
@@ -133,6 +170,7 @@
                     type="button"
                     class="btn btn-link px-1 py-0"
                     (click)="onItemActionClick('retry', file)"
+                    [disabled]="isActionRunning()"
                     triggers="hover"
                     placement="top"
                     [ngbTooltip]="'north.caching.replay-content-action' | translate"
@@ -145,6 +183,7 @@
                 type="button"
                 class="btn btn-link px-1 py-0"
                 (click)="onItemActionClick('view', file)"
+                [disabled]="isActionRunning()"
                 triggers="hover"
                 placement="top"
                 [ngbTooltip]="'north.caching.view-content-action' | translate"
@@ -155,6 +194,7 @@
                 type="button"
                 class="btn btn-link px-1 py-0"
                 (click)="onItemActionClick('remove', file)"
+                [disabled]="isActionRunning()"
                 triggers="hover"
                 placement="top"
                 [ngbTooltip]="'north.caching.remove-content-action' | translate"

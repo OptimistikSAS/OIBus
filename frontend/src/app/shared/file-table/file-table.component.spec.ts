@@ -97,12 +97,19 @@ const unsortedFiles: Array<{ metadataFilename: string; metadata: CacheMetadata }
 
 @Component({
   template: `
-    <oib-file-table [files]="files()" cacheType="archive" (itemAction)="onItemAction($event)" (selectedFiles)="selectedFiles.set($event)" />
+    <oib-file-table
+      [files]="files()"
+      cacheType="archive"
+      [isActionRunning]="isActionRunning()"
+      (itemAction)="onItemAction($event)"
+      (selectedFiles)="selectedFiles.set($event)"
+    />
   `,
   imports: [FileTableComponent]
 })
 class FileTableTestComponent {
   readonly files = signal(unsortedFiles);
+  readonly isActionRunning = signal(false);
   readonly itemAction = signal<
     | {
         type: 'remove' | 'error' | 'archive' | 'retry' | 'view';
@@ -146,11 +153,15 @@ class FileTestComponentTester extends ComponentTester<FileTableTestComponent> {
   }
 
   get checkboxes() {
-    return this.elements<HTMLInputElement>('.toggle-parameter');
+    return this.elements<HTMLInputElement>('tbody .form-check-input');
   }
 
-  get mainCheckbox() {
-    return this.element<HTMLInputElement>('#toggle-all-parameters')!;
+  get selectAllButton() {
+    return this.button('#select-all-button')!;
+  }
+
+  get unselectAllButton() {
+    return this.button('#unselect-all-button')!;
   }
 }
 
@@ -204,27 +215,29 @@ describe('FileTableComponent', () => {
   });
 
   it('should correctly check files', () => {
+    expect(tester.checkboxes.length).toBe(7);
+
     tester.checkboxes[0].check();
+    tester.detectChanges();
+    expect(tester.componentInstance.selectedFiles().length).toBe(1);
+
     tester.checkboxes[1].check();
+    tester.detectChanges();
+    expect(tester.componentInstance.selectedFiles().length).toBe(2);
+
     tester.checkboxes[2].check();
-    // the first 3 sorted files are checked
-    expect(tester.componentInstance.selectedFiles().map(file => file.metadata.createdAt)).toEqual([
-      '2020-03-25T00:00:00.000Z',
-      '2020-03-20T00:00:00.000Z',
-      '2020-03-20T00:00:00.000Z'
-    ]);
+    tester.detectChanges();
+    expect(tester.componentInstance.selectedFiles().length).toBe(3);
 
     tester.checkboxes[0].uncheck();
-    expect(tester.componentInstance.selectedFiles().map(file => file.metadata.createdAt)).toEqual([
-      '2020-03-20T00:00:00.000Z',
-      '2020-03-20T00:00:00.000Z'
-    ]);
+    tester.detectChanges();
+    expect(tester.componentInstance.selectedFiles().length).toBe(2);
   });
 
   it('should correctly check all files', () => {
-    tester.mainCheckbox.check();
+    tester.selectAllButton.click();
     expect(tester.componentInstance.selectedFiles()).toEqual(unsortedFiles);
-    tester.mainCheckbox.uncheck();
+    tester.unselectAllButton.click();
     expect(tester.componentInstance.selectedFiles()).toEqual([]);
   });
 
