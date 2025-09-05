@@ -1,24 +1,18 @@
 <div class="mb-3">
   <!-- Selection Controls - Above the table for better UX -->
-  <div class="d-flex justify-content-between align-items-center mb-3">
+  <div class="d-flex justify-content-between align-items-center my-2">
     <div class="d-flex align-items-center selection-controls">
       <button
         type="button"
         class="btn btn-sm"
         (click)="selectAll()"
-        [disabled]="mainFilesCheckboxState() === 'CHECKED'"
+        [disabled]="getSelectedFilesCount() === files().length"
         id="select-all-button"
       >
         <span class="fa fa-check-square me-1"></span>
         <span translate="north.caching.select-all"></span>
       </button>
-      <button
-        type="button"
-        class="btn btn-sm"
-        (click)="unselectAll()"
-        [disabled]="mainFilesCheckboxState() === 'UNCHECKED'"
-        id="unselect-all-button"
-      >
+      <button type="button" class="btn btn-sm" (click)="unselectAll()" [disabled]="getSelectedFilesCount() === 0" id="unselect-all-button">
         <span class="fa fa-square-o me-1"></span>
         <span translate="north.caching.unselect-all"></span>
       </button>
@@ -37,19 +31,7 @@
   <table class="table table-sm table-hover oib-table">
     <thead class="light">
       <tr>
-        <th style="width: 50px">
-          <div class="d-flex align-items-center justify-content-center">
-            <input
-              type="checkbox"
-              [checked]="mainFilesCheckboxState() === 'CHECKED'"
-              [indeterminate]="mainFilesCheckboxState() === 'INDETERMINATE'"
-              (change)="onMainCheckboxChange($event)"
-              id="toggle-all-parameters"
-              class="form-check-input"
-              style="width: 18px; height: 18px; cursor: pointer"
-            />
-          </div>
-        </th>
+        <th style="width: 50px"></th>
         <th>
           <button
             class="py-1 px-0 sort-by-modification-date"
