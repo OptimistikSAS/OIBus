@@ -36,10 +36,6 @@ export class FileTableComponent {
 
   readonly currentColumnSort = signal<keyof CacheMetadata>('createdAt');
   readonly currentColumnOrder = signal<ColumnSortState>(ColumnSortState.DESCENDING);
-  readonly mainFilesCheckboxState = linkedSignal({
-    source: () => this.files(),
-    computation: () => 'UNCHECKED' as 'CHECKED' | 'UNCHECKED' | 'INDETERMINATE'
-  });
 
   readonly itemAction = output<{
     type: 'remove' | 'error' | 'archive' | 'retry' | 'view';
@@ -55,7 +51,6 @@ export class FileTableComponent {
     this.files().forEach(errorFile => {
       this.checkboxByFiles().set(errorFile.metadataFilename, true);
     });
-    this.mainFilesCheckboxState.set('CHECKED');
     this.selectedFiles.emit(this.files().filter(file => this.checkboxByFiles().get(file.metadataFilename)));
   }
 
@@ -66,20 +61,7 @@ export class FileTableComponent {
     this.files().forEach(errorFile => {
       this.checkboxByFiles().set(errorFile.metadataFilename, false);
     });
-    this.mainFilesCheckboxState.set('UNCHECKED');
     this.selectedFiles.emit(this.files().filter(file => this.checkboxByFiles().get(file.metadataFilename)));
-  }
-
-  /**
-   * Called when the user changes the main checkbox
-   */
-  onMainCheckboxChange(event: Event) {
-    const target = event.target as HTMLInputElement;
-    if (target.checked) {
-      this.selectAll();
-    } else {
-      this.unselectAll();
-    }
   }
 
   /**
@@ -91,22 +73,6 @@ export class FileTableComponent {
 
   onFileCheckboxClick(isChecked: boolean, errorFile: { metadataFilename: string; metadata: CacheMetadata }) {
     this.checkboxByFiles().set(errorFile.metadataFilename, isChecked);
-    let everythingIsChecked = true;
-    let everythingIsUnChecked = true;
-    for (const isSelected of this.checkboxByFiles().values()) {
-      if (!isSelected) {
-        everythingIsChecked = false;
-      } else {
-        everythingIsUnChecked = false;
-      }
-    }
-    if (everythingIsChecked && !everythingIsUnChecked) {
-      this.mainFilesCheckboxState.set('CHECKED');
-    } else if (!everythingIsChecked && everythingIsUnChecked) {
-      this.mainFilesCheckboxState.set('UNCHECKED');
-    } else {
-      this.mainFilesCheckboxState.set('INDETERMINATE');
-    }
     this.selectedFiles.emit(this.files().filter(file => this.checkboxByFiles().get(file.metadataFilename)));
   }
 
