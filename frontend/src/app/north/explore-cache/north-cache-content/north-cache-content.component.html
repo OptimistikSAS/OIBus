@@ -20,6 +20,7 @@
                 type="button"
                 class="btn btn-secondary btn-sm oib-box-btn"
                 (click)="moveCacheContent('error')"
+                [disabled]="isActionRunning()"
                 translate="north.caching.error-selected-content"
                 id="error-selected-content"
               ></button
@@ -27,6 +28,7 @@
                 type="button"
                 class="btn btn-secondary btn-sm oib-box-btn"
                 (click)="moveCacheContent('archive')"
+                [disabled]="isActionRunning()"
                 translate="north.caching.archive-selected-content"
                 id="archive-selected-content"
               ></button>
@@ -36,6 +38,7 @@
                 type="button"
                 class="btn btn-secondary btn-sm oib-box-btn"
                 (click)="moveCacheContent('cache')"
+                [disabled]="isActionRunning()"
                 translate="north.caching.retry-selected-content"
                 id="retry-selected-error-content"
               ></button>
@@ -43,6 +46,7 @@
                 type="button"
                 class="btn btn-secondary btn-sm oib-box-btn"
                 (click)="moveCacheContent('archive')"
+                [disabled]="isActionRunning()"
                 translate="north.caching.archive-selected-content"
                 id="archive-selected-error-content"
               ></button>
@@ -52,6 +56,7 @@
                 type="button"
                 class="btn btn-secondary btn-sm oib-box-btn"
                 (click)="moveCacheContent('cache')"
+                [disabled]="isActionRunning()"
                 translate="north.caching.replay-selected-content"
                 id="retry-selected-archive-content"
               ></button>
@@ -62,6 +67,7 @@
             type="button"
             class="btn btn-danger btn-sm oib-box-btn"
             (click)="removeCacheContent()"
+            [disabled]="isActionRunning()"
             translate="north.caching.remove-selected-content"
             id="remove-selected-files"
           ></button>
@@ -75,6 +81,7 @@
       #fileTable
       [cacheType]="cacheType()"
       [files]="cacheContentFiles"
+      [isActionRunning]="isActionRunning()"
       (itemAction)="onItemAction($event)"
       (selectedFiles)="selectedFiles.set($event)"
     />

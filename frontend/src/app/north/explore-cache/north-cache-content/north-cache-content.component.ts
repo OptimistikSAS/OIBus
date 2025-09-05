@@ -25,19 +25,24 @@ export class NorthCacheContentComponent implements OnInit {
   cacheContentFiles: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [];
   readonly page = signal(0);
   readonly selectedFiles = signal<Array<{ metadataFilename: string; metadata: CacheMetadata }>>([]);
+  readonly isActionRunning = signal(false);
 
   ngOnInit() {
     this.refreshCacheFiles();
   }
 
   removeCacheContent(files: Array<string> = this.getCheckedFiles()) {
+    this.isActionRunning.set(true);
     this.northConnectorService.removeCacheContent(this.northConnector().id, this.cacheType(), files).subscribe(() => {
+      this.isActionRunning.set(false);
       this.cacheUpdated.emit();
     });
   }
 
   moveCacheContent(destinationFolder: 'cache' | 'error' | 'archive', files: Array<string> = this.getCheckedFiles()) {
+    this.isActionRunning.set(true);
     this.northConnectorService.moveCacheContent(this.northConnector().id, this.cacheType(), destinationFolder, files).subscribe(() => {
+      this.isActionRunning.set(false);
       this.cacheUpdated.emit();
     });
   }
