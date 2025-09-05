@@ -89,8 +89,22 @@ export default class SandboxService {
     transformer: CustomTransformer,
     options: object
   ): Promise<{ metadata: CacheMetadata; output: string }> {
+    // Handle pkg bundling - when bundled, __dirname points to a different location
+    // We need to find the pyodide files relative to the executable
+    let pyodidePath: string;
+
+    if ((process as unknown as { pkg: boolean }).pkg) {
+      // When bundled with pkg, use the executable directory
+      pyodidePath = path.join(path.dirname(process.execPath), 'lib', 'pyodide');
+    } else {
+      // Normal Node.js environment
+      pyodidePath = path.join(__dirname, '../../../../lib/pyodide');
+    }
+
+    this.logger.debug(`Loading Pyodide from: ${pyodidePath}`);
+
     const pyodide = await loadPyodide({
-      indexURL: path.join(__dirname, '../../../../lib/pyodide'),
+      indexURL: pyodidePath,
       packages: ['numpy', 'pandas', 'python-dateutil', 'pytz', 'six'],
       stdout: msg => this.logger.debug(msg),
       stderr: msg => this.logger.error(msg)
