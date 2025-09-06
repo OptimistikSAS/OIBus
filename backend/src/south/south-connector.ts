@@ -8,11 +8,10 @@ import pino from 'pino';
 import DeferredPromise from '../service/deferred-promise';
 import { DateTime } from 'luxon';
 import SouthCacheService from '../service/south-cache.service';
-import { DelegatesConnection, QueriesFile, QueriesHistory, QueriesLastPoint, QueriesSubscription } from './south-interface';
+import { QueriesFile, QueriesHistory, QueriesLastPoint, QueriesSubscription } from './south-interface';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { OIBusContent, OIBusRawContent, OIBusTimeValueContent } from '../../shared/model/engine.model';
 import path from 'node:path';
-import ConnectionService, { ManagedConnectionDTO } from '../service/connection.service';
 import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../model/south-connector.model';
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
 import { ScanMode } from '../model/scan-mode.model';
@@ -58,9 +57,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     private engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     private readonly southCacheRepository: SouthCacheRepository,
     protected logger: pino.Logger,
-    protected cacheFolderPath: string,
-    // The value is null in order to incrementally refactor connectors to use the ConnectionService
-    private readonly connectionService: ConnectionService | null = null
+    protected cacheFolderPath: string
   ) {
     this.cacheService = new SouthCacheService(this.southCacheRepository);
     this.tmpFolder = path.resolve(cacheFolderPath, 'tmp');
@@ -88,17 +85,6 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   }
 
   async connect(): Promise<void> {
-    if (this.delegatesConnection()) {
-      const connectionDTO: ManagedConnectionDTO<unknown> = {
-        type: this.connector.type,
-        connectorSettings: this.connector.settings,
-        createSessionFn: this.createSession.bind(this),
-        settings: this.connectionSettings
-      };
-
-      this.connection = this.connectionService!.create(this.connector.id, connectionDTO);
-    }
-
     this.logger.info(`South connector "${this.connector.name}" of type ${this.connector.type} started`);
 
     for (const cronJob of this.cronByScanModeIds.values()) {
@@ -502,10 +488,6 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     this.cronByScanModeIds.clear();
     this.taskJobQueue = [];
 
-    if (this.delegatesConnection()) {
-      await this.connectionService!.remove(this.connector.type, this.connector.id);
-    }
-
     this.logger.debug(`South connector "${this.connector.name}" (${this.connector.id}) disconnected`);
   }
 
@@ -549,10 +531,6 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
 
   queriesSubscription(): this is QueriesSubscription {
     return 'subscribe' in this && 'unsubscribe' in this;
-  }
-
-  delegatesConnection<T>(): this is DelegatesConnection<T> {
-    return 'connectionSettings' in this && 'createSession' in this;
   }
 
   set connectorConfiguration(connectorConfiguration: SouthConnectorEntity<T, I>) {

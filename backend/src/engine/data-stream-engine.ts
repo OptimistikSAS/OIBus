@@ -30,7 +30,6 @@ import { buildNorth } from '../north/north-connector-factory';
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
 import CertificateRepository from '../repository/config/certificate.repository';
 import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
-import ConnectionService from '../service/connection.service';
 import { HistoryQueryEntity, HistoryQueryEntityLight } from '../model/histor-query.model';
 import HistoryQuery from './history-query';
 import HistoryQueryRepository from '../repository/config/history-query.repository';
@@ -51,7 +50,6 @@ export default class DataStreamEngine {
   private historyQueryMetrics = new Map<string, HistoryQueryMetricsService>();
 
   private readonly cacheFolders: BaseFolders;
-  private readonly connectionService: ConnectionService;
 
   constructor(
     private northConnectorRepository: NorthConnectorRepository,
@@ -66,7 +64,6 @@ export default class DataStreamEngine {
     private oianalyticsMessageService: OIAnalyticsMessageService,
     private _logger: pino.Logger
   ) {
-    this.connectionService = new ConnectionService(_logger);
     this.cacheFolders = {
       cache: path.resolve(CACHE_FOLDER),
       archive: path.resolve(ARCHIVE_FOLDER),
@@ -233,8 +230,7 @@ export default class DataStreamEngine {
       path.resolve(this.cacheFolders.cache, `south-${configuration.id}`),
       this.southCacheRepository,
       this.certificateRepository,
-      this.oIAnalyticsRegistrationRepository,
-      this.connectionService
+      this.oIAnalyticsRegistrationRepository
     );
     this.southConnectors.set(configuration.id, south);
     this.southConnectorMetrics.set(configuration.id, new SouthConnectorMetricsService(south, this.southConnectorMetricsRepository));
@@ -386,8 +382,7 @@ export default class DataStreamEngine {
       path.resolve(this.cacheFolders.cache, `history-${configuration.id}`, 'south'),
       this.southCacheRepository,
       this.certificateRepository,
-      this.oIAnalyticsRegistrationRepository,
-      this.connectionService
+      this.oIAnalyticsRegistrationRepository
     );
 
     const historyQuery = new HistoryQuery(configuration, north, south, logger);
