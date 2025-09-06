@@ -1,4 +1,3 @@
-import { ManagedConnection, ManagedConnectionSettings } from '../service/connection.service';
 import { Instant } from '../../shared/model/types';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { SouthConnectorItemEntity, SouthThrottlingSettings } from '../model/south-connector.model';
@@ -24,7 +23,7 @@ export interface QueriesHistory {
     startTime: Instant,
     endTime: Instant,
     startTimeFromCache: Instant
-  ): Promise<Instant| null>;
+  ): Promise<Instant | null>;
 
   getThrottlingSettings(settings: SouthSettings): SouthThrottlingSettings;
 
@@ -36,22 +35,4 @@ export interface QueriesHistory {
 export interface QueriesSubscription {
   subscribe(items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void>;
   unsubscribe(items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void>;
-}
-
-export interface DelegatesConnection<TConnection> {
-  /**
-   * The connection that is being managed
-   */
-  connection: ManagedConnection<TConnection>;
-  /**
-   * The settings for the connection
-   */
-  connectionSettings: ManagedConnectionSettings<TConnection>;
-  /**
-   * The function to create a new session
-   *
-   * This function will be called by the connection service to create a new session using
-   * the context of the class that implements this interface
-   */
-  createSession(): Promise<TConnection | null>;
 }
