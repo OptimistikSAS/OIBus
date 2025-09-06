@@ -21,8 +21,6 @@ import SouthCacheRepositoryMock from '../tests/__mocks__/repository/cache/south-
 import SouthCacheServiceMock from '../tests/__mocks__/service/south-cache-service.mock';
 import { flushPromises } from '../tests/utils/test-utils';
 import SouthOPCUA from './south-opcua/south-opcua';
-import ConnectionService from '../service/connection.service';
-import ConnectionServiceMock from '../tests/__mocks__/service/connection-service.mock';
 import SouthMSSQL from './south-mssql/south-mssql';
 import { DateTime } from 'luxon';
 import { Instant } from '../model/types';
@@ -58,7 +56,6 @@ jest.mock('../service/encryption.service', () => ({
 }));
 
 const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
-const connectionService: ConnectionService = new ConnectionServiceMock();
 const southCacheService = new SouthCacheServiceMock();
 
 jest.mock(
@@ -203,18 +200,18 @@ describe('SouthConnector with file query', () => {
   it('should properly update cron', async () => {
     south.createOrUpdateCronJob(testData.scanMode.list[0]);
     await south.updateScanModeIfUsed(testData.scanMode.list[0]);
+    await south.connect();
+    await south.disconnect();
+    south.createOrUpdateCronJob(testData.scanMode.list[0]);
+
+    await south.stop();
+
     expect(logger.debug).toHaveBeenCalledWith(
       `Creating South cron job for scan mode "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron})`
     );
     expect(logger.debug).toHaveBeenCalledWith(
       `Removing existing South cron job associated to scan mode "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron})`
     );
-
-    await south.connect();
-    await south.disconnect();
-    south.createOrUpdateCronJob(testData.scanMode.list[0]);
-
-    await south.stop();
   });
 
   it('should not create a cron job when the cron expression is invalid', () => {
@@ -321,17 +318,9 @@ describe('SouthConnector with history and max instant per item', () => {
     configuration.settings.throttling.maxInstantPerItem = true;
     configuration.settings.sharedConnection = true;
 
-    south = new SouthOPCUA(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder', connectionService);
+    south = new SouthOPCUA(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
 
     await south.start();
-  });
-
-  it('should delegate connection', async () => {
-    expect(connectionService.create).toHaveBeenCalled();
-
-    south.updateSouthCacheOnScanModeAndMaxInstantChanges = jest.fn();
-    south.connectorConfiguration = configuration;
-    expect(south.updateSouthCacheOnScanModeAndMaxInstantChanges).toHaveBeenCalledTimes(1);
   });
 
   it('should manage history query with several intervals with max instant per item', async () => {
@@ -497,8 +486,7 @@ describe('SouthConnector with history and subscription', () => {
       addContentCallback,
       southCacheRepository,
       logger,
-      'cacheFolder',
-      connectionService
+      'cacheFolder'
     );
 
     south.connect = jest.fn();
@@ -555,6 +543,12 @@ describe('SouthConnector with history and subscription', () => {
     expect(south.lastPointQuery).toHaveBeenCalledTimes(2);
 
     expect(logger.trace).toHaveBeenCalledWith('No more task to run');
+
+    south['stopping'] = true;
+    const emitSpy = jest.spyOn(south['taskRunner'], 'emit');
+
+    await south.run('scanModeId', []);
+    expect(emitSpy).not.toHaveBeenCalled();
   });
 
   it('should properly stop', async () => {
@@ -842,10 +836,11 @@ describe('SouthConnector with history and subscription', () => {
 
   it('should update subscriptions', async () => {
     south['connector'].items = south['connector'].items.map(item => ({ ...item, scanMode: { ...item.scanMode, id: 'subscription' } }));
+    south['subscribedItems'] = [south['connector'].items[0]];
     south.unsubscribe = jest.fn();
     south.subscribe = jest.fn();
     await south.updateSubscriptions();
-    expect(logger.trace).toHaveBeenCalledWith('Subscribing to 4 new items');
+    expect(logger.trace).toHaveBeenCalledWith('Subscribing to 3 new items');
 
     south['connector'].items = [];
 

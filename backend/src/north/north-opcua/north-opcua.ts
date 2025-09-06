@@ -1,63 +1,15 @@
 import NorthConnector from '../north-connector';
-import EncryptionService, { encryptionService } from '../../service/encryption.service';
 import pino from 'pino';
 import { NorthOPCUASettings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import path from 'node:path';
-import { createFolder } from '../../service/utils';
 import fs from 'node:fs/promises';
-import { SouthOPCUASettingsSecurityMode, SouthOPCUASettingsSecurityPolicy } from '../../../shared/model/south-settings.model';
-import {
-  AttributeIds,
-  ClientSession,
-  DataType,
-  OPCUACertificateManager,
-  OPCUAClient,
-  OPCUAClientOptions,
-  resolveNodeId,
-  UserIdentityInfo,
-  UserTokenType
-} from 'node-opcua';
+import { AttributeIds, ClientSession, DataType, OPCUACertificateManager, OPCUAClient, resolveNodeId } from 'node-opcua';
 import { randomUUID } from 'crypto';
 import { OIBusOPCUAValue } from '../../service/transformers/connector-types.model';
 import CacheService from '../../service/cache/cache.service';
-
-function toOPCUASecurityMode(securityMode: SouthOPCUASettingsSecurityMode) {
-  switch (securityMode) {
-    case 'none':
-      return 1;
-    case 'sign':
-      return 2;
-    case 'sign-and-encrypt':
-      return 3;
-  }
-}
-
-function toOPCUASecurityPolicy(securityPolicy: SouthOPCUASettingsSecurityPolicy | null | undefined) {
-  switch (securityPolicy) {
-    case 'none':
-      return 'none';
-    case 'basic128':
-      return 'Basic128';
-    case 'basic192':
-      return 'Basic192';
-    case 'basic192-rsa15':
-      return 'Basic192Rsa15';
-    case 'basic256-rsa15':
-      return 'Basic256Rsa15';
-    case 'basic256-sha256':
-      return 'Basic256Sha256';
-    case 'aes128-sha256-rsa-oaep':
-      return 'Aes128_Sha256_RsaOaep';
-    case 'pub-sub-aes-128-ctr':
-      return 'PubSub_Aes128_CTR';
-    case 'pub-sub-aes-256-ctr':
-      return 'PubSub_Aes256_CTR';
-    default:
-      return undefined;
-  }
-}
+import { createSessionConfigs, initOPCUACertificateFolders } from '../../service/utils-opcua';
 
 /**
  * Class NorthOPCUA - Write values in an OPCUA server
@@ -78,7 +30,7 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
   }
 
   override async start(): Promise<void> {
-    await this.initOpcuaCertificateFolders(this.cacheFolderPath);
+    await initOPCUACertificateFolders(this.cacheFolderPath);
     if (!this.clientCertificateManager) {
       this.clientCertificateManager = new OPCUACertificateManager({
         rootFolder: path.resolve(this.cacheFolderPath, 'opcua'),
@@ -92,67 +44,25 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
   }
 
   override async connect(): Promise<void> {
-    await this.createSession();
-  }
-
-  override async testConnection(): Promise<void> {
-    const tempCertFolder = `opcua-test-${randomUUID()}`;
-    await this.initOpcuaCertificateFolders(tempCertFolder);
-    const clientCertificateManager = new OPCUACertificateManager({
-      rootFolder: path.resolve(tempCertFolder, 'opcua'),
-      automaticallyAcceptUnknownCertificate: true
-    });
-    // Set the state to the CertificateManager to 2 (Initialized) to avoid a call to openssl
-    // It is useful for offline instances of OIBus where downloading openssl is not possible
-    clientCertificateManager.state = 2;
-
-    let session;
-    try {
-      const { options, userIdentity } = await this.createSessionConfigs(
-        this.connector.settings,
-        clientCertificateManager,
-        encryptionService,
-        'OIBus Connector test'
-      );
-      session = await OPCUAClient.createSession(this.connector.settings.url, userIdentity, options);
-    } finally {
-      await fs.rm(path.resolve(tempCertFolder), { recursive: true, force: true });
-
-      if (session) {
-        await session.close();
-        session = null;
-      }
-    }
-  }
-
-  async createSession(): Promise<void> {
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);
       this.reconnectTimeout = null;
     }
     try {
-      const clientName = this.connector.id;
-      const { options, userIdentity } = await this.createSessionConfigs(
-        this.connector.settings,
-        this.clientCertificateManager!,
-        encryptionService,
-        clientName
-      );
-
-      this.logger.debug(`Connecting to OPCUA on ${this.connector.settings.url}`);
-      this.client = await OPCUAClient.createSession(this.connector.settings.url, userIdentity, options);
-      this.logger.info(`OPCUA ${this.connector.name} connected`);
+      await this.createSession();
+      this.logger.info(`OPCUA North connector "${this.connector.name}" connected`);
       await super.connect();
-    } catch (error) {
-      this.logger.error(`Error while connecting to the OPCUA server. ${error}`);
+    } catch (error: unknown) {
+      this.logger.error(`Error while connecting to the OPCUA server: ${(error as Error).message}`);
       await this.disconnect();
-      this.reconnectTimeout = setTimeout(this.createSession.bind(this), this.connector.settings.retryInterval);
+      if (!this.disconnecting && this.connector.enabled) {
+        this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
+      }
     }
   }
 
   override async disconnect(): Promise<void> {
     this.disconnecting = true;
-
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);
       this.reconnectTimeout = null;
@@ -167,68 +77,41 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
     this.disconnecting = false;
   }
 
-  async createSessionConfigs(
-    settings: NorthOPCUASettings,
-    clientCertificateManager: OPCUACertificateManager,
-    encryptionService: EncryptionService,
-    clientName: string
-  ) {
-    const options: OPCUAClientOptions = {
-      applicationName: 'OIBus',
-      connectionStrategy: {
-        initialDelay: 1000,
-        maxRetry: 1
-      },
-      securityMode: toOPCUASecurityMode(settings.securityMode),
-      securityPolicy: toOPCUASecurityPolicy(settings.securityPolicy),
-      endpointMustExist: false,
-      keepSessionAlive: settings.keepSessionAlive,
-      keepPendingSessionsOnDisconnect: false,
-      clientName,
-      clientCertificateManager
-    };
+  override async testConnection(): Promise<void> {
+    const tempCertFolder = `opcua-test-${randomUUID()}`;
+    await initOPCUACertificateFolders(tempCertFolder);
+    const clientCertificateManager = new OPCUACertificateManager({
+      rootFolder: path.resolve(tempCertFolder, 'opcua'),
+      automaticallyAcceptUnknownCertificate: true
+    });
+    // Set the state to the CertificateManager to 2 (Initialized) to avoid a call to openssl
+    // It is useful for offline instances of OIBus where downloading openssl is not possible
+    clientCertificateManager.state = 2;
 
-    let userIdentity: UserIdentityInfo;
-    switch (settings.authentication.type) {
-      case 'basic':
-        userIdentity = {
-          type: UserTokenType.UserName,
-          userName: settings.authentication.username!,
-          password: await encryptionService.decryptText(settings.authentication.password!)
-        };
-        break;
-      case 'cert':
-        const certContent = await fs.readFile(path.resolve(settings.authentication.certFilePath!));
-        const privateKeyContent = await fs.readFile(path.resolve(settings.authentication.keyFilePath!));
-        userIdentity = {
-          type: UserTokenType.Certificate,
-          certificateData: certContent,
-          privateKey: privateKeyContent.toString('utf8')
-        };
-        break;
-      default:
-        userIdentity = { type: UserTokenType.Anonymous };
+    let session;
+    try {
+      session = await this.createSession();
+    } finally {
+      await fs.rm(path.resolve(tempCertFolder), { recursive: true, force: true });
+      if (session) {
+        await session.close();
+        session = null;
+      }
     }
-
-    return { options, userIdentity };
   }
 
-  async initOpcuaCertificateFolders(certFolder: string): Promise<void> {
-    const opcuaBaseFolder = path.resolve(certFolder, 'opcua');
-    await createFolder(path.join(opcuaBaseFolder, 'own'));
-    await createFolder(path.join(opcuaBaseFolder, 'own/certs'));
-    await createFolder(path.join(opcuaBaseFolder, 'own/private'));
-    await createFolder(path.join(opcuaBaseFolder, 'rejected'));
-    await createFolder(path.join(opcuaBaseFolder, 'trusted'));
-    await createFolder(path.join(opcuaBaseFolder, 'trusted/certs'));
-    await createFolder(path.join(opcuaBaseFolder, 'trusted/crl'));
-
-    await createFolder(path.join(opcuaBaseFolder, 'issuers'));
-    await createFolder(path.join(opcuaBaseFolder, 'issuers/certs')); // contains Trusted CA certificates
-    await createFolder(path.join(opcuaBaseFolder, 'issuers/crl')); // contains CRL of revoked CA certificates
-
-    await fs.copyFile(encryptionService.getPrivateKeyPath(), `${opcuaBaseFolder}/own/private/private_key.pem`);
-    await fs.copyFile(encryptionService.getCertPath(), `${opcuaBaseFolder}/own/certs/client_certificate.pem`);
+  async createSession(): Promise<ClientSession> {
+    const { options, userIdentity } = await createSessionConfigs(
+      this.connector.id,
+      this.connector.name,
+      this.connector.settings,
+      this.clientCertificateManager!,
+      undefined
+    );
+    this.logger.debug(`Connecting to OPCUA on ${this.connector.settings.url}`);
+    const session = await OPCUAClient.createSession(this.connector.settings.url, userIdentity, options);
+    this.logger.info(`OPCUA connector "${this.connector.name}" connected`);
+    return session;
   }
 
   async handleContent(cacheMetadata: CacheMetadata): Promise<void> {
