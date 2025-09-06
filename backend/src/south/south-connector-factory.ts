@@ -4,7 +4,6 @@ import { OIBusContent } from '../../shared/model/engine.model';
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
 import CertificateRepository from '../repository/config/certificate.repository';
 import OIAnalyticsRegistrationRepository from 'src/repository/config/oianalytics-registration.repository';
-import ConnectionService from 'src/service/connection.service';
 import {
   SouthADSItemSettings,
   SouthADSSettings,
@@ -69,8 +68,7 @@ export const buildSouth = (
   southCacheFolder: string,
   southCacheRepository: SouthCacheRepository,
   certificateRepository: CertificateRepository,
-  oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
-  connectionService: ConnectionService
+  oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository
 ): SouthConnector<SouthSettings, SouthItemSettings> => {
   switch (settings.type) {
     case 'ads':
@@ -161,8 +159,7 @@ export const buildSouth = (
         addContent,
         southCacheRepository,
         logger,
-        southCacheFolder,
-        connectionService
+        southCacheFolder
       );
     case 'oracle':
       return new SouthOracle(

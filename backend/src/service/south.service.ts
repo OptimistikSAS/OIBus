@@ -55,7 +55,6 @@ import { OIBusObjectAttribute } from '../../shared/model/form.model';
 import { toScanModeDTO } from './scan-mode.service';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { buildSouth } from '../south/south-connector-factory';
-import ConnectionService from './connection.service';
 
 export const southManifestList: Array<SouthConnectorManifest> = [
   folderScannerManifest,
@@ -124,8 +123,7 @@ export default class SouthService {
       '',
       this.southCacheRepository,
       this.certificateRepository,
-      this.oIAnalyticsRegistrationRepository,
-      new ConnectionService(logger)
+      this.oIAnalyticsRegistrationRepository
     );
     return await south.testConnection();
   }
@@ -187,8 +185,7 @@ export default class SouthService {
       '',
       this.southCacheRepository,
       this.certificateRepository,
-      this.oIAnalyticsRegistrationRepository,
-      new ConnectionService(logger)
+      this.oIAnalyticsRegistrationRepository
     );
     return await south.testItem(testItemToRun, testingSettings, callback);
   }

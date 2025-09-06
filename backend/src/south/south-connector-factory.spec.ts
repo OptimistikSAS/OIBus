@@ -6,7 +6,6 @@ import { OIBusContent } from '../../shared/model/engine.model';
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
 import CertificateRepository from '../repository/config/certificate.repository';
 import OIAnalyticsRegistrationRepository from 'src/repository/config/oianalytics-registration.repository';
-import ConnectionService from 'src/service/connection.service';
 import SouthADS from '../south/south-ads/south-ads';
 import SouthFolderScanner from '../south/south-folder-scanner/south-folder-scanner';
 import SouthModbus from '../south/south-modbus/south-modbus';
@@ -25,42 +24,42 @@ import SouthSFTP from '../south/south-sftp/south-sftp';
 import SouthFTP from '../south/south-ftp/south-ftp';
 import SouthSQLite from '../south/south-sqlite/south-sqlite';
 import {
-  SouthADSSettings,
   SouthADSItemSettings,
-  SouthFolderScannerSettings,
+  SouthADSSettings,
   SouthFolderScannerItemSettings,
-  SouthModbusSettings,
-  SouthModbusItemSettings,
-  SouthMQTTSettings,
-  SouthMQTTItemSettings,
-  SouthMSSQLSettings,
-  SouthMSSQLItemSettings,
-  SouthMySQLSettings,
-  SouthMySQLItemSettings,
-  SouthODBCSettings,
-  SouthODBCItemSettings,
-  SouthOIAnalyticsSettings,
-  SouthOIAnalyticsItemSettings,
-  SouthOLEDBSettings,
-  SouthOLEDBItemSettings,
-  SouthOPCSettings,
-  SouthOPCItemSettings,
-  SouthOPCUASettings,
-  SouthOPCUAItemSettings,
-  SouthOracleSettings,
-  SouthOracleItemSettings,
-  SouthPISettings,
-  SouthPIItemSettings,
-  SouthPostgreSQLSettings,
-  SouthPostgreSQLItemSettings,
-  SouthSFTPSettings,
-  SouthSFTPItemSettings,
-  SouthFTPSettings,
+  SouthFolderScannerSettings,
   SouthFTPItemSettings,
-  SouthSQLiteSettings,
-  SouthSQLiteItemSettings,
+  SouthFTPSettings,
+  SouthItemSettings,
+  SouthModbusItemSettings,
+  SouthModbusSettings,
+  SouthMQTTItemSettings,
+  SouthMQTTSettings,
+  SouthMSSQLItemSettings,
+  SouthMSSQLSettings,
+  SouthMySQLItemSettings,
+  SouthMySQLSettings,
+  SouthODBCItemSettings,
+  SouthODBCSettings,
+  SouthOIAnalyticsItemSettings,
+  SouthOIAnalyticsSettings,
+  SouthOLEDBItemSettings,
+  SouthOLEDBSettings,
+  SouthOPCItemSettings,
+  SouthOPCSettings,
+  SouthOPCUAItemSettings,
+  SouthOPCUASettings,
+  SouthOracleItemSettings,
+  SouthOracleSettings,
+  SouthPIItemSettings,
+  SouthPISettings,
+  SouthPostgreSQLItemSettings,
+  SouthPostgreSQLSettings,
   SouthSettings,
-  SouthItemSettings
+  SouthSFTPItemSettings,
+  SouthSFTPSettings,
+  SouthSQLiteItemSettings,
+  SouthSQLiteSettings
 } from '../../shared/model/south-settings.model';
 
 // Mock all dependencies
@@ -90,7 +89,6 @@ describe('buildSouth', () => {
   const mockSouthCacheRepository = {} as SouthCacheRepository;
   const mockCertificateRepository = {} as CertificateRepository;
   const mockOIAnalyticsRegistrationRepository = {} as OIAnalyticsRegistrationRepository;
-  const mockConnectionService = {} as ConnectionService;
 
   const baseSettings = {
     id: 'test-id',
@@ -117,8 +115,7 @@ describe('buildSouth', () => {
       mockSouthCacheFolder,
       mockSouthCacheRepository,
       mockCertificateRepository,
-      mockOIAnalyticsRegistrationRepository,
-      mockConnectionService
+      mockOIAnalyticsRegistrationRepository
     );
     expect(SouthADS).toHaveBeenCalledTimes(1);
     expect(result).toBeInstanceOf(SouthADS);
@@ -137,8 +134,7 @@ describe('buildSouth', () => {
       mockSouthCacheFolder,
       mockSouthCacheRepository,
       mockCertificateRepository,
-      mockOIAnalyticsRegistrationRepository,
-      mockConnectionService
+      mockOIAnalyticsRegistrationRepository
     );
     expect(SouthFolderScanner).toHaveBeenCalledTimes(1);
     expect(result).toBeInstanceOf(SouthFolderScanner);
@@ -157,8 +153,7 @@ describe('buildSouth', () => {
       mockSouthCacheFolder,
       mockSouthCacheRepository,
       mockCertificateRepository,
-      mockOIAnalyticsRegistrationRepository,
-      mockConnectionService
+      mockOIAnalyticsRegistrationRepository
     );
     expect(SouthModbus).toHaveBeenCalledTimes(1);
     expect(result).toBeInstanceOf(SouthModbus);
@@ -177,8 +172,7 @@ describe('buildSouth', () => {
       mockSouthCacheFolder,
       mockSouthCacheRepository,
       mockCertificateRepository,
-      mockOIAnalyticsRegistrationRepository,
-      mockConnectionService
+      mockOIAnalyticsRegistrationRepository
     );
     expect(SouthMQTT).toHaveBeenCalledTimes(1);
     expect(result).toBeInstanceOf(SouthMQTT);
@@ -197,8 +191,7 @@ describe('buildSouth', () => {
       mockSouthCacheFolder,
       mockSouthCacheRepository,
       mockCertificateRepository,
-      mockOIAnalyticsRegistrationRepository,
-      mockConnectionService
+      mockOIAnalyticsRegistrationRepository
     );
     expect(SouthMSSQL).toHaveBeenCalledTimes(1);
     expect(result).toBeInstanceOf(SouthMSSQL);
@@ -217,8 +210,7 @@ describe('buildSouth', () => {
       mockSouthCacheFolder,
       mockSouthCacheRepository,
       mockCertificateRepository,
-      mockOIAnalyticsRegistrationRepository,
-      mockConnectionService
+      mockOIAnalyticsRegistrationRepository
     );
     expect(SouthMySQL).toHaveBeenCalledTimes(1);
     expect(result).toBeInstanceOf(SouthMySQL);
@@ -237,8 +229,7 @@ describe('buildSouth', () => {
       mockSouthCacheFolder,
       mockSouthCacheRepository,
       mockCertificateRepository,
-      mockOIAnalyticsRegistrationRepository,
-      mockConnectionService
+      mockOIAnalyticsRegistrationRepository
     );
     expect(SouthODBC).toHaveBeenCalledTimes(1);
     expect(result).toBeInstanceOf(SouthODBC);
@@ -257,8 +248,7 @@ describe('buildSouth', () => {
       mockSouthCacheFolder,
       mockSouthCacheRepository,
       mockCertificateRepository,
-      mockOIAnalyticsRegistrationRepository,
-      mockConnectionService
+      mockOIAnalyticsRegistrationRepository
     );
     expect(SouthOIAnalytics).toHaveBeenCalledTimes(1);
     expect(result).toBeInstanceOf(SouthOIAnalytics);
@@ -277,8 +267,7 @@ describe('buildSouth', () => {
       mockSouthCacheFolder,
       mockSouthCacheRepository,
       mockCertificateRepository,
-      mockOIAnalyticsRegistrationRepository,
-      mockConnectionService
+      mockOIAnalyticsRegistrationRepository
     );
     expect(SouthOLEDB).toHaveBeenCalledTimes(1);
     expect(result).toBeInstanceOf(SouthOLEDB);
@@ -297,8 +286,7 @@ describe('buildSouth', () => {
       mockSouthCacheFolder,
       mockSouthCacheRepository,
       mockCertificateRepository,
-      mockOIAnalyticsRegistrationRepository,
-      mockConnectionService
+      mockOIAnalyticsRegistrationRepository
     );
     expect(SouthOPC).toHaveBeenCalledTimes(1);
     expect(result).toBeInstanceOf(SouthOPC);
@@ -317,8 +305,7 @@ describe('buildSouth', () => {
       mockSouthCacheFolder,
       mockSouthCacheRepository,
       mockCertificateRepository,
-      mockOIAnalyticsRegistrationRepository,
-      mockConnectionService
+      mockOIAnalyticsRegistrationRepository
     );
     expect(SouthOPCUA).toHaveBeenCalledTimes(1);
     expect(result).toBeInstanceOf(SouthOPCUA);
@@ -337,8 +324,7 @@ describe('buildSouth', () => {
       mockSouthCacheFolder,
       mockSouthCacheRepository,
       mockCertificateRepository,
-      mockOIAnalyticsRegistrationRepository,
-      mockConnectionService
+      mockOIAnalyticsRegistrationRepository
     );
     expect(SouthOracle).toHaveBeenCalledTimes(1);
     expect(result).toBeInstanceOf(SouthOracle);
@@ -357,8 +343,7 @@ describe('buildSouth', () => {
       mockSouthCacheFolder,
       mockSouthCacheRepository,
       mockCertificateRepository,
-      mockOIAnalyticsRegistrationRepository,
-      mockConnectionService
+      mockOIAnalyticsRegistrationRepository
     );
     expect(SouthPI).toHaveBeenCalledTimes(1);
     expect(result).toBeInstanceOf(SouthPI);
@@ -377,8 +362,7 @@ describe('buildSouth', () => {
       mockSouthCacheFolder,
       mockSouthCacheRepository,
       mockCertificateRepository,
-      mockOIAnalyticsRegistrationRepository,
-      mockConnectionService
+      mockOIAnalyticsRegistrationRepository
     );
     expect(SouthPostgreSQL).toHaveBeenCalledTimes(1);
     expect(result).toBeInstanceOf(SouthPostgreSQL);
@@ -397,8 +381,7 @@ describe('buildSouth', () => {
       mockSouthCacheFolder,
       mockSouthCacheRepository,
       mockCertificateRepository,
-      mockOIAnalyticsRegistrationRepository,
-      mockConnectionService
+      mockOIAnalyticsRegistrationRepository
     );
     expect(SouthSFTP).toHaveBeenCalledTimes(1);
     expect(result).toBeInstanceOf(SouthSFTP);
@@ -417,8 +400,7 @@ describe('buildSouth', () => {
       mockSouthCacheFolder,
       mockSouthCacheRepository,
       mockCertificateRepository,
-      mockOIAnalyticsRegistrationRepository,
-      mockConnectionService
+      mockOIAnalyticsRegistrationRepository
     );
     expect(SouthFTP).toHaveBeenCalledTimes(1);
     expect(result).toBeInstanceOf(SouthFTP);
@@ -437,8 +419,7 @@ describe('buildSouth', () => {
       mockSouthCacheFolder,
       mockSouthCacheRepository,
       mockCertificateRepository,
-      mockOIAnalyticsRegistrationRepository,
-      mockConnectionService
+      mockOIAnalyticsRegistrationRepository
     );
     expect(SouthSQLite).toHaveBeenCalledTimes(1);
     expect(result).toBeInstanceOf(SouthSQLite);
@@ -458,8 +439,7 @@ describe('buildSouth', () => {
         mockSouthCacheFolder,
         mockSouthCacheRepository,
         mockCertificateRepository,
-        mockOIAnalyticsRegistrationRepository,
-        mockConnectionService
+        mockOIAnalyticsRegistrationRepository
       )
     ).toThrow(`South connector of type "unknown" not installed`);
   });
