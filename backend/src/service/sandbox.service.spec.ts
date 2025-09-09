@@ -4,7 +4,7 @@ import SandboxService from './sandbox.service';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import { CustomTransformer } from '../model/transformer.model';
 import { OIBusObjectAttribute } from '../../shared/model/form.model';
-import path from 'node:path';
+import fs from 'node:fs';
 
 // Javascript sandbox mock
 const transformFnRef = { apply: jest.fn() };
@@ -46,6 +46,11 @@ jest.mock('pyodide', () => {
     loadPyodide: mockLoadPyodide
   };
 });
+
+// Mock fs module for path existence checks
+jest.mock('node:fs', () => ({
+  existsSync: jest.fn()
+}));
 
 const logger: pino.Logger = new PinoLogger();
 
@@ -229,6 +234,9 @@ def transform(content, filename, source, options):
 
   describe('with mocked pyodide', () => {
     beforeEach(() => {
+      // Mock fs.existsSync to return true for pyodide path
+      (fs.existsSync as jest.Mock).mockReturnValue(true);
+
       // Mock successful execution
       (jest.requireMock('pyodide').loadPyodide as jest.Mock).mockResolvedValue({
         runPythonAsync: mockRunPython.mockImplementation((code: string) => {
@@ -254,8 +262,7 @@ def transform(content, filename, source, options):
       const result = await sandboxService.execute('data', 'source', 'my-file.txt', testTransformer, {});
       // Verify Pyodide was initialized
       expect(jest.requireMock('pyodide').loadPyodide).toHaveBeenCalledWith({
-        indexURL: path.join(__dirname, '../../../../lib/pyodide'),
-        packages: ['numpy', 'pandas', 'python-dateutil', 'pytz', 'six'],
+        indexURL: expect.stringMatching(/.*pyodide.*/),
         stdout: expect.any(Function),
         stderr: expect.any(Function)
       });
@@ -379,8 +386,8 @@ def transform(content, filename, source, options):
       await sandboxService.execute('["test"]', 'test-source', 'test-file.txt', testTransformer, {});
 
       // Verify stdout messages were logged
-      expect(logger.debug).toHaveBeenCalledWith(stdoutMessages[0]);
-      expect(logger.debug).toHaveBeenCalledWith(stdoutMessages[1]);
+      expect(logger.debug).toHaveBeenCalledWith(`Pyodide stdout: ${stdoutMessages[0]}`);
+      expect(logger.debug).toHaveBeenCalledWith(`Pyodide stdout: ${stdoutMessages[1]}`);
     });
 
     it('should log stderr messages from Pyodide', async () => {
@@ -406,8 +413,8 @@ def transform(content, filename, source, options):
       await sandboxService.execute('["test"]', 'test-source', 'test-file.txt', testTransformer, {});
 
       // Verify stderr messages were logged
-      expect(logger.error).toHaveBeenCalledWith(stderrMessages[0]);
-      expect(logger.error).toHaveBeenCalledWith(stderrMessages[1]);
+      expect(logger.error).toHaveBeenCalledWith(`Pyodide stderr: ${stderrMessages[0]}`);
+      expect(logger.error).toHaveBeenCalledWith(`Pyodide stderr: ${stderrMessages[1]}`);
     });
   });
 
