@@ -885,6 +885,28 @@
                "delete": "Delete this Custom Transformer"
              }
           },
+          "manifest-builder": {
+            "key": "Key",
+            "translation-key": "Translation Key",
+            "visible": "Visible",
+            "wrap-in-box": "Wrap in Box",
+            "attributes": "Attributes",
+            "add-attribute": "Add Attribute",
+            "type": "Type",
+            "default-value": "Default Value",
+            "unit": "Unit",
+            "selectable-values": "Selectable Values",
+            "content-type": "Content Type",
+            "acceptable-type": "Acceptable Type",
+            "paginate": "Paginate",
+            "number-of-elements-per-page": "Number of Elements per Page",
+            "row": "Row",
+            "columns": "Columns",
+            "display-in-view-mode": "Display in View Mode",
+            "nested-attributes": "Nested Attributes",
+            "add-nested-attribute": "Add Nested Attribute",
+            "save": "Save Manifest"
+          },
           "mapping": {
             "title": "Mapping table",
             "point-id": "Point ID (Reference)",

@@ -24,6 +24,7 @@ import { OIBusObjectAttribute } from '../../../../../../backend/shared/model/for
 import { OibusInputDataTypeEnumPipe } from '../../../shared/oibus-input-data-type-enum.pipe';
 import { OibusOutputDataTypeEnumPipe } from '../../../shared/oibus-output-data-type-enum.pipe';
 import { OIBusTransformerLanguageEnumPipe } from '../../../shared/oibus-transformer-language-enum.pipe';
+import { ManifestBuilderComponent } from '../../../shared/form/manifest-builder/manifest-builder.component';
 
 @Component({
   selector: 'oib-edit-transformer-modal',
@@ -37,7 +38,8 @@ import { OIBusTransformerLanguageEnumPipe } from '../../../shared/oibus-transfor
     SaveButtonComponent,
     OibusInputDataTypeEnumPipe,
     OibusOutputDataTypeEnumPipe,
-    OIBusTransformerLanguageEnumPipe
+    OIBusTransformerLanguageEnumPipe,
+    ManifestBuilderComponent
   ]
 })
 export class EditTransformerModalComponent {
@@ -51,6 +53,7 @@ export class EditTransformerModalComponent {
   state = new ObservableState();
 
   customTransformer: CustomTransformerDTO | null = null;
+  currentManifest: OIBusObjectAttribute | null = null;
 
   inputTypes = INPUT_TYPES;
   outputTypes = OUTPUT_TYPES;
@@ -62,22 +65,33 @@ export class EditTransformerModalComponent {
   form = this.fb.group({
     name: ['', Validators.required],
     description: '',
-    customCode: ['', Validators.required],
-    customManifest: ['', Validators.required]
+    customCode: ['', Validators.required]
   });
 
   prepareForCreation() {
     this.mode = 'create';
+    this.currentManifest = {
+      type: 'object',
+      key: 'options',
+      translationKey: 'configuration.oibus.manifest.transformers.options',
+      attributes: [],
+      enablingConditions: [],
+      validators: [],
+      displayProperties: {
+        visible: true,
+        wrapInBox: false
+      }
+    };
   }
 
   prepareForEdition(transformer: CustomTransformerDTO) {
     this.mode = 'edit';
     this.customTransformer = transformer;
+    this.currentManifest = transformer.manifest;
     this.form.patchValue({
       name: transformer.name,
       description: transformer.description,
-      customCode: transformer.customCode,
-      customManifest: JSON.stringify(transformer.manifest)
+      customCode: transformer.customCode
     });
   }
 
@@ -86,6 +100,11 @@ export class EditTransformerModalComponent {
       return this.unsavedChangesConfirmation.confirmUnsavedChanges();
     }
     return true;
+  }
+
+  onManifestChange(manifest: OIBusObjectAttribute) {
+    this.currentManifest = manifest;
+    this.form.markAsDirty();
   }
 
   cancel() {
@@ -122,7 +141,7 @@ export class EditTransformerModalComponent {
       name: formValue.name!,
       description: formValue.description!,
       customCode: formValue.customCode!,
-      customManifest: JSON.parse(formValue.customManifest!) as OIBusObjectAttribute
+      customManifest: this.currentManifest!
     };
 
     let obs: Observable<TransformerDTO>;
