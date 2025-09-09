@@ -1,10 +1,19 @@
 import { OIBusObjectAttribute } from './form.model';
 
+export const INPUT_TYPES = ['any', 'time-values', 'setpoint'];
+export type InputType = (typeof INPUT_TYPES)[number];
+
+export const OUTPUT_TYPES = ['any', 'time-values', 'opcua', 'mqtt', 'modbus'];
+export type OutputType = (typeof OUTPUT_TYPES)[number];
+
+export const CUSTOM_TRANSFORMER_LANGUAGES = ['javascript', 'typescript', 'python'];
+export type TransformerLanguage = (typeof CUSTOM_TRANSFORMER_LANGUAGES)[number];
+
 export interface BaseTransformerDTO {
   id: string;
   type: 'custom' | 'standard';
-  inputType: string;
-  outputType: string;
+  inputType: InputType;
+  outputType: OutputType;
   manifest: OIBusObjectAttribute;
 }
 
@@ -13,6 +22,7 @@ export interface CustomTransformerDTO extends BaseTransformerDTO {
   name: string;
   description: string;
   customCode: string;
+  language: TransformerLanguage;
 }
 
 export interface StandardTransformerDTO extends BaseTransformerDTO {
@@ -23,14 +33,14 @@ export interface StandardTransformerDTO extends BaseTransformerDTO {
 export type TransformerDTO = CustomTransformerDTO | StandardTransformerDTO;
 
 export interface TransformerDTOWithOptions {
-  inputType: string;
+  inputType: InputType;
   transformer: TransformerDTO;
   options: object;
 }
 export interface BaseTransformerCommand {
   type: 'custom' | 'standard';
-  inputType: string;
-  outputType: string;
+  inputType: InputType;
+  outputType: OutputType;
 }
 
 export interface StandardTransformerCommand extends BaseTransformerCommand {
@@ -43,6 +53,7 @@ export interface CustomTransformerCommand extends BaseTransformerCommand {
   name: string;
   description: string;
   customCode: string;
+  language: TransformerLanguage;
   customManifest: OIBusObjectAttribute;
 }
 
@@ -50,7 +61,7 @@ export type TransformerCommandDTO = StandardTransformerCommand | CustomTransform
 
 export interface TransformerSearchParam {
   type?: 'standard' | 'custom';
-  inputType?: string;
-  outputType?: string;
+  inputType?: InputType;
+  outputType?: OutputType;
   page?: number;
 }
