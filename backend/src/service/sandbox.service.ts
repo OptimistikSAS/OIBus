@@ -89,6 +89,7 @@ export default class SandboxService {
     transformer: CustomTransformer,
     options: object
   ): Promise<{ metadata: CacheMetadata; output: string }> {
+    this.logger.debug(`Starting Python execution for transformer: ${transformer.id}`);
     // Handle pkg bundling - when bundled, __dirname points to a different location
     // We need to find the pyodide files relative to the executable
     let pyodidePath: string;
@@ -103,14 +104,35 @@ export default class SandboxService {
 
     this.logger.debug(`Loading Pyodide from: ${pyodidePath}`);
 
-    const pyodide = await loadPyodide({
-      indexURL: pyodidePath,
-      packages: ['numpy', 'pandas', 'python-dateutil', 'pytz', 'six'],
-      stdout: msg => this.logger.debug(msg),
-      stderr: msg => this.logger.error(msg)
-    });
-    if (!pyodide) {
-      throw new Error('Pyodide not initialized');
+    let pyodide;
+    try {
+      // First try to load Pyodide without packages to avoid dynamic import issues
+      this.logger.debug('Loading Pyodide without packages...');
+      pyodide = await loadPyodide({
+        indexURL: pyodidePath,
+        stdout: msg => this.logger.debug(`Pyodide stdout: ${msg}`),
+        stderr: msg => this.logger.error(`Pyodide stderr: ${msg}`)
+      });
+      if (!pyodide) {
+        throw new Error('Pyodide not initialized');
+      }
+      this.logger.debug('Pyodide loaded successfully without packages');
+
+      // Now try to load packages one by one
+      const packages = ['numpy', 'pandas', 'python-dateutil', 'pytz', 'six'];
+      for (const pkg of packages) {
+        try {
+          this.logger.debug(`Loading package: ${pkg}`);
+          await pyodide.loadPackage(pkg);
+          this.logger.debug(`Package ${pkg} loaded successfully`);
+        } catch (pkgError) {
+          this.logger.warn(`Failed to load package ${pkg}: ${pkgError}`);
+          // Continue with other packages
+        }
+      }
+    } catch (error) {
+      this.logger.error(`Failed to load Pyodide: ${error}`);
+      throw error;
     }
 
     // Prepare the complete Python code with wrapper
@@ -194,13 +216,29 @@ def call_transform():
   `);
 
     // First run the complete Python code to define all functions
-    await pyodide.runPythonAsync(completePythonCode);
+    this.logger.debug('Executing Python transformer code...');
+    try {
+      await pyodide.runPythonAsync(completePythonCode);
+      this.logger.debug('Python transformer code executed successfully');
+    } catch (error) {
+      this.logger.error(`Failed to execute Python transformer code: ${error}`);
+      throw error;
+    }
 
     // Explicitly call the call_transform function and get its return value
-    const resultStr = await pyodide.runPythonAsync(`
-      result = call_transform()
-      result
-    `);
+    this.logger.debug('Calling Python transform function...');
+    let resultStr;
+    try {
+      resultStr = await pyodide.runPythonAsync(`
+        result = call_transform()
+        result
+      `);
+      this.logger.debug(`Python transform result: ${resultStr}`);
+    } catch (error) {
+      this.logger.error(`Failed to call Python transform function: ${error}`);
+      throw error;
+    }
+
     if (!resultStr) {
       throw new Error('Python execution returned no result');
     }
