@@ -6,7 +6,6 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
 import { TransformerService } from '../../../services/transformer.service';
-import { OIBusObjectAttribute } from '../../../../../../backend/shared/model/form.model';
 import { OibCodeBlockComponent } from '../../../shared/form/oib-code-block/oib-code-block.component';
 import { OibCodeBlockStubComponent } from '../../../shared/form/oib-code-block/oib-code-block-stub.component';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
@@ -42,7 +41,7 @@ class EditTransformerModalComponentTester extends ComponentTester<EditTransforme
   }
 
   get manifest() {
-    return this.input('#custom-manifest')!;
+    return this.element('oib-manifest-builder')!;
   }
 
   get validationErrors() {
@@ -87,7 +86,7 @@ describe('EditTransformerModalComponent', () => {
     TestBed.createComponent(DefaultValidationErrorsComponent).detectChanges();
 
     transformerService.create.and.returnValue(of(testData.transformers.customList[0]));
-    transformerService.get.and.returnValue(of(testData.transformers.customList[0]));
+    transformerService.findById.and.returnValue(of(testData.transformers.customList[0]));
     transformerService.update.and.returnValue(of(undefined));
 
     tester = new EditTransformerModalComponentTester();
@@ -109,7 +108,7 @@ describe('EditTransformerModalComponent', () => {
     tester.name.fillWith('my new transformer');
     tester.description.fillWith('my description');
     tester.componentInstance.form.get('customCode')!.setValue('my code');
-    tester.manifest.fillWith('{}');
+    // Manifest is handled by the ManifestBuilderComponent, not a simple input
 
     tester.save.click();
 
@@ -121,7 +120,7 @@ describe('EditTransformerModalComponent', () => {
       description: 'my description',
       customCode: 'my code',
       language: 'javascript',
-      customManifest: {} as OIBusObjectAttribute
+      customManifest: tester.componentInstance.form.get('customManifest')!.value!
     });
     expect(fakeActiveModal.close).toHaveBeenCalledWith(testData.transformers.customList[0]);
   });
@@ -148,7 +147,7 @@ describe('EditTransformerModalComponent', () => {
       language: testData.transformers.customList[0].language,
       customManifest: testData.transformers.customList[0].manifest
     });
-    expect(transformerService.get).toHaveBeenCalledWith(testData.transformers.customList[0].id);
+    expect(transformerService.findById).toHaveBeenCalledWith(testData.transformers.customList[0].id);
     expect(fakeActiveModal.close).toHaveBeenCalledWith(testData.transformers.customList[0]);
   });
 
@@ -158,8 +157,9 @@ describe('EditTransformerModalComponent', () => {
 
     tester.save.click();
 
-    // Name, code and manifest are not specified
-    expect(tester.validationErrors.length).toBe(3);
+    // Name and customCode are required fields in the main form
+    // inputType, outputType, and language are separate required controls
+    expect(tester.validationErrors.length).toBe(2);
     expect(fakeActiveModal.close).not.toHaveBeenCalled();
   });
 
