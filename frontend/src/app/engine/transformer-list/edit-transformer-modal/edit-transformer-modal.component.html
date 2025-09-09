@@ -4,7 +4,7 @@
 @if (form) {
   <div class="modal-body">
     <form [formGroup]="form" (ngSubmit)="save()" id="form">
-      <div class="row">
+      <div class="row mt-2">
         <!-- Name -->
         <div class="form-group">
           <label class="form-label" for="name" translate="configuration.oibus.manifest.transformers.edit-transformer-modal.name"></label>
@@ -100,20 +100,14 @@
             [language]="customTransformer ? customTransformer.language : this.language.value!"
           />
         }
-
         <val-errors controlName="customCode" />
       </div>
 
       <div class="row">
-        <!-- Manifest -->
+        <!-- Manifest Builder -->
         <div class="form-group">
-          <label
-            class="form-label"
-            for="custom-manifest"
-            translate="configuration.oibus.manifest.transformers.edit-transformer-modal.custom-manifest"
-          ></label>
-          <input formControlName="customManifest" id="custom-manifest" class="form-control" />
-          <val-errors controlName="customManifest" />
+          <label class="form-label" translate="configuration.oibus.manifest.transformers.edit-transformer-modal.custom-manifest"></label>
+          <oib-manifest-builder formControlName="customManifest" />
         </div>
       </div>
     </form>
