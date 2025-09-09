@@ -4,7 +4,7 @@ import { ControlContainer, FormControl, FormGroup, FormGroupName, ReactiveFormsM
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { of, startWith, switchMap } from 'rxjs';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { OIBusArrayAttribute, OIBusAttributeType, OIBusObjectAttribute } from '../../../../../../backend/shared/model/form.model';
+import { OIBusArrayAttribute, OIBusAttributeType } from '../../../../../../backend/shared/model/form.model';
 import { BoxComponent, BoxTitleDirective } from '../../box/box.component';
 import { PaginationComponent } from '../../pagination/pagination.component';
 import { ModalService } from '../../modal.service';
@@ -12,7 +12,6 @@ import { ArrayPage } from '../../pagination/array-page';
 import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.model';
 import { CertificateDTO } from '../../../../../../backend/shared/model/certificate.model';
 import { OIBusEditArrayElementModalComponent } from './oibus-edit-array-element-modal/oibus-edit-array-element-modal.component';
-import { isDisplayableAttribute } from '../dynamic-form.builder';
 import { ValErrorDelayDirective } from '../val-error-delay.directive';
 import { ValidationErrorsComponent } from 'ngx-valdemort';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -22,12 +21,7 @@ import { NotificationService } from '../../notification.service';
 import { ImportArrayValidationModalComponent } from './import-array-validation-modal/import-array-validation-modal.component';
 import { exportArrayElements, validateArrayElementsImport } from '../../utils/csv.utils';
 import { DownloadService } from '../../../services/download.service';
-
-interface Column {
-  path: Array<string>;
-  type: OIBusAttributeType;
-  translationKey: string;
-}
+import { FormUtils } from '../form-utils';
 
 @Component({
   selector: 'oib-oibus-array-form-control',
@@ -65,7 +59,7 @@ export class OIBusArrayFormControlComponent {
   southId = input<string>();
 
   private readonly controlValue = toSignal(toObservable(this.control).pipe(switchMap(c => c.valueChanges.pipe(startWith(c.value)))));
-  readonly columns = computed(() => this.buildColumn(this.arrayAttribute().rootAttribute, []));
+  readonly columns = computed(() => FormUtils.buildColumn(this.arrayAttribute().rootAttribute, []));
   readonly paginatedValues = computed(() => {
     if (this.arrayAttribute().paginate) {
       return new ArrayPage(this.controlValue()!, this.arrayAttribute().numberOfElementPerPage);
@@ -133,59 +127,8 @@ export class OIBusArrayFormControlComponent {
     this.paginatedValues().gotoPage(0);
   }
 
-  buildColumn(attribute: OIBusObjectAttribute, prefix: Array<string>): Array<Column> {
-    return attribute.attributes
-      .filter(
-        attribute => attribute.type === 'object' || (isDisplayableAttribute(attribute) && attribute.displayProperties.displayInViewMode)
-      )
-      .map(attribute => {
-        switch (attribute.type) {
-          case 'scan-mode':
-          case 'certificate':
-          case 'timezone':
-          case 'boolean':
-          case 'instant':
-          case 'number':
-          case 'secret':
-          case 'string':
-          case 'code':
-          case 'string-select':
-            return [{ path: [...prefix, attribute.key], type: attribute.type, translationKey: attribute.translationKey }];
-          case 'object':
-            return this.buildColumn(attribute, [...prefix, attribute.key]);
-          case 'array':
-            return [];
-        }
-      })
-      .flat();
-  }
-
   formatValue(element: any, path: Array<string>, type: OIBusAttributeType, translationKey: string) {
-    const value = this.getValueByPath(element, path);
-    if (value === undefined) {
-      return '';
-    }
-    switch (type) {
-      case 'object':
-      case 'array':
-        return '';
-      case 'string-select':
-        return this.translateService.instant(`${translationKey}.${value}`);
-      case 'number':
-      case 'code':
-      case 'string':
-      case 'timezone':
-      case 'instant':
-        return value;
-      case 'boolean':
-        return this.translateService.instant(`enums.boolean.${value}`);
-      case 'scan-mode':
-        return this.scanModes().find(scanMode => scanMode.id === value)?.name;
-    }
-  }
-
-  getValueByPath(obj: any, path: Array<string>) {
-    return path.reduce((acc, key) => acc && acc[key], obj);
+    return FormUtils.formatValue(element, path, type, translationKey, this.translateService, this.scanModes());
   }
 
   exportArray() {
