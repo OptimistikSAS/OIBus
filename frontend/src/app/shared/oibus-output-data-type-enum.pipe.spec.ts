@@ -5,10 +5,11 @@ describe('OibusOutputDataTypeEnumPipe', () => {
   it('should translate OIBus Output data type', () => {
     testEnumPipe(OibusOutputDataTypeEnumPipe, {
       any: 'Any',
-      'time-values': 'OIBus time values',
       mqtt: 'MQTT',
+      modbus: 'Modbus',
+      oianalytics: 'OIAnalytics optimized time values',
       opcua: 'OPCUA',
-      modbus: 'Modbus'
+      'time-values': 'OIBus time values'
     });
   });
 });
