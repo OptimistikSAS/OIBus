@@ -1,5 +1,11 @@
 import { OIBusObjectAttribute } from './form.model';
 
+export const INPUT_TYPES = ['any', 'time-values', 'setpoint'];
+export type InputType = (typeof INPUT_TYPES)[number];
+
+export const OUTPUT_TYPES = ['any', 'time-values', 'opcua', 'mqtt', 'modbus', 'oianalytics'];
+export type OutputType = (typeof OUTPUT_TYPES)[number];
+
 export const CUSTOM_TRANSFORMER_LANGUAGES = ['javascript', 'typescript'];
 export type TransformerLanguage = (typeof CUSTOM_TRANSFORMER_LANGUAGES)[number];
 
