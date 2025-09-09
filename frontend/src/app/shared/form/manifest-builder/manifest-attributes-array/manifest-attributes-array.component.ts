@@ -1,26 +1,25 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { ControlContainer, FormControl, FormGroup, FormGroupName, ReactiveFormsModule } from '@angular/forms';
-
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { startWith, switchMap } from 'rxjs';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { OIBusArrayAttribute, OIBusAttributeType } from '../../../../../../backend/shared/model/form.model';
-import { BoxComponent, BoxTitleDirective } from '../../box/box.component';
-import { PaginationComponent } from '../../pagination/pagination.component';
-import { ModalService } from '../../modal.service';
-import { ArrayPage } from '../../pagination/array-page';
-import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.model';
-import { CertificateDTO } from '../../../../../../backend/shared/model/certificate.model';
-import { OIBusEditArrayElementModalComponent } from './oibus-edit-array-element-modal/oibus-edit-array-element-modal.component';
-import { ValErrorDelayDirective } from '../val-error-delay.directive';
+import { OIBusArrayAttribute, OIBusAttributeType } from '../../../../../../../backend/shared/model/form.model';
+import { BoxComponent, BoxTitleDirective } from '../../../box/box.component';
+import { PaginationComponent } from '../../../pagination/pagination.component';
+import { ModalService } from '../../../modal.service';
+import { ArrayPage } from '../../../pagination/array-page';
+import { ScanModeDTO } from '../../../../../../../backend/shared/model/scan-mode.model';
+import { CertificateDTO } from '../../../../../../../backend/shared/model/certificate.model';
+import { ManifestAttributeEditorModalComponent } from '../manifest-attribute-editor-modal/manifest-attribute-editor-modal.component';
+import { ValErrorDelayDirective } from '../../val-error-delay.directive';
 import { ValidationErrorsComponent } from 'ngx-valdemort';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { FormUtils } from '../form-utils';
+import { FormUtils } from '../../form-utils';
 
 @Component({
-  selector: 'oib-oibus-array-form-control',
-  templateUrl: './oibus-array-form-control.component.html',
-  styleUrl: './oibus-array-form-control.component.scss',
+  selector: 'oib-manifest-attributes-array',
+  templateUrl: './manifest-attributes-array.component.html',
+  styleUrl: './manifest-attributes-array.component.scss',
   viewProviders: [
     {
       provide: ControlContainer,
@@ -39,7 +38,7 @@ import { FormUtils } from '../form-utils';
     NgbTooltip
   ]
 })
-export class OIBusArrayFormControlComponent {
+export class ManifestAttributesArrayComponent {
   private modalService = inject(ModalService);
   private translateService = inject(TranslateService);
 
@@ -60,13 +59,8 @@ export class OIBusArrayFormControlComponent {
 
   async addItem(event: Event) {
     event.preventDefault();
-    const modal = this.modalService.open(OIBusEditArrayElementModalComponent, { size: 'xl' });
-    modal.componentInstance.prepareForCreation(
-      this.scanModes(),
-      this.certificates(),
-      this.parentGroup(),
-      this.arrayAttribute().rootAttribute
-    );
+    const modal = this.modalService.open(ManifestAttributeEditorModalComponent, { size: 'lg' });
+    modal.componentInstance.prepareForCreation(this.scanModes(), this.certificates());
 
     modal.result.subscribe(arrayElement => {
       this.control().setValue([...this.control().value, arrayElement]);
@@ -75,14 +69,12 @@ export class OIBusArrayFormControlComponent {
   }
 
   async copyItem(element: any) {
-    const modal = this.modalService.open(OIBusEditArrayElementModalComponent, { size: 'xl' });
-    modal.componentInstance.prepareForCopy(
-      this.scanModes(),
-      this.certificates(),
-      this.parentGroup(),
-      element,
-      this.arrayAttribute().rootAttribute
-    );
+    const modal = this.modalService.open(ManifestAttributeEditorModalComponent, { size: 'lg' });
+    modal.componentInstance.prepareForCreation(this.scanModes(), this.certificates());
+
+    // Pre-populate with the copied attribute's values
+    const copiedAttribute = { ...element, key: element.key + '_copy' };
+    modal.componentInstance.prepareForEdition(this.scanModes(), this.certificates(), copiedAttribute);
 
     modal.result.subscribe(arrayElement => {
       this.control().setValue([...this.control().value, arrayElement]);
@@ -91,14 +83,8 @@ export class OIBusArrayFormControlComponent {
   }
 
   async editItem(element: any) {
-    const modal = this.modalService.open(OIBusEditArrayElementModalComponent, { size: 'xl' });
-    modal.componentInstance.prepareForEdition(
-      this.scanModes(),
-      this.certificates(),
-      this.parentGroup(),
-      element,
-      this.arrayAttribute().rootAttribute
-    );
+    const modal = this.modalService.open(ManifestAttributeEditorModalComponent, { size: 'lg' });
+    modal.componentInstance.prepareForEdition(this.scanModes(), this.certificates(), element);
 
     modal.result.subscribe(arrayElement => {
       const newArray = [...this.control().value];
