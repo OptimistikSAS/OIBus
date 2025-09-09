@@ -105,15 +105,17 @@
       </div>
 
       <div class="row">
-        <!-- Manifest -->
+        <!-- Manifest Builder -->
         <div class="form-group">
           <label
             class="form-label"
-            for="custom-manifest"
             translate="configuration.oibus.manifest.transformers.edit-transformer-modal.custom-manifest"
           ></label>
-          <input formControlName="customManifest" id="custom-manifest" class="form-control" />
-          <val-errors controlName="customManifest" />
+          @if (currentManifest) {
+            <oib-manifest-builder
+              [manifest]="currentManifest"
+              (manifestChange)="onManifestChange($event)" />
+          }
         </div>
       </div>
     </form>
