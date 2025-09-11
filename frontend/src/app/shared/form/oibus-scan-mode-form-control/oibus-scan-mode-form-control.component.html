@@ -3,7 +3,7 @@
   <select class="form-select" [id]="scanModeAttribute().key" [formControlName]="scanModeAttribute().key">
     <option [ngValue]="null"></option>
     @for (scanMode of scanModes(); track scanMode.id) {
-      <option [value]="scanMode.id">{{ scanMode.name }}</option>
+      <option [ngValue]="scanMode">{{ scanMode.name }}</option>
     }
   </select>
   <val-errors [controlName]="scanModeAttribute().key" />

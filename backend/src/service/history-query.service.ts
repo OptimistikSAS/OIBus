@@ -667,7 +667,7 @@ export const toHistoryQueryDTO = <S extends SouthSettings, N extends NorthSettin
     northSettings: encryptionService.filterSecrets<N>(historyQuery.northSettings, northManifest.settings),
     caching: {
       trigger: {
-        scanModeId: historyQuery.caching.trigger.scanMode.id,
+        scanMode: historyQuery.caching.trigger.scanMode,
         numberOfElements: historyQuery.caching.trigger.numberOfElements,
         numberOfFiles: historyQuery.caching.trigger.numberOfFiles
       },
