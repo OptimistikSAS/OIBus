@@ -275,14 +275,14 @@ describe('EditSouthItemModalComponent', () => {
     it('should save if valid', fakeAsync(() => {
       tester.name.fillWith('South Item 1 (updated)');
       tester.enabled.uncheck();
-      tester.scanMode.selectLabel('Subscription');
+      tester.scanMode.selectLabel('scanMode2');
       tester.save.click();
 
       expect(fakeActiveModal.close).toHaveBeenCalledWith({
         id: 'id1',
         enabled: false,
         name: 'South Item 1 (updated)',
-        scanMode: { id: 'subscription', name: 'Subscription', description: 'Subscription', cron: 'subscription' },
+        scanMode: { id: 'scanModeId2', name: 'scanMode2', description: 'my second scanMode', cron: '0 * * * * *' },
         settings: {
           objectArray: [],
           objectSettings: {},

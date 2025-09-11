@@ -400,7 +400,7 @@ const manifest: SouthConnectorManifest = {
         },
         {
           type: 'scan-mode',
-          key: 'scanModeId',
+          key: 'scanMode',
           acceptableType: 'SUBSCRIPTION',
           translationKey: 'configuration.oibus.manifest.south.items.scan-mode',
           validators: [

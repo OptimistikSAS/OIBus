@@ -331,7 +331,7 @@ const southTestManifest: SouthConnectorManifest = {
         },
         {
           type: 'scan-mode',
-          key: 'scanModeId',
+          key: 'scanMode',
           acceptableType: 'POLL',
           translationKey: 'configuration.oibus.manifest.south.items.scan-mode',
           validators: [
