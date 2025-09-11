@@ -82,7 +82,7 @@ export class EditSouthComponent implements OnInit, CanComponentDeactivate {
     combineLatest([this.scanModeService.list(), this.certificateService.list(), this.route.paramMap, this.route.queryParamMap])
       .pipe(
         switchMap(([scanModes, certificates, params, queryParams]) => {
-          this.scanModes = scanModes.filter(scanMode => scanMode.id !== 'subscription');
+          this.scanModes = scanModes;
           this.certificates = certificates;
           const paramSouthId = params.get('southId');
           const duplicateSouthId = queryParams.get('duplicate');
