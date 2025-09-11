@@ -253,8 +253,8 @@ export class EditSouthItemModalComponent {
 
     // if we have an item, we initialize the values
     if (this.item) {
-      const scanMode = this.scanModes.find(element => element.id === this.item!.scanMode.id)!; // used to have the same ref
-      this.form.patchValue({ name: this.item.name, enabled: this.item.enabled, scanMode, settings: this.item.settings });
+      this.item.scanMode = this.scanModes.find(element => element.id === this.item!.scanMode.id)!; // used to have the same ref
+      this.form.patchValue(this.item);
     } else {
       this.form.setValue(this.form.getRawValue());
     }

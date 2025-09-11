@@ -110,7 +110,7 @@
                 <td
                   translate="north.caching.trigger.value"
                   [translateParams]="{
-                    scanMode: getScanMode(historyQuery.caching.trigger.scanModeId),
+                    scanMode: historyQuery.caching.trigger.scanMode.name,
                     numberOfElements: historyQuery.caching.trigger.numberOfElements,
                     numberOfFiles: historyQuery.caching.trigger.numberOfFiles
                   }"

@@ -87,7 +87,7 @@ export class EditNorthComponent implements OnInit, CanComponentDeactivate {
     enabled: FormControl<boolean>;
     caching: FormGroup<{
       trigger: FormGroup<{
-        scanModeId: FormControl<string | null>;
+        scanMode: FormControl<ScanModeDTO | null>;
         numberOfElements: FormControl<number>;
         numberOfFiles: FormControl<number>;
       }>;
@@ -113,7 +113,7 @@ export class EditNorthComponent implements OnInit, CanComponentDeactivate {
   inMemorySubscriptions: Array<SouthConnectorLightDTO> = [];
   scanModeAttribute: OIBusScanModeAttribute = {
     type: 'scan-mode',
-    key: 'scanModeId',
+    key: 'scanMode',
     translationKey: 'north.caching.trigger.schedule',
     acceptableType: 'POLL',
     validators: [{ type: 'REQUIRED', arguments: [] }],
@@ -188,7 +188,7 @@ export class EditNorthComponent implements OnInit, CanComponentDeactivate {
       settings: this.fb.group({}),
       caching: this.fb.group({
         trigger: this.fb.group({
-          scanModeId: this.fb.control<string | null>(null, Validators.required),
+          scanMode: this.fb.control<ScanModeDTO | null>(null, Validators.required),
           numberOfElements: [1_000, Validators.required],
           numberOfFiles: [1, Validators.required]
         }),
@@ -215,6 +215,10 @@ export class EditNorthComponent implements OnInit, CanComponentDeactivate {
     addEnablingConditions(this.form.controls.settings, this.manifest!.settings.enablingConditions);
     // if we have a south connector, we initialize the values
     if (this.northConnector) {
+      // used to have the same ref
+      this.northConnector.caching.trigger.scanMode = this.scanModes.find(
+        element => element.id === this.northConnector!.caching.trigger.scanMode.id
+      )!;
       this.form.patchValue(this.northConnector);
       // Initialize in-memory subscriptions for edit mode to allow deferring persistence
       this.inMemorySubscriptions = [...this.northConnector.subscriptions];
@@ -295,7 +299,7 @@ export class EditNorthComponent implements OnInit, CanComponentDeactivate {
       settings: formValue.settings!,
       caching: {
         trigger: {
-          scanModeId: formValue.caching!.trigger!.scanModeId!,
+          scanModeId: formValue.caching!.trigger!.scanMode!.id,
           scanModeName: null,
           numberOfElements: formValue.caching!.trigger!.numberOfElements!,
           numberOfFiles: formValue.caching!.trigger!.numberOfFiles!
