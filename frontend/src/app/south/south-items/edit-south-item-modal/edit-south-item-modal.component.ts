@@ -113,7 +113,7 @@ export class EditSouthItemModalComponent {
     this.southId = southId;
     this.southConnectorCommand = southConnectorCommand;
     this.itemList = itemList;
-    this.scanModes = scanModes;
+    this.scanModes = this.setScanModes(scanModes, this.getScanModeAttribute());
     this.certificates = certificates;
     this.buildForm();
   }
@@ -138,7 +138,7 @@ export class EditSouthItemModalComponent {
     this.southConnectorCommand = southConnectorCommand;
     this.itemList = itemList;
     this.item = southItem; // used to check uniqueness
-    this.scanModes = scanModes;
+    this.scanModes = this.setScanModes(scanModes, this.getScanModeAttribute());
     this.certificates = certificates;
     this.tableIndex = tableIndex;
     this.buildForm();
@@ -161,7 +161,7 @@ export class EditSouthItemModalComponent {
     this.southId = southId;
     this.southConnectorCommand = southConnectorCommand;
     this.itemList = itemList;
-    this.scanModes = scanModes;
+    this.scanModes = this.setScanModes(scanModes, this.getScanModeAttribute());
     this.certificates = certificates;
     // used to check uniqueness
     this.item = JSON.parse(JSON.stringify(item)) as SouthConnectorItemDTO<SouthItemSettings>;
@@ -261,7 +261,17 @@ export class EditSouthItemModalComponent {
   }
 
   getScanModeAttribute(): OIBusScanModeAttribute {
-    return this.manifest!.items.rootAttribute.attributes.find(element => element.key === 'scanModeId')! as OIBusScanModeAttribute;
+    return this.manifest!.items.rootAttribute.attributes.find(element => element.key === 'scanMode')! as OIBusScanModeAttribute;
+  }
+
+  setScanModes(scanModes: Array<ScanModeDTO>, scanModeAttribute: OIBusScanModeAttribute): Array<ScanModeDTO> {
+    if (scanModeAttribute.acceptableType === 'SUBSCRIPTION') {
+      return scanModes.filter(scanMode => scanMode.id === 'subscription');
+    } else if (scanModeAttribute.acceptableType === 'POLL') {
+      return scanModes.filter(scanMode => scanMode.id !== 'subscription');
+    } else {
+      return scanModes;
+    }
   }
 
   getItemSettingsAttribute(): OIBusObjectAttribute {

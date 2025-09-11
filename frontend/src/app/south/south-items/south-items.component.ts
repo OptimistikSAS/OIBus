@@ -80,7 +80,7 @@ export class SouthItemsComponent implements OnInit {
   readonly saveChangesDirectly = input.required<boolean>();
 
   readonly scanModeManifest = computed(() => {
-    return this.southManifest().items.rootAttribute.attributes.find(attribute => attribute.key === 'scanModeId')! as OIBusScanModeAttribute;
+    return this.southManifest().items.rootAttribute.attributes.find(attribute => attribute.key === 'scanMode')! as OIBusScanModeAttribute;
   });
 
   readonly inMemoryItems = output<Array<SouthConnectorItemDTO<SouthItemSettings>> | null>();
@@ -128,7 +128,6 @@ export class SouthItemsComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.resetPage();
     const settingsAttribute = this.southManifest().items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'
     )! as OIBusObjectAttribute;
