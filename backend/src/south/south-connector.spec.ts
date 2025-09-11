@@ -246,7 +246,7 @@ describe('SouthConnector with file query', () => {
       testData.south.list[0].items as Array<SouthConnectorItemEntity<SouthFolderScannerItemSettings>>
     );
 
-    expect(logger.error).toHaveBeenCalledWith(`Error when calling fileQuery. ${new Error('file query error')}`);
+    expect(logger.error).toHaveBeenCalledWith(`Error when calling fileQuery: file query error`);
   });
 });
 
@@ -521,8 +521,8 @@ describe('SouthConnector with history and subscription', () => {
       south.connectorConfiguration.settings.throttling.overlap
     );
     expect(south.lastPointQuery).toHaveBeenCalledTimes(1);
-    expect(logger.error).toHaveBeenCalledWith(`Error when calling historyQuery. ${new Error('history query error')}`);
-    expect(logger.error).toHaveBeenCalledWith(`Error when calling lastPointQuery. ${new Error('last point query error')}`);
+    expect(logger.error).toHaveBeenCalledWith(`Error when calling historyQuery: history query error`);
+    expect(logger.error).toHaveBeenCalledWith(`Error when calling lastPointQuery: last point query error`);
 
     south.getThrottlingSettings = jest.fn().mockReturnValueOnce({ maxReadInterval: 0 });
     await south.run(testData.scanMode.list[0].id, testData.south.list[2].items as Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>);
