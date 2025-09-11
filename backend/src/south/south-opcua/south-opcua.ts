@@ -47,6 +47,7 @@ export default class SouthOPCUA
 
   private clientCertificateManager: OPCUACertificateManager | null = null;
   private disconnecting = false;
+  private connecting = false;
   private monitoredItems = new Map<string, ClientMonitoredItem>();
   private subscription: ClientSubscription | null = null;
   private flushTimeout: NodeJS.Timeout | null = null;
@@ -79,12 +80,17 @@ export default class SouthOPCUA
   }
 
   override async connect(): Promise<void> {
+    this.connecting = true;
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);
       this.reconnectTimeout = null;
     }
+    if (this.flushTimeout) {
+      clearTimeout(this.flushTimeout);
+      this.flushTimeout = null;
+    }
     try {
-      await this.createSession();
+      this.client = await this.createSession();
       this.logger.info(`OPCUA South connector "${this.connector.name}" connected`);
       await super.connect();
     } catch (error: unknown) {
@@ -93,6 +99,8 @@ export default class SouthOPCUA
       if (!this.disconnecting && this.connector.enabled) {
         this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
       }
+    } finally {
+      this.connecting = false;
     }
   }
 

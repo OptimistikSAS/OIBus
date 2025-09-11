@@ -191,8 +191,9 @@ describe('South Modbus', () => {
     south = new SouthModbus(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
-  it('should properly manage connection', async () => {
-    const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
+  it('should properly connect', async () => {
+    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+
     const mockedEmitter = new CustomStream();
     mockedEmitter.connect = jest.fn((_connectionObject: unknown, _callback: () => Promise<void>): Promise<void> => {
       return _callback();
@@ -200,6 +201,7 @@ describe('South Modbus', () => {
     // Mock node:net Socket constructor and the used function
     (net.Socket as unknown as jest.Mock).mockImplementation(() => mockedEmitter);
     south.disconnect = jest.fn();
+    south['reconnectTimeout'] = setTimeout(() => null);
 
     await south.connect();
     expect(net.Socket).toHaveBeenCalledTimes(1);
@@ -211,6 +213,23 @@ describe('South Modbus', () => {
       `Connecting Modbus socket into ${configuration.settings.host}:${configuration.settings.port}`
     );
     expect(logger.info).toHaveBeenCalledWith(`Modbus socket connected to ${configuration.settings.host}:${configuration.settings.port}`);
+    expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
+    expect(south.disconnect).not.toHaveBeenCalled();
+  });
+
+  it('should properly reconnect', async () => {
+    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+    const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
+
+    const mockedEmitter = new CustomStream();
+    mockedEmitter.connect = jest.fn((_connectionObject: unknown, _callback: () => Promise<void>): Promise<void> => {
+      return _callback();
+    });
+    // Mock node:net Socket constructor and the used function
+    (net.Socket as unknown as jest.Mock).mockImplementation(() => mockedEmitter);
+    south.disconnect = jest.fn();
+
+    await south.connect();
 
     south['disconnecting'] = true;
     mockedEmitter.emit('error', 'connect error');
@@ -223,6 +242,7 @@ describe('South Modbus', () => {
     await flushPromises();
     expect(south.disconnect).toHaveBeenCalledTimes(2);
     expect(setTimeoutSpy).toHaveBeenCalledTimes(1);
+    expect(clearTimeoutSpy).not.toHaveBeenCalled();
     expect(logger.error).toHaveBeenCalledWith('Modbus socket error: connect error');
   });
 

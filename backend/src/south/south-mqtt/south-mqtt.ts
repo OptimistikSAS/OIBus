@@ -35,7 +35,6 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
   }
 
   override async connect(): Promise<void> {
-    const options = await createConnectionOptions(this.connector.id, this.connector.settings, this.logger);
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);
       this.reconnectTimeout = null;
@@ -44,6 +43,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
       clearTimeout(this.flushTimeout);
       this.flushTimeout = null;
     }
+    const options = await createConnectionOptions(this.connector.id, this.connector.settings, this.logger);
     try {
       this.logger.info(`Connecting to "${this.connector.settings.url}"`);
       this.client = await mqtt.connectAsync(this.connector.settings.url, options);

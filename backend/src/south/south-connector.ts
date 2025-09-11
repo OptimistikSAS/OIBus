@@ -255,16 +255,17 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       try {
         this.logger.trace(`Querying file for ${items.length} items`);
         await this.fileQuery(items);
-      } catch (error) {
-        this.logger.error(`Error when calling fileQuery. ${error}`);
+      } catch (error: unknown) {
+        this.logger.error(`Error when calling fileQuery: ${(error as Error).message}`);
       }
     }
+
     if (this.queriesLastPoint()) {
       try {
         this.logger.trace(`Querying points for ${items.length} items`);
         await this.lastPointQuery(items);
-      } catch (error) {
-        this.logger.error(`Error when calling lastPointQuery. ${error}`);
+      } catch (error: unknown) {
+        this.logger.error(`Error when calling lastPointQuery: ${(error as Error).message}`);
       }
     }
 
@@ -285,9 +286,9 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
           this.getMaxInstantPerItem(this.connector.settings),
           this.getOverlap(this.connector.settings)
         );
-      } catch (error) {
+      } catch (error: unknown) {
         this.historyIsRunning = false;
-        this.logger.error(`Error when calling historyQuery. ${error}`);
+        this.logger.error(`Error when calling historyQuery: ${(error as Error).message}`);
       }
     }
 

@@ -233,9 +233,10 @@ describe('SouthOPCUA', () => {
     south.createSession = jest.fn();
     south.disconnect = jest.fn();
     south['reconnectTimeout'] = setTimeout(() => null);
+    south['flushTimeout'] = setTimeout(() => null);
     await south.connect();
     expect(south.createSession).toHaveBeenCalledTimes(1);
-    expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
+    expect(clearTimeoutSpy).toHaveBeenCalledTimes(2);
     expect(south.disconnect).not.toHaveBeenCalled();
   });
 
