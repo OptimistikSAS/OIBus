@@ -34,6 +34,10 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
   }
 
   override async connect(): Promise<void> {
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+      this.reconnectTimeout = null;
+    }
     return new Promise(resolve => {
       this.socket = new net.Socket();
       this.modbusClient = new client.TCP(this.socket, this.connector.settings.slaveId);
