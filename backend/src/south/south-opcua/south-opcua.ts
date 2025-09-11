@@ -428,7 +428,7 @@ export default class SouthOPCUA
     } catch (error) {
       await this.disconnect();
       if (!this.disconnecting && this.connector.enabled) {
-        await this.connect();
+        this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
       }
       throw error;
     }
