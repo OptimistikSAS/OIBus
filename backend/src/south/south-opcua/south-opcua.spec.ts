@@ -742,6 +742,7 @@ describe('SouthOPCUA', () => {
   });
 
   it('should query last point (several) and fail and reconnect', async () => {
+    const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
     const mockedClient = {} as unknown as ClientSession;
     south['client'] = mockedClient;
     south.getDAValues = jest.fn().mockImplementationOnce(() => {
@@ -758,7 +759,7 @@ describe('SouthOPCUA', () => {
     );
     expect(south.addContent).not.toHaveBeenCalled();
     expect(south.disconnect).toHaveBeenCalled();
-    expect(south.connect).toHaveBeenCalled();
+    expect(setTimeoutSpy).toHaveBeenCalled();
   });
 
   it('should query last point (several) and fail and not reconnect', async () => {
