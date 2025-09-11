@@ -121,15 +121,17 @@ describe('Service utils', () => {
 
     it('should return two intervals', () => {
       const startTime1 = '2020-01-01T00:00:00.000Z';
-      const startTimeFromCache = '2020-01-01T01:00:00.000Z';
+      const startTimeFromCache = '2020-01-01T01:30:00.000Z';
       const endTime1 = '2020-01-01T01:00:00.000Z';
-      const startTime2 = '2020-01-01T01:00:00.000Z';
       const endTime2 = '2020-01-01T02:00:00.000Z';
+      const startTime3 = '2020-01-01T02:00:00.000Z';
+      const endTime3 = '2020-01-01T02:50:00.000Z';
       const expectedIntervals = [
         { start: startTime1, end: endTime1 },
-        { start: startTime2, end: endTime2 }
+        { start: startTimeFromCache, end: endTime2 },
+        { start: startTime3, end: endTime3 }
       ];
-      const { intervals, numberOfIntervalsDone } = generateIntervals(startTime1, startTimeFromCache, endTime2, 3600);
+      const { intervals, numberOfIntervalsDone } = generateIntervals(startTime1, startTimeFromCache, endTime3, 3600);
       expect(intervals).toEqual(expectedIntervals);
       expect(numberOfIntervalsDone).toEqual(1);
     });

@@ -70,28 +70,46 @@ export const generateIntervals = (
   const endTime = DateTime.fromISO(endInstant);
   const originalInterval = endTime.toMillis() - startTime.toMillis();
   let numberOfIntervalsDone = 0;
-  if (maxNumberOfSecondsInInterval > 0 && endTime.toMillis() - startTime.toMillis() > 1000 * maxNumberOfSecondsInInterval) {
-    const numberOfInterval = originalInterval / (maxNumberOfSecondsInInterval * 1000);
-    const intervalLists: Array<Interval> = [];
-    for (let i = 0; i < numberOfInterval; i += 1) {
-      // Compute the newStartTime and the newEndTime for each interval
-      const newStartTime = DateTime.fromMillis(startTime.toMillis() + i * 1000 * maxNumberOfSecondsInInterval);
-      const newEndTime = DateTime.fromMillis(startTime.toMillis() + (i + 1) * 1000 * maxNumberOfSecondsInInterval);
-      if (newStartTime < startTimeFromCache) {
-        numberOfIntervalsDone += 1;
-      }
-      // If the newEndTime is bigger than the original end, the definitive end of the interval must be the end
+
+  if (maxNumberOfSecondsInInterval <= 0 || originalInterval <= 1000 * maxNumberOfSecondsInInterval) {
+    return {
+      intervals: [{ start: startInstantFromCache, end: endInstant }],
+      numberOfIntervalsDone: 0
+    };
+  }
+
+  const intervalLists: Array<Interval> = [];
+  const intervalDuration = maxNumberOfSecondsInInterval * 1000;
+  const numberOfIntervals = Math.ceil(originalInterval / intervalDuration);
+
+  let currentStart = startTime.toMillis();
+  for (let i = 0; i < numberOfIntervals; i += 1) {
+    const newStartTime = DateTime.fromMillis(currentStart);
+    const newEndTime = DateTime.fromMillis(currentStart + intervalDuration);
+
+    if (newEndTime > endTime) {
+      // Last interval: adjust end to endTime
       intervalLists.push({
         start: newStartTime.toUTC().toISO() as Instant,
-        end: newEndTime < endTime ? (newEndTime.toUTC().toISO() as Instant) : (endTime.toUTC().toISO() as Instant)
+        end: endTime.toUTC().toISO() as Instant
       });
+    } else {
+      // Handle the first unqueried interval It is needed to not query again the part of the interval that has already been queried
+      let adjustedStart = newStartTime;
+      if (newStartTime < startTimeFromCache && startTimeFromCache < newEndTime) {
+        adjustedStart = startTimeFromCache;
+      }
+      intervalLists.push({
+        start: adjustedStart.toUTC().toISO() as Instant,
+        end: newEndTime.toUTC().toISO() as Instant
+      });
+      if (newEndTime <= startTimeFromCache) {
+        numberOfIntervalsDone += 1;
+      }
     }
-    return { intervals: intervalLists, numberOfIntervalsDone };
+    currentStart += intervalDuration;
   }
-  return {
-    intervals: [{ start: startTime.toUTC().toISO() as Instant, end: endTime.toUTC().toISO() as Instant }],
-    numberOfIntervalsDone
-  };
+  return { intervals: intervalLists, numberOfIntervalsDone };
 };
 
 /**
