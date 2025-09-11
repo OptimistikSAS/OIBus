@@ -185,10 +185,6 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
     });
   }
 
-  getScanMode(scanModeId: string) {
-    return this.scanModes.find(scanMode => scanMode.id === scanModeId)?.name || scanModeId;
-  }
-
   connectToEventSource(): void {
     if (this.historyStream) {
       this.historyStream.close();

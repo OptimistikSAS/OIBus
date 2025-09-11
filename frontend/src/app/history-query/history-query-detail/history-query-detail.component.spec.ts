@@ -73,7 +73,7 @@ describe('HistoryQueryDetailComponent', () => {
     } as NorthSettings,
     caching: {
       trigger: {
-        scanModeId: 'scanModeId1',
+        scanMode: { id: 'scanModeId1', name: 'scan mode', description: '', cron: '* * * *' },
         numberOfElements: 1_000,
         numberOfFiles: 1
       },

@@ -111,7 +111,7 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
     dateRange: FormControl<DateRange>;
     caching: FormGroup<{
       trigger: FormGroup<{
-        scanModeId: FormControl<string | null>;
+        scanMode: FormControl<ScanModeDTO | null>;
         numberOfElements: FormControl<number>;
         numberOfFiles: FormControl<number>;
       }>;
@@ -138,7 +138,7 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
   inMemoryItems: Array<HistoryQueryItemCommandDTO<SouthItemSettings>> = [];
   scanModeAttribute: OIBusScanModeAttribute = {
     type: 'scan-mode',
-    key: 'scanModeId',
+    key: 'scanMode',
     translationKey: 'north.caching.trigger.schedule',
     acceptableType: 'POLL',
     validators: [{ type: 'REQUIRED', arguments: [] }],
@@ -265,7 +265,7 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
       ],
       caching: this.fb.group({
         trigger: this.fb.group({
-          scanModeId: this.fb.control<string | null>(null, Validators.required),
+          scanMode: this.fb.control<ScanModeDTO | null>(null, Validators.required),
           numberOfElements: [1_000, Validators.required],
           numberOfFiles: [1, Validators.required]
         }),
@@ -304,6 +304,10 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
         startTime: this.historyQuery.startTime,
         endTime: this.historyQuery.endTime
       };
+      // used to have the same ref
+      this.historyQuery.caching.trigger.scanMode = this.scanModes.find(
+        element => element.id === this.historyQuery!.caching.trigger.scanMode.id
+      )!;
       this.form.patchValue({
         ...this.historyQuery,
         dateRange
@@ -313,6 +317,9 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
         this.form.controls.southSettings.patchValue(southConnector.settings);
       }
       if (northConnector) {
+        northConnector.caching.trigger.scanMode = this.scanModes.find(
+          element => element.id === northConnector.caching.trigger.scanMode.id
+        )!;
         this.form.controls.northSettings.patchValue(northConnector.settings);
         this.form.controls.caching.patchValue(northConnector.caching);
         this.form.controls.northTransformers.patchValue(northConnector.transformers);
@@ -347,7 +354,7 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
       northSettings: formValue.northSettings,
       caching: {
         trigger: {
-          scanModeId: formValue.caching!.trigger!.scanModeId!,
+          scanModeId: formValue.caching!.trigger!.scanMode!.id!,
           scanModeName: null,
           numberOfElements: formValue.caching!.trigger!.numberOfElements!,
           numberOfFiles: formValue.caching!.trigger!.numberOfFiles!
