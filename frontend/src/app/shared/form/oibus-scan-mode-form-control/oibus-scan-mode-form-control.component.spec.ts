@@ -75,9 +75,8 @@ describe('OIBusScanModeFormControlComponent', () => {
 
   it('should display a select with the correct form control name', () => {
     expect(tester.field).toBeDefined();
-    tester.field.selectValue('subscription');
+    tester.field.selectLabel('Subscription');
     expect(tester.field).toHaveSelectedLabel('Subscription');
-    expect(tester.field).toHaveSelectedValue('subscription');
   });
 
   it('should display options for each selectable value', () => {

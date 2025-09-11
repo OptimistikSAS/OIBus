@@ -4,6 +4,7 @@ import { NorthSettings } from './north-settings.model';
 import { OIBusSouthType } from './south-connector.model';
 import { OIBusNorthType } from './north-connector.model';
 import { TransformerDTOWithOptions } from './transformer.model';
+import { ScanModeDTO } from './scan-mode.model';
 
 export const HISTORY_QUERY_STATUS = ['PENDING', 'RUNNING', 'PAUSED', 'FINISHED', 'ERRORED'] as const;
 export type HistoryQueryStatus = (typeof HISTORY_QUERY_STATUS)[number];
@@ -30,7 +31,7 @@ export interface HistoryQueryDTO<S extends SouthSettings, N extends NorthSetting
   northSettings: N;
   caching: {
     trigger: {
-      scanModeId: string;
+      scanMode: ScanModeDTO;
       numberOfElements: number;
       numberOfFiles: number;
     };

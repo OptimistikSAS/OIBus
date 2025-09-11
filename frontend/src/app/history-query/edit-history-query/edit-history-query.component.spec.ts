@@ -85,7 +85,7 @@ describe('EditHistoryQueryComponent', () => {
     southSettings: {} as SouthSettings,
     caching: {
       trigger: {
-        scanModeId: 'scanModeId1',
+        scanMode: { id: 'scanModeId1', name: 'scan mode', description: '', cron: '* * * *' },
         numberOfElements: 1_000,
         numberOfFiles: 1
       },
@@ -149,7 +149,7 @@ describe('EditHistoryQueryComponent', () => {
       ]
     });
 
-    scanModeService.list.and.returnValue(of([]));
+    scanModeService.list.and.returnValue(of(testData.scanMode.list));
     certificateService.list.and.returnValue(of([]));
     transformerService.list.and.returnValue(of([]));
 
