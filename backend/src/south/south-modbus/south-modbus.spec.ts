@@ -13,8 +13,7 @@ import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/sou
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import testData from '../../tests/utils/test-data';
-import { flushPromises } from '../../tests/utils/test-utils';
-import { readCoil, readDiscreteInputRegister, readHoldingRegister, readInputRegister } from '../../service/utils-modbus';
+import { connectSocket, readCoil, readDiscreteInputRegister, readHoldingRegister, readInputRegister } from '../../service/utils-modbus';
 import ModbusTCPClient from 'jsmodbus/dist/modbus-tcp-client';
 
 jest.mock('node:fs/promises');
@@ -174,19 +173,14 @@ describe('South Modbus', () => {
       }
     ]
   };
+  const mockedEmitter = new CustomStream();
 
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+
     // Mock node:net Socket constructor and the used function
-    (net.Socket as unknown as jest.Mock).mockReturnValue({
-      connect(_connectionObject: unknown, callback: () => Promise<void>): Promise<void> {
-        return callback();
-      },
-      on() {
-        jest.fn();
-      }
-    });
+    (net.Socket as unknown as jest.Mock).mockImplementation(() => mockedEmitter);
 
     south = new SouthModbus(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
@@ -194,21 +188,12 @@ describe('South Modbus', () => {
   it('should properly connect', async () => {
     const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
 
-    const mockedEmitter = new CustomStream();
-    mockedEmitter.connect = jest.fn((_connectionObject: unknown, _callback: () => Promise<void>): Promise<void> => {
-      return _callback();
-    });
-    // Mock node:net Socket constructor and the used function
-    (net.Socket as unknown as jest.Mock).mockImplementation(() => mockedEmitter);
     south.disconnect = jest.fn();
     south['reconnectTimeout'] = setTimeout(() => null);
 
     await south.connect();
     expect(net.Socket).toHaveBeenCalledTimes(1);
-    expect(mockedEmitter.connect).toHaveBeenCalledWith(
-      { host: configuration.settings.host, port: configuration.settings.port },
-      expect.any(Function)
-    );
+    expect(connectSocket).toHaveBeenCalledWith(mockedEmitter, configuration.settings);
     expect(logger.debug).toHaveBeenCalledWith(
       `Connecting Modbus socket into ${configuration.settings.host}:${configuration.settings.port}`
     );
@@ -221,25 +206,21 @@ describe('South Modbus', () => {
     const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
     const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
 
-    const mockedEmitter = new CustomStream();
-    mockedEmitter.connect = jest.fn((_connectionObject: unknown, _callback: () => Promise<void>): Promise<void> => {
-      return _callback();
-    });
-    // Mock node:net Socket constructor and the used function
-    (net.Socket as unknown as jest.Mock).mockImplementation(() => mockedEmitter);
     south.disconnect = jest.fn();
-
-    await south.connect();
-
     south['disconnecting'] = true;
-    mockedEmitter.emit('error', 'connect error');
-    await flushPromises();
+    (connectSocket as jest.Mock).mockImplementationOnce(() => {
+      throw new Error('connect error');
+    });
+    await south.connect();
+    expect(connectSocket).toHaveBeenCalledWith(mockedEmitter, configuration.settings);
     expect(south.disconnect).toHaveBeenCalledTimes(1);
     expect(setTimeoutSpy).not.toHaveBeenCalled();
 
     south['disconnecting'] = false;
-    mockedEmitter.emit('error', new Error('connect error'));
-    await flushPromises();
+    (connectSocket as jest.Mock).mockImplementationOnce(() => {
+      throw new Error('connect error');
+    });
+    await south.connect();
     expect(south.disconnect).toHaveBeenCalledTimes(2);
     expect(setTimeoutSpy).toHaveBeenCalledTimes(1);
     expect(clearTimeoutSpy).not.toHaveBeenCalled();
@@ -252,11 +233,11 @@ describe('South Modbus', () => {
     expect(clearTimeoutSpy).not.toHaveBeenCalled();
 
     south['reconnectTimeout'] = setTimeout(() => null);
-    const mockedEmitter = { end: jest.fn() };
+    const mockedEmitter = { removeAllListeners: jest.fn(), destroy: jest.fn() };
     south['socket'] = mockedEmitter as unknown as net.Socket;
 
     await south.disconnect();
-    expect(mockedEmitter.end).toHaveBeenCalledTimes(1);
+    expect(mockedEmitter.destroy).toHaveBeenCalledTimes(1);
     expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
   });
 
@@ -401,18 +382,8 @@ describe('South Modbus', () => {
   });
 
   it('should properly test connection', async () => {
-    const end = jest.fn();
-    // Mock node:net Socket constructor and the used function
-    (net.Socket as unknown as jest.Mock).mockReturnValue({
-      connect(_connectionObject: unknown, callback: () => Promise<void>): Promise<void> {
-        return callback();
-      },
-      on: jest.fn(),
-      end
-    });
-
     await expect(south.testConnection()).resolves.not.toThrow();
-    expect(end).toHaveBeenCalledTimes(1);
+    expect(connectSocket).toHaveBeenCalledWith(mockedEmitter, configuration.settings);
   });
 
   it('should properly manage error on test connection failure', async () => {
@@ -420,13 +391,8 @@ describe('South Modbus', () => {
     const errorMessage = 'Error creating connection to socket';
 
     for (code in ERROR_CODES) {
-      // Mock node:net Socket constructor and the used function
-      (net.Socket as unknown as jest.Mock).mockReturnValueOnce({
-        connect(_connectionObject: unknown, _callback: () => Promise<void>) {
-          throw new ModbusError(errorMessage, code);
-        },
-        on: jest.fn(),
-        end: jest.fn()
+      (connectSocket as jest.Mock).mockImplementationOnce(() => {
+        throw new ModbusError(errorMessage, code);
       });
 
       await expect(south.testConnection()).rejects.toThrow(new Error(`${ERROR_CODES[code]}: ${errorMessage}`));
@@ -455,13 +421,8 @@ describe('South Modbus', () => {
     const callback = jest.fn();
 
     for (code in ERROR_CODES) {
-      // Mock node:net Socket constructor and the used function
-      (net.Socket as unknown as jest.Mock).mockReturnValueOnce({
-        connect(_connectionObject: unknown, _callback: () => Promise<void>) {
-          throw new ModbusError(errorMessage, code);
-        },
-        on: jest.fn(),
-        end: jest.fn()
+      (connectSocket as jest.Mock).mockImplementationOnce(() => {
+        throw new ModbusError(errorMessage, code);
       });
 
       await expect(south.testItem(configuration.items[0], testData.south.itemTestingSettings, callback)).rejects.toThrow(
