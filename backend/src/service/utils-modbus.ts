@@ -1,5 +1,11 @@
-import { SouthModbusItemSettingsDataDataType, SouthModbusSettingsEndianness } from '../../shared/model/south-settings.model';
+import {
+  SouthModbusItemSettingsDataDataType,
+  SouthModbusSettings,
+  SouthModbusSettingsEndianness
+} from '../../shared/model/south-settings.model';
 import ModbusTCPClient from 'jsmodbus/dist/modbus-tcp-client';
+import net from 'node:net';
+import { NorthModbusSettings } from '../../shared/model/north-settings.model';
 
 export const readCoil = async (client: ModbusTCPClient, address: number): Promise<string> => {
   const { response } = await client.readCoils(address, 1);
@@ -117,4 +123,37 @@ export const getNumberOfWords = (dataType: string): number => {
     return 4;
   }
   return 1;
+};
+
+export const connectSocket = async (
+  socket: net.Socket,
+  connectionSettings: SouthModbusSettings | NorthModbusSettings,
+  timeoutMs = 10_000 // TODO: add connectionTimeout settings
+): Promise<void> => {
+  return new Promise<void>((resolve, reject) => {
+    // Set up a timeout to reject if connection takes too long
+    const timeout = setTimeout(() => {
+      clearTimeout(timeout);
+      socket.removeAllListeners();
+      socket.destroy();
+      reject(new Error(`Modbus connection timeout after ${timeoutMs} ms`));
+    }, timeoutMs);
+
+    socket.once('error', (error: Error) => {
+      clearTimeout(timeout);
+      socket.removeAllListeners();
+      socket.destroy();
+      reject(error);
+    });
+
+    socket.once('connect', () => {
+      clearTimeout(timeout);
+      resolve();
+    });
+
+    socket.connect({
+      host: connectionSettings.host,
+      port: connectionSettings.port
+    });
+  });
 };
