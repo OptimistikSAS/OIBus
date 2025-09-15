@@ -1,4 +1,5 @@
 import {
+  connectSocket,
   getNumberOfWords,
   getValueFromBuffer,
   readBuffer,
@@ -8,9 +9,14 @@ import {
   readInputRegister
 } from './utils-modbus';
 import ModbusTCPClient from 'jsmodbus/dist/modbus-tcp-client';
+import { SouthModbusSettings } from '../../shared/model/south-settings.model';
+import net from 'node:net';
+import Stream from 'node:stream';
 
 // Mock the jsmodbus client and Buffer methods
 jest.mock('jsmodbus/dist/modbus-tcp-client');
+// Mock net.Socket
+jest.mock('net');
 
 describe('Modbus Utilities', () => {
   const mockClient = {
@@ -130,7 +136,7 @@ describe('Modbus Utilities', () => {
 
   describe('readBuffer', () => {
     // Helper to create a Buffer with known values for testing
-    const createBuffer = (hexValues: number[]): Buffer => Buffer.from(hexValues);
+    const createBuffer = (hexValues: Array<number>): Buffer => Buffer.from(hexValues);
 
     describe('uint16', () => {
       it('should read uint16BE', () => {
@@ -279,6 +285,95 @@ describe('Modbus Utilities', () => {
     });
     it('should return 4 for double', () => {
       expect(getNumberOfWords('double')).toBe(4);
+    });
+  });
+});
+
+class CustomStream extends Stream {
+  constructor() {
+    super();
+  }
+
+  connect() {
+    return;
+  }
+
+  destroy() {
+    return;
+  }
+}
+
+describe('connectSocket', () => {
+  const mockConnectionSettings: SouthModbusSettings = {
+    host: '127.0.0.1',
+    port: 502
+  } as SouthModbusSettings;
+
+  let mockSocket: net.Socket;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockSocket = new CustomStream() as unknown as net.Socket;
+    mockSocket.connect = jest.fn();
+    mockSocket.destroy = jest.fn();
+    mockSocket.removeAllListeners = jest.fn();
+    (net.Socket as unknown as jest.Mock).mockImplementation(() => mockSocket);
+  });
+
+  describe('successful connection', () => {
+    it('should resolve when socket connects', async () => {
+      const connectPromise = connectSocket(mockSocket, mockConnectionSettings, 1000);
+      // Simulate successful connection
+      mockSocket.emit('connect');
+      await expect(connectPromise).resolves.not.toThrow();
+      expect(mockSocket.connect).toHaveBeenCalledWith({
+        host: mockConnectionSettings.host,
+        port: mockConnectionSettings.port
+      });
+      expect(mockSocket.removeAllListeners).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('connection timeout', () => {
+    it('should reject with timeout error', async () => {
+      jest.useFakeTimers();
+      const connectPromise = connectSocket(mockSocket, mockConnectionSettings, 100);
+      // Fast-forward time to trigger timeout
+      jest.advanceTimersByTime(100);
+      await expect(connectPromise).rejects.toThrow(new Error('Modbus connection timeout after 100 ms'));
+      expect(mockSocket.destroy).toHaveBeenCalled();
+      jest.useRealTimers();
+    });
+  });
+
+  describe('connection error', () => {
+    it('should reject with socket error', async () => {
+      const testError = new Error('Connection refused');
+      const connectPromise = connectSocket(mockSocket, mockConnectionSettings, 1000);
+      // Simulate socket error
+      mockSocket.emit('error', testError);
+      await expect(connectPromise).rejects.toThrow(testError);
+      expect(mockSocket.destroy).toHaveBeenCalled();
+    });
+  });
+
+  describe('cleanup', () => {
+    it('should remove all listeners and destroy socket on error', async () => {
+      const connectPromise = connectSocket(mockSocket, mockConnectionSettings);
+      mockSocket.emit('error', new Error('ECONNREFUSED'));
+      await expect(connectPromise).rejects.toThrow();
+      expect(mockSocket.removeAllListeners).toHaveBeenCalled();
+      expect(mockSocket.destroy).toHaveBeenCalled();
+    });
+
+    it('should remove all listeners and destroy socket on timeout', async () => {
+      jest.useFakeTimers();
+      const connectPromise = connectSocket(mockSocket, mockConnectionSettings, 100);
+      jest.advanceTimersByTime(100);
+      await expect(connectPromise).rejects.toThrow();
+      expect(mockSocket.removeAllListeners).toHaveBeenCalled();
+      expect(mockSocket.destroy).toHaveBeenCalled();
+      jest.useRealTimers();
     });
   });
 });

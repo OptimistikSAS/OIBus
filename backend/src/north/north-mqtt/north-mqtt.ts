@@ -9,6 +9,7 @@ import { QoS } from 'mqtt-packet';
 import { OIBusMQTTValue } from '../../service/transformers/connector-types.model';
 import CacheService from '../../service/cache/cache.service';
 import { createConnectionOptions } from '../../service/utils-mqtt';
+import { OIBusError } from '../../model/engine.model';
 
 /**
  * Class NorthOPCUA - Write values in a MQTT broker
@@ -86,24 +87,27 @@ export default class NorthMQTT extends NorthConnector<NorthMQTTSettings> {
     if (!this.supportedTypes().includes(cacheMetadata.contentType)) {
       throw new Error(`Unsupported data type: ${cacheMetadata.contentType} (file ${cacheMetadata.contentFile})`);
     }
+    if (this.reconnectTimeout) {
+      throw new OIBusError('Connector is reconnecting...', true);
+    }
     return this.handleValues(JSON.parse(await fs.readFile(cacheMetadata.contentFile, { encoding: 'utf-8' })) as Array<OIBusMQTTValue>);
   }
 
   private async handleValues(values: Array<OIBusMQTTValue>) {
-    if (!this.client) {
-      throw new Error('MQTT client not set');
-    }
-
     for (const value of values) {
       try {
+        if (!this.client) {
+          throw new OIBusError('MQTT client not set. The connector cannot write values', true);
+        }
         await this.client.publishAsync(value.topic, value.payload, { qos: parseInt(this.connector.settings.qos) as QoS });
       } catch (error: unknown) {
-        this.logger.error(`Unexpected error on topic ${value.topic}: ${(error as Error).message}`);
+        const oibusError = new OIBusError((error as Error).message, true);
+        this.logger.error(`Unexpected error: ${oibusError.message}`);
         await this.disconnect();
         if (!this.disconnecting && this.connector.enabled) {
           this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.reconnectPeriod);
         }
-        throw error;
+        throw oibusError;
       }
     }
   }

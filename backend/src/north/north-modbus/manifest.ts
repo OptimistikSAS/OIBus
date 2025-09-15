@@ -88,8 +88,8 @@ const manifest: NorthConnectorManifest = {
         type: 'number',
         key: 'slaveId',
         translationKey: 'configuration.oibus.manifest.north.modbus.slave-id',
-        defaultValue: 10000,
-        unit: 'ms',
+        defaultValue: 1,
+        unit: null,
         validators: [
           {
             type: 'REQUIRED',
@@ -101,7 +101,7 @@ const manifest: NorthConnectorManifest = {
           },
           {
             type: 'MAXIMUM',
-            arguments: ['65535']
+            arguments: ['255']
           }
         ],
         displayProperties: {

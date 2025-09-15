@@ -53,7 +53,7 @@ const manifest: SouthConnectorManifest = {
             arguments: ['1']
           },
           {
-            type: 'MINIMUM',
+            type: 'MAXIMUM',
             arguments: ['65535']
           }
         ],
@@ -79,7 +79,7 @@ const manifest: SouthConnectorManifest = {
             arguments: ['100']
           },
           {
-            type: 'MINIMUM',
+            type: 'MAXIMUM',
             arguments: ['60000']
           }
         ],
@@ -105,8 +105,8 @@ const manifest: SouthConnectorManifest = {
             arguments: ['1']
           },
           {
-            type: 'MINIMUM',
-            arguments: ['65535']
+            type: 'MAXIMUM',
+            arguments: ['255']
           }
         ],
         displayProperties: {

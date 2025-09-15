@@ -12,7 +12,7 @@ import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
-import { readCoil, readDiscreteInputRegister, readHoldingRegister, readInputRegister } from '../../service/utils-modbus';
+import { connectSocket, readCoil, readDiscreteInputRegister, readHoldingRegister, readInputRegister } from '../../service/utils-modbus';
 
 /**
  * Class SouthModbus - Provides instruction for Modbus client connection
@@ -38,29 +38,20 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
       clearTimeout(this.reconnectTimeout);
       this.reconnectTimeout = null;
     }
-    return new Promise(resolve => {
+    try {
+      this.logger.debug(`Connecting Modbus socket into ${this.connector.settings.host}:${this.connector.settings.port}`);
       this.socket = new net.Socket();
       this.modbusClient = new client.TCP(this.socket, this.connector.settings.slaveId);
-      this.logger.debug(`Connecting Modbus socket into ${this.connector.settings.host}:${this.connector.settings.port}`);
-      this.socket.connect(
-        {
-          host: this.connector.settings.host,
-          port: this.connector.settings.port
-        },
-        async () => {
-          this.logger.info(`Modbus socket connected to ${this.connector.settings.host}:${this.connector.settings.port}`);
-          await super.connect();
-          resolve();
-        }
-      );
-      this.socket.on('error', async error => {
-        this.logger.error(`Modbus socket error: ${(error as Error).message}`);
-        await this.disconnect();
-        if (!this.disconnecting && this.connector.enabled) {
-          this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
-        }
-      });
-    });
+      await connectSocket(this.socket, this.connector.settings);
+      this.logger.info(`Modbus socket connected to ${this.connector.settings.host}:${this.connector.settings.port}`);
+      await super.connect();
+    } catch (error: unknown) {
+      this.logger.error(`Modbus socket error: ${(error as Error).message}`);
+      await this.disconnect();
+      if (!this.disconnecting && this.connector.enabled) {
+        this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
+      }
+    }
   }
 
   async disconnect(): Promise<void> {
@@ -70,7 +61,8 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
       this.reconnectTimeout = null;
     }
     if (this.socket) {
-      this.socket.end();
+      this.socket.removeAllListeners();
+      this.socket.destroy();
       this.socket = null;
     }
     this.modbusClient = null;
@@ -80,13 +72,8 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
 
   override async testConnection(): Promise<void> {
     try {
-      await new Promise<void>((resolve, reject) => {
-        const socket = new net.Socket();
-        socket.connect({ host: this.connector.settings.host, port: this.connector.settings.port }, async () => {
-          socket.end();
-          resolve();
-        });
-      });
+      const socket = new net.Socket();
+      await connectSocket(socket, this.connector.settings);
     } catch (error: unknown) {
       switch ((error as { code: string; message: string }).code) {
         case 'ENOTFOUND':
@@ -105,25 +92,15 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
     callback: (data: OIBusContent) => void
   ): Promise<void> {
     try {
-      await new Promise<void>((resolve, reject) => {
-        const socket = new net.Socket();
-        const modbusClient = new client.TCP(socket, this.connector.settings.slaveId);
-        socket.connect(
-          {
-            host: this.connector.settings.host,
-            port: this.connector.settings.port
-          },
-          async () => {
-            const dataValues: Array<OIBusTimeValue> = await this.modbusFunction(modbusClient, item);
-            callback({
-              type: 'time-values',
-              content: dataValues
-            });
-            await this.disconnect();
-            resolve();
-          }
-        );
+      const socket = new net.Socket();
+      const modbusClient = new client.TCP(socket, this.connector.settings.slaveId);
+      await connectSocket(socket, this.connector.settings);
+      const dataValues: Array<OIBusTimeValue> = await this.modbusFunction(modbusClient, item);
+      callback({
+        type: 'time-values',
+        content: dataValues
       });
+      await this.disconnect();
     } catch (error: unknown) {
       switch ((error as { code: string; message: string }).code) {
         case 'ENOTFOUND':
@@ -136,12 +113,11 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
   }
 
   async lastPointQuery(items: Array<SouthConnectorItemEntity<SouthModbusItemSettings>>): Promise<void> {
-    if (!this.modbusClient) {
-      throw new Error('Could not read address: Modbus client not set');
-    }
-
     const dataValues: Array<OIBusTimeValue> = [];
     try {
+      if (!this.modbusClient) {
+        throw new Error('Could not read address: Modbus client not set');
+      }
       const startRequest = DateTime.now().toMillis();
       for (const item of items) {
         dataValues.push(...(await this.modbusFunction(this.modbusClient, item)));

@@ -291,12 +291,11 @@ describe('NorthOPCUA', () => {
         throw new Error('another error2');
       });
     const writeFn = jest.fn();
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error
+
     north['client'] = {
       write: writeFn,
       read: readFn
-    };
+    } as unknown as ClientSession;
     north.disconnect = jest.fn();
 
     await expect(
@@ -315,9 +314,10 @@ describe('NorthOPCUA', () => {
 
     expect(north.disconnect).toHaveBeenCalledTimes(1);
     expect(setTimeoutSpy).toHaveBeenCalledTimes(1);
-    expect(logger.error).toHaveBeenCalledWith(`Unexpected error on nodeId nodeId2: another error1`);
+    expect(logger.error).toHaveBeenCalledWith(`Unexpected error: another error1`);
 
     north['connector'].enabled = false;
+    north['reconnectTimeout'] = null;
 
     await expect(
       north.handleContent({
@@ -330,23 +330,40 @@ describe('NorthOPCUA', () => {
         options: {}
       })
     ).rejects.toThrow(new Error('another error2'));
-    expect(logger.error).toHaveBeenCalledWith(`Unexpected error on nodeId nodeId1: another error2`);
+    expect(logger.error).toHaveBeenCalledWith(`Unexpected error: another error2`);
     expect(north.disconnect).toHaveBeenCalledTimes(2);
     expect(setTimeoutSpy).toHaveBeenCalledTimes(1);
   });
 
+  it('should throw error if client is reconnecting', async () => {
+    north['client'] = {} as unknown as ClientSession;
+    north['reconnectTimeout'] = setTimeout(() => null);
+    await expect(
+      north.handleContent({
+        contentFile: 'path/to/file/example-123456789.json',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'opcua',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow('Connector is reconnecting...');
+  });
+
   it('should throw error if client is not set when handling content', async () => {
     (fs.readFile as jest.Mock).mockReturnValueOnce('[{}]');
-    await north.handleContent({
-      contentFile: 'path/to/file/example-123456789.json',
-      contentSize: 1234,
-      numberOfElement: 1,
-      createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'opcua',
-      source: 'south',
-      options: {}
-    });
-    expect(logger.error).toHaveBeenCalledWith(`OPCUA session not set. The connector cannot write values`);
+    await expect(
+      north.handleContent({
+        contentFile: 'path/to/file/example-123456789.json',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'opcua',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow('OPCUA client not set');
   });
 
   it('should ignore data if bad content type', async () => {

@@ -5,10 +5,12 @@ import { CacheMetadata } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import net from 'node:net';
 import ModbusTCPClient from 'jsmodbus/dist/modbus-tcp-client';
-import { client } from 'jsmodbus';
+import { client, UserRequestError } from 'jsmodbus';
 import fs from 'node:fs/promises';
 import { OIBusModbusValue } from '../../service/transformers/connector-types.model';
 import CacheService from '../../service/cache/cache.service';
+import { connectSocket } from '../../service/utils-modbus';
+import { OIBusError } from '../../model/engine.model';
 
 /**
  * Class NorthModbus - Write values in a Modbus server
@@ -29,29 +31,24 @@ export default class NorthModbus extends NorthConnector<NorthModbusSettings> {
   }
 
   override async connect(): Promise<void> {
-    return new Promise(resolve => {
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+      this.reconnectTimeout = null;
+    }
+    try {
+      this.logger.debug(`Connecting Modbus socket into ${this.connector.settings.host}:${this.connector.settings.port}`);
       this.socket = new net.Socket();
       this.modbusClient = new client.TCP(this.socket, this.connector.settings.slaveId);
-      this.logger.debug(`Connecting Modbus socket into ${this.connector.settings.host}:${this.connector.settings.port}`);
-      this.socket.connect(
-        {
-          host: this.connector.settings.host,
-          port: this.connector.settings.port
-        },
-        async () => {
-          this.logger.info(`Modbus socket connected to ${this.connector.settings.host}:${this.connector.settings.port}`);
-          await super.connect();
-          resolve();
-        }
-      );
-      this.socket.on('error', async error => {
-        this.logger.error(`Modbus socket error: ${(error as Error).message}`);
-        await this.disconnect();
-        if (!this.disconnecting && this.connector.enabled) {
-          this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
-        }
-      });
-    });
+      await connectSocket(this.socket, this.connector.settings);
+      this.logger.info(`Modbus socket connected to ${this.connector.settings.host}:${this.connector.settings.port}`);
+      await super.connect();
+    } catch (error: unknown) {
+      this.logger.error(`Modbus socket error: ${(error as Error).message}`);
+      await this.disconnect();
+      if (!this.disconnecting && this.connector.enabled) {
+        this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
+      }
+    }
   }
 
   async disconnect(): Promise<void> {
@@ -61,7 +58,8 @@ export default class NorthModbus extends NorthConnector<NorthModbusSettings> {
       this.reconnectTimeout = null;
     }
     if (this.socket) {
-      this.socket.end();
+      this.socket.removeAllListeners();
+      this.socket.destroy();
       this.socket = null;
     }
     this.modbusClient = null;
@@ -71,13 +69,8 @@ export default class NorthModbus extends NorthConnector<NorthModbusSettings> {
 
   override async testConnection(): Promise<void> {
     try {
-      await new Promise<void>((resolve, reject) => {
-        const socket = new net.Socket();
-        socket.connect({ host: this.connector.settings.host, port: this.connector.settings.port }, async () => {
-          socket.end();
-          resolve();
-        });
-      });
+      const socket = new net.Socket();
+      await connectSocket(socket, this.connector.settings);
     } catch (error: unknown) {
       switch ((error as { code: string; message: string }).code) {
         case 'ENOTFOUND':
@@ -94,18 +87,30 @@ export default class NorthModbus extends NorthConnector<NorthModbusSettings> {
     if (!this.supportedTypes().includes(cacheMetadata.contentType)) {
       throw new Error(`Unsupported data type: ${cacheMetadata.contentType} (file ${cacheMetadata.contentFile})`);
     }
-    if (!this.modbusClient) {
-      throw new Error('Modbus client not set. The connector cannot write values');
+    if (this.reconnectTimeout) {
+      throw new OIBusError('Connector is reconnecting...', true);
     }
-    return this.handleValues(
-      this.modbusClient,
-      JSON.parse(await fs.readFile(cacheMetadata.contentFile, { encoding: 'utf-8' })) as Array<OIBusModbusValue>
-    );
+    return this.handleValues(JSON.parse(await fs.readFile(cacheMetadata.contentFile, { encoding: 'utf-8' })) as Array<OIBusModbusValue>);
   }
 
-  private async handleValues(modbusClient: ModbusTCPClient, values: Array<OIBusModbusValue>) {
-    for (const value of values) {
-      await this.modbusFunction(modbusClient, value);
+  private async handleValues(values: Array<OIBusModbusValue>) {
+    try {
+      if (!this.modbusClient) {
+        throw new OIBusError('Modbus client not set. The connector cannot write values', true);
+      }
+      for (const value of values) {
+        await this.modbusFunction(this.modbusClient, value);
+      }
+    } catch (error: unknown) {
+      await this.disconnect();
+      if (!this.disconnecting && this.connector.enabled) {
+        this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
+      }
+
+      if (typeof error === 'object' && error !== null && 'err' in error && 'message' in error) {
+        throw new OIBusError(`${error.err} - ${error.message}`, true);
+      }
+      throw error;
     }
   }
 
@@ -118,6 +123,7 @@ export default class NorthModbus extends NorthConnector<NorthModbusSettings> {
       case 'coil':
         await modbusClient.writeSingleCoil(address, modbusValue.value as boolean);
         break;
+
       case 'register':
         await modbusClient.writeSingleRegister(address, modbusValue.value as number);
         break;

@@ -10,6 +10,7 @@ import { randomUUID } from 'crypto';
 import { OIBusOPCUAValue } from '../../service/transformers/connector-types.model';
 import CacheService from '../../service/cache/cache.service';
 import { createSessionConfigs, initOPCUACertificateFolders } from '../../service/utils-opcua';
+import { OIBusError } from '../../model/engine.model';
 
 /**
  * Class NorthOPCUA - Write values in an OPCUA server
@@ -49,7 +50,7 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
       this.reconnectTimeout = null;
     }
     try {
-      await this.createSession();
+      this.client = await this.createSession();
       this.logger.info(`OPCUA North connector "${this.connector.name}" connected`);
       await super.connect();
     } catch (error: unknown) {
@@ -118,25 +119,27 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
     if (!this.supportedTypes().includes(cacheMetadata.contentType)) {
       throw new Error(`Unsupported data type: ${cacheMetadata.contentType} (file ${cacheMetadata.contentFile})`);
     }
+    if (this.reconnectTimeout) {
+      throw new OIBusError('Connector is reconnecting...', true);
+    }
     return this.handleValues(JSON.parse(await fs.readFile(cacheMetadata.contentFile, { encoding: 'utf-8' })) as Array<OIBusOPCUAValue>);
   }
 
   private async handleValues(values: Array<OIBusOPCUAValue>) {
-    if (!this.client) {
-      this.logger.error('OPCUA session not set. The connector cannot write values');
-      return;
-    }
-
     for (const value of values) {
       let nodeId;
       try {
-        nodeId = resolveNodeId(value.nodeId);
-      } catch (error: unknown) {
-        this.logger.error(`Error when parsing node ID ${value.nodeId}: ${(error as Error).message}`);
-        continue;
-      }
+        if (!this.client) {
+          throw new OIBusError('OPCUA client not set. The connector cannot write values', true);
+        }
 
-      try {
+        try {
+          nodeId = resolveNodeId(value.nodeId);
+        } catch (error: unknown) {
+          this.logger.error(`Error when parsing node ID ${value.nodeId}: ${(error as Error).message}`);
+          continue;
+        }
+
         // Read the DataType attribute of the node
         const dataValue = await this.client.read({
           nodeId,
@@ -172,12 +175,13 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
           this.logger.error(`Write error on nodeId ${nodeId}: ${(error as Error).message}`);
           // Continue to the next iteration or operation
         } else {
-          this.logger.error(`Unexpected error on nodeId ${nodeId}: ${(error as Error).message}`);
+          const oibusError = new OIBusError((error as Error).message, true);
+          this.logger.error(`Unexpected error: ${oibusError.message}`);
           await this.disconnect();
           if (!this.disconnecting && this.connector.enabled) {
             this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
           }
-          throw error;
+          throw oibusError;
         }
       }
     }

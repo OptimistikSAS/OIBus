@@ -233,16 +233,16 @@ export default abstract class NorthConnector<T extends NorthSettings> {
       this.contentBeingSent = null;
       this.errorCount = 0;
     } catch (error: unknown) {
+      const oibusError = this.createOIBusError(error);
+      this.logger.error(
+        `Could not send content "${JSON.stringify(this.contentBeingSent)}" (${this.errorCount}). Error: ${oibusError.message}`
+      );
       this.metricsEvent.emit('run-end', {
         lastRunDuration: DateTime.now().toMillis() - runStart.toMillis(),
         metadata: this.contentBeingSent!.metadata,
         action: 'errored'
       });
       this.errorCount += 1;
-      const oibusError = this.createOIBusError(error);
-      this.logger.error(
-        `Could not send content "${JSON.stringify(this.contentBeingSent)}" (${this.errorCount}). Error: ${oibusError.message}`
-      );
       if (!oibusError.retry && this.errorCount > this.connector.caching.error.retryCount) {
         this.logger.warn(`Moving content into error after ${this.errorCount} errors`);
         await this.cacheService.moveCacheContent('cache', 'error', this.contentBeingSent!);

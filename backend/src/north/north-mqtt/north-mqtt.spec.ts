@@ -258,11 +258,12 @@ describe('NorthMQTT', () => {
       })
     ).rejects.toThrow(new Error('error1'));
 
-    expect(logger.error).toHaveBeenCalledWith(`Unexpected error on topic topic1: error1`);
+    expect(logger.error).toHaveBeenCalledWith(`Unexpected error: error1`);
     expect(north.disconnect).toHaveBeenCalledTimes(1);
     expect(setTimeoutSpy).toHaveBeenCalledTimes(1);
 
     north['connector'].enabled = false;
+    north['reconnectTimeout'] = null;
 
     await expect(
       north.handleContent({
@@ -275,9 +276,25 @@ describe('NorthMQTT', () => {
         options: {}
       })
     ).rejects.toThrow(new Error('error2'));
-    expect(logger.error).toHaveBeenCalledWith(`Unexpected error on topic topic1: error2`);
+    expect(logger.error).toHaveBeenCalledWith(`Unexpected error: error2`);
     expect(north.disconnect).toHaveBeenCalledTimes(2);
     expect(setTimeoutSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('should throw error if client is reconnecting', async () => {
+    north['client'] = {} as unknown as mqtt.MqttClient;
+    north['reconnectTimeout'] = setTimeout(() => null);
+    await expect(
+      north.handleContent({
+        contentFile: 'path/to/file/example-123456789.json',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'mqtt',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow('Connector is reconnecting...');
   });
 
   it('should properly disconnect', async () => {
