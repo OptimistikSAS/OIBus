@@ -107,14 +107,9 @@
       <div class="row">
         <!-- Manifest Builder -->
         <div class="form-group">
-          <label
-            class="form-label"
-            translate="configuration.oibus.manifest.transformers.edit-transformer-modal.custom-manifest"
-          ></label>
+          <label class="form-label" translate="configuration.oibus.manifest.transformers.edit-transformer-modal.custom-manifest"></label>
           @if (currentManifest) {
-            <oib-manifest-builder
-              [manifest]="currentManifest"
-              (manifestChange)="onManifestChange($event)" />
+            <oib-manifest-builder [manifest]="currentManifest" (manifestChange)="onManifestChange($event)" />
           }
         </div>
       </div>
