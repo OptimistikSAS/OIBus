@@ -1,4 +1,5 @@
 import { Component, input, output, inject, OnInit } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslateDirective } from '@ngx-translate/core';
 import { OIBusObjectAttribute, OIBusAttribute, OIBUS_ATTRIBUTE_TYPES } from '../../../../../../backend/shared/model/form.model';
@@ -8,7 +9,7 @@ import { BoxComponent, BoxTitleDirective } from '../../box/box.component';
   selector: 'oib-manifest-builder',
   templateUrl: './manifest-builder.component.html',
   styleUrl: './manifest-builder.component.scss',
-  imports: [ReactiveFormsModule, TranslateDirective, BoxComponent, BoxTitleDirective]
+  imports: [ReactiveFormsModule, TranslateDirective, BoxComponent, BoxTitleDirective, NgTemplateOutlet]
 })
 export class ManifestBuilderComponent implements OnInit {
   private fb = inject(FormBuilder);
@@ -16,7 +17,7 @@ export class ManifestBuilderComponent implements OnInit {
   manifest = input.required<OIBusObjectAttribute>();
   manifestChange = output<OIBusObjectAttribute>();
 
-  availableTypes = OIBUS_ATTRIBUTE_TYPES;
+  availableTypes = OIBUS_ATTRIBUTE_TYPES.filter(type => type !== 'transformer-array');
 
   form = this.fb.group({
     type: ['object', Validators.required],
@@ -241,8 +242,8 @@ export class ManifestBuilderComponent implements OnInit {
           type: 'string',
           defaultValue: attrForm.defaultValue,
           displayProperties: {
-            row: attrForm.row || 0,
-            columns: attrForm.columns || 4,
+            row: Number(attrForm.row ?? 0),
+            columns: Number(attrForm.columns ?? 4),
             displayInViewMode: attrForm.displayInViewMode ?? true
           }
         };
@@ -251,11 +252,14 @@ export class ManifestBuilderComponent implements OnInit {
         return {
           ...baseAttribute,
           type: 'number',
-          defaultValue: attrForm.defaultValue,
+          defaultValue:
+            attrForm.defaultValue === '' || attrForm.defaultValue === null || attrForm.defaultValue === undefined
+              ? null
+              : Number(attrForm.defaultValue),
           unit: attrForm.unit,
           displayProperties: {
-            row: attrForm.row || 0,
-            columns: attrForm.columns || 4,
+            row: Number(attrForm.row ?? 0),
+            columns: Number(attrForm.columns ?? 4),
             displayInViewMode: attrForm.displayInViewMode ?? true
           }
         };
@@ -266,8 +270,8 @@ export class ManifestBuilderComponent implements OnInit {
           type: 'boolean',
           defaultValue: attrForm.defaultValue ?? false,
           displayProperties: {
-            row: attrForm.row || 0,
-            columns: attrForm.columns || 4,
+            row: Number(attrForm.row ?? 0),
+            columns: Number(attrForm.columns ?? 4),
             displayInViewMode: attrForm.displayInViewMode ?? true
           }
         };
@@ -279,21 +283,29 @@ export class ManifestBuilderComponent implements OnInit {
           contentType: attrForm.contentType || 'json',
           defaultValue: attrForm.defaultValue,
           displayProperties: {
-            row: attrForm.row || 0,
-            columns: attrForm.columns || 4,
+            row: Number(attrForm.row ?? 0),
+            columns: Number(attrForm.columns ?? 4),
             displayInViewMode: attrForm.displayInViewMode ?? true
           }
         };
 
       case 'string-select':
+        const values = Array.isArray(attrForm.selectableValues)
+          ? attrForm.selectableValues
+          : typeof attrForm.selectableValues === 'string'
+            ? attrForm.selectableValues
+                .split(',')
+                .map((s: string) => s.trim())
+                .filter((s: string) => s.length > 0)
+            : [];
         return {
           ...baseAttribute,
           type: 'string-select',
-          selectableValues: attrForm.selectableValues || [],
+          selectableValues: values,
           defaultValue: attrForm.defaultValue,
           displayProperties: {
-            row: attrForm.row || 0,
-            columns: attrForm.columns || 4,
+            row: Number(attrForm.row ?? 0),
+            columns: Number(attrForm.columns ?? 4),
             displayInViewMode: attrForm.displayInViewMode ?? true
           }
         };
@@ -303,8 +315,8 @@ export class ManifestBuilderComponent implements OnInit {
           ...baseAttribute,
           type: 'secret',
           displayProperties: {
-            row: attrForm.row || 0,
-            columns: attrForm.columns || 4,
+            row: Number(attrForm.row ?? 0),
+            columns: Number(attrForm.columns ?? 4),
             displayInViewMode: attrForm.displayInViewMode ?? true
           }
         };
@@ -314,8 +326,8 @@ export class ManifestBuilderComponent implements OnInit {
           ...baseAttribute,
           type: 'instant',
           displayProperties: {
-            row: attrForm.row || 0,
-            columns: attrForm.columns || 4,
+            row: Number(attrForm.row ?? 0),
+            columns: Number(attrForm.columns ?? 4),
             displayInViewMode: attrForm.displayInViewMode ?? true
           }
         };
@@ -326,8 +338,8 @@ export class ManifestBuilderComponent implements OnInit {
           type: 'scan-mode',
           acceptableType: attrForm.acceptableType || 'POLL',
           displayProperties: {
-            row: attrForm.row || 0,
-            columns: attrForm.columns || 4,
+            row: Number(attrForm.row ?? 0),
+            columns: Number(attrForm.columns ?? 4),
             displayInViewMode: attrForm.displayInViewMode ?? true
           }
         };
@@ -337,8 +349,8 @@ export class ManifestBuilderComponent implements OnInit {
           ...baseAttribute,
           type: 'certificate',
           displayProperties: {
-            row: attrForm.row || 0,
-            columns: attrForm.columns || 4,
+            row: Number(attrForm.row ?? 0),
+            columns: Number(attrForm.columns ?? 4),
             displayInViewMode: attrForm.displayInViewMode ?? true
           }
         };
@@ -349,8 +361,8 @@ export class ManifestBuilderComponent implements OnInit {
           type: 'timezone',
           defaultValue: attrForm.defaultValue,
           displayProperties: {
-            row: attrForm.row || 0,
-            columns: attrForm.columns || 4,
+            row: Number(attrForm.row ?? 0),
+            columns: Number(attrForm.columns ?? 4),
             displayInViewMode: attrForm.displayInViewMode ?? true
           }
         };
@@ -374,7 +386,12 @@ export class ManifestBuilderComponent implements OnInit {
           ...baseAttribute,
           type: 'array',
           paginate: attrForm.paginate ?? false,
-          numberOfElementPerPage: attrForm.numberOfElementPerPage || 20,
+          numberOfElementPerPage:
+            attrForm.numberOfElementPerPage === '' ||
+            attrForm.numberOfElementPerPage === null ||
+            attrForm.numberOfElementPerPage === undefined
+              ? 20
+              : Number(attrForm.numberOfElementPerPage),
           rootAttribute: {
             type: 'object',
             key: 'item',

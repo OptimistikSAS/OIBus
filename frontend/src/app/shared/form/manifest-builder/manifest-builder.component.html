@@ -174,8 +174,8 @@
                       translate="configuration.oibus.manifest.transformers.manifest-builder.default-value"
                     ></label>
                     <select class="form-select" formControlName="defaultValue" id="attr-default-value-{{ $index }}">
-                      <option [value]="true">true</option>
-                      <option [value]="false">false</option>
+                      <option [ngValue]="true">true</option>
+                      <option [ngValue]="false">false</option>
                     </select>
                   </div>
                 </div>
@@ -354,117 +354,7 @@
 
             <!-- Nested attributes for objects and arrays -->
             @if (attributeForm.get('type')?.value === 'object' || attributeForm.get('type')?.value === 'array') {
-              <oib-box class="mt-3">
-                <ng-template oibBoxTitle>
-                  <span translate="configuration.oibus.manifest.transformers.manifest-builder.nested-attributes"></span>
-                </ng-template>
-
-                <div class="d-flex justify-content-end mb-3">
-                  <button type="button" class="btn btn-secondary btn-sm" (click)="addNestedAttribute(attributeForm)">
-                    <span class="fa fa-plus"></span>
-                    <span translate="configuration.oibus.manifest.transformers.manifest-builder.add-nested-attribute"></span>
-                  </button>
-                </div>
-
-                <div formArrayName="attributes">
-                  @for (nestedForm of getNestedAttributesControls(attributeForm); track $index) {
-                    <div class="nested-attribute-item mb-2 p-2 border rounded bg-white" [formGroupName]="$index">
-                      <div class="row">
-                        <div class="col-md-3">
-                          <div class="form-group">
-                            <label
-                              class="form-label"
-                              for="nested-type-{{ $index }}"
-                              translate="configuration.oibus.manifest.transformers.manifest-builder.type"
-                            ></label>
-                            <select
-                              class="form-select"
-                              formControlName="type"
-                              id="nested-type-{{ $index }}"
-                              (change)="onTypeChange(nestedForm)"
-                            >
-                              @for (type of availableTypes; track type) {
-                                <option [value]="type">{{ type }}</option>
-                              }
-                            </select>
-                          </div>
-                        </div>
-                        <div class="col-md-3">
-                          <div class="form-group">
-                            <label
-                              class="form-label"
-                              for="nested-key-{{ $index }}"
-                              translate="configuration.oibus.manifest.transformers.manifest-builder.key"
-                            ></label>
-                            <input type="text" class="form-control" formControlName="key" id="nested-key-{{ $index }}" />
-                          </div>
-                        </div>
-                        <div class="col-md-4">
-                          <div class="form-group">
-                            <label
-                              class="form-label"
-                              for="nested-translation-key-{{ $index }}"
-                              translate="configuration.oibus.manifest.transformers.manifest-builder.translation-key"
-                            ></label>
-                            <input
-                              type="text"
-                              class="form-control"
-                              formControlName="translationKey"
-                              id="nested-translation-key-{{ $index }}"
-                            />
-                          </div>
-                        </div>
-                        <div class="col-md-2 d-flex align-items-end">
-                          <button type="button" class="btn btn-danger btn-sm" (click)="removeNestedAttribute(attributeForm, $index)">
-                            <span class="fa fa-trash"></span>
-                          </button>
-                        </div>
-                      </div>
-
-                      <!-- Nested type-specific properties (simplified) -->
-                      @if (nestedForm.get('type')?.value === 'string' || nestedForm.get('type')?.value === 'number') {
-                        <div class="row mt-2">
-                          <div class="col-md-6">
-                            <div class="form-group">
-                              <label
-                                class="form-label"
-                                for="nested-default-value-{{ $index }}"
-                                translate="configuration.oibus.manifest.transformers.manifest-builder.default-value"
-                              ></label>
-                              <input
-                                [type]="nestedForm.get('type')?.value === 'number' ? 'number' : 'text'"
-                                class="form-control"
-                                formControlName="defaultValue"
-                                id="nested-default-value-{{ $index }}"
-                              />
-                            </div>
-                          </div>
-                          <div class="col-md-3">
-                            <div class="form-group">
-                              <label
-                                class="form-label"
-                                for="nested-row-{{ $index }}"
-                                translate="configuration.oibus.manifest.transformers.manifest-builder.row"
-                              ></label>
-                              <input type="number" class="form-control" formControlName="row" id="nested-row-{{ $index }}" />
-                            </div>
-                          </div>
-                          <div class="col-md-3">
-                            <div class="form-group">
-                              <label
-                                class="form-label"
-                                for="nested-columns-{{ $index }}"
-                                translate="configuration.oibus.manifest.transformers.manifest-builder.columns"
-                              ></label>
-                              <input type="number" class="form-control" formControlName="columns" id="nested-columns-{{ $index }}" />
-                            </div>
-                          </div>
-                        </div>
-                      }
-                    </div>
-                  }
-                </div>
-              </oib-box>
+              <ng-container [ngTemplateOutlet]="nestedAttributesTemplate" [ngTemplateOutletContext]="{ parent: attributeForm }" />
             }
           </div>
         }
@@ -479,3 +369,110 @@
     </div>
   </form>
 </div>
+
+<ng-template #nestedAttributesTemplate let-parent="parent">
+  <oib-box class="mt-3">
+    <ng-template oibBoxTitle>
+      <span translate="configuration.oibus.manifest.transformers.manifest-builder.nested-attributes"></span>
+    </ng-template>
+
+    <div class="d-flex justify-content-end mb-3">
+      <button type="button" class="btn btn-secondary btn-sm" (click)="addNestedAttribute(parent)">
+        <span class="fa fa-plus"></span>
+        <span translate="configuration.oibus.manifest.transformers.manifest-builder.add-nested-attribute"></span>
+      </button>
+    </div>
+
+    <div formArrayName="attributes">
+      @for (nestedForm of getNestedAttributesControls(parent); track $index) {
+        <div class="nested-attribute-item mb-2 p-2 border rounded bg-white" [formGroupName]="$index">
+          <div class="row">
+            <div class="col-md-3">
+              <div class="form-group">
+                <label
+                  class="form-label"
+                  for="nested-type-{{ $index }}"
+                  translate="configuration.oibus.manifest.transformers.manifest-builder.type"
+                ></label>
+                <select class="form-select" formControlName="type" id="nested-type-{{ $index }}" (change)="onTypeChange(nestedForm)">
+                  @for (type of availableTypes; track type) {
+                    <option [value]="type">{{ type }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group">
+                <label
+                  class="form-label"
+                  for="nested-key-{{ $index }}"
+                  translate="configuration.oibus.manifest.transformers.manifest-builder.key"
+                ></label>
+                <input type="text" class="form-control" formControlName="key" id="nested-key-{{ $index }}" />
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label
+                  class="form-label"
+                  for="nested-translation-key-{{ $index }}"
+                  translate="configuration.oibus.manifest.transformers.manifest-builder.translation-key"
+                ></label>
+                <input type="text" class="form-control" formControlName="translationKey" id="nested-translation-key-{{ $index }}" />
+              </div>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+              <button type="button" class="btn btn-danger btn-sm" (click)="removeNestedAttribute(parent, $index)">
+                <span class="fa fa-trash"></span>
+              </button>
+            </div>
+          </div>
+
+          @if (nestedForm.get('type')?.value === 'string' || nestedForm.get('type')?.value === 'number') {
+            <div class="row mt-2">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label
+                    class="form-label"
+                    for="nested-default-value-{{ $index }}"
+                    translate="configuration.oibus.manifest.transformers.manifest-builder.default-value"
+                  ></label>
+                  <input
+                    [type]="nestedForm.get('type')?.value === 'number' ? 'number' : 'text'"
+                    class="form-control"
+                    formControlName="defaultValue"
+                    id="nested-default-value-{{ $index }}"
+                  />
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="form-group">
+                  <label
+                    class="form-label"
+                    for="nested-row-{{ $index }}"
+                    translate="configuration.oibus.manifest.transformers.manifest-builder.row"
+                  ></label>
+                  <input type="number" class="form-control" formControlName="row" id="nested-row-{{ $index }}" />
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="form-group">
+                  <label
+                    class="form-label"
+                    for="nested-columns-{{ $index }}"
+                    translate="configuration.oibus.manifest.transformers.manifest-builder.columns"
+                  ></label>
+                  <input type="number" class="form-control" formControlName="columns" id="nested-columns-{{ $index }}" />
+                </div>
+              </div>
+            </div>
+          }
+
+          @if (nestedForm.get('type')?.value === 'object' || nestedForm.get('type')?.value === 'array') {
+            <ng-container [ngTemplateOutlet]="nestedAttributesTemplate" [ngTemplateOutletContext]="{ parent: nestedForm }" />
+          }
+        </div>
+      }
+    </div>
+  </oib-box>
+</ng-template>
