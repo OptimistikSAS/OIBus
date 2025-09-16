@@ -879,11 +879,11 @@
             "language": "Language",
             "custom-manifest": "Options",
             "select-language": "Select a programming language first.",
-             "tooltips": {
-               "add": "Add a Custom Transformer",
-               "edit": "Edit this Custom Transformer",
-               "delete": "Delete this Custom Transformer"
-             }
+            "tooltips": {
+              "add": "Add a Custom Transformer",
+              "edit": "Edit this Custom Transformer",
+              "delete": "Delete this Custom Transformer"
+            }
           },
           "manifest-builder": {
             "key": "Key",
@@ -905,7 +905,7 @@
             "display-in-view-mode": "Display in View Mode",
             "nested-attributes": "Nested Attributes",
             "add-nested-attribute": "Add Nested Attribute",
-            "save": "Save Manifest"
+            "auto-save-info": "Changes are automatically saved"
           },
           "mapping": {
             "title": "Mapping table",
@@ -1402,7 +1402,7 @@
                   "unix-epoch": "UNIX epoch (s)",
                   "unix-epoch-ms": "UNIX epoch (ms)",
                   "string": "String",
-            "date-time": "DateTime"
+                  "date-time": "DateTime"
                 },
                 "timezone": "Timezone",
                 "format": "Format",

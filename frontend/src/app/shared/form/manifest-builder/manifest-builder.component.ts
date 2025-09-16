@@ -1,6 +1,6 @@
 import { Component, input, output, inject, OnInit } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { TranslateDirective } from '@ngx-translate/core';
 import { OIBusObjectAttribute, OIBusAttribute, OIBUS_ATTRIBUTE_TYPES } from '../../../../../../backend/shared/model/form.model';
 import { BoxComponent, BoxTitleDirective } from '../../box/box.component';
@@ -30,6 +30,7 @@ export class ManifestBuilderComponent implements OnInit {
 
   ngOnInit() {
     this.initializeForm();
+    this.setupAutoSave();
   }
 
   private initializeForm() {
@@ -42,15 +43,12 @@ export class ManifestBuilderComponent implements OnInit {
       wrapInBox: manifest.displayProperties.wrapInBox
     });
 
-    // Clear existing form array
     const attributesArray = this.form.get('attributes');
     if (attributesArray) {
       while (attributesArray.value.length > 0) {
         this.removeAttribute(0);
       }
     }
-
-    // Add existing attributes
     manifest.attributes.forEach(attr => {
       this.addAttribute(attr);
     });
@@ -60,27 +58,26 @@ export class ManifestBuilderComponent implements OnInit {
     const attributesArray = this.form.get('attributes') as any;
     const attributeForm = this.fb.group({
       type: [existingAttribute?.type || 'string', Validators.required],
-      key: [existingAttribute?.key || '', Validators.required],
+      key: [existingAttribute?.key || '', [Validators.required, this.createUniqueKeyValidator()]],
       translationKey: [existingAttribute?.translationKey || '', Validators.required],
-      // Common properties
       validators: this.fb.array([]),
-      // Display properties for non-object/array types
       row: [
         existingAttribute && 'displayProperties' in existingAttribute && 'row' in existingAttribute.displayProperties
           ? existingAttribute.displayProperties.row
-          : 0
+          : 0,
+        [Validators.min(0)]
       ],
       columns: [
         existingAttribute && 'displayProperties' in existingAttribute && 'columns' in existingAttribute.displayProperties
           ? existingAttribute.displayProperties.columns
-          : 4
+          : 4,
+        [Validators.min(1), Validators.max(12)]
       ],
       displayInViewMode: [
         existingAttribute && 'displayProperties' in existingAttribute && 'displayInViewMode' in existingAttribute.displayProperties
           ? existingAttribute.displayProperties.displayInViewMode
           : true
       ],
-      // Object/Array specific properties
       visible: [
         existingAttribute && 'displayProperties' in existingAttribute && 'visible' in existingAttribute.displayProperties
           ? existingAttribute.displayProperties.visible
@@ -91,23 +88,19 @@ export class ManifestBuilderComponent implements OnInit {
           ? existingAttribute.displayProperties.wrapInBox
           : false
       ],
-      // Array specific properties
       paginate: [existingAttribute && 'paginate' in existingAttribute ? existingAttribute.paginate : false],
       numberOfElementPerPage: [
         existingAttribute && 'numberOfElementPerPage' in existingAttribute ? existingAttribute.numberOfElementPerPage : 20
       ],
-      // Type specific properties
       defaultValue: [existingAttribute && 'defaultValue' in existingAttribute ? existingAttribute.defaultValue : null],
       unit: [existingAttribute && 'unit' in existingAttribute ? existingAttribute.unit : null],
       contentType: [existingAttribute && 'contentType' in existingAttribute ? existingAttribute.contentType : 'json'],
       selectableValues: [existingAttribute && 'selectableValues' in existingAttribute ? existingAttribute.selectableValues : []],
       acceptableType: [existingAttribute && 'acceptableType' in existingAttribute ? existingAttribute.acceptableType : 'POLL'],
-      // Nested attributes for objects and arrays
       attributes: this.fb.array([]),
       enablingConditions: this.fb.array([])
     });
 
-    // If it's an existing object or array, populate nested attributes
     if (existingAttribute && (existingAttribute.type === 'object' || existingAttribute.type === 'array')) {
       const nestedAttributes =
         existingAttribute.type === 'object' ? existingAttribute.attributes : existingAttribute.rootAttribute.attributes;
@@ -123,18 +116,20 @@ export class ManifestBuilderComponent implements OnInit {
     const attributesArray = parentForm.get('attributes') as any;
     const attributeForm = this.fb.group({
       type: [existingAttribute?.type || 'string', Validators.required],
-      key: [existingAttribute?.key || '', Validators.required],
+      key: [existingAttribute?.key || '', [Validators.required, this.createUniqueKeyValidator(parentForm)]],
       translationKey: [existingAttribute?.translationKey || '', Validators.required],
       validators: this.fb.array([]),
       row: [
         existingAttribute && 'displayProperties' in existingAttribute && 'row' in existingAttribute.displayProperties
           ? existingAttribute.displayProperties.row
-          : 0
+          : 0,
+        [Validators.min(0)]
       ],
       columns: [
         existingAttribute && 'displayProperties' in existingAttribute && 'columns' in existingAttribute.displayProperties
           ? existingAttribute.displayProperties.columns
-          : 4
+          : 4,
+        [Validators.min(1), Validators.max(12)]
       ],
       displayInViewMode: [
         existingAttribute && 'displayProperties' in existingAttribute && 'displayInViewMode' in existingAttribute.displayProperties
@@ -164,7 +159,6 @@ export class ManifestBuilderComponent implements OnInit {
       enablingConditions: this.fb.array([])
     });
 
-    // Recursively add nested attributes for objects
     if (existingAttribute && existingAttribute.type === 'object') {
       existingAttribute.attributes.forEach((nestedAttr: OIBusAttribute) => {
         this.addNestedAttribute(attributeForm, nestedAttr);
@@ -187,7 +181,6 @@ export class ManifestBuilderComponent implements OnInit {
   onTypeChange(attributeForm: FormGroup): void {
     const type = attributeForm.get('type')?.value;
 
-    // Reset type-specific fields when type changes
     attributeForm.patchValue({
       unit: null,
       contentType: 'json',
@@ -196,8 +189,6 @@ export class ManifestBuilderComponent implements OnInit {
       paginate: false,
       numberOfElementPerPage: 20
     });
-
-    // Clear nested attributes when changing from object/array to other types
     if (type !== 'object' && type !== 'array') {
       const attributesArray = attributeForm.get('attributes') as any;
       while (attributesArray.length > 0) {
@@ -411,6 +402,15 @@ export class ManifestBuilderComponent implements OnInit {
     }
   }
 
+  private setupAutoSave(): void {
+    this.form.valueChanges.subscribe(() => {
+      if (this.form.valid) {
+        const manifest = this.generateManifest();
+        this.manifestChange.emit(manifest);
+      }
+    });
+  }
+
   save(): void {
     if (this.form.valid) {
       const manifest = this.generateManifest();
@@ -424,5 +424,29 @@ export class ManifestBuilderComponent implements OnInit {
 
   getNestedAttributesControls(attributeForm: FormGroup) {
     return (attributeForm.get('attributes') as any)?.controls || [];
+  }
+
+  private createUniqueKeyValidator(parentForm?: FormGroup): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      if (!control.value) {
+        return null;
+      }
+
+      const currentKey = control.value;
+      const attributesArray = parentForm ? parentForm.get('attributes') : this.form.get('attributes');
+
+      if (!attributesArray) {
+        return null;
+      }
+
+      const controls = attributesArray.getRawValue();
+      const duplicateCount = controls.filter((attr: any) => attr.key === currentKey).length;
+
+      if (duplicateCount > 1) {
+        return { uniqueKey: { message: 'Key must be unique within the same level' } };
+      }
+
+      return null;
+    };
   }
 }

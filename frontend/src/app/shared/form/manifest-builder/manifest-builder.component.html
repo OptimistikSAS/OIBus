@@ -62,9 +62,13 @@
 
       <div formArrayName="attributes">
         @for (attributeForm of attributesControls; track $index) {
-          <div class="attribute-item mb-3 p-3 border rounded bg-light" [formGroupName]="$index">
+          <div class="attribute-item position-relative" [formGroupName]="$index">
+            <button type="button" class="btn btn-danger position-absolute" (click)="removeAttribute($index)" style="z-index: 10">
+              <span class="fa fa-trash"></span>
+            </button>
+
             <div class="row">
-              <div class="col-md-3">
+              <div class="col-md-4">
                 <div class="form-group">
                   <label
                     class="form-label"
@@ -78,7 +82,7 @@
                   </select>
                 </div>
               </div>
-              <div class="col-md-3">
+              <div class="col-md-4">
                 <div class="form-group">
                   <label
                     class="form-label"
@@ -86,6 +90,16 @@
                     translate="configuration.oibus.manifest.transformers.manifest-builder.key"
                   ></label>
                   <input type="text" class="form-control" formControlName="key" id="attr-key-{{ $index }}" />
+                  @if (attributeForm.get('key')?.invalid && attributeForm.get('key')?.touched) {
+                    <div class="invalid-feedback d-block">
+                      @if (attributeForm.get('key')?.errors?.['required']) {
+                        <div>Key is required</div>
+                      }
+                      @if (attributeForm.get('key')?.errors?.['uniqueKey']) {
+                        <div>Key must be unique within the same level</div>
+                      }
+                    </div>
+                  }
                 </div>
               </div>
               <div class="col-md-4">
@@ -98,14 +112,8 @@
                   <input type="text" class="form-control" formControlName="translationKey" id="attr-translation-key-{{ $index }}" />
                 </div>
               </div>
-              <div class="col-md-2 d-flex align-items-end">
-                <button type="button" class="btn btn-danger btn-sm" (click)="removeAttribute($index)">
-                  <span class="fa fa-trash"></span>
-                </button>
-              </div>
             </div>
 
-            <!-- Type-specific properties -->
             @if (attributeForm.get('type')?.value === 'number') {
               <div class="row mt-2">
                 <div class="col-md-6">
@@ -308,7 +316,6 @@
               </div>
             }
 
-            <!-- Display properties for non-object/array types -->
             @if (attributeForm.get('type')?.value !== 'object' && attributeForm.get('type')?.value !== 'array') {
               <div class="row mt-2">
                 <div class="col-md-4">
@@ -319,6 +326,13 @@
                       translate="configuration.oibus.manifest.transformers.manifest-builder.row"
                     ></label>
                     <input type="number" class="form-control" formControlName="row" id="attr-row-{{ $index }}" />
+                    @if (attributeForm.get('row')?.invalid && attributeForm.get('row')?.touched) {
+                      <div class="invalid-feedback d-block">
+                        @if (attributeForm.get('row')?.errors?.['min']) {
+                          <div>Row must be 0 or greater</div>
+                        }
+                      </div>
+                    }
                   </div>
                 </div>
                 <div class="col-md-4">
@@ -329,6 +343,16 @@
                       translate="configuration.oibus.manifest.transformers.manifest-builder.columns"
                     ></label>
                     <input type="number" class="form-control" formControlName="columns" id="attr-columns-{{ $index }}" />
+                    @if (attributeForm.get('columns')?.invalid && attributeForm.get('columns')?.touched) {
+                      <div class="invalid-feedback d-block">
+                        @if (attributeForm.get('columns')?.errors?.['min']) {
+                          <div>Columns must be at least 1</div>
+                        }
+                        @if (attributeForm.get('columns')?.errors?.['max']) {
+                          <div>Columns cannot exceed 12</div>
+                        }
+                      </div>
+                    }
                   </div>
                 </div>
                 <div class="col-md-4">
@@ -352,7 +376,6 @@
               </div>
             }
 
-            <!-- Nested attributes for objects and arrays -->
             @if (attributeForm.get('type')?.value === 'object' || attributeForm.get('type')?.value === 'array') {
               <ng-container [ngTemplateOutlet]="nestedAttributesTemplate" [ngTemplateOutletContext]="{ parent: attributeForm }" />
             }
@@ -361,11 +384,9 @@
       </div>
     </oib-box>
 
-    <div class="d-flex justify-content-end mt-3">
-      <button type="button" class="btn btn-success" (click)="save()" [disabled]="!form.valid">
-        <span class="fa fa-save"></span>
-        <span translate="configuration.oibus.manifest.transformers.manifest-builder.save"></span>
-      </button>
+    <div class="auto-save-info">
+      <i class="fa fa-info-circle me-2"></i>
+      <span translate="configuration.oibus.manifest.transformers.manifest-builder.auto-save-info"></span>
     </div>
   </form>
 </div>
@@ -385,9 +406,18 @@
 
     <div formArrayName="attributes">
       @for (nestedForm of getNestedAttributesControls(parent); track $index) {
-        <div class="nested-attribute-item mb-2 p-2 border rounded bg-white" [formGroupName]="$index">
+        <div class="nested-attribute-item position-relative" [formGroupName]="$index">
+          <button
+            type="button"
+            class="btn btn-danger position-absolute"
+            (click)="removeNestedAttribute(parent, $index)"
+            style="z-index: 10"
+          >
+            <span class="fa fa-trash"></span>
+          </button>
+
           <div class="row">
-            <div class="col-md-3">
+            <div class="col-md-4">
               <div class="form-group">
                 <label
                   class="form-label"
@@ -401,7 +431,7 @@
                 </select>
               </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-4">
               <div class="form-group">
                 <label
                   class="form-label"
@@ -409,6 +439,16 @@
                   translate="configuration.oibus.manifest.transformers.manifest-builder.key"
                 ></label>
                 <input type="text" class="form-control" formControlName="key" id="nested-key-{{ $index }}" />
+                @if (nestedForm.get('key')?.invalid && nestedForm.get('key')?.touched) {
+                  <div class="invalid-feedback d-block">
+                    @if (nestedForm.get('key')?.errors?.['required']) {
+                      <div>Key is required</div>
+                    }
+                    @if (nestedForm.get('key')?.errors?.['uniqueKey']) {
+                      <div>Key must be unique within the same level</div>
+                    }
+                  </div>
+                }
               </div>
             </div>
             <div class="col-md-4">
@@ -420,11 +460,6 @@
                 ></label>
                 <input type="text" class="form-control" formControlName="translationKey" id="nested-translation-key-{{ $index }}" />
               </div>
-            </div>
-            <div class="col-md-2 d-flex align-items-end">
-              <button type="button" class="btn btn-danger btn-sm" (click)="removeNestedAttribute(parent, $index)">
-                <span class="fa fa-trash"></span>
-              </button>
             </div>
           </div>
 
@@ -453,6 +488,13 @@
                     translate="configuration.oibus.manifest.transformers.manifest-builder.row"
                   ></label>
                   <input type="number" class="form-control" formControlName="row" id="nested-row-{{ $index }}" />
+                  @if (nestedForm.get('row')?.invalid && nestedForm.get('row')?.touched) {
+                    <div class="invalid-feedback d-block">
+                      @if (nestedForm.get('row')?.errors?.['min']) {
+                        <div>Row must be 0 or greater</div>
+                      }
+                    </div>
+                  }
                 </div>
               </div>
               <div class="col-md-3">
@@ -463,6 +505,16 @@
                     translate="configuration.oibus.manifest.transformers.manifest-builder.columns"
                   ></label>
                   <input type="number" class="form-control" formControlName="columns" id="nested-columns-{{ $index }}" />
+                  @if (nestedForm.get('columns')?.invalid && nestedForm.get('columns')?.touched) {
+                    <div class="invalid-feedback d-block">
+                      @if (nestedForm.get('columns')?.errors?.['min']) {
+                        <div>Columns must be at least 1</div>
+                      }
+                      @if (nestedForm.get('columns')?.errors?.['max']) {
+                        <div>Columns cannot exceed 12</div>
+                      }
+                    </div>
+                  }
                 </div>
               </div>
             </div>
