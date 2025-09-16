@@ -3,25 +3,6 @@
     <div class="row">
       <div class="col-md-6">
         <div class="form-group">
-          <label class="form-label" for="manifest-key" translate="configuration.oibus.manifest.transformers.manifest-builder.key"></label>
-          <input type="text" class="form-control" formControlName="key" id="manifest-key" />
-        </div>
-      </div>
-      <div class="col-md-6">
-        <div class="form-group">
-          <label
-            class="form-label"
-            for="manifest-translation-key"
-            translate="configuration.oibus.manifest.transformers.manifest-builder.translation-key"
-          ></label>
-          <input type="text" class="form-control" formControlName="translationKey" id="manifest-translation-key" />
-        </div>
-      </div>
-    </div>
-
-    <div class="row">
-      <div class="col-md-6">
-        <div class="form-group">
           <div class="form-label">&nbsp;</div>
           <div class="form-check form-switch">
             <input class="form-check-input" type="checkbox" formControlName="visible" id="manifest-visible" />
@@ -50,20 +31,32 @@
 
     <oib-box class="mt-3">
       <ng-template oibBoxTitle>
-        <span translate="configuration.oibus.manifest.transformers.manifest-builder.attributes"></span>
+        <div class="d-flex justify-content-between align-items-center">
+          <span translate="configuration.oibus.manifest.transformers.manifest-builder.attributes"></span>
+          <div>
+            <button
+              type="button"
+              class="btn btn-sm btn-warning"
+              id="manifest-add-attribute"
+              [ngbTooltip]="'configuration.oibus.manifest.transformers.manifest-builder.tooltips.add-attribute' | translate"
+              (click)="addAttribute()"
+            >
+              <span class="fa fa-plus"></span>
+            </button>
+          </div>
+        </div>
       </ng-template>
-
-      <div class="d-flex justify-content-end mb-3">
-        <button type="button" class="btn btn-primary" (click)="addAttribute()">
-          <span class="fa fa-plus"></span>
-          <span class="ms-1" translate="configuration.oibus.manifest.transformers.manifest-builder.add-attribute"></span>
-        </button>
-      </div>
 
       <div formArrayName="attributes">
         @for (attributeForm of attributesControls; track $index) {
           <div class="attribute-item position-relative" [formGroupName]="$index">
-            <button type="button" class="btn btn-danger position-absolute" (click)="removeAttribute($index)" style="z-index: 10">
+            <button
+              type="button"
+              class="btn btn-danger position-absolute"
+              [ngbTooltip]="'configuration.oibus.manifest.transformers.manifest-builder.tooltips.delete-attribute' | translate"
+              (click)="removeAttribute($index)"
+              style="z-index: 10"
+            >
               <span class="fa fa-trash"></span>
             </button>
 
@@ -394,15 +387,21 @@
 <ng-template #nestedAttributesTemplate let-parent="parent">
   <oib-box class="mt-3">
     <ng-template oibBoxTitle>
-      <span translate="configuration.oibus.manifest.transformers.manifest-builder.nested-attributes"></span>
+      <div class="d-flex justify-content-between align-items-center">
+        <span translate="configuration.oibus.manifest.transformers.manifest-builder.nested-attributes"></span>
+        <div>
+          <button
+            type="button"
+            class="btn btn-sm btn-warning"
+            id="manifest-add-nested-attribute"
+            [ngbTooltip]="'configuration.oibus.manifest.transformers.manifest-builder.tooltips.add-nested-attribute' | translate"
+            (click)="addNestedAttribute(parent)"
+          >
+            <span class="fa fa-plus"></span>
+          </button>
+        </div>
+      </div>
     </ng-template>
-
-    <div class="d-flex justify-content-end mb-3">
-      <button type="button" class="btn btn-secondary btn-sm" (click)="addNestedAttribute(parent)">
-        <span class="fa fa-plus"></span>
-        <span translate="configuration.oibus.manifest.transformers.manifest-builder.add-nested-attribute"></span>
-      </button>
-    </div>
 
     <div formArrayName="attributes">
       @for (nestedForm of getNestedAttributesControls(parent); track $index) {
@@ -410,6 +409,7 @@
           <button
             type="button"
             class="btn btn-danger position-absolute"
+            [ngbTooltip]="'configuration.oibus.manifest.transformers.manifest-builder.tooltips.delete-nested-attribute' | translate"
             (click)="removeNestedAttribute(parent, $index)"
             style="z-index: 10"
           >

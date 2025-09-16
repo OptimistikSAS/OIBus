@@ -4,7 +4,7 @@
 @if (form) {
   <div class="modal-body">
     <form [formGroup]="form" (ngSubmit)="save()" id="form">
-      <div class="row">
+      <div class="row mt-2">
         <!-- Name -->
         <div class="form-group">
           <label class="form-label" for="name" translate="configuration.oibus.manifest.transformers.edit-transformer-modal.name"></label>
@@ -108,9 +108,7 @@
         <!-- Manifest Builder -->
         <div class="form-group">
           <label class="form-label" translate="configuration.oibus.manifest.transformers.edit-transformer-modal.custom-manifest"></label>
-          @if (currentManifest) {
-            <oib-manifest-builder [manifest]="currentManifest" (manifestChange)="onManifestChange($event)" />
-          }
+          <oib-manifest-builder formControlName="customManifest" />
         </div>
       </div>
     </form>

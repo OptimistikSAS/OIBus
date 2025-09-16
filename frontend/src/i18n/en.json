@@ -905,7 +905,13 @@
             "display-in-view-mode": "Display in View Mode",
             "nested-attributes": "Nested Attributes",
             "add-nested-attribute": "Add Nested Attribute",
-            "auto-save-info": "Changes are automatically saved"
+            "auto-save-info": "Changes are automatically saved",
+            "tooltips": {
+              "add-attribute": "Add an attribute",
+              "add-nested-attribute": "Add a nested attribute",
+              "delete-attribute": "Delete attribute",
+              "delete-nested-attribute": "Delete nested attribute"
+            }
           },
           "mapping": {
             "title": "Mapping table",

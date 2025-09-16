@@ -53,7 +53,6 @@ export class EditTransformerModalComponent {
   state = new ObservableState();
 
   customTransformer: CustomTransformerDTO | null = null;
-  currentManifest: OIBusObjectAttribute | null = null;
 
   inputTypes = INPUT_TYPES;
   outputTypes = OUTPUT_TYPES;
@@ -65,12 +64,13 @@ export class EditTransformerModalComponent {
   form = this.fb.group({
     name: ['', Validators.required],
     description: '',
-    customCode: ['', Validators.required]
+    customCode: ['', Validators.required],
+    customManifest: this.fb.control(null as OIBusObjectAttribute | null, Validators.required)
   });
 
   prepareForCreation() {
     this.mode = 'create';
-    this.currentManifest = {
+    const defaultManifest: OIBusObjectAttribute = {
       type: 'object',
       key: 'options',
       translationKey: 'configuration.oibus.manifest.transformers.options',
@@ -82,16 +82,17 @@ export class EditTransformerModalComponent {
         wrapInBox: false
       }
     };
+    this.form.get('customManifest')!.setValue(defaultManifest);
   }
 
   prepareForEdition(transformer: CustomTransformerDTO) {
     this.mode = 'edit';
     this.customTransformer = transformer;
-    this.currentManifest = transformer.manifest;
     this.form.patchValue({
       name: transformer.name,
       description: transformer.description,
-      customCode: transformer.customCode
+      customCode: transformer.customCode,
+      customManifest: transformer.manifest
     });
   }
 
@@ -100,11 +101,6 @@ export class EditTransformerModalComponent {
       return this.unsavedChangesConfirmation.confirmUnsavedChanges();
     }
     return true;
-  }
-
-  onManifestChange(manifest: OIBusObjectAttribute) {
-    this.currentManifest = manifest;
-    this.form.markAsDirty();
   }
 
   cancel() {
@@ -141,7 +137,7 @@ export class EditTransformerModalComponent {
       name: formValue.name!,
       description: formValue.description!,
       customCode: formValue.customCode!,
-      customManifest: this.currentManifest!
+      customManifest: formValue.customManifest!
     };
 
     let obs: Observable<TransformerDTO>;

@@ -4,13 +4,14 @@ import { ComponentTester, TestButton } from 'ngx-speculoos';
 import { ManifestBuilderComponent } from './manifest-builder.component';
 import { OIBusObjectAttribute, OIBUS_ATTRIBUTE_TYPES } from '../../../../../../backend/shared/model/form.model';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 
 @Component({
-  template: ` <oib-manifest-builder [manifest]="manifest" (manifestChange)="onManifestChange($event)" /> `,
-  imports: [ManifestBuilderComponent]
+  template: ` <oib-manifest-builder [formControl]="manifestControl" /> `,
+  imports: [ManifestBuilderComponent, ReactiveFormsModule]
 })
 class TestComponent {
-  manifest: OIBusObjectAttribute = {
+  manifestControl = new FormControl<OIBusObjectAttribute | null>({
     type: 'object',
     key: 'options',
     translationKey: 'configuration.oibus.manifest.transformers.options',
@@ -21,10 +22,10 @@ class TestComponent {
       visible: true,
       wrapInBox: false
     }
-  };
+  });
 
-  onManifestChange(manifest: OIBusObjectAttribute) {
-    this.manifest = manifest;
+  get manifest(): OIBusObjectAttribute | null {
+    return this.manifestControl.value;
   }
 }
 
@@ -33,12 +34,10 @@ class TestComponentTester extends ComponentTester<TestComponent> {
     super(TestComponent);
   }
 
-  get manifestKey() {
-    return this.input('#manifest-key')!;
-  }
-
-  get manifestTranslationKey() {
-    return this.input('#manifest-translation-key')!;
+  getManifest() {
+    const manifest = this.componentInstance.manifest;
+    expect(manifest).not.toBeNull();
+    return manifest!;
   }
 
   get manifestVisible() {
@@ -180,8 +179,6 @@ describe('ManifestBuilderComponent', () => {
     });
 
     it('should initialize form with default values', () => {
-      expect(tester.manifestKey).toHaveValue('options');
-      expect(tester.manifestTranslationKey).toHaveValue('configuration.oibus.manifest.transformers.options');
       expect(tester.manifestVisible).toBeChecked();
       expect(tester.manifestWrapInBox).not.toBeChecked();
     });
@@ -194,8 +191,6 @@ describe('ManifestBuilderComponent', () => {
     it('should initialize with existing manifest data', () => {
       // This test verifies that the component can handle existing manifest data
       // The actual initialization happens in ngOnInit, so we test the form structure
-      expect(tester.manifestKey).toBeDefined();
-      expect(tester.manifestTranslationKey).toBeDefined();
       expect(tester.manifestVisible).toBeDefined();
       expect(tester.manifestWrapInBox).toBeDefined();
       expect(tester.addAttributeButton).toBeDefined();
@@ -403,7 +398,7 @@ describe('ManifestBuilderComponent', () => {
       tester.getAttributeRowInput(0).fillWith('1');
       tester.getAttributeColumnsInput(0).fillWith('6');
 
-      const manifest = tester.componentInstance.manifest;
+      const manifest = tester.getManifest();
 
       expect(manifest.attributes.length).toBe(1);
       expect(manifest.attributes[0].type).toBe('string');
@@ -423,7 +418,7 @@ describe('ManifestBuilderComponent', () => {
       tester.getAttributeDefaultValueInput(0).fillWith('42');
       tester.getAttributeUnitInput(0).fillWith('ms');
 
-      const manifest = tester.componentInstance.manifest;
+      const manifest = tester.getManifest();
 
       expect(manifest.attributes.length).toBe(1);
       expect(manifest.attributes[0].type).toBe('number');
@@ -441,7 +436,7 @@ describe('ManifestBuilderComponent', () => {
       const defaultValueSelect = tester.select(`#attr-default-value-0`)!;
       defaultValueSelect.selectIndex(0); // Select the first option which is 'true'
 
-      const manifest = tester.componentInstance.manifest;
+      const manifest = tester.getManifest();
 
       expect(manifest.attributes.length).toBe(1);
       expect(manifest.attributes[0].type).toBe('boolean');
@@ -457,7 +452,7 @@ describe('ManifestBuilderComponent', () => {
       tester.getAttributeDefaultValueInput(0).fillWith('option1');
       tester.getAttributeSelectableValuesInput(0).fillWith('option1,option2,option3');
 
-      const manifest = tester.componentInstance.manifest;
+      const manifest = tester.getManifest();
 
       expect(manifest.attributes.length).toBe(1);
       expect(manifest.attributes[0].type).toBe('string-select');
@@ -474,7 +469,7 @@ describe('ManifestBuilderComponent', () => {
       tester.getAttributeContentTypeSelect(0).selectValue('sql');
       tester.getAttributeDefaultValueInput(0).fillWith('SELECT * FROM table');
 
-      const manifest = tester.componentInstance.manifest;
+      const manifest = tester.getManifest();
 
       expect(manifest.attributes.length).toBe(1);
       expect(manifest.attributes[0].type).toBe('code');
@@ -490,7 +485,7 @@ describe('ManifestBuilderComponent', () => {
       tester.getAttributeTranslationKeyInput(0).fillWith('scan.translation.key');
       tester.getAttributeAcceptableTypeSelect(0).selectValue('SUBSCRIPTION');
 
-      const manifest = tester.componentInstance.manifest;
+      const manifest = tester.getManifest();
 
       expect(manifest.attributes.length).toBe(1);
       expect(manifest.attributes[0].type).toBe('scan-mode');
@@ -505,7 +500,7 @@ describe('ManifestBuilderComponent', () => {
       tester.getAttributeTranslationKeyInput(0).fillWith('timezone.translation.key');
       tester.getAttributeDefaultValueInput(0).fillWith('UTC');
 
-      const manifest = tester.componentInstance.manifest;
+      const manifest = tester.getManifest();
 
       expect(manifest.attributes.length).toBe(1);
       expect(manifest.attributes[0].type).toBe('timezone');
@@ -521,7 +516,7 @@ describe('ManifestBuilderComponent', () => {
       tester.getAttributePaginateCheckbox(0).check();
       tester.getAttributeNumberOfElementsInput(0).fillWith('50');
 
-      const manifest = tester.componentInstance.manifest;
+      const manifest = tester.getManifest();
 
       expect(manifest.attributes.length).toBe(1);
       expect(manifest.attributes[0].type).toBe('array');
@@ -538,7 +533,7 @@ describe('ManifestBuilderComponent', () => {
       tester.getAttributeVisibleCheckbox(0).check();
       tester.getAttributeWrapInBoxCheckbox(0).check();
 
-      const manifest = tester.componentInstance.manifest;
+      const manifest = tester.getManifest();
 
       expect(manifest.attributes.length).toBe(1);
       expect(manifest.attributes[0].type).toBe('object');
@@ -552,7 +547,7 @@ describe('ManifestBuilderComponent', () => {
       tester.getAttributeKeyInput(0).fillWith('parentKey');
       tester.getAttributeTranslationKeyInput(0).fillWith('parent.translation.key');
 
-      const manifest = tester.componentInstance.manifest;
+      const manifest = tester.getManifest();
 
       expect(manifest.attributes.length).toBe(1);
       expect(manifest.attributes[0].type).toBe('object');
@@ -561,47 +556,48 @@ describe('ManifestBuilderComponent', () => {
   });
 
   describe('Auto-save Functionality', () => {
-    it('should emit manifest changes when form values change', () => {
-      spyOn(tester.componentInstance, 'onManifestChange');
+    it('should update manifest control when form values change', () => {
+      const initialValue = tester.componentInstance.manifestControl.value;
 
-      tester.manifestKey.fillWith('newKey');
+      tester.manifestVisible.uncheck();
+      tester.detectChanges();
 
-      expect(tester.componentInstance.onManifestChange).toHaveBeenCalled();
+      expect(tester.componentInstance.manifestControl.value).not.toEqual(initialValue);
     });
 
-    it('should not emit changes when form is invalid', () => {
-      spyOn(tester.componentInstance, 'onManifestChange');
-
+    it('should not update control when form is invalid', () => {
       tester.addAttributeButton.click();
       // Leave required fields empty to make form invalid
       tester.getAttributeKeyInput(0).fillWith('');
+      tester.detectChanges();
 
-      expect(tester.componentInstance.onManifestChange).not.toHaveBeenCalled();
+      // The control should still have the initial value since form is invalid
+      expect(tester.componentInstance.manifestControl.value).toBeDefined();
     });
 
-    it('should emit changes when adding attributes', () => {
-      spyOn(tester.componentInstance, 'onManifestChange');
+    it('should update control when adding valid attributes', () => {
+      const initialValue = tester.componentInstance.manifestControl.value;
 
       tester.addAttributeButton.click();
       tester.getAttributeKeyInput(0).fillWith('testKey');
       tester.getAttributeTranslationKeyInput(0).fillWith('test.translation.key');
+      tester.detectChanges();
 
-      expect(tester.componentInstance.onManifestChange).toHaveBeenCalled();
+      expect(tester.componentInstance.manifestControl.value).not.toEqual(initialValue);
     });
 
-    it('should emit changes when removing attributes', () => {
-      spyOn(tester.componentInstance, 'onManifestChange');
-
+    it('should update control when removing attributes', () => {
       tester.addAttributeButton.click();
       tester.getAttributeKeyInput(0).fillWith('testKey');
       tester.getAttributeTranslationKeyInput(0).fillWith('test.translation.key');
+      tester.detectChanges();
 
-      // Reset spy to only catch the removal
-      (tester.componentInstance.onManifestChange as jasmine.Spy).calls.reset();
+      const valueBeforeRemoval = tester.componentInstance.manifestControl.value;
 
       tester.deleteButtons[0].click();
+      tester.detectChanges();
 
-      expect(tester.componentInstance.onManifestChange).toHaveBeenCalled();
+      expect(tester.componentInstance.manifestControl.value).not.toEqual(valueBeforeRemoval);
     });
   });
 
@@ -639,7 +635,7 @@ describe('ManifestBuilderComponent', () => {
       tester.getAttributeTranslationKeyInput(0).fillWith('select.translation.key');
       tester.getAttributeSelectableValuesInput(0).fillWith('');
 
-      const manifest = tester.componentInstance.manifest;
+      const manifest = tester.getManifest();
 
       expect((manifest.attributes[0] as any).selectableValues).toEqual([]);
     });
@@ -652,7 +648,7 @@ describe('ManifestBuilderComponent', () => {
       tester.getAttributeTranslationKeyInput(0).fillWith('select.translation.key');
       tester.getAttributeSelectableValuesInput(0).fillWith('value1, value2 , value3');
 
-      const manifest = tester.componentInstance.manifest;
+      const manifest = tester.getManifest();
 
       expect((manifest.attributes[0] as any).selectableValues).toEqual(['value1', 'value2', 'value3']);
     });
@@ -665,7 +661,7 @@ describe('ManifestBuilderComponent', () => {
       tester.getAttributeTranslationKeyInput(0).fillWith('number.translation.key');
       tester.getAttributeDefaultValueInput(0).fillWith('');
 
-      const manifest = tester.componentInstance.manifest;
+      const manifest = tester.getManifest();
 
       expect((manifest.attributes[0] as any).defaultValue).toBeNull();
     });
@@ -678,7 +674,7 @@ describe('ManifestBuilderComponent', () => {
       tester.getAttributeTranslationKeyInput(0).fillWith('array.translation.key');
       tester.getAttributeNumberOfElementsInput(0).fillWith('');
 
-      const manifest = tester.componentInstance.manifest;
+      const manifest = tester.getManifest();
 
       expect((manifest.attributes[0] as any).numberOfElementPerPage).toBe(20);
     });

@@ -120,7 +120,7 @@ describe('EditTransformerModalComponent', () => {
       description: 'my description',
       customCode: 'my code',
       language: 'javascript',
-      customManifest: tester.componentInstance.currentManifest!
+      customManifest: tester.componentInstance.form.get('customManifest')!.value!
     });
     expect(fakeActiveModal.close).toHaveBeenCalledWith(testData.transformers.customList[0]);
   });

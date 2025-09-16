@@ -1,28 +1,44 @@
-import { Component, input, output, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, forwardRef } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
-import { TranslateDirective } from '@ngx-translate/core';
+import {
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+  AbstractControl,
+  ValidationErrors,
+  ValidatorFn,
+  ControlValueAccessor,
+  NG_VALUE_ACCESSOR
+} from '@angular/forms';
+import { TranslateDirective, TranslateModule } from '@ngx-translate/core';
 import { OIBusObjectAttribute, OIBusAttribute, OIBUS_ATTRIBUTE_TYPES } from '../../../../../../backend/shared/model/form.model';
 import { BoxComponent, BoxTitleDirective } from '../../box/box.component';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
   selector: 'oib-manifest-builder',
   templateUrl: './manifest-builder.component.html',
   styleUrl: './manifest-builder.component.scss',
-  imports: [ReactiveFormsModule, TranslateDirective, BoxComponent, BoxTitleDirective, NgTemplateOutlet]
+  imports: [ReactiveFormsModule, TranslateDirective, BoxComponent, BoxTitleDirective, NgTemplateOutlet, TranslateModule, NgbTooltip],
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => ManifestBuilderComponent),
+      multi: true
+    }
+  ]
 })
-export class ManifestBuilderComponent implements OnInit {
+export class ManifestBuilderComponent implements OnInit, ControlValueAccessor {
   private fb = inject(FormBuilder);
 
-  manifest = input.required<OIBusObjectAttribute>();
-  manifestChange = output<OIBusObjectAttribute>();
+  private onChange: (value: OIBusObjectAttribute | null) => void = () => {};
+  private onTouched: () => void = () => {};
+  private currentValue: OIBusObjectAttribute | null = null;
 
-  availableTypes = OIBUS_ATTRIBUTE_TYPES.filter(type => type !== 'transformer-array');
+  availableTypes = OIBUS_ATTRIBUTE_TYPES;
 
   form = this.fb.group({
-    type: ['object', Validators.required],
-    key: ['options', Validators.required],
-    translationKey: ['configuration.oibus.manifest.transformers.options', Validators.required],
     visible: [true],
     wrapInBox: [false],
     attributes: this.fb.array([])
@@ -34,13 +50,23 @@ export class ManifestBuilderComponent implements OnInit {
   }
 
   private initializeForm() {
-    const manifest = this.manifest();
+    const manifest = this.currentValue;
+    if (!manifest) {
+      this.currentValue = {
+        type: 'object',
+        key: 'options',
+        translationKey: 'configuration.oibus.manifest.transformers.options',
+        attributes: [],
+        enablingConditions: [],
+        validators: [],
+        displayProperties: { visible: true, wrapInBox: false }
+      };
+    }
+
+    const value = this.currentValue!;
     this.form.patchValue({
-      type: manifest.type,
-      key: manifest.key,
-      translationKey: manifest.translationKey,
-      visible: manifest.displayProperties.visible,
-      wrapInBox: manifest.displayProperties.wrapInBox
+      visible: value.displayProperties.visible,
+      wrapInBox: value.displayProperties.wrapInBox
     });
 
     const attributesArray = this.form.get('attributes');
@@ -49,7 +75,7 @@ export class ManifestBuilderComponent implements OnInit {
         this.removeAttribute(0);
       }
     }
-    manifest.attributes.forEach(attr => {
+    value.attributes.forEach(attr => {
       this.addAttribute(attr);
     });
   }
@@ -206,8 +232,8 @@ export class ManifestBuilderComponent implements OnInit {
 
     return {
       type: 'object',
-      key: formValue.key || 'options',
-      translationKey: formValue.translationKey || 'configuration.oibus.manifest.transformers.options',
+      key: 'options',
+      translationKey: 'configuration.oibus.manifest.transformers.options',
       attributes,
       enablingConditions: [],
       validators: [],
@@ -385,7 +411,7 @@ export class ManifestBuilderComponent implements OnInit {
               : Number(attrForm.numberOfElementPerPage),
           rootAttribute: {
             type: 'object',
-            key: 'item',
+            key: 'element',
             translationKey: attrForm.translationKey || 'configuration.oibus.manifest.transformers.mapping.title',
             attributes: arrayAttributes,
             enablingConditions: [],
@@ -406,15 +432,31 @@ export class ManifestBuilderComponent implements OnInit {
     this.form.valueChanges.subscribe(() => {
       if (this.form.valid) {
         const manifest = this.generateManifest();
-        this.manifestChange.emit(manifest);
+        this.currentValue = manifest;
+        this.onChange(manifest);
+        this.onTouched();
       }
     });
   }
 
-  save(): void {
-    if (this.form.valid) {
-      const manifest = this.generateManifest();
-      this.manifestChange.emit(manifest);
+  writeValue(value: OIBusObjectAttribute | null): void {
+    this.currentValue = value;
+    this.initializeForm();
+  }
+
+  registerOnChange(fn: (value: OIBusObjectAttribute | null) => void): void {
+    this.onChange = fn;
+  }
+
+  registerOnTouched(fn: () => void): void {
+    this.onTouched = fn;
+  }
+
+  setDisabledState(isDisabled: boolean): void {
+    if (isDisabled) {
+      this.form.disable({ emitEvent: false });
+    } else {
+      this.form.enable({ emitEvent: false });
     }
   }
 
