@@ -92,7 +92,8 @@
               "src/**/*.ts",
               "src/**/*.html"
             ],
-            "maxWarnings": 0
+            "maxWarnings": 0,
+            "concurrency": "auto"
           }
         },
         "test": {
