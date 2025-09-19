@@ -12,6 +12,7 @@ import { TransformerWithOptions } from '../../model/transformer.model';
 import { toTransformer } from './transformer.repository';
 import { ScanMode } from '../../model/scan-mode.model';
 import { toScanMode } from './scan-mode.repository';
+import { TransformerDTOWithOptions } from '../../../shared/model/transformer.model';
 
 const HISTORY_QUERIES_TABLE = 'history_queries';
 const HISTORY_ITEMS_TABLE = 'history_items';
@@ -189,6 +190,29 @@ export default class HistoryQueryRepository {
       this.database.prepare(`DELETE FROM ${HISTORY_QUERIES_TABLE} WHERE id = ?;`).run(id);
     });
     transaction();
+  }
+
+  addOrEditTransformer(historyId: string, transformerWithOptions: TransformerDTOWithOptions): void {
+    const transaction = this.database.transaction(() => {
+      this.database
+        .prepare(`DELETE FROM ${HISTORY_TRANSFORMERS_TABLE} WHERE history_id = ? AND transformer_id = ?;`)
+        .run(historyId, transformerWithOptions.transformer.id);
+      const query = `INSERT INTO ${HISTORY_TRANSFORMERS_TABLE} (history_id, transformer_id, options, input_type) VALUES (?, ?, ?, ?);`;
+      this.database
+        .prepare(query)
+        .run(
+          historyId,
+          transformerWithOptions.transformer.id,
+          JSON.stringify(transformerWithOptions.options),
+          transformerWithOptions.inputType
+        );
+    });
+    transaction();
+  }
+
+  removeTransformer(historyId: string, transformerId: string): void {
+    const query = `DELETE FROM ${HISTORY_TRANSFORMERS_TABLE} WHERE history_id = ? AND transformer_id = ?;`;
+    this.database.prepare(query).run(historyId, transformerId);
   }
 
   searchHistoryQueryItems<I extends SouthItemSettings>(

@@ -122,6 +122,58 @@ describe('History query controller', () => {
     expect(ctx.badRequest).toHaveBeenCalledWith('pause error');
   });
 
+  it('addOrEditTransformer() should add subscription', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.request.body = {};
+
+    await historyQueryController.addOrEditTransformer(ctx);
+
+    expect(ctx.app.historyQueryService.addOrEditTransformer).toHaveBeenCalledWith(testData.historyQueries.list[0].id, {});
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('addOrEditTransformer() should return bad request', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.request.body = {};
+    ctx.app.historyQueryService.addOrEditTransformer.mockImplementationOnce(() => {
+      throw new Error('Not Found');
+    });
+
+    await historyQueryController.addOrEditTransformer(ctx);
+
+    expect(ctx.app.historyQueryService.addOrEditTransformer).toHaveBeenCalledWith(testData.historyQueries.list[0].id, {});
+    expect(ctx.badRequest).toHaveBeenCalledWith('Not Found');
+  });
+
+  it('removeTransformer() should add subscription', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.params.transformerId = testData.transformers.list[0].id;
+
+    await historyQueryController.removeTransformer(ctx);
+
+    expect(ctx.app.historyQueryService.removeTransformer).toHaveBeenCalledWith(
+      testData.historyQueries.list[0].id,
+      testData.transformers.list[0].id
+    );
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('removeTransformer() should return bad request', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.params.transformerId = testData.transformers.list[0].id;
+    ctx.app.historyQueryService.removeTransformer.mockImplementationOnce(() => {
+      throw new Error('Not Found');
+    });
+
+    await historyQueryController.removeTransformer(ctx);
+
+    expect(ctx.app.historyQueryService.removeTransformer).toHaveBeenCalledWith(
+      testData.historyQueries.list[0].id,
+      testData.transformers.list[0].id
+    );
+    expect(ctx.badRequest).toHaveBeenCalledWith('Not Found');
+  });
+
   it('testSouthConnection() should test South connector settings', async () => {
     ctx.params.id = testData.historyQueries.list[0].id;
     ctx.request.body = testData.south.command.settings;

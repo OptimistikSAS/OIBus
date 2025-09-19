@@ -32,12 +32,11 @@ import { NorthSettings } from '../../shared/model/north-settings.model';
 import CertificateRepository from '../repository/config/certificate.repository';
 import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
 import DataStreamEngine from '../engine/data-stream-engine';
-import { SouthConnectorEntityLight } from '../model/south-connector.model';
 import { PassThrough } from 'node:stream';
 import { ReadStream } from 'node:fs';
 import { CacheMetadata, CacheSearchParam, OIBusSetpointContent } from '../../shared/model/engine.model';
 import TransformerService, { toTransformerDTO } from './transformer.service';
-import { TransformerDTO } from '../../shared/model/transformer.model';
+import { TransformerDTO, TransformerDTOWithOptions } from '../../shared/model/transformer.model';
 import { Transformer } from '../model/transformer.model';
 import { toScanModeDTO } from './scan-mode.service';
 import { buildNorth } from '../north/north-connector-factory';
@@ -278,13 +277,26 @@ export default class NorthService {
     await this.engine.stopNorth(northConnector.id);
   }
 
-  async findSubscriptionsByNorth(northId: string): Promise<Array<SouthConnectorEntityLight>> {
+  addOrEditTransformer(northId: string, transformerWithOptions: TransformerDTOWithOptions): void {
     const northConnector = this.northConnectorRepository.findNorthById(northId);
     if (!northConnector) {
       throw new Error('North connector not found');
     }
 
-    return this.northConnectorRepository.listNorthSubscriptions(northConnector.id);
+    this.northConnectorRepository.addOrEditTransformer(northId, transformerWithOptions);
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    this.engine.updateNorthConfiguration(northId);
+  }
+
+  removeTransformer(northId: string, transformerId: string): void {
+    const northConnector = this.northConnectorRepository.findNorthById(northId);
+    if (!northConnector) {
+      throw new Error('North connector not found');
+    }
+
+    this.northConnectorRepository.removeTransformer(northId, transformerId);
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    this.engine.updateNorthConfiguration(northId);
   }
 
   checkSubscription(northId: string, southId: string): boolean {

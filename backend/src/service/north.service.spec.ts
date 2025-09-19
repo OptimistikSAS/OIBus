@@ -28,6 +28,7 @@ import TransformerService, { toTransformerDTO } from './transformer.service';
 import { NorthConnectorCommandDTO } from '../../shared/model/north-connector.model';
 import { NorthSettings } from '../../shared/model/north-settings.model';
 import { buildNorth } from '../north/north-connector-factory';
+import { TransformerDTO } from '../../shared/model/transformer.model';
 
 jest.mock('./encryption.service');
 jest.mock('./utils');
@@ -325,23 +326,60 @@ describe('North Service', () => {
     expect(northConnectorRepository.stopNorth).not.toHaveBeenCalled();
   });
 
-  it('findByNorth() should list Subscription by North', async () => {
-    (northConnectorRepository.listNorthSubscriptions as jest.Mock).mockReturnValueOnce(testData.north.list[0].subscriptions);
+  it('addOrEditTransformer() should add or edit transformer', () => {
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValueOnce(testData.north.list[0]);
 
-    const result = await service.findSubscriptionsByNorth(testData.north.list[0].id);
+    service.addOrEditTransformer(testData.north.list[0].id, {
+      inputType: 'input',
+      transformer: testData.transformers.list[0] as TransformerDTO,
+      options: {}
+    });
+    expect(northConnectorRepository.addOrEditTransformer).toHaveBeenCalledWith(testData.north.list[0].id, {
+      inputType: 'input',
+      transformer: testData.transformers.list[0] as TransformerDTO,
+      options: {}
+    });
 
-    expect(northConnectorRepository.findNorthById).toHaveBeenCalledWith(testData.north.list[0].id);
-    expect(northConnectorRepository.listNorthSubscriptions).toHaveBeenCalledWith(testData.north.list[0].id);
-    expect(result).toEqual(testData.north.list[0].subscriptions);
+    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
+    expect(engine.updateNorthConfiguration).toHaveBeenCalledWith(testData.north.list[0].id);
   });
 
-  it('findByNorth() should throw an error if North not found', async () => {
+  it('addOrEditTransformer() should throw error if not found', () => {
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValueOnce(null);
 
-    await expect(service.findSubscriptionsByNorth(testData.north.list[0].id)).rejects.toThrow('North connector not found');
-    expect(northConnectorRepository.findNorthById).toHaveBeenCalledWith(testData.north.list[0].id);
-    expect(northConnectorRepository.listNorthSubscriptions).not.toHaveBeenCalled();
+    expect(() =>
+      service.addOrEditTransformer(testData.north.list[0].id, {
+        inputType: 'input',
+        transformer: testData.transformers.list[0] as TransformerDTO,
+        options: {}
+      })
+    ).toThrow('North connector not found');
+    expect(northConnectorRepository.addOrEditTransformer).not.toHaveBeenCalled();
+
+    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).not.toHaveBeenCalled();
+    expect(engine.updateNorthConfiguration).not.toHaveBeenCalled();
+  });
+
+  it('removeTransformer() should remove transformer', () => {
+    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValueOnce(testData.north.list[0]);
+
+    service.removeTransformer(testData.north.list[0].id, testData.transformers.list[0].id);
+    expect(northConnectorRepository.removeTransformer).toHaveBeenCalledWith(testData.north.list[0].id, testData.transformers.list[0].id);
+
+    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
+    expect(engine.updateNorthConfiguration).toHaveBeenCalledWith(testData.north.list[0].id);
+  });
+
+  it('removeTransformer() should throw error if not found', () => {
+    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValueOnce(null);
+
+    expect(() => service.removeTransformer(testData.north.list[0].id, testData.transformers.list[0].id)).toThrow(
+      'North connector not found'
+    );
+    expect(northConnectorRepository.removeTransformer).not.toHaveBeenCalled();
+
+    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).not.toHaveBeenCalled();
+    expect(engine.updateNorthConfiguration).not.toHaveBeenCalled();
   });
 
   it('checkSubscription() should check if subscription is set', () => {

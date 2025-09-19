@@ -12,6 +12,7 @@ import { toNorthConnectorDTO, toNorthConnectorLightDTO } from '../../service/nor
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata } from '../../../shared/model/engine.model';
 import { ReadStream } from 'node:fs';
+import { TransformerDTOWithOptions } from '../../../shared/model/transformer.model';
 
 export default class NorthConnectorController {
   constructor(protected readonly validator: JoiValidator) {}
@@ -72,6 +73,42 @@ export default class NorthConnectorController {
       ctx.noContent();
     } catch (error: unknown) {
       ctx.badRequest((error as Error).message);
+    }
+  }
+
+  async addOrEditTransformer(ctx: KoaContext<TransformerDTOWithOptions, void>): Promise<void> {
+    try {
+      await ctx.app.northService.addOrEditTransformer(ctx.params.northId, ctx.request.body!);
+      return ctx.noContent();
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
+    }
+  }
+
+  async removeTransformer(ctx: KoaContext<void, void>): Promise<void> {
+    try {
+      await ctx.app.northService.removeTransformer(ctx.params.northId, ctx.params.transformerId);
+      return ctx.noContent();
+    } catch (error: unknown) {
+      return ctx.badRequest((error as Error).message);
+    }
+  }
+
+  async addSubscription(ctx: KoaContext<void, void>): Promise<void> {
+    try {
+      await ctx.app.northService.createSubscription(ctx.params.northId, ctx.params.southId);
+      return ctx.noContent();
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
+    }
+  }
+
+  async removeSubscription(ctx: KoaContext<void, void>): Promise<void> {
+    try {
+      await ctx.app.northService.deleteSubscription(ctx.params.northId, ctx.params.southId);
+      return ctx.noContent();
+    } catch (error: unknown) {
+      return ctx.badRequest((error as Error).message);
     }
   }
 

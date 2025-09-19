@@ -37,6 +37,9 @@ import { CertificateDTO } from '../../../../../backend/shared/model/certificate.
 import { CertificateService } from '../../services/certificate.service';
 import { isDisplayableAttribute } from '../../shared/form/dynamic-form.builder';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TransformerService } from '../../services/transformer.service';
+import { TransformerDTO, TransformerDTOWithOptions } from '../../../../../backend/shared/model/transformer.model';
+import { HistoryQueryTransformersComponent } from '../history-query-transformers/history-query-transformers.component';
 
 @Component({
   selector: 'oib-history-query-detail',
@@ -54,7 +57,8 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
     OIBusNorthTypeEnumPipe,
     OIBusSouthTypeEnumPipe,
     TranslatePipe,
-    NgbTooltip
+    NgbTooltip,
+    HistoryQueryTransformersComponent
   ],
   templateUrl: './history-query-detail.component.html',
   styleUrl: './history-query-detail.component.scss',
@@ -67,6 +71,7 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
   private notificationService = inject(NotificationService);
   private scanModeService = inject(ScanModeService);
   private certificateService = inject(CertificateService);
+  private transformerService = inject(TransformerService);
   private modalService = inject(ModalService);
   private engineService = inject(EngineService);
   protected router = inject(Router);
@@ -81,6 +86,7 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
 
   scanModes: Array<ScanModeDTO> = [];
   certificates: Array<CertificateDTO> = [];
+  transformers: Array<TransformerDTO> = [];
   searchParams: SouthConnectorItemSearchParam | null = null;
   northManifest: NorthConnectorManifest | null = null;
   southManifest: SouthConnectorManifest | null = null;
@@ -92,13 +98,17 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
   historyQueryId: string | null = null;
 
   ngOnInit() {
-    combineLatest([this.scanModeService.list(), this.certificateService.list(), this.engineService.getInfo()]).subscribe(
-      ([scanModes, certificates, engineInfo]) => {
-        this.scanModes = scanModes.filter(scanMode => scanMode.id !== 'subscription');
-        this.certificates = certificates;
-        this.oibusInfo = engineInfo;
-      }
-    );
+    combineLatest([
+      this.scanModeService.list(),
+      this.certificateService.list(),
+      this.transformerService.list(),
+      this.engineService.getInfo()
+    ]).subscribe(([scanModes, certificates, transformers, engineInfo]) => {
+      this.scanModes = scanModes.filter(scanMode => scanMode.id !== 'subscription');
+      this.certificates = certificates;
+      this.transformers = transformers;
+      this.oibusInfo = engineInfo;
+    });
     this.route.paramMap
       .pipe(
         switchMap(params => {
@@ -178,10 +188,15 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
       });
   }
 
+  updateInMemoryTransformers(_transformers: Array<TransformerDTOWithOptions> | null) {
+    this.historyQueryService.get(this.historyQuery!.id).subscribe(historyQuery => {
+      this.historyQuery = JSON.parse(JSON.stringify(historyQuery)); // Used to force a refresh in history query item list
+    });
+  }
+
   updateInMemoryItems(_items: Array<HistoryQueryItemCommandDTO<SouthItemSettings>> | null) {
     this.historyQueryService.get(this.historyQuery!.id).subscribe(historyQuery => {
-      this.historyQuery!.items = historyQuery.items;
-      this.historyQuery = JSON.parse(JSON.stringify(this.historyQuery)); // Used to force a refresh in history query item list
+      this.historyQuery = JSON.parse(JSON.stringify(historyQuery)); // Used to force a refresh in history query item list
     });
   }
 

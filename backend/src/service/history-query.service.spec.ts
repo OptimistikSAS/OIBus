@@ -30,6 +30,7 @@ import TransformerService from './transformer.service';
 import TransformerServiceMock from '../tests/__mocks__/service/transformer-service.mock';
 import DataStreamEngine from '../engine/data-stream-engine';
 import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
+import { TransformerDTO } from '../../shared/model/transformer.model';
 
 jest.mock('papaparse');
 jest.mock('node:fs/promises');
@@ -479,6 +480,65 @@ describe('History Query service', () => {
     expect(historyQueryRepository.updateHistoryQueryStatus).toHaveBeenCalledWith(testData.historyQueries.list[0].id, 'PAUSED');
     expect(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).toHaveBeenCalledTimes(1);
     expect(engine.stopHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
+  });
+
+  it('addOrEditTransformer() should add or edit transformer', async () => {
+    (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0]);
+
+    await service.addOrEditTransformer(testData.historyQueries.list[0].id, {
+      inputType: 'input',
+      transformer: testData.transformers.list[0] as TransformerDTO,
+      options: {}
+    });
+    expect(historyQueryRepository.addOrEditTransformer).toHaveBeenCalledWith(testData.historyQueries.list[0].id, {
+      inputType: 'input',
+      transformer: testData.transformers.list[0] as TransformerDTO,
+      options: {}
+    });
+
+    expect(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).toHaveBeenCalled();
+    expect(engine.stopHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
+  });
+
+  it('addOrEditTransformer() should throw error if not found', async () => {
+    (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(null);
+
+    await expect(
+      service.addOrEditTransformer(testData.historyQueries.list[0].id, {
+        inputType: 'input',
+        transformer: testData.transformers.list[0] as TransformerDTO,
+        options: {}
+      })
+    ).rejects.toThrow('History query not found');
+    expect(historyQueryRepository.addOrEditTransformer).not.toHaveBeenCalled();
+
+    expect(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).not.toHaveBeenCalled();
+    expect(engine.stopHistoryQuery).not.toHaveBeenCalled();
+  });
+
+  it('removeTransformer() should remove transformer', async () => {
+    (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0]);
+
+    await service.removeTransformer(testData.historyQueries.list[0].id, testData.transformers.list[0].id);
+    expect(historyQueryRepository.removeTransformer).toHaveBeenCalledWith(
+      testData.historyQueries.list[0].id,
+      testData.transformers.list[0].id
+    );
+
+    expect(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).toHaveBeenCalled();
+    expect(engine.stopHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
+  });
+
+  it('removeTransformer() should throw error if not found', async () => {
+    (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(null);
+
+    await expect(service.removeTransformer(testData.historyQueries.list[0].id, testData.transformers.list[0].id)).rejects.toThrow(
+      'History query not found'
+    );
+    expect(historyQueryRepository.removeTransformer).not.toHaveBeenCalled();
+
+    expect(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).not.toHaveBeenCalled();
+    expect(engine.stopHistoryQuery).not.toHaveBeenCalled();
   });
 
   it('searchHistoryQueryItems() should list history query items', async () => {

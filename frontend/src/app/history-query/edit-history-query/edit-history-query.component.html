@@ -179,12 +179,14 @@
                 </div>
               </div>
             </oib-box>
-            <oib-north-transformers
-              [control]="form.controls.northTransformers"
+            <oib-history-query-transformers
+              [historyQuery]="historyQuery"
+              [scanModes]="scanModes"
+              [certificates]="certificates"
               [northManifest]="northManifest"
               [transformers]="transformers"
-              [certificates]="certificates"
-              [scanModes]="scanModes"
+              [saveChangesDirectly]="true"
+              (inMemoryTransformersWithOptions)="updateInMemoryTransformers($event)"
             />
 
             <!-- North settings -->

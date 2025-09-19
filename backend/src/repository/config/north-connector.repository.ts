@@ -9,6 +9,7 @@ import { toTransformer } from './transformer.repository';
 import { TransformerWithOptions } from '../../model/transformer.model';
 import { ScanMode } from '../../model/scan-mode.model';
 import { toScanMode } from './scan-mode.repository';
+import { TransformerDTOWithOptions } from '../../../shared/model/transformer.model';
 
 const NORTH_CONNECTORS_TABLE = 'north_connectors';
 const SUBSCRIPTION_TABLE = 'subscription';
@@ -170,6 +171,29 @@ export default class NorthConnectorRepository {
       .prepare(query)
       .all(northId)
       .map(result => toSouthConnectorLight(result as Record<string, string>));
+  }
+
+  addOrEditTransformer(northId: string, transformerWithOptions: TransformerDTOWithOptions): void {
+    const transaction = this.database.transaction(() => {
+      this.database
+        .prepare(`DELETE FROM ${NORTH_TRANSFORMERS_TABLE} WHERE north_id = ? AND transformer_id = ?;`)
+        .run(northId, transformerWithOptions.transformer.id);
+      const query = `INSERT INTO ${NORTH_TRANSFORMERS_TABLE} (north_id, transformer_id, options, input_type) VALUES (?, ?, ?, ?);`;
+      this.database
+        .prepare(query)
+        .run(
+          northId,
+          transformerWithOptions.transformer.id,
+          JSON.stringify(transformerWithOptions.options),
+          transformerWithOptions.inputType
+        );
+    });
+    transaction();
+  }
+
+  removeTransformer(northId: string, transformerId: string): void {
+    const query = `DELETE FROM ${NORTH_TRANSFORMERS_TABLE} WHERE north_id = ? AND transformer_id = ?;`;
+    this.database.prepare(query).run(northId, transformerId);
   }
 
   checkSubscription(northId: string, southId: string): boolean {

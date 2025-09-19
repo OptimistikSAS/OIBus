@@ -10,6 +10,8 @@ export default jest.fn().mockImplementation(() => {
     stopNorth: jest.fn(),
     deleteNorth: jest.fn(),
     listNorthSubscriptions: jest.fn(),
+    addOrEditTransformer: jest.fn(),
+    removeTransformer: jest.fn(),
     checkSubscription: jest.fn(),
     createSubscription: jest.fn(),
     deleteSubscription: jest.fn(),

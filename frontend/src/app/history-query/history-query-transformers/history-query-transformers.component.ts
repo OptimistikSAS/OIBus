@@ -1,11 +1,11 @@
 import { Component, effect, inject, input, output } from '@angular/core';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
-import { NorthConnectorDTO, NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
+import { NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { TransformerDTO, TransformerDTOWithOptions } from '../../../../../backend/shared/model/transformer.model';
 import { ReactiveFormsModule } from '@angular/forms';
 import { Modal, ModalService } from '../../shared/modal.service';
-import { EditNorthTransformerModalComponent } from './edit-north-transformer-modal/edit-north-transformer-modal.component';
+import { EditHistoryQueryTransformerModalComponent } from './edit-history-query-transformer-modal/edit-history-query-transformer-modal.component';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { OIBUS_DATA_TYPES } from '../../../../../backend/shared/model/engine.model';
 import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
@@ -14,21 +14,23 @@ import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 import { firstValueFrom, of, switchMap } from 'rxjs';
-import { NorthConnectorService } from '../../services/north-connector.service';
+import { HistoryQueryDTO } from '../../../../../backend/shared/model/history-query.model';
+import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
+import { HistoryQueryService } from '../../services/history-query.service';
 
 @Component({
-  selector: 'oib-north-transformers',
+  selector: 'oib-history-query-transformers',
   imports: [TranslateDirective, BoxComponent, ReactiveFormsModule, TranslatePipe, BoxTitleDirective, OibHelpComponent],
-  templateUrl: './north-transformers.component.html',
-  styleUrl: './north-transformers.component.scss'
+  templateUrl: './history-query-transformers.component.html',
+  styleUrl: './history-query-transformers.component.scss'
 })
-export class NorthTransformersComponent {
+export class HistoryQueryTransformersComponent {
   private confirmationService = inject(ConfirmationService);
   private notificationService = inject(NotificationService);
   private modalService = inject(ModalService);
-  private northConnectorService = inject(NorthConnectorService);
+  private historyQueryService = inject(HistoryQueryService);
 
-  readonly northConnector = input<NorthConnectorDTO<NorthSettings> | null>(null);
+  readonly historyQuery = input<HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings> | null>(null);
 
   readonly inMemoryTransformersWithOptions = output<Array<TransformerDTOWithOptions> | null>();
   readonly saveChangesDirectly = input<boolean>(false);
@@ -43,24 +45,24 @@ export class NorthTransformersComponent {
   constructor() {
     // Initialize local transformers when editing, and keep them in sync with input
     effect(() => {
-      const connector = this.northConnector();
-      if (connector) {
-        this.transformersWithOptions = [...connector.transformers];
+      const historyQuery = this.historyQuery();
+      if (historyQuery) {
+        this.transformersWithOptions = [...historyQuery.northTransformers];
       }
     });
   }
 
   addTransformer(e: Event) {
     e.preventDefault();
-    const modalRef = this.modalService.open(EditNorthTransformerModalComponent, {
+    const modalRef = this.modalService.open(EditHistoryQueryTransformerModalComponent, {
       size: 'xl',
       beforeDismiss: () => {
-        const component: EditNorthTransformerModalComponent = modalRef.componentInstance;
+        const component: EditHistoryQueryTransformerModalComponent = modalRef.componentInstance;
         const result = component.canDismiss();
         return typeof result === 'boolean' ? result : firstValueFrom(result);
       }
     });
-    const component: EditNorthTransformerModalComponent = modalRef.componentInstance;
+    const component: EditHistoryQueryTransformerModalComponent = modalRef.componentInstance;
 
     component.prepareForCreation(
       this.scanModes(),
@@ -72,13 +74,13 @@ export class NorthTransformersComponent {
     this.refreshAfterAddModalClosed(modalRef);
   }
 
-  private refreshAfterAddModalClosed(modalRef: Modal<EditNorthTransformerModalComponent>) {
+  private refreshAfterAddModalClosed(modalRef: Modal<EditHistoryQueryTransformerModalComponent>) {
     modalRef.result
       .pipe(
         switchMap((transformer: TransformerDTOWithOptions) => {
-          const northConnector = this.northConnector();
+          const northConnector = this.historyQuery();
           if (northConnector && this.saveChangesDirectly()) {
-            return this.northConnectorService.addOrEditTransformer(northConnector.id, transformer).pipe(switchMap(() => of(transformer)));
+            return this.historyQueryService.addOrEditTransformer(northConnector.id, transformer).pipe(switchMap(() => of(transformer)));
           }
           this.transformersWithOptions = [...this.transformersWithOptions, transformer];
           return of(transformer);
@@ -86,34 +88,37 @@ export class NorthTransformersComponent {
       )
       .subscribe(() => {
         if (this.saveChangesDirectly()) {
-          this.notificationService.success('north.transformers.added');
+          this.notificationService.success('history-query.transformers.added');
         }
         this.inMemoryTransformersWithOptions.emit(this.transformersWithOptions);
       });
   }
 
   editTransformer(transformer: TransformerDTOWithOptions) {
-    const modalRef = this.modalService.open(EditNorthTransformerModalComponent, {
+    const modalRef = this.modalService.open(EditHistoryQueryTransformerModalComponent, {
       size: 'xl',
       beforeDismiss: () => {
-        const component: EditNorthTransformerModalComponent = modalRef.componentInstance;
+        const component: EditHistoryQueryTransformerModalComponent = modalRef.componentInstance;
         const result = component.canDismiss();
         return typeof result === 'boolean' ? result : firstValueFrom(result);
       }
     });
-    const component: EditNorthTransformerModalComponent = modalRef.componentInstance;
+    const component: EditHistoryQueryTransformerModalComponent = modalRef.componentInstance;
 
     component.prepareForEdition(this.scanModes(), this.certificates(), transformer, this.transformers(), this.northManifest().types);
     this.refreshAfterEditModalClosed(modalRef, transformer);
   }
 
-  private refreshAfterEditModalClosed(modalRef: Modal<EditNorthTransformerModalComponent>, oldTransformer: TransformerDTOWithOptions) {
+  private refreshAfterEditModalClosed(
+    modalRef: Modal<EditHistoryQueryTransformerModalComponent>,
+    oldTransformer: TransformerDTOWithOptions
+  ) {
     modalRef.result
       .pipe(
         switchMap((transformer: TransformerDTOWithOptions) => {
-          const northConnector = this.northConnector();
+          const northConnector = this.historyQuery();
           if (northConnector && this.saveChangesDirectly()) {
-            return this.northConnectorService.addOrEditTransformer(northConnector.id, transformer).pipe(switchMap(() => of(transformer)));
+            return this.historyQueryService.addOrEditTransformer(northConnector.id, transformer).pipe(switchMap(() => of(transformer)));
           }
           this.transformersWithOptions = this.transformersWithOptions.filter(
             element => element.transformer.id !== oldTransformer.transformer.id
@@ -124,7 +129,7 @@ export class NorthTransformersComponent {
       )
       .subscribe(() => {
         if (this.saveChangesDirectly()) {
-          this.notificationService.success('north.transformers.edited');
+          this.notificationService.success('history-query.transformers.edited');
         }
         this.inMemoryTransformersWithOptions.emit(this.transformersWithOptions);
       });
@@ -133,13 +138,13 @@ export class NorthTransformersComponent {
   deleteTransformer(transformer: TransformerDTOWithOptions) {
     this.confirmationService
       .confirm({
-        messageKey: `north.transformers.confirm-deletion`
+        messageKey: `history-query.transformers.confirm-deletion`
       })
       .pipe(
         switchMap(() => {
-          const northConnector = this.northConnector();
+          const northConnector = this.historyQuery();
           if (this.saveChangesDirectly()) {
-            return this.northConnectorService.removeTransformer(northConnector!.id, transformer.transformer.id);
+            return this.historyQueryService.removeTransformer(northConnector!.id, transformer.transformer.id);
           }
           this.transformersWithOptions = this.transformersWithOptions.filter(
             element => element.transformer.id !== transformer.transformer.id
@@ -149,7 +154,7 @@ export class NorthTransformersComponent {
       )
       .subscribe(() => {
         if (this.saveChangesDirectly()) {
-          this.notificationService.success('north.transformers.removed');
+          this.notificationService.success('history-query.transformers.removed');
         }
         this.inMemoryTransformersWithOptions.emit(this.transformersWithOptions);
       });

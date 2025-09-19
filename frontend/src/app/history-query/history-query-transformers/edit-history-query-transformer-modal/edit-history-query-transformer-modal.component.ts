@@ -14,12 +14,12 @@ import { CertificateDTO } from '../../../../../../backend/shared/model/certifica
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 
 @Component({
-  selector: 'oib-edit-north-transformer-modal',
-  templateUrl: './edit-north-transformer-modal.component.html',
-  styleUrl: './edit-north-transformer-modal.component.scss',
+  selector: 'oib-edit-history-query-transformer-modal',
+  templateUrl: './edit-history-query-transformer-modal.component.html',
+  styleUrl: './edit-history-query-transformer-modal.component.scss',
   imports: [ReactiveFormsModule, TranslateDirective, SaveButtonComponent, TranslatePipe, OIBusObjectFormControlComponent]
 })
-export class EditNorthTransformerModalComponent {
+export class EditHistoryQueryTransformerModalComponent {
   private modal = inject(NgbActiveModal);
   private fb = inject(NonNullableFormBuilder);
   private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);

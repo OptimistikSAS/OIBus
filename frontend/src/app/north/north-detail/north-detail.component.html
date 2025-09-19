@@ -127,6 +127,16 @@
             </tbody>
           </table>
         </oib-box>
+
+        <oib-north-transformers
+          [scanModes]="scanModes"
+          [certificates]="certificates"
+          [northManifest]="manifest"
+          [transformers]="transformers"
+          [northConnector]="northConnector"
+          [saveChangesDirectly]="true"
+          (inMemoryTransformersWithOptions)="updateInMemoryTransformers($event)"
+        />
         <!-- subscription -->
         <oib-north-subscriptions
           [northConnector]="northConnector"

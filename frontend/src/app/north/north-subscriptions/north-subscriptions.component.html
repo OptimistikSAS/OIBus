@@ -28,7 +28,7 @@
         <tbody>
           @for (subscription of subscriptions; track subscription.id) {
             <tr>
-              <td>{{ subscription.name }} ({{ subscription.type }})</td>
+              <td>{{ subscription.name }} ({{ subscription.type | oIBusSouthTypeEnum }})</td>
               <td class="text-nowrap action-buttons">
                 <div class="pull-right">
                   <!-- Delete button -->

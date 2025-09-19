@@ -38,8 +38,8 @@ describe('CreateNorthSubscriptionModalComponent', () => {
   let notificationService: jasmine.SpyObj<NotificationService>;
 
   const southConnectors: Array<SouthConnectorLightDTO> = [
-    { id: 'id1', name: 'South1' } as SouthConnectorLightDTO,
-    { id: 'id2', name: 'South2' } as SouthConnectorLightDTO
+    { id: 'id1', name: 'South1', type: 'mqtt' } as SouthConnectorLightDTO,
+    { id: 'id2', name: 'South2', type: 'modbus' } as SouthConnectorLightDTO
   ];
 
   beforeEach(() => {
@@ -77,12 +77,13 @@ describe('CreateNorthSubscriptionModalComponent', () => {
   });
 
   it('should save south subscription if valid', fakeAsync(() => {
-    tester.south.selectLabel('South2');
+    tester.south.selectLabel('South2 (Modbus)');
     tester.save.click();
 
     const expectedSouth: SouthConnectorLightDTO = {
       id: 'id2',
-      name: 'South2'
+      name: 'South2',
+      type: 'modbus'
     } as SouthConnectorLightDTO;
 
     expect(fakeActiveModal.close).toHaveBeenCalledWith(expectedSouth);
