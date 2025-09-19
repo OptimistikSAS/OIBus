@@ -13,6 +13,8 @@ export default jest.fn().mockImplementation(() => ({
   deleteHistoryQuery: jest.fn(),
   startHistoryQuery: jest.fn(),
   pauseHistoryQuery: jest.fn(),
+  addOrEditTransformer: jest.fn(),
+  removeTransformer: jest.fn(),
   listItems: jest.fn(),
   searchHistoryQueryItems: jest.fn(),
   findAllItemsForHistoryQuery: jest.fn(),

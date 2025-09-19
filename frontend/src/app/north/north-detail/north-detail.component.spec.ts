@@ -14,6 +14,8 @@ import testData from '../../../../../backend/src/tests/utils/test-data';
 import { NorthConnectorDTO } from '../../../../../backend/shared/model/north-connector.model';
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { TransformerService } from '../../services/transformer.service';
+import { CertificateService } from '../../services/certificate.service';
 
 class NorthDetailComponentTester extends ComponentTester<NorthDetailComponent> {
   constructor() {
@@ -43,6 +45,8 @@ describe('NorthDetailComponent', () => {
   let scanModeService: jasmine.SpyObj<ScanModeService>;
   let engineService: jasmine.SpyObj<EngineService>;
   let notificationService: jasmine.SpyObj<NotificationService>;
+  let certificateService: jasmine.SpyObj<CertificateService>;
+  let transformerService: jasmine.SpyObj<TransformerService>;
 
   const northConnector = testData.north.list[0] as NorthConnectorDTO<NorthSettings>;
   const manifest = testData.north.manifest;
@@ -53,6 +57,8 @@ describe('NorthDetailComponent', () => {
     scanModeService = createMock(ScanModeService);
     notificationService = createMock(NotificationService);
     engineService = createMock(EngineService);
+    certificateService = createMock(CertificateService);
+    transformerService = createMock(TransformerService);
 
     TestBed.configureTestingModule({
       providers: [
@@ -71,7 +77,9 @@ describe('NorthDetailComponent', () => {
         { provide: NorthConnectorService, useValue: northConnectorService },
         { provide: NotificationService, useValue: notificationService },
         { provide: EngineService, useValue: engineService },
-        { provide: ScanModeService, useValue: scanModeService }
+        { provide: ScanModeService, useValue: scanModeService },
+        { provide: CertificateService, useValue: certificateService },
+        { provide: TransformerService, useValue: transformerService }
       ]
     });
 
@@ -81,6 +89,8 @@ describe('NorthDetailComponent', () => {
     northConnectorService.stopNorth.and.returnValue(of(undefined));
     engineService.getInfo.and.returnValue(of(engineInfo));
     scanModeService.list.and.returnValue(of([]));
+    certificateService.list.and.returnValue(of([]));
+    transformerService.list.and.returnValue(of([]));
 
     tester = new NorthDetailComponentTester();
   });

@@ -16,6 +16,7 @@ import { CacheMetadata, CacheSearchParam, OIBusContent } from '../../../../backe
 import { SouthItemSettings, SouthSettings } from '../../../../backend/shared/model/south-settings.model';
 import { NorthSettings } from '../../../../backend/shared/model/north-settings.model';
 import { OIBusNorthType } from '../../../../backend/shared/model/north-connector.model';
+import { TransformerDTOWithOptions } from '../../../../backend/shared/model/transformer.model';
 
 /**
  * Service used to interact with the backend for CRUD operations on History queries
@@ -88,6 +89,20 @@ export class HistoryQueryService {
    */
   deleteHistoryQuery(historyQueryId: string) {
     return this.http.delete<void>(`/api/history-queries/${historyQueryId}`);
+  }
+
+  /**
+   * Add or edit a History query transformer
+   */
+  addOrEditTransformer(historyQueryId: string, transformerWithOptions: TransformerDTOWithOptions): Observable<TransformerDTOWithOptions> {
+    return this.http.put<TransformerDTOWithOptions>(`/api/history-queries/${historyQueryId}/transformers`, transformerWithOptions);
+  }
+
+  /**
+   * Remove the selected History query transformer
+   */
+  removeTransformer(historyQueryId: string, transformerId: string): Observable<void> {
+    return this.http.delete<void>(`/api/history-queries/${historyQueryId}/transformers/${transformerId}`);
   }
 
   /**

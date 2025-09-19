@@ -76,6 +76,7 @@ import IgnoreTransformer from '../../service/transformers/ignore-transformer';
 import OIBusSetpointToModbusTransformer from '../../service/transformers/setpoint/oibus-setpoint-to-modbus-transformer';
 import OIBusSetpointToMQTTTransformer from '../../service/transformers/setpoint/oibus-setpoint-to-mqtt-transformer';
 import OIBusSetpointToOPCUATransformer from '../../service/transformers/setpoint/oibus-setpoint-to-opcua-transformer';
+import { TransformerDTO } from '../../../shared/model/transformer.model';
 
 jest.mock('../../service/utils');
 jest.mock('argon2');
@@ -1860,6 +1861,19 @@ describe('Repository with populated database', () => {
       expect(newNorthConnectorWithoutTransformer.id).toEqual('newIdWithoutTransformer');
       const createdConnectorWithoutTransformer = repository.findNorthById('newIdWithoutTransformer')!;
       expect(createdConnectorWithoutTransformer.transformers).toEqual([]);
+
+      repository.addOrEditTransformer(newNorthConnectorWithoutTransformer.id, {
+        inputType: 'input',
+        transformer: testData.transformers.list[0] as TransformerDTO,
+        options: {}
+      });
+      const createdConnectorWithTransformer = repository.findNorthById('newIdWithoutTransformer')!;
+      expect(createdConnectorWithTransformer.transformers.length).toEqual(1);
+      expect(createdConnectorWithTransformer.transformers[0].transformer.id).toEqual(testData.transformers.list[0].id);
+
+      repository.removeTransformer(newNorthConnectorWithoutTransformer.id, testData.transformers.list[0].id);
+      const createdConnectorWithRemovedTransformer = repository.findNorthById('newIdWithoutTransformer')!;
+      expect(createdConnectorWithRemovedTransformer.transformers).toEqual([]);
     });
 
     it('should update a north connector', () => {
@@ -1975,6 +1989,19 @@ describe('Repository with populated database', () => {
       expect(newHistoryWithoutTransformer.id).toEqual('newIdWithoutTransformer');
       const createdHistoryWithoutTransformer = repository.findHistoryQueryById('newIdWithoutTransformer')!;
       expect(createdHistoryWithoutTransformer.northTransformers).toEqual([]);
+
+      repository.addOrEditTransformer(newHistoryWithoutTransformer.id, {
+        inputType: 'input',
+        transformer: testData.transformers.list[0] as TransformerDTO,
+        options: {}
+      });
+      const createdHistoryWithTransformer = repository.findHistoryQueryById('newIdWithoutTransformer')!;
+      expect(createdHistoryWithTransformer.northTransformers.length).toEqual(1);
+      expect(createdHistoryWithTransformer.northTransformers[0].transformer.id).toEqual(testData.transformers.list[0].id);
+
+      repository.removeTransformer(newHistoryWithoutTransformer.id, testData.transformers.list[0].id);
+      const createdHistoryWithRemovedTransformer = repository.findHistoryQueryById('newIdWithoutTransformer')!;
+      expect(createdHistoryWithRemovedTransformer.northTransformers).toEqual([]);
     });
 
     it('should update a history query', () => {

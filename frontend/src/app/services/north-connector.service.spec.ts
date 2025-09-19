@@ -10,10 +10,10 @@ import {
   NorthType
 } from '../../../../backend/shared/model/north-connector.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { SouthConnectorLightDTO } from '../../../../backend/shared/model/south-connector.model';
 import { NorthSettings } from '../../../../backend/shared/model/north-settings.model';
 import { CacheMetadata } from '../../../../backend/shared/model/engine.model';
 import testData from '../../../../backend/src/tests/utils/test-data';
+import { TransformerDTOWithOptions } from '../../../../backend/shared/model/transformer.model';
 
 describe('NorthConnectorService', () => {
   let http: HttpTestingController;
@@ -109,20 +109,10 @@ describe('NorthConnectorService', () => {
     expect(done).toBe(true);
   });
 
-  it('should get North connector subscriptions', () => {
-    let expectedNorthConnectorSubscriptions: Array<SouthConnectorLightDTO> | null = null;
-    const northConnectorSubscriptions: Array<SouthConnectorLightDTO> = [];
-
-    service.getSubscriptions('id1').subscribe(c => (expectedNorthConnectorSubscriptions = c));
-
-    http.expectOne({ url: '/api/north/id1/subscriptions', method: 'GET' }).flush(northConnectorSubscriptions);
-    expect(expectedNorthConnectorSubscriptions!).toEqual(northConnectorSubscriptions);
-  });
-
   it('should create a North connector subscription', () => {
     let done = false;
     service.createSubscription('id1', 'southId').subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'POST', url: '/api/north/id1/subscriptions/southId' });
+    const testRequest = http.expectOne({ method: 'PUT', url: '/api/north/id1/subscriptions/southId' });
     testRequest.flush(null);
     expect(done).toBe(true);
   });
@@ -131,6 +121,22 @@ describe('NorthConnectorService', () => {
     let done = false;
     service.deleteSubscription('id1', 'southId').subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'DELETE', url: '/api/north/id1/subscriptions/southId' });
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
+  it('should add or edit a North connector transformer with options', () => {
+    let done = false;
+    service.addOrEditTransformer('id1', {} as TransformerDTOWithOptions).subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'PUT', url: '/api/north/id1/transformers' });
+    testRequest.flush({});
+    expect(done).toBe(true);
+  });
+
+  it('should remove a North connector transformer', () => {
+    let done = false;
+    service.removeTransformer('id1', 'transformerId').subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'DELETE', url: '/api/north/id1/transformers/transformerId' });
     testRequest.flush(null);
     expect(done).toBe(true);
   });

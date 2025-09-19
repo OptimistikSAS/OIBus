@@ -151,6 +151,15 @@
             </tbody>
           </table>
         </oib-box>
+        <oib-history-query-transformers
+          [historyQuery]="historyQuery"
+          [scanModes]="scanModes"
+          [certificates]="certificates"
+          [northManifest]="northManifest"
+          [transformers]="transformers"
+          [saveChangesDirectly]="true"
+          (inMemoryTransformersWithOptions)="updateInMemoryTransformers($event)"
+        />
         <!-- North Specific settings -->
         <oib-box>
           <ng-template oibBoxTitle>

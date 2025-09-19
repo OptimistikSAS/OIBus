@@ -9,9 +9,9 @@ import {
   NorthType,
   OIBusNorthType
 } from '../../../../backend/shared/model/north-connector.model';
-import { SouthConnectorLightDTO } from '../../../../backend/shared/model/south-connector.model';
 import { NorthSettings } from '../../../../backend/shared/model/north-settings.model';
 import { CacheMetadata, CacheSearchParam } from '../../../../backend/shared/model/engine.model';
+import { TransformerDTOWithOptions } from '../../../../backend/shared/model/transformer.model';
 
 /**
  * Service used to interact with the backend for CRUD operations on North connectors
@@ -90,17 +90,10 @@ export class NorthConnectorService {
   }
 
   /**
-   * Retrieve the North connector subscriptions
-   */
-  getSubscriptions(northId: string): Observable<Array<SouthConnectorLightDTO>> {
-    return this.http.get<Array<SouthConnectorLightDTO>>(`/api/north/${northId}/subscriptions`);
-  }
-
-  /**
-   * Create a new North connector subscription
+   * Add a new North connector subscription
    */
   createSubscription(northId: string, southId: string): Observable<void> {
-    return this.http.post<void>(`/api/north/${northId}/subscriptions/${southId}`, null);
+    return this.http.put<void>(`/api/north/${northId}/subscriptions/${southId}`, null);
   }
 
   /**
@@ -108,6 +101,20 @@ export class NorthConnectorService {
    */
   deleteSubscription(northId: string, southId: string): Observable<void> {
     return this.http.delete<void>(`/api/north/${northId}/subscriptions/${southId}`);
+  }
+
+  /**
+   * Add or edit a North connector transformer
+   */
+  addOrEditTransformer(northId: string, transformerWithOptions: TransformerDTOWithOptions): Observable<TransformerDTOWithOptions> {
+    return this.http.put<TransformerDTOWithOptions>(`/api/north/${northId}/transformers`, transformerWithOptions);
+  }
+
+  /**
+   * Remove the selected North connector transformer
+   */
+  removeTransformer(northId: string, transformerId: string): Observable<void> {
+    return this.http.delete<void>(`/api/north/${northId}/transformers/${transformerId}`);
   }
 
   searchCacheContent(
