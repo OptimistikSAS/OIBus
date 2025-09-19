@@ -120,7 +120,51 @@
     color: $darkGrey;
     font-size: 0.875rem;
     text-align: center;
-    border: 0.20rem solid $lightGrey;
+    border: 0.2rem solid $lightGrey;
     box-sizing: content-box;
+  }
+
+  .manifest-attributes-section {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid $lightGrey;
+
+    h5 {
+      margin-bottom: 0;
+      color: $darkGrey;
+    }
+
+    .table {
+      margin-bottom: 0;
+    }
+
+    .table th {
+      border-top: none;
+      font-weight: 600;
+      color: $darkGrey;
+      background-color: $veryLightGrey;
+    }
+
+    .table td {
+      vertical-align: middle;
+    }
+
+    .badge {
+      font-size: 0.75rem;
+    }
+
+    code {
+      font-family: var(--bs-font-monospace);
+      font-size: 0.875rem;
+      background-color: $veryLightGrey;
+      padding: 0.125rem 0.25rem;
+      border-radius: 0.25rem;
+      color: $darkGrey;
+    }
+
+    .btn-group-sm > .btn {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.875rem;
+    }
   }
 }

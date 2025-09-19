@@ -1,0 +1,50 @@
+.manifest-attribute-editor-modal {
+  .form-group {
+    margin-bottom: 1rem;
+  }
+
+  .form-label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: var(--bs-body-color);
+  }
+
+  .form-text {
+    font-size: 0.875rem;
+    color: var(--bs-secondary-color);
+  }
+
+  .alert {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+
+    &.alert-info {
+      background-color: var(--bs-info-bg-subtle);
+      border-color: var(--bs-info-border-subtle);
+      color: var(--bs-info-text);
+    }
+  }
+
+  .form-check {
+    margin-bottom: 0;
+
+    .form-check-input {
+      margin-top: 0.25rem;
+    }
+
+    .form-check-label {
+      margin-left: 0.5rem;
+      font-weight: normal;
+    }
+  }
+
+  .modal-body {
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+
+  .modal-footer {
+    border-top: 1px solid var(--bs-border-color);
+    padding-top: 1rem;
+  }
+}

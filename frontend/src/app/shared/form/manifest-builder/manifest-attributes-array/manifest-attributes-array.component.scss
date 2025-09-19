@@ -1,0 +1,9 @@
+// Use the same styling as the original OIBus array component
+@import '../../../../../common.scss';
+
+.btn-link-bold {
+  color: $darkGrey;
+  &:hover {
+    color: $yellow;
+  }
+}

@@ -886,31 +886,58 @@
             }
           },
           "manifest-builder": {
+            "attribute": "Attribute",
             "key": "Key",
             "translation-key": "Translation Key",
             "visible": "Visible",
             "wrap-in-box": "Wrap in Box",
             "attributes": "Attributes",
-            "add-attribute": "Add Attribute",
-            "type": "Type",
+            "add": "Add Attribute",
+            "none": "No attributes defined",
+            "type": {
+              "title": "Type",
+              "string": "String",
+              "number": "Number",
+              "instant": "Instant",
+              "string-select": "String select",
+              "secret": "Secret",
+              "code": "Code",
+              "boolean": "Boolean",
+              "scan-mode": "Scan mode",
+              "certificate": "Certificate",
+              "timezone": "Timezone",
+              "array": "Array",
+              "object": "Object"
+            },
             "default-value": "Default Value",
             "unit": "Unit",
             "selectable-values": "Selectable Values",
-            "content-type": "Content Type",
-            "acceptable-type": "Acceptable Type",
+            "selectable-values-help": "Comma-separated list of values",
+            "content-type": {
+              "title": "Content Type",
+              "json": "JSON",
+              "sql": "SQL"
+            },
+            "acceptable-type": {
+              "title": "Acceptable Type",
+              "POLL": "Poll",
+              "SUBSCRIPTION": "Subscription",
+              "SUBSCRIPTION_AND_POLL": "Subscription and Poll"
+            },
             "paginate": "Paginate",
             "number-of-elements-per-page": "Number of Elements per Page",
             "row": "Row",
             "columns": "Columns",
             "display-in-view-mode": "Display in View Mode",
             "nested-attributes": "Nested Attributes",
-            "add-nested-attribute": "Add Nested Attribute",
-            "auto-save-info": "Changes are automatically saved",
-            "tooltips": {
-              "add-attribute": "Add an attribute",
-              "add-nested-attribute": "Add a nested attribute",
-              "delete-attribute": "Delete attribute",
-              "delete-nested-attribute": "Delete nested attribute"
+            "object-info": "Object attributes can contain nested attributes",
+            "array-info": "Array elements can contain nested attributes",
+            "secret-info": "Secret fields are used for sensitive data",
+            "instant-info": "Instant fields are used for timestamp values",
+            "certificate-info": "Certificate fields are used for SSL certificates",
+            "edit-transformer-modal": {
+              "create-title": "Create Attribute",
+              "edit-title": "Edit Attribute"
             }
           },
           "mapping": {

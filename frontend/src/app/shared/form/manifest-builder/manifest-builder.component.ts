@@ -1,26 +1,26 @@
 import { Component, inject, OnInit, forwardRef } from '@angular/core';
-import { NgTemplateOutlet } from '@angular/common';
-import {
-  FormBuilder,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-  AbstractControl,
-  ValidationErrors,
-  ValidatorFn,
-  ControlValueAccessor,
-  NG_VALUE_ACCESSOR
-} from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, ControlValueAccessor, NG_VALUE_ACCESSOR, FormControl } from '@angular/forms';
 import { TranslateDirective, TranslateModule } from '@ngx-translate/core';
-import { OIBusObjectAttribute, OIBusAttribute, OIBUS_ATTRIBUTE_TYPES } from '../../../../../../backend/shared/model/form.model';
-import { BoxComponent, BoxTitleDirective } from '../../box/box.component';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import {
+  OIBusObjectAttribute,
+  OIBusAttribute,
+  OIBUS_ATTRIBUTE_TYPES,
+  OIBusArrayAttribute
+} from '../../../../../../backend/shared/model/form.model';
+import { ManifestAttributesArrayComponent } from './manifest-attributes-array/manifest-attributes-array.component';
 
 @Component({
   selector: 'oib-manifest-builder',
   templateUrl: './manifest-builder.component.html',
   styleUrl: './manifest-builder.component.scss',
-  imports: [ReactiveFormsModule, TranslateDirective, BoxComponent, BoxTitleDirective, NgTemplateOutlet, TranslateModule, NgbTooltip],
+  imports: [
+    ReactiveFormsModule,
+    TranslateDirective,
+    // BoxComponent,
+    // BoxTitleDirective,
+    TranslateModule,
+    ManifestAttributesArrayComponent
+  ],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -36,199 +36,294 @@ export class ManifestBuilderComponent implements OnInit, ControlValueAccessor {
   private onTouched: () => void = () => {};
   private currentValue: OIBusObjectAttribute | null = null;
 
-  availableTypes = OIBUS_ATTRIBUTE_TYPES;
+  availableTypes = OIBUS_ATTRIBUTE_TYPES.filter(t => t !== 'transformer-array');
 
+  // Table data for attributes (each element is a flat object edited via the modal)
+  attributesControl: FormControl<Array<any>> = this.fb.control<Array<any>>([]) as FormControl<Array<any>>;
+
+  // Top-level display properties
   form = this.fb.group({
     visible: [true],
-    wrapInBox: [false],
-    attributes: this.fb.array([])
+    wrapInBox: [false]
   });
 
+  // Element editor manifest for a single attribute
+  attributeElementManifest: OIBusObjectAttribute = {
+    type: 'object',
+    key: 'attribute',
+    translationKey: 'configuration.oibus.manifest.transformers.manifest-builder.attribute',
+    attributes: [
+      {
+        type: 'string-select',
+        key: 'type',
+        translationKey: 'configuration.oibus.manifest.transformers.manifest-builder.type',
+        selectableValues: [],
+        defaultValue: 'string',
+        validators: [],
+        displayProperties: { row: 0, columns: 4, displayInViewMode: true }
+      },
+      {
+        type: 'string',
+        key: 'key',
+        translationKey: 'configuration.oibus.manifest.transformers.manifest-builder.key',
+        defaultValue: '',
+        validators: [],
+        displayProperties: { row: 0, columns: 4, displayInViewMode: true }
+      },
+      {
+        type: 'string',
+        key: 'translationKey',
+        translationKey: 'configuration.oibus.manifest.transformers.manifest-builder.translation-key',
+        defaultValue: '',
+        validators: [],
+        displayProperties: { row: 0, columns: 4, displayInViewMode: true }
+      },
+      // Common layout props for displayable (non object/array)
+      {
+        type: 'number',
+        key: 'row',
+        translationKey: 'configuration.oibus.manifest.transformers.manifest-builder.row',
+        defaultValue: 0,
+        validators: [],
+        displayProperties: { row: 1, columns: 4, displayInViewMode: false },
+        unit: ''
+      },
+      {
+        type: 'number',
+        key: 'columns',
+        translationKey: 'configuration.oibus.manifest.transformers.manifest-builder.columns',
+        defaultValue: 4,
+        validators: [],
+        displayProperties: { row: 1, columns: 4, displayInViewMode: false },
+        unit: ''
+      },
+      {
+        type: 'boolean',
+        key: 'displayInViewMode',
+        translationKey: 'configuration.oibus.manifest.transformers.manifest-builder.display-in-view-mode',
+        defaultValue: true,
+        validators: [],
+        displayProperties: { row: 1, columns: 4, displayInViewMode: false }
+      },
+      // String
+      {
+        type: 'string',
+        key: 'defaultValue_string',
+        translationKey: 'configuration.oibus.manifest.transformers.manifest-builder.default-value',
+        defaultValue: '',
+        validators: [],
+        displayProperties: { row: 2, columns: 6, displayInViewMode: false }
+      },
+      // Number
+      {
+        type: 'number',
+        key: 'defaultValue_number',
+        translationKey: 'configuration.oibus.manifest.transformers.manifest-builder.default-value',
+        defaultValue: null,
+        validators: [],
+        displayProperties: { row: 2, columns: 3, displayInViewMode: false },
+        unit: ''
+      },
+      {
+        type: 'string',
+        key: 'unit',
+        translationKey: 'configuration.oibus.manifest.transformers.manifest-builder.unit',
+        defaultValue: '',
+        validators: [],
+        displayProperties: { row: 2, columns: 3, displayInViewMode: false }
+      },
+      // Boolean
+      {
+        type: 'boolean',
+        key: 'defaultValue_boolean',
+        translationKey: 'configuration.oibus.manifest.transformers.manifest-builder.default-value',
+        defaultValue: false,
+        validators: [],
+        displayProperties: { row: 2, columns: 6, displayInViewMode: false }
+      },
+      // Code
+      {
+        type: 'string-select',
+        key: 'contentType',
+        translationKey: 'configuration.oibus.manifest.transformers.manifest-builder.content-type',
+        selectableValues: ['json', 'sql'],
+        defaultValue: 'json',
+        validators: [],
+        displayProperties: { row: 2, columns: 3, displayInViewMode: false }
+      },
+      {
+        type: 'string',
+        key: 'defaultValue_code',
+        translationKey: 'configuration.oibus.manifest.transformers.manifest-builder.default-value',
+        defaultValue: '',
+        validators: [],
+        displayProperties: { row: 2, columns: 3, displayInViewMode: false }
+      },
+      // String select
+      {
+        type: 'string',
+        key: 'selectableValuesCsv',
+        translationKey: 'configuration.oibus.manifest.transformers.manifest-builder.selectable-values',
+        defaultValue: '',
+        validators: [],
+        displayProperties: { row: 2, columns: 6, displayInViewMode: false }
+      },
+      // Scan mode
+      {
+        type: 'string-select',
+        key: 'acceptableType',
+        translationKey: 'configuration.oibus.manifest.transformers.manifest-builder.acceptable-type',
+        selectableValues: ['POLL', 'SUBSCRIPTION', 'SUBSCRIPTION_AND_POLL'],
+        defaultValue: 'POLL',
+        validators: [],
+        displayProperties: { row: 2, columns: 6, displayInViewMode: false }
+      },
+      // Timezone
+      {
+        type: 'string',
+        key: 'defaultValue_timezone',
+        translationKey: 'configuration.oibus.manifest.transformers.manifest-builder.default-value',
+        defaultValue: '',
+        validators: [],
+        displayProperties: { row: 2, columns: 6, displayInViewMode: false }
+      },
+      // Object specific
+      {
+        type: 'boolean',
+        key: 'visible',
+        translationKey: 'configuration.oibus.manifest.transformers.manifest-builder.visible',
+        defaultValue: true,
+        validators: [],
+        displayProperties: { row: 3, columns: 6, displayInViewMode: false }
+      },
+      {
+        type: 'boolean',
+        key: 'wrapInBox',
+        translationKey: 'configuration.oibus.manifest.transformers.manifest-builder.wrap-in-box',
+        defaultValue: false,
+        validators: [],
+        displayProperties: { row: 3, columns: 6, displayInViewMode: false }
+      },
+      // Array specific
+      {
+        type: 'boolean',
+        key: 'paginate',
+        translationKey: 'configuration.oibus.manifest.transformers.manifest-builder.paginate',
+        defaultValue: false,
+        validators: [],
+        displayProperties: { row: 4, columns: 6, displayInViewMode: false }
+      },
+      {
+        type: 'number',
+        key: 'numberOfElementPerPage',
+        translationKey: 'configuration.oibus.manifest.transformers.manifest-builder.number-of-elements-per-page',
+        defaultValue: 20,
+        validators: [],
+        unit: '', // Added required 'unit' property for OIBusNumberAttribute
+        displayProperties: { row: 4, columns: 6, displayInViewMode: false }
+      },
+      // Nested attributes (for object and array root)
+      {
+        type: 'array',
+        key: 'attributes',
+        translationKey: 'configuration.oibus.manifest.transformers.manifest-builder.nested-attributes',
+        paginate: false,
+        numberOfElementPerPage: 20,
+        validators: [],
+        rootAttribute: {
+          type: 'object',
+          key: 'attribute',
+          translationKey: 'configuration.oibus.manifest.transformers.manifest-builder.attribute',
+          attributes: [],
+          enablingConditions: [],
+          validators: [],
+          displayProperties: { visible: true, wrapInBox: false }
+        }
+      }
+    ],
+    validators: [],
+    displayProperties: { visible: true, wrapInBox: false },
+    enablingConditions: []
+  };
+
+  // Array attribute used by the oib-array component
+  arrayAttribute: OIBusArrayAttribute = {
+    type: 'array',
+    key: 'attributes',
+    translationKey: 'configuration.oibus.manifest.transformers.manifest-builder.attributes',
+    paginate: false,
+    numberOfElementPerPage: 20,
+    validators: [],
+    rootAttribute: this.attributeElementManifest
+  };
+
   ngOnInit() {
+    // set selectable types once component is constructed
+    const typeAttr = this.attributeElementManifest.attributes.find(a => a.key === 'type') as any;
+    if (typeAttr) {
+      typeAttr.selectableValues = [...this.availableTypes];
+    }
+
+    // finalize recursion: nested attributes array uses same element manifest
+    const nestedArrayAttr = this.attributeElementManifest.attributes.find(a => a.key === 'attributes') as any;
+    if (nestedArrayAttr) {
+      nestedArrayAttr.rootAttribute = this.attributeElementManifest;
+    }
+
     this.initializeForm();
     this.setupAutoSave();
   }
 
   private initializeForm() {
     const manifest = this.currentValue;
-    if (!manifest) {
-      this.currentValue = {
-        type: 'object',
-        key: 'options',
-        translationKey: 'configuration.oibus.manifest.transformers.options',
-        attributes: [],
-        enablingConditions: [],
-        validators: [],
-        displayProperties: { visible: true, wrapInBox: false }
-      };
-    }
+    const defaultManifest: OIBusObjectAttribute = {
+      type: 'object',
+      key: 'options',
+      translationKey: 'configuration.oibus.manifest.transformers.options',
+      attributes: [],
+      enablingConditions: [],
+      validators: [],
+      displayProperties: { visible: true, wrapInBox: false }
+    };
+    const value = manifest ?? defaultManifest;
+    this.currentValue = value;
 
-    const value = this.currentValue!;
     this.form.patchValue({
       visible: value.displayProperties.visible,
       wrapInBox: value.displayProperties.wrapInBox
     });
 
-    const attributesArray = this.form.get('attributes');
-    if (attributesArray) {
-      while (attributesArray.value.length > 0) {
-        this.removeAttribute(0);
-      }
-    }
-    value.attributes.forEach(attr => {
-      this.addAttribute(attr);
-    });
+    // Map manifest attributes to flat editor objects used by oib-array
+    const flatAttributes = (value.attributes || []).map(attr => this.flattenAttribute(attr));
+    this.attributesControl.setValue(flatAttributes, { emitEvent: false });
   }
 
-  addAttribute(existingAttribute?: OIBusAttribute): void {
-    const attributesArray = this.form.get('attributes') as any;
-    const attributeForm = this.fb.group({
-      type: [existingAttribute?.type || 'string', Validators.required],
-      key: [existingAttribute?.key || '', [Validators.required, this.createUniqueKeyValidator()]],
-      translationKey: [existingAttribute?.translationKey || '', Validators.required],
-      validators: this.fb.array([]),
-      row: [
-        existingAttribute && 'displayProperties' in existingAttribute && 'row' in existingAttribute.displayProperties
-          ? existingAttribute.displayProperties.row
-          : 0,
-        [Validators.min(0)]
-      ],
-      columns: [
-        existingAttribute && 'displayProperties' in existingAttribute && 'columns' in existingAttribute.displayProperties
-          ? existingAttribute.displayProperties.columns
-          : 4,
-        [Validators.min(1), Validators.max(12)]
-      ],
-      displayInViewMode: [
-        existingAttribute && 'displayProperties' in existingAttribute && 'displayInViewMode' in existingAttribute.displayProperties
-          ? existingAttribute.displayProperties.displayInViewMode
-          : true
-      ],
-      visible: [
-        existingAttribute && 'displayProperties' in existingAttribute && 'visible' in existingAttribute.displayProperties
-          ? existingAttribute.displayProperties.visible
-          : true
-      ],
-      wrapInBox: [
-        existingAttribute && 'displayProperties' in existingAttribute && 'wrapInBox' in existingAttribute.displayProperties
-          ? existingAttribute.displayProperties.wrapInBox
-          : false
-      ],
-      paginate: [existingAttribute && 'paginate' in existingAttribute ? existingAttribute.paginate : false],
-      numberOfElementPerPage: [
-        existingAttribute && 'numberOfElementPerPage' in existingAttribute ? existingAttribute.numberOfElementPerPage : 20
-      ],
-      defaultValue: [existingAttribute && 'defaultValue' in existingAttribute ? existingAttribute.defaultValue : null],
-      unit: [existingAttribute && 'unit' in existingAttribute ? existingAttribute.unit : null],
-      contentType: [existingAttribute && 'contentType' in existingAttribute ? existingAttribute.contentType : 'json'],
-      selectableValues: [existingAttribute && 'selectableValues' in existingAttribute ? existingAttribute.selectableValues : []],
-      acceptableType: [existingAttribute && 'acceptableType' in existingAttribute ? existingAttribute.acceptableType : 'POLL'],
-      attributes: this.fb.array([]),
-      enablingConditions: this.fb.array([])
-    });
+  // No more inline attribute form rows – handled by oib-array modal
 
-    if (existingAttribute && (existingAttribute.type === 'object' || existingAttribute.type === 'array')) {
-      const nestedAttributes =
-        existingAttribute.type === 'object' ? existingAttribute.attributes : existingAttribute.rootAttribute.attributes;
-      nestedAttributes.forEach(nestedAttr => {
-        this.addNestedAttribute(attributeForm, nestedAttr);
-      });
-    }
+  // No more nested add – handled by nested oib-array inside modal
 
-    attributesArray.push(attributeForm);
-  }
+  removeAttribute(): void {}
 
-  addNestedAttribute(parentForm: FormGroup, existingAttribute?: OIBusAttribute): void {
-    const attributesArray = parentForm.get('attributes') as any;
-    const attributeForm = this.fb.group({
-      type: [existingAttribute?.type || 'string', Validators.required],
-      key: [existingAttribute?.key || '', [Validators.required, this.createUniqueKeyValidator(parentForm)]],
-      translationKey: [existingAttribute?.translationKey || '', Validators.required],
-      validators: this.fb.array([]),
-      row: [
-        existingAttribute && 'displayProperties' in existingAttribute && 'row' in existingAttribute.displayProperties
-          ? existingAttribute.displayProperties.row
-          : 0,
-        [Validators.min(0)]
-      ],
-      columns: [
-        existingAttribute && 'displayProperties' in existingAttribute && 'columns' in existingAttribute.displayProperties
-          ? existingAttribute.displayProperties.columns
-          : 4,
-        [Validators.min(1), Validators.max(12)]
-      ],
-      displayInViewMode: [
-        existingAttribute && 'displayProperties' in existingAttribute && 'displayInViewMode' in existingAttribute.displayProperties
-          ? existingAttribute.displayProperties.displayInViewMode
-          : true
-      ],
-      visible: [
-        existingAttribute && 'displayProperties' in existingAttribute && 'visible' in existingAttribute.displayProperties
-          ? existingAttribute.displayProperties.visible
-          : true
-      ],
-      wrapInBox: [
-        existingAttribute && 'displayProperties' in existingAttribute && 'wrapInBox' in existingAttribute.displayProperties
-          ? existingAttribute.displayProperties.wrapInBox
-          : false
-      ],
-      paginate: [existingAttribute && 'paginate' in existingAttribute ? existingAttribute.paginate : false],
-      numberOfElementPerPage: [
-        existingAttribute && 'numberOfElementPerPage' in existingAttribute ? existingAttribute.numberOfElementPerPage : 20
-      ],
-      defaultValue: [existingAttribute && 'defaultValue' in existingAttribute ? existingAttribute.defaultValue : null],
-      unit: [existingAttribute && 'unit' in existingAttribute ? existingAttribute.unit : null],
-      contentType: [existingAttribute && 'contentType' in existingAttribute ? existingAttribute.contentType : 'json'],
-      selectableValues: [existingAttribute && 'selectableValues' in existingAttribute ? existingAttribute.selectableValues : []],
-      acceptableType: [existingAttribute && 'acceptableType' in existingAttribute ? existingAttribute.acceptableType : 'POLL'],
-      attributes: this.fb.array([]),
-      enablingConditions: this.fb.array([])
-    });
+  removeNestedAttribute(): void {}
 
-    if (existingAttribute && existingAttribute.type === 'object') {
-      existingAttribute.attributes.forEach((nestedAttr: OIBusAttribute) => {
-        this.addNestedAttribute(attributeForm, nestedAttr);
-      });
-    }
-
-    attributesArray.push(attributeForm);
-  }
-
-  removeAttribute(index: number): void {
-    const attributesArray = this.form.get('attributes') as any;
-    attributesArray.removeAt(index);
-  }
-
-  removeNestedAttribute(parentForm: FormGroup, index: number): void {
-    const attributesArray = parentForm.get('attributes') as any;
-    attributesArray.removeAt(index);
-  }
-
-  onTypeChange(attributeForm: FormGroup): void {
-    const type = attributeForm.get('type')?.value;
-
-    attributeForm.patchValue({
-      unit: null,
-      contentType: 'json',
-      selectableValues: [],
-      acceptableType: 'POLL',
-      paginate: false,
-      numberOfElementPerPage: 20
-    });
-    if (type !== 'object' && type !== 'array') {
-      const attributesArray = attributeForm.get('attributes') as any;
-      while (attributesArray.length > 0) {
-        attributesArray.removeAt(0);
-      }
-    }
-  }
+  onTypeChange(): void {}
 
   generateManifest(): OIBusObjectAttribute {
     const formValue = this.form.value;
 
-    const attributes: Array<OIBusAttribute> = (formValue.attributes || []).map((attr: any) => {
-      return this.buildAttributeFromForm(attr);
+    // Deduplicate by key to avoid duplicates in the resulting manifest
+    const seen = new Set<string>();
+    const flat = (this.attributesControl.value || []).filter((attr: any) => {
+      if (!attr?.key) {
+        return false;
+      }
+      if (seen.has(attr.key)) {
+        return false;
+      }
+      seen.add(attr.key);
+      return true;
     });
+    const attributes: Array<OIBusAttribute> = flat.map((attr: any) => this.buildAttributeFromForm(attr));
 
     return {
       type: 'object',
@@ -244,7 +339,108 @@ export class ManifestBuilderComponent implements OnInit, ControlValueAccessor {
     };
   }
 
+  private flattenAttribute(attribute: OIBusAttribute): any {
+    const base: any = {
+      type: (attribute as any).type,
+      key: (attribute as any).key,
+      translationKey: (attribute as any).translationKey
+    };
+
+    switch (attribute.type) {
+      case 'string':
+        return {
+          ...base,
+          defaultValue_string: (attribute as any).defaultValue ?? '',
+          row: (attribute as any).displayProperties?.row ?? 0,
+          columns: (attribute as any).displayProperties?.columns ?? 4,
+          displayInViewMode: (attribute as any).displayProperties?.displayInViewMode ?? true
+        };
+      case 'number':
+        return {
+          ...base,
+          defaultValue_number: (attribute as any).defaultValue ?? null,
+          unit: (attribute as any).unit ?? null,
+          row: (attribute as any).displayProperties?.row ?? 0,
+          columns: (attribute as any).displayProperties?.columns ?? 4,
+          displayInViewMode: (attribute as any).displayProperties?.displayInViewMode ?? true
+        };
+      case 'boolean':
+        return {
+          ...base,
+          defaultValue_boolean: (attribute as any).defaultValue ?? false,
+          row: (attribute as any).displayProperties?.row ?? 0,
+          columns: (attribute as any).displayProperties?.columns ?? 4,
+          displayInViewMode: (attribute as any).displayProperties?.displayInViewMode ?? true
+        };
+      case 'code':
+        return {
+          ...base,
+          contentType: (attribute as any).contentType ?? 'json',
+          defaultValue_code: (attribute as any).defaultValue ?? '',
+          row: (attribute as any).displayProperties?.row ?? 0,
+          columns: (attribute as any).displayProperties?.columns ?? 4,
+          displayInViewMode: (attribute as any).displayProperties?.displayInViewMode ?? true
+        };
+      case 'string-select':
+        return {
+          ...base,
+          selectableValuesCsv: ((attribute as any).selectableValues ?? []).join(','),
+          defaultValue_string: (attribute as any).defaultValue ?? '',
+          row: (attribute as any).displayProperties?.row ?? 0,
+          columns: (attribute as any).displayProperties?.columns ?? 4,
+          displayInViewMode: (attribute as any).displayProperties?.displayInViewMode ?? true
+        };
+      case 'instant':
+      case 'secret':
+      case 'scan-mode':
+      case 'certificate':
+        return {
+          ...base,
+          acceptableType: (attribute as any).acceptableType,
+          row: (attribute as any).displayProperties?.row ?? 0,
+          columns: (attribute as any).displayProperties?.columns ?? 4,
+          displayInViewMode: (attribute as any).displayProperties?.displayInViewMode ?? true
+        };
+      case 'timezone':
+        return {
+          ...base,
+          defaultValue_timezone: (attribute as any).defaultValue ?? '',
+          row: (attribute as any).displayProperties?.row ?? 0,
+          columns: (attribute as any).displayProperties?.columns ?? 4,
+          displayInViewMode: (attribute as any).displayProperties?.displayInViewMode ?? true
+        };
+      case 'object':
+        return {
+          ...base,
+          visible: (attribute as any).displayProperties?.visible ?? true,
+          wrapInBox: (attribute as any).displayProperties?.wrapInBox ?? false,
+          attributes: (attribute as any).attributes?.map((a: OIBusAttribute) => this.flattenAttribute(a)) ?? []
+        };
+      case 'array':
+        return {
+          ...base,
+          paginate: (attribute as any).paginate ?? false,
+          numberOfElementPerPage: (attribute as any).numberOfElementPerPage ?? 20,
+          translationKey: (attribute as any).translationKey,
+          attributes: (attribute as any).rootAttribute?.attributes?.map((a: OIBusAttribute) => this.flattenAttribute(a)) ?? []
+        };
+    }
+  }
+
   private buildAttributeFromForm(attrForm: any): OIBusAttribute {
+    const deduplicateByKey = (list: Array<any>): Array<any> => {
+      const seen = new Set<string>();
+      return (list || []).filter(item => {
+        if (!item?.key) {
+          return false;
+        }
+        if (seen.has(item.key)) {
+          return false;
+        }
+        seen.add(item.key);
+        return true;
+      });
+    };
     const baseAttribute = {
       type: attrForm.type,
       key: attrForm.key,
@@ -257,7 +453,7 @@ export class ManifestBuilderComponent implements OnInit, ControlValueAccessor {
         return {
           ...baseAttribute,
           type: 'string',
-          defaultValue: attrForm.defaultValue,
+          defaultValue: attrForm.defaultValue_string ?? null,
           displayProperties: {
             row: Number(attrForm.row ?? 0),
             columns: Number(attrForm.columns ?? 4),
@@ -270,10 +466,10 @@ export class ManifestBuilderComponent implements OnInit, ControlValueAccessor {
           ...baseAttribute,
           type: 'number',
           defaultValue:
-            attrForm.defaultValue === '' || attrForm.defaultValue === null || attrForm.defaultValue === undefined
+            attrForm.defaultValue_number === '' || attrForm.defaultValue_number === null || attrForm.defaultValue_number === undefined
               ? null
-              : Number(attrForm.defaultValue),
-          unit: attrForm.unit,
+              : Number(attrForm.defaultValue_number),
+          unit: attrForm.unit ?? null,
           displayProperties: {
             row: Number(attrForm.row ?? 0),
             columns: Number(attrForm.columns ?? 4),
@@ -285,7 +481,7 @@ export class ManifestBuilderComponent implements OnInit, ControlValueAccessor {
         return {
           ...baseAttribute,
           type: 'boolean',
-          defaultValue: attrForm.defaultValue ?? false,
+          defaultValue: attrForm.defaultValue_boolean ?? false,
           displayProperties: {
             row: Number(attrForm.row ?? 0),
             columns: Number(attrForm.columns ?? 4),
@@ -298,7 +494,7 @@ export class ManifestBuilderComponent implements OnInit, ControlValueAccessor {
           ...baseAttribute,
           type: 'code',
           contentType: attrForm.contentType || 'json',
-          defaultValue: attrForm.defaultValue,
+          defaultValue: attrForm.defaultValue_code ?? '',
           displayProperties: {
             row: Number(attrForm.row ?? 0),
             columns: Number(attrForm.columns ?? 4),
@@ -307,10 +503,9 @@ export class ManifestBuilderComponent implements OnInit, ControlValueAccessor {
         };
 
       case 'string-select':
-        const values = Array.isArray(attrForm.selectableValues)
-          ? attrForm.selectableValues
-          : typeof attrForm.selectableValues === 'string'
-            ? attrForm.selectableValues
+        const values =
+          typeof attrForm.selectableValuesCsv === 'string'
+            ? attrForm.selectableValuesCsv
                 .split(',')
                 .map((s: string) => s.trim())
                 .filter((s: string) => s.length > 0)
@@ -319,7 +514,7 @@ export class ManifestBuilderComponent implements OnInit, ControlValueAccessor {
           ...baseAttribute,
           type: 'string-select',
           selectableValues: values,
-          defaultValue: attrForm.defaultValue,
+          defaultValue: attrForm.defaultValue_string ?? null,
           displayProperties: {
             row: Number(attrForm.row ?? 0),
             columns: Number(attrForm.columns ?? 4),
@@ -376,7 +571,7 @@ export class ManifestBuilderComponent implements OnInit, ControlValueAccessor {
         return {
           ...baseAttribute,
           type: 'timezone',
-          defaultValue: attrForm.defaultValue,
+          defaultValue: attrForm.defaultValue_timezone ?? null,
           displayProperties: {
             row: Number(attrForm.row ?? 0),
             columns: Number(attrForm.columns ?? 4),
@@ -385,7 +580,9 @@ export class ManifestBuilderComponent implements OnInit, ControlValueAccessor {
         };
 
       case 'object':
-        const objectAttributes = (attrForm.attributes || []).map((nestedAttr: any) => this.buildAttributeFromForm(nestedAttr));
+        const objectAttributes = deduplicateByKey(attrForm.attributes || []).map((nestedAttr: any) =>
+          this.buildAttributeFromForm(nestedAttr)
+        );
         return {
           ...baseAttribute,
           type: 'object',
@@ -398,7 +595,9 @@ export class ManifestBuilderComponent implements OnInit, ControlValueAccessor {
         };
 
       case 'array':
-        const arrayAttributes = (attrForm.attributes || []).map((nestedAttr: any) => this.buildAttributeFromForm(nestedAttr));
+        const arrayAttributes = deduplicateByKey(attrForm.attributes || []).map((nestedAttr: any) =>
+          this.buildAttributeFromForm(nestedAttr)
+        );
         return {
           ...baseAttribute,
           type: 'array',
@@ -429,14 +628,15 @@ export class ManifestBuilderComponent implements OnInit, ControlValueAccessor {
   }
 
   private setupAutoSave(): void {
-    this.form.valueChanges.subscribe(() => {
-      if (this.form.valid) {
-        const manifest = this.generateManifest();
-        this.currentValue = manifest;
-        this.onChange(manifest);
-        this.onTouched();
-      }
-    });
+    // When table changes or display props change, propagate value
+    const emit = () => {
+      const manifest = this.generateManifest();
+      this.currentValue = manifest;
+      this.onChange(manifest);
+      this.onTouched();
+    };
+    this.form.valueChanges.subscribe(() => emit());
+    this.attributesControl.valueChanges.subscribe(() => emit());
   }
 
   writeValue(value: OIBusObjectAttribute | null): void {
@@ -455,40 +655,18 @@ export class ManifestBuilderComponent implements OnInit, ControlValueAccessor {
   setDisabledState(isDisabled: boolean): void {
     if (isDisabled) {
       this.form.disable({ emitEvent: false });
+      this.attributesControl.disable({ emitEvent: false });
     } else {
       this.form.enable({ emitEvent: false });
+      this.attributesControl.enable({ emitEvent: false });
     }
   }
 
   get attributesControls() {
-    return (this.form.get('attributes') as any)?.controls || [];
+    return [];
   }
 
-  getNestedAttributesControls(attributeForm: FormGroup) {
-    return (attributeForm.get('attributes') as any)?.controls || [];
-  }
-
-  private createUniqueKeyValidator(parentForm?: FormGroup): ValidatorFn {
-    return (control: AbstractControl): ValidationErrors | null => {
-      if (!control.value) {
-        return null;
-      }
-
-      const currentKey = control.value;
-      const attributesArray = parentForm ? parentForm.get('attributes') : this.form.get('attributes');
-
-      if (!attributesArray) {
-        return null;
-      }
-
-      const controls = attributesArray.getRawValue();
-      const duplicateCount = controls.filter((attr: any) => attr.key === currentKey).length;
-
-      if (duplicateCount > 1) {
-        return { uniqueKey: { message: 'Key must be unique within the same level' } };
-      }
-
-      return null;
-    };
+  getNestedAttributesControls() {
+    return [];
   }
 }
