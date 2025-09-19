@@ -36,6 +36,7 @@ import TransformerService, { toTransformerDTO } from './transformer.service';
 import { Transformer } from '../model/transformer.model';
 import { OIBusObjectAttribute } from '../../shared/model/form.model';
 import DataStreamEngine from '../engine/data-stream-engine';
+import { TransformerDTOWithOptions } from '../../shared/model/transformer.model';
 
 export default class HistoryQueryService {
   constructor(
@@ -50,7 +51,7 @@ export default class HistoryQueryService {
     private readonly northService: NorthService,
     private readonly transformerService: TransformerService,
     private readonly oIAnalyticsMessageService: OIAnalyticsMessageService,
-    private readonly dataStreamEngine: DataStreamEngine
+    private readonly engine: DataStreamEngine
   ) {}
 
   async testNorth(
@@ -225,12 +226,12 @@ export default class HistoryQueryService {
     this.historyQueryRepository.saveHistoryQuery(historyQuery);
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
 
-    await this.dataStreamEngine.createHistoryQuery(historyQuery.id);
+    await this.engine.createHistoryQuery(historyQuery.id);
     return historyQuery;
   }
 
   getHistoryQueryDataStream(historyQueryId: string): PassThrough | null {
-    return this.dataStreamEngine.getHistoryQueryDataStream(historyQueryId);
+    return this.engine.getHistoryQueryDataStream(historyQueryId);
   }
 
   async updateHistoryQuery<S extends SouthSettings, N extends NorthSettings, I extends SouthItemSettings>(
@@ -271,7 +272,7 @@ export default class HistoryQueryService {
     this.historyQueryRepository.saveHistoryQuery(historyQuery);
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
 
-    await this.dataStreamEngine.reloadHistoryQuery(historyQuery, resetCache);
+    await this.engine.reloadHistoryQuery(historyQuery, resetCache);
   }
 
   async deleteHistoryQuery(historyQueryId: string): Promise<void> {
@@ -280,14 +281,14 @@ export default class HistoryQueryService {
       throw new Error(`History query "${historyQueryId}" not found`);
     }
 
-    await this.dataStreamEngine.deleteHistoryQuery(historyQuery);
+    await this.engine.deleteHistoryQuery(historyQuery);
     this.historyQueryRepository.deleteHistoryQuery(historyQuery.id);
     this.logRepository.deleteLogsByScopeId('history-query', historyQuery.id);
     this.historyQueryMetricsRepository.removeMetrics(historyQuery.id);
 
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
 
-    this.dataStreamEngine.logger.info(`Deleted History query "${historyQuery.name}" (${historyQuery.id})`);
+    this.engine.logger.info(`Deleted History query "${historyQuery.name}" (${historyQuery.id})`);
   }
 
   async startHistoryQuery(historyQueryId: string): Promise<void> {
@@ -298,7 +299,7 @@ export default class HistoryQueryService {
 
     this.historyQueryRepository.updateHistoryQueryStatus(historyQueryId, 'RUNNING');
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
-    await this.dataStreamEngine.reloadHistoryQuery(historyQuery, historyQuery.status === 'FINISHED' || historyQuery.status === 'ERRORED');
+    await this.engine.reloadHistoryQuery(historyQuery, historyQuery.status === 'FINISHED' || historyQuery.status === 'ERRORED');
   }
 
   async pauseHistoryQuery(historyQueryId: string): Promise<void> {
@@ -309,7 +310,29 @@ export default class HistoryQueryService {
 
     this.historyQueryRepository.updateHistoryQueryStatus(historyQueryId, 'PAUSED');
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
-    await this.dataStreamEngine.stopHistoryQuery(historyQuery.id);
+    await this.engine.stopHistoryQuery(historyQuery.id);
+  }
+
+  async addOrEditTransformer(historyQueryId: string, transformerWithOptions: TransformerDTOWithOptions): Promise<void> {
+    const historyQuery = this.historyQueryRepository.findHistoryQueryById(historyQueryId);
+    if (!historyQuery) {
+      throw new Error('History query not found');
+    }
+
+    this.historyQueryRepository.addOrEditTransformer(historyQueryId, transformerWithOptions);
+    this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
+    await this.engine.stopHistoryQuery(historyQueryId);
+  }
+
+  async removeTransformer(historyQueryId: string, transformerId: string): Promise<void> {
+    const historyQuery = this.historyQueryRepository.findHistoryQueryById(historyQueryId);
+    if (!historyQuery) {
+      throw new Error('History query not found');
+    }
+
+    this.historyQueryRepository.removeTransformer(historyQueryId, transformerId);
+    this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
+    await this.engine.stopHistoryQuery(historyQueryId);
   }
 
   getHistoryQueryItems(historyQueryId: string): Array<HistoryQueryItemEntity<SouthItemSettings>> {
@@ -348,7 +371,7 @@ export default class HistoryQueryService {
     await copyHistoryQueryItemCommandToHistoryQueryItemEntity(historyQueryItemEntity, command, null, historyQuery.southType);
     this.historyQueryRepository.saveHistoryQueryItem(historyQuery.id, historyQueryItemEntity);
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
-    await this.dataStreamEngine.reloadHistoryQuery(historyQuery, false);
+    await this.engine.reloadHistoryQuery(historyQuery, false);
     return historyQueryItemEntity;
   }
 
@@ -379,7 +402,7 @@ export default class HistoryQueryService {
     this.historyQueryRepository.saveHistoryQueryItem(historyQuery.id, historyQueryItemEntity);
 
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
-    await this.dataStreamEngine.reloadHistoryQuery(historyQuery, false);
+    await this.engine.reloadHistoryQuery(historyQuery, false);
   }
 
   async deleteHistoryQueryItem(historyQueryId: string, historyQueryItemId: string): Promise<void> {
@@ -391,7 +414,7 @@ export default class HistoryQueryService {
     if (!historyQueryItem) throw new Error(`History query item "${historyQueryItemId}" not found`);
     this.historyQueryRepository.deleteHistoryQueryItem(historyQueryItem.id);
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
-    await this.dataStreamEngine.reloadHistoryQuery(historyQuery, false);
+    await this.engine.reloadHistoryQuery(historyQuery, false);
   }
 
   async deleteAllItemsForHistoryQuery(historyQueryId: string): Promise<void> {
@@ -401,7 +424,7 @@ export default class HistoryQueryService {
     }
     this.historyQueryRepository.deleteAllHistoryQueryItemsByHistoryQuery(historyQueryId);
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
-    await this.dataStreamEngine.reloadHistoryQuery(historyQuery, true);
+    await this.engine.reloadHistoryQuery(historyQuery, true);
   }
 
   async enableHistoryQueryItem(historyQueryId: string, historyQueryItemId: string): Promise<void> {
@@ -415,7 +438,7 @@ export default class HistoryQueryService {
     }
     this.historyQueryRepository.enableHistoryQueryItem(historyQueryItem.id);
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
-    await this.dataStreamEngine.reloadHistoryQuery(historyQuery, false);
+    await this.engine.reloadHistoryQuery(historyQuery, false);
   }
 
   async disableHistoryQueryItem(historyQueryId: string, historyQueryItemId: string): Promise<void> {
@@ -429,7 +452,7 @@ export default class HistoryQueryService {
     }
     this.historyQueryRepository.disableHistoryQueryItem(historyQueryItem.id);
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
-    await this.dataStreamEngine.reloadHistoryQuery(historyQuery, false);
+    await this.engine.reloadHistoryQuery(historyQuery, false);
   }
 
   async checkCsvFileImport(
@@ -542,7 +565,7 @@ export default class HistoryQueryService {
 
     this.historyQueryRepository.saveAllItems(historyQuery.id, itemsToAdd, deleteItemsNotPresent);
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
-    await this.dataStreamEngine.reloadHistoryQuery(historyQuery, false);
+    await this.engine.reloadHistoryQuery(historyQuery, false);
   }
 
   async searchCacheContent(
@@ -550,7 +573,7 @@ export default class HistoryQueryService {
     searchParams: CacheSearchParam,
     folder: 'cache' | 'archive' | 'error'
   ): Promise<Array<{ metadataFilename: string; metadata: CacheMetadata }>> {
-    return await this.dataStreamEngine.searchCacheContent('history', historyQueryId, searchParams, folder);
+    return await this.engine.searchCacheContent('history', historyQueryId, searchParams, folder);
   }
 
   async getCacheContentFileStream(
@@ -558,7 +581,7 @@ export default class HistoryQueryService {
     folder: 'cache' | 'archive' | 'error',
     filename: string
   ): Promise<ReadStream | null> {
-    return await this.dataStreamEngine.getCacheContentFileStream('history', historyQueryId, folder, filename);
+    return await this.engine.getCacheContentFileStream('history', historyQueryId, folder, filename);
   }
 
   async removeCacheContent(
@@ -566,11 +589,11 @@ export default class HistoryQueryService {
     folder: 'cache' | 'archive' | 'error',
     metadataFilenameList: Array<string>
   ): Promise<void> {
-    return await this.dataStreamEngine.removeCacheContent('history', historyQueryId, folder, metadataFilenameList);
+    return await this.engine.removeCacheContent('history', historyQueryId, folder, metadataFilenameList);
   }
 
   async removeAllCacheContent(historyQueryId: string, folder: 'cache' | 'archive' | 'error'): Promise<void> {
-    return await this.dataStreamEngine.removeAllCacheContent('history', historyQueryId, folder);
+    return await this.engine.removeAllCacheContent('history', historyQueryId, folder);
   }
 
   async moveCacheContent(
@@ -579,7 +602,7 @@ export default class HistoryQueryService {
     destinationFolder: 'cache' | 'archive' | 'error',
     cacheContentList: Array<string>
   ): Promise<void> {
-    return await this.dataStreamEngine.moveCacheContent('history', historyQueryId, originFolder, destinationFolder, cacheContentList);
+    return await this.engine.moveCacheContent('history', historyQueryId, originFolder, destinationFolder, cacheContentList);
   }
 
   async moveAllCacheContent(
@@ -587,7 +610,7 @@ export default class HistoryQueryService {
     originFolder: 'cache' | 'archive' | 'error',
     destinationFolder: 'cache' | 'archive' | 'error'
   ): Promise<void> {
-    return await this.dataStreamEngine.moveAllCacheContent('history', historyQueryId, originFolder, destinationFolder);
+    return await this.engine.moveAllCacheContent('history', historyQueryId, originFolder, destinationFolder);
   }
 
   retrieveSecrets(

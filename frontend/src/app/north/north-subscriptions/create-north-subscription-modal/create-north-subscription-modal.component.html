@@ -7,7 +7,7 @@
       <label class="form-label" for="south" translate="north.subscriptions.south"></label>
       <select formControlName="southConnector" id="south" class="form-select mb-2 mr-sm-2">
         @for (southConnector of southConnectors; track southConnector.id) {
-          <option [ngValue]="southConnector">{{ southConnector.name }}</option>
+          <option [ngValue]="southConnector">{{ southConnector.name }} ({{ southConnector.type | oIBusSouthTypeEnum }})</option>
         }
       </select>
       <val-errors controlName="southConnector" />

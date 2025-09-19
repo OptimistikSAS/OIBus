@@ -22,6 +22,7 @@ import multer from '@koa/multer';
 import fs from 'node:fs/promises';
 import { CacheMetadata } from '../../../shared/model/engine.model';
 import { ReadStream } from 'node:fs';
+import { TransformerDTOWithOptions } from '../../../shared/model/transformer.model';
 
 export default class HistoryQueryController extends AbstractController {
   constructor(
@@ -186,6 +187,24 @@ export default class HistoryQueryController extends AbstractController {
       ctx.noContent();
     } catch (error: unknown) {
       ctx.badRequest((error as Error).message);
+    }
+  }
+
+  async addOrEditTransformer(ctx: KoaContext<TransformerDTOWithOptions, void>): Promise<void> {
+    try {
+      await ctx.app.historyQueryService.addOrEditTransformer(ctx.params.historyQueryId, ctx.request.body!);
+      return ctx.noContent();
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
+    }
+  }
+
+  async removeTransformer(ctx: KoaContext<void, void>): Promise<void> {
+    try {
+      await ctx.app.historyQueryService.removeTransformer(ctx.params.historyQueryId, ctx.params.transformerId);
+      return ctx.noContent();
+    } catch (error: unknown) {
+      return ctx.badRequest((error as Error).message);
     }
   }
 

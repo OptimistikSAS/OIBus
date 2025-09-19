@@ -14,10 +14,11 @@ import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NotificationService } from '../../shared/notification.service';
+import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
 
 @Component({
   selector: 'oib-north-subscriptions',
-  imports: [TranslateDirective, BoxComponent, BoxTitleDirective, OibHelpComponent, NgbTooltip, TranslateModule],
+  imports: [TranslateDirective, BoxComponent, BoxTitleDirective, OibHelpComponent, NgbTooltip, TranslateModule, OIBusSouthTypeEnumPipe],
   templateUrl: './north-subscriptions.component.html',
   styleUrl: './north-subscriptions.component.scss'
 })
@@ -57,21 +58,15 @@ export class NorthSubscriptionsComponent implements OnInit {
     const modalRef = this.modalService.open(CreateNorthSubscriptionModalComponent, { backdrop: 'static' });
     const component: CreateNorthSubscriptionModalComponent = modalRef.componentInstance;
 
-    if (this.northConnector()) {
-      component.prepareForCreation(
-        this.southConnectors.filter(south => !this.northConnector()!.subscriptions.some(subscription => subscription.id === south.id))
-      );
-    } else {
-      component.prepareForCreation(
-        this.southConnectors.filter(south => !this.subscriptions.some(subscription => subscription.id === south.id))
-      );
-    }
+    component.prepareForCreation(
+      this.southConnectors.filter(south => !this.subscriptions.some(subscription => subscription.id === south.id))
+    );
 
     this.refreshAfterAddSubscriptionModalClosed(modalRef);
   }
 
   /**
-   * Refresh the subscription list when the scan mode is edited
+   * Refresh the subscription list when the subscription is edited
    */
   private refreshAfterAddSubscriptionModalClosed(modalRef: Modal<CreateNorthSubscriptionModalComponent>) {
     modalRef.result

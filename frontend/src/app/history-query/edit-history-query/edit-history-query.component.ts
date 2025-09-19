@@ -43,7 +43,6 @@ import { TransformerDTO, TransformerDTOWithOptions } from '../../../../../backen
 import { TransformerService } from '../../services/transformer.service';
 import { CertificateService } from '../../services/certificate.service';
 import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
-import { NorthTransformersComponent } from '../../north/north-transformers/north-transformers.component';
 import { addAttributeToForm, addEnablingConditions } from '../../shared/form/dynamic-form.builder';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../shared/form/form-validation-directives';
 import { OIBusScanModeFormControlComponent } from '../../shared/form/oibus-scan-mode-form-control/oibus-scan-mode-form-control.component';
@@ -52,6 +51,7 @@ import { OIBusObjectFormControlComponent } from '../../shared/form/oibus-object-
 import { CanComponentDeactivate } from '../../shared/unsaved-changes.guard';
 import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
 import { DateRange, DateRangeSelectorComponent } from '../../shared/date-range-selector/date-range-selector.component';
+import { HistoryQueryTransformersComponent } from '../history-query-transformers/history-query-transformers.component';
 
 @Component({
   selector: 'oib-edit-history-query',
@@ -66,11 +66,11 @@ import { DateRange, DateRangeSelectorComponent } from '../../shared/date-range-s
     OibHelpComponent,
     OIBusNorthTypeEnumPipe,
     OIBusSouthTypeEnumPipe,
-    NorthTransformersComponent,
     ReactiveFormsModule,
     OI_FORM_VALIDATION_DIRECTIVES,
     OIBusScanModeFormControlComponent,
-    OIBusObjectFormControlComponent
+    OIBusObjectFormControlComponent,
+    HistoryQueryTransformersComponent
   ],
   templateUrl: './edit-history-query.component.html',
   styleUrl: './edit-history-query.component.scss'
@@ -132,9 +132,9 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
     }>;
     northSettings: FormGroup;
     southSettings: FormGroup;
-    northTransformers: FormControl<Array<TransformerDTOWithOptions>>;
   }> | null = null;
 
+  inMemoryTransformersWithOptions: Array<TransformerDTOWithOptions> = [];
   inMemoryItems: Array<HistoryQueryItemCommandDTO<SouthItemSettings>> = [];
   scanModeAttribute: OIBusScanModeAttribute = {
     type: 'scan-mode',
@@ -285,8 +285,7 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
         })
       }),
       northSettings: this.fb.group({}),
-      southSettings: this.fb.group({}),
-      northTransformers: [[] as Array<TransformerDTOWithOptions>]
+      southSettings: this.fb.group({})
     });
     for (const attribute of this.northManifest!.settings.attributes) {
       addAttributeToForm(this.fb, this.form.controls.northSettings, attribute);
@@ -298,7 +297,7 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
     }
     addEnablingConditions(this.form.controls.southSettings, this.southManifest!.settings.enablingConditions);
 
-    // if we have a south connector, we initialize the values
+    // if we have a history query, we initialize the values
     if (this.historyQuery) {
       const dateRange: DateRange = {
         startTime: this.historyQuery.startTime,
@@ -308,6 +307,7 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
       this.historyQuery.caching.trigger.scanMode = this.scanModes.find(
         element => element.id === this.historyQuery!.caching.trigger.scanMode.id
       )!;
+      this.inMemoryTransformersWithOptions = [...this.historyQuery.northTransformers];
       this.form.patchValue({
         ...this.historyQuery,
         dateRange
@@ -322,7 +322,7 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
         )!;
         this.form.controls.northSettings.patchValue(northConnector.settings);
         this.form.controls.caching.patchValue(northConnector.caching);
-        this.form.controls.northTransformers.patchValue(northConnector.transformers);
+        this.inMemoryTransformersWithOptions = [...northConnector.transformers];
       }
       // we should provoke all value changes to make sure fields are properly hidden and disabled
       this.form.setValue(this.form.getRawValue());
@@ -383,7 +383,7 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
               settings: item.settings
             }))
           : this.inMemoryItems,
-      northTransformers: formValue.northTransformers!.map(element => ({
+      northTransformers: this.inMemoryTransformersWithOptions.map(element => ({
         transformerId: element.transformer.id,
         options: element.options,
         inputType: element.inputType
@@ -426,6 +426,18 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
     createOrUpdate.pipe(this.state.pendingUntilFinalization()).subscribe(historyQuery => {
       this.router.navigate(['/history-queries', historyQuery.id]);
     });
+  }
+
+  updateInMemoryTransformers(transformersWithOptions: Array<TransformerDTOWithOptions> | null) {
+    if (transformersWithOptions) {
+      this.inMemoryTransformersWithOptions = transformersWithOptions;
+    } else {
+      // When child signals backend update, refresh current connector view and in-memory cache
+      this.historyQueryService.get(this.historyQuery!.id).subscribe(historyQuery => {
+        this.historyQuery = JSON.parse(JSON.stringify(historyQuery));
+        this.inMemoryTransformersWithOptions = [...historyQuery.northTransformers];
+      });
+    }
   }
 
   updateInMemoryItems(items: Array<HistoryQueryItemCommandDTO<SouthItemSettings>> | null) {

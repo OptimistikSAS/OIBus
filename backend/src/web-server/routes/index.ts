@@ -9,7 +9,6 @@ import NorthConnectorController from '../controllers/north-connector.controller'
 import SouthConnectorController from '../controllers/south-connector.controller';
 import UserController from '../controllers/user.controller';
 import HistoryQueryController from '../controllers/history-query.controller';
-import SubscriptionController from '../controllers/subscription.controller';
 import JoiValidator from '../controllers/validators/joi.validator';
 import { KoaContext } from '../koa';
 import CertificateController from '../controllers/certificate.controller';
@@ -72,7 +71,7 @@ import { OIBusCommandDTO } from '../../../shared/model/command.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import { ReadStream } from 'node:fs';
-import { CustomTransformerCommand, TransformerDTO } from '../../../shared/model/transformer.model';
+import { CustomTransformerCommand, TransformerDTO, TransformerDTOWithOptions } from '../../../shared/model/transformer.model';
 import TransformerController from '../controllers/transformer.controller';
 
 const joiValidator = new JoiValidator();
@@ -88,7 +87,6 @@ const southConnectorController = new SouthConnectorController(joiValidator);
 const historyQueryController = new HistoryQueryController(joiValidator, historyQuerySchema);
 const userController = new UserController(joiValidator, userSchema);
 const logController = new LogController(joiValidator, logSchema);
-const subscriptionController = new SubscriptionController();
 const transformerController = new TransformerController(joiValidator, transformerSchema);
 
 const router = new Router();
@@ -169,11 +167,16 @@ router.put('/api/north/:id', (ctx: KoaContext<NorthConnectorCommandDTO<NorthSett
 router.delete('/api/north/:id', (ctx: KoaContext<void, void>) => northConnectorController.delete(ctx));
 router.put('/api/north/:id/start', (ctx: KoaContext<void, void>) => northConnectorController.start(ctx));
 router.put('/api/north/:id/stop', (ctx: KoaContext<void, void>) => northConnectorController.stop(ctx));
-router.get('/api/north/:northId/subscriptions', (ctx: KoaContext<void, Array<SouthConnectorLightDTO>>) =>
-  subscriptionController.findByNorth(ctx)
+router.put('/api/north/:northId/subscriptions/:southId', (ctx: KoaContext<void, void>) => northConnectorController.addSubscription(ctx));
+router.delete('/api/north/:northId/subscriptions/:southId', (ctx: KoaContext<void, void>) =>
+  northConnectorController.removeSubscription(ctx)
 );
-router.post('/api/north/:northId/subscriptions/:southId', (ctx: KoaContext<void, void>) => subscriptionController.create(ctx));
-router.delete('/api/north/:northId/subscriptions/:southId', (ctx: KoaContext<void, void>) => subscriptionController.delete(ctx));
+router.put('/api/north/:northId/transformers', (ctx: KoaContext<TransformerDTOWithOptions, void>) =>
+  northConnectorController.addOrEditTransformer(ctx)
+);
+router.delete('/api/north/:northId/transformers/:transformerId', (ctx: KoaContext<void, void>) =>
+  northConnectorController.removeTransformer(ctx)
+);
 router.get('/api/north/:northId/cache/content', (ctx: KoaContext<void, Array<{ metadataFilename: string; metadata: CacheMetadata }>>) =>
   northConnectorController.searchCacheContent(ctx)
 );
@@ -298,7 +301,12 @@ router.put('/api/history-queries/:id', (ctx: KoaContext<HistoryQueryCommandDTO<S
   historyQueryController.updateHistoryQuery(ctx)
 );
 router.delete('/api/history-queries/:id', (ctx: KoaContext<void, void>) => historyQueryController.deleteHistoryQuery(ctx));
-
+router.put('/api/history-queries/:historyQueryId/transformers', (ctx: KoaContext<TransformerDTOWithOptions, void>) =>
+  historyQueryController.addOrEditTransformer(ctx)
+);
+router.delete('/api/history-queries/:historyQueryId/transformers/:transformerId', (ctx: KoaContext<void, void>) =>
+  historyQueryController.removeTransformer(ctx)
+);
 router.get('/api/history-queries/:historyQueryId/south-items', (ctx: KoaContext<void, Page<HistoryQueryItemDTO<SouthItemSettings>>>) =>
   historyQueryController.searchHistoryQueryItems(ctx)
 );

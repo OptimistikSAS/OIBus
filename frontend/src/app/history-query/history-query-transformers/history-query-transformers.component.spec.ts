@@ -1,17 +1,22 @@
 import { TestBed } from '@angular/core/testing';
 
-import { NorthTransformersComponent } from './north-transformers.component';
+import { HistoryQueryTransformersComponent } from './history-query-transformers.component';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { ComponentTester, createMock } from 'ngx-speculoos';
-import { NorthConnectorService } from '../../services/north-connector.service';
 import { Component, inject } from '@angular/core';
 import { NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
 import { TransformerDTO, TransformerDTOWithOptions } from '../../../../../backend/shared/model/transformer.model';
 import { FormControl, NonNullableFormBuilder } from '@angular/forms';
+import { HistoryQueryService } from '../../services/history-query.service';
 
 @Component({
-  template: `<oib-north-transformers [northManifest]="northManifest" [transformers]="transformers" [certificates]="[]" [scanModes]="[]" />`,
-  imports: [NorthTransformersComponent]
+  template: `<oib-history-query-transformers
+    [northManifest]="northManifest"
+    [transformers]="transformers"
+    [certificates]="[]"
+    [scanModes]="[]"
+  />`,
+  imports: [HistoryQueryTransformersComponent]
 })
 class TestComponent {
   private fb = inject(NonNullableFormBuilder);
@@ -21,7 +26,7 @@ class TestComponent {
   northManifest: NorthConnectorManifest = { id: 'console', types: ['any', 'time-values'] } as NorthConnectorManifest;
 }
 
-class NorthTransformersComponentTester extends ComponentTester<TestComponent> {
+class HistoryQueryTransformersComponentTester extends ComponentTester<TestComponent> {
   constructor() {
     super(TestComponent);
   }
@@ -35,18 +40,18 @@ class NorthTransformersComponentTester extends ComponentTester<TestComponent> {
   }
 }
 
-describe('NorthTransformersComponent', () => {
-  let tester: NorthTransformersComponentTester;
-  let northService: jasmine.SpyObj<NorthConnectorService>;
+describe('HistoryQueryTransformersComponent', () => {
+  let tester: HistoryQueryTransformersComponentTester;
+  let historyQueryService: jasmine.SpyObj<HistoryQueryService>;
 
   beforeEach(() => {
-    northService = createMock(NorthConnectorService);
+    historyQueryService = createMock(HistoryQueryService);
 
     TestBed.configureTestingModule({
-      providers: [provideI18nTesting(), { provide: NorthConnectorService, useValue: northService }]
+      providers: [provideI18nTesting(), { provide: HistoryQueryService, useValue: historyQueryService }]
     });
 
-    tester = new NorthTransformersComponentTester();
+    tester = new HistoryQueryTransformersComponentTester();
   });
 
   it('should display forms with types', () => {

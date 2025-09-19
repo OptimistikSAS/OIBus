@@ -25,6 +25,11 @@ import { NorthSettings } from '../../../../../backend/shared/model/north-setting
 import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
 import { isDisplayableAttribute } from '../../shared/form/dynamic-form.builder';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NorthTransformersComponent } from '../north-transformers/north-transformers.component';
+import { TransformerDTO, TransformerDTOWithOptions } from '../../../../../backend/shared/model/transformer.model';
+import { CertificateService } from '../../services/certificate.service';
+import { TransformerService } from '../../services/transformer.service';
+import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
 
 @Component({
   selector: 'oib-north-detail',
@@ -40,7 +45,8 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
     LogsComponent,
     OIBusNorthTypeEnumPipe,
     TranslatePipe,
-    NgbTooltip
+    NgbTooltip,
+    NorthTransformersComponent
   ],
   templateUrl: './north-detail.component.html',
   styleUrl: './north-detail.component.scss',
@@ -50,6 +56,8 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
   private windowService = inject(WindowService);
   private northConnectorService = inject(NorthConnectorService);
   private scanModeService = inject(ScanModeService);
+  private certificateService = inject(CertificateService);
+  private transformerService = inject(TransformerService);
   private engineService = inject(EngineService);
   private notificationService = inject(NotificationService);
   private modalService = inject(ModalService);
@@ -60,6 +68,8 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
   northConnector: NorthConnectorDTO<NorthSettings> | null = null;
   displayedSettings: Array<{ key: string; value: string }> = [];
   scanModes: Array<ScanModeDTO> = [];
+  certificates: Array<CertificateDTO> = [];
+  transformers: Array<TransformerDTO> = [];
   manifest: NorthConnectorManifest | null = null;
   connectorStream: EventSource | null = null;
   connectorMetrics: NorthConnectorMetrics | null = null;
@@ -67,7 +77,14 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
   northId: string | null = null;
 
   ngOnInit() {
-    combineLatest([this.scanModeService.list(), this.engineService.getInfo()]).subscribe(([scanModes, engineInfo]) => {
+    combineLatest([
+      this.scanModeService.list(),
+      this.certificateService.list(),
+      this.transformerService.list(),
+      this.engineService.getInfo()
+    ]).subscribe(([scanModes, certificates, transformers, engineInfo]) => {
+      this.certificates = certificates;
+      this.transformers = transformers;
       this.scanModes = scanModes.filter(scanMode => scanMode.id !== 'subscription');
       this.oibusInfo = engineInfo;
     });
@@ -119,6 +136,12 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
           });
         this.manifest = manifest;
       });
+  }
+
+  updateInMemoryTransformers(_transformers: Array<TransformerDTOWithOptions> | null) {
+    this.northConnectorService.get(this.northConnector!.id).subscribe(northConnector => {
+      this.northConnector = northConnector;
+    });
   }
 
   updateInMemorySubscriptions(_subscriptions: Array<SouthConnectorLightDTO> | null) {

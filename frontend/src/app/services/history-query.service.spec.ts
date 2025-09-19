@@ -12,6 +12,7 @@ import { SouthItemSettings, SouthSettings } from '../../../../backend/shared/mod
 import { NorthSettings } from '../../../../backend/shared/model/north-settings.model';
 import { CacheMetadata } from '../../../../backend/shared/model/engine.model';
 import testData from '../../../../backend/src/tests/utils/test-data';
+import { TransformerDTOWithOptions } from '../../../../backend/shared/model/transformer.model';
 
 describe('HistoryQueryService', () => {
   let http: HttpTestingController;
@@ -74,6 +75,22 @@ describe('HistoryQueryService', () => {
     let done = false;
     service.deleteHistoryQuery('id1').subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'DELETE', url: '/api/history-queries/id1' });
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
+  it('should add or edit a History query transformer with options', () => {
+    let done = false;
+    service.addOrEditTransformer('id1', {} as TransformerDTOWithOptions).subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'PUT', url: '/api/history-queries/id1/transformers' });
+    testRequest.flush({});
+    expect(done).toBe(true);
+  });
+
+  it('should remove a History query transformer', () => {
+    let done = false;
+    service.removeTransformer('id1', 'transformerId').subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'DELETE', url: '/api/history-queries/id1/transformers/transformerId' });
     testRequest.flush(null);
     expect(done).toBe(true);
   });

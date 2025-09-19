@@ -5,6 +5,7 @@ import testData from '../../tests/utils/test-data';
 import { toNorthConnectorDTO, toNorthConnectorLightDTO } from '../../service/north.service';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
+import { toSouthConnectorLightDTO } from '../../service/south.service';
 
 jest.mock('./validators/joi.validator');
 jest.mock('../../service/utils');
@@ -145,6 +146,98 @@ describe('North connector controller', () => {
     await northConnectorController.delete(ctx);
     expect(ctx.app.northService.deleteNorth).toHaveBeenCalledWith(testData.north.list[0].id);
     expect(ctx.badRequest).toHaveBeenCalledWith('error');
+  });
+
+  it('addOrEditTransformer() should add subscription', async () => {
+    ctx.params.northId = testData.north.list[0].id;
+    ctx.request.body = {};
+
+    await northConnectorController.addOrEditTransformer(ctx);
+
+    expect(ctx.app.northService.addOrEditTransformer).toHaveBeenCalledWith(testData.north.list[0].id, {});
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('addOrEditTransformer() should return bad request', async () => {
+    ctx.params.northId = testData.north.list[0].id;
+    ctx.request.body = {};
+    ctx.app.northService.addOrEditTransformer.mockImplementationOnce(() => {
+      throw new Error('Not Found');
+    });
+
+    await northConnectorController.addOrEditTransformer(ctx);
+
+    expect(ctx.app.northService.addOrEditTransformer).toHaveBeenCalledWith(testData.north.list[0].id, {});
+    expect(ctx.badRequest).toHaveBeenCalledWith('Not Found');
+  });
+
+  it('removeTransformer() should add subscription', async () => {
+    ctx.params.northId = testData.north.list[0].id;
+    ctx.params.transformerId = testData.transformers.list[0].id;
+
+    await northConnectorController.removeTransformer(ctx);
+
+    expect(ctx.app.northService.removeTransformer).toHaveBeenCalledWith(testData.north.list[0].id, testData.transformers.list[0].id);
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('removeTransformer() should return bad request', async () => {
+    ctx.params.northId = testData.north.list[0].id;
+    ctx.params.transformerId = testData.transformers.list[0].id;
+    ctx.app.northService.removeTransformer.mockImplementationOnce(() => {
+      throw new Error('Not Found');
+    });
+
+    await northConnectorController.removeTransformer(ctx);
+
+    expect(ctx.app.northService.removeTransformer).toHaveBeenCalledWith(testData.north.list[0].id, testData.transformers.list[0].id);
+    expect(ctx.badRequest).toHaveBeenCalledWith('Not Found');
+  });
+
+  it('addSubscription() should add subscription', async () => {
+    ctx.params.northId = testData.north.list[0].id;
+    ctx.params.southId = testData.south.list[0].id;
+
+    await northConnectorController.addSubscription(ctx);
+
+    expect(ctx.app.northService.createSubscription).toHaveBeenCalledWith(testData.north.list[0].id, testData.south.list[0].id);
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('addSubscription() should return bad request', async () => {
+    ctx.params.northId = testData.north.list[0].id;
+    ctx.params.southId = testData.south.list[0].id;
+    ctx.app.northService.createSubscription.mockImplementationOnce(() => {
+      throw new Error('Not Found');
+    });
+
+    await northConnectorController.addSubscription(ctx);
+
+    expect(ctx.app.northService.createSubscription).toHaveBeenCalledWith(testData.north.list[0].id, testData.south.list[0].id);
+    expect(ctx.badRequest).toHaveBeenCalledWith('Not Found');
+  });
+
+  it('removeSubscription() should remove subscription', async () => {
+    ctx.params.northId = testData.north.list[0].id;
+    ctx.params.southId = testData.south.list[0].id;
+
+    await northConnectorController.removeSubscription(ctx);
+
+    expect(ctx.app.northService.deleteSubscription).toHaveBeenCalledWith(testData.north.list[0].id, testData.south.list[0].id);
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('removeSubscription() should return bad request', async () => {
+    ctx.params.northId = testData.north.list[0].id;
+    ctx.params.southId = testData.south.list[0].id;
+    ctx.app.northService.deleteSubscription.mockImplementationOnce(() => {
+      throw new Error('Not Found');
+    });
+
+    await northConnectorController.removeSubscription(ctx);
+
+    expect(ctx.app.northService.deleteSubscription).toHaveBeenCalledWith(testData.north.list[0].id, testData.south.list[0].id);
+    expect(ctx.badRequest).toHaveBeenCalledWith('Not Found');
   });
 
   it('start() should enable North connector', async () => {

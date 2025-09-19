@@ -832,12 +832,6 @@
           }
         },
         "transformers": {
-          "title": "Transform payloads",
-          "input-type": "Source type",
-          "output-type": "Destination type",
-          "transformer": "Transformer",
-          "add": "Add a transformer",
-          "none": "No transformer",
           "standard": {
             "ignore": "Ignore",
             "iso": "No transform",
@@ -849,11 +843,6 @@
             "setpoint-to-mqtt": "Setpoints into MQTT payloads",
             "setpoint-to-opcua": "Setpoints into OPCUA values",
             "setpoint-to-modbus": "Setpoints into Modbus values"
-          },
-          "choose-transformer-modal": {
-            "title": "Choose how to handle payloads",
-            "transformer": "Transformer to apply",
-            "options": "options"
           },
           "mapping": {
             "title": "Mapping table",
@@ -1961,6 +1950,21 @@
         "delete": "Remove subscription"
       }
     },
+    "transformers": {
+      "title": "Transform payloads",
+      "input-type": "Source type",
+      "output-type": "Destination type",
+      "transformer": "Transformer",
+      "add": "Add a transformer",
+      "none": "No transformer",
+      "choose-transformer-modal": {
+        "title": "Choose how to handle payloads"
+      },
+      "added": "Transformer added",
+      "edited": "Transformer options edited",
+      "confirm-deletion": "Are you sure you want to delete this transformer from this North connector?",
+      "removed": "Transformer removed"
+    },
     "monitoring": {
       "title": "{{ name }} metrics",
       "since": "since {{ date }}",
@@ -2055,6 +2059,21 @@
     },
     "south": {
       "specific-settings": "{{ type }} settings"
+    },
+    "transformers": {
+      "title": "Transform payloads",
+      "input-type": "Source type",
+      "output-type": "Destination type",
+      "transformer": "Transformer",
+      "add": "Add a transformer",
+      "none": "No transformer",
+      "choose-transformer-modal": {
+        "title": "Choose how to handle payloads"
+      },
+      "added": "Transformer added",
+      "edited": "Transformer options edited",
+      "confirm-deletion": "Are you sure you want to delete this transformer from this History query?",
+      "removed": "Transformer removed"
     },
     "items": {
       "title": "Items",

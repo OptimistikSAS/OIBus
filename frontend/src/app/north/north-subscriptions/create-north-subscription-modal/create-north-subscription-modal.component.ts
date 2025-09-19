@@ -5,12 +5,13 @@ import { ObservableState, SaveButtonComponent } from '../../../shared/save-butto
 import { TranslateDirective } from '@ngx-translate/core';
 import { SouthConnectorLightDTO } from '../../../../../../backend/shared/model/south-connector.model';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
+import { OIBusSouthTypeEnumPipe } from '../../../shared/oibus-south-type-enum.pipe';
 
 @Component({
   selector: 'oib-create-north-subscription-modal',
   templateUrl: './create-north-subscription-modal.component.html',
   styleUrl: './create-north-subscription-modal.component.scss',
-  imports: [ReactiveFormsModule, TranslateDirective, SaveButtonComponent, OI_FORM_VALIDATION_DIRECTIVES]
+  imports: [ReactiveFormsModule, TranslateDirective, SaveButtonComponent, OI_FORM_VALIDATION_DIRECTIVES, OIBusSouthTypeEnumPipe]
 })
 export class CreateNorthSubscriptionModalComponent {
   private modal = inject(NgbActiveModal);

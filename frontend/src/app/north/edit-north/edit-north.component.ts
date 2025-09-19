@@ -107,9 +107,9 @@ export class EditNorthComponent implements OnInit, CanComponentDeactivate {
       }>;
     }>;
     settings: FormGroup;
-    transformers: FormControl<Array<TransformerDTOWithOptions>>;
   }> | null = null;
 
+  inMemoryTransformersWithOptions: Array<TransformerDTOWithOptions> = [];
   inMemorySubscriptions: Array<SouthConnectorLightDTO> = [];
   scanModeAttribute: OIBusScanModeAttribute = {
     type: 'scan-mode',
@@ -206,8 +206,7 @@ export class EditNorthComponent implements OnInit, CanComponentDeactivate {
           enabled: [false, Validators.required],
           retentionDuration: [72, Validators.required]
         })
-      }),
-      transformers: [[] as Array<TransformerDTOWithOptions>]
+      })
     });
     for (const attribute of this.manifest!.settings.attributes) {
       addAttributeToForm(this.fb, this.form.controls.settings, attribute);
@@ -222,6 +221,7 @@ export class EditNorthComponent implements OnInit, CanComponentDeactivate {
       this.form.patchValue(this.northConnector);
       // Initialize in-memory subscriptions for edit mode to allow deferring persistence
       this.inMemorySubscriptions = [...this.northConnector.subscriptions];
+      this.inMemoryTransformersWithOptions = [...this.northConnector.transformers];
     } else {
       // we should provoke all value changes to make sure fields are properly hidden and disabled
       this.form.setValue(this.form.getRawValue());
@@ -289,6 +289,18 @@ export class EditNorthComponent implements OnInit, CanComponentDeactivate {
     }
   }
 
+  updateInMemoryTransformers(transformersWithOptions: Array<TransformerDTOWithOptions> | null) {
+    if (transformersWithOptions) {
+      this.inMemoryTransformersWithOptions = transformersWithOptions;
+    } else {
+      // When child signals backend update, refresh current connector view and in-memory cache
+      this.northConnectorService.get(this.northConnector!.id).subscribe(northConnector => {
+        this.northConnector = JSON.parse(JSON.stringify(northConnector));
+        this.inMemoryTransformersWithOptions = [...northConnector.transformers];
+      });
+    }
+  }
+
   get formNorthConnectorCommand(): NorthConnectorCommandDTO<NorthSettings> {
     const formValue = this.form!.value;
     return {
@@ -321,7 +333,7 @@ export class EditNorthComponent implements OnInit, CanComponentDeactivate {
       },
       // Always use in-memory subscriptions, filled either from existing connector or local edits
       subscriptions: this.inMemorySubscriptions.map(subscription => subscription.id),
-      transformers: formValue.transformers!.map(element => ({
+      transformers: this.inMemoryTransformersWithOptions.map(element => ({
         transformerId: element.transformer.id,
         options: element.options,
         inputType: element.inputType

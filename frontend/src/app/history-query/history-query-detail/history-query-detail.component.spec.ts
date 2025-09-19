@@ -17,6 +17,7 @@ import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 import testData from '../../../../../backend/src/tests/utils/test-data';
 import { CertificateService } from '../../services/certificate.service';
+import { TransformerService } from '../../services/transformer.service';
 
 class HistoryQueryDetailComponentTester extends ComponentTester<HistoryQueryDetailComponent> {
   constructor() {
@@ -51,6 +52,7 @@ describe('HistoryQueryDetailComponent', () => {
   let historyQueryService: jasmine.SpyObj<HistoryQueryService>;
   let scanModeService: jasmine.SpyObj<ScanModeService>;
   let certificateService: jasmine.SpyObj<CertificateService>;
+  let transformerService: jasmine.SpyObj<TransformerService>;
   let engineService: jasmine.SpyObj<EngineService>;
   let modalService: jasmine.SpyObj<ModalService>;
 
@@ -112,6 +114,7 @@ describe('HistoryQueryDetailComponent', () => {
     historyQueryService = createMock(HistoryQueryService);
     scanModeService = createMock(ScanModeService);
     certificateService = createMock(CertificateService);
+    transformerService = createMock(TransformerService);
     engineService = createMock(EngineService);
     modalService = createMock(ModalService);
 
@@ -134,6 +137,7 @@ describe('HistoryQueryDetailComponent', () => {
         { provide: HistoryQueryService, useValue: historyQueryService },
         { provide: ScanModeService, useValue: scanModeService },
         { provide: CertificateService, useValue: certificateService },
+        { provide: TransformerService, useValue: transformerService },
         { provide: ModalService, useValue: modalService }
       ]
     });
@@ -145,6 +149,7 @@ describe('HistoryQueryDetailComponent', () => {
     northConnectorService.getNorthConnectorTypeManifest.and.returnValue(of(northManifest));
     scanModeService.list.and.returnValue(of([]));
     certificateService.list.and.returnValue(of([]));
+    transformerService.list.and.returnValue(of([]));
     engineService.getInfo.and.returnValue(of(engineInfo));
 
     tester = new HistoryQueryDetailComponentTester();
