@@ -1,0 +1,170 @@
+@import '../../../../common.scss';
+
+.manifest-builder {
+  .attribute-item {
+    background-color: $veryLightGrey;
+    border: 1px solid $lightGrey;
+    border-radius: 1rem;
+    transition: border-color 0.15s ease-in-out;
+    padding: 1rem 3.5rem 1rem 1rem;
+    margin-bottom: 1rem;
+
+    &:hover {
+      border-color: $electricBlue;
+    }
+
+    .btn-danger {
+      top: 1rem;
+      right: 1rem;
+      width: 2rem;
+      height: 2rem;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0.5rem;
+    }
+  }
+
+  .nested-attribute-item {
+    background-color: $white;
+    border: 1px solid $lightGrey;
+    border-radius: 1rem;
+    transition: border-color 0.15s ease-in-out;
+    padding: 0.75rem 3rem 0.75rem 0.75rem;
+    margin-bottom: 0.75rem;
+
+    &:hover {
+      border-color: $electricBlue;
+    }
+
+    .btn-danger {
+      top: 0.75rem;
+      right: 0.75rem;
+      width: 1.75rem;
+      height: 1.75rem;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0.5rem;
+    }
+  }
+
+  .form-group {
+    margin-bottom: 1rem;
+  }
+
+  .form-label {
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+    color: $darkGrey;
+  }
+
+  .btn-primary {
+    border-radius: 0.5rem;
+    border: none;
+    color: $white;
+    background-color: $electricBlue;
+
+    &:hover {
+      background-color: $yellow;
+      color: $darkGrey;
+    }
+  }
+
+  .btn-secondary {
+    border-radius: 0.5rem;
+    color: $white;
+    background-color: $yellow;
+    border: none;
+
+    &:hover {
+      background-color: $blue;
+      color: $darkGrey;
+    }
+  }
+
+  .btn-danger {
+    border-radius: 0.5rem;
+    border: none;
+    color: $white;
+    background-color: $red;
+  }
+
+  .form-control {
+    border-radius: 1rem;
+    background-color: $veryLightGrey;
+  }
+
+  .form-select {
+    border-radius: 1rem;
+    background-color: $veryLightGrey;
+  }
+
+  .form-check-switch {
+    .form-check-input {
+      &:checked {
+        background-color: $electricBlue;
+        border-color: $electricBlue;
+      }
+    }
+  }
+
+  .auto-save-info {
+    background-color: $veryLightGrey;
+    border-radius: 1rem;
+    padding: 0.75rem 1rem;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+    color: $darkGrey;
+    font-size: 0.875rem;
+    text-align: center;
+    border: 0.2rem solid $lightGrey;
+    box-sizing: content-box;
+  }
+
+  .manifest-attributes-section {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid $lightGrey;
+
+    h5 {
+      margin-bottom: 0;
+      color: $darkGrey;
+    }
+
+    .table {
+      margin-bottom: 0;
+    }
+
+    .table th {
+      border-top: none;
+      font-weight: 600;
+      color: $darkGrey;
+      background-color: $veryLightGrey;
+    }
+
+    .table td {
+      vertical-align: middle;
+    }
+
+    .badge {
+      font-size: 0.75rem;
+    }
+
+    code {
+      font-family: var(--bs-font-monospace);
+      font-size: 0.875rem;
+      background-color: $veryLightGrey;
+      padding: 0.125rem 0.25rem;
+      border-radius: 0.25rem;
+      color: $darkGrey;
+    }
+
+    .btn-group-sm > .btn {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.875rem;
+    }
+  }
+}
