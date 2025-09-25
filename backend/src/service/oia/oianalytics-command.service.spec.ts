@@ -167,6 +167,12 @@ describe('OIAnalytics Command Service', () => {
     expect(service.search({ types: [], status: [] }, 1)).toEqual(page);
   });
 
+  it('should delete command', () => {
+    service.delete('id1');
+
+    expect(oIAnalyticsCommandRepository.delete).toHaveBeenCalledWith('id1');
+  });
+
   it('should check commands', async () => {
     service.sendAckCommands = jest.fn();
     service.checkRetrievedCommands = jest.fn();

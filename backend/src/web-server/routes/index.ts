@@ -393,5 +393,6 @@ router.get('/api/scope-logs/:id', (ctx: KoaContext<void, Scope>) => logControlle
 router.post('/api/logs', (ctx: KoaContext<LogStreamCommandDTO, void>) => logController.addLogsFromRemote(ctx));
 
 router.get('/api/commands', (ctx: KoaContext<void, Page<OIBusCommandDTO>>) => commandController.search(ctx));
+router.delete('/api/commands/:id', (ctx: KoaContext<void, void>) => commandController.delete(ctx));
 
 export default router;

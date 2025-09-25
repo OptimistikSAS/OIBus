@@ -53,4 +53,27 @@ describe('OIAnalytics Command controller', () => {
     expect(ctx.app.oIAnalyticsCommandService.search).toHaveBeenCalledWith(searchParams, 0);
     expect(ctx.ok).toHaveBeenCalledWith(createPageFromArray(testData.oIAnalytics.commands.oIBusList, 25, 0));
   });
+
+  it('delete() should delete a command', async () => {
+    const id = 'id';
+    ctx.params.id = id;
+
+    await commandController.delete(ctx);
+
+    expect(ctx.app.oIAnalyticsCommandService.delete).toHaveBeenCalledWith(id);
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('delete() should delete a command', async () => {
+    const id = 'id';
+    ctx.params.id = id;
+    ctx.app.oIAnalyticsCommandService.delete.mockImplementationOnce(() => {
+      throw Error('bad request');
+    });
+
+    await commandController.delete(ctx);
+
+    expect(ctx.app.oIAnalyticsCommandService.delete).toHaveBeenCalledWith(id);
+    expect(ctx.badRequest).toHaveBeenCalledWith('bad request');
+  });
 });

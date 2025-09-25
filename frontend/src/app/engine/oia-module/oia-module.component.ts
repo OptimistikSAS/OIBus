@@ -175,4 +175,25 @@ export class OiaModuleComponent implements OnInit, OnDestroy {
         this.notificationService.success('oia-module.registration.saved');
       });
   }
+
+  deleteCommand(command: OIBusCommandDTO) {
+    this.confirmationService
+      .confirm({
+        messageKey: 'oia-module.commands.confirm-delete'
+      })
+      .pipe(
+        switchMap(() => this.oibusCommandService.deleteCommand(command)),
+        tap(() => this.notificationService.success('oia-module.commands.deleted')),
+        switchMap(() => {
+          const queryParamMap = this.route.snapshot.queryParamMap;
+          const page: number = +(queryParamMap.get('page') || 0);
+          const types: Array<OIBusCommandType> = queryParamMap.getAll('types') as Array<OIBusCommandType>;
+          const status: Array<OIBusCommandStatus> = queryParamMap.getAll('status') as Array<OIBusCommandStatus>;
+          return this.oibusCommandService.searchCommands({ page, types, status }).pipe(catchError(() => EMPTY));
+        })
+      )
+      .subscribe(commands => {
+        this.commands = commands;
+      });
+  }
 }

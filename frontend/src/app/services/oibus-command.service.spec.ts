@@ -37,4 +37,12 @@ describe('OibusCommandService', () => {
 
     expect(expectedCommands!).toEqual(commands);
   });
+
+  it('should delete a command', () => {
+    let done = false;
+    service.deleteCommand({ id: 'id1' } as OIBusCommandDTO).subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'DELETE', url: '/api/commands/id1' });
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
 });

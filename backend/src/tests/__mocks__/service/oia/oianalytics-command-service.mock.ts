@@ -5,6 +5,7 @@ export default jest.fn().mockImplementation(() => {
   return {
     start: jest.fn(),
     search: jest.fn(),
+    delete: jest.fn(),
     checkCommands: jest.fn(),
     sendAckCommands: jest.fn(),
     checkRetrievedCommands: jest.fn(),

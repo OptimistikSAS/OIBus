@@ -105,7 +105,7 @@
                     <tr>
                       <th></th>
                       <th translate="oia-module.commands.creation-date"></th>
-                      <th translate="oia-module.commands.type"></th>
+                      <th translate="oia-module.commands.command"></th>
                       <th translate="oia-module.commands.status"></th>
                       <th translate="oia-module.commands.completion-date"></th>
                       <th></th>
@@ -116,20 +116,26 @@
                       <tr>
                         <td></td>
                         <td>{{ command.retrievedDate! | datetime: 'mediumWithSeconds' }}</td>
-                        <td>{{ command.type | oibusCommandTypeEnum }}</td>
+                        <td>{{ command.type | oibusCommandTypeEnum }} ({{ command.id }})</td>
                         <td>{{ command.status | oibusCommandStatusEnum }}</td>
                         <td>
                           @if (command.completedDate) {
                             <span>{{ command.completedDate | datetime: 'mediumWithSeconds' }}</span>
                           }
                         </td>
-                        <td class="text-nowrap">
-                          <!-- Details button -->
-                          @if (['COMPLETED', 'ERRORED'].includes(command.status)) {
-                            <button type="button" class="btn btn-link details-button px-1 py-0" (click)="openCommandDetails(command)">
-                              <span class="fa fa-search" [ngbTooltip]="'oia-module.commands.details-tooltip' | translate"></span>
+                        <td class="text-nowrap action-buttons">
+                          <div class="pull-right">
+                            <!-- Details button -->
+                            @if (['COMPLETED', 'ERRORED'].includes(command.status)) {
+                              <button type="button" class="btn btn-link details-button px-1 py-0" (click)="openCommandDetails(command)">
+                                <span class="fa fa-search" [ngbTooltip]="'oia-module.commands.details-tooltip' | translate"></span>
+                              </button>
+                            }
+                            <!-- Delete button -->
+                            <button type="button" class="btn btn-link delete-command px-1 py-0" (click)="deleteCommand(command)">
+                              <span class="fa fa-trash" [ngbTooltip]="'oia-module.commands.delete-tooltip' | translate"></span>
                             </button>
-                          }
+                          </div>
                         </td>
                       </tr>
                     }

@@ -24,4 +24,8 @@ export class OibusCommandService {
       params: params
     });
   }
+
+  deleteCommand(command: OIBusCommandDTO): Observable<void> {
+    return this.http.delete<void>(`/api/commands/${command.id}`);
+  }
 }

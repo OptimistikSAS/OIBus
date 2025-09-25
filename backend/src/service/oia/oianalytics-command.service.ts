@@ -144,6 +144,10 @@ export default class OIAnalyticsCommandService {
     return this.oIAnalyticsCommandRepository.search(searchParams, page);
   }
 
+  delete(commandId: string): void {
+    return this.oIAnalyticsCommandRepository.delete(commandId);
+  }
+
   async checkCommands(): Promise<void> {
     const registration = this.oIAnalyticsRegistrationService.getRegistrationSettings()!;
     if (registration.status !== 'REGISTERED') {

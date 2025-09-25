@@ -29,4 +29,13 @@ export default class OIAnalyticsCommandController extends AbstractController {
       totalPages: page.totalPages
     });
   }
+
+  async delete(ctx: KoaContext<void, void>): Promise<void> {
+    try {
+      ctx.app.oIAnalyticsCommandService.delete(ctx.params.id!);
+      ctx.noContent();
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
+    }
+  }
 }

@@ -343,6 +343,7 @@
       "completion-date": "Completion date",
       "status": "Status",
       "type": "Type",
+      "command": "Command (id)",
       "none": "No command",
       "refresh-interval": "Command retrieve interval (from OIAnalytics)",
       "command-retry-interval": "Command (from OIAnalytics) retry interval",
@@ -395,7 +396,10 @@
           }
         }
       },
-      "details-tooltip": "Command details"
+      "details-tooltip": "Command details",
+      "confirm-delete": "Are you sure you want to delete this command?",
+      "delete-tooltip": "Delete command",
+      "deleted": "Command deleted"
     }
   },
   "about": {
