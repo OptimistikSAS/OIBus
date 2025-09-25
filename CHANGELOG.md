@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.6.9](https://github.com/OptimistikSAS/OIBus/compare/v3.6.8...v3.6.9) (2025-09-25)
+
+
+### Bug Fixes
+
+* **oianalytics:** display command ID and delete command ([d7d2415](https://github.com/OptimistikSAS/OIBus/commit/d7d24159ca79a004397160dcc2c864f83e724986))
+
 ## [3.6.8](https://github.com/OptimistikSAS/OIBus/compare/v3.6.7...v3.6.8) (2025-09-04)
 
 
