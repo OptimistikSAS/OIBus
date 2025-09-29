@@ -17,7 +17,7 @@ import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validat
 import { addAttributeToForm, addEnablingConditions } from '../../../shared/form/dynamic-form.builder';
 import { Observable } from 'rxjs';
 import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
-import { SouthItemTestComponent } from '../../../south/south-items/south-item-test/south-item-test.component';
+import SouthItemTestComponent from '../../../south/south-items/south-item-test/south-item-test.component';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { SouthItemSettings, SouthSettings } from '../../../../../../backend/shared/model/south-settings.model';
 import { HistoryQueryItemCommandDTO, HistoryQueryItemDTO } from '../../../../../../backend/shared/model/history-query.model';

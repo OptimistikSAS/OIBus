@@ -19,7 +19,7 @@ import {
 } from '../../../../../../backend/shared/model/south-connector.model';
 import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.model';
 import { SouthItemSettings, SouthSettings } from '../../../../../../backend/shared/model/south-settings.model';
-import { SouthItemTestComponent } from '../south-item-test/south-item-test.component';
+import SouthItemTestComponent from '../south-item-test/south-item-test.component';
 import { OIBusObjectAttribute, OIBusScanModeAttribute } from '../../../../../../backend/shared/model/form.model';
 import { addAttributeToForm, addEnablingConditions, createMqttValidator } from '../../../shared/form/dynamic-form.builder';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';

@@ -244,7 +244,7 @@ export interface OIBusTestHistoryQuerySouthConnectionCommand extends BaseOIBusCo
   commandContent: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
 }
 
-export interface OIBusTestHistoryQuerySouthItemConnectionCommand extends BaseOIBusCommand {
+export interface OIBusTestHistoryQuerySouthItemCommand extends BaseOIBusCommand {
   type: 'test-history-query-south-item';
   historyQueryId: string;
   southConnectorId: string | null;
@@ -313,7 +313,7 @@ export type OIBusCommand =
   | OIBusDeleteHistoryQueryCommand
   | OIBusTestHistoryQueryNorthConnectionCommand
   | OIBusTestHistoryQuerySouthConnectionCommand
-  | OIBusTestHistoryQuerySouthItemConnectionCommand
+  | OIBusTestHistoryQuerySouthItemCommand
   | OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand
   | OIBusUpdateHistoryQueryStatusCommand
   | OIBusSetpointCommand;
