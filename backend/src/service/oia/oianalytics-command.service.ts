@@ -30,7 +30,7 @@ import {
   OIBusSetpointCommand,
   OIBusTestHistoryQueryNorthConnectionCommand,
   OIBusTestHistoryQuerySouthConnectionCommand,
-  OIBusTestHistoryQuerySouthItemConnectionCommand,
+  OIBusTestHistoryQuerySouthItemCommand,
   OIBusTestNorthConnectorCommand,
   OIBusTestSouthConnectorCommand,
   OIBusTestSouthConnectorItemCommand,
@@ -62,6 +62,7 @@ import { HistoryQueryCommandDTO } from '../../../shared/model/history-query.mode
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { OIBusObjectAttribute } from '../../../shared/model/form.model';
+import { OIBusContent } from '../../../shared/model/engine.model';
 
 const UPDATE_SETTINGS_FILE = 'update.json';
 
@@ -811,7 +812,7 @@ export default class OIAnalyticsCommandService {
       command.commandContent.itemCommand.settings,
       command.commandContent.testingSettings,
       result => {
-        this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), JSON.stringify(result));
+        this.completeTestItemCommand(command, result);
       },
       this.logger
     );
@@ -873,7 +874,7 @@ export default class OIAnalyticsCommandService {
     );
   }
 
-  private async decryptHistoryQuerySouthItemSettings(command: OIBusTestHistoryQuerySouthItemConnectionCommand, privateKey: string) {
+  private async decryptHistoryQuerySouthItemSettings(command: OIBusTestHistoryQuerySouthItemCommand, privateKey: string) {
     const manifest = this.southService
       .getInstalledSouthManifests()
       .find(element => element.id === command.commandContent.historyCommand.southType)!;
@@ -980,7 +981,7 @@ export default class OIAnalyticsCommandService {
     );
   }
 
-  private async executeTestHistoryQuerySouthItemCommand(command: OIBusTestHistoryQuerySouthItemConnectionCommand, privateKey: string) {
+  private async executeTestHistoryQuerySouthItemCommand(command: OIBusTestHistoryQuerySouthItemCommand, privateKey: string) {
     await this.decryptHistoryQuerySouthItemSettings(command, privateKey);
 
     await this.historyQueryService.testSouthItem(
@@ -991,7 +992,7 @@ export default class OIAnalyticsCommandService {
       command.commandContent.itemCommand.settings,
       command.commandContent.testingSettings,
       result => {
-        this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), JSON.stringify(result));
+        this.completeTestItemCommand(command, result);
       },
       this.logger
     );
@@ -1020,6 +1021,40 @@ export default class OIAnalyticsCommandService {
     await this.northService.executeSetpoint(command.northConnectorId, command.commandContent, result => {
       this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), result);
     });
+  }
+
+  private completeTestItemCommand(
+    command: OIBusTestSouthConnectorItemCommand | OIBusTestHistoryQuerySouthItemCommand,
+    result: OIBusContent
+  ) {
+    let truncated = false;
+    let totalSize = 0;
+    switch (result.type) {
+      case 'time-values':
+      case 'setpoint':
+        totalSize = result.content.length;
+        if (result.content.length > 1000) {
+          // Only retrieve the first 1000 elements
+          truncated = true;
+          result.content = result.content.slice(0, 1000);
+        }
+        break;
+      case 'any':
+        if (result.content) {
+          totalSize = result.content.length;
+          if (result.content.length > 1024 * 500) {
+            // limit content size to the first 500 KBytes
+            truncated = true;
+            result.content = result.content.slice(0, 1024 * 500);
+          }
+        }
+        break;
+    }
+    this.oIAnalyticsCommandRepository.markAsCompleted(
+      command.id,
+      DateTime.now().toUTC().toISO(),
+      JSON.stringify({ ...result, truncated, totalSize })
+    );
   }
 
   private checkCommandPermission(command: OIBusCommand, registration: OIAnalyticsRegistration) {

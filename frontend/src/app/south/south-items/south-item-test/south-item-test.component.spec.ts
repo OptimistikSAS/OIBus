@@ -5,7 +5,7 @@ import { SouthConnectorItemDTO, SouthConnectorManifest } from '../../../../../..
 import { delay, of, throwError } from 'rxjs';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
-import { SouthItemTestComponent } from './south-item-test.component';
+import SouthItemTestComponent from './south-item-test.component';
 import { Component, ViewChild } from '@angular/core';
 import { SouthItemSettings } from '../../../../../../backend/shared/model/south-settings.model';
 import { HistoryQueryService } from '../../../services/history-query.service';

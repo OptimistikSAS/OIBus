@@ -32,7 +32,7 @@ import {
   OIBusDeleteSouthConnectorCommand,
   OIBusTestHistoryQueryNorthConnectionCommand,
   OIBusTestHistoryQuerySouthConnectionCommand,
-  OIBusTestHistoryQuerySouthItemConnectionCommand,
+  OIBusTestHistoryQuerySouthItemCommand,
   OIBusTestNorthConnectorCommand,
   OIBusTestSouthConnectorCommand,
   OIBusTestSouthConnectorItemCommand,
@@ -72,6 +72,7 @@ import HistoryQueryService from '../history-query.service';
 import HistoryQueryServiceMock from '../../tests/__mocks__/service/history-query-service.mock';
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
 import { OIAnalyticsFetchSetpointCommandDTO } from './oianalytics.model';
+import { OIBusContent } from '../../../shared/model/engine.model';
 
 jest.mock('node:crypto');
 jest.mock('node:fs/promises');
@@ -1052,6 +1053,7 @@ describe('OIAnalytics Command Service', () => {
         id: command.commandContent.southCommand.type
       }
     ]);
+    service['completeTestItemCommand'] = jest.fn();
 
     await service.executeCommand();
 
@@ -1064,7 +1066,7 @@ describe('OIAnalytics Command Service', () => {
       expect.anything(),
       logger
     );
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(command.id, testData.constants.dates.FAKE_NOW, '{}');
+    expect(service['completeTestItemCommand']).toHaveBeenCalledWith(command, {});
   });
 
   it('should execute north-connection-test command', async () => {
@@ -1361,7 +1363,7 @@ describe('OIAnalytics Command Service', () => {
   });
 
   it('should execute test-history-query-south-item command', async () => {
-    const command: OIBusTestHistoryQuerySouthItemConnectionCommand = {
+    const command: OIBusTestHistoryQuerySouthItemCommand = {
       id: 'testHistoryQuerySouthItemId',
       type: 'test-history-query-south-item',
       targetVersion: testData.engine.settings.version,
@@ -1373,7 +1375,7 @@ describe('OIAnalytics Command Service', () => {
         itemCommand: testData.historyQueries.itemCommand,
         testingSettings: {} as SouthConnectorItemTestingSettings
       }
-    } as OIBusTestHistoryQuerySouthItemConnectionCommand;
+    } as OIBusTestHistoryQuerySouthItemCommand;
 
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
     (historyQueryService.testSouthItem as jest.Mock).mockImplementationOnce(
@@ -1387,7 +1389,7 @@ describe('OIAnalytics Command Service', () => {
         id: command.commandContent.historyCommand.southType
       }
     ]);
-
+    service['completeTestItemCommand'] = jest.fn();
     await service.executeCommand();
 
     expect(historyQueryService.testSouthItem).toHaveBeenCalledWith(
@@ -1400,7 +1402,7 @@ describe('OIAnalytics Command Service', () => {
       expect.anything(),
       logger
     );
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(command.id, testData.constants.dates.FAKE_NOW, '{}');
+    expect(service['completeTestItemCommand']).toHaveBeenCalledWith(command, {});
   });
 
   it('should execute update-history-query-status command', async () => {
@@ -1634,5 +1636,95 @@ describe('OIAnalytics Command service with no commands and without update', () =
   it('should properly start when not registered', () => {
     expect(oIBusService.updateOIBusVersion).not.toHaveBeenCalled();
     expect(oIAnalyticsCommandRepository.markAsCompleted).not.toHaveBeenCalled();
+  });
+
+  it('should complete time values test item command', () => {
+    const command: OIBusTestSouthConnectorItemCommand = {
+      id: 'testSouthItemId',
+      type: 'test-south-item',
+      targetVersion: testData.engine.settings.version,
+      itemId: 'itemId',
+      southConnectorId: 'southConnectorId',
+      commandContent: {
+        southCommand: testData.south.command,
+        itemCommand: testData.south.itemCommand,
+        testingSettings: {} as SouthConnectorItemTestingSettings
+      }
+    } as OIBusTestSouthConnectorItemCommand;
+    const content = new Array(2000).fill(0);
+    const result: OIBusContent = {
+      type: 'time-values',
+      content: content
+    };
+    service['completeTestItemCommand'](command, result);
+
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      JSON.stringify({ type: 'time-values', content: content.slice(0, 1000), truncated: true, totalSize: 2000 })
+    );
+
+    const content2 = new Array(10).fill(0);
+    const result2: OIBusContent = {
+      type: 'time-values',
+      content: content2
+    };
+    service['completeTestItemCommand'](command, result2);
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      JSON.stringify({ type: 'time-values', content: content2, truncated: false, totalSize: 10 })
+    );
+  });
+
+  it('should complete file test item command', () => {
+    const command: OIBusTestSouthConnectorItemCommand = {
+      id: 'testSouthItemId',
+      type: 'test-south-item',
+      targetVersion: testData.engine.settings.version,
+      itemId: 'itemId',
+      southConnectorId: 'southConnectorId',
+      commandContent: {
+        southCommand: testData.south.command,
+        itemCommand: testData.south.itemCommand,
+        testingSettings: {} as SouthConnectorItemTestingSettings
+      }
+    } as OIBusTestSouthConnectorItemCommand;
+    const result: OIBusContent = {
+      type: 'any',
+      filePath: 'file.csv',
+      content: 'content'
+    };
+    service['completeTestItemCommand'](command, result);
+
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      JSON.stringify({ type: 'any', filePath: 'file.csv', content: result.content, truncated: false, totalSize: result.content!.length })
+    );
+
+    const content2 = 'A'.repeat(500 * 1025);
+    const result2: OIBusContent = {
+      type: 'any',
+      filePath: 'file.csv',
+      content: content2
+    };
+    service['completeTestItemCommand'](command, result2);
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      JSON.stringify({ type: 'any', filePath: 'file.csv', content: content2.slice(0, 1024 * 500), truncated: true, totalSize: 1025 * 500 })
+    );
+
+    const result3: OIBusContent = {
+      type: 'any',
+      filePath: 'file.csv'
+    };
+    service['completeTestItemCommand'](command, result3);
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      JSON.stringify({ type: 'any', filePath: 'file.csv', truncated: false, totalSize: 0 })
+    );
   });
 });
