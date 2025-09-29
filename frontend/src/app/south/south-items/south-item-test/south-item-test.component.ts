@@ -36,7 +36,7 @@ import { DateRange, DateRangeSelectorComponent } from '../../../shared/date-rang
     ItemTestResultComponent
   ]
 })
-export class SouthItemTestComponent<TItemType extends 'south' | 'history-south'> implements AfterContentInit, OnInit {
+class SouthItemTestComponent<TItemType extends 'south' | 'history-south'> implements AfterContentInit, OnInit {
   private translate = inject(TranslateService);
 
   readonly testResultView = viewChild.required<ItemTestResultComponent>('testResultViewComponent');
@@ -214,3 +214,5 @@ export class SouthItemTestComponent<TItemType extends 'south' | 'history-south'>
     this.testSubscription = null;
   }
 }
+
+export default SouthItemTestComponent;
