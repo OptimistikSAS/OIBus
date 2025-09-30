@@ -43,15 +43,13 @@
             <td class="text-nowrap action-buttons">
               <div class="pull-right">
                 <!-- Edit button -->
-                <button type="button" class="btn btn-link edit-ip-filter px-1 py-0" (click)="editIpFilter(ipFilter)">
-                  <button
-                    type="button"
-                    class="btn btn-link edit-ip-filter px-1 py-0"
-                    [ngbTooltip]="'engine.ip-filter.tooltips.edit' | translate"
-                    (click)="editIpFilter(ipFilter)"
-                  >
-                    <span class="fa fa-pencil"></span>
-                  </button>
+                <button
+                  type="button"
+                  class="btn btn-link edit-ip-filter px-1 py-0"
+                  [ngbTooltip]="'engine.ip-filter.tooltips.edit' | translate"
+                  (click)="editIpFilter(ipFilter)"
+                >
+                  <span class="fa fa-pencil"></span>
                 </button>
                 <!-- Delete button -->
                 <button
