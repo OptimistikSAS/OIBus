@@ -47,15 +47,13 @@
             <td class="text-nowrap action-buttons">
               <div class="pull-right">
                 <!-- Edit button -->
-                <button type="button" class="btn btn-link edit-transformer px-1 py-0" (click)="editTransformer(transformer)">
-                  <button
-                    type="button"
-                    class="btn btn-link edit-transformer px-1 py-0"
-                    [ngbTooltip]="'configuration.oibus.manifest.transformers.edit-transformer-modal.tooltips.edit' | translate"
-                    (click)="editTransformer(transformer)"
-                  >
-                    <span class="fa fa-pencil"></span>
-                  </button>
+                <button
+                  type="button"
+                  class="btn btn-link edit-transformer px-1 py-0"
+                  [ngbTooltip]="'configuration.oibus.manifest.transformers.edit-transformer-modal.tooltips.edit' | translate"
+                  (click)="editTransformer(transformer)"
+                >
+                  <span class="fa fa-pencil"></span>
                 </button>
                 <!-- Delete button -->
                 <button
