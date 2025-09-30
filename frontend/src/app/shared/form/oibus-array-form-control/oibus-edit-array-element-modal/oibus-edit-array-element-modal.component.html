@@ -17,8 +17,8 @@
     </form>
   }
 </div>
-<div class="modal-footer d-flex justify-content-between">
-  <div class="btn-group">
+<div class="modal-footer">
+  <div class="btn-group pull-right">
     @if (elementManifest) {
       <button [oib-save-button]="state" [form]="'edit-array-element-form-' + elementManifest.key"></button>
     }
