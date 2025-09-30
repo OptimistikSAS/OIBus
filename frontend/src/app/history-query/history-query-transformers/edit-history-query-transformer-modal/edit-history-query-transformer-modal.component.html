@@ -11,7 +11,7 @@
               <label class="form-label" for="input-type" translate="history-query.transformers.input-type"></label>
               <select [formControl]="inputTypeControl" class="form-select mb-2 mr-sm-2" id="input-type">
                 @for (inputType of selectableInputs; track inputType) {
-                  <option [ngValue]="inputType" [translate]="'enums.oibus-data-type.' + inputType"></option>
+                  <option [ngValue]="inputType" [translate]="'enums.oibus-input-data-type.' + inputType"></option>
                 }
               </select>
             </div>
