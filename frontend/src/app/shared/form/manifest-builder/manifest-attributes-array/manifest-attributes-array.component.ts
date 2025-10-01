@@ -7,14 +7,15 @@ import { OIBusArrayAttribute, OIBusAttributeType } from '../../../../../../../ba
 import { BoxComponent, BoxTitleDirective } from '../../../box/box.component';
 import { PaginationComponent } from '../../../pagination/pagination.component';
 import { ModalService } from '../../../modal.service';
+import type { Modal } from '../../../modal.service';
 import { ArrayPage } from '../../../pagination/array-page';
 import { ScanModeDTO } from '../../../../../../../backend/shared/model/scan-mode.model';
 import { CertificateDTO } from '../../../../../../../backend/shared/model/certificate.model';
-import { ManifestAttributeEditorModalComponent } from '../manifest-attribute-editor-modal/manifest-attribute-editor-modal.component';
 import { ValErrorDelayDirective } from '../../val-error-delay.directive';
 import { ValidationErrorsComponent } from 'ngx-valdemort';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FormUtils } from '../../form-utils';
+import type { ManifestAttributeEditorModalComponent } from '../manifest-attribute-editor-modal/manifest-attribute-editor-modal.component';
 
 @Component({
   selector: 'oib-manifest-attributes-array',
@@ -47,6 +48,7 @@ export class ManifestAttributesArrayComponent {
   parentGroup = input.required<FormGroup>();
   control = input.required<FormControl<Array<any>>>();
   arrayAttribute = input.required<OIBusArrayAttribute>();
+  contextPath = input<Array<string>>([]);
 
   private readonly controlValue = toSignal(toObservable(this.control).pipe(switchMap(c => c.valueChanges.pipe(startWith(c.value)))));
   readonly columns = computed(() => FormUtils.buildColumn(this.arrayAttribute().rootAttribute, []));
@@ -59,8 +61,7 @@ export class ManifestAttributesArrayComponent {
 
   async addItem(event: Event) {
     event.preventDefault();
-    const modal = this.modalService.open(ManifestAttributeEditorModalComponent, { size: 'lg' });
-    modal.componentInstance.prepareForCreation(this.scanModes(), this.certificates());
+    const modal = await this.openAttributeEditor();
 
     modal.result.subscribe(arrayElement => {
       this.control().setValue([...this.control().value, arrayElement]);
@@ -69,12 +70,8 @@ export class ManifestAttributesArrayComponent {
   }
 
   async copyItem(element: any) {
-    const modal = this.modalService.open(ManifestAttributeEditorModalComponent, { size: 'lg' });
-    modal.componentInstance.prepareForCreation(this.scanModes(), this.certificates());
-
-    // Pre-populate with the copied attribute's values
-    const copiedAttribute = { ...element, key: element.key + '_copy' };
-    modal.componentInstance.prepareForEdition(this.scanModes(), this.certificates(), copiedAttribute);
+    const modal = await this.openAttributeEditor();
+    this.prepareModalForEdition(modal, { ...element, key: element.key + '_copy' });
 
     modal.result.subscribe(arrayElement => {
       this.control().setValue([...this.control().value, arrayElement]);
@@ -83,8 +80,8 @@ export class ManifestAttributesArrayComponent {
   }
 
   async editItem(element: any) {
-    const modal = this.modalService.open(ManifestAttributeEditorModalComponent, { size: 'lg' });
-    modal.componentInstance.prepareForEdition(this.scanModes(), this.certificates(), element);
+    const modal = await this.openAttributeEditor(false);
+    this.prepareModalForEdition(modal, element);
 
     modal.result.subscribe(arrayElement => {
       const newArray = [...this.control().value];
@@ -110,5 +107,23 @@ export class ManifestAttributesArrayComponent {
 
   getValueByPath(obj: any, path: Array<string>) {
     return FormUtils.getValueByPath(obj, path);
+  }
+
+  private prepareModalForEdition(modal: Modal<ManifestAttributeEditorModalComponent>, attribute: any) {
+    modal.componentInstance.prepareForEdition(this.scanModes(), this.certificates(), attribute);
+  }
+
+  private async openAttributeEditor(initialise = true): Promise<Modal<ManifestAttributeEditorModalComponent>> {
+    const { ManifestAttributeEditorModalComponent } = await import(
+      '../manifest-attribute-editor-modal/manifest-attribute-editor-modal.component'
+    );
+    const modal = this.modalService.open<ManifestAttributeEditorModalComponent>(ManifestAttributeEditorModalComponent, {
+      size: 'lg'
+    });
+    modal.componentInstance.setContextPath(this.contextPath());
+    if (initialise) {
+      modal.componentInstance.prepareForCreation(this.scanModes(), this.certificates());
+    }
+    return modal;
   }
 }

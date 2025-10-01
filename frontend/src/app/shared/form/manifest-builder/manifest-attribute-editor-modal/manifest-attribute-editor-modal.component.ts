@@ -1,31 +1,128 @@
 import { Component, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { TranslateDirective } from '@ngx-translate/core';
+import { FormControl, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { TranslateDirective, TranslateService } from '@ngx-translate/core';
 import { ObservableState, SaveButtonComponent } from '../../../save-button/save-button.component';
 import { OIBusAttribute, OIBUS_ATTRIBUTE_TYPES } from '../../../../../../../backend/shared/model/form.model';
 import { ScanModeDTO } from '../../../../../../../backend/shared/model/scan-mode.model';
 import { CertificateDTO } from '../../../../../../../backend/shared/model/certificate.model';
 import { ValErrorDelayDirective } from '../../val-error-delay.directive';
 import { ValidationErrorsComponent } from 'ngx-valdemort';
+import { ManifestAttributesArrayComponent } from '../manifest-attributes-array/manifest-attributes-array.component';
 
 @Component({
   selector: 'oib-manifest-attribute-editor-modal',
   templateUrl: './manifest-attribute-editor-modal.component.html',
   styleUrl: './manifest-attribute-editor-modal.component.scss',
-  imports: [ReactiveFormsModule, TranslateDirective, SaveButtonComponent, ValErrorDelayDirective, ValidationErrorsComponent]
+  imports: [
+    ReactiveFormsModule,
+    TranslateDirective,
+    SaveButtonComponent,
+    ValErrorDelayDirective,
+    ValidationErrorsComponent,
+    ManifestAttributesArrayComponent
+  ]
 })
 export class ManifestAttributeEditorModalComponent {
   private activeModal = inject(NgbActiveModal);
   private fb = inject(NonNullableFormBuilder);
+  private translateService = inject(TranslateService);
 
   mode: 'create' | 'edit' = 'create';
   scanModes: Array<ScanModeDTO> = [];
   certificates: Array<CertificateDTO> = [];
   attribute: OIBusAttribute | null = null;
+  private contextPathSegments: Array<string> = [];
 
   state = new ObservableState();
   availableTypes = OIBUS_ATTRIBUTE_TYPES.filter((t: string) => t !== 'transformer-array');
+
+  // Configuration for nested attributes
+  nestedAttributesConfig = {
+    type: 'array' as const,
+    key: 'attributes',
+    translationKey: 'configuration.oibus.manifest.transformers.manifest-builder.nested-attributes',
+    paginate: false,
+    numberOfElementPerPage: 20,
+    validators: [],
+    rootAttribute: {
+      type: 'object' as const,
+      key: 'attribute',
+      translationKey: 'configuration.oibus.manifest.transformers.manifest-builder.attribute',
+      attributes: [],
+      enablingConditions: [],
+      validators: [],
+      displayProperties: { visible: true, wrapInBox: false }
+    }
+  };
+
+  setContextPath(path: Array<string>) {
+    this.contextPathSegments = [...path];
+  }
+
+  get nestedAttributesContext(): Array<string> {
+    const key = this.currentAttributeKey;
+    if (!key) {
+      return [...this.contextPathSegments];
+    }
+    return [...this.contextPathSegments, key];
+  }
+
+  get nestedAttributesTitle(): string {
+    const base = this.translateService.instant('configuration.oibus.manifest.transformers.manifest-builder.nested-attributes');
+    const key = this.currentAttributeKey;
+    return key ? `${base} (${key})` : base;
+  }
+
+  get nestedAttributesPath(): string | null {
+    const segments = this.nestedAttributesContext.filter(segment => !!segment);
+    return segments.length > 0 ? segments.join(' ▸ ') : null;
+  }
+
+  onGlobalKeydown(event: Event) {
+    const keyboardEvent = event as KeyboardEvent;
+    if (keyboardEvent.key !== 'Enter' || keyboardEvent.shiftKey) {
+      return;
+    }
+
+    const target = event.target as HTMLElement | null;
+    if (!target) {
+      return;
+    }
+
+    if (this.isSubmitControl(target) || target instanceof HTMLTextAreaElement) {
+      return;
+    }
+
+    keyboardEvent.preventDefault();
+    keyboardEvent.stopPropagation();
+  }
+
+  onNestedEnter(event: Event) {
+    this.onGlobalKeydown(event);
+  }
+
+  private isSubmitControl(target: HTMLElement): boolean {
+    if (target instanceof HTMLButtonElement) {
+      return true;
+    }
+
+    if (target instanceof HTMLInputElement) {
+      const type = (target.type || '').toLowerCase();
+      return type === 'submit' || type === 'button';
+    }
+
+    return target.closest('button[oib-save-button]') !== null;
+  }
+
+  private get currentAttributeKey(): string | null {
+    const keyControl = this.form.get('key');
+    const key = keyControl?.value;
+    if (key) {
+      return key;
+    }
+    return this.attribute?.key ?? null;
+  }
 
   form = this.fb.group({
     type: ['string', [Validators.required]],
@@ -49,7 +146,9 @@ export class ManifestAttributeEditorModalComponent {
     visible: [true],
     wrapInBox: [false],
     paginate: [false],
-    numberOfElementPerPage: [20]
+    numberOfElementPerPage: [20],
+    // Nested attributes for object and array types
+    attributes: this.fb.control<Array<any>>([])
   });
 
   prepareForCreation(scanModes: Array<ScanModeDTO>, certificates: Array<CertificateDTO>) {
@@ -57,6 +156,7 @@ export class ManifestAttributeEditorModalComponent {
     this.scanModes = scanModes;
     this.certificates = certificates;
     this.attribute = null;
+    this.contextPathSegments = [];
     this.form.reset({
       type: 'string',
       key: '',
@@ -76,8 +176,10 @@ export class ManifestAttributeEditorModalComponent {
       visible: true,
       wrapInBox: false,
       paginate: false,
-      numberOfElementPerPage: 20
+      numberOfElementPerPage: 20,
+      attributes: []
     });
+    this.attributesControl.setValue([]);
   }
 
   prepareForEdition(scanModes: Array<ScanModeDTO>, certificates: Array<CertificateDTO>, attribute: OIBusAttribute) {
@@ -85,6 +187,8 @@ export class ManifestAttributeEditorModalComponent {
     this.scanModes = scanModes;
     this.certificates = certificates;
     this.attribute = attribute;
+    this.contextPathSegments = [];
+    this.attributesControl.setValue([]);
     this.populateForm(attribute);
   }
 
@@ -127,10 +231,12 @@ export class ManifestAttributeEditorModalComponent {
       case 'object':
         formValue.visible = (attribute as any).displayProperties?.visible ?? true;
         formValue.wrapInBox = (attribute as any).displayProperties?.wrapInBox ?? false;
+        this.attributesControl.setValue([...((attribute as any).attributes ?? [])]);
         break;
       case 'array':
         formValue.paginate = (attribute as any).paginate ?? false;
         formValue.numberOfElementPerPage = (attribute as any).numberOfElementPerPage ?? 20;
+        this.attributesControl.setValue([...((attribute as any).rootAttribute?.attributes ?? [])]);
         break;
     }
 
@@ -152,8 +258,10 @@ export class ManifestAttributeEditorModalComponent {
       visible: true,
       wrapInBox: false,
       paginate: false,
-      numberOfElementPerPage: 20
+      numberOfElementPerPage: 20,
+      attributes: []
     });
+    this.attributesControl.setValue([]);
   }
 
   dismiss() {
@@ -291,7 +399,7 @@ export class ManifestAttributeEditorModalComponent {
         return {
           ...baseAttribute,
           type: 'object',
-          attributes: [],
+          attributes: formValue.attributes || [],
           enablingConditions: [],
           displayProperties: {
             visible: formValue.visible ?? true,
@@ -314,7 +422,7 @@ export class ManifestAttributeEditorModalComponent {
             type: 'object',
             key: 'element',
             translationKey: formValue.translationKey || 'configuration.oibus.manifest.transformers.mapping.title',
-            attributes: [],
+            attributes: formValue.attributes || [],
             enablingConditions: [],
             validators: [],
             displayProperties: {
@@ -371,5 +479,13 @@ export class ManifestAttributeEditorModalComponent {
     return ['string', 'number', 'boolean', 'code', 'string-select', 'timezone', 'scan-mode', 'secret', 'instant', 'certificate'].includes(
       type || ''
     );
+  }
+
+  get attributesControl(): FormControl<Array<any>> {
+    return this.form.get('attributes') as FormControl<Array<any>>;
+  }
+
+  hasNestedAttributes(): boolean {
+    return this.isObjectType() || this.isArrayType();
   }
 }

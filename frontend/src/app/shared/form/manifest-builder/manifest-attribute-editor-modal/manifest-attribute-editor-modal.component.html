@@ -5,7 +5,7 @@
   ></h3>
 </div>
 <div class="modal-body">
-  <form [id]="'manifest-attribute-form'" [formGroup]="form" (ngSubmit)="submit()">
+  <form [id]="'manifest-attribute-form'" [formGroup]="form" (ngSubmit)="submit()" (keydown.enter)="onGlobalKeydown($event)">
     <!-- Basic Properties -->
     <div class="row">
       <div class="col-md-6">
@@ -231,6 +231,27 @@
         <i class="fa fa-info-circle me-2"></i>
         <span [translate]="'configuration.oibus.manifest.transformers.manifest-builder.object-info'"></span>
       </div>
+      <!-- Nested Attributes for Object -->
+      <div class="row">
+        <div class="col-md-12">
+          <div class="nested-attributes-header">
+            <h5 class="nested-attributes-title">{{ nestedAttributesTitle }}</h5>
+            @if (nestedAttributesPath) {
+              <div class="nested-attributes-path">
+                {{ nestedAttributesPath }}
+              </div>
+            }
+          </div>
+          <oib-manifest-attributes-array
+            [scanModes]="scanModes"
+            [certificates]="certificates"
+            [parentGroup]="form"
+            [control]="attributesControl"
+            [arrayAttribute]="nestedAttributesConfig"
+            (keydown.enter)="onNestedEnter($event)"
+          />
+        </div>
+      </div>
     }
 
     @if (isArrayType()) {
@@ -262,6 +283,27 @@
       <div class="alert alert-info">
         <i class="fa fa-info-circle me-2"></i>
         <span [translate]="'configuration.oibus.manifest.transformers.manifest-builder.array-info'"></span>
+      </div>
+      <!-- Nested Attributes for Array -->
+      <div class="row">
+        <div class="col-md-12">
+          <div class="nested-attributes-header">
+            <h5 class="nested-attributes-title">{{ nestedAttributesTitle }}</h5>
+            @if (nestedAttributesPath) {
+              <div class="nested-attributes-path">
+                {{ nestedAttributesPath }}
+              </div>
+            }
+          </div>
+          <oib-manifest-attributes-array
+            [scanModes]="scanModes"
+            [certificates]="certificates"
+            [parentGroup]="form"
+            [control]="attributesControl"
+            [arrayAttribute]="nestedAttributesConfig"
+            (keydown.enter)="onNestedEnter($event)"
+          />
+        </div>
       </div>
     }
 
