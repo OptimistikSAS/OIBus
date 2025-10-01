@@ -1,0 +1,22 @@
+@import '../../../../../common';
+
+.nested-attributes-header {
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.nested-attributes-title {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.nested-attributes-path {
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.25rem;
+  background: rgba(0, 0, 0, 0.05);
+  font-size: 0.875rem;
+  color: $darkGrey;
+}
+
