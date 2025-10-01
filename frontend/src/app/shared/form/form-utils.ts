@@ -1,4 +1,4 @@
-import { OIBusAttributeType, OIBusObjectAttribute } from '../../../../../backend/shared/model/form.model';
+import { OIBusAttribute, OIBusAttributeType } from '../../../../../backend/shared/model/form.model';
 import { isDisplayableAttribute } from './dynamic-form.builder';
 import { TranslateService } from '@ngx-translate/core';
 import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
@@ -10,8 +10,8 @@ export interface Column {
 }
 
 export class FormUtils {
-  static buildColumn(attribute: OIBusObjectAttribute, prefix: Array<string>): Array<Column> {
-    return attribute.attributes
+  static buildColumn(attributes: Array<OIBusAttribute>, prefix: Array<string>): Array<Column> {
+    return attributes
       .filter(
         attribute => attribute.type === 'object' || (isDisplayableAttribute(attribute) && attribute.displayProperties.displayInViewMode)
       )
@@ -29,7 +29,7 @@ export class FormUtils {
           case 'string-select':
             return [{ path: [...prefix, attribute.key], type: attribute.type, translationKey: attribute.translationKey }];
           case 'object':
-            return this.buildColumn(attribute, [...prefix, attribute.key]);
+            return this.buildColumn(attribute.attributes, [...prefix, attribute.key]);
           case 'array':
             return [];
         }
