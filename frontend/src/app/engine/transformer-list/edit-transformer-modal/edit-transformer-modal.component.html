@@ -103,11 +103,13 @@
         <val-errors controlName="customCode" />
       </div>
 
-      <div class="row">
+      <div class="row mt-3">
         <!-- Manifest Builder -->
         <div class="form-group">
-          <label class="form-label" translate="configuration.oibus.manifest.transformers.edit-transformer-modal.custom-manifest"></label>
-          <oib-manifest-builder formControlName="customManifest" />
+          <oib-manifest-attributes-array
+            [label]="'configuration.oibus.manifest.transformers.choose-transformer-modal.options' | translate"
+            [control]="form.controls.attributes!"
+          />
         </div>
       </div>
     </form>
