@@ -75,7 +75,7 @@ describe('FormUtils', () => {
         }
       };
 
-      const result = FormUtils.buildColumn(attribute, []);
+      const result = FormUtils.buildColumn(attribute.attributes, []);
 
       expect(result).toEqual([
         { path: ['name'], type: 'string', translationKey: 'test.name' },
@@ -123,7 +123,7 @@ describe('FormUtils', () => {
         }
       };
 
-      const result = FormUtils.buildColumn(attribute, []);
+      const result = FormUtils.buildColumn(attribute.attributes, []);
 
       expect(result).toEqual([{ path: ['child', 'name'], type: 'string', translationKey: 'test.child.name' }]);
     });
@@ -167,7 +167,7 @@ describe('FormUtils', () => {
         }
       };
 
-      const result = FormUtils.buildColumn(attribute, []);
+      const result = FormUtils.buildColumn(attribute.attributes, []);
 
       expect(result).toEqual([{ path: ['visibleField'], type: 'string', translationKey: 'test.visible' }]);
     });
@@ -207,7 +207,7 @@ describe('FormUtils', () => {
         }
       };
 
-      const result = FormUtils.buildColumn(attribute, []);
+      const result = FormUtils.buildColumn(attribute.attributes, []);
 
       expect(result).toEqual([]);
     });
@@ -307,7 +307,7 @@ describe('FormUtils', () => {
         }
       };
 
-      const result = FormUtils.buildColumn(attribute, []);
+      const result = FormUtils.buildColumn(attribute.attributes, []);
 
       expect(result.length).toBe(9);
       expect(result[0]).toEqual({ path: ['scanMode'], type: 'scan-mode', translationKey: 'test.scan-mode' });
@@ -532,7 +532,7 @@ describe('FormUtils', () => {
       };
 
       // Build columns
-      const columns = FormUtils.buildColumn(complexAttribute, []);
+      const columns = FormUtils.buildColumn(complexAttribute.attributes, []);
 
       expect(columns.length).toBe(3);
       expect(columns[0]).toEqual({ path: ['name'], type: 'string', translationKey: 'test.user.name' });
