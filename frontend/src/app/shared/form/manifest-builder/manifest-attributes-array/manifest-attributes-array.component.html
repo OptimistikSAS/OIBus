@@ -1,7 +1,7 @@
 <oib-box class="mt-1">
   <ng-template oibBoxTitle>
     <div class="d-flex justify-content-between align-items-center">
-      <div [translate]="arrayAttribute().rootAttribute.translationKey"></div>
+      <div>{{ label() }}</div>
       <div>
         <button
           class="btn btn-sm btn-warning"
@@ -15,33 +15,33 @@
     </div>
   </ng-template>
 
-  @if (arrayAttribute().paginate && paginatedValues().totalPages > 1) {
+  @if (paginatedValues().totalPages > 1) {
     <div>
       <oib-pagination class="d-flex justify-content-end" [page]="paginatedValues()" (pageChanged)="paginatedValues().gotoPage($event)" />
     </div>
   }
-  @if (control().value.length > 0) {
+  @if (paginatedValues().content.length > 0) {
     <table style="table-layout: fixed" class="table table-sm table-hover oib-table">
       <thead class="light">
         <tr>
-          @for (column of columns(); track column.translationKey) {
-            @if (column.type === 'string-select') {
-              <th>{{ column.translationKey + '.title' | translate }}</th>
-            } @else {
-              <th>{{ column.translationKey | translate }}</th>
-            }
-          }
+          <th translate="configuration.oibus.manifest.transformers.attributes.key"></th>
+          <th translate="configuration.oibus.manifest.transformers.attributes.type.title"></th>
+          <th translate="configuration.oibus.manifest.transformers.attributes.translation-key"></th>
           <th></th>
         </tr>
       </thead>
       <tbody>
-        @for (element of arrayAttribute().paginate ? paginatedValues().content : control().value; track element) {
+        @for (element of paginatedValues().content; track element) {
           <tr>
-            @for (column of columns(); track column.translationKey) {
-              <td style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap">
-                {{ formatValue(element, column.path, column.type, column.translationKey) }}
-              </td>
-            }
+            <td style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap">
+              {{ 'configuration.oibus.manifest.transformers.attributes.type.' + element.type | translate }}
+            </td>
+            <td style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap">
+              {{ element.key }}
+            </td>
+            <td style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap">
+              {{ element.translationKey | translate }}
+            </td>
             <td class="text-nowrap action-buttons">
               <div class="pull-right">
                 <button
@@ -75,7 +75,6 @@
       </tbody>
     </table>
   } @else {
-    <div class="oi-details" translate="configuration.oibus.manifest.transformers.manifest-builder.none"></div>
+    <div class="oi-details" translate="configuration.oibus.manifest.transformers.attributes.none"></div>
   }
-  <val-errors [controlName]="arrayAttribute().key" />
 </oib-box>
