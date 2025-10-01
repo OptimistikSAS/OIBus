@@ -40,10 +40,6 @@ class EditTransformerModalComponentTester extends ComponentTester<EditTransforme
     return this.element('#language-disclaimer')!;
   }
 
-  get manifest() {
-    return this.element('oib-manifest-builder')!;
-  }
-
   get validationErrors() {
     return this.elements('val-errors div');
   }
@@ -108,7 +104,6 @@ describe('EditTransformerModalComponent', () => {
     tester.name.fillWith('my new transformer');
     tester.description.fillWith('my description');
     tester.componentInstance.form.get('customCode')!.setValue('my code');
-    // Manifest is handled by the ManifestBuilderComponent, not a simple input
 
     tester.save.click();
 
@@ -120,7 +115,18 @@ describe('EditTransformerModalComponent', () => {
       description: 'my description',
       customCode: 'my code',
       language: 'javascript',
-      customManifest: tester.componentInstance.form.get('customManifest')!.value!
+      customManifest: {
+        type: 'object',
+        key: 'options',
+        translationKey: 'configuration.oibus.manifest.transformers.choose-transformer-modal.options',
+        attributes: tester.componentInstance.form.get('attributes')!.value!,
+        enablingConditions: [],
+        validators: [],
+        displayProperties: {
+          visible: true,
+          wrapInBox: false
+        }
+      }
     });
     expect(fakeActiveModal.close).toHaveBeenCalledWith(testData.transformers.customList[0]);
   });
@@ -145,7 +151,18 @@ describe('EditTransformerModalComponent', () => {
       description: testData.transformers.customList[0].description,
       customCode: testData.transformers.customList[0].customCode,
       language: testData.transformers.customList[0].language,
-      customManifest: testData.transformers.customList[0].manifest
+      customManifest: {
+        type: 'object',
+        key: 'options',
+        translationKey: 'configuration.oibus.manifest.transformers.choose-transformer-modal.options',
+        attributes: tester.componentInstance.form.get('attributes')!.value!,
+        enablingConditions: [],
+        validators: [],
+        displayProperties: {
+          visible: true,
+          wrapInBox: false
+        }
+      }
     });
     expect(transformerService.get).toHaveBeenCalledWith(testData.transformers.customList[0].id);
     expect(fakeActiveModal.close).toHaveBeenCalledWith(testData.transformers.customList[0]);

@@ -50,7 +50,7 @@ export class OIBusArrayFormControlComponent {
   arrayAttribute = input.required<OIBusArrayAttribute>();
 
   private readonly controlValue = toSignal(toObservable(this.control).pipe(switchMap(c => c.valueChanges.pipe(startWith(c.value)))));
-  readonly columns = computed(() => FormUtils.buildColumn(this.arrayAttribute().rootAttribute, []));
+  readonly columns = computed(() => FormUtils.buildColumn(this.arrayAttribute().rootAttribute.attributes, []));
   readonly paginatedValues = computed(() => {
     if (this.arrayAttribute().paginate) {
       return new ArrayPage(this.controlValue()!, this.arrayAttribute().numberOfElementPerPage);
