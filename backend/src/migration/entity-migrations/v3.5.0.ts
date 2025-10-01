@@ -182,7 +182,7 @@ async function updateNorthConnectors(knex: Knex): Promise<void> {
         newSettings.useADLS = false;
         break;
     }
-    await knex(SOUTH_CONNECTORS_TABLE)
+    await knex(NORTH_CONNECTORS_TABLE)
       .update({ settings: JSON.stringify(newSettings) })
       .where('id', id);
   }
@@ -734,6 +734,7 @@ async function updateHistoryQueries(knex: Knex): Promise<void> {
     switch (north_type) {
       case 'azure-blob':
         newNorthSettings.authentication = toNewAzureBlobAuthentication(newNorthSettings.authentication);
+        newNorthSettings.useADLS = false;
         break;
     }
 
