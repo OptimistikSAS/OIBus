@@ -1,7 +1,7 @@
 import { Component, inject, ViewChild } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
-import { TranslateDirective } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 
 import { OibCodeBlockComponent } from '../../../shared/form/oib-code-block/oib-code-block.component';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
@@ -20,11 +20,11 @@ import { Observable, switchMap } from 'rxjs';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { TransformerService } from '../../../services/transformer.service';
-import { OIBusObjectAttribute } from '../../../../../../backend/shared/model/form.model';
 import { OibusInputDataTypeEnumPipe } from '../../../shared/oibus-input-data-type-enum.pipe';
 import { OibusOutputDataTypeEnumPipe } from '../../../shared/oibus-output-data-type-enum.pipe';
 import { OIBusTransformerLanguageEnumPipe } from '../../../shared/oibus-transformer-language-enum.pipe';
-import { ManifestBuilderComponent } from '../../../shared/form/manifest-builder/manifest-builder.component';
+import { OIBusAttribute } from '../../../../../../backend/shared/model/form.model';
+import { ManifestAttributesArrayComponent } from '../../../shared/form/manifest-builder/manifest-attributes-array/manifest-attributes-array.component';
 
 @Component({
   selector: 'oib-edit-transformer-modal',
@@ -39,7 +39,8 @@ import { ManifestBuilderComponent } from '../../../shared/form/manifest-builder/
     OibusInputDataTypeEnumPipe,
     OibusOutputDataTypeEnumPipe,
     OIBusTransformerLanguageEnumPipe,
-    ManifestBuilderComponent
+    ManifestAttributesArrayComponent,
+    TranslatePipe
   ]
 })
 export class EditTransformerModalComponent {
@@ -65,24 +66,11 @@ export class EditTransformerModalComponent {
     name: ['', Validators.required],
     description: '',
     customCode: ['', Validators.required],
-    customManifest: this.fb.control(null as OIBusObjectAttribute | null, Validators.required)
+    attributes: this.fb.control([] as Array<OIBusAttribute>)
   });
 
   prepareForCreation() {
     this.mode = 'create';
-    const defaultManifest: OIBusObjectAttribute = {
-      type: 'object',
-      key: 'options',
-      translationKey: 'configuration.oibus.manifest.transformers.options',
-      attributes: [],
-      enablingConditions: [],
-      validators: [],
-      displayProperties: {
-        visible: true,
-        wrapInBox: false
-      }
-    };
-    this.form.get('customManifest')!.setValue(defaultManifest);
   }
 
   prepareForEdition(transformer: CustomTransformerDTO) {
@@ -92,7 +80,7 @@ export class EditTransformerModalComponent {
       name: transformer.name,
       description: transformer.description,
       customCode: transformer.customCode,
-      customManifest: transformer.manifest
+      attributes: transformer.manifest.attributes
     });
   }
 
@@ -137,7 +125,18 @@ export class EditTransformerModalComponent {
       name: formValue.name!,
       description: formValue.description!,
       customCode: formValue.customCode!,
-      customManifest: formValue.customManifest!
+      customManifest: {
+        type: 'object',
+        key: 'options',
+        translationKey: 'configuration.oibus.manifest.transformers.choose-transformer-modal.options',
+        attributes: formValue.attributes!,
+        enablingConditions: [],
+        validators: [],
+        displayProperties: {
+          visible: true,
+          wrapInBox: false
+        }
+      }
     };
 
     let obs: Observable<TransformerDTO>;
