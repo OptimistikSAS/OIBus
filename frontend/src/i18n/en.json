@@ -912,15 +912,12 @@
               "delete": "Delete this Custom Transformer"
             }
           },
-          "manifest-builder": {
+          "attributes": {
             "attribute": "Attribute",
+            "sub-attribute": "Sub-attribute",
+            "root-attribute": "Root attribute",
+            "root-attribute-item": "Root attribute item",
             "key": "Key",
-            "translation-key": "Translation Key",
-            "visible": "Visible",
-            "wrap-in-box": "Wrap in Box",
-            "attributes": "Attributes",
-            "add": "Add Attribute",
-            "none": "No attributes defined",
             "type": {
               "title": "Type",
               "string": "String",
@@ -936,6 +933,12 @@
               "array": "Array",
               "object": "Object"
             },
+            "translation-key": "Translation key",
+            "visible": "Visible",
+            "wrap-in-box": "Wrap in Box",
+            "attributes": "Attributes",
+            "add": "Add Attribute",
+            "none": "No attributes defined",
             "default-value": "Default Value",
             "unit": "Unit",
             "selectable-values": "Selectable Values",
@@ -952,13 +955,16 @@
               "SUBSCRIPTION_AND_POLL": "Subscription and Poll"
             },
             "paginate": "Paginate",
-            "number-of-elements-per-page": "Number of Elements per Page",
+            "number-of-elements-per-page": "Number of elements per page",
+            "display-properties": {
+              "visible": "Visible",
+              "wrap-in-box": "Wrap in box"
+            },
             "row": "Row",
             "columns": "Columns",
             "display-in-view-mode": "Display in View Mode",
             "nested-attributes": "Nested Attributes",
-            "object-info": "Object attributes can contain nested attributes",
-            "array-info": "Array elements can contain nested attributes",
+            "nested-context": "Nested Attributes — {{ path }}",
             "secret-info": "Secret fields are used for sensitive data",
             "instant-info": "Instant fields are used for timestamp values",
             "certificate-info": "Certificate fields are used for SSL certificates",
