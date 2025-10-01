@@ -5,8 +5,6 @@ import { ManifestAttributeEditorModalComponent } from './manifest-attribute-edit
 import { OIBusAttribute } from '../../../../../../../backend/shared/model/form.model';
 import { provideI18nTesting } from '../../../../../i18n/mock-i18n';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { ScanModeDTO } from '../../../../../../../backend/shared/model/scan-mode.model';
-import { CertificateDTO } from '../../../../../../../backend/shared/model/certificate.model';
 
 @Component({
   template: ` <oib-manifest-attribute-editor-modal /> `,
@@ -21,10 +19,6 @@ class TestComponentTester extends ComponentTester<TestComponent> {
 
   get modalComponent(): ManifestAttributeEditorModalComponent | undefined {
     return this.debugElement.query(p => p.componentInstance instanceof ManifestAttributeEditorModalComponent)?.componentInstance;
-  }
-
-  get modalTitle() {
-    return this.element('.modal-title');
   }
 
   get typeSelect() {
@@ -103,10 +97,6 @@ class TestComponentTester extends ComponentTester<TestComponent> {
     return this.input('input[formControlName="numberOfElementPerPage"]')!;
   }
 
-  get saveButton() {
-    return this.button('[oib-save-button]')!;
-  }
-
   get cancelButton() {
     return this.button('#cancel-button')!;
   }
@@ -117,10 +107,6 @@ class TestComponentTester extends ComponentTester<TestComponent> {
 
   get validationErrors() {
     return this.elements('.invalid-feedback')!;
-  }
-
-  get infoAlerts() {
-    return this.elements('.alert-info')!;
   }
 
   // Helper methods to check if type-specific sections are visible
@@ -169,23 +155,6 @@ describe('ManifestAttributeEditorModalComponent', () => {
   let tester: TestComponentTester;
   let mockActiveModal: jasmine.SpyObj<NgbActiveModal>;
 
-  const mockScanModes: Array<ScanModeDTO> = [
-    { id: 'scan1', name: 'Scan Mode 1', description: 'Description 1', cron: '0 0 * * *' },
-    { id: 'scan2', name: 'Scan Mode 2', description: 'Description 2', cron: '0 1 * * *' }
-  ];
-
-  const mockCertificates: Array<CertificateDTO> = [
-    {
-      id: 'cert1',
-      name: 'Certificate 1',
-      description: 'Desc 1',
-      publicKey: 'key1',
-      certificate: 'cert1',
-      expiry: new Date().toISOString()
-    },
-    { id: 'cert2', name: 'Certificate 2', description: 'Desc 2', publicKey: 'key2', certificate: 'cert2', expiry: new Date().toISOString() }
-  ];
-
   beforeEach(() => {
     mockActiveModal = jasmine.createSpyObj('NgbActiveModal', ['close', 'dismiss']);
 
@@ -222,12 +191,10 @@ describe('ManifestAttributeEditorModalComponent', () => {
   describe('Modal Preparation', () => {
     it('should prepare for creation mode', () => {
       expect(tester.modalComponent).toBeDefined();
-      tester.modalComponent!.prepareForCreation(mockScanModes, mockCertificates);
+      tester.modalComponent!.prepareForCreation();
       tester.detectChanges();
 
       expect(tester.modalComponent?.mode).toBe('create');
-      expect(tester.modalComponent?.scanModes).toEqual(mockScanModes);
-      expect(tester.modalComponent?.certificates).toEqual(mockCertificates);
       expect(tester.modalComponent?.attribute).toBeNull();
       expect(tester.typeSelect).toBeDefined();
       expect(tester.typeSelect).toHaveSelectedValue('string');
@@ -248,12 +215,10 @@ describe('ManifestAttributeEditorModalComponent', () => {
         }
       };
 
-      tester.modalComponent!.prepareForEdition(mockScanModes, mockCertificates, testAttribute);
+      tester.modalComponent!.prepareForEdition(testAttribute);
       tester.detectChanges();
 
       expect(tester.modalComponent?.mode).toBe('edit');
-      expect(tester.modalComponent?.scanModes).toEqual(mockScanModes);
-      expect(tester.modalComponent?.certificates).toEqual(mockCertificates);
       expect(tester.modalComponent?.attribute).toEqual(testAttribute);
       expect(tester.typeSelect).toBeDefined();
       expect(tester.typeSelect).toHaveSelectedValue('string');
@@ -268,7 +233,7 @@ describe('ManifestAttributeEditorModalComponent', () => {
 
   describe('Type-specific Form Sections', () => {
     beforeEach(() => {
-      tester.modalComponent!.prepareForCreation(mockScanModes, mockCertificates);
+      tester.modalComponent!.prepareForCreation();
       tester.detectChanges();
     });
 
@@ -366,7 +331,7 @@ describe('ManifestAttributeEditorModalComponent', () => {
 
   describe('Type Change Handling', () => {
     beforeEach(() => {
-      tester.modalComponent!.prepareForCreation(mockScanModes, mockCertificates);
+      tester.modalComponent!.prepareForCreation();
       tester.detectChanges();
     });
 
@@ -409,7 +374,7 @@ describe('ManifestAttributeEditorModalComponent', () => {
 
   describe('Form Validation', () => {
     beforeEach(() => {
-      tester.modalComponent!.prepareForCreation(mockScanModes, mockCertificates);
+      tester.modalComponent!.prepareForCreation();
       tester.detectChanges();
     });
 
@@ -447,7 +412,7 @@ describe('ManifestAttributeEditorModalComponent', () => {
 
   describe('Modal Actions', () => {
     beforeEach(() => {
-      tester.modalComponent!.prepareForCreation(mockScanModes, mockCertificates);
+      tester.modalComponent!.prepareForCreation();
       tester.detectChanges();
     });
 
@@ -483,7 +448,7 @@ describe('ManifestAttributeEditorModalComponent', () => {
 
   describe('Helper Methods', () => {
     beforeEach(() => {
-      tester.modalComponent!.prepareForCreation(mockScanModes, mockCertificates);
+      tester.modalComponent!.prepareForCreation();
       tester.detectChanges();
     });
 
@@ -524,7 +489,7 @@ describe('ManifestAttributeEditorModalComponent', () => {
 
   describe('Edge Cases', () => {
     beforeEach(() => {
-      tester.modalComponent!.prepareForCreation(mockScanModes, mockCertificates);
+      tester.modalComponent!.prepareForCreation();
       tester.detectChanges();
     });
 
