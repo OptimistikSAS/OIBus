@@ -6,8 +6,8 @@
   "author": "Optimistik SAS",
   "license": "EUPL",
   "engines": {
-    "node": "=v22.16",
-    "npm": ">=10"
+    "node": "=v24",
+    "npm": "=11"
   },
   "scripts": {
     "start:macos-x64": "../build/bin/macos-x64/oibus-launcher --config ../data-folder",
