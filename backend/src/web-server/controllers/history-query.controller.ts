@@ -104,10 +104,6 @@ export default class HistoryQueryController extends AbstractController {
 
   async testSouthConnection(ctx: KoaContext<SouthSettings, void>) {
     try {
-      const historyQuery = ctx.app.historyQueryService.findById(ctx.params.id);
-      if (!historyQuery) {
-        return ctx.notFound();
-      }
       const logger = ctx.app.logger.child(
         {
           scopeType: 'south',
@@ -166,10 +162,6 @@ export default class HistoryQueryController extends AbstractController {
 
   async testNorthConnection(ctx: KoaContext<NorthSettings, void>) {
     try {
-      const historyQuery = ctx.app.historyQueryService.findById(ctx.params.id);
-      if (!historyQuery) {
-        return ctx.notFound();
-      }
       const logger = ctx.app.logger.child(
         {
           scopeType: 'north',

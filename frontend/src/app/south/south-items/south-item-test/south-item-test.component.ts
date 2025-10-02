@@ -36,25 +36,19 @@ import { DateRange, DateRangeSelectorComponent } from '../../../shared/date-rang
     ItemTestResultComponent
   ]
 })
-class SouthItemTestComponent<TItemType extends 'south' | 'history-south'> implements AfterContentInit, OnInit {
+class SouthItemTestComponent implements AfterContentInit, OnInit {
   private translate = inject(TranslateService);
 
   readonly testResultView = viewChild.required<ItemTestResultComponent>('testResultViewComponent');
 
   /** What kind of item is being tested */
-  readonly type = input.required<TItemType>();
+  readonly type = input.required<'south' | 'history-south'>();
 
   /** Either southId or historyId (or 'create') */
   readonly entityId = input.required<string>();
+  readonly fromSouth = input<string | null>(null);
 
-  readonly item =
-    input.required<
-      TItemType extends 'south'
-        ? SouthConnectorItemDTO<SouthItemSettings>
-        : TItemType extends 'history-south'
-          ? HistoryQueryItemDTO<SouthItemSettings>
-          : never
-    >();
+  readonly item = input.required<SouthConnectorItemDTO<SouthItemSettings> | HistoryQueryItemDTO<SouthItemSettings>>();
 
   readonly connectorCommand = input.required<SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>>();
   readonly manifest = input.required<SouthConnectorManifest>();
@@ -173,6 +167,7 @@ class SouthItemTestComponent<TItemType extends 'south' | 'history-south'> implem
     } else if (type === 'history-south') {
       return this.historyQueryService.testSouthItem(
         this.entityId(),
+        this.fromSouth(),
         this.connectorCommand().type,
         this.item().name,
         this.connectorCommand().settings,

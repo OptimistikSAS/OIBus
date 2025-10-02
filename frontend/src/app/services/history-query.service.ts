@@ -185,6 +185,7 @@ export class HistoryQueryService {
 
   testSouthItem(
     historyId: string,
+    fromSouth: string | null,
     southType: OIBusSouthType,
     itemName: string,
     southSettings: SouthSettings,
@@ -199,7 +200,7 @@ export class HistoryQueryService {
         testingSettings
       },
       {
-        params: { southType, itemName }
+        params: fromSouth ? { fromSouth, southType, itemName } : { southType, itemName }
       }
     );
   }

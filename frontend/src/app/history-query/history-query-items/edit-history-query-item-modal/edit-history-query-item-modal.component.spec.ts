@@ -80,7 +80,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
 
   describe('create mode', () => {
     beforeEach(() => {
-      tester.componentInstance.prepareForCreation(allItems, historyId, southConnectorCommand, manifest);
+      tester.componentInstance.prepareForCreation(allItems, historyId, 'fromSouth', southConnectorCommand, manifest);
       tester.detectChanges();
     });
 
@@ -124,7 +124,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
     };
 
     it('should duplicate item', () => {
-      tester.componentInstance.prepareForCopy(allItems, southItem, historyId, southConnectorCommand, manifest);
+      tester.componentInstance.prepareForCopy(allItems, southItem, historyId, 'fromSouth', southConnectorCommand, manifest);
       tester.detectChanges();
       expect(tester.name).toHaveValue('myName-copy');
 
@@ -151,7 +151,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
     };
 
     beforeEach(() => {
-      tester.componentInstance.prepareForEdition(allItems, southItem, historyId, southConnectorCommand, manifest, 0);
+      tester.componentInstance.prepareForEdition(allItems, southItem, historyId, 'fromSouth', southConnectorCommand, manifest, 0);
       tester.detectChanges();
     });
 
@@ -204,7 +204,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
 
   describe('unsaved changes', () => {
     beforeEach(() => {
-      tester.componentInstance.prepareForCreation(allItems, historyId, southConnectorCommand, manifest);
+      tester.componentInstance.prepareForCreation(allItems, historyId, 'fromSouth', southConnectorCommand, manifest);
       tester.detectChanges();
     });
 
