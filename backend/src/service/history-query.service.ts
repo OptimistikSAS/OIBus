@@ -131,6 +131,7 @@ export default class HistoryQueryService {
   async testSouthItem(
     historyQueryId: string,
     southType: OIBusSouthType,
+    itemName: string,
     retrieveSecretsFromSouth: string | null,
     southSettings: SouthSettings,
     itemSettings: SouthItemSettings,
@@ -164,6 +165,7 @@ export default class HistoryQueryService {
     return await this.southService.testSouthItem(
       'create',
       southType,
+      itemName,
       await encryptionService.decryptConnectorSecrets(
         await encryptionService.encryptConnectorSecrets(southSettings, southSettingsFrom, manifest.settings),
         manifest.settings

@@ -165,6 +165,7 @@ class SouthItemTestComponent<TItemType extends 'south' | 'history-south'> implem
       return this.southConnectorService.testItem(
         this.entityId(),
         this.connectorCommand().type,
+        this.item().name,
         this.connectorCommand().settings,
         this.item().settings,
         this.testingSettings
@@ -173,6 +174,7 @@ class SouthItemTestComponent<TItemType extends 'south' | 'history-south'> implem
       return this.historyQueryService.testSouthItem(
         this.entityId(),
         this.connectorCommand().type,
+        this.item().name,
         this.connectorCommand().settings,
         this.item().settings,
         this.testingSettings

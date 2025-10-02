@@ -190,6 +190,7 @@ export class SouthConnectorService {
   testItem(
     southId: string,
     southType: OIBusSouthType,
+    itemName: string,
     southSettings: SouthSettings,
     itemSettings: SouthItemSettings,
     testingSettings: SouthConnectorItemTestingSettings
@@ -198,7 +199,7 @@ export class SouthConnectorService {
       `/api/south/${southId}/items/test-item`,
       { southSettings, itemSettings, testingSettings },
       {
-        params: { southType }
+        params: { southType, itemName }
       }
     );
   }

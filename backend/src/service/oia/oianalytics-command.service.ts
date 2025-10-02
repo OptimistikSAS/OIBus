@@ -804,6 +804,7 @@ export default class OIAnalyticsCommandService {
     await this.southService.testSouthItem(
       command.southConnectorId,
       command.commandContent.southCommand.type,
+      command.commandContent.itemCommand.name,
       command.commandContent.southCommand.settings,
       command.commandContent.itemCommand.settings,
       command.commandContent.testingSettings,
@@ -983,6 +984,7 @@ export default class OIAnalyticsCommandService {
     await this.historyQueryService.testSouthItem(
       command.historyQueryId,
       command.commandContent.historyCommand.southType,
+      command.commandContent.itemCommand.name,
       command.southConnectorId,
       command.commandContent.historyCommand.southSettings,
       command.commandContent.itemCommand.settings,
