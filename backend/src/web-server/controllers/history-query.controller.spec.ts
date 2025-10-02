@@ -297,6 +297,7 @@ describe('History query controller', () => {
     expect(ctx.app.historyQueryService.testSouthItem).toHaveBeenCalledWith(
       testData.historyQueries.list[0].id,
       testData.south.command.type,
+      '',
       null,
       testData.south.command.settings,
       testData.south.itemCommand.settings,
@@ -314,6 +315,7 @@ describe('History query controller', () => {
     };
     ctx.query.southType = testData.south.command.type;
     ctx.params.id = testData.historyQueries.list[0].id;
+    ctx.query.itemName = testData.south.itemCommand.name;
     ctx.query.fromSouth = testData.south.list[0].id;
 
     ctx.app.logger.child.mockReturnValueOnce(logger);
@@ -326,6 +328,7 @@ describe('History query controller', () => {
     expect(ctx.app.historyQueryService.testSouthItem).toHaveBeenCalledWith(
       testData.historyQueries.list[0].id,
       testData.south.command.type,
+      testData.south.itemCommand.name,
       testData.south.list[0].id,
       testData.south.command.settings,
       testData.south.itemCommand.settings,

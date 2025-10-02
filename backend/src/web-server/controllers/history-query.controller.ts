@@ -151,6 +151,7 @@ export default class HistoryQueryController extends AbstractController {
       await ctx.app.historyQueryService.testSouthItem(
         ctx.params.id,
         ctx.query.southType as OIBusSouthType,
+        (ctx.query.itemName as string) || '',
         (ctx.query.fromSouth as string) || null,
         ctx.request.body!.southSettings,
         ctx.request.body!.itemSettings,

@@ -146,6 +146,7 @@ export default class SouthConnectorController {
       await ctx.app.southService.testSouthItem(
         ctx.params.id,
         ctx.query.southType as OIBusSouthType,
+        (ctx.query.itemName as string) || '',
         ctx.request.body!.southSettings,
         ctx.request.body!.itemSettings,
         ctx.request.body!.testingSettings,

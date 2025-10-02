@@ -204,6 +204,7 @@ describe('SouthItemTestComponent', () => {
       expect(testCase.service.testItem).toHaveBeenCalledWith(
         tester.componentInstance.entityId,
         tester.componentInstance.connectorCommand.type,
+        tester.componentInstance.item.name,
         tester.componentInstance.connectorCommand.settings,
         {
           query: 'sql'
@@ -249,6 +250,7 @@ describe('SouthItemTestComponent', () => {
       expect(testCase.service.testItem).toHaveBeenCalledWith(
         tester.componentInstance.entityId,
         tester.componentInstance.connectorCommand.type,
+        tester.componentInstance.item.name,
         tester.componentInstance.connectorCommand.settings,
         {
           query: 'sql'
@@ -276,6 +278,7 @@ describe('SouthItemTestComponent', () => {
       expect(testCase.service.testItem).toHaveBeenCalledWith(
         tester.componentInstance.entityId,
         tester.componentInstance.connectorCommand.type,
+        tester.componentInstance.item.name,
         tester.componentInstance.connectorCommand.settings,
         {
           query: 'sql'
@@ -310,6 +313,7 @@ describe('SouthItemTestComponent', () => {
       expect(testCase.service.testItem).toHaveBeenCalledWith(
         tester.componentInstance.entityId,
         tester.componentInstance.connectorCommand.type,
+        tester.componentInstance.item.name,
         tester.componentInstance.connectorCommand.settings,
         {
           query: 'sql'
@@ -355,6 +359,7 @@ describe('SouthItemTestComponent', () => {
       expect(testCase.service.testItem).toHaveBeenCalledWith(
         tester.componentInstance.entityId,
         tester.componentInstance.connectorCommand.type,
+        tester.componentInstance.item.name,
         tester.componentInstance.connectorCommand.settings,
         {
           query: 'sql'
@@ -401,6 +406,7 @@ describe('SouthItemTestComponent', () => {
       expect(testCase.service.testItem).toHaveBeenCalledWith(
         tester.componentInstance.entityId,
         tester.componentInstance.connectorCommand.type,
+        tester.componentInstance.item.name,
         tester.componentInstance.connectorCommand.settings,
         {
           query: 'sql'
@@ -432,6 +438,7 @@ describe('SouthItemTestComponent', () => {
       expect(testCase.service.testItem).toHaveBeenCalledWith(
         tester.componentInstance.entityId,
         tester.componentInstance.connectorCommand.type,
+        tester.componentInstance.item.name,
         tester.componentInstance.connectorCommand.settings,
         {
           query: 'sql'

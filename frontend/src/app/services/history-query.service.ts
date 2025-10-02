@@ -186,6 +186,7 @@ export class HistoryQueryService {
   testSouthItem(
     historyId: string,
     southType: OIBusSouthType,
+    itemName: string,
     southSettings: SouthSettings,
     itemSettings: SouthItemSettings,
     testingSettings: SouthConnectorItemTestingSettings
@@ -198,7 +199,7 @@ export class HistoryQueryService {
         testingSettings
       },
       {
-        params: { southType }
+        params: { southType, itemName }
       }
     );
   }
