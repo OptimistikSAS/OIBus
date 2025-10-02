@@ -1,5 +1,6 @@
 import { BaseEntity } from './types';
 import { OIBusObjectAttribute } from '../../shared/model/form.model';
+import { TransformerLanguage } from '../../shared/model/transformer.model';
 
 export interface BaseTransformer {
   id: string;
@@ -13,6 +14,7 @@ export interface CustomTransformer extends BaseEntity, BaseTransformer {
   name: string;
   description: string;
   customCode: string;
+  language: TransformerLanguage;
   customManifest: OIBusObjectAttribute;
 }
 
