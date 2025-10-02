@@ -26,7 +26,7 @@ import testData from '../../../../../../backend/src/tests/utils/test-data';
   imports: [SouthItemTestComponent]
 })
 class TestComponent {
-  @ViewChild('testedComponent') testedComponent!: SouthItemTestComponent<'south'>;
+  @ViewChild('testedComponent') testedComponent!: SouthItemTestComponent;
 
   type!: 'south' | 'history-south';
   entityId!: string;
@@ -201,16 +201,30 @@ describe('SouthItemTestComponent', () => {
         }
       });
 
-      expect(testCase.service.testItem).toHaveBeenCalledWith(
-        tester.componentInstance.entityId,
-        tester.componentInstance.connectorCommand.type,
-        tester.componentInstance.item.name,
-        tester.componentInstance.connectorCommand.settings,
-        {
-          query: 'sql'
-        } as SouthItemSettings,
-        expectedSettings
-      );
+      if (testCase.type === 'south') {
+        expect(testCase.service.testItem).toHaveBeenCalledWith(
+          tester.componentInstance.entityId,
+          tester.componentInstance.connectorCommand.type,
+          tester.componentInstance.item.name,
+          tester.componentInstance.connectorCommand.settings,
+          {
+            query: 'sql'
+          } as SouthItemSettings,
+          expectedSettings
+        );
+      } else {
+        expect(testCase.service.testItem).toHaveBeenCalledWith(
+          tester.componentInstance.entityId,
+          null,
+          tester.componentInstance.connectorCommand.type,
+          tester.componentInstance.item.name,
+          tester.componentInstance.connectorCommand.settings,
+          {
+            query: 'sql'
+          } as SouthItemSettings,
+          expectedSettings
+        );
+      }
 
       expect(tester.testResultViewComponent.displayResult).toHaveBeenCalledWith(testResultOIBusContent);
       expect(tester.componentInstance.testedComponent.isTestRunning).toBeFalse();
@@ -247,16 +261,30 @@ describe('SouthItemTestComponent', () => {
 
       tester.testButton.click();
 
-      expect(testCase.service.testItem).toHaveBeenCalledWith(
-        tester.componentInstance.entityId,
-        tester.componentInstance.connectorCommand.type,
-        tester.componentInstance.item.name,
-        tester.componentInstance.connectorCommand.settings,
-        {
-          query: 'sql'
-        } as SouthItemSettings,
-        expectedSettings
-      );
+      if (testCase.type === 'south') {
+        expect(testCase.service.testItem).toHaveBeenCalledWith(
+          tester.componentInstance.entityId,
+          tester.componentInstance.connectorCommand.type,
+          tester.componentInstance.item.name,
+          tester.componentInstance.connectorCommand.settings,
+          {
+            query: 'sql'
+          } as SouthItemSettings,
+          expectedSettings
+        );
+      } else {
+        expect(testCase.service.testItem).toHaveBeenCalledWith(
+          tester.componentInstance.entityId,
+          null,
+          tester.componentInstance.connectorCommand.type,
+          tester.componentInstance.item.name,
+          tester.componentInstance.connectorCommand.settings,
+          {
+            query: 'sql'
+          } as SouthItemSettings,
+          expectedSettings
+        );
+      }
 
       expect(tester.testResultViewComponent.displayResult).toHaveBeenCalledWith(testResultOIBusContent);
       expect(tester.componentInstance.testedComponent.isTestRunning).toBeFalse();
@@ -275,16 +303,30 @@ describe('SouthItemTestComponent', () => {
 
       expect(formValues).toEqual(expectedSettings);
 
-      expect(testCase.service.testItem).toHaveBeenCalledWith(
-        tester.componentInstance.entityId,
-        tester.componentInstance.connectorCommand.type,
-        tester.componentInstance.item.name,
-        tester.componentInstance.connectorCommand.settings,
-        {
-          query: 'sql'
-        } as SouthItemSettings,
-        expectedSettings
-      );
+      if (testCase.type === 'south') {
+        expect(testCase.service.testItem).toHaveBeenCalledWith(
+          tester.componentInstance.entityId,
+          tester.componentInstance.connectorCommand.type,
+          tester.componentInstance.item.name,
+          tester.componentInstance.connectorCommand.settings,
+          {
+            query: 'sql'
+          } as SouthItemSettings,
+          expectedSettings
+        );
+      } else {
+        expect(testCase.service.testItem).toHaveBeenCalledWith(
+          tester.componentInstance.entityId,
+          null,
+          tester.componentInstance.connectorCommand.type,
+          tester.componentInstance.item.name,
+          tester.componentInstance.connectorCommand.settings,
+          {
+            query: 'sql'
+          } as SouthItemSettings,
+          expectedSettings
+        );
+      }
 
       expect(tester.testResultViewComponent.displayResult).toHaveBeenCalledWith(testResultOIBusContent);
       expect(tester.componentInstance.testedComponent.isTestRunning).toBeFalse();
@@ -310,16 +352,30 @@ describe('SouthItemTestComponent', () => {
 
       expect(formValues).toEqual(expectedSettings);
 
-      expect(testCase.service.testItem).toHaveBeenCalledWith(
-        tester.componentInstance.entityId,
-        tester.componentInstance.connectorCommand.type,
-        tester.componentInstance.item.name,
-        tester.componentInstance.connectorCommand.settings,
-        {
-          query: 'sql'
-        } as SouthItemSettings,
-        expectedSettings
-      );
+      if (testCase.type === 'south') {
+        expect(testCase.service.testItem).toHaveBeenCalledWith(
+          tester.componentInstance.entityId,
+          tester.componentInstance.connectorCommand.type,
+          tester.componentInstance.item.name,
+          tester.componentInstance.connectorCommand.settings,
+          {
+            query: 'sql'
+          } as SouthItemSettings,
+          expectedSettings
+        );
+      } else {
+        expect(testCase.service.testItem).toHaveBeenCalledWith(
+          tester.componentInstance.entityId,
+          null,
+          tester.componentInstance.connectorCommand.type,
+          tester.componentInstance.item.name,
+          tester.componentInstance.connectorCommand.settings,
+          {
+            query: 'sql'
+          } as SouthItemSettings,
+          expectedSettings
+        );
+      }
 
       // wait for a bit, but not enough for the test request to finish
       tick(1000);
@@ -356,16 +412,30 @@ describe('SouthItemTestComponent', () => {
 
       expect(formValues).toEqual(expectedSettings);
 
-      expect(testCase.service.testItem).toHaveBeenCalledWith(
-        tester.componentInstance.entityId,
-        tester.componentInstance.connectorCommand.type,
-        tester.componentInstance.item.name,
-        tester.componentInstance.connectorCommand.settings,
-        {
-          query: 'sql'
-        } as SouthItemSettings,
-        expectedSettings
-      );
+      if (testCase.type === 'south') {
+        expect(testCase.service.testItem).toHaveBeenCalledWith(
+          tester.componentInstance.entityId,
+          tester.componentInstance.connectorCommand.type,
+          tester.componentInstance.item.name,
+          tester.componentInstance.connectorCommand.settings,
+          {
+            query: 'sql'
+          } as SouthItemSettings,
+          expectedSettings
+        );
+      } else {
+        expect(testCase.service.testItem).toHaveBeenCalledWith(
+          tester.componentInstance.entityId,
+          null,
+          tester.componentInstance.connectorCommand.type,
+          tester.componentInstance.item.name,
+          tester.componentInstance.connectorCommand.settings,
+          {
+            query: 'sql'
+          } as SouthItemSettings,
+          expectedSettings
+        );
+      }
 
       // wait for more time than needed for the test request
       tick(5000);
@@ -403,16 +473,30 @@ describe('SouthItemTestComponent', () => {
 
       expect(formValues).toEqual(expectedSettings);
 
-      expect(testCase.service.testItem).toHaveBeenCalledWith(
-        tester.componentInstance.entityId,
-        tester.componentInstance.connectorCommand.type,
-        tester.componentInstance.item.name,
-        tester.componentInstance.connectorCommand.settings,
-        {
-          query: 'sql'
-        } as SouthItemSettings,
-        expectedSettings
-      );
+      if (testCase.type === 'south') {
+        expect(testCase.service.testItem).toHaveBeenCalledWith(
+          tester.componentInstance.entityId,
+          tester.componentInstance.connectorCommand.type,
+          tester.componentInstance.item.name,
+          tester.componentInstance.connectorCommand.settings,
+          {
+            query: 'sql'
+          } as SouthItemSettings,
+          expectedSettings
+        );
+      } else {
+        expect(testCase.service.testItem).toHaveBeenCalledWith(
+          tester.componentInstance.entityId,
+          null,
+          tester.componentInstance.connectorCommand.type,
+          tester.componentInstance.item.name,
+          tester.componentInstance.connectorCommand.settings,
+          {
+            query: 'sql'
+          } as SouthItemSettings,
+          expectedSettings
+        );
+      }
 
       expect(tester.testResultViewComponent.displayError).toHaveBeenCalled();
       expect(tester.testResultViewComponent.displayResult).not.toHaveBeenCalled();
@@ -435,16 +519,30 @@ describe('SouthItemTestComponent', () => {
 
       expect(formValues).toEqual(expectedSettings);
 
-      expect(testCase.service.testItem).toHaveBeenCalledWith(
-        tester.componentInstance.entityId,
-        tester.componentInstance.connectorCommand.type,
-        tester.componentInstance.item.name,
-        tester.componentInstance.connectorCommand.settings,
-        {
-          query: 'sql'
-        } as SouthItemSettings,
-        expectedSettings
-      );
+      if (testCase.type === 'south') {
+        expect(testCase.service.testItem).toHaveBeenCalledWith(
+          tester.componentInstance.entityId,
+          tester.componentInstance.connectorCommand.type,
+          tester.componentInstance.item.name,
+          tester.componentInstance.connectorCommand.settings,
+          {
+            query: 'sql'
+          } as SouthItemSettings,
+          expectedSettings
+        );
+      } else {
+        expect(testCase.service.testItem).toHaveBeenCalledWith(
+          tester.componentInstance.entityId,
+          null,
+          tester.componentInstance.connectorCommand.type,
+          tester.componentInstance.item.name,
+          tester.componentInstance.connectorCommand.settings,
+          {
+            query: 'sql'
+          } as SouthItemSettings,
+          expectedSettings
+        );
+      }
 
       expect(tester.testResultViewComponent.displayResult).toHaveBeenCalledWith(result);
       expect(tester.componentInstance.testedComponent.isTestRunning).toBeFalse();
