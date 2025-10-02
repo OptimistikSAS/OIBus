@@ -817,6 +817,7 @@ describe('South connector controller', () => {
     expect(ctx.app.southService.testSouthItem).toHaveBeenCalledWith(
       testData.south.list[0].id,
       testData.south.command.type,
+      '',
       testData.south.command.settings,
       testData.south.itemCommand.settings,
       testData.south.itemTestingSettings,
@@ -833,6 +834,7 @@ describe('South connector controller', () => {
       testingSettings: testData.south.itemTestingSettings
     };
     ctx.query.southType = testData.south.command.type;
+    ctx.query.itemName = testData.south.itemCommand.name;
     ctx.app.logger.child = jest.fn().mockImplementation(() => logger);
     (ctx.app.southService.testSouthItem as jest.Mock).mockImplementation(() => {
       throw new Error('test error');
@@ -842,6 +844,7 @@ describe('South connector controller', () => {
     expect(ctx.app.southService.testSouthItem).toHaveBeenCalledWith(
       testData.south.list[0].id,
       testData.south.command.type,
+      testData.south.itemCommand.name,
       testData.south.command.settings,
       testData.south.itemCommand.settings,
       testData.south.itemTestingSettings,

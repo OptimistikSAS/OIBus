@@ -133,6 +133,7 @@ describe('South Service', () => {
     await service.testSouthItem(
       'create',
       testData.south.command.type,
+      testData.south.itemCommand.name,
       testData.south.command.settings,
       itemCommand,
       testData.south.itemTestingSettings,
@@ -151,6 +152,7 @@ describe('South Service', () => {
       service.testSouthItem(
         'create',
         badCommand.type,
+        testData.south.itemCommand.name,
         badCommand.settings,
         testData.south.itemCommand.settings,
         testData.south.itemTestingSettings,
@@ -174,6 +176,7 @@ describe('South Service', () => {
     await service.testSouthItem(
       testData.south.list[0].id,
       testData.south.command.type,
+      testData.south.itemCommand.name,
       testData.south.command.settings,
       itemCommand,
       testData.south.itemTestingSettings,
@@ -191,6 +194,7 @@ describe('South Service', () => {
       service.testSouthItem(
         testData.south.list[0].id,
         testData.south.command.type,
+        testData.south.itemCommand.name,
         testData.south.command.settings,
         testData.south.itemCommand.settings,
         testData.south.itemTestingSettings,

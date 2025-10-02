@@ -183,6 +183,7 @@ describe('History Query service', () => {
     await service.testSouthItem(
       'create',
       testData.south.command.type,
+      testData.south.itemCommand.name,
       null,
       testData.south.command.settings,
       testData.south.itemCommand.settings,
@@ -193,6 +194,7 @@ describe('History Query service', () => {
     expect(southService.testSouthItem).toHaveBeenCalledWith(
       'create',
       testData.south.command.type,
+      testData.south.itemCommand.name,
       testData.south.command.settings,
       testData.south.itemCommand.settings,
       testData.south.itemTestingSettings,
@@ -211,6 +213,7 @@ describe('History Query service', () => {
       service.testSouthItem(
         'create',
         badCommand.type,
+        testData.south.itemCommand.name,
         testData.south.list[0].id,
         badCommand.settings,
         testData.south.itemCommand.settings,
@@ -230,6 +233,7 @@ describe('History Query service', () => {
       service.testSouthItem(
         'create',
         testData.south.command.type,
+        testData.south.itemCommand.name,
         testData.south.list[0].id,
         testData.south.command.settings,
         testData.south.itemCommand.settings,
@@ -253,6 +257,7 @@ describe('History Query service', () => {
     await service.testSouthItem(
       testData.historyQueries.list[0].id,
       testData.south.command.type,
+      testData.south.itemCommand.name,
       null,
       testData.south.command.settings,
       testData.south.itemCommand.settings,
@@ -271,6 +276,7 @@ describe('History Query service', () => {
       service.testSouthItem(
         testData.historyQueries.list[0].id,
         testData.south.command.type,
+        testData.south.itemCommand.name,
         null,
         testData.south.command.settings,
         testData.south.itemCommand.settings,

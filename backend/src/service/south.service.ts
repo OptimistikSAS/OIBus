@@ -129,8 +129,9 @@ export default class SouthService {
   }
 
   async testSouthItem(
-    id: string,
+    southConnectorId: string,
     southType: OIBusSouthType,
+    itemName: string,
     southSettings: SouthSettings,
     itemSettings: SouthItemSettings,
     testingSettings: SouthConnectorItemTestingSettings,
@@ -138,10 +139,10 @@ export default class SouthService {
     logger: pino.Logger
   ): Promise<void> {
     let southConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings> | null = null;
-    if (id !== 'create') {
-      southConnector = this.southConnectorRepository.findSouthById(id);
+    if (southConnectorId !== 'create') {
+      southConnector = this.southConnectorRepository.findSouthById(southConnectorId);
       if (!southConnector) {
-        throw new Error(`South connector "${id}" not found`);
+        throw new Error(`South connector "${southConnectorId}" not found`);
       }
     }
     const manifest = this.getInstalledSouthManifests().find(southManifest => southManifest.id === southType);
@@ -157,7 +158,7 @@ export default class SouthService {
     const testItemToRun: SouthConnectorItemEntity<SouthItemSettings> = {
       id: 'test',
       enabled: false,
-      name: 'testing',
+      name: itemName,
       scanMode: {
         id: '',
         name: '',

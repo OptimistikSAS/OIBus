@@ -1043,7 +1043,7 @@ describe('OIAnalytics Command Service', () => {
 
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
     (southService.testSouthItem as jest.Mock).mockImplementationOnce(
-      (_southId, _southType, _southSettings, _itemCommand, _testSettings, callback, _logger) => {
+      (_southId, _southType, _itemName, _southSettings, _itemCommand, _testSettings, callback, _logger) => {
         callback({});
       }
     );
@@ -1060,6 +1060,7 @@ describe('OIAnalytics Command Service', () => {
     expect(southService.testSouthItem).toHaveBeenCalledWith(
       command.southConnectorId,
       command.commandContent.southCommand.type,
+      command.commandContent.itemCommand.name,
       command.commandContent.southCommand.settings,
       command.commandContent.itemCommand.settings,
       command.commandContent.testingSettings,
@@ -1379,7 +1380,7 @@ describe('OIAnalytics Command Service', () => {
 
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
     (historyQueryService.testSouthItem as jest.Mock).mockImplementationOnce(
-      (_historyId, _southType, _southId, _southSettings, _itemCommand, _testSettings, callback, _logger) => {
+      (_historyId, _southType, _itemName, _southId, _southSettings, _itemCommand, _testSettings, callback, _logger) => {
         callback({});
       }
     );
@@ -1395,6 +1396,7 @@ describe('OIAnalytics Command Service', () => {
     expect(historyQueryService.testSouthItem).toHaveBeenCalledWith(
       command.historyQueryId,
       command.commandContent.historyCommand.southType,
+      command.commandContent.itemCommand.name,
       command.southConnectorId,
       command.commandContent.historyCommand.southSettings,
       command.commandContent.itemCommand.settings,
