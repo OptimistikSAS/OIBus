@@ -6,8 +6,8 @@
   "license": "EUPL",
   "description": "OIBus frontend",
   "engines": {
-    "node": "=v22.16",
-    "npm": ">=10"
+    "node": "=v24",
+    "npm": "=11"
   },
   "scripts": {
     "ng": "ng",
