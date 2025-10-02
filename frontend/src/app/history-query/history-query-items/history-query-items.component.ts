@@ -60,6 +60,7 @@ export class HistoryQueryItemsComponent implements OnInit {
 
   /** Actual historyId (or 'create') */
   readonly historyId = input.required<string>();
+  readonly fromSouth = input<string | null>(null);
   readonly southConnectorCommand = input.required<SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>>();
   readonly historyQuery = input<HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings> | null>(null);
   readonly southManifest = input.required<SouthConnectorManifest>();
@@ -153,6 +154,7 @@ export class HistoryQueryItemsComponent implements OnInit {
       this.allItems,
       historyQueryItem,
       this.historyId(),
+      this.fromSouth(),
       this.southConnectorCommand(),
       this.southManifest(),
       tableIndex
@@ -170,7 +172,7 @@ export class HistoryQueryItemsComponent implements OnInit {
       }
     });
     const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
-    component.prepareForCreation(this.allItems, this.historyId(), this.southConnectorCommand(), this.southManifest());
+    component.prepareForCreation(this.allItems, this.historyId(), this.fromSouth(), this.southConnectorCommand(), this.southManifest());
     this.refreshAfterCreationModalClosed(modalRef);
   }
 
@@ -264,7 +266,7 @@ export class HistoryQueryItemsComponent implements OnInit {
   duplicateItem(item: HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>) {
     const modalRef = this.modalService.open(EditHistoryQueryItemModalComponent, { size: 'xl', backdrop: 'static' });
     const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
-    component.prepareForCopy(this.allItems, item, this.historyId(), this.southConnectorCommand(), this.southManifest());
+    component.prepareForCopy(this.allItems, item, this.historyId(), this.fromSouth(), this.southConnectorCommand(), this.southManifest());
     this.refreshAfterCreationModalClosed(modalRef);
   }
 

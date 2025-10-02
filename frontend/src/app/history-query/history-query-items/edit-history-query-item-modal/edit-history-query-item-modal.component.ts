@@ -33,7 +33,8 @@ import { OIBusObjectAttribute } from '../../../../../../backend/shared/model/for
     SouthItemTestComponent,
     OI_FORM_VALIDATION_DIRECTIVES,
     OIBusObjectFormControlComponent,
-    SaveButtonComponent
+    SaveButtonComponent,
+    SouthItemTestComponent
   ]
 })
 export class EditHistoryQueryItemModalComponent {
@@ -44,6 +45,7 @@ export class EditHistoryQueryItemModalComponent {
   mode: 'create' | 'edit' | 'copy' = 'create';
   state = new ObservableState();
   historyId!: string;
+  fromSouth: string | null = null;
   southConnectorCommand!: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
   manifest!: SouthConnectorManifest;
   item: HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings> | null = null;
@@ -67,12 +69,14 @@ export class EditHistoryQueryItemModalComponent {
   prepareForCreation(
     itemList: Array<HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>>,
     historyId: string,
+    fromSouth: string | null,
     southConnectorCommand: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>,
     manifest: SouthConnectorManifest
   ) {
     this.mode = 'create';
     this.manifest = manifest;
     this.historyId = historyId;
+    this.fromSouth = fromSouth;
     this.southConnectorCommand = southConnectorCommand;
     this.itemList = itemList;
     this.buildForm();
@@ -82,6 +86,7 @@ export class EditHistoryQueryItemModalComponent {
     itemList: Array<HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>>,
     historyQueryItem: HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>,
     historyId: string,
+    fromSouth: string | null,
     southConnectorCommand: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>,
     manifest: SouthConnectorManifest,
     tableIndex: number
@@ -89,6 +94,7 @@ export class EditHistoryQueryItemModalComponent {
     this.mode = 'edit';
     this.manifest = manifest;
     this.historyId = historyId;
+    this.fromSouth = fromSouth;
     this.southConnectorCommand = southConnectorCommand;
     this.itemList = itemList;
     this.item = historyQueryItem; // used to check uniqueness
@@ -100,12 +106,14 @@ export class EditHistoryQueryItemModalComponent {
     itemList: Array<HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>>,
     item: HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>,
     historyId: string,
+    fromSouth: string | null,
     southConnectorCommand: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>,
     manifest: SouthConnectorManifest
   ) {
     this.mode = 'copy';
     this.manifest = manifest;
     this.historyId = historyId;
+    this.fromSouth = fromSouth;
     this.southConnectorCommand = southConnectorCommand;
     this.itemList = itemList;
     // used to check uniqueness
