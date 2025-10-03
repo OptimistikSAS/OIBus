@@ -28,7 +28,7 @@ interface OIAnalyticsOptions {
   host: string;
   token: string;
   useProxy: boolean;
-  proxyUrl?: string;
+  proxyUrl: string | null;
   proxyUsername?: string | null;
   proxyPassword?: string | null;
   acceptUnauthorized: boolean;
@@ -153,6 +153,7 @@ class OianalyticsTransport {
     this.stopping = true;
     if (this.sendOIALogsInterval) {
       clearInterval(this.sendOIALogsInterval);
+      this.sendOIALogsInterval = null;
     }
     await this.sendOIALogs();
   };
