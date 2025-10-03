@@ -220,11 +220,6 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
             if (southConnector) {
               this.southType = southConnector.type;
               this.fromSouthId = southConnector.id;
-              this.inMemoryItems = southConnector.items.map(item => ({
-                ...item,
-                id: null, // we need to remove the existing ids
-                scanModeId: undefined // remove scanModeId retrieved from south connector
-              }));
             }
             if (northConnector) {
               this.northType = northConnector.type;
@@ -315,6 +310,11 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
     } else {
       if (southConnector) {
         this.form.controls.southSettings.patchValue(southConnector.settings);
+        this.inMemoryItems = southConnector.items.map(item => ({
+          ...item,
+          id: null, // we need to remove the existing ids
+          scanModeId: undefined // remove scanModeId retrieved from south connector
+        }));
       }
       if (northConnector) {
         northConnector.caching.trigger.scanMode = this.scanModes.find(
