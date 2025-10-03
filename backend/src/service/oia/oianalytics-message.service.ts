@@ -39,7 +39,7 @@ export default class OIAnalyticsMessageService {
   private triggerRun: EventEmitter = new EventEmitter();
   private runProgress$: DeferredPromise | null = null;
   private stopTimeout: NodeJS.Timeout | null = null;
-  private retryMessageInterval: NodeJS.Timeout | undefined = undefined;
+  private retryMessageInterval: NodeJS.Timeout | null = null;
 
   constructor(
     private oIAnalyticsMessageRepository: OIAnalyticsMessageRepository,
@@ -57,6 +57,11 @@ export default class OIAnalyticsMessageService {
   ) {}
 
   start(): void {
+    this.oIAnalyticsRegistrationService.registrationEvent.on('updated', () => {
+      this.createFullConfigMessageIfNotPending();
+      this.createFullHistoryQueriesMessageIfNotPending();
+    });
+
     this.createFullConfigMessageIfNotPending();
     this.createFullHistoryQueriesMessageIfNotPending();
     this.messagesQueue = this.oIAnalyticsMessageRepository.list({ status: ['PENDING'], types: [] });
@@ -69,18 +74,14 @@ export default class OIAnalyticsMessageService {
       }
     });
     this.triggerRun.emit('next');
-
-    this.oIAnalyticsRegistrationService.registrationEvent.on('updated', () => {
-      const registrationSettings = this.oIAnalyticsRegistrationService.getRegistrationSettings()!;
-      if (registrationSettings.status === 'REGISTERED') {
-        this.createFullConfigMessageIfNotPending();
-        this.createFullHistoryQueriesMessageIfNotPending();
-      }
-    });
   }
 
   async run(): Promise<void> {
-    clearTimeout(this.retryMessageInterval);
+    if (this.retryMessageInterval) {
+      clearTimeout(this.retryMessageInterval);
+      this.retryMessageInterval = null;
+    }
+
     const registration = this.oIAnalyticsRegistrationService.getRegistrationSettings()!;
     if (registration.status !== 'REGISTERED') {
       this.logger.trace(`OIBus is not registered to OIAnalytics. Messages won't be sent`);
@@ -100,24 +101,19 @@ export default class OIAnalyticsMessageService {
           break;
       }
       this.oIAnalyticsMessageRepository.markAsCompleted(message.id, DateTime.now().toUTC().toISO());
+      this.removeMessageFromQueue(message.id);
     } catch (error: unknown) {
-      if (error instanceof Error && 'code' in error && error.code && typeof error.code === 'string') {
-        this.logger.error(`Error while sending message ${message.id} of type ${message.type}. ${error.message}${error.code}`);
-        if (!['ECONNREFUSED', 'ECONNRESET', 'ETIMEDOUT'].includes(error.code)) {
-          this.oIAnalyticsMessageRepository.markAsErrored(message.id, DateTime.now().toUTC().toISO(), `${error.message}${error.code}`);
-        } else {
-          this.retryMessageInterval = setTimeout(this.run.bind(this), registration.messageRetryInterval * 1000);
-          this.resolveDeferredPromise();
-          return;
-        }
-      } else {
-        this.logger.error(`Error while sending message ${message.id} of type ${message.type}. ${(error as Error).message}`);
+      if ((error as Error).message.includes('Bad Request')) {
+        this.logger.error(`Error while sending message ${message.id} of type ${message.type}: ${(error as Error).message}`);
         this.oIAnalyticsMessageRepository.markAsErrored(message.id, DateTime.now().toUTC().toISO(), (error as Error).message);
+        this.removeMessageFromQueue(message.id);
+      } else if (!this.retryMessageInterval) {
+        this.logger.error(`Retrying message ${message.id} of type ${message.type} after error: ${(error as Error).message}`);
+        this.retryMessageInterval = setTimeout(this.run.bind(this), registration.messageRetryInterval * 1000);
       }
     }
-    this.removeMessageFromQueue(message.id);
     this.resolveDeferredPromise();
-    if (this.messagesQueue.length > 0) {
+    if (this.messagesQueue.length > 0 && !this.retryMessageInterval) {
       this.triggerRun.emit('next');
     }
   }
@@ -136,7 +132,11 @@ export default class OIAnalyticsMessageService {
       await this.runProgress$.promise;
       clearTimeout(this.stopTimeout);
     }
-    clearTimeout(this.retryMessageInterval);
+    if (this.retryMessageInterval) {
+      clearTimeout(this.retryMessageInterval);
+      this.retryMessageInterval = null;
+    }
+
     this.logger.debug(`OIAnalytics message service stopped`);
   }
 
