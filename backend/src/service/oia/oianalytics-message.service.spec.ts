@@ -91,6 +91,9 @@ describe('OIAnalytics Message Service', () => {
   });
 
   it('should properly start and stop', async () => {
+    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+
+    service['retryMessageInterval'] = setTimeout(() => null);
     service.run = jest.fn();
     service.start();
     expect(service.run).toHaveBeenCalledTimes(1);
@@ -100,6 +103,7 @@ describe('OIAnalytics Message Service', () => {
     });
 
     await service.stop();
+    expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
     expect(logger.debug).toHaveBeenCalledWith(`Stopping OIAnalytics message service...`);
     expect(logger.debug).toHaveBeenCalledWith(`OIAnalytics message service stopped`);
   });
@@ -110,29 +114,6 @@ describe('OIAnalytics Message Service', () => {
     expect(service.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
     oIAnalyticsRegistrationService.registrationEvent.emit('updated');
     expect(service.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(2);
-  });
-
-  it('should properly catch command exception', async () => {
-    (oIAnalyticsClient.sendConfiguration as jest.Mock).mockImplementationOnce(() => {
-      throw new Error('error');
-    });
-
-    service.start();
-    service.stop();
-
-    jest.advanceTimersByTime(1_000);
-
-    await service.stop();
-
-    expect(logger.error).toHaveBeenCalledWith(
-      `Error while sending message ${testData.oIAnalytics.messages.oIBusList[0].id} of type ${testData.oIAnalytics.messages.oIBusList[0].type}. error`
-    );
-    expect(oIAnalyticsMessageRepository.markAsErrored).toHaveBeenCalledWith(
-      testData.oIAnalytics.messages.oIBusList[0].id,
-      DateTime.fromISO(testData.constants.dates.FAKE_NOW).plus({ second: 1 }).toUTC().toISO()!,
-      'error'
-    );
-    expect(logger.debug).toHaveBeenCalledWith('Waiting for OIAnalytics message to finish');
   });
 
   it('should properly send message and wait for it to finish before stopping', async () => {
@@ -194,12 +175,10 @@ describe('OIAnalytics Message Service', () => {
     const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
     const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
 
-    (oIAnalyticsClient.sendConfiguration as jest.Mock) = jest.fn().mockRejectedValueOnce(
-      new (class extends Error {
-        public message = 'fetch error - ';
-        public code = 'ECONNREFUSED';
-      })()
-    );
+    (oIAnalyticsClient.sendConfiguration as jest.Mock) = jest.fn().mockImplementationOnce(() => {
+      throw new Error('fetch error');
+    });
+    service['retryMessageInterval'] = 1 as unknown as NodeJS.Timeout;
 
     service.start();
     await flushPromises();
@@ -207,26 +186,25 @@ describe('OIAnalytics Message Service', () => {
     expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
     expect(logger.error).toHaveBeenCalledTimes(1);
     expect(logger.error).toHaveBeenCalledWith(
-      `Error while sending message ${testData.oIAnalytics.messages.oIBusList[0].id} of type ${testData.oIAnalytics.messages.oIBusList[0].type}. fetch error - ECONNREFUSED`
+      `Retrying message ${testData.oIAnalytics.messages.oIBusList[0].id} of type ${testData.oIAnalytics.messages.oIBusList[0].type} after error: fetch error`
     );
   });
 
-  it('should not resend message if fetch fails', async () => {
+  it('should not resend message if fetch fails because of Bad request', async () => {
     const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
+    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
 
-    (oIAnalyticsClient.sendConfiguration as jest.Mock) = jest.fn().mockRejectedValueOnce(
-      new (class extends Error {
-        public message = 'fetch error - ';
-        public code = 'ERROR';
-      })()
-    );
+    (oIAnalyticsClient.sendConfiguration as jest.Mock) = jest.fn().mockImplementationOnce(() => {
+      throw new Error('Bad Request');
+    });
 
     service.start();
     await flushPromises();
     expect(setTimeoutSpy).toHaveBeenCalledTimes(0);
+    expect(clearTimeoutSpy).toHaveBeenCalledTimes(0);
     expect(logger.error).toHaveBeenCalledTimes(1);
     expect(logger.error).toHaveBeenCalledWith(
-      `Error while sending message ${testData.oIAnalytics.messages.oIBusList[0].id} of type ${testData.oIAnalytics.messages.oIBusList[0].type}. fetch error - ERROR`
+      `Error while sending message ${testData.oIAnalytics.messages.oIBusList[0].id} of type ${testData.oIAnalytics.messages.oIBusList[0].type}: Bad Request`
     );
   });
 });
