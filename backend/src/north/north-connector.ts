@@ -172,7 +172,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     const foundJob = this.taskJobQueue.find(element => element.id === taskDescription.id);
     if (foundJob) {
       // If a job is already scheduled in queue, it will not be added
-      this.logger.warn(`Task "${taskDescription.name}" is already in queue`);
+      this.logger.debug(`Task "${taskDescription.name}" is already in queue`);
       return;
     }
 

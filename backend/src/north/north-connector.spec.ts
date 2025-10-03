@@ -162,13 +162,13 @@ describe('NorthConnector', () => {
     await north.start();
     north.run = jest.fn();
     north.addTaskToQueue({ id: testData.scanMode.list[0].id, name: testData.scanMode.list[0].name });
-    expect(logger.warn).not.toHaveBeenCalled();
+    expect(logger.debug).not.toHaveBeenCalledWith(`Task "${testData.scanMode.list[0].name}" is already in queue`);
 
     expect(north.run).toHaveBeenCalledWith({ id: testData.scanMode.list[0].id, name: testData.scanMode.list[0].name });
     expect(north.run).toHaveBeenCalledTimes(1);
     north.addTaskToQueue({ id: testData.scanMode.list[0].id, name: testData.scanMode.list[0].name });
 
-    expect(logger.warn).toHaveBeenCalledWith(`Task "${testData.scanMode.list[0].name}" is already in queue`);
+    expect(logger.debug).toHaveBeenCalledWith(`Task "${testData.scanMode.list[0].name}" is already in queue`);
     expect(north.run).toHaveBeenCalledTimes(1);
   });
 
