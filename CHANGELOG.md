@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.6.9](https://github.com/OptimistikSAS/OIBus/compare/v3.6.8...v3.6.9) (2025-10-03)
+
+
+### Bug Fixes
+
+* **azure:** fix migration of azure north connector in 3.5.0 ([1d4fb28](https://github.com/OptimistikSAS/OIBus/commit/1d4fb2871ade61ef9d200b3c5d0645c37882c878))
+* **north:** debug log instead of warning when task is already running ([fa727df](https://github.com/OptimistikSAS/OIBus/commit/fa727df6bf0cfff169af4cad9f79f610cd5ae53d))
+* **oianalytics:** display command ID and delete command ([d7d2415](https://github.com/OptimistikSAS/OIBus/commit/d7d24159ca79a004397160dcc2c864f83e724986))
+* **oianalytics:** fix http error handling when sending messages to OIAnalytics ([b55dd05](https://github.com/OptimistikSAS/OIBus/commit/b55dd057e5a4898dad2251f318a4469d1a52c8a0))
+
 ## [3.6.8](https://github.com/OptimistikSAS/OIBus/compare/v3.6.7...v3.6.8) (2025-09-04)
 
 
