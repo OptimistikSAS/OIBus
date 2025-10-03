@@ -39,6 +39,7 @@ export class HistoryQueryTransformersComponent {
   readonly certificates = input.required<Array<CertificateDTO>>();
   readonly scanModes = input.required<Array<ScanModeDTO>>();
   readonly transformers = input.required<Array<TransformerDTO>>();
+  readonly transformersFromNorth = input<Array<TransformerDTOWithOptions>>([]);
 
   transformersWithOptions: Array<TransformerDTOWithOptions> = []; // Array used to store subscription on north connector creation
 
@@ -48,6 +49,8 @@ export class HistoryQueryTransformersComponent {
       const historyQuery = this.historyQuery();
       if (historyQuery) {
         this.transformersWithOptions = [...historyQuery.northTransformers];
+      } else {
+        this.transformersWithOptions = [...this.transformersFromNorth()];
       }
     });
   }
