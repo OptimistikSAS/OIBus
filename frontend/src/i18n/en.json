@@ -222,8 +222,7 @@
     },
     "oibus-transformer-language": {
       "javascript": "JavaScript",
-      "typescript": "TypeScript",
-      "python": "Python"
+      "typescript": "TypeScript"
     },
     "oibus-north-category": {
       "debug": "Debug",
