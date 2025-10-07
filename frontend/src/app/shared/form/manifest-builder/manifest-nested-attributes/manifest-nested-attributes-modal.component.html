@@ -1,11 +1,10 @@
 <div class="modal-header">
-  <h3
-    class="modal-title"
-    [translate]="'configuration.oibus.manifest.transformers.manifest-builder.edit-transformer-modal.' + mode + '-title'"
-  ></h3>
+  <h3 class="modal-title">
+    <span [translate]="'configuration.oibus.manifest.transformers.manifest-builder.edit-transformer-modal.' + mode + '-title'"></span>
+  </h3>
 </div>
 <div class="modal-body">
-  <form [id]="'manifest-attribute-form'" [formGroup]="form" (ngSubmit)="submit()" (keydown.enter)="onGlobalKeydown($event)">
+  <form [id]="uniqueFormId" [formGroup]="form" (ngSubmit)="submit()" (keydown.enter)="onGlobalKeydown($event)">
     <!-- Basic Properties -->
     <div class="row">
       <div class="col-md-6">
@@ -233,9 +232,7 @@
           <div class="nested-attributes-header">
             <h5 class="nested-attributes-title">{{ nestedAttributesTitle }}</h5>
             @if (nestedAttributesPath) {
-              <div class="nested-attributes-path">
-                {{ nestedAttributesPath }}
-              </div>
+              <div class="nested-attributes-path" [innerHTML]="nestedAttributesPath"></div>
             }
           </div>
           <oib-manifest-attributes-array
@@ -277,15 +274,17 @@
           </div>
         </div>
       </div>
+      <div class="alert alert-info">
+        <i class="fa fa-info-circle me-2"></i>
+        <span [translate]="'configuration.oibus.manifest.transformers.manifest-builder.array-info'"></span>
+      </div>
       <!-- Nested Attributes for Array -->
       <div class="row">
         <div class="col-md-12">
           <div class="nested-attributes-header">
             <h5 class="nested-attributes-title">{{ nestedAttributesTitle }}</h5>
             @if (nestedAttributesPath) {
-              <div class="nested-attributes-path">
-                {{ nestedAttributesPath }}
-              </div>
+              <div class="nested-attributes-path" [innerHTML]="nestedAttributesPath"></div>
             }
           </div>
           <oib-manifest-attributes-array
@@ -312,7 +311,7 @@
 </div>
 <div class="modal-footer d-flex justify-content-end">
   <div class="btn-group">
-    <button [oib-save-button]="state" [form]="'manifest-attribute-form'"></button>
+    <button [oib-save-button]="state" [form]="uniqueFormId"></button>
     <button type="button" class="btn btn-cancel" (click)="dismiss()" translate="common.close" id="cancel-button"></button>
   </div>
 </div>

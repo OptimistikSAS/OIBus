@@ -11,9 +11,9 @@ import { ValidationErrorsComponent } from 'ngx-valdemort';
 import { ManifestAttributesArrayComponent } from '../manifest-attributes-array/manifest-attributes-array.component';
 
 @Component({
-  selector: 'oib-manifest-attribute-editor-modal',
-  templateUrl: './manifest-attribute-editor-modal.component.html',
-  styleUrl: './manifest-attribute-editor-modal.component.scss',
+  selector: 'oib-manifest-nested-attributes-modal',
+  templateUrl: './manifest-nested-attributes-modal.component.html',
+  styleUrl: './manifest-nested-attributes-modal.component.scss',
   imports: [
     ReactiveFormsModule,
     TranslateDirective,
@@ -23,7 +23,7 @@ import { ManifestAttributesArrayComponent } from '../manifest-attributes-array/m
     ManifestAttributesArrayComponent
   ]
 })
-export class ManifestAttributeEditorModalComponent {
+export class ManifestNestedAttributesModalComponent {
   private activeModal = inject(NgbActiveModal);
   private fb = inject(NonNullableFormBuilder);
   private translateService = inject(TranslateService);
@@ -33,6 +33,8 @@ export class ManifestAttributeEditorModalComponent {
   certificates: Array<CertificateDTO> = [];
   attribute: OIBusAttribute | null = null;
   private contextPathSegments: Array<string> = [];
+  recursionDepth = 0;
+  isNestedAttributeEditor = false;
 
   state = new ObservableState();
   availableTypes = OIBUS_ATTRIBUTE_TYPES.filter((t: string) => t !== 'transformer-array');
@@ -82,8 +84,9 @@ export class ManifestAttributeEditorModalComponent {
     }
   };
 
-  setContextPath(path: Array<string>) {
+  setContextPath(path: Array<string>, depth = 0) {
     this.contextPathSegments = [...path];
+    this.recursionDepth = depth;
     this.initializeNestedAttributesConfig();
   }
 
@@ -98,7 +101,8 @@ export class ManifestAttributeEditorModalComponent {
   get nestedAttributesContext(): Array<string> {
     const key = this.currentAttributeKey;
     if (!key) {
-      return [...this.contextPathSegments];
+      // In create mode with empty key, expose a placeholder '' for the current element
+      return [...this.contextPathSegments, ''];
     }
     return [...this.contextPathSegments, key];
   }
@@ -106,12 +110,27 @@ export class ManifestAttributeEditorModalComponent {
   get nestedAttributesTitle(): string {
     const base = this.translateService.instant('configuration.oibus.manifest.transformers.manifest-builder.nested-attributes');
     const key = this.currentAttributeKey;
-    return key ? `${base} (${key})` : base;
+    const depthIndicator = this.recursionDepth > 0 ? ` (Level ${this.recursionDepth + 1})` : '';
+    if (key) {
+      return `${base} (${key})${depthIndicator}`;
+    } else if (this.mode === 'create') {
+      return `${base} (New Attribute)${depthIndicator}`;
+    } else {
+      return `${base}${depthIndicator}`;
+    }
   }
 
   get nestedAttributesPath(): string | null {
     const segments = this.nestedAttributesContext.filter(segment => !!segment);
-    return segments.length > 0 ? segments.join(' ▸ ') : null;
+    if (segments.length === 0) return null;
+
+    return segments.map(segment => `<span>${segment}</span>`).join(' <i class="fa fa-solid fa-angle-right path-separator"></i> ');
+  }
+
+  get uniqueFormId(): string {
+    const contextHash = this.contextPathSegments.join('-');
+    const depthSuffix = this.recursionDepth > 0 ? `-depth-${this.recursionDepth}` : '';
+    return `manifest-nested-attribute-form-${contextHash}${depthSuffix}`;
   }
 
   onGlobalKeydown(event: Event) {
@@ -186,12 +205,13 @@ export class ManifestAttributeEditorModalComponent {
     attributes: this.fb.control<Array<any>>([])
   });
 
-  prepareForCreation(scanModes: Array<ScanModeDTO>, certificates: Array<CertificateDTO>) {
+  prepareForCreation(scanModes: Array<ScanModeDTO>, certificates: Array<CertificateDTO>, contextPath: Array<string> = [], depth = 0) {
     this.mode = 'create';
     this.scanModes = scanModes;
     this.certificates = certificates;
     this.attribute = null;
-    // Don't reset contextPathSegments here - it should be set via setContextPath() before calling this method
+    this.setContextPath(contextPath, depth);
+    this.isNestedAttributeEditor = depth > 0;
     this.form.reset({
       type: 'string',
       key: '',
@@ -217,12 +237,19 @@ export class ManifestAttributeEditorModalComponent {
     this.attributesControl.setValue([]);
   }
 
-  prepareForEdition(scanModes: Array<ScanModeDTO>, certificates: Array<CertificateDTO>, attribute: OIBusAttribute) {
+  prepareForEdition(
+    scanModes: Array<ScanModeDTO>,
+    certificates: Array<CertificateDTO>,
+    attribute: OIBusAttribute,
+    contextPath: Array<string> = [],
+    depth = 0
+  ) {
     this.mode = 'edit';
     this.scanModes = scanModes;
     this.certificates = certificates;
     this.attribute = attribute;
-    // Don't reset contextPathSegments here - it should be set via setContextPath() before calling this method
+    this.setContextPath(contextPath, depth);
+    this.isNestedAttributeEditor = depth > 0;
     this.attributesControl.setValue([]);
     this.populateForm(attribute);
   }
@@ -307,8 +334,25 @@ export class ManifestAttributeEditorModalComponent {
     if (this.form.valid) {
       const formValue = this.form.value;
       const attribute = this.buildAttributeFromForm(formValue);
-      this.activeModal.close(attribute);
+
+      if (this.isNestedAttributeEditor) {
+        // For nested attribute editors, we need to handle the save differently
+        // Instead of closing the modal, we should update the nested attributes array
+        // and return to the parent modal
+        this.handleNestedAttributeSave(attribute);
+      } else {
+        // For top-level attribute editors, close the modal normally
+        this.activeModal.close(attribute);
+      }
     }
+  }
+
+  private handleNestedAttributeSave(attribute: OIBusAttribute) {
+    // This method handles saving nested attributes within a nested context
+    // We need to update the nested attributes array and return to the parent modal
+    // For now, we'll just close the modal with the attribute
+    // The parent component will handle adding it to the nested attributes array
+    this.activeModal.close(attribute);
   }
 
   private buildAttributeFromForm(formValue: any): OIBusAttribute {

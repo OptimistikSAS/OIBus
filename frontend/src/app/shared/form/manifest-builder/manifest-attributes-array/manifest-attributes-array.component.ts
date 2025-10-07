@@ -16,6 +16,7 @@ import { ValidationErrorsComponent } from 'ngx-valdemort';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FormUtils } from '../../form-utils';
 import type { ManifestAttributeEditorModalComponent } from '../manifest-attribute-editor-modal/manifest-attribute-editor-modal.component';
+import type { ManifestNestedAttributesModalComponent } from '../manifest-nested-attributes/manifest-nested-attributes-modal.component';
 
 @Component({
   selector: 'oib-manifest-attributes-array',
@@ -61,7 +62,8 @@ export class ManifestAttributesArrayComponent {
 
   async addItem(event: Event) {
     event.preventDefault();
-    const modal = await this.openAttributeEditor();
+    const isNested = this.contextPath().length > 0;
+    const modal = isNested ? await this.openNestedAttributeEditor() : await this.openAttributeEditor();
 
     modal.result.subscribe(arrayElement => {
       this.control().setValue([...this.control().value, arrayElement]);
@@ -70,7 +72,8 @@ export class ManifestAttributesArrayComponent {
   }
 
   async copyItem(element: any) {
-    const modal = await this.openAttributeEditor();
+    const isNested = this.contextPath().length > 0;
+    const modal = isNested ? await this.openNestedAttributeEditor() : await this.openAttributeEditor();
     this.prepareModalForEdition(modal, { ...element, key: element.key + '_copy' });
 
     modal.result.subscribe(arrayElement => {
@@ -80,7 +83,8 @@ export class ManifestAttributesArrayComponent {
   }
 
   async editItem(element: any) {
-    const modal = await this.openAttributeEditor(false);
+    const isNested = this.contextPath().length > 0;
+    const modal = isNested ? await this.openNestedAttributeEditor(false) : await this.openAttributeEditor(false);
     this.prepareModalForEdition(modal, element);
 
     modal.result.subscribe(arrayElement => {
@@ -109,8 +113,14 @@ export class ManifestAttributesArrayComponent {
     return FormUtils.getValueByPath(obj, path);
   }
 
-  private prepareModalForEdition(modal: Modal<ManifestAttributeEditorModalComponent>, attribute: any) {
-    modal.componentInstance.prepareForEdition(this.scanModes(), this.certificates(), attribute);
+  private prepareModalForEdition(
+    modal: Modal<ManifestAttributeEditorModalComponent | ManifestNestedAttributesModalComponent>,
+    attribute: any
+  ) {
+    if ('prepareForEdition' in modal.componentInstance) {
+      const depth = this.contextPath().length;
+      modal.componentInstance.prepareForEdition(this.scanModes(), this.certificates(), attribute, this.contextPath(), depth);
+    }
   }
 
   private async openAttributeEditor(initialise = true): Promise<Modal<ManifestAttributeEditorModalComponent>> {
@@ -123,6 +133,21 @@ export class ManifestAttributesArrayComponent {
     modal.componentInstance.setContextPath(this.contextPath());
     if (initialise) {
       modal.componentInstance.prepareForCreation(this.scanModes(), this.certificates());
+    }
+    return modal;
+  }
+
+  private async openNestedAttributeEditor(initialise = true): Promise<Modal<ManifestNestedAttributesModalComponent>> {
+    const { ManifestNestedAttributesModalComponent } = await import(
+      '../manifest-nested-attributes/manifest-nested-attributes-modal.component'
+    );
+    const modal = this.modalService.open<ManifestNestedAttributesModalComponent>(ManifestNestedAttributesModalComponent, {
+      size: 'lg'
+    });
+    const depth = this.contextPath().length;
+    modal.componentInstance.setContextPath(this.contextPath(), depth);
+    if (initialise) {
+      modal.componentInstance.prepareForCreation(this.scanModes(), this.certificates(), this.contextPath(), depth);
     }
     return modal;
   }

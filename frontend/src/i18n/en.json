@@ -935,8 +935,6 @@
             "display-in-view-mode": "Display in View Mode",
             "nested-attributes": "Nested Attributes",
             "nested-context": "Nested Attributes — {{ path }}",
-            "object-info": "Object attributes can contain nested attributes",
-            "array-info": "Array elements can contain nested attributes",
             "secret-info": "Secret fields are used for sensitive data",
             "instant-info": "Instant fields are used for timestamp values",
             "certificate-info": "Certificate fields are used for SSL certificates",
