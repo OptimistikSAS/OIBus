@@ -5,8 +5,7 @@ describe('OIBusTransformerLanguageEnumPipe', () => {
   it('should translate transformer language', () => {
     testEnumPipe(OIBusTransformerLanguageEnumPipe, {
       javascript: 'JavaScript',
-      typescript: 'TypeScript',
-      python: 'Python'
+      typescript: 'TypeScript'
     });
   });
 });
