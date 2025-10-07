@@ -1,0 +1,76 @@
+<oib-box>
+  <ng-template oibBoxTitle>
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <span translate="configuration.oibus.manifest.transformers.list" id="title"></span>
+        @if (transformers.length) {
+          <span class="mx-1">({{ transformers.length }})</span>
+        }
+      </div>
+      <div>
+        <button
+          type="button"
+          id="add-transformer"
+          class="btn btn-primary btn-sm oib-box-btn"
+          [ngbTooltip]="'configuration.oibus.manifest.transformers.edit-transformer-modal.tooltips.add' | translate"
+          (click)="addTransformer()"
+        >
+          <span class="fa fa-plus"></span>
+        </button>
+
+        <oib-help url="https://oibus.optimistik.com/docs/guide/engine/transformers" />
+      </div>
+    </div>
+  </ng-template>
+</oib-box>
+
+<!-- the Custom Transformers list -->
+@if (transformers.length !== 0) {
+  <div>
+    <table class="mb-2 table table-sm table-hover oib-table">
+      <thead class="light">
+        <tr>
+          <th translate="configuration.oibus.manifest.transformers.edit-transformer-modal.name"></th>
+          <th translate="configuration.oibus.manifest.transformers.edit-transformer-modal.description"></th>
+          <th translate="configuration.oibus.manifest.transformers.edit-transformer-modal.input-type"></th>
+          <th translate="configuration.oibus.manifest.transformers.edit-transformer-modal.output-type"></th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (transformer of transformers; track transformer.id) {
+          <tr>
+            <td>{{ transformer.name }}</td>
+            <td>{{ transformer.description }}</td>
+            <td>{{ transformer.inputType }}</td>
+            <td>{{ transformer.outputType }}</td>
+            <td class="text-nowrap action-buttons">
+              <div class="pull-right">
+                <!-- Edit button -->
+                <button
+                  type="button"
+                  class="btn btn-link edit-transformer px-1 py-0"
+                  [ngbTooltip]="'configuration.oibus.manifest.transformers.edit-transformer-modal.tooltips.edit' | translate"
+                  (click)="editTransformer(transformer)"
+                >
+                  <span class="fa fa-pencil"></span>
+                </button>
+                <!-- Delete button -->
+                <button
+                  type="button"
+                  class="btn btn-link delete-transformer px-1 py-0"
+                  [ngbTooltip]="'configuration.oibus.manifest.transformers.edit-transformer-modal.tooltips.delete' | translate"
+                  (click)="deleteTransformer(transformer)"
+                >
+                  <span class="fa fa-trash"></span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+} @else {
+  <div class="oib-grey-container" id="no-transformer" translate="configuration.oibus.manifest.transformers.none"></div>
+}
