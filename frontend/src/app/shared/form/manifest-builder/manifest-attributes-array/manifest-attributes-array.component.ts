@@ -1,4 +1,4 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
 import { ControlContainer, FormControl, FormGroup, FormGroupName, ReactiveFormsModule } from '@angular/forms';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { startWith, switchMap } from 'rxjs';
@@ -16,7 +16,6 @@ import { ValidationErrorsComponent } from 'ngx-valdemort';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FormUtils } from '../../form-utils';
 import type { ManifestAttributeEditorModalComponent } from '../manifest-attribute-editor-modal/manifest-attribute-editor-modal.component';
-import type { ManifestNestedAttributesModalComponent } from '../manifest-nested-attributes/manifest-nested-attributes-modal.component';
 
 @Component({
   selector: 'oib-manifest-attributes-array',
@@ -51,6 +50,9 @@ export class ManifestAttributesArrayComponent {
   arrayAttribute = input.required<OIBusArrayAttribute>();
   contextPath = input<Array<string>>([]);
 
+  // ✅ Emit when nested data changes (for parent modals to react)
+  nestedChange = output<void>();
+
   private readonly controlValue = toSignal(toObservable(this.control).pipe(switchMap(c => c.valueChanges.pipe(startWith(c.value)))));
   readonly columns = computed(() => FormUtils.buildColumn(this.arrayAttribute().rootAttribute, []));
   readonly paginatedValues = computed(() => {
@@ -62,30 +64,46 @@ export class ManifestAttributesArrayComponent {
 
   async addItem(event: Event) {
     event.preventDefault();
-    const isNested = this.contextPath().length > 0;
-    const modal = isNested ? await this.openNestedAttributeEditor() : await this.openAttributeEditor();
+    const modal = await this.openAttributeEditor();
+    const depth = this.contextPath().length;
+
+    modal.componentInstance.prepareForCreation(this.scanModes(), this.certificates(), this.contextPath(), depth);
 
     modal.result.subscribe(arrayElement => {
       this.control().setValue([...this.control().value, arrayElement]);
       this.paginatedValues().gotoPage(0);
+      // ✅ Notify parent that nested data changed
+      this.control().markAsDirty();
+      this.nestedChange.emit();
     });
   }
 
   async copyItem(element: any) {
-    const isNested = this.contextPath().length > 0;
-    const modal = isNested ? await this.openNestedAttributeEditor() : await this.openAttributeEditor();
-    this.prepareModalForEdition(modal, { ...element, key: element.key + '_copy' });
+    const modal = await this.openAttributeEditor();
+    const depth = this.contextPath().length;
+
+    modal.componentInstance.prepareForEdition(
+      this.scanModes(),
+      this.certificates(),
+      { ...element, key: element.key + '_copy' },
+      this.contextPath(),
+      depth
+    );
 
     modal.result.subscribe(arrayElement => {
       this.control().setValue([...this.control().value, arrayElement]);
       this.paginatedValues().gotoPage(0);
+      // ✅ Notify parent that nested data changed
+      this.control().markAsDirty();
+      this.nestedChange.emit();
     });
   }
 
   async editItem(element: any) {
-    const isNested = this.contextPath().length > 0;
-    const modal = isNested ? await this.openNestedAttributeEditor(false) : await this.openAttributeEditor(false);
-    this.prepareModalForEdition(modal, element);
+    const modal = await this.openAttributeEditor();
+    const depth = this.contextPath().length;
+
+    modal.componentInstance.prepareForEdition(this.scanModes(), this.certificates(), element, this.contextPath(), depth);
 
     modal.result.subscribe(arrayElement => {
       const newArray = [...this.control().value];
@@ -94,6 +112,9 @@ export class ManifestAttributesArrayComponent {
 
       this.control().setValue(newArray);
       this.paginatedValues().gotoPage(0);
+      // ✅ Notify parent that nested data changed
+      this.control().markAsDirty();
+      this.nestedChange.emit();
     });
   }
 
@@ -103,52 +124,21 @@ export class ManifestAttributesArrayComponent {
     newArray.splice(index, 1);
     this.control().setValue(newArray);
     this.paginatedValues().gotoPage(0);
+    // ✅ Notify parent that nested data changed
+    this.control().markAsDirty();
+    this.nestedChange.emit();
   }
 
   formatValue(element: any, path: Array<string>, type: OIBusAttributeType, translationKey: string) {
     return FormUtils.formatValue(element, path, type, translationKey, this.translateService, this.scanModes());
   }
 
-  getValueByPath(obj: any, path: Array<string>) {
-    return FormUtils.getValueByPath(obj, path);
-  }
-
-  private prepareModalForEdition(
-    modal: Modal<ManifestAttributeEditorModalComponent | ManifestNestedAttributesModalComponent>,
-    attribute: any
-  ) {
-    if ('prepareForEdition' in modal.componentInstance) {
-      const depth = this.contextPath().length;
-      modal.componentInstance.prepareForEdition(this.scanModes(), this.certificates(), attribute, this.contextPath(), depth);
-    }
-  }
-
-  private async openAttributeEditor(initialise = true): Promise<Modal<ManifestAttributeEditorModalComponent>> {
+  private async openAttributeEditor(): Promise<Modal<ManifestAttributeEditorModalComponent>> {
     const { ManifestAttributeEditorModalComponent } = await import(
       '../manifest-attribute-editor-modal/manifest-attribute-editor-modal.component'
     );
-    const modal = this.modalService.open<ManifestAttributeEditorModalComponent>(ManifestAttributeEditorModalComponent, {
+    return this.modalService.open<ManifestAttributeEditorModalComponent>(ManifestAttributeEditorModalComponent, {
       size: 'lg'
     });
-    modal.componentInstance.setContextPath(this.contextPath());
-    if (initialise) {
-      modal.componentInstance.prepareForCreation(this.scanModes(), this.certificates());
-    }
-    return modal;
-  }
-
-  private async openNestedAttributeEditor(initialise = true): Promise<Modal<ManifestNestedAttributesModalComponent>> {
-    const { ManifestNestedAttributesModalComponent } = await import(
-      '../manifest-nested-attributes/manifest-nested-attributes-modal.component'
-    );
-    const modal = this.modalService.open<ManifestNestedAttributesModalComponent>(ManifestNestedAttributesModalComponent, {
-      size: 'lg'
-    });
-    const depth = this.contextPath().length;
-    modal.componentInstance.setContextPath(this.contextPath(), depth);
-    if (initialise) {
-      modal.componentInstance.prepareForCreation(this.scanModes(), this.certificates(), this.contextPath(), depth);
-    }
-    return modal;
   }
 }

@@ -32,12 +32,15 @@ export class ManifestAttributeEditorModalComponent {
   scanModes: Array<ScanModeDTO> = [];
   certificates: Array<CertificateDTO> = [];
   attribute: OIBusAttribute | null = null;
+
+  // Context tracking for nested editing
   private contextPathSegments: Array<string> = [];
+  private depth = 0;
 
   state = new ObservableState();
   availableTypes = OIBUS_ATTRIBUTE_TYPES.filter((t: string) => t !== 'transformer-array');
 
-  // Configuration for nested attributes
+  // Configuration for nested attributes (used by ManifestAttributesArrayComponent)
   nestedAttributesConfig = {
     type: 'array' as const,
     key: 'attributes',
@@ -82,83 +85,6 @@ export class ManifestAttributeEditorModalComponent {
     }
   };
 
-  setContextPath(path: Array<string>) {
-    this.contextPathSegments = [...path];
-    this.initializeNestedAttributesConfig();
-  }
-
-  private initializeNestedAttributesConfig() {
-    // Set selectable types for the nested attributes config
-    const typeAttr = this.nestedAttributesConfig.rootAttribute.attributes.find((a: any) => a.key === 'type') as any;
-    if (typeAttr) {
-      typeAttr.selectableValues = [...this.availableTypes];
-    }
-  }
-
-  get nestedAttributesContext(): Array<string> {
-    const key = this.currentAttributeKey;
-    if (!key) {
-      return [...this.contextPathSegments];
-    }
-    return [...this.contextPathSegments, key];
-  }
-
-  get nestedAttributesTitle(): string {
-    const base = this.translateService.instant('configuration.oibus.manifest.transformers.manifest-builder.nested-attributes');
-    const key = this.currentAttributeKey;
-    return key ? `${base} (${key})` : base;
-  }
-
-  get nestedAttributesPath(): string | null {
-    const segments = this.nestedAttributesContext.filter(segment => !!segment);
-    return segments.length > 0 ? segments.join(' ▸ ') : null;
-  }
-
-  onGlobalKeydown(event: Event) {
-    const keyboardEvent = event as KeyboardEvent;
-    if (keyboardEvent.key !== 'Enter' || keyboardEvent.shiftKey) {
-      return;
-    }
-
-    const target = event.target as HTMLElement | null;
-    if (!target) {
-      return;
-    }
-
-    if (this.isSubmitControl(target) || target instanceof HTMLTextAreaElement) {
-      return;
-    }
-
-    keyboardEvent.preventDefault();
-    keyboardEvent.stopPropagation();
-  }
-
-  onNestedEnter(event: Event) {
-    this.onGlobalKeydown(event);
-  }
-
-  private isSubmitControl(target: HTMLElement): boolean {
-    if (target instanceof HTMLButtonElement) {
-      return true;
-    }
-
-    if (target instanceof HTMLInputElement) {
-      const type = (target.type || '').toLowerCase();
-      return type === 'submit' || type === 'button';
-    }
-
-    return target.closest('button[oib-save-button]') !== null;
-  }
-
-  private get currentAttributeKey(): string | null {
-    const keyControl = this.form.get('key');
-    const key = keyControl?.value;
-    if (key) {
-      return key;
-    }
-    return this.attribute?.key ?? null;
-  }
-
   form = this.fb.group({
     type: ['string', [Validators.required]],
     key: ['', [Validators.required]],
@@ -169,7 +95,7 @@ export class ManifestAttributeEditorModalComponent {
     displayInViewMode: [true],
     // Type-specific properties
     defaultValue_string: [''],
-    defaultValue_number: [null],
+    defaultValue_number: [null as number | null],
     defaultValue_boolean: [false],
     defaultValue_code: [''],
     defaultValue_timezone: [''],
@@ -186,12 +112,34 @@ export class ManifestAttributeEditorModalComponent {
     attributes: this.fb.control<Array<any>>([])
   });
 
-  prepareForCreation(scanModes: Array<ScanModeDTO>, certificates: Array<CertificateDTO>) {
+  /**
+   * Set the context path for this editor instance
+   * Called before prepareForCreation or prepareForEdition
+   */
+  setContextPath(path: Array<string>, depth = 0) {
+    this.contextPathSegments = [...path];
+    this.depth = depth;
+    this.initializeNestedAttributesConfig();
+  }
+
+  private initializeNestedAttributesConfig() {
+    // Set selectable types for the nested attributes config
+    const typeAttr = this.nestedAttributesConfig.rootAttribute.attributes.find((a: any) => a.key === 'type') as any;
+    if (typeAttr) {
+      typeAttr.selectableValues = [...this.availableTypes];
+    }
+  }
+
+  /**
+   * Prepare modal for creating a new attribute
+   */
+  prepareForCreation(scanModes: Array<ScanModeDTO>, certificates: Array<CertificateDTO>, contextPath: Array<string> = [], depth = 0) {
     this.mode = 'create';
     this.scanModes = scanModes;
     this.certificates = certificates;
     this.attribute = null;
-    // Don't reset contextPathSegments here - it should be set via setContextPath() before calling this method
+    this.setContextPath(contextPath, depth);
+
     this.form.reset({
       type: 'string',
       key: '',
@@ -217,12 +165,21 @@ export class ManifestAttributeEditorModalComponent {
     this.attributesControl.setValue([]);
   }
 
-  prepareForEdition(scanModes: Array<ScanModeDTO>, certificates: Array<CertificateDTO>, attribute: OIBusAttribute) {
+  /**
+   * Prepare modal for editing an existing attribute
+   */
+  prepareForEdition(
+    scanModes: Array<ScanModeDTO>,
+    certificates: Array<CertificateDTO>,
+    attribute: OIBusAttribute,
+    contextPath: Array<string> = [],
+    depth = 0
+  ) {
     this.mode = 'edit';
     this.scanModes = scanModes;
     this.certificates = certificates;
     this.attribute = attribute;
-    // Don't reset contextPathSegments here - it should be set via setContextPath() before calling this method
+    this.setContextPath(contextPath, depth);
     this.attributesControl.setValue([]);
     this.populateForm(attribute);
   }
@@ -472,7 +429,107 @@ export class ManifestAttributeEditorModalComponent {
     }
   }
 
-  // Helper methods for template
+  // ============================================================================
+  // Display Helpers
+  // ============================================================================
+
+  get nestedAttributesContext(): Array<string> {
+    const key = this.currentAttributeKey;
+    if (!key) {
+      // In create mode with empty key, expose a placeholder '' for the current element
+      return [...this.contextPathSegments, ''];
+    }
+    return [...this.contextPathSegments, key];
+  }
+
+  get nestedAttributesTitle(): string {
+    const base = this.translateService.instant('configuration.oibus.manifest.transformers.manifest-builder.nested-attributes');
+    const key = this.currentAttributeKey;
+    const depthIndicator = this.depth > 0 ? ` (Level ${this.depth + 1})` : '';
+
+    if (key) {
+      return `${base} (${key})${depthIndicator}`;
+    } else if (this.mode === 'create') {
+      return `${base} (New Attribute)${depthIndicator}`;
+    } else {
+      return `${base}${depthIndicator}`;
+    }
+  }
+
+  get nestedAttributesPath(): string | null {
+    const segments = this.nestedAttributesContext.filter(segment => !!segment);
+    if (segments.length === 0) return null;
+
+    return segments.map(segment => `<span>${segment}</span>`).join(' <i class="fa fa-solid fa-angle-right path-separator"></i> ');
+  }
+
+  get uniqueFormId(): string {
+    const contextHash = this.contextPathSegments.join('-') || 'root';
+    const depthSuffix = this.depth > 0 ? `-depth-${this.depth}` : '';
+    return `manifest-attribute-form-${contextHash}${depthSuffix}`;
+  }
+
+  private get currentAttributeKey(): string | null {
+    const keyControl = this.form.get('key');
+    const key = keyControl?.value;
+    if (key) {
+      return key;
+    }
+    return this.attribute?.key ?? null;
+  }
+
+  get attributesControl(): FormControl<Array<any>> {
+    return this.form.get('attributes') as FormControl<Array<any>>;
+  }
+
+  get recursionDepth(): number {
+    return this.depth;
+  }
+
+  // ============================================================================
+  // Keyboard Handling
+  // ============================================================================
+
+  onGlobalKeydown(event: Event) {
+    const keyboardEvent = event as KeyboardEvent;
+    if (keyboardEvent.key !== 'Enter' || keyboardEvent.shiftKey) {
+      return;
+    }
+
+    const target = event.target as HTMLElement | null;
+    if (!target) {
+      return;
+    }
+
+    if (this.isSubmitControl(target) || target instanceof HTMLTextAreaElement) {
+      return;
+    }
+
+    keyboardEvent.preventDefault();
+    keyboardEvent.stopPropagation();
+  }
+
+  onNestedEnter(event: Event) {
+    this.onGlobalKeydown(event);
+  }
+
+  private isSubmitControl(target: HTMLElement): boolean {
+    if (target instanceof HTMLButtonElement) {
+      return true;
+    }
+
+    if (target instanceof HTMLInputElement) {
+      const type = (target.type || '').toLowerCase();
+      return type === 'submit' || type === 'button';
+    }
+
+    return target.closest('button[oib-save-button]') !== null;
+  }
+
+  // ============================================================================
+  // Type Checking Helpers (for template)
+  // ============================================================================
+
   isStringType(): boolean {
     return this.form.get('type')?.value === 'string';
   }
@@ -516,11 +573,19 @@ export class ManifestAttributeEditorModalComponent {
     );
   }
 
-  get attributesControl(): FormControl<Array<any>> {
-    return this.form.get('attributes') as FormControl<Array<any>>;
-  }
-
   hasNestedAttributes(): boolean {
     return this.isObjectType() || this.isArrayType();
+  }
+
+  /**
+   * Called when nested attributes are modified
+   * Ensures the form state is properly updated
+   */
+  onNestedAttributeChange(): void {
+    // Mark the form as dirty to ensure changes are tracked
+    this.form.markAsDirty();
+
+    // Trigger value update to ensure latest nested data is captured
+    this.form.updateValueAndValidity();
   }
 }
