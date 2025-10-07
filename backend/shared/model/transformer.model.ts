@@ -6,7 +6,7 @@ export type InputType = (typeof INPUT_TYPES)[number];
 export const OUTPUT_TYPES = ['any', 'time-values', 'opcua', 'mqtt', 'modbus'];
 export type OutputType = (typeof OUTPUT_TYPES)[number];
 
-export const CUSTOM_TRANSFORMER_LANGUAGES = ['javascript', 'typescript', 'python'];
+export const CUSTOM_TRANSFORMER_LANGUAGES = ['javascript', 'typescript'];
 export type TransformerLanguage = (typeof CUSTOM_TRANSFORMER_LANGUAGES)[number];
 
 export interface BaseTransformerDTO {
