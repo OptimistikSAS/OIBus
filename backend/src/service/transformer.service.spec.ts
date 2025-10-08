@@ -283,6 +283,188 @@ describe('Transformer Service', () => {
     );
   });
 
+  describe('test a custom transformer', () => {
+    it('should test a custom transformer successfully', async () => {
+      const customTransformer: CustomTransformer = {
+        id: 'test-transformer',
+        type: 'custom',
+        name: 'Test Transformer',
+        description: 'Test transformer for testing',
+        inputType: 'time-values',
+        outputType: 'any',
+        customCode: `
+          function transform(data, source, filename, options) {
+            return {
+              data: JSON.parse(data),
+              filename: 'test-output.json',
+              numberOfElement: 1
+            };
+          }
+        `,
+        language: 'javascript',
+        customManifest: {
+          type: 'object',
+          key: 'options',
+          translationKey: 'test',
+          attributes: [],
+          enablingConditions: [],
+          validators: [],
+          displayProperties: {
+            visible: true,
+            wrapInBox: false
+          }
+        }
+      };
+
+      (transformerRepository.findById as jest.Mock).mockReturnValueOnce(customTransformer);
+
+      const testRequest = {
+        inputData: JSON.stringify([{ pointId: 'test', timestamp: '2023-01-01T00:00:00Z', data: { value: 42 } }]),
+        options: { testOption: 'value' }
+      };
+
+      const result = await service.test('test-transformer', testRequest);
+
+      expect(result).toHaveProperty('output');
+      expect(result).toHaveProperty('metadata');
+      expect(result.metadata).toHaveProperty('contentType', 'any');
+      expect(result.metadata).toHaveProperty('numberOfElement', 1);
+    });
+
+    it('should test a custom transformer with undefined options', async () => {
+      const customTransformer: CustomTransformer = {
+        id: 'test-transformer',
+        type: 'custom',
+        name: 'Test Transformer',
+        description: 'Test transformer for testing',
+        inputType: 'time-values',
+        outputType: 'any',
+        customCode: `
+          function transform(data, source, filename, options) {
+            return {
+              data: JSON.parse(data),
+              filename: 'test-output.json',
+              numberOfElement: 1
+            };
+          }
+        `,
+        language: 'javascript',
+        customManifest: {
+          type: 'object',
+          key: 'options',
+          translationKey: 'test',
+          attributes: [],
+          enablingConditions: [],
+          validators: [],
+          displayProperties: {
+            visible: true,
+            wrapInBox: false
+          }
+        }
+      };
+
+      (transformerRepository.findById as jest.Mock).mockReturnValueOnce(customTransformer);
+
+      const testRequest = {
+        inputData: JSON.stringify([{ pointId: 'test', timestamp: '2023-01-01T00:00:00Z', data: { value: 42 } }])
+        // options is undefined
+      };
+
+      const result = await service.test('test-transformer', testRequest);
+
+      expect(result).toHaveProperty('output');
+      expect(result).toHaveProperty('metadata');
+      expect(result.metadata).toHaveProperty('contentType', 'any');
+      expect(result.metadata).toHaveProperty('numberOfElement', 1);
+    });
+
+    it('should throw an error if transformer is a standard one', async () => {
+      const standardTransformer: StandardTransformer = {
+        id: 'test-transformer',
+        type: 'standard',
+        functionName: 'Test Transformer',
+        inputType: 'time-values',
+        outputType: 'any'
+      };
+
+      (transformerRepository.findById as jest.Mock).mockReturnValueOnce(standardTransformer);
+
+      const testRequest = {
+        inputData: JSON.stringify([{ pointId: 'test', timestamp: '2023-01-01T00:00:00Z', data: { value: 42 } }])
+        // options is undefined
+      };
+
+      await expect(service.test('test-transformer', testRequest)).rejects.toThrow(
+        `Cannot test standard transformer "${standardTransformer.functionName}"`
+      );
+    });
+  });
+
+  describe('generateTimeValuesTemplate', () => {
+    it('should generate time-values template with sample data', () => {
+      const template = service.generateTemplate('time-values');
+
+      expect(template.type).toBe('time-values');
+      expect(template.description).toBe('Sample time-series data with multiple sensor readings');
+
+      const data = JSON.parse(template.data);
+      expect(Array.isArray(data)).toBe(true);
+      expect(data.length).toBe(3);
+
+      // Check first time value
+      expect(data[0]).toHaveProperty('pointId', 'temperature_sensor_01');
+      expect(data[0]).toHaveProperty('timestamp');
+      expect(data[0]).toHaveProperty('data');
+      expect(data[0].data).toHaveProperty('value', 23.5);
+      expect(data[0].data).toHaveProperty('unit', '°C');
+      expect(data[0].data).toHaveProperty('quality', 'good');
+    });
+  });
+
+  describe('generateSetpointTemplate', () => {
+    it('should generate setpoint template with sample data', () => {
+      const template = service.generateTemplate('setpoint');
+
+      expect(template.type).toBe('setpoint');
+      expect(template.description).toBe('Sample setpoint commands for various parameters');
+
+      const data = JSON.parse(template.data);
+      expect(Array.isArray(data)).toBe(true);
+      expect(data.length).toBe(4);
+
+      // Check first setpoint
+      expect(data[0]).toHaveProperty('reference', 'setpoint_temperature');
+      expect(data[0]).toHaveProperty('value', 22.0);
+
+      // Check boolean setpoint
+      expect(data[2]).toHaveProperty('reference', 'setpoint_enabled');
+      expect(data[2]).toHaveProperty('value', true);
+    });
+  });
+
+  describe('generateFileTemplate', () => {
+    it('should generate file template with sample data', () => {
+      const template = service.generateTemplate('any');
+
+      expect(template.type).toBe('any');
+      expect(template.description).toBe('Sample file content with structured data');
+
+      const data = JSON.parse(template.data);
+      expect(data).toHaveProperty('timestamp');
+      expect(data).toHaveProperty('source', 'test_device');
+      expect(data).toHaveProperty('measurements');
+      expect(data).toHaveProperty('metadata');
+
+      expect(data.measurements).toHaveProperty('temperature', 23.5);
+      expect(data.measurements).toHaveProperty('humidity', 65.2);
+      expect(data.measurements).toHaveProperty('pressure', 1013.25);
+
+      expect(data.metadata).toHaveProperty('device_id', 'sensor_001');
+      expect(data.metadata).toHaveProperty('location', 'building_a_floor_2');
+      expect(data.metadata).toHaveProperty('firmware_version', '1.2.3');
+    });
+  });
+
   it('should get standard manifest', async () => {
     expect(getStandardManifest('iso')).toEqual(IsoTransformer.manifestSettings);
     expect(getStandardManifest('ignore')).toEqual(IgnoreTransformer.manifestSettings);
@@ -306,6 +488,7 @@ describe('Transformer Service', () => {
       name: customTransformer.name,
       description: customTransformer.description,
       inputType: customTransformer.inputType,
+      language: customTransformer.language,
       outputType: customTransformer.outputType,
       customCode: customTransformer.customCode,
       manifest: customTransformer.customManifest
