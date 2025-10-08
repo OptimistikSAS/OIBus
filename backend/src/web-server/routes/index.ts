@@ -147,6 +147,7 @@ router.put('/api/registration/edit', (ctx: KoaContext<RegistrationSettingsComman
 router.put('/api/registration/unregister', (ctx: KoaContext<void, void>) => registrationController.unregister(ctx));
 
 router.get('/api/transformers', (ctx: KoaContext<void, Array<TransformerDTO>>) => transformerController.findAll(ctx));
+router.get('/api/transformers/input-template', (ctx: KoaContext<void, InputTemplate>) => transformerController.getInputTemplate(ctx));
 router.get('/api/transformers/:id', (ctx: KoaContext<void, TransformerDTO>) => transformerController.findById(ctx));
 router.post('/api/transformers', (ctx: KoaContext<CustomTransformerCommand, TransformerDTO>) => transformerController.create(ctx));
 router.put('/api/transformers/:id', (ctx: KoaContext<CustomTransformerCommand, void>) => transformerController.update(ctx));
@@ -154,7 +155,6 @@ router.delete('/api/transformers/:id', (ctx: KoaContext<void, void>) => transfor
 router.post('/api/transformers/:id/test', (ctx: KoaContext<TransformerTestRequest, TransformerTestResponse>) =>
   transformerController.test(ctx)
 );
-router.get('/api/transformers/input-template', (ctx: KoaContext<void, InputTemplate>) => transformerController.getInputTemplate(ctx));
 
 router.get('/api/ip-filters', (ctx: KoaContext<void, Array<IPFilterDTO>>) => ipFilterController.findAll(ctx));
 router.get('/api/ip-filters/:id', (ctx: KoaContext<void, IPFilterDTO>) => ipFilterController.findById(ctx));
