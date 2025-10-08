@@ -2,8 +2,11 @@ import { Body, Controller, Delete, Get, Path, Post, Put, Query, Request, Route, 
 import {
   CustomTransformerCommandDTO,
   CustomTransformerDTO,
+  InputTemplate,
+  InputType,
   TransformerDTO,
-  TransformerSearchParam
+  TransformerSearchParam,
+  TransformerTestRequest
 } from '../../../shared/model/transformer.model';
 import { toTransformerDTO } from '../../service/transformer.service';
 import { Page } from '../../../shared/model/types';
@@ -110,5 +113,22 @@ export class TransformerController extends Controller {
   async delete(@Path() transformerId: string, @Request() request: CustomExpressRequest): Promise<void> {
     const transformerService = request.services.transformerService;
     await transformerService.delete(transformerId);
+  }
+
+  @Post('/{transformerId}/test')
+  @SuccessResponse(204, 'No Content')
+  async test(
+    @Path() transformerId: string,
+    @Body() command: TransformerTestRequest,
+    @Request() request: CustomExpressRequest
+  ): Promise<void> {
+    const transformerService = request.services.transformerService;
+    await transformerService.test(transformerId, command);
+  }
+
+  @Get('/template/{inputType}')
+  async getInputTemplate(@Path() inputType: InputType, @Request() request: CustomExpressRequest): Promise<InputTemplate> {
+    const transformerService = request.services.transformerService;
+    return transformerService.generateTemplate(inputType);
   }
 }

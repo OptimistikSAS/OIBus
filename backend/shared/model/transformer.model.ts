@@ -9,6 +9,12 @@ export type OutputType = (typeof OUTPUT_TYPES)[number];
 export const CUSTOM_TRANSFORMER_LANGUAGES = ['javascript', 'typescript'];
 export type TransformerLanguage = (typeof CUSTOM_TRANSFORMER_LANGUAGES)[number];
 
+export interface InputTemplate {
+  type: InputType;
+  data: string;
+  description: string;
+}
+
 /**
  * Base Data Transfer Object for a transformer.
  * Represents the common properties of both custom and standard transformers.
@@ -224,4 +230,17 @@ export interface TransformerSearchParam {
    * @example 1
    */
   page: number;
+}
+
+export interface TransformerTestRequest {
+  inputData: string;
+  options?: object;
+}
+
+export interface TransformerTestResponse {
+  output: string;
+  metadata: {
+    contentType: string;
+    numberOfElement: number;
+  };
 }
