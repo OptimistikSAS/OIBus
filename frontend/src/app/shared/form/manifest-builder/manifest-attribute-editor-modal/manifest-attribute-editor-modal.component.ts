@@ -123,10 +123,9 @@ export class ManifestAttributeEditorModalComponent {
   }
 
   private initializeNestedAttributesConfig() {
-    // Set selectable types for the nested attributes config
-    const typeAttr = this.nestedAttributesConfig.rootAttribute.attributes.find((a: any) => a.key === 'type') as any;
-    if (typeAttr) {
-      typeAttr.selectableValues = [...this.availableTypes];
+    const typeAttributes = this.nestedAttributesConfig.rootAttribute.attributes.find((a: any) => a.key === 'type') as any;
+    if (typeAttributes) {
+      typeAttributes.selectableValues = [...this.availableTypes];
     }
   }
 
@@ -194,7 +193,6 @@ export class ManifestAttributeEditorModalComponent {
       displayInViewMode: (attribute as any).displayProperties?.displayInViewMode ?? true
     };
 
-    // Type-specific values
     switch (attribute.type) {
       case 'string':
         formValue.defaultValue_string = (attribute as any).defaultValue ?? '';
@@ -429,10 +427,6 @@ export class ManifestAttributeEditorModalComponent {
     }
   }
 
-  // ============================================================================
-  // Display Helpers
-  // ============================================================================
-
   get nestedAttributesContext(): Array<string> {
     const key = this.currentAttributeKey;
     if (!key) {
@@ -486,10 +480,6 @@ export class ManifestAttributeEditorModalComponent {
     return this.depth;
   }
 
-  // ============================================================================
-  // Keyboard Handling
-  // ============================================================================
-
   onGlobalKeydown(event: Event) {
     const keyboardEvent = event as KeyboardEvent;
     if (keyboardEvent.key !== 'Enter' || keyboardEvent.shiftKey) {
@@ -526,10 +516,7 @@ export class ManifestAttributeEditorModalComponent {
     return target.closest('button[oib-save-button]') !== null;
   }
 
-  // ============================================================================
   // Type Checking Helpers (for template)
-  // ============================================================================
-
   isStringType(): boolean {
     return this.form.get('type')?.value === 'string';
   }
@@ -582,10 +569,7 @@ export class ManifestAttributeEditorModalComponent {
    * Ensures the form state is properly updated
    */
   onNestedAttributeChange(): void {
-    // Mark the form as dirty to ensure changes are tracked
     this.form.markAsDirty();
-
-    // Trigger value update to ensure latest nested data is captured
     this.form.updateValueAndValidity();
   }
 }

@@ -50,7 +50,7 @@ export class ManifestAttributesArrayComponent {
   arrayAttribute = input.required<OIBusArrayAttribute>();
   contextPath = input<Array<string>>([]);
 
-  // ✅ Emit when nested data changes (for parent modals to react)
+  // Emit when nested data changes (for parent modals to react)
   nestedChange = output<void>();
 
   private readonly controlValue = toSignal(toObservable(this.control).pipe(switchMap(c => c.valueChanges.pipe(startWith(c.value)))));
@@ -72,7 +72,6 @@ export class ManifestAttributesArrayComponent {
     modal.result.subscribe(arrayElement => {
       this.control().setValue([...this.control().value, arrayElement]);
       this.paginatedValues().gotoPage(0);
-      // ✅ Notify parent that nested data changed
       this.control().markAsDirty();
       this.nestedChange.emit();
     });
@@ -93,7 +92,6 @@ export class ManifestAttributesArrayComponent {
     modal.result.subscribe(arrayElement => {
       this.control().setValue([...this.control().value, arrayElement]);
       this.paginatedValues().gotoPage(0);
-      // ✅ Notify parent that nested data changed
       this.control().markAsDirty();
       this.nestedChange.emit();
     });
@@ -112,7 +110,6 @@ export class ManifestAttributesArrayComponent {
 
       this.control().setValue(newArray);
       this.paginatedValues().gotoPage(0);
-      // ✅ Notify parent that nested data changed
       this.control().markAsDirty();
       this.nestedChange.emit();
     });
@@ -124,7 +121,6 @@ export class ManifestAttributesArrayComponent {
     newArray.splice(index, 1);
     this.control().setValue(newArray);
     this.paginatedValues().gotoPage(0);
-    // ✅ Notify parent that nested data changed
     this.control().markAsDirty();
     this.nestedChange.emit();
   }
