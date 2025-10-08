@@ -909,11 +909,23 @@
             "language": "Language",
             "custom-manifest": "Options",
             "select-language": "Select a programming language first.",
+            "test": "Test",
             "tooltips": {
               "add": "Add a Custom Transformer",
               "edit": "Edit this Custom Transformer",
               "delete": "Delete this Custom Transformer"
             }
+          },
+          "test-transformer-modal": {
+            "title": "Test Custom Transformer",
+            "transformer": "Transformer",
+            "input-type": "Input Type",
+            "input-data": "Input Data",
+            "options": "Options",
+            "output": "Output",
+            "results": "Results",
+            "success": "Test completed successfully",
+            "test": "Run Test"
           },
           "attributes": {
             "attribute": "Attribute",
