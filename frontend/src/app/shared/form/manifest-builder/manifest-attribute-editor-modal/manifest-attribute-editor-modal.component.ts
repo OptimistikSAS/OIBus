@@ -1,31 +1,89 @@
 import { Component, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { TranslateDirective } from '@ngx-translate/core';
+import { FormControl, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { TranslateDirective, TranslateService } from '@ngx-translate/core';
 import { ObservableState, SaveButtonComponent } from '../../../save-button/save-button.component';
 import { OIBusAttribute, OIBUS_ATTRIBUTE_TYPES } from '../../../../../../../backend/shared/model/form.model';
 import { ScanModeDTO } from '../../../../../../../backend/shared/model/scan-mode.model';
 import { CertificateDTO } from '../../../../../../../backend/shared/model/certificate.model';
 import { ValErrorDelayDirective } from '../../val-error-delay.directive';
 import { ValidationErrorsComponent } from 'ngx-valdemort';
+import { ManifestAttributesArrayComponent } from '../manifest-attributes-array/manifest-attributes-array.component';
 
 @Component({
   selector: 'oib-manifest-attribute-editor-modal',
   templateUrl: './manifest-attribute-editor-modal.component.html',
   styleUrl: './manifest-attribute-editor-modal.component.scss',
-  imports: [ReactiveFormsModule, TranslateDirective, SaveButtonComponent, ValErrorDelayDirective, ValidationErrorsComponent]
+  imports: [
+    ReactiveFormsModule,
+    TranslateDirective,
+    SaveButtonComponent,
+    ValErrorDelayDirective,
+    ValidationErrorsComponent,
+    ManifestAttributesArrayComponent
+  ]
 })
 export class ManifestAttributeEditorModalComponent {
   private activeModal = inject(NgbActiveModal);
   private fb = inject(NonNullableFormBuilder);
+  private translateService = inject(TranslateService);
 
   mode: 'create' | 'edit' = 'create';
   scanModes: Array<ScanModeDTO> = [];
   certificates: Array<CertificateDTO> = [];
   attribute: OIBusAttribute | null = null;
 
+  // Context tracking for nested editing
+  private contextPathSegments: Array<string> = [];
+  private depth = 0;
+
   state = new ObservableState();
   availableTypes = OIBUS_ATTRIBUTE_TYPES.filter((t: string) => t !== 'transformer-array');
+
+  // Configuration for nested attributes (used by ManifestAttributesArrayComponent)
+  nestedAttributesConfig = {
+    type: 'array' as const,
+    key: 'attributes',
+    translationKey: 'configuration.oibus.manifest.transformers.manifest-builder.nested-attributes',
+    paginate: false,
+    numberOfElementPerPage: 20,
+    validators: [],
+    rootAttribute: {
+      type: 'object' as const,
+      key: 'attribute',
+      translationKey: 'configuration.oibus.manifest.transformers.manifest-builder.attribute',
+      attributes: [
+        {
+          type: 'string-select' as const,
+          key: 'type',
+          translationKey: 'configuration.oibus.manifest.transformers.manifest-builder.type',
+          selectableValues: [],
+          defaultValue: 'string',
+          validators: [],
+          displayProperties: { row: 0, columns: 4, displayInViewMode: true }
+        },
+        {
+          type: 'string' as const,
+          key: 'key',
+          translationKey: 'configuration.oibus.manifest.transformers.manifest-builder.key',
+          defaultValue: '',
+          validators: [],
+          displayProperties: { row: 0, columns: 4, displayInViewMode: true }
+        },
+        {
+          type: 'string' as const,
+          key: 'translationKey',
+          translationKey: 'configuration.oibus.manifest.transformers.manifest-builder.translation-key',
+          defaultValue: '',
+          validators: [],
+          displayProperties: { row: 0, columns: 4, displayInViewMode: true }
+        }
+      ],
+      enablingConditions: [],
+      validators: [],
+      displayProperties: { visible: true, wrapInBox: false }
+    }
+  };
 
   form = this.fb.group({
     type: ['string', [Validators.required]],
@@ -37,7 +95,7 @@ export class ManifestAttributeEditorModalComponent {
     displayInViewMode: [true],
     // Type-specific properties
     defaultValue_string: [''],
-    defaultValue_number: [null],
+    defaultValue_number: [null as number | null],
     defaultValue_boolean: [false],
     defaultValue_code: [''],
     defaultValue_timezone: [''],
@@ -49,14 +107,38 @@ export class ManifestAttributeEditorModalComponent {
     visible: [true],
     wrapInBox: [false],
     paginate: [false],
-    numberOfElementPerPage: [20]
+    numberOfElementPerPage: [20],
+    // Nested attributes for object and array types
+    attributes: this.fb.control<Array<any>>([])
   });
 
-  prepareForCreation(scanModes: Array<ScanModeDTO>, certificates: Array<CertificateDTO>) {
+  /**
+   * Set the context path for this editor instance
+   * Called before prepareForCreation or prepareForEdition
+   */
+  setContextPath(path: Array<string>, depth = 0) {
+    this.contextPathSegments = [...path];
+    this.depth = depth;
+    this.initializeNestedAttributesConfig();
+  }
+
+  private initializeNestedAttributesConfig() {
+    const typeAttributes = this.nestedAttributesConfig.rootAttribute.attributes.find((a: any) => a.key === 'type') as any;
+    if (typeAttributes) {
+      typeAttributes.selectableValues = [...this.availableTypes];
+    }
+  }
+
+  /**
+   * Prepare modal for creating a new attribute
+   */
+  prepareForCreation(scanModes: Array<ScanModeDTO>, certificates: Array<CertificateDTO>, contextPath: Array<string> = [], depth = 0) {
     this.mode = 'create';
     this.scanModes = scanModes;
     this.certificates = certificates;
     this.attribute = null;
+    this.setContextPath(contextPath, depth);
+
     this.form.reset({
       type: 'string',
       key: '',
@@ -76,15 +158,28 @@ export class ManifestAttributeEditorModalComponent {
       visible: true,
       wrapInBox: false,
       paginate: false,
-      numberOfElementPerPage: 20
+      numberOfElementPerPage: 20,
+      attributes: []
     });
+    this.attributesControl.setValue([]);
   }
 
-  prepareForEdition(scanModes: Array<ScanModeDTO>, certificates: Array<CertificateDTO>, attribute: OIBusAttribute) {
+  /**
+   * Prepare modal for editing an existing attribute
+   */
+  prepareForEdition(
+    scanModes: Array<ScanModeDTO>,
+    certificates: Array<CertificateDTO>,
+    attribute: OIBusAttribute,
+    contextPath: Array<string> = [],
+    depth = 0
+  ) {
     this.mode = 'edit';
     this.scanModes = scanModes;
     this.certificates = certificates;
     this.attribute = attribute;
+    this.setContextPath(contextPath, depth);
+    this.attributesControl.setValue([]);
     this.populateForm(attribute);
   }
 
@@ -98,7 +193,6 @@ export class ManifestAttributeEditorModalComponent {
       displayInViewMode: (attribute as any).displayProperties?.displayInViewMode ?? true
     };
 
-    // Type-specific values
     switch (attribute.type) {
       case 'string':
         formValue.defaultValue_string = (attribute as any).defaultValue ?? '';
@@ -127,10 +221,12 @@ export class ManifestAttributeEditorModalComponent {
       case 'object':
         formValue.visible = (attribute as any).displayProperties?.visible ?? true;
         formValue.wrapInBox = (attribute as any).displayProperties?.wrapInBox ?? false;
+        this.attributesControl.setValue([...((attribute as any).attributes ?? [])]);
         break;
       case 'array':
         formValue.paginate = (attribute as any).paginate ?? false;
         formValue.numberOfElementPerPage = (attribute as any).numberOfElementPerPage ?? 20;
+        this.attributesControl.setValue([...((attribute as any).rootAttribute?.attributes ?? [])]);
         break;
     }
 
@@ -152,8 +248,10 @@ export class ManifestAttributeEditorModalComponent {
       visible: true,
       wrapInBox: false,
       paginate: false,
-      numberOfElementPerPage: 20
+      numberOfElementPerPage: 20,
+      attributes: []
     });
+    this.attributesControl.setValue([]);
   }
 
   dismiss() {
@@ -291,7 +389,7 @@ export class ManifestAttributeEditorModalComponent {
         return {
           ...baseAttribute,
           type: 'object',
-          attributes: [],
+          attributes: formValue.attributes || [],
           enablingConditions: [],
           displayProperties: {
             visible: formValue.visible ?? true,
@@ -314,7 +412,7 @@ export class ManifestAttributeEditorModalComponent {
             type: 'object',
             key: 'element',
             translationKey: formValue.translationKey || 'configuration.oibus.manifest.transformers.mapping.title',
-            attributes: [],
+            attributes: formValue.attributes || [],
             enablingConditions: [],
             validators: [],
             displayProperties: {
@@ -329,7 +427,96 @@ export class ManifestAttributeEditorModalComponent {
     }
   }
 
-  // Helper methods for template
+  get nestedAttributesContext(): Array<string> {
+    const key = this.currentAttributeKey;
+    if (!key) {
+      // In create mode with empty key, expose a placeholder '' for the current element
+      return [...this.contextPathSegments, ''];
+    }
+    return [...this.contextPathSegments, key];
+  }
+
+  get nestedAttributesTitle(): string {
+    const base = this.translateService.instant('configuration.oibus.manifest.transformers.manifest-builder.nested-attributes');
+    const key = this.currentAttributeKey;
+    const depthIndicator = this.depth > 0 ? ` (Level ${this.depth + 1})` : '';
+
+    if (key) {
+      return `${base} (${key})${depthIndicator}`;
+    } else if (this.mode === 'create') {
+      return `${base} (New Attribute)${depthIndicator}`;
+    } else {
+      return `${base}${depthIndicator}`;
+    }
+  }
+
+  get nestedAttributesPath(): string | null {
+    const segments = this.nestedAttributesContext.filter(segment => !!segment);
+    if (segments.length === 0) return null;
+
+    return segments.map(segment => `<span>${segment}</span>`).join(' <i class="fa fa-solid fa-angle-right path-separator"></i> ');
+  }
+
+  get uniqueFormId(): string {
+    const contextHash = this.contextPathSegments.join('-') || 'root';
+    const depthSuffix = this.depth > 0 ? `-depth-${this.depth}` : '';
+    return `manifest-attribute-form-${contextHash}${depthSuffix}`;
+  }
+
+  private get currentAttributeKey(): string | null {
+    const keyControl = this.form.get('key');
+    const key = keyControl?.value;
+    if (key) {
+      return key;
+    }
+    return this.attribute?.key ?? null;
+  }
+
+  get attributesControl(): FormControl<Array<any>> {
+    return this.form.get('attributes') as FormControl<Array<any>>;
+  }
+
+  get recursionDepth(): number {
+    return this.depth;
+  }
+
+  onGlobalKeydown(event: Event) {
+    const keyboardEvent = event as KeyboardEvent;
+    if (keyboardEvent.key !== 'Enter' || keyboardEvent.shiftKey) {
+      return;
+    }
+
+    const target = event.target as HTMLElement | null;
+    if (!target) {
+      return;
+    }
+
+    if (this.isSubmitControl(target) || target instanceof HTMLTextAreaElement) {
+      return;
+    }
+
+    keyboardEvent.preventDefault();
+    keyboardEvent.stopPropagation();
+  }
+
+  onNestedEnter(event: Event) {
+    this.onGlobalKeydown(event);
+  }
+
+  private isSubmitControl(target: HTMLElement): boolean {
+    if (target instanceof HTMLButtonElement) {
+      return true;
+    }
+
+    if (target instanceof HTMLInputElement) {
+      const type = (target.type || '').toLowerCase();
+      return type === 'submit' || type === 'button';
+    }
+
+    return target.closest('button[oib-save-button]') !== null;
+  }
+
+  // Type Checking Helpers (for template)
   isStringType(): boolean {
     return this.form.get('type')?.value === 'string';
   }
@@ -371,5 +558,18 @@ export class ManifestAttributeEditorModalComponent {
     return ['string', 'number', 'boolean', 'code', 'string-select', 'timezone', 'scan-mode', 'secret', 'instant', 'certificate'].includes(
       type || ''
     );
+  }
+
+  hasNestedAttributes(): boolean {
+    return this.isObjectType() || this.isArrayType();
+  }
+
+  /**
+   * Called when nested attributes are modified
+   * Ensures the form state is properly updated
+   */
+  onNestedAttributeChange(): void {
+    this.form.markAsDirty();
+    this.form.updateValueAndValidity();
   }
 }

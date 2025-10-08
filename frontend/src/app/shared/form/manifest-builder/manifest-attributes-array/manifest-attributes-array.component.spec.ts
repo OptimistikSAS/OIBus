@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { fakeAsync, tick, TestBed } from '@angular/core/testing';
 import { Component } from '@angular/core';
 import { ComponentTester, TestButton } from 'ngx-speculoos';
 import { ManifestAttributesArrayComponent } from './manifest-attributes-array.component';
@@ -154,18 +154,34 @@ class TestComponentTester extends ComponentTester<TestComponent> {
 describe('ManifestAttributesArrayComponent', () => {
   let tester: TestComponentTester;
   let mockModalService: jasmine.SpyObj<ModalService>;
+  let openAttributeEditorSpy: jasmine.Spy;
 
   beforeEach(() => {
     mockModalService = jasmine.createSpyObj('ModalService', ['open']);
 
-    // Mock the modal service to return a simple observable
-    mockModalService.open.and.returnValue({
-      result: of({}),
+    const createModalInstance = (resultValue?: any) => ({
+      result: of(resultValue !== undefined ? resultValue : {}),
       componentInstance: {
+        setContextPath: jasmine.createSpy('setContextPath'),
         prepareForCreation: jasmine.createSpy('prepareForCreation'),
         prepareForEdition: jasmine.createSpy('prepareForEdition')
       }
-    } as any);
+    });
+
+    mockModalService.open.and.returnValue(createModalInstance() as any);
+
+    openAttributeEditorSpy = spyOn<any>(ManifestAttributesArrayComponent.prototype, 'openAttributeEditor').and.callFake(function (
+      initialise = true
+    ) {
+      const DummyComponent = function () {} as any;
+      const modal = mockModalService.open(DummyComponent);
+
+      (modal.componentInstance as any).setContextPath();
+      if (initialise) {
+        (modal.componentInstance as any).prepareForCreation();
+      }
+      return Promise.resolve(modal);
+    });
 
     TestBed.configureTestingModule({
       providers: [provideI18nTesting(), { provide: ModalService, useValue: mockModalService }]
@@ -216,19 +232,21 @@ describe('ManifestAttributesArrayComponent', () => {
   });
 
   describe('Add Item Functionality', () => {
-    it('should open modal when add button is clicked', () => {
+    it('should open modal when add button is clicked', fakeAsync(() => {
       tester.addButton.click();
+      tick();
+      expect(openAttributeEditorSpy).toHaveBeenCalled();
+    }));
 
-      expect(mockModalService.open).toHaveBeenCalled();
-    });
-
-    it('should prepare modal for creation', () => {
+    it('should prepare modal for creation', fakeAsync(() => {
       tester.addButton.click();
+      tick();
+      expect(openAttributeEditorSpy).toHaveBeenCalled();
+      const modal = mockModalService.open.calls.mostRecent().returnValue as { componentInstance: any };
+      expect(modal.componentInstance.prepareForCreation).toHaveBeenCalled();
+    }));
 
-      expect(mockModalService.open).toHaveBeenCalled();
-    });
-
-    it('should add new item when modal returns result', () => {
+    it('should add new item when modal returns result', fakeAsync(() => {
       const newAttribute = {
         type: 'string',
         key: 'newKey',
@@ -239,21 +257,22 @@ describe('ManifestAttributesArrayComponent', () => {
       mockModalService.open.and.returnValue({
         result: of(newAttribute),
         componentInstance: {
+          setContextPath: jasmine.createSpy('setContextPath'),
           prepareForCreation: jasmine.createSpy('prepareForCreation'),
           prepareForEdition: jasmine.createSpy('prepareForEdition')
         }
       } as any);
 
       tester.addButton.click();
+      tick();
       tester.detectChanges();
 
       expect(tester.componentInstance.attributesControl.value).toContain(newAttribute);
-    });
+    }));
   });
 
   describe('Edit Item Functionality', () => {
     beforeEach(() => {
-      // Add some test data
       const testAttributes = [
         {
           type: 'string',
@@ -281,13 +300,13 @@ describe('ManifestAttributesArrayComponent', () => {
       expect(tester.editButtons.length).toBe(2);
     });
 
-    it('should open modal when edit button is clicked', () => {
+    it('should open modal when edit button is clicked', fakeAsync(() => {
       tester.editButtons[0].click();
+      tick();
+      expect(openAttributeEditorSpy).toHaveBeenCalled();
+    }));
 
-      expect(mockModalService.open).toHaveBeenCalled();
-    });
-
-    it('should update item when modal returns result', () => {
+    it('should update item when modal returns result', fakeAsync(() => {
       const updatedAttribute = {
         type: 'string',
         key: 'updatedKey',
@@ -298,17 +317,19 @@ describe('ManifestAttributesArrayComponent', () => {
       mockModalService.open.and.returnValue({
         result: of(updatedAttribute),
         componentInstance: {
+          setContextPath: jasmine.createSpy('setContextPath'),
           prepareForCreation: jasmine.createSpy('prepareForCreation'),
           prepareForEdition: jasmine.createSpy('prepareForEdition')
         }
       } as any);
 
       tester.editButtons[0].click();
+      tick();
       tester.detectChanges();
 
       const currentValue = tester.componentInstance.attributesControl.value;
       expect(currentValue?.[0]).toEqual(jasmine.objectContaining(updatedAttribute));
-    });
+    }));
   });
 
   describe('Copy Item Functionality', () => {
@@ -329,13 +350,13 @@ describe('ManifestAttributesArrayComponent', () => {
       expect(tester.copyButtons.length).toBe(1);
     });
 
-    it('should open modal when copy button is clicked', () => {
+    it('should open modal when copy button is clicked', fakeAsync(() => {
       tester.copyButtons[0].click();
+      tick();
+      expect(openAttributeEditorSpy).toHaveBeenCalled();
+    }));
 
-      expect(mockModalService.open).toHaveBeenCalled();
-    });
-
-    it('should add copied item when modal returns result', () => {
+    it('should add copied item when modal returns result', fakeAsync(() => {
       const copiedAttribute = {
         type: 'string',
         key: 'testKey_copy',
@@ -346,18 +367,20 @@ describe('ManifestAttributesArrayComponent', () => {
       mockModalService.open.and.returnValue({
         result: of(copiedAttribute),
         componentInstance: {
+          setContextPath: jasmine.createSpy('setContextPath'),
           prepareForCreation: jasmine.createSpy('prepareForCreation'),
           prepareForEdition: jasmine.createSpy('prepareForEdition')
         }
       } as any);
 
       tester.copyButtons[0].click();
+      tick();
       tester.detectChanges();
 
       const currentValue = tester.componentInstance.attributesControl.value;
       expect(currentValue?.length).toBe(2);
       expect(currentValue?.[1]).toEqual(copiedAttribute);
-    });
+    }));
   });
 
   describe('Delete Item Functionality', () => {
@@ -515,7 +538,7 @@ describe('ManifestAttributesArrayComponent', () => {
   });
 
   describe('Integration with Form Control', () => {
-    it('should update form control when items are added', () => {
+    it('should update form control when items are added', fakeAsync(() => {
       const newAttribute = {
         type: 'string',
         key: 'newKey',
@@ -526,16 +549,18 @@ describe('ManifestAttributesArrayComponent', () => {
       mockModalService.open.and.returnValue({
         result: of(newAttribute),
         componentInstance: {
+          setContextPath: jasmine.createSpy('setContextPath'),
           prepareForCreation: jasmine.createSpy('prepareForCreation'),
           prepareForEdition: jasmine.createSpy('prepareForEdition')
         }
       } as any);
 
       tester.addButton.click();
+      tick();
       tester.detectChanges();
 
       expect(tester.componentInstance.attributesControl.value).toContain(newAttribute);
-    });
+    }));
 
     it('should update form control when items are edited', () => {
       const testAttributes = [

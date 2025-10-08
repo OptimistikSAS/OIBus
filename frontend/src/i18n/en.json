@@ -933,14 +933,28 @@
             "columns": "Columns",
             "display-in-view-mode": "Display in View Mode",
             "nested-attributes": "Nested Attributes",
-            "object-info": "Object attributes can contain nested attributes",
-            "array-info": "Array elements can contain nested attributes",
+            "nested-context": "Nested Attributes — {{ path }}",
             "secret-info": "Secret fields are used for sensitive data",
             "instant-info": "Instant fields are used for timestamp values",
             "certificate-info": "Certificate fields are used for SSL certificates",
             "edit-transformer-modal": {
               "create-title": "Create Attribute",
               "edit-title": "Edit Attribute"
+            }
+          },
+          "attributes": {
+            "attribute": "Attribute",
+            "sub-attribute": "Sub-attribute",
+            "root-attribute": "Root attribute",
+            "root-attribute-item": "Root attribute item",
+            "key": "Key",
+            "type": "Type",
+            "translation-key": "Translation key",
+            "paginate": "Paginate",
+            "number-of-elements-per-page": "Number of elements per page",
+            "display-properties": {
+              "visible": "Visible",
+              "wrap-in-box": "Wrap in box"
             }
           },
           "mapping": {

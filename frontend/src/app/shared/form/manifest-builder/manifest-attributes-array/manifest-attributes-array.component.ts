@@ -1,4 +1,4 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
 import { ControlContainer, FormControl, FormGroup, FormGroupName, ReactiveFormsModule } from '@angular/forms';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { startWith, switchMap } from 'rxjs';
@@ -7,14 +7,15 @@ import { OIBusArrayAttribute, OIBusAttributeType } from '../../../../../../../ba
 import { BoxComponent, BoxTitleDirective } from '../../../box/box.component';
 import { PaginationComponent } from '../../../pagination/pagination.component';
 import { ModalService } from '../../../modal.service';
+import type { Modal } from '../../../modal.service';
 import { ArrayPage } from '../../../pagination/array-page';
 import { ScanModeDTO } from '../../../../../../../backend/shared/model/scan-mode.model';
 import { CertificateDTO } from '../../../../../../../backend/shared/model/certificate.model';
-import { ManifestAttributeEditorModalComponent } from '../manifest-attribute-editor-modal/manifest-attribute-editor-modal.component';
 import { ValErrorDelayDirective } from '../../val-error-delay.directive';
 import { ValidationErrorsComponent } from 'ngx-valdemort';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FormUtils } from '../../form-utils';
+import type { ManifestAttributeEditorModalComponent } from '../manifest-attribute-editor-modal/manifest-attribute-editor-modal.component';
 
 @Component({
   selector: 'oib-manifest-attributes-array',
@@ -47,6 +48,10 @@ export class ManifestAttributesArrayComponent {
   parentGroup = input.required<FormGroup>();
   control = input.required<FormControl<Array<any>>>();
   arrayAttribute = input.required<OIBusArrayAttribute>();
+  contextPath = input<Array<string>>([]);
+
+  // Emit when nested data changes (for parent modals to react)
+  nestedChange = output<void>();
 
   private readonly controlValue = toSignal(toObservable(this.control).pipe(switchMap(c => c.valueChanges.pipe(startWith(c.value)))));
   readonly columns = computed(() => FormUtils.buildColumn(this.arrayAttribute().rootAttribute, []));
@@ -59,32 +64,44 @@ export class ManifestAttributesArrayComponent {
 
   async addItem(event: Event) {
     event.preventDefault();
-    const modal = this.modalService.open(ManifestAttributeEditorModalComponent, { size: 'lg' });
-    modal.componentInstance.prepareForCreation(this.scanModes(), this.certificates());
+    const modal = await this.openAttributeEditor();
+    const depth = this.contextPath().length;
+
+    modal.componentInstance.prepareForCreation(this.scanModes(), this.certificates(), this.contextPath(), depth);
 
     modal.result.subscribe(arrayElement => {
       this.control().setValue([...this.control().value, arrayElement]);
       this.paginatedValues().gotoPage(0);
+      this.control().markAsDirty();
+      this.nestedChange.emit();
     });
   }
 
   async copyItem(element: any) {
-    const modal = this.modalService.open(ManifestAttributeEditorModalComponent, { size: 'lg' });
-    modal.componentInstance.prepareForCreation(this.scanModes(), this.certificates());
+    const modal = await this.openAttributeEditor();
+    const depth = this.contextPath().length;
 
-    // Pre-populate with the copied attribute's values
-    const copiedAttribute = { ...element, key: element.key + '_copy' };
-    modal.componentInstance.prepareForEdition(this.scanModes(), this.certificates(), copiedAttribute);
+    modal.componentInstance.prepareForEdition(
+      this.scanModes(),
+      this.certificates(),
+      { ...element, key: element.key + '_copy' },
+      this.contextPath(),
+      depth
+    );
 
     modal.result.subscribe(arrayElement => {
       this.control().setValue([...this.control().value, arrayElement]);
       this.paginatedValues().gotoPage(0);
+      this.control().markAsDirty();
+      this.nestedChange.emit();
     });
   }
 
   async editItem(element: any) {
-    const modal = this.modalService.open(ManifestAttributeEditorModalComponent, { size: 'lg' });
-    modal.componentInstance.prepareForEdition(this.scanModes(), this.certificates(), element);
+    const modal = await this.openAttributeEditor();
+    const depth = this.contextPath().length;
+
+    modal.componentInstance.prepareForEdition(this.scanModes(), this.certificates(), element, this.contextPath(), depth);
 
     modal.result.subscribe(arrayElement => {
       const newArray = [...this.control().value];
@@ -93,6 +110,8 @@ export class ManifestAttributesArrayComponent {
 
       this.control().setValue(newArray);
       this.paginatedValues().gotoPage(0);
+      this.control().markAsDirty();
+      this.nestedChange.emit();
     });
   }
 
@@ -102,13 +121,20 @@ export class ManifestAttributesArrayComponent {
     newArray.splice(index, 1);
     this.control().setValue(newArray);
     this.paginatedValues().gotoPage(0);
+    this.control().markAsDirty();
+    this.nestedChange.emit();
   }
 
   formatValue(element: any, path: Array<string>, type: OIBusAttributeType, translationKey: string) {
     return FormUtils.formatValue(element, path, type, translationKey, this.translateService, this.scanModes());
   }
 
-  getValueByPath(obj: any, path: Array<string>) {
-    return FormUtils.getValueByPath(obj, path);
+  private async openAttributeEditor(): Promise<Modal<ManifestAttributeEditorModalComponent>> {
+    const { ManifestAttributeEditorModalComponent } = await import(
+      '../manifest-attribute-editor-modal/manifest-attribute-editor-modal.component'
+    );
+    return this.modalService.open<ManifestAttributeEditorModalComponent>(ManifestAttributeEditorModalComponent, {
+      size: 'lg'
+    });
   }
 }
