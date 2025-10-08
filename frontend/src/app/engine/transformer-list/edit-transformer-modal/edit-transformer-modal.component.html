@@ -118,6 +118,15 @@
 <div class="modal-footer">
   <div class="btn-group">
     <button [oib-save-button]="state" form="form"></button>
+    @if (mode === 'edit' && customTransformer) {
+      <button
+        type="button"
+        class="btn btn-secondary"
+        (click)="test()"
+        translate="configuration.oibus.manifest.transformers.edit-transformer-modal.test"
+        id="test-button"
+      ></button>
+    }
     <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
   </div>
 </div>

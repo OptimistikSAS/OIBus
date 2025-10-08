@@ -1,5 +1,5 @@
 import { TransformerController } from './transformer.controller';
-import { CustomTransformerCommandDTO, TransformerSearchParam } from '../../../shared/model/transformer.model';
+import { CustomTransformerCommandDTO, TransformerSearchParam, TransformerTestRequest } from '../../../shared/model/transformer.model';
 import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
 import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';
@@ -118,5 +118,35 @@ describe('TransformerController', () => {
     await controller.delete(transformerId, mockRequest as CustomExpressRequest);
 
     expect(mockRequest.services!.transformerService.delete).toHaveBeenCalledWith(transformerId);
+  });
+
+  it('should test a transformer', async () => {
+    const transformerId = testData.transformers.list[0].id;
+    (mockRequest.services!.transformerService.test as jest.Mock).mockResolvedValue(undefined);
+
+    const command: TransformerTestRequest = {
+      inputData: 'time-values',
+      options: {}
+    };
+
+    await controller.test(
+      transformerId,
+      {
+        inputData: 'time-values',
+        options: {}
+      },
+      mockRequest as CustomExpressRequest
+    );
+
+    expect(mockRequest.services!.transformerService.test).toHaveBeenCalledWith(transformerId, command);
+  });
+
+  it('should get a template for transformer', async () => {
+    const inputType = 'time-values';
+    (mockRequest.services!.transformerService.generateTemplate as jest.Mock).mockResolvedValue(undefined);
+
+    await controller.getInputTemplate(inputType, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.transformerService.generateTemplate).toHaveBeenCalledWith(inputType);
   });
 });

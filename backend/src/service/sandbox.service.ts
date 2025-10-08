@@ -94,7 +94,7 @@ export default class SandboxService {
       // Compile TypeScript to JavaScript
       let compiledCode: string;
       try {
-        const result = ts.transpile(transformer.customCode, {
+        compiledCode = ts.transpile(transformer.customCode, {
           target: ts.ScriptTarget.ES2022,
           module: ts.ModuleKind.ESNext,
           jsx: ts.JsxEmit.Preserve,
@@ -104,7 +104,6 @@ export default class SandboxService {
           skipLibCheck: true,
           forceConsistentCasingInFileNames: false
         });
-        compiledCode = result;
       } catch (compileError) {
         throw new Error(`TypeScript compilation failed: ${compileError instanceof Error ? compileError.message : String(compileError)}`);
       }
