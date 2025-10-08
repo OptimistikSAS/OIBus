@@ -2,7 +2,13 @@ import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import { transformerSchema } from '../web-server/controllers/validators/oibus-validation-schema';
 import TransformerRepository from '../repository/config/transformer.repository';
 import { CustomTransformer, Transformer, TransformerWithOptions } from '../model/transformer.model';
-import { CustomTransformerCommand, TransformerDTO, TransformerSearchParam } from '../../shared/model/transformer.model';
+import {
+  CustomTransformerCommand,
+  TransformerDTO,
+  TransformerSearchParam,
+  TransformerTestRequest,
+  TransformerTestResponse
+} from '../../shared/model/transformer.model';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import { Page } from '../../shared/model/types';
 import { NorthConnectorEntity } from '../model/north-connector.model';
@@ -21,6 +27,7 @@ import OIBusSetpointToModbusTransformer from './transformers/setpoint/oibus-setp
 import OIBusSetpointToMQTTTransformer from './transformers/setpoint/oibus-setpoint-to-mqtt-transformer';
 import OIBusSetpointToOPCUATransformer from './transformers/setpoint/oibus-setpoint-to-opcua-transformer';
 import OIBusCustomTransformer from './transformers/oibus-custom-transformer';
+import { Readable } from 'node:stream';
 
 export default class TransformerService {
   constructor(
@@ -76,6 +83,56 @@ export default class TransformerService {
     }
     this.transformerRepository.delete(id);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+  }
+
+  async test(id: string, testRequest: TransformerTestRequest): Promise<TransformerTestResponse> {
+    const transformer = this.transformerRepository.findById(id);
+    if (!transformer) {
+      throw new Error(`Transformer ${id} not found`);
+    }
+    if (transformer.type === 'standard') {
+      throw new Error(`Cannot test standard transformer ${id}`);
+    }
+
+    const customTransformer = transformer as CustomTransformer;
+
+    // Create a mock north connector for testing
+    const mockNorthConnector = {
+      id: 'test-connector',
+      name: 'Test Connector',
+      type: 'test',
+      description: 'Mock connector for testing',
+      enabled: true,
+      settings: {},
+      caching: {
+        enabled: false,
+        maxSize: 0,
+        maxCount: 0,
+        throttling: {
+          maxNumberOfElements: 0,
+          maxDuration: 0
+        }
+      },
+      transformers: []
+    } as unknown as NorthConnectorEntity<NorthSettings>;
+
+    // Create a mock logger
+    const mockLogger = pino({ level: 'silent' });
+
+    // Create the custom transformer instance
+    const transformerInstance = new OIBusCustomTransformer(mockLogger, customTransformer, mockNorthConnector, testRequest.options || {});
+
+    // Execute the transformer
+    const inputStream = Readable.from([Buffer.from(testRequest.inputData, 'utf-8')]);
+    const { metadata, output } = await transformerInstance.transform(inputStream, 'test-source', 'test-input.json');
+
+    return {
+      output,
+      metadata: {
+        contentType: metadata.contentType,
+        numberOfElement: metadata.numberOfElement
+      }
+    };
   }
 }
 

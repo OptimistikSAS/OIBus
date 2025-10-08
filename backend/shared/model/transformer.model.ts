@@ -65,3 +65,16 @@ export interface TransformerSearchParam {
   outputType?: OutputType;
   page?: number;
 }
+
+export interface TransformerTestRequest {
+  inputData: string;
+  options?: object;
+}
+
+export interface TransformerTestResponse {
+  output: string;
+  metadata: {
+    contentType: string;
+    numberOfElement: number;
+  };
+}

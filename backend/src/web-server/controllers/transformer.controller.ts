@@ -5,10 +5,13 @@ import {
   InputType,
   OutputType,
   TransformerDTO,
-  TransformerSearchParam
+  TransformerSearchParam,
+  TransformerTestRequest,
+  TransformerTestResponse
 } from '../../../shared/model/transformer.model';
 import { toTransformerDTO } from '../../service/transformer.service';
 import { Page } from '../../../shared/model/types';
+import InputTemplateService, { InputTemplate } from '../../service/input-template.service';
 
 export default class TransformerController extends AbstractController {
   async search(ctx: KoaContext<void, Page<TransformerDTO>>): Promise<void> {
@@ -63,6 +66,30 @@ export default class TransformerController extends AbstractController {
     try {
       await ctx.app.transformerService.delete(ctx.params.id);
       ctx.noContent();
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
+    }
+  }
+
+  async test(ctx: KoaContext<TransformerTestRequest, TransformerTestResponse>): Promise<void> {
+    try {
+      const result = await ctx.app.transformerService.test(ctx.params.id, ctx.request.body as TransformerTestRequest);
+      ctx.ok(result);
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
+    }
+  }
+
+  async getInputTemplate(ctx: KoaContext<void, InputTemplate>): Promise<void> {
+    try {
+      const inputType = ctx.query.inputType as InputType;
+      if (!inputType) {
+        return ctx.badRequest('inputType query parameter is required');
+      }
+
+      const templateService = new InputTemplateService();
+      const template = templateService.generateTemplate(inputType);
+      ctx.ok(template);
     } catch (error: unknown) {
       ctx.badRequest((error as Error).message);
     }
