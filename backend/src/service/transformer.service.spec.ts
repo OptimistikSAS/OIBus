@@ -219,4 +219,132 @@ describe('Transformer Service', () => {
     expect(getStandardManifest('setpoint-to-opcua')).toEqual(OIBusSetpointToOPCUATransformer.manifestSettings);
     expect(() => getStandardManifest('bad-id')).toThrow(`Could not find manifest for bad-id transformer`);
   });
+
+  describe('test', () => {
+    it('should test a custom transformer successfully', async () => {
+      const customTransformer: CustomTransformer = {
+        id: 'test-transformer',
+        type: 'custom',
+        name: 'Test Transformer',
+        description: 'Test transformer for testing',
+        inputType: 'time-values',
+        outputType: 'any',
+        customCode: `
+          function transform(data, source, filename, options) {
+            return {
+              data: JSON.parse(data),
+              filename: 'test-output.json',
+              numberOfElement: 1
+            };
+          }
+        `,
+        language: 'javascript',
+        customManifest: {
+          type: 'object',
+          key: 'options',
+          translationKey: 'test',
+          attributes: [],
+          enablingConditions: [],
+          validators: [],
+          displayProperties: {
+            visible: true,
+            wrapInBox: false
+          }
+        }
+      };
+
+      (transformerRepository.findById as jest.Mock).mockReturnValueOnce(customTransformer);
+
+      const testRequest = {
+        inputData: JSON.stringify([{ pointId: 'test', timestamp: '2023-01-01T00:00:00Z', data: { value: 42 } }]),
+        options: { testOption: 'value' }
+      };
+
+      const result = await service.test('test-transformer', testRequest);
+
+      expect(result).toHaveProperty('output');
+      expect(result).toHaveProperty('metadata');
+      expect(result.metadata).toHaveProperty('contentType', 'any');
+      expect(result.metadata).toHaveProperty('numberOfElement', 1);
+    });
+
+    it('should throw error when transformer not found', async () => {
+      (transformerRepository.findById as jest.Mock).mockReturnValueOnce(null);
+
+      const testRequest = {
+        inputData: 'test data',
+        options: {}
+      };
+
+      await expect(service.test('non-existent', testRequest)).rejects.toThrow('Transformer non-existent not found');
+    });
+
+    it('should throw error when trying to test standard transformer', async () => {
+      const standardTransformer: StandardTransformer = {
+        id: 'standard-transformer',
+        type: 'standard',
+        inputType: 'time-values',
+        outputType: 'any',
+        functionName: 'iso'
+      };
+
+      (transformerRepository.findById as jest.Mock).mockReturnValueOnce(standardTransformer);
+
+      const testRequest = {
+        inputData: 'test data',
+        options: {}
+      };
+
+      await expect(service.test('standard-transformer', testRequest)).rejects.toThrow(
+        'Cannot test standard transformer standard-transformer'
+      );
+    });
+
+    it('should test a custom transformer with undefined options', async () => {
+      const customTransformer: CustomTransformer = {
+        id: 'test-transformer',
+        type: 'custom',
+        name: 'Test Transformer',
+        description: 'Test transformer for testing',
+        inputType: 'time-values',
+        outputType: 'any',
+        customCode: `
+          function transform(data, source, filename, options) {
+            return {
+              data: JSON.parse(data),
+              filename: 'test-output.json',
+              numberOfElement: 1
+            };
+          }
+        `,
+        language: 'javascript',
+        customManifest: {
+          type: 'object',
+          key: 'options',
+          translationKey: 'test',
+          attributes: [],
+          enablingConditions: [],
+          validators: [],
+          displayProperties: {
+            visible: true,
+            wrapInBox: false
+          }
+        }
+      };
+
+      (transformerRepository.findById as jest.Mock).mockReturnValueOnce(customTransformer);
+
+      const testRequest = {
+        inputData: JSON.stringify([{ pointId: 'test', timestamp: '2023-01-01T00:00:00Z', data: { value: 42 } }])
+        // options is undefined
+      };
+
+      const result = await service.test('test-transformer', testRequest);
+
+      expect(result).toHaveProperty('output');
+      expect(result).toHaveProperty('metadata');
+      expect(result.metadata).toHaveProperty('contentType', 'any');
+      expect(result.metadata).toHaveProperty('numberOfElement', 1);
+    });
+  });
 });
