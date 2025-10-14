@@ -60,9 +60,6 @@ export const SOUTH_M_Q_T_T_ITEM_SETTINGS_VALUE_TYPES = ['number', 'string', 'jso
 export type SouthMQTTItemSettingsValueType = (typeof SOUTH_M_Q_T_T_ITEM_SETTINGS_VALUE_TYPES)[number];
 
 export const SOUTH_M_S_S_Q_L_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = [
-  'iso-string',
-  'unix-epoch',
-  'unix-epoch-ms',
   'string',
   'date',
   'date-time',
@@ -237,10 +234,10 @@ export const SOUTH_O_P_C_U_A_ITEM_SETTINGS_TIMESTAMP_ORIGINS = ['oibus', 'point'
 export type SouthOPCUAItemSettingsTimestampOrigin = (typeof SOUTH_O_P_C_U_A_ITEM_SETTINGS_TIMESTAMP_ORIGINS)[number];
 
 export const SOUTH_ORACLE_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = [
-  'string',
   'iso-string',
   'unix-epoch',
   'unix-epoch-ms',
+  'string',
   'date-time'
 ] as const;
 export type SouthOracleItemSettingsDateTimeFieldsType = (typeof SOUTH_ORACLE_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
