@@ -158,12 +158,7 @@ const manifest: NorthConnectorManifest = {
             type: 'secret',
             key: 'password',
             translationKey: 'configuration.oibus.manifest.north.mqtt.authentication.password',
-            validators: [
-              {
-                type: 'REQUIRED',
-                arguments: []
-              }
-            ],
+            validators: [],
             displayProperties: {
               row: 1,
               columns: 4,

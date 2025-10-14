@@ -49,7 +49,7 @@ export type NorthSFTPSettingsAuthentication = (typeof NORTH_S_F_T_P_SETTINGS_AUT
 export interface NorthMQTTSettingsAuthentication {
   type: NorthMQTTSettingsAuthenticationType;
   username?: string;
-  password?: string;
+  password?: string | null;
   certFilePath?: string;
   keyFilePath?: string;
   caFilePath?: string;
