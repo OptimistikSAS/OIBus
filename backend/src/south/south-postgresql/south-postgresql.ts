@@ -47,7 +47,8 @@ export default class SouthPostgreSQL
       password: this.connector.settings.password ? await encryptionService.decryptText(this.connector.settings.password) : undefined,
       database: this.connector.settings.database,
       query_timeout: this.connector.settings.requestTimeout,
-      connectionTimeoutMillis: this.connector.settings.connectionTimeout
+      connectionTimeoutMillis: this.connector.settings.connectionTimeout,
+      ssl: this.connector.settings.sslMode
     };
   }
 

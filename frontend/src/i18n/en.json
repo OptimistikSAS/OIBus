@@ -1151,6 +1151,7 @@
             },
             "host": "Host",
             "port": "Port",
+            "ssl-mode": "SSL",
             "connection-timeout": "Connection timeout",
             "request-timeout": "Request timeout",
             "database": "Database",
