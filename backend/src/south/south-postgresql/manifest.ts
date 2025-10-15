@@ -148,23 +148,14 @@ const manifest: SouthConnectorManifest = {
         }
       },
       {
-        type: 'number',
-        key: 'connectionTimeout',
-        translationKey: 'configuration.oibus.manifest.south.postgresql.connection-timeout',
-        unit: 'ms',
-        defaultValue: 10000,
+        type: 'boolean',
+        key: 'sslMode',
+        translationKey: 'configuration.oibus.manifest.south.postgresql.ssl-mode',
+        defaultValue: false,
         validators: [
           {
             type: 'REQUIRED',
             arguments: []
-          },
-          {
-            type: 'MINIMUM',
-            arguments: ['100']
-          },
-          {
-            type: 'MAXIMUM',
-            arguments: ['30000']
           }
         ],
         displayProperties: {
@@ -186,7 +177,33 @@ const manifest: SouthConnectorManifest = {
         ],
         displayProperties: {
           row: 2,
-          columns: 8,
+          columns: 6,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'number',
+        key: 'connectionTimeout',
+        translationKey: 'configuration.oibus.manifest.south.postgresql.connection-timeout',
+        unit: 'ms',
+        defaultValue: 10000,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          },
+          {
+            type: 'MINIMUM',
+            arguments: ['100']
+          },
+          {
+            type: 'MAXIMUM',
+            arguments: ['30000']
+          }
+        ],
+        displayProperties: {
+          row: 2,
+          columns: 3,
           displayInViewMode: true
         }
       },
@@ -212,7 +229,7 @@ const manifest: SouthConnectorManifest = {
         ],
         displayProperties: {
           row: 2,
-          columns: 4,
+          columns: 3,
           displayInViewMode: false
         }
       },

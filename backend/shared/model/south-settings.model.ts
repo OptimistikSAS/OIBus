@@ -559,8 +559,9 @@ export interface SouthPostgreSQLSettings {
   throttling: SouthPostgreSQLSettingsThrottling;
   host: string;
   port: number;
-  connectionTimeout: number;
+  sslMode: boolean;
   database: string;
+  connectionTimeout: number;
   requestTimeout: number;
   username: string | null;
   password: string | null;

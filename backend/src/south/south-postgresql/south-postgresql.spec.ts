@@ -55,6 +55,7 @@ describe('SouthPostgreSQL with authentication', () => {
       host: 'localhost',
       port: 5432,
       database: 'db',
+      sslMode: true,
       username: 'username',
       password: 'password',
       connectionTimeout: 1000,
@@ -238,7 +239,8 @@ describe('SouthPostgreSQL with authentication', () => {
       password: configuration.settings.password,
       database: configuration.settings.database,
       connectionTimeoutMillis: configuration.settings.connectionTimeout,
-      query_timeout: configuration.settings.requestTimeout
+      query_timeout: configuration.settings.requestTimeout,
+      ssl: true
     });
     expect(client.connect).toHaveBeenCalledTimes(1);
     expect(client.query).toHaveBeenCalledWith(
@@ -360,6 +362,7 @@ describe('SouthPostgreSQL without authentication', () => {
       host: 'localhost',
       port: 1521,
       database: 'db',
+      sslMode: false,
       username: '',
       password: '',
       connectionTimeout: 1000,
@@ -503,6 +506,7 @@ describe('SouthPostgreSQL test connection', () => {
       host: 'localhost',
       port: 5432,
       database: 'db',
+      sslMode: false,
       username: 'username',
       password: 'password',
       connectionTimeout: 1000,
