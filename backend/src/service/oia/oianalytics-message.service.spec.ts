@@ -33,6 +33,7 @@ import TransformerRepository from '../../repository/config/transformer.repositor
 import TransformerRepositoryMock from '../../tests/__mocks__/repository/config/transformer-repository.mock';
 import { StandardTransformer } from '../../model/transformer.model';
 import IsoTransformer from '../transformers/iso-transformer';
+import DeferredPromise from '../deferred-promise';
 
 jest.mock('node:fs/promises');
 jest.mock('../utils');
@@ -185,6 +186,22 @@ describe('OIAnalytics Message Service', () => {
 
     await service.stop();
     expect(logger.debug).toHaveBeenCalledWith(`OIAnalytics message service stopped`);
+  });
+
+  it('should properly stop with stop timeout already set', async () => {
+    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+
+    const deferredPromise = new DeferredPromise();
+    service['runProgress$'] = deferredPromise;
+    service['stopTimeout'] = setTimeout(() => {
+      deferredPromise.resolve();
+    }, 30_000);
+
+    service.stop();
+    jest.advanceTimersByTime(30_000);
+    await flushPromises();
+
+    expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
   });
 
   it('should properly resend message if fetch fails', async () => {

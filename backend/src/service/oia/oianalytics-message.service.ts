@@ -65,6 +65,8 @@ export default class OIAnalyticsMessageService {
     this.oIAnalyticsRegistrationService.registrationEvent.on('updated', () => {
       this.createFullConfigMessageIfNotPending();
       this.createFullHistoryQueriesMessageIfNotPending();
+      this.messagesQueue = this.oIAnalyticsMessageRepository.list({ status: ['PENDING'], types: [] });
+      this.triggerRun.emit('next'); // trigger next if messages are already pending and not trigger by the creation function
     });
 
     this.createFullConfigMessageIfNotPending();
@@ -112,7 +114,7 @@ export default class OIAnalyticsMessageService {
         this.logger.error(`Error while sending message ${message.id} of type ${message.type}: ${(error as Error).message}`);
         this.oIAnalyticsMessageRepository.markAsErrored(message.id, DateTime.now().toUTC().toISO(), (error as Error).message);
         this.removeMessageFromQueue(message.id);
-      } else if (!this.retryMessageInterval) {
+      } else {
         this.logger.error(`Retrying message ${message.id} of type ${message.type} after error: ${(error as Error).message}`);
         this.retryMessageInterval = setTimeout(this.run.bind(this), registration.messageRetryInterval * 1000);
       }
@@ -136,6 +138,7 @@ export default class OIAnalyticsMessageService {
       this.logger.debug('Waiting for OIAnalytics message to finish');
       await this.runProgress$.promise;
       clearTimeout(this.stopTimeout);
+      this.stopTimeout = null;
     }
     if (this.retryMessageInterval) {
       clearTimeout(this.retryMessageInterval);
