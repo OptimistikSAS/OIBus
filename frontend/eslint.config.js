@@ -3,6 +3,9 @@
 // Allows us to bring in the recommended core rules from eslint itself
 import eslint from '@eslint/js';
 
+// Import defineConfig from eslint
+import { defineConfig } from 'eslint/config';
+
 // Allows us to use the typed utility for our config, and to bring in the recommended rules for TypeScript projects from typescript-eslint
 import tseslint from 'typescript-eslint';
 
@@ -12,9 +15,9 @@ import angular from 'angular-eslint';
 // Allows us to bring in the recommended rules for Prettier from eslint-plugin-prettier
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 
-// Export our config array, which is composed together thanks to the typed utility function from typescript-eslint
+// Export our config array, which is composed together thanks to the defineConfig utility function from eslint
 export default [
-  ...tseslint.config(
+  ...defineConfig(
     {
       // Everything in this config object targets our TypeScript files (Components, Directives, Pipes etc)
       files: ['**/*.ts'],
