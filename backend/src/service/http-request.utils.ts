@@ -125,6 +125,7 @@ export const retryableHttpStatusCodes = [
   407, // Proxy Authentication Required
   408, // Request Timeout
   429, // Too Many Requests
+  500, // Server error
   502, // Bad Gateway
   503, // Service Unavailable
   504, // Gateway Timeout
