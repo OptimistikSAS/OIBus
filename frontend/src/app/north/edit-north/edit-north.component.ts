@@ -200,7 +200,7 @@ export class EditNorthComponent implements OnInit, CanComponentDeactivate {
         error: this.fb.group({
           retryInterval: [5_000, Validators.required],
           retryCount: [3, Validators.required],
-          retentionDuration: [72, Validators.required]
+          retentionDuration: [0, Validators.required]
         }),
         archive: this.fb.group({
           enabled: [false, Validators.required],
