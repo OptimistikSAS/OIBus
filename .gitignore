@@ -2,6 +2,13 @@
 /build/bin
 /data-folder/
 
+# Docker data folders
+/docker/mosquitto/data/*
+/docker/mosquitto/log/*
+/docker/mosquitto/config/password.txt
+/docker/modbus/data/*
+/docker/opcua/pki/*
+
 # Node
 /node_modules
 npm-debug.log
