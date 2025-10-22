@@ -1,11 +1,11 @@
 import { Component, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateDirective } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { ObservableState } from '../../../shared/save-button/save-button.component';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
 import { OibCodeBlockComponent } from '../../../shared/form/oib-code-block/oib-code-block.component';
-import { ManifestBuilderComponent } from '../../../shared/form/manifest-builder/manifest-builder.component';
+import { ManifestAttributesArrayComponent } from '../../../shared/form/manifest-builder/manifest-attributes-array/manifest-attributes-array.component';
 import { TransformerService } from '../../../services/transformer.service';
 import { CustomTransformerDTO } from '../../../../../../backend/shared/model/transformer.model';
 import { OibusInputDataTypeEnumPipe } from '../../../shared/oibus-input-data-type-enum.pipe';
@@ -17,9 +17,10 @@ import { OibusInputDataTypeEnumPipe } from '../../../shared/oibus-input-data-typ
   imports: [
     ReactiveFormsModule,
     TranslateDirective,
+    TranslatePipe,
     OI_FORM_VALIDATION_DIRECTIVES,
     OibCodeBlockComponent,
-    ManifestBuilderComponent,
+    ManifestAttributesArrayComponent,
     OibusInputDataTypeEnumPipe
   ]
 })

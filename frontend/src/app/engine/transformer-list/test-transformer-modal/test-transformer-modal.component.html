@@ -31,7 +31,10 @@
       <div class="row mb-3">
         <div class="col-12">
           <label class="form-label" translate="configuration.oibus.manifest.transformers.test-transformer-modal.options"></label>
-          <oib-manifest-builder formControlName="options" />
+          <oib-manifest-attributes-array
+            [label]="'configuration.oibus.manifest.transformers.test-transformer-modal.options' | translate"
+            [control]="form.controls.options!"
+          />
           <val-errors controlName="options" />
         </div>
       </div>
