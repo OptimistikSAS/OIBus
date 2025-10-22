@@ -403,6 +403,33 @@ export class HistoryQueryController extends Controller {
     request.res!.status(200).send(csv);
   }
 
+  async enableHistoryQueryItems(ctx: KoaContext<{ itemIds: Array<string> }, void>): Promise<void> {
+    try {
+      await ctx.app.historyQueryService.enableHistoryQueryItems(ctx.params.historyQueryId, ctx.request.body!.itemIds);
+      ctx.noContent();
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
+    }
+  }
+
+  async disableHistoryQueryItems(ctx: KoaContext<{ itemIds: Array<string> }, void>): Promise<void> {
+    try {
+      await ctx.app.historyQueryService.disableHistoryQueryItems(ctx.params.historyQueryId, ctx.request.body!.itemIds);
+      ctx.noContent();
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
+    }
+  }
+
+  async deleteHistoryQueryItems(ctx: KoaContext<{ itemIds: Array<string> }, void>): Promise<void> {
+    try {
+      await ctx.app.historyQueryService.deleteHistoryQueryItems(ctx.params.historyQueryId, ctx.request.body!.itemIds);
+      ctx.noContent();
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
+    }
+  }
+
   /**
    * Exports all items from a history query as a CSV file
    * @summary Export items to CSV

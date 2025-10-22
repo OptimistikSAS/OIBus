@@ -197,6 +197,24 @@ export class SouthConnectorService {
   }
 
   /**
+   * Enable multiple South items
+   * @param southId - the ID of the South connector
+   * @param itemIds - array of item IDs to enable
+   */
+  enableItems(southId: string, itemIds: Array<string>) {
+    return this.http.put<void>(`/api/south/${southId}/items/bulk/enable`, { itemIds });
+  }
+
+  /**
+   * Disable multiple South items
+   * @param southId - the ID of the South connector
+   * @param itemIds - array of item IDs to disable
+   */
+  disableItems(southId: string, itemIds: Array<string>) {
+    return this.http.put<void>(`/api/south/${southId}/items/bulk/disable`, { itemIds });
+  }
+
+  /**
    * Delete all South items
    * @param southId - the ID of the South connector
    */

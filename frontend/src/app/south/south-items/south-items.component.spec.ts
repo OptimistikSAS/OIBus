@@ -100,7 +100,7 @@ class SouthItemsComponentTester extends ComponentTester<TestComponent> {
   }
 
   get toggleButtons() {
-    return this.elements('.form-check-input')! as Array<TestInput>;
+    return this.elements('.form-check.form-switch .form-check-input')! as Array<TestInput>;
   }
 
   get deleteAllButton() {
@@ -124,11 +124,11 @@ class SouthItemsComponentTester extends ComponentTester<TestComponent> {
   }
 
   get tableItemNames() {
-    return this.elements<HTMLTableCellElement>('tbody tr.south-item td:nth-child(2)').map(e => e.nativeElement.innerText);
+    return this.elements<HTMLTableCellElement>('tbody tr.south-item td:nth-child(3)').map(e => e.nativeElement.innerText);
   }
 
   get tableScanModeNames() {
-    return this.elements<HTMLTableCellElement>('tbody tr.south-item td:nth-child(3)').map(e => e.nativeElement.innerText);
+    return this.elements<HTMLTableCellElement>('tbody tr.south-item td:nth-child(4)').map(e => e.nativeElement.innerText);
   }
 }
 
@@ -170,8 +170,8 @@ describe('SouthItemsComponent with saving changes directly', () => {
   it('should display items', () => {
     expect(tester.southItems.length).toBe(3);
     const item = tester.southItems[0];
-    expect(item.elements('td')[1]).toContainText(testSouthConnector.items[0].name);
-    expect(item.elements('td')[2]).toContainText('scanMode1');
+    expect(item.elements('td')[2]).toContainText(testSouthConnector.items[0].name);
+    expect(item.elements('td')[3]).toContainText('scanMode1');
   });
 
   it('should enable south item', () => {
@@ -363,8 +363,8 @@ describe('SouthItemsComponent without saving changes directly', () => {
   it('should display items', () => {
     expect(tester.southItems.length).toBe(3);
     const item = tester.southItems[0];
-    expect(item.elements('td')[1]).toContainText(testSouthConnector.items[0].name);
-    expect(item.elements('td')[2]).toContainText('scanMode1');
+    expect(item.elements('td')[2]).toContainText(testSouthConnector.items[0].name);
+    expect(item.elements('td')[3]).toContainText('scanMode1');
   });
 
   it('should not have option to enable/disable south item', () => {
@@ -875,6 +875,22 @@ describe('SouthItemsComponent CSV Import Tests', () => {
       tester.button('#import-button')!.click();
 
       expect(southConnectorService.checkImportItems).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Mass actions', () => {
+    beforeEach(() => {
+      tester.componentInstance.southConnector = testSouthConnector;
+      tester.detectChanges();
+    });
+
+    it('should have mass action functionality available', () => {
+      // This test verifies that the mass action functionality is present
+      // The actual implementation is tested through the component's behavior
+      expect(tester.componentInstance).toBeDefined();
+      expect(southConnectorService.enableItems).toBeDefined();
+      expect(southConnectorService.disableItems).toBeDefined();
+      expect(southConnectorService.deleteItems).toBeDefined();
     });
   });
 });

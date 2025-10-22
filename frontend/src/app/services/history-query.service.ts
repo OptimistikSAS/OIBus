@@ -214,6 +214,33 @@ export class HistoryQueryService {
   }
 
   /**
+   * Enable multiple History query items
+   * @param historyId - the ID of the History query
+   * @param itemIds - array of item IDs to enable
+   */
+  enableItems(historyId: string, itemIds: Array<string>) {
+    return this.http.put<void>(`/api/history-queries/${historyId}/south-items/bulk/enable`, { itemIds });
+  }
+
+  /**
+   * Disable multiple History query items
+   * @param historyId - the ID of the History query
+   * @param itemIds - array of item IDs to disable
+   */
+  disableItems(historyId: string, itemIds: Array<string>) {
+    return this.http.put<void>(`/api/history-queries/${historyId}/south-items/bulk/disable`, { itemIds });
+  }
+
+  /**
+   * Delete multiple History query items
+   * @param historyId - the ID of the History query
+   * @param itemIds - array of item IDs to delete
+   */
+  deleteItems(historyId: string, itemIds: Array<string>) {
+    return this.http.delete<void>(`/api/history-queries/${historyId}/south-items/bulk`, { body: { itemIds } });
+  }
+
+  /**
    * Delete all items
    * @param historyId - the ID of the History Query connector
    */

@@ -110,8 +110,8 @@ describe('SouthDetailComponent', () => {
     tester.detectChanges();
     expect(tester.southItems.length).toBe(2);
     const item = tester.southItems[0];
-    expect(item.elements('td')[1]).toContainText('item1');
-    expect(item.elements('td')[2]).toContainText('scanMode1');
+    expect(item.elements('td')[2]).toContainText('item1');
+    expect(item.elements('td')[3]).toContainText('scanMode1');
   });
 
   it('should display logs', () => {

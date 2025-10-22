@@ -382,6 +382,60 @@ export default class SouthService {
     await this.engine.reloadSouthItems(southConnector);
   }
 
+  async enableItems(southConnectorId: string, itemIds: Array<string>): Promise<void> {
+    const southConnector = this.southConnectorRepository.findSouthById(southConnectorId);
+    if (!southConnector) {
+      throw new Error(`South connector "${southConnectorId}" does not exist`);
+    }
+
+    for (const itemId of itemIds) {
+      const southItem = this.southConnectorRepository.findItemById(southConnectorId, itemId);
+      if (!southItem) {
+        throw new Error(`South item "${itemId}" not found`);
+      }
+      this.southConnectorRepository.enableItem(southItem.id);
+    }
+
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    await this.engine.reloadSouthItems(southConnector);
+  }
+
+  async disableItems(southConnectorId: string, itemIds: Array<string>): Promise<void> {
+    const southConnector = this.southConnectorRepository.findSouthById(southConnectorId);
+    if (!southConnector) {
+      throw new Error(`South connector "${southConnectorId}" does not exist`);
+    }
+
+    for (const itemId of itemIds) {
+      const southItem = this.southConnectorRepository.findItemById(southConnectorId, itemId);
+      if (!southItem) {
+        throw new Error(`South item "${itemId}" not found`);
+      }
+      this.southConnectorRepository.disableItem(southItem.id);
+    }
+
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    await this.engine.reloadSouthItems(southConnector);
+  }
+
+  async deleteItems(southConnectorId: string, itemIds: Array<string>): Promise<void> {
+    const southConnector = this.southConnectorRepository.findSouthById(southConnectorId);
+    if (!southConnector) {
+      throw new Error(`South connector "${southConnectorId}" does not exist`);
+    }
+
+    for (const itemId of itemIds) {
+      const southItem = this.southConnectorRepository.findItemById(southConnectorId, itemId);
+      if (!southItem) {
+        throw new Error(`South item "${itemId}" not found`);
+      }
+      this.southConnectorRepository.deleteItem(southItem.id);
+    }
+
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    await this.engine.reloadSouthItems(southConnector);
+  }
+
   async checkImportItems(
     southType: string,
     fileContent: string,

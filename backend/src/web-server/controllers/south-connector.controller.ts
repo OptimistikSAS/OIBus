@@ -369,6 +369,33 @@ export class SouthConnectorController extends Controller {
     await southService.deleteAllItems(southId);
   }
 
+  async enableSouthItems(ctx: KoaContext<{ itemIds: Array<string> }, void>): Promise<void> {
+    try {
+      await ctx.app.southService.enableItems(ctx.params.southId, ctx.request.body!.itemIds);
+      ctx.noContent();
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
+    }
+  }
+
+  async disableSouthItems(ctx: KoaContext<{ itemIds: Array<string> }, void>): Promise<void> {
+    try {
+      await ctx.app.southService.disableItems(ctx.params.southId, ctx.request.body!.itemIds);
+      ctx.noContent();
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
+    }
+  }
+
+  async deleteSouthItems(ctx: KoaContext<{ itemIds: Array<string> }, void>): Promise<void> {
+    try {
+      await ctx.app.southService.deleteItems(ctx.params.southId, ctx.request.body!.itemIds);
+      ctx.noContent();
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
+    }
+  }
+
   /**
    * Converts frontend in memory items to CSV format
    * @summary Convert items to CSV
