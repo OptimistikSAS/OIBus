@@ -896,6 +896,8 @@
             "input-data": "Input Data",
             "options": "Options",
             "output": "Output",
+            "results": "Results",
+            "success": "Test completed successfully",
             "test": "Run Test"
           },
           "attributes": {

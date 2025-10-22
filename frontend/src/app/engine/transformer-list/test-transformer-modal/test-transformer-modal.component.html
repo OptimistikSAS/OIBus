@@ -43,12 +43,12 @@
     @if (output()) {
       <div class="row mb-3">
         <div class="col-12">
-          <label class="form-label" translate="configuration.oibus.manifest.transformers.test-transformer-modal.output"></label>
-          <div class="alert alert-success" role="alert">
-            <strong>Test completed successfully!</strong>
+          <div class="alert alert-info" role="alert">
+            <span translate="configuration.oibus.manifest.transformers.test-transformer-modal.success"></span>
           </div>
+          <label class="form-label" translate="configuration.oibus.manifest.transformers.test-transformer-modal.results"></label>
           <div class="output-container">
-            <pre class="bg-light p-3 rounded" style="max-height: 400px; overflow-y: auto"><code>{{ output() }}</code></pre>
+            <oib-code-block [formControl]="outputControl" [language]="'json'" [readOnly]="true" [height]="'400px'" />
           </div>
         </div>
       </div>

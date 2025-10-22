@@ -42,6 +42,8 @@ export class TestTransformerModalComponent {
     options: [{}]
   });
 
+  outputControl = this.fb.control('');
+
   prepareForCreation(transformer: CustomTransformerDTO, _customCode?: string, customManifest?: any) {
     this.transformer.set(transformer);
     this.loadInputTemplate();
@@ -92,8 +94,10 @@ export class TestTransformerModalComponent {
           const parsedOutput = JSON.parse(response.output);
           const prettifiedOutput = JSON.stringify(parsedOutput, null, 2);
           this.output.set(prettifiedOutput);
+          this.outputControl.setValue(prettifiedOutput);
         } catch (_error) {
           this.output.set(response.output);
+          this.outputControl.setValue(response.output);
         }
         this.isLoading.set(false);
       },
