@@ -43,6 +43,26 @@
           [disabled]="allItems.length === 0"
           translate="south.items.delete-all"
         ></button>
+        @if (selectedItems.size > 0) {
+          <button
+            type="button"
+            class="btn btn-secondary btn-sm"
+            (click)="enableSelectedItems()"
+            translate="history-query.items.enable-selected"
+          ></button>
+          <button
+            type="button"
+            class="btn btn-secondary btn-sm"
+            (click)="disableSelectedItems()"
+            translate="history-query.items.disable-selected"
+          ></button>
+          <button
+            type="button"
+            class="btn btn-danger btn-sm"
+            (click)="deleteSelectedItems()"
+            translate="history-query.items.delete-selected"
+          ></button>
+        }
         <oib-help url="https://oibus.optimistik.com/docs/guide/south-connectors/common-settings#item-section" />
       </div>
     </div>
@@ -53,6 +73,16 @@
       <table class="table table-sm table-hover oib-table">
         <thead class="light">
           <tr>
+            <th style="width: 50px; text-align: center">
+              <input
+                type="checkbox"
+                class="form-check-input"
+                [checked]="isAllSelected"
+                [indeterminate]="isIndeterminate"
+                (change)="toggleSelectAll()"
+                style="width: 16px; height: 16px; cursor: pointer"
+              />
+            </th>
             <th style="width: 3rem"></th>
             <th class="w-25">
               <button type="button" style="background: none; border: none; font-weight: bold" (click)="toggleColumnSort('name')">
@@ -73,6 +103,15 @@
         <tbody>
           @for (item of displayedItems.content; track item.id) {
             <tr class="south-item">
+              <td style="text-align: center">
+                <input
+                  type="checkbox"
+                  class="form-check-input"
+                  [checked]="selectedItems.has(item.id!)"
+                  (change)="toggleItemSelection(item.id!)"
+                  style="width: 16px; height: 16px; cursor: pointer"
+                />
+              </td>
               @if (saveChangesDirectly()) {
                 <td>
                   <div class="form-check form-switch">

@@ -1340,7 +1340,7 @@
                   "unix-epoch": "UNIX epoch (s)",
                   "unix-epoch-ms": "UNIX epoch (ms)",
                   "string": "String",
-            "date-time": "DateTime"
+                  "date-time": "DateTime"
                 },
                 "timezone": "Timezone",
                 "format": "Format",
@@ -1811,6 +1811,17 @@
       "scan-mode": "Schedule",
       "enabled": "South item {{name}} enabled",
       "disabled": "South item {{name}} disabled",
+      "enabled-multiple": "{{count}} south items enabled",
+      "disabled-multiple": "{{count}} south items disabled",
+      "deleted-multiple": "{{count}} south items deleted",
+      "enable-selected": "Enable selected",
+      "disable-selected": "Disable selected",
+      "delete-selected": "Delete selected",
+      "selected-count": "{{count}} selected",
+      "delete-multiple-message": "Are you sure you want to delete {{count}} selected items?",
+      "enable-error": "Error enabling items: {{error}}",
+      "disable-error": "Error disabling items: {{error}}",
+      "delete-error": "Error deleting items: {{error}}",
       "search": {
         "name": "Name"
       },
@@ -2095,6 +2106,17 @@
       "imported": "Items imported",
       "enabled": "History item {{ name }} enabled",
       "disabled": "History item {{ name }} disabled",
+      "enabled-multiple": "{{count}} history items enabled",
+      "disabled-multiple": "{{count}} history items disabled",
+      "deleted-multiple": "{{count}} history items deleted",
+      "enable-selected": "Enable selected",
+      "disable-selected": "Disable selected",
+      "delete-selected": "Delete selected",
+      "selected-count": "{{count}} selected",
+      "delete-multiple-message": "Are you sure you want to delete {{count}} selected items?",
+      "enable-error": "Error enabling items: {{error}}",
+      "disable-error": "Error disabling items: {{error}}",
+      "delete-error": "Error deleting items: {{error}}",
       "search": {
         "name": "Name"
       },

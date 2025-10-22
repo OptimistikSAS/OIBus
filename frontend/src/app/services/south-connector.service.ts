@@ -187,6 +187,33 @@ export class SouthConnectorService {
     return this.http.delete<void>(`/api/south/${southId}/items/all`);
   }
 
+  /**
+   * Enable multiple South items
+   * @param southId - the ID of the South connector
+   * @param itemIds - array of item IDs to enable
+   */
+  enableItems(southId: string, itemIds: Array<string>) {
+    return this.http.put<void>(`/api/south/${southId}/items/bulk/enable`, { itemIds });
+  }
+
+  /**
+   * Disable multiple South items
+   * @param southId - the ID of the South connector
+   * @param itemIds - array of item IDs to disable
+   */
+  disableItems(southId: string, itemIds: Array<string>) {
+    return this.http.put<void>(`/api/south/${southId}/items/bulk/disable`, { itemIds });
+  }
+
+  /**
+   * Delete multiple South items
+   * @param southId - the ID of the South connector
+   * @param itemIds - array of item IDs to delete
+   */
+  deleteItems(southId: string, itemIds: Array<string>) {
+    return this.http.delete<void>(`/api/south/${southId}/items/bulk`, { body: { itemIds } });
+  }
+
   testItem(
     southId: string,
     southType: OIBusSouthType,

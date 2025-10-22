@@ -24,6 +24,9 @@ export default jest.fn().mockImplementation(() => ({
   deleteAllItemsForSouthConnector: jest.fn(),
   enableItem: jest.fn(),
   disableItem: jest.fn(),
+  enableItems: jest.fn(),
+  disableItems: jest.fn(),
+  deleteItems: jest.fn(),
   checkCsvFileImport: jest.fn(),
   checkCsvContentImport: jest.fn(),
   importItems: jest.fn()

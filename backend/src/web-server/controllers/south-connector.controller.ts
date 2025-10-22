@@ -261,6 +261,33 @@ export default class SouthConnectorController {
     }
   }
 
+  async enableSouthItems(ctx: KoaContext<{ itemIds: Array<string> }, void>): Promise<void> {
+    try {
+      await ctx.app.southService.enableItems(ctx.params.southId, ctx.request.body!.itemIds);
+      ctx.noContent();
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
+    }
+  }
+
+  async disableSouthItems(ctx: KoaContext<{ itemIds: Array<string> }, void>): Promise<void> {
+    try {
+      await ctx.app.southService.disableItems(ctx.params.southId, ctx.request.body!.itemIds);
+      ctx.noContent();
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
+    }
+  }
+
+  async deleteSouthItems(ctx: KoaContext<{ itemIds: Array<string> }, void>): Promise<void> {
+    try {
+      await ctx.app.southService.deleteItems(ctx.params.southId, ctx.request.body!.itemIds);
+      ctx.noContent();
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
+    }
+  }
+
   /**
    * Endpoint used to download a CSV from a list of items when creating a South Connector (before the items are saved on
    * the database). When the items are already saved, it is downloaded with the export method

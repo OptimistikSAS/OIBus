@@ -295,6 +295,33 @@ export default class HistoryQueryController extends AbstractController {
     }
   }
 
+  async enableHistoryQueryItems(ctx: KoaContext<{ itemIds: Array<string> }, void>): Promise<void> {
+    try {
+      await ctx.app.historyQueryService.enableHistoryQueryItems(ctx.params.historyQueryId, ctx.request.body!.itemIds);
+      ctx.noContent();
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
+    }
+  }
+
+  async disableHistoryQueryItems(ctx: KoaContext<{ itemIds: Array<string> }, void>): Promise<void> {
+    try {
+      await ctx.app.historyQueryService.disableHistoryQueryItems(ctx.params.historyQueryId, ctx.request.body!.itemIds);
+      ctx.noContent();
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
+    }
+  }
+
+  async deleteHistoryQueryItems(ctx: KoaContext<{ itemIds: Array<string> }, void>): Promise<void> {
+    try {
+      await ctx.app.historyQueryService.deleteHistoryQueryItems(ctx.params.historyQueryId, ctx.request.body!.itemIds);
+      ctx.noContent();
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
+    }
+  }
+
   /**
    * Endpoint used to download a CSV from a list of items when creating a history query (before the items are saved on
    * the database). When the items are already saved, it is downloaded with the export method
