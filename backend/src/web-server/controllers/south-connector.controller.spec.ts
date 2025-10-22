@@ -429,4 +429,76 @@ describe('SouthConnectorController', () => {
 
     await expect(controller.importItems(southId, undefined!, mockRequest as CustomExpressRequest)).rejects.toThrow('Missing file "items"');
   });
+
+  it('enableSouthItems() should enable multiple South items', async () => {
+    ctx.params.southId = testData.south.list[0].id;
+    ctx.request.body = { itemIds: [testData.south.list[0].items[0].id, testData.south.list[0].items[1].id] };
+
+    await southConnectorController.enableSouthItems(ctx);
+
+    expect(ctx.app.southService.enableItems).toHaveBeenCalledWith(testData.south.list[0].id, [
+      testData.south.list[0].items[0].id,
+      testData.south.list[0].items[1].id
+    ]);
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('enableSouthItems() should return bad request', async () => {
+    ctx.params.southId = testData.south.list[0].id;
+    ctx.request.body = { itemIds: [testData.south.list[0].items[0].id] };
+    ctx.app.southService.enableItems.mockImplementationOnce(() => {
+      throw new Error('enable items error');
+    });
+
+    await southConnectorController.enableSouthItems(ctx);
+    expect(ctx.badRequest).toHaveBeenCalledWith('enable items error');
+  });
+
+  it('disableSouthItems() should disable multiple South items', async () => {
+    ctx.params.southId = testData.south.list[0].id;
+    ctx.request.body = { itemIds: [testData.south.list[0].items[0].id, testData.south.list[0].items[1].id] };
+
+    await southConnectorController.disableSouthItems(ctx);
+
+    expect(ctx.app.southService.disableItems).toHaveBeenCalledWith(testData.south.list[0].id, [
+      testData.south.list[0].items[0].id,
+      testData.south.list[0].items[1].id
+    ]);
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('disableSouthItems() should return bad request', async () => {
+    ctx.params.southId = testData.south.list[0].id;
+    ctx.request.body = { itemIds: [testData.south.list[0].items[0].id] };
+    ctx.app.southService.disableItems.mockImplementationOnce(() => {
+      throw new Error('disable items error');
+    });
+
+    await southConnectorController.disableSouthItems(ctx);
+    expect(ctx.badRequest).toHaveBeenCalledWith('disable items error');
+  });
+
+  it('deleteSouthItems() should delete multiple South items', async () => {
+    ctx.params.southId = testData.south.list[0].id;
+    ctx.request.body = { itemIds: [testData.south.list[0].items[0].id, testData.south.list[0].items[1].id] };
+
+    await southConnectorController.deleteSouthItems(ctx);
+
+    expect(ctx.app.southService.deleteItems).toHaveBeenCalledWith(testData.south.list[0].id, [
+      testData.south.list[0].items[0].id,
+      testData.south.list[0].items[1].id
+    ]);
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('deleteSouthItems() should return bad request', async () => {
+    ctx.params.southId = testData.south.list[0].id;
+    ctx.request.body = { itemIds: [testData.south.list[0].items[0].id] };
+    ctx.app.southService.deleteItems.mockImplementationOnce(() => {
+      throw new Error('delete items error');
+    });
+
+    await southConnectorController.deleteSouthItems(ctx);
+    expect(ctx.badRequest).toHaveBeenCalledWith('delete items error');
+  });
 });

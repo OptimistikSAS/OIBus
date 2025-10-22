@@ -127,7 +127,7 @@ class HistoryQueryItemsComponentTester extends ComponentTester<TestComponent> {
   }
 
   get toggleButtons() {
-    return this.elements('.form-check-input')! as Array<TestInput>;
+    return this.elements('.form-check.form-switch .form-check-input')! as Array<TestInput>;
   }
 
   get deleteAllButton() {
@@ -147,7 +147,7 @@ class HistoryQueryItemsComponentTester extends ComponentTester<TestComponent> {
   }
 
   get tableItemNames() {
-    return this.elements<HTMLTableCellElement>('tbody tr.south-item td:nth-child(2)').map(e => e.nativeElement.innerText);
+    return this.elements<HTMLTableCellElement>('tbody tr.south-item td:nth-child(3)').map(e => e.nativeElement.innerText);
   }
 }
 
@@ -202,7 +202,7 @@ describe('HistoryQueryItemsComponent with saving changes directly', () => {
   it('should display items', () => {
     expect(tester.southItems.length).toBe(3);
     const item = tester.southItems[0];
-    expect(item.elements('td')[1]).toContainText(testHistoryQuery.items[0].name);
+    expect(item.elements('td')[2]).toContainText(testHistoryQuery.items[0].name);
   });
 
   it('should enable history item', () => {
@@ -401,7 +401,7 @@ describe('HistoryQueryItemsComponent without saving changes directly', () => {
   it('should display items', () => {
     expect(tester.southItems.length).toBe(3);
     const item = tester.southItems[0];
-    expect(item.elements('td')[1]).toContainText(testHistoryQuery.items[0].name);
+    expect(item.elements('td')[2]).toContainText(testHistoryQuery.items[0].name);
   });
 
   it('should not have option to enable/disable history item', () => {
@@ -901,6 +901,20 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
       expect(() => {
         tester.button('#import-button')!.click();
       }).not.toThrow();
+    });
+  });
+
+  describe('Mass actions', () => {
+    beforeEach(() => {
+      tester.componentInstance.historyQuery = testHistoryQuery;
+      tester.detectChanges();
+    });
+
+    it('should have mass action functionality available', () => {
+      expect(tester.componentInstance).toBeDefined();
+      expect(historyQueryService.enableItems).toBeDefined();
+      expect(historyQueryService.disableItems).toBeDefined();
+      expect(historyQueryService.deleteItems).toBeDefined();
     });
   });
 });

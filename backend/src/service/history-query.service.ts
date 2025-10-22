@@ -323,6 +323,60 @@ export default class HistoryQueryService {
     await this.engine.reloadHistoryQuery(historyQuery, false);
   }
 
+  async enableHistoryQueryItems(historyQueryId: string, itemIds: Array<string>): Promise<void> {
+    const historyQuery = this.historyQueryRepository.findHistoryQueryById(historyQueryId);
+    if (!historyQuery) {
+      throw new Error(`History query "${historyQueryId}" does not exist`);
+    }
+
+    for (const itemId of itemIds) {
+      const historyQueryItem = this.historyQueryRepository.findHistoryQueryItemById(historyQueryId, itemId);
+      if (!historyQueryItem) {
+        throw new Error(`History query item "${itemId}" not found`);
+      }
+      this.historyQueryRepository.enableHistoryQueryItem(historyQueryItem.id);
+    }
+
+    this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
+    await this.engine.reloadHistoryQuery(historyQuery, false);
+  }
+
+  async disableHistoryQueryItems(historyQueryId: string, itemIds: Array<string>): Promise<void> {
+    const historyQuery = this.historyQueryRepository.findHistoryQueryById(historyQueryId);
+    if (!historyQuery) {
+      throw new Error(`History query "${historyQueryId}" does not exist`);
+    }
+
+    for (const itemId of itemIds) {
+      const historyQueryItem = this.historyQueryRepository.findHistoryQueryItemById(historyQueryId, itemId);
+      if (!historyQueryItem) {
+        throw new Error(`History query item "${itemId}" not found`);
+      }
+      this.historyQueryRepository.disableHistoryQueryItem(historyQueryItem.id);
+    }
+
+    this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
+    await this.engine.reloadHistoryQuery(historyQuery, false);
+  }
+
+  async deleteHistoryQueryItems(historyQueryId: string, itemIds: Array<string>): Promise<void> {
+    const historyQuery = this.historyQueryRepository.findHistoryQueryById(historyQueryId);
+    if (!historyQuery) {
+      throw new Error(`History query "${historyQueryId}" does not exist`);
+    }
+
+    for (const itemId of itemIds) {
+      const historyQueryItem = this.historyQueryRepository.findHistoryQueryItemById(historyQueryId, itemId);
+      if (!historyQueryItem) {
+        throw new Error(`History query item "${itemId}" not found`);
+      }
+      this.historyQueryRepository.deleteHistoryQueryItem(historyQueryItem.id);
+    }
+
+    this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
+    await this.engine.reloadHistoryQuery(historyQuery, false);
+  }
+
   async deleteAllItems(historyId: string): Promise<void> {
     const historyQuery = this.findById(historyId);
     this.historyQueryRepository.deleteAllHistoryQueryItemsByHistoryQuery(historyId);
