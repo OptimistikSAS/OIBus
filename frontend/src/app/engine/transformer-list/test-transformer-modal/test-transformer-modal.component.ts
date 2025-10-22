@@ -39,7 +39,7 @@ export class TestTransformerModalComponent {
 
   form = this.fb.group({
     inputData: ['', Validators.required],
-    options: [{}]
+    options: this.fb.control([])
   });
 
   outputControl = this.fb.control('');
@@ -50,7 +50,7 @@ export class TestTransformerModalComponent {
 
     // Pre-fill options if provided from edit modal
     if (customManifest) {
-      this.form.patchValue({ options: customManifest });
+      this.form.patchValue({ options: Array.isArray(customManifest) ? customManifest : [customManifest] } as any);
     }
   }
 
@@ -85,7 +85,7 @@ export class TestTransformerModalComponent {
 
     const testRequest = {
       inputData: formValue.inputData!,
-      options: formValue.options || {}
+      options: formValue.options || []
     };
 
     this.transformerService.test(transformer.id, testRequest).subscribe({

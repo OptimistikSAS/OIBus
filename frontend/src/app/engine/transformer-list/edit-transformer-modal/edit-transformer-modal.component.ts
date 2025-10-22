@@ -22,7 +22,6 @@ import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-chang
 import { TransformerService } from '../../../services/transformer.service';
 import { ModalService } from '../../../shared/modal.service';
 import { TestTransformerModalComponent } from '../test-transformer-modal/test-transformer-modal.component';
-// import { OIBusObjectAttribute } from '../../../../../../backend/shared/model/form.model';
 import { OibusInputDataTypeEnumPipe } from '../../../shared/oibus-input-data-type-enum.pipe';
 import { OibusOutputDataTypeEnumPipe } from '../../../shared/oibus-output-data-type-enum.pipe';
 import { OIBusTransformerLanguageEnumPipe } from '../../../shared/oibus-transformer-language-enum.pipe';
