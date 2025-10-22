@@ -20,6 +20,8 @@ import { Observable, switchMap } from 'rxjs';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { TransformerService } from '../../../services/transformer.service';
+import { ModalService } from '../../../shared/modal.service';
+import { TestTransformerModalComponent } from '../test-transformer-modal/test-transformer-modal.component';
 import { OibusInputDataTypeEnumPipe } from '../../../shared/oibus-input-data-type-enum.pipe';
 import { OibusOutputDataTypeEnumPipe } from '../../../shared/oibus-output-data-type-enum.pipe';
 import { OIBusTransformerLanguageEnumPipe } from '../../../shared/oibus-transformer-language-enum.pipe';
@@ -47,6 +49,7 @@ export class EditTransformerModalComponent {
   private modal = inject(NgbActiveModal);
   private transformerService = inject(TransformerService);
   private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
+  private modalService = inject(ModalService);
   private fb = inject(NonNullableFormBuilder);
 
   @ViewChild(OibCodeBlockComponent) editor: OibCodeBlockComponent | null = null;
@@ -93,6 +96,22 @@ export class EditTransformerModalComponent {
 
   cancel() {
     this.modal.dismiss();
+  }
+
+  test() {
+    if (!this.customTransformer || !this.form) {
+      return;
+    }
+
+    const modalRef = this.modalService.open(TestTransformerModalComponent, {
+      size: 'xl',
+      windowClass: 'test-transformer-modal'
+    });
+
+    const component: TestTransformerModalComponent = modalRef.componentInstance;
+    const formValue = this.form.value;
+
+    component.prepareForCreation(this.customTransformer, formValue.customCode, formValue.attributes);
   }
 
   save() {
