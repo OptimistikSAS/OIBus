@@ -1,0 +1,59 @@
+version: '3.8'
+
+x-mqtt-variables: &mqtt-variables
+  MQTT_USER: oibus
+  MQTT_PASSWORD: pass
+
+services:
+  opcua-server:
+    image: mcr.microsoft.com/iotedge/opc-plc:latest
+    container_name: opcua-plc
+    ports:
+      - "50000:50000"
+    volumes:
+      - ./docker/opcua/nodes_config.json:/app/nodes_config.json
+      - ./docker/opcua/pki:/app/pki
+#    command: --pn=50000 --autoaccept --sph --sn=5 --sr=10 --st=uint --fn=5 --fr=1 --ft=uint --gn=5 --nodesfile=/app/nodes_config.json
+    command: --nodesfile=/app/nodes_config.json --autoaccept
+    restart: unless-stopped
+
+  mqtt-broker:
+    image: eclipse-mosquitto
+    container_name: mqtt-broker
+    ports:
+      - "1883:1883"
+      - "9001:9001"  # WebSocket support
+    volumes:
+      - ./docker/mosquitto/config:/mosquitto/config
+      - ./docker/mosquitto/data:/mosquitto/data
+      - ./docker/mosquitto/log:/mosquitto/log
+      - ./docker/mosquitto/entrypoint.sh:/entrypoint.sh
+    environment: *mqtt-variables
+    entrypoint: /entrypoint.sh
+    command: mosquitto -c /mosquitto/config/mosquitto.conf
+    restart: unless-stopped
+
+  mqtt-simulator:
+    image: python:3.9-slim
+    container_name: mqtt-simulator
+    volumes:
+      - ./docker/mosquitto/mqtt_simulator.py:/app/mqtt_simulator.py
+    environment:
+      <<: *mqtt-variables
+      MQTT_BROKER: mqtt-broker
+      MQTT_PORT: 1883
+    working_dir: /app
+    command: sh -c "pip install paho-mqtt && python mqtt_simulator.py"
+    depends_on:
+      - mqtt-broker
+
+  modbus-server:
+    image: oitc/modbus-server
+    container_name: modbus-server
+    ports:
+      - "5020:5020"
+    volumes:
+      - ./docker/modbus/server_config.json:/server_config.json
+    command: -f /server_config.json
+    restart: unless-stopped
+

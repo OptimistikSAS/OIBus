@@ -1,0 +1,40 @@
+{
+  "Folder": "OIBus",
+  "NodeList": [
+    {
+      "NodeId": 1023,
+      "NodeClass": "Variable",
+      "DataType": "Double",
+      "Value": 20.0,
+      "MinimumSamplingInterval": 1000,
+      "Historizing": false,
+      "ValueRank": -1,
+      "ArrayDimensions": [],
+      "Description": "Simulated temperature sensor",
+      "Simulation": {
+        "Type": "RandomWalk",
+        "MinValue": 18.0,
+        "MaxValue": 28.0,
+        "StepSize": 0.5,
+        "Interval": 2000
+      }
+    },
+    {
+      "NodeId": 1024,
+      "NodeClass": "Variable",
+      "DataType": "Double",
+      "Value": 1013.25,
+      "MinimumSamplingInterval": 1000,
+      "Historizing": false,
+      "ValueRank": -1,
+      "ArrayDimensions": [],
+      "Description": "Simulated pressure sensor",
+      "Simulation": {
+        "Type": "SineWave",
+        "Amplitude": 10.0,
+        "Period": 10000,
+        "Offset": 1013.25
+      }
+    }
+  ]
+}
