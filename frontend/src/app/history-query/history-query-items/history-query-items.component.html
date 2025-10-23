@@ -83,7 +83,9 @@
                 style="width: 16px; height: 16px; cursor: pointer"
               />
             </th>
-            <th style="width: 3rem"></th>
+            <th style="width: 8rem; text-align: center">
+              <span translate="history-query.items.status"></span>
+            </th>
             <th class="w-25">
               <button type="button" style="background: none; border: none; font-weight: bold" (click)="toggleColumnSort('name')">
                 <span translate="history-query.items.name" class="me-2"></span>
@@ -112,15 +114,13 @@
                   style="width: 16px; height: 16px; cursor: pointer"
                 />
               </td>
-              @if (saveChangesDirectly()) {
-                <td>
-                  <div class="form-check form-switch">
-                    <input (click)="toggleItem(item, !item.enabled)" [checked]="item.enabled" type="checkbox" class="form-check-input" />
-                  </div>
-                </td>
-              } @else {
-                <td></td>
-              }
+              <td class="text-center">
+                @if (item.enabled) {
+                  <span translate="history-query.items.enabled-label"></span>
+                } @else {
+                  <span translate="history-query.items.disabled-label"></span>
+                }
+              </td>
               <td>{{ item.name }}</td>
               @for (setting of displaySettings; track setting) {
                 <td>{{ getFieldValue(item.settings, setting.key) }}</td>
