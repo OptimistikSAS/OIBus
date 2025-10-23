@@ -93,6 +93,11 @@ export class SouthItemsComponent implements OnInit {
 
   searchControl = inject(NonNullableFormBuilder).control(null as string | null);
 
+  // Mass action properties
+  selectedItems = new Set<string>();
+  isAllSelected = false;
+  isIndeterminate = false;
+
   columnSortStates: { [key in keyof TableData]: ColumnSortState } = {
     name: ColumnSortState.INDETERMINATE,
     scanMode: ColumnSortState.INDETERMINATE
@@ -147,6 +152,11 @@ export class SouthItemsComponent implements OnInit {
   changePage(pageNumber: number) {
     this.sortTable();
     this.displayedItems = createPageFromArray(this.filteredItems, PAGE_SIZE, pageNumber);
+  }
+
+  refreshCurrentPage() {
+    this.sortTable();
+    this.displayedItems = createPageFromArray(this.filteredItems, PAGE_SIZE, this.displayedItems.number);
   }
 
   filter(): Array<SouthConnectorItemDTO<SouthItemSettings>> {
@@ -293,6 +303,8 @@ export class SouthItemsComponent implements OnInit {
         if (this.saveChangesDirectly()) {
           this.notificationService.success('south.items.deleted');
           this.inMemoryItems.emit(null);
+          // Refresh current page instead of resetting to page 0
+          this.refreshCurrentPage();
         } else {
           this.inMemoryItems.emit(this.allItems);
           this.resetPage();
@@ -470,6 +482,8 @@ export class SouthItemsComponent implements OnInit {
           if (this.southConnector()) {
             this.inMemoryItems.emit(null);
           }
+          // Refresh current page instead of resetting to page 0
+          this.refreshCurrentPage();
         });
     } else {
       this.southConnectorService
@@ -483,6 +497,8 @@ export class SouthItemsComponent implements OnInit {
           if (this.southConnector()) {
             this.inMemoryItems.emit(null);
           }
+          // Refresh current page instead of resetting to page 0
+          this.refreshCurrentPage();
         });
     }
   }
@@ -535,5 +551,100 @@ export class SouthItemsComponent implements OnInit {
           break;
       }
     }
+  }
+
+  // Mass action methods
+  toggleItemSelection(itemId: string) {
+    if (this.selectedItems.has(itemId)) {
+      this.selectedItems.delete(itemId);
+    } else {
+      this.selectedItems.add(itemId);
+    }
+    this.updateSelectionState();
+  }
+
+  toggleSelectAll() {
+    if (this.isAllSelected) {
+      this.selectedItems.clear();
+    } else {
+      this.displayedItems.content.forEach(item => {
+        if (item.id) {
+          this.selectedItems.add(item.id);
+        }
+      });
+    }
+    this.updateSelectionState();
+  }
+
+  updateSelectionState() {
+    const totalItems = this.displayedItems.content.length;
+    const selectedCount = this.selectedItems.size;
+
+    this.isAllSelected = selectedCount === totalItems && totalItems > 0;
+    this.isIndeterminate = selectedCount > 0 && selectedCount < totalItems;
+  }
+
+  enableSelectedItems() {
+    const itemIds = Array.from(this.selectedItems);
+    if (itemIds.length === 0) return;
+
+    this.southConnectorService.enableItems(this.southId(), itemIds).subscribe({
+      next: () => {
+        this.notificationService.success('south.items.enabled-multiple', { count: itemIds.length.toString() });
+        this.selectedItems.clear();
+        this.updateSelectionState();
+        if (this.southConnector()) {
+          this.inMemoryItems.emit(null);
+        }
+      },
+      error: error => {
+        this.notificationService.error('south.items.enable-error', { error: error.message });
+      }
+    });
+  }
+
+  disableSelectedItems() {
+    const itemIds = Array.from(this.selectedItems);
+    if (itemIds.length === 0) return;
+
+    this.southConnectorService.disableItems(this.southId(), itemIds).subscribe({
+      next: () => {
+        this.notificationService.success('south.items.disabled-multiple', { count: itemIds.length.toString() });
+        this.selectedItems.clear();
+        this.updateSelectionState();
+        if (this.southConnector()) {
+          this.inMemoryItems.emit(null);
+        }
+      },
+      error: error => {
+        this.notificationService.error('south.items.disable-error', { error: error.message });
+      }
+    });
+  }
+
+  deleteSelectedItems() {
+    const itemIds = Array.from(this.selectedItems);
+    if (itemIds.length === 0) return;
+
+    this.confirmationService
+      .confirm({
+        messageKey: 'south.items.delete-multiple-message',
+        interpolateParams: { count: itemIds.length.toString() }
+      })
+      .subscribe(() => {
+        this.southConnectorService.deleteItems(this.southId(), itemIds).subscribe({
+          next: () => {
+            this.notificationService.success('south.items.deleted-multiple', { count: itemIds.length.toString() });
+            this.selectedItems.clear();
+            this.updateSelectionState();
+            if (this.southConnector()) {
+              this.inMemoryItems.emit(null);
+            }
+          },
+          error: error => {
+            this.notificationService.error('south.items.delete-error', { error: error.message });
+          }
+        });
+      });
   }
 }

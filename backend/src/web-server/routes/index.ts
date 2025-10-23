@@ -278,7 +278,16 @@ router.put('/api/south/:southId/items/:id', (ctx: KoaContext<SouthConnectorItemC
 );
 router.put('/api/south/:southId/items/:id/enable', (ctx: KoaContext<void, void>) => southConnectorController.enableSouthItem(ctx));
 router.put('/api/south/:southId/items/:id/disable', (ctx: KoaContext<void, void>) => southConnectorController.disableSouthItem(ctx));
+router.put('/api/south/:southId/items/bulk/enable', (ctx: KoaContext<{ itemIds: Array<string> }, void>) =>
+  southConnectorController.enableSouthItems(ctx)
+);
+router.put('/api/south/:southId/items/bulk/disable', (ctx: KoaContext<{ itemIds: Array<string> }, void>) =>
+  southConnectorController.disableSouthItems(ctx)
+);
 router.delete('/api/south/:southId/items/all', (ctx: KoaContext<void, void>) => southConnectorController.deleteAllSouthItem(ctx));
+router.delete('/api/south/:southId/items/bulk', (ctx: KoaContext<{ itemIds: Array<string> }, void>) =>
+  southConnectorController.deleteSouthItems(ctx)
+);
 router.delete('/api/south/:southId/items/:id', (ctx: KoaContext<void, void>) => southConnectorController.deleteSouthItem(ctx));
 router.put('/api/south/:southId/cache/reset-metrics', (ctx: KoaContext<void, void>) => southConnectorController.resetSouthMetrics(ctx));
 
@@ -350,6 +359,15 @@ router.post(
 );
 router.put('/api/history-queries/:historyQueryId/south-items/:id', (ctx: KoaContext<HistoryQueryItemCommandDTO<SouthItemSettings>, void>) =>
   historyQueryController.updateHistoryQueryItem(ctx)
+);
+router.put('/api/history-queries/:historyQueryId/south-items/bulk/enable', (ctx: KoaContext<{ itemIds: Array<string> }, void>) =>
+  historyQueryController.enableHistoryQueryItems(ctx)
+);
+router.put('/api/history-queries/:historyQueryId/south-items/bulk/disable', (ctx: KoaContext<{ itemIds: Array<string> }, void>) =>
+  historyQueryController.disableHistoryQueryItems(ctx)
+);
+router.delete('/api/history-queries/:historyQueryId/south-items/bulk', (ctx: KoaContext<{ itemIds: Array<string> }, void>) =>
+  historyQueryController.deleteHistoryQueryItems(ctx)
 );
 router.put('/api/history-queries/:historyQueryId/south-items/:id/enable', (ctx: KoaContext<void, void>) =>
   historyQueryController.enableHistoryQueryItem(ctx)
