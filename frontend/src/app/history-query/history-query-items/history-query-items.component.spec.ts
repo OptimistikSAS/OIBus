@@ -205,18 +205,16 @@ describe('HistoryQueryItemsComponent with saving changes directly', () => {
     expect(item.elements('td')[2]).toContainText(testHistoryQuery.items[0].name);
   });
 
-  it('should enable history item', () => {
-    const btnIdx = 1; // the second one is disabled by default
-    tester.toggleButtons[btnIdx].click();
-    expect(historyQueryService.enableItem).toHaveBeenCalledWith(testHistoryQuery.id, testHistoryQuery.items[btnIdx].id);
-    expect(notificationService.success).toHaveBeenCalledWith('history-query.items.enabled', { name: testHistoryQuery.items[btnIdx].name });
+  it('should display enabled status for enabled items', () => {
+    const item = tester.southItems[0]; // first item is enabled by default
+    const statusCell = item.elements('td')[1]; // status column
+    expect(statusCell).toContainText('Enabled');
   });
 
-  it('should disable history item', () => {
-    const btnIdx = 0; // the first one is enabled by default
-    tester.toggleButtons[btnIdx].click();
-    expect(historyQueryService.disableItem).toHaveBeenCalledWith(testHistoryQuery.id, testHistoryQuery.items[btnIdx].id);
-    expect(notificationService.success).toHaveBeenCalledWith('history-query.items.disabled', { name: testHistoryQuery.items[btnIdx].name });
+  it('should display disabled status for disabled items', () => {
+    const item = tester.southItems[1]; // second item is disabled by default
+    const statusCell = item.elements('td')[1]; // status column
+    expect(statusCell).toContainText('Disabled');
   });
 
   it('should delete all', () => {
@@ -404,7 +402,7 @@ describe('HistoryQueryItemsComponent without saving changes directly', () => {
     expect(item.elements('td')[2]).toContainText(testHistoryQuery.items[0].name);
   });
 
-  it('should not have option to enable/disable history item', () => {
+  it('should not have toggle buttons for enable/disable', () => {
     expect(tester.toggleButtons.length).toBe(0);
   });
 
