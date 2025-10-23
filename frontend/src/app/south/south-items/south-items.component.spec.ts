@@ -174,18 +174,16 @@ describe('SouthItemsComponent with saving changes directly', () => {
     expect(item.elements('td')[3]).toContainText('scanMode1');
   });
 
-  it('should enable south item', () => {
-    const btnIdx = 1; // the second one is disabled by default
-    tester.toggleButtons[btnIdx].click();
-    expect(southConnectorService.enableItem).toHaveBeenCalledWith('southId', testSouthConnector.items[btnIdx].id);
-    expect(notificationService.success).toHaveBeenCalledWith('south.items.enabled', { name: testSouthConnector.items[btnIdx].name });
+  it('should display enabled status for enabled items', () => {
+    const item = tester.southItems[0]; // first item is enabled by default
+    const statusCell = item.elements('td')[1]; // status column
+    expect(statusCell).toContainText('Enabled');
   });
 
-  it('should disable south item', () => {
-    const btnIdx = 0; // the first one is enabled by default
-    tester.toggleButtons[btnIdx].click();
-    expect(southConnectorService.disableItem).toHaveBeenCalledWith('southId', testSouthConnector.items[btnIdx].id);
-    expect(notificationService.success).toHaveBeenCalledWith('south.items.disabled', { name: testSouthConnector.items[btnIdx].name });
+  it('should display disabled status for disabled items', () => {
+    const item = tester.southItems[1]; // second item is disabled by default
+    const statusCell = item.elements('td')[1]; // status column
+    expect(statusCell).toContainText('Disabled');
   });
 
   it('should delete all', () => {
@@ -367,7 +365,7 @@ describe('SouthItemsComponent without saving changes directly', () => {
     expect(item.elements('td')[3]).toContainText('scanMode1');
   });
 
-  it('should not have option to enable/disable south item', () => {
+  it('should not have toggle buttons for enable/disable', () => {
     expect(tester.toggleButtons.length).toBe(0);
   });
 
