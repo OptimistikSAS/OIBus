@@ -3,15 +3,19 @@ sidebar_position: 4
 ---
 
 # OLEDB
+
 Send HTTP queries to connect to an ODBC driver and read data through SQL queries.
 
 ## HTTP API
+
 ### Status
+
 ```
 curl --location 'http://localhost:2224/api/ole/id/status'
 ```
 
 ### Connection
+
 ```
 curl --location --request PUT 'http://localhost:2224/api/ole/id/connect' \
 --header 'Content-Type: application/json' \
@@ -22,6 +26,7 @@ curl --location --request PUT 'http://localhost:2224/api/ole/id/connect' \
 ```
 
 ### Read
+
 ```
 curl --location --request PUT 'http://localhost:2224/api/ole/id/read' \
 --header 'Content-Type: application/json' \
@@ -39,7 +44,7 @@ curl --location --request PUT 'http://localhost:2224/api/ole/id/read' \
 ```
 
 ### Disconnection
+
 ```
 curl --location --request DELETE 'http://localhost:2224/api/ole/id/disconnect'
 ```
-

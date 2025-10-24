@@ -1,15 +1,14 @@
-import React from 'react'
-import clsx from 'clsx'
-import styles from './styles.module.css'
-import Translate from "@docusaurus/Translate";
+import React from 'react';
+import clsx from 'clsx';
+import styles from './styles.module.css';
+import Translate from '@docusaurus/Translate';
+import PropTypes from 'prop-types';
 
 const FeatureList = [
   {
     title: (
       <>
-        <Translate description="Multi source title">
-          Multi source
-        </Translate>
+        <Translate description="Multi source title">Multi source</Translate>
       </>
     ),
     Svg: require('@site/static/img/multi-source.svg').default,
@@ -19,14 +18,12 @@ const FeatureList = [
           Access a variety of data sources securely and remotely, including databases and IoT devices.
         </Translate>
       </>
-    ),
+    )
   },
   {
     title: (
       <>
-        <Translate description="No code title">
-          No code
-        </Translate>
+        <Translate description="No code title">No code</Translate>
       </>
     ),
     Svg: require('@site/static/img/no-code.svg').default,
@@ -36,25 +33,22 @@ const FeatureList = [
           Using OIBus is simple: connect a data source and send your data at desired intervals directly from the web interface.
         </Translate>
       </>
-    ),
+    )
   },
   {
     title: (
       <>
-        <Translate description="Real time title">
-          Real time
-        </Translate>
+        <Translate description="Real time title">Real time</Translate>
       </>
     ),
     Svg: require('@site/static/img/real-time.svg').default,
     description: (
       <Translate description="Real time feature">
-        Manage your subscriptions and schedule tasks with high precision to adapt your data stream to your real-time
-        needs.
+        Manage your subscriptions and schedule tasks with high precision to adapt your data stream to your real-time needs.
       </Translate>
-    ),
-  },
-]
+    )
+  }
+];
 
 const Feature = ({ Svg, title, description }) => (
   <div className={clsx('col col--4')}>
@@ -66,7 +60,13 @@ const Feature = ({ Svg, title, description }) => (
       <p>{description}</p>
     </div>
   </div>
-)
+);
+
+Feature.propTypes = {
+  Svg: PropTypes.string.isRequired,
+  title: PropTypes.string.isRequired,
+  description: PropTypes.object.isRequired
+};
 
 export default function HomepageFeatures() {
   return (
@@ -79,5 +79,5 @@ export default function HomepageFeatures() {
         </div>
       </div>
     </section>
-  )
+  );
 }

@@ -3,22 +3,25 @@ displayed_sidebar: guideSidebar
 sidebar_position: 1
 ---
 
-# Main concepts
-## Open-source, scalable and flexible
-OIBus is a lightweight and flexible data collection solution that simplifies data recovery in an industrial environment.
-It collects data from a wide variety of sources encountered in the industry and transmits it to target applications 
-whether they are on-premises or in the cloud.
+# Main Concepts
 
-OIBus is an open-source solution which allows great flexibility to answer various use cases. Historically developed to 
-power the OIAnalytics® solution, Optimistik offers and maintains since 2020 this solution under [(EU-PL)
-](https://ec.europa.eu/info/european-union-public-licence_en) open-source license. 
+## Open-source, Scalable, and Flexible
 
-It is used by other solution providers who choose to join this initiative so that the collection of data in industry is 
-no longer an obstacle to its digitization.
+OIBus is a lightweight, open-source solution designed to simplify data collection in industrial environments. It seamlessly gathers data
+from diverse sources and transmits it to target applications—whether on-premises or in the cloud.
 
-## A streaming solution 
-OIBus is built in a modular way with a South (data collection from source systems), a North (transmission to target 
-systems) and an Engine (mainly in charge of configuration, orchestration and cache).
+Originally developed to power **OIAnalytics®**, OIBus has been maintained by Optimistik since 2020 under the
+[European Union Public Licence (EU-PL)](https://ec.europa.eu/info/european-union-public-licence_en). As an open-source project, it offers
+unparalleled flexibility to address a wide range of use cases. Many solution providers have adopted OIBus to overcome data collection
+challenges and accelerate industrial digitization.
+
+## A Modular, Streaming Solution
+
+OIBus is built with a modular architecture, consisting of three core components:
+
+- **South**: Collects data from source systems.
+- **North**: Caches and transmits data to target systems.
+- **Engine**: Manages configuration, orchestration, and logging.
 
 <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2rem' }}>
   <div style={{ width: '650px', height: '650px' }}>
@@ -28,29 +31,46 @@ systems) and an Engine (mainly in charge of configuration, orchestration and cac
   </div>
 </div>
 
+:::info
+This modular design simplifies scalability by centralizing complexity in the Engine, making it easier to
+[develop and integrate](../developer/create-connector/presentation.md) new North or South modules.
+:::
 
-This structure facilitates the scalability of the solution by concentrating most of the complexity in the Engine. Thus, 
-the development of North or South modules is made easier.
+## Advanced Capabilities
 
-## Advanced capabilities
-OIBus already supports many industrial data sources and can be enriched thanks to its open-source code.
+### Supported Data Sources
 
-- **Industrial information systems**: PLCs, supervisions, historians with various protocols (OPCUA, OPC, TwinCAT® ADS, Modbus...)
-- **Business information systems**: Access to business information systems by SQL queries (Oracle Database™, Microsoft SQL Server™,
-PostgreSQL, MySQL®, MariaDB™, SQLite™...), files retrieval (xls, csv...)
-- **IoT Sensors**: Subscribe to IoT messaging services (MQTT, API...)
+OIBus supports a wide range of industrial and business data sources, and its open-source nature allows for continuous expansion:
 
-OIBus also supports many application targets which can be extended as needed.
-- **SaaS Applications**: OIAnalytics®, Amazon S3™, Azure Blob Storage™, REST API...
-- **IoT platforms**: Subscription to IoT messaging services (MQTT, API...)
-- **Databases**: InfluxDB, TimeScale DB, MongoDB...
+- **Industrial Systems**: PLCs, supervisory systems, and historians using protocols like OPC UA™, OPC Classic™, TwinCAT® ADS, and Modbus.
+- **Business Systems**: Access to databases (Oracle Database™, Microsoft SQL Server™, PostgreSQL, MySQL®, MariaDB™, SQLite™) and file
+  retrieval (e.g., Excel, CSV).
+- **IoT Sensors**: Integration with IoT messaging services (MQTT, APIs, etc.).
 
-In addition, OIBus has been designed to withstand large loads and is used on many industrial sites with data streams 
-ranging from 10 to 10,000 points with second-scale precision.
+| Protocol/Type        | Historian Capabilities | Direct Access      | Typical Use Cases                     |
+| -------------------- | ---------------------- | ------------------ | ------------------------------------- |
+| OPC UA™             | Yes                    | Yes                | PLCs, supervisory systems, historians |
+| OPC Classic™        | Yes                    | Yes                | Legacy industrial systems             |
+| TwinCAT® ADS        | No                     | Yes                | Beckhoff PLCs                         |
+| Modbus               | No                     | Yes                | PLCs, sensors, devices                |
+| MQTT                 | Limited                | Yes                | IoT sensors, messaging services       |
+| REST API             | Depends on the API     | Depends on the API | Web services, cloud applications      |
+| SQL Databases        | Yes                    | No                 | Oracle, SQL Server, PostgreSQL, etc.  |
+| File Retrieval, SFTP | No                     | Yes                | Excel, CSV, logs                      |
 
-Overall, OIBus can manage:
-- Reliable, secure and optimized communications
-- Store and forward so as not to miss any data
-- Communications secured by HTTPS
-- Data compression
-- Tunneling and proxy management
+### Target Applications
+
+OIBus transmits data to various destinations, including:
+
+- **SaaS Applications**: OIAnalytics®, Amazon S3™, Azure Blob Storage™, REST APIs, and more.
+- **IoT Platforms**: MQTT, APIs, and other IoT messaging services.
+- **Industrial Systems**: OPC UA™ and Modbus.
+
+### Performance and Reliability
+
+OIBus is engineered to handle high-volume data streams, with deployments ranging from **10 to 10,000 data points per second**. Key features
+include:
+
+- **Reliable and secure communications** (HTTPS, tunneling, proxy management).
+- **Store-and-forward functionality** to ensure no data is lost.
+- **Data compression** for optimized transmission.

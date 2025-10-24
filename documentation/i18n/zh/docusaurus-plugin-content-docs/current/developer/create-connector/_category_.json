@@ -1,8 +1,0 @@
-{
-  "label": "Create a connector",
-  "position": 3,
-  "link": {
-    "type": "generated-index",
-    "description": "Learn how to develop new OIBus connectors."
-  }
-}

@@ -3,20 +3,23 @@ sidebar_position: 5
 ---
 
 # OSIsoft PI System™
-The OIBus agent can receive the following [HTTP calls](#http-api). The agent run a local PI module through an inter-process
-communication.
+
+The OIBus agent can receive the following [HTTP calls](#http-api). The agent run a local PI module through an inter-process communication.
 
 :::caution OS compatibility
 This feature is available only on Windows.
 :::
 
 ## HTTP API
+
 ### Status
+
 ```
 curl --location 'http://localhost:2224/api/pi/id/status'
 ```
 
 ### Connection
+
 ```
 curl --location --request PUT 'http://localhost:2224/api/pi/id/connect' \
 --header 'Content-Type: application/json' \
@@ -24,6 +27,7 @@ curl --location --request PUT 'http://localhost:2224/api/pi/id/connect' \
 ```
 
 ### Read
+
 ```
 curl --location --request PUT 'http://localhost:2224/api/pi/id/read' \
 --header 'Content-Type: application/json' \
@@ -46,21 +50,22 @@ curl --location --request PUT 'http://localhost:2224/api/pi/id/read' \
 ```
 
 ### Disconnection
+
 ```
 curl --location --request DELETE 'http://localhost:2224/api/pi/id/disconnect'
 ```
 
 ## OIBusPI Module
 
-OIBusPI is a module used by OIBus Agent to interact with OSIsoft PI Server. As a standalone module, it can also be
-run through a Command Line Interface.
+OIBusPI is a module used by OIBus Agent to interact with OSIsoft PI Server. As a standalone module, it can also be run through a Command
+Line Interface.
 
 OIBusPI is built in C# with .NET Framework 4.8.
 
-Newtonsoft.Json and CommandLineParser libraries are also required to interact with HTTP commands and CLI commands
-respectively.
+Newtonsoft.Json and CommandLineParser libraries are also required to interact with HTTP commands and CLI commands respectively.
 
 ### PIAgent (standalone)
+
 The agent is an executable that needs the following DLLs to run :
 
 - CommandLine.dll
@@ -68,25 +73,28 @@ The agent is an executable that needs the following DLLs to run :
 - OSIsoft.AFSDK.dll
 
 Several actions are possible:
+
 - catalog: list available tags and store them in a CSV file
 
 The following options are available for both commands:
 
-````
+```
 -l --consoleLevel           Verbosity level for Console (error, warning, info, debug, trace). Default debug
 -x --fileLevel              Verbosity level for File (error, warning, info, debug, trace). Default debug
-````
-
+```
 
 #### catalog
+
 PIAgent Catalog creates a csv file `catalog.csv`.
 
 The following options are available:
-````
+
+```
 -f --file               Name of the output folder. Default: catalog.csv
-````
+```
 
 ##### Basic usage
+
 `.\PIAgent.exe catalog`
 
 ```
@@ -98,6 +106,7 @@ PointId
 ```
 
 ##### Includes all and specific file
+
 `.\PIAgent.exe catalog --file myFile.csv`
 
 ```
