@@ -5,9 +5,11 @@ sidebar_position: 13
 import ThrottlingSettings from './_throttling-settings.mdx';
 
 # OIAnalytics®
+
 Query time values from [OIAnalytics®](https://optimistik.com/oianalytics/)
 
 ## Specific settings
+
 Here are the important parameters for configuring connectivity with the OIAnalytics SaaS application:
 
 - **Use OIAnalytics registration**: Use the connection settings of the [OIAnalytics registration](../advanced/oianalytics-registration.mdx)
@@ -35,44 +37,48 @@ If OIAnalytics registration is not used, the following fields will be used:
   - **Proxy username**: The username associated with the proxy.
   - **Proxy password**: The password linked to the proxy.
 
-<ThrottlingSettings/>
+<ThrottlingSettings />
 
 ## Item settings
-In the South connector, each item can be configured to be queried according to the chosen scan mode. Multiple queries to
-the same database can be configured within the same South connector. OIBus will execute the queries one after another,
-prepare the output file, and then send it to North connectors.
+
+In the South connector, each item can be configured to be queried according to the chosen scan mode. Multiple queries to the same database
+can be configured within the same South connector. OIBus will execute the queries one after another, prepare the output file, and then send
+it to North connectors.
 
 ### Endpoint
+
 The endpoint where to send the HTTP request, for instance `/api/oianalytics/data/values`.
 
 ### Query params
-The **Query params** field can utilize internal variables. These variables serve two primary purposes:
-ensuring data stream resilience in case of connection failures and breaking down large intervals into smaller chunks,
-thus reducing the load on both the server and the network (as explained in the [big queries section](#splitting-large-queries)).
+
+The **Query params** field can utilize internal variables. These variables serve two primary purposes: ensuring data stream resilience in
+case of connection failures and breaking down large intervals into smaller chunks, thus reducing the load on both the server and the network
+(as explained in the [big queries section](#splitting-large-queries)).
 
 #### Query variables
+
 In OIBus, you can utilize the following internal variables that will be interpreted by the system:
 
-- **@StartTime**: Initially, the @StartTime variable is set to the date of the first execution of the query. When results
-are retrieved from the application, the @StartTime value is updated to the most recent timestamp among those results in the
-field used as a reference.
-- **@EndTime**: The @EndTime variable is set to either the current time (_now()_) or the end of the sub-interval if a
-query is split.
+- **@StartTime**: Initially, the @StartTime variable is set to the date of the first execution of the query. When results are retrieved from
+  the application, the @StartTime value is updated to the most recent timestamp among those results in the field used as a reference.
+- **@EndTime**: The @EndTime variable is set to either the current time (_now()_) or the end of the sub-interval if a query is split.
 
 ### CSV Serialization
-OIBus offers the option to serialize retrieved data into CSV files, and you can customize the serialization process with
-the following settings:
-- **Filename**: The name of the file where the result will be stored. You can use several internal variables like
-**@ConnectorName** (the name of the connector) and **@CurrentDate** (the current date in `yyyy_MM_dd_HH_mm_ss_SSS`
-format - it is uncorrelated to the datetime format of the serialization, used for datetime fields).
+
+OIBus offers the option to serialize retrieved data into CSV files, and you can customize the serialization process with the following
+settings:
+
+- **Filename**: The name of the file where the result will be stored. You can use several internal variables like **@ConnectorName** (the
+  name of the connector) and **@CurrentDate** (the current date in `yyyy_MM_dd_HH_mm_ss_SSS` format - it is uncorrelated to the datetime
+  format of the serialization, used for datetime fields).
 - **Delimiter**: The delimiter to use in the CSV.
 - **Compression**: Choose whether to compress the file with gzip or not.
-- **Output datetime format**: Specify the format of the datetime in the CSV. The **@CurrentDate** variable used in the output
-filename won't be affected.
+- **Output datetime format**: Specify the format of the datetime in the CSV. The **@CurrentDate** variable used in the output filename won't
+  be affected.
 - **Output timezone**: The timezone to use for storing the datetime.
 
 ## Splitting large queries
-In situations where a query may impose a significant load on the server, especially when a large time interval is requested
-and the @StartTime and @EndTime [query variables](#query-variables) are utilized, you can split the query into several
-sub-queries with smaller intervals. This can be achieved by configuring the **Max read interval** field in the
-[throttling settings](#throttling-settings).
+
+In situations where a query may impose a significant load on the server, especially when a large time interval is requested and the
+@StartTime and @EndTime [query variables](#query-variables) are utilized, you can split the query into several sub-queries with smaller
+intervals. This can be achieved by configuring the **Max read interval** field in the [throttling settings](#throttling-settings).

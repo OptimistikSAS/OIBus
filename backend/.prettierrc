@@ -1,4 +1,14 @@
-singleQuote: true
-printWidth: 140
-trailingComma: none
-arrowParens: avoid
+{
+  "singleQuote": true,
+  "printWidth": 140,
+  "trailingComma": "none",
+  "arrowParens": "avoid",
+  "overrides": [
+    {
+      "files": ["*.md", "*.mdx"],
+      "options": {
+        "proseWrap": "preserve"
+      }
+    }
+  ]
+}

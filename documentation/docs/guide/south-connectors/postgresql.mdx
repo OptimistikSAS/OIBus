@@ -6,11 +6,13 @@ import ItemSettings from './_south-sql-item-settings.mdx';
 import ThrottlingSettings from './_throttling-settings.mdx';
 
 # PostgreSQL
+
 Query PostgreSQL databases.
 
 ## Specific settings
-When configuring the SQL connector to send SQL queries to a PostgreSQL Server, you will need to provide the following
-details:
+
+When configuring the SQL connector to send SQL queries to a PostgreSQL Server, you will need to provide the following details:
+
 - **Host**: The address of the PostgreSQL server.
 - **Port**: The PostgreSQL server port (default is 5432).
 - **Connection timeout**: Timeout setting for establishing the connection.
@@ -20,9 +22,10 @@ details:
 - **Request timeout**: Timeout for each SQL query.
 
 :::tip Database access
-It is strongly advised to use a read-only user when connecting to the database for security and data integrity purposes.
+It is strongly advised to use a read-only user when connecting to the database for security and data integrity
+purposes.
 :::
 
-<ThrottlingSettings/>
+<ThrottlingSettings />
 
-<ItemSettings/>
+<ItemSettings />

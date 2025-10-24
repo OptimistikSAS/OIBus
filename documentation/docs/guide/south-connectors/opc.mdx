@@ -7,11 +7,11 @@ import ThrottlingSettings from './_throttling-settings.mdx';
 # OPC Classic™
 
 OPC Classic™ (HDA/DA) is a communication protocol used in the industrial world and developed by the
-[OPC Foundation](https://opcfoundation.org/). This technology has been replaced by OPCUA but is still widely used in
-the industry. To use OPC UA™ in OIBus, see the [OPC UA connector documentation](./opcua.mdx).
+[OPC Foundation](https://opcfoundation.org/). This technology has been replaced by OPCUA but is still widely used in the industry. To use
+OPC UA™ in OIBus, see the [OPC UA connector documentation](./opcua.mdx).
 
-An HDA server allows to retrieve the history of data over a more or less long period, while a DA server allows to
-retrieve only the most recent value of a tag.
+An HDA server allows to retrieve the history of data over a more or less long period, while a DA server allows to retrieve only the most
+recent value of a tag.
 
 Only OPC in HDA mode is supported by OIBus. This connector uses the [OIBus Agent](../oibus-agent/installation.mdx).
 
@@ -21,8 +21,8 @@ The OIBus Agent must be installed on a Windows machine.
 
 ## Specific settings
 
-OIBus exchanges commands and data with the HDA agent through a TCP server/client communication. Therefore, several
-fields must be filled to make OIBus communicate with the OIBus Agent:
+OIBus exchanges commands and data with the HDA agent through a TCP server/client communication. Therefore, several fields must be filled to
+make OIBus communicate with the OIBus Agent:
 
 - **Remote agent URL**: Specify the URL of the remote OIBus agent, e.g., `http://ip-address-or-host:2224`.
 - **Connection timeout**: Set the timeout for establishing a connection.
@@ -30,23 +30,19 @@ fields must be filled to make OIBus communicate with the OIBus Agent:
 - **Server host**: Address of the OPC server (from the remote OIBus agent machine).
 - **Server name**: Name of the OPC server (e.g. Matrikon.OPC.Simulation).
 
-<ThrottlingSettings/>
+<ThrottlingSettings />
 
 ## Item settings
 
 When configuring each item to retrieve data in JSON payload, you'll need to specify the following specific settings:
 
 - **Node ID**: The Node ID corresponds to the path of the data within the appropriate namespace on the OPC server.
-- **Aggregate**: Aggregate the retrieved values over the requested interval (be sure that the server supports the
-  aggregate).
-- **Resampling**: When aggregate is different from `Raw`, it is possible to resample the retrieved values at the
-  requested
-  interval.
+- **Aggregate**: Aggregate the retrieved values over the requested interval (be sure that the server supports the aggregate).
+- **Resampling**: When aggregate is different from `Raw`, it is possible to resample the retrieved values at the requested interval.
 
 :::caution Compatibility with the OPC server
-It's important to note that not all aggregation and resampling options are supported by OPC servers. To avoid
-compatibility issues, it's recommended to use `Raw` aggregation and `None` resampling whenever possible.    
+It's important to note that not all aggregation and resampling options are supported by OPC
+servers. To avoid compatibility issues, it's recommended to use `Raw` aggregation and `None` resampling whenever possible.  
 :::
 
-The name of the item will serve as a reference in JSON payloads, specifically in the `pointID` field for the North
-application. 
+The name of the item will serve as a reference in JSON payloads, specifically in the `pointID` field for the North application.

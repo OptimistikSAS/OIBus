@@ -1,12 +1,13 @@
-import React from 'react'
-import PropTypes from 'prop-types'
+import React from 'react';
+import PropTypes from 'prop-types';
 
 const DownloadButton = ({ children, link, color }) => (
-  <div style={{
-    marginBottom: '20px',
-    marginTop: '10px',
-    textAlign: 'center',
-  }}
+  <div
+    style={{
+      marginBottom: '20px',
+      marginTop: '10px',
+      textAlign: 'center'
+    }}
   >
     <a
       rel="nofollow"
@@ -26,14 +27,14 @@ const DownloadButton = ({ children, link, color }) => (
       {children}
     </a>
   </div>
-)
+);
 
 DownloadButton.propTypes = {
   link: PropTypes.string.isRequired,
   color: PropTypes.string,
-  children: PropTypes.object.isRequired,
-}
+  children: PropTypes.object.isRequired
+};
 
-DownloadButton.defaultProps = { color: '#009ee0' }
+DownloadButton.defaultProps = { color: '#009ee0' };
 
-export default DownloadButton
+export default DownloadButton;

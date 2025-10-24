@@ -1,8 +1,8 @@
 // @ts-check
 // Note: type annotations allow type checking and IDEs autocompletion
 
-const lightCodeTheme = require('prism-react-renderer').themes.github
-const darkCodeTheme = require('prism-react-renderer').themes.dracula
+const lightCodeTheme = require('prism-react-renderer').themes.github;
+const darkCodeTheme = require('prism-react-renderer').themes.dracula;
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -12,7 +12,11 @@ const config = {
   favicon: 'img/favicon.ico',
   tagline: 'Start collecting your data now',
   onBrokenLinks: 'warn',
-  onBrokenMarkdownLinks: 'warn',
+  markdown: {
+    hooks: {
+      onBrokenMarkdownLinks: 'warn'
+    }
+  },
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
@@ -24,7 +28,7 @@ const config = {
   // to replace "en" with "zh-Hans".
   i18n: {
     defaultLocale: 'en',
-    locales: ['en', 'zh'],
+    locales: ['en']
   },
 
   presets: [
@@ -37,9 +41,9 @@ const config = {
           lastVersion: 'current',
           editLocalizedFiles: true
         },
-        theme: { customCss: require.resolve('./src/css/custom.css') },
-      },
-    ],
+        theme: { customCss: require.resolve('./src/css/custom.css') }
+      }
+    ]
   ],
 
   themeConfig:
@@ -49,37 +53,37 @@ const config = {
         title: 'OIBus',
         logo: {
           alt: 'OIBus Logo',
-          src: 'img/logo.svg',
+          src: 'img/logo.svg'
         },
         items: [
           {
             type: 'doc',
             docId: 'guide/index',
             position: 'left',
-            label: 'Documentation',
+            label: 'Documentation'
           },
           {
             type: 'doc',
             docId: 'developer/index',
             position: 'left',
-            label: 'Developer',
+            label: 'Developer'
           },
           {
             type: 'doc',
             docId: 'use-cases/index',
             position: 'left',
-            label: 'Use cases',
+            label: 'Use cases'
           },
           {
             type: 'localeDropdown',
-            position: 'right',
+            position: 'right'
           },
           {
             href: 'https://github.com/OptimistikSAS/OIBus',
             label: 'GitHub',
-            position: 'right',
-          },
-        ],
+            position: 'right'
+          }
+        ]
       },
       footer: {
         style: 'dark',
@@ -89,39 +93,39 @@ const config = {
             items: [
               {
                 label: 'User Guide',
-                to: '/docs/guide/',
+                to: '/docs/guide/'
               },
               {
                 label: 'Developer Guide',
-                to: '/docs/developer/',
+                to: '/docs/developer/'
               },
               {
                 label: 'Use cases',
-                to: '/docs/use-cases/',
-              },
-            ],
+                to: '/docs/use-cases/'
+              }
+            ]
           },
           {
             title: 'Community',
             items: [
               {
                 label: 'LinkedIn',
-                href: 'https://www.linkedin.com/showcase/oibus-by-optimistik',
-              },
-            ],
+                href: 'https://www.linkedin.com/showcase/oibus-by-optimistik'
+              }
+            ]
           },
           {
             title: 'More',
             items: [
               {
                 label: 'GitHub',
-                href: 'https://github.com/OptimistikSAS/OIBus',
-              },
-            ],
-          },
+                href: 'https://github.com/OptimistikSAS/OIBus'
+              }
+            ]
+          }
         ],
         copyright: `Copyright © ${new Date().getFullYear()} Optimistik. Built with Docusaurus.
-        All trademarks, logos and brand names are the property of their respective owners. All company, product and service names used in this website are for identification purposes only. Use of these names, trademarks and brands does not imply endorsement.`,
+        All trademarks, logos and brand names are the property of their respective owners. All company, product and service names used in this website are for identification purposes only. Use of these names, trademarks and brands does not imply endorsement.`
       },
       algolia: {
         // The application ID provided by Algolia
@@ -139,15 +143,15 @@ const config = {
         searchParameters: {},
 
         // Optional: path for search page that enabled by default (`false` to disable it)
-        searchPagePath: 'search',
+        searchPagePath: 'search'
 
         //... other Algolia params
       },
       prism: {
         theme: lightCodeTheme,
-        darkTheme: darkCodeTheme,
-      },
-    }),
-}
+        darkTheme: darkCodeTheme
+      }
+    })
+};
 
-module.exports = config
+module.exports = config;

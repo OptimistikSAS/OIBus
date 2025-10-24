@@ -1,12 +1,11 @@
 ### Throttling settings
-For South connectors capable of historical data retrieval, you have the flexibility to request data
-in intervals. These intervals can vary in size, depending on factors such as the chosen scan mode or the presence of
-prolonged network failures.
 
-To handle such scenarios, the throttling settings enable you to divide large intervals into smaller sub-intervals, each
-no longer than the specified **Max read interval** (in seconds). These sub-intervals are requested with a delay defined
-by the **Read delay** setting (in milliseconds).
+For South connectors capable of historical data retrieval, you have the flexibility to request data in intervals. These intervals can vary
+in size, depending on factors such as the chosen scan mode or the presence of prolonged network failures.
 
-In certain situations, adding an overlap to the query can be beneficial. You can achieve this by configuring
-the **overlap** field (in milliseconds): it will subtract this specified number of milliseconds from the `@StartTime`
-variable of the subsequent query.
+To handle such scenarios, the throttling settings enable you to divide large intervals into smaller sub-intervals, each no longer than the
+specified **Max read interval** (in seconds). These sub-intervals are requested with a delay defined by the **Read delay** setting (in
+milliseconds).
+
+In certain situations, adding an overlap to the query can be beneficial. You can achieve this by configuring the **overlap** field (in
+milliseconds): it will subtract this specified number of milliseconds from the `@StartTime` variable of the subsequent query.

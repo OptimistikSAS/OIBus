@@ -16,9 +16,9 @@ Here are the essential parameters for configuring the Amazon S3 connector:
 - **Access key**: The authentication key used for connecting to the Amazon S3 bucket.
 - **Secret key**: The secret key associated with the access key.
 - **Use proxy**: An option to utilize a proxy for sending HTTP requests.
-    - **Proxy URL**: The URL of the proxy server to pass requests through.
-    - **Proxy username**: The username linked to the proxy.
-    - **Proxy password**: The password associated with the proxy username.
+  - **Proxy URL**: The URL of the proxy server to pass requests through.
+  - **Proxy username**: The username linked to the proxy.
+  - **Proxy password**: The password associated with the proxy username.
 
 ## OIBus Time values
 
