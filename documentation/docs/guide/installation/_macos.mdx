@@ -23,36 +23,52 @@ import packageInfo from '../../../package.json';
   </DownloadButton>
 </div>
 
-macOS OIBus binary can be run through its executable. Once unzipped, start a Terminal and enter the following command:
+## Run OIBus on macOS
 
-<CodeBlock>{`./oibus-launcher --config ./data-folder`}</CodeBlock>
+1. **Extract the downloaded archive** to a location of your choice
 
-The `./data-folder` path must be adapted according to the place where the OIBus cache and config will be stored and the binary must be run
-from its own folder.
+2. **Open Terminal** and navigate to the folder containing the OIBus binary
 
-For example, if the binary is stored in `/bin/` and the cache and configuration files are stored in `~/test/oibus-data`, the command will
-be:
+3. **Run OIBus** with the following command:
 
-<CodeBlock>{`cd /bin && ./oibus-launcher --config ~/test/oibus-data`}</CodeBlock>
+```bash
+./oibus-launcher --config [your-data-folder-path]
+```
 
-:::caution
-Be sure to have admin permissions to run the binary
+Replace `[your-data-folder-path]` with the path where you want to store OIBus configuration and cache files.
+
+**Example:**
+
+```bash
+./oibus-launcher --config ~/oibus-data
+```
+
+:::important Requirements
+
+- You need **admin permissions** to run the binary
+- The binary must be run from its own folder
+
 :::
 
-:::caution Allow the app to be executed
-On macOS, you may need to allow the execution of the binary. When first run, go to the System
-Settings, on the Privacy & Security menu, and allow the oibus-launcher in the Security section by clicking on `Allow Anyway`.
+## Allow App Execution
 
-<div style={{textAlign: 'center'}}>
+On macOS, you may need to manually allow the execution of the OIBus binary:
 
-![MacOS security](../../../static/img/guide/installation/macos-security.png)
+1. When first running OIBus, you'll see a security warning
+2. Go to **System Settings > Privacy & Security**
+3. In the Security section, click **Allow Anyway** for:
 
-</div>
+- `oibus-launcher`
+- `oibus` (which is run by the launcher)
 
-This operation must be done twice:
+<div style={{ textAlign: 'center' }}>![macOS Security Settings](../../../static/img/guide/installation/macos-security.png)</div>
 
-- One for `oibus-launcher`
-- One for `oibus` (run by `oibus-launcher`)
-  :::
+:::note
+You'll need to perform this operation twice - once for each binary.
+:::
+
+## Access OIBus
+
+After successfully launching OIBus, access the interface at: http://localhost:2223/
 
 Get familiar with the OIBus interface on the [first access page](./first-access.mdx).

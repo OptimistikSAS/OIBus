@@ -1,5 +1,5 @@
 ---
-sidebar_position: 2
+sidebar_position: 1
 ---
 
 import Tabs from '@theme/Tabs';
@@ -10,26 +10,37 @@ import MacOSSteps from './_macos.mdx';
 
 # Installation
 
-Let's get OIBus up and running in under 2 minutes.
+Get OIBus installed and running in **under 2 minutes**.
 
 ## System Requirements
 
-In order to successfully install OIBus, your environment should meet the following minimum specifications:
+Before installing OIBus, ensure your environment meets these minimum requirements:
+Resource | Minimum Requirement | Notes |
+|-----------------------|-----------------------------------------|-----------------------------------------------------------------------|
+| **RAM** | 2 GB | Actual usage depends on your configuration and data volume. |
+| **Disk Space** | 200 MB | Additional space (several GB) recommended for data buffering and caching. |
+| **Administrative Rights** | Required | Needed to install OIBus and register it as a service. |
+| **Web Browser** | Modern browser (Chrome, Firefox, Edge) | Internet Explorer is **not** supported. |
 
-- **RAM: 2GB**. A minimum of 2GB is required, although the actual RAM needed may vary depending on your specific configuration.
-- **Disk Space: 200 MB**. You'll need at least 200 MB of disk space for the application. However, it's advisable to have additional space
-  (several GB, depending on your data stream) to store collected data in case of an upstream network failure.
-- **Administrative Privileges**: You must have administrative rights on your environment to install OIBus and register it as a service. This
-  applies to both Windows and Linux platforms.
+### Supported Operating Systems
+
+OIBus is officially supported on the following platforms:
+| Operating System | Version(s) | Notes |
+|-----------------------|-----------------------------------------|--------------------------------------------|
+| Windows | 10, 11, Server 2016/2019/2022/2025 | 64-bit versions only. |
+| Linux | Ubuntu 20.04 and later, Debian 10/11, RHEL 8/9 | x64 and ARM64 architectures. |
+| macOS | 11 (Big Sur) and later | Apple Silicon (M1/M2) and Intel supported. |
 
 :::caution
-You'll need a modern web browser to access the OIBus configuration interface. The browser can reside on the same computer as
-OIBus or on a different one, as long as you configure the [necessary access settings](../engine/ip-filters.md).
 
-Internet Explorer is not supported.
+- You need a **modern web browser** to access the OIBus configuration interface.
+- The browser can be on the same machine or remote, but you must [configure access settings](../engine/ip-filters.md).
+
 :::
 
 ## Installation steps
+
+Select your operating system for step-by-step instructions:
 
 <Tabs>
   <TabItem value="windows" label="Windows" default>
@@ -38,7 +49,7 @@ Internet Explorer is not supported.
   <TabItem value="linux" label="Linux">
     <LinuxSteps />
   </TabItem>
-  <TabItem value="macos" label="MacOS">
+  <TabItem value="macos" label="macOS">
     <MacOSSteps />
   </TabItem>
 </Tabs>

@@ -1,0 +1,207 @@
+---
+sidebar_position: 4
+---
+
+# Automated OIBus Installation
+
+## Objective
+
+This automated installation procedure enables efficient, large-scale OIBus deployments by combining secure installation with standardized initial configuration.
+
+**Key Benefits:**
+
+- **Scalable deployment** across multiple machines
+- **Consistent configurations** from first launch
+- **Immediate remote management** via [OIAnalytics](./oianalytics.mdx)
+- **Reduced manual effort** and minimized setup errors
+
+Perfect for enterprise environments, industrial implementations, or any scenario requiring multiple OIBus instances with uniform configurations.
+
+## Disk Image Preparation
+
+### Sample Implementation
+
+1. Extract the OIBus installation ZIP to `C:\Program Files\OIBus`
+2. Add your installation script to this directory
+3. Configure the script to run on startup (only if OIBus isn't already installed)
+4. Create a disk image (without OIBus installed) for deployment
+
+Additional curl commands can be added to the installation script for initial setup. Specific configurations will be managed through OIAnalytics.
+
+## Sample Installation Script
+
+```batch
+@echo off
+:: This script checks if OIBus is already installed. If not, it waits for the network, installs OIBus, waits for the service to start, and registers it.
+
+:: Check if OIBus service is already installed
+sc query "OIBus" >nul 2>&1
+if %errorlevel% equ 0 (
+    echo OIBus service is already installed. Skipping installation.
+    goto END
+)
+
+:: Wait for the network service to be running
+echo Waiting for the network service to start...
+:WAIT_FOR_NETWORK
+sc query "Dnscache" | find "RUNNING" >nul
+if %errorlevel% neq 0 (
+    timeout /t 5 >nul
+    goto WAIT_FOR_NETWORK
+)
+echo Network service is running.
+
+:: Set the directory where OIBus data will be stored (optional, if not set, the installation script will prompt)
+set OIBUS_DATA_DIR=C:\OIBusData
+
+:: Path to the installation script (assumes it is in the same folder as this script)
+set INSTALL_SCRIPT_PATH=%~dp0install_oibus.bat
+
+:: Call the installation script, passing the data directory as a parameter if needed
+call "%INSTALL_SCRIPT_PATH%" -c "%OIBUS_DATA_DIR%"
+
+:: Check the error level to see if the installation was successful
+if %errorlevel% neq 0 (
+    echo Error: OIBus installation failed.
+    exit /b %errorlevel%
+)
+
+:CHECK_SERVICE_RUNNING
+:: Wait for the OIBus service to be running
+echo Waiting for OIBus service to start...
+:WAIT_FOR_OIBUS
+for /f "tokens=3 delims=: " %%H in ('sc query "OIBus" ^| findstr "STATE"') do (
+    if /I "%%H" NEQ "RUNNING" (
+        timeout /t 5 >nul
+        goto WAIT_FOR_OIBUS
+    )
+)
+echo OIBus service is now running.
+
+:: Execute the curl command to create North connector
+curl --location 'http://localhost:2223/api/north' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Basic YWRtaW46cGFzcw==' \
+--data '{
+    "name": "North OIAnalytics",
+    "type": "oianalytics",
+    "description": "",
+    "enabled": true,
+    "settings": {
+        "useOiaModule": true,
+        "compress": false,
+        "timeout": 15000
+    },
+    "caching": {
+        "trigger": {
+            "scanModeId": null,
+            "scanModeName": "Every minute",
+            "numberOfElements": 10000,
+            "numberOfFiles": 1
+        },
+        "throttling": {
+            "runMinDelay": 200,
+            "maxSize": 0,
+            "maxNumberOfElements": 50000
+        },
+        "error": {
+            "retryInterval": 5000,
+            "retryCount": 3,
+            "retentionDuration": 72
+        },
+        "archive": {
+            "enabled": false,
+            "retentionDuration": 72
+        }
+    },
+    "subscriptions": []
+}'
+
+:: Execute the curl command to create South connector
+curl --location 'http://localhost:2223/api/south' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Basic YWRtaW46cGFzcw==' \
+--data '{
+    "name": "Modbus",
+    "type": "modbus",
+    "description": "Modbus South",
+    "enabled": true,
+    "settings": {
+        "host": "127.0.0.1",
+        "port": 502,
+        "retryInterval": 10000,
+        "slaveId": 1,
+        "addressOffset": "modbus",
+        "endianness": "big-endian",
+        "swapBytesInWords": false,
+        "swapWordsInDWords": false
+    },
+    "items": []
+}'
+
+:: Execute the curl command to create a scan mode
+curl --location 'http://localhost:2223/api/scan-modes' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Basic YWRtaW46cGFzcw==' \
+--data '{
+    "name": "Every 5 seconds",
+    "description": "Trigger every 5 seconds",
+    "cron": "*/5 * * * * *"
+}'
+
+:: Execute the curl command to register OIBus
+curl --location --request PUT 'http://localhost:2223/api/registration' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Basic YWRtaW46cGFzcw==' \
+--data '{
+    "host": "https://instance_name.optimistik.fr/",
+    "useProxy": false,
+    "acceptUnauthorized": false,
+    "commandRefreshInterval": 60,
+    "commandRetryInterval": 5,
+    "messageRetryInterval": 5,
+    "commandPermissions": {
+        "updateVersion": true,
+        "restartEngine": true,
+        "regenerateCipherKeys": true,
+        "updateEngineSettings": true,
+        "updateRegistrationSettings": true,
+        "createScanMode": true,
+        "updateScanMode": true,
+        "deleteScanMode": true,
+        "createIpFilter": true,
+        "updateIpFilter": true,
+        "deleteIpFilter": true,
+        "createCertificate": true,
+        "updateCertificate": true,
+        "deleteCertificate": true,
+        "createHistoryQuery": true,
+        "updateHistoryQuery": true,
+        "deleteHistoryQuery": true,
+        "createOrUpdateHistoryItemsFromCsv": true,
+        "testHistoryNorthConnection": true,
+        "testHistorySouthConnection": true,
+        "testHistorySouthItem": true,
+        "createSouth": true,
+        "updateSouth": true,
+        "deleteSouth": true,
+        "createOrUpdateSouthItemsFromCsv": true,
+        "testSouthConnection": true,
+        "testSouthItem": true,
+        "createNorth": true,
+        "updateNorth": true,
+        "deleteNorth": true,
+        "testNorthConnection": true
+    }
+}'
+
+
+if %errorlevel% neq 0 (
+    echo Error: Failed to register OIBus.
+    exit /b %errorlevel%
+)
+
+echo OIBus registration completed successfully.
+
+:END
+```
