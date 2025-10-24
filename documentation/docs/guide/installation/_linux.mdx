@@ -23,100 +23,91 @@ import packageInfo from '../../../package.json';
   </DownloadButton>
 </div>
 
-You also have the option to obtain the files using this command:
+Alternatively, download and extract the files using these commands:
 
-<CodeBlock>
+<CodeBlock language="bash">
   {`curl -LO https://github.com/OptimistikSAS/OIBus/releases/download/v${packageInfo.version}/oibus-linux_arm64-v${packageInfo.version}.zip`}
   {`\r\nunzip -a oibus-linux_arm64-v${packageInfo.version}.zip -d OIBus/`}
 </CodeBlock>
 
-The following files have been extracted:
+:::info Extracted Files
+The archive contains:
 
-```
-oibus-launcher          // OIBus launcher to run the binary
-binaries/oibus          // OIBus binary
-oibus-setup.sh          // installation script
-oibus-uninstall.sh      // uninstallation script that will be updated during the installation process
-```
+- `oibus-launcher` – Launcher for the OIBus binary
+- `binaries/oibus` – OIBus executable
+- `oibus-setup.sh` – Installation script
+- `oibus-uninstall.sh` – Uninstallation script (updated during installation)
 
-Bash scripts have been tested on Ubuntu. They are used to set OIBus as a service. Alternatively, it is possible to
-[run OIBus binary only](#run-oibus-in-standalone).
+:::
 
-## Installation of OIBus as a Linux service
+:::note
+The provided bash scripts have been tested on **Ubuntu** and are designed to set up OIBus as a system service. For other distributions, you may need to adapt the script.
+:::
 
-You can execute the installation script using the following command, and administrative privileges will be necessary during the script's
-execution.
+## Install OIBus as a Linux Service
 
-```
+1. Unzip the downloaded file into the directory where you want to install OIBus.
+
+2. Run the installation script with administrative privileges:
+
+```bash
 sudo ./oibus-setup.sh
 ```
 
-During the installation process, the following questions will be presented (default answers are provided in this example):
+3. Follow the interactive prompts (default values shown in parentheses):
 
 ```
 Administrative permissions are required to proceed. Do you wish to continue? (Y/n)
-Administrative permissions granted.
-Enter the directory in which you want to install the OIBus binary (default: ./OIBus/):
-Enter the directory in which you want to save all your OIBus related data, caches, and logs (default: ./OIBusData/):
-Enter a username for your session. It will be used every time you log into OIBus (default: admin):
-Enter a name for your OIBus. It will help to identify your OIBus, and assist in potential troubleshooting (default: OIBus):
-Enter the port on which you want OIBus to run (default 2223):
-Installing oibus service...
+Enter the directory for OIBus binaries (default: ./OIBus/):
+Enter the directory for OIBus data, caches, and logs (default: ./OIBusData/):
+Enter a username for your OIBus session (default: admin):
+Enter a name for your OIBus instance (default: OIBus):
+Enter the port for OIBus (default: 2223):
+```
+
+4. After successful installation, you'll see:
+
+```
 Service file successfully created. Enabling oibus service startup on system boot...
 Created symlink /etc/systemd/system/default.target.wants/oibus.service → /etc/systemd/system/oibus.service.
 Starting OIBus service...
-Setting oibus-uninstall.sh...
-Installation procedure completed !
+Installation procedure completed!
+```
 
-Useful commands:
-        Check service status:   sudo systemctl status oibus
-        Check service-logs:     sudo journalctl -u oibus -f
+5. Access OIBus at http://localhost:2223/
 
-Access OIBus: http://localhost:2223/
+6. Useful commands:
+
+```bash
+# Check service status
+sudo systemctl status oibus
+
+# View service logs
+sudo journalctl -u oibus -f
 ```
 
 Get familiar with the OIBus interface on the [first access page](./first-access.mdx).
 
-## Update
+## Update OIBus
 
-To perform an OIBus update, download the most recent version, extract the compressed archive, and initiate the setup installation.
-
-```
-sudo ./oibus-setup.sh
-```
-
-At start, OIBus will automatically update the configuration `oibus.db` and the cache structure if needed. Here is an output example:
-
-```
-Administrative permissions are required to proceed. Do you wish to continue? (Y/n)
-Administrative permissions granted.
-Enter the directory in which you want to install the OIBus binary (default: ./OIBus/):
-Enter the directory in which you want to save all your OIBus related data, caches, and logs (default: ./OIBusData/):
-An oibus.json file was found. Do you want to use it for this OIBus? (Y/n)
-Stopping oibus service...
-Removed /etc/systemd/system/default.target.wants/oibus.service.
-The oibus service has been stopped and disabled!
-Installing oibus service...
-Service file successfully created. Enabling oibus service startup on system boot...
-Created symlink /etc/systemd/system/default.target.wants/oibus.service → /etc/systemd/system/oibus.service.
-Starting OIBus service...
-Setting oibus-uninstall.sh...
-Installation procedure completed !
-
-Useful commands:
-        Check service status:   sudo systemctl status oibus
-        Check service-logs:     sudo journalctl -u oibus -f
-```
+1. Download the latest version and extract it.
+2. Stop the OIBus service.
+3. Replace the binary files where it has originally been installed.
+4. Restart the OIBus service.
 
 ## Uninstall OIBus
 
-An uninstallation script has been provided within the OIBus binary directory. When inside this folder, input the following command:
+1. Navigate to the OIBus binary directory and run:
 
-```
+```bash
 sudo ./oibus-uninstall.sh
 ```
 
-Here is an output example:
+2. Choose whether to remove all data when prompted
+
+:::caution
+Selecting to remove all data will permanently delete your configuration, credentials, and logs.
+:::
 
 ```
 Administrative permissions are required to proceed with uninstall. Do you wish to continue ? (Y/n)
@@ -126,17 +117,14 @@ Removed /etc/systemd/system/default.target.wants/oibus.service.
 OIBus service was successfully removed.
 ```
 
-As a default setting, the configuration is retained if you intend to reinstall OIBus at a later time. However, it is possible to remove it,
-but doing so will result in the loss of all credentials and the entire OIBus configuration.
+## Run OIBus in Standalone Mode
 
-## Run OIBus in standalone
+To run OIBus without installing as a service:
 
-If you prefer to run OIBus without installing it as a service, after downloading and unzipping the archive, you can execute the following
-command:
-
-```
+```bash
 ./oibus-launcher --config ./OIBusData
 ```
 
-Ensure that the OIBusData directory is already in place, as it serves as the storage location for cache, logs, and the configuration
-database (`OIBusData` in the example).
+:::tip
+Ensure the `OIBusData` directory exists before running this command.
+:::
