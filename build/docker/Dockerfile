@@ -4,7 +4,7 @@ ARG TARGETARCH
 # TARGETARCH is either amd64 or arm64
 # amd64 is mapped to x64
 ARG ARCH=${TARGETARCH/amd64/x64}
-ARG VERSION="v3.5.8"
+ARG VERSION="v3.7.0"
 
 RUN echo "${ARCH}-${VERSION}"
 

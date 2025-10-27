@@ -1,7 +1,88 @@
 import CodeBlock from '@theme/CodeBlock';
-import DownloadButton from '../../../src/components/DownloadButton';
 import packageInfo from '../../../package.json';
 
 ## Download
 
 <CodeBlock language="bash">{`docker pull ghcr.io/optimistiksas/oibus:v${packageInfo.version}`}</CodeBlock>
+
+### Run the Container
+
+```bash
+docker run --name oibus-container \ -d \ -p 2223:2223 \ -v "./OIBusData:/app/OIBus/OIBusData" \ oibus
+```
+
+:::tip Persistent Data Volume
+The volume mount (`-v`) is **highly recommended** to:
+
+- Persist configuration between container restarts
+- Access logs and cache files
+- Maintain your configuration database
+- Store historical data
+
+Without a volume, all data will be lost when the container stops.
+:::
+
+## Container Configuration
+
+### Port Configuration
+
+| Port     | Purpose       | Configuration                                   |
+| -------- | ------------- | ----------------------------------------------- |
+| 2223     | Web interface | Exposed by default (`-p 2223:2223`)             |
+| [custom] | Proxy server  | Add `-p [HOST_PORT]:[CONTAINER_PORT]` to expose |
+
+:::danger Port Configuration Warning
+**Important:** Never change the HTTP port (2223) from within the OIBus web interface when running in Docker. Changing this port will make the web interface inaccessible as the container only exposes port 2223 by default.
+:::
+
+### Proxy Server Setup
+
+To use OIBus as a proxy server in Docker:
+
+1. Configure the proxy port in OIBus settings (e.g., 9000)
+2. Update your `docker run` command:
+
+```bash
+docker run --name oibus-container \ -d \ -p 2223:2223 \ -p 9000:9000 \ -v "./OIBusData:/app/OIBus/OIBusData" \ oibus
+```
+
+3. Ensure your firewall allows traffic on the proxy port
+
+## Best Practices
+
+### Volume Management
+
+- Create a dedicated directory for OIBus data on your host
+- Set appropriate permissions: `chmod 775 OIBusData`
+- Consider using named volumes for production deployments
+
+### Resource Limits
+
+```bash
+docker run --name oibus-container \ -d \ --memory="2g" \ --cpus="2" \ -p 2223:2223 \ -v "./OIBusData:/app/OIBus/OIBusData" \ oibus
+```
+
+### Docker Compose Example
+
+<CodeBlock language="yaml">
+  {`
+version: '3.8'
+services:
+  oibus:
+    image: ghcr.io/optimistiksas/oibus:v${packageInfo.version}
+    container_name: oibus-container
+    ports:
+      - '2223:2223'
+    volumes:
+      - ./OIBusData:/app/OIBus/OIBusData
+    restart: unless-stopped
+    environment:
+      - TZ=UTC
+    # Uncomment to set resource limits
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: '2'
+    #       memory: 2G
+`}
+</CodeBlock>
