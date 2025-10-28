@@ -216,6 +216,8 @@ describe('Service utils', () => {
     it('should properly get filename without random id', () => {
       expect(getFilenameWithoutRandomId('test.file')).toEqual('test.file');
       expect(getFilenameWithoutRandomId('test-12345.file')).toEqual('test.file');
+      expect(getFilenameWithoutRandomId('test-12345.csv.gz')).toEqual('test.gz'); // This case should never happen
+      expect(getFilenameWithoutRandomId('test.csv-12345.gz')).toEqual('test.csv.gz');
       expect(getFilenameWithoutRandomId(path.join('folder', 'sub-directory', 'test-12345.file'))).toEqual('test.file');
     });
   });

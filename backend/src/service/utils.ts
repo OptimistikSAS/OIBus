@@ -141,13 +141,13 @@ export const createBaseFolders = async (baseFolders: BaseFolders, entityType: 's
  * Get filename without random ID from file path.
  * Example: file1-123456.json => file1.json
  */
-export const getFilenameWithoutRandomId = (filePath: string): string => {
-  const { name, ext } = path.parse(filePath);
+export const getFilenameWithoutRandomId = (filename: string): string => {
+  const { name, ext } = path.parse(filename);
   if (name.lastIndexOf('-') === -1) {
     return `${name}${ext}`;
   }
-  const filename = name.slice(0, name.lastIndexOf('-'));
-  return `${filename}${ext}`;
+  const resultingFilename = name.slice(0, name.lastIndexOf('-'));
+  return `${resultingFilename}${ext}`;
 };
 
 /**

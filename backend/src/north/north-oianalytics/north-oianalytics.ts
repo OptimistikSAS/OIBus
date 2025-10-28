@@ -128,22 +128,25 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     }
 
     const { name, ext, dir } = path.parse(filePath);
-    const timestamp = name.slice(name.lastIndexOf('-'));
+    const randomString = name.slice(name.lastIndexOf('-'));
 
-    let fileToSend = filePath;
-    if (this.connector.settings.compress && !filePath.endsWith('.gz')) {
+    const fileToSend =
+      this.connector.settings.compress && ext !== '.gz'
+        ? path.resolve(dir, `${name.replace(randomString, '')}${ext}${randomString}.gz`)
+        : path.resolve(dir, `${name}${ext}`);
+    if (this.connector.settings.compress && ext !== '.gz') {
       // compress if enabled and file to send is not a compressed one
-      fileToSend = `${name.slice(0, name.lastIndexOf('-'))}${ext}${timestamp}.gz`;
-      if (!(await filesExists(path.resolve(dir, fileToSend)))) {
+      if (!(await filesExists(fileToSend))) {
         // Compress only if the file has not been compressed by another try first
-        await compress(filePath, path.resolve(dir, fileToSend));
+        await compress(filePath, fileToSend);
       }
     }
 
-    const readStream = createReadStream(path.resolve(dir, fileToSend));
+    const readStream = createReadStream(fileToSend);
     const body = new FormData();
+    const filename = path.parse(fileToSend).base.replace(randomString, '');
     body.append('file', readStream, {
-      filename: `${fileToSend.slice(0, fileToSend.lastIndexOf('-'))}${this.connector.settings.compress ? '.gz' : ext}`
+      filename
     });
 
     let response: ReqResponse;
@@ -162,9 +165,9 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
       if (!readStream.closed) {
         readStream.close();
       }
-      if (this.connector.settings.compress && !filePath.endsWith('.gz')) {
+      if (this.connector.settings.compress && ext !== '.gz') {
         // Remove only the compressed file. The uncompressed file will be removed by north connector logic
-        await fs.unlink(path.resolve(dir, fileToSend));
+        await fs.unlink(fileToSend);
       }
     } catch (fetchError) {
       if (!readStream.closed) {
