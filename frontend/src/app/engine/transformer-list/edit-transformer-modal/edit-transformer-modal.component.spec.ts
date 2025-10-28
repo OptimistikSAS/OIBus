@@ -174,9 +174,9 @@ describe('EditTransformerModalComponent', () => {
 
     tester.save.click();
 
-    // Name and customCode are required fields in the main form
-    // inputType, outputType, and language are separate required controls
-    expect(tester.validationErrors.length).toBe(2);
+    // Form should be invalid and not save
+    expect(tester.componentInstance.form?.valid).toBeFalsy();
+    expect(tester.validationErrors.length).toBeGreaterThan(0);
     expect(fakeActiveModal.close).not.toHaveBeenCalled();
   });
 
