@@ -7,7 +7,7 @@ import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validat
 import { OibCodeBlockComponent } from '../../../shared/form/oib-code-block/oib-code-block.component';
 import { ManifestAttributesArrayComponent } from '../../../shared/form/manifest-builder/manifest-attributes-array/manifest-attributes-array.component';
 import { TransformerService } from '../../../services/transformer.service';
-import { CustomTransformerDTO } from '../../../../../../backend/shared/model/transformer.model';
+import { CustomTransformerDTO, CustomTransformerCommand } from '../../../../../../backend/shared/model/transformer.model';
 import { OibusInputDataTypeEnumPipe } from '../../../shared/oibus-input-data-type-enum.pipe';
 
 @Component({
@@ -30,6 +30,8 @@ export class TestTransformerModalComponent {
   private fb = inject(NonNullableFormBuilder);
 
   readonly transformer = signal<CustomTransformerDTO | null>(null);
+  readonly transformerCommand = signal<CustomTransformerCommand | null>(null);
+  readonly isCreationMode = signal<boolean>(false);
   readonly inputTemplate = signal<string>('');
   readonly output = signal<string>('');
   readonly isLoading = signal<boolean>(false);
@@ -46,9 +48,19 @@ export class TestTransformerModalComponent {
 
   prepareForCreation(transformer: CustomTransformerDTO, _customCode?: string, customManifest?: any) {
     this.transformer.set(transformer);
+    this.isCreationMode.set(false);
     this.loadInputTemplate();
 
-    // Pre-fill options if provided from edit modal
+    if (customManifest) {
+      this.form.patchValue({ options: Array.isArray(customManifest) ? customManifest : [customManifest] } as any);
+    }
+  }
+
+  prepareForCreationMode(command: CustomTransformerCommand, customManifest?: any) {
+    this.transformerCommand.set(command);
+    this.isCreationMode.set(true);
+    this.loadInputTemplate();
+
     if (customManifest) {
       this.form.patchValue({ options: Array.isArray(customManifest) ? customManifest : [customManifest] } as any);
     }
@@ -56,10 +68,13 @@ export class TestTransformerModalComponent {
 
   private loadInputTemplate() {
     const transformer = this.transformer();
-    if (!transformer) return;
+    const command = this.transformerCommand();
+    const inputType = transformer?.inputType || command?.inputType;
+
+    if (!inputType) return;
 
     this.isLoading.set(true);
-    this.transformerService.getInputTemplate(transformer.inputType).subscribe({
+    this.transformerService.getInputTemplate(inputType).subscribe({
       next: template => {
         this.inputTemplate.set(template.data);
         this.form.patchValue({ inputData: template.data });
@@ -73,11 +88,17 @@ export class TestTransformerModalComponent {
   }
 
   test() {
-    if (!this.form.valid || !this.transformer()) {
+    if (!this.form.valid) {
       return;
     }
 
-    const transformer = this.transformer()!;
+    const transformer = this.transformer();
+    const command = this.transformerCommand();
+
+    if (!transformer && !command) {
+      return;
+    }
+
     const formValue = this.form.value;
 
     this.isLoading.set(true);
@@ -88,7 +109,12 @@ export class TestTransformerModalComponent {
       options: formValue.options || []
     };
 
-    this.transformerService.test(transformer.id, testRequest).subscribe({
+    const testObservable =
+      this.isCreationMode() && command
+        ? this.transformerService.testDefinition(command, testRequest)
+        : this.transformerService.test(transformer!.id, testRequest);
+
+    testObservable.subscribe({
       next: response => {
         try {
           const parsedOutput = JSON.parse(response.output);
