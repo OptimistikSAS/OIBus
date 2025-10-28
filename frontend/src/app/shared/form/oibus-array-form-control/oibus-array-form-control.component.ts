@@ -16,6 +16,10 @@ import { isDisplayableAttribute } from '../dynamic-form.builder';
 import { ValErrorDelayDirective } from '../val-error-delay.directive';
 import { ValidationErrorsComponent } from 'ngx-valdemort';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ExportArrayModalComponent } from '../../export-array-modal/export-array-modal.component';
+import { ImportArrayModalComponent } from '../../import-array-modal/import-array-modal.component';
+import { ArrayExportImportService } from '../../../services/array-export-import.service';
+import { NotificationService } from '../../notification.service';
 
 interface Column {
   path: Array<string>;
@@ -48,12 +52,15 @@ interface Column {
 export class OIBusArrayFormControlComponent {
   private modalService = inject(ModalService);
   private translateService = inject(TranslateService);
+  private arrayExportImportService = inject(ArrayExportImportService);
+  private notificationService = inject(NotificationService);
 
   scanModes = input.required<Array<ScanModeDTO>>();
   certificates = input.required<Array<CertificateDTO>>();
   parentGroup = input.required<FormGroup>();
   control = input.required<FormControl<Array<any>>>();
   arrayAttribute = input.required<OIBusArrayAttribute>();
+  southId = input<string>(); // Add southId input for export/import functionality
 
   private readonly controlValue = toSignal(toObservable(this.control).pipe(switchMap(c => c.valueChanges.pipe(startWith(c.value)))));
   readonly columns = computed(() => this.buildColumn(this.arrayAttribute().rootAttribute, []));
@@ -177,5 +184,76 @@ export class OIBusArrayFormControlComponent {
 
   getValueByPath(obj: any, path: Array<string>) {
     return path.reduce((acc, key) => acc && acc[key], obj);
+  }
+
+  async exportArray() {
+    if (!this.southId()) {
+      return;
+    }
+
+    const modal = this.modalService.open(ExportArrayModalComponent);
+    modal.componentInstance.prepare(this.arrayAttribute().key);
+
+    modal.result.subscribe(result => {
+      if (result) {
+        this.arrayExportImportService.exportArray(this.southId()!, this.arrayAttribute().key, result.delimiter).subscribe({
+          next: blob => {
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = result.fileName + '.csv';
+            link.click();
+            window.URL.revokeObjectURL(url);
+            this.notificationService.success('common.export-success');
+          },
+          error: () => {
+            this.notificationService.error('common.export-error');
+          }
+        });
+      }
+    });
+  }
+
+  async importArray() {
+    if (!this.southId()) {
+      return;
+    }
+
+    const modal = this.modalService.open(ImportArrayModalComponent);
+    modal.componentInstance.arrayKey = this.arrayAttribute().key;
+
+    modal.result.subscribe(result => {
+      if (result) {
+        this.arrayExportImportService
+          .checkImportArray(this.southId()!, this.arrayAttribute().key, result.file, result.delimiter)
+          .subscribe({
+            next: response => {
+              if (response.errors.length > 0) {
+                // Show validation errors in modal
+                modal.componentInstance.setValidationErrors(response.errors);
+                this.notificationService.errorMessage(
+                  `Import validation failed: ${response.errors.map(e => e.error).join(', ')}`
+                );
+              } else {
+                // Import the validated items
+                this.arrayExportImportService.importArray(this.southId()!, this.arrayAttribute().key, response.items).subscribe({
+                  next: () => {
+                    // Update the form control with the imported items
+                    this.control().setValue(response.items);
+                    this.paginatedValues().gotoPage(0);
+                    this.notificationService.success('common.import-success');
+                  },
+                  error: () => {
+                    this.notificationService.error('common.import-error');
+                  }
+                });
+              }
+            },
+            error: () => {
+              this.notificationService.error('common.import-error');
+            }
+          });
+      }
+    });
   }
 }

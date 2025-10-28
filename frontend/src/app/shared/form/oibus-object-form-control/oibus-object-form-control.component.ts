@@ -63,6 +63,7 @@ export class OIBusObjectFormControlComponent {
   certificates = input.required<Array<CertificateDTO>>();
   group = input.required<FormGroup>();
   objectAttribute = input.required<OIBusObjectAttribute>();
+  southId = input<string>(); // Add southId input for array export/import functionality
 
   formRows = computed(() => {
     const rows: Array<FormRow> = [];

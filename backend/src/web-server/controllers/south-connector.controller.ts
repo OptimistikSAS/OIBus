@@ -524,4 +524,96 @@ export class SouthConnectorController extends Controller {
     const items: Array<SouthConnectorItemCommandDTO> = JSON.parse(itemsFile.buffer.toString('utf8'));
     await southService.importItems(southId, items);
   }
+
+  async exportArrayField(ctx: KoaContext<{ delimiter: string; arrayKey: string }, string>): Promise<void> {
+    const { delimiter, arrayKey } = ctx.request.body!;
+    const southConnector = ctx.app.southService.findById(ctx.params.southId);
+
+    if (!southConnector) {
+      return ctx.badRequest('South connector not found');
+    }
+
+    try {
+      // Check if the array field exists in the main connector settings
+      const settings = southConnector.settings as unknown as Record<string, unknown>;
+      let arrayData: Array<Record<string, unknown>> = [];
+
+      if (Array.isArray(settings[arrayKey])) {
+        // Array field is in main connector settings
+        arrayData = (settings[arrayKey] as Array<unknown>).filter(
+          (item): item is Record<string, unknown> => typeof item === 'object' && item !== null
+        );
+      } else {
+        // Array field might be in item settings - we need to collect from all items
+        const items = ctx.app.southService.getSouthItems(ctx.params.southId);
+        const allArrayData: Array<Record<string, unknown>> = [];
+
+        for (const item of items) {
+          const itemSettings = item.settings as unknown as Record<string, unknown>;
+          if (Array.isArray(itemSettings[arrayKey])) {
+            allArrayData.push(
+              ...(itemSettings[arrayKey] as Array<unknown>).filter(
+                (item: unknown): item is Record<string, unknown> => typeof item === 'object' && item !== null
+              )
+            );
+          }
+        }
+        arrayData = allArrayData;
+      }
+
+      const csvContent = ctx.app.southService.exportArrayToCSV(arrayData, delimiter, arrayKey);
+      ctx.body = csvContent;
+      ctx.set('Content-Type', 'text/csv');
+      ctx.set('Content-Disposition', `attachment; filename="${arrayKey}-export.csv"`);
+      ctx.ok();
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
+    }
+    return;
+  }
+
+  async checkImportArrayField(
+    ctx: KoaContext<
+      { delimiter: string; arrayKey: string },
+      {
+        items: Array<Record<string, unknown>>;
+        errors: Array<{ item: Record<string, unknown>; error: string }>;
+      }
+    >
+  ): Promise<void> {
+    const files = ctx.request.files as Record<string, Array<multer.File>>;
+    if (!files || !files['file']) {
+      return ctx.badRequest('Missing file "file"');
+    }
+
+    const { delimiter, arrayKey } = ctx.request.body!;
+    const southConnector = ctx.app.southService.findById(ctx.params.southId);
+
+    if (!southConnector) {
+      return ctx.badRequest('South connector not found');
+    }
+
+    try {
+      return ctx.ok(await ctx.app.southService.checkArrayCSVImport(files['file'][0], delimiter, arrayKey));
+    } catch (error: unknown) {
+      return ctx.badRequest((error as Error).message);
+    }
+  }
+
+  async importArrayField(ctx: KoaContext<{ arrayKey: string }, void>): Promise<void> {
+    const files = ctx.request.files as Record<string, Array<multer.File>>;
+    if (!files || !files['items']) {
+      return ctx.badRequest('Missing file "items"');
+    }
+
+    const { arrayKey } = ctx.request.body!;
+    const items: Array<Record<string, unknown>> = JSON.parse((await fs.readFile(files['items'][0].path)).toString('utf8'));
+
+    try {
+      await ctx.app.southService.importArrayField(ctx.params.southId, arrayKey, items);
+    } catch (error: unknown) {
+      return ctx.badRequest((error as Error).message);
+    }
+    ctx.noContent();
+  }
 }

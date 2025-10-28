@@ -1,0 +1,27 @@
+// Import array modal styles
+.import-drop-zone {
+  border: 2px dashed #ccc;
+  border-radius: 4px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.3s;
+
+  &:hover {
+    border-color: #007bff;
+  }
+
+  .import-drop-zone-content {
+    .import-drop-zone-text {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+
+      .fa {
+        font-size: 24px;
+        color: #666;
+      }
+    }
+  }
+}
