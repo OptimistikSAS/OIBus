@@ -118,7 +118,7 @@
 <div class="modal-footer">
   <div class="btn-group">
     <button [oib-save-button]="state" form="form"></button>
-    @if (mode === 'edit' && customTransformer) {
+    @if ((mode === 'edit' && customTransformer) || (mode === 'create' && canTest())) {
       <button
         type="button"
         class="btn btn-secondary"
