@@ -1,0 +1,15 @@
+.form-check-input {
+  opacity: 1 !important;
+  cursor: pointer;
+  margin: 0;
+}
+
+.form-check-input:checked {
+  background-color: #fabb00;
+  border-color: #fabb00;
+}
+
+.form-check-input:indeterminate {
+  background-color: #009ee0;
+  border-color: #009ee0;
+}

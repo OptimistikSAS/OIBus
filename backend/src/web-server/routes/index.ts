@@ -270,6 +270,15 @@ router.put(
   upload.fields([{ name: 'items', maxCount: 1 }]),
   (ctx: KoaContext<{ delimiter: string }, string>) => southConnectorController.southConnectorItemsToCsv(ctx)
 );
+router.put('/api/south/:southId/items/bulk/enable', (ctx: KoaContext<{ itemIds: Array<string> }, void>) =>
+  southConnectorController.enableSouthItems(ctx)
+);
+router.put('/api/south/:southId/items/bulk/disable', (ctx: KoaContext<{ itemIds: Array<string> }, void>) =>
+  southConnectorController.disableSouthItems(ctx)
+);
+router.delete('/api/south/:southId/items/bulk', (ctx: KoaContext<{ itemIds: Array<string> }, void>) =>
+  southConnectorController.deleteSouthItems(ctx)
+);
 router.get('/api/south/:southId/items/:id', (ctx: KoaContext<void, SouthConnectorItemDTO<SouthItemSettings>>) =>
   southConnectorController.getSouthItem(ctx)
 );
@@ -340,6 +349,15 @@ router.put(
   (ctx: KoaContext<{ delimiter: string }, string>) => historyQueryController.historyQueryItemsToCsv(ctx)
 );
 
+router.put('/api/history-queries/:historyQueryId/south-items/bulk/enable', (ctx: KoaContext<{ itemIds: Array<string> }, void>) =>
+  historyQueryController.enableHistoryQueryItems(ctx)
+);
+router.put('/api/history-queries/:historyQueryId/south-items/bulk/disable', (ctx: KoaContext<{ itemIds: Array<string> }, void>) =>
+  historyQueryController.disableHistoryQueryItems(ctx)
+);
+router.delete('/api/history-queries/:historyQueryId/south-items/bulk', (ctx: KoaContext<{ itemIds: Array<string> }, void>) =>
+  historyQueryController.deleteHistoryQueryItems(ctx)
+);
 router.get('/api/history-queries/:historyQueryId/south-items/:id', (ctx: KoaContext<void, HistoryQueryItemDTO<SouthItemSettings>>) =>
   historyQueryController.getHistoryQueryItem(ctx)
 );
