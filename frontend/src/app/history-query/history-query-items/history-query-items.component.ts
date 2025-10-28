@@ -497,38 +497,62 @@ export class HistoryQueryItemsComponent implements OnInit {
     const itemIds = Array.from(this.selectedItems);
     if (itemIds.length === 0) return;
 
-    this.historyQueryService.enableItems(this.historyId(), itemIds).subscribe({
-      next: () => {
-        this.notificationService.success('history-query.items.enabled-multiple', { count: itemIds.length.toString() });
-        this.selectedItems.clear();
-        this.updateSelectionState();
-        if (this.saveChangesDirectly()) {
+    if (this.saveChangesDirectly()) {
+      this.historyQueryService.enableItems(this.historyId(), itemIds).subscribe({
+        next: () => {
+          this.notificationService.success('history-query.items.enabled-multiple', { count: itemIds.length.toString() });
+          this.selectedItems.clear();
+          this.updateSelectionState();
           this.inMemoryItems.emit(null);
+        },
+        error: error => {
+          this.notificationService.error('history-query.items.enable-error', { error: error.message });
         }
-      },
-      error: error => {
-        this.notificationService.error('history-query.items.enable-error', { error: error.message });
-      }
-    });
+      });
+    } else {
+      this.allItems = this.allItems.map(item => {
+        if (itemIds.includes(item.id!)) {
+          return { ...item, enabled: true };
+        }
+        return item;
+      });
+      this.notificationService.success('history-query.items.enabled-multiple', { count: itemIds.length.toString() });
+      this.selectedItems.clear();
+      this.updateSelectionState();
+      this.inMemoryItems.emit(this.allItems);
+      this.refreshCurrentPage();
+    }
   }
 
   disableSelectedItems() {
     const itemIds = Array.from(this.selectedItems);
     if (itemIds.length === 0) return;
 
-    this.historyQueryService.disableItems(this.historyId(), itemIds).subscribe({
-      next: () => {
-        this.notificationService.success('history-query.items.disabled-multiple', { count: itemIds.length.toString() });
-        this.selectedItems.clear();
-        this.updateSelectionState();
-        if (this.saveChangesDirectly()) {
+    if (this.saveChangesDirectly()) {
+      this.historyQueryService.disableItems(this.historyId(), itemIds).subscribe({
+        next: () => {
+          this.notificationService.success('history-query.items.disabled-multiple', { count: itemIds.length.toString() });
+          this.selectedItems.clear();
+          this.updateSelectionState();
           this.inMemoryItems.emit(null);
+        },
+        error: error => {
+          this.notificationService.error('history-query.items.disable-error', { error: error.message });
         }
-      },
-      error: error => {
-        this.notificationService.error('history-query.items.disable-error', { error: error.message });
-      }
-    });
+      });
+    } else {
+      this.allItems = this.allItems.map(item => {
+        if (itemIds.includes(item.id!)) {
+          return { ...item, enabled: false };
+        }
+        return item;
+      });
+      this.notificationService.success('history-query.items.disabled-multiple', { count: itemIds.length.toString() });
+      this.selectedItems.clear();
+      this.updateSelectionState();
+      this.inMemoryItems.emit(this.allItems);
+      this.refreshCurrentPage();
+    }
   }
 
   deleteSelectedItems() {
@@ -541,19 +565,26 @@ export class HistoryQueryItemsComponent implements OnInit {
         interpolateParams: { count: itemIds.length.toString() }
       })
       .subscribe(() => {
-        this.historyQueryService.deleteItems(this.historyId(), itemIds).subscribe({
-          next: () => {
-            this.notificationService.success('history-query.items.deleted-multiple', { count: itemIds.length.toString() });
-            this.selectedItems.clear();
-            this.updateSelectionState();
-            if (this.saveChangesDirectly()) {
+        if (this.saveChangesDirectly()) {
+          this.historyQueryService.deleteItems(this.historyId(), itemIds).subscribe({
+            next: () => {
+              this.notificationService.success('history-query.items.deleted-multiple', { count: itemIds.length.toString() });
+              this.selectedItems.clear();
+              this.updateSelectionState();
               this.inMemoryItems.emit(null);
+            },
+            error: error => {
+              this.notificationService.error('history-query.items.delete-error', { error: error.message });
             }
-          },
-          error: error => {
-            this.notificationService.error('history-query.items.delete-error', { error: error.message });
-          }
-        });
+          });
+        } else {
+          this.allItems = this.allItems.filter(item => !itemIds.includes(item.id!));
+          this.notificationService.success('history-query.items.deleted-multiple', { count: itemIds.length.toString() });
+          this.selectedItems.clear();
+          this.updateSelectionState();
+          this.inMemoryItems.emit(this.allItems);
+          this.refreshCurrentPage();
+        }
       });
   }
 }
