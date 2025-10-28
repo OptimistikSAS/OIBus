@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { switchMap, finalize } from 'rxjs/operators';
 import { inject, Injectable } from '@angular/core';
 import {
   CustomTransformerCommandDTO,
@@ -73,5 +74,21 @@ export class TransformerService {
    */
   getInputTemplate(inputType: string): Observable<InputTemplate> {
     return this.http.get<InputTemplate>(`/api/transformers/input-template?inputType=${inputType}`);
+  }
+
+  /**
+   * Test a transformer definition by temporarily creating it
+   * @param command - the transformer command to test
+   * @param testRequest - the test request with input data and options
+   */
+  testDefinition(command: CustomTransformerCommand, testRequest: TransformerTestRequest): Observable<TransformerTestResponse> {
+    let transformerId: string;
+    return this.create(command).pipe(
+      switchMap(transformer => {
+        transformerId = transformer.id;
+        return this.test(transformer.id, testRequest);
+      }),
+      finalize(() => this.delete(transformerId!).subscribe())
+    );
   }
 }
