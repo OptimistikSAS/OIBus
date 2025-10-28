@@ -20,6 +20,7 @@ import { ScanMode } from '../model/scan-mode.model';
 import { HistoryQueryItemDTO } from '../../shared/model/history-query.model';
 import { SouthItemSettings } from '../../shared/model/south-settings.model';
 import { BaseFolders } from '../model/types';
+import { OIBusArrayAttribute, OIBusObjectAttribute } from 'shared/model/form.model';
 
 const COMPRESSION_LEVEL = 9;
 
@@ -700,6 +701,148 @@ export const stringToBoolean = (value: string): boolean => {
   if (['true', 'True', 'TRUE', '1'].includes(value)) return true;
   if (['false', 'False', 'FALSE', '0'].includes(value)) return false;
   return false;
+};
+
+export const arrayToFlattenedCSV = (
+  arrayItems: Array<Record<string, unknown>>,
+  delimiter: string,
+  arrayAttribute: OIBusArrayAttribute
+): string => {
+  const columns: Set<string> = new Set<string>();
+  const flattenedItems: Array<Record<string, string | object | boolean>> = [];
+
+  for (const item of arrayItems) {
+    const flattenedItem: Record<string, string | object | boolean> = {};
+
+    // Flatten the item based on the array attribute structure
+    flattenObject(item, arrayAttribute.rootAttribute, flattenedItem, []);
+
+    // Collect all column names
+    for (const key of Object.keys(flattenedItem)) {
+      columns.add(key);
+    }
+
+    flattenedItems.push(flattenedItem);
+  }
+
+  return csv.unparse(flattenedItems, { columns: Array.from(columns), delimiter });
+};
+
+const flattenObject = (
+  obj: Record<string, unknown>,
+  attribute: OIBusObjectAttribute,
+  flattened: Record<string, unknown>,
+  prefix: Array<string>
+): void => {
+  if (attribute.type === 'object' && attribute.attributes) {
+    for (const subAttribute of attribute.attributes) {
+      const key = subAttribute.key;
+      const value = obj[key];
+
+      if (value !== undefined) {
+        const fullKey = [...prefix, key].join('_');
+
+        if (subAttribute.type === 'object') {
+          // Ensure value is a non-null object before calling flattenObject
+          if (value && typeof value === 'object') {
+            flattenObject(value as Record<string, unknown>, subAttribute, flattened, [...prefix, key]);
+          }
+        } else {
+          if (typeof value === 'object' && value !== null) {
+            flattened[fullKey] = JSON.stringify(value);
+          } else {
+            flattened[fullKey] = value;
+          }
+        }
+      }
+    }
+  }
+};
+
+export const validateArrayCSVImport = (
+  csvContent: string,
+  delimiter: string,
+  arrayAttribute: OIBusArrayAttribute
+): {
+  items: Array<Record<string, unknown>>;
+  errors: Array<{ item: Record<string, string>; error: string }>;
+} => {
+  const csvData = csv.parse(csvContent, { header: true, delimiter, skipEmptyLines: true });
+
+  if (csvData.meta.delimiter !== delimiter) {
+    throw new Error(`The entered delimiter "${delimiter}" does not correspond to the file delimiter "${csvData.meta.delimiter}"`);
+  }
+
+  const validItems: Array<Record<string, unknown>> = [];
+  const errors: Array<{ item: Record<string, string>; error: string }> = [];
+
+  for (const [index, data] of csvData.data.entries()) {
+    try {
+      const item = unflattenObject(data as Record<string, unknown>, arrayAttribute.rootAttribute);
+      validItems.push(item);
+    } catch (error) {
+      errors.push({
+        item: data as Record<string, string>,
+        error: `Row ${index + 1}: ${(error as Error).message}`
+      });
+    }
+  }
+
+  return { items: validItems, errors };
+};
+
+const unflattenObject = (
+  flattened: Record<string, unknown>,
+  attribute: { type: string; attributes?: Array<unknown>; key?: string }
+): Record<string, unknown> => {
+  const result: Record<string, unknown> = {};
+
+  if (attribute.type === 'object' && Array.isArray(attribute.attributes)) {
+    for (const subAttributeUnknown of attribute.attributes) {
+      // Explicitly assert type for subAttribute
+      const subAttribute = subAttributeUnknown as {
+        type: string;
+        attributes?: Array<unknown>;
+        key?: string;
+      };
+      const key = subAttribute.key;
+
+      if (subAttribute.type === 'object') {
+        if (key !== undefined) {
+          result[key] = unflattenObject(flattened, subAttribute);
+        }
+      } else {
+        if (key !== undefined) {
+          const value = flattened[key];
+          if (value !== undefined) {
+            // Handle type conversion based on attribute type
+            switch (subAttribute.type) {
+              case 'boolean':
+                result[key] = stringToBoolean(value as string);
+                break;
+              case 'number':
+                result[key] = Number(value);
+                break;
+              case 'string':
+              case 'code':
+              case 'string-select':
+              case 'secret':
+              case 'timezone':
+              case 'instant':
+              case 'scan-mode':
+              case 'certificate':
+                result[key] = String(value);
+                break;
+              default:
+                result[key] = value;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return result;
 };
 
 const formatRegex = (ip: string) => {

@@ -79,7 +79,11 @@
       "save": "Save changes",
       "discard": "Discard changes",
       "remove": "Remove"
-    }
+    },
+    "export-success": "Export completed successfully",
+    "export-error": "Export failed",
+    "import-success": "Import completed successfully",
+    "import-error": "Import failed"
   },
   "datepicker": {
     "parse-pattern": "d/M/yyyy",

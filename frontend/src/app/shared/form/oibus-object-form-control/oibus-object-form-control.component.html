@@ -66,6 +66,7 @@
                   [parentGroup]="group()"
                   [control]="asFormControl(group().controls[row.columns[0].attribute.key])"
                   [arrayAttribute]="row.columns[0].attribute"
+                  [southId]="southId()"
                 />
               }
             }
@@ -136,6 +137,7 @@
                 [parentGroup]="group()"
                 [control]="asFormControl(group().controls[row.columns[0].attribute.key])"
                 [arrayAttribute]="row.columns[0].attribute"
+                [southId]="southId()"
               />
             }
           }

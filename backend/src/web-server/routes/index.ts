@@ -270,6 +270,29 @@ router.put(
   upload.fields([{ name: 'items', maxCount: 1 }]),
   (ctx: KoaContext<{ delimiter: string }, string>) => southConnectorController.southConnectorItemsToCsv(ctx)
 );
+
+// Array field export/import endpoints
+router.put('/api/south/:southId/array/:arrayKey/export', (ctx: KoaContext<{ delimiter: string; arrayKey: string }, string>) =>
+  southConnectorController.exportArrayField(ctx)
+);
+router.post(
+  '/api/south/:southId/array/:arrayKey/check-import',
+  upload.fields([{ name: 'file', maxCount: 1 }]),
+  (
+    ctx: KoaContext<
+      { delimiter: string; arrayKey: string },
+      {
+        items: Array<Record<string, unknown>>;
+        errors: Array<{ item: Record<string, string>; error: string }>;
+      }
+    >
+  ) => southConnectorController.checkImportArrayField(ctx)
+);
+router.post(
+  '/api/south/:southId/array/:arrayKey/import',
+  upload.fields([{ name: 'items', maxCount: 1 }]),
+  (ctx: KoaContext<{ arrayKey: string }, void>) => southConnectorController.importArrayField(ctx)
+);
 router.get('/api/south/:southId/items/:id', (ctx: KoaContext<void, SouthConnectorItemDTO<SouthItemSettings>>) =>
   southConnectorController.getSouthItem(ctx)
 );
