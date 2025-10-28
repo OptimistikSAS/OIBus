@@ -1,4 +1,4 @@
-import { Component, inject, ViewChild } from '@angular/core';
+import { Component, inject, ViewChild, OnInit } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
@@ -45,7 +45,7 @@ import { ManifestAttributesArrayComponent } from '../../../shared/form/manifest-
     TranslatePipe
   ]
 })
-export class EditTransformerModalComponent {
+export class EditTransformerModalComponent implements OnInit {
   private modal = inject(NgbActiveModal);
   private transformerService = inject(TransformerService);
   private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
@@ -72,8 +72,73 @@ export class EditTransformerModalComponent {
     attributes: this.fb.control([] as Array<OIBusAttribute>)
   });
 
+  ngOnInit() {
+    this.language.valueChanges.subscribe(() => {
+      if (this.mode === 'create') {
+        this.generateCodeTemplate();
+      }
+    });
+  }
+
   prepareForCreation() {
     this.mode = 'create';
+    this.generateCodeTemplate();
+  }
+
+  private generateCodeTemplate() {
+    const template = this.getCodeTemplate();
+    this.form.patchValue({ customCode: template });
+  }
+
+  private getCodeTemplate(): string {
+    const language = this.language.value || 'javascript';
+    if (language === 'typescript') {
+      return `// Custom transformer function
+// This function will be called for each input data
+function transform(inputData: string, source: string, filename: string, options: any): { data: any; filename: string; numberOfElement?: number } {
+  // Parse the input data
+  let data = inputData;
+  try {
+    data = JSON.parse(inputData);
+  } catch (e) {
+    data = inputData;
+  }
+
+  // Your transformation logic here
+  // data: the parsed input data to transform
+  // options: the transformer options configured by the user
+  // Return the transformed data in the expected format
+
+  return {
+    data: data,
+    filename: filename,
+    numberOfElement: Array.isArray(data) ? data.length : 1
+  };
+}`;
+    } else {
+      return `// Custom transformer function
+// This function will be called for each input data
+function transform(inputData, source, filename, options) {
+  let data = inputData;
+  // Parse the input data
+  try {
+    data = JSON.parse(inputData);
+  } catch (e) {
+    data = inputData;
+  }
+
+  // Your transformation logic here
+  // data: the parsed input data to transform
+  // options: the transformer options configured by the user
+  // Return the transformed data in the expected format
+
+  return {
+    data: data,
+    filename: filename,
+    numberOfElement: Array.isArray(data) ? data.length : 1
+  };
+}`;
+    }
   }
 
   prepareForEdition(transformer: CustomTransformerDTO) {
@@ -98,8 +163,15 @@ export class EditTransformerModalComponent {
     this.modal.dismiss();
   }
 
+  canTest(): boolean {
+    if (this.mode === 'create') {
+      return this.inputType.valid && this.outputType.valid && this.language.valid && this.form?.valid === true;
+    }
+    return !!this.customTransformer && this.form?.valid === true;
+  }
+
   test() {
-    if (!this.customTransformer || !this.form) {
+    if (!this.form || !this.canTest()) {
       return;
     }
 
@@ -111,7 +183,32 @@ export class EditTransformerModalComponent {
     const component: TestTransformerModalComponent = modalRef.componentInstance;
     const formValue = this.form.value;
 
-    component.prepareForCreation(this.customTransformer, formValue.customCode, formValue.attributes);
+    if (this.mode === 'create') {
+      const command: CustomTransformerCommand = {
+        type: 'custom',
+        inputType: this.inputType.value!,
+        outputType: this.outputType.value!,
+        language: this.language.value!,
+        name: formValue.name || 'Test Transformer',
+        description: formValue.description || '',
+        customCode: formValue.customCode || '',
+        customManifest: {
+          type: 'object',
+          key: 'options',
+          translationKey: 'configuration.oibus.manifest.transformers.choose-transformer-modal.options',
+          attributes: formValue.attributes || [],
+          enablingConditions: [],
+          validators: [],
+          displayProperties: {
+            visible: true,
+            wrapInBox: false
+          }
+        }
+      };
+      component.prepareForCreationMode(command, formValue.attributes);
+    } else {
+      component.prepareForCreation(this.customTransformer!, formValue.customCode, formValue.attributes);
+    }
   }
 
   save() {
