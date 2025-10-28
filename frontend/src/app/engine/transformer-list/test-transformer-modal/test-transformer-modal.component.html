@@ -3,18 +3,18 @@
 </div>
 
 <div class="modal-body">
-  @if (transformer()) {
+  @if (transformer() || transformerCommand()) {
     <div class="row mb-3">
       <div class="col-md-6">
         <div class="form-group">
           <label class="form-label" translate="configuration.oibus.manifest.transformers.test-transformer-modal.transformer"></label>
-          <div class="form-control-plaintext">{{ transformer()!.name }}</div>
+          <div class="form-control-plaintext">{{ (transformer() || transformerCommand())!.name }}</div>
         </div>
       </div>
       <div class="col-md-6">
         <div class="form-group">
           <label class="form-label" translate="configuration.oibus.manifest.transformers.test-transformer-modal.input-type"></label>
-          <div class="form-control-plaintext">{{ transformer()!.inputType | oIBusInputDataTypeEnum }}</div>
+          <div class="form-control-plaintext">{{ (transformer() || transformerCommand())!.inputType | oIBusInputDataTypeEnum }}</div>
         </div>
       </div>
     </div>
