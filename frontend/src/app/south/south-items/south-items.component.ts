@@ -85,7 +85,7 @@ export class SouthItemsComponent implements OnInit {
 
   readonly inMemoryItems = output<Array<SouthConnectorItemDTO<SouthItemSettings>> | null>();
 
-  allItems: Array<SouthConnectorItemDTO<SouthItemSettings>> = []; // Array used to store item commands on south connector creation
+  allItems: Array<SouthConnectorItemDTO<SouthItemSettings>> = [];
   filteredItems: Array<SouthConnectorItemDTO<SouthItemSettings>> = [];
 
   displayedItems: Page<SouthConnectorItemDTO<SouthItemSettings>> = emptyPage();
@@ -588,38 +588,62 @@ export class SouthItemsComponent implements OnInit {
     const itemIds = Array.from(this.selectedItems);
     if (itemIds.length === 0) return;
 
-    this.southConnectorService.enableItems(this.southId(), itemIds).subscribe({
-      next: () => {
-        this.notificationService.success('south.items.enabled-multiple', { count: itemIds.length.toString() });
-        this.selectedItems.clear();
-        this.updateSelectionState();
-        if (this.southConnector()) {
+    if (this.saveChangesDirectly()) {
+      this.southConnectorService.enableItems(this.southId(), itemIds).subscribe({
+        next: () => {
+          this.notificationService.success('south.items.enabled-multiple', { count: itemIds.length.toString() });
+          this.selectedItems.clear();
+          this.updateSelectionState();
           this.inMemoryItems.emit(null);
+        },
+        error: error => {
+          this.notificationService.error('south.items.enable-error', { error: error.message });
         }
-      },
-      error: error => {
-        this.notificationService.error('south.items.enable-error', { error: error.message });
-      }
-    });
+      });
+    } else {
+      this.allItems = this.allItems.map(item => {
+        if (itemIds.includes(item.id!)) {
+          return { ...item, enabled: true };
+        }
+        return item;
+      });
+      this.notificationService.success('south.items.enabled-multiple', { count: itemIds.length.toString() });
+      this.selectedItems.clear();
+      this.updateSelectionState();
+      this.inMemoryItems.emit(this.allItems);
+      this.refreshCurrentPage();
+    }
   }
 
   disableSelectedItems() {
     const itemIds = Array.from(this.selectedItems);
     if (itemIds.length === 0) return;
 
-    this.southConnectorService.disableItems(this.southId(), itemIds).subscribe({
-      next: () => {
-        this.notificationService.success('south.items.disabled-multiple', { count: itemIds.length.toString() });
-        this.selectedItems.clear();
-        this.updateSelectionState();
-        if (this.southConnector()) {
+    if (this.saveChangesDirectly()) {
+      this.southConnectorService.disableItems(this.southId(), itemIds).subscribe({
+        next: () => {
+          this.notificationService.success('south.items.disabled-multiple', { count: itemIds.length.toString() });
+          this.selectedItems.clear();
+          this.updateSelectionState();
           this.inMemoryItems.emit(null);
+        },
+        error: error => {
+          this.notificationService.error('south.items.disable-error', { error: error.message });
         }
-      },
-      error: error => {
-        this.notificationService.error('south.items.disable-error', { error: error.message });
-      }
-    });
+      });
+    } else {
+      this.allItems = this.allItems.map(item => {
+        if (itemIds.includes(item.id!)) {
+          return { ...item, enabled: false };
+        }
+        return item;
+      });
+      this.notificationService.success('south.items.disabled-multiple', { count: itemIds.length.toString() });
+      this.selectedItems.clear();
+      this.updateSelectionState();
+      this.inMemoryItems.emit(this.allItems);
+      this.refreshCurrentPage();
+    }
   }
 
   deleteSelectedItems() {
@@ -632,19 +656,26 @@ export class SouthItemsComponent implements OnInit {
         interpolateParams: { count: itemIds.length.toString() }
       })
       .subscribe(() => {
-        this.southConnectorService.deleteItems(this.southId(), itemIds).subscribe({
-          next: () => {
-            this.notificationService.success('south.items.deleted-multiple', { count: itemIds.length.toString() });
-            this.selectedItems.clear();
-            this.updateSelectionState();
-            if (this.southConnector()) {
+        if (this.saveChangesDirectly()) {
+          this.southConnectorService.deleteItems(this.southId(), itemIds).subscribe({
+            next: () => {
+              this.notificationService.success('south.items.deleted-multiple', { count: itemIds.length.toString() });
+              this.selectedItems.clear();
+              this.updateSelectionState();
               this.inMemoryItems.emit(null);
+            },
+            error: error => {
+              this.notificationService.error('south.items.delete-error', { error: error.message });
             }
-          },
-          error: error => {
-            this.notificationService.error('south.items.delete-error', { error: error.message });
-          }
-        });
+          });
+        } else {
+          this.allItems = this.allItems.filter(item => !itemIds.includes(item.id!));
+          this.notificationService.success('south.items.deleted-multiple', { count: itemIds.length.toString() });
+          this.selectedItems.clear();
+          this.updateSelectionState();
+          this.inMemoryItems.emit(this.allItems);
+          this.refreshCurrentPage();
+        }
       });
   }
 }
