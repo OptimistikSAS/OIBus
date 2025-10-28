@@ -340,7 +340,10 @@ export default abstract class NorthConnector<T extends NorthSettings> {
         }
         break;
       case 'any':
-        const { metadata, output } = await transformer.transform(createReadStream(data.filePath), source, path.parse(data.filePath).base);
+        // Use a random ID to be sure to have a unique filename
+        const randomId = generateRandomId(10);
+        const cacheFilename = `${path.parse(data.filePath).name}-${randomId}${path.parse(data.filePath).ext}`;
+        const { metadata, output } = await transformer.transform(createReadStream(data.filePath), source, cacheFilename);
         await this.persistDataInCache(metadata, output);
         break;
     }
@@ -351,9 +354,11 @@ export default abstract class NorthConnector<T extends NorthSettings> {
 
   private async cacheWithoutTransform(data: OIBusContent, source: string) {
     if (data.type === 'any') {
+      const randomId = generateRandomId(10);
+      const cacheFilename = `${path.parse(data.filePath).name}-${randomId}${path.parse(data.filePath).ext}`;
       await this.persistDataInCache(
         {
-          contentFile: path.parse(data.filePath).base,
+          contentFile: cacheFilename,
           contentSize: 0,
           createdAt: '',
           numberOfElement: 0,
@@ -367,9 +372,10 @@ export default abstract class NorthConnector<T extends NorthSettings> {
       if (this.connector.caching.throttling.maxNumberOfElements > 0) {
         for (let i = 0; i < data.content.length; i += this.connector.caching.throttling.maxNumberOfElements) {
           const chunks: Array<object> = data.content.slice(i, i + this.connector.caching.throttling.maxNumberOfElements);
+          const randomId = generateRandomId(10);
           await this.persistDataInCache(
             {
-              contentFile: generateRandomId(10),
+              contentFile: randomId,
               contentSize: 0,
               createdAt: '',
               numberOfElement: chunks.length,
@@ -381,9 +387,10 @@ export default abstract class NorthConnector<T extends NorthSettings> {
           );
         }
       } else {
+        const randomId = generateRandomId(10);
         await this.persistDataInCache(
           {
-            contentFile: generateRandomId(10),
+            contentFile: randomId,
             contentSize: 0,
             createdAt: '',
             numberOfElement: data.content.length,

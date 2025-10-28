@@ -719,6 +719,7 @@ describe('NorthConnector', () => {
 
   it('should cache any data without transform', async () => {
     (createReadStream as jest.Mock).mockReturnValueOnce('readStream');
+    (generateRandomId as jest.Mock).mockReturnValueOnce('123456');
     north.persistDataInCache = jest.fn();
     await north['cacheWithoutTransform'](
       {
@@ -730,7 +731,7 @@ describe('NorthConnector', () => {
 
     expect(north.persistDataInCache).toHaveBeenCalledWith(
       {
-        contentFile: 'file.csv',
+        contentFile: 'file-123456.csv',
         contentSize: 0,
         createdAt: '',
         numberOfElement: 0,
