@@ -1,0 +1,504 @@
+{
+	"openapi": "3.0.0",
+	"components": {
+		"examples": {},
+		"headers": {},
+		"parameters": {},
+		"requestBodies": {},
+		"responses": {},
+		"schemas": {
+			"Instant": {
+				"type": "string"
+			},
+			"ScanModeDTO": {
+				"description": "DTO for scan modes",
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"creationDate": {
+						"$ref": "#/components/schemas/Instant"
+					},
+					"lastEditInstant": {
+						"$ref": "#/components/schemas/Instant"
+					},
+					"name": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string"
+					},
+					"cron": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"id",
+					"name",
+					"description",
+					"cron"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ScanModeCommandDTO": {
+				"description": "Command DTO for scan modes",
+				"properties": {
+					"name": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string"
+					},
+					"cron": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"name",
+					"description",
+					"cron"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ValidatedCronExpression": {
+				"properties": {
+					"isValid": {
+						"type": "boolean"
+					},
+					"errorMessage": {
+						"type": "string"
+					},
+					"nextExecutions": {
+						"items": {
+							"$ref": "#/components/schemas/Instant"
+						},
+						"type": "array"
+					},
+					"humanReadableForm": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"isValid",
+					"errorMessage",
+					"nextExecutions",
+					"humanReadableForm"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"CertificateDTO": {
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"creationDate": {
+						"$ref": "#/components/schemas/Instant"
+					},
+					"lastEditInstant": {
+						"$ref": "#/components/schemas/Instant"
+					},
+					"name": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string"
+					},
+					"publicKey": {
+						"type": "string"
+					},
+					"certificate": {
+						"type": "string"
+					},
+					"expiry": {
+						"$ref": "#/components/schemas/Instant"
+					}
+				},
+				"required": [
+					"id",
+					"name",
+					"description",
+					"publicKey",
+					"certificate",
+					"expiry"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"CertificateOptions": {
+				"properties": {
+					"commonName": {
+						"type": "string"
+					},
+					"countryName": {
+						"type": "string"
+					},
+					"stateOrProvinceName": {
+						"type": "string"
+					},
+					"localityName": {
+						"type": "string"
+					},
+					"organizationName": {
+						"type": "string"
+					},
+					"keySize": {
+						"type": "number",
+						"format": "double"
+					},
+					"daysBeforeExpiry": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"commonName",
+					"countryName",
+					"stateOrProvinceName",
+					"localityName",
+					"organizationName",
+					"keySize",
+					"daysBeforeExpiry"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"CertificateCommandDTO": {
+				"properties": {
+					"name": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string"
+					},
+					"regenerateCertificate": {
+						"type": "boolean"
+					},
+					"options": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/CertificateOptions"
+							}
+						],
+						"nullable": true
+					}
+				},
+				"required": [
+					"name",
+					"description",
+					"regenerateCertificate",
+					"options"
+				],
+				"type": "object",
+				"additionalProperties": false
+			}
+		},
+		"securitySchemes": {}
+	},
+	"info": {
+		"title": "oibus",
+		"version": "3.7.0",
+		"license": {
+			"name": "EUPL"
+		},
+		"contact": {
+			"name": "Optimistik SAS"
+		}
+	},
+	"paths": {
+		"/api/scan-modes": {
+			"get": {
+				"operationId": "FindAll",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/ScanModeDTO"
+									},
+									"type": "array"
+								}
+							}
+						}
+					}
+				},
+				"security": [],
+				"parameters": []
+			},
+			"post": {
+				"operationId": "Create",
+				"responses": {
+					"201": {
+						"description": "Created",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ScanModeDTO"
+								}
+							}
+						}
+					}
+				},
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/ScanModeCommandDTO"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/scan-modes/{id}": {
+			"get": {
+				"operationId": "FindById",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ScanModeDTO"
+								}
+							}
+						}
+					}
+				},
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			},
+			"put": {
+				"operationId": "Update",
+				"responses": {
+					"204": {
+						"description": "No Content"
+					}
+				},
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/ScanModeCommandDTO"
+							}
+						}
+					}
+				}
+			},
+			"delete": {
+				"operationId": "Delete",
+				"responses": {
+					"204": {
+						"description": "No Content"
+					}
+				},
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/api/scan-modes/verify": {
+			"post": {
+				"operationId": "VerifyCron",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidatedCronExpression"
+								}
+							}
+						}
+					}
+				},
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"cron": {
+										"type": "string"
+									}
+								},
+								"required": [
+									"cron"
+								],
+								"type": "object"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/certificates": {
+			"get": {
+				"operationId": "FindAll",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/CertificateDTO"
+									},
+									"type": "array"
+								}
+							}
+						}
+					}
+				},
+				"security": [],
+				"parameters": []
+			},
+			"post": {
+				"operationId": "Create",
+				"responses": {
+					"201": {
+						"description": "Created",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/CertificateDTO"
+								}
+							}
+						}
+					}
+				},
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CertificateCommandDTO"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/certificates/{id}": {
+			"get": {
+				"operationId": "FindById",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/CertificateDTO"
+								}
+							}
+						}
+					}
+				},
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			},
+			"put": {
+				"operationId": "Update",
+				"responses": {
+					"204": {
+						"description": "No Content"
+					}
+				},
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CertificateCommandDTO"
+							}
+						}
+					}
+				}
+			},
+			"delete": {
+				"operationId": "Delete",
+				"responses": {
+					"204": {
+						"description": "No Content"
+					}
+				},
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		}
+	},
+	"servers": [
+		{
+			"url": "/"
+		}
+	]
+}

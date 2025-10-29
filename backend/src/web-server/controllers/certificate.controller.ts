@@ -1,47 +1,45 @@
-import { KoaContext } from '../koa';
-import AbstractController from './abstract.controller';
+import { Body, Controller, Delete, Get, Path, Post, Put, Request, Route, SuccessResponse } from 'tsoa';
 import { CertificateCommandDTO, CertificateDTO } from '../../../shared/model/certificate.model';
-import { toCertificateDTO } from '../../service/certificate.service';
+import CertificateService, { toCertificateDTO } from '../../service/certificate.service';
+import { CustomExpressRequest } from '../express';
 
-export default class CertificateController extends AbstractController {
-  async findAll(ctx: KoaContext<void, Array<CertificateDTO>>): Promise<void> {
-    const certificates = ctx.app.certificateService.findAll().map(c => toCertificateDTO(c));
-    ctx.ok(certificates);
+@Route('/api/certificates')
+export class CertificateController extends Controller {
+  @Get('/')
+  async findAll(@Request() request: CustomExpressRequest): Promise<Array<CertificateDTO>> {
+    const certificateService: CertificateService = request.services.certificateService;
+    return certificateService.findAll().map(certificate => toCertificateDTO(certificate));
   }
 
-  async findById(ctx: KoaContext<void, CertificateDTO>): Promise<void> {
-    const certificate = ctx.app.certificateService.findById(ctx.params.id);
-    if (certificate) {
-      ctx.ok(toCertificateDTO(certificate));
-    } else {
-      ctx.notFound();
+  @Get('/{id}')
+  async findById(@Path() id: string, @Request() request: CustomExpressRequest): Promise<CertificateDTO> {
+    const certificateService: CertificateService = request.services.certificateService;
+    const certificate = certificateService.findById(id);
+    if (!certificate) {
+      throw new Error('Not found');
     }
+    return toCertificateDTO(certificate);
   }
 
-  async create(ctx: KoaContext<CertificateCommandDTO, void>): Promise<void> {
-    try {
-      const certificate = await ctx.app.certificateService.create(ctx.request.body!);
-      ctx.created(toCertificateDTO(certificate));
-    } catch (error: unknown) {
-      ctx.badRequest((error as Error).message);
-    }
+  @Post('/')
+  @SuccessResponse(201, 'Created')
+  async create(@Body() requestBody: CertificateCommandDTO, @Request() request: CustomExpressRequest): Promise<CertificateDTO> {
+    const certificateService: CertificateService = request.services.certificateService;
+    const certificate = await certificateService.create(requestBody);
+    return toCertificateDTO(certificate);
   }
 
-  async update(ctx: KoaContext<CertificateCommandDTO, void>): Promise<void> {
-    try {
-      await ctx.app.certificateService.update(ctx.params.id, ctx.request.body!);
-      ctx.noContent();
-    } catch (error: unknown) {
-      ctx.badRequest((error as Error).message);
-    }
+  @Put('/{id}')
+  @SuccessResponse(204, 'No Content')
+  async update(@Path() id: string, @Body() requestBody: CertificateCommandDTO, @Request() request: CustomExpressRequest): Promise<void> {
+    const certificateService: CertificateService = request.services.certificateService;
+    await certificateService.update(id, requestBody);
   }
 
-  async delete(ctx: KoaContext<void, void>): Promise<void> {
-    try {
-      await ctx.app.certificateService.delete(ctx.params.id);
-      ctx.noContent();
-    } catch (error: unknown) {
-      ctx.badRequest((error as Error).message);
-    }
+  @Delete('/{id}')
+  @SuccessResponse(204, 'No Content')
+  async delete(@Path() id: string, @Request() request: CustomExpressRequest): Promise<void> {
+    const certificateService: CertificateService = request.services.certificateService;
+    await certificateService.delete(id);
   }
 }

@@ -29,7 +29,7 @@ export default class EngineController extends AbstractController {
     ctx.ok(oibusInfo);
   }
 
-  async getStatus(ctx: KoaContext<void, void>): Promise<void> {
+  async getOIBusStatus(ctx: KoaContext<void, void>): Promise<void> {
     ctx.ok();
   }
 }

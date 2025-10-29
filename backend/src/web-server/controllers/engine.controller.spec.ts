@@ -54,7 +54,7 @@ describe('Engine controller', () => {
   });
 
   it('should get OIBus status', async () => {
-    await engineController.getStatus(ctx);
+    await engineController.getOIBusStatus(ctx);
     expect(ctx.ok).toHaveBeenCalledWith();
   });
 
