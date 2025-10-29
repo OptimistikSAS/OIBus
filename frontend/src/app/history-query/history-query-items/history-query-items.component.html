@@ -43,26 +43,6 @@
           [disabled]="allItems.length === 0"
           translate="south.items.delete-all"
         ></button>
-        @if (selectedItems.size > 0) {
-          <button
-            type="button"
-            class="btn btn-secondary btn-sm"
-            (click)="enableSelectedItems()"
-            translate="history-query.items.enable-selected"
-          ></button>
-          <button
-            type="button"
-            class="btn btn-secondary btn-sm"
-            (click)="disableSelectedItems()"
-            translate="history-query.items.disable-selected"
-          ></button>
-          <button
-            type="button"
-            class="btn btn-danger btn-sm"
-            (click)="deleteSelectedItems()"
-            translate="history-query.items.delete-selected"
-          ></button>
-        }
         <oib-help url="https://oibus.optimistik.com/docs/guide/south-connectors/common-settings#item-section" />
       </div>
     </div>
@@ -70,19 +50,65 @@
 
   <div class="mb-3">
     @if (displayedItems.content.length > 0) {
+      <!-- Selection Controls - Between box header and table header -->
+      <div class="d-flex justify-content-between align-items-center my-2">
+        <div class="d-flex align-items-center selection-controls">
+          <button
+            type="button"
+            class="btn btn-secondary btn-sm"
+            (click)="selectAll()"
+            [disabled]="getSelectedItemsCount() === filteredItems.length"
+            id="select-all-button"
+          >
+            <span class="fa fa-check-square me-1"></span>
+            <span translate="history-query.items.select-all"></span>
+          </button>
+          <button
+            type="button"
+            class="btn btn-secondary btn-sm"
+            (click)="unselectAll()"
+            [disabled]="getSelectedItemsCount() === 0"
+            id="unselect-all-button"
+          >
+            <span class="fa fa-square-o me-1"></span>
+            <span translate="history-query.items.unselect-all"></span>
+          </button>
+          @if (getSelectedItemsCount() > 0) {
+            <span class="badge counter-badge">
+              <span translate="history-query.items.selected-items" [translateParams]="{ count: getSelectedItemsCount() }"></span>
+            </span>
+          }
+        </div>
+
+        <!-- Mass Action Buttons -->
+        @if (selectedItems.size > 0) {
+          <div class="d-flex align-items-center gap-2">
+            <button
+              type="button"
+              class="btn btn-secondary btn-sm oib-box-btn"
+              (click)="enableSelectedItems()"
+              translate="history-query.items.enable-selected"
+            ></button>
+            <button
+              type="button"
+              class="btn btn-secondary btn-sm oib-box-btn"
+              (click)="disableSelectedItems()"
+              translate="history-query.items.disable-selected"
+            ></button>
+            <button
+              type="button"
+              class="btn btn-danger btn-sm oib-box-btn"
+              (click)="deleteSelectedItems()"
+              translate="history-query.items.delete-selected"
+            ></button>
+          </div>
+        }
+      </div>
+
       <table class="table table-sm table-hover oib-table">
         <thead class="light">
           <tr>
-            <th style="width: 50px; text-align: center">
-              <input
-                type="checkbox"
-                class="form-check-input"
-                [checked]="isAllSelected"
-                [indeterminate]="isIndeterminate"
-                (change)="toggleSelectAll()"
-                style="width: 16px; height: 16px; cursor: pointer"
-              />
-            </th>
+            <th style="width: 50px; text-align: center"></th>
             <th style="width: 8rem; text-align: center">
               <span translate="history-query.items.status"></span>
             </th>

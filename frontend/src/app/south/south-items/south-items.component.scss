@@ -13,3 +13,62 @@
   background-color: #009ee0;
   border-color: #009ee0;
 }
+
+th:first-child {
+  width: 50px !important;
+  text-align: center;
+}
+
+td:first-child {
+  text-align: center;
+}
+
+.selection-controls {
+  gap: 0.5rem;
+}
+
+.selection-controls .btn-secondary.oib-box-btn {
+  color: #2c3c45 !important;
+}
+
+#select-all-button:disabled {
+  background-color: #d2dce2 !important;
+  border-color: #d2dce2 !important;
+  color: #86a2b2 !important;
+}
+
+#unselect-all-button:disabled {
+  background-color: #d2dce2 !important;
+  border-color: #d2dce2 !important;
+  color: #86a2b2 !important;
+}
+
+#select-all-button {
+  background-color: #fabb00;
+  border-color: #fabb00;
+  color: #2c3c45;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+#unselect-all-button {
+  background-color: #009ee0;
+  border-color: #009ee0;
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.counter-badge {
+  background-color: #fabb00;
+  color: #2c3c45;
+  font-weight: 600;
+  font-size: 0.875rem;
+  padding: 0.375rem 0.75rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: fit-content;
+}
