@@ -472,25 +472,38 @@ export class HistoryQueryItemsComponent implements OnInit {
     this.updateSelectionState();
   }
 
-  toggleSelectAll() {
-    if (this.isAllSelected) {
-      this.selectedItems.clear();
-    } else {
-      this.displayedItems.content.forEach(item => {
-        if (item.id) {
-          this.selectedItems.add(item.id);
-        }
-      });
-    }
+  selectAll() {
+    this.filteredItems.forEach(item => {
+      if (item.id) {
+        this.selectedItems.add(item.id);
+      }
+    });
     this.updateSelectionState();
   }
 
+  unselectAll() {
+    this.selectedItems.clear();
+    this.updateSelectionState();
+  }
+
+  toggleSelectAll() {
+    if (this.isAllSelected) {
+      this.unselectAll();
+    } else {
+      this.selectAll();
+    }
+  }
+
   updateSelectionState() {
-    const totalItems = this.displayedItems.content.length;
+    const totalItems = this.filteredItems.length;
     const selectedCount = this.selectedItems.size;
 
     this.isAllSelected = selectedCount === totalItems && totalItems > 0;
     this.isIndeterminate = selectedCount > 0 && selectedCount < totalItems;
+  }
+
+  getSelectedItemsCount(): number {
+    return this.selectedItems.size;
   }
 
   enableSelectedItems() {
