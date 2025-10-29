@@ -134,6 +134,7 @@ const historyQuerySchema: Joi.ObjectSchema = Joi.object({
   caching: Joi.object().required(),
   archive: Joi.object().required()
 });
+
 const userSchema: Joi.ObjectSchema = Joi.object({
   login: Joi.string().required().min(4),
   firstName: Joi.optional(),
@@ -143,18 +144,7 @@ const userSchema: Joi.ObjectSchema = Joi.object({
   timezone: Joi.string().required()
 });
 
-const logSchema: Joi.ObjectSchema = Joi.object({
-  streams: Joi.array().items(
-    Joi.object({
-      values: Joi.array().items(Joi.array().items(Joi.string())),
-      stream: Joi.object({
-        level: Joi.string(),
-        oibus: Joi.string(),
-        scope: Joi.string()
-      })
-    })
-  )
-});
+const logSchema: Joi.ObjectSchema = Joi.object({});
 
 const transformerSchema: Joi.ObjectSchema = Joi.object({
   name: Joi.string().required(),

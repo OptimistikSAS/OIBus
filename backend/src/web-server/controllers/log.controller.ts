@@ -1,11 +1,11 @@
 import { KoaContext } from '../koa';
 import { Page } from '../../../shared/model/types';
-import { LogDTO, LogSearchParam, LogStreamCommandDTO, Scope } from '../../../shared/model/logs.model';
+import { LogDTO, LogSearchParam, Scope } from '../../../shared/model/logs.model';
 import { DateTime } from 'luxon';
 import AbstractController from './abstract.controller';
 import { toLogDTO } from '../../service/log.service';
 
-export default class LogsConnectorController extends AbstractController {
+export default class LogController extends AbstractController {
   async search(ctx: KoaContext<void, Page<LogDTO>>): Promise<void> {
     const now = DateTime.now();
     const dayAgo = now.minus({ days: 1 });
@@ -56,15 +56,6 @@ export default class LogsConnectorController extends AbstractController {
       ctx.ok(scope);
     } else {
       ctx.noContent();
-    }
-  }
-
-  async addLogsFromRemote(ctx: KoaContext<LogStreamCommandDTO, void>): Promise<void> {
-    try {
-      await ctx.app.logService.addLogsFromRemote(ctx.request.body as LogStreamCommandDTO, ctx.app.logger);
-      ctx.noContent();
-    } catch (error: unknown) {
-      ctx.badRequest((error as Error).message);
     }
   }
 }

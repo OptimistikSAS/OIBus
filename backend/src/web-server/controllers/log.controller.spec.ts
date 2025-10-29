@@ -76,25 +76,6 @@ describe('Log controller', () => {
     expect(ctx.ok).toHaveBeenCalledWith({ ...expectedResult, content: expectedResult.content.map(element => toLogDTO(element)) });
   });
 
-  it('addLogsFromRemote() should return no content', async () => {
-    ctx.request.body = testData.logs.command;
-
-    await logController.addLogsFromRemote(ctx);
-
-    expect(ctx.app.logService.addLogsFromRemote).toHaveBeenCalledWith(testData.logs.command, ctx.app.logger);
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('addLogsFromRemote() should return bad request', async () => {
-    (ctx.app.logService.addLogsFromRemote as jest.Mock).mockImplementationOnce(() => {
-      throw new Error('bad request');
-    });
-    await logController.addLogsFromRemote(ctx);
-
-    expect(ctx.app.logService.addLogsFromRemote).toHaveBeenCalledWith(testData.logs.command, ctx.app.logger);
-    expect(ctx.badRequest).toHaveBeenCalledWith('bad request');
-  });
-
   it('should suggest scopes by name', async () => {
     const scopes: Array<Scope> = [{ scopeId: 'id', scopeName: 'name' }];
     ctx.app.logService.searchScopesByName.mockReturnValue(scopes);
