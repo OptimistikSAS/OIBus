@@ -1,11 +1,13 @@
 // @ts-check
 // Note: type annotations allow type checking and IDEs autocompletion
 
-const lightCodeTheme = require('prism-react-renderer').themes.github;
-const darkCodeTheme = require('prism-react-renderer').themes.dracula;
+import * as path from 'node:path';
+
+import { themes } from 'prism-react-renderer';
+const { github: lightCodeTheme, dracula: darkCodeTheme } = themes;
 
 /** @type {import('@docusaurus/types').Config} */
-const config = {
+export default {
   title: 'OIBus - Data collection solution',
   url: 'https://oibus.optimistik.com/',
   baseUrl: '/',
@@ -33,19 +35,27 @@ const config = {
 
   presets: [
     [
-      'classic',
-      /** @type {import('@docusaurus/preset-classic').Options} */
+      '@docusaurus/preset-classic',
       {
         docs: {
           sidebarPath: require.resolve('./sidebars.js'),
-          lastVersion: 'current',
+          path: 'docs',
+          routeBasePath: '/docs',
           editLocalizedFiles: true
         },
-        theme: { customCss: require.resolve('./src/css/custom.css') }
+        theme: { customCss: [require.resolve('./src/css/custom.css')] }
+      }
+    ],
+    [
+      'redocusaurus',
+      {
+        openapi: {
+          path: 'openapi',
+          routeBasePath: '/api'
+        }
       }
     ]
   ],
-
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
@@ -64,15 +74,21 @@ const config = {
           },
           {
             type: 'doc',
+            docId: 'use-cases/index',
+            position: 'left',
+            label: 'Use cases'
+          },
+          {
+            type: 'doc',
             docId: 'developer/index',
             position: 'left',
             label: 'Developer'
           },
           {
             type: 'doc',
-            docId: 'use-cases/index',
+            docId: 'api/index',
             position: 'left',
-            label: 'Use cases'
+            label: 'API'
           },
           {
             type: 'localeDropdown',
@@ -96,12 +112,16 @@ const config = {
                 to: '/docs/guide/'
               },
               {
+                label: 'Use cases',
+                to: '/docs/use-cases/'
+              },
+              {
                 label: 'Developer Guide',
                 to: '/docs/developer/'
               },
               {
-                label: 'Use cases',
-                to: '/docs/use-cases/'
+                label: 'API',
+                to: '/docs/api/'
               }
             ]
           },
@@ -153,5 +173,3 @@ const config = {
       }
     })
 };
-
-module.exports = config;
