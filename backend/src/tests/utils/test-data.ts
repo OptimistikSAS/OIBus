@@ -33,7 +33,6 @@ import { User } from '../../model/user.model';
 import { Certificate } from '../../model/certificate.model';
 import { OIBusLog } from '../../model/logs.model';
 import { CertificateCommandDTO } from '../../../shared/model/certificate.model';
-import { LogStreamCommandDTO } from '../../../shared/model/logs.model';
 import { CustomTransformerCommand } from '../../../shared/model/transformer.model';
 import { Transformer } from '../../model/transformer.model';
 
@@ -1139,65 +1138,6 @@ const logs: Array<OIBusLog> = [
     message: 'warn message log'
   }
 ];
-const logCommand: LogStreamCommandDTO = {
-  streams: [
-    {
-      values: [['1000000', 'message1']],
-      stream: {
-        level: 'trace',
-        oibus: 'oibusId',
-        oibusName: 'oibusName',
-        scopeType: 'scopeType',
-        scopeId: 'scopeId',
-        scopeName: 'scopeName'
-      }
-    },
-    {
-      values: [['1000001', 'message2']],
-      stream: {
-        level: 'debug',
-        oibus: 'oibusId',
-        oibusName: 'oibusName',
-        scopeType: 'scopeType',
-        scopeId: 'scopeId',
-        scopeName: 'scopeName'
-      }
-    },
-    {
-      values: [['1000002', 'message3']],
-      stream: {
-        level: 'info',
-        oibus: 'oibusId',
-        oibusName: 'oibusName',
-        scopeType: 'scopeType',
-        scopeId: 'scopeId',
-        scopeName: 'scopeName'
-      }
-    },
-    {
-      values: [['1000003', 'message4']],
-      stream: {
-        level: 'warn',
-        oibus: 'oibusId',
-        oibusName: 'oibusName',
-        scopeType: 'scopeType',
-        scopeId: 'scopeId',
-        scopeName: 'scopeName'
-      }
-    },
-    {
-      values: [['1000004', 'message5']],
-      stream: {
-        level: 'error',
-        oibus: 'oibusId',
-        oibusName: 'oibusName',
-        scopeType: 'scopeType',
-        scopeId: 'scopeId',
-        scopeName: 'scopeName'
-      }
-    }
-  ]
-};
 
 const oIAnalyticsRegistrationRegistered: OIAnalyticsRegistration = {
   id: 'registrationId1',
@@ -1808,8 +1748,7 @@ export default Object.freeze({
     command: certificateCommand
   },
   logs: {
-    list: logs,
-    command: logCommand
+    list: logs
   },
   constants
 });

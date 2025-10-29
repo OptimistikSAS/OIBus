@@ -33,21 +33,6 @@ export const LEVEL_FORMAT: Record<string, LogLevel> = {
   '60': 'fatal'
 };
 
-export interface LogStreamValuesCommandDTO {
-  values: Array<[string, string]>;
-  stream: {
-    level: LogLevel;
-    oibus: string;
-    oibusName: string;
-    scopeType: string;
-    scopeId: string | null;
-    scopeName: string | null;
-  };
-}
-export interface LogStreamCommandDTO {
-  streams: Array<LogStreamValuesCommandDTO>;
-}
-
 export interface LogSearchParam {
   page: number;
   start: string | null;
