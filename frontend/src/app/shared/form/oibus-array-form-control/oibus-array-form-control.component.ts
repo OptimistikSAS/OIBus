@@ -60,7 +60,7 @@ export class OIBusArrayFormControlComponent {
   parentGroup = input.required<FormGroup>();
   control = input.required<FormControl<Array<any>>>();
   arrayAttribute = input.required<OIBusArrayAttribute>();
-  southId = input<string>(); // Add southId input for export/import functionality
+  southId = input<string>();
 
   private readonly controlValue = toSignal(toObservable(this.control).pipe(switchMap(c => c.valueChanges.pipe(startWith(c.value)))));
   readonly columns = computed(() => this.buildColumn(this.arrayAttribute().rootAttribute, []));
@@ -187,72 +187,47 @@ export class OIBusArrayFormControlComponent {
   }
 
   async exportArray() {
-    if (!this.southId()) {
-      return;
-    }
-
     const modal = this.modalService.open(ExportArrayModalComponent);
     modal.componentInstance.prepare(this.arrayAttribute().key);
 
     modal.result.subscribe(result => {
       if (result) {
-        this.arrayExportImportService.exportArray(this.southId()!, this.arrayAttribute().key, result.delimiter).subscribe({
-          next: blob => {
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = result.fileName + '.csv';
-            link.click();
-            window.URL.revokeObjectURL(url);
-            this.notificationService.success('common.export-success');
-          },
-          error: () => {
-            this.notificationService.error('common.export-error');
-          }
-        });
+        const arrayData = this.control().value || [];
+        const csvContent = this.arrayExportImportService.exportArrayToCSV(arrayData, result.delimiter, this.arrayAttribute());
+
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = result.fileName + '.csv';
+        link.click();
+        window.URL.revokeObjectURL(url);
+        this.notificationService.success('common.export-success');
       }
     });
   }
 
   async importArray() {
-    if (!this.southId()) {
-      return;
-    }
-
     const modal = this.modalService.open(ImportArrayModalComponent);
     modal.componentInstance.arrayKey = this.arrayAttribute().key;
 
     modal.result.subscribe(result => {
       if (result) {
-        this.arrayExportImportService
-          .checkImportArray(this.southId()!, this.arrayAttribute().key, result.file, result.delimiter)
-          .subscribe({
-            next: response => {
-              if (response.errors.length > 0) {
-                // Show validation errors in modal
-                modal.componentInstance.setValidationErrors(response.errors);
-                this.notificationService.errorMessage(
-                  `Import validation failed: ${response.errors.map(e => e.error).join(', ')}`
-                );
-              } else {
-                // Import the validated items
-                this.arrayExportImportService.importArray(this.southId()!, this.arrayAttribute().key, response.items).subscribe({
-                  next: () => {
-                    // Update the form control with the imported items
-                    this.control().setValue(response.items);
-                    this.paginatedValues().gotoPage(0);
-                    this.notificationService.success('common.import-success');
-                  },
-                  error: () => {
-                    this.notificationService.error('common.import-error');
-                  }
-                });
-              }
-            },
-            error: () => {
-              this.notificationService.error('common.import-error');
+        this.arrayExportImportService.validateAndImportCSV(result.file, result.delimiter, this.arrayAttribute()).subscribe({
+          next: response => {
+            if (response.errors.length > 0) {
+              modal.componentInstance.setValidationErrors(response.errors);
+              this.notificationService.errorMessage(`Import validation failed: ${response.errors.map(e => e.error).join(', ')}`);
+            } else {
+              this.control().setValue(response.items);
+              this.paginatedValues().gotoPage(0);
+              this.notificationService.success('common.import-success');
             }
-          });
+          },
+          error: () => {
+            this.notificationService.error('common.import-error');
+          }
+        });
       }
     });
   }

@@ -23,11 +23,13 @@ import CertificateRepositoryMock from '../tests/__mocks__/repository/config/cert
 import DataStreamEngine from '../engine/data-stream-engine';
 import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
 import SouthConnectorMock from '../tests/__mocks__/south-connector.mock';
+import { stringToBoolean, arrayToFlattenedCSV, validateArrayCSVImport } from './utils';
+import multer from '@koa/multer';
+import csv from 'papaparse';
+import fs from 'node:fs/promises';
 import { buildSouth } from '../south/south-connector-factory';
 import { NotFoundError, OIBusValidationError } from '../model/types';
-import csv from 'papaparse';
-import { stringToBoolean } from './utils';
-import { SouthConnectorEntityLight } from '../model/south-connector.model';
+import { SouthConnectorEntityLight, SouthConnectorManifest } from '../model/south-connector.model';
 
 jest.mock('../south/south-opcua/south-opcua');
 jest.mock('./metrics/south-connector-metrics.service');
@@ -436,7 +438,7 @@ describe('South Service', () => {
       data: csvData
     });
     (validator.validateSettings as jest.Mock).mockImplementationOnce(() => {
-      throw new Error(`validation error`);
+      throw new Error('validation error');
     });
 
     const result = await service.checkImportItems(testData.south.list[0].type, 'file content', ',', testData.south.list[0].items);
@@ -617,6 +619,226 @@ describe('South Service', () => {
       enabled: southEntity.enabled,
       settings: southEntity.settings,
       items: southEntity.items.map(item => toSouthConnectorItemDTO(item, southEntity.type))
+    });
+  });
+
+  describe('Array export/import functionality', () => {
+    const mockArrayAttribute = {
+      type: 'array' as const,
+      key: 'items',
+      translationKey: 'test.items',
+      validators: [],
+      rootAttribute: {
+        type: 'object' as const,
+        key: 'item',
+        translationKey: 'test.item',
+        validators: [],
+        attributes: [
+          {
+            type: 'string' as const,
+            key: 'name',
+            translationKey: 'test.name',
+            validators: [],
+            defaultValue: null,
+            displayProperties: { visible: true, wrapInBox: false, row: 0, columns: 12, displayInViewMode: true }
+          }
+        ],
+        enablingConditions: [],
+        displayProperties: { visible: true, wrapInBox: false }
+      },
+      paginate: false,
+      numberOfElementPerPage: 25
+    };
+
+    const mockManifest = {
+      id: 'folder-scanner' as const,
+      category: 'file' as const,
+      modes: {
+        subscription: false,
+        lastPoint: false,
+        lastFile: true,
+        history: false
+      },
+      items: {
+        type: 'array' as const,
+        key: 'items',
+        translationKey: 'test.items',
+        validators: [],
+        rootAttribute: {
+          type: 'object' as const,
+          key: 'settings',
+          translationKey: 'test.settings',
+          validators: [],
+          attributes: [],
+          enablingConditions: [],
+          displayProperties: { visible: true, wrapInBox: false }
+        },
+        paginate: false,
+        numberOfElementPerPage: 25
+      },
+      settings: {
+        type: 'object' as const,
+        key: 'settings',
+        translationKey: 'test.settings',
+        validators: [],
+        attributes: [mockArrayAttribute],
+        enablingConditions: [],
+        displayProperties: { visible: true, wrapInBox: false }
+      }
+    } as SouthConnectorManifest;
+
+    beforeEach(() => {
+      jest.spyOn(service, 'getInstalledSouthManifests').mockReturnValue([mockManifest]);
+    });
+
+    describe('exportArrayToCSV', () => {
+      it('should export array data to CSV', () => {
+        (arrayToFlattenedCSV as jest.Mock).mockReturnValue('name\ntest1\ntest2');
+
+        const arrayData = [{ name: 'test1' }, { name: 'test2' }];
+        const delimiter = ',';
+        const arrayKey = 'items';
+
+        const result = service.exportArrayToCSV(arrayData, delimiter, arrayKey);
+
+        expect(arrayToFlattenedCSV).toHaveBeenCalledWith(arrayData, delimiter, mockArrayAttribute);
+        expect(result).toBe('name\ntest1\ntest2');
+      });
+
+      it('should throw error if array field not found in manifest', () => {
+        const arrayData = [{ name: 'test1' }];
+        const delimiter = ',';
+        const arrayKey = 'nonexistent';
+
+        expect(() => service.exportArrayToCSV(arrayData, delimiter, arrayKey)).toThrow('Array field "nonexistent" not found in manifest');
+      });
+
+      it('should throw error if field is not an array', () => {
+        // Create a manifest with a non-array field
+        const nonArrayManifest = {
+          ...mockManifest,
+          settings: {
+            ...mockManifest.settings,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'items',
+                translationKey: 'test.items',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { visible: true, wrapInBox: false, row: 0, columns: 12, displayInViewMode: true }
+              }
+            ]
+          }
+        } as unknown as SouthConnectorManifest;
+
+        jest.spyOn(service, 'getInstalledSouthManifests').mockReturnValue([nonArrayManifest]);
+
+        const arrayData = [{ name: 'test1' }];
+        const delimiter = ',';
+        const arrayKey = 'items';
+
+        expect(() => service.exportArrayToCSV(arrayData, delimiter, arrayKey)).toThrow('Field "items" is not an array');
+      });
+    });
+
+    describe('checkArrayCSVImport', () => {
+      it('should validate CSV import', async () => {
+        const mockFileContent = 'name\ntest1\ntest2';
+        (fs.readFile as jest.Mock).mockResolvedValue(Buffer.from(mockFileContent));
+        (validateArrayCSVImport as jest.Mock).mockReturnValue({
+          items: [{ name: 'test1' }, { name: 'test2' }],
+          errors: []
+        });
+
+        const mockFile = {
+          path: '/tmp/test.csv'
+        } as multer.File;
+        const delimiter = ',';
+        const arrayKey = 'items';
+
+        const result = await service.checkArrayCSVImport(mockFile, delimiter, arrayKey);
+
+        expect(fs.readFile).toHaveBeenCalledWith('/tmp/test.csv');
+        expect(validateArrayCSVImport).toHaveBeenCalledWith(mockFileContent, delimiter, mockArrayAttribute);
+        expect(result).toHaveProperty('items');
+        expect(result).toHaveProperty('errors');
+        expect(result.items).toHaveLength(2);
+        expect(result.items[0]).toEqual({ name: 'test1' });
+        expect(result.items[1]).toEqual({ name: 'test2' });
+      });
+
+      it('should throw error if array field not found in manifest', async () => {
+        const mockFile = {
+          path: '/tmp/test.csv'
+        } as multer.File;
+        const delimiter = ',';
+        const arrayKey = 'nonexistent';
+
+        await expect(service.checkArrayCSVImport(mockFile, delimiter, arrayKey)).rejects.toThrow(
+          'Array field "nonexistent" not found in manifest'
+        );
+      });
+
+      it('should throw error if field is not an array', async () => {
+        // Create a manifest with a non-array field
+        const nonArrayManifest = {
+          ...mockManifest,
+          settings: {
+            ...mockManifest.settings,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'items',
+                translationKey: 'test.items',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { visible: true, wrapInBox: false, row: 0, columns: 12, displayInViewMode: true }
+              }
+            ]
+          }
+        } as unknown as SouthConnectorManifest;
+
+        jest.spyOn(service, 'getInstalledSouthManifests').mockReturnValue([nonArrayManifest]);
+
+        const mockFile = {
+          path: '/tmp/test.csv'
+        } as multer.File;
+        const delimiter = ',';
+        const arrayKey = 'items';
+
+        await expect(service.checkArrayCSVImport(mockFile, delimiter, arrayKey)).rejects.toThrow('Field "items" is not an array');
+      });
+    });
+
+    describe('importArrayField', () => {
+      it('should import array field', async () => {
+        const southId = 'test-south-id';
+        const arrayKey = 'items';
+        const items = [{ name: 'test1' }, { name: 'test2' }];
+
+        (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(testData.south.list[0]);
+
+        await service.importArrayField(southId, arrayKey, items);
+
+        expect(southConnectorRepository.saveSouthConnector).toHaveBeenCalledWith({
+          ...testData.south.list[0],
+          settings: {
+            ...testData.south.list[0].settings,
+            [arrayKey]: items
+          }
+        });
+      });
+
+      it('should throw error if south connector not found', async () => {
+        const southId = 'nonexistent';
+        const arrayKey = 'items';
+        const items = [{ name: 'test1' }];
+
+        (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(null);
+
+        await expect(service.importArrayField(southId, arrayKey, items)).rejects.toThrow('South connector "nonexistent" does not exist');
+      });
     });
   });
 });

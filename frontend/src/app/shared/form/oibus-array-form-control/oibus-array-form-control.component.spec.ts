@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { Component } from '@angular/core';
 import { ComponentTester, createMock, TestButton } from 'ngx-speculoos';
@@ -9,6 +10,8 @@ import { OIBusArrayAttribute } from '../../../../../../backend/shared/model/form
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { MockModalService, provideModalTesting } from '../../mock-modal.service.spec';
 import { OIBusEditArrayElementModalComponent } from './oibus-edit-array-element-modal/oibus-edit-array-element-modal.component';
+import { ArrayExportImportService } from '../../../services/array-export-import.service';
+import { NotificationService } from '../../notification.service';
 
 @Component({
   template: `<form [formGroup]="formGroup">
@@ -84,7 +87,13 @@ describe('OIBusArrayFormControlComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideI18nTesting(), provideModalTesting()]
+      providers: [
+        provideHttpClientTesting(),
+        provideI18nTesting(),
+        provideModalTesting(),
+        { provide: ArrayExportImportService, useValue: createMock(ArrayExportImportService) },
+        { provide: NotificationService, useValue: createMock(NotificationService) }
+      ]
     });
 
     tester = new TestComponentTester();

@@ -271,7 +271,6 @@ router.put(
   (ctx: KoaContext<{ delimiter: string }, string>) => southConnectorController.southConnectorItemsToCsv(ctx)
 );
 
-// Array field export/import endpoints
 router.put('/api/south/:southId/array/:arrayKey/export', (ctx: KoaContext<{ delimiter: string; arrayKey: string }, string>) =>
   southConnectorController.exportArrayField(ctx)
 );
