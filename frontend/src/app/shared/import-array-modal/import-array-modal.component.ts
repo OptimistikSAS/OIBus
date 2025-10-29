@@ -35,7 +35,9 @@ export class ImportArrayModalComponent implements OnInit {
   }
 
   get canSave(): boolean {
-    return this.selectedFile !== this.initializeFile && !this.validationError && this.validationErrors.length === 0 && this.importForm.valid;
+    return (
+      this.selectedFile !== this.initializeFile && !this.validationError && this.validationErrors.length === 0 && this.importForm.valid
+    );
   }
 
   public async onFileSelected(file: File): Promise<void> {
@@ -44,20 +46,15 @@ export class ImportArrayModalComponent implements OnInit {
     this.validationErrors = [];
 
     if (file !== this.initializeFile) {
-      // Basic file validation - check if it's a CSV file
       if (!file.name.toLowerCase().endsWith('.csv')) {
         this.validationError = 'Please select a CSV file';
         return;
       }
-
-      // Additional validation could be added here
-      // For now, we'll do basic validation and let the backend handle the rest
     }
   }
 
   async onDelimiterChange(): Promise<void> {
     if (this.selectedFile !== this.initializeFile) {
-      // Re-validate with new delimiter if needed
       this.validationError = null;
     }
   }

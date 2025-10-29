@@ -714,10 +714,8 @@ export const arrayToFlattenedCSV = (
   for (const item of arrayItems) {
     const flattenedItem: Record<string, string | object | boolean> = {};
 
-    // Flatten the item based on the array attribute structure
     flattenObject(item, arrayAttribute.rootAttribute, flattenedItem, []);
 
-    // Collect all column names
     for (const key of Object.keys(flattenedItem)) {
       columns.add(key);
     }

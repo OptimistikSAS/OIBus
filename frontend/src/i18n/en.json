@@ -17,6 +17,11 @@
     "confirmation-modal-title": "Confirmation",
     "date-hour-format": "yyyy-MM-dd HH:mm",
     "delimiter": "Delimiter",
+    "file": "File",
+    "drop-file-here": "Drop file here",
+    "item": "Item",
+    "nested": "Nested",
+    "root": "Root",
     "unsaved-changes": "Unsaved changes",
     "unsaved-changes-message": "You have unsaved changes. Are you sure you want to leave without saving?",
     "leave-without-saving": "Leave without saving",
@@ -1344,7 +1349,7 @@
                   "unix-epoch": "UNIX epoch (s)",
                   "unix-epoch-ms": "UNIX epoch (ms)",
                   "string": "String",
-            "date-time": "DateTime"
+                  "date-time": "DateTime"
                 },
                 "timezone": "Timezone",
                 "format": "Format",
