@@ -33,7 +33,7 @@ import { User } from '../../model/user.model';
 import { Certificate } from '../../model/certificate.model';
 import { OIBusLog } from '../../model/logs.model';
 import { CertificateCommandDTO } from '../../../shared/model/certificate.model';
-import { CustomTransformerCommand } from '../../../shared/model/transformer.model';
+import { CustomTransformerCommandDTO } from '../../../shared/model/transformer.model';
 import { Transformer } from '../../model/transformer.model';
 
 const constants = {
@@ -79,7 +79,7 @@ const ipFilters: Array<IPFilter> = [
   }
 ];
 
-const transformerCommandDTO: CustomTransformerCommand = {
+const transformerCommandDTO: CustomTransformerCommandDTO = {
   type: 'custom',
   name: 'my new transformer',
   description: 'description',

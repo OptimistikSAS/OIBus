@@ -17,7 +17,7 @@ export class LogService {
    * Retrieve the Logs from search params
    * @param searchParams - The search params
    */
-  searchLogs(searchParams: LogSearchParam): Observable<Page<LogDTO>> {
+  search(searchParams: LogSearchParam): Observable<Page<LogDTO>> {
     const params: Record<string, string | Array<string>> = {
       page: `${searchParams.page || 0}`
     };
@@ -31,22 +31,22 @@ export class LogService {
       params['end'] = searchParams.end;
     }
     if (searchParams.scopeTypes) {
-      params['scopeTypes'] = searchParams.scopeTypes;
+      params['scopeTypes'] = searchParams.scopeTypes.join(',');
     }
     if (searchParams.scopeIds) {
-      params['scopeIds'] = searchParams.scopeIds;
+      params['scopeIds'] = searchParams.scopeIds.join(',');
     }
     if (searchParams.levels) {
-      params['levels'] = searchParams.levels;
+      params['levels'] = searchParams.levels.join(',');
     }
     return this.http.get<Page<LogDTO>>(`/api/logs`, { params });
   }
 
-  suggestByScopeName(name: string): Observable<Array<Scope>> {
-    return this.http.get<Array<Scope>>('/api/scope-logs/suggestions', { params: { name } });
+  suggestScopes(name: string): Observable<Array<Scope>> {
+    return this.http.get<Array<Scope>>('/api/logs/scopes/suggest', { params: { name } });
   }
 
   getScopeById(id: string): Observable<Scope | null> {
-    return this.http.get<Scope | null>(`/api/scope-logs/${id}`);
+    return this.http.get<Scope | null>(`/api/logs/scopes/${id}`);
   }
 }

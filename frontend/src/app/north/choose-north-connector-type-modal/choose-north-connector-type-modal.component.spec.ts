@@ -45,7 +45,7 @@ describe('ChooseNorthConnectorTypeModal', () => {
       ]
     });
 
-    northConnectorService.getNorthConnectorTypes.and.returnValue(
+    northConnectorService.getNorthTypes.and.returnValue(
       of([
         {
           id: 'file-writer',

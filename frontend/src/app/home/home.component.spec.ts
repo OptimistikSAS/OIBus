@@ -73,8 +73,8 @@ describe('HomeComponent', () => {
         { id: 'north3', name: 'north3', enabled: true }
       ] as Array<NorthConnectorLightDTO>)
     );
-    northService.getNorthConnectorTypeManifest.and.returnValue(of({} as NorthConnectorManifest));
-    southService.getSouthConnectorTypeManifest.and.returnValue(of({} as SouthConnectorManifest));
+    northService.getNorthManifest.and.returnValue(of({} as NorthConnectorManifest));
+    southService.getSouthManifest.and.returnValue(of({} as SouthConnectorManifest));
 
     tester = new HomeComponentTester();
     tester.detectChanges();

@@ -115,7 +115,7 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
           this.historyQueryId = params.get('historyQueryId') || '';
 
           if (this.historyQueryId) {
-            return this.historyQueryService.get(this.historyQueryId);
+            return this.historyQueryService.findById(this.historyQueryId);
           }
           return of(null);
         }),
@@ -125,8 +125,8 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
           }
           this.historyQuery = historyQuery;
           return combineLatest([
-            this.northConnectorService.getNorthConnectorTypeManifest(historyQuery.northType),
-            this.southConnectorService.getSouthConnectorTypeManifest(historyQuery.southType)
+            this.northConnectorService.getNorthManifest(historyQuery.northType),
+            this.southConnectorService.getSouthManifest(historyQuery.southType)
           ]);
         })
       )
@@ -189,13 +189,13 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
   }
 
   updateInMemoryTransformers(_transformers: Array<TransformerDTOWithOptions> | null) {
-    this.historyQueryService.get(this.historyQuery!.id).subscribe(historyQuery => {
+    this.historyQueryService.findById(this.historyQuery!.id).subscribe(historyQuery => {
       this.historyQuery = JSON.parse(JSON.stringify(historyQuery)); // Used to force a refresh in history query item list
     });
   }
 
   updateInMemoryItems(_items: Array<HistoryQueryItemCommandDTO<SouthItemSettings>> | null) {
-    this.historyQueryService.get(this.historyQuery!.id).subscribe(historyQuery => {
+    this.historyQueryService.findById(this.historyQuery!.id).subscribe(historyQuery => {
       this.historyQuery = JSON.parse(JSON.stringify(historyQuery)); // Used to force a refresh in history query item list
     });
   }
@@ -226,11 +226,11 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
   toggleHistoryQuery(newStatus: HistoryQueryStatus) {
     if (newStatus === 'RUNNING') {
       this.historyQueryService
-        .startHistoryQuery(this.historyQuery!.id)
+        .start(this.historyQuery!.id)
         .pipe(
           this.state.pendingUntilFinalization(),
           switchMap(() => {
-            return this.historyQueryService.get(this.historyQuery!.id);
+            return this.historyQueryService.findById(this.historyQuery!.id);
           })
         )
         .subscribe(updatedHistoryQuery => {
@@ -240,11 +240,11 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
         });
     } else {
       this.historyQueryService
-        .pauseHistoryQuery(this.historyQuery!.id)
+        .pause(this.historyQuery!.id)
         .pipe(
           this.state.pendingUntilFinalization(),
           switchMap(() => {
-            return this.historyQueryService.get(this.historyQuery!.id);
+            return this.historyQueryService.findById(this.historyQuery!.id);
           })
         )
         .subscribe(updatedHistoryQuery => {

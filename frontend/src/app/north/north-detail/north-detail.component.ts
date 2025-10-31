@@ -94,7 +94,7 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
           this.northId = params.get('northId');
 
           if (this.northId) {
-            return this.northConnectorService.get(this.northId);
+            return this.northConnectorService.findById(this.northId);
           }
           return of(null);
         }),
@@ -103,7 +103,7 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
             return of(null);
           }
           this.northConnector = northConnector;
-          return this.northConnectorService.getNorthConnectorTypeManifest(this.northConnector!.type);
+          return this.northConnectorService.getNorthManifest(this.northConnector!.type);
         })
       )
       .subscribe(manifest => {
@@ -139,13 +139,13 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
   }
 
   updateInMemoryTransformers(_transformers: Array<TransformerDTOWithOptions> | null) {
-    this.northConnectorService.get(this.northConnector!.id).subscribe(northConnector => {
+    this.northConnectorService.findById(this.northConnector!.id).subscribe(northConnector => {
       this.northConnector = northConnector;
     });
   }
 
   updateInMemorySubscriptions(_subscriptions: Array<SouthConnectorLightDTO> | null) {
-    this.northConnectorService.get(this.northConnector!.id).subscribe(northConnector => {
+    this.northConnectorService.findById(this.northConnector!.id).subscribe(northConnector => {
       this.northConnector = northConnector;
     });
   }
@@ -163,13 +163,13 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
   toggleConnector(value: boolean) {
     if (value) {
       this.northConnectorService
-        .startNorth(this.northConnector!.id)
+        .start(this.northConnector!.id)
         .pipe(
           tap(() => {
             this.notificationService.success('north.started', { name: this.northConnector!.name });
           }),
           switchMap(() => {
-            return this.northConnectorService.get(this.northConnector!.id);
+            return this.northConnectorService.findById(this.northConnector!.id);
           })
         )
         .subscribe(northConnector => {
@@ -177,13 +177,13 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
         });
     } else {
       this.northConnectorService
-        .stopNorth(this.northConnector!.id)
+        .stop(this.northConnector!.id)
         .pipe(
           tap(() => {
             this.notificationService.success('north.stopped', { name: this.northConnector!.name });
           }),
           switchMap(() => {
-            return this.northConnectorService.get(this.northConnector!.id);
+            return this.northConnectorService.findById(this.northConnector!.id);
           })
         )
         .subscribe(northConnector => {

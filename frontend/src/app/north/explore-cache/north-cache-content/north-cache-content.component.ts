@@ -49,7 +49,7 @@ export class NorthCacheContentComponent implements OnInit {
 
   refreshCacheFiles() {
     this.northConnectorService
-      .searchCacheContent(this.northConnector().id, { start: null, end: null, nameContains: '' }, this.cacheType())
+      .searchCacheContent(this.northConnector().id, { start: undefined, end: undefined, nameContains: undefined }, this.cacheType())
       .subscribe(cacheFiles => {
         this.cacheContentFiles = cacheFiles;
       });

@@ -79,7 +79,7 @@ describe('EditUserSettingsComponent', () => {
       language: 'en', // current language of the mock i18n translate service
       timezone: 'Europe/Paris' // current language of the mock i18n translate service
     } as UserDTO;
-    userSettingsService.get.and.returnValue(of(userSettings));
+    userSettingsService.currentUser.and.returnValue(of(userSettings));
 
     currentUserService.getTimezone.and.returnValue('Europe/Paris');
 
@@ -130,7 +130,7 @@ describe('EditUserSettingsComponent', () => {
     tester.timezone.selectLabel('Asia/Tokyo');
 
     userSettingsService.update.and.returnValue(of(undefined));
-    userSettingsService.get.and.returnValue(of({ ...userSettings, timezone: 'Asia/Tokyo' }));
+    userSettingsService.currentUser.and.returnValue(of({ ...userSettings, timezone: 'Asia/Tokyo' }));
 
     tester.save.click();
 

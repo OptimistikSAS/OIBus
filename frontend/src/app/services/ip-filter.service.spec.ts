@@ -33,7 +33,7 @@ describe('IpFilterService', () => {
     let expectedIpFilter: IPFilterDTO | null = null;
     const ipFilter = { id: 'id1' } as IPFilterDTO;
 
-    service.get('id1').subscribe(c => (expectedIpFilter = c));
+    service.findById('id1').subscribe(c => (expectedIpFilter = c));
 
     http.expectOne({ url: '/api/ip-filters/id1', method: 'GET' }).flush(ipFilter);
     expect(expectedIpFilter!).toEqual(ipFilter);

@@ -25,15 +25,15 @@ export class NorthConnectorService {
   /**
    * Get North connectors types
    */
-  getNorthConnectorTypes(): Observable<Array<NorthType>> {
-    return this.http.get<Array<NorthType>>(`/api/north-types`);
+  getNorthTypes(): Observable<Array<NorthType>> {
+    return this.http.get<Array<NorthType>>(`/api/north/types`);
   }
 
   /**
    * Get a North connectors manifest
    */
-  getNorthConnectorTypeManifest(type: string): Observable<NorthConnectorManifest> {
-    return this.http.get<NorthConnectorManifest>(`/api/north-types/${type}`);
+  getNorthManifest(type: string): Observable<NorthConnectorManifest> {
+    return this.http.get<NorthConnectorManifest>(`/api/north/manifests/${type}`);
   }
 
   /**
@@ -47,16 +47,8 @@ export class NorthConnectorService {
    * Get one North connector
    * @param northId - the ID of the North connector
    */
-  get(northId: string): Observable<NorthConnectorDTO<NorthSettings>> {
+  findById(northId: string): Observable<NorthConnectorDTO<NorthSettings>> {
     return this.http.get<NorthConnectorDTO<NorthSettings>>(`/api/north/${northId}`);
-  }
-
-  /**
-   * Get the schema of a North connector
-   * @param type - the type of the North connector
-   */
-  getSchema(type: string): Observable<object> {
-    return this.http.get<object>(`/api/north-type/${type}`);
   }
 
   /**
@@ -89,18 +81,26 @@ export class NorthConnectorService {
     return this.http.delete<void>(`/api/north/${northId}`);
   }
 
-  /**
-   * Add a new North connector subscription
-   */
-  createSubscription(northId: string, southId: string): Observable<void> {
-    return this.http.put<void>(`/api/north/${northId}/subscriptions/${southId}`, null);
+  start(northId: string): Observable<void> {
+    return this.http.post<void>(`/api/north/${northId}/start`, null);
+  }
+
+  stop(northId: string): Observable<void> {
+    return this.http.post<void>(`/api/north/${northId}/stop`, null);
   }
 
   /**
-   * Delete the selected North connector subscription
+   * Reset the selected North metrics
+   * @param northId - the ID of the North connector to reset
    */
-  deleteSubscription(northId: string, southId: string): Observable<void> {
-    return this.http.delete<void>(`/api/north/${northId}/subscriptions/${southId}`);
+  resetMetrics(northId: string): Observable<void> {
+    return this.http.post<void>(`/api/north/${northId}/metrics/reset`, null);
+  }
+
+  testConnection(northId: string, settings: NorthSettings, northType: OIBusNorthType): Observable<void> {
+    return this.http.post<void>(`/api/north/${northId}/test/connection`, settings, {
+      params: { northType }
+    });
   }
 
   /**
@@ -115,6 +115,20 @@ export class NorthConnectorService {
    */
   removeTransformer(northId: string, transformerId: string): Observable<void> {
     return this.http.delete<void>(`/api/north/${northId}/transformers/${transformerId}`);
+  }
+
+  /**
+   * Add a new North connector subscription
+   */
+  addSubscription(northId: string, southId: string): Observable<void> {
+    return this.http.put<void>(`/api/north/${northId}/subscriptions/${southId}`, null);
+  }
+
+  /**
+   * Remove the selected North connector subscription
+   */
+  removeSubscription(northId: string, southId: string): Observable<void> {
+    return this.http.delete<void>(`/api/north/${northId}/subscriptions/${southId}`);
   }
 
   searchCacheContent(
@@ -134,7 +148,7 @@ export class NorthConnectorService {
     if (searchParams.nameContains) {
       params['nameContains'] = searchParams.nameContains;
     }
-    return this.http.get<Array<{ metadataFilename: string; metadata: CacheMetadata }>>(`/api/north/${northId}/cache/content`, { params });
+    return this.http.get<Array<{ metadataFilename: string; metadata: CacheMetadata }>>(`/api/north/${northId}/cache/search`, { params });
   }
 
   getCacheFileContent(northId: string, folder: 'cache' | 'archive' | 'error', filename: string): Observable<HttpResponse<Blob>> {
@@ -148,7 +162,7 @@ export class NorthConnectorService {
   }
 
   removeCacheContent(northId: string, folder: 'cache' | 'archive' | 'error', filenames: Array<string>): Observable<void> {
-    return this.http.delete<void>(`/api/north/${northId}/cache/content/remove`, {
+    return this.http.delete<void>(`/api/north/${northId}/cache/remove`, {
       params: {
         folder
       },
@@ -157,7 +171,7 @@ export class NorthConnectorService {
   }
 
   removeAllCacheContent(northId: string, folder: 'cache' | 'archive' | 'error'): Observable<void> {
-    return this.http.delete<void>(`/api/north/${northId}/cache/content/remove-all`, {
+    return this.http.delete<void>(`/api/north/${northId}/cache/remove-all`, {
       params: {
         folder
       }
@@ -170,7 +184,7 @@ export class NorthConnectorService {
     destinationFolder: 'cache' | 'archive' | 'error',
     filenames: Array<string>
   ): Observable<void> {
-    return this.http.post<void>(`/api/north/${northId}/cache/content/move`, filenames, {
+    return this.http.post<void>(`/api/north/${northId}/cache/move`, filenames, {
       params: {
         originFolder,
         destinationFolder
@@ -183,33 +197,11 @@ export class NorthConnectorService {
     originFolder: 'cache' | 'archive' | 'error',
     destinationFolder: 'cache' | 'archive' | 'error'
   ): Observable<void> {
-    return this.http.post<void>(`/api/north/${northId}/cache/content/move-all`, null, {
+    return this.http.post<void>(`/api/north/${northId}/cache/move-all`, null, {
       params: {
         originFolder,
         destinationFolder
       }
-    });
-  }
-
-  /**
-   * Reset the selected North metrics
-   * @param northId - the ID of the North connector to reset
-   */
-  resetMetrics(northId: string): Observable<void> {
-    return this.http.put<void>(`/api/north/${northId}/cache/reset-metrics`, null);
-  }
-
-  startNorth(northId: string): Observable<void> {
-    return this.http.put<void>(`/api/north/${northId}/start`, null);
-  }
-
-  stopNorth(northId: string): Observable<void> {
-    return this.http.put<void>(`/api/north/${northId}/stop`, null);
-  }
-
-  testConnection(northId: string, settings: NorthSettings, northType: OIBusNorthType): Observable<void> {
-    return this.http.put<void>(`/api/north/${northId}/test-connection`, settings, {
-      params: { northType }
     });
   }
 }

@@ -75,7 +75,7 @@ export class NorthSubscriptionsComponent implements OnInit {
           const northConnector = this.northConnector();
           if (northConnector && this.saveChangesDirectly()) {
             return this.northConnectorService
-              .createSubscription(northConnector.id, southConnector.id)
+              .addSubscription(northConnector.id, southConnector.id)
               .pipe(switchMap(() => of(southConnector)));
           }
           this.subscriptions = [...this.subscriptions, southConnector];
@@ -102,7 +102,7 @@ export class NorthSubscriptionsComponent implements OnInit {
         switchMap(() => {
           const northConnector = this.northConnector();
           if (this.saveChangesDirectly()) {
-            return this.northConnectorService.deleteSubscription(northConnector!.id, subscription!.id);
+            return this.northConnectorService.removeSubscription(northConnector!.id, subscription!.id);
           }
           this.subscriptions = this.subscriptions.filter(element => element.id !== subscription.id);
           return of(null);

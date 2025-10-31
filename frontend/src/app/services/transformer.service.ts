@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { inject, Injectable } from '@angular/core';
-import { CustomTransformerCommand, TransformerDTO } from '../../../../backend/shared/model/transformer.model';
+import { CustomTransformerCommandDTO, TransformerDTO } from '../../../../backend/shared/model/transformer.model';
 
 /**
  * Service used to interact with the backend for CRUD operations on Transformers
@@ -16,14 +16,14 @@ export class TransformerService {
    * Get the transformers
    */
   list(): Observable<Array<TransformerDTO>> {
-    return this.http.get<Array<TransformerDTO>>(`/api/transformers`);
+    return this.http.get<Array<TransformerDTO>>(`/api/transformers/list`);
   }
 
   /**
    * Get one transformer
    * @param transformerId - the ID of the transformer
    */
-  get(transformerId: string): Observable<TransformerDTO> {
+  findById(transformerId: string): Observable<TransformerDTO> {
     return this.http.get<TransformerDTO>(`/api/transformers/${transformerId}`);
   }
 
@@ -31,7 +31,7 @@ export class TransformerService {
    * Create a new transformer
    * @param command - the new transformer
    */
-  create(command: CustomTransformerCommand): Observable<TransformerDTO> {
+  create(command: CustomTransformerCommandDTO): Observable<TransformerDTO> {
     return this.http.post<TransformerDTO>(`/api/transformers`, command);
   }
 
@@ -40,7 +40,7 @@ export class TransformerService {
    * @param transformerId - the ID of the transformer
    * @param command - the new values of the selected transformer
    */
-  update(transformerId: string, command: CustomTransformerCommand) {
+  update(transformerId: string, command: CustomTransformerCommandDTO) {
     return this.http.put<void>(`/api/transformers/${transformerId}`, command);
   }
 

@@ -30,7 +30,7 @@ export class ExploreHistoryCacheComponent implements OnInit {
         switchMap(params => {
           const paramHistoryQueryId = params.get('historyQueryId');
           if (paramHistoryQueryId) {
-            return this.historyQueryService.get(paramHistoryQueryId);
+            return this.historyQueryService.findById(paramHistoryQueryId);
           }
           return of(null);
         })

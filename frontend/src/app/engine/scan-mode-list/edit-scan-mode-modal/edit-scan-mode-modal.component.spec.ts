@@ -139,7 +139,7 @@ describe('EditScanModeModalComponent', () => {
 
     beforeEach(() => {
       scanModeService.verifyCron.and.returnValue(of({ isValid: true, errorMessage: '', nextExecutions: [], humanReadableForm: '' }));
-      scanModeService.get.and.returnValue(of(scanModeToUpdate));
+      scanModeService.findById.and.returnValue(of(scanModeToUpdate));
 
       tester.componentInstance.prepareForEdition(scanModeToUpdate);
       tester.detectChanges();
@@ -192,7 +192,7 @@ describe('EditScanModeModalComponent', () => {
       };
 
       expect(scanModeService.update).toHaveBeenCalledWith('id1', expectedCommand);
-      expect(scanModeService.get).toHaveBeenCalledWith('id1');
+      expect(scanModeService.findById).toHaveBeenCalledWith('id1');
       expect(fakeActiveModal.close).toHaveBeenCalledWith(scanModeToUpdate);
     }));
 

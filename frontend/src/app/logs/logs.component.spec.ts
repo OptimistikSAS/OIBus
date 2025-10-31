@@ -115,21 +115,21 @@ describe('LogsComponent', () => {
   });
 
   it('should have empty page', () => {
-    logService.searchLogs.and.returnValue(of(emptyLogPage));
+    logService.search.and.returnValue(of(emptyLogPage));
     tester.detectChanges();
 
     expect(tester.emptyContainer).toContainText('No log found');
   });
 
   it('should have log page', fakeAsync(() => {
-    logService.searchLogs.and.returnValue(of(logPage));
+    logService.search.and.returnValue(of(logPage));
     tester.detectChanges();
     tick();
     tester.detectChanges();
 
     // Default timezone is Europe/Paris
-    expect(logService.searchLogs).toHaveBeenCalledWith({
-      messageContent: null,
+    expect(logService.search).toHaveBeenCalledWith({
+      messageContent: undefined,
       scopeTypes: [],
       scopeIds: [],
       start: '2022-12-31T23:00:00.000Z',
@@ -193,7 +193,7 @@ describe('LogsComponent', () => {
 
   it('should build search params from route', () => {
     const params = tester.componentInstance.toSearchParams(route);
-    expect(params.messageContent).toBeNull();
+    expect(params.messageContent).toBeUndefined();
     expect(params.scopeTypes).toEqual([]);
     expect(params.levels).toEqual(['info', 'error']);
     expect(params.page).toBe(2);
@@ -202,18 +202,18 @@ describe('LogsComponent', () => {
   it('should fetch logs periodically if page is 0, no end date, and not paused', fakeAsync(() => {
     pageLoader.pageLoads$ = new BehaviorSubject<number>(0);
     tester.componentInstance.autoReloadPaused.set(false);
-    logService.searchLogs.and.returnValue(of(logPage));
+    logService.search.and.returnValue(of(logPage));
 
     tester.detectChanges();
     tick(10_000); // Advance 10 seconds
     tester.detectChanges();
 
-    expect(logService.searchLogs).toHaveBeenCalledTimes(2); // Initial + after timer
+    expect(logService.search).toHaveBeenCalledTimes(2); // Initial + after timer
   }));
 
   describe('Auto-reload functionality', () => {
     beforeEach(() => {
-      logService.searchLogs.and.returnValue(of(logPage));
+      logService.search.and.returnValue(of(logPage));
     });
 
     it('should initially have auto-reload enabled', fakeAsync(() => {
@@ -318,19 +318,19 @@ describe('LogsComponent', () => {
   describe('other utility methods and streams', () => {
     it('scopeTypeahead should call service and set noLogMatchingWarning', fakeAsync(() => {
       const scopes1: Array<Scope> = [{ scopeId: '1', scopeName: 'A' }];
-      logService.suggestByScopeName.and.returnValue(of(scopes1));
+      logService.suggestScopes.and.returnValue(of(scopes1));
       let result: Array<Scope> | undefined;
       tester.componentInstance.scopeTypeahead(of('foo')).subscribe(r => (result = r));
       tick(TYPEAHEAD_DEBOUNCE_TIME);
-      expect(logService.suggestByScopeName).toHaveBeenCalledWith('foo');
+      expect(logService.suggestScopes).toHaveBeenCalledWith('foo');
       expect(result).toBe(scopes1);
       expect(tester.componentInstance.noLogMatchingWarning()).toBe(false);
 
       const scopes2: Array<Scope> = [];
-      logService.suggestByScopeName.and.returnValue(of(scopes2));
+      logService.suggestScopes.and.returnValue(of(scopes2));
       tester.componentInstance.scopeTypeahead(of('bar')).subscribe(r => (result = r));
       tick(TYPEAHEAD_DEBOUNCE_TIME);
-      expect(logService.suggestByScopeName).toHaveBeenCalledWith('bar');
+      expect(logService.suggestScopes).toHaveBeenCalledWith('bar');
       expect(result).toBe(scopes2);
       expect(tester.componentInstance.noLogMatchingWarning()).toBe(true);
     }));
@@ -344,8 +344,8 @@ describe('LogsComponent', () => {
         start: 'AAA',
         end: 'BBB',
         messageContent: 'MSG',
-        levels: ['L1'],
-        scopeTypes: ['ST'],
+        levels: ['info'],
+        scopeTypes: ['south'],
         scopeIds: null,
         page: 0
       });
@@ -358,8 +358,8 @@ describe('LogsComponent', () => {
           start: 'AAA',
           end: 'BBB',
           messageContent: 'MSG',
-          levels: ['L1'],
-          scopeTypes: ['ST'],
+          levels: ['info'],
+          scopeTypes: ['south'],
           scopeIds: ['X'],
           page: 0
         }

@@ -405,7 +405,7 @@ export class SouthItemsComponent implements OnInit {
   }
 
   checkImportItems(file: File, delimiter: string) {
-    this.southConnectorService.checkImportItems(this.southManifest().id, this.southId(), this.allItems, file, delimiter).subscribe(
+    this.southConnectorService.checkImportItems(this.southManifest().id, this.allItems, file, delimiter).subscribe(
       (result: {
         items: Array<SouthConnectorItemDTO<SouthItemSettings>>;
         errors: Array<{

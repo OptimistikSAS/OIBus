@@ -86,12 +86,12 @@ describe('SouthDetailComponent', () => {
     scanModeService.list.and.returnValue(of(testData.scanMode.list));
     certificateService.list.and.returnValue(of(testData.certificates.list));
     engineService.getInfo.and.returnValue(of(engineInfo));
-    southConnectorService.get.and.returnValue(
+    southConnectorService.findById.and.returnValue(
       of({ ...southConnector, items: southConnector.items.map(element => ({ ...element, scanModeId: element.scanMode.id })) })
     );
-    southConnectorService.getSouthConnectorTypeManifest.and.returnValue(of(manifest));
-    southConnectorService.startSouth.and.returnValue(of(undefined));
-    southConnectorService.stopSouth.and.returnValue(of(undefined));
+    southConnectorService.getSouthManifest.and.returnValue(of(manifest));
+    southConnectorService.start.and.returnValue(of(undefined));
+    southConnectorService.stop.and.returnValue(of(undefined));
 
     tester = new SouthDisplayComponentTester();
   });
@@ -121,12 +121,12 @@ describe('SouthDetailComponent', () => {
   it('should stop south', () => {
     tester.detectChanges();
     tester.toggleButton.click();
-    expect(southConnectorService.stopSouth).toHaveBeenCalledWith(southConnector.id);
+    expect(southConnectorService.stop).toHaveBeenCalledWith(southConnector.id);
     expect(notificationService.success).toHaveBeenCalledWith('south.stopped', { name: southConnector.name });
   });
 
   it('should start south', () => {
-    southConnectorService.get.and.returnValue(
+    southConnectorService.findById.and.returnValue(
       of({
         ...southConnector,
         items: southConnector.items.map(element => ({ ...element, scanModeId: element.scanMode.id })),
@@ -135,7 +135,7 @@ describe('SouthDetailComponent', () => {
     );
     tester.detectChanges();
     tester.toggleButton.click();
-    expect(southConnectorService.startSouth).toHaveBeenCalledWith(southConnector.id);
+    expect(southConnectorService.start).toHaveBeenCalledWith(southConnector.id);
     expect(notificationService.success).toHaveBeenCalledWith('south.started', { name: southConnector.name });
   });
 });

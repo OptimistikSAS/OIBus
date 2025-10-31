@@ -85,7 +85,7 @@ class TestComponent {
     if (items) {
       this.inMemoryItems = items;
     } else {
-      this._southConnectorService.get(this.southConnector!.id).subscribe(southConnector => {
+      this._southConnectorService.findById(this.southConnector!.id).subscribe(southConnector => {
         this.southConnector!.items = southConnector.items;
         this.southConnector = JSON.parse(JSON.stringify(this.southConnector)); // Used to force a refresh in a south item list
       });
@@ -162,7 +162,7 @@ describe('SouthItemsComponent with saving changes directly', () => {
     southConnectorService.deleteItem.and.returnValue(of(undefined));
     southConnectorService.deleteAllItems.and.returnValue(of(undefined));
     southConnectorService.exportItems.and.returnValue(of(undefined));
-    southConnectorService.get.and.returnValue(of(testSouthConnector));
+    southConnectorService.findById.and.returnValue(of(testSouthConnector));
 
     confirmationService.confirm.and.returnValue(of(undefined));
 
@@ -193,7 +193,7 @@ describe('SouthItemsComponent with saving changes directly', () => {
   });
 
   it('should delete all', () => {
-    southConnectorService.get.and.returnValue(of({ ...testSouthConnector, items: [] }));
+    southConnectorService.findById.and.returnValue(of({ ...testSouthConnector, items: [] }));
 
     tester.deleteAllButton.click();
 
@@ -249,7 +249,7 @@ describe('SouthItemsComponent with saving changes directly', () => {
 
   it('should delete one item', () => {
     // mock API response to delete first item
-    southConnectorService.get.and.returnValue(of({ ...testSouthConnector, items: testSouthConnector.items.slice(1) }));
+    southConnectorService.findById.and.returnValue(of({ ...testSouthConnector, items: testSouthConnector.items.slice(1) }));
 
     tester.southItems[0].button('.delete-south-item')!.click();
 
@@ -265,7 +265,7 @@ describe('SouthItemsComponent with saving changes directly', () => {
     expect(tester.tableItemNames).toEqual(['item3', 'item1-copy', 'item1']);
 
     // mock API response to delete third item
-    southConnectorService.get.and.returnValue(
+    southConnectorService.findById.and.returnValue(
       of({
         ...testSouthConnector,
         items: testSouthConnector.items.slice(0, 2)
@@ -309,7 +309,7 @@ describe('SouthItemsComponent with saving changes directly', () => {
     expect(tester.tableItemNames).toEqual(['item3']);
 
     // Delete the third item in the list
-    southConnectorService.get.and.returnValue(
+    southConnectorService.findById.and.returnValue(
       of({
         ...testSouthConnector,
         items: testSouthConnector.items.slice(0, 2)
@@ -355,7 +355,7 @@ describe('SouthItemsComponent without saving changes directly', () => {
     southConnectorService.deleteItem.and.returnValue(of(undefined));
     southConnectorService.deleteAllItems.and.returnValue(of(undefined));
     southConnectorService.exportItems.and.returnValue(of(undefined));
-    southConnectorService.get.and.returnValue(of(testSouthConnector));
+    southConnectorService.findById.and.returnValue(of(testSouthConnector));
 
     confirmationService.confirm.and.returnValue(of(undefined));
 
@@ -517,7 +517,7 @@ describe('SouthItemsComponent CSV Import Tests', () => {
       ]
     });
 
-    southConnectorService.get.and.returnValue(of(testSouthConnector));
+    southConnectorService.findById.and.returnValue(of(testSouthConnector));
     southConnectorService.checkImportItems.and.returnValue(
       of({
         items: [] as Array<SouthConnectorItemDTO<SouthItemSettings>>,
@@ -588,7 +588,6 @@ describe('SouthItemsComponent CSV Import Tests', () => {
 
       expect(southConnectorService.checkImportItems).toHaveBeenCalledWith(
         tester.componentInstance.manifest.id,
-        tester.componentInstance.southConnector.id,
         jasmine.any(Array),
         mockFile,
         ','

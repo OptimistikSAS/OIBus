@@ -142,7 +142,7 @@ export class SouthListComponent implements OnInit {
   toggleConnector(southId: string, northName: string, value: boolean) {
     if (value) {
       this.southConnectorService
-        .startSouth(southId)
+        .start(southId)
         .pipe(
           this.states.get(southId)!.pendingUntilFinalization(),
           tap(() => {
@@ -159,7 +159,7 @@ export class SouthListComponent implements OnInit {
         });
     } else {
       this.southConnectorService
-        .stopSouth(southId)
+        .stop(southId)
         .pipe(
           this.states.get(southId)!.pendingUntilFinalization(),
           tap(() => {

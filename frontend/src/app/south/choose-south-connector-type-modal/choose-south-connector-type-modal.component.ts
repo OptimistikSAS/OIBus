@@ -24,7 +24,7 @@ export class ChooseSouthConnectorTypeModalComponent implements OnInit {
   groupedSouthTypes: Array<{ category: string; types: Array<SouthType> }> = [];
 
   ngOnInit() {
-    this.southConnectorService.getAvailableTypes().subscribe(types => {
+    this.southConnectorService.getSouthTypes().subscribe(types => {
       this.southTypes = types;
       this.groupSouthTypes();
     });

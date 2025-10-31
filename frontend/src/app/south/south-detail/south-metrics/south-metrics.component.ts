@@ -31,7 +31,7 @@ export class SouthMetricsComponent implements OnInit {
 
   ngOnInit(): void {
     if (!this.manifest()) {
-      this.southService.getSouthConnectorTypeManifest(this.southConnector().type).subscribe(manifest => {
+      this.southService.getSouthManifest(this.southConnector().type).subscribe(manifest => {
         this.manifestOrSouthConnectorTypeManifest.set(manifest);
       });
     }

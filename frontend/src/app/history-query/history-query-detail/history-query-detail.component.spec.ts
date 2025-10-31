@@ -142,11 +142,11 @@ describe('HistoryQueryDetailComponent', () => {
       ]
     });
 
-    historyQueryService.get.and.returnValue(of(historyQuery));
-    historyQueryService.startHistoryQuery.and.returnValue(of(undefined));
-    historyQueryService.pauseHistoryQuery.and.returnValue(of(undefined));
-    southConnectorService.getSouthConnectorTypeManifest.and.returnValue(of(southManifest));
-    northConnectorService.getNorthConnectorTypeManifest.and.returnValue(of(northManifest));
+    historyQueryService.findById.and.returnValue(of(historyQuery));
+    historyQueryService.start.and.returnValue(of(undefined));
+    historyQueryService.pause.and.returnValue(of(undefined));
+    southConnectorService.getSouthManifest.and.returnValue(of(southManifest));
+    northConnectorService.getNorthManifest.and.returnValue(of(northManifest));
     scanModeService.list.and.returnValue(of([]));
     certificateService.list.and.returnValue(of([]));
     transformerService.list.and.returnValue(of([]));
