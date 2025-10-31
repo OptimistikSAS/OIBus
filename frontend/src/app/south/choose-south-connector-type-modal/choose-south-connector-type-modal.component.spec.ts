@@ -45,7 +45,7 @@ describe('ChooseSouthConnectorTypeModalComponent', () => {
       ]
     });
 
-    southConnectorService.getAvailableTypes.and.returnValue(
+    southConnectorService.getSouthTypes.and.returnValue(
       of([
         {
           id: 'mssql',

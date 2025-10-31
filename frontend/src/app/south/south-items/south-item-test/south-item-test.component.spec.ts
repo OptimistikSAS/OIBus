@@ -133,8 +133,8 @@ describe('SouthItemTestComponent', () => {
     southConnectorService.testItem.calls.reset();
     southConnectorService.testItem.and.returnValue(of(testResultOIBusContent));
 
-    historyQueryService.testSouthItem.calls.reset();
-    historyQueryService.testSouthItem.and.returnValue(of(testResultOIBusContent));
+    historyQueryService.testItem.calls.reset();
+    historyQueryService.testItem.and.returnValue(of(testResultOIBusContent));
 
     tester = new SouthItemTestComponentTester();
     tester.changeType('south');
@@ -155,7 +155,7 @@ describe('SouthItemTestComponent', () => {
 
   const testCases = [
     { type: 'south' as 'south' | 'history-south', entityId: 'southId', service: { testItem: southConnectorService!.testItem } },
-    { type: 'history-south' as 'south' | 'history-south', entityId: 'historyId', service: { testItem: historyQueryService!.testSouthItem } }
+    { type: 'history-south' as 'south' | 'history-south', entityId: 'historyId', service: { testItem: historyQueryService!.testItem } }
   ];
 
   testCases.forEach(testCase => {
@@ -601,6 +601,6 @@ describe('SouthItemTestComponent', () => {
     tester.testButton.click();
     expect(tester.testResultViewComponent.displayResult).not.toHaveBeenCalled();
     expect(southConnectorService.testItem).not.toHaveBeenCalled();
-    expect(historyQueryService.testSouthItem).not.toHaveBeenCalled();
+    expect(historyQueryService.testItem).not.toHaveBeenCalled();
   });
 });

@@ -76,7 +76,7 @@ describe('EditNorthComponent', () => {
     certificateService.list.and.returnValue(of([]));
     transformerService.list.and.returnValue(of([]));
 
-    northConnectorService.getNorthConnectorTypeManifest.and.returnValue(of(testData.north.manifest));
+    northConnectorService.getNorthManifest.and.returnValue(of(testData.north.manifest));
   });
 
   describe('create mode', () => {
@@ -133,12 +133,12 @@ describe('EditNorthComponent', () => {
     beforeEach(() => {
       TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute({ params: { northId: 'id1' } }) });
 
-      northConnectorService.get.and.returnValue(of(northConnector));
+      northConnectorService.findById.and.returnValue(of(northConnector));
       tester = new EditNorthComponentTester();
       tester.detectChanges();
     });
     it('should display general settings', () => {
-      expect(northConnectorService.get).toHaveBeenCalledWith('id1');
+      expect(northConnectorService.findById).toHaveBeenCalledWith('id1');
       expect(tester.title).toContainText('Edit North Connector');
       expect(tester.enabled).toBeChecked();
       expect(tester.description).toHaveValue('My North connector description');

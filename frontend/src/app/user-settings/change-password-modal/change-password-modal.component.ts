@@ -56,10 +56,10 @@ export class ChangePasswordModalComponent {
       newPassword: formValue.newPasswordForm!.newPassword!
     };
     this.userSettingsService
-      .get()
+      .currentUser()
       .pipe(
         switchMap(user => {
-          return this.userSettingsService.changePassword(user.id, command);
+          return this.userSettingsService.updatePassword(user.id, command);
         })
       )
       .subscribe({

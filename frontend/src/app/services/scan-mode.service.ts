@@ -23,7 +23,7 @@ export class ScanModeService {
    * Get one scan mode
    * @param scanModeId - the ID of the scan mode
    */
-  get(scanModeId: string): Observable<ScanModeDTO> {
+  findById(scanModeId: string): Observable<ScanModeDTO> {
     return this.http.get<ScanModeDTO>(`/api/scan-modes/${scanModeId}`);
   }
 

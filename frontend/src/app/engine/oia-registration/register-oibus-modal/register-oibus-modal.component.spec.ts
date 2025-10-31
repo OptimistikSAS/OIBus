@@ -123,7 +123,7 @@ describe('RegisterOibusModalComponent', () => {
       ]
     });
 
-    engineService.updateRegistrationSettings.and.returnValue(of());
+    engineService.register.and.returnValue(of());
     engineService.editRegistrationSettings.and.returnValue(of());
     TestBed.createComponent(DefaultValidationErrorsComponent).detectChanges();
 
@@ -209,7 +209,7 @@ describe('RegisterOibusModalComponent', () => {
       }
     };
 
-    expect(engineService.updateRegistrationSettings).toHaveBeenCalledWith(expectedCommand);
+    expect(engineService.register).toHaveBeenCalledWith(expectedCommand);
   }));
 
   it('should cancel in register mode', () => {

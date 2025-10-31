@@ -176,21 +176,21 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
           if (paramHistoryQueryId) {
             this.mode = 'edit';
             this.historyId = paramHistoryQueryId;
-            historyQueryObs = this.historyQueryService.get(paramHistoryQueryId);
+            historyQueryObs = this.historyQueryService.findById(paramHistoryQueryId);
           } else {
             this.mode = 'create';
             this.historyId = 'create';
             if (paramDuplicateHistoryQueryId) {
               this.duplicateId = paramDuplicateHistoryQueryId;
-              historyQueryObs = this.historyQueryService.get(paramDuplicateHistoryQueryId);
+              historyQueryObs = this.historyQueryService.findById(paramDuplicateHistoryQueryId);
             } else {
               if (southId) {
-                southObs = this.southConnectorService.get(southId);
+                southObs = this.southConnectorService.findById(southId);
               } else {
                 this.southType = queryParams.get('southType') || '';
               }
               if (northId) {
-                northObs = this.northConnectorService.get(northId);
+                northObs = this.northConnectorService.findById(northId);
               } else {
                 this.northType = queryParams.get('northType') || '';
               }
@@ -227,8 +227,8 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
             }
           }
           return combineLatest([
-            this.northConnectorService.getNorthConnectorTypeManifest(this.northType),
-            this.southConnectorService.getSouthConnectorTypeManifest(this.southType),
+            this.northConnectorService.getNorthManifest(this.northType),
+            this.southConnectorService.getSouthManifest(this.southType),
             of(southConnector),
             of(northConnector)
           ]);
@@ -411,7 +411,7 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
           });
           this.form?.markAsPristine();
         }),
-        switchMap(() => this.historyQueryService.get(this.historyQuery!.id))
+        switchMap(() => this.historyQueryService.findById(this.historyQuery!.id))
       );
     } else {
       createOrUpdate = this.historyQueryService.create(command, this.fromSouthId, this.fromNorthId, this.duplicateId).pipe(
@@ -433,7 +433,7 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
       this.inMemoryTransformersWithOptions = transformersWithOptions;
     } else {
       // When child signals backend update, refresh current connector view and in-memory cache
-      this.historyQueryService.get(this.historyQuery!.id).subscribe(historyQuery => {
+      this.historyQueryService.findById(this.historyQuery!.id).subscribe(historyQuery => {
         this.historyQuery = JSON.parse(JSON.stringify(historyQuery));
         this.inMemoryTransformersWithOptions = [...historyQuery.northTransformers];
       });
@@ -444,7 +444,7 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
     if (items) {
       this.inMemoryItems = items;
     } else {
-      this.historyQueryService.get(this.historyQuery!.id).subscribe(historyQuery => {
+      this.historyQueryService.findById(this.historyQuery!.id).subscribe(historyQuery => {
         this.historyQuery!.items = historyQuery.items;
         this.historyQuery = JSON.parse(JSON.stringify(this.historyQuery)); // Used to force a refresh in a history query item list
       });

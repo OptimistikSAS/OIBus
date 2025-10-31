@@ -157,7 +157,7 @@ export class RegisterOibusModalComponent {
     };
     if (this.mode === 'register') {
       this.oibusService
-        .updateRegistrationSettings(command)
+        .register(command)
         .pipe(this.state.pendingUntilFinalization())
         .subscribe(() => {
           this.modal.close();

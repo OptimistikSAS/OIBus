@@ -60,8 +60,8 @@ describe('NorthListComponent', () => {
     });
 
     northConnectorService.list.and.returnValue(of(northConnectors));
-    northConnectorService.startNorth.and.returnValue(of(undefined));
-    northConnectorService.stopNorth.and.returnValue(of(undefined));
+    northConnectorService.start.and.returnValue(of(undefined));
+    northConnectorService.stop.and.returnValue(of(undefined));
 
     tester = new NorthListComponentTester();
     tester.detectChanges();
@@ -85,12 +85,12 @@ describe('NorthListComponent', () => {
   it('should toggle north connector', () => {
     const toggle1 = tester.northList[0].elements('td')[4].elements('button')[0] as TestButton;
     toggle1.click();
-    expect(northConnectorService.stopNorth).toHaveBeenCalledWith('id1');
+    expect(northConnectorService.stop).toHaveBeenCalledWith('id1');
     expect(notificationService.success).toHaveBeenCalledWith('north.stopped', { name: northConnectors[0].name });
 
     const toggle2 = tester.northList[1].elements('td')[4].elements('button')[0] as TestButton;
     toggle2.click();
-    expect(northConnectorService.startNorth).toHaveBeenCalledWith('id2');
+    expect(northConnectorService.start).toHaveBeenCalledWith('id2');
     expect(notificationService.success).toHaveBeenCalledWith('north.started', { name: northConnectors[1].name });
   });
 });

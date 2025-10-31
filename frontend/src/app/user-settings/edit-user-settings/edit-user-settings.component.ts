@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Language, LANGUAGES, Timezone } from '../../../../../backend/shared/model/types';
+import { Timezone } from '../../../../../backend/shared/model/types';
 import { Observable, of, switchMap, tap, timer } from 'rxjs';
 import { CurrentUserService } from '../../shared/current-user.service';
 import { ChangePasswordModalComponent } from '../change-password-modal/change-password-modal.component';
@@ -47,7 +47,6 @@ export class EditUserSettingsComponent implements CanComponentDeactivate {
     timezone: ['' as Timezone, Validators.required]
   });
   editedUserSettings: UserDTO | null = null;
-  languages: Array<Language> = LANGUAGES;
 
   state = new ObservableState();
 
@@ -110,7 +109,7 @@ export class EditUserSettingsComponent implements CanComponentDeactivate {
   }
 
   private loadSettingsAndPopulate(): Observable<UserDTO> {
-    return this.userSettingsService.get().pipe(
+    return this.userSettingsService.currentUser().pipe(
       tap(settings => {
         this.editedUserSettings = settings;
         const formValue = {

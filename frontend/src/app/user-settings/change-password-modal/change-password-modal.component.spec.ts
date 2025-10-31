@@ -60,7 +60,7 @@ describe('ChangePasswordModalComponent', () => {
     });
 
     userSettings = testData.users.list[0] as UserDTO;
-    userSettingsService.get.and.returnValue(of(userSettings));
+    userSettingsService.currentUser.and.returnValue(of(userSettings));
 
     TestBed.createComponent(DefaultValidationErrorsComponent).detectChanges();
 
@@ -77,7 +77,7 @@ describe('ChangePasswordModalComponent', () => {
   it('should validate', () => {
     tester.save.click();
 
-    expect(userSettingsService.changePassword).not.toHaveBeenCalled();
+    expect(userSettingsService.updatePassword).not.toHaveBeenCalled();
 
     // all 3 fields are required
     expect(tester.errors.length).toBe(3);
@@ -98,10 +98,10 @@ describe('ChangePasswordModalComponent', () => {
     tester.newPassword.fillWith('newABCD12!');
     tester.newPasswordConfirmation.fillWith('newABCD12!');
 
-    userSettingsService.changePassword.and.returnValue(of(undefined));
+    userSettingsService.updatePassword.and.returnValue(of(undefined));
     tester.save.click();
 
-    expect(userSettingsService.changePassword).toHaveBeenCalledWith(userSettings.id, {
+    expect(userSettingsService.updatePassword).toHaveBeenCalledWith(userSettings.id, {
       currentPassword: 'current',
       newPassword: 'newABCD12!'
     });
@@ -110,7 +110,7 @@ describe('ChangePasswordModalComponent', () => {
 
   it('should close without saving', () => {
     tester.cancel.click();
-    expect(userSettingsService.changePassword).not.toHaveBeenCalled();
+    expect(userSettingsService.updatePassword).not.toHaveBeenCalled();
     expect(activeModal.dismiss).toHaveBeenCalled();
   });
 });

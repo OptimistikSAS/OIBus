@@ -62,8 +62,8 @@ describe('HistoryQueryListComponent', () => {
     });
 
     historyQueryService.list.and.returnValue(of(historyQueries));
-    historyQueryService.startHistoryQuery.and.returnValue(of(undefined));
-    historyQueryService.pauseHistoryQuery.and.returnValue(of(undefined));
+    historyQueryService.start.and.returnValue(of(undefined));
+    historyQueryService.pause.and.returnValue(of(undefined));
 
     tester = new HistoryQueryListComponentTester();
     tester.detectChanges();

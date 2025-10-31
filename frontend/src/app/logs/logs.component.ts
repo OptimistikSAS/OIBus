@@ -3,11 +3,10 @@ import { TranslateDirective } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PageLoader } from '../shared/page-loader.service';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { LogDTO, LogSearchParam, Scope } from '../../../../backend/shared/model/logs.model';
+import { LOG_LEVELS, LogDTO, LogLevel, LogSearchParam, Scope, SCOPE_TYPES, ScopeType } from '../../../../backend/shared/model/logs.model';
 import { DateTime } from 'luxon';
 import { Instant, Page } from '../../../../backend/shared/model/types';
 import { ascendingDates } from '../shared/form/validators';
-import { LOG_LEVELS, LogLevel, SCOPE_TYPES, ScopeType } from '../../../../backend/shared/model/engine.model';
 import {
   catchError,
   combineLatest,
@@ -35,7 +34,7 @@ import { ScopeTypesEnumPipe } from '../shared/scope-types-enum.pipe';
 import { NgbAccordionModule, NgbTooltip, NgbTypeahead, NgbTypeaheadSelectItemEvent } from '@ng-bootstrap/ng-bootstrap';
 import { PillComponent } from '../shared/pill/pill.component';
 import { LegendComponent } from '../shared/legend/legend.component';
-import { NgClass } from '@angular/common';
+import { NgClass, NgOptimizedImage } from '@angular/common';
 import { TYPEAHEAD_DEBOUNCE_TIME } from '../shared/form/typeahead';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../shared/form/form-validation-directives';
 import { TranslateModule } from '@ngx-translate/core';
@@ -61,7 +60,8 @@ import { toObservable } from '@angular/core/rxjs-interop';
     NgbAccordionModule,
     OI_FORM_VALIDATION_DIRECTIVES,
     NgbAccordionModule,
-    NgbTooltip
+    NgbTooltip,
+    NgOptimizedImage
   ],
   templateUrl: './logs.component.html',
   styleUrl: './logs.component.scss',
@@ -112,7 +112,7 @@ export class LogsComponent implements OnInit, OnDestroy {
     text$.pipe(
       debounceTime(TYPEAHEAD_DEBOUNCE_TIME),
       distinctUntilChanged(),
-      switchMap(text => this.logService.suggestByScopeName(text)),
+      switchMap(text => this.logService.suggestScopes(text)),
       tap(scopes => {
         this.noLogMatchingWarning.set(scopes.length === 0);
       })
@@ -124,9 +124,9 @@ export class LogsComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     const searchParams = this.toSearchParams(this.route);
     this.searchForm.setValue({
-      messageContent: searchParams.messageContent,
-      start: searchParams.start,
-      end: searchParams.end,
+      messageContent: searchParams.messageContent || null,
+      start: searchParams.start || null,
+      end: searchParams.end || null,
       scopeTypes: searchParams.scopeTypes,
       scopeIds: '',
       levels: searchParams.levels,
@@ -155,7 +155,7 @@ export class LogsComponent implements OnInit, OnDestroy {
           exhaustMap(page => {
             this.loading.set(true);
             const criteria: LogSearchParam = { ...this.toSearchParams(this.route), page };
-            return this.logService.searchLogs(criteria).pipe(catchError(() => EMPTY));
+            return this.logService.search(criteria).pipe(catchError(() => EMPTY));
           })
         )
         .subscribe(logs => {
@@ -168,8 +168,8 @@ export class LogsComponent implements OnInit, OnDestroy {
   toSearchParams(route: ActivatedRoute): LogSearchParam {
     const now = DateTime.now().endOf('minute');
     const queryParamMap = route.snapshot.queryParamMap;
-    const messageContent = queryParamMap.get('messageContent');
-    let scopeTypes: Array<string>;
+    const messageContent = queryParamMap.get('messageContent') || undefined;
+    let scopeTypes: Array<ScopeType>;
     let scopeIds: Array<string>;
     const scopeId = this.scopeId();
     const scopeType = this.scopeType();
@@ -177,12 +177,12 @@ export class LogsComponent implements OnInit, OnDestroy {
       scopeTypes = [scopeType];
       scopeIds = [scopeId];
     } else {
-      scopeTypes = queryParamMap.getAll('scopeTypes');
+      scopeTypes = queryParamMap.getAll('scopeTypes') as Array<ScopeType>;
       scopeIds = queryParamMap.getAll('scopeIds');
     }
     const start = queryParamMap.get('start') ?? now.minus({ days: 1 }).toISO();
-    const end = queryParamMap.get('end');
-    const levels = queryParamMap.getAll('levels');
+    const end = queryParamMap.get('end') || undefined;
+    const levels = queryParamMap.getAll('levels') as Array<LogLevel>;
     const page = queryParamMap.get('page') ? parseInt(queryParamMap.get('page')!, 10) : 0;
     return { messageContent, scopeTypes, scopeIds, start, end, levels, page };
   }

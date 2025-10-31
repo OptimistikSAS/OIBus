@@ -32,15 +32,15 @@ export class HistoryQueryService {
    * Get History queries
    */
   list(): Observable<Array<HistoryQueryLightDTO>> {
-    return this.http.get<Array<HistoryQueryLightDTO>>(`/api/history-queries`);
+    return this.http.get<Array<HistoryQueryLightDTO>>(`/api/history`);
   }
 
   /**
    * Get one History query
-   * @param historyQueryId - the ID of the History query
+   * @param historyId - the ID of the History query
    */
-  get(historyQueryId: string): Observable<HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings>> {
-    return this.http.get<HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings>>(`/api/history-queries/${historyQueryId}`);
+  findById(historyId: string): Observable<HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings>> {
+    return this.http.get<HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings>>(`/api/history/${historyId}`);
   }
 
   /**
@@ -66,124 +66,62 @@ export class HistoryQueryService {
     if (retrieveSecretsFromNorth) {
       params['fromNorth'] = retrieveSecretsFromNorth;
     }
-    return this.http.post<HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings>>(`/api/history-queries`, command, { params });
+    return this.http.post<HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings>>(`/api/history`, command, { params });
   }
 
   /**
    * Update the selected History query
-   * @param historyQueryId - the ID of the History query
+   * @param historyId - the ID of the History query
    * @param command - the new values of the selected History query
    * @param resetCache - The user wants to reset the history cache to restart from scratch
    */
-  update(historyQueryId: string, command: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>, resetCache: boolean) {
+  update(historyId: string, command: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>, resetCache: boolean) {
     const params: Record<string, string | Array<string>> = {};
     if (resetCache) {
       params['resetCache'] = resetCache.toString();
     }
-    return this.http.put<void>(`/api/history-queries/${historyQueryId}`, command, { params });
+    return this.http.put<void>(`/api/history/${historyId}`, command, { params });
   }
 
   /**
    * Delete the selected History query
-   * @param historyQueryId - the ID of the History query to delete
+   * @param historyId - the ID of the History query to delete
    */
-  deleteHistoryQuery(historyQueryId: string) {
-    return this.http.delete<void>(`/api/history-queries/${historyQueryId}`);
+  delete(historyId: string) {
+    return this.http.delete<void>(`/api/history/${historyId}`);
   }
 
-  /**
-   * Add or edit a History query transformer
-   */
-  addOrEditTransformer(historyQueryId: string, transformerWithOptions: TransformerDTOWithOptions): Observable<TransformerDTOWithOptions> {
-    return this.http.put<TransformerDTOWithOptions>(`/api/history-queries/${historyQueryId}/transformers`, transformerWithOptions);
+  start(historyId: string): Observable<void> {
+    return this.http.post<void>(`/api/history/${historyId}/start`, null);
   }
 
-  /**
-   * Remove the selected History query transformer
-   */
-  removeTransformer(historyQueryId: string, transformerId: string): Observable<void> {
-    return this.http.delete<void>(`/api/history-queries/${historyQueryId}/transformers/${transformerId}`);
+  pause(historyId: string): Observable<void> {
+    return this.http.post<void>(`/api/history/${historyId}/pause`, null);
   }
 
-  /**
-   * Retrieve the South items from search params
-   * @param historyQueryId - the ID of the South connector
-   * @param searchParams - The search params
-   */
-  searchItems(historyQueryId: string, searchParams: HistoryQueryItemSearchParam): Observable<Page<HistoryQueryItemDTO<SouthItemSettings>>> {
-    const params: Record<string, string | Array<string>> = {
-      page: `${searchParams.page || 0}`
-    };
-    if (searchParams.name) {
-      params['name'] = searchParams.name;
-    }
-    return this.http.get<Page<HistoryQueryItemDTO<SouthItemSettings>>>(`/api/history-queries/${historyQueryId}/south-items`, { params });
+  testNorthConnection(
+    historyId: string,
+    settings: NorthSettings,
+    northType: OIBusNorthType,
+    fromNorth: string | null = null
+  ): Observable<void> {
+    return this.http.post<void>(`/api/history/${historyId}/test/north`, settings, {
+      params: fromNorth ? { fromNorth, northType } : { northType }
+    });
   }
 
-  /**
-   * Get a History query item
-   * @param historyQueryId - the ID of the History query
-   * @param itemId - the ID of the History query item
-   */
-  getItem(historyQueryId: string, itemId: string): Observable<HistoryQueryItemDTO<SouthItemSettings>> {
-    return this.http.get<HistoryQueryItemDTO<SouthItemSettings>>(`/api/history-queries/${historyQueryId}/south-items/${itemId}`);
+  testSouthConnection(
+    historyId: string,
+    settings: SouthSettings,
+    southType: OIBusSouthType,
+    fromSouth: string | null = null
+  ): Observable<void> {
+    return this.http.post<void>(`/api/history/${historyId}/test/south`, settings, {
+      params: fromSouth ? { fromSouth, southType } : { southType }
+    });
   }
 
-  /**
-   * Create a new History query item
-   * @param historyQueryId - the ID of the History query
-   * @param command - The values of the History query item to create
-   */
-  createItem(historyQueryId: string, command: HistoryQueryItemCommandDTO<SouthItemSettings>): Observable<HistoryQueryItemDTO<any>> {
-    return this.http.post<HistoryQueryItemDTO<SouthItemSettings>>(`/api/history-queries/${historyQueryId}/south-items`, command);
-  }
-
-  /**
-   * Update the selected History query item
-   * @param historyQueryId - the ID of the History query
-   * @param itemId - the ID of the History query item
-   * @param command - the new values of the selected History query item
-   */
-  updateItem(historyQueryId: string, itemId: string, command: HistoryQueryItemCommandDTO<SouthItemSettings>) {
-    return this.http.put<void>(`/api/history-queries/${historyQueryId}/south-items/${itemId}`, command);
-  }
-
-  /**
-   * Delete the selected History query item
-   * @param historyQueryId - the ID of the History query
-   * @param itemId - the ID of the History query item to delete
-   */
-  deleteItem(historyQueryId: string, itemId: string) {
-    return this.http.delete<void>(`/api/history-queries/${historyQueryId}/south-items/${itemId}`);
-  }
-
-  /**
-   * Enable an item in the History query
-   * @param historyId - the ID of the History query
-   * @param itemId - the ID of the History query item to enable
-   */
-  enableItem(historyId: string, itemId: string) {
-    return this.http.put<void>(`/api/history-queries/${historyId}/south-items/${itemId}/enable`, null);
-  }
-
-  /**
-   * Disable an item in the History query
-   * @param historyId - the ID of the History query
-   * @param itemId - the ID of the History query item to disable
-   */
-  disableItem(historyId: string, itemId: string) {
-    return this.http.put<void>(`/api/history-queries/${historyId}/south-items/${itemId}/disable`, null);
-  }
-
-  /**
-   * Delete all items
-   * @param historyId - the ID of the History Query connector
-   */
-  deleteAllItems(historyId: string) {
-    return this.http.delete<void>(`/api/history-queries/${historyId}/south-items/all`);
-  }
-
-  testSouthItem(
+  testItem(
     historyId: string,
     fromSouth: string | null,
     southType: OIBusSouthType,
@@ -192,8 +130,8 @@ export class HistoryQueryService {
     itemSettings: SouthItemSettings,
     testingSettings: SouthConnectorItemTestingSettings
   ): Observable<OIBusContent> {
-    return this.http.put<OIBusContent>(
-      `/api/history-queries/${historyId}/south/items/test-item`,
+    return this.http.post<OIBusContent>(
+      `/api/history/${historyId}/test/items`,
       {
         southSettings,
         itemSettings,
@@ -206,28 +144,102 @@ export class HistoryQueryService {
   }
 
   /**
-   * Export items in CSV file
+   * Retrieve the South items from search params
+   * @param historyId - the ID of the South connector
+   * @param searchParams - The search params
    */
-  exportItems(historyQueryId: string, fileName: string, delimiter: string): Observable<void> {
-    return this.http
-      .put(`/api/history-queries/${historyQueryId}/south-items/export`, { delimiter }, { responseType: 'blob', observe: 'response' })
-      .pipe(map(response => this.downloadService.download(response, `${fileName}.csv`)));
+  searchItems(historyId: string, searchParams: HistoryQueryItemSearchParam): Observable<Page<HistoryQueryItemDTO<SouthItemSettings>>> {
+    const params: Record<string, string | Array<string>> = {
+      page: `${searchParams.page || 0}`
+    };
+    if (searchParams.name) {
+      params['name'] = searchParams.name;
+    }
+    return this.http.get<Page<HistoryQueryItemDTO<SouthItemSettings>>>(`/api/history/${historyId}/items/search`, { params });
+  }
+
+  /**
+   * Get a History query item
+   * @param historyId - the ID of the History query
+   * @param itemId - the ID of the History query item
+   */
+  getItem(historyId: string, itemId: string): Observable<HistoryQueryItemDTO<SouthItemSettings>> {
+    return this.http.get<HistoryQueryItemDTO<SouthItemSettings>>(`/api/history/${historyId}/items/${itemId}`);
+  }
+
+  /**
+   * Create a new History query item
+   * @param historyId - the ID of the History query
+   * @param command - The values of the History query item to create
+   */
+  createItem(historyId: string, command: HistoryQueryItemCommandDTO<SouthItemSettings>): Observable<HistoryQueryItemDTO<any>> {
+    return this.http.post<HistoryQueryItemDTO<SouthItemSettings>>(`/api/history/${historyId}/items`, command);
+  }
+
+  /**
+   * Update the selected History query item
+   * @param historyId - the ID of the History query
+   * @param itemId - the ID of the History query item
+   * @param command - the new values of the selected History query item
+   */
+  updateItem(historyId: string, itemId: string, command: HistoryQueryItemCommandDTO<SouthItemSettings>) {
+    return this.http.put<void>(`/api/history/${historyId}/items/${itemId}`, command);
+  }
+
+  /**
+   * Enable an item in the History query
+   * @param historyId - the ID of the History query
+   * @param itemId - the ID of the History query item to enable
+   */
+  enableItem(historyId: string, itemId: string) {
+    return this.http.post<void>(`/api/history/${historyId}/items/${itemId}/enable`, null);
+  }
+
+  /**
+   * Disable an item in the History query
+   * @param historyId - the ID of the History query
+   * @param itemId - the ID of the History query item to disable
+   */
+  disableItem(historyId: string, itemId: string) {
+    return this.http.post<void>(`/api/history/${historyId}/items/${itemId}/disable`, null);
+  }
+
+  /**
+   * Delete the selected History query item
+   * @param historyId - the ID of the History query
+   * @param itemId - the ID of the History query item to delete
+   */
+  deleteItem(historyId: string, itemId: string) {
+    return this.http.delete<void>(`/api/history/${historyId}/items/${itemId}`);
+  }
+
+  /**
+   * Delete all items
+   * @param historyId - the ID of the History Query connector
+   */
+  deleteAllItems(historyId: string) {
+    return this.http.delete<void>(`/api/history/${historyId}/items`);
   }
 
   itemsToCsv(
     southType: string,
     items: Array<HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>>,
-    fileName: string,
+    filename: string,
     delimiter: string
   ): Observable<void> {
     const formData = new FormData();
     // Convert the string to a Blob and append it as a file
-    const currentItemsBlob = new Blob([JSON.stringify(items)], { type: 'text/plain' });
-    formData.set('items', currentItemsBlob, 'items.json');
+    formData.set('items', new Blob([JSON.stringify(items)], { type: 'application/json' }), 'items.json');
     formData.set('delimiter', delimiter);
 
     return this.http
-      .put(`/api/history-queries/${southType}/south-items/to-csv`, formData, { responseType: 'blob', observe: 'response' })
+      .post(`/api/history/${southType}/items/to-csv`, formData, { responseType: 'blob', observe: 'response' })
+      .pipe(map(response => this.downloadService.download(response, `${filename}.csv`)));
+  }
+
+  exportItems(historyQueryId: string, fileName: string, delimiter: string): Observable<void> {
+    return this.http
+      .post(`/api/history/${historyQueryId}/items/export`, { delimiter }, { responseType: 'blob', observe: 'response' })
       .pipe(map(response => this.downloadService.download(response, `${fileName}.csv`)));
   }
 
@@ -236,7 +248,6 @@ export class HistoryQueryService {
    */
   checkImportItems(
     southType: string,
-    historyQueryId: string,
     currentItems: Array<HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>>,
     file: File,
     delimiter: string
@@ -248,57 +259,39 @@ export class HistoryQueryService {
     }>;
   }> {
     const formData = new FormData();
-    formData.set('file', file);
+    formData.set('itemsToImport', file);
     // Convert the string to a Blob and append it as a file
-    const currentItemsBlob = new Blob([JSON.stringify(currentItems)], { type: 'text/plain' });
-    formData.set('currentItems', currentItemsBlob, 'currentItems.txt');
+    formData.set('currentItems', new Blob([JSON.stringify(currentItems)], { type: 'application/json' }), 'currentItems.json');
     formData.set('delimiter', delimiter);
     return this.http.post<{
       items: Array<HistoryQueryItemDTO<SouthItemSettings>>;
       errors: Array<{ item: HistoryQueryItemDTO<SouthItemSettings>; error: string }>;
-    }>(`/api/history-queries/${southType}/south-items/check-south-import/${historyQueryId}`, formData);
+    }>(`/api/history/${southType}/items/import/check`, formData);
   }
 
-  importItems(historyQueryId: string, items: Array<HistoryQueryItemCommandDTO<SouthItemSettings>>): Observable<void> {
+  importItems(historyId: string, items: Array<HistoryQueryItemCommandDTO<SouthItemSettings>>): Observable<void> {
     const formData = new FormData();
     // Convert the string to a Blob and append it as a file
-    const itemsBlob = new Blob([JSON.stringify(items)], { type: 'text/plain' });
-    formData.set('items', itemsBlob, 'items.json');
-    return this.http.post<void>(`/api/history-queries/${historyQueryId}/south-items/import`, formData);
+    formData.set('items', new Blob([JSON.stringify(items)], { type: 'application/json' }), 'items.json');
+    return this.http.post<void>(`/api/history/${historyId}/items/import`, formData);
   }
 
-  startHistoryQuery(historyQueryId: string): Observable<void> {
-    return this.http.put<void>(`/api/history-queries/${historyQueryId}/start`, null);
+  /**
+   * Add or edit a History query transformer
+   */
+  addOrEditTransformer(historyId: string, transformerWithOptions: TransformerDTOWithOptions): Observable<TransformerDTOWithOptions> {
+    return this.http.post<TransformerDTOWithOptions>(`/api/history/${historyId}/transformers`, transformerWithOptions);
   }
 
-  pauseHistoryQuery(historyQueryId: string): Observable<void> {
-    return this.http.put<void>(`/api/history-queries/${historyQueryId}/pause`, null);
-  }
-
-  testSouthConnection(
-    historyQueryId: string,
-    settings: SouthSettings,
-    southType: OIBusSouthType,
-    fromSouth: string | null = null
-  ): Observable<void> {
-    return this.http.put<void>(`/api/history-queries/${historyQueryId}/south/test-connection`, settings, {
-      params: fromSouth ? { fromSouth, southType } : { southType }
-    });
-  }
-
-  testNorthConnection(
-    historyQueryId: string,
-    settings: NorthSettings,
-    northType: OIBusNorthType,
-    fromNorth: string | null = null
-  ): Observable<void> {
-    return this.http.put<void>(`/api/history-queries/${historyQueryId}/north/test-connection`, settings, {
-      params: fromNorth ? { fromNorth, northType } : { northType }
-    });
+  /**
+   * Remove the selected History query transformer
+   */
+  removeTransformer(historyId: string, transformerId: string): Observable<void> {
+    return this.http.delete<void>(`/api/history/${historyId}/transformers/${transformerId}`);
   }
 
   searchCacheContent(
-    historyQueryId: string,
+    historyId: string,
     searchParams: CacheSearchParam,
     folder: 'cache' | 'archive' | 'error'
   ): Observable<Array<{ metadataFilename: string; metadata: CacheMetadata }>> {
@@ -314,14 +307,13 @@ export class HistoryQueryService {
     if (searchParams.nameContains) {
       params['nameContains'] = searchParams.nameContains;
     }
-    return this.http.get<Array<{ metadataFilename: string; metadata: CacheMetadata }>>(
-      `/api/history-query/${historyQueryId}/cache/content`,
-      { params }
-    );
+    return this.http.get<Array<{ metadataFilename: string; metadata: CacheMetadata }>>(`/api/history/${historyId}/cache/search`, {
+      params
+    });
   }
 
-  getCacheFileContent(historyQueryId: string, folder: 'cache' | 'archive' | 'error', filename: string): Observable<HttpResponse<Blob>> {
-    return this.http.get<Blob>(`/api/history-query/${historyQueryId}/cache/content/${filename}`, {
+  getCacheFileContent(historyId: string, folder: 'cache' | 'archive' | 'error', filename: string): Observable<HttpResponse<Blob>> {
+    return this.http.get<Blob>(`/api/history/${historyId}/cache/content/${filename}`, {
       responseType: 'blob' as 'json',
       observe: 'response',
       params: {
@@ -330,8 +322,8 @@ export class HistoryQueryService {
     });
   }
 
-  removeCacheContent(historyQueryId: string, folder: 'cache' | 'archive' | 'error', filenames: Array<string>): Observable<void> {
-    return this.http.delete<void>(`/api/history-query/${historyQueryId}/cache/content/remove`, {
+  removeCacheContent(historyId: string, folder: 'cache' | 'archive' | 'error', filenames: Array<string>): Observable<void> {
+    return this.http.delete<void>(`/api/history/${historyId}/cache/remove`, {
       params: {
         folder
       },
@@ -339,8 +331,8 @@ export class HistoryQueryService {
     });
   }
 
-  removeAllCacheContent(historyQueryId: string, folder: 'cache' | 'archive' | 'error'): Observable<void> {
-    return this.http.delete<void>(`/api/history-query/${historyQueryId}/cache/content/remove-all`, {
+  removeAllCacheContent(historyId: string, folder: 'cache' | 'archive' | 'error'): Observable<void> {
+    return this.http.delete<void>(`/api/history/${historyId}/cache/remove-all`, {
       params: {
         folder
       }
@@ -348,12 +340,12 @@ export class HistoryQueryService {
   }
 
   moveCacheContent(
-    historyQueryId: string,
+    historyId: string,
     originFolder: 'cache' | 'archive' | 'error',
     destinationFolder: 'cache' | 'archive' | 'error',
     filenames: Array<string>
   ): Observable<void> {
-    return this.http.post<void>(`/api/history-query/${historyQueryId}/cache/content/move`, filenames, {
+    return this.http.post<void>(`/api/history/${historyId}/cache/move`, filenames, {
       params: {
         originFolder,
         destinationFolder
@@ -362,11 +354,11 @@ export class HistoryQueryService {
   }
 
   moveAllCacheContent(
-    historyQueryId: string,
+    historyId: string,
     originFolder: 'cache' | 'archive' | 'error',
     destinationFolder: 'cache' | 'archive' | 'error'
   ): Observable<void> {
-    return this.http.post<void>(`/api/history-query/${historyQueryId}/cache/content/move-all`, null, {
+    return this.http.post<void>(`/api/history/${historyId}/cache/move-all`, null, {
       params: {
         originFolder,
         destinationFolder

@@ -92,14 +92,14 @@ export class EditSouthComponent implements OnInit, CanComponentDeactivate {
           if (paramSouthId) {
             this.mode = 'edit';
             this.southId = paramSouthId;
-            return this.southConnectorService.get(paramSouthId).pipe(this.state.pendingUntilFinalization());
+            return this.southConnectorService.findById(paramSouthId).pipe(this.state.pendingUntilFinalization());
           } else {
             this.mode = 'create';
             this.southId = 'create';
             // fetch the South connector in case of duplicate
             if (duplicateSouthId) {
               this.duplicateId = duplicateSouthId;
-              return this.southConnectorService.get(duplicateSouthId).pipe(this.state.pendingUntilFinalization());
+              return this.southConnectorService.findById(duplicateSouthId).pipe(this.state.pendingUntilFinalization());
             }
             // otherwise, we are creating one
             else {
@@ -113,7 +113,7 @@ export class EditSouthComponent implements OnInit, CanComponentDeactivate {
             this.southType = southConnector.type;
             this.inMemoryItems = southConnector.items;
           }
-          return this.southConnectorService.getSouthConnectorTypeManifest(this.southType);
+          return this.southConnectorService.getSouthManifest(this.southType);
         })
       )
       .subscribe(manifest => {
@@ -140,7 +140,7 @@ export class EditSouthComponent implements OnInit, CanComponentDeactivate {
           this.notificationService.success('south.updated', { name: command.name });
           this.form?.markAsPristine();
         }),
-        switchMap(() => this.southConnectorService.get(this.southConnector!.id))
+        switchMap(() => this.southConnectorService.findById(this.southConnector!.id))
       );
     } else {
       createOrUpdate = this.southConnectorService.create(command, this.duplicateId).pipe(
@@ -178,7 +178,7 @@ export class EditSouthComponent implements OnInit, CanComponentDeactivate {
     if (items) {
       this.inMemoryItems = items;
     } else {
-      this.southConnectorService.get(this.southConnector!.id).subscribe(southConnector => {
+      this.southConnectorService.findById(this.southConnector!.id).subscribe(southConnector => {
         this.southConnector!.items = southConnector.items;
         this.southConnector = JSON.parse(JSON.stringify(this.southConnector)); // Used to force a refresh in south item list
       });

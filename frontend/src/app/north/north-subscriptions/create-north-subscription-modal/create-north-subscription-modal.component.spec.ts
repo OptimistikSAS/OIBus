@@ -60,7 +60,7 @@ describe('CreateNorthSubscriptionModalComponent', () => {
 
     tester = new CreateNorthSubscriptionModalComponentTester();
     tester.componentInstance.prepareForCreation(southConnectors);
-    northConnectorService.createSubscription.and.returnValue(of(undefined));
+    northConnectorService.addSubscription.and.returnValue(of(undefined));
     tester.detectChanges();
   });
 

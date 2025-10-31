@@ -23,7 +23,7 @@ export class IpFilterService {
    * Get one IP filter
    * @param ipFilterId - the ID of the IP filter
    */
-  get(ipFilterId: string): Observable<IPFilterDTO> {
+  findById(ipFilterId: string): Observable<IPFilterDTO> {
     return this.http.get<IPFilterDTO>(`/api/ip-filters/${ipFilterId}`);
   }
 

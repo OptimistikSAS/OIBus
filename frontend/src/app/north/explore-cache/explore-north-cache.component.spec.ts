@@ -84,7 +84,7 @@ describe('ExploreNorthCacheComponent', () => {
         { provide: NorthConnectorService, useValue: northConnectorService }
       ]
     });
-    northConnectorService.get.and.returnValue(of(northConnector));
+    northConnectorService.findById.and.returnValue(of(northConnector));
     northConnectorService.searchCacheContent.and.returnValue(of([]));
     tester = new ExploreNorthCacheComponentTester();
     tester.detectChanges();

@@ -31,7 +31,7 @@ export class NorthMetricsComponent implements OnInit {
 
   ngOnInit(): void {
     if (!this.manifest()) {
-      this.northConnectorService.getNorthConnectorTypeManifest(this.northConnector().type).subscribe(manifest => {
+      this.northConnectorService.getNorthManifest(this.northConnector().type).subscribe(manifest => {
         this.manifestOrNorthConnectorTypeManifest.set(manifest);
       });
     }

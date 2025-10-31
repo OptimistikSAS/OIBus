@@ -29,11 +29,11 @@ describe('NorthConnectorService', () => {
 
   afterEach(() => http.verify());
 
-  it('should get all North connector types', () => {
+  it('should get all North connector manifests', () => {
     let expectedNorthConnectorTypes: Array<NorthType> = [];
-    service.getNorthConnectorTypes().subscribe(types => (expectedNorthConnectorTypes = types));
+    service.getNorthTypes().subscribe(types => (expectedNorthConnectorTypes = types));
 
-    http.expectOne('/api/north-types').flush([
+    http.expectOne('/api/north/types').flush([
       { category: 'Database', type: 'SQL', description: 'SQL description' },
       { category: 'IoT', type: 'MQTT', description: 'MQTT description' }
     ]);
@@ -43,9 +43,9 @@ describe('NorthConnectorService', () => {
 
   it('should get a North connector manifest', () => {
     let expectedManifest: NorthConnectorManifest | null = null;
-    service.getNorthConnectorTypeManifest('console').subscribe(manifest => (expectedManifest = manifest));
+    service.getNorthManifest('console').subscribe(manifest => (expectedManifest = manifest));
 
-    http.expectOne('/api/north-types/console').flush(testData.north.manifest);
+    http.expectOne('/api/north/manifests/console').flush(testData.north.manifest);
 
     expect(expectedManifest!).toEqual(testData.north.manifest);
   });
@@ -63,20 +63,10 @@ describe('NorthConnectorService', () => {
     let expectedNorthConnector: NorthConnectorDTO<NorthSettings> | null = null;
     const northConnector = { id: 'id1' } as NorthConnectorDTO<NorthSettings>;
 
-    service.get('id1').subscribe(c => (expectedNorthConnector = c));
+    service.findById('id1').subscribe(c => (expectedNorthConnector = c));
 
     http.expectOne({ url: '/api/north/id1', method: 'GET' }).flush(northConnector);
     expect(expectedNorthConnector!).toEqual(northConnector);
-  });
-
-  it('should get a North connector schema', () => {
-    let expectedNorthConnectorType: object | null = null;
-    const manifest = testData.north.manifest;
-
-    service.getSchema('SQL').subscribe(c => (expectedNorthConnectorType = c));
-
-    http.expectOne({ url: '/api/north-type/SQL', method: 'GET' }).flush(manifest);
-    expect(expectedNorthConnectorType!).toEqual(manifest);
   });
 
   it('should create a North connector', () => {
@@ -111,7 +101,7 @@ describe('NorthConnectorService', () => {
 
   it('should create a North connector subscription', () => {
     let done = false;
-    service.createSubscription('id1', 'southId').subscribe(() => (done = true));
+    service.addSubscription('id1', 'southId').subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'PUT', url: '/api/north/id1/subscriptions/southId' });
     testRequest.flush(null);
     expect(done).toBe(true);
@@ -119,7 +109,7 @@ describe('NorthConnectorService', () => {
 
   it('should delete a North connector subscription', () => {
     let done = false;
-    service.deleteSubscription('id1', 'southId').subscribe(() => (done = true));
+    service.removeSubscription('id1', 'southId').subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'DELETE', url: '/api/north/id1/subscriptions/southId' });
     testRequest.flush(null);
     expect(done).toBe(true);
@@ -151,7 +141,7 @@ describe('NorthConnectorService', () => {
 
     http
       .expectOne({
-        url: '/api/north/id1/cache/content?folder=cache&start=2020-01-01T00:00:00.000Z&end=2021-01-01T00:00:00.000Z&nameContains=file',
+        url: '/api/north/id1/cache/search?folder=cache&start=2020-01-01T00:00:00.000Z&end=2021-01-01T00:00:00.000Z&nameContains=file',
         method: 'GET'
       })
       .flush(northCacheFiles);
@@ -172,7 +162,7 @@ describe('NorthConnectorService', () => {
     service.removeCacheContent('id1', 'cache', ['file1', 'file2']).subscribe(() => (done = true));
     const testRequest = http.expectOne({
       method: 'DELETE',
-      url: '/api/north/id1/cache/content/remove?folder=cache'
+      url: '/api/north/id1/cache/remove?folder=cache'
     });
     testRequest.flush(['file1', 'file2']);
     expect(done).toBe(true);
@@ -181,7 +171,7 @@ describe('NorthConnectorService', () => {
   it('should remove all archive files', () => {
     let done = false;
     service.removeAllCacheContent('id1', 'archive').subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'DELETE', url: '/api/north/id1/cache/content/remove-all?folder=archive' });
+    const testRequest = http.expectOne({ method: 'DELETE', url: '/api/north/id1/cache/remove-all?folder=archive' });
     testRequest.flush(null);
     expect(done).toBe(true);
   });
@@ -191,7 +181,7 @@ describe('NorthConnectorService', () => {
     service.moveCacheContent('id1', 'cache', 'archive', ['file1', 'file2']).subscribe(() => (done = true));
     const testRequest = http.expectOne({
       method: 'POST',
-      url: '/api/north/id1/cache/content/move?originFolder=cache&destinationFolder=archive'
+      url: '/api/north/id1/cache/move?originFolder=cache&destinationFolder=archive'
     });
     testRequest.flush(null);
     expect(done).toBe(true);
@@ -202,7 +192,7 @@ describe('NorthConnectorService', () => {
     service.moveAllCacheContent('id1', 'archive', 'cache').subscribe(() => (done = true));
     const testRequest = http.expectOne({
       method: 'POST',
-      url: '/api/north/id1/cache/content/move-all?originFolder=archive&destinationFolder=cache'
+      url: '/api/north/id1/cache/move-all?originFolder=archive&destinationFolder=cache'
     });
     testRequest.flush(null);
     expect(done).toBe(true);
@@ -212,7 +202,7 @@ describe('NorthConnectorService', () => {
     let done = false;
 
     service.resetMetrics('id1').subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'PUT', url: '/api/north/id1/cache/reset-metrics' });
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/north/id1/metrics/reset' });
     expect(testRequest.request.body).toBeNull();
     testRequest.flush(null);
     expect(done).toBe(true);
@@ -223,7 +213,7 @@ describe('NorthConnectorService', () => {
     const command = testData.north.command;
 
     service.testConnection('id1', command.settings, command.type).subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'PUT', url: '/api/north/id1/test-connection?northType=file-writer' });
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/north/id1/test/connection?northType=file-writer' });
     expect(testRequest.request.body).toEqual(command.settings);
     testRequest.flush(null);
     expect(done).toBe(true);
@@ -232,8 +222,8 @@ describe('NorthConnectorService', () => {
   it('should start a North', () => {
     let done = false;
 
-    service.startNorth('id1').subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'PUT', url: '/api/north/id1/start' });
+    service.start('id1').subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/north/id1/start' });
     expect(testRequest.request.body).toEqual(null);
     testRequest.flush(null);
     expect(done).toBe(true);
@@ -242,8 +232,8 @@ describe('NorthConnectorService', () => {
   it('should stop a North', () => {
     let done = false;
 
-    service.stopNorth('id1').subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'PUT', url: '/api/north/id1/stop' });
+    service.stop('id1').subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/north/id1/stop' });
     expect(testRequest.request.body).toEqual(null);
     testRequest.flush(null);
     expect(done).toBe(true);

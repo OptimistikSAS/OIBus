@@ -33,7 +33,7 @@ describe('ScanModeService', () => {
     let expectedScanMode: ScanModeDTO | null = null;
     const scanMode = { id: 'id1' } as ScanModeDTO;
 
-    service.get('id1').subscribe(c => (expectedScanMode = c));
+    service.findById('id1').subscribe(c => (expectedScanMode = c));
 
     http.expectOne({ url: '/api/scan-modes/id1', method: 'GET' }).flush(scanMode);
     expect(expectedScanMode!).toEqual(scanMode);
