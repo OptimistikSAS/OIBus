@@ -1,8 +1,3 @@
-// @ts-check
-// Note: type annotations allow type checking and IDEs autocompletion
-
-import * as path from 'node:path';
-
 import { themes } from 'prism-react-renderer';
 const { github: lightCodeTheme, dracula: darkCodeTheme } = themes;
 
