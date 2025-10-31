@@ -7,6 +7,8 @@ import SouthCacheRepository from '../repository/cache/south-cache.repository';
 import { ScanMode } from '../model/scan-mode.model';
 import { validateCronExpression } from './utils';
 import DataStreamEngine from '../engine/data-stream-engine';
+import { NotFoundError } from '../model/types';
+import { ValidationError } from 'joi';
 
 export default class ScanModeService {
   constructor(
@@ -21,8 +23,12 @@ export default class ScanModeService {
     return this.scanModeRepository.findAll();
   }
 
-  findById(id: string): ScanMode | null {
-    return this.scanModeRepository.findById(id);
+  findById(scanModeId: string): ScanMode {
+    const scanMode = this.scanModeRepository.findById(scanModeId);
+    if (!scanMode) {
+      throw new NotFoundError(`Scan mode "${scanModeId}" not found`);
+    }
+    return scanMode;
   }
 
   async create(command: ScanModeCommandDTO): Promise<ScanMode> {
@@ -36,7 +42,7 @@ export default class ScanModeService {
     await this.validator.validate(scanModeSchema, command);
     const oldScanMode = this.scanModeRepository.findById(scanModeId);
     if (!oldScanMode) {
-      throw new Error(`Scan mode ${scanModeId} not found`);
+      throw new NotFoundError(`Scan mode "${scanModeId}" not found`);
     }
     this.scanModeRepository.update(scanModeId, command);
     const newScanMode = this.scanModeRepository.findById(scanModeId)!;
@@ -49,24 +55,19 @@ export default class ScanModeService {
   async delete(scanModeId: string): Promise<void> {
     const scanMode = this.scanModeRepository.findById(scanModeId);
     if (!scanMode) {
-      throw new Error(`Scan mode ${scanModeId} not found`);
+      throw new NotFoundError(`Scan mode "${scanModeId}" not found`);
     }
-
     this.southCacheRepository.deleteAllByScanMode(scanModeId);
     this.scanModeRepository.delete(scanModeId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
 
   async verifyCron(command: { cron: string }): Promise<ValidatedCronExpression> {
-    if (!command.cron) {
-      return {
-        isValid: false,
-        errorMessage: 'Cron expression is required',
-        nextExecutions: [],
-        humanReadableForm: ''
-      };
+    const result = validateCronExpression(command.cron);
+    if (!result.isValid) {
+      throw new ValidationError(result.errorMessage, [], null);
     }
-    return validateCronExpression(command.cron);
+    return result;
   }
 }
 

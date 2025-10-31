@@ -60,9 +60,15 @@ describe('User Service', () => {
     const expectedResult = createPageFromArray(testData.users.list, 25, 0);
     (userRepository.search as jest.Mock).mockReturnValueOnce(expectedResult);
 
-    const result = service.search({});
+    const result = service.search({
+      login: 'john.doe',
+      page: 1
+    });
 
-    expect(userRepository.search).toHaveBeenCalledWith({});
+    expect(userRepository.search).toHaveBeenCalledWith({
+      login: 'john.doe',
+      page: 1
+    });
     expect(result).toEqual(expectedResult);
   });
 
@@ -96,7 +102,7 @@ describe('User Service', () => {
     (userRepository.findById as jest.Mock).mockReturnValueOnce(null);
 
     await expect(service.update(testData.users.list[0].id, testData.users.command)).rejects.toThrow(
-      new Error(`User ${testData.users.list[0].id} not found`)
+      new Error(`User "${testData.users.list[0].id}" (id) not found`)
     );
 
     expect(userRepository.findById).toHaveBeenCalledWith(testData.users.list[0].id);
@@ -124,7 +130,7 @@ describe('User Service', () => {
     (userRepository.findById as jest.Mock).mockReturnValueOnce(null);
 
     await expect(service.updatePassword(testData.users.list[0].id, 'new password')).rejects.toThrow(
-      new Error(`User ${testData.users.list[0].id} not found`)
+      new Error(`User "${testData.users.list[0].id}" (id) not found`)
     );
 
     expect(userRepository.findById).toHaveBeenCalledWith(testData.users.list[0].id);
@@ -143,7 +149,7 @@ describe('User Service', () => {
   it('delete() should not delete if the user is not found', async () => {
     (userRepository.findById as jest.Mock).mockReturnValueOnce(null);
 
-    expect(() => service.delete(testData.users.list[0].id)).toThrow(new Error(`User ${testData.users.list[0].id} not found`));
+    expect(() => service.delete(testData.users.list[0].id)).toThrow(new Error(`User "${testData.users.list[0].id}" (id) not found`));
 
     expect(userRepository.findById).toHaveBeenCalledWith(testData.users.list[0].id);
     expect(userRepository.delete).not.toHaveBeenCalled();

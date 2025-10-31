@@ -223,7 +223,7 @@ describe('CacheService', () => {
   it('should search cache content without filter', async () => {
     (fs.readdir as jest.Mock).mockReturnValueOnce([fileList[0].metadataFilename]);
     (fs.readFile as jest.Mock).mockImplementationOnce(() => JSON.stringify(fileList[0].metadata));
-    const result = await service.searchCacheContent({ start: null, end: null, nameContains: null }, 'cache');
+    const result = await service.searchCacheContent({ start: undefined, end: undefined, nameContains: undefined }, 'cache');
 
     expect(result).toEqual([fileList[0]]);
   });
@@ -634,7 +634,7 @@ describe('CacheService', () => {
     await service.compactQueue(0, 'time-values');
     service.getCacheContentToSend(0);
 
-    service.searchCacheContent({ start: null, end: null, nameContains: null }, 'cache');
+    service.searchCacheContent({ start: '2023-01-01T00:00:00Z', end: '2023-01-02T00:00:00Z', nameContains: 'example' }, 'cache');
 
     service.removeCacheContent('cache', {
       metadataFilename: 'fileToRemove.json',

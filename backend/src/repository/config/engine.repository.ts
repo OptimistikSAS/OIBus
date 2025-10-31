@@ -2,6 +2,7 @@ import { generateRandomId } from '../../service/utils';
 import { Database } from 'better-sqlite3';
 import { EngineSettings } from '../../model/engine.model';
 import { version } from '../../../package.json';
+import { LogLevel } from '../../../shared/model/logs.model';
 
 const ENGINES_TABLE = 'engines';
 
@@ -158,27 +159,27 @@ export default class EngineRepository {
       proxyPort: result.proxy_port as number,
       logParameters: {
         console: {
-          level: result.log_console_level as string
+          level: result.log_console_level as LogLevel
         },
         file: {
-          level: result.log_file_level as string,
+          level: result.log_file_level as LogLevel,
           maxFileSize: result.log_file_max_file_size as number,
           numberOfFiles: result.log_file_number_of_files as number
         },
         database: {
-          level: result.log_database_level as string,
+          level: result.log_database_level as LogLevel,
           maxNumberOfLogs: result.log_database_max_number_of_logs as number
         },
 
         loki: {
-          level: result.log_loki_level as string,
+          level: result.log_loki_level as LogLevel,
           interval: result.log_loki_interval as number,
           address: result.log_loki_address as string,
           username: result.log_loki_username as string,
           password: result.log_loki_password as string
         },
         oia: {
-          level: result.log_oia_level as string,
+          level: result.log_oia_level as LogLevel,
           interval: result.log_oia_interval as number
         }
       }

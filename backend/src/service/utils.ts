@@ -10,7 +10,7 @@ import AdmZip from 'adm-zip';
 import { CsvCharacter, DateTimeType, Instant, Interval, SerializationSettings, Timezone } from '../../shared/model/types';
 import pino from 'pino';
 import csv from 'papaparse';
-import { EngineSettingsDTO, OIBusContent, OIBusInfo, OIBusTimeValue } from '../../shared/model/engine.model';
+import { EngineSettingsDTO, OIBusContent, OIBusInfo } from '../../shared/model/engine.model';
 import os from 'node:os';
 import cronstrue from 'cronstrue';
 import cronparser from 'cron-parser';
@@ -288,8 +288,6 @@ export const persistResults = async (
   logger: pino.Logger
 ): Promise<void> => {
   switch (serializationSettings.type) {
-    case 'json':
-      return addContentFn({ type: 'time-values', content: data as Array<OIBusTimeValue> });
     case 'file':
       const filePath = generateFilenameForSerialization(baseFolder, serializationSettings.filename, connectorName, itemName);
       logger.debug(`Writing ${data.length} bytes into file at "${filePath}"`);
@@ -565,8 +563,6 @@ export const getPlatformFromOsType = (osType: string): string => {
 /**
  * Validates a cron expression and returns the next 3 executions and a human-readable form.
  * Next executions are in UTC.
- *
- * @throws {Error} if the cron expression is invalid, with a message
  */
 export const validateCronExpression = (cron: string): ValidatedCronExpression => {
   const response: ValidatedCronExpression = {
@@ -584,7 +580,7 @@ export const validateCronExpression = (cron: string): ValidatedCronExpression =>
   if (cron.split(' ').filter(Boolean).length >= 7) {
     return {
       isValid: false,
-      errorMessage: 'Too many fields. Only seconds, minutes, hours, day of month, month and day of week are supported.',
+      errorMessage: 'Cron Expression: Too many fields. Only seconds, minutes, hours, day of month, month and day of week are supported.',
       nextExecutions: [],
       humanReadableForm: ''
     };
@@ -594,7 +590,7 @@ export const validateCronExpression = (cron: string): ValidatedCronExpression =>
   if (badCharacters.length > 0) {
     return {
       isValid: false,
-      errorMessage: `Expression contains non-standard characters: ${badCharacters.join(', ')}`,
+      errorMessage: `Cron Expression: Non-standard characters: ${badCharacters.join(', ')}`,
       nextExecutions: [],
       humanReadableForm: ''
     };
@@ -619,7 +615,7 @@ export const validateCronExpression = (cron: string): ValidatedCronExpression =>
     if (error && typeof error === 'object' && (error as Error).message) {
       return {
         isValid: false,
-        errorMessage: (error as Error).message,
+        errorMessage: `Cron Expression: ${(error as Error).message}`,
         nextExecutions: [],
         humanReadableForm: ''
       };
@@ -629,7 +625,7 @@ export const validateCronExpression = (cron: string): ValidatedCronExpression =>
     if (typeof error === 'string') {
       // remove the "Error: " prefix
       const string = error.replace(/^Error: /, '');
-      const errorMessage = string.charAt(0).toUpperCase() + string.slice(1);
+      const errorMessage = `Cron Expression: ${string.charAt(0).toUpperCase() + string.slice(1)}`;
       return {
         isValid: false,
         errorMessage,
@@ -640,7 +636,7 @@ export const validateCronExpression = (cron: string): ValidatedCronExpression =>
 
     return {
       isValid: false,
-      errorMessage: 'Invalid cron expression',
+      errorMessage: 'Cron Expression: Invalid',
       nextExecutions: [],
       humanReadableForm: ''
     };

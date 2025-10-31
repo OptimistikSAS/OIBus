@@ -48,13 +48,12 @@ describe('Scan Mode Service', () => {
     expect(result).toEqual(toScanModeDTO(testData.scanMode.list[0]));
   });
 
-  it('findById() should return null if id not found', () => {
+  it('findById() should throw not found', () => {
     (scanModeRepository.findById as jest.Mock).mockReturnValueOnce(null);
-
-    const result = service.findById('id');
-
-    expect(scanModeRepository.findById).toHaveBeenCalledWith('id');
-    expect(result).toEqual(null);
+    expect(() => service.findById(testData.scanMode.list[0].id)).toThrow(
+      new Error(`Scan mode "${testData.scanMode.list[0].id}" not found`)
+    );
+    expect(scanModeRepository.findById).toHaveBeenCalledWith(testData.scanMode.list[0].id);
   });
 
   it('create() should create a scan mode', async () => {
@@ -99,7 +98,7 @@ describe('Scan Mode Service', () => {
     (scanModeRepository.findById as jest.Mock).mockReturnValueOnce(null);
 
     await expect(service.update(testData.scanMode.list[0].id, testData.scanMode.command)).rejects.toThrow(
-      new Error(`Scan mode ${testData.scanMode.list[0].id} not found`)
+      new Error(`Scan mode "${testData.scanMode.list[0].id}" not found`)
     );
 
     expect(scanModeRepository.findById).toHaveBeenCalledWith(testData.scanMode.list[0].id);
@@ -123,7 +122,7 @@ describe('Scan Mode Service', () => {
     (scanModeRepository.findById as jest.Mock).mockReturnValueOnce(null);
 
     await expect(service.delete(testData.scanMode.list[0].id)).rejects.toThrow(
-      new Error(`Scan mode ${testData.scanMode.list[0].id} not found`)
+      new Error(`Scan mode "${testData.scanMode.list[0].id}" not found`)
     );
 
     expect(scanModeRepository.findById).toHaveBeenCalledWith(testData.scanMode.list[0].id);
@@ -147,13 +146,15 @@ describe('Scan Mode Service', () => {
     expect(result).toEqual(validatedCronExpression);
   });
 
-  it('verifyCron() should throw an error if cron is empty', async () => {
-    const result = await service.verifyCron({ ...testData.scanMode.command, cron: '' });
-    expect(result).toEqual({
+  it('verifyCron() should throw an error if cron properly set', async () => {
+    const validatedCronExpression: ValidatedCronExpression = {
       isValid: false,
-      errorMessage: 'Cron expression is required',
+      errorMessage: 'validation error',
       nextExecutions: [],
       humanReadableForm: ''
-    });
+    };
+    (validateCronExpression as jest.Mock).mockReturnValueOnce(validatedCronExpression);
+
+    await expect(service.verifyCron(testData.scanMode.command)).rejects.toThrow('validation error');
   });
 });

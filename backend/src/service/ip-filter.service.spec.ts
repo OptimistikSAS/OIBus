@@ -68,7 +68,7 @@ describe('IP Filter Service', () => {
     (ipFilterRepository.findById as jest.Mock).mockReturnValueOnce(null);
 
     await expect(service.update(testData.ipFilters.list[0].id, testData.ipFilters.command)).rejects.toThrow(
-      new Error(`IP Filter ${testData.ipFilters.list[0].id} not found`)
+      new Error(`IP filter "${testData.ipFilters.list[0].id}" not found`)
     );
 
     expect(ipFilterRepository.findById).toHaveBeenCalledWith(testData.ipFilters.list[0].id);
@@ -91,7 +91,7 @@ describe('IP Filter Service', () => {
     (ipFilterRepository.findById as jest.Mock).mockReturnValueOnce(null);
 
     await expect(service.delete(testData.ipFilters.list[0].id)).rejects.toThrow(
-      new Error(`IP Filter ${testData.ipFilters.list[0].id} not found`)
+      new Error(`IP filter "${testData.ipFilters.list[0].id}" not found`)
     );
 
     expect(ipFilterRepository.findById).toHaveBeenCalledWith(testData.ipFilters.list[0].id);

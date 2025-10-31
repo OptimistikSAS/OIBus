@@ -20,12 +20,10 @@ import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import testData from '../tests/utils/test-data';
 import fs from 'node:fs/promises';
 import csv from 'papaparse';
-import multer from '@koa/multer';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
 import NorthConnectorRepository from '../repository/config/north-connector.repository';
 import SouthConnectorRepositoryMock from '../tests/__mocks__/repository/config/south-connector-repository.mock';
 import NorthConnectorRepositoryMock from '../tests/__mocks__/repository/config/north-connector-repository.mock';
-import { stringToBoolean } from './utils';
 import TransformerService from './transformer.service';
 import TransformerServiceMock from '../tests/__mocks__/service/transformer-service.mock';
 import DataStreamEngine from '../engine/data-stream-engine';
@@ -80,8 +78,8 @@ describe('History Query service', () => {
         ...northManifestList[4] // file-writer
       }
     ]);
-    await service.testNorth('create', testData.north.command.type, null, testData.north.command.settings, logger);
-    expect(northService.testNorth).toHaveBeenCalledWith('create', testData.north.command.type, testData.north.command.settings, logger);
+    await service.testNorth('create', testData.north.command.type, null, testData.north.command.settings);
+    expect(northService.testNorth).toHaveBeenCalledWith('create', testData.north.command.type, testData.north.command.settings);
   });
 
   it('testNorth() should throw an error if manifest type is bad', async () => {
@@ -89,7 +87,7 @@ describe('History Query service', () => {
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValueOnce(testData.north.list[0]);
     const badCommand = JSON.parse(JSON.stringify(testData.north.command));
     badCommand.type = 'bad';
-    await expect(service.testNorth('create', badCommand.type, testData.north.list[0].id, badCommand.settings, logger)).rejects.toThrow(
+    await expect(service.testNorth('create', badCommand.type, testData.north.list[0].id, badCommand.settings)).rejects.toThrow(
       'North manifest "bad" not found'
     );
     expect(northService.testNorth).not.toHaveBeenCalled();
@@ -99,7 +97,7 @@ describe('History Query service', () => {
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValueOnce(null);
 
     await expect(
-      service.testNorth('create', testData.north.command.type, testData.north.list[0].id, testData.north.command.settings, logger)
+      service.testNorth('create', testData.north.command.type, testData.north.list[0].id, testData.north.command.settings)
     ).rejects.toThrow(`North connector "${testData.north.list[0].id}" not found`);
     expect(northService.testNorth).not.toHaveBeenCalled();
   });
@@ -111,14 +109,14 @@ describe('History Query service', () => {
       }
     ]);
     (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0]);
-    await service.testNorth(testData.historyQueries.list[0].id, testData.north.command.type, null, testData.north.command.settings, logger);
+    await service.testNorth(testData.historyQueries.list[0].id, testData.north.command.type, null, testData.north.command.settings);
     expect(northService.testNorth).toHaveBeenCalled();
   });
 
   it('testNorth() should fail to test North connector in edit mode if north connector not found', async () => {
     (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(null);
     await expect(
-      service.testNorth(testData.historyQueries.list[0].id, testData.north.command.type, null, testData.north.command.settings, logger)
+      service.testNorth(testData.historyQueries.list[0].id, testData.north.command.type, null, testData.north.command.settings)
     ).rejects.toThrow(`History query "${testData.historyQueries.list[0].id}" not found`);
     expect(northService.testNorth).not.toHaveBeenCalled();
   });
@@ -129,8 +127,8 @@ describe('History Query service', () => {
         ...southManifestList[0] // folder-scanner
       }
     ]);
-    await service.testSouth('create', testData.south.command.type, null, testData.south.command.settings, logger);
-    expect(southService.testSouth).toHaveBeenCalledWith('create', testData.south.command.type, testData.south.command.settings, logger);
+    await service.testSouth('create', testData.south.command.type, null, testData.south.command.settings);
+    expect(southService.testSouth).toHaveBeenCalledWith('create', testData.south.command.type, testData.south.command.settings);
   });
 
   it('testSouth() should throw an error if manifest type is bad', async () => {
@@ -139,7 +137,7 @@ describe('History Query service', () => {
 
     const badCommand = JSON.parse(JSON.stringify(testData.south.command));
     badCommand.type = 'bad';
-    await expect(service.testSouth('create', badCommand.type, testData.south.list[0].id, badCommand.settings, logger)).rejects.toThrow(
+    await expect(service.testSouth('create', badCommand.type, testData.south.list[0].id, badCommand.settings)).rejects.toThrow(
       'South manifest "bad" not found'
     );
     expect(southService.testSouth).not.toHaveBeenCalled();
@@ -149,7 +147,7 @@ describe('History Query service', () => {
     (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(null);
 
     await expect(
-      service.testSouth('create', testData.south.command.type, testData.south.list[0].id, testData.south.command.settings, logger)
+      service.testSouth('create', testData.south.command.type, testData.south.list[0].id, testData.south.command.settings)
     ).rejects.toThrow(`South connector "${testData.south.list[0].id}" not found`);
     expect(southService.testSouth).not.toHaveBeenCalled();
   });
@@ -161,14 +159,14 @@ describe('History Query service', () => {
       }
     ]);
     (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0]);
-    await service.testSouth(testData.historyQueries.list[0].id, testData.south.command.type, null, testData.south.command.settings, logger);
+    await service.testSouth(testData.historyQueries.list[0].id, testData.south.command.type, null, testData.south.command.settings);
     expect(southService.testSouth).toHaveBeenCalled();
   });
 
   it('testSouth() should fail to test South connector in edit mode if history query not found', async () => {
     (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(null);
     await expect(
-      service.testSouth(testData.historyQueries.list[0].id, testData.south.command.type, null, testData.south.command.settings, logger)
+      service.testSouth(testData.historyQueries.list[0].id, testData.south.command.type, null, testData.south.command.settings)
     ).rejects.toThrow(`History query "${testData.historyQueries.list[0].id}" not found`);
     expect(southService.testSouth).not.toHaveBeenCalled();
   });
@@ -188,8 +186,7 @@ describe('History Query service', () => {
       testData.south.command.settings,
       testData.south.itemCommand.settings,
       testData.south.itemTestingSettings,
-      callback,
-      logger
+      callback
     );
     expect(southService.testSouthItem).toHaveBeenCalledWith(
       'create',
@@ -198,8 +195,7 @@ describe('History Query service', () => {
       testData.south.command.settings,
       testData.south.itemCommand.settings,
       testData.south.itemTestingSettings,
-      callback,
-      logger
+      callback
     );
   });
 
@@ -218,8 +214,7 @@ describe('History Query service', () => {
         badCommand.settings,
         testData.south.itemCommand.settings,
         testData.south.itemTestingSettings,
-        callback,
-        logger
+        callback
       )
     ).rejects.toThrow('South manifest "bad" not found');
 
@@ -238,8 +233,7 @@ describe('History Query service', () => {
         testData.south.command.settings,
         testData.south.itemCommand.settings,
         testData.south.itemTestingSettings,
-        callback,
-        logger
+        callback
       )
     ).rejects.toThrow(`South connector "${testData.south.list[0].id}" not found`);
 
@@ -262,8 +256,7 @@ describe('History Query service', () => {
       testData.south.command.settings,
       testData.south.itemCommand.settings,
       testData.south.itemTestingSettings,
-      callback,
-      logger
+      callback
     );
     expect(southService.testSouthItem).toHaveBeenCalled();
   });
@@ -281,8 +274,7 @@ describe('History Query service', () => {
         testData.south.command.settings,
         testData.south.itemCommand.settings,
         testData.south.itemTestingSettings,
-        callback,
-        logger
+        callback
       )
     ).rejects.toThrow(`History query "${testData.historyQueries.list[0].id}" not found`);
     expect(southService.testSouthItem).not.toHaveBeenCalled();
@@ -790,175 +782,6 @@ describe('History Query service', () => {
     );
   });
 
-  it('checkCsvImport() should properly parse csv and check items', async () => {
-    (southService.getInstalledSouthManifests as jest.Mock).mockReturnValueOnce([
-      {
-        ...southManifestList[0], // folder scanner
-        id: testData.historyQueries.command.southType
-      }
-    ]);
-    const csvData = [
-      {
-        name: 'item1',
-        enabled: 'true',
-        settings_regex: '*',
-        settings_preserveFiles: 'true',
-        settings_ignoreModifiedDate: 'false',
-        settings_minAge: 100
-      },
-      {
-        name: 'item3',
-        enabled: 'true',
-        settings_regex: '*',
-        settings_preserveFiles: 'true',
-        settings_ignoreModifiedDate: 'false',
-        settings_minAge: 100,
-        settings_badItem: 100
-      },
-      {
-        name: 'item4',
-        enabled: 'true',
-        settings_regex: '*',
-        settings_preserveFiles: 'true',
-        settings_ignoreModifiedDate: 12, // bad type
-        settings_minAge: 100
-      },
-      {
-        name: 'item5',
-        enabled: 'true',
-        settings_regex: '*',
-        settings_preserveFiles: 'true',
-        settings_ignoreModifiedDate: 'false',
-        settings_minAge: 100
-      }
-    ];
-    (fs.readFile as jest.Mock).mockReturnValueOnce('file content').mockReturnValueOnce(JSON.stringify(testData.south.list[0].items));
-    (csv.parse as jest.Mock).mockReturnValueOnce({
-      meta: { delimiter: ',' },
-      data: csvData
-    });
-    (validator.validateSettings as jest.Mock).mockImplementationOnce(() => {
-      throw new Error(`validation error`);
-    });
-    (stringToBoolean as jest.Mock).mockReturnValue(true);
-
-    const result = await service.checkCsvFileImport(
-      testData.historyQueries.command.southType,
-      { path: 'file/path.csv' } as multer.File,
-      ',',
-      { path: 'items.json' } as multer.File
-    );
-    expect(result).toEqual({
-      items: [
-        {
-          id: '',
-          name: csvData[3].name,
-          enabled: true,
-          settings: {
-            ignoreModifiedDate: true,
-            minAge: 100,
-            preserveFiles: true,
-            regex: '*'
-          }
-        }
-      ],
-      errors: [
-        {
-          error: 'Item name "item1" already used',
-          item: {
-            name: csvData[0].name,
-            enabled: 'true',
-            settings_ignoreModifiedDate: 'false',
-            settings_minAge: 100,
-            settings_preserveFiles: 'true',
-            settings_regex: '*'
-          }
-        },
-        {
-          error: 'Settings "badItem" not accepted in manifest',
-          item: {
-            name: csvData[1].name,
-            enabled: 'true',
-            settings_badItem: 100,
-            settings_ignoreModifiedDate: 'false',
-            settings_minAge: 100,
-            settings_preserveFiles: 'true',
-            settings_regex: '*'
-          }
-        },
-        {
-          error: 'validation error',
-          item: {
-            name: csvData[2].name,
-            enabled: 'true',
-            settings_ignoreModifiedDate: 12,
-            settings_minAge: 100,
-            settings_preserveFiles: 'true',
-            settings_regex: '*'
-          }
-        }
-      ]
-    });
-  });
-
-  it('checkCsvImport() should properly parse csv and check items with array or object', async () => {
-    (southService.getInstalledSouthManifests as jest.Mock).mockReturnValueOnce([
-      {
-        ...southManifestList[4], // mssql
-        id: testData.historyQueries.command.southType
-      }
-    ]);
-    const csvData = [
-      {
-        name: 'item',
-        enabled: 'true',
-        settings_query: 'query',
-        settings_dateTimeFields: '[]',
-        settings_serialization: JSON.stringify({
-          type: 'csv',
-          filename: 'filename',
-          delimiter: 'SEMI_COLON',
-          compression: true,
-          outputTimestampFormat: 'YYYY-MM-DD HH:mm:ss.SSS',
-          outputTimezone: 'Europe/Paris'
-        })
-      }
-    ];
-    (fs.readFile as jest.Mock).mockReturnValueOnce('file content').mockReturnValueOnce(JSON.stringify(testData.south.list[1].items));
-    (csv.parse as jest.Mock).mockReturnValueOnce({
-      meta: { delimiter: ',' },
-      data: csvData
-    });
-    const result = await service.checkCsvFileImport(
-      testData.historyQueries.command.southType,
-      { path: 'file/path.csv' } as multer.File,
-      ',',
-      { path: 'items.json' } as multer.File
-    );
-    expect(result).toEqual({
-      items: [
-        {
-          id: '',
-          name: csvData[0].name,
-          enabled: csvData[0].enabled.toLowerCase() === 'true',
-          settings: {
-            query: 'query',
-            dateTimeFields: [],
-            serialization: {
-              type: 'csv',
-              filename: 'filename',
-              delimiter: 'SEMI_COLON',
-              compression: true,
-              outputTimestampFormat: 'YYYY-MM-DD HH:mm:ss.SSS',
-              outputTimezone: 'Europe/Paris'
-            }
-          }
-        }
-      ],
-      errors: []
-    });
-  });
-
   it('checkCsvContentImport() should throw error if manifest not found', async () => {
     (southService.getInstalledSouthManifests as jest.Mock).mockReturnValueOnce([
       {
@@ -983,12 +806,6 @@ describe('History Query service', () => {
       meta: { delimiter: ';' },
       data: []
     });
-
-    await expect(
-      service.checkCsvFileImport(testData.historyQueries.command.southType, { path: 'file/path.csv' } as multer.File, ',', {
-        path: 'items.json'
-      } as multer.File)
-    ).rejects.toThrow(`The entered delimiter "," does not correspond to the file delimiter ";"`);
   });
 
   it('importItems() should import items', async () => {

@@ -3,7 +3,9 @@ import { userSchema } from '../web-server/controllers/validators/oibus-validatio
 import UserRepository from '../repository/config/user.repository';
 import { User } from '../model/user.model';
 import { Page } from '../../shared/model/types';
-import { UserDTO, UserSearchParam } from '../../shared/model/user.model';
+import { UserCommandDTO, UserDTO, UserSearchParam } from '../../shared/model/user.model';
+import { NotFoundError } from '../model/types';
+import { ValidationError } from 'joi';
 
 export default class UserService {
   constructor(
@@ -15,12 +17,20 @@ export default class UserService {
     return this.userRepository.findAll();
   }
 
-  findById(id: string): User | null {
-    return this.userRepository.findById(id);
+  findById(userId: string): User {
+    const user = this.userRepository.findById(userId);
+    if (!user) {
+      throw new NotFoundError(`User "${userId}" (id) not found`);
+    }
+    return user;
   }
 
   findByLogin(login: string): User | null {
-    return this.userRepository.findByLogin(login);
+    const user = this.userRepository.findByLogin(login);
+    if (!user) {
+      throw new NotFoundError(`User "${login}" (login) not found`);
+    }
+    return user;
   }
 
   getHashedPasswordByLogin(login: string): string | null {
@@ -34,40 +44,37 @@ export default class UserService {
   async create(command: Omit<User, 'id'>, password: string | undefined): Promise<User> {
     await this.validator.validate(userSchema, command);
     if (!password) {
-      throw new Error('Password is required');
+      throw new ValidationError('Password is required', [], null);
     }
     return await this.userRepository.create(command, password);
   }
 
-  async update(id: string, command: Omit<User, 'id'>): Promise<void> {
-    const user = this.userRepository.findById(id);
+  async update(userId: string, command: UserCommandDTO): Promise<void> {
+    const user = this.userRepository.findById(userId);
     if (!user) {
-      throw new Error(`User ${id} not found`);
+      throw new NotFoundError(`User "${userId}" (id) not found`);
     }
-
     await this.validator.validate(userSchema, command);
-    this.userRepository.update(id, command);
+    this.userRepository.update(userId, command);
   }
 
-  async updatePassword(id: string, newPassword: string | undefined): Promise<void> {
-    const user = this.userRepository.findById(id);
+  async updatePassword(userId: string, newPassword: string | undefined): Promise<void> {
+    const user = this.userRepository.findById(userId);
     if (!user) {
-      throw new Error(`User ${id} not found`);
+      throw new NotFoundError(`User "${userId}" (id) not found`);
     }
     if (!newPassword) {
-      throw new Error('Password is required');
+      throw new ValidationError('Password is required', [], null);
     }
-
-    await this.userRepository.updatePassword(id, newPassword);
+    await this.userRepository.updatePassword(userId, newPassword);
   }
 
-  delete(id: string): void {
-    const user = this.userRepository.findById(id);
+  delete(userId: string): void {
+    const user = this.userRepository.findById(userId);
     if (!user) {
-      throw new Error(`User ${id} not found`);
+      throw new NotFoundError(`User "${userId}" (id) not found`);
     }
-
-    this.userRepository.delete(id);
+    this.userRepository.delete(userId);
   }
 }
 
