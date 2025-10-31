@@ -1,8 +1,6 @@
 import { Knex } from 'knex';
-import { LOG_LEVELS } from '../../../shared/model/engine.model';
-const LOG_TABLE = 'logs';
 
-const NEW_SCOPE_TYPES = ['south', 'north', 'history-query', 'internal', 'web-server'];
+const LOG_TABLE = 'logs';
 
 export async function up(knex: Knex): Promise<void> {
   await createLogsTable(knex);
@@ -35,8 +33,8 @@ async function createLogsTable(knex: Knex): Promise<void> {
   await knex.schema.raw(`drop table ${LOG_TABLE};`);
   await knex.schema.createTable(LOG_TABLE, table => {
     table.datetime('timestamp').notNullable();
-    table.enum('level', LOG_LEVELS).notNullable();
-    table.enum('scope_type', NEW_SCOPE_TYPES).notNullable().defaultTo('internal');
+    table.string('level').notNullable();
+    table.string('scope_type').notNullable().defaultTo('internal');
     table.text('scope_id');
     table.text('scope_name');
     table.text('message').notNullable();

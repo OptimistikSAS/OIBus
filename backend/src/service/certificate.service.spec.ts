@@ -73,12 +73,6 @@ describe('Certificate Service', () => {
     expect(result).toEqual(toCertificateDTO(testData.certificates.list[0]));
   });
 
-  it('create() should not create if options is null', async () => {
-    const command: CertificateCommandDTO = JSON.parse(JSON.stringify(testData.certificates.command));
-    command.options = null;
-    await expect(service.create(command)).rejects.toThrow('Options must be provided');
-  });
-
   it('update() should update a certificate', async () => {
     (certificateRepository.findById as jest.Mock).mockReturnValueOnce(testData.certificates.list[0]);
     (encryptionService.generateSelfSignedCertificate as jest.Mock).mockReturnValueOnce({
@@ -110,30 +104,10 @@ describe('Certificate Service', () => {
   it('update() should not update if the certificate is not found', async () => {
     (certificateRepository.findById as jest.Mock).mockReturnValueOnce(null);
 
-    await expect(service.update('newId', testData.certificates.command)).rejects.toThrow(new Error(`Certificate newId not found`));
+    await expect(service.update('newId', testData.certificates.command)).rejects.toThrow(new Error(`Certificate "newId" not found`));
 
     expect(certificateRepository.findById).toHaveBeenCalledWith('newId');
     expect(certificateRepository.update).not.toHaveBeenCalled();
-  });
-
-  it('update() should not update if options is null', async () => {
-    (certificateRepository.findById as jest.Mock).mockReturnValueOnce(testData.certificates.list[0]);
-
-    const command: CertificateCommandDTO = JSON.parse(JSON.stringify(testData.certificates.command));
-    command.options = null;
-    command.regenerateCertificate = true;
-
-    await expect(service.update('newId', command)).rejects.toThrow('Options must be provided');
-  });
-
-  it('update() should not update if options is null', async () => {
-    (certificateRepository.findById as jest.Mock).mockReturnValueOnce(testData.certificates.list[0]);
-
-    const command: CertificateCommandDTO = JSON.parse(JSON.stringify(testData.certificates.command));
-    command.options = null;
-    command.regenerateCertificate = true;
-
-    await expect(service.update('newId', command)).rejects.toThrow('Options must be provided');
   });
 
   it('update() should just update name and description if regenerateCertificate is false', async () => {
@@ -158,7 +132,7 @@ describe('Certificate Service', () => {
     (certificateRepository.findById as jest.Mock).mockReturnValueOnce(null);
 
     await expect(service.delete(testData.certificates.list[0].id)).rejects.toThrow(
-      new Error(`Certificate ${testData.certificates.list[0].id} not found`)
+      new Error(`Certificate "${testData.certificates.list[0].id}" not found`)
     );
 
     expect(certificateRepository.findById).toHaveBeenCalledWith(testData.certificates.list[0].id);

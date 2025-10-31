@@ -1,5 +1,4 @@
-import EncryptionService, { encryptionService } from './encryption.service';
-import pino from 'pino';
+import { encryptionService } from './encryption.service';
 import {
   NorthConnectorCommandDTO,
   NorthConnectorDTO,
@@ -69,7 +68,7 @@ export default class NorthService {
     private readonly engine: DataStreamEngine
   ) {}
 
-  async testNorth(id: string, northType: OIBusNorthType, settingsToTest: NorthSettings, logger: pino.Logger): Promise<void> {
+  async testNorth(id: string, northType: OIBusNorthType, settingsToTest: NorthSettings): Promise<void> {
     let northConnector: NorthConnectorEntity<NorthSettings> | null = null;
     if (id !== 'create') {
       northConnector = this.northConnectorRepository.findNorthById(id);
@@ -122,7 +121,22 @@ export default class NorthService {
       }
     };
 
-    const north = buildNorth(testToRun, logger, '', '', '', this.certificateRepository, this.oIAnalyticsRegistrationRepository);
+    const north = buildNorth(
+      testToRun,
+      this.engine.logger.child(
+        {
+          scopeType: 'north',
+          scopeId: 'test',
+          scopeName: 'test'
+        },
+        { level: 'silent' }
+      ),
+      '',
+      '',
+      '',
+      this.certificateRepository,
+      this.oIAnalyticsRegistrationRepository
+    );
     return await north.testConnection();
   }
 
@@ -393,10 +407,7 @@ export default class NorthService {
   }
 }
 
-export const toNorthConnectorDTO = <N extends NorthSettings>(
-  northEntity: NorthConnectorEntity<N>,
-  encryptionService: EncryptionService
-): NorthConnectorDTO<N> => {
+export const toNorthConnectorDTO = <N extends NorthSettings>(northEntity: NorthConnectorEntity<N>): NorthConnectorDTO<N> => {
   return {
     id: northEntity.id,
     name: northEntity.name,

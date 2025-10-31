@@ -7,6 +7,7 @@ import { CertificateCommandDTO } from '../../shared/model/certificate.model';
 import { generateRandomId } from './utils';
 import { DateTime, Duration } from 'luxon';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
+import { NotFoundError } from '../model/types';
 
 export default class CertificateService {
   constructor(
@@ -20,24 +21,24 @@ export default class CertificateService {
     return this.certificateRepository.findAll();
   }
 
-  findById(id: string): Certificate | null {
-    return this.certificateRepository.findById(id);
+  findById(certificateId: string): Certificate {
+    const certificate = this.certificateRepository.findById(certificateId);
+    if (!certificate) {
+      throw new NotFoundError(`Certificate "${certificateId}" not found`);
+    }
+    return certificate;
   }
 
   async create(command: CertificateCommandDTO): Promise<Certificate> {
-    if (!command.options) {
-      throw new Error('Options must be provided');
-    }
     await this.validator.validate(certificateSchema, command);
-
     const cert = this.encryptionService.generateSelfSignedCertificate({
-      commonName: command.options.commonName,
-      organizationName: command.options.organizationName,
-      countryName: command.options.countryName,
-      localityName: command.options.localityName,
-      stateOrProvinceName: command.options.stateOrProvinceName,
-      daysBeforeExpiry: command.options.daysBeforeExpiry,
-      keySize: command.options.keySize
+      commonName: command.options!.commonName,
+      organizationName: command.options!.organizationName,
+      countryName: command.options!.countryName,
+      localityName: command.options!.localityName,
+      stateOrProvinceName: command.options!.stateOrProvinceName,
+      daysBeforeExpiry: command.options!.daysBeforeExpiry,
+      keySize: command.options!.keySize
     });
 
     const certificate = this.certificateRepository.create({
@@ -49,7 +50,7 @@ export default class CertificateService {
       certificate: cert.cert,
       expiry: DateTime.now()
         .startOf('day')
-        .plus(Duration.fromObject({ days: command.options.daysBeforeExpiry }))
+        .plus(Duration.fromObject({ days: command.options!.daysBeforeExpiry }))
         .toISO()!
     });
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
@@ -60,21 +61,17 @@ export default class CertificateService {
     await this.validator.validate(certificateSchema, command);
     const certificate = this.certificateRepository.findById(certificateId);
     if (!certificate) {
-      throw new Error(`Certificate ${certificateId} not found`);
+      throw new NotFoundError(`Certificate "${certificateId}" not found`);
     }
-
     if (command.regenerateCertificate) {
-      if (command.options == null) {
-        throw new Error('Options must be provided');
-      }
       const cert = this.encryptionService.generateSelfSignedCertificate({
-        commonName: command.options.commonName,
-        organizationName: command.options.organizationName,
-        countryName: command.options.countryName,
-        localityName: command.options.localityName,
-        stateOrProvinceName: command.options.stateOrProvinceName,
-        daysBeforeExpiry: command.options.daysBeforeExpiry,
-        keySize: command.options.keySize
+        commonName: command.options!.commonName,
+        organizationName: command.options!.organizationName,
+        countryName: command.options!.countryName,
+        localityName: command.options!.localityName,
+        stateOrProvinceName: command.options!.stateOrProvinceName,
+        daysBeforeExpiry: command.options!.daysBeforeExpiry,
+        keySize: command.options!.keySize
       });
       this.certificateRepository.update({
         id: certificateId,
@@ -85,7 +82,7 @@ export default class CertificateService {
         certificate: cert.cert,
         expiry: DateTime.now()
           .startOf('day')
-          .plus(Duration.fromObject({ days: command.options.daysBeforeExpiry }))
+          .plus(Duration.fromObject({ days: command.options!.daysBeforeExpiry }))
           .toISO()!
       });
     } else {
@@ -97,7 +94,7 @@ export default class CertificateService {
   async delete(certificateId: string): Promise<void> {
     const certificate = this.certificateRepository.findById(certificateId);
     if (!certificate) {
-      throw new Error(`Certificate ${certificateId} not found`);
+      throw new NotFoundError(`Certificate "${certificateId}" not found`);
     }
     this.certificateRepository.delete(certificateId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();

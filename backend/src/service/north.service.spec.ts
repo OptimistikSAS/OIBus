@@ -89,7 +89,7 @@ describe('North Service', () => {
   });
 
   it('testNorth() should test North connector in creation mode', async () => {
-    await service.testNorth('create', testData.north.command.type, testData.north.command.settings, logger);
+    await service.testNorth('create', testData.north.command.type, testData.north.command.settings);
     expect(buildNorth).toHaveBeenCalledTimes(1);
     expect(mockedNorth1.testConnection).toHaveBeenCalled();
   });
@@ -97,15 +97,13 @@ describe('North Service', () => {
   it('testNorth() should throw an error if manifest type is bad', async () => {
     const badCommand = JSON.parse(JSON.stringify(testData.north.command));
     badCommand.type = 'bad';
-    await expect(service.testNorth('create', badCommand.type, badCommand.settings, logger)).rejects.toThrow(
-      'North manifest "bad" not found'
-    );
+    await expect(service.testNorth('create', badCommand.type, badCommand.settings)).rejects.toThrow('North manifest "bad" not found');
     expect(buildNorth).not.toHaveBeenCalled();
   });
 
   it('testNorth() should test North connector in edit mode', async () => {
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValueOnce(testData.north.list[0]);
-    await service.testNorth(testData.north.list[0].id, testData.north.command.type, testData.north.command.settings, logger);
+    await service.testNorth(testData.north.list[0].id, testData.north.command.type, testData.north.command.settings);
     expect(buildNorth).toHaveBeenCalledTimes(1);
     expect(mockedNorth1.testConnection).toHaveBeenCalled();
   });
@@ -113,7 +111,7 @@ describe('North Service', () => {
   it('testNorth() should fail to test North connector in edit mode if north connector not found', async () => {
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValueOnce(null);
     await expect(
-      service.testNorth(testData.north.list[0].id, testData.north.command.type, testData.north.command.settings, logger)
+      service.testNorth(testData.north.list[0].id, testData.north.command.type, testData.north.command.settings)
     ).rejects.toThrow(`North connector "${testData.north.list[0].id}" not found`);
     expect(buildNorth).not.toHaveBeenCalled();
   });

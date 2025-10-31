@@ -20,12 +20,9 @@ import SouthService, { southManifestList } from './south.service';
 import NorthService, { northManifestList } from './north.service';
 import LogRepository from '../repository/logs/log.repository';
 import { Page } from '../../shared/model/types';
-import pino from 'pino';
 import { CacheMetadata, CacheSearchParam, OIBusContent } from '../../shared/model/engine.model';
 import { ScanMode } from '../model/scan-mode.model';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
-import multer from '@koa/multer';
-import fs from 'node:fs/promises';
 import csv from 'papaparse';
 import HistoryQueryMetricsRepository from '../repository/metrics/history-query-metrics.repository';
 import { PassThrough } from 'node:stream';
@@ -58,8 +55,7 @@ export default class HistoryQueryService {
     historyQueryId: string,
     northType: OIBusNorthType,
     retrieveSecretsFromNorth: string | null,
-    settingsToTest: NorthSettings,
-    logger: pino.Logger
+    settingsToTest: NorthSettings
   ): Promise<void> {
     let northSettings: NorthSettings | null = null;
     if (historyQueryId !== 'create') {
@@ -86,8 +82,7 @@ export default class HistoryQueryService {
       await encryptionService.decryptConnectorSecrets(
         await encryptionService.encryptConnectorSecrets(settingsToTest, northSettings, manifest.settings),
         manifest.settings
-      ),
-      logger
+      )
     );
   }
 
@@ -95,8 +90,7 @@ export default class HistoryQueryService {
     historyQueryId: string,
     southType: OIBusSouthType,
     retrieveSecretsFromSouth: string | null,
-    settingsToTest: SouthSettings,
-    logger: pino.Logger
+    settingsToTest: SouthSettings
   ): Promise<void> {
     let southSettings: SouthSettings | null = null;
     if (historyQueryId !== 'create') {
@@ -123,8 +117,7 @@ export default class HistoryQueryService {
       await encryptionService.decryptConnectorSecrets(
         await encryptionService.encryptConnectorSecrets(settingsToTest, southSettings, manifest.settings),
         manifest.settings
-      ),
-      logger
+      )
     );
   }
 
@@ -136,8 +129,7 @@ export default class HistoryQueryService {
     southSettings: SouthSettings,
     itemSettings: SouthItemSettings,
     testingSettings: SouthConnectorItemTestingSettings,
-    callback: (data: OIBusContent) => void,
-    logger: pino.Logger
+    callback: (data: OIBusContent) => void
   ): Promise<void> {
     let southSettingsFrom: SouthSettings | null = null;
     if (historyQueryId !== 'create') {
@@ -172,8 +164,7 @@ export default class HistoryQueryService {
       ),
       itemSettings,
       testingSettings,
-      callback,
-      logger
+      callback
     );
   }
 
@@ -455,22 +446,6 @@ export default class HistoryQueryService {
     this.historyQueryRepository.disableHistoryQueryItem(historyQueryItem.id);
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
     await this.engine.reloadHistoryQuery(historyQuery, false);
-  }
-
-  async checkCsvFileImport(
-    southType: string,
-    file: multer.File,
-    delimiter: string,
-    existingItems: multer.File
-  ): Promise<{
-    items: Array<HistoryQueryItemDTO<SouthItemSettings>>;
-    errors: Array<{ item: Record<string, string>; error: string }>;
-  }> {
-    const fileContent = await fs.readFile(file.path);
-    const existingItemsContent: Array<HistoryQueryItemDTO<SouthItemSettings>> = JSON.parse(
-      (await fs.readFile(existingItems.path)).toString('utf8')
-    );
-    return await this.checkCsvContentImport(southType, fileContent.toString('utf8'), delimiter, existingItemsContent);
   }
 
   async checkCsvContentImport(

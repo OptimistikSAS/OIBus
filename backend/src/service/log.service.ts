@@ -3,6 +3,7 @@ import { Page } from '../../shared/model/types';
 import { OIBusLog } from '../model/logs.model';
 import { LogDTO, LogSearchParam, Scope } from '../../shared/model/logs.model';
 import LogRepository from '../repository/logs/log.repository';
+import { NotFoundError } from '../model/types';
 
 export default class LogService {
   constructor(
@@ -18,8 +19,12 @@ export default class LogService {
     return this.logRepository.searchScopesByName(name);
   }
 
-  getScopeById(scopeId: string): Scope | null {
-    return this.logRepository.getScopeById(scopeId);
+  getScopeById(scopeId: string): Scope {
+    const scope = this.logRepository.getScopeById(scopeId);
+    if (!scope) {
+      throw new NotFoundError(`Scope "${scopeId}" not found`);
+    }
+    return scope;
   }
 }
 

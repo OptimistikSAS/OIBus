@@ -219,8 +219,8 @@ describe('Logger', () => {
   it('should properly create child logger', async () => {
     const childFunction = jest.fn();
     service.logger = { child: childFunction } as unknown as pino.Logger;
-    service.createChildLogger('myScope');
-    expect(service.logger.child).toHaveBeenCalledWith({ scopeType: 'myScope' });
+    service.createChildLogger('south');
+    expect(service.logger.child).toHaveBeenCalledWith({ scopeType: 'south' });
   });
 
   it('should properly stop logger', async () => {

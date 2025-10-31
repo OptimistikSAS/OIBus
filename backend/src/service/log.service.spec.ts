@@ -1,5 +1,4 @@
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
-import { logSchema } from '../web-server/controllers/validators/oibus-validation-schema';
 import testData from '../tests/utils/test-data';
 import { createPageFromArray } from '../../shared/model/types';
 import LogRepository from '../repository/logs/log.repository';
@@ -7,15 +6,12 @@ import LogRepositoryMock from '../tests/__mocks__/repository/log/log-repository.
 import LogService from './log.service';
 import { DateTime } from 'luxon';
 import { LogSearchParam } from '../../shared/model/logs.model';
-import pino from 'pino';
-import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 
 jest.mock('./utils');
 jest.mock('../web-server/controllers/validators/joi.validator');
 
 const validator = new JoiValidator();
 const logRepository: LogRepository = new LogRepositoryMock();
-const logger: pino.Logger = new PinoLogger();
 
 let service: LogService;
 describe('Log Service', () => {
@@ -37,7 +33,7 @@ describe('Log Service', () => {
       levels: [],
       scopeIds: [],
       scopeTypes: [],
-      messageContent: null
+      messageContent: undefined
     };
     const result = service.search(searchParams);
 
