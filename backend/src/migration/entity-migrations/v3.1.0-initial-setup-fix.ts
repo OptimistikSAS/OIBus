@@ -36,7 +36,7 @@ async function updateHistoryQueriesTable(knex: Knex): Promise<void> {
   await knex.schema.raw(`alter table ${HISTORY_ITEMS_TABLE}_dg_tmp rename to ${HISTORY_ITEMS_TABLE};`);
 
   await knex.schema.alterTable(HISTORY_QUERIES_TABLE, async table => {
-    table.enum('status', HISTORY_QUERY_STATUS).notNullable().defaultTo('PENDING');
+    table.string('status').notNullable().defaultTo('PENDING');
     await knex(HISTORY_QUERIES_TABLE).where({ enabled: true }).update({ status: 'RUNNING' });
   });
 

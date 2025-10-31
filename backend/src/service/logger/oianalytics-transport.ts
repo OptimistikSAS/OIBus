@@ -1,13 +1,24 @@
 import build from 'pino-abstract-transport';
 
-import { LogDTO, PinoLog } from '../../../shared/model/logs.model';
-import { CryptoSettings, LogLevel, ScopeType } from '../../../shared/model/engine.model';
+import { ScopeType } from '../../../shared/model/logs.model';
+import { CryptoSettings } from '../../../shared/model/engine.model';
 import { HTTPRequest, ReqProxyOptions } from '../http-request.utils';
 import { encryptionService } from '../encryption.service';
+import { PinoLog } from '../../model/logs.model';
+import { Instant } from '../../model/types';
+
+interface OIAnalyticsLog {
+  message: string;
+  scopeType: 'SOUTH' | 'NORTH' | 'HISTORY_QUERY' | 'INTERNAL' | 'WEB_SERVER';
+  scopeId: string | null;
+  scopeName: string | null;
+  timestamp: Instant;
+  level: 'TRACE' | 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
+}
 
 const MAX_BATCH_LOG = 500;
 const MAX_BATCH_INTERVAL_S = 60;
-const LEVEL_FORMAT: Record<string, LogLevel> = {
+const LEVEL_FORMAT: Record<string, 'TRACE' | 'DEBUG' | 'INFO' | 'WARN' | 'ERROR'> = {
   '10': 'TRACE',
   '20': 'DEBUG',
   '30': 'INFO',
@@ -15,7 +26,7 @@ const LEVEL_FORMAT: Record<string, LogLevel> = {
   '50': 'ERROR'
 };
 
-const SCOPE_TYPE_FORMAT: Record<ScopeType, LogLevel> = {
+const SCOPE_TYPE_FORMAT: Record<ScopeType, 'SOUTH' | 'NORTH' | 'HISTORY_QUERY' | 'INTERNAL' | 'WEB_SERVER'> = {
   south: 'SOUTH',
   north: 'NORTH',
   'history-query': 'HISTORY_QUERY',
@@ -43,7 +54,7 @@ interface OIAnalyticsOptions {
 class OianalyticsTransport {
   private readonly options: OIAnalyticsOptions;
   private sendOIALogsInterval: NodeJS.Timeout | null = null;
-  private batchLogs: Array<LogDTO> = [];
+  private batchLogs: Array<OIAnalyticsLog> = [];
   private stopping = false;
 
   constructor(options: OIAnalyticsOptions) {

@@ -34,7 +34,7 @@ describe('HistoryQueryService', () => {
     let expectedHistoryQueries: Array<HistoryQueryLightDTO> = [];
     service.list().subscribe(historyQueries => (expectedHistoryQueries = historyQueries));
 
-    http.expectOne('/api/history-queries').flush([{ name: 'History query 1' }, { name: 'History query 2' }]);
+    http.expectOne('/api/history').flush([{ name: 'History query 1' }, { name: 'History query 2' }]);
 
     expect(expectedHistoryQueries.length).toBe(2);
   });
@@ -43,9 +43,9 @@ describe('HistoryQueryService', () => {
     let expectedHistoryQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings> | null = null;
     const historyQuery = { id: 'id1' } as HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings>;
 
-    service.get('id1').subscribe(c => (expectedHistoryQuery = c));
+    service.findById('id1').subscribe(c => (expectedHistoryQuery = c));
 
-    http.expectOne({ url: '/api/history-queries/id1', method: 'GET' }).flush(historyQuery);
+    http.expectOne({ url: '/api/history/id1', method: 'GET' }).flush(historyQuery);
     expect(expectedHistoryQuery!).toEqual(historyQuery);
   });
 
@@ -54,7 +54,7 @@ describe('HistoryQueryService', () => {
     const command = testData.historyQueries.command;
 
     service.create(command, null, null, '').subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'POST', url: '/api/history-queries' });
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/history' });
     expect(testRequest.request.body).toEqual(command);
     testRequest.flush(null);
     expect(done).toBe(true);
@@ -65,7 +65,7 @@ describe('HistoryQueryService', () => {
     const command = testData.historyQueries.command;
 
     service.update('id1', command, true).subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'PUT', url: '/api/history-queries/id1?resetCache=true' });
+    const testRequest = http.expectOne({ method: 'PUT', url: '/api/history/id1?resetCache=true' });
     expect(testRequest.request.body).toEqual(command);
     testRequest.flush(null);
     expect(done).toBe(true);
@@ -73,8 +73,8 @@ describe('HistoryQueryService', () => {
 
   it('should delete a History query', () => {
     let done = false;
-    service.deleteHistoryQuery('id1').subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'DELETE', url: '/api/history-queries/id1' });
+    service.delete('id1').subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'DELETE', url: '/api/history/id1' });
     testRequest.flush(null);
     expect(done).toBe(true);
   });
@@ -82,7 +82,7 @@ describe('HistoryQueryService', () => {
   it('should add or edit a History query transformer with options', () => {
     let done = false;
     service.addOrEditTransformer('id1', {} as TransformerDTOWithOptions).subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'PUT', url: '/api/history-queries/id1/transformers' });
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/history/id1/transformers' });
     testRequest.flush({});
     expect(done).toBe(true);
   });
@@ -90,7 +90,7 @@ describe('HistoryQueryService', () => {
   it('should remove a History query transformer', () => {
     let done = false;
     service.removeTransformer('id1', 'transformerId').subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'DELETE', url: '/api/history-queries/id1/transformers/transformerId' });
+    const testRequest = http.expectOne({ method: 'DELETE', url: '/api/history/id1/transformers/transformerId' });
     testRequest.flush(null);
     expect(done).toBe(true);
   });
@@ -103,7 +103,7 @@ describe('HistoryQueryService', () => {
 
     service.searchItems('id1', { page: 0 }).subscribe(c => (expectedItems = c));
 
-    http.expectOne({ url: '/api/history-queries/id1/south-items?page=0', method: 'GET' }).flush(southConnectorItems);
+    http.expectOne({ url: '/api/history/id1/items/search?page=0', method: 'GET' }).flush(southConnectorItems);
     expect(expectedItems!).toEqual(southConnectorItems);
   });
 
@@ -113,7 +113,7 @@ describe('HistoryQueryService', () => {
 
     service.getItem('id1', 'itemId1').subscribe(c => (expectedItem = c));
 
-    http.expectOne({ url: '/api/history-queries/id1/south-items/itemId1', method: 'GET' }).flush(southConnectorItem);
+    http.expectOne({ url: '/api/history/id1/items/itemId1', method: 'GET' }).flush(southConnectorItem);
     expect(expectedItem!).toEqual(southConnectorItem);
   });
 
@@ -122,7 +122,7 @@ describe('HistoryQueryService', () => {
     const command = testData.historyQueries.itemCommand;
 
     service.createItem('id1', command).subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'POST', url: '/api/history-queries/id1/south-items' });
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/history/id1/items' });
     expect(testRequest.request.body).toEqual(command);
     testRequest.flush(null);
     expect(done).toBe(true);
@@ -133,7 +133,7 @@ describe('HistoryQueryService', () => {
     const command = testData.historyQueries.itemCommand;
 
     service.updateItem('id1', 'itemId1', command).subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'PUT', url: '/api/history-queries/id1/south-items/itemId1' });
+    const testRequest = http.expectOne({ method: 'PUT', url: '/api/history/id1/items/itemId1' });
     expect(testRequest.request.body).toEqual(command);
     testRequest.flush(null);
     expect(done).toBe(true);
@@ -142,7 +142,7 @@ describe('HistoryQueryService', () => {
   it('should delete a History query item', () => {
     let done = false;
     service.deleteItem('id1', 'itemId1').subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'DELETE', url: '/api/history-queries/id1/south-items/itemId1' });
+    const testRequest = http.expectOne({ method: 'DELETE', url: '/api/history/id1/items/itemId1' });
     testRequest.flush(null);
     expect(done).toBe(true);
   });
@@ -150,7 +150,7 @@ describe('HistoryQueryService', () => {
   it('should enable a History query item', () => {
     let done = false;
     service.enableItem('id1', 'historyItemId1').subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'PUT', url: '/api/history-queries/id1/south-items/historyItemId1/enable' });
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/history/id1/items/historyItemId1/enable' });
     testRequest.flush(null);
     expect(done).toBe(true);
   });
@@ -158,7 +158,7 @@ describe('HistoryQueryService', () => {
   it('should disable a History query item', () => {
     let done = false;
     service.disableItem('id1', 'historyItemId1').subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'PUT', url: '/api/history-queries/id1/south-items/historyItemId1/disable' });
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/history/id1/items/historyItemId1/disable' });
     testRequest.flush(null);
     expect(done).toBe(true);
   });
@@ -166,7 +166,7 @@ describe('HistoryQueryService', () => {
   it('should delete all South connector items', () => {
     let done = false;
     service.deleteAllItems('id1').subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'DELETE', url: '/api/history-queries/id1/south-items/all' });
+    const testRequest = http.expectOne({ method: 'DELETE', url: '/api/history/id1/items' });
     testRequest.flush(null);
     expect(done).toBe(true);
   });
@@ -179,8 +179,8 @@ describe('HistoryQueryService', () => {
 
     http
       .expectOne({
-        method: 'PUT',
-        url: '/api/history-queries/southType/south-items/to-csv'
+        method: 'POST',
+        url: '/api/history/southType/items/to-csv'
       })
       .flush(new Blob());
 
@@ -196,8 +196,8 @@ describe('HistoryQueryService', () => {
 
     http
       .expectOne({
-        method: 'PUT',
-        url: '/api/history-queries/id1/south-items/export'
+        method: 'POST',
+        url: '/api/history/id1/items/export'
       })
       .flush(new Blob());
 
@@ -209,14 +209,16 @@ describe('HistoryQueryService', () => {
     const file = new Blob() as File;
     const delimiter = ',';
     const expectedFormData = new FormData();
-    expectedFormData.set('file', file);
+    expectedFormData.set('itemsToImport', file);
+    expectedFormData.set('currentItems', new Blob([JSON.stringify([])], { type: 'application/json' }), 'currentItems.json');
+    expectedFormData.set('delimiter', delimiter);
     let actualImportation = false;
 
-    service.checkImportItems('southType', 'historyId', [], file, delimiter).subscribe(() => {
+    service.checkImportItems('southType', [], file, delimiter).subscribe(() => {
       actualImportation = true;
     });
 
-    const testRequest = http.expectOne({ method: 'POST', url: '/api/history-queries/southType/south-items/check-south-import/historyId' });
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/history/southType/items/import/check' });
     expect(testRequest.request.body).toEqual(expectedFormData);
     testRequest.flush(true);
 
@@ -233,7 +235,7 @@ describe('HistoryQueryService', () => {
       actualImportation = true;
     });
 
-    const testRequest = http.expectOne({ method: 'POST', url: '/api/history-queries/id1/south-items/import' });
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/history/id1/items/import' });
     expect(testRequest.request.body).toEqual(expectedFormData);
     testRequest.flush(true);
 
@@ -243,8 +245,8 @@ describe('HistoryQueryService', () => {
   it('should start a History query', () => {
     let done = false;
 
-    service.startHistoryQuery('id1').subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'PUT', url: '/api/history-queries/id1/start' });
+    service.start('id1').subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/history/id1/start' });
     expect(testRequest.request.body).toEqual(null);
     testRequest.flush(null);
     expect(done).toBe(true);
@@ -253,8 +255,8 @@ describe('HistoryQueryService', () => {
   it('should stop a History query', () => {
     let done = false;
 
-    service.pauseHistoryQuery('id1').subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'PUT', url: '/api/history-queries/id1/pause' });
+    service.pause('id1').subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/history/id1/pause' });
     expect(testRequest.request.body).toEqual(null);
     testRequest.flush(null);
     expect(done).toBe(true);
@@ -265,7 +267,7 @@ describe('HistoryQueryService', () => {
     const command = testData.north.command;
 
     service.testNorthConnection('id1', command.settings, command.type).subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'PUT', url: '/api/history-queries/id1/north/test-connection?northType=file-writer' });
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/history/id1/test/north?northType=file-writer' });
     expect(testRequest.request.body).toEqual(command.settings);
     testRequest.flush(null);
     expect(done).toBe(true);
@@ -276,7 +278,7 @@ describe('HistoryQueryService', () => {
     const command = testData.south.command;
 
     service.testSouthConnection('id1', command.settings, command.type).subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'PUT', url: '/api/history-queries/id1/south/test-connection?southType=folder-scanner' });
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/history/id1/test/south?southType=folder-scanner' });
     expect(testRequest.request.body).toEqual(command.settings);
     testRequest.flush(null);
     expect(done).toBe(true);
@@ -292,7 +294,7 @@ describe('HistoryQueryService', () => {
 
     http
       .expectOne({
-        url: '/api/history-query/id1/cache/content?folder=cache&start=2020-01-01T00:00:00.000Z&end=2021-01-01T00:00:00.000Z&nameContains=file',
+        url: '/api/history/id1/cache/search?folder=cache&start=2020-01-01T00:00:00.000Z&end=2021-01-01T00:00:00.000Z&nameContains=file',
         method: 'GET'
       })
       .flush(northCacheFiles);
@@ -304,7 +306,7 @@ describe('HistoryQueryService', () => {
     const northCacheFileContent = new Blob(['test'], { type: 'text/plain' });
     service.getCacheFileContent('id1', 'cache', 'file1').subscribe(c => (httpResponse = c));
 
-    http.expectOne({ url: '/api/history-query/id1/cache/content/file1?folder=cache', method: 'GET' }).flush(northCacheFileContent);
+    http.expectOne({ url: '/api/history/id1/cache/content/file1?folder=cache', method: 'GET' }).flush(northCacheFileContent);
     expect(httpResponse!.body).toEqual(northCacheFileContent);
   });
 
@@ -313,7 +315,7 @@ describe('HistoryQueryService', () => {
     service.removeCacheContent('id1', 'cache', ['file1', 'file2']).subscribe(() => (done = true));
     const testRequest = http.expectOne({
       method: 'DELETE',
-      url: '/api/history-query/id1/cache/content/remove?folder=cache'
+      url: '/api/history/id1/cache/remove?folder=cache'
     });
     testRequest.flush(['file1', 'file2']);
     expect(done).toBe(true);
@@ -322,7 +324,7 @@ describe('HistoryQueryService', () => {
   it('should remove all archive files', () => {
     let done = false;
     service.removeAllCacheContent('id1', 'archive').subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'DELETE', url: '/api/history-query/id1/cache/content/remove-all?folder=archive' });
+    const testRequest = http.expectOne({ method: 'DELETE', url: '/api/history/id1/cache/remove-all?folder=archive' });
     testRequest.flush(null);
     expect(done).toBe(true);
   });
@@ -332,7 +334,7 @@ describe('HistoryQueryService', () => {
     service.moveCacheContent('id1', 'cache', 'archive', ['file1', 'file2']).subscribe(() => (done = true));
     const testRequest = http.expectOne({
       method: 'POST',
-      url: '/api/history-query/id1/cache/content/move?originFolder=cache&destinationFolder=archive'
+      url: '/api/history/id1/cache/move?originFolder=cache&destinationFolder=archive'
     });
     testRequest.flush(null);
     expect(done).toBe(true);
@@ -343,7 +345,7 @@ describe('HistoryQueryService', () => {
     service.moveAllCacheContent('id1', 'archive', 'cache').subscribe(() => (done = true));
     const testRequest = http.expectOne({
       method: 'POST',
-      url: '/api/history-query/id1/cache/content/move-all?originFolder=archive&destinationFolder=cache'
+      url: '/api/history/id1/cache/move-all?originFolder=archive&destinationFolder=cache'
     });
     testRequest.flush(null);
     expect(done).toBe(true);

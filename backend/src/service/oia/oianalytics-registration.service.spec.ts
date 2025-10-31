@@ -182,7 +182,7 @@ describe('OIAnalytics Registration Service', () => {
   it('should edit registration connection settings', async () => {
     (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.registration.completed);
 
-    await service.editConnectionSettings(testData.oIAnalytics.registration.command);
+    await service.editRegistrationSettings(testData.oIAnalytics.registration.command);
 
     expect(oIAnalyticsRegistrationRepository.update).toHaveBeenCalledWith(testData.oIAnalytics.registration.command);
   });
@@ -243,7 +243,7 @@ describe('OIAnalytics Registration Service', () => {
     };
     (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.registration.completed);
 
-    await service.editConnectionSettings(command);
+    await service.editRegistrationSettings(command);
 
     expect(oIAnalyticsRegistrationRepository.update).toHaveBeenCalledWith(command);
   });

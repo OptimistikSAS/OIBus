@@ -91,7 +91,7 @@ export class SouthDetailComponent implements OnInit, OnDestroy {
           this.southId = params.get('southId');
 
           if (this.southId) {
-            return this.southConnectorService.get(this.southId);
+            return this.southConnectorService.findById(this.southId);
           }
           return of(null);
         }),
@@ -100,7 +100,7 @@ export class SouthDetailComponent implements OnInit, OnDestroy {
             return of(null);
           }
           this.southConnector = southConnector;
-          return this.southConnectorService.getSouthConnectorTypeManifest(this.southConnector!.type);
+          return this.southConnectorService.getSouthManifest(this.southConnector!.type);
         })
       )
       .subscribe(manifest => {
@@ -137,7 +137,7 @@ export class SouthDetailComponent implements OnInit, OnDestroy {
   }
 
   updateInMemoryItems(_items: Array<SouthConnectorItemDTO<SouthItemSettings>> | null) {
-    this.southConnectorService.get(this.southConnector!.id).subscribe(southConnector => {
+    this.southConnectorService.findById(this.southConnector!.id).subscribe(southConnector => {
       this.southConnector = southConnector;
     });
   }
@@ -155,13 +155,13 @@ export class SouthDetailComponent implements OnInit, OnDestroy {
   toggleConnector(value: boolean) {
     if (value) {
       this.southConnectorService
-        .startSouth(this.southConnector!.id)
+        .start(this.southConnector!.id)
         .pipe(
           tap(() => {
             this.notificationService.success('south.started', { name: this.southConnector!.name });
           }),
           switchMap(() => {
-            return this.southConnectorService.get(this.southConnector!.id);
+            return this.southConnectorService.findById(this.southConnector!.id);
           })
         )
         .subscribe(southConnector => {
@@ -169,13 +169,13 @@ export class SouthDetailComponent implements OnInit, OnDestroy {
         });
     } else {
       this.southConnectorService
-        .stopSouth(this.southConnector!.id)
+        .stop(this.southConnector!.id)
         .pipe(
           tap(() => {
             this.notificationService.success('south.stopped', { name: this.southConnector!.name });
           }),
           switchMap(() => {
-            return this.southConnectorService.get(this.southConnector!.id);
+            return this.southConnectorService.findById(this.southConnector!.id);
           })
         )
         .subscribe(southConnector => {

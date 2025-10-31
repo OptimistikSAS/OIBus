@@ -1,7 +1,7 @@
 import build from 'pino-abstract-transport';
 import LogRepository from '../../repository/logs/log.repository';
 import Database from 'better-sqlite3';
-import { PinoLog } from '../../../shared/model/logs.model';
+import { PinoLog } from '../../model/logs.model';
 
 const DEFAULT_MAX_NUMBER_OF_LOGS = 2_000_000;
 const BATCH_TEMPO = 700; // Store logs in the database every x ms

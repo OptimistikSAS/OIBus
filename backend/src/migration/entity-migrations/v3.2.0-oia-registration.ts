@@ -1,6 +1,4 @@
 import { Knex } from 'knex';
-import { LOG_LEVELS, REGISTRATION_STATUS } from '../../../shared/model/engine.model';
-import { OIBUS_COMMAND_STATUS, OIBUS_COMMAND_TYPES } from '../../../shared/model/command.model';
 import CreateTableBuilder = Knex.CreateTableBuilder;
 
 const SOUTH_CONNECTORS_TABLE = 'south_connectors';
@@ -104,7 +102,7 @@ async function updateEngineSettings(knex: Knex) {
   await knex.schema.alterTable(ENGINES_TABLE, table => {
     table.boolean('proxy_enabled').defaultTo(false);
     table.integer('proxy_port').defaultTo(9000);
-    table.enum('log_oia_level', LOG_LEVELS).notNullable().defaultTo('silent');
+    table.string('log_oia_level').notNullable().defaultTo('silent');
     table.integer('log_oia_interval').notNullable().defaultTo(10);
     table.dropColumn('log_loki_token_address');
   });
@@ -124,15 +122,15 @@ async function createRegistrationTable(knex: Knex): Promise<void> {
     table.string('activation_date');
     table.string('activation_expiration_date');
     table.string('token');
-    table.enum('status', REGISTRATION_STATUS).notNullable().defaultTo('NOT_REGISTERED');
+    table.string('status').notNullable().defaultTo('NOT_REGISTERED');
   });
 }
 
 async function createCommandTable(knex: Knex): Promise<void> {
   await knex.schema.createTable(COMMANDS_TABLE, table => {
     createDefaultEntityFields(table);
-    table.enum('type', OIBUS_COMMAND_TYPES).notNullable();
-    table.enum('status', OIBUS_COMMAND_STATUS).notNullable();
+    table.string('type').notNullable();
+    table.string('status').notNullable();
     table.boolean('ack').defaultTo(false).notNullable();
     table.string('retrieved_date');
     table.string('completed_date');

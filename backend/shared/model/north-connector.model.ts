@@ -2,7 +2,7 @@ import { OIBusObjectAttribute } from './form.model';
 import { BaseEntity } from './types';
 import { NorthSettings } from './north-settings.model';
 import { SouthConnectorLightDTO } from './south-connector.model';
-import { TransformerDTOWithOptions } from './transformer.model';
+import { TransformerDTOWithOptions, TransformerIdWithOptions } from './transformer.model';
 import { OIBusDataType } from './engine.model';
 import { ScanModeDTO } from './scan-mode.model';
 
@@ -96,7 +96,7 @@ export interface NorthConnectorCommandDTO<T extends NorthSettings> {
     };
   };
   subscriptions: Array<string>;
-  transformers: Array<{ transformerId: string; options: object; inputType: string }>;
+  transformers: Array<TransformerIdWithOptions>;
 }
 
 export interface NorthConnectorManifest {

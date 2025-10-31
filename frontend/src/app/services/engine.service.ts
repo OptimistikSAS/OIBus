@@ -33,43 +33,40 @@ export class EngineService {
     return this.http.put<void>(`/api/engine`, command);
   }
 
-  getInfo(): Observable<OIBusInfo> {
-    return this.http.get<OIBusInfo>('/api/info');
-  }
-
-  restart(): Observable<void> {
-    return this.http.put<void>('/api/restart', null);
-  }
-
   /**
    * Reset the Engine metrics
    */
-  resetMetrics(): Observable<void> {
-    return this.http.put<void>(`/api/engine/reset-metrics`, null);
+  resetEngineMetrics(): Observable<void> {
+    return this.http.post<void>(`/api/engine/metrics/reset`, null);
   }
 
-  /**
-   * Get the engine settings
-   */
+  restart(): Observable<void> {
+    return this.http.post<void>('/api/engine/restart', null);
+  }
+
+  getInfo(): Observable<OIBusInfo> {
+    return this.http.get<OIBusInfo>('/api/engine/info');
+  }
+
   getRegistrationSettings(): Observable<RegistrationSettingsDTO> {
-    return this.http.get<RegistrationSettingsDTO>(`/api/registration`);
+    return this.http.get<RegistrationSettingsDTO>(`/api/oianalytics/registration`);
   }
 
   /**
-   * Get the engine settings
+   * Register OIAnalytics (generate 6 characters code)
    */
-  updateRegistrationSettings(command: RegistrationSettingsCommandDTO): Observable<void> {
-    return this.http.put<void>(`/api/registration`, command);
+  register(command: RegistrationSettingsCommandDTO): Observable<void> {
+    return this.http.post<void>(`/api/oianalytics/register`, command);
   }
 
   /**
-   * Edit the engine settings
+   * Edit registration permissions and intervals
    */
   editRegistrationSettings(command: RegistrationSettingsCommandDTO): Observable<void> {
-    return this.http.put<void>(`/api/registration/edit`, command);
+    return this.http.put<void>(`/api/oianalytics/registration`, command);
   }
 
   unregister(): Observable<void> {
-    return this.http.put<void>(`/api/registration/unregister`, null);
+    return this.http.post<void>(`/api/oianalytics/unregister`, null);
   }
 }

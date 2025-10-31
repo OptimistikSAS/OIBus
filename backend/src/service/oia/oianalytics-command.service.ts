@@ -92,7 +92,10 @@ export default class OIAnalyticsCommandService {
     const engineSettings = this.oIBusService.getEngineSettings();
     const currentUpgradeCommand = this.oIAnalyticsCommandRepository.list({
       status: ['RUNNING'],
-      types: ['update-version']
+      types: ['update-version'],
+      ack: undefined,
+      start: undefined,
+      end: undefined
     });
     if (currentUpgradeCommand.length > 0) {
       const updateVersion = (currentUpgradeCommand[0] as OIBusUpdateVersionCommand).commandContent.version.startsWith('v')
@@ -143,8 +146,8 @@ export default class OIAnalyticsCommandService {
     this.commandEvent.emit('next');
   }
 
-  search(searchParams: CommandSearchParam, page: number): Page<OIBusCommand> {
-    return this.oIAnalyticsCommandRepository.search(searchParams, page);
+  search(searchParams: CommandSearchParam): Page<OIBusCommand> {
+    return this.oIAnalyticsCommandRepository.search(searchParams);
   }
 
   delete(commandId: string): void {
@@ -187,7 +190,9 @@ export default class OIAnalyticsCommandService {
     const commandsToAck = this.oIAnalyticsCommandRepository.list({
       status: [],
       types: [],
-      ack: false
+      ack: false,
+      start: undefined,
+      end: undefined
     });
     if (commandsToAck.length === 0) {
       this.logger.trace('No command to ack');
@@ -212,7 +217,13 @@ export default class OIAnalyticsCommandService {
    * Check if retrieved commands have been cancelled on OIAnalytics before running them
    */
   async checkRetrievedCommands(registration: OIAnalyticsRegistration): Promise<void> {
-    const pendingCommands = this.oIAnalyticsCommandRepository.list({ status: ['RETRIEVED'], types: [] });
+    const pendingCommands = this.oIAnalyticsCommandRepository.list({
+      status: ['RETRIEVED'],
+      types: [],
+      ack: undefined,
+      start: undefined,
+      end: undefined
+    });
     if (pendingCommands.length === 0) {
       this.logger.trace('No command retrieved to check');
       return;
@@ -259,7 +270,10 @@ export default class OIAnalyticsCommandService {
     // Retrieve stored commands, already retrieved from OIAnalytics
     const commandsToExecute = this.oIAnalyticsCommandRepository.list({
       status: ['RETRIEVED', 'RUNNING'],
-      types: []
+      types: [],
+      ack: undefined,
+      start: undefined,
+      end: undefined
     });
     if (commandsToExecute.length === 0) {
       this.logger.trace(`No command to execute`);
@@ -642,7 +656,7 @@ export default class OIAnalyticsCommandService {
           : registration.commandPermissions.setpoint
       }
     };
-    await this.oIAnalyticsRegistrationService.editConnectionSettings(registrationCommand);
+    await this.oIAnalyticsRegistrationService.editRegistrationSettings(registrationCommand);
 
     this.oIAnalyticsCommandRepository.markAsCompleted(
       command.id,
@@ -798,7 +812,7 @@ export default class OIAnalyticsCommandService {
 
   private async executeTestSouthConnectionCommand(command: OIBusTestSouthConnectorCommand, privateKey: string) {
     await this.decryptSouthSettings(command, privateKey);
-    await this.southService.testSouth(command.southConnectorId, command.commandContent.type, command.commandContent.settings, this.logger);
+    await this.southService.testSouth(command.southConnectorId, command.commandContent.type, command.commandContent.settings);
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'South connection tested successfully');
   }
 
@@ -814,8 +828,7 @@ export default class OIAnalyticsCommandService {
       command.commandContent.testingSettings,
       result => {
         this.completeTestItemCommand(command, result);
-      },
-      this.logger
+      }
     );
   }
 
@@ -850,7 +863,7 @@ export default class OIAnalyticsCommandService {
 
   private async executeTestNorthConnectionCommand(command: OIBusTestNorthConnectorCommand, privateKey: string) {
     await this.decryptNorthSettings(command, privateKey);
-    await this.northService.testNorth(command.northConnectorId, command.commandContent.type, command.commandContent.settings, this.logger);
+    await this.northService.testNorth(command.northConnectorId, command.commandContent.type, command.commandContent.settings);
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'North connection tested successfully');
   }
 
@@ -956,8 +969,7 @@ export default class OIAnalyticsCommandService {
       command.historyQueryId,
       command.commandContent.northType,
       command.northConnectorId,
-      command.commandContent.northSettings,
-      this.logger
+      command.commandContent.northSettings
     );
     this.oIAnalyticsCommandRepository.markAsCompleted(
       command.id,
@@ -972,8 +984,7 @@ export default class OIAnalyticsCommandService {
       command.historyQueryId,
       command.commandContent.southType,
       command.southConnectorId,
-      command.commandContent.southSettings,
-      this.logger
+      command.commandContent.southSettings
     );
     this.oIAnalyticsCommandRepository.markAsCompleted(
       command.id,
@@ -995,8 +1006,7 @@ export default class OIAnalyticsCommandService {
       command.commandContent.testingSettings,
       result => {
         this.completeTestItemCommand(command, result);
-      },
-      this.logger
+      }
     );
   }
 

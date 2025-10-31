@@ -47,7 +47,7 @@ describe('EngineService', () => {
 
     service.getInfo().subscribe(c => (expectedInfo = c));
 
-    http.expectOne({ url: '/api/info', method: 'GET' }).flush(engineInfo);
+    http.expectOne({ url: '/api/engine/info', method: 'GET' }).flush(engineInfo);
     expect(expectedInfo!).toEqual(engineInfo);
   });
 
@@ -55,7 +55,7 @@ describe('EngineService', () => {
     let done = false;
 
     service.restart().subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'PUT', url: '/api/restart' });
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/engine/restart' });
     testRequest.flush(null);
     expect(done).toBe(true);
   });
@@ -63,9 +63,18 @@ describe('EngineService', () => {
   it('should reset metrics', () => {
     let done = false;
 
-    service.resetMetrics().subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'PUT', url: '/api/engine/reset-metrics' });
+    service.resetEngineMetrics().subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/engine/metrics/reset' });
     expect(testRequest.request.body).toBeNull();
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
+  it('should register', () => {
+    let done = false;
+    const command = testData.oIAnalytics.registration.command;
+    service.register(command).subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/oianalytics/register' });
     testRequest.flush(null);
     expect(done).toBe(true);
   });
@@ -74,7 +83,7 @@ describe('EngineService', () => {
     let done = false;
     const command = testData.oIAnalytics.registration.command;
     service.editRegistrationSettings(command).subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'PUT', url: '/api/registration/edit' });
+    const testRequest = http.expectOne({ method: 'PUT', url: '/api/oianalytics/registration' });
     testRequest.flush(null);
     expect(done).toBe(true);
   });

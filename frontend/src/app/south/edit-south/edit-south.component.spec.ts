@@ -72,7 +72,7 @@ describe('EditSouthComponent', () => {
     scanModeService.list.and.returnValue(of([]));
     certificateService.list.and.returnValue(of([]));
 
-    southConnectorService.getSouthConnectorTypeManifest.and.returnValue(of(testData.south.manifest));
+    southConnectorService.getSouthManifest.and.returnValue(of(testData.south.manifest));
   });
 
   describe('create mode', () => {
@@ -114,13 +114,13 @@ describe('EditSouthComponent', () => {
         })
       });
 
-      southConnectorService.get.and.returnValue(of(southConnector));
+      southConnectorService.findById.and.returnValue(of(southConnector));
       tester = new EditSouthComponentTester();
       tester.detectChanges();
     });
 
     it('should display general settings', () => {
-      expect(southConnectorService.get).toHaveBeenCalledWith('id1');
+      expect(southConnectorService.findById).toHaveBeenCalledWith('id1');
       expect(tester.title).toContainText('Edit My South Connector 1');
       expect(tester.enabled).toBeChecked();
       expect(tester.description).toHaveValue('My South connector description');
@@ -885,7 +885,7 @@ describe('EditSouthComponent', () => {
       }
     };
     beforeEach(() => {
-      southConnectorService.getSouthConnectorTypeManifest.and.returnValue(of(manifest));
+      southConnectorService.getSouthManifest.and.returnValue(of(manifest));
 
       TestBed.overrideProvider(ActivatedRoute, {
         useValue: stubRoute({ queryParams: { type: 'MQTT' } })
@@ -897,7 +897,7 @@ describe('EditSouthComponent', () => {
       tester.detectChanges();
 
       expect(tester.title).toContainText('Create MQTT south connector');
-      expect(southConnectorService.getSouthConnectorTypeManifest).toHaveBeenCalledWith('MQTT');
+      expect(southConnectorService.getSouthManifest).toHaveBeenCalledWith('MQTT');
     });
 
     it('should display MQTT-specific settings form', () => {

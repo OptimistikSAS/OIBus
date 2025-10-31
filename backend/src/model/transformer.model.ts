@@ -25,6 +25,6 @@ export type Transformer = CustomTransformer | StandardTransformer;
 
 export interface TransformerWithOptions {
   transformer: Transformer;
-  options: object;
+  options: Record<string, unknown>;
   inputType: string;
 }

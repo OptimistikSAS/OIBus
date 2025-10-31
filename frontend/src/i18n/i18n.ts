@@ -11,7 +11,7 @@ const timezoneKey = 'oibus-timezone';
  * Retrieves the language from the local storage or return 'en'.
  */
 export function languageToUse(): Language {
-  return localStorage.getItem(languageKey) || 'en';
+  return (localStorage.getItem(languageKey) || 'en') as Language;
 }
 
 export function storeLanguage(language: Language) {

@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 
 import { EngineService } from '../../services/engine.service';
-import { EngineSettingsCommandDTO, LOG_LEVELS, LogLevel } from '../../../../../backend/shared/model/engine.model';
+import { EngineSettingsCommandDTO } from '../../../../../backend/shared/model/engine.model';
 import { NotificationService } from '../../shared/notification.service';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { BoxComponent } from '../../shared/box/box.component';
@@ -13,6 +13,7 @@ import { BackNavigationDirective } from '../../shared/back-navigation.directives
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../shared/form/form-validation-directives';
 import { CanComponentDeactivate } from '../../shared/unsaved-changes.guard';
 import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
+import { LOG_LEVELS, LogLevel } from '../../../../../backend/shared/model/logs.model';
 
 @Component({
   selector: 'oib-edit-engine',

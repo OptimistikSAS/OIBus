@@ -343,7 +343,7 @@ export class HistoryQueryItemsComponent implements OnInit {
   }
 
   checkImportItems(file: File, delimiter: string) {
-    this.historyQueryService.checkImportItems(this.southManifest().id, this.historyId(), this.allItems, file, delimiter).subscribe(
+    this.historyQueryService.checkImportItems(this.southManifest().id, this.allItems, file, delimiter).subscribe(
       (result: {
         items: Array<HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>>;
         errors: Array<{

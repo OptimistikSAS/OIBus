@@ -115,7 +115,7 @@ describe('EditIpFilterModalComponent', () => {
     };
 
     beforeEach(() => {
-      ipFilterService.get.and.returnValue(of(ipFilterToUpdate));
+      ipFilterService.findById.and.returnValue(of(ipFilterToUpdate));
 
       tester.componentInstance.prepareForEdition(ipFilterToUpdate);
       tester.detectChanges();
@@ -149,7 +149,7 @@ describe('EditIpFilterModalComponent', () => {
       };
 
       expect(ipFilterService.update).toHaveBeenCalledWith('id1', expectedCommand);
-      expect(ipFilterService.get).toHaveBeenCalledWith('id1');
+      expect(ipFilterService.findById).toHaveBeenCalledWith('id1');
       expect(fakeActiveModal.close).toHaveBeenCalledWith(ipFilterToUpdate);
     }));
 

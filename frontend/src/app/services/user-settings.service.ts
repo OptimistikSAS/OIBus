@@ -10,7 +10,7 @@ export class UserSettingsService {
   private http = inject(HttpClient);
 
   // we do not use the current user service here, to make sure we get the actual data from the server and not the cached data
-  get(): Observable<UserDTO> {
+  currentUser(): Observable<UserDTO> {
     return this.http.get<UserDTO>('/api/users/current-user');
   }
 
@@ -18,7 +18,7 @@ export class UserSettingsService {
     return this.http.put<void>(`/api/users/${userId}`, command);
   }
 
-  changePassword(userId: string, command: ChangePasswordCommand): Observable<void> {
+  updatePassword(userId: string, command: ChangePasswordCommand): Observable<void> {
     return this.http.put<void>(`/api/users/${userId}/change-password`, command);
   }
 }

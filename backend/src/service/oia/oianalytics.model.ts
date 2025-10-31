@@ -15,7 +15,7 @@ import { UserCommandDTO } from '../../../shared/model/user.model';
 import { IPFilterCommandDTO } from '../../../shared/model/ip-filter.model';
 import { ScanModeCommandDTO } from '../../../shared/model/scan-mode.model';
 import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO, HistoryQueryStatus } from '../../../shared/model/history-query.model';
-import { TransformerCommandDTO } from '../../../shared/model/transformer.model';
+import { CustomTransformerCommandDTO } from '../../../shared/model/transformer.model';
 import { OIBusObjectAttribute } from '../../../shared/model/form.model';
 
 export interface OIAnalyticsScanModeCommandDTO {
@@ -38,10 +38,17 @@ export interface OIAnalyticsUserCommandDTO {
   settings: UserCommandDTO;
 }
 
+interface StandardTransformerCommandDTO {
+  type: 'standard';
+  functionName: string;
+  inputType: string;
+  outputType: string;
+}
+
 export interface OIAnalyticsTransformerCommandDTO {
   oIBusInternalId: string;
   type: 'custom' | 'standard';
-  settings: Omit<TransformerCommandDTO, 'type'>;
+  settings: Omit<CustomTransformerCommandDTO | StandardTransformerCommandDTO, 'type'>;
   manifest: OIBusObjectAttribute;
 }
 

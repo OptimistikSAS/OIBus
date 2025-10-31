@@ -1,6 +1,7 @@
 import { Knex } from 'knex';
-import { LOG_LEVELS } from '../../../shared/model/engine.model';
 import CreateTableBuilder = Knex.CreateTableBuilder;
+
+const LOG_LEVELS = ['silent', 'error', 'warn', 'info', 'debug', 'trace'] as const;
 
 const SOUTH_CONNECTORS_TABLE = 'south_connectors';
 const SOUTH_ITEMS_TABLE = 'south_items';
@@ -40,13 +41,13 @@ async function createEnginesTable(knex: Knex): Promise<void> {
     createDefaultEntityFields(table);
     table.string('name').notNullable().defaultTo('OIBus').unique();
     table.integer('port').notNullable().defaultTo(2223);
-    table.enum('log_console_level', LOG_LEVELS).notNullable().defaultTo('silent');
-    table.enum('log_file_level', LOG_LEVELS).notNullable().defaultTo('silent');
+    table.string('log_console_level').notNullable().defaultTo('silent');
+    table.string('log_file_level').notNullable().defaultTo('silent');
     table.integer('log_file_max_file_size').notNullable().defaultTo(50);
     table.integer('log_file_number_of_files').notNullable().defaultTo(5);
-    table.enum('log_database_level', LOG_LEVELS).notNullable().defaultTo('silent');
+    table.string('log_database_level').notNullable().defaultTo('silent');
     table.integer('log_database_max_number_of_logs').notNullable().defaultTo(100_000);
-    table.enum('log_loki_level', LOG_LEVELS).notNullable().defaultTo('silent');
+    table.string('log_loki_level').notNullable().defaultTo('silent');
     table.integer('log_loki_interval').notNullable().defaultTo(60);
     table.string('log_loki_address');
     table.string('log_loki_token_address');

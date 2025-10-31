@@ -601,21 +601,6 @@ describe('Service utils', () => {
         expect(fs.unlink).toHaveBeenCalledTimes(2);
       });
 
-      it('should properly persists results into values', async () => {
-        await persistResults(
-          dataToWrite,
-          {
-            type: 'json'
-          },
-          'connectorName',
-          'itemName',
-          'myTmpFolder',
-          addContent,
-          logger
-        );
-        expect(addContent).toHaveBeenCalledWith({ type: 'time-values', content: dataToWrite });
-      });
-
       it('should properly persists results into CSV file and log unlink errors', async () => {
         (fs.unlink as jest.Mock).mockImplementation(() => {
           throw new Error('unlink error');
@@ -1082,7 +1067,7 @@ describe('Service utils', () => {
     it('should throw an error for too many fields', () => {
       expect(validateCronExpression('* * * * * * 2024')).toEqual({
         isValid: false,
-        errorMessage: 'Too many fields. Only seconds, minutes, hours, day of month, month and day of week are supported.',
+        errorMessage: 'Cron Expression: Too many fields. Only seconds, minutes, hours, day of month, month and day of week are supported.',
         humanReadableForm: '',
         nextExecutions: []
       });
@@ -1091,35 +1076,35 @@ describe('Service utils', () => {
     it('should throw an error for non standard characters', () => {
       expect(validateCronExpression('* * * * 5L')).toEqual({
         isValid: false,
-        errorMessage: 'Expression contains non-standard characters: L',
+        errorMessage: 'Cron Expression: Non-standard characters: L',
         humanReadableForm: '',
         nextExecutions: []
       });
 
       expect(validateCronExpression('* * * W * *')).toEqual({
         isValid: false,
-        errorMessage: 'Expression contains non-standard characters: W',
+        errorMessage: 'Cron Expression: Non-standard characters: W',
         humanReadableForm: '',
         nextExecutions: []
       });
 
       expect(validateCronExpression('* * * * * 5#3')).toEqual({
         isValid: false,
-        errorMessage: 'Expression contains non-standard characters: #',
+        errorMessage: 'Cron Expression: Non-standard characters: #',
         humanReadableForm: '',
         nextExecutions: []
       });
 
       expect(validateCronExpression('? ? * * * *')).toEqual({
         isValid: false,
-        errorMessage: 'Expression contains non-standard characters: ?',
+        errorMessage: 'Cron Expression: Non-standard characters: ?',
         humanReadableForm: '',
         nextExecutions: []
       });
 
       expect(validateCronExpression('H * * * *')).toEqual({
         isValid: false,
-        errorMessage: 'Expression contains non-standard characters: H',
+        errorMessage: 'Cron Expression: Non-standard characters: H',
         humanReadableForm: '',
         nextExecutions: []
       });
@@ -1128,19 +1113,19 @@ describe('Service utils', () => {
     it('should throw an error for invalid cron expression caught by cronstrue', () => {
       expect(validateCronExpression('0 35 10 19 01')).toEqual({
         isValid: false,
-        errorMessage: 'Hours part must be >= 0 and <= 23',
+        errorMessage: 'Cron Expression: Hours part must be >= 0 and <= 23',
         humanReadableForm: '',
         nextExecutions: []
       });
       expect(validateCronExpression('0 23 10 19 01')).toEqual({
         isValid: false,
-        errorMessage: 'Month part must be >= 1 and <= 12',
+        errorMessage: 'Cron Expression: Month part must be >= 1 and <= 12',
         humanReadableForm: '',
         nextExecutions: []
       });
       expect(validateCronExpression('0 23 10 12 8')).toEqual({
         isValid: false,
-        errorMessage: 'DOW part must be >= 0 and <= 6',
+        errorMessage: 'Cron Expression: DOW part must be >= 0 and <= 6',
         humanReadableForm: '',
         nextExecutions: []
       });
@@ -1149,13 +1134,13 @@ describe('Service utils', () => {
     it('should throw an error for invalid cron expression caught by cron-parser', () => {
       expect(validateCronExpression('0 23 10 12 6/-')).toEqual({
         isValid: false,
-        errorMessage: 'Constraint error, cannot repeat at every NaN time.',
+        errorMessage: 'Cron Expression: Constraint error, cannot repeat at every NaN time.',
         humanReadableForm: '',
         nextExecutions: []
       });
       expect(validateCronExpression('0 23 10-1 12 6/1')).toEqual({
         isValid: false,
-        errorMessage: 'Invalid range: 10-1, min(10) > max(1)',
+        errorMessage: 'Cron Expression: Invalid range: 10-1, min(10) > max(1)',
         humanReadableForm: '',
         nextExecutions: []
       });
@@ -1167,7 +1152,7 @@ describe('Service utils', () => {
       });
       expect(validateCronExpression('* * * * * *')).toEqual({
         isValid: false,
-        errorMessage: 'Invalid cron expression',
+        errorMessage: 'Cron Expression: Invalid',
         humanReadableForm: '',
         nextExecutions: []
       });

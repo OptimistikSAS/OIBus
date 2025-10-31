@@ -169,7 +169,7 @@ describe('EditNorthTransformerModalComponent', () => {
   });
 
   it('should validate with transformers', () => {
-    transformerService.get.and.returnValue(of(transformer));
+    transformerService.findById.and.returnValue(of(transformer));
     tester.componentInstance.prepareForEdition(
       [],
       [],

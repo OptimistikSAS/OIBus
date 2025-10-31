@@ -22,11 +22,7 @@ import OIAnalyticsRegistrationRepositoryMock from '../tests/__mocks__/repository
 import CertificateRepositoryMock from '../tests/__mocks__/repository/config/certificate-repository.mock';
 import DataStreamEngine from '../engine/data-stream-engine';
 import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
-import fs from 'node:fs/promises';
 import SouthConnectorMock from '../tests/__mocks__/south-connector.mock';
-import { stringToBoolean } from './utils';
-import multer from '@koa/multer';
-import csv from 'papaparse';
 import { buildSouth } from '../south/south-connector-factory';
 
 jest.mock('../south/south-opcua/south-opcua');
@@ -92,7 +88,7 @@ describe('South Service', () => {
   });
 
   it('testSouth() should test South connector in creation mode', async () => {
-    await service.testSouth('create', testData.south.command.type, testData.south.command.settings, logger);
+    await service.testSouth('create', testData.south.command.type, testData.south.command.settings);
     expect(buildSouth).toHaveBeenCalledTimes(1);
     expect(mockedSouth1.testConnection).toHaveBeenCalled();
   });
@@ -100,15 +96,13 @@ describe('South Service', () => {
   it('testSouth() should throw an error if manifest type is bad', async () => {
     const badCommand = JSON.parse(JSON.stringify(testData.south.command));
     badCommand.type = 'bad';
-    await expect(service.testSouth('create', badCommand.type, badCommand.settings, logger)).rejects.toThrow(
-      'South manifest "bad" not found'
-    );
+    await expect(service.testSouth('create', badCommand.type, badCommand.settings)).rejects.toThrow('South manifest "bad" not found');
     expect(buildSouth).not.toHaveBeenCalled();
   });
 
   it('testSouth() should test South connector in edit mode', async () => {
     (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(testData.south.list[0]);
-    await service.testSouth(testData.south.list[0].id, testData.south.command.type, testData.south.command.settings, logger);
+    await service.testSouth(testData.south.list[0].id, testData.south.command.type, testData.south.command.settings);
     expect(buildSouth).toHaveBeenCalledTimes(1);
     expect(mockedSouth1.testConnection).toHaveBeenCalled();
   });
@@ -116,7 +110,7 @@ describe('South Service', () => {
   it('testSouth() should fail to test South connector in edit mode if south connector not found', async () => {
     (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(null);
     await expect(
-      service.testSouth(testData.south.list[0].id, testData.south.command.type, testData.south.command.settings, logger)
+      service.testSouth(testData.south.list[0].id, testData.south.command.type, testData.south.command.settings)
     ).rejects.toThrow(`South connector "${testData.south.list[0].id}" not found`);
     expect(buildSouth).not.toHaveBeenCalled();
   });
@@ -137,8 +131,7 @@ describe('South Service', () => {
       testData.south.command.settings,
       itemCommand,
       testData.south.itemTestingSettings,
-      callback,
-      logger
+      callback
     );
     expect(buildSouth).toHaveBeenCalledTimes(1);
     expect(mockedSouth1.testItem).toHaveBeenCalled();
@@ -156,8 +149,7 @@ describe('South Service', () => {
         badCommand.settings,
         testData.south.itemCommand.settings,
         testData.south.itemTestingSettings,
-        callback,
-        logger
+        callback
       )
     ).rejects.toThrow('South manifest "bad" not found');
     expect(buildSouth).not.toHaveBeenCalled();
@@ -180,8 +172,7 @@ describe('South Service', () => {
       testData.south.command.settings,
       itemCommand,
       testData.south.itemTestingSettings,
-      callback,
-      logger
+      callback
     );
     expect(buildSouth).toHaveBeenCalledTimes(1);
     expect(mockedSouth1.testItem).toHaveBeenCalled();
@@ -198,8 +189,7 @@ describe('South Service', () => {
         testData.south.command.settings,
         testData.south.itemCommand.settings,
         testData.south.itemTestingSettings,
-        callback,
-        logger
+        callback
       )
     ).rejects.toThrow(`South connector "${testData.south.list[0].id}" not found`);
     expect(buildSouth).not.toHaveBeenCalled();
@@ -570,206 +560,10 @@ describe('South Service', () => {
     await expect(service.disableItem(testData.south.list[0].id, 'itemId')).rejects.toThrow('South connector "southId1" does not exist');
   });
 
-  it('checkCsvImport() should properly parse csv and check items', async () => {
-    const csvData = [
-      {
-        name: 'item1',
-        enabled: 'true',
-        settings_regex: '*',
-        settings_preserveFiles: 'true',
-        settings_ignoreModifiedDate: 'false',
-        settings_minAge: 100,
-        scanMode: testData.scanMode.list[0].name
-      },
-      {
-        name: 'item2bis',
-        enabled: 'true',
-        settings_regex: '*',
-        settings_preserveFiles: 'true',
-        settings_ignoreModifiedDate: 'false',
-        settings_minAge: 100,
-        scanMode: 'bad scan mode'
-      },
-      {
-        name: 'item3',
-        enabled: 'true',
-        settings_regex: '*',
-        settings_preserveFiles: 'true',
-        settings_ignoreModifiedDate: 'false',
-        settings_minAge: 100,
-        settings_badItem: 100,
-        scanMode: testData.scanMode.list[0].name
-      },
-      {
-        name: 'item4',
-        enabled: 'true',
-        settings_regex: '*',
-        settings_preserveFiles: 'true',
-        settings_ignoreModifiedDate: 12, // bad type
-        settings_minAge: 100,
-        scanMode: testData.scanMode.list[0].name
-      },
-      {
-        name: 'item5',
-        enabled: 'true',
-        settings_regex: '*',
-        settings_preserveFiles: 'true',
-        settings_ignoreModifiedDate: 'false',
-        settings_minAge: 100,
-        scanMode: testData.scanMode.list[0].name
-      }
-    ];
-    (fs.readFile as jest.Mock).mockReturnValueOnce('file content').mockReturnValueOnce(JSON.stringify(testData.south.list[0].items));
-    (csv.parse as jest.Mock).mockReturnValueOnce({
-      meta: { delimiter: ',' },
-      data: csvData
-    });
-    (validator.validateSettings as jest.Mock).mockImplementationOnce(() => {
-      throw new Error(`validation error`);
-    });
-    (stringToBoolean as jest.Mock).mockReturnValue(true);
-    const result = await service.checkCsvFileImport(testData.south.list[0].type, { path: 'file/path.csv' } as multer.File, ',', {
-      path: 'items.json'
-    } as multer.File);
-    expect(result).toEqual({
-      items: [
-        {
-          id: '',
-          name: csvData[4].name,
-          enabled: true,
-          scanMode: testData.scanMode.list[0],
-          settings: {
-            ignoreModifiedDate: true,
-            minAge: 100,
-            preserveFiles: true,
-            regex: '*'
-          }
-        }
-      ],
-      errors: [
-        {
-          error: 'Item name "item1" already used',
-          item: {
-            name: csvData[0].name,
-            enabled: csvData[0].enabled,
-            scanMode: csvData[0].scanMode,
-            settings_ignoreModifiedDate: 'false',
-            settings_minAge: 100,
-            settings_preserveFiles: 'true',
-            settings_regex: '*'
-          }
-        },
-        {
-          error: 'Scan mode "bad scan mode" not found for item "item2bis"',
-          item: {
-            name: csvData[1].name,
-            enabled: csvData[1].enabled,
-            scanMode: csvData[1].scanMode,
-            settings_ignoreModifiedDate: 'false',
-            settings_minAge: 100,
-            settings_preserveFiles: 'true',
-            settings_regex: '*'
-          }
-        },
-        {
-          error: 'Settings "badItem" not accepted in manifest',
-          item: {
-            name: csvData[2].name,
-            enabled: csvData[2].enabled,
-            scanMode: csvData[2].scanMode,
-            settings_badItem: 100,
-            settings_ignoreModifiedDate: 'false',
-            settings_minAge: 100,
-            settings_preserveFiles: 'true',
-            settings_regex: '*'
-          }
-        },
-        {
-          error: 'validation error',
-          item: {
-            name: csvData[3].name,
-            enabled: csvData[3].enabled,
-            scanMode: csvData[3].scanMode,
-            settings_ignoreModifiedDate: 12,
-            settings_minAge: 100,
-            settings_preserveFiles: 'true',
-            settings_regex: '*'
-          }
-        }
-      ]
-    });
-  });
-
-  it('checkCsvImport() should properly parse csv and check items with array or object', async () => {
-    const csvData = [
-      {
-        name: 'item',
-        enabled: 'true',
-        settings_query: 'query1',
-        settings_dateTimeFields: '[]',
-        settings_serialization: JSON.stringify({
-          type: 'csv',
-          filename: 'filename',
-          delimiter: 'SEMI_COLON',
-          compression: true,
-          outputTimestampFormat: 'YYYY-MM-DD HH:mm:ss.SSS',
-          outputTimezone: 'Europe/Paris'
-        }),
-        scanMode: testData.scanMode.list[0].name
-      }
-    ];
-    (fs.readFile as jest.Mock).mockReturnValueOnce('file content').mockReturnValueOnce(JSON.stringify(testData.south.list[0].items));
-    (csv.parse as jest.Mock).mockReturnValueOnce({
-      meta: { delimiter: ',' },
-      data: csvData
-    });
-    (stringToBoolean as jest.Mock).mockReturnValue(true);
-    const result = await service.checkCsvFileImport(testData.south.list[1].type, { path: 'file/path.csv' } as multer.File, ',', {
-      path: 'items.json'
-    } as multer.File);
-    expect(result).toEqual({
-      items: [
-        {
-          id: '',
-          name: csvData[0].name,
-          enabled: csvData[0].enabled.toLowerCase() === 'true',
-          scanMode: testData.scanMode.list[0],
-          settings: {
-            query: 'query1',
-            dateTimeFields: [],
-            serialization: {
-              type: 'csv',
-              filename: 'filename',
-              delimiter: 'SEMI_COLON',
-              compression: true,
-              outputTimestampFormat: 'YYYY-MM-DD HH:mm:ss.SSS',
-              outputTimezone: 'Europe/Paris'
-            }
-          }
-        }
-      ],
-      errors: []
-    });
-  });
-
   it('checkCsvContentImport() should throw error if manifest not found', async () => {
     await expect(service.checkCsvContentImport('bad', 'fileContent', ',', testData.south.list[0].items)).rejects.toThrow(
       `South manifest does not exist for type "bad"`
     );
-  });
-
-  it('checkCsvImport() should throw error if delimiter does not match', async () => {
-    (fs.readFile as jest.Mock).mockReturnValueOnce('file content').mockReturnValueOnce(JSON.stringify(testData.south.list[0].items));
-    (csv.parse as jest.Mock).mockReturnValueOnce({
-      meta: { delimiter: ';' },
-      data: []
-    });
-
-    await expect(
-      service.checkCsvFileImport(testData.south.list[0].type, { path: 'file/path.csv' } as multer.File, ',', {
-        path: 'items.json'
-      } as multer.File)
-    ).rejects.toThrow(`The entered delimiter "," does not correspond to the file delimiter ";"`);
   });
 
   it('importItems() should import items', async () => {

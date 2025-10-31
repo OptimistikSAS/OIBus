@@ -1,5 +1,4 @@
 import { encryptionService } from './encryption.service';
-import pino from 'pino';
 
 // South imports
 import {
@@ -43,9 +42,7 @@ import SouthConnectorRepository from '../repository/config/south-connector.repos
 import { checkScanMode, stringToBoolean } from './utils';
 import { ScanMode } from '../model/scan-mode.model';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
-import fs from 'node:fs/promises';
 import csv from 'papaparse';
-import multer from '@koa/multer';
 
 import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
 import CertificateRepository from '../repository/config/certificate.repository';
@@ -90,7 +87,7 @@ export default class SouthService {
     private readonly engine: DataStreamEngine
   ) {}
 
-  async testSouth(id: string, southType: OIBusSouthType, settingsToTest: SouthSettings, logger: pino.Logger): Promise<void> {
+  async testSouth(id: string, southType: OIBusSouthType, settingsToTest: SouthSettings): Promise<void> {
     let southConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings> | null = null;
     if (id !== 'create') {
       southConnector = this.southConnectorRepository.findSouthById(id);
@@ -119,7 +116,14 @@ export default class SouthService {
     const south = buildSouth(
       testToRun,
       mockedAddContent,
-      logger,
+      this.engine.logger.child(
+        {
+          scopeType: 'south',
+          scopeId: 'test',
+          scopeName: 'test'
+        },
+        { level: 'silent' }
+      ),
       '',
       this.southCacheRepository,
       this.certificateRepository,
@@ -135,8 +139,7 @@ export default class SouthService {
     southSettings: SouthSettings,
     itemSettings: SouthItemSettings,
     testingSettings: SouthConnectorItemTestingSettings,
-    callback: (data: OIBusContent) => void,
-    logger: pino.Logger
+    callback: (data: OIBusContent) => void
   ): Promise<void> {
     let southConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings> | null = null;
     if (southConnectorId !== 'create') {
@@ -182,7 +185,14 @@ export default class SouthService {
     const south = buildSouth(
       testConnectorToRun,
       mockedAddContent,
-      logger,
+      this.engine.logger.child(
+        {
+          scopeType: 'south',
+          scopeId: 'test',
+          scopeName: 'test'
+        },
+        { level: 'silent' }
+      ),
       '',
       this.southCacheRepository,
       this.certificateRepository,
@@ -418,22 +428,6 @@ export default class SouthService {
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
 
     await this.engine.reloadSouthItems(southConnector);
-  }
-
-  async checkCsvFileImport(
-    southType: string,
-    file: multer.File,
-    delimiter: string,
-    existingItems: multer.File
-  ): Promise<{
-    items: Array<SouthConnectorItemDTO<SouthItemSettings>>;
-    errors: Array<{ item: Record<string, string>; error: string }>;
-  }> {
-    const fileContent = await fs.readFile(file.path);
-    const existingItemsContent: Array<SouthConnectorItemDTO<SouthItemSettings>> = JSON.parse(
-      (await fs.readFile(existingItems.path)).toString('utf8')
-    );
-    return await this.checkCsvContentImport(southType, fileContent.toString('utf8'), delimiter, existingItemsContent);
   }
 
   async checkCsvContentImport(

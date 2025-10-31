@@ -153,16 +153,16 @@ describe('EditHistoryQueryComponent', () => {
     certificateService.list.and.returnValue(of([]));
     transformerService.list.and.returnValue(of([]));
 
-    historyQueryService.get.and.returnValue(of(historyQuery));
-    northConnectorService.getNorthConnectorTypeManifest.and.returnValue(of(testData.north.manifest));
-    southConnectorService.getSouthConnectorTypeManifest.and.returnValue(of(testData.south.manifest));
+    historyQueryService.findById.and.returnValue(of(historyQuery));
+    northConnectorService.getNorthManifest.and.returnValue(of(testData.north.manifest));
+    southConnectorService.getSouthManifest.and.returnValue(of(testData.south.manifest));
 
     tester = new EditHistoryQueryComponentTester();
     tester.detectChanges();
   });
 
   it('should display general settings', () => {
-    expect(historyQueryService.get).toHaveBeenCalledWith('id1');
+    expect(historyQueryService.findById).toHaveBeenCalledWith('id1');
     expect(tester.title).toContainText('Edit Test');
     expect(tester.description).toHaveValue('My History query description');
     expect(tester.specificForm).toBeDefined();
@@ -180,7 +180,7 @@ describe('EditHistoryQueryComponent', () => {
   });
 
   it('should display south sharing input when connection can be shared', () => {
-    southConnectorService.getSouthConnectorTypeManifest.and.returnValue(of(testData.south.manifest));
+    southConnectorService.getSouthManifest.and.returnValue(of(testData.south.manifest));
     tester = new EditHistoryQueryComponentTester();
     tester.detectChanges();
     expect(tester.sharedConnection).toBeDefined();
@@ -242,7 +242,7 @@ describe('EditHistoryQueryComponent', () => {
     });
 
     historyQueryService.update.and.returnValue(of(undefined));
-    historyQueryService.get.and.returnValue(of(historyQuery));
+    historyQueryService.findById.and.returnValue(of(historyQuery));
     modalService.open.and.returnValue({
       result: of(false)
     } as Modal<boolean>);

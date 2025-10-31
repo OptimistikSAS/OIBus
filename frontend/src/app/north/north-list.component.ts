@@ -140,7 +140,7 @@ export class NorthListComponent implements OnInit {
   toggleConnector(northId: string, northName: string, value: boolean) {
     if (value) {
       this.northConnectorService
-        .startNorth(northId)
+        .start(northId)
         .pipe(
           this.states.get(northId)!.pendingUntilFinalization(),
           tap(() => {
@@ -157,7 +157,7 @@ export class NorthListComponent implements OnInit {
         });
     } else {
       this.northConnectorService
-        .stopNorth(northId)
+        .stop(northId)
         .pipe(
           this.states.get(northId)!.pendingUntilFinalization(),
           tap(() => {

@@ -10,7 +10,7 @@ import { Page } from '../../../../backend/shared/model/types';
 export class OibusCommandService {
   private http = inject(HttpClient);
 
-  searchCommands(searchParams: CommandSearchParam): Observable<Page<OIBusCommandDTO>> {
+  search(searchParams: CommandSearchParam): Observable<Page<OIBusCommandDTO>> {
     const params: Record<string, string | Array<string>> = {
       page: `${searchParams.page || 0}`
     };
@@ -20,12 +20,12 @@ export class OibusCommandService {
     if (searchParams.status) {
       params['status'] = searchParams.status;
     }
-    return this.http.get<Page<OIBusCommandDTO>>('/api/commands', {
+    return this.http.get<Page<OIBusCommandDTO>>('/api/oianalytics/commands/search', {
       params: params
     });
   }
 
-  deleteCommand(command: OIBusCommandDTO): Observable<void> {
-    return this.http.delete<void>(`/api/commands/${command.id}`);
+  delete(command: OIBusCommandDTO): Observable<void> {
+    return this.http.delete<void>(`/api/oianalytics/commands/${command.id}`);
   }
 }

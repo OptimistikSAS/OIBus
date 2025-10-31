@@ -38,6 +38,31 @@ export async function up(knex: Knex): Promise<void> {
   await createHistoryTransformersTable(knex);
   await updateRegistrationSettings(knex);
   await updatePostgresqlSettings(knex);
+
+  // TODO on 3.7.1
+  // TODO: remove enum on command table
+  // made on 3.2 :table.enum('type', OIBUS_COMMAND_TYPES).notNullable();
+  //     table.enum('status', OIBUS_COMMAND_STATUS).notNullable();
+
+  // TODO : remove enum on registration
+  // table.enum('status', REGISTRATION_STATUS).notNullable().defaultTo('NOT_REGISTERED');
+
+  // TODO: remove enum on oianalytics message
+  //     table.enum('status', OIANALYTICS_MESSAGE_STATUS).notNullable().defaultTo('PENDING');
+
+  // TODO : remove enum on engine log level
+  // table.enum('log_oia_level', LOG_LEVELS).notNullable().defaultTo('silent');
+  // table.enum('log_console_level', LOG_LEVELS).notNullable().defaultTo('silent');
+  //     table.enum('log_file_level', LOG_LEVELS).notNullable().defaultTo('silent');
+  //     table.enum('log_database_level', LOG_LEVELS).notNullable().defaultTo('silent');
+  //table.string('log_loki_level').notNullable().defaultTo('silent');
+
+  // TODO: remove enum on history query
+  // table.enum('status', HISTORY_QUERY_STATUS).notNullable().defaultTo('PENDING');
+
+  // TODO on log migration: remove enum on logs
+  // table.enum('level', LOG_LEVELS).notNullable();
+  // table.enum('scope_type', SCOPE_TYPES).notNullable();
 }
 
 async function createTransformersTable(knex: Knex): Promise<void> {

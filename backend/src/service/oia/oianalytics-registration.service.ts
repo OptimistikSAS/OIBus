@@ -11,6 +11,7 @@ import { registrationSchema } from '../../web-server/controllers/validators/oibu
 import crypto from 'node:crypto';
 import OIAnalyticsClient from './oianalytics-client.service';
 import { EventEmitter } from 'node:events';
+import { NotFoundError } from '../../model/types';
 
 const CHECK_REGISTRATION_INTERVAL = 10_000;
 export default class OIAnalyticsRegistrationService {
@@ -33,8 +34,12 @@ export default class OIAnalyticsRegistrationService {
     }
   }
 
-  getRegistrationSettings(): OIAnalyticsRegistration | null {
-    return this.oIAnalyticsRegistrationRepository.get();
+  getRegistrationSettings(): OIAnalyticsRegistration {
+    const registrationSettings = this.oIAnalyticsRegistrationRepository.get();
+    if (!registrationSettings) {
+      throw new NotFoundError('Registration settings not found');
+    }
+    return registrationSettings;
   }
 
   /**
@@ -115,7 +120,7 @@ export default class OIAnalyticsRegistrationService {
     this.ongoingCheckRegistration = false;
   }
 
-  async editConnectionSettings(command: RegistrationSettingsCommandDTO): Promise<void> {
+  async editRegistrationSettings(command: RegistrationSettingsCommandDTO): Promise<void> {
     await this.validator.validate(registrationSchema, command);
 
     const currentRegistration = this.oIAnalyticsRegistrationRepository.get()!;
@@ -133,7 +138,7 @@ export default class OIAnalyticsRegistrationService {
     this.oIAnalyticsRegistrationRepository.updateKeys(await encryptionService.encryptText(privateKey), publicKey);
   }
 
-  unregister() {
+  unregister(): void {
     this.oIAnalyticsRegistrationRepository.unregister();
     if (this.intervalCheckRegistration) {
       clearInterval(this.intervalCheckRegistration);

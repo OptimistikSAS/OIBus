@@ -43,9 +43,6 @@ describe('Repository with populated database', () => {
             case 'error':
               pinoLevel = '50';
               break;
-            case 'fatal':
-              pinoLevel = '60';
-              break;
             default:
               pinoLevel = '20';
               break;

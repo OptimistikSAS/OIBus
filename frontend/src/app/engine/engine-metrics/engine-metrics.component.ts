@@ -38,7 +38,7 @@ export class EngineMetricsComponent {
 
   resetMetrics() {
     this.zone.run(() => {
-      this.engineService.resetMetrics().subscribe(() => {
+      this.engineService.resetEngineMetrics().subscribe(() => {
         this.notificationService.success('engine.monitoring.metrics-reset');
       });
     });

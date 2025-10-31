@@ -1,21 +1,12 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-expect-error
-import respond from 'koa-respond';
-import cors from '@koa/cors';
-import bodyParser from 'koa-bodyparser';
-import helmet from 'koa-helmet';
-
-import router from './routes';
-import auth from './middlewares/auth';
-import ipFilter from './middlewares/ip-filter';
-import webClient from './middlewares/web-client';
-import sse from './middlewares/sse';
+import express from 'express';
+import cors from 'cors';
+import bodyParser from 'body-parser';
+import helmet from 'helmet';
+import authMiddleware from './middlewares/auth.middleware';
+import sseMiddleware from './middlewares/sse.middleware';
 import EncryptionService from '../service/encryption.service';
 import pino from 'pino';
 import * as Http from 'http';
-import Koa from 'koa';
-import oibus from './middlewares/oibus';
-import { KoaApplication } from './koa';
 import SouthService from '../service/south.service';
 import OIBusService from '../service/oibus.service';
 import NorthService from '../service/north.service';
@@ -29,15 +20,21 @@ import CertificateService from '../service/certificate.service';
 import UserService from '../service/user.service';
 import LogService from '../service/log.service';
 import TransformerService from '../service/transformer.service';
+import { Express } from 'express-serve-static-core';
+import IpFilterMiddleware from './middlewares/ip-filter.middleware';
+import { createInjectServicesMiddleware } from './middlewares/services.middleware';
+import { RegisterRoutes } from './routes';
+import path from 'path';
 
 /**
- * Class Server - Provides the web client and establish socket connections.
+ * OIBus web server - using express
  */
 export default class WebServer {
   private _logger: pino.Logger;
   private readonly _id: string;
   private _port: number;
-  private app: KoaApplication | null = null;
+  private _whiteList: Array<string> = [];
+  private app: Express | null = null;
   private webServer: Http.Server | null = null;
 
   constructor(
@@ -63,6 +60,7 @@ export default class WebServer {
     this._id = id;
     this._port = port;
     this._logger = logger;
+    this._whiteList = this.ipFilterService.findAll().map(filter => filter.address);
   }
 
   get logger(): pino.Logger {
@@ -73,68 +71,131 @@ export default class WebServer {
     return this._port;
   }
 
+  get whiteList(): Array<string> {
+    return this._whiteList;
+  }
+
   async init(): Promise<void> {
-    this.app = new Koa() as KoaApplication;
+    this.app = express();
 
-    this.app.whiteList = this.ipFilterService.findAll().map(filter => filter.address);
-
-    this.app.use(
-      oibus(
-        this._id,
-        this.scanModeService,
-        this.ipFilterService,
-        this.certificateService,
-        this.logService,
-        this.oIAnalyticsRegistrationService,
-        this.oIAnalyticsCommandService,
-        this.oIBusService,
-        this.southService,
-        this.northService,
-        this.transformerService,
-        this.historyQueryService,
-        this.homeMetricsService,
-        this.encryptionService,
-        this.userService,
-        this.logger
-      )
-    );
-
-    // koa-helmet is a wrapper for helmet to work with koa.
-    // It provides important security headers to make your app more secure by default.
+    // Helmet for Express
     this.app.use(helmet({ contentSecurityPolicy: false }));
+    this.app.disable('x-powered-by'); // Remove X-Powered-By header
 
-    // Middleware for Koa that adds useful methods to the Koa context.
-    this.app.use(respond());
+    this.app.use(this.setupRequestLogging());
 
-    // filter IP addresses
-    this.app.use(ipFilter(this.ignoreIpFilters));
+    // IP filter middleware
+    const ipFilter = new IpFilterMiddleware(this.whiteList, this.logger, this.ignoreIpFilters);
+    this.app.use(ipFilter.middleware());
 
-    this.app.use(webClient);
+    this.app.use(createInjectServicesMiddleware(this.scanModeService, this.certificateService));
+
+    // Static files for web client
+    this.app.use(express.static(path.join(__dirname, '../../../frontend/browser')));
 
     // Password protection middleware
-    this.app.use(auth());
+    this.app.use(authMiddleware(this.userService, this.encryptionService));
 
-    this.app.use(sse());
+    // CORS middleware
+    this.app.use(this.setupCors());
 
-    // CORS middleware for Koa
-    this.app.use(cors());
-
-    // A body parser for koa, base on co-body. support json, form and text type body.
+    // Body parser for Express
     this.app.use(
-      bodyParser({
-        enableTypes: ['json', 'text'],
-        jsonLimit: '20mb',
-        strict: true,
-        onerror(err, ctx) {
-          ctx.throw(422, 'body parse error');
-        }
+      bodyParser.json({
+        limit: '20mb',
+        strict: true
       })
     );
+    this.app.use(
+      bodyParser.text({
+        limit: '20mb'
+      })
+    );
+    this.app.use(express.json({ limit: '20mb' }));
+    this.app.use(express.urlencoded({ extended: true, limit: '20mb' }));
 
-    this.app.use(router.routes());
-    this.app.use(router.allowedMethods());
+    // SSE middleware
+    this.app.use(sseMiddleware(this.southService, this.northService, this.oIBusService, this.homeMetricsService, this.historyQueryService));
+
+    // Routes
+    this.app.get('/health', this.healthCheck.bind(this));
+    this.setupRoutes(this.app);
+
+    // Error handling
+    this.app.use(this.handle404.bind(this));
+    this.app.use(this.handleBodyParserErrors.bind(this));
+    this.app.use(this.setupErrorHandling());
 
     await this.start();
+  }
+
+  private setupRequestLogging(): express.RequestHandler {
+    return (req, res, next) => {
+      this.logger.trace(`${req.method} ${req.path}`);
+      return next();
+    };
+  }
+
+  private setupCors(): express.RequestHandler {
+    const corsOptions = {
+      origin: process.env.CORS_ORIGIN || '*',
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+      credentials: true,
+      maxAge: 86400 // 24 hours
+    };
+    return cors(corsOptions);
+  }
+
+  private setupRoutes(app: Express): void {
+    // Routes are generated with the npm run generate:openapi command
+    RegisterRoutes(app);
+  }
+
+  private healthCheck(_req: express.Request, res: express.Response): void {
+    res.status(200).json({
+      status: 'OK',
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  private handle404(req: express.Request, res: express.Response): void {
+    res.status(404).json({
+      error: 'Not Found',
+      message: `Cannot ${req.method} ${req.path}`
+    });
+  }
+
+  private handleBodyParserErrors(err: unknown, _req: express.Request, res: express.Response, next: express.NextFunction): void {
+    if (err instanceof SyntaxError && 'body' in err) {
+      this.logger.warn(`Body parse error: ${err.message}`);
+      res.status(422).json({
+        error: 'Unprocessable Entity',
+        message: 'Invalid JSON payload'
+      });
+    } else {
+      next(err);
+    }
+  }
+
+  private setupErrorHandling(): express.ErrorRequestHandler {
+    return (err: Error, req: express.Request, res: express.Response) => {
+      this.logger.error(`Unhandled error: ${err.stack}`);
+
+      // Handle specific error types
+      if (err.name === 'ValidationError') {
+        return res.status(400).json({
+          error: 'Validation Error',
+          message: err.message
+        });
+      }
+
+      // Default to 500 server error
+      return res.status(500).json({
+        error: 'Internal Server Error',
+        message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
+      });
+    };
   }
 
   async start(): Promise<void> {
@@ -149,9 +210,7 @@ export default class WebServer {
     });
 
     this.ipFilterService.whiteListEvent.on('update-white-list', (newWhiteList: Array<string>) => {
-      if (this.app) {
-        this.app.whiteList = newWhiteList;
-      }
+      this._whiteList = newWhiteList;
     });
 
     if (!this.app) return;
@@ -162,6 +221,16 @@ export default class WebServer {
   }
 
   async stop(): Promise<void> {
-    this.webServer?.close();
+    if (this.webServer) {
+      await new Promise<void>((resolve, reject) => {
+        this.webServer?.close(err => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve();
+          }
+        });
+      });
+    }
   }
 }

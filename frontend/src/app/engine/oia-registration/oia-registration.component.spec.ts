@@ -69,7 +69,7 @@ describe('OIARegistrationComponent', () => {
       ]
     });
 
-    commandService.searchCommands.and.returnValue(of(emptyPage<OIBusCommandDTO>()));
+    commandService.search.and.returnValue(of(emptyPage<OIBusCommandDTO>()));
     engineService.getRegistrationSettings.and.returnValue(of(registrationSettings));
 
     tester = new OIARegistrationComponentTester();

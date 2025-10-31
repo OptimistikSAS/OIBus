@@ -99,7 +99,7 @@ export class EditHistoryQueryTransformerModalComponent {
       options: this.fb.group({})
     });
     this.form!.controls.transformerId.valueChanges.pipe(
-      switchMap(transformerId => (transformerId ? this.transformerService.get(transformerId) : of(null)))
+      switchMap(transformerId => (transformerId ? this.transformerService.findById(transformerId) : of(null)))
     ).subscribe(newTransformer => {
       if (newTransformer) {
         this.createOptionsForm(newTransformer);

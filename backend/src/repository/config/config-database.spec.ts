@@ -251,7 +251,14 @@ describe('Repository with populated database', () => {
     });
 
     it('should properly search transformers and page them', () => {
-      expect(repository.search({})).toEqual(createPageFromArray([...testData.transformers.list, ...standardTransformers], 10, 0));
+      expect(
+        repository.search({
+          type: undefined,
+          inputType: undefined,
+          outputType: undefined,
+          page: 0
+        })
+      ).toEqual(createPageFromArray([...testData.transformers.list, ...standardTransformers], 10, 0));
     });
   });
 
@@ -337,7 +344,8 @@ describe('Repository with populated database', () => {
     it('should search users without page', () => {
       expect(
         repository.search({
-          login: 'second'
+          login: 'second',
+          page: 0
         })
       ).toEqual(createPageFromArray([testData.users.list[1]], 50, 0));
 
@@ -499,16 +507,14 @@ describe('Repository with populated database', () => {
 
     it('should properly search commands and page them', () => {
       expect(
-        repository.search(
-          {
-            types: ['update-version'],
-            status: ['RUNNING'],
-            ack: false,
-            start: testData.constants.dates.JANUARY_1ST_2020_UTC,
-            end: testData.constants.dates.FAKE_NOW_IN_FUTURE
-          },
-          0
-        )
+        repository.search({
+          types: ['update-version'],
+          status: ['RUNNING'],
+          ack: false,
+          start: testData.constants.dates.JANUARY_1ST_2020_UTC,
+          end: testData.constants.dates.FAKE_NOW_IN_FUTURE,
+          page: 0
+        })
       ).toEqual(
         createPageFromArray(
           testData.oIAnalytics.commands.oIBusList.filter(
@@ -519,13 +525,14 @@ describe('Repository with populated database', () => {
         )
       );
 
-      const searchResult = repository.search(
-        {
-          types: [],
-          status: []
-        },
-        0
-      );
+      const searchResult = repository.search({
+        types: [],
+        status: [],
+        ack: undefined,
+        start: undefined,
+        end: undefined,
+        page: 0
+      });
       expect({
         ...searchResult,
         content: searchResult.content.sort((a, b) => a.id.localeCompare(b.id))
@@ -554,7 +561,10 @@ describe('Repository with populated database', () => {
       );
       const listResult = repository.list({
         types: [],
-        status: []
+        status: [],
+        ack: undefined,
+        start: undefined,
+        end: undefined
       });
       expect(listResult.sort((a, b) => a.id.localeCompare(b.id))).toEqual(
         testData.oIAnalytics.commands.oIBusList.sort((a, b) => a.id.localeCompare(b.id))

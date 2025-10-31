@@ -2,7 +2,7 @@ import argon2 from 'argon2';
 import { Database } from 'better-sqlite3';
 
 import { generateRandomId } from '../../service/utils';
-import { Page } from '../../../shared/model/types';
+import { Language, Page } from '../../../shared/model/types';
 import { User } from '../../model/user.model';
 import { UserSearchParam } from '../../../shared/model/user.model';
 
@@ -38,7 +38,6 @@ export default class UserRepository {
   search(searchParams: UserSearchParam): Page<User> {
     const queryParams = [];
     let whereClause = '';
-    const page = searchParams.page ?? 0;
 
     if (searchParams.login) {
       whereClause += `WHERE login like '%' || ? || '%'`;
@@ -46,7 +45,7 @@ export default class UserRepository {
     }
     const query =
       `SELECT id, login, first_name, last_name, email, language, timezone FROM ${USERS_TABLE} ${whereClause}` +
-      ` LIMIT ${PAGE_SIZE} OFFSET ${PAGE_SIZE * page};`;
+      ` LIMIT ${PAGE_SIZE} OFFSET ${PAGE_SIZE * searchParams.page};`;
     const results = this.database
       .prepare(query)
       .all(...queryParams)
@@ -59,7 +58,7 @@ export default class UserRepository {
     return {
       content: results,
       size: PAGE_SIZE,
-      number: page,
+      number: searchParams.page,
       totalElements,
       totalPages
     };
@@ -141,7 +140,7 @@ export default class UserRepository {
       firstName: result.first_name || null,
       lastName: result.last_name || null,
       email: result.email || null,
-      language: result.language,
+      language: result.language as Language,
       timezone: result.timezone
     };
   }

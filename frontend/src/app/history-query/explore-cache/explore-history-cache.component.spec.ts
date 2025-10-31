@@ -93,7 +93,7 @@ describe('ExploreHistoryCacheComponent', () => {
         { provide: HistoryQueryService, useValue: historyQueryService }
       ]
     });
-    historyQueryService.get.and.returnValue(of(historyQuery));
+    historyQueryService.findById.and.returnValue(of(historyQuery));
     historyQueryService.searchCacheContent.and.returnValue(of([]));
     tester = new ExploreHistoryCacheComponentTester();
     tester.detectChanges();

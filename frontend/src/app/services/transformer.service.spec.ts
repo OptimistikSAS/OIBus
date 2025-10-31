@@ -24,7 +24,7 @@ describe('TransformerService', () => {
     let expectedTransformers: Array<TransformerDTO> = [];
     service.list().subscribe(transformers => (expectedTransformers = transformers));
 
-    http.expectOne('/api/transformers').flush([{ name: 'Transformer 1' }, { name: 'Transformer 2' }]);
+    http.expectOne('/api/transformers/list').flush([{ name: 'Transformer 1' }, { name: 'Transformer 2' }]);
 
     expect(expectedTransformers.length).toBe(2);
   });
@@ -33,7 +33,7 @@ describe('TransformerService', () => {
     let expectedTransformer: TransformerDTO | null = null;
     const transformer = { id: 'id1' } as TransformerDTO;
 
-    service.get('id1').subscribe(c => (expectedTransformer = c));
+    service.findById('id1').subscribe(c => (expectedTransformer = c));
 
     http.expectOne({ url: '/api/transformers/id1', method: 'GET' }).flush(transformer);
     expect(expectedTransformer!).toEqual(transformer);

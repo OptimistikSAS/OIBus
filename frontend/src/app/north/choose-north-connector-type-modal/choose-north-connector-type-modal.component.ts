@@ -25,7 +25,7 @@ export class ChooseNorthConnectorTypeModalComponent implements OnInit {
   groupedNorthTypes: Array<{ category: string; types: Array<NorthType> }> = [];
 
   ngOnInit() {
-    this.northConnectorService.getNorthConnectorTypes().subscribe(types => {
+    this.northConnectorService.getNorthTypes().subscribe(types => {
       this.northTypes = types;
       this.groupNorthTypes();
     });

@@ -2,12 +2,11 @@ import path from 'node:path';
 
 import pino from 'pino';
 
-import { ScopeType } from '../../../shared/model/engine.model';
-
 import FileCleanupService from './file-cleanup.service';
 import { encryptionService } from '../encryption.service';
 import { EngineSettings } from '../../model/engine.model';
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
+import { ScopeType } from '../../../shared/model/logs.model';
 
 const LOG_DB_NAME = 'logs.db';
 const LOG_FILE_NAME = 'journal.log';

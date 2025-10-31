@@ -165,7 +165,7 @@ class SouthItemTestComponent implements AfterContentInit, OnInit {
         this.testingSettings
       );
     } else if (type === 'history-south') {
-      return this.historyQueryService.testSouthItem(
+      return this.historyQueryService.testItem(
         this.entityId(),
         this.fromSouth(),
         this.connectorCommand().type,

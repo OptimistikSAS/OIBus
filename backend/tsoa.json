@@ -1,0 +1,18 @@
+{
+  "entryFile": "src/index.ts",
+  "noImplicitAdditionalProperties": "throw-on-extras",
+  "controllerPathGlobs": ["src/web-server/controllers/**/*.ts"],
+  "spec": {
+    "outputDirectory": "../documentation/docs/api",
+    "specVersion": 3,
+    "basePath": "/",
+    "securityDefinitions": {},
+    "specFileBaseName": "openapi"
+  },
+  "routes": {
+    "routesDir": "src/web-server",
+    "authenticationModule": "",
+    "iocModule": "",
+    "routesFile": "routes.ts"
+  }
+}

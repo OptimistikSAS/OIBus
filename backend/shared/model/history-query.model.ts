@@ -3,7 +3,7 @@ import { SouthItemSettings, SouthSettings } from './south-settings.model';
 import { NorthSettings } from './north-settings.model';
 import { OIBusSouthType } from './south-connector.model';
 import { OIBusNorthType } from './north-connector.model';
-import { TransformerDTOWithOptions } from './transformer.model';
+import { TransformerDTOWithOptions, TransformerIdWithOptions } from './transformer.model';
 import { ScanModeDTO } from './scan-mode.model';
 
 export const HISTORY_QUERY_STATUS = ['PENDING', 'RUNNING', 'PAUSED', 'FINISHED', 'ERRORED'] as const;
@@ -86,7 +86,7 @@ export interface HistoryQueryCommandDTO<S extends SouthSettings, N extends North
     };
   };
   items: Array<HistoryQueryItemCommandDTO<I>>;
-  northTransformers: Array<{ transformerId: string; options: object; inputType: string }>;
+  northTransformers: Array<TransformerIdWithOptions>;
 }
 
 export interface HistoryQueryItemSearchParam {

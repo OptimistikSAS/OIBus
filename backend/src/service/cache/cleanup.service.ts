@@ -207,7 +207,9 @@ export default class CleanupService {
       end: DateTime.now()
         .minus({ hour: 24 * 7 })
         .toUTC()
-        .toISO()!
+        .toISO()!,
+      start: undefined,
+      ack: undefined
     });
     for (const command of commandsToRemove) {
       this.oianalyticsCommandRepository.delete(command.id);

@@ -87,7 +87,9 @@ export class OIARegistrationComponent implements OnInit, OnDestroy {
             const queryParamMap = this.route.snapshot.queryParamMap;
             const types: Array<OIBusCommandType> = queryParamMap.getAll('types') as Array<OIBusCommandType>;
             const status: Array<OIBusCommandStatus> = queryParamMap.getAll('status') as Array<OIBusCommandStatus>;
-            return this.oibusCommandService.searchCommands({ page, types, status }).pipe(catchError(() => EMPTY));
+            return this.oibusCommandService
+              .search({ page, types, status, start: undefined, end: undefined, ack: undefined })
+              .pipe(catchError(() => EMPTY));
           })
         )
         .subscribe(commands => {
@@ -181,14 +183,16 @@ export class OIARegistrationComponent implements OnInit, OnDestroy {
         messageKey: 'oia-module.commands.confirm-delete'
       })
       .pipe(
-        switchMap(() => this.oibusCommandService.deleteCommand(command)),
+        switchMap(() => this.oibusCommandService.delete(command)),
         tap(() => this.notificationService.success('oia-module.commands.deleted')),
         switchMap(() => {
           const queryParamMap = this.route.snapshot.queryParamMap;
           const page: number = +(queryParamMap.get('page') || 0);
           const types: Array<OIBusCommandType> = queryParamMap.getAll('types') as Array<OIBusCommandType>;
           const status: Array<OIBusCommandStatus> = queryParamMap.getAll('status') as Array<OIBusCommandStatus>;
-          return this.oibusCommandService.searchCommands({ page, types, status }).pipe(catchError(() => EMPTY));
+          return this.oibusCommandService
+            .search({ page, types, status, start: undefined, end: undefined, ack: undefined })
+            .pipe(catchError(() => EMPTY));
         })
       )
       .subscribe(commands => {

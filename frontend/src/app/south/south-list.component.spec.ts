@@ -44,8 +44,8 @@ describe('SouthListComponent', () => {
     });
 
     southConnectorService.list.and.returnValue(of(southConnectors));
-    southConnectorService.startSouth.and.returnValue(of(undefined));
-    southConnectorService.stopSouth.and.returnValue(of(undefined));
+    southConnectorService.start.and.returnValue(of(undefined));
+    southConnectorService.stop.and.returnValue(of(undefined));
 
     tester = new SouthListComponentTester();
     tester.detectChanges();
@@ -69,12 +69,12 @@ describe('SouthListComponent', () => {
   it('should toggle south connector', () => {
     const toggle1 = tester.southList[0].elements('td')[4].elements('button')[0] as TestButton;
     toggle1.click();
-    expect(southConnectorService.stopSouth).toHaveBeenCalledWith('southId1');
+    expect(southConnectorService.stop).toHaveBeenCalledWith('southId1');
     expect(notificationService.success).toHaveBeenCalledWith('south.stopped', { name: southConnectors[0].name });
 
     const toggle2 = tester.southList[1].elements('td')[4].elements('button')[0] as TestButton;
     toggle2.click();
-    expect(southConnectorService.startSouth).toHaveBeenCalledWith('southId2');
+    expect(southConnectorService.start).toHaveBeenCalledWith('southId2');
     expect(notificationService.success).toHaveBeenCalledWith('south.started', { name: southConnectors[1].name });
   });
 });

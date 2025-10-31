@@ -145,14 +145,14 @@ export class EditNorthComponent implements OnInit, CanComponentDeactivate {
           if (paramNorthId) {
             this.mode = 'edit';
             this.northId = paramNorthId;
-            return this.northConnectorService.get(paramNorthId).pipe(this.state.pendingUntilFinalization());
+            return this.northConnectorService.findById(paramNorthId).pipe(this.state.pendingUntilFinalization());
           }
           // fetch the North connector in case of duplicate
           else if (duplicateNorthId) {
             this.mode = 'create';
             this.northId = 'create';
             this.duplicateId = duplicateNorthId;
-            return this.northConnectorService.get(duplicateNorthId).pipe(this.state.pendingUntilFinalization());
+            return this.northConnectorService.findById(duplicateNorthId).pipe(this.state.pendingUntilFinalization());
           }
           // otherwise, we are creating one
           else {
@@ -166,7 +166,7 @@ export class EditNorthComponent implements OnInit, CanComponentDeactivate {
           if (northConnector) {
             this.northType = northConnector.type;
           }
-          return this.northConnectorService.getNorthConnectorTypeManifest(this.northType);
+          return this.northConnectorService.getNorthManifest(this.northType);
         })
       )
       .subscribe(manifest => {
@@ -243,7 +243,7 @@ export class EditNorthComponent implements OnInit, CanComponentDeactivate {
           this.notificationService.success('north.updated', { name: command.name });
           this.form?.markAsPristine();
         }),
-        switchMap(() => this.northConnectorService.get(this.northConnector!.id))
+        switchMap(() => this.northConnectorService.findById(this.northConnector!.id))
       );
     } else {
       createOrUpdate = this.northConnectorService.create(command, this.duplicateId).pipe(
@@ -282,7 +282,7 @@ export class EditNorthComponent implements OnInit, CanComponentDeactivate {
       this.inMemorySubscriptions = subscriptions;
     } else {
       // When child signals backend update, refresh current connector view and in-memory cache
-      this.northConnectorService.get(this.northConnector!.id).subscribe(northConnector => {
+      this.northConnectorService.findById(this.northConnector!.id).subscribe(northConnector => {
         this.northConnector = JSON.parse(JSON.stringify(northConnector));
         this.inMemorySubscriptions = [...northConnector.subscriptions];
       });
@@ -294,7 +294,7 @@ export class EditNorthComponent implements OnInit, CanComponentDeactivate {
       this.inMemoryTransformersWithOptions = transformersWithOptions;
     } else {
       // When child signals backend update, refresh current connector view and in-memory cache
-      this.northConnectorService.get(this.northConnector!.id).subscribe(northConnector => {
+      this.northConnectorService.findById(this.northConnector!.id).subscribe(northConnector => {
         this.northConnector = JSON.parse(JSON.stringify(northConnector));
         this.inMemoryTransformersWithOptions = [...northConnector.transformers];
       });

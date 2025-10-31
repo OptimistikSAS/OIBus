@@ -1,12 +1,19 @@
 import { Page } from '../../../shared/model/types';
-import { LEVEL_FORMAT, LogSearchParam, PinoLog, Scope } from '../../../shared/model/logs.model';
+import { LogLevel, LogSearchParam, Scope, ScopeType } from '../../../shared/model/logs.model';
 import { Database } from 'better-sqlite3';
 import { DateTime } from 'luxon';
-import { ScopeType } from '../../../shared/model/engine.model';
-import { OIBusLog } from '../../model/logs.model';
+import { OIBusLog, PinoLog } from '../../model/logs.model';
 
 export const LOG_TABLE = 'logs';
 const PAGE_SIZE = 50;
+
+const LEVEL_FORMAT: Record<string, LogLevel> = {
+  '10': 'trace',
+  '20': 'debug',
+  '30': 'info',
+  '40': 'warn',
+  '50': 'error'
+};
 
 /**
  * Repository used for logs
@@ -109,8 +116,8 @@ export default class LogRepository {
   private toLog(result: Record<string, string>): OIBusLog {
     return {
       timestamp: result.timestamp,
-      level: result.level,
-      scopeType: result.scope_type,
+      level: result.level as LogLevel,
+      scopeType: result.scope_type as ScopeType,
       scopeId: result.scope_id || null,
       scopeName: result.scope_name || null,
       message: result.message

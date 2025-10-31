@@ -93,7 +93,7 @@ export class HistoryQueryListComponent implements OnInit {
       })
       .pipe(
         switchMap(() => {
-          return this.historyQueryService.deleteHistoryQuery(historyQuery.id);
+          return this.historyQueryService.delete(historyQuery.id);
         })
       )
       .subscribe(() => {
@@ -144,7 +144,7 @@ export class HistoryQueryListComponent implements OnInit {
   toggleHistoryQuery(query: HistoryQueryLightDTO, newStatus: HistoryQueryStatus) {
     if (newStatus === 'RUNNING') {
       this.historyQueryService
-        .startHistoryQuery(query.id)
+        .start(query.id)
         .pipe(
           this.states.get(query.id)!.pendingUntilFinalization(),
           switchMap(() => {
@@ -160,7 +160,7 @@ export class HistoryQueryListComponent implements OnInit {
         });
     } else {
       this.historyQueryService
-        .pauseHistoryQuery(query.id)
+        .pause(query.id)
         .pipe(
           this.states.get(query.id)!.pendingUntilFinalization(),
           switchMap(() => {

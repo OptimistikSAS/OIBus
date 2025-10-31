@@ -43,10 +43,10 @@ describe('LogService', () => {
     ]);
 
     service
-      .searchLogs({
+      .search({
         page: 0,
         messageContent: 'messageContent',
-        scopeTypes: ['myScopeType1', 'myScopeType2'],
+        scopeTypes: ['web-server', 'south'],
         scopeIds: ['id1', 'id2'],
         start: '2023-01-01T00:00:00.000Z',
         end: '2023-01-02T00:00:00.000Z',
@@ -56,7 +56,7 @@ describe('LogService', () => {
 
     http
       .expectOne({
-        url: '/api/logs?page=0&messageContent=messageContent&start=2023-01-01T00:00:00.000Z&end=2023-01-02T00:00:00.000Z&scopeTypes=myScopeType1&scopeTypes=myScopeType2&scopeIds=id1&scopeIds=id2&levels=info&levels=debug',
+        url: '/api/logs?page=0&messageContent=messageContent&start=2023-01-01T00:00:00.000Z&end=2023-01-02T00:00:00.000Z&scopeTypes=web-server,south&scopeIds=id1,id2&levels=info,debug',
         method: 'GET'
       })
       .flush(logs);
@@ -76,11 +76,11 @@ describe('LogService', () => {
       }
     ];
 
-    service.suggestByScopeName('name').subscribe(c => (expectedScopes = c));
+    service.suggestScopes('name').subscribe(c => (expectedScopes = c));
 
     http
       .expectOne({
-        url: '/api/scope-logs/suggestions?name=name',
+        url: '/api/logs/scopes/suggest?name=name',
         method: 'GET'
       })
       .flush(scopes);
@@ -98,7 +98,7 @@ describe('LogService', () => {
 
     http
       .expectOne({
-        url: '/api/scope-logs/id1',
+        url: '/api/logs/scopes/id1',
         method: 'GET'
       })
       .flush(scope);

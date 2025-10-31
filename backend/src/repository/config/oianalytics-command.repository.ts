@@ -24,7 +24,7 @@ export default class OIAnalyticsCommandRepository {
       .map(command => this.toOIBusCommand(command as Record<string, string>));
   }
 
-  search(searchParams: CommandSearchParam, page: number): Page<OIBusCommand> {
+  search(searchParams: CommandSearchParam): Page<OIBusCommand> {
     const queryParams = [];
     let whereClause = 'WHERE id IS NOT NULL';
     if (searchParams.types.length > 0) {
@@ -54,7 +54,7 @@ export default class OIAnalyticsCommandRepository {
                    LIMIT ${PAGE_SIZE} OFFSET ?;`;
     const results: Array<OIBusCommand> = this.database
       .prepare(query)
-      .all(...queryParams, PAGE_SIZE * page)
+      .all(...queryParams, PAGE_SIZE * searchParams.page)
       .map(command => this.toOIBusCommand(command as Record<string, string>));
     const totalElements = (
       this.database
@@ -69,13 +69,13 @@ export default class OIAnalyticsCommandRepository {
     return {
       content: results,
       size: PAGE_SIZE,
-      number: page,
+      number: searchParams.page,
       totalElements,
       totalPages
     };
   }
 
-  list(searchParams: CommandSearchParam): Array<OIBusCommand> {
+  list(searchParams: Omit<CommandSearchParam, 'page'>): Array<OIBusCommand> {
     const queryParams = [];
     let whereClause = 'WHERE id IS NOT NULL';
     if (searchParams.types.length > 0) {

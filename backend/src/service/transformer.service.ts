@@ -2,7 +2,7 @@ import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import { transformerSchema } from '../web-server/controllers/validators/oibus-validation-schema';
 import TransformerRepository from '../repository/config/transformer.repository';
 import { CustomTransformer, Transformer, TransformerWithOptions } from '../model/transformer.model';
-import { CustomTransformerCommand, TransformerDTO, TransformerSearchParam } from '../../shared/model/transformer.model';
+import { CustomTransformerCommandDTO, TransformerDTO, TransformerSearchParam } from '../../shared/model/transformer.model';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import { Page } from '../../shared/model/types';
 import { NorthConnectorEntity } from '../model/north-connector.model';
@@ -20,6 +20,8 @@ import { OIBusObjectAttribute } from '../../shared/model/form.model';
 import OIBusSetpointToModbusTransformer from './transformers/setpoint/oibus-setpoint-to-modbus-transformer';
 import OIBusSetpointToMQTTTransformer from './transformers/setpoint/oibus-setpoint-to-mqtt-transformer';
 import OIBusSetpointToOPCUATransformer from './transformers/setpoint/oibus-setpoint-to-opcua-transformer';
+import { NotFoundError } from '../model/types';
+import { ValidationError } from 'joi';
 
 export default class TransformerService {
   constructor(
@@ -36,13 +38,16 @@ export default class TransformerService {
     return this.transformerRepository.search(searchParams);
   }
 
-  findById(id: string): Transformer | null {
-    return this.transformerRepository.findById(id);
+  findById(transformerId: string): Transformer {
+    const transformer = this.transformerRepository.findById(transformerId);
+    if (!transformer) {
+      throw new NotFoundError(`Transformer "${transformerId}" not found`);
+    }
+    return transformer;
   }
 
-  async create(command: CustomTransformerCommand): Promise<CustomTransformer> {
+  async create(command: CustomTransformerCommandDTO): Promise<CustomTransformer> {
     await this.validator.validate(transformerSchema, command);
-
     const transformer = { type: 'custom' } as CustomTransformer;
     await copyTransformerCommandToTransformerEntity(transformer, command);
     this.transformerRepository.save(transformer);
@@ -50,37 +55,36 @@ export default class TransformerService {
     return transformer;
   }
 
-  async update(id: string, command: CustomTransformerCommand): Promise<void> {
+  async update(transformerId: string, command: CustomTransformerCommandDTO): Promise<void> {
     await this.validator.validate(transformerSchema, command);
-    const transformer = this.transformerRepository.findById(id);
+    const transformer = this.transformerRepository.findById(transformerId);
     if (!transformer) {
-      throw new Error(`Transformer ${id} not found`);
+      throw new NotFoundError(`Transformer "${transformerId}" not found`);
     }
     if (transformer.type === 'standard') {
-      throw new Error(`Cannot edit standard transformer ${id}`);
+      throw new ValidationError(`Cannot edit standard transformer "${transformerId}"`, [], null);
     }
     await copyTransformerCommandToTransformerEntity(transformer as CustomTransformer, command);
-
     this.transformerRepository.save(transformer);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
 
-  async delete(id: string): Promise<void> {
-    const transformer = this.transformerRepository.findById(id);
+  delete(transformerId: string): void {
+    const transformer = this.transformerRepository.findById(transformerId);
     if (!transformer) {
-      throw new Error(`Transformer ${id} not found`);
+      throw new NotFoundError(`Transformer "${transformerId}" not found`);
     }
     if (transformer.type === 'standard') {
-      throw new Error(`Cannot delete standard transformer ${id}`);
+      throw new ValidationError(`Cannot delete standard transformer "${transformerId}"`, [], null);
     }
-    this.transformerRepository.delete(id);
+    this.transformerRepository.delete(transformerId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
 }
 
 export const copyTransformerCommandToTransformerEntity = async (
   transformer: CustomTransformer,
-  command: CustomTransformerCommand
+  command: CustomTransformerCommandDTO
 ): Promise<void> => {
   transformer.name = command.name;
   transformer.description = command.description;

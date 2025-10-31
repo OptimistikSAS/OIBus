@@ -107,7 +107,7 @@ class TestComponent {
     if (items) {
       this.inMemoryItems = items;
     } else {
-      this._historyQueryService.get(this.historyQuery!.id).subscribe(historyQuery => {
+      this._historyQueryService.findById(this.historyQuery!.id).subscribe(historyQuery => {
         this.historyQuery!.items = historyQuery.items;
         this.historyQuery = JSON.parse(JSON.stringify(this.historyQuery)); // Used to force a refresh in a history query item list
       });
@@ -180,7 +180,7 @@ describe('HistoryQueryItemsComponent with saving changes directly', () => {
     historyQueryService.deleteItem.and.returnValue(of(undefined));
     historyQueryService.deleteAllItems.and.returnValue(of(undefined));
     historyQueryService.exportItems.and.returnValue(of(undefined));
-    historyQueryService.get.and.returnValue(of(testHistoryQuery));
+    historyQueryService.findById.and.returnValue(of(testHistoryQuery));
 
     confirmationService.confirm.and.returnValue(of(undefined));
 
@@ -220,7 +220,7 @@ describe('HistoryQueryItemsComponent with saving changes directly', () => {
   });
 
   it('should delete all', () => {
-    historyQueryService.get.and.returnValue(of({ ...testHistoryQuery, items: [] }));
+    historyQueryService.findById.and.returnValue(of({ ...testHistoryQuery, items: [] }));
 
     tester.deleteAllButton.click();
 
@@ -254,7 +254,7 @@ describe('HistoryQueryItemsComponent with saving changes directly', () => {
 
   it('should delete one item', () => {
     // mock API response to delete first item
-    historyQueryService.get.and.returnValue(of({ ...testHistoryQuery, items: testHistoryQuery.items.slice(1) }));
+    historyQueryService.findById.and.returnValue(of({ ...testHistoryQuery, items: testHistoryQuery.items.slice(1) }));
 
     tester.southItems[0].button('.delete-south-item')!.click();
 
@@ -270,7 +270,7 @@ describe('HistoryQueryItemsComponent with saving changes directly', () => {
     expect(tester.tableItemNames).toEqual(['item3', 'item1-copy', 'item1']);
 
     // mock API response to delete third item
-    historyQueryService.get.and.returnValue(of({ ...testHistoryQuery, items: testHistoryQuery.items.slice(0, 2) }));
+    historyQueryService.findById.and.returnValue(of({ ...testHistoryQuery, items: testHistoryQuery.items.slice(0, 2) }));
 
     tester.southItems[2].button('.delete-south-item')!.click();
 
@@ -309,7 +309,7 @@ describe('HistoryQueryItemsComponent with saving changes directly', () => {
     expect(tester.tableItemNames).toEqual(['item3']);
 
     // Delete the third item in the list
-    historyQueryService.get.and.returnValue(of({ ...testHistoryQuery, items: testHistoryQuery.items.slice(0, 2) }));
+    historyQueryService.findById.and.returnValue(of({ ...testHistoryQuery, items: testHistoryQuery.items.slice(0, 2) }));
     tester.southItems[0].button('.delete-south-item')!.click();
 
     expect(confirmationService.confirm).toHaveBeenCalledTimes(1);
@@ -379,7 +379,7 @@ describe('HistoryQueryItemsComponent without saving changes directly', () => {
     historyQueryService.deleteItem.and.returnValue(of(undefined));
     historyQueryService.deleteAllItems.and.returnValue(of(undefined));
     historyQueryService.exportItems.and.returnValue(of(undefined));
-    historyQueryService.get.and.returnValue(of(testHistoryQuery));
+    historyQueryService.findById.and.returnValue(of(testHistoryQuery));
 
     confirmationService.confirm.and.returnValue(of(undefined));
 
@@ -528,7 +528,7 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
       ]
     });
 
-    historyQueryService.get.and.returnValue(of(testHistoryQuery));
+    historyQueryService.findById.and.returnValue(of(testHistoryQuery));
     historyQueryService.checkImportItems.and.returnValue(
       of({
         items: [] as Array<HistoryQueryItemDTO<SouthItemSettings>>,
@@ -584,7 +584,6 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
 
       expect(historyQueryService.checkImportItems).toHaveBeenCalledWith(
         tester.componentInstance.manifest.id,
-        tester.componentInstance.historyQuery.id,
         jasmine.any(Array),
         mockFile,
         ','

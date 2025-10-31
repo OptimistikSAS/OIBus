@@ -25,13 +25,13 @@ describe('OibusCommandService', () => {
     const commands = toPage<OIBusCommandDTO>([{ id: '1' }] as Array<OIBusCommandDTO>);
 
     service
-      .searchCommands({ page: 0, types: ['update-version'], status: ['COMPLETED', 'CANCELLED'] })
+      .search({ page: 0, types: ['update-version'], status: ['COMPLETED', 'CANCELLED'], ack: undefined, start: undefined, end: undefined })
       .subscribe(c => (expectedCommands = c));
 
     http
       .expectOne({
         method: 'GET',
-        url: '/api/commands?page=0&types=update-version&status=COMPLETED&status=CANCELLED'
+        url: '/api/oianalytics/commands/search?page=0&types=update-version&status=COMPLETED&status=CANCELLED'
       })
       .flush(commands);
 
@@ -40,8 +40,8 @@ describe('OibusCommandService', () => {
 
   it('should delete a command', () => {
     let done = false;
-    service.deleteCommand({ id: 'id1' } as OIBusCommandDTO).subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'DELETE', url: '/api/commands/id1' });
+    service.delete({ id: 'id1' } as OIBusCommandDTO).subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'DELETE', url: '/api/oianalytics/commands/id1' });
     testRequest.flush(null);
     expect(done).toBe(true);
   });

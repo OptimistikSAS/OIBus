@@ -50,7 +50,7 @@ export class HistoryCacheContentComponent implements OnInit {
 
   refreshCacheFiles() {
     this.historyQueryService
-      .searchCacheContent(this.historyQuery().id, { start: null, end: null, nameContains: '' }, this.cacheType())
+      .searchCacheContent(this.historyQuery().id, { start: undefined, end: undefined, nameContains: undefined }, this.cacheType())
       .subscribe(cacheFiles => {
         this.cacheContentFiles = cacheFiles;
       });

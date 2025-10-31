@@ -83,10 +83,10 @@ describe('NorthDetailComponent', () => {
       ]
     });
 
-    northConnectorService.get.and.returnValue(of(northConnector));
-    northConnectorService.getNorthConnectorTypeManifest.and.returnValue(of(manifest));
-    northConnectorService.startNorth.and.returnValue(of(undefined));
-    northConnectorService.stopNorth.and.returnValue(of(undefined));
+    northConnectorService.findById.and.returnValue(of(northConnector));
+    northConnectorService.getNorthManifest.and.returnValue(of(manifest));
+    northConnectorService.start.and.returnValue(of(undefined));
+    northConnectorService.stop.and.returnValue(of(undefined));
     engineService.getInfo.and.returnValue(of(engineInfo));
     scanModeService.list.and.returnValue(of([]));
     certificateService.list.and.returnValue(of([]));
@@ -112,15 +112,15 @@ describe('NorthDetailComponent', () => {
   it('should stop north', () => {
     tester.detectChanges();
     tester.toggleButton.click();
-    expect(northConnectorService.stopNorth).toHaveBeenCalledWith(northConnector.id);
+    expect(northConnectorService.stop).toHaveBeenCalledWith(northConnector.id);
     expect(notificationService.success).toHaveBeenCalledWith('north.stopped', { name: northConnector.name });
   });
 
   it('should start north', () => {
-    northConnectorService.get.and.returnValue(of({ ...northConnector, enabled: false }));
+    northConnectorService.findById.and.returnValue(of({ ...northConnector, enabled: false }));
     tester.detectChanges();
     tester.toggleButton.click();
-    expect(northConnectorService.startNorth).toHaveBeenCalledWith(northConnector.id);
+    expect(northConnectorService.start).toHaveBeenCalledWith(northConnector.id);
     expect(notificationService.success).toHaveBeenCalledWith('north.started', { name: northConnector.name });
   });
 });

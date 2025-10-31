@@ -39,9 +39,14 @@ describe('Transformer Service', () => {
   it('search() should search transformers', () => {
     (transformerRepository.search as jest.Mock).mockReturnValueOnce(testData.transformers.list);
 
-    const result = service.search({});
+    const result = service.search({
+      type: undefined,
+      inputType: undefined,
+      outputType: undefined,
+      page: 0
+    });
 
-    expect(transformerRepository.search).toHaveBeenCalled();
+    expect(transformerRepository.search).toHaveBeenCalledWith({ type: undefined, inputType: undefined, outputType: undefined, page: 0 });
     expect(result).toEqual(testData.transformers.list);
   });
 
@@ -88,7 +93,7 @@ describe('Transformer Service', () => {
     (transformerRepository.findById as jest.Mock).mockReturnValueOnce(null);
 
     await expect(service.update(testData.transformers.list[0].id, testData.transformers.command)).rejects.toThrow(
-      new Error(`Transformer ${testData.transformers.list[0].id} not found`)
+      new Error(`Transformer "${testData.transformers.list[0].id}" not found`)
     );
 
     expect(transformerRepository.findById).toHaveBeenCalledWith(testData.transformers.list[0].id);
@@ -103,7 +108,7 @@ describe('Transformer Service', () => {
     (transformerRepository.findById as jest.Mock).mockReturnValueOnce(standardTransformer);
 
     await expect(service.update(standardTransformer.id, testData.transformers.command)).rejects.toThrow(
-      new Error(`Cannot edit standard transformer ${standardTransformer.id}`)
+      new Error(`Cannot edit standard transformer "${standardTransformer.id}"`)
     );
 
     expect(transformerRepository.findById).toHaveBeenCalledWith(standardTransformer.id);
@@ -122,8 +127,8 @@ describe('Transformer Service', () => {
   it('delete() should not delete if the transformer is not found', async () => {
     (transformerRepository.findById as jest.Mock).mockReturnValueOnce(null);
 
-    await expect(service.delete(testData.transformers.list[0].id)).rejects.toThrow(
-      new Error(`Transformer ${testData.transformers.list[0].id} not found`)
+    expect(() => service.delete(testData.transformers.list[0].id)).toThrow(
+      new Error(`Transformer "${testData.transformers.list[0].id}" not found`)
     );
 
     expect(transformerRepository.findById).toHaveBeenCalledWith(testData.transformers.list[0].id);
@@ -137,8 +142,8 @@ describe('Transformer Service', () => {
     } as StandardTransformer;
     (transformerRepository.findById as jest.Mock).mockReturnValueOnce(standardTransformer);
 
-    await expect(service.delete(standardTransformer.id)).rejects.toThrow(
-      new Error(`Cannot delete standard transformer ${standardTransformer.id}`)
+    expect(() => service.delete(standardTransformer.id)).toThrow(
+      new Error(`Cannot delete standard transformer "${standardTransformer.id}"`)
     );
 
     expect(transformerRepository.findById).toHaveBeenCalledWith(standardTransformer.id);

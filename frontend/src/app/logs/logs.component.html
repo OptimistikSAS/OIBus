@@ -4,7 +4,7 @@
       <div class="row mb-2">
         <div class="col d-flex">
           <div class="oib-block-title">
-            <img class="oib-title-image pt-2" src="/home/logs.svg" />
+            <img class="oib-title-image pt-2" ngSrc="/home/logs.svg" alt="Logo logs" height="30" width="30" />
           </div>
           <h1 class="oib-title" translate="logs.title"></h1>
         </div>
@@ -74,7 +74,7 @@
                           [editable]="false"
                           (selectItem)="selectScope($event)"
                         />
-                        <div [style.margin-top.rem]="selectedScopes.length ? -0.75 : 0">
+                        <div [style.margin-top.rem]="selectedScopes().length ? -0.75 : 0">
                           @for (scope of selectedScopes(); track scope.scopeId) {
                             <oib-pill type="secondary" [removable]="true" (removed)="removeScope(scope)"> {{ scope.scopeName }} </oib-pill>
                           }
@@ -155,7 +155,7 @@
               </tr>
             </thead>
             <tbody>
-              @for (log of logs().content; track log) {
+              @for (log of logs().content; track $index) {
                 <tr class="data">
                   <td>
                     <span style="display: block" [class]="getLevelClass(log.level)"></span>

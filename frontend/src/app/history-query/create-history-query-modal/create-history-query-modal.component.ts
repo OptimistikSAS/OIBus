@@ -72,9 +72,9 @@ export class CreateHistoryQueryModalComponent implements OnInit {
 
   ngOnInit() {
     combineLatest([
-      this.northConnectorService.getNorthConnectorTypes(),
+      this.northConnectorService.getNorthTypes(),
       this.northConnectorService.list(),
-      this.southConnectorService.getAvailableTypes(),
+      this.southConnectorService.getSouthTypes(),
       this.southConnectorService.list()
     ]).subscribe(([northTypes, northList, southTypes, southList]) => {
       this.northTypes = northTypes;

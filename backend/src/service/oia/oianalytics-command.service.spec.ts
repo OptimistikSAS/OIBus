@@ -110,6 +110,7 @@ describe('OIAnalytics Command Service', () => {
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.commands.oIBusList).mockReturnValue([]);
     (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock).mockReturnValue(testData.oIAnalytics.registration.completed);
     (getOIBusInfo as jest.Mock).mockReturnValue(testData.engine.oIBusInfo);
+    (logger.child as jest.Mock).mockReturnValue(logger);
 
     service = new OIAnalyticsCommandService(
       oIAnalyticsCommandRepository,
@@ -166,7 +167,7 @@ describe('OIAnalytics Command Service', () => {
     const page = createPageFromArray(testData.oIAnalytics.commands.oIBusList, 1, 25);
     (oIAnalyticsCommandRepository.search as jest.Mock).mockReturnValueOnce(page);
 
-    expect(service.search({ types: [], status: [] }, 1)).toEqual(page);
+    expect(service.search({ types: [], status: [], page: 0, ack: undefined, start: undefined, end: undefined })).toEqual(page);
   });
 
   it('should delete command', () => {
@@ -473,7 +474,7 @@ describe('OIAnalytics Command Service', () => {
 
     await service.executeCommand();
 
-    expect(oIAnalyticsRegistrationService.editConnectionSettings).toHaveBeenCalledWith({
+    expect(oIAnalyticsRegistrationService.editRegistrationSettings).toHaveBeenCalledWith({
       host: testData.oIAnalytics.registration.completed.host,
       useProxy: testData.oIAnalytics.registration.completed.useProxy,
       proxyUrl: testData.oIAnalytics.registration.completed.proxyUrl,
@@ -488,7 +489,7 @@ describe('OIAnalytics Command Service', () => {
         .messageRetryInterval,
       commandPermissions: testData.oIAnalytics.registration.completed.commandPermissions
     });
-    expect(oIAnalyticsRegistrationService.editConnectionSettings).toHaveBeenCalledTimes(1);
+    expect(oIAnalyticsRegistrationService.editRegistrationSettings).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       testData.oIAnalytics.commands.oIBusList[15].id,
       testData.constants.dates.FAKE_NOW,
@@ -540,7 +541,7 @@ describe('OIAnalytics Command Service', () => {
       registration
     );
 
-    expect(oIAnalyticsRegistrationService.editConnectionSettings).toHaveBeenCalledWith({
+    expect(oIAnalyticsRegistrationService.editRegistrationSettings).toHaveBeenCalledWith({
       host: registration.host,
       useProxy: registration.useProxy,
       proxyUrl: registration.proxyUrl,
@@ -555,7 +556,7 @@ describe('OIAnalytics Command Service', () => {
         .messageRetryInterval,
       commandPermissions: registration.commandPermissions
     });
-    expect(oIAnalyticsRegistrationService.editConnectionSettings).toHaveBeenCalledTimes(1);
+    expect(oIAnalyticsRegistrationService.editRegistrationSettings).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       testData.oIAnalytics.commands.oIBusList[15].id,
       testData.constants.dates.FAKE_NOW,
@@ -1017,8 +1018,7 @@ describe('OIAnalytics Command Service', () => {
     expect(southService.testSouth).toHaveBeenCalledWith(
       command.southConnectorId,
       command.commandContent.type,
-      command.commandContent.settings,
-      logger
+      command.commandContent.settings
     );
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       command.id,
@@ -1064,8 +1064,7 @@ describe('OIAnalytics Command Service', () => {
       command.commandContent.southCommand.settings,
       command.commandContent.itemCommand.settings,
       command.commandContent.testingSettings,
-      expect.anything(),
-      logger
+      expect.anything()
     );
     expect(service['completeTestItemCommand']).toHaveBeenCalledWith(command, {});
   });
@@ -1092,8 +1091,7 @@ describe('OIAnalytics Command Service', () => {
     expect(northService.testNorth).toHaveBeenCalledWith(
       command.northConnectorId,
       command.commandContent.type,
-      command.commandContent.settings,
-      logger
+      command.commandContent.settings
     );
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       command.id,
@@ -1313,8 +1311,7 @@ describe('OIAnalytics Command Service', () => {
       command.historyQueryId,
       command.commandContent.northType,
       command.northConnectorId,
-      command.commandContent.northSettings,
-      logger
+      command.commandContent.northSettings
     );
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       command.id,
@@ -1323,7 +1320,7 @@ describe('OIAnalytics Command Service', () => {
     );
   });
 
-  it('should execute south-connection-test command', async () => {
+  it('should execute test-history-query-south-connection command', async () => {
     const command: OIBusTestHistoryQuerySouthConnectionCommand = {
       id: 'testHistorySouthConnectorId',
       type: 'test-history-query-south-connection',
@@ -1353,8 +1350,7 @@ describe('OIAnalytics Command Service', () => {
       command.historyQueryId,
       command.commandContent.southType,
       command.southConnectorId,
-      command.commandContent.southSettings,
-      logger
+      command.commandContent.southSettings
     );
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       command.id,
@@ -1401,8 +1397,7 @@ describe('OIAnalytics Command Service', () => {
       command.commandContent.historyCommand.southSettings,
       command.commandContent.itemCommand.settings,
       command.commandContent.testingSettings,
-      expect.anything(),
-      logger
+      expect.anything()
     );
     expect(service['completeTestItemCommand']).toHaveBeenCalledWith(command, {});
   });
