@@ -191,6 +191,7 @@ export default class CleanupService {
     const messagesToRemove = this.oianalyticsMessageRepository.list({
       types: [],
       status: ['ERRORED', 'COMPLETED'],
+      start: undefined,
       end: DateTime.now()
         .minus({ hour: 24 * 7 })
         .toUTC()

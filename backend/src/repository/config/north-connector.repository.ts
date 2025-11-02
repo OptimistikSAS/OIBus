@@ -29,7 +29,7 @@ export default class NorthConnectorRepository {
       .map(result => this.toNorthConnectorLight(result as Record<string, string>));
   }
 
-  findNorthById<N extends NorthSettings>(id: string): NorthConnectorEntity<N> | null {
+  findNorthById(id: string): NorthConnectorEntity<NorthSettings> | null {
     const query =
       `SELECT id, name, type, description, enabled, settings, ` +
       `caching_trigger_schedule, caching_trigger_number_of_elements, caching_trigger_number_of_files, ` +
@@ -39,7 +39,7 @@ export default class NorthConnectorRepository {
       `FROM ${NORTH_CONNECTORS_TABLE} WHERE id = ?;`;
     const result = this.database.prepare(query).get(id);
     if (!result) return null;
-    return this.toNorthConnector<N>(result as Record<string, string | number>);
+    return this.toNorthConnector(result as Record<string, string | number>);
   }
 
   saveNorthConnector(north: NorthConnectorEntity<NorthSettings>): void {
@@ -242,14 +242,14 @@ export default class NorthConnectorRepository {
     };
   }
 
-  private toNorthConnector<N extends NorthSettings>(result: Record<string, string | number>): NorthConnectorEntity<N> {
+  private toNorthConnector(result: Record<string, string | number>): NorthConnectorEntity<NorthSettings> {
     return {
       id: result.id as string,
       name: result.name as string,
       type: result.type as OIBusNorthType,
       description: result.description as string,
       enabled: Boolean(result.enabled),
-      settings: JSON.parse(result.settings as string) as N,
+      settings: JSON.parse(result.settings as string) as NorthSettings,
       caching: {
         trigger: {
           scanMode: this.findScanModeForNorth(result.caching_trigger_schedule as string),

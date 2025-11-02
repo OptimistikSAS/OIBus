@@ -1,3 +1,5 @@
+import { Instant } from './types';
+
 /**
  * List of possible scope types.
  */
@@ -21,16 +23,6 @@ export type LogLevel = (typeof LOG_LEVELS)[number];
 /**
  * Data Transfer Object for a log entry.
  * Represents a log with its metadata, severity level, scope, and message content.
- *
- * @example
- * {
- *   "timestamp": "2023-10-31T12:34:56.789Z",
- *   "level": "error",
- *   "scopeType": "south",
- *   "scopeId": "connector123",
- *   "scopeName": "South Connector 1",
- *   "message": "Connection failed to host: timeout after 5s"
- * }
  */
 export interface LogDTO {
   /**
@@ -75,12 +67,6 @@ export interface LogDTO {
 /**
  * Represents a scope associated with log entries.
  * A scope can be a connector, service, or module.
- *
- * @example
- * {
- *   "scopeId": "connector123",
- *   "scopeName": "South Connector 1"
- * }
  */
 export interface Scope {
   /**
@@ -99,17 +85,6 @@ export interface Scope {
 /**
  * Parameters for searching or filtering log entries.
  * Used to query logs based on criteria such as time range, log level, or scope.
- *
- * @example
- * {
- *   "page": 1,
- *   "start": "2023-10-31T00:00:00Z",
- *   "end": "2023-10-31T23:59:59Z",
- *   "levels": ["error", "warn"],
- *   "scopeIds": ["connector123", "connector456"],
- *   "scopeTypes": ["south", "north"],
- *   "messageContent": "Connection failed"
- * }
  */
 export interface LogSearchParam {
   /**
@@ -123,14 +98,14 @@ export interface LogSearchParam {
    * Can be `undefined` to ignore the start time filter.
    * @example "2023-10-31T00:00:00Z"
    */
-  start: string | undefined;
+  start: Instant | undefined;
 
   /**
    * The end timestamp for the log search in ISO 8601 format.
    * Can be `undefined` to ignore the end time filter.
    * @example "2023-10-31T23:59:59Z"
    */
-  end: string | undefined;
+  end: Instant | undefined;
 
   /**
    * An array of log levels to filter by.

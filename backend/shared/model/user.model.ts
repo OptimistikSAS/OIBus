@@ -3,12 +3,6 @@ import { BaseEntity, Language, Timezone } from './types';
 /**
  * Parameters for searching users.
  * Used to query users based on login and pagination.
- *
- * @example
- * {
- *   "login": "john.doe",
- *   "page": 1
- * }
  */
 export interface UserSearchParam {
   /**
@@ -28,20 +22,6 @@ export interface UserSearchParam {
 /**
  * Data Transfer Object for a user.
  * Represents a user with their personal information, login credentials, preferences, and display name.
- *
- * @example
- * {
- *   "id": "aBc12F",
- *   "createdAt": "2023-01-01T00:00:00Z",
- *   "updatedAt": "2023-01-01T00:00:00Z",
- *   "login": "john.doe",
- *   "firstName": "John",
- *   "lastName": "Doe",
- *   "email": "john.doe@example.com",
- *   "language": "en",
- *   "timezone": "Europe/Paris",
- *   "friendlyName": "John Doe"
- * }
  */
 export interface UserDTO extends BaseEntity {
   /**
@@ -93,16 +73,6 @@ export interface UserDTO extends BaseEntity {
 /**
  * Command Data Transfer Object for creating or updating a user.
  * Used as the request body for user creation/update endpoints.
- *
- * @example
- * {
- *   "login": "john.doe",
- *   "firstName": "John",
- *   "lastName": "Doe",
- *   "email": "john.doe@example.com",
- *   "language": "en",
- *   "timezone": "Europe/Paris"
- * }
  */
 export interface UserCommandDTO {
   /**
@@ -148,12 +118,6 @@ export interface UserCommandDTO {
 /**
  * Command for changing a user's password.
  * Used as the request body for password change endpoints.
- *
- * @example
- * {
- *   "currentPassword": "oldPassword123",
- *   "newPassword": "newSecurePassword456"
- * }
  */
 export interface ChangePasswordCommand {
   /**

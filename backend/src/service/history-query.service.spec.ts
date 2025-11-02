@@ -284,8 +284,12 @@ describe('History Query service', () => {
   });
 
   it('should search items', async () => {
-    service.searchItems(testData.historyQueries.list[0].id, {});
-    expect(historyQueryRepository.searchHistoryQueryItems).toHaveBeenCalledWith(testData.historyQueries.list[0].id, {});
+    service.searchItems(testData.historyQueries.list[0].id, { name: undefined, enabled: undefined, page: 0 });
+    expect(historyQueryRepository.searchHistoryQueryItems).toHaveBeenCalledWith(testData.historyQueries.list[0].id, {
+      name: undefined,
+      enabled: undefined,
+      page: 0
+    });
   });
 
   it('should find an item', async () => {

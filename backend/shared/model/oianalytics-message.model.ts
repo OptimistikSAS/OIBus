@@ -9,21 +9,6 @@ export type OIAnalyticsMessageType = (typeof OIANALYTICS_MESSAGE_TYPES)[number];
 export interface OIAnalyticsMessageSearchParam {
   types: Array<OIAnalyticsMessageType>;
   status: Array<OIAnalyticsMessageStatus>;
-  start?: Instant;
-  end?: Instant;
+  start: Instant | undefined;
+  end: Instant | undefined;
 }
-
-// DTO used to update or create messages in OIBus and send messages to OIAnalytics
-interface BaseOIAnalyticsMessageCommandDTO {
-  type: OIAnalyticsMessageType;
-}
-
-export interface OIAnalyticsMessageFullConfigCommandDTO extends BaseOIAnalyticsMessageCommandDTO {
-  type: 'full-config';
-}
-
-export interface OIAnalyticsMessageSendHistoryQueriesCommandDTO extends BaseOIAnalyticsMessageCommandDTO {
-  type: 'history-queries';
-}
-
-export type OIAnalyticsMessageCommandDTO = OIAnalyticsMessageFullConfigCommandDTO | OIAnalyticsMessageSendHistoryQueriesCommandDTO;

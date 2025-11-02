@@ -3,13 +3,6 @@ import { BaseEntity } from './types';
 /**
  * Data Transfer Object for an IP filter.
  * Represents a configured IP filter with its address and description.
- *
- * @example
- * {
- *   "id": "aBc12F",
- *   "address": "192.168.1.1",
- *   "description": "Allow traffic from the local admin workstation"
- * }
  */
 export interface IPFilterDTO extends BaseEntity {
   /**
@@ -29,12 +22,6 @@ export interface IPFilterDTO extends BaseEntity {
 /**
  * Command DTO for creating or updating an IP filter.
  * Used as the request body for IP filter creation/update endpoints.
- *
- * @example
- * {
- *   "address": "192.168.1.1",
- *   "description": "Allow traffic from the local admin workstation"
- * }
  */
 export interface IPFilterCommandDTO {
   /**

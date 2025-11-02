@@ -1652,7 +1652,7 @@ const models: TsoaRoute.Models = {
     "SouthConnectorItemTestingSettings": {
         "dataType": "refObject",
         "properties": {
-            "history": {"dataType":"nestedObjectLiteral","nestedProperties":{"endTime":{"dataType":"string","required":true},"startTime":{"dataType":"string","required":true}}},
+            "history": {"dataType":"union","subSchemas":[{"dataType":"nestedObjectLiteral","nestedProperties":{"endTime":{"dataType":"string","required":true},"startTime":{"dataType":"string","required":true}}},{"dataType":"undefined"}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -3824,8 +3824,10 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsSouthConnectorController_searchItems: Record<string, TsoaRoute.ParameterSchema> = {
                 southId: {"in":"path","name":"southId","required":true,"dataType":"string"},
-                page: {"in":"query","name":"page","required":true,"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"undefined"}]},
                 name: {"in":"query","name":"name","required":true,"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},
+                scanModeId: {"in":"query","name":"scanModeId","required":true,"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},
+                enabled: {"in":"query","name":"enabled","required":true,"dataType":"union","subSchemas":[{"dataType":"boolean"},{"dataType":"undefined"}]},
+                page: {"default":0,"in":"query","name":"page","dataType":"double"},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
         };
         app.get('/api/south/:southId/items/search',
@@ -5986,6 +5988,7 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
         const argsHistoryQueryController_searchItems: Record<string, TsoaRoute.ParameterSchema> = {
                 historyId: {"in":"path","name":"historyId","required":true,"dataType":"string"},
                 name: {"in":"query","name":"name","required":true,"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},
+                enabled: {"in":"query","name":"enabled","required":true,"dataType":"union","subSchemas":[{"dataType":"boolean"},{"dataType":"undefined"}]},
                 page: {"default":0,"in":"query","name":"page","dataType":"double"},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
         };

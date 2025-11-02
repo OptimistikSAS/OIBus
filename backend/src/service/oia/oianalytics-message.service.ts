@@ -65,13 +65,13 @@ export default class OIAnalyticsMessageService {
     this.oIAnalyticsRegistrationService.registrationEvent.on('updated', () => {
       this.createFullConfigMessageIfNotPending();
       this.createFullHistoryQueriesMessageIfNotPending();
-      this.messagesQueue = this.oIAnalyticsMessageRepository.list({ status: ['PENDING'], types: [] });
+      this.messagesQueue = this.oIAnalyticsMessageRepository.list({ status: ['PENDING'], types: [], start: undefined, end: undefined });
       this.triggerRun.emit('next'); // trigger next if messages are already pending and not trigger by the creation function
     });
 
     this.createFullConfigMessageIfNotPending();
     this.createFullHistoryQueriesMessageIfNotPending();
-    this.messagesQueue = this.oIAnalyticsMessageRepository.list({ status: ['PENDING'], types: [] });
+    this.messagesQueue = this.oIAnalyticsMessageRepository.list({ status: ['PENDING'], types: [], start: undefined, end: undefined });
 
     this.triggerRun.on('next', async () => {
       if (!this.runProgress$) {
@@ -172,7 +172,9 @@ export default class OIAnalyticsMessageService {
     if (
       this.oIAnalyticsMessageRepository.list({
         status: ['PENDING'],
-        types: ['full-config']
+        types: ['full-config'],
+        start: undefined,
+        end: undefined
       }).length > 0
     ) {
       return;
@@ -194,7 +196,9 @@ export default class OIAnalyticsMessageService {
     if (
       this.oIAnalyticsMessageRepository.list({
         status: ['PENDING'],
-        types: ['history-queries']
+        types: ['history-queries'],
+        start: undefined,
+        end: undefined
       }).length > 0
     ) {
       return;

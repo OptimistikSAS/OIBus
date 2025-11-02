@@ -344,7 +344,7 @@ describe('SouthOPCUA', () => {
     south.getDAValues = jest.fn();
     south.getHAValues = jest.fn();
     const callback = jest.fn();
-    await south.testItem(configuration.items[3], {}, callback);
+    await south.testItem(configuration.items[3], { history: undefined }, callback);
     expect(initOPCUACertificateFolders).toHaveBeenCalledWith('opcua-test-randomUUID');
     expect(resolveNodeId).toHaveBeenCalledWith(configuration.items[0].settings.nodeId);
     expect(south.createSession).toHaveBeenCalledTimes(1);
@@ -360,7 +360,7 @@ describe('SouthOPCUA', () => {
     south.getDAValues = jest.fn();
     south.getHAValues = jest.fn();
     const callback = jest.fn();
-    await expect(south.testItem(configuration.items[3], {}, callback)).rejects.toThrow('get session error');
+    await expect(south.testItem(configuration.items[3], { history: undefined }, callback)).rejects.toThrow('get session error');
     expect(initOPCUACertificateFolders).toHaveBeenCalledWith('opcua-test-randomUUID');
     expect(fs.rm).toHaveBeenCalledWith(path.resolve('opcua-test-randomUUID'), { recursive: true, force: true });
     expect(south.createSession).toHaveBeenCalledTimes(1);

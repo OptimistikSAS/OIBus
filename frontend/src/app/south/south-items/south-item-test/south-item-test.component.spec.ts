@@ -588,7 +588,7 @@ describe('SouthItemTestComponent', () => {
       tester.testButton.click();
 
       expect(tester.testingSettingsForm?.valid).toBeFalse();
-      expect(tester.componentInstance.testedComponent.testingSettings).toEqual({});
+      expect(tester.componentInstance.testedComponent.testingSettings).toEqual({ history: undefined });
       expect(testCase.service.testItem).not.toHaveBeenCalled();
     });
   });

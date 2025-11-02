@@ -66,17 +66,6 @@ export type OIBusCommandStatus = (typeof OIBUS_COMMAND_STATUS)[number];
 /**
  * Base Data Transfer Object for an OIBus command.
  * Contains common properties for all OIBus commands.
- *
- * @example
- * {
- *   "id": "cmd123",
- *   "type": "update-version",
- *   "status": "COMPLETED",
- *   "ack": true,
- *   "retrievedDate": "2023-10-31T12:34:56.789Z",
- *   "completedDate": "2023-10-31T12:35:56.789Z",
- *   "result": "Success"
- * }
  */
 export interface BaseOIBusCommandDTO {
   /**
@@ -87,13 +76,11 @@ export interface BaseOIBusCommandDTO {
 
   /**
    * The type of the command.
-   * @example "update-version"
    */
   type: OIBusCommandType;
 
   /**
    * The current status of the command.
-   * @example "COMPLETED"
    */
   status: OIBusCommandStatus;
 
@@ -124,23 +111,6 @@ export interface BaseOIBusCommandDTO {
 
 /**
  * Command DTO for updating the OIBus version.
- *
- * @example
- * {
- *   "id": "cmd123",
- *   "type": "update-version",
- *   "status": "RETRIEVED",
- *   "ack": false,
- *   "retrievedDate": null,
- *   "completedDate": null,
- *   "result": null,
- *   "commandContent": {
- *     "version": "3.7.0",
- *     "assetId": "asset123",
- *     "updateLauncher": true,
- *     "backupFolders": "/backup"
- *   }
- * }
  */
 export interface OIBusUpdateVersionCommandDTO extends BaseOIBusCommandDTO {
   /**
@@ -180,18 +150,6 @@ export interface OIBusUpdateVersionCommandDTO extends BaseOIBusCommandDTO {
 
 /**
  * Command DTO for restarting the engine.
- *
- * @example
- * {
- *   "id": "cmd123",
- *   "type": "restart-engine",
- *   "status": "RETRIEVED",
- *   "ack": false,
- *   "retrievedDate": null,
- *   "completedDate": null,
- *   "result": null,
- *   "targetVersion": "3.7.0"
- * }
  */
 export interface OIBusRestartEngineCommandDTO extends BaseOIBusCommandDTO {
   /**
@@ -208,18 +166,6 @@ export interface OIBusRestartEngineCommandDTO extends BaseOIBusCommandDTO {
 
 /**
  * Command DTO for regenerating cipher keys.
- *
- * @example
- * {
- *   "id": "cmd123",
- *   "type": "regenerate-cipher-keys",
- *   "status": "RETRIEVED",
- *   "ack": false,
- *   "retrievedDate": null,
- *   "completedDate": null,
- *   "result": null,
- *   "targetVersion": "3.7.0"
- * }
  */
 export interface OIBusRegenerateCipherKeysCommandDTO extends BaseOIBusCommandDTO {
   /**
@@ -236,31 +182,6 @@ export interface OIBusRegenerateCipherKeysCommandDTO extends BaseOIBusCommandDTO
 
 /**
  * Command DTO for updating engine settings.
- *
- * @example
- * {
- *   "id": "cmd123",
- *   "type": "update-engine-settings",
- *   "status": "RETRIEVED",
- *   "ack": false,
- *   "retrievedDate": null,
- *   "completedDate": null,
- *   "result": null,
- *   "targetVersion": "3.7.0",
- *   "commandContent": {
- *     "name": "Engine 1",
- *     "port": 8080,
- *     "proxyEnabled": false,
- *     "proxyPort": null,
- *     "logParameters": {
- *       "console": { "level": "info" },
- *       "file": { "level": "debug", "maxFileSize": 10485760, "numberOfFiles": 5 },
- *       "database": { "level": "warn", "maxNumberOfLogs": 10000 },
- *       "loki": { "level": "error", "interval": 60, "address": "http://loki:3100", "username": "user", "password": "pass" },
- *       "oia": { "level": "info", "interval": 60 }
- *     }
- *   }
- * }
  */
 export interface OIBusUpdateEngineSettingsCommandDTO extends BaseOIBusCommandDTO {
   /**
@@ -282,23 +203,6 @@ export interface OIBusUpdateEngineSettingsCommandDTO extends BaseOIBusCommandDTO
 
 /**
  * Command DTO for updating registration settings.
- *
- * @example
- * {
- *   "id": "cmd123",
- *   "type": "update-registration-settings",
- *   "status": "RETRIEVED",
- *   "ack": false,
- *   "retrievedDate": null,
- *   "completedDate": null,
- *   "result": null,
- *   "targetVersion": "3.7.0",
- *   "commandContent": {
- *     "commandRefreshInterval": 60,
- *     "commandRetryInterval": 10,
- *     "messageRetryInterval": 10
- *   }
- * }
  */
 export interface OIBusUpdateRegistrationSettingsCommandDTO extends BaseOIBusCommandDTO {
   /**
@@ -338,23 +242,6 @@ export interface OIBusUpdateRegistrationSettingsCommandDTO extends BaseOIBusComm
 
 /**
  * Command DTO for creating a scan mode.
- *
- * @example
- * {
- *   "id": "cmd123",
- *   "type": "create-scan-mode",
- *   "status": "RETRIEVED",
- *   "ack": false,
- *   "retrievedDate": null,
- *   "completedDate": null,
- *   "result": null,
- *   "targetVersion": "3.7.0",
- *   "commandContent": {
- *     "name": "Daily Scan",
- *     "description": "Scans for new data every day at midnight",
- *     "cron": "0 0 * * *"
- *   }
- * }
  */
 export interface OIBusCreateScanModeCommandDTO extends BaseOIBusCommandDTO {
   /**
@@ -376,24 +263,6 @@ export interface OIBusCreateScanModeCommandDTO extends BaseOIBusCommandDTO {
 
 /**
  * Command DTO for updating a scan mode.
- *
- * @example
- * {
- *   "id": "cmd123",
- *   "type": "update-scan-mode",
- *   "status": "RETRIEVED",
- *   "ack": false,
- *   "retrievedDate": null,
- *   "completedDate": null,
- *   "result": null,
- *   "targetVersion": "3.7.0",
- *   "scanModeId": "scan123",
- *   "commandContent": {
- *     "name": "Daily Scan",
- *     "description": "Scans for new data every day at midnight",
- *     "cron": "0 0 * * *"
- *   }
- * }
  */
 export interface OIBusUpdateScanModeCommandDTO extends BaseOIBusCommandDTO {
   /**
@@ -421,19 +290,6 @@ export interface OIBusUpdateScanModeCommandDTO extends BaseOIBusCommandDTO {
 
 /**
  * Command DTO for deleting a scan mode.
- *
- * @example
- * {
- *   "id": "cmd123",
- *   "type": "delete-scan-mode",
- *   "status": "RETRIEVED",
- *   "ack": false,
- *   "retrievedDate": null,
- *   "completedDate": null,
- *   "result": null,
- *   "targetVersion": "3.7.0",
- *   "scanModeId": "scan123"
- * }
  */
 export interface OIBusDeleteScanModeCommandDTO extends BaseOIBusCommandDTO {
   /**
@@ -456,22 +312,6 @@ export interface OIBusDeleteScanModeCommandDTO extends BaseOIBusCommandDTO {
 
 /**
  * Command DTO for creating an IP filter.
- *
- * @example
- * {
- *   "id": "cmd123",
- *   "type": "create-ip-filter",
- *   "status": "RETRIEVED",
- *   "ack": false,
- *   "retrievedDate": null,
- *   "completedDate": null,
- *   "result": null,
- *   "targetVersion": "3.7.0",
- *   "commandContent": {
- *     "address": "192.168.1.1",
- *     "description": "Allow traffic from the local admin workstation"
- *   }
- * }
  */
 export interface OIBusCreateIPFilterCommandDTO extends BaseOIBusCommandDTO {
   /**
@@ -493,23 +333,6 @@ export interface OIBusCreateIPFilterCommandDTO extends BaseOIBusCommandDTO {
 
 /**
  * Command DTO for updating an IP filter.
- *
- * @example
- * {
- *   "id": "cmd123",
- *   "type": "update-ip-filter",
- *   "status": "RETRIEVED",
- *   "ack": false,
- *   "retrievedDate": null,
- *   "completedDate": null,
- *   "result": null,
- *   "targetVersion": "3.7.0",
- *   "ipFilterId": "filter123",
- *   "commandContent": {
- *     "address": "192.168.1.1",
- *     "description": "Allow traffic from the local admin workstation"
- *   }
- * }
  */
 export interface OIBusUpdateIPFilterCommandDTO extends BaseOIBusCommandDTO {
   /**
@@ -537,19 +360,6 @@ export interface OIBusUpdateIPFilterCommandDTO extends BaseOIBusCommandDTO {
 
 /**
  * Command DTO for deleting an IP filter.
- *
- * @example
- * {
- *   "id": "cmd123",
- *   "type": "delete-ip-filter",
- *   "status": "RETRIEVED",
- *   "ack": false,
- *   "retrievedDate": null,
- *   "completedDate": null,
- *   "result": null,
- *   "targetVersion": "3.7.0",
- *   "ipFilterId": "filter123"
- * }
  */
 export interface OIBusDeleteIPFilterCommandDTO extends BaseOIBusCommandDTO {
   /**
@@ -572,32 +382,6 @@ export interface OIBusDeleteIPFilterCommandDTO extends BaseOIBusCommandDTO {
 
 /**
  * Command DTO for creating a certificate.
- *
- * @example
- * {
- *   "id": "cmd123",
- *   "type": "create-certificate",
- *   "status": "RETRIEVED",
- *   "ack": false,
- *   "retrievedDate": null,
- *   "completedDate": null,
- *   "result": null,
- *   "targetVersion": "3.7.0",
- *   "commandContent": {
- *     "name": "Server SSL Certificate",
- *     "description": "SSL certificate for securing server communications",
- *     "regenerateCertificate": false,
- *     "options": {
- *       "commonName": "example.com",
- *       "countryName": "US",
- *       "stateOrProvinceName": "California",
- *       "localityName": "San Francisco",
- *       "organizationName": "Example Inc.",
- *       "keySize": 2048,
- *       "daysBeforeExpiry": 365
- *     }
- *   }
- * }
  */
 export interface OIBusCreateCertificateCommandDTO extends BaseOIBusCommandDTO {
   /**
@@ -619,33 +403,6 @@ export interface OIBusCreateCertificateCommandDTO extends BaseOIBusCommandDTO {
 
 /**
  * Command DTO for updating a certificate.
- *
- * @example
- * {
- *   "id": "cmd123",
- *   "type": "update-certificate",
- *   "status": "RETRIEVED",
- *   "ack": false,
- *   "retrievedDate": null,
- *   "completedDate": null,
- *   "result": null,
- *   "targetVersion": "3.7.0",
- *   "certificateId": "cert123",
- *   "commandContent": {
- *     "name": "Server SSL Certificate",
- *     "description": "SSL certificate for securing server communications",
- *     "regenerateCertificate": false,
- *     "options": {
- *       "commonName": "example.com",
- *       "countryName": "US",
- *       "stateOrProvinceName": "California",
- *       "localityName": "San Francisco",
- *       "organizationName": "Example Inc.",
- *       "keySize": 2048,
- *       "daysBeforeExpiry": 365
- *     }
- *   }
- * }
  */
 export interface OIBusUpdateCertificateCommandDTO extends BaseOIBusCommandDTO {
   /**
@@ -673,19 +430,6 @@ export interface OIBusUpdateCertificateCommandDTO extends BaseOIBusCommandDTO {
 
 /**
  * Command DTO for deleting a certificate.
- *
- * @example
- * {
- *   "id": "cmd123",
- *   "type": "delete-certificate",
- *   "status": "RETRIEVED",
- *   "ack": false,
- *   "retrievedDate": null,
- *   "completedDate": null,
- *   "result": null,
- *   "targetVersion": "3.7.0",
- *   "certificateId": "cert123"
- * }
  */
 export interface OIBusDeleteCertificateCommandDTO extends BaseOIBusCommandDTO {
   /**
@@ -708,26 +452,6 @@ export interface OIBusDeleteCertificateCommandDTO extends BaseOIBusCommandDTO {
 
 /**
  * Command DTO for creating a south connector.
- *
- * @example
- * {
- *   "id": "cmd123",
- *   "type": "create-south",
- *   "status": "RETRIEVED",
- *   "ack": false,
- *   "retrievedDate": null,
- *   "completedDate": null,
- *   "result": null,
- *   "targetVersion": "3.7.0",
- *   "commandContent": {
- *     "name": "South Connector 1",
- *     "description": "Connector for south data source",
- *     "type": "opcua",
- *     "enabled": true,
- *     "settings": TODO,
- *     "items": []
- *   }
- * }
  */
 export interface OIBusCreateSouthConnectorCommandDTO extends BaseOIBusCommandDTO {
   /**
@@ -749,27 +473,6 @@ export interface OIBusCreateSouthConnectorCommandDTO extends BaseOIBusCommandDTO
 
 /**
  * Command DTO for updating a south connector.
- *
- * @example
- * {
- *   "id": "cmd123",
- *   "type": "update-south",
- *   "status": "RETRIEVED",
- *   "ack": false,
- *   "retrievedDate": null,
- *   "completedDate": null,
- *   "result": null,
- *   "targetVersion": "3.7.0",
- *   "southConnectorId": "south123",
- *   "commandContent": {
- *     "name": "South Connector 1",
- *     "description": "Connector for south data source",
- *     "type": "opcua",
- *     "enabled": true,
- *     "settings": {}, // TODO
- *     "items": []
- *   }
- * }
  */
 export interface OIBusUpdateSouthConnectorCommandDTO extends BaseOIBusCommandDTO {
   /**
@@ -797,19 +500,6 @@ export interface OIBusUpdateSouthConnectorCommandDTO extends BaseOIBusCommandDTO
 
 /**
  * Command DTO for deleting a south connector.
- *
- * @example
- * {
- *   "id": "cmd123",
- *   "type": "delete-south",
- *   "status": "RETRIEVED",
- *   "ack": false,
- *   "retrievedDate": null,
- *   "completedDate": null,
- *   "result": null,
- *   "targetVersion": "3.7.0",
- *   "southConnectorId": "south123"
- * }
  */
 export interface OIBusDeleteSouthConnectorCommandDTO extends BaseOIBusCommandDTO {
   /**
@@ -832,19 +522,6 @@ export interface OIBusDeleteSouthConnectorCommandDTO extends BaseOIBusCommandDTO
 
 /**
  * Command DTO for testing a south connector connection.
- *
- * @example
- * {
- *   "id": "cmd123",
- *   "type": "test-south-connection",
- *   "status": "RETRIEVED",
- *   "ack": false,
- *   "retrievedDate": null,
- *   "completedDate": null,
- *   "result": null,
- *   "targetVersion": "3.7.0",
- *   "southConnectorId": "south123"
- * }
  */
 export interface OIBusTestSouthConnectorCommandDTO extends BaseOIBusCommandDTO {
   /**
@@ -867,20 +544,6 @@ export interface OIBusTestSouthConnectorCommandDTO extends BaseOIBusCommandDTO {
 
 /**
  * Command DTO for testing a south connector item.
- *
- * @example
- * {
- *   "id": "cmd123",
- *   "type": "test-south-item",
- *   "status": "RETRIEVED",
- *   "ack": false,
- *   "retrievedDate": null,
- *   "completedDate": null,
- *   "result": null,
- *   "targetVersion": "3.7.0",
- *   "southConnectorId": "south123",
- *   "itemId": "item456"
- * }
  */
 export interface OIBusTestSouthConnectorItemCommandDTO extends BaseOIBusCommandDTO {
   /**
@@ -909,25 +572,6 @@ export interface OIBusTestSouthConnectorItemCommandDTO extends BaseOIBusCommandD
 
 /**
  * Command DTO for creating a north connector.
- *
- * @example
- * {
- *   "id": "cmd123",
- *   "type": "create-north",
- *   "status": "RETRIEVED",
- *   "ack": false,
- *   "retrievedDate": null,
- *   "completedDate": null,
- *   "result": null,
- *   "targetVersion": "3.7.0",
- *   "commandContent": {
- *     "name": "North Connector 1",
- *     "description": "Connector for north data destination",
- *     "type": "http",
- *     "enabled": true,
- *     "settings": {} // TODO
- *   }
- * }
  */
 export interface OIBusCreateNorthConnectorCommandDTO extends BaseOIBusCommandDTO {
   /**
@@ -949,26 +593,6 @@ export interface OIBusCreateNorthConnectorCommandDTO extends BaseOIBusCommandDTO
 
 /**
  * Command DTO for updating a north connector.
- *
- * @example
- * {
- *   "id": "cmd123",
- *   "type": "update-north",
- *   "status": "RETRIEVED",
- *   "ack": false,
- *   "retrievedDate": null,
- *   "completedDate": null,
- *   "result": null,
- *   "targetVersion": "3.7.0",
- *   "northConnectorId": "north123",
- *   "commandContent": {
- *     "name": "North Connector 1",
- *     "description": "Connector for north data destination",
- *     "type": "http",
- *     "enabled": true,
- *     "settings": {} // TODO
- *   }
- * }
  */
 export interface OIBusUpdateNorthConnectorCommandDTO extends BaseOIBusCommandDTO {
   /**
@@ -996,19 +620,6 @@ export interface OIBusUpdateNorthConnectorCommandDTO extends BaseOIBusCommandDTO
 
 /**
  * Command DTO for deleting a north connector.
- *
- * @example
- * {
- *   "id": "cmd123",
- *   "type": "delete-north",
- *   "status": "RETRIEVED",
- *   "ack": false,
- *   "retrievedDate": null,
- *   "completedDate": null,
- *   "result": null,
- *   "targetVersion": "3.7.0",
- *   "northConnectorId": "north123"
- * }
  */
 export interface OIBusDeleteNorthConnectorCommandDTO extends BaseOIBusCommandDTO {
   /**
@@ -1031,19 +642,6 @@ export interface OIBusDeleteNorthConnectorCommandDTO extends BaseOIBusCommandDTO
 
 /**
  * Command DTO for testing a north connector connection.
- *
- * @example
- * {
- *   "id": "cmd123",
- *   "type": "test-north-connection",
- *   "status": "RETRIEVED",
- *   "ack": false,
- *   "retrievedDate": null,
- *   "completedDate": null,
- *   "result": null,
- *   "targetVersion": "3.7.0",
- *   "northConnectorId": "north123"
- * }
  */
 export interface OIBusTestNorthConnectorCommandDTO extends BaseOIBusCommandDTO {
   /**
@@ -1066,24 +664,6 @@ export interface OIBusTestNorthConnectorCommandDTO extends BaseOIBusCommandDTO {
 
 /**
  * Command DTO for creating or updating south connector items from CSV.
- *
- * @example
- * {
- *   "id": "cmd123",
- *   "type": "create-or-update-south-items-from-csv",
- *   "status": "RETRIEVED",
- *   "ack": false,
- *   "retrievedDate": null,
- *   "completedDate": null,
- *   "result": null,
- *   "targetVersion": "3.7.0",
- *   "southConnectorId": "south123",
- *   "commandContent": {
- *     "deleteItemsNotPresent": false,
- *     "csvContent": "id,name,address\n1,Item 1,Address 1",
- *     "delimiter": ","
- *   }
- * }
  */
 export interface OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommandDTO extends BaseOIBusCommandDTO {
   /**
@@ -1129,31 +709,6 @@ export interface OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommandDTO extends
 
 /**
  * Command DTO for creating a history query.
- *
- * @example
- * {
- *   "id": "cmd123",
- *   "type": "create-history-query",
- *   "status": "RETRIEVED",
- *   "ack": false,
- *   "retrievedDate": null,
- *   "completedDate": null,
- *   "result": null,
- *   "targetVersion": "3.7.0",
- *   "commandContent": {
- *     "name": "History Query 1",
- *     "description": "Query for historical data",
- *     "enabled": true,
- *     "startDate": "2023-01-01T00:00:00Z",
- *     "endDate": "2023-01-31T23:59:59Z",
- *     "interval": "PT1H",
- *     "southType": "opcua",
- *     "northType": "http",
- *     "southSettings": {}, // TODO
- *     "northSettings": {}, // TODO
- *     "items": []
- *   }
- * }
  */
 export interface OIBusCreateHistoryQueryCommandDTO extends BaseOIBusCommandDTO {
   /**
@@ -1175,35 +730,6 @@ export interface OIBusCreateHistoryQueryCommandDTO extends BaseOIBusCommandDTO {
 
 /**
  * Command DTO for updating a history query.
- *
- * @example
- * {
- *   "id": "cmd123",
- *   "type": "update-history-query",
- *   "status": "RETRIEVED",
- *   "ack": false,
- *   "retrievedDate": null,
- *   "completedDate": null,
- *   "result": null,
- *   "targetVersion": "3.7.0",
- *   "historyQueryId": "history123",
- *   "commandContent": {
- *     "resetCache": false,
- *     "historyQuery": {
- *       "name": "History Query 1",
- *       "description": "Query for historical data",
- *       "enabled": true,
- *       "startDate": "2023-01-01T00:00:00Z",
- *       "endDate": "2023-01-31T23:59:59Z",
- *       "interval": "PT1H",
- *       "southType": "opcua",
- *       "northType": "http",
- *       "southSettings": {}, // TODO
- *       "northSettings": {}, // TODO
- *       "items": []
- *     }
- *   }
- * }
  */
 export interface OIBusUpdateHistoryQueryCommandDTO extends BaseOIBusCommandDTO {
   /**
@@ -1242,19 +768,6 @@ export interface OIBusUpdateHistoryQueryCommandDTO extends BaseOIBusCommandDTO {
 
 /**
  * Command DTO for deleting a history query.
- *
- * @example
- * {
- *   "id": "cmd123",
- *   "type": "delete-history-query",
- *   "status": "RETRIEVED",
- *   "ack": false,
- *   "retrievedDate": null,
- *   "completedDate": null,
- *   "result": null,
- *   "targetVersion": "3.7.0",
- *   "historyQueryId": "history123"
- * }
  */
 export interface OIBusDeleteHistoryQueryCommandDTO extends BaseOIBusCommandDTO {
   /**
@@ -1277,33 +790,6 @@ export interface OIBusDeleteHistoryQueryCommandDTO extends BaseOIBusCommandDTO {
 
 /**
  * Command DTO for testing a history query north connection.
- *
- * @example
- * {
- *   "id": "cmd123",
- *   "type": "test-history-query-north-connection",
- *   "status": "RETRIEVED",
- *   "ack": false,
- *   "retrievedDate": null,
- *   "completedDate": null,
- *   "result": null,
- *   "targetVersion": "3.7.0",
- *   "historyQueryId": "history123",
- *   "northConnectorId": "north123",
- *   "commandContent": {
- *     "name": "History Query 1",
- *     "description": "Query for historical data",
- *     "enabled": true,
- *     "startDate": "2023-01-01T00:00:00Z",
- *     "endDate": "2023-01-31T23:59:59Z",
- *     "interval": "PT1H",
- *     "southType": "opcua",
- *     "northType": "http",
- *     "southSettings": {}, // TODO
- *     "northSettings": {}, // TODO
- *     "items": []
- *   }
- * }
  */
 export interface OIBusTestHistoryQueryNorthConnectionCommandDTO extends BaseOIBusCommandDTO {
   /**
@@ -1337,33 +823,6 @@ export interface OIBusTestHistoryQueryNorthConnectionCommandDTO extends BaseOIBu
 
 /**
  * Command DTO for testing a history query south connection.
- *
- * @example
- * {
- *   "id": "cmd123",
- *   "type": "test-history-query-south-connection",
- *   "status": "RETRIEVED",
- *   "ack": false,
- *   "retrievedDate": null,
- *   "completedDate": null,
- *   "result": null,
- *   "targetVersion": "3.7.0",
- *   "historyQueryId": "history123",
- *   "southConnectorId": "south123",
- *   "commandContent": {
- *     "name": "History Query 1",
- *     "description": "Query for historical data",
- *     "enabled": true,
- *     "startDate": "2023-01-01T00:00:00Z",
- *     "endDate": "2023-01-31T23:59:59Z",
- *     "interval": "PT1H",
- *     "southType": "opcua",
- *     "northType": "http",
- *     "southSettings": {}, // TODO
- *     "northSettings": {}, // TODO
- *     "items": []
- *   }
- * }
  */
 export interface OIBusTestHistoryQuerySouthConnectionCommandDTO extends BaseOIBusCommandDTO {
   /**
@@ -1397,45 +856,6 @@ export interface OIBusTestHistoryQuerySouthConnectionCommandDTO extends BaseOIBu
 
 /**
  * Command DTO for testing a history query south item.
- *
- * @example
- * {
- *   "id": "cmd123",
- *   "type": "test-history-query-south-item",
- *   "status": "RETRIEVED",
- *   "ack": false,
- *   "retrievedDate": null,
- *   "completedDate": null,
- *   "result": null,
- *   "targetVersion": "3.7.0",
- *   "historyQueryId": "history123",
- *   "southConnectorId": "south123",
- *   "itemId": "item456",
- *   "commandContent": {
- *     "historyCommand": {
- *       "name": "History Query 1",
- *       "description": "Query for historical data",
- *       "enabled": true,
- *       "startDate": "2023-01-01T00:00:00Z",
- *       "endDate": "2023-01-31T23:59:59Z",
- *       "interval": "PT1H",
- *       "southType": "opcua",
- *       "northType": "http",
- *       "southSettings": {}, // TODO
- *       "northSettings": {}, // TODO
- *       "items": []
- *     },
- *     "itemCommand": {
- *       "name": "Item 1",
- *       "description": "Item for historical data",
- *       "settings": {} // TODO
- *     },
- *     "testingSettings": {
- *       "startDate": "2023-01-01T00:00:00Z",
- *       "endDate": "2023-01-01T23:59:59Z"
- *     }
- *   }
- * }
  */
 export interface OIBusTestHistoryQuerySouthItemCommandDTO extends BaseOIBusCommandDTO {
   /**
@@ -1490,24 +910,6 @@ export interface OIBusTestHistoryQuerySouthItemCommandDTO extends BaseOIBusComma
 
 /**
  * Command DTO for creating or updating history query south items from CSV.
- *
- * @example
- * {
- *   "id": "cmd123",
- *   "type": "create-or-update-history-query-south-items-from-csv",
- *   "status": "RETRIEVED",
- *   "ack": false,
- *   "retrievedDate": null,
- *   "completedDate": null,
- *   "result": null,
- *   "targetVersion": "3.7.0",
- *   "historyQueryId": "history123",
- *   "commandContent": {
- *     "deleteItemsNotPresent": false,
- *     "csvContent": "id,name,address\r\n1,Item 1,Address 1",
- *     "delimiter": ","
- *   }
- * }
  */
 export interface OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommandDTO extends BaseOIBusCommandDTO {
   /**
@@ -1553,22 +955,6 @@ export interface OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommandDTO exte
 
 /**
  * Command DTO for updating a history query status.
- *
- * @example
- * {
- *   "id": "cmd123",
- *   "type": "update-history-query-status",
- *   "status": "RETRIEVED",
- *   "ack": false,
- *   "retrievedDate": null,
- *   "completedDate": null,
- *   "result": null,
- *   "targetVersion": "3.7.0",
- *   "historyQueryId": "history123",
- *   "commandContent": {
- *     "historyQueryStatus": "RUNNING"
- *   }
- * }
  */
 export interface OIBusUpdateHistoryQueryStatusCommandDTO extends BaseOIBusCommandDTO {
   /**
@@ -1602,25 +988,6 @@ export interface OIBusUpdateHistoryQueryStatusCommandDTO extends BaseOIBusComman
 
 /**
  * Command DTO for sending setpoints.
- *
- * @example
- * {
- *   "id": "cmd123",
- *   "type": "setpoint",
- *   "status": "RETRIEVED",
- *   "ack": false,
- *   "retrievedDate": null,
- *   "completedDate": null,
- *   "result": null,
- *   "targetVersion": "3.7.0",
- *   "northConnectorId": "north123",
- *   "commandContent": [
- *     {
- *       "reference": "setpoint1",
- *       "value": "100"
- *     }
- *   ]
- * }
  */
 export interface OIBusSetpointCommandDTO extends BaseOIBusCommandDTO {
   /**
@@ -1698,16 +1065,6 @@ export type OIBusCommandDTO =
 
 /**
  * Parameters for searching commands.
- *
- * @example
- * {
- *   "page": 1,
- *   "types": ["update-version", "restart-engine"],
- *   "status": ["RETRIEVED", "RUNNING"],
- *   "ack": true,
- *   "start": "2023-10-31T00:00:00Z",
- *   "end": "2023-10-31T23:59:59Z"
- * }
  */
 export interface CommandSearchParam {
   /**

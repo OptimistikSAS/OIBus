@@ -14,23 +14,6 @@ export type OIBusDataType = (typeof OIBUS_DATA_TYPES)[number];
 /**
  * Engine settings Data Transfer Object.
  * Represents the configuration settings for the engine.
- *
- * @example
- * {
- *   "id": "aBc12F",
- *   "name": "OIBus OT",
- *   "port": 2223,
- *   "version": "3.7.0",
- *   "launcherVersion": "3.7.0",
- *   "proxyEnabled": false,
- *   "proxyPort": null,
- *   "logParameters": {
- *     "console": { "level": "info" },
- *     "file": { "level": "debug", "maxFileSize": 10485760, "numberOfFiles": 5 },
- *     "database": { "level": "warn", "maxNumberOfLogs": 10000 },
- *     "loki": { "level": "error", "interval": 60, "address": "http://loki:3100", "username": "user", "password": "pass" },
- *     "oia": { "level": "info", "interval": 60 }
- *   }
  */
 export interface EngineSettingsDTO extends BaseEntity {
   /**
@@ -79,7 +62,6 @@ export interface EngineSettingsDTO extends BaseEntity {
     console: {
       /**
        * The log level for console output.
-       * @example "info"
        */
       level: LogLevel;
     };
@@ -90,7 +72,6 @@ export interface EngineSettingsDTO extends BaseEntity {
     file: {
       /**
        * The log level for file output.
-       * @example "debug"
        */
       level: LogLevel;
 
@@ -113,7 +94,6 @@ export interface EngineSettingsDTO extends BaseEntity {
     database: {
       /**
        * The log level for database output.
-       * @example "warn"
        */
       level: LogLevel;
 
@@ -130,7 +110,6 @@ export interface EngineSettingsDTO extends BaseEntity {
     loki: {
       /**
        * The log level for Loki output.
-       * @example "error"
        */
       level: LogLevel;
 
@@ -165,7 +144,6 @@ export interface EngineSettingsDTO extends BaseEntity {
     oia: {
       /**
        * The log level for OIA output.
-       * @example "info"
        */
       level: LogLevel;
 
@@ -191,52 +169,6 @@ export type RegistrationStatus = (typeof REGISTRATION_STATUS)[number];
 /**
  * Registration settings Data Transfer Object.
  * Represents the registration settings for the engine.
- *
- * @example
- * {
- *   "id": "aBc12F",
- *   "host": "https://instance.oianalytics.com",
- *   "activationCode": "ABC123",
- *   "status": "REGISTERED",
- *   "activationDate": "2023-01-01T00:00:00Z",
- *   "activationExpirationDate": "2024-01-01T00:00:00Z",
- *   "checkUrl": "https://instance.oianalytics.com/check",
- *   "useProxy": false,
- *   "proxyUrl": null,
- *   "proxyUsername": null,
- *   "acceptUnauthorized": false,
- *   "commandRefreshInterval": 60,
- *   "commandRetryInterval": 10,
- *   "messageRetryInterval": 10,
- *   "commandPermissions": {
- *     "updateVersion": true,
- *     "restartEngine": true,
- *     "regenerateCipherKeys": true,
- *     "updateEngineSettings": true,
- *     "updateRegistrationSettings": true,
- *     "createScanMode": true,
- *     "updateScanMode": true,
- *     "deleteScanMode": true,
- *     "createIpFilter": true,
- *     "updateIpFilter": true,
- *     "deleteIpFilter": true,
- *     "createCertificate": true,
- *     "updateCertificate": true,
- *     "deleteCertificate": true,
- *     "createHistoryQuery": true,
- *     "updateHistoryQuery": true,
- *     "deleteHistoryQuery": true,
- *     "createOrUpdateHistoryItemsFromCsv": true,
- *     "createSouth": true,
- *     "updateSouth": true,
- *     "deleteSouth": true,
- *     "createOrUpdateSouthItemsFromCsv": true,
- *     "createNorth": true,
- *     "updateNorth": true,
- *     "deleteNorth": true,
- *     "setpoint": true
- *   }
- * }
  */
 export interface RegistrationSettingsDTO extends BaseEntity {
   /**
@@ -271,7 +203,7 @@ export interface RegistrationSettingsDTO extends BaseEntity {
 
   /**
    * The URL to check registration status.
-   * @example "https://registration.example.com/check"
+   * @example "https://instant.oianalytics.com/check"
    */
   checkUrl: string | null;
 
@@ -480,60 +412,13 @@ export interface RegistrationSettingsDTO extends BaseEntity {
 }
 
 /**
- * Registration settings command Data Transfer Object.
+ * Registration settings command DTO.
  * Used as the request body for updating registration settings.
- *
- * @example
- * {
- *   "host": "https://registration.example.com",
- *   "useProxy": false,
- *   "proxyUrl": null,
- *   "proxyUsername": null,
- *   "proxyPassword": null,
- *   "acceptUnauthorized": false,
- *   "commandRefreshInterval": 60,
- *   "commandRetryInterval": 10,
- *   "messageRetryInterval": 10,
- *   "commandPermissions": {
- *     "updateVersion": true,
- *     "restartEngine": true,
- *     "regenerateCipherKeys": true,
- *     "updateEngineSettings": true,
- *     "updateRegistrationSettings": true,
- *     "createScanMode": true,
- *     "updateScanMode": true,
- *     "deleteScanMode": true,
- *     "createIpFilter": true,
- *     "updateIpFilter": true,
- *     "deleteIpFilter": true,
- *     "createCertificate": true,
- *     "updateCertificate": true,
- *     "deleteCertificate": true,
- *     "createHistoryQuery": true,
- *     "updateHistoryQuery": true,
- *     "deleteHistoryQuery": true,
- *     "createOrUpdateHistoryItemsFromCsv": true,
- *     "testHistoryNorthConnection": true,
- *     "testHistorySouthConnection": true,
- *     "testHistorySouthItem": true,
- *     "createSouth": true,
- *     "updateSouth": true,
- *     "deleteSouth": true,
- *     "createOrUpdateSouthItemsFromCsv": true,
- *     "testSouthConnection": true,
- *     "testSouthItem": true,
- *     "createNorth": true,
- *     "updateNorth": true,
- *     "deleteNorth": true,
- *     "testNorthConnection": true,
- *     "setpoint": true
- *   }
- * }
  */
 export interface RegistrationSettingsCommandDTO {
   /**
    * The host URL for registration.
-   * @example "https://instant.oianalytics.com"
+   * @example "https://instance.oianalytics.com"
    */
   host: string;
 
@@ -785,13 +670,6 @@ export interface RegistrationSettingsCommandDTO {
 
 /**
  * Crypto settings for encryption.
- *
- * @example
- * {
- *   "algorithm": "aes-256-cbc",
- *   "initVector": "1234567890abcdef",
- *   "securityKey": "abcdef1234567890abcdef1234567890"
- * }
  */
 export interface CryptoSettings {
   /**
@@ -816,21 +694,6 @@ export interface CryptoSettings {
 /**
  * Engine settings command Data Transfer Object.
  * Used as the request body for updating engine settings.
- *
- * @example
- * {
- *   "name": "OIBus OT",
- *   "port": 8080,
- *   "proxyEnabled": false,
- *   "proxyPort": null,
- *   "logParameters": {
- *     "console": { "level": "info" },
- *     "file": { "level": "debug", "maxFileSize": 10485760, "numberOfFiles": 5 },
- *     "database": { "level": "warn", "maxNumberOfLogs": 10000 },
- *     "loki": { "level": "error", "interval": 60, "address": "http://loki:3100", "username": "user", "password": "pass" },
- *     "oia": { "level": "info", "interval": 60 }
- *   }
- * }
  */
 export interface EngineSettingsCommandDTO {
   /**
@@ -968,21 +831,6 @@ export interface EngineSettingsCommandDTO {
 
 /**
  * Information about the OIBus instance.
- *
- * @example
- * {
- *   "version": "3.7.0",
- *   "launcherVersion": "3.7.0",
- *   "oibusName": "OIBus OT",
- *   "oibusId": "aBc12F",
- *   "dataDirectory": "/var/lib/oibus",
- *   "binaryDirectory": "/usr/lib/oibus",
- *   "processId": "12345",
- *   "hostname": "server1",
- *   "operatingSystem": "linux",
- *   "architecture": "x64",
- *   "platform": "ubuntu"
- * }
  */
 export interface OIBusInfo {
   /**
@@ -1083,22 +931,6 @@ export interface BaseConnectorMetrics {
 
 /**
  * Metrics for a north connector.
- *
- * @example
- * {
- *   "metricsStart": "2023-01-01T00:00:00Z",
- *   "lastConnection": "2023-01-01T00:00:00Z",
- *   "lastRunStart": "2023-01-01T00:00:00Z",
- *   "lastRunDuration": 1000,
- *   "contentSentSize": 1024,
- *   "contentErroredSize": 0,
- *   "contentArchivedSize": 0,
- *   "contentCachedSize": 0,
- *   "lastContentSent": "file1.json",
- *   "currentCacheSize": 0,
- *   "currentErrorSize": 0,
- *   "currentArchiveSize": 0
- * }
  */
 export interface NorthConnectorMetrics extends BaseConnectorMetrics {
   /**
@@ -1152,18 +984,6 @@ export interface NorthConnectorMetrics extends BaseConnectorMetrics {
 
 /**
  * Metrics for a south connector.
- *
- * @example
- * {
- *   "metricsStart": "2023-01-01T00:00:00Z",
- *   "lastConnection": "2023-01-01T00:00:00Z",
- *   "lastRunStart": "2023-01-01T00:00:00Z",
- *   "lastRunDuration": 1000,
- *   "numberOfValuesRetrieved": 100,
- *   "numberOfFilesRetrieved": 1,
- *   "lastValueRetrieved": { "pointId": "point1", "timestamp": "2023-01-01T00:00:00Z", "data": { "value": 100 } },
- *   "lastFileRetrieved": "file1.json"
- * }
  */
 export interface SouthConnectorMetrics extends BaseConnectorMetrics {
   /**
@@ -1193,41 +1013,6 @@ export interface SouthConnectorMetrics extends BaseConnectorMetrics {
 
 /**
  * Metrics for a history query.
- *
- * @example
- * {
- *   "metricsStart": "2023-01-01T00:00:00Z",
- *   "north": {
- *     "lastConnection": "2023-01-01T00:00:00Z",
- *     "lastRunStart": "2023-01-01T00:00:00Z",
- *     "lastRunDuration": 1000,
- *     "contentSentSize": 1024,
- *     "contentErroredSize": 0,
- *     "contentArchivedSize": 0,
- *     "contentCachedSize": 0,
- *     "lastContentSent": "file1.json",
- *     "currentCacheSize": 0,
- *     "currentErrorSize": 0,
- *     "currentArchiveSize": 0
- *   },
- *   "south": {
- *     "lastConnection": "2023-01-01T00:00:00Z",
- *     "lastRunStart": "2023-01-01T00:00:00Z",
- *     "lastRunDuration": 1000,
- *     "numberOfValuesRetrieved": 100,
- *     "numberOfFilesRetrieved": 1,
- *     "lastValueRetrieved": { "pointId": "point1", "timestamp": "2023-01-01T00:00:00Z", "data": { "value": 100 } },
- *     "lastFileRetrieved": "file1.json"
- *   },
- *   "historyMetrics": {
- *     "running": true,
- *     "intervalProgress": 0.5,
- *     "currentIntervalStart": "2023-01-01T00:00:00Z",
- *     "currentIntervalEnd": "2023-01-02T00:00:00Z",
- *     "currentIntervalNumber": 1,
- *     "numberOfIntervals": 2
- *   }
- * }
  */
 export interface HistoryQueryMetrics {
   /**
@@ -1398,31 +1183,6 @@ export interface HistoryQueryMetrics {
 
 /**
  * Metrics for the engine.
- *
- * @example
- * {
- *   "metricsStart": "2023-01-01T00:00:00Z",
- *   "processCpuUsageInstant": 0.5,
- *   "processCpuUsageAverage": 0.3,
- *   "processUptime": 3600,
- *   "freeMemory": 1073741824,
- *   "totalMemory": 2147483648,
- *   "minRss": 104857600,
- *   "currentRss": 157286400,
- *   "maxRss": 209715200,
- *   "minHeapTotal": 52428800,
- *   "currentHeapTotal": 73400320,
- *   "maxHeapTotal": 94371840,
- *   "minHeapUsed": 31457280,
- *   "currentHeapUsed": 47185920,
- *   "maxHeapUsed": 62914560,
- *   "minExternal": 1048576,
- *   "currentExternal": 2097152,
- *   "maxExternal": 3145728,
- *   "minArrayBuffers": 1048576,
- *   "currentArrayBuffers": 2097152,
- *   "maxArrayBuffers": 3145728
- * }
  */
 export interface EngineMetrics {
   /**
@@ -1554,61 +1314,6 @@ export interface EngineMetrics {
 
 /**
  * Home metrics containing metrics for norths, souths, and the engine.
- *
- * @example
- * {
- *   "norths": {
- *     "north1": {
- *       "metricsStart": "2023-01-01T00:00:00Z",
- *       "lastConnection": "2023-01-01T00:00:00Z",
- *       "lastRunStart": "2023-01-01T00:00:00Z",
- *       "lastRunDuration": 1000,
- *       "contentSentSize": 1024,
- *       "contentErroredSize": 0,
- *       "contentArchivedSize": 0,
- *       "contentCachedSize": 0,
- *       "lastContentSent": "file1.json",
- *       "currentCacheSize": 0,
- *       "currentErrorSize": 0,
- *       "currentArchiveSize": 0
- *     }
- *   },
- *   "engine": {
- *     "metricsStart": "2023-01-01T00:00:00Z",
- *     "processCpuUsageInstant": 0.5,
- *     "processCpuUsageAverage": 0.3,
- *     "processUptime": 3600,
- *     "freeMemory": 1073741824,
- *     "totalMemory": 2147483648,
- *     "minRss": 104857600,
- *     "currentRss": 157286400,
- *     "maxRss": 209715200,
- *     "minHeapTotal": 52428800,
- *     "currentHeapTotal": 73400320,
- *     "maxHeapTotal": 94371840,
- *     "minHeapUsed": 31457280,
- *     "currentHeapUsed": 47185920,
- *     "maxHeapUsed": 62914560,
- *     "minExternal": 1048576,
- *     "currentExternal": 2097152,
- *     "maxExternal": 3145728,
- *     "minArrayBuffers": 1048576,
- *     "currentArrayBuffers": 2097152,
- *     "maxArrayBuffers": 3145728
- *   },
- *   "souths": {
- *     "south1": {
- *       "metricsStart": "2023-01-01T00:00:00Z",
- *       "lastConnection": "2023-01-01T00:00:00Z",
- *       "lastRunStart": "2023-01-01T00:00:00Z",
- *       "lastRunDuration": 1000,
- *       "numberOfValuesRetrieved": 100,
- *       "numberOfFilesRetrieved": 1,
- *       "lastValueRetrieved": { "pointId": "point1", "timestamp": "2023-01-01T00:00:00Z", "data": { "value": 100 } },
- *       "lastFileRetrieved": "file1.json"
- *     }
- *   }
- * }
  */
 export interface HomeMetrics {
   /**
@@ -1639,15 +1344,6 @@ interface BaseOIBusContent {
 
 /**
  * A time-value pair.
- *
- * @example
- * {
- *   "pointId": "point1",
- *   "timestamp": "2023-01-01T00:00:00Z",
- *   "data": {
- *     "value": 100
- *   }
- * }
  */
 export interface OIBusTimeValue {
   /**
@@ -1681,20 +1377,6 @@ export interface OIBusTimeValue {
 
 /**
  * Time-value content.
- *
- * @example
- * {
- *   "type": "time-values",
- *   "content": [
- *     {
- *       "pointId": "point1",
- *       "timestamp": "2023-01-01T00:00:00Z",
- *       "data": {
- *         "value": "100"
- *       }
- *     }
- *   ]
- * }
  */
 export interface OIBusTimeValueContent extends BaseOIBusContent {
   /**
@@ -1711,12 +1393,6 @@ export interface OIBusTimeValueContent extends BaseOIBusContent {
 
 /**
  * A setpoint.
- *
- * @example
- * {
- *   "reference": "setpoint1",
- *   "value": 100
- * }
  */
 export interface OIBusSetpoint {
   /**
@@ -1734,17 +1410,6 @@ export interface OIBusSetpoint {
 
 /**
  * Setpoint content.
- *
- * @example
- * {
- *   "type": "setpoint",
- *   "content": [
- *     {
- *       "reference": "setpoint1",
- *       "value": 100
- *     }
- *   ]
- * }
  */
 export interface OIBusSetpointContent extends BaseOIBusContent {
   /**
@@ -1761,13 +1426,6 @@ export interface OIBusSetpointContent extends BaseOIBusContent {
 
 /**
  * Raw content.
- *
- * @example
- * {
- *   "type": "any",
- *   "filePath": "/path/to/file.json",
- *   "content": "{\"key\": \"value\"}"
- * }
  */
 export interface OIBusRawContent extends BaseOIBusContent {
   /**
@@ -1784,7 +1442,6 @@ export interface OIBusRawContent extends BaseOIBusContent {
 
   /**
    * The content itself, if available.
-   * @example "{\"key\": \"value\"}"
    */
   content?: string;
 }
@@ -1796,20 +1453,6 @@ export type OIBusContent = OIBusTimeValueContent | OIBusRawContent | OIBusSetpoi
 
 /**
  * Metadata for cached content.
- *
- * @example
- * {
- *   "contentFile": "/path/to/content.json",
- *   "contentSize": 1024,
- *   "numberOfElement": 10,
- *   "createdAt": "2023-01-01T00:00:00Z",
- *   "contentType": "time-values",
- *   "source": "south1",
- *   "options": {
- *     "key1": "value1",
- *     "key2": 100
- *   }
- * }
  */
 export interface CacheMetadata {
   /**
@@ -1856,13 +1499,6 @@ export interface CacheMetadata {
 
 /**
  * Parameters for searching the cache.
- *
- * @example
- * {
- *   "start": "2023-01-01T00:00:00Z",
- *   "end": "2023-01-02T00:00:00Z",
- *   "nameContains": "example"
- * }
  */
 export interface CacheSearchParam {
   /**

@@ -213,10 +213,14 @@ describe('SouthConnectorController', () => {
     const southId = testData.south.list[0].id;
     const page = 1;
     const name = 'test';
+    const scanModeId = 'scanModeId';
+    const enabled = false;
 
     const searchParams: SouthConnectorItemSearchParam = {
-      page: page,
-      name: name
+      name,
+      scanModeId,
+      enabled,
+      page
     };
 
     const mockPageResult = {
@@ -229,7 +233,7 @@ describe('SouthConnectorController', () => {
     (mockRequest.services!.southService.findById as jest.Mock).mockReturnValue(testData.south.list[0]);
     (mockRequest.services!.southService.searchItems as jest.Mock).mockResolvedValue(mockPageResult);
 
-    const result = await controller.searchItems(southId, page, name, mockRequest as CustomExpressRequest);
+    const result = await controller.searchItems(southId, name, scanModeId, enabled, page, mockRequest as CustomExpressRequest);
 
     expect(mockRequest.services!.southService.findById).toHaveBeenCalledWith(southId);
     expect(mockRequest.services!.southService.searchItems).toHaveBeenCalledWith(southId, searchParams);
@@ -249,7 +253,7 @@ describe('SouthConnectorController', () => {
     (mockRequest.services!.southService.findById as jest.Mock).mockReturnValue(testData.south.list[0]);
     (mockRequest.services!.southService.searchItems as jest.Mock).mockResolvedValue(mockPageResult);
 
-    const result = await controller.searchItems(southId, undefined, undefined, mockRequest as CustomExpressRequest);
+    const result = await controller.searchItems(southId, undefined, undefined, undefined, undefined, mockRequest as CustomExpressRequest);
 
     expect(mockRequest.services!.southService.findById).toHaveBeenCalledWith(southId);
     expect(mockRequest.services!.southService.searchItems).toHaveBeenCalledWith(southId, { page: 0 });

@@ -3,15 +3,6 @@ import { OIBusObjectAttribute } from './form.model';
 /**
  * Base Data Transfer Object for a transformer.
  * Represents the common properties of both custom and standard transformers.
- *
- * @example
- * {
- *   "id": "transformer123",
- *   "type": "custom",
- *   "inputType": "string",
- *   "outputType": "number",
- *   "manifest": {}, // TODO
- * }
  */
 export interface BaseTransformerDTO {
   /**
@@ -47,18 +38,6 @@ export interface BaseTransformerDTO {
 /**
  * Data Transfer Object for a custom transformer.
  * Extends the base transformer with custom-specific properties.
- *
- * @example
- * {
- *   "id": "customTransformer123",
- *   "type": "custom",
- *   "inputType": "string",
- *   "outputType": "number",
- *   "manifest": {}, // TODO
- *   "name": "String to Number",
- *   "description": "Converts string input to numeric output",
- *   "customCode": "function transform(input) { return parseFloat(input); }"
- * }
  */
 export interface CustomTransformerDTO extends BaseTransformerDTO {
   /**
@@ -88,16 +67,6 @@ export interface CustomTransformerDTO extends BaseTransformerDTO {
 /**
  * Data Transfer Object for a standard transformer.
  * Extends the base transformer with standard-specific properties.
- *
- * @example
- * {
- *   "id": "standardTransformer123",
- *   "type": "standard",
- *   "inputType": "string",
- *   "outputType": "string",
- *   "manifest": {}, // TODO
- *   "functionName": "toUpperCase"
- * }
  */
 export interface StandardTransformerDTO extends BaseTransformerDTO {
   /**
@@ -120,25 +89,6 @@ export type TransformerDTO = CustomTransformerDTO | StandardTransformerDTO;
 /**
  * Data Transfer Object for a transformer with its options.
  * Used when a transformer needs to be applied with specific configuration options.
- *
- * @example
- * {
- *   "inputType": "string",
- *   "transformer": {
- *     "id": "customTransformer123",
- *     "type": "custom",
- *     "inputType": "string",
- *     "outputType": "number",
- *     "manifest": {}, // TODO
- *     "name": "String to Number",
- *     "description": "Converts string input to numeric output",
- *     "customCode": "function transform(input) { return parseFloat(input); }"
- *   },
- *   "options": {
- *     "precision": 2,
- *     "defaultValue": 0
- *   }
- * }
  */
 export interface TransformerDTOWithOptions {
   /**
@@ -162,16 +112,6 @@ export interface TransformerDTOWithOptions {
 /**
  * Data Transfer Object for referencing a transformer by ID with its options.
  * Used when only the transformer ID is needed along with configuration options.
- *
- * @example
- * {
- *   "inputType": "string",
- *   "transformerId": "customTransformer123",
- *   "options": {
- *     "precision": 2,
- *     "defaultValue": 0
- *   }
- * }
  */
 export interface TransformerIdWithOptions {
   /**
@@ -195,17 +135,6 @@ export interface TransformerIdWithOptions {
 
 /**
  * Command Data Transfer Object for creating or updating a custom transformer.
- *
- * @example
- * {
- *   "type": "custom",
- *   "inputType": "string",
- *   "outputType": "number",
- *   "name": "String to Number",
- *   "description": "Converts string input to numeric output",
- *   "customCode": "function transform(input) { return parseFloat(input); }",
- *   "customManifest": {} // TODO
- * }
  */
 export interface CustomTransformerCommandDTO {
   /**
@@ -252,14 +181,6 @@ export interface CustomTransformerCommandDTO {
 /**
  * Parameters for searching transformers.
  * Used to query transformers based on type, input/output types, and pagination.
- *
- * @example
- * {
- *   "type": "custom",
- *   "inputType": "string",
- *   "outputType": "number",
- *   "page": 1
- * }
  */
 export interface TransformerSearchParam {
   /**

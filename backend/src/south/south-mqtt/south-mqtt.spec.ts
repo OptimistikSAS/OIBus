@@ -385,7 +385,7 @@ describe('SouthMQTT', () => {
     south.disconnect = jest.fn();
     mqttStream.unsubscribeAsync = jest.fn();
     const callback = jest.fn();
-    south.testItem(configuration.items[0], {}, callback);
+    south.testItem(configuration.items[0], { history: undefined }, callback);
 
     await flushPromises();
     mqttStream.emit('message', 'myTopic', 'myMessage', { dup: false });
@@ -407,7 +407,7 @@ describe('SouthMQTT', () => {
     });
     const callback = jest.fn();
     let error;
-    south.testItem(configuration.items[0], {}, callback).catch(err => (error = err));
+    south.testItem(configuration.items[0], { history: undefined }, callback).catch(err => (error = err));
 
     await flushPromises();
     mqttStream.emit('message', 'myTopic', 'myMessage', { dup: false });
@@ -430,7 +430,7 @@ describe('SouthMQTT', () => {
     });
     const callback = jest.fn();
     let error;
-    south.testItem(configuration.items[0], {}, callback).catch(err => (error = err));
+    south.testItem(configuration.items[0], { history: undefined }, callback).catch(err => (error = err));
 
     await flushPromises();
 
