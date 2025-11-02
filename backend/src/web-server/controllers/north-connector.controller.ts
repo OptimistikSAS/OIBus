@@ -273,7 +273,7 @@ export class NorthConnectorController extends Controller {
    * Removes specific files from the north connector cache
    * @summary Remove cache files
    */
-  @Post('/{northId}/cache/remove')
+  @Delete('/{northId}/cache/remove')
   @SuccessResponse(204, 'No Content')
   async removeCacheContent(
     @Path() northId: string,
@@ -289,7 +289,7 @@ export class NorthConnectorController extends Controller {
    * Removes all files from a north connector cache folder
    * @summary Remove all cache files
    */
-  @Post('/{northId}/cache/remove-all')
+  @Delete('/{northId}/cache/remove-all')
   @SuccessResponse(204, 'No Content')
   async removeAllCacheContent(
     @Path() northId: string,

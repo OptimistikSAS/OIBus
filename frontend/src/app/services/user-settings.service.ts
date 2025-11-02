@@ -19,6 +19,6 @@ export class UserSettingsService {
   }
 
   updatePassword(userId: string, command: ChangePasswordCommand): Observable<void> {
-    return this.http.put<void>(`/api/users/${userId}/change-password`, command);
+    return this.http.post<void>(`/api/users/${userId}/password`, command);
   }
 }

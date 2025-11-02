@@ -48,7 +48,7 @@ describe('UserSettingsService', () => {
     const command: ChangePasswordCommand = { currentPassword: 'current-password', newPassword: 'new-password' };
     service.updatePassword('id1', command).subscribe(() => (done = true));
 
-    const testRequest = http.expectOne({ method: 'PUT', url: '/api/users/id1/change-password' });
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/users/id1/password' });
     expect(testRequest.request.body).toBe(command);
     testRequest.flush(null);
 

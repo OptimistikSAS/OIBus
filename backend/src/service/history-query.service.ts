@@ -178,7 +178,7 @@ export default class HistoryQueryService {
     const northManifest = this.northService.getManifest(northType);
     await this.validator.validateSettings(northManifest.settings, settingsToTest);
     return await this.northService.testNorth(
-      historyId,
+      'history',
       northType,
       await encryptionService.decryptConnectorSecrets(
         await encryptionService.encryptConnectorSecrets(settingsToTest, northSettings, northManifest.settings),
@@ -204,7 +204,7 @@ export default class HistoryQueryService {
     const southManifest = this.southService.getManifest(southType);
     await this.validator.validateSettings(southManifest.settings, settingsToTest);
     return await this.southService.testSouth(
-      historyId,
+      'history',
       southType,
       await encryptionService.decryptConnectorSecrets(
         await encryptionService.encryptConnectorSecrets(settingsToTest, southSettings, southManifest.settings),
@@ -238,7 +238,7 @@ export default class HistoryQueryService {
     )! as OIBusObjectAttribute;
     await this.validator.validateSettings(itemSettingsManifest, itemSettings);
     return await this.southService.testItem(
-      'create',
+      'history',
       southType,
       itemName,
       await encryptionService.decryptConnectorSecrets(

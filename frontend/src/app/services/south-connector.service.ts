@@ -118,7 +118,7 @@ export class SouthConnectorService {
     testingSettings: SouthConnectorItemTestingSettings
   ): Observable<OIBusContent> {
     return this.http.post<OIBusContent>(
-      `/api/south/${southId}/test/item`,
+      `/api/south/${southId}/items/test`,
       { southSettings, itemSettings, testingSettings },
       {
         params: { southType, itemName }

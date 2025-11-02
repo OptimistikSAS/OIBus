@@ -5250,7 +5250,7 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 filenames: {"in":"body","name":"filenames","required":true,"dataType":"array","array":{"dataType":"string"}},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
         };
-        app.post('/api/north/:northId/cache/remove',
+        app.delete('/api/north/:northId/cache/remove',
             ...(fetchMiddlewares<RequestHandler>(NorthConnectorController)),
             ...(fetchMiddlewares<RequestHandler>(NorthConnectorController.prototype.removeCacheContent)),
 
@@ -5282,7 +5282,7 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 folder: {"in":"query","name":"folder","required":true,"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["archive"]},{"dataType":"enum","enums":["error"]}]},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
         };
-        app.post('/api/north/:northId/cache/remove-all',
+        app.delete('/api/north/:northId/cache/remove-all',
             ...(fetchMiddlewares<RequestHandler>(NorthConnectorController)),
             ...(fetchMiddlewares<RequestHandler>(NorthConnectorController.prototype.removeAllCacheContent)),
 
@@ -6630,7 +6630,7 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 filenames: {"in":"body","name":"filenames","required":true,"dataType":"array","array":{"dataType":"string"}},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
         };
-        app.post('/api/history/:historyId/cache/remove',
+        app.delete('/api/history/:historyId/cache/remove',
             ...(fetchMiddlewares<RequestHandler>(HistoryQueryController)),
             ...(fetchMiddlewares<RequestHandler>(HistoryQueryController.prototype.removeCacheContent)),
 
@@ -6662,7 +6662,7 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 folder: {"in":"query","name":"folder","required":true,"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["archive"]},{"dataType":"enum","enums":["error"]}]},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
         };
-        app.post('/api/history/:historyId/cache/remove-all',
+        app.delete('/api/history/:historyId/cache/remove-all',
             ...(fetchMiddlewares<RequestHandler>(HistoryQueryController)),
             ...(fetchMiddlewares<RequestHandler>(HistoryQueryController.prototype.removeAllCacheContent)),
 
