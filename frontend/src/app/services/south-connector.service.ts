@@ -184,7 +184,7 @@ export class SouthConnectorService {
    * @param itemId - the ID of the South connector item to enable
    */
   enableItem(southId: string, itemId: string) {
-    return this.http.put<void>(`/api/south/${southId}/items/${itemId}/enable`, null);
+    return this.http.post<void>(`/api/south/${southId}/items/${itemId}/enable`, null);
   }
 
   /**
@@ -193,7 +193,7 @@ export class SouthConnectorService {
    * @param itemId - the ID of the South connector item to disable
    */
   disableItem(southId: string, itemId: string) {
-    return this.http.put<void>(`/api/south/${southId}/items/${itemId}/disable`, null);
+    return this.http.post<void>(`/api/south/${southId}/items/${itemId}/disable`, null);
   }
 
   /**
@@ -202,7 +202,7 @@ export class SouthConnectorService {
    * @param itemIds - array of item IDs to enable
    */
   enableItems(southId: string, itemIds: Array<string>) {
-    return this.http.put<void>(`/api/south/${southId}/items/bulk/enable`, { itemIds });
+    return this.http.post<void>(`/api/south/${southId}/items/enable`, { itemIds });
   }
 
   /**
@@ -211,7 +211,16 @@ export class SouthConnectorService {
    * @param itemIds - array of item IDs to disable
    */
   disableItems(southId: string, itemIds: Array<string>) {
-    return this.http.put<void>(`/api/south/${southId}/items/bulk/disable`, { itemIds });
+    return this.http.post<void>(`/api/south/${southId}/items/disable`, { itemIds });
+  }
+
+  /**
+   * Delete multiple South items
+   * @param southId - the ID of the South connector
+   * @param itemIds - array of item IDs to delete
+   */
+  deleteItems(southId: string, itemIds: Array<string>) {
+    return this.http.post<void>(`/api/south/${southId}/items/delete`, { itemIds });
   }
 
   /**

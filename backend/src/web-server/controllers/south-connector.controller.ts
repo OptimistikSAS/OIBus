@@ -359,6 +359,62 @@ export class SouthConnectorController extends Controller {
   }
 
   /**
+   * Enable a list of south connector items
+   * @summary Enable south connector items
+   */
+  @Post('/{southId}/items/enable')
+  @SuccessResponse(204, 'No Content')
+  async enableItems(
+    @Path() southId: string,
+    @Body() command: { itemIds: Array<string> },
+    @Request() request: CustomExpressRequest
+  ): Promise<void> {
+    const southService = request.services.southService as SouthService;
+    await southService.enableItems(southId, command.itemIds);
+  }
+
+  /**
+   * Disable a list of south connector items
+   * @summary Disable south connector items
+   */
+  @Post('/{southId}/items/disable')
+  @SuccessResponse(204, 'No Content')
+  async disableItems(
+    @Path() southId: string,
+    @Body() command: { itemIds: Array<string> },
+    @Request() request: CustomExpressRequest
+  ): Promise<void> {
+    const southService = request.services.southService as SouthService;
+    await southService.disableItems(southId, command.itemIds);
+  }
+
+  /**
+   * Delete a south item
+   * @summary Delete south item
+   */
+  @Delete('/{southId}/items/{itemId}')
+  @SuccessResponse(204, 'No Content')
+  async deleteItem(@Path() southId: string, @Path() itemId: string, @Request() request: CustomExpressRequest): Promise<void> {
+    const southService = request.services.southService as SouthService;
+    await southService.deleteItem(southId, itemId);
+  }
+
+  /**
+   * Delete a list of south connector items
+   * @summary Delete south connector items
+   */
+  @Post('/{southId}/items/delete')
+  @SuccessResponse(204, 'No Content')
+  async deleteItems(
+    @Path() southId: string,
+    @Body() command: { itemIds: Array<string> },
+    @Request() request: CustomExpressRequest
+  ): Promise<void> {
+    const southService = request.services.southService as SouthService;
+    await southService.deleteItems(southId, command.itemIds);
+  }
+
+  /**
    * Deletes all items from a south connector
    * @summary Delete all south connector items
    */
@@ -367,33 +423,6 @@ export class SouthConnectorController extends Controller {
   async deleteAllItems(@Path() southId: string, @Request() request: CustomExpressRequest): Promise<void> {
     const southService = request.services.southService as SouthService;
     await southService.deleteAllItems(southId);
-  }
-
-  async enableSouthItems(ctx: KoaContext<{ itemIds: Array<string> }, void>): Promise<void> {
-    try {
-      await ctx.app.southService.enableItems(ctx.params.southId, ctx.request.body!.itemIds);
-      ctx.noContent();
-    } catch (error: unknown) {
-      ctx.badRequest((error as Error).message);
-    }
-  }
-
-  async disableSouthItems(ctx: KoaContext<{ itemIds: Array<string> }, void>): Promise<void> {
-    try {
-      await ctx.app.southService.disableItems(ctx.params.southId, ctx.request.body!.itemIds);
-      ctx.noContent();
-    } catch (error: unknown) {
-      ctx.badRequest((error as Error).message);
-    }
-  }
-
-  async deleteSouthItems(ctx: KoaContext<{ itemIds: Array<string> }, void>): Promise<void> {
-    try {
-      await ctx.app.southService.deleteItems(ctx.params.southId, ctx.request.body!.itemIds);
-      ctx.noContent();
-    } catch (error: unknown) {
-      ctx.badRequest((error as Error).message);
-    }
   }
 
   /**

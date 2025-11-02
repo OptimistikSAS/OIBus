@@ -24,6 +24,7 @@ export default jest.fn().mockImplementation(() => ({
   enableItems: jest.fn(),
   disableItems: jest.fn(),
   deleteItem: jest.fn(),
+  deleteItems: jest.fn(),
   deleteAllItems: jest.fn(),
   checkImportItems: jest.fn(),
   importItems: jest.fn(),

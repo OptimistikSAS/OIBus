@@ -362,6 +362,36 @@ export class HistoryQueryController extends Controller {
   }
 
   /**
+   * Enable a list of history query items
+   * @summary Enable history query items
+   */
+  @Post('/{historyId}/items/enable')
+  @SuccessResponse(204, 'No Content')
+  async enableItems(
+    @Path() historyId: string,
+    @Body() command: { itemIds: Array<string> },
+    @Request() request: CustomExpressRequest
+  ): Promise<void> {
+    const historyQueryService = request.services.historyQueryService as HistoryQueryService;
+    await historyQueryService.enableItems(historyId, command.itemIds);
+  }
+
+  /**
+   * Disable a list of history query items
+   * @summary Disable history query items
+   */
+  @Post('/{historyId}/items/disable')
+  @SuccessResponse(204, 'No Content')
+  async disableItems(
+    @Path() historyId: string,
+    @Body() command: { itemIds: Array<string> },
+    @Request() request: CustomExpressRequest
+  ): Promise<void> {
+    const historyQueryService = request.services.historyQueryService as HistoryQueryService;
+    await historyQueryService.disableItems(historyId, command.itemIds);
+  }
+
+  /**
    * Delete a history query item
    * @summary Delete history query item
    */
@@ -370,6 +400,21 @@ export class HistoryQueryController extends Controller {
   async deleteItem(@Path() historyId: string, @Path() itemId: string, @Request() request: CustomExpressRequest): Promise<void> {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
     await historyQueryService.deleteItem(historyId, itemId);
+  }
+
+  /**
+   * Delete a list of history query items
+   * @summary Delete history query items
+   */
+  @Post('/{historyId}/items/delete')
+  @SuccessResponse(204, 'No Content')
+  async deleteItems(
+    @Path() historyId: string,
+    @Body() command: { itemIds: Array<string> },
+    @Request() request: CustomExpressRequest
+  ): Promise<void> {
+    const historyQueryService = request.services.historyQueryService as HistoryQueryService;
+    await historyQueryService.deleteItems(historyId, command.itemIds);
   }
 
   /**
@@ -401,33 +446,6 @@ export class HistoryQueryController extends Controller {
     request.res!.attachment('items.csv');
     request.res!.contentType('text/csv; charset=utf-8');
     request.res!.status(200).send(csv);
-  }
-
-  async enableHistoryQueryItems(ctx: KoaContext<{ itemIds: Array<string> }, void>): Promise<void> {
-    try {
-      await ctx.app.historyQueryService.enableHistoryQueryItems(ctx.params.historyQueryId, ctx.request.body!.itemIds);
-      ctx.noContent();
-    } catch (error: unknown) {
-      ctx.badRequest((error as Error).message);
-    }
-  }
-
-  async disableHistoryQueryItems(ctx: KoaContext<{ itemIds: Array<string> }, void>): Promise<void> {
-    try {
-      await ctx.app.historyQueryService.disableHistoryQueryItems(ctx.params.historyQueryId, ctx.request.body!.itemIds);
-      ctx.noContent();
-    } catch (error: unknown) {
-      ctx.badRequest((error as Error).message);
-    }
-  }
-
-  async deleteHistoryQueryItems(ctx: KoaContext<{ itemIds: Array<string> }, void>): Promise<void> {
-    try {
-      await ctx.app.historyQueryService.deleteHistoryQueryItems(ctx.params.historyQueryId, ctx.request.body!.itemIds);
-      ctx.noContent();
-    } catch (error: unknown) {
-      ctx.badRequest((error as Error).message);
-    }
   }
 
   /**

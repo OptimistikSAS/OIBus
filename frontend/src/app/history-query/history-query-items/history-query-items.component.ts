@@ -5,7 +5,7 @@ import { NotificationService } from '../../shared/notification.service';
 import { Modal, ModalService } from '../../shared/modal.service';
 import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { SouthConnectorCommandDTO, SouthConnectorManifest } from '../../../../../backend/shared/model/south-connector.model';
-import { debounceTime, distinctUntilChanged, firstValueFrom, of, switchMap, tap } from 'rxjs';
+import { debounceTime, distinctUntilChanged, firstValueFrom, of, switchMap } from 'rxjs';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { createPageFromArray, Page } from '../../../../../backend/shared/model/types';
 import { emptyPage } from '../../shared/test-utils';
@@ -391,38 +391,6 @@ export class HistoryQueryItemsComponent implements OnInit {
       });
   }
 
-  toggleItem(item: HistoryQueryItemDTO | HistoryQueryItemCommandDTO, value: boolean) {
-    if (value) {
-      this.historyQueryService
-        .enableItem(this.historyId(), item.id!)
-        .pipe(
-          tap(() => {
-            this.notificationService.success('history-query.items.enabled', { name: item.name });
-          })
-        )
-        .subscribe(() => {
-          if (this.saveChangesDirectly()) {
-            this.inMemoryItems.emit(null);
-          }
-          this.refreshCurrentPage();
-        });
-    } else {
-      this.historyQueryService
-        .disableItem(this.historyId(), item.id!)
-        .pipe(
-          tap(() => {
-            this.notificationService.success('history-query.items.disabled', { name: item.name });
-          })
-        )
-        .subscribe(() => {
-          if (this.saveChangesDirectly()) {
-            this.inMemoryItems.emit(null);
-          }
-          this.refreshCurrentPage();
-        });
-    }
-  }
-
   getFieldValue(element: any, field: string): string {
     const settingsAttribute = this.southManifest().items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'
@@ -486,14 +454,6 @@ export class HistoryQueryItemsComponent implements OnInit {
     this.updateSelectionState();
   }
 
-  toggleSelectAll() {
-    if (this.isAllSelected) {
-      this.unselectAll();
-    } else {
-      this.selectAll();
-    }
-  }
-
   updateSelectionState() {
     const totalItems = this.filteredItems.length;
     const selectedCount = this.selectedItems.size;
@@ -529,7 +489,6 @@ export class HistoryQueryItemsComponent implements OnInit {
         }
         return item;
       });
-      this.notificationService.success('history-query.items.enabled-multiple', { count: itemIds.length.toString() });
       this.selectedItems.clear();
       this.updateSelectionState();
       this.inMemoryItems.emit(this.allItems);
@@ -560,7 +519,6 @@ export class HistoryQueryItemsComponent implements OnInit {
         }
         return item;
       });
-      this.notificationService.success('history-query.items.disabled-multiple', { count: itemIds.length.toString() });
       this.selectedItems.clear();
       this.updateSelectionState();
       this.inMemoryItems.emit(this.allItems);
@@ -592,7 +550,6 @@ export class HistoryQueryItemsComponent implements OnInit {
           });
         } else {
           this.allItems = this.allItems.filter(item => !itemIds.includes(item.id!));
-          this.notificationService.success('history-query.items.deleted-multiple', { count: itemIds.length.toString() });
           this.selectedItems.clear();
           this.updateSelectionState();
           this.inMemoryItems.emit(this.allItems);

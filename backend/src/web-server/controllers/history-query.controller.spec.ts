@@ -304,6 +304,39 @@ describe('HistoryQueryController', () => {
     expect(mockRequest.services!.historyQueryService.disableItem).toHaveBeenCalledWith(historyId, itemId);
   });
 
+  it('should enable a list of history query items', async () => {
+    const historyId = testData.historyQueries.list[0].id;
+    const itemIds = testData.historyQueries.list[0].items.map(item => item.id);
+
+    (mockRequest.services!.historyQueryService.enableItems as jest.Mock).mockResolvedValue(undefined);
+
+    await controller.enableItems(historyId, { itemIds }, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.historyQueryService.enableItems).toHaveBeenCalledWith(historyId, itemIds);
+  });
+
+  it('should disable a list of history query items', async () => {
+    const historyId = testData.historyQueries.list[0].id;
+    const itemIds = testData.historyQueries.list[0].items.map(item => item.id);
+
+    (mockRequest.services!.historyQueryService.disableItems as jest.Mock).mockResolvedValue(undefined);
+
+    await controller.disableItems(historyId, { itemIds }, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.historyQueryService.disableItems).toHaveBeenCalledWith(historyId, itemIds);
+  });
+
+  it('should delete a list of history query items', async () => {
+    const historyId = testData.historyQueries.list[0].id;
+    const itemIds = testData.historyQueries.list[0].items.map(item => item.id);
+
+    (mockRequest.services!.historyQueryService.deleteItems as jest.Mock).mockResolvedValue(undefined);
+
+    await controller.deleteItems(historyId, { itemIds }, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.historyQueryService.deleteItems).toHaveBeenCalledWith(historyId, itemIds);
+  });
+
   it('should delete a history query item', async () => {
     const historyId = testData.historyQueries.list[0].id;
     const itemId = testData.historyQueries.list[0].items[0].id;
@@ -556,77 +589,5 @@ describe('HistoryQueryController', () => {
     await controller.moveAllCacheContent(historyId, originFolder, destinationFolder, mockRequest as CustomExpressRequest);
 
     expect(mockRequest.services!.historyQueryService.moveAllCacheContent).toHaveBeenCalledWith(historyId, originFolder, destinationFolder);
-  });
-
-  it('enableHistoryQueryItems() should enable multiple History query items', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.request.body = { itemIds: [testData.historyQueries.list[0].items[0].id, testData.historyQueries.list[0].items[1].id] };
-
-    await historyQueryController.enableHistoryQueryItems(ctx);
-
-    expect(ctx.app.historyQueryService.enableHistoryQueryItems).toHaveBeenCalledWith(testData.historyQueries.list[0].id, [
-      testData.historyQueries.list[0].items[0].id,
-      testData.historyQueries.list[0].items[1].id
-    ]);
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('enableHistoryQueryItems() should return bad request', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.request.body = { itemIds: [testData.historyQueries.list[0].items[0].id] };
-    ctx.app.historyQueryService.enableHistoryQueryItems.mockImplementationOnce(() => {
-      throw new Error('enable history query items error');
-    });
-
-    await historyQueryController.enableHistoryQueryItems(ctx);
-    expect(ctx.badRequest).toHaveBeenCalledWith('enable history query items error');
-  });
-
-  it('disableHistoryQueryItems() should disable multiple History query items', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.request.body = { itemIds: [testData.historyQueries.list[0].items[0].id, testData.historyQueries.list[0].items[1].id] };
-
-    await historyQueryController.disableHistoryQueryItems(ctx);
-
-    expect(ctx.app.historyQueryService.disableHistoryQueryItems).toHaveBeenCalledWith(testData.historyQueries.list[0].id, [
-      testData.historyQueries.list[0].items[0].id,
-      testData.historyQueries.list[0].items[1].id
-    ]);
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('disableHistoryQueryItems() should return bad request', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.request.body = { itemIds: [testData.historyQueries.list[0].items[0].id] };
-    ctx.app.historyQueryService.disableHistoryQueryItems.mockImplementationOnce(() => {
-      throw new Error('disable history query items error');
-    });
-
-    await historyQueryController.disableHistoryQueryItems(ctx);
-    expect(ctx.badRequest).toHaveBeenCalledWith('disable history query items error');
-  });
-
-  it('deleteHistoryQueryItems() should delete multiple History query items', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.request.body = { itemIds: [testData.historyQueries.list[0].items[0].id, testData.historyQueries.list[0].items[1].id] };
-
-    await historyQueryController.deleteHistoryQueryItems(ctx);
-
-    expect(ctx.app.historyQueryService.deleteHistoryQueryItems).toHaveBeenCalledWith(testData.historyQueries.list[0].id, [
-      testData.historyQueries.list[0].items[0].id,
-      testData.historyQueries.list[0].items[1].id
-    ]);
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('deleteHistoryQueryItems() should return bad request', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.request.body = { itemIds: [testData.historyQueries.list[0].items[0].id] };
-    ctx.app.historyQueryService.deleteHistoryQueryItems.mockImplementationOnce(() => {
-      throw new Error('delete history query items error');
-    });
-
-    await historyQueryController.deleteHistoryQueryItems(ctx);
-    expect(ctx.badRequest).toHaveBeenCalledWith('delete history query items error');
   });
 });
