@@ -1476,7 +1476,9 @@ describe('Repository with populated database', () => {
         repository.search(
           {
             types: [],
-            status: []
+            status: [],
+            start: undefined,
+            end: undefined
           },
           0
         )
@@ -1499,7 +1501,9 @@ describe('Repository with populated database', () => {
       expect(
         repository.list({
           types: [],
-          status: []
+          status: [],
+          start: undefined,
+          end: undefined
         })
       ).toEqual(testData.oIAnalytics.messages.oIBusList);
     });
@@ -1719,7 +1723,9 @@ describe('Repository with populated database', () => {
         }).length
       ).toEqual(2);
 
-      expect(repository.listItems(testData.south.list[1].id, {}).length).toEqual(2);
+      expect(
+        repository.listItems(testData.south.list[1].id, { name: undefined, scanModeId: undefined, enabled: undefined }).length
+      ).toEqual(2);
     });
 
     it('should search items', () => {
@@ -1732,7 +1738,10 @@ describe('Repository with populated database', () => {
         }).totalElements
       ).toEqual(2);
 
-      expect(repository.searchItems(testData.south.list[1].id, { page: 0 }).totalElements).toEqual(2);
+      expect(
+        repository.searchItems(testData.south.list[1].id, { name: undefined, scanModeId: undefined, enabled: undefined, page: 0 })
+          .totalElements
+      ).toEqual(2);
     });
 
     it('should find items', () => {
@@ -2046,7 +2055,9 @@ describe('Repository with populated database', () => {
         }).length
       ).toEqual(2);
 
-      expect(repository.listHistoryQueryItems(testData.historyQueries.list[1].id, {}).length).toEqual(2);
+      expect(repository.listHistoryQueryItems(testData.historyQueries.list[1].id, { enabled: undefined, name: undefined }).length).toEqual(
+        2
+      );
     });
 
     it('should search items', () => {
@@ -2058,7 +2069,10 @@ describe('Repository with populated database', () => {
         }).totalElements
       ).toEqual(2);
 
-      expect(repository.searchHistoryQueryItems(testData.historyQueries.list[1].id, {}).totalElements).toEqual(2);
+      expect(
+        repository.searchHistoryQueryItems(testData.historyQueries.list[1].id, { enabled: undefined, name: undefined, page: 0 })
+          .totalElements
+      ).toEqual(2);
     });
 
     it('should find items', () => {

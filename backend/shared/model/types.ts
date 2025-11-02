@@ -42,13 +42,6 @@ export type Language = (typeof LANGUAGES)[number];
 
 /**
  * Base entity interface that includes common properties for all entities.
- *
- * @example
- * {
- *   "id": "entity123",
- *   "creationDate": "2023-10-31T12:34:56.789Z",
- *   "lastEditInstant": "2023-10-31T13:45:00.123Z"
- * }
  */
 export interface BaseEntity {
   /**
@@ -72,15 +65,6 @@ export interface BaseEntity {
 
 /**
  * Represents a paginated response containing an array of elements.
- *
- * @example
- * {
- *   "content": [{ "id": "item1" }, { "id": "item2" }],
- *   "totalElements": 2,
- *   "size": 10,
- *   "number": 0,
- *   "totalPages": 1
- * }
  */
 export interface Page<T> {
   /**
@@ -252,16 +236,6 @@ export interface BaseSerializationSettings {
 
 /**
  * Serialization settings for CSV format.
- *
- * @example
- * {
- *   "type": "csv",
- *   "outputTimestampFormat": "YYYY-MM-DD HH:mm:ss",
- *   "outputTimezone": "Europe/Paris",
- *   "filename": "output.csv",
- *   "compression": true,
- *   "delimiter": "COMMA"
- * }
  */
 export interface CSVSerializationSettings extends BaseSerializationSettings {
   /**
@@ -313,38 +287,29 @@ export type SerializationSettings = CSVSerializationSettings | FileSerialization
 
 /**
  * Manifest for a connector, describing its properties and configuration.
- *
- * @example
- * {
- *   "id": "postgresql",
- *   "category": "database",
- *   "name": "PostgreSQL Connector",
- *   "description": "Connector for PostgreSQL databases",
- *   "settings": {} // TODO
- * }
  */
 export interface ConnectorManifest {
   /**
    * The unique identifier of the connector.
-   * @example "postgresql"
+   * @example "console"
    */
   id: string;
 
   /**
    * The category of the connector.
-   * @example "database"
+   * @example "debug"
    */
   category: string;
 
   /**
    * The name of the connector.
-   * @example "PostgreSQL Connector"
+   * @example "Debug Connector"
    */
   name: string;
 
   /**
    * A description of the connector.
-   * @example "Connector for PostgreSQL databases"
+   * @example "Connector for debugging"
    */
   description: string;
 

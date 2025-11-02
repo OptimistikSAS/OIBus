@@ -46,9 +46,7 @@ export default class HistoryQueryRepository {
     return result.map(element => this.toHistoryQueryEntity(element as Record<string, string | number>));
   }
 
-  findHistoryQueryById<S extends SouthSettings, N extends NorthSettings, I extends SouthItemSettings>(
-    id: string
-  ): HistoryQueryEntity<S, N, I> | null {
+  findHistoryQueryById(id: string): HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> | null {
     const query =
       `SELECT id, name, description, status, start_time, end_time, ` +
       `south_type, north_type, south_settings, north_settings, ` +
@@ -61,12 +59,10 @@ export default class HistoryQueryRepository {
     if (!result) {
       return null;
     }
-    return this.toHistoryQueryEntity<S, N, I>(result as Record<string, string | number>);
+    return this.toHistoryQueryEntity(result as Record<string, string | number>);
   }
 
-  saveHistoryQuery<S extends SouthSettings, N extends NorthSettings, I extends SouthItemSettings>(
-    historyQuery: HistoryQueryEntity<S, N, I>
-  ): void {
+  saveHistoryQuery(historyQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>): void {
     const transaction = this.database.transaction(() => {
       if (!historyQuery.id) {
         historyQuery.id = generateRandomId(6);
@@ -215,14 +211,11 @@ export default class HistoryQueryRepository {
     this.database.prepare(query).run(historyId, transformerId);
   }
 
-  searchHistoryQueryItems<I extends SouthItemSettings>(
-    historyId: string,
-    searchParams: HistoryQueryItemSearchParam
-  ): Page<HistoryQueryItemEntity<I>> {
+  searchHistoryQueryItems(historyId: string, searchParams: HistoryQueryItemSearchParam): Page<HistoryQueryItemEntity<SouthItemSettings>> {
     let whereClause = `WHERE history_id = ?`;
     const queryParams = [historyId];
 
-    const page = searchParams.page ?? 0;
+    const page = searchParams.page;
 
     if (searchParams.name) {
       queryParams.push(searchParams.name);
@@ -237,7 +230,7 @@ export default class HistoryQueryRepository {
     const results = this.database
       .prepare(query)
       .all(...queryParams)
-      .map(result => this.toHistoryQueryItemEntity<I>(result as Record<string, string>));
+      .map(result => this.toHistoryQueryItemEntity(result as Record<string, string>));
     const totalElements: number = (
       this.database.prepare(`SELECT COUNT(*) as count FROM ${HISTORY_ITEMS_TABLE} ${whereClause}`).get(...queryParams) as { count: number }
     ).count;
@@ -251,10 +244,10 @@ export default class HistoryQueryRepository {
     };
   }
 
-  listHistoryQueryItems<I extends SouthItemSettings>(
+  listHistoryQueryItems(
     historyId: string,
-    searchParams: HistoryQueryItemSearchParam
-  ): Array<HistoryQueryItemEntity<I>> {
+    searchParams: Omit<HistoryQueryItemSearchParam, 'page'>
+  ): Array<HistoryQueryItemEntity<SouthItemSettings>> {
     let whereClause = `WHERE history_id = ?`;
     const queryParams = [historyId];
     if (searchParams.name) {
@@ -271,21 +264,18 @@ export default class HistoryQueryRepository {
     return this.database
       .prepare(query)
       .all(...queryParams)
-      .map(result => this.toHistoryQueryItemEntity<I>(result as Record<string, string>));
+      .map(result => this.toHistoryQueryItemEntity(result as Record<string, string>));
   }
 
-  findAllItemsForHistoryQuery<I extends SouthItemSettings>(historyQueryId: string): Array<HistoryQueryItemEntity<I>> {
+  findAllItemsForHistoryQuery(historyQueryId: string): Array<HistoryQueryItemEntity<SouthItemSettings>> {
     const query = `SELECT id, name, enabled, settings FROM ${HISTORY_ITEMS_TABLE} WHERE history_id = ?;`;
     return this.database
       .prepare(query)
       .all(historyQueryId)
-      .map(result => this.toHistoryQueryItemEntity<I>(result as Record<string, string>));
+      .map(result => this.toHistoryQueryItemEntity(result as Record<string, string>));
   }
 
-  findHistoryQueryItemById<I extends SouthItemSettings>(
-    historyQueryId: string,
-    historyQueryItemId: string
-  ): HistoryQueryItemEntity<I> | null {
+  findHistoryQueryItemById(historyQueryId: string, historyQueryItemId: string): HistoryQueryItemEntity<SouthItemSettings> | null {
     const query = `SELECT id, name, enabled, settings FROM ${HISTORY_ITEMS_TABLE} WHERE id = ? AND history_id = ?;`;
     const result = this.database.prepare(query).get(historyQueryItemId, historyQueryId);
     if (!result) return null;
@@ -307,9 +297,9 @@ export default class HistoryQueryRepository {
     }
   }
 
-  saveAllItems<I extends SouthItemSettings>(
+  saveAllItems(
     historyQueryId: string,
-    historyQueryItems: Array<HistoryQueryItemEntity<I>>,
+    historyQueryItems: Array<HistoryQueryItemEntity<SouthItemSettings>>,
     deleteItemsNotPresent: boolean
   ): void {
     const transaction = this.database.transaction(() => {
@@ -317,7 +307,7 @@ export default class HistoryQueryRepository {
         this.deleteAllHistoryQueryItemsByHistoryQuery(historyQueryId);
       }
       for (const item of historyQueryItems) {
-        this.saveHistoryQueryItem<I>(historyQueryId, item);
+        this.saveHistoryQueryItem(historyQueryId, item);
       }
     });
     transaction();
@@ -359,18 +349,18 @@ export default class HistoryQueryRepository {
     return toScanMode(result);
   }
 
-  private toHistoryQueryItemEntity<I extends SouthItemSettings>(result: Record<string, string>): HistoryQueryItemEntity<I> {
+  private toHistoryQueryItemEntity(result: Record<string, string>): HistoryQueryItemEntity<SouthItemSettings> {
     return {
       id: result.id,
       name: result.name,
       enabled: Boolean(result.enabled),
-      settings: JSON.parse(result.settings) as I
+      settings: JSON.parse(result.settings) as SouthItemSettings
     };
   }
 
-  private toHistoryQueryEntity<S extends SouthSettings, N extends NorthSettings, I extends SouthItemSettings>(
+  private toHistoryQueryEntity(
     result: Record<string, string | number>
-  ): HistoryQueryEntity<S, N, I> {
+  ): HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> {
     return {
       id: result.id as string,
       name: result.name as string,
@@ -380,8 +370,8 @@ export default class HistoryQueryRepository {
       endTime: result.end_time as Instant,
       southType: result.south_type as OIBusSouthType,
       northType: result.north_type as OIBusNorthType,
-      southSettings: JSON.parse(result.south_settings as string) as S,
-      northSettings: JSON.parse(result.north_settings as string) as N,
+      southSettings: JSON.parse(result.south_settings as string) as SouthSettings,
+      northSettings: JSON.parse(result.north_settings as string) as NorthSettings,
       caching: {
         trigger: {
           scanMode: this.findScanModeForHistoryQuery(result.caching_trigger_schedule as string),
@@ -403,7 +393,7 @@ export default class HistoryQueryRepository {
           retentionDuration: result.caching_archive_retention_duration as number
         }
       },
-      items: this.findAllItemsForHistoryQuery<I>(result.id as string),
+      items: this.findAllItemsForHistoryQuery(result.id as string),
       northTransformers: this.findTransformersForHistory(result.id as string)
     };
   }

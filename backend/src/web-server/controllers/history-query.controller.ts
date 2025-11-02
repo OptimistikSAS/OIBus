@@ -269,14 +269,16 @@ export class HistoryQueryController extends Controller {
   async searchItems(
     @Path() historyId: string,
     @Query() name: string | undefined,
+    @Query() enabled: boolean | undefined,
     @Query() page = 0,
     @Request() request: CustomExpressRequest
   ): Promise<Page<HistoryQueryItemDTO>> {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
     const historyQuery = historyQueryService.findById(historyId);
     const searchParams: HistoryQueryItemSearchParam = {
-      page: page ? parseInt(page.toString(), 10) : 0,
-      name: name
+      name,
+      enabled,
+      page: page ? parseInt(page.toString(), 10) : 0
     };
     const pageResult = await historyQueryService.searchItems(historyId, searchParams);
     return {

@@ -197,10 +197,12 @@ describe('HistoryQueryController', () => {
     const historyId = testData.historyQueries.list[0].id;
     const page = 1;
     const name = 'test';
+    const enabled = false;
 
     const searchParams: HistoryQueryItemSearchParam = {
-      page: page,
-      name: name
+      name,
+      enabled,
+      page
     };
 
     const mockPageResult = {
@@ -213,7 +215,7 @@ describe('HistoryQueryController', () => {
     (mockRequest.services!.historyQueryService.findById as jest.Mock).mockReturnValue(testData.historyQueries.list[0]);
     (mockRequest.services!.historyQueryService.searchItems as jest.Mock).mockResolvedValue(mockPageResult);
 
-    const result = await controller.searchItems(historyId, name, page, mockRequest as CustomExpressRequest);
+    const result = await controller.searchItems(historyId, name, enabled, page, mockRequest as CustomExpressRequest);
 
     expect(mockRequest.services!.historyQueryService.findById).toHaveBeenCalledWith(historyId);
     expect(mockRequest.services!.historyQueryService.searchItems).toHaveBeenCalledWith(historyId, searchParams);
@@ -233,7 +235,7 @@ describe('HistoryQueryController', () => {
     (mockRequest.services!.historyQueryService.findById as jest.Mock).mockReturnValue(testData.historyQueries.list[0]);
     (mockRequest.services!.historyQueryService.searchItems as jest.Mock).mockResolvedValue(mockPageResult);
 
-    const result = await controller.searchItems(historyId, undefined, undefined, mockRequest as CustomExpressRequest);
+    const result = await controller.searchItems(historyId, undefined, undefined, undefined, mockRequest as CustomExpressRequest);
 
     expect(mockRequest.services!.historyQueryService.findById).toHaveBeenCalledWith(historyId);
     expect(mockRequest.services!.historyQueryService.searchItems).toHaveBeenCalledWith(historyId, { page: 0 });

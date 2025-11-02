@@ -86,7 +86,7 @@ class SouthItemTestComponent implements AfterContentInit, OnInit {
 
   get testingSettings(): SouthConnectorItemTestingSettings {
     if (!this.testingSettingsForm?.valid) {
-      return {};
+      return { history: undefined };
     }
 
     const formValue = this.testingSettingsForm.value;

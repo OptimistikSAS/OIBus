@@ -3,16 +3,6 @@ import { BaseEntity, Instant } from './types';
 /**
  * Data Transfer Object for a scan mode.
  * Represents a configured scan mode with its metadata and schedule.
- *
- * @example
- * {
- *   "id": "aBc12F",
- *   "name": "Daily Backup Scan",
- *   "description": "Scans for new backup data every day at midnight",
- *   "cron": "0 0 * * *",
- *   "createdAt": "2023-01-01T00:00:00Z",
- *   "updatedAt": "2023-01-01T00:00:00Z"
- * }
  */
 export interface ScanModeDTO extends BaseEntity {
   /**
@@ -37,13 +27,6 @@ export interface ScanModeDTO extends BaseEntity {
 /**
  * Command DTO for creating or updating a scan mode.
  * Used as the request body for scan mode creation/update endpoints.
- *
- * @example
- * {
- *   "name": "Daily Backup Scan",
- *   "description": "Scans for new backup data every day at midnight",
- *   "cron": "0 0 * * *"
- * }
  */
 export interface ScanModeCommandDTO {
   /**
@@ -68,20 +51,6 @@ export interface ScanModeCommandDTO {
 /**
  * Result of validating a cron expression.
  * Includes validation status, error messages, and execution details.
- *
- * @example
- * {
- *   "isValid": true,
- *   "errorMessage": "",
- *   "nextExecutions": [
- *     "2023-01-01T00:00:00Z",
- *     "2023-01-02T00:00:00Z",
- *     "2023-01-03T00:00:00Z",
- *     "2023-01-04T00:00:00Z",
- *     "2023-01-05T00:00:00Z"
- *   ],
- *   "humanReadableForm": "At 00:00 every day"
- * }
  */
 export interface ValidatedCronExpression {
   /**

@@ -3,18 +3,6 @@ import { BaseEntity, Instant } from './types';
 /**
  * Data Transfer Object for a certificate.
  * Represents a certificate with its metadata, public key, and expiry information.
- *
- * @example
- * {
- *   "id": "aBc12F",
- *   "name": "Server SSL Certificate",
- *   "description": "SSL certificate for securing server communications",
- *   "publicKey": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA...",
- *   "certificate": "-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJAKoK/heBjcOuMA0GCSqGSIb3DQEBBQUAMEUx...",
- *   "expiry": "2024-12-31T23:59:59Z",
- *   "createdAt": "2023-01-01T00:00:00Z",
- *   "updatedAt": "2023-01-01T00:00:00Z"
- * }
  */
 export interface CertificateDTO extends BaseEntity {
   /**
@@ -43,7 +31,6 @@ export interface CertificateDTO extends BaseEntity {
 
   /**
    * The expiry date and time of the certificate.
-   * @example "2024-12-31T23:59:59Z"
    */
   expiry: Instant;
 }
@@ -51,22 +38,6 @@ export interface CertificateDTO extends BaseEntity {
 /**
  * Command DTO for creating or updating a certificate.
  * Used as the request body for certificate creation/update endpoints.
- *
- * @example
- * {
- *   "name": "New Server SSL Certificate",
- *   "description": "New SSL certificate for securing server communications",
- *   "regenerateCertificate": false,
- *   "options": {
- *     "commonName": "example.com",
- *     "countryName": "US",
- *     "stateOrProvinceName": "California",
- *     "localityName": "San Francisco",
- *     "organizationName": "Example Inc.",
- *     "keySize": 2048,
- *     "daysBeforeExpiry": 365
- *   }
- * }
  */
 export interface CertificateCommandDTO {
   /**
@@ -90,16 +61,6 @@ export interface CertificateCommandDTO {
   /**
    * Options for generating the certificate.
    * Set to `null` to not regenerate certificate
-   * @example
-   * {
-   *   "commonName": "example.com",
-   *   "countryName": "US",
-   *   "stateOrProvinceName": "California",
-   *   "localityName": "San Francisco",
-   *   "organizationName": "Example Inc.",
-   *   "keySize": 2048,
-   *   "daysBeforeExpiry": 365
-   * }
    */
   options: CertificateOptions | null;
 }
@@ -107,17 +68,6 @@ export interface CertificateCommandDTO {
 /**
  * Options for generating a certificate.
  * Used to specify details for certificate generation.
- *
- * @example
- * {
- *   "commonName": "example.com",
- *   "countryName": "US",
- *   "stateOrProvinceName": "California",
- *   "localityName": "San Francisco",
- *   "organizationName": "Example Inc.",
- *   "keySize": 2048,
- *   "daysBeforeExpiry": 365
- * }
  */
 export interface CertificateOptions {
   /**
@@ -128,19 +78,19 @@ export interface CertificateOptions {
 
   /**
    * The country name for the certificate.
-   * @example "US"
+   * @example "FR"
    */
   countryName: string;
 
   /**
    * The state or province name for the certificate.
-   * @example "California"
+   * @example "Savoie"
    */
   stateOrProvinceName: string;
 
   /**
    * The locality (e.g., city) name for the certificate.
-   * @example "San Francisco"
+   * @example "Chambéry"
    */
   localityName: string;
 

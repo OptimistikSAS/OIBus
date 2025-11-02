@@ -265,15 +265,19 @@ export class SouthConnectorController extends Controller {
   @Get('/{southId}/items/search')
   async searchItems(
     @Path() southId: string,
-    @Query() page: number | undefined,
     @Query() name: string | undefined,
+    @Query() scanModeId: string | undefined,
+    @Query() enabled: boolean | undefined,
+    @Query() page = 0,
     @Request() request: CustomExpressRequest
   ): Promise<Page<SouthConnectorItemDTO>> {
     const southService = request.services.southService as SouthService;
     const southConnector = southService.findById(southId);
     const searchParams: SouthConnectorItemSearchParam = {
-      page: page ? parseInt(page.toString(), 10) : 0,
-      name: name
+      name,
+      scanModeId,
+      enabled,
+      page: page ? parseInt(page.toString(), 10) : 0
     };
     const pageResult = await southService.searchItems(southId, searchParams);
     return {

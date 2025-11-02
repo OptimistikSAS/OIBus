@@ -100,7 +100,7 @@ describe('HistoryQueryService', () => {
       { id: 'itemId', name: 'MySouthItem', enabled: true, settings: {} as SouthItemSettings }
     ]);
 
-    service.searchItems('id1', { page: 0 }).subscribe(c => (expectedItems = c));
+    service.searchItems('id1', { name: undefined, enabled: undefined, page: 0 }).subscribe(c => (expectedItems = c));
 
     http.expectOne({ url: '/api/history/id1/items/search?page=0', method: 'GET' }).flush(southConnectorItems);
     expect(expectedItems!).toEqual(southConnectorItems);

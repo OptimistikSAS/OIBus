@@ -24,7 +24,7 @@ export default class SouthConnectorRepository {
       .map(result => toSouthConnectorLight(result as Record<string, string>));
   }
 
-  findSouthById<S extends SouthSettings, I extends SouthItemSettings>(id: string): SouthConnectorEntity<S, I> | null {
+  findSouthById(id: string): SouthConnectorEntity<SouthSettings, SouthItemSettings> | null {
     const query = `
         SELECT id, name, type, description, enabled, settings
         FROM ${SOUTH_CONNECTORS_TABLE}
@@ -34,10 +34,10 @@ export default class SouthConnectorRepository {
     if (!result) {
       return null;
     }
-    return this.toSouthConnector<S, I>(result as Record<string, string | number>);
+    return this.toSouthConnector(result as Record<string, string | number>);
   }
 
-  saveSouthConnector<S extends SouthSettings, I extends SouthItemSettings>(south: SouthConnectorEntity<S, I>): void {
+  saveSouthConnector(south: SouthConnectorEntity<SouthSettings, SouthItemSettings>): void {
     const transaction = this.database.transaction(() => {
       if (!south.id) {
         south.id = generateRandomId(6);
@@ -163,22 +163,22 @@ export default class SouthConnectorRepository {
     };
   }
 
-  findAllItemsForSouth<I extends SouthItemSettings>(southId: string): Array<SouthConnectorItemEntity<I>> {
+  findAllItemsForSouth(southId: string): Array<SouthConnectorItemEntity<SouthItemSettings>> {
     const query = `SELECT id, name, enabled, scan_mode_id, settings FROM ${SOUTH_ITEMS_TABLE} WHERE connector_id = ?;`;
     return this.database
       .prepare(query)
       .all(southId)
-      .map(result => this.toSouthConnectorItemEntity<I>(result as Record<string, string>));
+      .map(result => this.toSouthConnectorItemEntity(result as Record<string, string>));
   }
 
-  findItemById<I extends SouthItemSettings>(southConnectorId: string, itemId: string): SouthConnectorItemEntity<I> | null {
+  findItemById(southConnectorId: string, itemId: string): SouthConnectorItemEntity<SouthItemSettings> | null {
     const query = `SELECT id, name, enabled, scan_mode_id, settings FROM ${SOUTH_ITEMS_TABLE} WHERE id = ? AND connector_id = ?;`;
     const result = this.database.prepare(query).get(itemId, southConnectorId);
     if (!result) return null;
     return this.toSouthConnectorItemEntity(result as Record<string, string>);
   }
 
-  saveItem<I extends SouthItemSettings>(southConnectorId: string, southItem: SouthConnectorItemEntity<I>): void {
+  saveItem(southConnectorId: string, southItem: SouthConnectorItemEntity<SouthItemSettings>): void {
     if (!southItem.id) {
       southItem.id = generateRandomId(6);
       const insertQuery =
@@ -194,9 +194,9 @@ export default class SouthConnectorRepository {
     }
   }
 
-  saveAllItems<I extends SouthItemSettings>(
+  saveAllItems(
     southConnectorId: string,
-    southItems: Array<SouthConnectorItemEntity<I>>,
+    southItems: Array<SouthConnectorItemEntity<SouthItemSettings>>,
     deleteItemsNotPresent: boolean
   ): void {
     const transaction = this.database.transaction(() => {
@@ -236,27 +236,25 @@ export default class SouthConnectorRepository {
     return toScanMode(result);
   }
 
-  private toSouthConnectorItemEntity<I extends SouthItemSettings>(result: Record<string, string>): SouthConnectorItemEntity<I> {
+  private toSouthConnectorItemEntity(result: Record<string, string>): SouthConnectorItemEntity<SouthItemSettings> {
     return {
       id: result.id,
       name: result.name,
       enabled: Boolean(result.enabled),
       scanMode: this.findScanModeForSouth(result.scan_mode_id as string),
-      settings: JSON.parse(result.settings) as I
+      settings: JSON.parse(result.settings) as SouthItemSettings
     };
   }
 
-  private toSouthConnector<S extends SouthSettings, I extends SouthItemSettings>(
-    result: Record<string, string | number>
-  ): SouthConnectorEntity<S, I> {
+  private toSouthConnector(result: Record<string, string | number>): SouthConnectorEntity<SouthSettings, SouthItemSettings> {
     return {
       id: result.id as string,
       name: result.name as string,
       type: result.type as OIBusSouthType,
       description: result.description as string,
       enabled: Boolean(result.enabled),
-      settings: JSON.parse(result.settings as string) as S,
-      items: this.findAllItemsForSouth<I>(result.id as string)
+      settings: JSON.parse(result.settings as string) as SouthSettings,
+      items: this.findAllItemsForSouth(result.id as string)
     };
   }
 }

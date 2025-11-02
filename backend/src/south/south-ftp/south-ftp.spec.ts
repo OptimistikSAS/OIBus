@@ -180,7 +180,7 @@ describe('SouthFTP', () => {
       const item = configuration.items[0];
       const callback = jest.fn();
 
-      await south.testItem(item, {}, callback);
+      await south.testItem(item, { history: undefined }, callback);
 
       expect(callback).toHaveBeenCalledWith({
         type: 'time-values',
@@ -220,7 +220,7 @@ describe('SouthFTP', () => {
       const item = configuration.items[0];
       const callback = jest.fn();
 
-      await south.testItem(item, {}, callback);
+      await south.testItem(item, { history: undefined }, callback);
 
       expect(callback).toHaveBeenCalledWith({
         type: 'time-values',

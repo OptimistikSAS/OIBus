@@ -229,8 +229,13 @@ describe('South Service', () => {
   });
 
   it('should search items', () => {
-    service.searchItems(testData.south.list[0].id, { page: 0 });
-    expect(southConnectorRepository.searchItems).toHaveBeenCalledWith(testData.south.list[0].id, { page: 0 });
+    service.searchItems(testData.south.list[0].id, { name: undefined, scanModeId: undefined, enabled: undefined, page: 0 });
+    expect(southConnectorRepository.searchItems).toHaveBeenCalledWith(testData.south.list[0].id, {
+      name: undefined,
+      scanModeId: undefined,
+      enabled: undefined,
+      page: 0
+    });
   });
 
   it('should find an item', () => {
