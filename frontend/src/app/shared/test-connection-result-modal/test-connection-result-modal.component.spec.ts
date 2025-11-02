@@ -10,8 +10,6 @@ import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NorthConnectorCommandDTO, NorthConnectorDTO } from '../../../../../backend/shared/model/north-connector.model';
 import { HistoryQueryService } from '../../services/history-query.service';
-import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
-import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 import testData from '../../../../../backend/src/tests/utils/test-data';
 
 class TestConnectionResultModalComponentTester extends ComponentTester<TestConnectionResultModalComponent> {
@@ -114,14 +112,14 @@ describe('TestConnectionResultModalComponent', () => {
   });
 
   describe('North type', () => {
-    const northConnector: NorthConnectorDTO<NorthSettings> = {
+    const northConnector: NorthConnectorDTO = {
       id: 'id1',
       type: 'file-writer',
       name: 'My South Connector 1',
       description: 'My South connector description',
       enabled: true,
       settings: {}
-    } as NorthConnectorDTO<NorthSettings>;
+    } as NorthConnectorDTO;
 
     beforeEach(() => {
       northConnectorService.testConnection.and.returnValue(of(undefined));
@@ -172,10 +170,10 @@ describe('TestConnectionResultModalComponent', () => {
   });
 
   describe('History query north', () => {
-    const northCommand: NorthConnectorCommandDTO<NorthSettings> = {
+    const northCommand: NorthConnectorCommandDTO = {
       name: 'test',
       settings: {}
-    } as NorthConnectorCommandDTO<NorthSettings>;
+    } as NorthConnectorCommandDTO;
 
     beforeEach(() => {
       historyQueryService.testNorthConnection.and.returnValue(of(undefined));
@@ -256,10 +254,10 @@ describe('TestConnectionResultModalComponent', () => {
   });
 
   describe('History query south', () => {
-    const southCommand: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> = {
+    const southCommand: SouthConnectorCommandDTO = {
       name: 'test',
       settings: {}
-    } as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
+    } as SouthConnectorCommandDTO;
 
     beforeEach(() => {
       historyQueryService.testSouthConnection.and.returnValue(of(undefined));

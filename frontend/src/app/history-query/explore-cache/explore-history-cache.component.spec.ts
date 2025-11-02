@@ -8,7 +8,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 import { HistoryQueryService } from '../../services/history-query.service';
 import { HistoryQueryDTO } from '../../../../../backend/shared/model/history-query.model';
-import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
+import { SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 import testData from '../../../../../backend/src/tests/utils/test-data';
 
 class ExploreHistoryCacheComponentTester extends ComponentTester<ExploreHistoryCacheComponent> {
@@ -37,7 +37,7 @@ describe('ExploreHistoryCacheComponent', () => {
   let tester: ExploreHistoryCacheComponentTester;
   let historyQueryService: jasmine.SpyObj<HistoryQueryService>;
 
-  const historyQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings> = {
+  const historyQuery: HistoryQueryDTO = {
     id: 'id1',
     status: 'PAUSED',
     southType: 'opcua',
@@ -72,7 +72,7 @@ describe('ExploreHistoryCacheComponent', () => {
     southSettings: {} as SouthSettings,
     items: [],
     northTransformers: []
-  } as HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings>;
+  } as HistoryQueryDTO;
 
   beforeEach(() => {
     historyQueryService = createMock(HistoryQueryService);

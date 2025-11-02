@@ -6,7 +6,6 @@ import { BoxComponent, BoxTitleDirective } from '../../../shared/box/box.compone
 import { FileTableComponent } from '../../../shared/file-table/file-table.component';
 import { FileContentModalComponent } from '../../../shared/file-content-modal/file-content-modal.component';
 import { ModalService } from '../../../shared/modal.service';
-import { NorthSettings } from '../../../../../../backend/shared/model/north-settings.model';
 import { CacheMetadata } from '../../../../../../backend/shared/model/engine.model';
 
 @Component({
@@ -19,7 +18,7 @@ export class NorthCacheContentComponent implements OnInit {
   private northConnectorService = inject(NorthConnectorService);
   private modalService = inject(ModalService);
 
-  readonly northConnector = input.required<NorthConnectorDTO<NorthSettings>>();
+  readonly northConnector = input.required<NorthConnectorDTO>();
   readonly cacheType = input.required<'cache' | 'error' | 'archive'>();
   readonly cacheUpdated = output();
   cacheContentFiles: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [];

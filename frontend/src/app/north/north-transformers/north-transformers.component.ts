@@ -12,7 +12,6 @@ import { CertificateDTO } from '../../../../../backend/shared/model/certificate.
 import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
-import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 import { firstValueFrom, of, switchMap } from 'rxjs';
 import { NorthConnectorService } from '../../services/north-connector.service';
 
@@ -28,7 +27,7 @@ export class NorthTransformersComponent {
   private modalService = inject(ModalService);
   private northConnectorService = inject(NorthConnectorService);
 
-  readonly northConnector = input<NorthConnectorDTO<NorthSettings> | null>(null);
+  readonly northConnector = input<NorthConnectorDTO | null>(null);
 
   readonly inMemoryTransformersWithOptions = output<Array<TransformerDTOWithOptions> | null>();
   readonly saveChangesDirectly = input<boolean>(false);

@@ -47,8 +47,8 @@ export class NorthConnectorService {
    * Get one North connector
    * @param northId - the ID of the North connector
    */
-  findById(northId: string): Observable<NorthConnectorDTO<NorthSettings>> {
-    return this.http.get<NorthConnectorDTO<NorthSettings>>(`/api/north/${northId}`);
+  findById(northId: string): Observable<NorthConnectorDTO> {
+    return this.http.get<NorthConnectorDTO>(`/api/north/${northId}`);
   }
 
   /**
@@ -56,12 +56,12 @@ export class NorthConnectorService {
    * @param command - the new North connector
    * @param retrieveSecretsFromNorth - The ID of the duplicated North used to retrieved secrets in the backend
    */
-  create(command: NorthConnectorCommandDTO<NorthSettings>, retrieveSecretsFromNorth: string): Observable<NorthConnectorDTO<any>> {
+  create(command: NorthConnectorCommandDTO, retrieveSecretsFromNorth: string): Observable<NorthConnectorDTO> {
     const params: Record<string, string | Array<string>> = {};
     if (retrieveSecretsFromNorth) {
       params['duplicate'] = retrieveSecretsFromNorth;
     }
-    return this.http.post<NorthConnectorDTO<NorthSettings>>(`/api/north`, command, { params });
+    return this.http.post<NorthConnectorDTO>(`/api/north`, command, { params });
   }
 
   /**
@@ -69,7 +69,7 @@ export class NorthConnectorService {
    * @param northId - the ID of the North connector
    * @param command - the new values of the selected North connector
    */
-  update(northId: string, command: NorthConnectorCommandDTO<NorthSettings>): Observable<void> {
+  update(northId: string, command: NorthConnectorCommandDTO): Observable<void> {
     return this.http.put<void>(`/api/north/${northId}`, command);
   }
 

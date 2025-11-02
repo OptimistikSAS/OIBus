@@ -45,7 +45,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
   const historyId = 'historyId';
   const southConnectorCommand = testData.south.command;
   const manifest = testData.south.manifest;
-  const allItems: Array<HistoryQueryItemDTO<SouthItemSettings>> = [
+  const allItems: Array<HistoryQueryItemDTO> = [
     {
       id: 'id1',
       enabled: true,
@@ -116,7 +116,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
   });
 
   describe('copy mode', () => {
-    const southItem: HistoryQueryItemDTO<SouthItemSettings> = {
+    const southItem: HistoryQueryItemDTO = {
       id: 'id1',
       name: 'myName',
       enabled: true,
@@ -143,7 +143,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
   });
 
   describe('edit mode', () => {
-    const southItem: HistoryQueryItemDTO<SouthItemSettings> = {
+    const southItem: HistoryQueryItemDTO = {
       id: 'id1',
       name: 'myName',
       enabled: true,

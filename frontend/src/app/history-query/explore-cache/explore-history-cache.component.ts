@@ -4,10 +4,8 @@ import { of, switchMap } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
 import { HistoryCacheContentComponent } from './cache-content/history-cache-content.component';
-import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 import { HistoryQueryService } from '../../services/history-query.service';
 import { HistoryQueryDTO } from '../../../../../backend/shared/model/history-query.model';
-import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 
 @Component({
   selector: 'oib-explore-history-cache',
@@ -19,7 +17,7 @@ export class ExploreHistoryCacheComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private historyQueryService = inject(HistoryQueryService);
 
-  historyQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings> | null = null;
+  historyQuery: HistoryQueryDTO | null = null;
   readonly cacheFilesComponent = viewChild.required<HistoryCacheContentComponent>('cache');
   readonly errorFilesComponent = viewChild.required<HistoryCacheContentComponent>('error');
   readonly archiveFilesComponent = viewChild.required<HistoryCacheContentComponent>('archive');

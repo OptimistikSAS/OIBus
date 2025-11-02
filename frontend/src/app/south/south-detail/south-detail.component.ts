@@ -25,7 +25,6 @@ import { TestConnectionResultModalComponent } from '../../shared/test-connection
 import { EngineService } from '../../services/engine.service';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { LogsComponent } from '../../logs/logs.component';
-import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
 import { isDisplayableAttribute } from '../../shared/form/dynamic-form.builder';
 import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
@@ -66,7 +65,7 @@ export class SouthDetailComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private cd = inject(ChangeDetectorRef);
 
-  southConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> | null = null;
+  southConnector: SouthConnectorDTO | null = null;
   displayedSettings: Array<{ key: string; value: string }> = [];
   scanModes: Array<ScanModeDTO> = [];
   certificates: Array<CertificateDTO> = [];
@@ -136,7 +135,7 @@ export class SouthDetailComponent implements OnInit, OnDestroy {
       });
   }
 
-  updateInMemoryItems(_items: Array<SouthConnectorItemDTO<SouthItemSettings>> | null) {
+  updateInMemoryItems(_items: Array<SouthConnectorItemDTO> | null) {
     this.southConnectorService.findById(this.southConnector!.id).subscribe(southConnector => {
       this.southConnector = southConnector;
     });
@@ -208,7 +207,7 @@ export class SouthDetailComponent implements OnInit, OnDestroy {
   }
 
   get southConnectorCommand() {
-    const command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> = {
+    const command: SouthConnectorCommandDTO = {
       ...this.southConnector!,
       items: this.southConnector!.items.map(item => ({
         id: item.id,

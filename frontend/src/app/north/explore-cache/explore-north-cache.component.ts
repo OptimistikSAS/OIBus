@@ -3,7 +3,6 @@ import { NorthConnectorService } from '../../services/north-connector.service';
 import { NorthConnectorDTO } from '../../../../../backend/shared/model/north-connector.model';
 import { of, switchMap } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 import { TranslateDirective } from '@ngx-translate/core';
 import { NorthCacheContentComponent } from './north-cache-content/north-cache-content.component';
 
@@ -17,7 +16,7 @@ export class ExploreNorthCacheComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private northConnectorService = inject(NorthConnectorService);
 
-  northConnector: NorthConnectorDTO<NorthSettings> | null = null;
+  northConnector: NorthConnectorDTO | null = null;
   readonly cacheFilesComponent = viewChild.required<NorthCacheContentComponent>('cache');
   readonly errorFilesComponent = viewChild.required<NorthCacheContentComponent>('error');
   readonly archiveFilesComponent = viewChild.required<NorthCacheContentComponent>('archive');

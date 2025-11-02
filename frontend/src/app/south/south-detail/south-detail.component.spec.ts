@@ -13,6 +13,7 @@ import { ScanModeService } from '../../services/scan-mode.service';
 import { EngineService } from '../../services/engine.service';
 import testData from '../../../../../backend/src/tests/utils/test-data';
 import { CertificateService } from '../../services/certificate.service';
+import { SouthConnectorDTO } from '../../../../../backend/shared/model/south-connector.model';
 
 class SouthDisplayComponentTester extends ComponentTester<SouthDetailComponent> {
   constructor() {
@@ -50,7 +51,7 @@ describe('SouthDetailComponent', () => {
   let engineService: jasmine.SpyObj<EngineService>;
 
   const manifest = testData.south.manifest;
-  const southConnector = testData.south.list[0];
+  const southConnector = testData.south.list[0] as SouthConnectorDTO;
   const engineInfo = testData.engine.oIBusInfo;
 
   beforeEach(() => {

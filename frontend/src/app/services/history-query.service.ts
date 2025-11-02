@@ -39,8 +39,8 @@ export class HistoryQueryService {
    * Get one History query
    * @param historyId - the ID of the History query
    */
-  findById(historyId: string): Observable<HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings>> {
-    return this.http.get<HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings>>(`/api/history/${historyId}`);
+  findById(historyId: string): Observable<HistoryQueryDTO> {
+    return this.http.get<HistoryQueryDTO>(`/api/history/${historyId}`);
   }
 
   /**
@@ -51,11 +51,11 @@ export class HistoryQueryService {
    * @param retrieveSecretsFromHistory - The ID of the duplicated History Query used to retrieved secrets in the backend
    */
   create(
-    command: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>,
+    command: HistoryQueryCommandDTO,
     retrieveSecretsFromSouth: string | null,
     retrieveSecretsFromNorth: string | null,
     retrieveSecretsFromHistory: string | null
-  ): Observable<HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings>> {
+  ): Observable<HistoryQueryDTO> {
     const params: Record<string, string | Array<string>> = {};
     if (retrieveSecretsFromHistory) {
       params['duplicate'] = retrieveSecretsFromHistory;
@@ -66,7 +66,7 @@ export class HistoryQueryService {
     if (retrieveSecretsFromNorth) {
       params['fromNorth'] = retrieveSecretsFromNorth;
     }
-    return this.http.post<HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings>>(`/api/history`, command, { params });
+    return this.http.post<HistoryQueryDTO>(`/api/history`, command, { params });
   }
 
   /**
@@ -75,7 +75,7 @@ export class HistoryQueryService {
    * @param command - the new values of the selected History query
    * @param resetCache - The user wants to reset the history cache to restart from scratch
    */
-  update(historyId: string, command: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>, resetCache: boolean) {
+  update(historyId: string, command: HistoryQueryCommandDTO, resetCache: boolean) {
     const params: Record<string, string | Array<string>> = {};
     if (resetCache) {
       params['resetCache'] = resetCache.toString();
@@ -148,14 +148,14 @@ export class HistoryQueryService {
    * @param historyId - the ID of the South connector
    * @param searchParams - The search params
    */
-  searchItems(historyId: string, searchParams: HistoryQueryItemSearchParam): Observable<Page<HistoryQueryItemDTO<SouthItemSettings>>> {
+  searchItems(historyId: string, searchParams: HistoryQueryItemSearchParam): Observable<Page<HistoryQueryItemDTO>> {
     const params: Record<string, string | Array<string>> = {
       page: `${searchParams.page || 0}`
     };
     if (searchParams.name) {
       params['name'] = searchParams.name;
     }
-    return this.http.get<Page<HistoryQueryItemDTO<SouthItemSettings>>>(`/api/history/${historyId}/items/search`, { params });
+    return this.http.get<Page<HistoryQueryItemDTO>>(`/api/history/${historyId}/items/search`, { params });
   }
 
   /**
@@ -163,8 +163,8 @@ export class HistoryQueryService {
    * @param historyId - the ID of the History query
    * @param itemId - the ID of the History query item
    */
-  getItem(historyId: string, itemId: string): Observable<HistoryQueryItemDTO<SouthItemSettings>> {
-    return this.http.get<HistoryQueryItemDTO<SouthItemSettings>>(`/api/history/${historyId}/items/${itemId}`);
+  getItem(historyId: string, itemId: string): Observable<HistoryQueryItemDTO> {
+    return this.http.get<HistoryQueryItemDTO>(`/api/history/${historyId}/items/${itemId}`);
   }
 
   /**
@@ -172,8 +172,8 @@ export class HistoryQueryService {
    * @param historyId - the ID of the History query
    * @param command - The values of the History query item to create
    */
-  createItem(historyId: string, command: HistoryQueryItemCommandDTO<SouthItemSettings>): Observable<HistoryQueryItemDTO<any>> {
-    return this.http.post<HistoryQueryItemDTO<SouthItemSettings>>(`/api/history/${historyId}/items`, command);
+  createItem(historyId: string, command: HistoryQueryItemCommandDTO): Observable<HistoryQueryItemDTO> {
+    return this.http.post<HistoryQueryItemDTO>(`/api/history/${historyId}/items`, command);
   }
 
   /**
@@ -182,7 +182,7 @@ export class HistoryQueryService {
    * @param itemId - the ID of the History query item
    * @param command - the new values of the selected History query item
    */
-  updateItem(historyId: string, itemId: string, command: HistoryQueryItemCommandDTO<SouthItemSettings>) {
+  updateItem(historyId: string, itemId: string, command: HistoryQueryItemCommandDTO) {
     return this.http.put<void>(`/api/history/${historyId}/items/${itemId}`, command);
   }
 
@@ -223,7 +223,7 @@ export class HistoryQueryService {
 
   itemsToCsv(
     southType: string,
-    items: Array<HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>>,
+    items: Array<HistoryQueryItemDTO | HistoryQueryItemCommandDTO>,
     filename: string,
     delimiter: string
   ): Observable<void> {
@@ -248,13 +248,13 @@ export class HistoryQueryService {
    */
   checkImportItems(
     southType: string,
-    currentItems: Array<HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>>,
+    currentItems: Array<HistoryQueryItemDTO | HistoryQueryItemCommandDTO>,
     file: File,
     delimiter: string
   ): Observable<{
-    items: Array<HistoryQueryItemDTO<SouthItemSettings>>;
+    items: Array<HistoryQueryItemDTO>;
     errors: Array<{
-      item: HistoryQueryItemDTO<SouthItemSettings>;
+      item: HistoryQueryItemDTO;
       error: string;
     }>;
   }> {
@@ -264,12 +264,12 @@ export class HistoryQueryService {
     formData.set('currentItems', new Blob([JSON.stringify(currentItems)], { type: 'application/json' }), 'currentItems.json');
     formData.set('delimiter', delimiter);
     return this.http.post<{
-      items: Array<HistoryQueryItemDTO<SouthItemSettings>>;
-      errors: Array<{ item: HistoryQueryItemDTO<SouthItemSettings>; error: string }>;
+      items: Array<HistoryQueryItemDTO>;
+      errors: Array<{ item: HistoryQueryItemDTO; error: string }>;
     }>(`/api/history/${southType}/items/import/check`, formData);
   }
 
-  importItems(historyId: string, items: Array<HistoryQueryItemCommandDTO<SouthItemSettings>>): Observable<void> {
+  importItems(historyId: string, items: Array<HistoryQueryItemCommandDTO>): Observable<void> {
     const formData = new FormData();
     // Convert the string to a Blob and append it as a file
     formData.set('items', new Blob([JSON.stringify(items)], { type: 'application/json' }), 'items.json');

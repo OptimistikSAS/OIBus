@@ -6,7 +6,6 @@ import { OIBusUpdateSouthConnectorCommandDTO, OIBusUpdateVersionCommandDTO } fro
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { provideCurrentUser } from '../../../shared/current-user-testing';
 import { SouthConnectorCommandDTO } from '../../../../../../backend/shared/model/south-connector.model';
-import { SouthItemSettings, SouthSettings } from '../../../../../../backend/shared/model/south-settings.model';
 
 class OIBusCommandDetailsModalComponentTester extends ComponentTester<OiaCommandDetailsModalComponent> {
   constructor() {
@@ -57,7 +56,7 @@ describe('OIBusCommandDetailsModalComponent', () => {
     southConnectorId: 'southId1',
     commandContent: {
       name: 'south'
-    } as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>,
+    } as SouthConnectorCommandDTO,
     ack: false
   };
   beforeEach(() => {

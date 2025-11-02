@@ -12,10 +12,8 @@ import { CertificateDTO } from '../../../../../backend/shared/model/certificate.
 import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
-import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 import { firstValueFrom, of, switchMap } from 'rxjs';
 import { HistoryQueryDTO } from '../../../../../backend/shared/model/history-query.model';
-import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 import { HistoryQueryService } from '../../services/history-query.service';
 
 @Component({
@@ -30,7 +28,7 @@ export class HistoryQueryTransformersComponent {
   private modalService = inject(ModalService);
   private historyQueryService = inject(HistoryQueryService);
 
-  readonly historyQuery = input<HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings> | null>(null);
+  readonly historyQuery = input<HistoryQueryDTO | null>(null);
 
   readonly inMemoryTransformersWithOptions = output<Array<TransformerDTOWithOptions> | null>();
   readonly saveChangesDirectly = input<boolean>(false);

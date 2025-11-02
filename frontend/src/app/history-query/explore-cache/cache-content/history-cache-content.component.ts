@@ -4,10 +4,8 @@ import { BoxComponent, BoxTitleDirective } from '../../../shared/box/box.compone
 import { FileTableComponent } from '../../../shared/file-table/file-table.component';
 import { FileContentModalComponent } from '../../../shared/file-content-modal/file-content-modal.component';
 import { ModalService } from '../../../shared/modal.service';
-import { NorthSettings } from '../../../../../../backend/shared/model/north-settings.model';
 import { CacheMetadata } from '../../../../../../backend/shared/model/engine.model';
 import { HistoryQueryDTO } from '../../../../../../backend/shared/model/history-query.model';
-import { SouthItemSettings, SouthSettings } from '../../../../../../backend/shared/model/south-settings.model';
 import { HistoryQueryService } from '../../../services/history-query.service';
 
 @Component({
@@ -20,7 +18,7 @@ export class HistoryCacheContentComponent implements OnInit {
   private historyQueryService = inject(HistoryQueryService);
   private modalService = inject(ModalService);
 
-  readonly historyQuery = input.required<HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings>>();
+  readonly historyQuery = input.required<HistoryQueryDTO>();
   readonly cacheType = input.required<'cache' | 'error' | 'archive'>();
   readonly cacheUpdated = output();
   cacheContentFiles: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [];

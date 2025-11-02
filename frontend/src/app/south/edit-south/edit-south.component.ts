@@ -22,7 +22,6 @@ import { SouthItemsComponent } from '../south-items/south-items.component';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { ModalService } from '../../shared/modal.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
-import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
 import { formDirectives } from '../../shared/form/form-directives';
 import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
@@ -62,7 +61,7 @@ export class EditSouthComponent implements OnInit, CanComponentDeactivate {
 
   mode: 'create' | 'edit' = 'create';
   southId!: string;
-  southConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> | null = null;
+  southConnector: SouthConnectorDTO | null = null;
   southType = '';
   duplicateId = '';
   state = new ObservableState();
@@ -76,7 +75,7 @@ export class EditSouthComponent implements OnInit, CanComponentDeactivate {
     settings: FormGroup;
   }> | null = null;
 
-  inMemoryItems: Array<SouthConnectorItemDTO<SouthItemSettings>> = [];
+  inMemoryItems: Array<SouthConnectorItemDTO> = [];
 
   ngOnInit() {
     combineLatest([this.scanModeService.list(), this.certificateService.list(), this.route.paramMap, this.route.queryParamMap])
@@ -132,8 +131,8 @@ export class EditSouthComponent implements OnInit, CanComponentDeactivate {
     return true;
   }
 
-  createOrUpdateSouthConnector(command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>): void {
-    let createOrUpdate: Observable<SouthConnectorDTO<SouthSettings, SouthItemSettings>>;
+  createOrUpdateSouthConnector(command: SouthConnectorCommandDTO): void {
+    let createOrUpdate: Observable<SouthConnectorDTO>;
     if (this.mode === 'edit') {
       createOrUpdate = this.southConnectorService.update(this.southConnector!.id, command).pipe(
         tap(() => {
@@ -174,7 +173,7 @@ export class EditSouthComponent implements OnInit, CanComponentDeactivate {
     component.runTest('south', this.southConnector?.id || null, this.formSouthConnectorCommand.settings, this.southType as OIBusSouthType);
   }
 
-  updateInMemoryItems(items: Array<SouthConnectorItemDTO<SouthItemSettings>> | null) {
+  updateInMemoryItems(items: Array<SouthConnectorItemDTO> | null) {
     if (items) {
       this.inMemoryItems = items;
     } else {
@@ -205,7 +204,7 @@ export class EditSouthComponent implements OnInit, CanComponentDeactivate {
     }
   }
 
-  get formSouthConnectorCommand(): SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> {
+  get formSouthConnectorCommand(): SouthConnectorCommandDTO {
     const formValue = this.form!.value;
     return {
       name: formValue.name!,

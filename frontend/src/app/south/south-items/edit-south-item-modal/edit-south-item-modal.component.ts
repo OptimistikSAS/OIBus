@@ -18,7 +18,6 @@ import {
   SouthConnectorManifest
 } from '../../../../../../backend/shared/model/south-connector.model';
 import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.model';
-import { SouthItemSettings, SouthSettings } from '../../../../../../backend/shared/model/south-settings.model';
 import SouthItemTestComponent from '../south-item-test/south-item-test.component';
 import { OIBusObjectAttribute, OIBusScanModeAttribute } from '../../../../../../backend/shared/model/form.model';
 import { addAttributeToForm, addEnablingConditions, createMqttValidator } from '../../../shared/form/dynamic-form.builder';
@@ -51,10 +50,10 @@ export class EditSouthItemModalComponent {
   scanModes: Array<ScanModeDTO> = [];
   certificates: Array<CertificateDTO> = [];
   southId!: string;
-  southConnectorCommand!: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
+  southConnectorCommand!: SouthConnectorCommandDTO;
   manifest!: SouthConnectorManifest;
-  item: SouthConnectorItemDTO<SouthItemSettings> | null = null;
-  itemList: Array<SouthConnectorItemDTO<SouthItemSettings>> = [];
+  item: SouthConnectorItemDTO | null = null;
+  itemList: Array<SouthConnectorItemDTO> = [];
 
   /** Not every item passed will have an id, but we still need to check for uniqueness.
    * This ensures that we have a backup identifier for the currently edited item.
@@ -101,11 +100,11 @@ export class EditSouthItemModalComponent {
    * Prepares the component for creation.
    */
   prepareForCreation(
-    itemList: Array<SouthConnectorItemDTO<SouthItemSettings>>,
+    itemList: Array<SouthConnectorItemDTO>,
     scanModes: Array<ScanModeDTO>,
     certificates: Array<CertificateDTO>,
     southId: string,
-    southConnectorCommand: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>,
+    southConnectorCommand: SouthConnectorCommandDTO,
     manifest: SouthConnectorManifest
   ) {
     this.mode = 'create';
@@ -123,12 +122,12 @@ export class EditSouthItemModalComponent {
    * tableIndex is an additional identifier when item ids are not available. This indexes the given itemList param
    */
   prepareForEdition(
-    itemList: Array<SouthConnectorItemDTO<SouthItemSettings>>,
+    itemList: Array<SouthConnectorItemDTO>,
     scanModes: Array<ScanModeDTO>,
     certificates: Array<CertificateDTO>,
-    southItem: SouthConnectorItemDTO<SouthItemSettings>,
+    southItem: SouthConnectorItemDTO,
     southId: string,
-    southConnectorCommand: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>,
+    southConnectorCommand: SouthConnectorCommandDTO,
     manifest: SouthConnectorManifest,
     tableIndex: number
   ) {
@@ -148,12 +147,12 @@ export class EditSouthItemModalComponent {
    * Prepares the component to edit
    */
   prepareForCopy(
-    itemList: Array<SouthConnectorItemDTO<SouthItemSettings>>,
+    itemList: Array<SouthConnectorItemDTO>,
     scanModes: Array<ScanModeDTO>,
     certificates: Array<CertificateDTO>,
-    item: SouthConnectorItemDTO<SouthItemSettings>,
+    item: SouthConnectorItemDTO,
     southId: string,
-    southConnectorCommand: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>,
+    southConnectorCommand: SouthConnectorCommandDTO,
     manifest: SouthConnectorManifest
   ) {
     this.mode = 'copy';
@@ -164,7 +163,7 @@ export class EditSouthItemModalComponent {
     this.scanModes = this.setScanModes(scanModes, this.getScanModeAttribute());
     this.certificates = certificates;
     // used to check uniqueness
-    this.item = JSON.parse(JSON.stringify(item)) as SouthConnectorItemDTO<SouthItemSettings>;
+    this.item = JSON.parse(JSON.stringify(item)) as SouthConnectorItemDTO;
     this.item.name = `${item.name}-copy`;
     this.item.id = '';
     this.buildForm();
@@ -188,7 +187,7 @@ export class EditSouthItemModalComponent {
     this.modal.close(this.formItem);
   }
 
-  get formItem(): SouthConnectorItemDTO<SouthItemSettings> {
+  get formItem(): SouthConnectorItemDTO {
     const formValue = this.form!.value;
 
     const scanModeAttribute = this.getScanModeAttribute();

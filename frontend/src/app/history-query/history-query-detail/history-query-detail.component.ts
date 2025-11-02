@@ -29,8 +29,6 @@ import { ClipboardModule } from '@angular/cdk/clipboard';
 import { ModalService } from '../../shared/modal.service';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { LogsComponent } from '../../logs/logs.component';
-import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
-import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
 import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
 import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
@@ -80,7 +78,7 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
   private cd = inject(ChangeDetectorRef);
   private translateService = inject(TranslateService);
 
-  historyQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings> | null = null;
+  historyQuery: HistoryQueryDTO | null = null;
   northDisplayedSettings: Array<{ key: string; value: string }> = [];
   southDisplayedSettings: Array<{ key: string; value: string }> = [];
 
@@ -194,7 +192,7 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
     });
   }
 
-  updateInMemoryItems(_items: Array<HistoryQueryItemCommandDTO<SouthItemSettings>> | null) {
+  updateInMemoryItems(_items: Array<HistoryQueryItemCommandDTO> | null) {
     this.historyQueryService.findById(this.historyQuery!.id).subscribe(historyQuery => {
       this.historyQuery = JSON.parse(JSON.stringify(historyQuery)); // Used to force a refresh in history query item list
     });
@@ -285,6 +283,6 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
     return {
       type: this.southManifest!.id,
       settings: this.historyQuery!.southSettings
-    } as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
+    } as SouthConnectorCommandDTO;
   }
 }

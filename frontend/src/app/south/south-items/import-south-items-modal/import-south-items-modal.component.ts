@@ -7,7 +7,6 @@ import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.mo
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
 import { createPageFromArray, Page } from '../../../../../../backend/shared/model/types';
 import { emptyPage } from '../../../shared/test-utils';
-import { SouthItemSettings } from '../../../../../../backend/shared/model/south-settings.model';
 import { isDisplayableAttribute } from '../../../shared/form/dynamic-form.builder';
 import { OIBusAttribute, OIBusObjectAttribute } from '../../../../../../backend/shared/model/form.model';
 
@@ -24,15 +23,15 @@ export class ImportSouthItemsModalComponent {
   private translateService = inject(TranslateService);
 
   state = new ObservableState();
-  existingItemList: Array<SouthConnectorItemDTO<SouthItemSettings>> = [];
-  newItemList: Array<SouthConnectorItemDTO<SouthItemSettings>> = [];
+  existingItemList: Array<SouthConnectorItemDTO> = [];
+  newItemList: Array<SouthConnectorItemDTO> = [];
   errorList: Array<{
     item: Record<string, string>;
     error: string;
   }> = [];
   scanModes: Array<ScanModeDTO> = [];
   displaySettings: Array<OIBusAttribute> = [];
-  displayedItemsNew: Page<SouthConnectorItemDTO<SouthItemSettings>> = emptyPage();
+  displayedItemsNew: Page<SouthConnectorItemDTO> = emptyPage();
   displayedItemsError: Page<{
     item: Record<string, string>;
     error: string;
@@ -40,8 +39,8 @@ export class ImportSouthItemsModalComponent {
 
   prepare(
     manifest: SouthConnectorManifest,
-    existingItemList: Array<SouthConnectorItemDTO<SouthItemSettings>>,
-    newItemList: Array<SouthConnectorItemDTO<SouthItemSettings>>,
+    existingItemList: Array<SouthConnectorItemDTO>,
+    newItemList: Array<SouthConnectorItemDTO>,
     errorList: Array<{
       item: Record<string, string>;
       error: string;
@@ -88,7 +87,7 @@ export class ImportSouthItemsModalComponent {
     this.displayedItemsError = this.createPageError(pageNumber);
   }
 
-  private createPageNew(pageNumber: number): Page<SouthConnectorItemDTO<SouthItemSettings>> {
+  private createPageNew(pageNumber: number): Page<SouthConnectorItemDTO> {
     return createPageFromArray(this.newItemList, PAGE_SIZE, pageNumber);
   }
 

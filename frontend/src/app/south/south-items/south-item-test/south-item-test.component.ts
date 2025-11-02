@@ -5,7 +5,6 @@ import {
   SouthConnectorItemTestingSettings,
   SouthConnectorManifest
 } from '../../../../../../backend/shared/model/south-connector.model';
-import { SouthItemSettings, SouthSettings } from '../../../../../../backend/shared/model/south-settings.model';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ValErrorDelayDirective } from '../../../shared/form/val-error-delay.directive';
 import { SouthConnectorService } from '../../../services/south-connector.service';
@@ -48,9 +47,9 @@ class SouthItemTestComponent implements AfterContentInit, OnInit {
   readonly entityId = input.required<string>();
   readonly fromSouth = input<string | null>(null);
 
-  readonly item = input.required<SouthConnectorItemDTO<SouthItemSettings> | HistoryQueryItemDTO<SouthItemSettings>>();
+  readonly item = input.required<SouthConnectorItemDTO | HistoryQueryItemDTO>();
 
-  readonly connectorCommand = input.required<SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>>();
+  readonly connectorCommand = input.required<SouthConnectorCommandDTO>();
   readonly manifest = input.required<SouthConnectorManifest>();
 
   private southConnectorService = inject(SouthConnectorService);

@@ -8,8 +8,7 @@ import { toPage } from '../shared/test-utils';
 import { Page } from '../../../../backend/shared/model/types';
 import { DownloadService } from './download.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { SouthItemSettings, SouthSettings } from '../../../../backend/shared/model/south-settings.model';
-import { NorthSettings } from '../../../../backend/shared/model/north-settings.model';
+import { SouthItemSettings } from '../../../../backend/shared/model/south-settings.model';
 import { CacheMetadata } from '../../../../backend/shared/model/engine.model';
 import testData from '../../../../backend/src/tests/utils/test-data';
 import { TransformerDTOWithOptions } from '../../../../backend/shared/model/transformer.model';
@@ -40,8 +39,8 @@ describe('HistoryQueryService', () => {
   });
 
   it('should get a History query', () => {
-    let expectedHistoryQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings> | null = null;
-    const historyQuery = { id: 'id1' } as HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings>;
+    let expectedHistoryQuery: HistoryQueryDTO | null = null;
+    const historyQuery = { id: 'id1' } as HistoryQueryDTO;
 
     service.findById('id1').subscribe(c => (expectedHistoryQuery = c));
 
@@ -96,8 +95,8 @@ describe('HistoryQueryService', () => {
   });
 
   it('should search History query items', () => {
-    let expectedItems: Page<HistoryQueryItemDTO<SouthItemSettings>> | null = null;
-    const southConnectorItems = toPage<HistoryQueryItemDTO<SouthItemSettings>>([
+    let expectedItems: Page<HistoryQueryItemDTO> | null = null;
+    const southConnectorItems = toPage<HistoryQueryItemDTO>([
       { id: 'itemId', name: 'MySouthItem', enabled: true, settings: {} as SouthItemSettings }
     ]);
 

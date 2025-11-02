@@ -58,7 +58,7 @@ describe('HistoryQueryDetailComponent', () => {
 
   const southManifest = testData.south.manifest;
   const northManifest = testData.north.manifest;
-  const historyQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings> = {
+  const historyQuery: HistoryQueryDTO = {
     id: 'id1',
     name: 'History query',
     description: 'My History query description',

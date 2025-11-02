@@ -31,7 +31,7 @@ class TestComponent {
   type!: 'south' | 'history-south';
   entityId!: string;
 
-  item: SouthConnectorItemDTO<SouthItemSettings> = {
+  item: SouthConnectorItemDTO = {
     id: 'id1',
     name: 'item1',
     enabled: true,

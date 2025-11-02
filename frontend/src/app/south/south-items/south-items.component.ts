@@ -22,7 +22,6 @@ import { PaginationComponent } from '../../shared/pagination/pagination.componen
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
 import { ImportItemModalComponent } from '../../shared/import-item-modal/import-item-modal.component';
-import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 import { OIBusAttribute, OIBusObjectAttribute, OIBusScanModeAttribute } from '../../../../../backend/shared/model/form.model';
 import { isDisplayableAttribute } from '../../shared/form/dynamic-form.builder';
 import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
@@ -67,9 +66,9 @@ export class SouthItemsComponent implements OnInit {
 
   /** Actual southId (or 'create') */
   readonly southId = input.required<string>();
-  readonly southConnectorCommand = input.required<SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>>();
+  readonly southConnectorCommand = input.required<SouthConnectorCommandDTO>();
   /** Either the edited dto or the duplicated dto */
-  readonly southConnector = input<SouthConnectorDTO<SouthSettings, SouthItemSettings> | null>(null);
+  readonly southConnector = input<SouthConnectorDTO | null>(null);
   readonly southManifest = input.required<SouthConnectorManifest>();
   readonly scanModes = input.required<Array<ScanModeDTO>>();
   readonly certificates = input.required<Array<CertificateDTO>>();
@@ -83,12 +82,12 @@ export class SouthItemsComponent implements OnInit {
     return this.southManifest().items.rootAttribute.attributes.find(attribute => attribute.key === 'scanMode')! as OIBusScanModeAttribute;
   });
 
-  readonly inMemoryItems = output<Array<SouthConnectorItemDTO<SouthItemSettings>> | null>();
+  readonly inMemoryItems = output<Array<SouthConnectorItemDTO> | null>();
 
-  allItems: Array<SouthConnectorItemDTO<SouthItemSettings>> = []; // Array used to store item commands on south connector creation
-  filteredItems: Array<SouthConnectorItemDTO<SouthItemSettings>> = [];
+  allItems: Array<SouthConnectorItemDTO> = []; // Array used to store item commands on south connector creation
+  filteredItems: Array<SouthConnectorItemDTO> = [];
 
-  displayedItems: Page<SouthConnectorItemDTO<SouthItemSettings>> = emptyPage();
+  displayedItems: Page<SouthConnectorItemDTO> = emptyPage();
   displaySettings: Array<OIBusAttribute> = [];
 
   searchControl = inject(NonNullableFormBuilder).control(null as string | null);
@@ -149,12 +148,12 @@ export class SouthItemsComponent implements OnInit {
     this.displayedItems = createPageFromArray(this.filteredItems, PAGE_SIZE, pageNumber);
   }
 
-  filter(): Array<SouthConnectorItemDTO<SouthItemSettings>> {
+  filter(): Array<SouthConnectorItemDTO> {
     const searchText = this.searchControl.value || '';
     return this.allItems.filter(item => item.name.toLowerCase().includes(searchText.toLowerCase()));
   }
 
-  editItem(southItem: SouthConnectorItemDTO<SouthItemSettings>) {
+  editItem(southItem: SouthConnectorItemDTO) {
     const modalRef = this.modalService.open(EditSouthItemModalComponent, {
       size: 'xl',
       beforeDismiss: () => {
@@ -206,7 +205,7 @@ export class SouthItemsComponent implements OnInit {
   private refreshAfterCreationModalClosed(modalRef: Modal<any>) {
     modalRef.result
       .pipe(
-        switchMap((command: SouthConnectorItemDTO<SouthItemSettings>) => {
+        switchMap((command: SouthConnectorItemDTO) => {
           if (this.saveChangesDirectly()) {
             return this.southConnectorService.createItem(this.southId(), {
               id: command.id || null,
@@ -242,10 +241,10 @@ export class SouthItemsComponent implements OnInit {
   /**
    * Refresh the South item list when a South item is edited
    */
-  private refreshAfterEditionModalClosed(modalRef: Modal<any>, oldItem: SouthConnectorItemDTO<SouthItemSettings>) {
+  private refreshAfterEditionModalClosed(modalRef: Modal<any>, oldItem: SouthConnectorItemDTO) {
     modalRef.result
       .pipe(
-        switchMap((command: SouthConnectorItemDTO<SouthItemSettings>) => {
+        switchMap((command: SouthConnectorItemDTO) => {
           if (this.saveChangesDirectly()) {
             return this.southConnectorService.updateItem(this.southId(), command.id!, {
               id: command.id,
@@ -274,7 +273,7 @@ export class SouthItemsComponent implements OnInit {
       });
   }
 
-  deleteItem(item: SouthConnectorItemDTO<SouthItemSettings>) {
+  deleteItem(item: SouthConnectorItemDTO) {
     this.confirmationService
       .confirm({
         messageKey: 'south.items.confirm-deletion'
@@ -300,7 +299,7 @@ export class SouthItemsComponent implements OnInit {
       });
   }
 
-  duplicateItem(item: SouthConnectorItemDTO<SouthItemSettings>) {
+  duplicateItem(item: SouthConnectorItemDTO) {
     const modalRef = this.modalService.open(EditSouthItemModalComponent, { size: 'xl', backdrop: 'static' });
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
     component.prepareForCopy(
@@ -407,7 +406,7 @@ export class SouthItemsComponent implements OnInit {
   checkImportItems(file: File, delimiter: string) {
     this.southConnectorService.checkImportItems(this.southManifest().id, this.allItems, file, delimiter).subscribe(
       (result: {
-        items: Array<SouthConnectorItemDTO<SouthItemSettings>>;
+        items: Array<SouthConnectorItemDTO>;
         errors: Array<{
           item: Record<string, string>;
           error: string;
@@ -427,7 +426,7 @@ export class SouthItemsComponent implements OnInit {
   private refreshAfterImportModalClosed(modalRef: Modal<any>) {
     modalRef.result
       .pipe(
-        switchMap((newItems: Array<SouthConnectorItemDTO<SouthItemSettings>>) => {
+        switchMap((newItems: Array<SouthConnectorItemDTO>) => {
           if (this.saveChangesDirectly()) {
             return this.southConnectorService.importItems(
               this.southId(),
@@ -457,7 +456,7 @@ export class SouthItemsComponent implements OnInit {
       });
   }
 
-  toggleItem(item: SouthConnectorItemDTO<SouthItemSettings>, value: boolean) {
+  toggleItem(item: SouthConnectorItemDTO, value: boolean) {
     if (value) {
       this.southConnectorService
         .enableItem(this.southId(), item.id!)
@@ -525,12 +524,8 @@ export class SouthItemsComponent implements OnInit {
         case 'scanMode':
           this.filteredItems.sort((a, b) =>
             ascending
-              ? (a as SouthConnectorItemDTO<SouthItemSettings>).scanMode.name.localeCompare(
-                  (b as SouthConnectorItemDTO<SouthItemSettings>).scanMode.name
-                )
-              : (b as SouthConnectorItemDTO<SouthItemSettings>).scanMode.name.localeCompare(
-                  (a as SouthConnectorItemDTO<SouthItemSettings>).scanMode.name
-                )
+              ? (a as SouthConnectorItemDTO).scanMode.name.localeCompare((b as SouthConnectorItemDTO).scanMode.name)
+              : (b as SouthConnectorItemDTO).scanMode.name.localeCompare((a as SouthConnectorItemDTO).scanMode.name)
           );
           break;
       }

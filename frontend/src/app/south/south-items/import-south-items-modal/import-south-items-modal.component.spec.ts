@@ -5,6 +5,7 @@ import { fakeAsync, TestBed } from '@angular/core/testing';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { SouthItemSettings } from '../../../../../../backend/shared/model/south-settings.model';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
+import { SouthConnectorDTO } from '../../../../../../backend/shared/model/south-connector.model';
 
 class ImportSouthItemsModalComponentTester extends ComponentTester<ImportSouthItemsModalComponent> {
   constructor() {
@@ -23,6 +24,7 @@ class ImportSouthItemsModalComponentTester extends ComponentTester<ImportSouthIt
 describe('ImportSouthItemsModalComponent', () => {
   let tester: ImportSouthItemsModalComponentTester;
   let fakeActiveModal: NgbActiveModal;
+  const southConnector = testData.south.list[0] as SouthConnectorDTO;
 
   beforeEach(() => {
     fakeActiveModal = createMock(NgbActiveModal);
@@ -34,7 +36,7 @@ describe('ImportSouthItemsModalComponent', () => {
     tester = new ImportSouthItemsModalComponentTester();
     tester.componentInstance.prepare(
       testData.south.manifest,
-      testData.south.list[0].items.map(element => ({ ...element, scanModeId: element.scanMode.id })),
+      southConnector.items.map(element => ({ ...element, scanModeId: element.scanMode.id })),
       [
         {
           id: '',

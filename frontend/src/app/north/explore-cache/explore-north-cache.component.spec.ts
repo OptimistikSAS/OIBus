@@ -7,7 +7,6 @@ import { NorthConnectorDTO } from '../../../../../backend/shared/model/north-con
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { provideHttpClient } from '@angular/common/http';
-import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 import testData from '../../../../../backend/src/tests/utils/test-data';
 
 class ExploreNorthCacheComponentTester extends ComponentTester<ExploreNorthCacheComponent> {
@@ -36,7 +35,7 @@ describe('ExploreNorthCacheComponent', () => {
   let tester: ExploreNorthCacheComponentTester;
   let northConnectorService: jasmine.SpyObj<NorthConnectorService>;
 
-  const northConnector: NorthConnectorDTO<NorthSettings> = {
+  const northConnector: NorthConnectorDTO = {
     id: 'id1',
     type: 'file-writer',
     name: 'North Connector',
@@ -63,7 +62,7 @@ describe('ExploreNorthCacheComponent', () => {
         retentionDuration: 0
       }
     }
-  } as NorthConnectorDTO<NorthSettings>;
+  } as NorthConnectorDTO;
 
   beforeEach(() => {
     northConnectorService = createMock(NorthConnectorService);

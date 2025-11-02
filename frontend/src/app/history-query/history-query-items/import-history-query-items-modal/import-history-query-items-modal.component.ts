@@ -6,7 +6,6 @@ import { PaginationComponent } from '../../../shared/pagination/pagination.compo
 import { createPageFromArray, Page } from '../../../../../../backend/shared/model/types';
 import { emptyPage } from '../../../shared/test-utils';
 import { HistoryQueryItemCommandDTO, HistoryQueryItemDTO } from '../../../../../../backend/shared/model/history-query.model';
-import { SouthItemSettings } from '../../../../../../backend/shared/model/south-settings.model';
 import { OIBusAttribute, OIBusObjectAttribute } from '../../../../../../backend/shared/model/form.model';
 import { SouthConnectorManifest } from '../../../../../../backend/shared/model/south-connector.model';
 import { isDisplayableAttribute } from '../../../shared/form/dynamic-form.builder';
@@ -24,25 +23,25 @@ export class ImportHistoryQueryItemsModalComponent {
   private translateService = inject(TranslateService);
 
   state = new ObservableState();
-  existingItemList: Array<HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>> = [];
-  newItemList: Array<HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>> = [];
+  existingItemList: Array<HistoryQueryItemDTO | HistoryQueryItemCommandDTO> = [];
+  newItemList: Array<HistoryQueryItemDTO | HistoryQueryItemCommandDTO> = [];
   errorList: Array<{
-    item: HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>;
+    item: HistoryQueryItemDTO | HistoryQueryItemCommandDTO;
     error: string;
   }> = [];
   displaySettings: Array<OIBusAttribute> = [];
-  displayedItemsNew: Page<HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>> = emptyPage();
+  displayedItemsNew: Page<HistoryQueryItemDTO | HistoryQueryItemCommandDTO> = emptyPage();
   displayedItemsError: Page<{
-    item: HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>;
+    item: HistoryQueryItemDTO | HistoryQueryItemCommandDTO;
     error: string;
   }> = emptyPage();
 
   prepare(
     manifest: SouthConnectorManifest,
-    existingItemList: Array<HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>>,
-    newItemList: Array<HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>>,
+    existingItemList: Array<HistoryQueryItemDTO | HistoryQueryItemCommandDTO>,
+    newItemList: Array<HistoryQueryItemDTO | HistoryQueryItemCommandDTO>,
     errorList: Array<{
-      item: HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>;
+      item: HistoryQueryItemDTO | HistoryQueryItemCommandDTO;
       error: string;
     }>
   ) {
@@ -81,12 +80,12 @@ export class ImportHistoryQueryItemsModalComponent {
     this.displayedItemsError = this.createPageError(pageNumber);
   }
 
-  private createPageNew(pageNumber: number): Page<HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>> {
+  private createPageNew(pageNumber: number): Page<HistoryQueryItemDTO | HistoryQueryItemCommandDTO> {
     return createPageFromArray(this.newItemList, PAGE_SIZE, pageNumber);
   }
 
   private createPageError(pageNumber: number): Page<{
-    item: HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>;
+    item: HistoryQueryItemDTO | HistoryQueryItemCommandDTO;
     error: string;
   }> {
     return createPageFromArray(this.errorList, PAGE_SIZE, pageNumber);
