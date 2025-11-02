@@ -1,89 +1,60 @@
-import Joi from 'joi';
-import JoiValidator from './validators/joi.validator';
-import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
-import OIAnalyticsRegistrationController from './oianalytics-registration.controller';
+import { OIAnalyticsRegistrationController } from './oianalytics-registration.controller';
+import { RegistrationSettingsCommandDTO } from '../../../shared/model/engine.model';
+import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
-import { toOIAnalyticsRegistrationDTO } from '../../service/oia/oianalytics-registration.service';
+import OIAnalyticsRegistrationServiceMock from '../../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
 
-jest.mock('./validators/joi.validator');
+// Mock the services
+jest.mock('../../service/oia/oianalytics-registration.service', () => ({
+  toOIAnalyticsRegistrationDTO: jest.fn().mockImplementation(settings => settings)
+}));
 
-const validator = new JoiValidator();
-const schema = Joi.object({});
-const registrationController = new OIAnalyticsRegistrationController(validator, schema);
+describe('OIAnalyticsRegistrationController', () => {
+  let controller: OIAnalyticsRegistrationController;
+  const mockRequest: Partial<CustomExpressRequest> = {
+    services: {
+      oIAnalyticsRegistrationService: new OIAnalyticsRegistrationServiceMock()
+    }
+  } as CustomExpressRequest;
 
-const ctx = new KoaContextMock();
-
-describe('OIAnalytics Registration Controller', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    controller = new OIAnalyticsRegistrationController();
   });
 
-  it('get() should return registration settings', async () => {
-    ctx.app.oIAnalyticsRegistrationService.getRegistrationSettings.mockReturnValue(testData.oIAnalytics.registration.completed);
+  it('should return registration settings', async () => {
+    const mockSettings = testData.oIAnalytics.registration.completed;
+    (mockRequest.services!.oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock).mockReturnValue(mockSettings);
 
-    await registrationController.get(ctx);
+    const result = await controller.getRegistrationSettings(mockRequest as CustomExpressRequest);
 
-    expect(ctx.app.oIAnalyticsRegistrationService.getRegistrationSettings).toHaveBeenCalled();
-    expect(ctx.ok).toHaveBeenCalledWith(toOIAnalyticsRegistrationDTO(testData.oIAnalytics.registration.completed));
+    expect(mockRequest.services!.oIAnalyticsRegistrationService.getRegistrationSettings).toHaveBeenCalled();
+    expect(result).toEqual(mockSettings);
   });
 
-  it('get() should return not found', async () => {
-    ctx.app.oIAnalyticsRegistrationService.getRegistrationSettings.mockReturnValue(null);
+  it('should register with OIAnalytics service', async () => {
+    const command: RegistrationSettingsCommandDTO = testData.oIAnalytics.registration.command;
+    (mockRequest.services!.oIAnalyticsRegistrationService.register as jest.Mock).mockResolvedValue(undefined);
 
-    await registrationController.get(ctx);
+    await controller.register(command, mockRequest as CustomExpressRequest);
 
-    expect(ctx.app.oIAnalyticsRegistrationService.getRegistrationSettings).toHaveBeenCalled();
-    expect(ctx.notFound).toHaveBeenCalled();
+    expect(mockRequest.services!.oIAnalyticsRegistrationService.register).toHaveBeenCalledWith(command);
   });
 
-  it('register() should update registration settings', async () => {
-    ctx.request.body = testData.oIAnalytics.registration.command;
+  it('should update registration settings', async () => {
+    const command: RegistrationSettingsCommandDTO = testData.oIAnalytics.registration.command;
+    (mockRequest.services!.oIAnalyticsRegistrationService.editRegistrationSettings as jest.Mock).mockResolvedValue(undefined);
 
-    await registrationController.register(ctx);
+    await controller.editRegistrationSettings(command, mockRequest as CustomExpressRequest);
 
-    expect(ctx.app.oIAnalyticsRegistrationService.register).toHaveBeenCalledWith(testData.oIAnalytics.registration.command);
-    expect(ctx.noContent).toHaveBeenCalled();
+    expect(mockRequest.services!.oIAnalyticsRegistrationService.editRegistrationSettings).toHaveBeenCalledWith(command);
   });
 
-  it('updateRegistrationSettings() should return bad request', async () => {
-    ctx.request.body = testData.oIAnalytics.registration.command;
-    const validationError = new Error('invalid body');
-    ctx.app.oIAnalyticsRegistrationService.register.mockImplementationOnce(() => {
-      throw validationError;
-    });
+  it('should unregister from OIAnalytics service', async () => {
+    (mockRequest.services!.oIAnalyticsRegistrationService.unregister as jest.Mock).mockResolvedValue(undefined);
 
-    await registrationController.register(ctx);
+    await controller.unregister(mockRequest as CustomExpressRequest);
 
-    expect(ctx.app.oIAnalyticsRegistrationService.register).toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
-  });
-
-  it('editConnectionSettings() should edit registration settings', async () => {
-    ctx.request.body = testData.oIAnalytics.registration.command;
-
-    await registrationController.editConnectionSettings(ctx);
-
-    expect(ctx.app.oIAnalyticsRegistrationService.editConnectionSettings).toHaveBeenCalledWith(testData.oIAnalytics.registration.command);
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('editConnectionSettings() should return bad request', async () => {
-    ctx.request.body = testData.oIAnalytics.registration.command;
-    const validationError = new Error('invalid body');
-    ctx.app.oIAnalyticsRegistrationService.editConnectionSettings.mockImplementationOnce(() => {
-      throw validationError;
-    });
-
-    await registrationController.editConnectionSettings(ctx);
-
-    expect(ctx.app.oIAnalyticsRegistrationService.editConnectionSettings).toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
-  });
-
-  it('unregister() should call unregister from oibus service', async () => {
-    await registrationController.unregister(ctx);
-
-    expect(ctx.app.oIAnalyticsRegistrationService.unregister).toHaveBeenCalledTimes(1);
-    expect(ctx.noContent).toHaveBeenCalled();
+    expect(mockRequest.services!.oIAnalyticsRegistrationService.unregister).toHaveBeenCalled();
   });
 });

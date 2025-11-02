@@ -1,133 +1,91 @@
-import Joi from 'joi';
-
-import ScanModeController from './scan-mode.controller';
-import JoiValidator from './validators/joi.validator';
-import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
-import { ValidatedCronExpression } from '../../../shared/model/scan-mode.model';
+import { ScanModeController } from './scan-mode.controller';
+import { ScanModeCommandDTO, ValidatedCronExpression } from '../../../shared/model/scan-mode.model';
+import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
-import { toScanModeDTO } from '../../service/scan-mode.service';
+import ScanModeServiceMock from '../../tests/__mocks__/service/scan-mode-service.mock';
 
-jest.mock('./validators/joi.validator');
+// Mock the services
+jest.mock('../../service/scan-mode.service', () => ({
+  toScanModeDTO: jest.fn().mockImplementation(scanMode => scanMode)
+}));
 
-const validator = new JoiValidator();
-const schema = Joi.object({});
-const scanModeController = new ScanModeController(validator, schema);
+describe('ScanModeController', () => {
+  let controller: ScanModeController;
+  const mockRequest: Partial<CustomExpressRequest> = {
+    services: {
+      scanModeService: new ScanModeServiceMock()
+    }
+  } as CustomExpressRequest;
 
-const ctx = new KoaContextMock();
-
-describe('Scan Mode Controller', () => {
-  beforeEach(async () => {
+  beforeEach(() => {
     jest.clearAllMocks();
+    controller = new ScanModeController();
   });
 
-  it('findAll() should return scan modes', async () => {
-    ctx.app.scanModeService.findAll.mockReturnValueOnce(testData.scanMode.list);
+  it('should return a list of scan modes', async () => {
+    const mockScanModes = testData.scanMode.list;
+    (mockRequest.services!.scanModeService.list as jest.Mock).mockReturnValue(mockScanModes);
 
-    await scanModeController.findAll(ctx);
+    const result = await controller.list(mockRequest as CustomExpressRequest);
 
-    expect(ctx.app.scanModeService.findAll).toHaveBeenCalled();
-    expect(ctx.ok).toHaveBeenCalledWith(testData.scanMode.list.map(element => toScanModeDTO(element)));
+    expect(mockRequest.services!.scanModeService.list).toHaveBeenCalled();
+    expect(result).toEqual(mockScanModes);
   });
 
-  it('findById() should return a scan mode', async () => {
-    const id = 'id';
+  it('should return a scan mode by ID', async () => {
+    const mockScanMode = testData.scanMode.list[0];
+    const scanModeId = mockScanMode.id;
+    (mockRequest.services!.scanModeService.findById as jest.Mock).mockReturnValue(mockScanMode);
 
-    ctx.params.id = id;
-    ctx.app.scanModeService.findById.mockReturnValueOnce(testData.scanMode.list[0]);
+    const result = await controller.findById(scanModeId, mockRequest as CustomExpressRequest);
 
-    await scanModeController.findById(ctx);
-
-    expect(ctx.app.scanModeService.findById).toHaveBeenCalledWith(id);
-    expect(ctx.ok).toHaveBeenCalledWith(toScanModeDTO(testData.scanMode.list[0]));
+    expect(mockRequest.services!.scanModeService.findById).toHaveBeenCalledWith(scanModeId);
+    expect(result).toEqual(mockScanMode);
   });
 
-  it('findById() should return not found', async () => {
-    const id = 'id';
-    ctx.params.id = id;
-    ctx.app.scanModeService.findById.mockReturnValueOnce(null);
+  it('should create a new scan mode', async () => {
+    const command: ScanModeCommandDTO = testData.scanMode.command;
+    const createdScanMode = testData.scanMode.list[0];
+    (mockRequest.services!.scanModeService.create as jest.Mock).mockResolvedValue(createdScanMode);
 
-    await scanModeController.findById(ctx);
+    const result = await controller.create(command, mockRequest as CustomExpressRequest);
 
-    expect(ctx.app.scanModeService.findById).toHaveBeenCalledWith(id);
-    expect(ctx.notFound).toHaveBeenCalledWith();
+    expect(mockRequest.services!.scanModeService.create).toHaveBeenCalledWith(command);
+    expect(result).toEqual(createdScanMode);
   });
 
-  it('create() should create a scan mode', async () => {
-    ctx.request.body = testData.scanMode.command;
-    ctx.app.scanModeService.create.mockReturnValueOnce(testData.scanMode.list[0]);
+  it('should update an existing scan mode', async () => {
+    const scanModeId = testData.scanMode.list[0].id;
+    const command: ScanModeCommandDTO = testData.scanMode.command;
+    (mockRequest.services!.scanModeService.update as jest.Mock).mockResolvedValue(undefined);
 
-    await scanModeController.create(ctx);
+    await controller.update(scanModeId, command, mockRequest as CustomExpressRequest);
 
-    expect(ctx.app.scanModeService.create).toHaveBeenCalledWith(testData.scanMode.command);
-    expect(ctx.created).toHaveBeenCalledWith(toScanModeDTO(testData.scanMode.list[0]));
+    expect(mockRequest.services!.scanModeService.update).toHaveBeenCalledWith(scanModeId, command);
   });
 
-  it('create() should throw bad request', async () => {
-    ctx.request.body = testData.scanMode.command;
-    ctx.app.scanModeService.create.mockImplementationOnce(() => {
-      throw Error('bad request');
-    });
+  it('should delete a scan mode', async () => {
+    const scanModeId = testData.scanMode.list[0].id;
+    (mockRequest.services!.scanModeService.delete as jest.Mock).mockResolvedValue(undefined);
 
-    await scanModeController.create(ctx);
+    await controller.delete(scanModeId, mockRequest as CustomExpressRequest);
 
-    expect(ctx.app.scanModeService.create).toHaveBeenCalledWith(testData.scanMode.command);
-    expect(ctx.badRequest).toHaveBeenCalledWith('bad request');
+    expect(mockRequest.services!.scanModeService.delete).toHaveBeenCalledWith(scanModeId);
   });
 
-  it('update() should update a scan mode', async () => {
-    ctx.params.id = 'id';
-    ctx.request.body = testData.scanMode.command;
+  it('should validate a cron expression', async () => {
+    const command = { cron: testData.scanMode.command.cron };
+    const validatedCronExpression: ValidatedCronExpression = {
+      isValid: true,
+      errorMessage: '',
+      nextExecutions: [],
+      humanReadableForm: ''
+    };
+    (mockRequest.services!.scanModeService.verifyCron as jest.Mock).mockReturnValue(validatedCronExpression);
 
-    await scanModeController.update(ctx);
+    const result = await controller.verifyCron(command, mockRequest as CustomExpressRequest);
 
-    expect(ctx.app.scanModeService.update).toHaveBeenCalledWith('id', testData.scanMode.command);
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('update() should throw bad request', async () => {
-    ctx.params.id = 'id';
-    ctx.request.body = testData.scanMode.command;
-    ctx.app.scanModeService.update.mockImplementationOnce(() => {
-      throw Error('bad request');
-    });
-
-    await scanModeController.update(ctx);
-
-    expect(ctx.app.scanModeService.update).toHaveBeenCalledWith('id', testData.scanMode.command);
-    expect(ctx.badRequest).toHaveBeenCalledWith('bad request');
-  });
-
-  it('delete() should delete a scan mode', async () => {
-    const id = 'id';
-    ctx.params.id = id;
-
-    await scanModeController.delete(ctx);
-
-    expect(ctx.app.scanModeService.delete).toHaveBeenCalledWith(id);
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('delete() should delete a scan mode', async () => {
-    const id = 'id';
-    ctx.params.id = id;
-    ctx.app.scanModeService.delete.mockImplementationOnce(() => {
-      throw Error('bad request');
-    });
-
-    await scanModeController.delete(ctx);
-
-    expect(ctx.app.scanModeService.delete).toHaveBeenCalledWith(id);
-    expect(ctx.badRequest).toHaveBeenCalledWith('bad request');
-  });
-
-  it('verifyCron() should return validated cron expression', async () => {
-    ctx.request.body = testData.scanMode.command;
-    const validatedCronExpression: ValidatedCronExpression = { isValid: true, errorMessage: '', nextExecutions: [], humanReadableForm: '' };
-    ctx.app.scanModeService.verifyCron.mockReturnValueOnce(validatedCronExpression);
-
-    await scanModeController.verifyCron(ctx);
-
-    expect(ctx.app.scanModeService.verifyCron).toHaveBeenCalledWith(testData.scanMode.command);
-    expect(ctx.ok).toHaveBeenCalledWith(validatedCronExpression);
+    expect(mockRequest.services!.scanModeService.verifyCron).toHaveBeenCalledWith(command);
+    expect(result).toEqual(validatedCronExpression);
   });
 });

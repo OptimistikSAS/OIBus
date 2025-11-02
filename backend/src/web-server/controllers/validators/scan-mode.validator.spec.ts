@@ -62,7 +62,7 @@ const dataProviders: Array<DataProvider> = [
       cron: '* * * * * *L'
     },
     isValid: false,
-    errorMessage: 'Expression contains non-standard characters: L'
+    errorMessage: 'Cron Expression: Non-standard characters: L'
   }
 ];
 

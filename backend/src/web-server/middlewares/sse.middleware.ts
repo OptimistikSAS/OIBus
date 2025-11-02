@@ -53,7 +53,7 @@ const createSSEMiddleware = (config: SSEConfig) => {
 
       if (req.path.startsWith('/sse/history-queries/')) {
         const splitString = req.path.split('/');
-        const stream = config.historyQueryService.getHistoryQueryDataStream(splitString[3])!;
+        const stream = config.historyQueryService.getHistoryDataStream(splitString[3])!;
         return stream.pipe(res);
       }
 

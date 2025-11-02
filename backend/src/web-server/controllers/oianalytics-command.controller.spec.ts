@@ -1,79 +1,93 @@
-import Joi from 'joi';
-import JoiValidator from './validators/joi.validator';
-import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
+import { OIAnalyticsCommandController } from './oianalytics-command.controller';
 import { CommandSearchParam } from '../../../shared/model/command.model';
-import OianalyticsCommandController from './oianalytics-command.controller';
-import { createPageFromArray } from '../../../shared/model/types';
+import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
+import OIAnalyticsCommandServiceMock from '../../tests/__mocks__/service/oia/oianalytics-command-service.mock';
+import { createPageFromArray } from '../../../shared/model/types';
 
-jest.mock('./validators/joi.validator');
+// Mock the services
+jest.mock('../../service/oia/oianalytics-command.service', () => ({
+  toOIBusCommandDTO: jest.fn().mockImplementation(command => command)
+}));
 
-const validator = new JoiValidator();
-const schema = Joi.object({});
-const commandController = new OianalyticsCommandController(validator, schema);
+describe('OIAnalyticsCommandController', () => {
+  let controller: OIAnalyticsCommandController;
+  const mockRequest: Partial<CustomExpressRequest> = {
+    services: {
+      oIAnalyticsCommandService: new OIAnalyticsCommandServiceMock()
+    }
+  } as CustomExpressRequest;
 
-const ctx = new KoaContextMock();
-
-describe('OIAnalytics Command controller', () => {
-  beforeEach(async () => {
+  beforeEach(() => {
     jest.clearAllMocks();
+    controller = new OIAnalyticsCommandController();
   });
 
-  it('search() should return commands', async () => {
-    ctx.query.status = ['ERRORED'];
-    ctx.query.types = ['update-version'];
-    ctx.query.page = 1;
+  it('should return commands with search parameters', async () => {
+    const types = 'update-version,restart-engine';
+    const status = 'ERRORED,RETRIEVED';
+    const page = 1;
+    const start = testData.constants.dates.DATE_1;
+    const end = testData.constants.dates.DATE_2;
+    const ack = true;
+
     const searchParams: CommandSearchParam = {
-      types: ['update-version'],
-      status: ['ERRORED']
-    };
-    ctx.app.oIAnalyticsCommandService.search.mockReturnValue(createPageFromArray(testData.oIAnalytics.commands.oIBusList, 25, 1));
-
-    await commandController.search(ctx);
-
-    expect(ctx.app.oIAnalyticsCommandService.search).toHaveBeenCalledWith(searchParams, 1);
-    expect(ctx.ok).toHaveBeenCalledWith(createPageFromArray(testData.oIAnalytics.commands.oIBusList, 25, 1));
-  });
-
-  it('search() should return commands with default search params', async () => {
-    ctx.query = {
-      types: 'update-version',
-      status: 'ERRORED'
-    };
-    const searchParams: CommandSearchParam = {
-      types: ['update-version'],
-      status: ['ERRORED']
+      types: ['update-version', 'restart-engine'],
+      status: ['ERRORED', 'RETRIEVED'],
+      page: 1,
+      start,
+      end,
+      ack
     };
 
-    const page = createPageFromArray(testData.oIAnalytics.commands.oIBusList, 25, 0);
-    ctx.app.oIAnalyticsCommandService.search.mockReturnValueOnce(page);
+    const expectedResult = createPageFromArray(testData.oIAnalytics.commands.oIBusList, 25, 1);
+    (mockRequest.services!.oIAnalyticsCommandService.search as jest.Mock).mockReturnValue(expectedResult);
 
-    await commandController.search(ctx);
+    const result = await controller.search(types, status, start, end, ack, page, mockRequest as CustomExpressRequest);
 
-    expect(ctx.app.oIAnalyticsCommandService.search).toHaveBeenCalledWith(searchParams, 0);
-    expect(ctx.ok).toHaveBeenCalledWith(createPageFromArray(testData.oIAnalytics.commands.oIBusList, 25, 0));
-  });
-
-  it('delete() should delete a command', async () => {
-    const id = 'id';
-    ctx.params.id = id;
-
-    await commandController.delete(ctx);
-
-    expect(ctx.app.oIAnalyticsCommandService.delete).toHaveBeenCalledWith(id);
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('delete() should delete a command', async () => {
-    const id = 'id';
-    ctx.params.id = id;
-    ctx.app.oIAnalyticsCommandService.delete.mockImplementationOnce(() => {
-      throw Error('bad request');
+    expect(mockRequest.services!.oIAnalyticsCommandService.search).toHaveBeenCalledWith(searchParams);
+    expect(result).toEqual({
+      ...expectedResult,
+      content: expectedResult.content
     });
+  });
 
-    await commandController.delete(ctx);
+  it('should return commands with default search parameters', async () => {
+    const searchParams: CommandSearchParam = {
+      types: [],
+      status: [],
+      page: 0,
+      start: undefined,
+      end: undefined,
+      ack: undefined
+    };
 
-    expect(ctx.app.oIAnalyticsCommandService.delete).toHaveBeenCalledWith(id);
-    expect(ctx.badRequest).toHaveBeenCalledWith('bad request');
+    const expectedResult = createPageFromArray(testData.oIAnalytics.commands.oIBusList, 25, 0);
+    (mockRequest.services!.oIAnalyticsCommandService.search as jest.Mock).mockReturnValue(expectedResult);
+
+    const result = await controller.search(
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      mockRequest as CustomExpressRequest
+    );
+
+    expect(mockRequest.services!.oIAnalyticsCommandService.search).toHaveBeenCalledWith(searchParams);
+    expect(result).toEqual({
+      ...expectedResult,
+      content: expectedResult.content
+    });
+  });
+
+  it('should delete a command', async () => {
+    const commandId = 'id';
+    (mockRequest.services!.oIAnalyticsCommandService.delete as jest.Mock).mockResolvedValue(undefined);
+
+    await controller.delete(commandId, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.oIAnalyticsCommandService.delete).toHaveBeenCalledWith(commandId);
   });
 });

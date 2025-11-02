@@ -1,1131 +1,560 @@
-import HistoryQueryConnectorController from './history-query.controller';
-
-import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
-import JoiValidator from './validators/joi.validator';
-import { historyQuerySchema } from './validators/oibus-validation-schema';
+import { HistoryQueryController } from './history-query.controller';
+import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO, HistoryQueryItemSearchParam } from '../../../shared/model/history-query.model';
+import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
-import { toHistoryQueryDTO, toHistoryQueryItemDTO, toHistoryQueryLightDTO } from '../../service/history-query.service';
-import { itemToFlattenedCSV } from '../../service/utils';
-import pino from 'pino';
-import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import fs from 'node:fs/promises';
+import HistoryQueryServiceMock from '../../tests/__mocks__/service/history-query-service.mock';
+import { CacheMetadata, OIBusContent } from '../../../shared/model/engine.model';
+import { TransformerDTO, TransformerDTOWithOptions } from '../../../shared/model/transformer.model';
 
-jest.mock('node:fs/promises');
-jest.mock('./validators/joi.validator');
-jest.mock('../../service/utils');
+// Mock the services
+jest.mock('../../service/history-query.service', () => ({
+  toHistoryQueryDTO: jest.fn().mockImplementation(query => query),
+  toHistoryQueryLightDTO: jest.fn().mockImplementation(query => query),
+  toHistoryQueryItemDTO: jest.fn().mockImplementation(item => item)
+}));
 
-const logger: pino.Logger = new PinoLogger();
-const ctx = new KoaContextMock();
-const validator = new JoiValidator();
-const historyQueryController = new HistoryQueryConnectorController(validator, historyQuerySchema);
+jest.mock('../../service/utils', () => ({
+  itemToFlattenedCSV: jest.fn().mockReturnValue('csv content')
+}));
 
-describe('History query controller', () => {
-  beforeEach(async () => {
+describe('HistoryQueryController', () => {
+  let controller: HistoryQueryController;
+  const mockRequest: Partial<CustomExpressRequest> = {
+    services: {
+      historyQueryService: new HistoryQueryServiceMock(),
+      southService: {
+        getInstalledSouthManifests: jest
+          .fn()
+          .mockReturnValue([{ ...testData.south.manifest, id: testData.historyQueries.list[0].southType }])
+      }
+    },
+    res: {
+      attachment: jest.fn(),
+      contentType: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      send: jest.fn(),
+      setHeader: jest.fn(),
+      pipe: jest.fn()
+    }
+  } as unknown as CustomExpressRequest;
+
+  beforeEach(() => {
     jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    controller = new HistoryQueryController();
   });
 
-  it('findAll() should return history queries', async () => {
-    ctx.app.historyQueryService.findAll.mockReturnValueOnce(testData.historyQueries.list);
+  it('should return a list of history queries', async () => {
+    const mockHistoryQueries = testData.historyQueries.list;
+    (mockRequest.services!.historyQueryService.list as jest.Mock).mockReturnValue(mockHistoryQueries);
 
-    await historyQueryController.findAll(ctx);
+    const result = await controller.list(mockRequest as CustomExpressRequest);
 
-    expect(ctx.ok).toHaveBeenCalledWith(testData.historyQueries.list.map(element => toHistoryQueryLightDTO(element)));
+    expect(mockRequest.services!.historyQueryService.list).toHaveBeenCalled();
+    expect(result).toEqual(mockHistoryQueries);
   });
 
-  it('findById() should return history query', async () => {
-    ctx.params.id = testData.historyQueries.list[0].id;
-    ctx.app.historyQueryService.findById
-      .mockReturnValueOnce(testData.historyQueries.list[0])
-      .mockReturnValueOnce(testData.historyQueries.list[1]);
+  it('should return a history query by ID', async () => {
+    const mockHistoryQuery = testData.historyQueries.list[0];
+    const historyId = mockHistoryQuery.id;
+    (mockRequest.services!.historyQueryService.findById as jest.Mock).mockReturnValue(mockHistoryQuery);
 
-    await historyQueryController.findById(ctx);
-    expect(ctx.app.historyQueryService.findById).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
-    expect(ctx.ok).toHaveBeenCalledWith(toHistoryQueryDTO(testData.historyQueries.list[0]));
+    const result = await controller.findById(historyId, mockRequest as CustomExpressRequest);
 
-    ctx.params.id = testData.historyQueries.list[1].id;
-    await historyQueryController.findById(ctx);
-    expect(ctx.app.historyQueryService.findById).toHaveBeenCalledWith(testData.historyQueries.list[1].id);
-    expect(ctx.ok).toHaveBeenCalledWith(toHistoryQueryDTO(testData.historyQueries.list[1]));
+    expect(mockRequest.services!.historyQueryService.findById).toHaveBeenCalledWith(historyId);
+    expect(result).toEqual(mockHistoryQuery);
   });
 
-  it('findById() should return not found when history query is not found', async () => {
-    ctx.params.id = testData.historyQueries.list[0].id;
-    ctx.app.historyQueryService.findById.mockReturnValueOnce(null);
+  it('should create a new history query', async () => {
+    const command: HistoryQueryCommandDTO = testData.historyQueries.command;
+    const createdHistoryQuery = testData.historyQueries.list[0];
+    (mockRequest.services!.historyQueryService.create as jest.Mock).mockResolvedValue(createdHistoryQuery);
 
-    await historyQueryController.findById(ctx);
+    const result = await controller.create(command, undefined, undefined, undefined, mockRequest as CustomExpressRequest);
 
-    expect(ctx.app.historyQueryService.findById).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
-    expect(ctx.notFound).toHaveBeenCalled();
+    expect(mockRequest.services!.historyQueryService.create).toHaveBeenCalledWith(command, undefined, undefined, undefined);
+    expect(result).toEqual(createdHistoryQuery);
   });
 
-  it('create() should create History query with new connectors', async () => {
-    ctx.request.body = testData.historyQueries.command;
+  it('should update an existing history query', async () => {
+    const historyId = testData.historyQueries.list[0].id;
+    const command: HistoryQueryCommandDTO = testData.historyQueries.command;
+    (mockRequest.services!.historyQueryService.update as jest.Mock).mockResolvedValue(undefined);
 
-    (ctx.app.historyQueryService.createHistoryQuery as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0]);
-    await historyQueryController.createHistoryQuery(ctx);
+    await controller.update(historyId, command, undefined, mockRequest as CustomExpressRequest);
 
-    expect(ctx.created).toHaveBeenCalledWith(toHistoryQueryDTO(testData.historyQueries.list[0]));
+    expect(mockRequest.services!.historyQueryService.update).toHaveBeenCalledWith(historyId, command, false);
   });
 
-  it('create() should throw bad request on create error', async () => {
-    ctx.request.body = testData.historyQueries.command;
+  it('should delete a history query', async () => {
+    const historyId = testData.historyQueries.list[0].id;
+    (mockRequest.services!.historyQueryService.delete as jest.Mock).mockResolvedValue(undefined);
 
-    (ctx.app.historyQueryService.createHistoryQuery as jest.Mock).mockImplementationOnce(() => {
-      throw new Error('create error');
-    });
-    await historyQueryController.createHistoryQuery(ctx);
+    await controller.delete(historyId, mockRequest as CustomExpressRequest);
 
-    expect(ctx.badRequest).toHaveBeenCalledWith('create error');
+    expect(mockRequest.services!.historyQueryService.delete).toHaveBeenCalledWith(historyId);
   });
 
-  it('start() should enable History query', async () => {
-    ctx.params.id = testData.historyQueries.list[0].id;
+  it('should start a history query', async () => {
+    const historyId = testData.historyQueries.list[0].id;
+    (mockRequest.services!.historyQueryService.start as jest.Mock).mockResolvedValue(undefined);
 
-    await historyQueryController.startHistoryQuery(ctx);
+    await controller.start(historyId, mockRequest as CustomExpressRequest);
 
-    expect(ctx.app.historyQueryService.startHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
-    expect(ctx.noContent).toHaveBeenCalled();
-    expect(ctx.badRequest).not.toHaveBeenCalled();
+    expect(mockRequest.services!.historyQueryService.start).toHaveBeenCalledWith(historyId);
   });
 
-  it('start() should throw bad request on start error', async () => {
-    ctx.request.id = testData.historyQueries.list[0].id;
+  it('should pause a history query', async () => {
+    const historyId = testData.historyQueries.list[0].id;
+    (mockRequest.services!.historyQueryService.pause as jest.Mock).mockResolvedValue(undefined);
 
-    (ctx.app.historyQueryService.startHistoryQuery as jest.Mock).mockImplementationOnce(() => {
-      throw new Error('start error');
-    });
-    await historyQueryController.startHistoryQuery(ctx);
+    await controller.pause(historyId, mockRequest as CustomExpressRequest);
 
-    expect(ctx.badRequest).toHaveBeenCalledWith('start error');
+    expect(mockRequest.services!.historyQueryService.pause).toHaveBeenCalledWith(historyId);
   });
 
-  it('pauseHistoryQuery() should pause History query', async () => {
-    ctx.params.id = testData.historyQueries.list[0].id;
+  it('should test north connection', async () => {
+    const historyId = testData.historyQueries.list[0].id;
+    const northType = testData.north.command.type;
+    const fromNorth = testData.north.list[0].id;
+    const settings = testData.north.command.settings;
 
-    await historyQueryController.pauseHistoryQuery(ctx);
+    (mockRequest.services!.historyQueryService.testNorth as jest.Mock).mockResolvedValue(undefined);
 
-    expect(ctx.app.historyQueryService.pauseHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
-    expect(ctx.noContent).toHaveBeenCalled();
-    expect(ctx.badRequest).not.toHaveBeenCalled();
+    await controller.testNorth(historyId, northType, fromNorth, settings, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.historyQueryService.testNorth).toHaveBeenCalledWith(historyId, northType, fromNorth, settings);
   });
 
-  it('pause() should throw bad request on pause error', async () => {
-    ctx.request.id = testData.historyQueries.list[0].id;
-    ctx.request.body = testData.south.command;
+  it('should test south connection', async () => {
+    const historyId = testData.historyQueries.list[0].id;
+    const southType = testData.south.command.type;
+    const fromSouth = testData.south.list[0].id;
+    const settings = testData.south.command.settings;
 
-    (ctx.app.historyQueryService.pauseHistoryQuery as jest.Mock).mockImplementationOnce(() => {
-      throw new Error('pause error');
-    });
-    await historyQueryController.pauseHistoryQuery(ctx);
+    (mockRequest.services!.historyQueryService.testSouth as jest.Mock).mockResolvedValue(undefined);
 
-    expect(ctx.badRequest).toHaveBeenCalledWith('pause error');
+    await controller.testSouth(historyId, southType, fromSouth, settings, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.historyQueryService.testSouth).toHaveBeenCalledWith(historyId, southType, fromSouth, settings);
   });
 
-  it('addOrEditTransformer() should add subscription', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.request.body = {};
-
-    await historyQueryController.addOrEditTransformer(ctx);
-
-    expect(ctx.app.historyQueryService.addOrEditTransformer).toHaveBeenCalledWith(testData.historyQueries.list[0].id, {});
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('addOrEditTransformer() should return bad request', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.request.body = {};
-    ctx.app.historyQueryService.addOrEditTransformer.mockImplementationOnce(() => {
-      throw new Error('Not Found');
-    });
-
-    await historyQueryController.addOrEditTransformer(ctx);
-
-    expect(ctx.app.historyQueryService.addOrEditTransformer).toHaveBeenCalledWith(testData.historyQueries.list[0].id, {});
-    expect(ctx.badRequest).toHaveBeenCalledWith('Not Found');
-  });
-
-  it('removeTransformer() should add subscription', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.params.transformerId = testData.transformers.list[0].id;
-
-    await historyQueryController.removeTransformer(ctx);
-
-    expect(ctx.app.historyQueryService.removeTransformer).toHaveBeenCalledWith(
-      testData.historyQueries.list[0].id,
-      testData.transformers.list[0].id
-    );
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('removeTransformer() should return bad request', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.params.transformerId = testData.transformers.list[0].id;
-    ctx.app.historyQueryService.removeTransformer.mockImplementationOnce(() => {
-      throw new Error('Not Found');
-    });
-
-    await historyQueryController.removeTransformer(ctx);
-
-    expect(ctx.app.historyQueryService.removeTransformer).toHaveBeenCalledWith(
-      testData.historyQueries.list[0].id,
-      testData.transformers.list[0].id
-    );
-    expect(ctx.badRequest).toHaveBeenCalledWith('Not Found');
-  });
-
-  it('testSouthConnection() should test South connector settings', async () => {
-    ctx.params.id = testData.historyQueries.list[0].id;
-    ctx.request.body = testData.south.command.settings;
-    ctx.query.southType = testData.south.command.type;
-    ctx.app.logger.child.mockReturnValueOnce(logger);
-    ctx.app.southService.testSouth.mockResolvedValueOnce(undefined);
-
-    await historyQueryController.testSouthConnection(ctx);
-
-    expect(ctx.app.logger.child).toHaveBeenCalledWith(
-      {
-        scopeType: 'south',
-        scopeId: 'test',
-        scopeName: 'test'
-      },
-      { level: 'silent' }
-    );
-    expect(ctx.app.historyQueryService.testSouth).toHaveBeenCalledWith(
-      testData.historyQueries.list[0].id,
-      testData.south.command.type,
-      null,
-      testData.south.command.settings,
-      logger
-    );
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('testSouthConnection() should throw bad request when validation fails', async () => {
-    ctx.params.id = testData.historyQueries.list[0].id;
-    ctx.request.body = testData.south.command.settings;
-    ctx.query.southType = testData.south.command.type;
-    ctx.app.logger.child.mockReturnValueOnce(logger);
-    ctx.app.historyQueryService.testSouth.mockImplementationOnce(() => {
-      throw new Error('validation error');
-    });
-
-    await historyQueryController.testSouthConnection(ctx);
-
-    expect(ctx.app.logger.child).toHaveBeenCalledWith(
-      {
-        scopeType: 'south',
-        scopeId: 'test',
-        scopeName: 'test'
-      },
-      { level: 'silent' }
-    );
-    expect(ctx.app.historyQueryService.testSouth).toHaveBeenCalledWith(
-      testData.historyQueries.list[0].id,
-      testData.south.command.type,
-      null,
-      testData.south.command.settings,
-      logger
-    );
-    expect(ctx.badRequest).toHaveBeenCalledWith('validation error');
-    expect(ctx.noContent).not.toHaveBeenCalled();
-  });
-
-  it('testSouthConnection() should throw bad request when manifest not found', async () => {
-    ctx.params.id = testData.historyQueries.list[0].id;
-    ctx.request.body = testData.south.command.settings;
-    ctx.query.southType = testData.south.command.type;
-    ctx.app.logger.child.mockReturnValueOnce(logger);
-    ctx.app.historyQueryService.testSouth.mockImplementationOnce(() => {
-      throw new Error(`South manifest ${testData.historyQueries.list[0].southType} not found`);
-    });
-
-    await historyQueryController.testSouthConnection(ctx);
-
-    expect(ctx.app.logger.child).toHaveBeenCalledWith(
-      {
-        scopeType: 'south',
-        scopeId: 'test',
-        scopeName: 'test'
-      },
-      { level: 'silent' }
-    );
-    expect(ctx.app.historyQueryService.testSouth).toHaveBeenCalledWith(
-      testData.historyQueries.list[0].id,
-      testData.south.command.type,
-      null,
-      testData.south.command.settings,
-      logger
-    );
-    expect(ctx.badRequest).toHaveBeenCalledWith(`South manifest ${testData.historyQueries.list[0].southType} not found`);
-    expect(ctx.noContent).not.toHaveBeenCalled();
-  });
-
-  it('testHistoryQueryItem() should test south item', async () => {
-    ctx.request.body = {
+  it('should test a history query item', async () => {
+    const historyId = testData.historyQueries.list[0].id;
+    const southType = testData.south.command.type;
+    const itemName = testData.south.itemCommand.name;
+    const fromSouth = testData.south.list[0].id;
+    const requestBody = {
       southSettings: testData.south.command.settings,
       itemSettings: testData.south.itemCommand.settings,
-      testingSettings: testData.south.itemTestingSettings
+      testingSettings: {
+        history: {
+          startTime: testData.constants.dates.DATE_1,
+          endTime: testData.constants.dates.DATE_2
+        }
+      }
     };
-    ctx.query.southType = testData.south.command.type;
-    ctx.params.id = testData.historyQueries.list[0].id;
-    ctx.query.fromSouth = null;
 
-    ctx.app.logger.child.mockReturnValueOnce(logger);
+    const mockContent: OIBusContent = {
+      type: 'any',
+      filePath: '/path/to/file.json',
+      content: '{"key": "value"}'
+    };
+    (mockRequest.services!.historyQueryService.testItem as jest.Mock).mockImplementation(
+      (_historyQueryId, _southType, _itemName, _retrieveSecretsFromSouth, _southSettings, _itemSettings, _testingSettings, callback) => {
+        callback(mockContent);
+      }
+    );
 
-    await historyQueryController.testHistoryQueryItem(ctx);
+    const result = await controller.testItem(historyId, southType, itemName, fromSouth, requestBody, mockRequest as CustomExpressRequest);
 
-    expect(ctx.app.historyQueryService.testSouthItem).toHaveBeenCalledWith(
-      testData.historyQueries.list[0].id,
-      testData.south.command.type,
-      '',
-      null,
-      testData.south.command.settings,
-      testData.south.itemCommand.settings,
-      testData.south.itemTestingSettings,
-      ctx.ok,
-      logger
+    expect(mockRequest.services!.historyQueryService.testItem).toHaveBeenCalledWith(
+      historyId,
+      southType,
+      itemName || '',
+      fromSouth,
+      requestBody.southSettings,
+      requestBody.itemSettings,
+      requestBody.testingSettings,
+      expect.any(Function)
+    );
+    expect(result).toEqual(mockContent);
+  });
+
+  it('should return a list of history query items', async () => {
+    const historyId = testData.historyQueries.list[0].id;
+    const mockItems = testData.historyQueries.list[0].items;
+    (mockRequest.services!.historyQueryService.findById as jest.Mock).mockReturnValue(testData.historyQueries.list[0]);
+    (mockRequest.services!.historyQueryService.listItems as jest.Mock).mockReturnValue(mockItems);
+
+    const result = await controller.listItems(historyId, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.historyQueryService.findById).toHaveBeenCalledWith(historyId);
+    expect(mockRequest.services!.historyQueryService.listItems).toHaveBeenCalledWith(historyId);
+    expect(result).toEqual(mockItems);
+  });
+
+  it('should search history query items', async () => {
+    const historyId = testData.historyQueries.list[0].id;
+    const page = 1;
+    const name = 'test';
+
+    const searchParams: HistoryQueryItemSearchParam = {
+      page: page,
+      name: name
+    };
+
+    const mockPageResult = {
+      content: testData.south.list[0].items,
+      totalElements: testData.south.list[0].items.length,
+      size: 25,
+      number: page,
+      totalPages: 1
+    };
+    (mockRequest.services!.historyQueryService.findById as jest.Mock).mockReturnValue(testData.historyQueries.list[0]);
+    (mockRequest.services!.historyQueryService.searchItems as jest.Mock).mockResolvedValue(mockPageResult);
+
+    const result = await controller.searchItems(historyId, name, page, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.historyQueryService.findById).toHaveBeenCalledWith(historyId);
+    expect(mockRequest.services!.historyQueryService.searchItems).toHaveBeenCalledWith(historyId, searchParams);
+    expect(result).toEqual(mockPageResult);
+  });
+
+  it('should search history query items with default params', async () => {
+    const historyId = testData.historyQueries.list[0].id;
+
+    const mockPageResult = {
+      content: testData.south.list[0].items,
+      totalElements: testData.south.list[0].items.length,
+      size: 25,
+      number: 0,
+      totalPages: 1
+    };
+    (mockRequest.services!.historyQueryService.findById as jest.Mock).mockReturnValue(testData.historyQueries.list[0]);
+    (mockRequest.services!.historyQueryService.searchItems as jest.Mock).mockResolvedValue(mockPageResult);
+
+    const result = await controller.searchItems(historyId, undefined, undefined, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.historyQueryService.findById).toHaveBeenCalledWith(historyId);
+    expect(mockRequest.services!.historyQueryService.searchItems).toHaveBeenCalledWith(historyId, { page: 0 });
+    expect(result).toEqual(mockPageResult);
+  });
+
+  it('should return a specific history query item', async () => {
+    const historyId = testData.historyQueries.list[0].id;
+    const itemId = testData.historyQueries.list[0].items[0].id;
+    const mockItem = testData.historyQueries.list[0].items[0];
+
+    (mockRequest.services!.historyQueryService.findById as jest.Mock).mockReturnValue(testData.historyQueries.list[0]);
+    (mockRequest.services!.historyQueryService.findItemById as jest.Mock).mockReturnValue(mockItem);
+
+    const result = await controller.findItemById(historyId, itemId, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.historyQueryService.findById).toHaveBeenCalledWith(historyId);
+    expect(mockRequest.services!.historyQueryService.findItemById).toHaveBeenCalledWith(historyId, itemId);
+    expect(result).toEqual(mockItem);
+  });
+
+  it('should create a new history query item', async () => {
+    const historyId = testData.historyQueries.list[0].id;
+    const command: HistoryQueryItemCommandDTO = testData.historyQueries.itemCommand;
+    const createdItem = testData.historyQueries.list[0].items[0];
+
+    (mockRequest.services!.historyQueryService.findById as jest.Mock).mockReturnValue(testData.historyQueries.list[0]);
+    (mockRequest.services!.historyQueryService.createItem as jest.Mock).mockResolvedValue(createdItem);
+
+    const result = await controller.createItem(historyId, command, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.historyQueryService.findById).toHaveBeenCalledWith(historyId);
+    expect(mockRequest.services!.historyQueryService.createItem).toHaveBeenCalledWith(historyId, command);
+    expect(result).toEqual(createdItem);
+  });
+
+  it('should update a history query item', async () => {
+    const historyId = testData.historyQueries.list[0].id;
+    const itemId = testData.historyQueries.list[0].items[0].id;
+    const command: HistoryQueryItemCommandDTO = testData.historyQueries.itemCommand;
+
+    (mockRequest.services!.historyQueryService.updateItem as jest.Mock).mockResolvedValue(undefined);
+
+    await controller.updateItem(historyId, itemId, command, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.historyQueryService.updateItem).toHaveBeenCalledWith(historyId, itemId, command);
+  });
+
+  it('should enable a history query item', async () => {
+    const historyId = testData.historyQueries.list[0].id;
+    const itemId = testData.historyQueries.list[0].items[0].id;
+
+    (mockRequest.services!.historyQueryService.enableItem as jest.Mock).mockResolvedValue(undefined);
+
+    await controller.enableItem(historyId, itemId, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.historyQueryService.enableItem).toHaveBeenCalledWith(historyId, itemId);
+  });
+
+  it('should disable a history query item', async () => {
+    const historyId = testData.historyQueries.list[0].id;
+    const itemId = testData.historyQueries.list[0].items[0].id;
+
+    (mockRequest.services!.historyQueryService.disableItem as jest.Mock).mockResolvedValue(undefined);
+
+    await controller.disableItem(historyId, itemId, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.historyQueryService.disableItem).toHaveBeenCalledWith(historyId, itemId);
+  });
+
+  it('should delete a history query item', async () => {
+    const historyId = testData.historyQueries.list[0].id;
+    const itemId = testData.historyQueries.list[0].items[0].id;
+
+    (mockRequest.services!.historyQueryService.deleteItem as jest.Mock).mockResolvedValue(undefined);
+
+    await controller.deleteItem(historyId, itemId, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.historyQueryService.deleteItem).toHaveBeenCalledWith(historyId, itemId);
+  });
+
+  it('should delete all items from a history query', async () => {
+    const historyId = testData.historyQueries.list[0].id;
+
+    (mockRequest.services!.historyQueryService.deleteAllItems as jest.Mock).mockResolvedValue(undefined);
+
+    await controller.deleteAllItems(historyId, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.historyQueryService.deleteAllItems).toHaveBeenCalledWith(historyId);
+  });
+
+  it('should convert items to CSV', async () => {
+    const southType = testData.historyQueries.list[0].southType;
+    const delimiter = ',';
+    const itemsFile = {
+      buffer: Buffer.from(JSON.stringify([{ id: '1', name: 'item1' }]))
+    } as Express.Multer.File;
+
+    await controller.itemsToCsv(southType, delimiter, itemsFile, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.res!.attachment).toHaveBeenCalledWith('items.csv');
+    expect(mockRequest.res!.contentType).toHaveBeenCalledWith('text/csv; charset=utf-8');
+    expect(mockRequest.res!.status).toHaveBeenCalledWith(200);
+    expect(mockRequest.res!.send).toHaveBeenCalledWith('csv content');
+  });
+
+  it('should export items to CSV', async () => {
+    const historyId = testData.historyQueries.list[0].id;
+    const delimiter = ',';
+    const command = { delimiter };
+
+    (mockRequest.services!.historyQueryService.findById as jest.Mock).mockReturnValue(testData.historyQueries.list[0]);
+
+    await controller.exportItems(historyId, command, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.historyQueryService.findById).toHaveBeenCalledWith(historyId);
+    expect(mockRequest.res!.attachment).toHaveBeenCalledWith('items.csv');
+    expect(mockRequest.res!.contentType).toHaveBeenCalledWith('text/csv; charset=utf-8');
+    expect(mockRequest.res!.status).toHaveBeenCalledWith(200);
+    expect(mockRequest.res!.send).toHaveBeenCalledWith('csv content');
+  });
+
+  it('should check CSV import and return validation results', async () => {
+    const southType = testData.historyQueries.list[0].southType;
+    const delimiter = ',';
+    const itemsToImportFile = {
+      buffer: Buffer.from('id,name\n1,item1')
+    } as Express.Multer.File;
+    const currentItemsFile = {
+      buffer: Buffer.from(JSON.stringify([{ id: '1', name: 'item1' }]))
+    } as Express.Multer.File;
+
+    const mockResult = {
+      items: [testData.historyQueries.itemCommand],
+      errors: []
+    };
+
+    (mockRequest.services!.historyQueryService.checkImportItems as jest.Mock).mockReturnValue(mockResult);
+
+    const result = await controller.checkImportItems(
+      southType,
+      delimiter,
+      itemsToImportFile,
+      currentItemsFile,
+      mockRequest as CustomExpressRequest
+    );
+
+    expect(mockRequest.services!.historyQueryService.checkImportItems).toHaveBeenCalledWith(
+      southType,
+      itemsToImportFile.buffer.toString('utf8'),
+      delimiter,
+      JSON.parse(currentItemsFile.buffer.toString('utf8'))
+    );
+    expect(result).toEqual(mockResult);
+  });
+
+  it('should throw an error if itemsToImport or currentItems files are missing in checkImportItems', async () => {
+    const southType = testData.historyQueries.list[0].southType;
+    const delimiter = ',';
+    const itemsToImportFile = {
+      buffer: Buffer.from('id,name\n1,item1')
+    } as Express.Multer.File;
+
+    await expect(
+      controller.checkImportItems(southType, delimiter, itemsToImportFile, undefined!, mockRequest as CustomExpressRequest)
+    ).rejects.toThrow('Missing "itemsToImport" or "currentItems"');
+  });
+
+  it('should import items from CSV', async () => {
+    const historyId = testData.historyQueries.list[0].id;
+    const itemsFile = {
+      buffer: Buffer.from(JSON.stringify([testData.historyQueries.itemCommand]))
+    } as Express.Multer.File;
+
+    (mockRequest.services!.historyQueryService.importItems as jest.Mock).mockResolvedValue(undefined);
+
+    await controller.importItems(historyId, itemsFile, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.historyQueryService.importItems).toHaveBeenCalledWith(
+      historyId,
+      JSON.parse(itemsFile.buffer.toString('utf8'))
     );
   });
 
-  it('testHistoryQueryItem() should return bad request', async () => {
-    ctx.request.body = {
-      southSettings: testData.south.command.settings,
-      itemSettings: testData.south.itemCommand.settings,
-      testingSettings: testData.south.itemTestingSettings
-    };
-    ctx.query.southType = testData.south.command.type;
-    ctx.params.id = testData.historyQueries.list[0].id;
-    ctx.query.itemName = testData.south.itemCommand.name;
-    ctx.query.fromSouth = testData.south.list[0].id;
+  it('should throw an error if items file is missing in importItems', async () => {
+    const historyId = testData.historyQueries.list[0].id;
 
-    ctx.app.logger.child.mockReturnValueOnce(logger);
-    ctx.app.historyQueryService.testSouthItem.mockImplementationOnce(() => {
-      throw new Error('test error');
-    });
-
-    await historyQueryController.testHistoryQueryItem(ctx);
-
-    expect(ctx.app.historyQueryService.testSouthItem).toHaveBeenCalledWith(
-      testData.historyQueries.list[0].id,
-      testData.south.command.type,
-      testData.south.itemCommand.name,
-      testData.south.list[0].id,
-      testData.south.command.settings,
-      testData.south.itemCommand.settings,
-      testData.south.itemTestingSettings,
-      ctx.ok,
-      logger
+    await expect(controller.importItems(historyId, undefined!, mockRequest as CustomExpressRequest)).rejects.toThrow(
+      'Missing file "items"'
     );
-    expect(ctx.badRequest).toHaveBeenCalledWith('test error');
   });
 
-  it('testNorthConnection() should test North connector settings', async () => {
-    ctx.params.id = testData.historyQueries.list[0].id;
-    ctx.request.body = testData.north.command.settings;
-    ctx.query.northType = testData.north.command.type;
-    ctx.app.logger.child.mockReturnValueOnce(logger);
-    ctx.app.northService.testNorth.mockResolvedValueOnce(undefined);
+  it('should add or edit a transformer', async () => {
+    const historyId = testData.historyQueries.list[0].id;
+    const command: TransformerDTOWithOptions = {
+      transformer: testData.transformers.list[0] as TransformerDTO,
+      inputType: 'any',
+      options: {}
+    };
 
-    await historyQueryController.testNorthConnection(ctx);
+    (mockRequest.services!.historyQueryService.addOrEditTransformer as jest.Mock).mockResolvedValue(undefined);
 
-    expect(ctx.app.logger.child).toHaveBeenCalledWith(
+    await controller.addOrEditTransformer(historyId, command, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.historyQueryService.addOrEditTransformer).toHaveBeenCalledWith(historyId, command);
+  });
+
+  it('should remove a transformer', async () => {
+    const historyId = testData.historyQueries.list[0].id;
+    const transformerId = testData.transformers.list[0].id;
+
+    (mockRequest.services!.historyQueryService.removeTransformer as jest.Mock).mockResolvedValue(undefined);
+
+    await controller.removeTransformer(historyId, transformerId, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.historyQueryService.removeTransformer).toHaveBeenCalledWith(historyId, transformerId);
+  });
+
+  it('should search cache content', async () => {
+    const historyId = testData.historyQueries.list[0].id;
+    const nameContains = 'test';
+    const start = '2023-01-01';
+    const end = '2023-01-02';
+    const folder: 'cache' | 'archive' | 'error' = 'cache';
+
+    const mockMetadata: CacheMetadata = {
+      contentFile: '/path/to/content.json',
+      contentSize: 1024,
+      numberOfElement: 10,
+      createdAt: '2023-01-01T00:00:00Z',
+      contentType: 'time-values',
+      source: 'south1',
+      options: {
+        key1: 'value1',
+        key2: 100
+      }
+    };
+    const mockResult = [
       {
-        scopeType: 'north',
-        scopeId: 'test',
-        scopeName: 'test'
-      },
-      { level: 'silent' }
+        metadataFilename: 'metadata.json',
+        metadata: mockMetadata
+      }
+    ];
+
+    (mockRequest.services!.historyQueryService.searchCacheContent as jest.Mock).mockResolvedValue(mockResult);
+
+    const result = await controller.searchCacheContent(historyId, nameContains, start, end, folder, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.historyQueryService.searchCacheContent).toHaveBeenCalledWith(
+      historyId,
+      { start, end, nameContains },
+      folder
     );
-    expect(ctx.app.historyQueryService.testNorth).toHaveBeenCalledWith(
-      testData.historyQueries.list[0].id,
-      testData.north.command.type,
-      null,
-      testData.north.command.settings,
-      logger
-    );
-    expect(ctx.noContent).toHaveBeenCalled();
+    expect(result).toEqual(mockResult);
   });
 
-  it('testNorthConnection() should throw bad request when validation fails', async () => {
-    ctx.params.id = testData.historyQueries.list[0].id;
-    ctx.request.body = testData.north.command.settings;
-    ctx.query.northType = testData.north.command.type;
-    ctx.app.logger.child.mockReturnValueOnce(logger);
-    ctx.app.historyQueryService.testNorth.mockImplementationOnce(() => {
-      throw new Error('validation error');
-    });
+  it('should get cache file content', async () => {
+    const historyId = testData.historyQueries.list[0].id;
+    const filename = 'test.json';
+    const folder = 'cache';
 
-    await historyQueryController.testNorthConnection(ctx);
+    const mockStream = { pipe: jest.fn() };
+    (mockRequest.services!.historyQueryService.getCacheFileContent as jest.Mock).mockResolvedValue(mockStream);
 
-    expect(ctx.app.logger.child).toHaveBeenCalledWith(
-      {
-        scopeType: 'north',
-        scopeId: 'test',
-        scopeName: 'test'
-      },
-      { level: 'silent' }
-    );
-    expect(ctx.app.historyQueryService.testNorth).toHaveBeenCalledWith(
-      testData.historyQueries.list[0].id,
-      testData.north.command.type,
-      null,
-      testData.north.command.settings,
-      logger
-    );
-    expect(ctx.badRequest).toHaveBeenCalledWith('validation error');
-    expect(ctx.noContent).not.toHaveBeenCalled();
+    await controller.getCacheFileContent(historyId, filename, folder, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.historyQueryService.getCacheFileContent).toHaveBeenCalledWith(historyId, folder, filename);
+    expect(mockRequest.res!.setHeader).toHaveBeenCalledWith('Content-Disposition', `attachment; filename="${filename}"`);
+    expect(mockStream.pipe).toHaveBeenCalledWith(mockRequest.res!);
   });
 
-  it('testNorthConnection() should throw bad request when manifest not found', async () => {
-    ctx.params.id = testData.historyQueries.list[0].id;
-    ctx.request.body = testData.north.command.settings;
-    ctx.query.northType = testData.north.command.type;
-    ctx.app.logger.child.mockReturnValueOnce(logger);
-    ctx.app.historyQueryService.testNorth.mockImplementationOnce(() => {
-      throw new Error(`North manifest ${testData.historyQueries.list[0].northType} not found`);
-    });
+  it('should remove cache content', async () => {
+    const historyId = testData.historyQueries.list[0].id;
+    const folder: 'cache' | 'archive' | 'error' = 'cache';
+    const filenames = ['test1.json', 'test2.json'];
 
-    await historyQueryController.testNorthConnection(ctx);
+    (mockRequest.services!.historyQueryService.removeCacheContent as jest.Mock).mockResolvedValue(undefined);
 
-    expect(ctx.app.logger.child).toHaveBeenCalledWith(
-      {
-        scopeType: 'north',
-        scopeId: 'test',
-        scopeName: 'test'
-      },
-      { level: 'silent' }
-    );
-    expect(ctx.app.historyQueryService.testNorth).toHaveBeenCalledWith(
-      testData.historyQueries.list[0].id,
-      testData.north.command.type,
-      null,
-      testData.north.command.settings,
-      logger
-    );
-    expect(ctx.badRequest).toHaveBeenCalledWith(`North manifest ${testData.historyQueries.list[0].northType} not found`);
-    expect(ctx.noContent).not.toHaveBeenCalled();
+    await controller.removeCacheContent(historyId, folder, filenames, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.historyQueryService.removeCacheContent).toHaveBeenCalledWith(historyId, folder, filenames);
   });
 
-  it('update() should update History Query', async () => {
-    ctx.request.body = testData.historyQueries.command;
-    ctx.params.id = testData.historyQueries.list[0].id;
+  it('should remove all cache content', async () => {
+    const historyId = testData.historyQueries.list[0].id;
+    const folder: 'cache' | 'archive' | 'error' = 'cache';
 
-    await historyQueryController.updateHistoryQuery(ctx);
+    (mockRequest.services!.historyQueryService.removeAllCacheContent as jest.Mock).mockResolvedValue(undefined);
 
-    expect(ctx.app.historyQueryService.updateHistoryQuery).toHaveBeenCalledWith(
-      testData.historyQueries.list[0].id,
-      testData.historyQueries.command,
-      false
-    );
+    await controller.removeAllCacheContent(historyId, folder, mockRequest as CustomExpressRequest);
 
-    expect(ctx.noContent).toHaveBeenCalled();
+    expect(mockRequest.services!.historyQueryService.removeAllCacheContent).toHaveBeenCalledWith(historyId, folder);
   });
 
-  it('update() should throw bad request on update error', async () => {
-    ctx.request.body = testData.historyQueries.command;
+  it('should move cache content', async () => {
+    const historyId = testData.historyQueries.list[0].id;
+    const originFolder: 'cache' | 'archive' | 'error' = 'cache';
+    const destinationFolder: 'cache' | 'archive' | 'error' = 'archive';
+    const filenames = ['test1.json', 'test2.json'];
 
-    (ctx.app.historyQueryService.updateHistoryQuery as jest.Mock).mockImplementationOnce(() => {
-      throw new Error('update error');
-    });
-    await historyQueryController.updateHistoryQuery(ctx);
+    (mockRequest.services!.historyQueryService.moveCacheContent as jest.Mock).mockResolvedValue(undefined);
 
-    expect(ctx.badRequest).toHaveBeenCalledWith('update error');
-  });
+    await controller.moveCacheContent(historyId, originFolder, destinationFolder, filenames, mockRequest as CustomExpressRequest);
 
-  it('deleteHistoryQuery() should delete history query', async () => {
-    ctx.params.id = testData.historyQueries.list[0].id;
-
-    await historyQueryController.deleteHistoryQuery(ctx);
-
-    expect(ctx.app.historyQueryService.deleteHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('delete() should throw bad request on delete error', async () => {
-    ctx.request.body = testData.historyQueries.command;
-
-    (ctx.app.historyQueryService.deleteHistoryQuery as jest.Mock).mockImplementationOnce(() => {
-      throw new Error('delete error');
-    });
-    await historyQueryController.deleteHistoryQuery(ctx);
-
-    expect(ctx.badRequest).toHaveBeenCalledWith('delete error');
-  });
-
-  it('searchHistoryQueryItems() should return South items', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.query = {
-      page: 1,
-      name: 'name'
-    };
-    const searchParams = {
-      page: 1,
-      name: 'name'
-    };
-    ctx.app.historyQueryService.searchHistoryQueryItems.mockReturnValue({
-      content: testData.historyQueries.list[0].items.map(item => toHistoryQueryItemDTO(item, testData.historyQueries.list[0].southType)),
-      totalElements: testData.historyQueries.list[0].items.length,
-      size: 25,
-      number: 1,
-      totalPages: 1
-    });
-    ctx.app.historyQueryService.findById.mockReturnValueOnce(testData.historyQueries.list[0]);
-
-    await historyQueryController.searchHistoryQueryItems(ctx);
-
-    expect(ctx.app.historyQueryService.findById).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
-    expect(ctx.app.historyQueryService.searchHistoryQueryItems).toHaveBeenCalledWith(testData.historyQueries.list[0].id, searchParams);
-    expect(ctx.ok).toHaveBeenCalledWith({
-      content: testData.historyQueries.list[0].items.map(item => toHistoryQueryItemDTO(item, testData.historyQueries.list[0].southType)),
-      totalElements: testData.historyQueries.list[0].items.length,
-      size: 25,
-      number: 1,
-      totalPages: 1
-    });
-  });
-
-  it('searchHistoryQueryItems() should return South items with default search params', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.query = {};
-    const searchParams = {
-      page: 0
-    };
-    ctx.app.historyQueryService.findById.mockReturnValueOnce(testData.historyQueries.list[0]);
-    ctx.app.historyQueryService.searchHistoryQueryItems.mockReturnValue({
-      content: testData.historyQueries.list[0].items.map(item => toHistoryQueryItemDTO(item, testData.historyQueries.list[0].southType)),
-      totalElements: testData.historyQueries.list[0].items.length,
-      size: 25,
-      number: 1,
-      totalPages: 1
-    });
-
-    await historyQueryController.searchHistoryQueryItems(ctx);
-
-    expect(ctx.app.historyQueryService.findById).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
-    expect(ctx.app.historyQueryService.searchHistoryQueryItems).toHaveBeenCalledWith(testData.historyQueries.list[0].id, searchParams);
-    expect(ctx.ok).toHaveBeenCalledWith({
-      content: testData.historyQueries.list[0].items.map(item => toHistoryQueryItemDTO(item, testData.historyQueries.list[0].southType)),
-      totalElements: testData.historyQueries.list[0].items.length,
-      size: 25,
-      number: 1,
-      totalPages: 1
-    });
-  });
-
-  it('searchHistoryQueryItems() should return not found if history query is not found', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.app.historyQueryService.findById.mockReturnValueOnce(null);
-
-    await historyQueryController.searchHistoryQueryItems(ctx);
-
-    expect(ctx.notFound).toHaveBeenCalledTimes(1);
-  });
-
-  it('getHistoryItem() should return item', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.params.id = testData.historyQueries.list[0].items[0].id;
-    ctx.app.historyQueryService.findById.mockReturnValueOnce(testData.historyQueries.list[0]);
-    ctx.app.historyQueryService.findHistoryQueryItemById.mockReturnValueOnce(testData.historyQueries.list[0].items[0]);
-
-    await historyQueryController.getHistoryQueryItem(ctx);
-
-    expect(ctx.app.historyQueryService.findHistoryQueryItemById).toHaveBeenCalledWith(
-      testData.historyQueries.list[0].id,
-      testData.historyQueries.list[0].items[0].id
-    );
-    expect(ctx.ok).toHaveBeenCalledWith(testData.historyQueries.list[0].items[0]);
-  });
-
-  it('getHistoryItem() should return not found if history query is not found', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.app.historyQueryService.findById.mockReturnValueOnce(null);
-
-    await historyQueryController.getHistoryQueryItem(ctx);
-
-    expect(ctx.notFound).toHaveBeenCalledTimes(1);
-  });
-
-  it('getHistoryItem() should return not found when South item not found', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.params.id = testData.historyQueries.list[0].items[0].id;
-    ctx.app.historyQueryService.findById.mockReturnValueOnce(testData.historyQueries.list[0]);
-    ctx.app.historyQueryService.findHistoryQueryItemById.mockReturnValueOnce(null);
-
-    await historyQueryController.getHistoryQueryItem(ctx);
-
-    expect(ctx.app.historyQueryService.findHistoryQueryItemById).toHaveBeenCalledWith(
-      testData.historyQueries.list[0].id,
-      testData.historyQueries.list[0].items[0].id
-    );
-    expect(ctx.notFound).toHaveBeenCalled();
-  });
-
-  it('createHistoryQueryItem() should create item', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.request.body = testData.historyQueries.itemCommand;
-    ctx.app.historyQueryService.findById.mockReturnValueOnce(testData.historyQueries.list[0]);
-    ctx.app.historyQueryService.createHistoryQueryItem.mockReturnValueOnce(testData.historyQueries.list[0].items[0]);
-    ctx.app.southService.getInstalledSouthManifests.mockReturnValueOnce([
-      { ...testData.south.manifest, id: testData.historyQueries.list[0].southType }
-    ]);
-
-    await historyQueryController.createHistoryQueryItem(ctx);
-
-    expect(ctx.app.historyQueryService.createHistoryQueryItem).toHaveBeenCalledWith(
-      testData.historyQueries.list[0].id,
-      testData.historyQueries.itemCommand
-    );
-    expect(ctx.created).toHaveBeenCalledWith(
-      toHistoryQueryItemDTO(testData.historyQueries.list[0].items[0], testData.historyQueries.list[0].southType)
+    expect(mockRequest.services!.historyQueryService.moveCacheContent).toHaveBeenCalledWith(
+      historyId,
+      originFolder,
+      destinationFolder,
+      filenames
     );
   });
 
-  it('createHistoryQueryItem() should return not found if history query is not found', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.request.body = testData.historyQueries.itemCommand;
-    ctx.app.historyQueryService.findById.mockReturnValueOnce(null);
-    await historyQueryController.createHistoryQueryItem(ctx);
+  it('should move all cache content', async () => {
+    const historyId = testData.historyQueries.list[0].id;
+    const originFolder: 'cache' | 'archive' | 'error' = 'cache';
+    const destinationFolder: 'cache' | 'archive' | 'error' = 'archive';
 
-    expect(ctx.notFound).toHaveBeenCalledTimes(1);
-  });
+    (mockRequest.services!.historyQueryService.moveAllCacheContent as jest.Mock).mockResolvedValue(undefined);
 
-  it('createHistoryQueryItem() should return bad request on item creation error', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.request.body = testData.historyQueries.itemCommand;
-    ctx.app.historyQueryService.findById.mockReturnValueOnce(testData.historyQueries.list[0]);
+    await controller.moveAllCacheContent(historyId, originFolder, destinationFolder, mockRequest as CustomExpressRequest);
 
-    ctx.app.historyQueryService.createHistoryQueryItem.mockImplementationOnce(() => {
-      throw new Error('create error');
-    });
-    await historyQueryController.createHistoryQueryItem(ctx);
-
-    expect(ctx.badRequest).toHaveBeenCalledWith('create error');
-  });
-
-  it('updateHistoryQueryItem() should update item', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.params.id = testData.historyQueries.list[0].items[0].id;
-    ctx.request.body = testData.historyQueries.itemCommand;
-
-    await historyQueryController.updateHistoryQueryItem(ctx);
-
-    expect(ctx.app.historyQueryService.updateHistoryQueryItem).toHaveBeenCalledWith(
-      testData.historyQueries.list[0].id,
-      testData.historyQueries.list[0].items[0].id,
-      testData.historyQueries.itemCommand
-    );
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('updateHistoryQueryItem() should return bad request on item update error', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.params.id = testData.historyQueries.list[0].items[0].id;
-    ctx.request.body = testData.historyQueries.itemCommand;
-
-    ctx.app.historyQueryService.updateHistoryQueryItem.mockImplementationOnce(() => {
-      throw new Error('update error');
-    });
-    await historyQueryController.updateHistoryQueryItem(ctx);
-
-    expect(ctx.badRequest).toHaveBeenCalledWith('update error');
-  });
-
-  it('deleteHistoryQueryItem() should delete item', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.params.id = testData.historyQueries.list[0].items[0].id;
-
-    await historyQueryController.deleteHistoryQueryItem(ctx);
-
-    expect(ctx.app.historyQueryService.deleteHistoryQueryItem).toHaveBeenCalledWith(
-      testData.historyQueries.list[0].id,
-      testData.historyQueries.list[0].items[0].id
-    );
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('deleteHistoryQueryItem() should return bad request on item delete error', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.params.id = testData.historyQueries.list[0].items[0].id;
-
-    ctx.app.historyQueryService.deleteHistoryQueryItem.mockImplementationOnce(() => {
-      throw new Error('delete error');
-    });
-    await historyQueryController.deleteHistoryQueryItem(ctx);
-
-    expect(ctx.badRequest).toHaveBeenCalledWith('delete error');
-  });
-
-  it('enableHistoryQueryItem() should enable History item', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.params.id = testData.historyQueries.list[0].items[0].id;
-
-    await historyQueryController.enableHistoryQueryItem(ctx);
-
-    expect(ctx.app.historyQueryService.enableHistoryQueryItem).toHaveBeenCalledWith(
-      testData.historyQueries.list[0].id,
-      testData.historyQueries.list[0].items[0].id
-    );
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('enableHistoryQueryItem() should return bad request on item enable error', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.params.id = testData.historyQueries.list[0].items[0].id;
-
-    ctx.app.historyQueryService.enableHistoryQueryItem.mockImplementationOnce(() => {
-      throw new Error('enable error');
-    });
-    await historyQueryController.enableHistoryQueryItem(ctx);
-
-    expect(ctx.badRequest).toHaveBeenCalledWith('enable error');
-  });
-
-  it('disableHistoryQueryItem() should disable History item', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.params.id = testData.historyQueries.list[0].items[0].id;
-
-    await historyQueryController.disableHistoryQueryItem(ctx);
-
-    expect(ctx.app.historyQueryService.disableHistoryQueryItem).toHaveBeenCalledWith(
-      testData.historyQueries.list[0].id,
-      testData.historyQueries.list[0].items[0].id
-    );
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('disableHistoryQueryItem() should return bad request on item disable error', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.params.id = testData.historyQueries.list[0].items[0].id;
-
-    ctx.app.historyQueryService.disableHistoryQueryItem.mockImplementationOnce(() => {
-      throw new Error('disable error');
-    });
-    await historyQueryController.disableHistoryQueryItem(ctx);
-
-    expect(ctx.badRequest).toHaveBeenCalledWith('disable error');
-  });
-
-  it('deleteAllItems() should delete all South items', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-
-    await historyQueryController.deleteAllItems(ctx);
-
-    expect(ctx.app.historyQueryService.deleteAllItemsForHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('deleteAllItems() should return bad request on delete all item error', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.params.id = testData.historyQueries.list[0].items[0].id;
-
-    ctx.app.historyQueryService.deleteAllItemsForHistoryQuery.mockImplementationOnce(() => {
-      throw new Error('delete all error');
-    });
-    await historyQueryController.deleteAllItems(ctx);
-
-    expect(ctx.badRequest).toHaveBeenCalledWith('delete all error');
-  });
-
-  it('historyQueryItemsToCsv() should download a csv file', async () => {
-    ctx.params.southType = testData.historyQueries.list[0].southType;
-    ctx.request.body = {
-      delimiter: ';'
-    };
-    ctx.request.files = {
-      items: [
-        {
-          path: 'items.json',
-          mimetype: 'text/plain'
-        }
-      ]
-    };
-    (itemToFlattenedCSV as jest.Mock).mockReturnValue('csv content');
-    ctx.app.southService.getInstalledSouthManifests.mockReturnValueOnce([
-      { ...testData.south.manifest, id: testData.historyQueries.list[0].southType }
-    ]);
-    (fs.readFile as jest.Mock).mockReturnValueOnce(JSON.stringify(testData.historyQueries.list[0].items));
-
-    await historyQueryController.historyQueryItemsToCsv(ctx);
-
-    expect(ctx.ok).toHaveBeenCalledWith();
-    expect(ctx.body).toEqual('csv content');
-  });
-
-  it('historyQueryItemsToCsv() should throw not found if manifest not found', async () => {
-    ctx.params.southType = 'bad type';
-    ctx.request.body = {
-      delimiter: ';'
-    };
-    ctx.request.files = {
-      items: [
-        {
-          path: 'items.json',
-          mimetype: 'text/plain'
-        }
-      ]
-    };
-    ctx.app.southService.getInstalledSouthManifests.mockReturnValueOnce([]);
-
-    await historyQueryController.historyQueryItemsToCsv(ctx);
-
-    expect(ctx.throw).toHaveBeenCalledWith(404, 'South manifest not found');
-  });
-
-  it('historyQueryItemsToCsv() should throw if file not found', async () => {
-    ctx.request.body = {
-      delimiter: ';'
-    };
-    ctx.request.files = {};
-    ctx.app.southService.getInstalledSouthManifests.mockReturnValueOnce([{ ...testData.south.manifest, id: testData.south.list[0].type }]);
-
-    await historyQueryController.historyQueryItemsToCsv(ctx);
-
-    expect(ctx.badRequest).toHaveBeenCalledWith('Missing files "items"');
-  });
-
-  it('exportSouthItems() should download a csv file', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.app.historyQueryService.findById.mockReturnValueOnce(testData.historyQueries.list[0]);
-    (itemToFlattenedCSV as jest.Mock).mockReturnValue('csv content');
-    ctx.request.body = { delimiter: ';' };
-
-    await historyQueryController.exportSouthItems(ctx);
-
-    expect(ctx.ok).toHaveBeenCalledWith();
-    expect(ctx.body).toEqual('csv content');
-  });
-
-  it('exportSouthItems() should return not found if history query not found', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.app.historyQueryService.findById.mockReturnValueOnce(null);
-    ctx.request.body = { delimiter: ';' };
-
-    await historyQueryController.exportSouthItems(ctx);
-
-    expect(ctx.notFound).toHaveBeenCalledWith();
-  });
-
-  it('checkImportSouthItems() should check import of items in a csv file with new history', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.params.southType = testData.historyQueries.list[0].southType;
-    ctx.request.body = { delimiter: ',' };
-    ctx.request.files = {
-      file: [
-        {
-          path: 'myFile.csv',
-          mimetype: 'text/csv'
-        }
-      ],
-      currentItems: [
-        {
-          path: 'currentItems.json',
-          mimetype: 'text/plain'
-        }
-      ]
-    };
-    ctx.app.historyQueryService.checkCsvFileImport.mockReturnValueOnce({ items: testData.historyQueries.list[0].items, errors: [] });
-
-    await historyQueryController.checkImportSouthItems(ctx);
-
-    expect(ctx.badRequest).not.toHaveBeenCalled();
-    expect(ctx.throw).not.toHaveBeenCalled();
-
-    expect(ctx.app.historyQueryService.checkCsvFileImport).toHaveBeenCalledWith(
-      testData.historyQueries.list[0].southType,
-      { mimetype: 'text/csv', path: 'myFile.csv' },
-      ctx.request.body.delimiter,
-      { mimetype: 'text/plain', path: 'currentItems.json' }
-    );
-    expect(ctx.ok).toHaveBeenCalledWith({ items: testData.historyQueries.list[0].items, errors: [] });
-  });
-
-  it('checkImportSouthItems() should return bad request if check csv import fails', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.params.southType = testData.historyQueries.list[0].southType;
-    ctx.request.body = { delimiter: ',' };
-    ctx.request.files = {
-      file: [
-        {
-          path: 'myFile.csv',
-          mimetype: 'text/csv'
-        }
-      ],
-      currentItems: [
-        {
-          path: 'currentItems.json',
-          mimetype: 'text/plain'
-        }
-      ]
-    };
-    ctx.app.historyQueryService.checkCsvFileImport.mockImplementationOnce(() => {
-      throw new Error('check import error');
-    });
-
-    await historyQueryController.checkImportSouthItems(ctx);
-
-    expect(ctx.badRequest).toHaveBeenCalledWith('check import error');
-  });
-
-  it('checkImportSouthItems() should return bad request if file is missing', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.params.southType = testData.historyQueries.list[0].southType;
-    ctx.request.body = { delimiter: ',' };
-    ctx.request.files = {};
-
-    await historyQueryController.checkImportSouthItems(ctx);
-
-    expect(ctx.badRequest).toHaveBeenCalledWith('Missing files "file" or "currentItems"');
-  });
-
-  it('importSouthItems() should import items', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.request.files = {
-      items: [
-        {
-          path: 'currentItems.json',
-          mimetype: 'text/plain'
-        }
-      ]
-    };
-    (fs.readFile as jest.Mock).mockReturnValueOnce(JSON.stringify(testData.historyQueries.list[0].items));
-
-    await historyQueryController.importSouthItems(ctx);
-    expect(ctx.app.historyQueryService.importItems).toHaveBeenCalledWith(
-      testData.historyQueries.list[0].id,
-      testData.historyQueries.list[0].items
-    );
-  });
-
-  it('importSouthItems() should return bad request if import fails', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.request.files = {
-      items: [
-        {
-          path: 'currentItems.json',
-          mimetype: 'text/plain'
-        }
-      ]
-    };
-    (fs.readFile as jest.Mock).mockReturnValueOnce(JSON.stringify(testData.historyQueries.list[0].items));
-
-    ctx.app.historyQueryService.importItems.mockImplementationOnce(() => {
-      throw new Error('import items error');
-    });
-
-    await historyQueryController.importSouthItems(ctx);
-    expect(ctx.app.historyQueryService.importItems).toHaveBeenCalledWith(
-      testData.historyQueries.list[0].id,
-      testData.historyQueries.list[0].items
-    );
-    expect(ctx.badRequest).toHaveBeenCalledWith('import items error');
-  });
-
-  it('importSouthItems() should return bad request if file is missing', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.request.files = {};
-
-    await historyQueryController.importSouthItems(ctx);
-    expect(ctx.badRequest).toHaveBeenCalledWith('Missing file "items"');
-  });
-
-  it('searchCacheContent() should search cache content with default params', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.query.folder = 'cache';
-    ctx.app.historyQueryService.searchCacheContent.mockReturnValueOnce([]);
-    await historyQueryController.searchCacheContent(ctx);
-    expect(ctx.app.historyQueryService.searchCacheContent).toHaveBeenCalledWith(
-      testData.historyQueries.list[0].id,
-      { start: null, end: null, nameContains: null },
-      'cache'
-    );
-    expect(ctx.ok).toHaveBeenCalledWith([]);
-  });
-
-  it('searchCacheContent() should fail to search if bad folder', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.query.folder = null;
-    await historyQueryController.searchCacheContent(ctx);
-    expect(ctx.app.historyQueryService.searchCacheContent).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith('A folder must be specified among "cache", "error" or "archive"');
-  });
-
-  it('searchCacheContent() should search cache content', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.query.start = testData.constants.dates.DATE_1;
-    ctx.query.end = testData.constants.dates.DATE_2;
-    ctx.query.nameContains = 'filename';
-    ctx.query.folder = 'cache';
-    ctx.app.historyQueryService.searchCacheContent.mockReturnValueOnce([]);
-    await historyQueryController.searchCacheContent(ctx);
-    expect(ctx.app.historyQueryService.searchCacheContent).toHaveBeenCalledWith(
-      testData.historyQueries.list[0].id,
-      { start: testData.constants.dates.DATE_1, end: testData.constants.dates.DATE_2, nameContains: 'filename' },
-      'cache'
-    );
-    expect(ctx.ok).toHaveBeenCalledWith([]);
-  });
-
-  it('getCacheContentFileStream() should get error file content', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.params.filename = 'my file';
-    ctx.query.folder = 'cache';
-    ctx.app.historyQueryService.getCacheContentFileStream.mockReturnValueOnce('file content');
-    await historyQueryController.getCacheContentFileStream(ctx);
-    expect(ctx.app.historyQueryService.getCacheContentFileStream).toHaveBeenCalledWith(
-      testData.historyQueries.list[0].id,
-      'cache',
-      'my file'
-    );
-    expect(ctx.attachment).toHaveBeenCalledWith('my file');
-    expect(ctx.ok).toHaveBeenCalledWith('file content');
-  });
-
-  it('getCacheContentFileStream() should fail to get file if bad folder', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.query.folder = null;
-    await historyQueryController.getCacheContentFileStream(ctx);
-    expect(ctx.app.historyQueryService.getCacheContentFileStream).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith('A folder must be specified among "cache", "error" or "archive"');
-  });
-
-  it('getCacheContentFileStream() should fail to get file if no filename', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.query.folder = 'cache';
-    ctx.params.filename = null;
-    await historyQueryController.getCacheContentFileStream(ctx);
-    expect(ctx.app.historyQueryService.getCacheContentFileStream).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith('A filename must be specified');
-  });
-
-  it('getCacheContentFileStream() should not get error file content if null', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.params.filename = 'my file';
-    ctx.query.folder = 'cache';
-    ctx.app.historyQueryService.getCacheContentFileStream.mockReturnValueOnce(null);
-    await historyQueryController.getCacheContentFileStream(ctx);
-    expect(ctx.app.historyQueryService.getCacheContentFileStream).toHaveBeenCalledWith(
-      testData.historyQueries.list[0].id,
-      'cache',
-      'my file'
-    );
-    expect(ctx.attachment).not.toHaveBeenCalled();
-    expect(ctx.notFound).toHaveBeenCalled();
-  });
-
-  it('removeCacheContent() should fail to remove if bad folder', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.query.folder = null;
-    await historyQueryController.removeCacheContent(ctx);
-    expect(ctx.app.historyQueryService.removeCacheContent).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith('A folder must be specified among "cache", "error" or "archive"');
-  });
-
-  it('removeCacheContent() should not remove files if body is not an array', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.request.body = 'my file';
-    ctx.query.folder = 'cache';
-    await historyQueryController.removeCacheContent(ctx);
-    expect(ctx.app.historyQueryService.removeCacheContent).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith('Invalid file list');
-  });
-
-  it('removeCacheContent() should remove error files', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.query.folder = 'cache';
-    ctx.request.body = ['my file1', 'my file2'];
-    await historyQueryController.removeCacheContent(ctx);
-    expect(ctx.app.historyQueryService.removeCacheContent).toHaveBeenCalledWith(testData.historyQueries.list[0].id, 'cache', [
-      'my file1',
-      'my file2'
-    ]);
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('removeCacheContent() should remove error files with only one file', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.query.folder = 'cache';
-    ctx.request.body = ['my file'];
-    await historyQueryController.removeCacheContent(ctx);
-    expect(ctx.app.historyQueryService.removeCacheContent).toHaveBeenCalledWith(testData.historyQueries.list[0].id, 'cache', ['my file']);
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('moveCacheContent() should fail to move all if bad originFolder', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.query.originFolder = null;
-    await historyQueryController.moveCacheContent(ctx);
-    expect(ctx.app.historyQueryService.moveCacheContent).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith('The originFolder must be specified among "cache", "error" or "archive"');
-  });
-
-  it('moveCacheContent() should fail to move all if bad destinationFolder', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.query.originFolder = 'cache';
-    ctx.query.destinationFolder = null;
-    await historyQueryController.moveCacheContent(ctx);
-    expect(ctx.app.historyQueryService.moveCacheContent).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith('The destinationFolder must be specified among "cache", "error" or "archive"');
-  });
-
-  it('moveCacheContent() should not move files if body is not an array', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.request.body = 'my file';
-    ctx.query.originFolder = 'cache';
-    ctx.query.destinationFolder = 'error';
-    await historyQueryController.moveCacheContent(ctx);
-    expect(ctx.app.historyQueryService.moveCacheContent).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith('Invalid file list');
-  });
-
-  it('moveCacheContent() should move files', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.query.originFolder = 'cache';
-    ctx.query.destinationFolder = 'error';
-    ctx.request.body = ['my file'];
-    await historyQueryController.moveCacheContent(ctx);
-    expect(ctx.app.historyQueryService.moveCacheContent).toHaveBeenCalledWith(testData.historyQueries.list[0].id, 'cache', 'error', [
-      'my file'
-    ]);
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('removeAllCacheContent() should remove all cache content', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    await historyQueryController.removeAllCacheContent(ctx);
-    expect(ctx.app.historyQueryService.removeAllCacheContent).toHaveBeenCalledWith(testData.historyQueries.list[0].id, 'cache');
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('removeAllCacheContent() should fail to remove all if bad folder', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.query.folder = null;
-    await historyQueryController.removeAllCacheContent(ctx);
-    expect(ctx.app.historyQueryService.removeAllCacheContent).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith('A folder must be specified among "cache", "error" or "archive"');
-  });
-
-  it('moveAllCacheContent() should move all cache content', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    await historyQueryController.moveAllCacheContent(ctx);
-    expect(ctx.app.historyQueryService.moveAllCacheContent).toHaveBeenCalledWith(testData.historyQueries.list[0].id, 'cache', 'error');
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('moveAllCacheContent() should fail to move all if bad originFolder', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.query.originFolder = null;
-    await historyQueryController.moveAllCacheContent(ctx);
-    expect(ctx.app.historyQueryService.moveAllCacheContent).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith('The originFolder must be specified among "cache", "error" or "archive"');
-  });
-
-  it('moveAllCacheContent() should fail to move all if bad destinationFolder', async () => {
-    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.query.originFolder = 'cache';
-    ctx.query.destinationFolder = null;
-    await historyQueryController.moveAllCacheContent(ctx);
-    expect(ctx.app.historyQueryService.moveAllCacheContent).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith('The destinationFolder must be specified among "cache", "error" or "archive"');
+    expect(mockRequest.services!.historyQueryService.moveAllCacheContent).toHaveBeenCalledWith(historyId, originFolder, destinationFolder);
   });
 });

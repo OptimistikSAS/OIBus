@@ -1,77 +1,106 @@
-import { KoaContext } from '../koa';
+import { Body, Controller, Delete, Get, Path, Post, Put, Query, Request, Route, SuccessResponse, Tags } from 'tsoa';
 import { ChangePasswordCommand, UserCommandDTO, UserDTO, UserSearchParam } from '../../../shared/model/user.model';
 import { Page } from '../../../shared/model/types';
-import AbstractController from './abstract.controller';
-import UserService, { toUserDTO } from '../../service/user.service';
-import JoiValidator from './validators/joi.validator';
-import Joi from 'joi';
+import { CustomExpressRequest } from '../express';
+import { toUserDTO } from '../../service/user.service';
 
-export default class UserController extends AbstractController {
-  constructor(
-    protected validator: JoiValidator,
-    protected schema: Joi.ObjectSchema,
-    private userService: UserService
-  ) {
-    super(validator, schema);
-  }
+interface UserWithPassword {
+  user: UserCommandDTO;
+  password: string;
+}
 
-  async search(ctx: KoaContext<void, Page<UserDTO>>): Promise<void> {
+@Route('/api/users')
+@Tags('Users')
+/**
+ * User Management API
+ * @description Endpoints for managing user accounts and authentication
+ */
+export class UserController extends Controller {
+  /**
+   * Searches for users with optional filtering by login name
+   * @summary Search users
+   * @returns {Promise<Page<UserDTO>>} Paginated list of user accounts
+   */
+  @Get('/')
+  async search(
+    @Query() login: string | undefined,
+    @Query() page: number | undefined,
+    @Request() request: CustomExpressRequest
+  ): Promise<Page<UserDTO>> {
     const searchParams: UserSearchParam = {
-      page: ctx.query.page ? parseInt(ctx.query.page as string, 10) : 0,
-      login: (ctx.query.login as string) || undefined
+      page: page ? parseInt(page.toString(), 10) : 0,
+      login: login
     };
-    const page = this.userService.search(searchParams);
-    ctx.ok({
-      content: page.content.map(element => toUserDTO(element)),
-      totalElements: page.totalElements,
-      size: page.size,
-      number: page.number,
-      totalPages: page.totalPages
-    });
+
+    const userService = request.services.userService;
+    const pageResult = userService.search(searchParams);
+
+    return {
+      content: pageResult.content.map(element => toUserDTO(element)),
+      totalElements: pageResult.totalElements,
+      size: pageResult.size,
+      number: pageResult.number,
+      totalPages: pageResult.totalPages
+    };
   }
 
-  async findById(ctx: KoaContext<void, UserDTO>): Promise<void> {
-    const user = this.userService.findById(ctx.params.id);
-    if (user) {
-      ctx.ok(toUserDTO(user));
-    } else {
-      ctx.notFound();
-    }
+  /**
+   * Retrieves a specific user by their unique identifier
+   * @summary Get user details
+   * @returns {Promise<UserDTO>} The user account details
+   */
+  @Get('/{userId}')
+  async findById(@Path() userId: string, @Request() request: CustomExpressRequest): Promise<UserDTO> {
+    const userService = request.services.userService;
+    return toUserDTO(userService.findById(userId));
   }
 
-  async create(ctx: KoaContext<{ user: UserCommandDTO; password: string }, UserDTO>): Promise<void> {
-    try {
-      const user = await this.userService.create(ctx.request.body!.user, ctx.request.body!.password);
-      ctx.created(toUserDTO(user));
-    } catch (error: unknown) {
-      ctx.badRequest((error as Error).message);
-    }
+  /**
+   * Creates a new user account with the provided details and password
+   * @summary Create user
+   * @returns {Promise<UserDTO>} The created user account
+   */
+  @Post('/')
+  @SuccessResponse(201, 'User created successfully')
+  async create(@Body() command: UserWithPassword, @Request() request: CustomExpressRequest): Promise<UserDTO> {
+    const userService = request.services.userService;
+    return toUserDTO(await userService.create(command.user, command.password));
   }
 
-  async update(ctx: KoaContext<UserCommandDTO, void>) {
-    try {
-      await this.userService.update(ctx.params.id, ctx.request.body!);
-      ctx.noContent();
-    } catch (error: unknown) {
-      ctx.badRequest((error as Error).message);
-    }
+  /**
+   * Updates an existing user account with new details
+   * @summary Update user
+   */
+  @Put('/{userId}')
+  @SuccessResponse(204, 'User updated successfully')
+  async update(@Path() userId: string, @Body() command: UserCommandDTO, @Request() request: CustomExpressRequest): Promise<void> {
+    const userService = request.services.userService;
+    await userService.update(userId, command);
   }
 
-  async updatePassword(ctx: KoaContext<ChangePasswordCommand, void>) {
-    try {
-      await this.userService.updatePassword(ctx.params.id, ctx.request.body!.newPassword);
-      ctx.noContent();
-    } catch (error: unknown) {
-      ctx.badRequest((error as Error).message);
-    }
+  /**
+   *  Updates a user's password
+   * @summary Change password
+   */
+  @Post('/{userId}/password')
+  @SuccessResponse(204, 'Password updated successfully')
+  async updatePassword(
+    @Path() userId: string,
+    @Body() command: ChangePasswordCommand,
+    @Request() request: CustomExpressRequest
+  ): Promise<void> {
+    const userService = request.services.userService;
+    await userService.updatePassword(userId, command.newPassword);
   }
 
-  async delete(ctx: KoaContext<void, void>): Promise<void> {
-    try {
-      this.userService.delete(ctx.params.id);
-      ctx.noContent();
-    } catch (error: unknown) {
-      ctx.badRequest((error as Error).message);
-    }
+  /**
+   * Deletes a user account by its unique identifier
+   * @summary Delete user
+   */
+  @Delete('/{userId}')
+  @SuccessResponse(204, 'User deleted successfully')
+  async delete(@Path() userId: string, @Request() request: CustomExpressRequest): Promise<void> {
+    const userService = request.services.userService;
+    await userService.delete(userId);
   }
 }

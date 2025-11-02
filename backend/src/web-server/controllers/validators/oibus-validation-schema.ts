@@ -19,10 +19,12 @@ const certificateSchema: Joi.ObjectSchema = Joi.object({
     stateOrProvinceName: Joi.string().required(),
     daysBeforeExpiry: Joi.number().min(1),
     keySize: Joi.number().min(1)
-  }).allow(null)
+  }).when('regenerateCertificate', {
+    is: true,
+    then: Joi.required(),
+    otherwise: Joi.optional().allow(null)
+  })
 });
-
-const commandSchema: Joi.ObjectSchema = Joi.object({});
 
 const engineSchema: Joi.ObjectSchema = Joi.object({
   name: Joi.string().required(),
@@ -168,7 +170,6 @@ export {
   userSchema,
   historyQuerySchema,
   logSchema,
-  commandSchema,
   contentSchema,
   transformerSchema
 };

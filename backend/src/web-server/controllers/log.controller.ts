@@ -1,61 +1,82 @@
-import { KoaContext } from '../koa';
-import { Page } from '../../../shared/model/types';
-import { LogDTO, LogSearchParam, Scope } from '../../../shared/model/logs.model';
+import { Controller, Get, Path, Query, Request, Route, Tags } from 'tsoa';
+import { Instant, Page } from '../../../shared/model/types';
+import { LogDTO, LogLevel, LogSearchParam, Scope, ScopeType } from '../../../shared/model/logs.model';
 import { DateTime } from 'luxon';
-import AbstractController from './abstract.controller';
+import { CustomExpressRequest } from '../express';
 import { toLogDTO } from '../../service/log.service';
 
-export default class LogController extends AbstractController {
-  async search(ctx: KoaContext<void, Page<LogDTO>>): Promise<void> {
+@Route('/api/logs')
+@Tags('Logs')
+/**
+ * Log Management API
+ * @description Endpoints for searching and retrieving system logs
+ */
+export class LogController extends Controller {
+  /**
+   * Searches system logs with various filter parameters. If no time range is specified, defaults to the last 24 hours.
+   * @summary Search logs
+   * @returns {Promise<Page<LogDTO>>} Paginated list of log entries
+   */
+  @Get('/')
+  async search(
+    @Query() start: Instant | undefined,
+    @Query() end: Instant | undefined,
+    @Query() levels: string | undefined,
+    @Query() scopeIds: string | undefined,
+    @Query() scopeTypes: string | undefined,
+    @Query() messageContent: string | undefined,
+    @Query() page = 0,
+    @Request() request: CustomExpressRequest
+  ): Promise<Page<LogDTO>> {
     const now = DateTime.now();
     const dayAgo = now.minus({ days: 1 });
 
-    const levels = Array.isArray(ctx.query.levels) ? ctx.query.levels : [];
-    if (typeof ctx.query.levels === 'string') {
-      levels.push(ctx.query.levels);
-    }
-
-    const scopeIds = Array.isArray(ctx.query.scopeIds) ? ctx.query.scopeIds : [];
-    if (typeof ctx.query.scopeIds === 'string') {
-      scopeIds.push(ctx.query.scopeIds);
-    }
-
-    const scopeTypes = Array.isArray(ctx.query.scopeTypes) ? ctx.query.scopeTypes : [];
-    if (typeof ctx.query.scopeTypes === 'string') {
-      scopeTypes.push(ctx.query.scopeTypes);
-    }
+    const normalizedLevels = levels ? (levels.split(',').filter(level => level.trim() !== '') as Array<LogLevel>) : [];
+    const normalizedScopeTypes = scopeTypes ? (scopeTypes.split(',').filter(scopeType => scopeType.trim() !== '') as Array<ScopeType>) : [];
+    const normalizedScopeIds = scopeIds ? (scopeIds.split(',').filter(scopeId => scopeId.trim() !== '') as Array<string>) : [];
 
     const searchParams: LogSearchParam = {
-      page: ctx.query.page ? parseInt(ctx.query.page as string, 10) : 0,
-      start: (ctx.query.start as string) || dayAgo.toUTC().toISO(),
-      end: (ctx.query.end as string) || now.toUTC().toISO(),
-      levels,
-      scopeIds,
-      scopeTypes,
-      messageContent: (ctx.query.messageContent as string) || null
+      page: page ? parseInt(page.toString(), 10) : 0,
+      start: start || dayAgo.toUTC().toISO(),
+      end: end || now.toUTC().toISO(),
+      levels: normalizedLevels,
+      scopeIds: normalizedScopeIds,
+      scopeTypes: normalizedScopeTypes,
+      messageContent: messageContent
     };
 
-    const page = ctx.app.logService.search(searchParams);
-    ctx.ok({
-      content: page.content.map(element => toLogDTO(element)),
-      totalElements: page.totalElements,
-      size: page.size,
-      number: page.number,
-      totalPages: page.totalPages
-    });
+    const logService = request.services.logService;
+    const pageResult = await logService.search(searchParams);
+
+    return {
+      content: pageResult.content.map(element => toLogDTO(element)),
+      totalElements: pageResult.totalElements,
+      size: pageResult.size,
+      number: pageResult.number,
+      totalPages: pageResult.totalPages
+    };
   }
 
-  async suggestScopes(ctx: KoaContext<void, Array<Scope>>): Promise<void> {
-    const scopes = ctx.app.logService.searchScopesByName(ctx.query.name as string);
-    ctx.ok(scopes);
+  /**
+   * Returns a list of scope suggestions based on the provided name fragment
+   * @summary Get scope suggestions
+   * @returns {Promise<Array<Scope>>} Array of matching scope objects
+   */
+  @Get('/scopes/suggest')
+  async suggestScopes(@Query() name = '', @Request() request: CustomExpressRequest): Promise<Array<Scope>> {
+    const logService = request.services.logService;
+    return logService.suggestScopes(name);
   }
 
-  async getScopeById(ctx: KoaContext<void, Scope>): Promise<void> {
-    const scope = ctx.app.logService.getScopeById(ctx.params.id);
-    if (scope) {
-      ctx.ok(scope);
-    } else {
-      ctx.noContent();
-    }
+  /**
+   * Retrieves details for a specific log scope by its ID
+   * @summary Get log scope details
+   * @param {string} scopeId.path.required - Scope ID
+   * @returns {Promise<Scope|null>} Scope object or null if not found
+   */
+  @Get('/scopes/{scopeId}')
+  async getScopeById(@Path() scopeId: string, @Request() request: CustomExpressRequest): Promise<Scope> {
+    const logService = request.services.logService;
+    return logService.getScopeById(scopeId);
   }
 }

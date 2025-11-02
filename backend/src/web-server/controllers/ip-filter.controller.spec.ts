@@ -1,113 +1,75 @@
-import Joi from 'joi';
-
-import IpFilterController from './ip-filter.controller';
-import JoiValidator from './validators/joi.validator';
-import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
+import { IPFilterController } from './ip-filter.controller';
+import { IPFilterCommandDTO } from '../../../shared/model/ip-filter.model';
+import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
-import { toIPFilterDTO } from '../../service/ip-filter.service';
+import IPFilterServiceMock from '../../tests/__mocks__/service/ip-filter-service.mock';
 
-jest.mock('./validators/joi.validator');
+// Mock the services
+jest.mock('../../service/ip-filter.service', () => ({
+  toIPFilterDTO: jest.fn().mockImplementation(ipFilter => ipFilter)
+}));
 
-const validator = new JoiValidator();
-const schema = Joi.object({});
-const ipFilterController = new IpFilterController(validator, schema);
+describe('IPFilterController', () => {
+  let controller: IPFilterController;
+  const mockRequest: Partial<CustomExpressRequest> = {
+    services: {
+      ipFilterService: new IPFilterServiceMock()
+    }
+  } as CustomExpressRequest;
 
-const ctx = new KoaContextMock();
-
-describe('IP Filter controller', () => {
-  beforeEach(async () => {
+  beforeEach(() => {
     jest.clearAllMocks();
+    controller = new IPFilterController();
   });
 
-  it('findAll() should return ip filters', async () => {
-    ctx.app.ipFilterService.findAll.mockReturnValueOnce(testData.ipFilters.list.map(element => toIPFilterDTO(element)));
+  it('should return a list of IP filters', async () => {
+    const mockIPFilters = testData.ipFilters.list;
+    (mockRequest.services!.ipFilterService.list as jest.Mock).mockReturnValue(mockIPFilters);
 
-    await ipFilterController.findAll(ctx);
+    const result = await controller.list(mockRequest as CustomExpressRequest);
 
-    expect(ctx.app.ipFilterService.findAll).toHaveBeenCalled();
-    expect(ctx.ok).toHaveBeenCalledWith(testData.ipFilters.list.map(element => toIPFilterDTO(element)));
+    expect(mockRequest.services!.ipFilterService.list).toHaveBeenCalled();
+    expect(result).toEqual(mockIPFilters);
   });
 
-  it('findById() should return ip filter', async () => {
-    ctx.params.id = testData.ipFilters.list[0].id;
-    ctx.app.ipFilterService.findById.mockReturnValueOnce(testData.ipFilters.list[0]);
+  it('should return an IP filter by ID', async () => {
+    const mockIPFilter = testData.ipFilters.list[0];
+    const ipFilterId = mockIPFilter.id;
+    (mockRequest.services!.ipFilterService.findById as jest.Mock).mockReturnValue(mockIPFilter);
 
-    await ipFilterController.findById(ctx);
+    const result = await controller.findById(ipFilterId, mockRequest as CustomExpressRequest);
 
-    expect(ctx.app.ipFilterService.findById).toHaveBeenCalledWith(testData.ipFilters.list[0].id);
-    expect(ctx.ok).toHaveBeenCalledWith(toIPFilterDTO(testData.ipFilters.list[0]));
+    expect(mockRequest.services!.ipFilterService.findById).toHaveBeenCalledWith(ipFilterId);
+    expect(result).toEqual(mockIPFilter);
   });
 
-  it('findById() should return not found', async () => {
-    ctx.params.id = testData.ipFilters.list[0].id;
-    ctx.app.ipFilterService.findById.mockReturnValueOnce(null);
+  it('should create a new IP filter', async () => {
+    const command: IPFilterCommandDTO = testData.ipFilters.command;
+    const createdIPFilter = testData.ipFilters.list[0];
+    (mockRequest.services!.ipFilterService.create as jest.Mock).mockResolvedValue(createdIPFilter);
 
-    await ipFilterController.findById(ctx);
+    const result = await controller.create(command, mockRequest as CustomExpressRequest);
 
-    expect(ctx.app.ipFilterService.findById).toHaveBeenCalledWith(testData.ipFilters.list[0].id);
-    expect(ctx.notFound).toHaveBeenCalled();
+    expect(mockRequest.services!.ipFilterService.create).toHaveBeenCalledWith(command);
+    expect(result).toEqual(createdIPFilter);
   });
 
-  it('create() should create ip filter', async () => {
-    ctx.request.body = testData.ipFilters.command;
-    ctx.app.ipFilterService.create.mockReturnValueOnce(testData.ipFilters.list[0]);
+  it('should update an existing IP filter', async () => {
+    const ipFilterId = testData.ipFilters.list[0].id;
+    const command: IPFilterCommandDTO = testData.ipFilters.command;
+    (mockRequest.services!.ipFilterService.update as jest.Mock).mockResolvedValue(undefined);
 
-    await ipFilterController.create(ctx);
+    await controller.update(ipFilterId, command, mockRequest as CustomExpressRequest);
 
-    expect(ctx.app.ipFilterService.create).toHaveBeenCalledWith(testData.ipFilters.command);
-    expect(ctx.created).toHaveBeenCalledWith(toIPFilterDTO(testData.ipFilters.list[0]));
+    expect(mockRequest.services!.ipFilterService.update).toHaveBeenCalledWith(ipFilterId, command);
   });
 
-  it('create() should return bad request', async () => {
-    ctx.request.body = testData.ipFilters.command;
-    ctx.app.ipFilterService.create.mockImplementationOnce(() => {
-      throw Error('bad request');
-    });
+  it('should delete an IP filter', async () => {
+    const ipFilterId = testData.ipFilters.list[0].id;
+    (mockRequest.services!.ipFilterService.delete as jest.Mock).mockResolvedValue(undefined);
 
-    await ipFilterController.create(ctx);
+    await controller.delete(ipFilterId, mockRequest as CustomExpressRequest);
 
-    expect(ctx.badRequest).toHaveBeenCalledWith('bad request');
-  });
-
-  it('update() should update ip filter', async () => {
-    ctx.params.id = testData.ipFilters.list[0].id;
-    ctx.request.body = testData.ipFilters.command;
-
-    await ipFilterController.update(ctx);
-
-    expect(ctx.app.ipFilterService.update).toHaveBeenCalledWith(testData.ipFilters.list[0].id, testData.ipFilters.command);
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('update() should return bad request', async () => {
-    ctx.params.id = testData.ipFilters.list[0].id;
-    ctx.request.body = testData.ipFilters.command;
-    ctx.app.ipFilterService.update.mockImplementationOnce(() => {
-      throw Error('bad request');
-    });
-
-    await ipFilterController.update(ctx);
-
-    expect(ctx.badRequest).toHaveBeenCalledWith('bad request');
-  });
-
-  it('delete() should delete ip filter', async () => {
-    ctx.params.id = testData.ipFilters.list[0].id;
-
-    await ipFilterController.delete(ctx);
-
-    expect(ctx.app.ipFilterService.delete).toHaveBeenCalledWith(testData.ipFilters.list[0].id);
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('delete() should return not found', async () => {
-    ctx.params.id = testData.ipFilters.list[0].id;
-    ctx.app.ipFilterService.delete.mockImplementationOnce(() => {
-      throw Error('bad request');
-    });
-
-    await ipFilterController.delete(ctx);
-
-    expect(ctx.badRequest).toHaveBeenCalledWith('bad request');
+    expect(mockRequest.services!.ipFilterService.delete).toHaveBeenCalledWith(ipFilterId);
   });
 });

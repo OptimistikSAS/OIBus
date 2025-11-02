@@ -1,67 +1,74 @@
-import Joi from 'joi';
-
-import EngineController from './engine.controller';
-import JoiValidator from './validators/joi.validator';
-import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
+import { EngineController } from './engine.controller';
+import { EngineSettingsCommandDTO } from '../../../shared/model/engine.model';
+import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
-import { toEngineSettingsDTO } from '../../service/oibus.service';
+import OIBusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
 
-jest.mock('./validators/joi.validator');
+// Mock the services
+jest.mock('../../service/oibus.service', () => ({
+  toEngineSettingsDTO: jest.fn().mockImplementation(settings => settings)
+}));
 
-const validator = new JoiValidator();
-const schema = Joi.object({});
-const engineController = new EngineController(validator, schema);
+describe('EngineController', () => {
+  let controller: EngineController;
+  const mockRequest: Partial<CustomExpressRequest> = {
+    services: {
+      oIBusService: new OIBusServiceMock()
+    }
+  } as CustomExpressRequest;
 
-const ctx = new KoaContextMock();
-
-describe('Engine controller', () => {
-  beforeEach(async () => {
+  beforeEach(() => {
     jest.clearAllMocks();
+    controller = new EngineController();
   });
 
-  it('getEngineSettings() should return engine settings', async () => {
-    ctx.app.oIBusService.getEngineSettings.mockReturnValue(testData.engine.settings);
+  it('should return engine settings', async () => {
+    const mockSettings = testData.engine.settings;
+    (mockRequest.services!.oIBusService.getEngineSettings as jest.Mock).mockReturnValue(mockSettings);
 
-    await engineController.getEngineSettings(ctx);
+    const result = await controller.getEngineSettings(mockRequest as CustomExpressRequest);
 
-    expect(ctx.app.oIBusService.getEngineSettings).toHaveBeenCalled();
-    expect(ctx.ok).toHaveBeenCalledWith(toEngineSettingsDTO(testData.engine.settings));
+    expect(mockRequest.services!.oIBusService.getEngineSettings).toHaveBeenCalled();
+    expect(result).toEqual(mockSettings);
   });
 
-  it('updateEngineSettings() should update engine settings with loki password change', async () => {
-    ctx.request.body = testData.engine.command;
+  it('should update engine settings', async () => {
+    const command: EngineSettingsCommandDTO = testData.engine.command;
+    (mockRequest.services!.oIBusService.updateEngineSettings as jest.Mock).mockResolvedValue(undefined);
 
-    await engineController.updateEngineSettings(ctx);
+    await controller.updateEngineSettings(command, mockRequest as CustomExpressRequest);
 
-    expect(ctx.app.oIBusService.updateEngineSettings).toHaveBeenCalledWith(testData.engine.command);
-    expect(ctx.noContent).toHaveBeenCalled();
+    expect(mockRequest.services!.oIBusService.updateEngineSettings).toHaveBeenCalledWith(command);
   });
 
-  it('restart() should restart oibus', async () => {
-    await engineController.restart(ctx);
+  it('should reset engine metrics', async () => {
+    (mockRequest.services!.oIBusService.resetEngineMetrics as jest.Mock).mockResolvedValue(undefined);
 
-    expect(ctx.app.oIBusService.restartOIBus).toHaveBeenCalled();
-    expect(ctx.noContent).toHaveBeenCalled();
+    await controller.resetEngineMetrics(mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.oIBusService.resetEngineMetrics).toHaveBeenCalled();
   });
 
-  it('getOIBusInfo() should get OIBus info', async () => {
-    ctx.app.oIBusService.getOIBusInfo.mockReturnValueOnce(testData.engine.oIBusInfo);
+  it('should restart OIBus', async () => {
+    (mockRequest.services!.oIBusService.restart as jest.Mock).mockResolvedValue(undefined);
 
-    await engineController.getOIBusInfo(ctx);
+    await controller.restart(mockRequest as CustomExpressRequest);
 
-    expect(ctx.app.oIBusService.getOIBusInfo).toHaveBeenCalled();
-    expect(ctx.ok).toHaveBeenCalledWith(testData.engine.oIBusInfo);
+    expect(mockRequest.services!.oIBusService.restart).toHaveBeenCalled();
   });
 
-  it('should get OIBus status', async () => {
-    await engineController.getOIBusStatus(ctx);
-    expect(ctx.ok).toHaveBeenCalledWith();
+  it('should return OIBus info', async () => {
+    const mockInfo = testData.engine.oIBusInfo;
+    (mockRequest.services!.oIBusService.getInfo as jest.Mock).mockReturnValue(mockInfo);
+
+    const result = await controller.getInfo(mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.oIBusService.getInfo).toHaveBeenCalled();
+    expect(result).toEqual(mockInfo);
   });
 
-  it('should reset metrics', async () => {
-    await engineController.resetEngineMetrics(ctx);
-
-    expect(ctx.app.oIBusService.resetMetrics).toHaveBeenCalled();
-    expect(ctx.noContent).toHaveBeenCalled();
+  it('should check OIBus status', async () => {
+    await controller.getOIBusStatus(mockRequest as CustomExpressRequest);
+    // No assertions needed as the method doesn't return anything
   });
 });

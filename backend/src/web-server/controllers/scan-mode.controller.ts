@@ -1,52 +1,79 @@
-// src/controllers/scan-mode.controller.ts
-import { Body, Controller, Delete, Get, Path, Post, Put, Request, Route, SuccessResponse } from 'tsoa';
+import { Body, Controller, Delete, Get, Path, Post, Put, Request, Route, SuccessResponse, Tags } from 'tsoa';
 import { ScanModeCommandDTO, ScanModeDTO, ValidatedCronExpression } from '../../../shared/model/scan-mode.model';
 import ScanModeService, { toScanModeDTO } from '../../service/scan-mode.service';
 import { CustomExpressRequest } from '../express';
 
 @Route('/api/scan-modes')
+@Tags('Scan Modes')
+/**
+ * Scan Mode Management API
+ * @description Endpoints for managing scan modes used to schedule data collection and processing
+ */
 export class ScanModeController extends Controller {
+  /**
+   * Retrieves a list of all scan modes
+   * @summary List all scan modes
+   * @returns {Promise<Array<ScanModeDTO>>} Array of scan mode objects
+   */
   @Get('/')
-  async findAll(@Request() request: CustomExpressRequest): Promise<Array<ScanModeDTO>> {
+  async list(@Request() request: CustomExpressRequest): Promise<Array<ScanModeDTO>> {
     const scanModeService: ScanModeService = request.services.scanModeService;
-    return scanModeService.findAll().map(scanMode => toScanModeDTO(scanMode));
+    return scanModeService.list().map(scanMode => toScanModeDTO(scanMode));
   }
 
-  @Get('/{id}')
-  async findById(@Path() id: string, @Request() request: CustomExpressRequest): Promise<ScanModeDTO> {
+  /**
+   * Retrieves a specific scan mode by its unique identifier
+   * @summary Get scan mode
+   * @returns {Promise<ScanModeDTO>} The scan mode object
+   */
+  @Get('/{scanModeId}')
+  async findById(@Path() scanModeId: string, @Request() request: CustomExpressRequest): Promise<ScanModeDTO> {
     const scanModeService: ScanModeService = request.services.scanModeService;
-    const scanMode = scanModeService.findById(id);
-    if (!scanMode) {
-      throw new Error('Not found');
-    }
-    return toScanModeDTO(scanMode);
+    return toScanModeDTO(scanModeService.findById(scanModeId));
   }
 
+  /**
+   * Creates a new scan mode with the provided configuration
+   * @summary Create scan mode
+   * @returns {Promise<ScanModeDTO>} The created scan mode
+   */
   @Post('/')
-  @SuccessResponse(201, 'Created')
-  async create(@Body() requestBody: ScanModeCommandDTO, @Request() request: CustomExpressRequest): Promise<ScanModeDTO> {
+  @SuccessResponse(201, 'Scan mode created successfully')
+  async create(@Body() command: ScanModeCommandDTO, @Request() request: CustomExpressRequest): Promise<ScanModeDTO> {
     const scanModeService: ScanModeService = request.services.scanModeService;
-    const scanMode = await scanModeService.create(requestBody);
-    return toScanModeDTO(scanMode);
+    return toScanModeDTO(await scanModeService.create(command));
   }
 
-  @Put('/{id}')
-  @SuccessResponse(204, 'No Content')
-  async update(@Path() id: string, @Body() requestBody: ScanModeCommandDTO, @Request() request: CustomExpressRequest): Promise<void> {
+  /**
+   * Updates an existing scan mode with new configuration
+   * @summary Update scan mode
+   */
+  @Put('/{scanModeId}')
+  @SuccessResponse(204, 'Scan mode updated successfully')
+  async update(@Path() scanModeId: string, @Body() command: ScanModeCommandDTO, @Request() request: CustomExpressRequest): Promise<void> {
     const scanModeService: ScanModeService = request.services.scanModeService;
-    await scanModeService.update(id, requestBody);
+    await scanModeService.update(scanModeId, command);
   }
 
-  @Delete('/{id}')
-  @SuccessResponse(204, 'No Content')
-  async delete(@Path() id: string, @Request() request: CustomExpressRequest): Promise<void> {
+  /**
+   * Deletes a scan mode by its unique identifier
+   * @summary Delete scan mode
+   */
+  @Delete('/{scanModeId}')
+  @SuccessResponse(204, 'Scan mode deleted successfully')
+  async delete(@Path() scanModeId: string, @Request() request: CustomExpressRequest): Promise<void> {
     const scanModeService: ScanModeService = request.services.scanModeService;
-    await scanModeService.delete(id);
+    await scanModeService.delete(scanModeId);
   }
 
+  /**
+   * Validates a cron expression to ensure it's properly formatted
+   * @summary Validate cron expression
+   * @returns {Promise<ValidatedCronExpression>} The cron validation with next execution times
+   */
   @Post('/verify')
-  async verifyCron(@Body() requestBody: { cron: string }, @Request() request: CustomExpressRequest): Promise<ValidatedCronExpression> {
+  async verifyCron(@Body() command: { cron: string }, @Request() request: CustomExpressRequest): Promise<ValidatedCronExpression> {
     const scanModeService: ScanModeService = request.services.scanModeService;
-    return scanModeService.verifyCron(requestBody);
+    return scanModeService.verifyCron(command);
   }
 }

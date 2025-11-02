@@ -1,8 +1,9 @@
 {
   "name": "oibus",
-  "version": "3.7.0",
+  "version": "3.6.9",
   "main": "index.js",
   "author": "Optimistik SAS",
+  "homepage": "https://oibus.optimistik.com/",
   "license": "EUPL",
   "engines": {
     "node": "=v24",
