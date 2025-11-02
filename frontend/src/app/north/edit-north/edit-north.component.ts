@@ -23,7 +23,6 @@ import { CertificateDTO } from '../../../../../backend/shared/model/certificate.
 import { CertificateService } from '../../services/certificate.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { SouthConnectorLightDTO } from '../../../../../backend/shared/model/south-connector.model';
-import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
 import { TransformerDTO, TransformerDTOWithOptions } from '../../../../../backend/shared/model/transformer.model';
 import { TransformerService } from '../../services/transformer.service';
@@ -71,7 +70,7 @@ export class EditNorthComponent implements OnInit, CanComponentDeactivate {
 
   mode: 'create' | 'edit' = 'create';
   northId!: string;
-  northConnector: NorthConnectorDTO<NorthSettings> | null = null;
+  northConnector: NorthConnectorDTO | null = null;
   northType = '';
   duplicateId = '';
   state = new ObservableState();
@@ -235,8 +234,8 @@ export class EditNorthComponent implements OnInit, CanComponentDeactivate {
     return true;
   }
 
-  createOrUpdateNorthConnector(command: NorthConnectorCommandDTO<NorthSettings>): void {
-    let createOrUpdate: Observable<NorthConnectorDTO<NorthSettings>>;
+  createOrUpdateNorthConnector(command: NorthConnectorCommandDTO): void {
+    let createOrUpdate: Observable<NorthConnectorDTO>;
     if (this.mode === 'edit') {
       createOrUpdate = this.northConnectorService.update(this.northConnector!.id, command).pipe(
         tap(() => {
@@ -301,7 +300,7 @@ export class EditNorthComponent implements OnInit, CanComponentDeactivate {
     }
   }
 
-  get formNorthConnectorCommand(): NorthConnectorCommandDTO<NorthSettings> {
+  get formNorthConnectorCommand(): NorthConnectorCommandDTO {
     const formValue = this.form!.value;
     return {
       name: formValue.name!,

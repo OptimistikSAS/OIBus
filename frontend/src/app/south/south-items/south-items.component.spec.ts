@@ -6,11 +6,7 @@ import {
   SouthConnectorDTO,
   SouthConnectorItemDTO
 } from '../../../../../backend/shared/model/south-connector.model';
-import {
-  SouthItemSettings,
-  SouthSettings,
-  SouthSQLiteItemSettingsSerialization
-} from '../../../../../backend/shared/model/south-settings.model';
+import { SouthItemSettings, SouthSQLiteItemSettingsSerialization } from '../../../../../backend/shared/model/south-settings.model';
 import { of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
@@ -24,7 +20,7 @@ import { ModalService } from '../../shared/modal.service';
 import { ImportSouthItemsModalComponent } from './import-south-items-modal/import-south-items-modal.component';
 import { OIBusBooleanAttribute, OIBusNumberAttribute, OIBusStringAttribute } from '../../../../../backend/shared/model/form.model';
 
-const testSouthConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> = {
+const testSouthConnector: SouthConnectorDTO = {
   id: 'southId',
   name: 'South Connector',
   items: [
@@ -56,7 +52,7 @@ const testSouthConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> = 
       scanMode: testData.scanMode.list[0]
     }
   ]
-} as SouthConnectorDTO<SouthSettings, SouthItemSettings>;
+} as SouthConnectorDTO;
 
 @Component({
   template: ` <oib-south-items
@@ -77,11 +73,11 @@ class TestComponent {
   scanModes = testData.scanMode.list;
   manifest = testData.south.manifest;
   saveChangesDirectly!: boolean;
-  inMemoryItems: Array<SouthConnectorItemDTO<SouthItemSettings>> = [];
-  southConnectorCommand = {} as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
+  inMemoryItems: Array<SouthConnectorItemDTO> = [];
+  southConnectorCommand = {} as SouthConnectorCommandDTO;
   southCommand = testData.south.command;
 
-  updateInMemoryItems(items: Array<SouthConnectorItemDTO<SouthItemSettings>> | null) {
+  updateInMemoryItems(items: Array<SouthConnectorItemDTO> | null) {
     if (items) {
       this.inMemoryItems = items;
     } else {
@@ -520,7 +516,7 @@ describe('SouthItemsComponent CSV Import Tests', () => {
     southConnectorService.findById.and.returnValue(of(testSouthConnector));
     southConnectorService.checkImportItems.and.returnValue(
       of({
-        items: [] as Array<SouthConnectorItemDTO<SouthItemSettings>>,
+        items: [] as Array<SouthConnectorItemDTO>,
         errors: []
       })
     );
@@ -595,7 +591,7 @@ describe('SouthItemsComponent CSV Import Tests', () => {
     });
 
     it('should open ImportSouthItemsModalComponent after successful check', () => {
-      const mockItems: Array<SouthConnectorItemDTO<SouthItemSettings>> = [
+      const mockItems: Array<SouthConnectorItemDTO> = [
         {
           id: 'new1',
           name: 'newItem1',
@@ -641,7 +637,7 @@ describe('SouthItemsComponent CSV Import Tests', () => {
     });
 
     it('should call importItems service when import is confirmed', () => {
-      const mockItems: Array<SouthConnectorItemDTO<SouthItemSettings>> = [
+      const mockItems: Array<SouthConnectorItemDTO> = [
         {
           id: 'new1',
           name: 'newItem1',
@@ -687,7 +683,7 @@ describe('SouthItemsComponent CSV Import Tests', () => {
     it('should emit null inMemoryItems after successful import', () => {
       spyOn(tester.componentInstance, 'updateInMemoryItems');
 
-      const mockItems: Array<SouthConnectorItemDTO<SouthItemSettings>> = [
+      const mockItems: Array<SouthConnectorItemDTO> = [
         {
           id: 'new1',
           name: 'newItem1',
@@ -727,7 +723,7 @@ describe('SouthItemsComponent CSV Import Tests', () => {
     });
 
     it('should add items to allItems array instead of calling service', () => {
-      const mockItems: Array<SouthConnectorItemDTO<SouthItemSettings>> = [
+      const mockItems: Array<SouthConnectorItemDTO> = [
         {
           id: 'new1',
           name: 'newItem1',
@@ -763,7 +759,7 @@ describe('SouthItemsComponent CSV Import Tests', () => {
     });
 
     it('should not call backend services in memory mode', () => {
-      const mockItems: Array<SouthConnectorItemDTO<SouthItemSettings>> = [
+      const mockItems: Array<SouthConnectorItemDTO> = [
         {
           id: 'new1',
           name: 'newItem1',

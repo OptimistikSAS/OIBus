@@ -7,7 +7,7 @@ import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { HistoryQueryDTO } from '../../../../../../backend/shared/model/history-query.model';
 import { HistoryQueryMetrics } from '../../../../../../backend/shared/model/engine.model';
 import { provideHttpClient } from '@angular/common/http';
-import { SouthItemSettings, SouthSettings } from '../../../../../../backend/shared/model/south-settings.model';
+import { SouthSettings } from '../../../../../../backend/shared/model/south-settings.model';
 import { NorthSettings } from '../../../../../../backend/shared/model/north-settings.model';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
 
@@ -24,7 +24,7 @@ class TestComponent {
   southManifest = testData.south.manifest;
   northManifest = testData.north.manifest;
 
-  historyQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings> = {
+  historyQuery: HistoryQueryDTO = {
     id: 'id1',
     name: 'History query',
     description: 'My History query description',

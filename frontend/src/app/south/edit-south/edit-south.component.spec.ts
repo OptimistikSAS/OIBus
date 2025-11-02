@@ -9,7 +9,7 @@ import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { provideHttpClient } from '@angular/common/http';
 import { SouthConnectorDTO, SouthConnectorManifest } from '../../../../../backend/shared/model/south-connector.model';
-import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
+import { SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 import testData from '../../../../../backend/src/tests/utils/test-data';
 import { OIBusObjectFormControlComponent } from '../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
 import { CertificateService } from '../../services/certificate.service';
@@ -96,7 +96,7 @@ describe('EditSouthComponent', () => {
   });
 
   describe('edit mode', () => {
-    const southConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> = {
+    const southConnector: SouthConnectorDTO = {
       id: 'id1',
       type: 'mssql',
       name: 'My South Connector 1',

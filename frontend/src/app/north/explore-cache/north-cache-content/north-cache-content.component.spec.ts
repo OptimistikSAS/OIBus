@@ -6,7 +6,6 @@ import { of } from 'rxjs';
 import { NorthConnectorDTO } from '../../../../../../backend/shared/model/north-connector.model';
 import { Component, viewChild } from '@angular/core';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
-import { NorthSettings } from '../../../../../../backend/shared/model/north-settings.model';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
 
 @Component({
@@ -15,10 +14,10 @@ import testData from '../../../../../../backend/src/tests/utils/test-data';
 })
 class TestComponent {
   readonly component = viewChild.required<NorthCacheContentComponent>('component');
-  northConnector: NorthConnectorDTO<NorthSettings> = {
+  northConnector: NorthConnectorDTO = {
     id: 'northId',
     name: 'North Connector'
-  } as NorthConnectorDTO<NorthSettings>;
+  } as NorthConnectorDTO;
 }
 
 class NorthCacheContentComponentTester extends ComponentTester<TestComponent> {

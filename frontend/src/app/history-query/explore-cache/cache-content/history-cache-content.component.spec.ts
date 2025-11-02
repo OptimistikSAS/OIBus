@@ -4,10 +4,8 @@ import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { Component, viewChild } from '@angular/core';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
-import { NorthSettings } from '../../../../../../backend/shared/model/north-settings.model';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
 import { HistoryQueryDTO } from '../../../../../../backend/shared/model/history-query.model';
-import { SouthItemSettings, SouthSettings } from '../../../../../../backend/shared/model/south-settings.model';
 import { HistoryQueryService } from '../../../services/history-query.service';
 
 @Component({
@@ -16,10 +14,10 @@ import { HistoryQueryService } from '../../../services/history-query.service';
 })
 class TestComponent {
   readonly component = viewChild.required<HistoryCacheContentComponent>('component');
-  historyQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings> = {
+  historyQuery: HistoryQueryDTO = {
     id: 'northId',
     name: 'North Connector'
-  } as HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings>;
+  } as HistoryQueryDTO;
 }
 
 class HistoryCacheContentComponentTester extends ComponentTester<TestComponent> {

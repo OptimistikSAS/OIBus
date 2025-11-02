@@ -19,7 +19,6 @@ import { Observable } from 'rxjs';
 import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
 import SouthItemTestComponent from '../../../south/south-items/south-item-test/south-item-test.component';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
-import { SouthItemSettings, SouthSettings } from '../../../../../../backend/shared/model/south-settings.model';
 import { HistoryQueryItemCommandDTO, HistoryQueryItemDTO } from '../../../../../../backend/shared/model/history-query.model';
 import { OIBusObjectAttribute } from '../../../../../../backend/shared/model/form.model';
 
@@ -46,10 +45,10 @@ export class EditHistoryQueryItemModalComponent {
   state = new ObservableState();
   historyId!: string;
   fromSouth: string | null = null;
-  southConnectorCommand!: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
+  southConnectorCommand!: SouthConnectorCommandDTO;
   manifest!: SouthConnectorManifest;
-  item: HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings> | null = null;
-  itemList: Array<HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>> = [];
+  item: HistoryQueryItemDTO | HistoryQueryItemCommandDTO | null = null;
+  itemList: Array<HistoryQueryItemDTO | HistoryQueryItemCommandDTO> = [];
 
   /** Not every item passed will have an id, but we still need to check for uniqueness.
    * This ensures that we have a backup identifier for the currently edited item.
@@ -67,10 +66,10 @@ export class EditHistoryQueryItemModalComponent {
    * Prepares the component for creation.
    */
   prepareForCreation(
-    itemList: Array<HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>>,
+    itemList: Array<HistoryQueryItemDTO | HistoryQueryItemCommandDTO>,
     historyId: string,
     fromSouth: string | null,
-    southConnectorCommand: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>,
+    southConnectorCommand: SouthConnectorCommandDTO,
     manifest: SouthConnectorManifest
   ) {
     this.mode = 'create';
@@ -83,11 +82,11 @@ export class EditHistoryQueryItemModalComponent {
   }
 
   prepareForEdition(
-    itemList: Array<HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>>,
-    historyQueryItem: HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>,
+    itemList: Array<HistoryQueryItemDTO | HistoryQueryItemCommandDTO>,
+    historyQueryItem: HistoryQueryItemDTO | HistoryQueryItemCommandDTO,
     historyId: string,
     fromSouth: string | null,
-    southConnectorCommand: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>,
+    southConnectorCommand: SouthConnectorCommandDTO,
     manifest: SouthConnectorManifest,
     tableIndex: number
   ) {
@@ -103,11 +102,11 @@ export class EditHistoryQueryItemModalComponent {
   }
 
   prepareForCopy(
-    itemList: Array<HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>>,
-    item: HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>,
+    itemList: Array<HistoryQueryItemDTO | HistoryQueryItemCommandDTO>,
+    item: HistoryQueryItemDTO | HistoryQueryItemCommandDTO,
     historyId: string,
     fromSouth: string | null,
-    southConnectorCommand: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>,
+    southConnectorCommand: SouthConnectorCommandDTO,
     manifest: SouthConnectorManifest
   ) {
     this.mode = 'copy';
@@ -117,7 +116,7 @@ export class EditHistoryQueryItemModalComponent {
     this.southConnectorCommand = southConnectorCommand;
     this.itemList = itemList;
     // used to check uniqueness
-    this.item = JSON.parse(JSON.stringify(item)) as HistoryQueryItemDTO<SouthItemSettings>;
+    this.item = JSON.parse(JSON.stringify(item)) as HistoryQueryItemDTO;
     this.item.name = `${item.name}-copy`;
     this.item.id = '';
     this.buildForm();
@@ -141,7 +140,7 @@ export class EditHistoryQueryItemModalComponent {
     this.modal.close(this.formItem);
   }
 
-  get formItem(): HistoryQueryItemDTO<SouthItemSettings> {
+  get formItem(): HistoryQueryItemDTO {
     const formValue = this.form!.value;
 
     return {

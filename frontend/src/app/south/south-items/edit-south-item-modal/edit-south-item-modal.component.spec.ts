@@ -49,7 +49,7 @@ describe('EditSouthItemModalComponent', () => {
   const southId = 'southId';
   const southConnectorCommand = testData.south.command;
   const manifest = testData.south.manifest;
-  const allItems: Array<SouthConnectorItemDTO<SouthItemSettings>> = [
+  const allItems: Array<SouthConnectorItemDTO> = [
     {
       id: 'id1',
       enabled: true,
@@ -196,7 +196,7 @@ describe('EditSouthItemModalComponent', () => {
   });
 
   describe('copy mode', () => {
-    const southItem: SouthConnectorItemDTO<SouthItemSettings> = {
+    const southItem: SouthConnectorItemDTO = {
       id: 'id1',
       name: 'myName',
       enabled: true,
@@ -230,7 +230,7 @@ describe('EditSouthItemModalComponent', () => {
   });
 
   describe('edit mode', () => {
-    const southItem: SouthConnectorItemDTO<SouthItemSettings> = {
+    const southItem: SouthConnectorItemDTO = {
       id: 'id1',
       name: 'myName',
       enabled: true,

@@ -13,7 +13,7 @@ import { Page } from '../../../../backend/shared/model/types';
 import { toPage } from '../shared/test-utils';
 import { DownloadService } from './download.service';
 import { provideHttpClient } from '@angular/common/http';
-import { SouthItemSettings, SouthSettings } from '../../../../backend/shared/model/south-settings.model';
+import { SouthItemSettings } from '../../../../backend/shared/model/south-settings.model';
 import testData from '../../../../backend/src/tests/utils/test-data';
 
 describe('SouthConnectorService', () => {
@@ -63,8 +63,8 @@ describe('SouthConnectorService', () => {
   });
 
   it('should get a South connector', () => {
-    let expectedSouthConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> | null = null;
-    const southConnector = { id: 'id1' } as SouthConnectorDTO<SouthSettings, SouthItemSettings>;
+    let expectedSouthConnector: SouthConnectorDTO | null = null;
+    const southConnector = { id: 'id1' } as SouthConnectorDTO;
 
     service.findById('id1').subscribe(c => (expectedSouthConnector = c));
 
@@ -103,9 +103,9 @@ describe('SouthConnectorService', () => {
   });
 
   it('should search South connector items', () => {
-    let expectedSouthConnectorItems: Page<SouthConnectorItemDTO<any>> | null = null;
-    const southConnectorItems = toPage<SouthConnectorItemDTO<any>>([
-      { id: 'southItemId', name: 'MySouthItem', enabled: true, scanMode: testData.scanMode.list[0], settings: {} }
+    let expectedSouthConnectorItems: Page<SouthConnectorItemDTO> | null = null;
+    const southConnectorItems = toPage<SouthConnectorItemDTO>([
+      { id: 'southItemId', name: 'MySouthItem', enabled: true, scanMode: testData.scanMode.list[0], settings: {} as SouthItemSettings }
     ]);
 
     service.searchItems('id1', { page: 0 }).subscribe(c => (expectedSouthConnectorItems = c));

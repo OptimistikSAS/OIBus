@@ -7,7 +7,6 @@ import { NorthConnectorService } from '../../services/north-connector.service';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { Component } from '@angular/core';
 import { NorthConnectorDTO } from '../../../../../backend/shared/model/north-connector.model';
-import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 import { of } from 'rxjs';
 import { NotificationService } from '../../shared/notification.service';
 
@@ -16,7 +15,7 @@ import { NotificationService } from '../../shared/notification.service';
   imports: [NorthSubscriptionsComponent]
 })
 class TestComponent {
-  northConnector: NorthConnectorDTO<NorthSettings> = {
+  northConnector: NorthConnectorDTO = {
     id: 'northId',
     name: 'North Connector',
     subscriptions: [
@@ -35,7 +34,7 @@ class TestComponent {
         description: ''
       }
     ]
-  } as NorthConnectorDTO<NorthSettings>;
+  } as NorthConnectorDTO;
 }
 
 class NorthSubscriptionsComponentTester extends ComponentTester<TestComponent> {

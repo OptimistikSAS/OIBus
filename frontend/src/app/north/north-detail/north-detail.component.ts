@@ -21,7 +21,6 @@ import { BooleanEnumPipe } from '../../shared/boolean-enum.pipe';
 import { EngineService } from '../../services/engine.service';
 import { LogsComponent } from '../../logs/logs.component';
 import { SouthConnectorLightDTO } from '../../../../../backend/shared/model/south-connector.model';
-import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
 import { isDisplayableAttribute } from '../../shared/form/dynamic-form.builder';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -65,7 +64,7 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
   private cd = inject(ChangeDetectorRef);
   private translateService = inject(TranslateService);
 
-  northConnector: NorthConnectorDTO<NorthSettings> | null = null;
+  northConnector: NorthConnectorDTO | null = null;
   displayedSettings: Array<{ key: string; value: string }> = [];
   scanModes: Array<ScanModeDTO> = [];
   certificates: Array<CertificateDTO> = [];

@@ -53,8 +53,8 @@ export class SouthConnectorService {
    * Get one South connector
    * @param southId - the ID of the South connector
    */
-  findById(southId: string): Observable<SouthConnectorDTO<SouthSettings, SouthItemSettings>> {
-    return this.http.get<SouthConnectorDTO<SouthSettings, SouthItemSettings>>(`/api/south/${southId}`);
+  findById(southId: string): Observable<SouthConnectorDTO> {
+    return this.http.get<SouthConnectorDTO>(`/api/south/${southId}`);
   }
 
   /**
@@ -62,15 +62,12 @@ export class SouthConnectorService {
    * @param command - the new South connector
    * @param retrieveSecretsFromSouth - The ID of the duplicated South used to retrieved secrets in the backend
    */
-  create(
-    command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>,
-    retrieveSecretsFromSouth: string
-  ): Observable<SouthConnectorDTO<SouthSettings, SouthItemSettings>> {
+  create(command: SouthConnectorCommandDTO, retrieveSecretsFromSouth: string): Observable<SouthConnectorDTO> {
     const params: Record<string, string | Array<string>> = {};
     if (retrieveSecretsFromSouth) {
       params['duplicate'] = retrieveSecretsFromSouth;
     }
-    return this.http.post<SouthConnectorDTO<SouthSettings, SouthItemSettings>>(`/api/south`, command, { params });
+    return this.http.post<SouthConnectorDTO>(`/api/south`, command, { params });
   }
 
   /**
@@ -78,7 +75,7 @@ export class SouthConnectorService {
    * @param southId - the ID of the South connector
    * @param command - the new values of the selected South connector
    */
-  update(southId: string, command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>) {
+  update(southId: string, command: SouthConnectorCommandDTO) {
     return this.http.put<void>(`/api/south/${southId}`, command);
   }
 
@@ -134,14 +131,14 @@ export class SouthConnectorService {
    * @param southId - the ID of the South connector
    * @param searchParams - The search params
    */
-  searchItems(southId: string, searchParams: SouthConnectorItemSearchParam): Observable<Page<SouthConnectorItemDTO<SouthItemSettings>>> {
+  searchItems(southId: string, searchParams: SouthConnectorItemSearchParam): Observable<Page<SouthConnectorItemDTO>> {
     const params: Record<string, string | Array<string>> = {
       page: `${searchParams.page || 0}`
     };
     if (searchParams.name) {
       params['name'] = searchParams.name;
     }
-    return this.http.get<Page<SouthConnectorItemDTO<SouthItemSettings>>>(`/api/south/${southId}/items/search`, { params });
+    return this.http.get<Page<SouthConnectorItemDTO>>(`/api/south/${southId}/items/search`, { params });
   }
 
   /**
@@ -149,8 +146,8 @@ export class SouthConnectorService {
    * @param southId - the ID of the South connector
    * @param itemId - the ID of the South connector item
    */
-  getItem(southId: string, itemId: string): Observable<SouthConnectorItemDTO<SouthItemSettings>> {
-    return this.http.get<SouthConnectorItemDTO<SouthItemSettings>>(`/api/south/${southId}/items/${itemId}`);
+  getItem(southId: string, itemId: string): Observable<SouthConnectorItemDTO> {
+    return this.http.get<SouthConnectorItemDTO>(`/api/south/${southId}/items/${itemId}`);
   }
 
   /**
@@ -158,11 +155,8 @@ export class SouthConnectorService {
    * @param southId - the ID of the South connector
    * @param command - The values of the South connector item to create
    */
-  createItem(
-    southId: string,
-    command: SouthConnectorItemCommandDTO<SouthItemSettings>
-  ): Observable<SouthConnectorItemDTO<SouthItemSettings>> {
-    return this.http.post<SouthConnectorItemDTO<SouthItemSettings>>(`/api/south/${southId}/items`, command);
+  createItem(southId: string, command: SouthConnectorItemCommandDTO): Observable<SouthConnectorItemDTO> {
+    return this.http.post<SouthConnectorItemDTO>(`/api/south/${southId}/items`, command);
   }
 
   /**
@@ -171,7 +165,7 @@ export class SouthConnectorService {
    * @param itemId - the ID of the South connector item
    * @param command - the new values of the selected South connector item
    */
-  updateItem(southId: string, itemId: string, command: SouthConnectorItemCommandDTO<SouthItemSettings>) {
+  updateItem(southId: string, itemId: string, command: SouthConnectorItemCommandDTO) {
     return this.http.put<void>(`/api/south/${southId}/items/${itemId}`, command);
   }
 
@@ -213,12 +207,7 @@ export class SouthConnectorService {
   /**
    * Export south items in CSV file
    */
-  itemsToCsv(
-    southType: string,
-    items: Array<SouthConnectorItemCommandDTO<SouthItemSettings>>,
-    filename: string,
-    delimiter: string
-  ): Observable<void> {
+  itemsToCsv(southType: string, items: Array<SouthConnectorItemCommandDTO>, filename: string, delimiter: string): Observable<void> {
     const formData = new FormData();
     // Convert the string to a Blob and append it as a file
     formData.set('items', new Blob([JSON.stringify(items)], { type: 'application/json' }), 'items.json');
@@ -243,11 +232,11 @@ export class SouthConnectorService {
    */
   checkImportItems(
     southType: string,
-    currentItems: Array<SouthConnectorItemDTO<SouthItemSettings>>,
+    currentItems: Array<SouthConnectorItemDTO>,
     file: File,
     delimiter: string
   ): Observable<{
-    items: Array<SouthConnectorItemDTO<SouthItemSettings>>;
+    items: Array<SouthConnectorItemDTO>;
     errors: Array<{
       item: Record<string, string>;
       error: string;
@@ -259,12 +248,12 @@ export class SouthConnectorService {
     formData.set('currentItems', new Blob([JSON.stringify(currentItems)], { type: 'application/json' }), 'currentItems.json');
     formData.set('delimiter', delimiter);
     return this.http.post<{
-      items: Array<SouthConnectorItemDTO<SouthItemSettings>>;
+      items: Array<SouthConnectorItemDTO>;
       errors: Array<{ item: Record<string, string>; error: string }>;
     }>(`/api/south/${southType}/items/import/check`, formData);
   }
 
-  importItems(southId: string, items: Array<SouthConnectorItemCommandDTO<SouthItemSettings>>): Observable<void> {
+  importItems(southId: string, items: Array<SouthConnectorItemCommandDTO>): Observable<void> {
     const formData = new FormData();
     // Convert the string to a Blob and append it as a file
     formData.set('items', new Blob([JSON.stringify(items)], { type: 'application/json' }), 'items.json');

@@ -72,7 +72,7 @@ describe('EditHistoryQueryComponent', () => {
   let transformerService: jasmine.SpyObj<TransformerService>;
   let modalService: jasmine.SpyObj<ModalService>;
 
-  const historyQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings> = {
+  const historyQuery: HistoryQueryDTO = {
     id: 'id1',
     name: 'Test',
     description: 'My History query description',

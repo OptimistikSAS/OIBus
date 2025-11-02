@@ -10,7 +10,6 @@ import {
   NorthType
 } from '../../../../backend/shared/model/north-connector.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { NorthSettings } from '../../../../backend/shared/model/north-settings.model';
 import { CacheMetadata } from '../../../../backend/shared/model/engine.model';
 import testData from '../../../../backend/src/tests/utils/test-data';
 import { TransformerDTOWithOptions } from '../../../../backend/shared/model/transformer.model';
@@ -60,8 +59,8 @@ describe('NorthConnectorService', () => {
   });
 
   it('should get a North connector', () => {
-    let expectedNorthConnector: NorthConnectorDTO<NorthSettings> | null = null;
-    const northConnector = { id: 'id1' } as NorthConnectorDTO<NorthSettings>;
+    let expectedNorthConnector: NorthConnectorDTO | null = null;
+    const northConnector = { id: 'id1' } as NorthConnectorDTO;
 
     service.findById('id1').subscribe(c => (expectedNorthConnector = c));
 

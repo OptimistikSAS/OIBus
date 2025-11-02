@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, output, input, effect } from '@angular/core';
+import { Component, effect, inject, input, OnInit, output } from '@angular/core';
 
 import { of, switchMap } from 'rxjs';
 import { ConfirmationService } from '../../shared/confirmation.service';
@@ -11,7 +11,6 @@ import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component'
 import { CreateNorthSubscriptionModalComponent } from './create-north-subscription-modal/create-north-subscription-modal.component';
 import { Modal, ModalService } from '../../shared/modal.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
-import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NotificationService } from '../../shared/notification.service';
 import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
@@ -29,7 +28,7 @@ export class NorthSubscriptionsComponent implements OnInit {
   private northConnectorService = inject(NorthConnectorService);
   private southConnectorService = inject(SouthConnectorService);
 
-  readonly northConnector = input<NorthConnectorDTO<NorthSettings> | null>(null);
+  readonly northConnector = input<NorthConnectorDTO | null>(null);
 
   readonly inMemorySubscriptions = output<Array<SouthConnectorLightDTO> | null>();
   readonly saveChangesDirectly = input<boolean>(false);

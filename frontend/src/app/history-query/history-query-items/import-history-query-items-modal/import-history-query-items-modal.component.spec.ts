@@ -46,7 +46,7 @@ describe('ImportHistoryQueryItemsModalComponent', () => {
           settings: {} as SouthItemSettings
         }
       ],
-      [{ item: { name: 'item2' } as HistoryQueryItemDTO<SouthItemSettings>, error: '' }]
+      [{ item: { name: 'item2' } as HistoryQueryItemDTO, error: '' }]
     );
     tester.detectChanges();
   });

@@ -12,7 +12,6 @@ import { NotificationService } from '../../shared/notification.service';
 import { EngineService } from '../../services/engine.service';
 import testData from '../../../../../backend/src/tests/utils/test-data';
 import { NorthConnectorDTO } from '../../../../../backend/shared/model/north-connector.model';
-import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TransformerService } from '../../services/transformer.service';
 import { CertificateService } from '../../services/certificate.service';
@@ -48,7 +47,7 @@ describe('NorthDetailComponent', () => {
   let certificateService: jasmine.SpyObj<CertificateService>;
   let transformerService: jasmine.SpyObj<TransformerService>;
 
-  const northConnector = testData.north.list[0] as NorthConnectorDTO<NorthSettings>;
+  const northConnector = testData.north.list[0] as NorthConnectorDTO;
   const manifest = testData.north.manifest;
   const engineInfo = testData.engine.oIBusInfo;
 

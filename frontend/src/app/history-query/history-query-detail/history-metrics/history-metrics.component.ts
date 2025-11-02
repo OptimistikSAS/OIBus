@@ -9,8 +9,6 @@ import { HistoryQueryDTO } from '../../../../../../backend/shared/model/history-
 import { NorthConnectorManifest } from '../../../../../../backend/shared/model/north-connector.model';
 import { SouthConnectorManifest } from '../../../../../../backend/shared/model/south-connector.model';
 import { ProgressbarComponent } from './progressbar/progressbar.component';
-import { SouthItemSettings, SouthSettings } from '../../../../../../backend/shared/model/south-settings.model';
-import { NorthSettings } from '../../../../../../backend/shared/model/north-settings.model';
 import { FileSizePipe } from '../../../shared/file-size.pipe';
 
 @Component({
@@ -20,7 +18,7 @@ import { FileSizePipe } from '../../../shared/file-size.pipe';
   imports: [TranslateDirective, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, JsonPipe, ProgressbarComponent, FileSizePipe]
 })
 export class HistoryMetricsComponent {
-  readonly historyQuery = input.required<HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings>>();
+  readonly historyQuery = input.required<HistoryQueryDTO>();
   readonly northManifest = input.required<NorthConnectorManifest>();
   readonly southManifest = input.required<SouthConnectorManifest>();
   readonly historyMetrics = input.required<HistoryQueryMetrics>();

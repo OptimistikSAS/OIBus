@@ -98,7 +98,7 @@ describe('EditNorthComponent', () => {
   });
 
   describe('edit mode', () => {
-    const northConnector: NorthConnectorDTO<NorthSettings> = {
+    const northConnector: NorthConnectorDTO = {
       id: 'id1',
       type: 'console',
       name: 'North Connector',
