@@ -587,7 +587,7 @@ export class HistoryQueryController extends Controller {
    * Removes specific files from the history query cache
    * @summary Remove cache files
    */
-  @Post('/{historyId}/cache/remove')
+  @Delete('/{historyId}/cache/remove')
   @SuccessResponse(204, 'No Content')
   async removeCacheContent(
     @Path() historyId: string,
@@ -603,7 +603,7 @@ export class HistoryQueryController extends Controller {
    * Removes all files from the history query cache
    * @summary Remove all cache files
    */
-  @Post('/{historyId}/cache/remove-all')
+  @Delete('/{historyId}/cache/remove-all')
   @SuccessResponse(204, 'No Content')
   async removeAllCacheContent(
     @Path() historyId: string,

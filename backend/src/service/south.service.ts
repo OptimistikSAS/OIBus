@@ -196,7 +196,7 @@ export default class SouthService {
 
   async testSouth(southId: string, southType: OIBusSouthType, settingsToTest: SouthSettings): Promise<void> {
     let southConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings> | null = null;
-    if (southId !== 'create') {
+    if (southId !== 'create' && southId !== 'history') {
       southConnector = this.findById(southId);
     }
     const manifest = this.getManifest(southType);
@@ -243,7 +243,7 @@ export default class SouthService {
     callback: (data: OIBusContent) => void
   ): Promise<void> {
     let southConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings> | null = null;
-    if (southId !== 'create') {
+    if (southId !== 'create' && southId !== 'history') {
       southConnector = this.findById(southId);
     }
     const manifest = this.getManifest(southType);

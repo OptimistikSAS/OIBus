@@ -173,45 +173,37 @@ describe('History Query service', () => {
   it('should test north connection in creation mode', async () => {
     await service.testNorth('create', testData.north.command.type, undefined, testData.north.command.settings);
 
-    expect(northService.testNorth).toHaveBeenCalledWith('create', testData.north.command.type, testData.north.command.settings);
+    expect(northService.testNorth).toHaveBeenCalledWith('history', testData.north.command.type, testData.north.command.settings);
   });
 
   it('should test north connection in creation mode and retrieve secrets', async () => {
     await service.testNorth('create', testData.north.command.type, testData.north.list[0].id, testData.north.command.settings);
 
-    expect(northService.testNorth).toHaveBeenCalledWith('create', testData.north.command.type, testData.north.command.settings);
+    expect(northService.testNorth).toHaveBeenCalledWith('history', testData.north.command.type, testData.north.command.settings);
   });
 
   it('should test north connection in edit mode', async () => {
     await service.testNorth(testData.historyQueries.list[0].id, testData.north.command.type, undefined, testData.north.command.settings);
 
-    expect(northService.testNorth).toHaveBeenCalledWith(
-      testData.historyQueries.list[0].id,
-      testData.north.command.type,
-      testData.north.command.settings
-    );
+    expect(northService.testNorth).toHaveBeenCalledWith('history', testData.north.command.type, testData.north.command.settings);
   });
 
   it('should test south connection in creation mode', async () => {
     await service.testSouth('create', testData.south.command.type, undefined, testData.south.command.settings);
 
-    expect(southService.testSouth).toHaveBeenCalledWith('create', testData.south.command.type, testData.south.command.settings);
+    expect(southService.testSouth).toHaveBeenCalledWith('history', testData.south.command.type, testData.south.command.settings);
   });
 
   it('should test south connection in creation mode and retrieve secrets', async () => {
     await service.testSouth('create', testData.south.command.type, testData.south.list[0].id, testData.south.command.settings);
 
-    expect(southService.testSouth).toHaveBeenCalledWith('create', testData.south.command.type, testData.south.command.settings);
+    expect(southService.testSouth).toHaveBeenCalledWith('history', testData.south.command.type, testData.south.command.settings);
   });
 
   it('should test south connection in edit mode', async () => {
     await service.testSouth(testData.historyQueries.list[0].id, testData.south.command.type, undefined, testData.south.command.settings);
 
-    expect(southService.testSouth).toHaveBeenCalledWith(
-      testData.historyQueries.list[0].id,
-      testData.south.command.type,
-      testData.south.command.settings
-    );
+    expect(southService.testSouth).toHaveBeenCalledWith('history', testData.south.command.type, testData.south.command.settings);
   });
 
   it('should test item in creation mode', async () => {
@@ -228,7 +220,7 @@ describe('History Query service', () => {
     );
 
     expect(southService.testItem).toHaveBeenCalledWith(
-      'create',
+      'history',
       testData.south.command.type,
       testData.south.itemCommand.name,
       testData.south.command.settings,
@@ -252,7 +244,7 @@ describe('History Query service', () => {
     );
 
     expect(southService.testItem).toHaveBeenCalledWith(
-      'create',
+      'history',
       testData.south.command.type,
       testData.south.itemCommand.name,
       testData.south.command.settings,

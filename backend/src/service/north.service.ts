@@ -166,7 +166,7 @@ export default class NorthService {
 
   async testNorth(northId: string, northType: OIBusNorthType, settingsToTest: NorthSettings): Promise<void> {
     let northConnector: NorthConnectorEntity<NorthSettings> | null = null;
-    if (northId !== 'create') {
+    if (northId !== 'create' && northId !== 'history') {
       northConnector = this.findById(northId);
     }
     const manifest = this.getManifest(northType);

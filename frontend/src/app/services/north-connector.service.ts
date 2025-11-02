@@ -107,7 +107,7 @@ export class NorthConnectorService {
    * Add or edit a North connector transformer
    */
   addOrEditTransformer(northId: string, transformerWithOptions: TransformerDTOWithOptions): Observable<TransformerDTOWithOptions> {
-    return this.http.put<TransformerDTOWithOptions>(`/api/north/${northId}/transformers`, transformerWithOptions);
+    return this.http.post<TransformerDTOWithOptions>(`/api/north/${northId}/transformers`, transformerWithOptions);
   }
 
   /**
@@ -121,7 +121,7 @@ export class NorthConnectorService {
    * Add a new North connector subscription
    */
   addSubscription(northId: string, southId: string): Observable<void> {
-    return this.http.put<void>(`/api/north/${northId}/subscriptions/${southId}`, null);
+    return this.http.post<void>(`/api/north/${northId}/subscriptions/${southId}`, null);
   }
 
   /**

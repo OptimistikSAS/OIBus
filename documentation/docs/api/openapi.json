@@ -13593,7 +13593,7 @@
 			}
 		},
 		"/api/north/{northId}/cache/remove": {
-			"post": {
+			"delete": {
 				"operationId": "RemoveCacheContent",
 				"responses": {
 					"204": {
@@ -13645,7 +13645,7 @@
 			}
 		},
 		"/api/north/{northId}/cache/remove-all": {
-			"post": {
+			"delete": {
 				"operationId": "RemoveAllCacheContent",
 				"responses": {
 					"204": {
@@ -15377,7 +15377,7 @@
 			}
 		},
 		"/api/history/{historyId}/cache/remove": {
-			"post": {
+			"delete": {
 				"operationId": "RemoveCacheContent",
 				"responses": {
 					"204": {
@@ -15429,7 +15429,7 @@
 			}
 		},
 		"/api/history/{historyId}/cache/remove-all": {
-			"post": {
+			"delete": {
 				"operationId": "RemoveAllCacheContent",
 				"responses": {
 					"204": {

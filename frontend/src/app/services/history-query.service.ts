@@ -131,7 +131,7 @@ export class HistoryQueryService {
     testingSettings: SouthConnectorItemTestingSettings
   ): Observable<OIBusContent> {
     return this.http.post<OIBusContent>(
-      `/api/history/${historyId}/test/items`,
+      `/api/history/${historyId}/items/test`,
       {
         southSettings,
         itemSettings,
