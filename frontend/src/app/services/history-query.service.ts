@@ -219,7 +219,7 @@ export class HistoryQueryService {
    * @param itemIds - array of item IDs to enable
    */
   enableItems(historyId: string, itemIds: Array<string>) {
-    return this.http.put<void>(`/api/history-queries/${historyId}/south-items/bulk/enable`, { itemIds });
+    return this.http.post<void>(`/api/history/${historyId}/items/enable`, { itemIds });
   }
 
   /**
@@ -228,7 +228,7 @@ export class HistoryQueryService {
    * @param itemIds - array of item IDs to disable
    */
   disableItems(historyId: string, itemIds: Array<string>) {
-    return this.http.put<void>(`/api/history-queries/${historyId}/south-items/bulk/disable`, { itemIds });
+    return this.http.post<void>(`/api/history/${historyId}/items/disable`, { itemIds });
   }
 
   /**
@@ -237,7 +237,7 @@ export class HistoryQueryService {
    * @param itemIds - array of item IDs to delete
    */
   deleteItems(historyId: string, itemIds: Array<string>) {
-    return this.http.delete<void>(`/api/history-queries/${historyId}/south-items/bulk`, { body: { itemIds } });
+    return this.http.post<void>(`/api/history/${historyId}/items/delete`, { body: { itemIds } });
   }
 
   /**

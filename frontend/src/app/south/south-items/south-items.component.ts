@@ -12,7 +12,7 @@ import {
   SouthConnectorManifest
 } from '../../../../../backend/shared/model/south-connector.model';
 import { EditSouthItemModalComponent } from './edit-south-item-modal/edit-south-item-modal.component';
-import { debounceTime, distinctUntilChanged, firstValueFrom, of, switchMap, tap } from 'rxjs';
+import { debounceTime, distinctUntilChanged, firstValueFrom, of, switchMap } from 'rxjs';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { createPageFromArray, Page } from '../../../../../backend/shared/model/types';
@@ -468,40 +468,6 @@ export class SouthItemsComponent implements OnInit {
       });
   }
 
-  toggleItem(item: SouthConnectorItemDTO, value: boolean) {
-    if (value) {
-      this.southConnectorService
-        .enableItem(this.southId(), item.id!)
-        .pipe(
-          tap(() => {
-            this.notificationService.success('south.items.enabled', { name: item.name });
-          })
-        )
-        .subscribe(() => {
-          if (this.southConnector()) {
-            this.inMemoryItems.emit(null);
-          }
-          // Refresh current page instead of resetting to page 0
-          this.refreshCurrentPage();
-        });
-    } else {
-      this.southConnectorService
-        .disableItem(this.southId(), item.id!)
-        .pipe(
-          tap(() => {
-            this.notificationService.success('south.items.disabled', { name: item.name });
-          })
-        )
-        .subscribe(() => {
-          if (this.southConnector()) {
-            this.inMemoryItems.emit(null);
-          }
-          // Refresh current page instead of resetting to page 0
-          this.refreshCurrentPage();
-        });
-    }
-  }
-
   getFieldValue(element: any, field: string): string {
     const settingsAttribute = this.southManifest().items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'
@@ -572,14 +538,6 @@ export class SouthItemsComponent implements OnInit {
     this.updateSelectionState();
   }
 
-  toggleSelectAll() {
-    if (this.isAllSelected) {
-      this.unselectAll();
-    } else {
-      this.selectAll();
-    }
-  }
-
   updateSelectionState() {
     const totalItems = this.filteredItems.length;
     const selectedCount = this.selectedItems.size;
@@ -615,7 +573,6 @@ export class SouthItemsComponent implements OnInit {
         }
         return item;
       });
-      this.notificationService.success('south.items.enabled-multiple', { count: itemIds.length.toString() });
       this.selectedItems.clear();
       this.updateSelectionState();
       this.inMemoryItems.emit(this.allItems);
@@ -646,7 +603,6 @@ export class SouthItemsComponent implements OnInit {
         }
         return item;
       });
-      this.notificationService.success('south.items.disabled-multiple', { count: itemIds.length.toString() });
       this.selectedItems.clear();
       this.updateSelectionState();
       this.inMemoryItems.emit(this.allItems);
@@ -678,7 +634,6 @@ export class SouthItemsComponent implements OnInit {
           });
         } else {
           this.allItems = this.allItems.filter(item => !itemIds.includes(item.id!));
-          this.notificationService.success('south.items.deleted-multiple', { count: itemIds.length.toString() });
           this.selectedItems.clear();
           this.updateSelectionState();
           this.inMemoryItems.emit(this.allItems);

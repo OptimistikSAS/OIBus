@@ -323,6 +323,50 @@ describe('SouthConnectorController', () => {
     expect(mockRequest.services!.southService.disableItem).toHaveBeenCalledWith(southId, itemId);
   });
 
+  it('should enable a list of items', async () => {
+    const southId = testData.south.list[0].id;
+    const itemIds = testData.south.list[0].items.map(item => item.id);
+
+    (mockRequest.services!.southService.enableItems as jest.Mock).mockResolvedValue(undefined);
+
+    await controller.enableItems(southId, { itemIds }, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.southService.enableItems).toHaveBeenCalledWith(southId, itemIds);
+  });
+
+  it('should disable a list of items', async () => {
+    const southId = testData.south.list[0].id;
+    const itemIds = testData.south.list[0].items.map(item => item.id);
+
+    (mockRequest.services!.southService.disableItems as jest.Mock).mockResolvedValue(undefined);
+
+    await controller.disableItems(southId, { itemIds }, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.southService.disableItems).toHaveBeenCalledWith(southId, itemIds);
+  });
+
+  it('should delete a list of items', async () => {
+    const southId = testData.south.list[0].id;
+    const itemIds = testData.south.list[0].items.map(item => item.id);
+
+    (mockRequest.services!.southService.deleteItems as jest.Mock).mockResolvedValue(undefined);
+
+    await controller.deleteItems(southId, { itemIds }, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.southService.deleteItems).toHaveBeenCalledWith(southId, itemIds);
+  });
+
+  it('should delete a item', async () => {
+    const southId = testData.south.list[0].id;
+    const itemId = testData.south.list[0].items[0].id;
+
+    (mockRequest.services!.southService.deleteItem as jest.Mock).mockResolvedValue(undefined);
+
+    await controller.deleteItem(southId, itemId, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.southService.deleteItem).toHaveBeenCalledWith(southId, itemId);
+  });
+
   it('should delete all items from a south connector', async () => {
     const southId = testData.south.list[0].id;
 
@@ -428,77 +472,5 @@ describe('SouthConnectorController', () => {
     const southId = testData.south.list[0].id;
 
     await expect(controller.importItems(southId, undefined!, mockRequest as CustomExpressRequest)).rejects.toThrow('Missing file "items"');
-  });
-
-  it('enableSouthItems() should enable multiple South items', async () => {
-    ctx.params.southId = testData.south.list[0].id;
-    ctx.request.body = { itemIds: [testData.south.list[0].items[0].id, testData.south.list[0].items[1].id] };
-
-    await southConnectorController.enableSouthItems(ctx);
-
-    expect(ctx.app.southService.enableItems).toHaveBeenCalledWith(testData.south.list[0].id, [
-      testData.south.list[0].items[0].id,
-      testData.south.list[0].items[1].id
-    ]);
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('enableSouthItems() should return bad request', async () => {
-    ctx.params.southId = testData.south.list[0].id;
-    ctx.request.body = { itemIds: [testData.south.list[0].items[0].id] };
-    ctx.app.southService.enableItems.mockImplementationOnce(() => {
-      throw new Error('enable items error');
-    });
-
-    await southConnectorController.enableSouthItems(ctx);
-    expect(ctx.badRequest).toHaveBeenCalledWith('enable items error');
-  });
-
-  it('disableSouthItems() should disable multiple South items', async () => {
-    ctx.params.southId = testData.south.list[0].id;
-    ctx.request.body = { itemIds: [testData.south.list[0].items[0].id, testData.south.list[0].items[1].id] };
-
-    await southConnectorController.disableSouthItems(ctx);
-
-    expect(ctx.app.southService.disableItems).toHaveBeenCalledWith(testData.south.list[0].id, [
-      testData.south.list[0].items[0].id,
-      testData.south.list[0].items[1].id
-    ]);
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('disableSouthItems() should return bad request', async () => {
-    ctx.params.southId = testData.south.list[0].id;
-    ctx.request.body = { itemIds: [testData.south.list[0].items[0].id] };
-    ctx.app.southService.disableItems.mockImplementationOnce(() => {
-      throw new Error('disable items error');
-    });
-
-    await southConnectorController.disableSouthItems(ctx);
-    expect(ctx.badRequest).toHaveBeenCalledWith('disable items error');
-  });
-
-  it('deleteSouthItems() should delete multiple South items', async () => {
-    ctx.params.southId = testData.south.list[0].id;
-    ctx.request.body = { itemIds: [testData.south.list[0].items[0].id, testData.south.list[0].items[1].id] };
-
-    await southConnectorController.deleteSouthItems(ctx);
-
-    expect(ctx.app.southService.deleteItems).toHaveBeenCalledWith(testData.south.list[0].id, [
-      testData.south.list[0].items[0].id,
-      testData.south.list[0].items[1].id
-    ]);
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('deleteSouthItems() should return bad request', async () => {
-    ctx.params.southId = testData.south.list[0].id;
-    ctx.request.body = { itemIds: [testData.south.list[0].items[0].id] };
-    ctx.app.southService.deleteItems.mockImplementationOnce(() => {
-      throw new Error('delete items error');
-    });
-
-    await southConnectorController.deleteSouthItems(ctx);
-    expect(ctx.badRequest).toHaveBeenCalledWith('delete items error');
   });
 });

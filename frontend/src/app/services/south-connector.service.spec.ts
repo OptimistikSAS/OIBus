@@ -157,7 +157,7 @@ describe('SouthConnectorService', () => {
   it('should enable a South connector item', () => {
     let done = false;
     service.enableItem('id1', 'southItemId1').subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'PUT', url: '/api/south/id1/items/southItemId1/enable' });
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/south/id1/items/southItemId1/enable' });
     testRequest.flush(null);
     expect(done).toBe(true);
   });
@@ -165,7 +165,31 @@ describe('SouthConnectorService', () => {
   it('should disable a South connector item', () => {
     let done = false;
     service.disableItem('id1', 'southItemId1').subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'PUT', url: '/api/south/id1/items/southItemId1/disable' });
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/south/id1/items/southItemId1/disable' });
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
+  it('should enable South connector items', () => {
+    let done = false;
+    service.enableItems('id1', ['southItemId1', 'southItemId2']).subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/south/id1/items/enable' });
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
+  it('should disable South connector items', () => {
+    let done = false;
+    service.disableItems('id1', ['southItemId1', 'southItemId2']).subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/south/id1/items/disable' });
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
+  it('should delete South connector items', () => {
+    let done = false;
+    service.deleteItems('id1', ['southItemId1', 'southItemId2']).subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/south/id1/items/delete' });
     testRequest.flush(null);
     expect(done).toBe(true);
   });

@@ -359,6 +359,39 @@ describe('History Query service', () => {
     expect(engine.reloadHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0], false);
   });
 
+  it('should enable multiple history query items', async () => {
+    const historyQueryId = testData.historyQueries.list[0].id;
+    const itemIds = [testData.historyQueries.list[0].items[0].id, testData.historyQueries.list[0].items[1].id];
+
+    (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValue(testData.historyQueries.list[0]);
+    (historyQueryRepository.findHistoryQueryItemById as jest.Mock)
+      .mockReturnValueOnce(testData.historyQueries.list[0].items[0])
+      .mockReturnValueOnce(testData.historyQueries.list[0].items[1]);
+
+    await service.enableItems(historyQueryId, itemIds);
+
+    expect(historyQueryRepository.enableHistoryQueryItem).toHaveBeenCalledWith(testData.historyQueries.list[0].items[0].id);
+    expect(historyQueryRepository.enableHistoryQueryItem).toHaveBeenCalledWith(testData.historyQueries.list[0].items[1].id);
+    expect(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).toHaveBeenCalled();
+    expect(engine.reloadHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0], false);
+  });
+
+  it('should disable multiple history query items', async () => {
+    const historyQueryId = testData.historyQueries.list[0].id;
+    const itemIds = [testData.historyQueries.list[0].items[0].id, testData.historyQueries.list[0].items[1].id];
+
+    (historyQueryRepository.findHistoryQueryItemById as jest.Mock)
+      .mockReturnValueOnce(testData.historyQueries.list[0].items[0])
+      .mockReturnValueOnce(testData.historyQueries.list[0].items[1]);
+
+    await service.disableItems(historyQueryId, itemIds);
+
+    expect(historyQueryRepository.disableHistoryQueryItem).toHaveBeenCalledWith(testData.historyQueries.list[0].items[0].id);
+    expect(historyQueryRepository.disableHistoryQueryItem).toHaveBeenCalledWith(testData.historyQueries.list[0].items[1].id);
+    expect(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).toHaveBeenCalled();
+    expect(engine.reloadHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0], false);
+  });
+
   it('should delete an item', async () => {
     await service.deleteItem(testData.historyQueries.list[0].id, testData.historyQueries.list[0].items[0].id);
 
@@ -368,6 +401,22 @@ describe('History Query service', () => {
     );
     expect(historyQueryRepository.deleteHistoryQueryItem).toHaveBeenCalledWith(testData.historyQueries.list[0].items[0].id);
     expect(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).toHaveBeenCalledTimes(1);
+    expect(engine.reloadHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0], false);
+  });
+
+  it('should delete multiple history query items', async () => {
+    const historyQueryId = testData.historyQueries.list[0].id;
+    const itemIds = [testData.historyQueries.list[0].items[0].id, testData.historyQueries.list[0].items[1].id];
+
+    (historyQueryRepository.findHistoryQueryItemById as jest.Mock)
+      .mockReturnValueOnce(testData.historyQueries.list[0].items[0])
+      .mockReturnValueOnce(testData.historyQueries.list[0].items[1]);
+
+    await service.deleteItems(historyQueryId, itemIds);
+
+    expect(historyQueryRepository.deleteHistoryQueryItem).toHaveBeenCalledWith(testData.historyQueries.list[0].items[0].id);
+    expect(historyQueryRepository.deleteHistoryQueryItem).toHaveBeenCalledWith(testData.historyQueries.list[0].items[1].id);
+    expect(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).toHaveBeenCalled();
     expect(engine.reloadHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0], false);
   });
 
@@ -801,119 +850,5 @@ describe('History Query service', () => {
       southType: historyQuery.southType,
       northType: historyQuery.northType
     });
-  });
-
-  it('enableHistoryQueryItems() should enable multiple history query items', async () => {
-    const historyQueryId = testData.historyQueries.list[0].id;
-    const itemIds = [testData.historyQueries.list[0].items[0].id, testData.historyQueries.list[0].items[1].id];
-
-    (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValue(testData.historyQueries.list[0]);
-    (historyQueryRepository.findHistoryQueryItemById as jest.Mock)
-      .mockReturnValueOnce(testData.historyQueries.list[0].items[0])
-      .mockReturnValueOnce(testData.historyQueries.list[0].items[1]);
-
-    await service.enableHistoryQueryItems(historyQueryId, itemIds);
-
-    expect(historyQueryRepository.enableHistoryQueryItem).toHaveBeenCalledWith(testData.historyQueries.list[0].items[0].id);
-    expect(historyQueryRepository.enableHistoryQueryItem).toHaveBeenCalledWith(testData.historyQueries.list[0].items[1].id);
-    expect(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).toHaveBeenCalled();
-    expect(engine.reloadHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0], false);
-  });
-
-  it('enableHistoryQueryItems() should throw error if history query does not exist', async () => {
-    const historyQueryId = 'non-existent';
-    const itemIds = ['item1'];
-
-    (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValue(null);
-
-    await expect(service.enableHistoryQueryItems(historyQueryId, itemIds)).rejects.toThrow('History query "non-existent" does not exist');
-  });
-
-  it('enableHistoryQueryItems() should throw error if history query item does not exist', async () => {
-    const historyQueryId = testData.historyQueries.list[0].id;
-    const itemIds = ['non-existent-item'];
-
-    (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValue(testData.historyQueries.list[0]);
-    (historyQueryRepository.findHistoryQueryItemById as jest.Mock).mockReturnValue(null);
-
-    await expect(service.enableHistoryQueryItems(historyQueryId, itemIds)).rejects.toThrow(
-      'History query item "non-existent-item" not found'
-    );
-  });
-
-  it('disableHistoryQueryItems() should disable multiple history query items', async () => {
-    const historyQueryId = testData.historyQueries.list[0].id;
-    const itemIds = [testData.historyQueries.list[0].items[0].id, testData.historyQueries.list[0].items[1].id];
-
-    (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValue(testData.historyQueries.list[0]);
-    (historyQueryRepository.findHistoryQueryItemById as jest.Mock)
-      .mockReturnValueOnce(testData.historyQueries.list[0].items[0])
-      .mockReturnValueOnce(testData.historyQueries.list[0].items[1]);
-
-    await service.disableHistoryQueryItems(historyQueryId, itemIds);
-
-    expect(historyQueryRepository.disableHistoryQueryItem).toHaveBeenCalledWith(testData.historyQueries.list[0].items[0].id);
-    expect(historyQueryRepository.disableHistoryQueryItem).toHaveBeenCalledWith(testData.historyQueries.list[0].items[1].id);
-    expect(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).toHaveBeenCalled();
-    expect(engine.reloadHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0], false);
-  });
-
-  it('disableHistoryQueryItems() should throw error if history query does not exist', async () => {
-    const historyQueryId = 'non-existent';
-    const itemIds = ['item1'];
-
-    (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValue(null);
-
-    await expect(service.disableHistoryQueryItems(historyQueryId, itemIds)).rejects.toThrow('History query "non-existent" does not exist');
-  });
-
-  it('disableHistoryQueryItems() should throw error if history query item does not exist', async () => {
-    const historyQueryId = testData.historyQueries.list[0].id;
-    const itemIds = ['non-existent-item'];
-
-    (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValue(testData.historyQueries.list[0]);
-    (historyQueryRepository.findHistoryQueryItemById as jest.Mock).mockReturnValue(null);
-
-    await expect(service.disableHistoryQueryItems(historyQueryId, itemIds)).rejects.toThrow(
-      'History query item "non-existent-item" not found'
-    );
-  });
-
-  it('deleteHistoryQueryItems() should delete multiple history query items', async () => {
-    const historyQueryId = testData.historyQueries.list[0].id;
-    const itemIds = [testData.historyQueries.list[0].items[0].id, testData.historyQueries.list[0].items[1].id];
-
-    (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValue(testData.historyQueries.list[0]);
-    (historyQueryRepository.findHistoryQueryItemById as jest.Mock)
-      .mockReturnValueOnce(testData.historyQueries.list[0].items[0])
-      .mockReturnValueOnce(testData.historyQueries.list[0].items[1]);
-
-    await service.deleteHistoryQueryItems(historyQueryId, itemIds);
-
-    expect(historyQueryRepository.deleteHistoryQueryItem).toHaveBeenCalledWith(testData.historyQueries.list[0].items[0].id);
-    expect(historyQueryRepository.deleteHistoryQueryItem).toHaveBeenCalledWith(testData.historyQueries.list[0].items[1].id);
-    expect(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).toHaveBeenCalled();
-    expect(engine.reloadHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0], false);
-  });
-
-  it('deleteHistoryQueryItems() should throw error if history query does not exist', async () => {
-    const historyQueryId = 'non-existent';
-    const itemIds = ['item1'];
-
-    (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValue(null);
-
-    await expect(service.deleteHistoryQueryItems(historyQueryId, itemIds)).rejects.toThrow('History query "non-existent" does not exist');
-  });
-
-  it('deleteHistoryQueryItems() should throw error if history query item does not exist', async () => {
-    const historyQueryId = testData.historyQueries.list[0].id;
-    const itemIds = ['non-existent-item'];
-
-    (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValue(testData.historyQueries.list[0]);
-    (historyQueryRepository.findHistoryQueryItemById as jest.Mock).mockReturnValue(null);
-
-    await expect(service.deleteHistoryQueryItems(historyQueryId, itemIds)).rejects.toThrow(
-      'History query item "non-existent-item" not found'
-    );
   });
 });

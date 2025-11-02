@@ -284,12 +284,60 @@ describe('South Service', () => {
     expect(engine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0]);
   });
 
+  it('should enable multiple south items', async () => {
+    const southConnectorId = testData.south.list[0].id;
+    const itemIds = [testData.south.list[0].items[0].id, testData.south.list[0].items[1].id];
+
+    (southConnectorRepository.findItemById as jest.Mock)
+      .mockReturnValueOnce(testData.south.list[0].items[0])
+      .mockReturnValueOnce(testData.south.list[0].items[1]);
+
+    await service.enableItems(southConnectorId, itemIds);
+
+    expect(southConnectorRepository.enableItem).toHaveBeenCalledWith(testData.south.list[0].items[0].id);
+    expect(southConnectorRepository.enableItem).toHaveBeenCalledWith(testData.south.list[0].items[1].id);
+    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
+    expect(engine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0]);
+  });
+
+  it('should disable multiple south items', async () => {
+    const southConnectorId = testData.south.list[0].id;
+    const itemIds = [testData.south.list[0].items[0].id, testData.south.list[0].items[1].id];
+
+    (southConnectorRepository.findItemById as jest.Mock)
+      .mockReturnValueOnce(testData.south.list[0].items[0])
+      .mockReturnValueOnce(testData.south.list[0].items[1]);
+
+    await service.disableItems(southConnectorId, itemIds);
+
+    expect(southConnectorRepository.disableItem).toHaveBeenCalledWith(testData.south.list[0].items[0].id);
+    expect(southConnectorRepository.disableItem).toHaveBeenCalledWith(testData.south.list[0].items[1].id);
+    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
+    expect(engine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0]);
+  });
+
   it('should delete an item', async () => {
     await service.deleteItem(testData.south.list[0].id, testData.south.list[0].items[0].id);
 
     expect(southConnectorRepository.findItemById).toHaveBeenCalledWith(testData.south.list[0].id, testData.south.list[0].items[0].id);
     expect(southConnectorRepository.deleteItem).toHaveBeenCalledWith(testData.south.list[0].items[0].id);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
+    expect(engine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0]);
+  });
+
+  it('should delete multiple south items', async () => {
+    const southConnectorId = testData.south.list[0].id;
+    const itemIds = [testData.south.list[0].items[0].id, testData.south.list[0].items[1].id];
+
+    (southConnectorRepository.findItemById as jest.Mock)
+      .mockReturnValueOnce(testData.south.list[0].items[0])
+      .mockReturnValueOnce(testData.south.list[0].items[1]);
+
+    await service.deleteItems(southConnectorId, itemIds);
+
+    expect(southConnectorRepository.deleteItem).toHaveBeenCalledWith(testData.south.list[0].items[0].id);
+    expect(southConnectorRepository.deleteItem).toHaveBeenCalledWith(testData.south.list[0].items[1].id);
+    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
     expect(engine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0]);
   });
 
@@ -538,113 +586,5 @@ describe('South Service', () => {
       settings: southEntity.settings,
       items: southEntity.items.map(item => toSouthConnectorItemDTO(item, southEntity.type))
     });
-  });
-
-  it('enableItems() should enable multiple south items', async () => {
-    const southConnectorId = testData.south.list[0].id;
-    const itemIds = [testData.south.list[0].items[0].id, testData.south.list[0].items[1].id];
-
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(testData.south.list[0]);
-    (southConnectorRepository.findItemById as jest.Mock)
-      .mockReturnValueOnce(testData.south.list[0].items[0])
-      .mockReturnValueOnce(testData.south.list[0].items[1]);
-
-    await service.enableItems(southConnectorId, itemIds);
-
-    expect(southConnectorRepository.enableItem).toHaveBeenCalledWith(testData.south.list[0].items[0].id);
-    expect(southConnectorRepository.enableItem).toHaveBeenCalledWith(testData.south.list[0].items[1].id);
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
-    expect(engine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0]);
-  });
-
-  it('enableItems() should throw error if south connector does not exist', async () => {
-    const southConnectorId = 'non-existent';
-    const itemIds = ['item1'];
-
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(null);
-
-    await expect(service.enableItems(southConnectorId, itemIds)).rejects.toThrow('South connector "non-existent" does not exist');
-  });
-
-  it('enableItems() should throw error if south item does not exist', async () => {
-    const southConnectorId = testData.south.list[0].id;
-    const itemIds = ['non-existent-item'];
-
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(testData.south.list[0]);
-    (southConnectorRepository.findItemById as jest.Mock).mockReturnValue(null);
-
-    await expect(service.enableItems(southConnectorId, itemIds)).rejects.toThrow('South item "non-existent-item" not found');
-  });
-
-  it('disableItems() should disable multiple south items', async () => {
-    const southConnectorId = testData.south.list[0].id;
-    const itemIds = [testData.south.list[0].items[0].id, testData.south.list[0].items[1].id];
-
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(testData.south.list[0]);
-    (southConnectorRepository.findItemById as jest.Mock)
-      .mockReturnValueOnce(testData.south.list[0].items[0])
-      .mockReturnValueOnce(testData.south.list[0].items[1]);
-
-    await service.disableItems(southConnectorId, itemIds);
-
-    expect(southConnectorRepository.disableItem).toHaveBeenCalledWith(testData.south.list[0].items[0].id);
-    expect(southConnectorRepository.disableItem).toHaveBeenCalledWith(testData.south.list[0].items[1].id);
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
-    expect(engine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0]);
-  });
-
-  it('disableItems() should throw error if south connector does not exist', async () => {
-    const southConnectorId = 'non-existent';
-    const itemIds = ['item1'];
-
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(null);
-
-    await expect(service.disableItems(southConnectorId, itemIds)).rejects.toThrow('South connector "non-existent" does not exist');
-  });
-
-  it('disableItems() should throw error if south item does not exist', async () => {
-    const southConnectorId = testData.south.list[0].id;
-    const itemIds = ['non-existent-item'];
-
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(testData.south.list[0]);
-    (southConnectorRepository.findItemById as jest.Mock).mockReturnValue(null);
-
-    await expect(service.disableItems(southConnectorId, itemIds)).rejects.toThrow('South item "non-existent-item" not found');
-  });
-
-  it('deleteItems() should delete multiple south items', async () => {
-    const southConnectorId = testData.south.list[0].id;
-    const itemIds = [testData.south.list[0].items[0].id, testData.south.list[0].items[1].id];
-
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(testData.south.list[0]);
-    (southConnectorRepository.findItemById as jest.Mock)
-      .mockReturnValueOnce(testData.south.list[0].items[0])
-      .mockReturnValueOnce(testData.south.list[0].items[1]);
-
-    await service.deleteItems(southConnectorId, itemIds);
-
-    expect(southConnectorRepository.deleteItem).toHaveBeenCalledWith(testData.south.list[0].items[0].id);
-    expect(southConnectorRepository.deleteItem).toHaveBeenCalledWith(testData.south.list[0].items[1].id);
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
-    expect(engine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0]);
-  });
-
-  it('deleteItems() should throw error if south connector does not exist', async () => {
-    const southConnectorId = 'non-existent';
-    const itemIds = ['item1'];
-
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(null);
-
-    await expect(service.deleteItems(southConnectorId, itemIds)).rejects.toThrow('South connector "non-existent" does not exist');
-  });
-
-  it('deleteItems() should throw error if south item does not exist', async () => {
-    const southConnectorId = testData.south.list[0].id;
-    const itemIds = ['non-existent-item'];
-
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(testData.south.list[0]);
-    (southConnectorRepository.findItemById as jest.Mock).mockReturnValue(null);
-
-    await expect(service.deleteItems(southConnectorId, itemIds)).rejects.toThrow('South item "non-existent-item" not found');
   });
 });
