@@ -10,20 +10,20 @@ export interface SouthConnectorEntityLight extends BaseEntity {
   enabled: boolean;
 }
 
-export interface SouthConnectorEntity<T extends SouthSettings, I extends SouthItemSettings> extends BaseEntity {
+export interface SouthConnectorEntity<S extends SouthSettings, I extends SouthItemSettings> extends BaseEntity {
   name: string;
   type: OIBusSouthType;
   description: string;
   enabled: boolean;
-  settings: T;
+  settings: S;
   items: Array<SouthConnectorItemEntity<I>>;
 }
 
-export interface SouthConnectorItemEntity<T extends SouthItemSettings> extends BaseEntity {
+export interface SouthConnectorItemEntity<I extends SouthItemSettings> extends BaseEntity {
   name: string;
   enabled: boolean;
   scanMode: ScanMode;
-  settings: T;
+  settings: I;
 }
 
 export interface SouthThrottlingSettings {

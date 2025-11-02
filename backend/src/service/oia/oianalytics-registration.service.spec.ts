@@ -5,7 +5,7 @@ import pino from 'pino';
 import crypto from 'node:crypto';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import { getOIBusInfo } from '../utils';
-import OIAnalyticsRegistrationService from './oianalytics-registration.service';
+import OIAnalyticsRegistrationService, { toOIAnalyticsRegistrationDTO } from './oianalytics-registration.service';
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import OianalyticsRegistrationRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
 import EngineRepository from '../../repository/config/engine.repository';
@@ -16,6 +16,7 @@ import { flushPromises } from '../../tests/utils/test-utils';
 import JoiValidator from '../../web-server/controllers/validators/joi.validator';
 import OIAnalyticsClient from './oianalytics-client.service';
 import OianalyticsClientMock from '../../tests/__mocks__/service/oia/oianalytics-client.mock';
+import { NotFoundError } from '../../model/types';
 
 jest.mock('node:fs/promises');
 jest.mock('node:crypto');
@@ -66,6 +67,14 @@ describe('OIAnalytics Registration Service', () => {
     (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.registration.completed);
 
     expect(service.getRegistrationSettings()).toEqual(testData.oIAnalytics.registration.completed);
+    expect(oIAnalyticsRegistrationRepository.get).toHaveBeenCalled();
+  });
+
+  it('should not get registration settings if not found', () => {
+    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce(null);
+
+    expect(() => service.getRegistrationSettings()).toThrow(new NotFoundError('Registration settings not found'));
+    expect(oIAnalyticsRegistrationRepository.get).toHaveBeenCalled();
   });
 
   it('should register', async () => {
@@ -340,5 +349,26 @@ describe('OIAnalytics Registration Service', () => {
 
     expect(logger.error).toHaveBeenCalledWith('Error while checking registration status: could not retrieve check URL');
     expect(oIAnalyticsClient.checkRegistration as jest.Mock).not.toHaveBeenCalled();
+  });
+
+  it('should properly convert to DTO', () => {
+    const registration = testData.oIAnalytics.registration.completed;
+    expect(toOIAnalyticsRegistrationDTO(registration)).toEqual({
+      id: registration.id,
+      host: registration.host,
+      activationCode: registration.activationCode,
+      status: registration.status,
+      activationDate: registration.activationDate,
+      activationExpirationDate: registration.activationExpirationDate,
+      checkUrl: registration.checkUrl,
+      useProxy: registration.useProxy,
+      proxyUrl: registration.proxyUrl,
+      proxyUsername: registration.proxyUsername,
+      acceptUnauthorized: registration.acceptUnauthorized,
+      commandRefreshInterval: registration.commandRefreshInterval,
+      commandRetryInterval: registration.commandRetryInterval,
+      messageRetryInterval: registration.messageRetryInterval,
+      commandPermissions: registration.commandPermissions
+    });
   });
 });

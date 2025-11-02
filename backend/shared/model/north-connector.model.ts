@@ -36,12 +36,12 @@ export interface NorthConnectorLightDTO extends BaseEntity {
   enabled: boolean;
 }
 
-export interface NorthConnectorDTO<T extends NorthSettings> extends BaseEntity {
+export interface NorthConnectorDTO extends BaseEntity {
   name: string;
   type: OIBusNorthType;
   description: string;
   enabled: boolean;
-  settings: T;
+  settings: NorthSettings;
   caching: {
     trigger: {
       scanMode: ScanModeDTO;
@@ -67,12 +67,12 @@ export interface NorthConnectorDTO<T extends NorthSettings> extends BaseEntity {
   transformers: Array<TransformerDTOWithOptions>;
 }
 
-export interface NorthConnectorCommandDTO<T extends NorthSettings> {
+export interface NorthConnectorCommandDTO {
   name: string;
   type: OIBusNorthType;
   description: string;
   enabled: boolean;
-  settings: T;
+  settings: NorthSettings;
   caching: {
     trigger: {
       scanModeId: string;

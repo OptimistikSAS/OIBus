@@ -45,9 +45,9 @@ export default class HomeMetricsService {
       const engineMetrics: EngineMetrics = JSON.parse(data.toString().substring(6));
 
       this._metrics = {
-        norths: this.dataStreamEngine.getNorthConnectorMetrics(),
+        norths: this.dataStreamEngine.getNorthMetrics(),
         engine: engineMetrics,
-        souths: this.dataStreamEngine.getSouthConnectorMetrics()
+        souths: this.dataStreamEngine.getSouthMetrics()
       };
       this._stream?.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
     });

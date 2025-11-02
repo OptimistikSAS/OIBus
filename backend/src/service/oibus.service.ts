@@ -75,11 +75,11 @@ export default class OIBusService {
     });
   }
 
-  async startOIBus(): Promise<void> {
+  async start(): Promise<void> {
     const start = DateTime.now().toMillis();
     this.logger.info('Starting OIBus...');
 
-    await this.engine.start(this.northService.findAll(), this.southService.findAll(), this.historyQueryService.findAll());
+    await this.engine.start(this.northService.list(), this.southService.list(), this.historyQueryService.list());
 
     const settings = this.getEngineSettings();
     this.cpuUsageRefInstant = DateTime.now().toMillis(); // Reference between two dates for cpu usage calculation
@@ -87,7 +87,7 @@ export default class OIBusService {
     this.engineMetricsRepository.initMetrics(settings.id);
     this.metrics = this.engineMetricsRepository.getMetrics(settings.id)!;
 
-    this.updateEngineMetricsInterval = setInterval(this.updateMetrics.bind(this), UPDATE_ENGINE_METRICS_INTERVAL);
+    this.updateEngineMetricsInterval = setInterval(this.updateEngineMetrics.bind(this), UPDATE_ENGINE_METRICS_INTERVAL);
     this.healthSignalInterval = setInterval(this.logHealthSignal.bind(this), HEALTH_SIGNAL_INTERVAL);
     this.logHealthSignal();
 
@@ -96,7 +96,7 @@ export default class OIBusService {
         '127.0.0.1',
         '::1',
         '::ffff:127.0.0.1',
-        ...this.ipFilterService.findAll().map(filter => filter.address)
+        ...this.ipFilterService.list().map(filter => filter.address)
       ]);
       await this.proxyServer.start(settings.proxyPort!);
     }
@@ -108,7 +108,7 @@ export default class OIBusService {
     return this.engineRepository.get()!;
   }
 
-  getOIBusInfo(): OIBusInfo {
+  getInfo(): OIBusInfo {
     return getOIBusInfo(this.getEngineSettings());
   }
 
@@ -164,13 +164,13 @@ export default class OIBusService {
     this.loggerEvent.emit('updated', this.loggerService.createChildLogger('web-server'));
   }
 
-  async restartOIBus(): Promise<void> {
+  async restart(): Promise<void> {
     setTimeout(() => {
       process.exit();
     }, 100); // wait a bit to let the HTTP answer trigger
   }
 
-  async stopOIBus(): Promise<void> {
+  async stop(): Promise<void> {
     const start = DateTime.now().toMillis();
     this.logger.info('Stopping OIBus...');
     await this.engine.stop();
@@ -200,14 +200,11 @@ export default class OIBusService {
     this.oIAnalyticsMessageService.setLogger(logger);
   }
 
-  /**
-   * Log the health signal (info level)
-   */
   logHealthSignal(): void {
     this.logger.info(JSON.stringify(this.metrics));
   }
 
-  updateMetrics(): void {
+  updateEngineMetrics(): void {
     const newRefInstant = DateTime.now().toMillis();
     const cpuUsage = process.cpuUsage();
     const processUptime = process.uptime() * 1000; // number of ms
@@ -250,20 +247,20 @@ export default class OIBusService {
     this._stream?.write(`data: ${JSON.stringify(this.metrics)}\n\n`);
   }
 
-  resetMetrics(): void {
+  resetEngineMetrics(): void {
     const settings = this.getEngineSettings();
     this.engineMetricsRepository.removeMetrics(settings.id);
     this.engineMetricsRepository.initMetrics(settings.id);
     this.metrics = this.engineMetricsRepository.getMetrics(settings.id)!;
-    this.updateMetrics();
+    this.updateEngineMetrics();
   }
 
-  resetNorthConnectorMetrics(northConnectorId: string): void {
-    this.engine.resetNorthConnectorMetrics(northConnectorId);
+  resetNorthMetrics(northId: string): void {
+    this.engine.resetNorthMetrics(northId);
   }
 
-  resetSouthConnectorMetrics(southConnectorId: string): void {
-    this.engine.resetSouthConnectorMetrics(southConnectorId);
+  resetSouthMetrics(southId: string): void {
+    this.engine.resetSouthMetrics(southId);
   }
 
   /**

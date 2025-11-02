@@ -35,10 +35,11 @@ import { PassThrough } from 'node:stream';
 import { ReadStream } from 'node:fs';
 import { CacheMetadata, CacheSearchParam, OIBusSetpointContent } from '../../shared/model/engine.model';
 import TransformerService, { toTransformerDTO } from './transformer.service';
-import { TransformerDTO, TransformerDTOWithOptions } from '../../shared/model/transformer.model';
+import { TransformerDTOWithOptions } from '../../shared/model/transformer.model';
 import { Transformer } from '../model/transformer.model';
 import { toScanModeDTO } from './scan-mode.service';
 import { buildNorth } from '../north/north-connector-factory';
+import { NotFoundError, OIBusValidationError } from '../model/types';
 
 export const northManifestList: Array<NorthConnectorManifest> = [
   consoleManifest,
@@ -68,20 +69,107 @@ export default class NorthService {
     private readonly engine: DataStreamEngine
   ) {}
 
-  async testNorth(id: string, northType: OIBusNorthType, settingsToTest: NorthSettings): Promise<void> {
-    let northConnector: NorthConnectorEntity<NorthSettings> | null = null;
-    if (id !== 'create') {
-      northConnector = this.northConnectorRepository.findNorthById(id);
-      if (!northConnector) {
-        throw new Error(`North connector "${id}" not found`);
-      }
-    }
+  listManifest(): Array<NorthConnectorManifest> {
+    return northManifestList;
+  }
 
-    const manifest = this.getInstalledNorthManifests().find(northManifest => northManifest.id === northType);
+  getManifest(type: string): NorthConnectorManifest {
+    const manifest = northManifestList.find(element => element.id === type);
     if (!manifest) {
-      throw new Error(`North manifest "${northType}" not found`);
+      throw new NotFoundError(`North manifest "${type}" not found`);
     }
+    return manifest;
+  }
 
+  list(): Array<NorthConnectorEntityLight> {
+    return this.northConnectorRepository.findAllNorth();
+  }
+
+  findById(northId: string): NorthConnectorEntity<NorthSettings> {
+    const north = this.northConnectorRepository.findNorthById(northId);
+    if (!north) {
+      throw new NotFoundError(`North "${northId}" not found`);
+    }
+    return north;
+  }
+
+  async create(command: NorthConnectorCommandDTO, retrieveSecretsFromNorth: string | null): Promise<NorthConnectorEntity<NorthSettings>> {
+    const manifest = this.getManifest(command.type);
+    await this.validator.validateSettings(manifest.settings, command.settings);
+
+    const northEntity = {} as NorthConnectorEntity<NorthSettings>;
+    await copyNorthConnectorCommandToNorthEntity(
+      northEntity,
+      command,
+      this.retrieveSecretsFromNorth(retrieveSecretsFromNorth, manifest),
+      this.scanModeRepository.findAll(),
+      this.southConnectorRepository.findAllSouth(),
+      this.transformerService.findAll()
+    );
+    this.northConnectorRepository.saveNorthConnector(northEntity);
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+
+    await this.engine.createNorth(northEntity.id);
+    if (northEntity.enabled) {
+      await this.engine.startNorth(northEntity.id);
+    }
+    return northEntity;
+  }
+
+  async update(northId: string, command: NorthConnectorCommandDTO) {
+    const previousSettings = this.findById(northId);
+    const manifest = this.getManifest(command.type);
+    await this.validator.validateSettings(manifest.settings, command.settings);
+
+    const northEntity = { id: previousSettings.id } as NorthConnectorEntity<NorthSettings>;
+    await copyNorthConnectorCommandToNorthEntity(
+      northEntity,
+      command,
+      previousSettings,
+      this.scanModeRepository.findAll(),
+      this.southConnectorRepository.findAllSouth(),
+      this.transformerService.findAll()
+    );
+    this.northConnectorRepository.saveNorthConnector(northEntity);
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    await this.engine.reloadNorth(northEntity);
+  }
+
+  async delete(northId: string) {
+    const northConnector = this.findById(northId);
+    await this.engine.deleteNorth(northConnector);
+    this.northConnectorRepository.deleteNorth(northId);
+    this.logRepository.deleteLogsByScopeId('north', northConnector.id);
+    this.northMetricsRepository.removeMetrics(northConnector.id);
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+
+    this.engine.logger.info(`Deleted North connector "${northConnector.name}" (${northConnector.id})`);
+  }
+
+  async start(northId: string) {
+    const northConnector = this.findById(northId);
+    this.northConnectorRepository.startNorth(northId);
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    await this.engine.startNorth(northConnector.id);
+  }
+
+  async stop(northId: string) {
+    const northConnector = this.findById(northId);
+    this.northConnectorRepository.stopNorth(northId);
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    await this.engine.stopNorth(northConnector.id);
+  }
+
+  getNorthDataStream(northId: string): PassThrough | null {
+    return this.engine.getNorthDataStream(northId);
+  }
+
+  async testNorth(northId: string, northType: OIBusNorthType, settingsToTest: NorthSettings): Promise<void> {
+    let northConnector: NorthConnectorEntity<NorthSettings> | null = null;
+    if (northId !== 'create') {
+      northConnector = this.findById(northId);
+    }
+    const manifest = this.getManifest(northType);
     await this.validator.validateSettings(manifest.settings, settingsToTest);
 
     const testToRun: NorthConnectorEntity<NorthSettings> = {
@@ -140,196 +228,35 @@ export default class NorthService {
     return await north.testConnection();
   }
 
-  findById(northId: string): NorthConnectorEntity<NorthSettings> | null {
-    return this.northConnectorRepository.findNorthById(northId);
-  }
-
-  findAll(): Array<NorthConnectorEntityLight> {
-    return this.northConnectorRepository.findAllNorth();
-  }
-
-  getInstalledNorthManifests(): Array<NorthConnectorManifest> {
-    return northManifestList;
-  }
-
-  async createNorth(
-    command: NorthConnectorCommandDTO<NorthSettings>,
-    retrieveSecretsFromNorth: string | null
-  ): Promise<NorthConnectorEntity<NorthSettings>> {
-    const manifest = this.getInstalledNorthManifests().find(northManifest => northManifest.id === command.type);
-    if (!manifest) {
-      throw new Error(`North manifest does not exist for type ${command.type}`);
-    }
-    await this.validator.validateSettings(manifest.settings, command.settings);
-
-    const northEntity = {} as NorthConnectorEntity<NorthSettings>;
-    await copyNorthConnectorCommandToNorthEntity(
-      northEntity,
-      command,
-      this.retrieveSecretsFromNorth(retrieveSecretsFromNorth, manifest),
-      this.scanModeRepository.findAll(),
-      this.southConnectorRepository.findAllSouth(),
-      this.transformerService.findAll()
-    );
-    this.northConnectorRepository.saveNorthConnector(northEntity);
-    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-
-    await this.engine.createNorth(northEntity.id);
-    if (northEntity.enabled) {
-      await this.engine.startNorth(northEntity.id);
-    }
-    return northEntity;
-  }
-
-  getNorthDataStream(northConnectorId: string): PassThrough | null {
-    return this.engine.getNorthDataStream(northConnectorId);
-  }
-
-  async searchCacheContent(
-    northConnectorId: string,
-    searchParams: CacheSearchParam,
-    folder: 'cache' | 'archive' | 'error'
-  ): Promise<Array<{ metadataFilename: string; metadata: CacheMetadata }>> {
-    return await this.engine.searchCacheContent('north', northConnectorId, searchParams, folder);
-  }
-
-  async getCacheContentFileStream(
-    northConnectorId: string,
-    folder: 'cache' | 'archive' | 'error',
-    filename: string
-  ): Promise<ReadStream | null> {
-    return await this.engine.getCacheContentFileStream('north', northConnectorId, folder, filename);
-  }
-
-  async removeCacheContent(
-    northConnectorId: string,
-    folder: 'cache' | 'archive' | 'error',
-    metadataFilenameList: Array<string>
-  ): Promise<void> {
-    return await this.engine.removeCacheContent('north', northConnectorId, folder, metadataFilenameList);
-  }
-
-  async removeAllCacheContent(northConnectorId: string, folder: 'cache' | 'archive' | 'error'): Promise<void> {
-    return await this.engine.removeAllCacheContent('north', northConnectorId, folder);
-  }
-
-  async moveCacheContent(
-    northConnectorId: string,
-    originFolder: 'cache' | 'archive' | 'error',
-    destinationFolder: 'cache' | 'archive' | 'error',
-    cacheContentList: Array<string>
-  ): Promise<void> {
-    return await this.engine.moveCacheContent('north', northConnectorId, originFolder, destinationFolder, cacheContentList);
-  }
-
-  async moveAllCacheContent(
-    northConnectorId: string,
-    originFolder: 'cache' | 'archive' | 'error',
-    destinationFolder: 'cache' | 'archive' | 'error'
-  ): Promise<void> {
-    return await this.engine.moveAllCacheContent('north', northConnectorId, originFolder, destinationFolder);
-  }
-
-  async updateNorth<N extends NorthSettings>(northConnectorId: string, command: NorthConnectorCommandDTO<N>) {
-    const previousSettings = this.northConnectorRepository.findNorthById<N>(northConnectorId);
-    if (!previousSettings) {
-      throw new Error(`North connector ${northConnectorId} does not exist`);
-    }
-    const manifest = this.getInstalledNorthManifests().find(northManifest => northManifest.id === command.type);
-    if (!manifest) {
-      throw new Error(`North manifest does not exist for type ${command.type}`);
-    }
-    await this.validator.validateSettings(manifest.settings, command.settings);
-
-    const northEntity = { id: previousSettings.id } as NorthConnectorEntity<N>;
-    await copyNorthConnectorCommandToNorthEntity<N>(
-      northEntity,
-      command,
-      previousSettings,
-      this.scanModeRepository.findAll(),
-      this.southConnectorRepository.findAllSouth(),
-      this.transformerService.findAll()
-    );
-    this.northConnectorRepository.saveNorthConnector(northEntity);
-    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-    await this.engine.reloadNorth(northEntity);
-  }
-
-  async deleteNorth(northConnectorId: string) {
-    const northConnector = this.northConnectorRepository.findNorthById(northConnectorId);
-    if (!northConnector) {
-      throw new Error(`North connector ${northConnectorId} does not exist`);
-    }
-    await this.engine.deleteNorth(northConnector);
-    this.northConnectorRepository.deleteNorth(northConnectorId);
-    this.logRepository.deleteLogsByScopeId('north', northConnector.id);
-    this.northMetricsRepository.removeMetrics(northConnector.id);
-    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-
-    this.engine.logger.info(`Deleted North connector "${northConnector.name}" (${northConnector.id})`);
-  }
-
-  async startNorth(northConnectorId: string) {
-    const northConnector = this.northConnectorRepository.findNorthById(northConnectorId);
-    if (!northConnector) {
-      throw new Error(`North connector ${northConnectorId} does not exist`);
-    }
-
-    this.northConnectorRepository.startNorth(northConnectorId);
-    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-    await this.engine.startNorth(northConnector.id);
-  }
-
-  async stopNorth(northConnectorId: string) {
-    const northConnector = this.northConnectorRepository.findNorthById(northConnectorId);
-    if (!northConnector) {
-      throw new Error(`North connector ${northConnectorId} does not exist`);
-    }
-
-    this.northConnectorRepository.stopNorth(northConnectorId);
-    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-    await this.engine.stopNorth(northConnector.id);
-  }
-
   addOrEditTransformer(northId: string, transformerWithOptions: TransformerDTOWithOptions): void {
-    const northConnector = this.northConnectorRepository.findNorthById(northId);
-    if (!northConnector) {
-      throw new Error('North connector not found');
-    }
-
-    this.northConnectorRepository.addOrEditTransformer(northId, transformerWithOptions);
+    const northConnector = this.findById(northId);
+    this.northConnectorRepository.addOrEditTransformer(northConnector.id, transformerWithOptions);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-    this.engine.updateNorthConfiguration(northId);
+    this.engine.updateNorthConfiguration(northConnector.id);
   }
 
   removeTransformer(northId: string, transformerId: string): void {
-    const northConnector = this.northConnectorRepository.findNorthById(northId);
-    if (!northConnector) {
-      throw new Error('North connector not found');
-    }
-
-    this.northConnectorRepository.removeTransformer(northId, transformerId);
+    const northConnector = this.findById(northId);
+    this.northConnectorRepository.removeTransformer(northConnector.id, transformerId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-    this.engine.updateNorthConfiguration(northId);
+    this.engine.updateNorthConfiguration(northConnector.id);
   }
 
   checkSubscription(northId: string, southId: string): boolean {
-    return this.northConnectorRepository.checkSubscription(northId, southId);
+    const northConnector = this.findById(northId);
+    return this.northConnectorRepository.checkSubscription(northConnector.id, southId);
   }
 
-  async createSubscription(northId: string, southId: string): Promise<void> {
-    const northConnector = this.northConnectorRepository.findNorthById(northId);
-    if (!northConnector) {
-      throw new Error('North connector not found');
-    }
+  async subscribeToSouth(northId: string, southId: string): Promise<void> {
+    const northConnector = this.findById(northId);
 
     const southConnector = this.southConnectorRepository.findSouthById(southId);
     if (!southConnector) {
-      throw new Error('South connector not found');
+      throw new NotFoundError(`South connector "${southId}" not found`);
     }
 
-    if (this.checkSubscription(northId, southId)) {
-      throw new Error('Subscription already exists');
+    if (this.checkSubscription(northConnector.id, southId)) {
+      throw new OIBusValidationError(`North connector "${northConnector.name}" already subscribed to "${southConnector.name}"`);
     }
 
     this.northConnectorRepository.createSubscription(northId, southId);
@@ -337,31 +264,65 @@ export default class NorthService {
     this.engine.updateNorthConfiguration(northId);
   }
 
-  async deleteSubscription(northId: string, southId: string): Promise<void> {
-    const northConnector = this.northConnectorRepository.findNorthById(northId);
-    if (!northConnector) {
-      throw new Error('North connector not found');
-    }
+  async unsubscribeFromSouth(northId: string, southId: string): Promise<void> {
+    const northConnector = this.findById(northId);
 
     const southConnector = this.southConnectorRepository.findSouthById(southId);
     if (!southConnector) {
-      throw new Error('South connector not found');
+      throw new NotFoundError(`South connector "${southId}" not found`);
     }
 
-    this.northConnectorRepository.deleteSubscription(northId, southId);
+    this.northConnectorRepository.deleteSubscription(northConnector.id, southId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-    this.engine.updateNorthConfiguration(northId);
+    this.engine.updateNorthConfiguration(northConnector.id);
   }
 
-  async deleteAllSubscriptionsByNorth(northId: string): Promise<void> {
-    const northConnector = this.northConnectorRepository.findNorthById(northId);
-    if (!northConnector) {
-      throw new Error('North connector not found');
-    }
-
-    this.northConnectorRepository.deleteAllSubscriptionsByNorth(northId);
+  async unsubscribeFromAllSouth(northId: string): Promise<void> {
+    const northConnector = this.findById(northId);
+    this.northConnectorRepository.deleteAllSubscriptionsByNorth(northConnector.id);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-    this.engine.updateNorthConfiguration(northId);
+    this.engine.updateNorthConfiguration(northConnector.id);
+  }
+
+  async searchCacheContent(
+    northId: string,
+    searchParams: CacheSearchParam,
+    folder: 'cache' | 'archive' | 'error'
+  ): Promise<Array<{ metadataFilename: string; metadata: CacheMetadata }>> {
+    return await this.engine.searchCacheContent('north', northId, searchParams, folder);
+  }
+
+  async getCacheFileContent(northId: string, folder: 'cache' | 'archive' | 'error', filename: string): Promise<ReadStream> {
+    const fileStream = await this.engine.getCacheContentFileStream('north', northId, folder, filename);
+    if (!fileStream) {
+      throw new NotFoundError(`File "${filename}" not found in ${folder}`);
+    }
+    return fileStream;
+  }
+
+  async removeCacheContent(northId: string, folder: 'cache' | 'archive' | 'error', metadataFilenameList: Array<string>): Promise<void> {
+    return await this.engine.removeCacheContent('north', northId, folder, metadataFilenameList);
+  }
+
+  async removeAllCacheContent(northId: string, folder: 'cache' | 'archive' | 'error'): Promise<void> {
+    return await this.engine.removeAllCacheContent('north', northId, folder);
+  }
+
+  async moveCacheContent(
+    northId: string,
+    originFolder: 'cache' | 'archive' | 'error',
+    destinationFolder: 'cache' | 'archive' | 'error',
+    cacheContentList: Array<string>
+  ): Promise<void> {
+    return await this.engine.moveCacheContent('north', northId, originFolder, destinationFolder, cacheContentList);
+  }
+
+  async moveAllCacheContent(
+    northId: string,
+    originFolder: 'cache' | 'archive' | 'error',
+    destinationFolder: 'cache' | 'archive' | 'error'
+  ): Promise<void> {
+    return await this.engine.moveAllCacheContent('north', northId, originFolder, destinationFolder);
   }
 
   async executeSetpoint(
@@ -374,11 +335,11 @@ export default class NorthService {
   ) {
     const northConnector = this.engine.getNorth(northConnectorId);
     if (!northConnector) {
-      throw new Error(`North connector ${northConnectorId} not found`);
+      throw new NotFoundError(`North connector "${northConnectorId}" not found`);
     }
 
     if (!northConnector.isEnabled()) {
-      throw new Error(`North connector ${northConnectorId} disabled`);
+      throw new OIBusValidationError(`North connector "${northConnectorId}" disabled`);
     }
 
     const setpointContent: OIBusSetpointContent = {
@@ -396,25 +357,32 @@ export default class NorthService {
     manifest: NorthConnectorManifest
   ): NorthConnectorEntity<NorthSettings> | null {
     if (!retrieveSecretsFromNorth) return null;
-    const source = this.northConnectorRepository.findNorthById(retrieveSecretsFromNorth);
-    if (!source) {
-      throw new Error(`Could not find north connector ${retrieveSecretsFromNorth} to retrieve secrets from`);
-    }
+    const source = this.findById(retrieveSecretsFromNorth);
     if (source.type !== manifest.id) {
-      throw new Error(`North connector ${retrieveSecretsFromNorth} (type ${source.type}) must be of the type ${manifest.id}`);
+      throw new Error(`North connector "${retrieveSecretsFromNorth}" (type "${source.type}") must be of the type "${manifest.id}"`);
     }
     return source;
   }
 }
 
-export const toNorthConnectorDTO = <N extends NorthSettings>(northEntity: NorthConnectorEntity<N>): NorthConnectorDTO<N> => {
+export const toNorthConnectorLightDTO = (northEntity: NorthConnectorEntityLight): NorthConnectorLightDTO => {
+  return {
+    id: northEntity.id,
+    name: northEntity.name,
+    type: northEntity.type,
+    description: northEntity.description,
+    enabled: northEntity.enabled
+  };
+};
+
+export const toNorthConnectorDTO = (northEntity: NorthConnectorEntity<NorthSettings>): NorthConnectorDTO => {
   return {
     id: northEntity.id,
     name: northEntity.name,
     type: northEntity.type,
     description: northEntity.description,
     enabled: northEntity.enabled,
-    settings: encryptionService.filterSecrets<N>(
+    settings: encryptionService.filterSecrets(
       northEntity.settings,
       northManifestList.find(element => element.id === northEntity.type)!.settings
     ),
@@ -448,20 +416,10 @@ export const toNorthConnectorDTO = <N extends NorthSettings>(northEntity: NorthC
   };
 };
 
-export const toNorthConnectorLightDTO = (entity: NorthConnectorEntityLight): NorthConnectorLightDTO => {
-  return {
-    id: entity.id,
-    name: entity.name,
-    type: entity.type,
-    description: entity.description,
-    enabled: entity.enabled
-  };
-};
-
-export const copyNorthConnectorCommandToNorthEntity = async <N extends NorthSettings>(
-  northEntity: NorthConnectorEntity<N>,
-  command: NorthConnectorCommandDTO<N>,
-  currentSettings: NorthConnectorEntity<N> | null,
+export const copyNorthConnectorCommandToNorthEntity = async (
+  northEntity: NorthConnectorEntity<NorthSettings>,
+  command: NorthConnectorCommandDTO,
+  currentSettings: NorthConnectorEntity<NorthSettings> | null,
   scanModes: Array<ScanMode>,
   southConnectors: Array<SouthConnectorLightDTO>,
   transformers: Array<Transformer>
@@ -470,7 +428,7 @@ export const copyNorthConnectorCommandToNorthEntity = async <N extends NorthSett
   northEntity.type = command.type;
   northEntity.description = command.description;
   northEntity.enabled = command.enabled;
-  northEntity.settings = await encryptionService.encryptConnectorSecrets<N>(
+  northEntity.settings = await encryptionService.encryptConnectorSecrets(
     command.settings,
     currentSettings?.settings || null,
     northManifestList.find(element => element.id === northEntity.type)!.settings
@@ -499,24 +457,15 @@ export const copyNorthConnectorCommandToNorthEntity = async <N extends NorthSett
   northEntity.subscriptions = command.subscriptions.map(subscriptionId => {
     const subscription = southConnectors.find(southConnector => southConnector.id === subscriptionId);
     if (!subscription) {
-      throw new Error(`Could not find South connector "${subscriptionId}"`);
+      throw new NotFoundError(`Could not find south connector "${subscriptionId}"`);
     }
     return subscription;
   });
   northEntity.transformers = command.transformers.map(transformerIdWithOptions => {
     const foundTransformer = transformers.find(transformer => transformer.id === transformerIdWithOptions.transformerId);
     if (!foundTransformer) {
-      throw new Error(`Could not find OIBus Transformer "${transformerIdWithOptions.transformerId}"`);
+      throw new Error(`Could not find OIBus transformer "${transformerIdWithOptions.transformerId}"`);
     }
     return { transformer: foundTransformer, options: transformerIdWithOptions.options, inputType: transformerIdWithOptions.inputType };
   });
-};
-
-export const getTransformer = (id: string | null, transformers: Array<TransformerDTO>): TransformerDTO | null => {
-  if (!id) return null;
-  const transformer = transformers.find(element => element.id === id);
-  if (!transformer) {
-    throw new Error(`Could not find OIBus Transformer ${id}`);
-  }
-  return transformer;
 };

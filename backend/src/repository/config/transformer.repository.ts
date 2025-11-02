@@ -24,7 +24,7 @@ export default class TransformerRepository {
     this.createStandardTransformers();
   }
 
-  findAll(): Array<Transformer> {
+  list(): Array<Transformer> {
     const query = `SELECT id, type, input_type, output_type, function_name, name, description, custom_manifest, custom_code FROM ${TRANSFORMERS_TABLE};`;
     const result = this.database.prepare(query).all();
     return result.map(element => toTransformer(element as Record<string, string>));
@@ -84,7 +84,7 @@ export default class TransformerRepository {
     let whereClause = `WHERE id IS NOT NULL`;
     const queryParams = [];
 
-    const page = searchParams.page ?? 0;
+    const page = searchParams.page;
 
     if (searchParams.type !== undefined) {
       queryParams.push(searchParams.type);

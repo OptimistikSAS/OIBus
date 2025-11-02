@@ -374,7 +374,7 @@ export default class OIAnalyticsMessageService {
   }
 
   private createIPFiltersCommand(): Array<OIAnalyticsIPFilterCommandDTO> {
-    const ipFilters = this.ipFilterRepository.findAll();
+    const ipFilters = this.ipFilterRepository.list();
     return ipFilters.map(ipFilter => ({
       oIBusInternalId: ipFilter.id,
       settings: {
@@ -385,7 +385,7 @@ export default class OIAnalyticsMessageService {
   }
 
   private createCertificatesCommand(): Array<OIAnalyticsCertificateCommandDTO> {
-    const certificates = this.certificateRepository.findAll();
+    const certificates = this.certificateRepository.list();
     return certificates.map(certificate => ({
       oIBusInternalId: certificate.id,
       settings: {
@@ -399,7 +399,7 @@ export default class OIAnalyticsMessageService {
   }
 
   private createUsersCommand(): Array<OIAnalyticsUserCommandDTO> {
-    const users = this.userRepository.findAll();
+    const users = this.userRepository.list();
     return users.map(user => ({
       oIBusInternalId: user.id,
       settings: {
@@ -491,7 +491,7 @@ export default class OIAnalyticsMessageService {
   }
 
   private createTransformersCommand(): Array<OIAnalyticsTransformerCommandDTO> {
-    const transformers = this.transformerRepository.findAll();
+    const transformers = this.transformerRepository.list();
     return transformers.map(transformer => {
       if (transformer.type === 'standard') {
         return {

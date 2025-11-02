@@ -1,5 +1,5 @@
 import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
-import OIBusService from './oibus.service';
+import OIBusService, { toEngineSettingsDTO } from './oibus.service';
 import DataStreamEngine from '../engine/data-stream-engine';
 import pino from 'pino';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
@@ -59,7 +59,7 @@ describe('OIBus Service', () => {
     (engineRepository.get as jest.Mock).mockReturnValue(testData.engine.settings);
     (engineMetricsRepository.getMetrics as jest.Mock).mockReturnValue(testData.engine.metrics);
     (loggerService.createChildLogger as jest.Mock).mockReturnValue(logger);
-    (ipFilterService.findAll as jest.Mock).mockReturnValue(testData.ipFilters.list);
+    (ipFilterService.list as jest.Mock).mockReturnValue(testData.ipFilters.list);
 
     service = new OIBusService(
       validator,
@@ -78,19 +78,19 @@ describe('OIBus Service', () => {
   });
 
   it('should start OIBus and stop it', async () => {
-    (northService.findAll as jest.Mock).mockReturnValue(testData.north.list);
-    (southService.findAll as jest.Mock).mockReturnValue(testData.south.list);
-    (historyQueryService.findAll as jest.Mock).mockReturnValue(testData.historyQueries.list);
+    (northService.list as jest.Mock).mockReturnValue(testData.north.list);
+    (southService.list as jest.Mock).mockReturnValue(testData.south.list);
+    (historyQueryService.list as jest.Mock).mockReturnValue(testData.historyQueries.list);
     (southService.findById as jest.Mock).mockImplementation(id => testData.south.list.find(element => element.id === id));
     (northService.findById as jest.Mock).mockImplementation(id => testData.north.list.find(element => element.id === id));
     (historyQueryService.findById as jest.Mock).mockImplementation(id => testData.historyQueries.list.find(element => element.id === id));
 
-    await service.startOIBus();
+    await service.start();
 
     expect(engine.start).toHaveBeenCalledWith(testData.north.list, testData.south.list, testData.historyQueries.list);
     expect(logger.info).toHaveBeenCalledWith('Starting OIBus...');
     expect(service.getProxyServer()).toBeDefined();
-    expect(ipFilterService.findAll).toHaveBeenCalledTimes(1);
+    expect(ipFilterService.list).toHaveBeenCalledTimes(1);
 
     const settingsWithoutOIAlog: EngineSettings = JSON.parse(JSON.stringify(testData.engine.settings));
     settingsWithoutOIAlog.logParameters.oia.level = 'silent';
@@ -111,25 +111,25 @@ describe('OIBus Service', () => {
     ipFilterService.whiteListEvent.emit('update-white-list');
     expect(service.getProxyServer().refreshIpFilters).toHaveBeenCalled();
 
-    await service.stopOIBus();
+    await service.stop();
 
     expect(engine.stop).toHaveBeenCalled();
   });
 
   it('should start OIBus without proxy', async () => {
-    (northService.findAll as jest.Mock).mockReturnValue([]);
-    (southService.findAll as jest.Mock).mockReturnValue([]);
-    (historyQueryService.findAll as jest.Mock).mockReturnValue([]);
+    (northService.list as jest.Mock).mockReturnValue([]);
+    (southService.list as jest.Mock).mockReturnValue([]);
+    (historyQueryService.list as jest.Mock).mockReturnValue([]);
     const settingsWithoutProxy: EngineSettings = JSON.parse(JSON.stringify(testData.engine.settings));
     settingsWithoutProxy.proxyEnabled = false;
     (engineRepository.get as jest.Mock).mockReturnValue(settingsWithoutProxy);
 
-    await service.startOIBus();
-    expect(ipFilterService.findAll).not.toHaveBeenCalled();
+    await service.start();
+    expect(ipFilterService.list).not.toHaveBeenCalled();
   });
 
   it('should stop OIBus without starting', async () => {
-    await service.stopOIBus();
+    await service.stop();
     expect(engine.stop).toHaveBeenCalled();
   });
 
@@ -199,13 +199,13 @@ describe('OIBus Service', () => {
   it('should correctly restart OIBus', async () => {
     const processExitSpy = jest.spyOn(process, 'exit').mockImplementation();
 
-    await service.restartOIBus();
+    await service.restart();
     jest.advanceTimersByTime(100);
     expect(processExitSpy).toHaveBeenCalledTimes(1);
   });
 
   it('should log health signal', async () => {
-    await service.startOIBus();
+    await service.start();
     expect(logger.info).toHaveBeenCalledTimes(3); // starting, health info, started
 
     service.logHealthSignal();
@@ -226,7 +226,7 @@ describe('OIBus Service', () => {
       .mockReturnValueOnce({ rss: 10, heapTotal: 10, heapUsed: 10, external: 10, arrayBuffers: 10 })
       .mockReturnValueOnce({ rss: 5, heapTotal: 5, heapUsed: 5, external: 5, arrayBuffers: 5 });
 
-    await service.startOIBus();
+    await service.start();
 
     expect(engineMetricsRepository.updateMetrics).not.toHaveBeenCalled();
     jest.advanceTimersByTime(1000);
@@ -259,12 +259,12 @@ describe('OIBus Service', () => {
       maxArrayBuffers: 10
     });
 
-    service.updateMetrics = jest.fn();
+    service.updateEngineMetrics = jest.fn();
 
-    service.resetMetrics();
+    service.resetEngineMetrics();
     expect(engineMetricsRepository.removeMetrics).toHaveBeenCalledWith(testData.engine.settings.id);
     expect(engineMetricsRepository.initMetrics).toHaveBeenCalledWith(testData.engine.settings.id);
-    expect(service.updateMetrics).toHaveBeenCalled();
+    expect(service.updateEngineMetrics).toHaveBeenCalled();
   });
 
   it('should get stream', () => {
@@ -273,7 +273,7 @@ describe('OIBus Service', () => {
     jest.advanceTimersByTime(100);
     expect(stream.write).toHaveBeenCalledTimes(1);
 
-    service.updateMetrics();
+    service.updateEngineMetrics();
     expect(stream.write).toHaveBeenCalledWith(
       `data: ${JSON.stringify({
         metricsStart: '2020-01-01T00:00:00.000',
@@ -306,7 +306,7 @@ describe('OIBus Service', () => {
   it('should get OIBus info', () => {
     (getOIBusInfo as jest.Mock).mockReturnValueOnce(testData.engine.oIBusInfo);
 
-    expect(service.getOIBusInfo()).toEqual(testData.engine.oIBusInfo);
+    expect(service.getInfo()).toEqual(testData.engine.oIBusInfo);
   });
 
   it('should update OIBus version', () => {
@@ -315,12 +315,51 @@ describe('OIBus Service', () => {
   });
 
   it('should reset North Connector Metrics', () => {
-    service.resetNorthConnectorMetrics('id');
-    expect(engine.resetNorthConnectorMetrics).toHaveBeenCalledWith('id');
+    service.resetNorthMetrics('id');
+    expect(engine.resetNorthMetrics).toHaveBeenCalledWith('id');
   });
 
   it('should reset South Connector Metrics', () => {
-    service.resetSouthConnectorMetrics('id');
-    expect(engine.resetSouthConnectorMetrics).toHaveBeenCalledWith('id');
+    service.resetSouthMetrics('id');
+    expect(engine.resetSouthMetrics).toHaveBeenCalledWith('id');
+  });
+
+  it('should properly convert to DTO', () => {
+    const engineSettings = testData.engine.settings;
+    expect(toEngineSettingsDTO(engineSettings)).toEqual({
+      id: engineSettings.id,
+      name: engineSettings.name,
+      port: engineSettings.port,
+      version: engineSettings.version,
+      launcherVersion: engineSettings.launcherVersion,
+      proxyEnabled: engineSettings.proxyEnabled,
+      proxyPort: engineSettings.proxyPort,
+      logParameters: {
+        console: {
+          level: engineSettings.logParameters.console.level
+        },
+        file: {
+          level: engineSettings.logParameters.file.level,
+          maxFileSize: engineSettings.logParameters.file.maxFileSize,
+          numberOfFiles: engineSettings.logParameters.file.numberOfFiles
+        },
+        database: {
+          level: engineSettings.logParameters.database.level,
+          maxNumberOfLogs: engineSettings.logParameters.database.maxNumberOfLogs
+        },
+
+        loki: {
+          level: engineSettings.logParameters.loki.level,
+          interval: engineSettings.logParameters.loki.interval,
+          address: engineSettings.logParameters.loki.address,
+          username: engineSettings.logParameters.loki.username,
+          password: ''
+        },
+        oia: {
+          level: engineSettings.logParameters.oia.level,
+          interval: engineSettings.logParameters.oia.interval
+        }
+      }
+    });
   });
 });

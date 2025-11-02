@@ -197,7 +197,7 @@ const CERT_FOLDER = 'certs';
     dataStreamEngine,
     ignoreIpFilters
   );
-  await oIBusService.startOIBus();
+  await oIBusService.start();
 
   const homeMetricsService = new HomeMetricsService(oIBusService, dataStreamEngine);
 
@@ -277,7 +277,7 @@ const CERT_FOLDER = 'certs';
     if (stopping) return;
     console.info('SIGINT (Ctrl+C) received. Stopping everything.');
     stopping = true;
-    await oIBusService.stopOIBus();
+    await oIBusService.stop();
     await oIAnalyticsCommandService.stop();
     await oIAnalyticsMessageService.stop();
     await server.stop();

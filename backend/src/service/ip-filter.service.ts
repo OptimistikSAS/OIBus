@@ -16,8 +16,8 @@ export default class IPFilterService {
     private oIAnalyticsMessageService: OIAnalyticsMessageService
   ) {}
 
-  findAll(): Array<IPFilter> {
-    return this.ipFilterRepository.findAll();
+  list(): Array<IPFilter> {
+    return this.ipFilterRepository.list();
   }
 
   findById(ipFilterId: string): IPFilter {
@@ -33,7 +33,7 @@ export default class IPFilterService {
     const ipFilter = this.ipFilterRepository.create(command);
     this.whiteListEvent.emit(
       'update-white-list',
-      this.ipFilterRepository.findAll().map(ip => ip.address)
+      this.ipFilterRepository.list().map(ip => ip.address)
     );
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     return ipFilter;
@@ -41,27 +41,21 @@ export default class IPFilterService {
 
   async update(ipFilterId: string, command: IPFilterCommandDTO): Promise<void> {
     await this.validator.validate(ipFilterSchema, command);
-    const ipFilter = this.ipFilterRepository.findById(ipFilterId);
-    if (!ipFilter) {
-      throw new NotFoundError(`IP filter "${ipFilterId}" not found`);
-    }
-    this.ipFilterRepository.update(ipFilterId, command);
+    const ipFilter = this.findById(ipFilterId);
+    this.ipFilterRepository.update(ipFilter.id, command);
     this.whiteListEvent.emit(
       'update-white-list',
-      this.ipFilterRepository.findAll().map(ip => ip.address)
+      this.ipFilterRepository.list().map(ip => ip.address)
     );
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
 
   async delete(ipFilterId: string): Promise<void> {
-    const ipFilter = this.ipFilterRepository.findById(ipFilterId);
-    if (!ipFilter) {
-      throw new NotFoundError(`IP filter "${ipFilterId}" not found`);
-    }
-    this.ipFilterRepository.delete(ipFilterId);
+    const ipFilter = this.findById(ipFilterId);
+    this.ipFilterRepository.delete(ipFilter.id);
     this.whiteListEvent.emit(
       'update-white-list',
-      this.ipFilterRepository.findAll().map(ip => ip.address)
+      this.ipFilterRepository.list().map(ip => ip.address)
     );
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }

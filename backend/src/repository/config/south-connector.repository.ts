@@ -97,7 +97,10 @@ export default class SouthConnectorRepository {
     transaction();
   }
 
-  listItems<I extends SouthItemSettings>(southId: string, searchParams: SouthConnectorItemSearchParam): Array<SouthConnectorItemEntity<I>> {
+  listItems(
+    southId: string,
+    searchParams: Omit<SouthConnectorItemSearchParam, 'page'>
+  ): Array<SouthConnectorItemEntity<SouthItemSettings>> {
     let whereClause = `WHERE connector_id = ?`;
     const queryParams = [southId];
 
@@ -118,17 +121,14 @@ export default class SouthConnectorRepository {
     return this.database
       .prepare(query)
       .all(...queryParams)
-      .map(result => this.toSouthConnectorItemEntity<I>(result as Record<string, string>));
+      .map(result => this.toSouthConnectorItemEntity(result as Record<string, string>));
   }
 
-  searchItems<I extends SouthItemSettings>(
-    southId: string,
-    searchParams: SouthConnectorItemSearchParam
-  ): Page<SouthConnectorItemEntity<I>> {
+  searchItems(southId: string, searchParams: SouthConnectorItemSearchParam): Page<SouthConnectorItemEntity<SouthItemSettings>> {
     let whereClause = `WHERE connector_id = ?`;
     const queryParams = [southId];
 
-    const page = searchParams.page ?? 0;
+    const page = searchParams.page;
 
     if (searchParams.scanModeId) {
       queryParams.push(searchParams.scanModeId);
@@ -148,7 +148,7 @@ export default class SouthConnectorRepository {
     const results = this.database
       .prepare(query)
       .all(...queryParams)
-      .map(result => this.toSouthConnectorItemEntity<I>(result as Record<string, string>));
+      .map(result => this.toSouthConnectorItemEntity(result as Record<string, string>));
     const totalElements = (
       this.database.prepare(`SELECT COUNT(*) as count FROM ${SOUTH_ITEMS_TABLE} ${whereClause}`).get(...queryParams) as { count: number }
     ).count;

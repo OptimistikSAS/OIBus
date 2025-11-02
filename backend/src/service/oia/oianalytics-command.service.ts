@@ -59,10 +59,9 @@ import IPFilterService from '../ip-filter.service';
 import CertificateService from '../certificate.service';
 import HistoryQueryService from '../history-query.service';
 import { HistoryQueryCommandDTO } from '../../../shared/model/history-query.model';
-import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
-import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { OIBusObjectAttribute } from '../../../shared/model/form.model';
 import { OIBusContent } from '../../../shared/model/engine.model';
+import { NotFoundError } from '../../model/types';
 
 const UPDATE_SETTINGS_FILE = 'update.json';
 
@@ -150,8 +149,17 @@ export default class OIAnalyticsCommandService {
     return this.oIAnalyticsCommandRepository.search(searchParams);
   }
 
+  findById(commandId: string): OIBusCommand {
+    const historyQuery = this.oIAnalyticsCommandRepository.findById(commandId);
+    if (!historyQuery) {
+      throw new NotFoundError(`OIAnalytics command "${commandId}" not found`);
+    }
+    return historyQuery;
+  }
+
   delete(commandId: string): void {
-    return this.oIAnalyticsCommandRepository.delete(commandId);
+    const command = this.findById(commandId);
+    return this.oIAnalyticsCommandRepository.delete(command.id);
   }
 
   async checkCommands(): Promise<void> {
@@ -714,7 +722,7 @@ export default class OIAnalyticsCommandService {
     command: OIBusCreateSouthConnectorCommand | OIBusUpdateSouthConnectorCommand | OIBusTestSouthConnectorCommand,
     privateKey: string
   ) {
-    const manifest = this.southService.getInstalledSouthManifests().find(element => element.id === command.commandContent.type)!;
+    const manifest = this.southService.listManifest().find(element => element.id === command.commandContent.type)!;
     const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'
     )! as OIBusObjectAttribute;
@@ -736,9 +744,7 @@ export default class OIAnalyticsCommandService {
   }
 
   private async decryptSouthItemSettings(command: OIBusTestSouthConnectorItemCommand, privateKey: string) {
-    const manifest = this.southService
-      .getInstalledSouthManifests()
-      .find(element => element.id === command.commandContent.southCommand.type)!;
+    const manifest = this.southService.listManifest().find(element => element.id === command.commandContent.southCommand.type)!;
     const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'
     )! as OIBusObjectAttribute;
@@ -756,18 +762,18 @@ export default class OIAnalyticsCommandService {
 
   private async executeCreateSouthCommand(command: OIBusCreateSouthConnectorCommand, privateKey: string) {
     await this.decryptSouthSettings(command, privateKey);
-    await this.southService.createSouth(command.commandContent, command.southConnectorId);
+    await this.southService.create(command.commandContent, command.southConnectorId);
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'South connector created successfully');
   }
 
   private async executeUpdateSouthCommand(command: OIBusUpdateSouthConnectorCommand, privateKey: string) {
     await this.decryptSouthSettings(command, privateKey);
-    await this.southService.updateSouth(command.southConnectorId, command.commandContent);
+    await this.southService.update(command.southConnectorId, command.commandContent);
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'South connector updated successfully');
   }
 
   private async executeDeleteSouthCommand(command: OIBusDeleteSouthConnectorCommand) {
-    await this.southService.deleteSouth(command.southConnectorId);
+    await this.southService.delete(command.southConnectorId);
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'South connector deleted successfully');
   }
 
@@ -777,7 +783,7 @@ export default class OIAnalyticsCommandService {
       throw new Error(`South connector ${command.southConnectorId} not found`);
     }
 
-    const { items, errors } = await this.southService.checkCsvContentImport(
+    const { items, errors } = await this.southService.checkImportItems(
       southConnector.type,
       command.commandContent.csvContent,
       command.commandContent.delimiter,
@@ -819,7 +825,7 @@ export default class OIAnalyticsCommandService {
   private async executeTestSouthItemCommand(command: OIBusTestSouthConnectorItemCommand, privateKey: string) {
     await this.decryptSouthItemSettings(command, privateKey);
 
-    await this.southService.testSouthItem(
+    await this.southService.testItem(
       command.southConnectorId,
       command.commandContent.southCommand.type,
       command.commandContent.itemCommand.name,
@@ -836,7 +842,7 @@ export default class OIAnalyticsCommandService {
     command: OIBusCreateNorthConnectorCommand | OIBusUpdateNorthConnectorCommand | OIBusTestNorthConnectorCommand,
     privateKey: string
   ) {
-    const manifest = this.northService.getInstalledNorthManifests().find(element => element.id === command.commandContent.type)!;
+    const manifest = this.northService.listManifest().find(element => element.id === command.commandContent.type)!;
     command.commandContent.settings = await encryptionService.decryptSecretsWithPrivateKey(
       command.commandContent.settings,
       manifest.settings,
@@ -846,18 +852,18 @@ export default class OIAnalyticsCommandService {
 
   private async executeCreateNorthCommand(command: OIBusCreateNorthConnectorCommand, privateKey: string) {
     await this.decryptNorthSettings(command, privateKey);
-    await this.northService.createNorth(command.commandContent, command.northConnectorId);
+    await this.northService.create(command.commandContent, command.northConnectorId);
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'North connector created successfully');
   }
 
   private async executeUpdateNorthCommand(command: OIBusUpdateNorthConnectorCommand, privateKey: string) {
     await this.decryptNorthSettings(command, privateKey);
-    await this.northService.updateNorth(command.northConnectorId, command.commandContent);
+    await this.northService.update(command.northConnectorId, command.commandContent);
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'North connector updated successfully');
   }
 
   private async executeDeleteNorthCommand(command: OIBusDeleteNorthConnectorCommand) {
-    await this.northService.deleteNorth(command.northConnectorId);
+    await this.northService.delete(command.northConnectorId);
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'North connector deleted successfully');
   }
 
@@ -867,12 +873,9 @@ export default class OIAnalyticsCommandService {
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'North connection tested successfully');
   }
 
-  private async decryptHistoryQuerySettings(
-    command: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>,
-    privateKey: string
-  ) {
-    const northManifest = this.northService.getInstalledNorthManifests().find(element => element.id === command.northType)!;
-    const southManifest = this.southService.getInstalledSouthManifests().find(element => element.id === command.southType)!;
+  private async decryptHistoryQuerySettings(command: HistoryQueryCommandDTO, privateKey: string) {
+    const northManifest = this.northService.listManifest().find(element => element.id === command.northType)!;
+    const southManifest = this.southService.listManifest().find(element => element.id === command.southType)!;
     const itemSettingsManifest = southManifest.items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'
     )! as OIBusObjectAttribute;
@@ -889,9 +892,7 @@ export default class OIAnalyticsCommandService {
   }
 
   private async decryptHistoryQuerySouthItemSettings(command: OIBusTestHistoryQuerySouthItemCommand, privateKey: string) {
-    const manifest = this.southService
-      .getInstalledSouthManifests()
-      .find(element => element.id === command.commandContent.historyCommand.southType)!;
+    const manifest = this.southService.listManifest().find(element => element.id === command.commandContent.historyCommand.southType)!;
     const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'
     )! as OIBusObjectAttribute;
@@ -909,7 +910,7 @@ export default class OIAnalyticsCommandService {
 
   private async executeCreateHistoryQueryCommand(command: OIBusCreateHistoryQueryCommand, privateKey: string) {
     await this.decryptHistoryQuerySettings(command.commandContent, privateKey);
-    await this.historyQueryService.createHistoryQuery(
+    await this.historyQueryService.create(
       command.commandContent,
       command.southConnectorId,
       command.northConnectorId,
@@ -920,16 +921,12 @@ export default class OIAnalyticsCommandService {
 
   private async executeUpdateHistoryQueryCommand(command: OIBusUpdateHistoryQueryCommand, privateKey: string) {
     await this.decryptHistoryQuerySettings(command.commandContent.historyQuery, privateKey);
-    await this.historyQueryService.updateHistoryQuery(
-      command.historyQueryId,
-      command.commandContent.historyQuery,
-      command.commandContent.resetCache
-    );
+    await this.historyQueryService.update(command.historyQueryId, command.commandContent.historyQuery, command.commandContent.resetCache);
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'History query updated successfully');
   }
 
   private async executeDeleteHistoryQueryCommand(command: OIBusDeleteHistoryQueryCommand) {
-    await this.historyQueryService.deleteHistoryQuery(command.historyQueryId);
+    await this.historyQueryService.delete(command.historyQueryId);
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'History query deleted successfully');
   }
 
@@ -941,7 +938,7 @@ export default class OIAnalyticsCommandService {
       throw new Error(`History query ${command.historyQueryId} not found`);
     }
 
-    const { items, errors } = await this.historyQueryService.checkCsvContentImport(
+    const { items, errors } = await this.historyQueryService.checkImportItems(
       historyQuery.southType,
       command.commandContent.csvContent,
       command.commandContent.delimiter,
@@ -996,7 +993,7 @@ export default class OIAnalyticsCommandService {
   private async executeTestHistoryQuerySouthItemCommand(command: OIBusTestHistoryQuerySouthItemCommand, privateKey: string) {
     await this.decryptHistoryQuerySouthItemSettings(command, privateKey);
 
-    await this.historyQueryService.testSouthItem(
+    await this.historyQueryService.testItem(
       command.historyQueryId,
       command.commandContent.historyCommand.southType,
       command.commandContent.itemCommand.name,
@@ -1013,11 +1010,11 @@ export default class OIAnalyticsCommandService {
   private async executeUpdateHistoryQueryStatusCommand(command: OIBusUpdateHistoryQueryStatusCommand) {
     switch (command.commandContent.historyQueryStatus) {
       case 'RUNNING':
-        await this.historyQueryService.startHistoryQuery(command.historyQueryId);
+        await this.historyQueryService.start(command.historyQueryId);
         this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'History query started');
         break;
       case 'PAUSED':
-        await this.historyQueryService.pauseHistoryQuery(command.historyQueryId);
+        await this.historyQueryService.pause(command.historyQueryId);
         this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'History query paused');
         break;
       case 'ERRORED':

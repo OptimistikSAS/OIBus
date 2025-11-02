@@ -20,8 +20,7 @@ import { OIBusObjectAttribute } from '../../shared/model/form.model';
 import OIBusSetpointToModbusTransformer from './transformers/setpoint/oibus-setpoint-to-modbus-transformer';
 import OIBusSetpointToMQTTTransformer from './transformers/setpoint/oibus-setpoint-to-mqtt-transformer';
 import OIBusSetpointToOPCUATransformer from './transformers/setpoint/oibus-setpoint-to-opcua-transformer';
-import { NotFoundError } from '../model/types';
-import { ValidationError } from 'joi';
+import { NotFoundError, OIBusValidationError } from '../model/types';
 
 export default class TransformerService {
   constructor(
@@ -31,7 +30,7 @@ export default class TransformerService {
   ) {}
 
   findAll(): Array<Transformer> {
-    return this.transformerRepository.findAll();
+    return this.transformerRepository.list();
   }
 
   search(searchParams: TransformerSearchParam): Page<Transformer> {
@@ -57,12 +56,9 @@ export default class TransformerService {
 
   async update(transformerId: string, command: CustomTransformerCommandDTO): Promise<void> {
     await this.validator.validate(transformerSchema, command);
-    const transformer = this.transformerRepository.findById(transformerId);
-    if (!transformer) {
-      throw new NotFoundError(`Transformer "${transformerId}" not found`);
-    }
+    const transformer = this.findById(transformerId);
     if (transformer.type === 'standard') {
-      throw new ValidationError(`Cannot edit standard transformer "${transformerId}"`, [], null);
+      throw new OIBusValidationError(`Cannot edit standard transformer "${transformerId}"`);
     }
     await copyTransformerCommandToTransformerEntity(transformer as CustomTransformer, command);
     this.transformerRepository.save(transformer);
@@ -70,12 +66,9 @@ export default class TransformerService {
   }
 
   delete(transformerId: string): void {
-    const transformer = this.transformerRepository.findById(transformerId);
-    if (!transformer) {
-      throw new NotFoundError(`Transformer "${transformerId}" not found`);
-    }
+    const transformer = this.findById(transformerId);
     if (transformer.type === 'standard') {
-      throw new ValidationError(`Cannot delete standard transformer "${transformerId}"`, [], null);
+      throw new OIBusValidationError(`Cannot delete standard transformer "${transformerId}"`);
     }
     this.transformerRepository.delete(transformerId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();

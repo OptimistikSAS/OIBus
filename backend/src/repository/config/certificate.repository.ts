@@ -9,7 +9,7 @@ const CERTIFICATES_TABLE = 'certificates';
 export default class CertificateRepository {
   constructor(private readonly database: Database) {}
 
-  findAll(): Array<Certificate> {
+  list(): Array<Certificate> {
     const query = `SELECT id,
                               name,
                               description,

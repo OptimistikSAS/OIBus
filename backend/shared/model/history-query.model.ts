@@ -19,7 +19,7 @@ export interface HistoryQueryLightDTO extends BaseEntity {
   northType: OIBusNorthType;
 }
 
-export interface HistoryQueryDTO<S extends SouthSettings, N extends NorthSettings, I extends SouthItemSettings> extends BaseEntity {
+export interface HistoryQueryDTO extends BaseEntity {
   name: string;
   description: string;
   status: HistoryQueryStatus;
@@ -27,8 +27,8 @@ export interface HistoryQueryDTO<S extends SouthSettings, N extends NorthSetting
   endTime: string;
   southType: OIBusSouthType;
   northType: OIBusNorthType;
-  southSettings: S;
-  northSettings: N;
+  southSettings: SouthSettings;
+  northSettings: NorthSettings;
   caching: {
     trigger: {
       scanMode: ScanModeDTO;
@@ -50,19 +50,19 @@ export interface HistoryQueryDTO<S extends SouthSettings, N extends NorthSetting
       retentionDuration: number;
     };
   };
-  items: Array<HistoryQueryItemDTO<I>>;
+  items: Array<HistoryQueryItemDTO>;
   northTransformers: Array<TransformerDTOWithOptions>;
 }
 
-export interface HistoryQueryCommandDTO<S extends SouthSettings, N extends NorthSettings, I extends SouthItemSettings> {
+export interface HistoryQueryCommandDTO {
   name: string;
   description: string;
   startTime: string;
   endTime: string;
   southType: OIBusSouthType;
   northType: OIBusNorthType;
-  southSettings: S;
-  northSettings: N;
+  southSettings: SouthSettings;
+  northSettings: NorthSettings;
   caching: {
     trigger: {
       scanModeId: string;
@@ -85,7 +85,7 @@ export interface HistoryQueryCommandDTO<S extends SouthSettings, N extends North
       retentionDuration: number;
     };
   };
-  items: Array<HistoryQueryItemCommandDTO<I>>;
+  items: Array<HistoryQueryItemCommandDTO>;
   northTransformers: Array<TransformerIdWithOptions>;
 }
 
@@ -95,15 +95,15 @@ export interface HistoryQueryItemSearchParam {
   page?: number;
 }
 
-export interface HistoryQueryItemDTO<T extends SouthItemSettings> extends BaseEntity {
+export interface HistoryQueryItemDTO extends BaseEntity {
   name: string;
   enabled: boolean;
-  settings: T;
+  settings: SouthItemSettings;
 }
 
-export interface HistoryQueryItemCommandDTO<T extends SouthItemSettings> {
+export interface HistoryQueryItemCommandDTO {
   id: string | null;
   name: string;
   enabled: boolean;
-  settings: T;
+  settings: SouthItemSettings;
 }

@@ -110,7 +110,7 @@ describe('Repository with populated database', () => {
     });
 
     it('should search scopes and find by id', () => {
-      const result = repository.searchScopesByName(testData.logs.list[2].scopeName as string);
+      const result = repository.suggestScopes(testData.logs.list[2].scopeName as string);
       expect(result).toEqual([{ scopeId: testData.logs.list[2].scopeId, scopeName: testData.logs.list[2].scopeName }]);
 
       const scope = repository.getScopeById(testData.logs.list[2].scopeId as string);

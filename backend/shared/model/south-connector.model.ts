@@ -45,39 +45,39 @@ export interface SouthConnectorLightDTO extends BaseEntity {
   enabled: boolean;
 }
 
-export interface SouthConnectorDTO<T extends SouthSettings, I extends SouthItemSettings> extends BaseEntity {
+export interface SouthConnectorDTO extends BaseEntity {
   name: string;
   type: OIBusSouthType;
   description: string;
   enabled: boolean;
-  settings: T;
-  items: Array<SouthConnectorItemDTO<I>>;
+  settings: SouthSettings;
+  items: Array<SouthConnectorItemDTO>;
 }
 
-export interface SouthConnectorCommandDTO<T extends SouthSettings, I extends SouthItemSettings> {
+export interface SouthConnectorCommandDTO {
   name: string;
   type: OIBusSouthType;
   description: string;
   enabled: boolean;
-  settings: T;
-  items: Array<SouthConnectorItemCommandDTO<I>>;
+  settings: SouthSettings;
+  items: Array<SouthConnectorItemCommandDTO>;
 }
 
 /**
  * DTO used for an item to query within a south
  */
-export interface SouthConnectorItemDTO<T extends SouthItemSettings> extends BaseEntity {
+export interface SouthConnectorItemDTO extends BaseEntity {
   name: string;
   enabled: boolean;
-  settings: T;
+  settings: SouthItemSettings;
   scanMode: ScanModeDTO;
 }
 
-export interface SouthConnectorItemCommandDTO<T extends SouthItemSettings> {
+export interface SouthConnectorItemCommandDTO {
   id: string | null;
   enabled: boolean;
   name: string;
-  settings: T;
+  settings: SouthItemSettings;
   scanModeId: string | null;
   scanModeName: string | null;
 }
@@ -86,7 +86,7 @@ export interface SouthConnectorItemSearchParam {
   name?: string;
   scanModeId?: string;
   enabled?: boolean;
-  page?: number;
+  page: number;
 }
 
 export interface SouthConnectorItemTestingSettings {

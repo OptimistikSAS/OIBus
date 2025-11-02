@@ -7,9 +7,7 @@ import {
   SouthConnectorItemCommandDTO,
   SouthConnectorItemTestingSettings
 } from '../../shared/model/south-connector.model';
-import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { NorthConnectorCommandDTO } from '../../shared/model/north-connector.model';
-import { NorthSettings } from '../../shared/model/north-settings.model';
 import { IPFilterCommandDTO } from '../../shared/model/ip-filter.model';
 import { CertificateCommandDTO } from '../../shared/model/certificate.model';
 import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO, HistoryQueryStatus } from '../../shared/model/history-query.model';
@@ -141,13 +139,13 @@ export interface OIBusDeleteCertificateCommand extends BaseOIBusCommand {
 export interface OIBusCreateSouthConnectorCommand extends BaseOIBusCommand {
   type: 'create-south';
   southConnectorId: string | null; // used to retrieve passwords in case of duplicate
-  commandContent: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
+  commandContent: SouthConnectorCommandDTO;
 }
 
 export interface OIBusUpdateSouthConnectorCommand extends BaseOIBusCommand {
   type: 'update-south';
   southConnectorId: string;
-  commandContent: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
+  commandContent: SouthConnectorCommandDTO;
 }
 
 export interface OIBusDeleteSouthConnectorCommand extends BaseOIBusCommand {
@@ -159,7 +157,7 @@ export interface OIBusTestSouthConnectorCommand extends BaseOIBusCommand {
   type: 'test-south-connection';
   targetVersion: string;
   southConnectorId: string;
-  commandContent: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
+  commandContent: SouthConnectorCommandDTO;
 }
 
 export interface OIBusTestSouthConnectorItemCommand extends BaseOIBusCommand {
@@ -168,8 +166,8 @@ export interface OIBusTestSouthConnectorItemCommand extends BaseOIBusCommand {
   southConnectorId: string;
   itemId: string;
   commandContent: {
-    southCommand: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
-    itemCommand: SouthConnectorItemCommandDTO<SouthItemSettings>;
+    southCommand: SouthConnectorCommandDTO;
+    itemCommand: SouthConnectorItemCommandDTO;
     testingSettings: SouthConnectorItemTestingSettings;
   };
 }
@@ -177,13 +175,13 @@ export interface OIBusTestSouthConnectorItemCommand extends BaseOIBusCommand {
 export interface OIBusCreateNorthConnectorCommand extends BaseOIBusCommand {
   type: 'create-north';
   northConnectorId: string | null; // used to retrieve passwords in case of duplicate
-  commandContent: NorthConnectorCommandDTO<NorthSettings>;
+  commandContent: NorthConnectorCommandDTO;
 }
 
 export interface OIBusUpdateNorthConnectorCommand extends BaseOIBusCommand {
   type: 'update-north';
   northConnectorId: string;
-  commandContent: NorthConnectorCommandDTO<NorthSettings>;
+  commandContent: NorthConnectorCommandDTO;
 }
 
 export interface OIBusDeleteNorthConnectorCommand extends BaseOIBusCommand {
@@ -195,7 +193,7 @@ export interface OIBusTestNorthConnectorCommand extends BaseOIBusCommand {
   type: 'test-north-connection';
   targetVersion: string;
   northConnectorId: string;
-  commandContent: NorthConnectorCommandDTO<NorthSettings>;
+  commandContent: NorthConnectorCommandDTO;
 }
 
 export interface OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand extends BaseOIBusCommand {
@@ -210,10 +208,10 @@ export interface OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand extends Ba
 
 export interface OIBusCreateHistoryQueryCommand extends BaseOIBusCommand {
   type: 'create-history-query';
-  northConnectorId: string | null; // used to retrieve passwords in case it is created from a north connector
-  southConnectorId: string | null; // used to retrieve passwords in case it is created from a south connector
-  historyQueryId: string | null; // used to retrieve passwords in case of duplicate
-  commandContent: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
+  northConnectorId: string | undefined; // used to retrieve passwords in case it is created from a north connector
+  southConnectorId: string | undefined; // used to retrieve passwords in case it is created from a south connector
+  historyQueryId: string | undefined; // used to retrieve passwords in case of duplicate
+  commandContent: HistoryQueryCommandDTO;
 }
 
 export interface OIBusUpdateHistoryQueryCommand extends BaseOIBusCommand {
@@ -221,7 +219,7 @@ export interface OIBusUpdateHistoryQueryCommand extends BaseOIBusCommand {
   historyQueryId: string;
   commandContent: {
     resetCache: boolean;
-    historyQuery: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
+    historyQuery: HistoryQueryCommandDTO;
   };
 }
 
@@ -233,25 +231,25 @@ export interface OIBusDeleteHistoryQueryCommand extends BaseOIBusCommand {
 export interface OIBusTestHistoryQueryNorthConnectionCommand extends BaseOIBusCommand {
   type: 'test-history-query-north-connection';
   historyQueryId: string;
-  northConnectorId: string | null;
-  commandContent: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
+  northConnectorId: string | undefined;
+  commandContent: HistoryQueryCommandDTO;
 }
 
 export interface OIBusTestHistoryQuerySouthConnectionCommand extends BaseOIBusCommand {
   type: 'test-history-query-south-connection';
   historyQueryId: string;
-  southConnectorId: string | null;
-  commandContent: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
+  southConnectorId: string | undefined;
+  commandContent: HistoryQueryCommandDTO;
 }
 
 export interface OIBusTestHistoryQuerySouthItemCommand extends BaseOIBusCommand {
   type: 'test-history-query-south-item';
   historyQueryId: string;
-  southConnectorId: string | null;
+  southConnectorId: string | undefined;
   itemId: string;
   commandContent: {
-    historyCommand: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
-    itemCommand: HistoryQueryItemCommandDTO<SouthItemSettings>;
+    historyCommand: HistoryQueryCommandDTO;
+    itemCommand: HistoryQueryItemCommandDTO;
     testingSettings: SouthConnectorItemTestingSettings;
   };
 }

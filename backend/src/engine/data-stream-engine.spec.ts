@@ -735,19 +735,19 @@ describe('DataStreamEngine', () => {
   it('should properly get metrics', async () => {
     await engine.start([northList[0]], [southList[0]], []);
 
-    expect(engine.getNorthConnectorMetrics()).toEqual({ [mockedNorth1.connectorConfiguration.id]: {} });
-    expect(engine.getSouthConnectorMetrics()).toEqual({ [mockedSouth1.connectorConfiguration.id]: {} });
+    expect(engine.getNorthMetrics()).toEqual({ [mockedNorth1.connectorConfiguration.id]: {} });
+    expect(engine.getSouthMetrics()).toEqual({ [mockedSouth1.connectorConfiguration.id]: {} });
   });
 
   it('should properly reset metrics', async () => {
     await engine.start([northList[0]], [southList[0]], []);
 
-    engine.resetNorthConnectorMetrics(mockedNorth1.connectorConfiguration.id);
-    engine.resetNorthConnectorMetrics('bad id');
+    engine.resetNorthMetrics(mockedNorth1.connectorConfiguration.id);
+    engine.resetNorthMetrics('bad id');
     expect(northConnectorMetricsService.resetMetrics).toHaveBeenCalledTimes(1);
 
-    engine.resetSouthConnectorMetrics(mockedSouth1.connectorConfiguration.id);
-    engine.resetSouthConnectorMetrics('bad id');
+    engine.resetSouthMetrics(mockedSouth1.connectorConfiguration.id);
+    engine.resetSouthMetrics('bad id');
     expect(southConnectorMetricsService.resetMetrics).toHaveBeenCalledTimes(1);
   });
 

@@ -2,8 +2,6 @@
 // DTO to send to OIAnalytics
 //
 import { EngineSettingsCommandDTO } from '../../../shared/model/engine.model';
-import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
-import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { NorthConnectorCommandDTO } from '../../../shared/model/north-connector.model';
 import {
   SouthConnectorCommandDTO,
@@ -101,13 +99,13 @@ export interface OIAnalyticsEngineCommandDTO {
 export interface OIAnalyticsSouthCommandDTO {
   oIBusInternalId: string | null;
   type: string;
-  settings: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
+  settings: SouthConnectorCommandDTO;
 }
 
 export interface OIAnalyticsNorthCommandDTO {
   oIBusInternalId: string | null;
   type: string;
-  settings: NorthConnectorCommandDTO<NorthSettings>;
+  settings: NorthConnectorCommandDTO;
 }
 
 export interface OIBusFullConfigurationCommandDTO {
@@ -125,7 +123,7 @@ export interface OIBusFullConfigurationCommandDTO {
 export interface OIBusHistoryQueriesCommandDTO {
   historyQueries: Array<{
     oIBusInternalId: string | null;
-    settings: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
+    settings: HistoryQueryCommandDTO;
   }>;
 }
 
@@ -256,13 +254,13 @@ export interface OIAnalyticsFetchDeleteCertificateCommandDTO extends BaseOIAnaly
 export interface OIAnalyticsFetchCreateSouthConnectorCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
   type: 'create-south';
   retrieveSecretsFromSouth: string | null; // used to retrieve passwords in case of duplicate
-  commandContent: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
+  commandContent: SouthConnectorCommandDTO;
 }
 
 export interface OIAnalyticsFetchUpdateSouthConnectorCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
   type: 'update-south';
   southConnectorId: string;
-  commandContent: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
+  commandContent: SouthConnectorCommandDTO;
 }
 
 export interface OIAnalyticsFetchDeleteSouthConnectorCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
@@ -281,7 +279,7 @@ export interface OIAnalyticsFetchCreateOrUpdateSouthConnectorItemsFromCSVCommand
 export interface OIAnalyticsFetchTestSouthConnectionCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
   type: 'test-south-connection';
   southConnectorId: string;
-  commandContent: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
+  commandContent: SouthConnectorCommandDTO;
 }
 
 export interface OIAnalyticsFetchTestSouthItemCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
@@ -289,8 +287,8 @@ export interface OIAnalyticsFetchTestSouthItemCommandDTO extends BaseOIAnalytics
   southConnectorId: string;
   itemId: string;
   commandContent: {
-    southCommand: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
-    itemCommand: SouthConnectorItemCommandDTO<SouthItemSettings>;
+    southCommand: SouthConnectorCommandDTO;
+    itemCommand: SouthConnectorItemCommandDTO;
     testingSettings: SouthConnectorItemTestingSettings;
   };
 }
@@ -298,13 +296,13 @@ export interface OIAnalyticsFetchTestSouthItemCommandDTO extends BaseOIAnalytics
 export interface OIAnalyticsFetchCreateNorthConnectorCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
   type: 'create-north';
   retrieveSecretsFromNorth: string | null; // used to retrieve passwords in case of duplicate
-  commandContent: NorthConnectorCommandDTO<NorthSettings>;
+  commandContent: NorthConnectorCommandDTO;
 }
 
 export interface OIAnalyticsFetchUpdateNorthConnectorCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
   type: 'update-north';
   northConnectorId: string;
-  commandContent: NorthConnectorCommandDTO<NorthSettings>;
+  commandContent: NorthConnectorCommandDTO;
 }
 
 export interface OIAnalyticsFetchDeleteNorthConnectorCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
@@ -315,7 +313,7 @@ export interface OIAnalyticsFetchDeleteNorthConnectorCommandDTO extends BaseOIAn
 export interface OIAnalyticsFetchTestNorthConnectionCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
   type: 'test-north-connection';
   northConnectorId: string;
-  commandContent: NorthConnectorCommandDTO<NorthSettings>;
+  commandContent: NorthConnectorCommandDTO;
 }
 
 export interface OIAnalyticsFetchCreateHistoryQueryCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
@@ -323,7 +321,7 @@ export interface OIAnalyticsFetchCreateHistoryQueryCommandDTO extends BaseOIAnal
   retrieveSecretsFromSouth: string | null;
   retrieveSecretsFromNorth: string | null;
   retrieveSecretsFromHistoryQuery: string | null;
-  commandContent: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
+  commandContent: HistoryQueryCommandDTO;
 }
 
 export interface OIAnalyticsFetchUpdateHistoryQueryCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
@@ -331,7 +329,7 @@ export interface OIAnalyticsFetchUpdateHistoryQueryCommandDTO extends BaseOIAnal
   historyId: string;
   commandContent: {
     resetCache: boolean;
-    historyQuery: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
+    historyQuery: HistoryQueryCommandDTO;
   };
 }
 
@@ -344,14 +342,14 @@ export interface OIAnalyticsFetchTestHistoryQueryNorthConnectionCommandDTO exten
   type: 'test-history-query-north-connection';
   historyId: string;
   northConnectorId: string;
-  commandContent: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
+  commandContent: HistoryQueryCommandDTO;
 }
 
 export interface OIAnalyticsFetchTestHistoryQuerySouthConnectionCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
   type: 'test-history-query-south-connection';
   historyId: string;
   southConnectorId: string;
-  commandContent: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
+  commandContent: HistoryQueryCommandDTO;
 }
 
 export interface OIAnalyticsFetchTestHistoryQuerySouthItemConnectionCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
@@ -360,8 +358,8 @@ export interface OIAnalyticsFetchTestHistoryQuerySouthItemConnectionCommandDTO e
   southConnectorId: string;
   itemId: string;
   commandContent: {
-    historyCommand: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
-    itemCommand: HistoryQueryItemCommandDTO<SouthItemSettings>;
+    historyCommand: HistoryQueryCommandDTO;
+    itemCommand: HistoryQueryItemCommandDTO;
     testingSettings: SouthConnectorItemTestingSettings;
   };
 }

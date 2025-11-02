@@ -76,14 +76,14 @@ describe('OIAnalytics Message Service', () => {
     (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock).mockReturnValue(testData.oIAnalytics.registration.completed);
     (engineRepository.get as jest.Mock).mockReturnValue(testData.engine.settings);
     (scanModeRepository.findAll as jest.Mock).mockReturnValue(testData.scanMode.list);
-    (ipFilterRepository.findAll as jest.Mock).mockReturnValue(testData.ipFilters.list);
-    (certificateRepository.findAll as jest.Mock).mockReturnValue(testData.certificates.list);
-    (userRepository.findAll as jest.Mock).mockReturnValue(testData.users.list);
+    (ipFilterRepository.list as jest.Mock).mockReturnValue(testData.ipFilters.list);
+    (certificateRepository.list as jest.Mock).mockReturnValue(testData.certificates.list);
+    (userRepository.list as jest.Mock).mockReturnValue(testData.users.list);
     (southRepository.findAllSouth as jest.Mock).mockReturnValue(testData.south.list);
     (southRepository.findSouthById as jest.Mock).mockImplementation(id => testData.south.list.find(element => element.id === id));
     (northRepository.findAllNorth as jest.Mock).mockReturnValue(testData.north.list);
     (northRepository.findNorthById as jest.Mock).mockImplementation(id => testData.north.list.find(element => element.id === id));
-    (transformerRepository.findAll as jest.Mock).mockReturnValue([...testData.transformers.list, standardTransformer]);
+    (transformerRepository.list as jest.Mock).mockReturnValue([...testData.transformers.list, standardTransformer]);
 
     service = new OIAnalyticsMessageService(
       oIAnalyticsMessageRepository,

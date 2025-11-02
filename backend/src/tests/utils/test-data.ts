@@ -26,7 +26,6 @@ import { OIAnalyticsMessage } from '../../model/oianalytics-message.model';
 import { SouthConnectorEntity } from '../../model/south-connector.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
-import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { HistoryQueryEntity } from '../../model/histor-query.model';
 import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO } from '../../../shared/model/history-query.model';
 import { User } from '../../model/user.model';
@@ -35,6 +34,7 @@ import { OIBusLog } from '../../model/logs.model';
 import { CertificateCommandDTO } from '../../../shared/model/certificate.model';
 import { CustomTransformerCommandDTO } from '../../../shared/model/transformer.model';
 import { Transformer } from '../../model/transformer.model';
+import { NorthSettings } from '../../../shared/model/north-settings.model';
 
 const constants = {
   dates: {
@@ -538,7 +538,7 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
     ]
   }
 ];
-const southConnectorCommand: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> = {
+const southConnectorCommand: SouthConnectorCommandDTO = {
   name: 'South 1',
   type: 'folder-scanner',
   description: 'my folder scanner',
@@ -563,7 +563,7 @@ const southConnectorCommand: SouthConnectorCommandDTO<SouthSettings, SouthItemSe
     }
   ]
 };
-const southConnectorItemCommand: SouthConnectorItemCommandDTO<SouthItemSettings> = {
+const southConnectorItemCommand: SouthConnectorItemCommandDTO = {
   id: 'newSouthItemId',
   name: 'New South Item',
   scanModeId: 'scanModeId1',
@@ -699,7 +699,7 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
     transformers: []
   }
 ];
-const northConnectorCommand: NorthConnectorCommandDTO<NorthSettings> = {
+const northConnectorCommand: NorthConnectorCommandDTO = {
   name: 'North 1',
   type: 'file-writer',
   description: 'my file writer',
@@ -873,7 +873,7 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
     northTransformers: []
   }
 ];
-const historyQueryCommand: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings> = {
+const historyQueryCommand: HistoryQueryCommandDTO = {
   name: 'name',
   description: 'description',
   startTime: '2020-02-01T02:02:59.999Z',
@@ -937,7 +937,7 @@ const historyQueryCommand: HistoryQueryCommandDTO<SouthSettings, NorthSettings, 
     { transformerId: transformers[1].id, options: {}, inputType: transformers[1].inputType }
   ]
 };
-const historyQueryItemCommand: HistoryQueryItemCommandDTO<SouthItemSettings> = {
+const historyQueryItemCommand: HistoryQueryItemCommandDTO = {
   id: 'newHistoryQueryItemId',
   name: 'New History query Item',
   enabled: true,

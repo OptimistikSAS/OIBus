@@ -11,6 +11,7 @@ import { DateTime, Duration } from 'luxon';
 import { CertificateCommandDTO } from '../../shared/model/certificate.model';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import OianalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
+import { NotFoundError } from '../model/types';
 
 jest.mock('./utils');
 jest.mock('../web-server/controllers/validators/joi.validator');
@@ -29,16 +30,16 @@ describe('Certificate Service', () => {
     service = new CertificateService(validator, certificateRepository, encryptionService, oIAnalyticsMessageService);
   });
 
-  it('findAll() should find all certificated', () => {
-    (certificateRepository.findAll as jest.Mock).mockReturnValueOnce(testData.certificates.list);
+  it('should list all certificated', () => {
+    (certificateRepository.list as jest.Mock).mockReturnValueOnce(testData.certificates.list);
 
-    const result = service.findAll();
+    const result = service.list();
 
-    expect(certificateRepository.findAll).toHaveBeenCalled();
+    expect(certificateRepository.list).toHaveBeenCalled();
     expect(result).toEqual(testData.certificates.list.map(element => toCertificateDTO(element)));
   });
 
-  it('findById() should find a certificate by id', () => {
+  it('should find a certificate by id', () => {
     (certificateRepository.findById as jest.Mock).mockReturnValueOnce(testData.certificates.list[0]);
 
     const result = service.findById(testData.certificates.list[0].id);
@@ -47,7 +48,18 @@ describe('Certificate Service', () => {
     expect(result).toEqual(toCertificateDTO(testData.certificates.list[0]));
   });
 
-  it('create() should create a certificate', async () => {
+  it('should not get if the certificate is not found', async () => {
+    (certificateRepository.findById as jest.Mock).mockReturnValueOnce(null);
+
+    expect(() => service.findById(testData.certificates.list[0].id)).toThrow(
+      new NotFoundError(`Certificate "${testData.certificates.list[0].id}" not found`)
+    );
+
+    expect(certificateRepository.findById).toHaveBeenCalledWith(testData.certificates.list[0].id);
+    expect(certificateRepository.update).not.toHaveBeenCalled();
+  });
+
+  it('should create a certificate', async () => {
     (certificateRepository.create as jest.Mock).mockReturnValueOnce(testData.certificates.list[0]);
     (generateRandomId as jest.Mock).mockReturnValueOnce('newCertificateId');
     (encryptionService.generateSelfSignedCertificate as jest.Mock).mockReturnValueOnce({
@@ -55,6 +67,7 @@ describe('Certificate Service', () => {
       private: 'private',
       cert: 'cert'
     });
+
     const result = await service.create(testData.certificates.command);
 
     expect(validator.validate).toHaveBeenCalledWith(certificateSchema, testData.certificates.command);
@@ -73,7 +86,7 @@ describe('Certificate Service', () => {
     expect(result).toEqual(toCertificateDTO(testData.certificates.list[0]));
   });
 
-  it('update() should update a certificate', async () => {
+  it('should update a certificate', async () => {
     (certificateRepository.findById as jest.Mock).mockReturnValueOnce(testData.certificates.list[0]);
     (encryptionService.generateSelfSignedCertificate as jest.Mock).mockReturnValueOnce({
       public: 'public',
@@ -83,12 +96,12 @@ describe('Certificate Service', () => {
     const command: CertificateCommandDTO = JSON.parse(JSON.stringify(testData.certificates.command));
     command.regenerateCertificate = true;
 
-    await service.update('newId', command);
+    await service.update(testData.certificates.list[0].id, command);
 
     expect(validator.validate).toHaveBeenCalledWith(certificateSchema, command);
-    expect(certificateRepository.findById).toHaveBeenCalledWith('newId');
+    expect(certificateRepository.findById).toHaveBeenCalledWith(testData.certificates.list[0].id);
     expect(certificateRepository.update).toHaveBeenCalledWith({
-      id: 'newId',
+      id: testData.certificates.list[0].id,
       name: command.name,
       description: command.description,
       publicKey: 'public',
@@ -101,25 +114,20 @@ describe('Certificate Service', () => {
     });
   });
 
-  it('update() should not update if the certificate is not found', async () => {
-    (certificateRepository.findById as jest.Mock).mockReturnValueOnce(null);
-
-    await expect(service.update('newId', testData.certificates.command)).rejects.toThrow(new Error(`Certificate "newId" not found`));
-
-    expect(certificateRepository.findById).toHaveBeenCalledWith('newId');
-    expect(certificateRepository.update).not.toHaveBeenCalled();
-  });
-
-  it('update() should just update name and description if regenerateCertificate is false', async () => {
+  it('should just update name and description if regenerateCertificate is false', async () => {
     (certificateRepository.findById as jest.Mock).mockReturnValueOnce(testData.certificates.list[0]);
 
     const command: CertificateCommandDTO = JSON.parse(JSON.stringify(testData.certificates.command));
     command.regenerateCertificate = false;
-    await service.update('newId', command);
-    expect(certificateRepository.updateNameAndDescription).toHaveBeenCalledWith('newId', command.name, command.description);
+    await service.update(testData.certificates.list[0].id, command);
+    expect(certificateRepository.updateNameAndDescription).toHaveBeenCalledWith(
+      testData.certificates.list[0].id,
+      command.name,
+      command.description
+    );
   });
 
-  it('delete() should delete a certificate', async () => {
+  it('should delete a certificate', async () => {
     (certificateRepository.findById as jest.Mock).mockReturnValueOnce(testData.certificates.list[0]);
 
     await service.delete(testData.certificates.list[0].id);
@@ -128,14 +136,16 @@ describe('Certificate Service', () => {
     expect(certificateRepository.delete).toHaveBeenCalledWith(testData.certificates.list[0].id);
   });
 
-  it('delete() should not delete if the certificate is not found', async () => {
-    (certificateRepository.findById as jest.Mock).mockReturnValueOnce(null);
-
-    await expect(service.delete(testData.certificates.list[0].id)).rejects.toThrow(
-      new Error(`Certificate "${testData.certificates.list[0].id}" not found`)
-    );
-
-    expect(certificateRepository.findById).toHaveBeenCalledWith(testData.certificates.list[0].id);
-    expect(certificateRepository.delete).not.toHaveBeenCalled();
+  it('should properly convert to DTO', () => {
+    const certificate = testData.certificates.list[0];
+    expect(toCertificateDTO(certificate)).toEqual({
+      id: certificate.id,
+      name: certificate.name,
+      description: certificate.description,
+      publicKey: certificate.publicKey,
+      privateKey: certificate.privateKey,
+      certificate: certificate.certificate,
+      expiry: certificate.expiry
+    });
   });
 });
