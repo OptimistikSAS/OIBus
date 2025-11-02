@@ -1,252 +1,335 @@
-import { KoaContext } from '../koa';
+import { Body, Controller, Delete, Get, Path, Post, Put, Query, Request, Route, SuccessResponse, Tags } from 'tsoa';
 import {
   NorthConnectorCommandDTO,
   NorthConnectorDTO,
   NorthConnectorLightDTO,
   NorthConnectorManifest,
-  NorthType,
+  OIBusNorthCategory,
   OIBusNorthType
 } from '../../../shared/model/north-connector.model';
-import JoiValidator from './validators/joi.validator';
-import { toNorthConnectorDTO, toNorthConnectorLightDTO } from '../../service/north.service';
+import { CustomExpressRequest } from '../express';
+import NorthService, { toNorthConnectorDTO, toNorthConnectorLightDTO } from '../../service/north.service';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata } from '../../../shared/model/engine.model';
-import { ReadStream } from 'node:fs';
 import { TransformerDTOWithOptions } from '../../../shared/model/transformer.model';
+import OIBusService from '../../service/oibus.service';
 
-export default class NorthConnectorController {
-  constructor(protected readonly validator: JoiValidator) {}
+/**
+ * @interface NorthConnectorType
+ * @description North connector type information
+ */
+interface NorthConnectorType {
+  /** North connector type ID */
+  id: OIBusNorthType;
+  /** Category of the north connector */
+  category: OIBusNorthCategory;
+  /** Supported types */
+  types: Array<string>;
+}
 
-  async getNorthConnectorTypes(ctx: KoaContext<void, Array<NorthType>>): Promise<void> {
-    ctx.ok(
-      ctx.app.northService.getInstalledNorthManifests().map(manifest => ({
-        id: manifest.id,
-        category: manifest.category,
-        types: manifest.types
-      }))
-    );
+/**
+ * @interface NorthCacheMetadata
+ * @description Metadata for north connector cache files
+ */
+interface NorthCacheMetadata {
+  /** Filename of the metadata */
+  metadataFilename: string;
+  /** Metadata content */
+  metadata: CacheMetadata;
+}
+
+@Route('/api/north')
+@Tags('North Connectors')
+/**
+ * @class NorthConnectorController
+ * @description Endpoints for managing north connectors, subscriptions, and cache operations
+ */
+export class NorthConnectorController extends Controller {
+  /**
+   * Retrieves a list of all available north connector types
+   * @summary List all north connector types
+   * @returns {Array<NorthConnectorType>} Array of north connector type objects
+   */
+  @Get('/types')
+  listManifest(@Request() request: CustomExpressRequest): Array<NorthConnectorType> {
+    const northService = request.services.northService as NorthService;
+    return northService.listManifest().map(manifest => ({
+      id: manifest.id,
+      category: manifest.category,
+      types: manifest.types
+    }));
   }
 
-  async getNorthConnectorManifest(ctx: KoaContext<void, NorthConnectorManifest>): Promise<void> {
-    const manifest = ctx.app.northService.getInstalledNorthManifests().find(northManifest => northManifest.id === ctx.params.id);
-    if (!manifest) {
-      ctx.throw(404, 'North not found');
-    }
-    ctx.ok(manifest);
+  /**
+   * Retrieves a specific north connector manifest by its type
+   * @summary Get north connector manifest
+   * @returns {NorthConnectorManifest} The north connector manifest
+   */
+  @Get('/manifests/{type}')
+  getManifest(@Path() type: string, @Request() request: CustomExpressRequest): NorthConnectorManifest {
+    const northService = request.services.northService as NorthService;
+    return northService.getManifest(type);
   }
 
-  async findAll(ctx: KoaContext<void, Array<NorthConnectorLightDTO>>): Promise<void> {
-    const northConnectors = ctx.app.northService.findAll();
-    ctx.ok(northConnectors.map(connector => toNorthConnectorLightDTO(connector)));
+  /**
+   * Retrieves a list of all configured north connectors
+   * @summary List all north connectors
+   * @returns {Array<NorthConnectorLightDTO>} Array of north connector objects
+   */
+  @Get('/')
+  list(@Request() request: CustomExpressRequest): Array<NorthConnectorLightDTO> {
+    const northService = request.services.northService as NorthService;
+    const northConnectors = northService.list();
+    return northConnectors.map(connector => toNorthConnectorLightDTO(connector));
   }
 
-  async findById(ctx: KoaContext<void, NorthConnectorDTO<NorthSettings>>): Promise<void> {
-    const northConnector = ctx.app.northService.findById(ctx.params.id);
-    if (northConnector) {
-      ctx.ok(toNorthConnectorDTO(northConnector, ctx.app.encryptionService));
-    } else {
-      ctx.notFound();
-    }
+  /**
+   * Retrieves a specific north connector by its unique identifier
+   * @summary Get north connector by ID
+   * @returns {NorthConnectorDTO} The north connector object
+   */
+  @Get('/{northId}')
+  findById(@Path() northId: string, @Request() request: CustomExpressRequest): NorthConnectorDTO {
+    const northService = request.services.northService as NorthService;
+    return toNorthConnectorDTO(northService.findById(northId));
   }
 
-  async create(ctx: KoaContext<NorthConnectorCommandDTO<NorthSettings>, NorthConnectorDTO<NorthSettings>>): Promise<void> {
-    try {
-      const northConnector = await ctx.app.northService.createNorth(ctx.request.body!, (ctx.query.duplicate as string) || null);
-      ctx.created(toNorthConnectorDTO(northConnector, ctx.app.encryptionService));
-    } catch (error: unknown) {
-      ctx.badRequest((error as Error).message);
-    }
+  /**
+   * Creates a new north connector with the provided configuration
+   * @summary Create north connector
+   * @returns {Promise<NorthConnectorDTO>} The created north connector
+   */
+  @Post('/')
+  @SuccessResponse(201, 'Created')
+  async create(
+    @Body() command: NorthConnectorCommandDTO,
+    @Query() duplicate: string | undefined,
+    @Request() request: CustomExpressRequest
+  ): Promise<NorthConnectorDTO> {
+    const northService = request.services.northService as NorthService;
+    return toNorthConnectorDTO(await northService.create(command, duplicate || null));
   }
 
-  async updateNorth(ctx: KoaContext<NorthConnectorCommandDTO<NorthSettings>, void>): Promise<void> {
-    try {
-      await ctx.app.northService.updateNorth(ctx.params.id!, ctx.request.body!);
-      ctx.noContent();
-    } catch (error: unknown) {
-      ctx.badRequest((error as Error).message);
-    }
+  /**
+   * Updates an existing north connector configuration
+   * @summary Update north connector
+   */
+  @Put('/{northId}')
+  @SuccessResponse(204, 'No Content')
+  async update(
+    @Path() northId: string,
+    @Body() command: NorthConnectorCommandDTO,
+    @Request() request: CustomExpressRequest
+  ): Promise<void> {
+    const northService = request.services.northService as NorthService;
+    await northService.update(northId, command);
   }
 
-  async delete(ctx: KoaContext<void, void>): Promise<void> {
-    try {
-      await ctx.app.northService.deleteNorth(ctx.params.id!);
-      ctx.noContent();
-    } catch (error: unknown) {
-      ctx.badRequest((error as Error).message);
-    }
+  /**
+   * Deletes a north connector by its ID
+   * @summary Delete north connector
+   */
+  @Delete('/{northId}')
+  @SuccessResponse(204, 'No Content')
+  async delete(@Path() northId: string, @Request() request: CustomExpressRequest): Promise<void> {
+    const northService = request.services.northService as NorthService;
+    await northService.delete(northId);
   }
 
-  async addOrEditTransformer(ctx: KoaContext<TransformerDTOWithOptions, void>): Promise<void> {
-    try {
-      await ctx.app.northService.addOrEditTransformer(ctx.params.northId, ctx.request.body!);
-      return ctx.noContent();
-    } catch (error: unknown) {
-      ctx.badRequest((error as Error).message);
-    }
+  /**
+   * Starts a north connector
+   * @summary Start north connector
+   */
+  @Post('/{northId}/start')
+  @SuccessResponse(204, 'No Content')
+  async start(@Path() northId: string, @Request() request: CustomExpressRequest): Promise<void> {
+    const northService = request.services.northService as NorthService;
+    await northService.start(northId);
   }
 
-  async removeTransformer(ctx: KoaContext<void, void>): Promise<void> {
-    try {
-      await ctx.app.northService.removeTransformer(ctx.params.northId, ctx.params.transformerId);
-      return ctx.noContent();
-    } catch (error: unknown) {
-      return ctx.badRequest((error as Error).message);
-    }
+  /**
+   * Stops a north connector
+   * @summary Stop north connector
+   */
+  @Post('/{northId}/stop')
+  @SuccessResponse(204, 'No Content')
+  async stop(@Path() northId: string, @Request() request: CustomExpressRequest): Promise<void> {
+    const northService = request.services.northService as NorthService;
+    await northService.stop(northId);
   }
 
-  async addSubscription(ctx: KoaContext<void, void>): Promise<void> {
-    try {
-      await ctx.app.northService.createSubscription(ctx.params.northId, ctx.params.southId);
-      return ctx.noContent();
-    } catch (error: unknown) {
-      ctx.badRequest((error as Error).message);
-    }
+  /**
+   * Resets all metrics for a north connector
+   * @summary Reset north connector metrics
+   */
+  @Post('/{northId}/metrics/reset')
+  @SuccessResponse(204, 'No Content')
+  async resetMetrics(@Path() northId: string, @Request() request: CustomExpressRequest): Promise<void> {
+    const oIBusService = request.services.oIBusService as OIBusService;
+    await oIBusService.resetNorthMetrics(northId);
   }
 
-  async removeSubscription(ctx: KoaContext<void, void>): Promise<void> {
-    try {
-      await ctx.app.northService.deleteSubscription(ctx.params.northId, ctx.params.southId);
-      return ctx.noContent();
-    } catch (error: unknown) {
-      return ctx.badRequest((error as Error).message);
-    }
+  /**
+   * Tests the connection for a north connector
+   * @summary Test north connection
+   */
+  @Post('/{northId}/test/connection')
+  @SuccessResponse(204, 'No Content')
+  async testNorth(
+    @Path() northId: string,
+    @Query() northType: OIBusNorthType,
+    @Body() command: NorthSettings,
+    @Request() request: CustomExpressRequest
+  ): Promise<void> {
+    const northService = request.services.northService as NorthService;
+    await northService.testNorth(northId, northType, command);
   }
 
-  start = async (ctx: KoaContext<void, void>) => {
-    try {
-      await ctx.app.northService.startNorth(ctx.params.id!);
-      ctx.noContent();
-    } catch (error: unknown) {
-      ctx.badRequest((error as Error).message);
-    }
-  };
-
-  stop = async (ctx: KoaContext<void, void>) => {
-    try {
-      await ctx.app.northService.stopNorth(ctx.params.id!);
-      ctx.noContent();
-    } catch (error: unknown) {
-      ctx.badRequest((error as Error).message);
-    }
-  };
-
-  async resetMetrics(ctx: KoaContext<void, void>): Promise<void> {
-    ctx.app.oIBusService.resetNorthConnectorMetrics(ctx.params.northId);
-    ctx.noContent();
+  /**
+   * Adds or updates a transformer configuration for a north connector
+   * @summary Add/edit transformer
+   */
+  @Post('/{northId}/transformers')
+  @SuccessResponse(204, 'No Content')
+  async addOrEditTransformer(
+    @Path() northId: string,
+    @Body() command: TransformerDTOWithOptions,
+    @Request() request: CustomExpressRequest
+  ): Promise<void> {
+    const northService = request.services.northService as NorthService;
+    await northService.addOrEditTransformer(northId, command);
   }
 
-  async searchCacheContent(ctx: KoaContext<void, Array<{ metadataFilename: string; metadata: CacheMetadata }>>): Promise<void> {
-    const nameContains = (ctx.query.nameContains as string) || null;
-    const start = (ctx.query.start as string) || null;
-    const end = (ctx.query.end as string) || null;
-    const folder = (ctx.query.folder as string) || '';
-    if (!['cache', 'archive', 'error'].includes(folder)) {
-      return ctx.badRequest('A folder must be specified among "cache", "error" or "archive"');
-    }
-    const cacheContentList: Array<{ metadataFilename: string; metadata: CacheMetadata }> = await ctx.app.northService.searchCacheContent(
-      ctx.params.northId,
-      { start: start, end: end, nameContains },
-      folder as 'cache' | 'archive' | 'error'
-    );
-    ctx.ok(cacheContentList);
+  /**
+   * Remove a transformer from a north connector
+   * @summary Remove transformer
+   */
+  @Delete('/{northId}/transformers/{transformerId}')
+  @SuccessResponse(204, 'No Content')
+  async removeTransformer(@Path() northId: string, @Path() transformerId: string, @Request() request: CustomExpressRequest): Promise<void> {
+    const northService = request.services.northService as NorthService;
+    await northService.removeTransformer(northId, transformerId);
   }
 
-  async getCacheContentFileStream(ctx: KoaContext<void, ReadStream>): Promise<void> {
-    const folder = (ctx.query.folder as string) || '';
-    const filename = (ctx.params.filename as string) || '';
-    if (!['cache', 'archive', 'error'].includes(folder)) {
-      return ctx.badRequest('A folder must be specified among "cache", "error" or "archive"');
-    }
-    if (!filename) {
-      return ctx.badRequest('A filename must be specified');
-    }
-    const fileStream = await ctx.app.northService.getCacheContentFileStream(
-      ctx.params.northId,
-      folder as 'cache' | 'archive' | 'error',
-      filename
-    );
-    if (!fileStream) {
-      return ctx.notFound();
-    }
-    ctx.attachment(ctx.params.filename);
-    ctx.ok(fileStream);
+  /**
+   * Subscribe to a south connector from a north connector
+   * @summary Subscribe to a south connector
+   */
+  @Post('/{northId}/subscriptions/{southId}')
+  @SuccessResponse(204, 'No Content')
+  async subscribeToSouth(@Path() northId: string, @Path() southId: string, @Request() request: CustomExpressRequest): Promise<void> {
+    const northService = request.services.northService as NorthService;
+    await northService.subscribeToSouth(northId, southId);
   }
 
-  async removeCacheContent(ctx: KoaContext<Array<string>, void>): Promise<void> {
-    const folder = (ctx.query.folder as string) || '';
-    if (!['cache', 'archive', 'error'].includes(folder)) {
-      return ctx.badRequest('A folder must be specified among "cache", "error" or "archive"');
-    }
-
-    if (!Array.isArray(ctx.request.body)) {
-      return ctx.badRequest('Invalid file list');
-    }
-
-    await ctx.app.northService.removeCacheContent(ctx.params.northId, folder as 'cache' | 'archive' | 'error', ctx.request.body);
-    ctx.noContent();
+  /**
+   * Remove a subscription to a south connector from a north connector
+   * @summary Unsubscribe from a south connector
+   */
+  @Delete('/{northId}/subscriptions/{southId}')
+  @SuccessResponse(204, 'No Content')
+  async unsubscribeFromSouth(@Path() northId: string, @Path() southId: string, @Request() request: CustomExpressRequest): Promise<void> {
+    const northService = request.services.northService as NorthService;
+    await northService.unsubscribeFromSouth(northId, southId);
   }
 
-  async removeAllCacheContent(ctx: KoaContext<void, void>): Promise<void> {
-    const folder = (ctx.query.folder as string) || '';
-    if (!['cache', 'archive', 'error'].includes(folder)) {
-      return ctx.badRequest('A folder must be specified among "cache", "error" or "archive"');
-    }
-    await ctx.app.northService.removeAllCacheContent(ctx.params.northId, folder as 'cache' | 'archive' | 'error');
-    ctx.noContent();
+  /**
+   * Searches for files in the north connector cache
+   * @summary Search cache files
+   * @returns {Promise<Array<NorthCacheMetadata>>} Array of cache file metadata
+   */
+  @Get('/{northId}/cache/search')
+  async searchCacheContent(
+    @Path() northId: string,
+    @Query() nameContains: string | undefined,
+    @Query() start: string | undefined,
+    @Query() end: string | undefined,
+    @Query() folder: 'cache' | 'archive' | 'error',
+    @Request() request: CustomExpressRequest
+  ): Promise<Array<NorthCacheMetadata>> {
+    const northService = request.services.northService as NorthService;
+    return await northService.searchCacheContent(northId, { start, end, nameContains }, folder);
   }
 
-  async moveCacheContent(ctx: KoaContext<Array<string>, void>): Promise<void> {
-    const originFolder = (ctx.query.originFolder as string) || '';
-    if (!['cache', 'archive', 'error'].includes(originFolder)) {
-      return ctx.badRequest('The originFolder must be specified among "cache", "error" or "archive"');
-    }
-    const destinationFolder = (ctx.query.destinationFolder as string) || '';
-    if (!['cache', 'archive', 'error'].includes(destinationFolder)) {
-      return ctx.badRequest('The destinationFolder must be specified among "cache", "error" or "archive"');
-    }
-    if (!Array.isArray(ctx.request.body)) {
-      return ctx.badRequest('Invalid file list');
-    }
-    await ctx.app.northService.moveCacheContent(
-      ctx.params.northId,
-      originFolder as 'cache' | 'archive' | 'error',
-      destinationFolder as 'cache' | 'archive' | 'error',
-      ctx.request.body
-    );
-    ctx.noContent();
+  /**
+   * Download a cache file from a north connector cache
+   * @summary Download cache file
+   * @responseHeader Content-Disposition attachment; filename="{filename}"
+   */
+  @Get('/{northId}/cache/content/{filename}')
+  async getCacheFileContent(
+    @Path() northId: string,
+    @Path() filename: string,
+    @Query() folder: 'cache' | 'archive' | 'error',
+    @Request() request: CustomExpressRequest
+  ): Promise<void> {
+    const northService = request.services.northService as NorthService;
+    const fileStream = await northService.getCacheFileContent(northId, folder, filename);
+    request.res!.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    fileStream.pipe(request.res!);
   }
 
-  async moveAllCacheContent(ctx: KoaContext<void, void>): Promise<void> {
-    const originFolder = (ctx.query.originFolder as string) || '';
-    if (!['cache', 'archive', 'error'].includes(originFolder)) {
-      return ctx.badRequest('The originFolder must be specified among "cache", "error" or "archive"');
-    }
-    const destinationFolder = (ctx.query.destinationFolder as string) || '';
-    if (!['cache', 'archive', 'error'].includes(destinationFolder)) {
-      return ctx.badRequest('The destinationFolder must be specified among "cache", "error" or "archive"');
-    }
-    await ctx.app.northService.moveAllCacheContent(
-      ctx.params.northId,
-      originFolder as 'cache' | 'archive' | 'error',
-      destinationFolder as 'cache' | 'archive' | 'error'
-    );
-    ctx.noContent();
+  /**
+   * Removes specific files from the north connector cache
+   * @summary Remove cache files
+   */
+  @Post('/{northId}/cache/remove')
+  @SuccessResponse(204, 'No Content')
+  async removeCacheContent(
+    @Path() northId: string,
+    @Query() folder: 'cache' | 'archive' | 'error',
+    @Body() filenames: Array<string>,
+    @Request() request: CustomExpressRequest
+  ): Promise<void> {
+    const northService = request.services.northService as NorthService;
+    await northService.removeCacheContent(northId, folder, filenames);
   }
 
-  async testNorthConnection(ctx: KoaContext<NorthSettings, void>): Promise<void> {
-    try {
-      const logger = ctx.app.logger.child(
-        {
-          scopeType: 'north',
-          scopeId: 'test',
-          scopeName: 'test'
-        },
-        { level: 'silent' }
-      );
-      await ctx.app.northService.testNorth(ctx.params.id, ctx.query.northType as OIBusNorthType, ctx.request.body!, logger);
-      ctx.noContent();
-    } catch (error: unknown) {
-      ctx.badRequest((error as Error).message);
-    }
+  /**
+   * Removes all files from a north connector cache folder
+   * @summary Remove all cache files
+   */
+  @Post('/{northId}/cache/remove-all')
+  @SuccessResponse(204, 'No Content')
+  async removeAllCacheContent(
+    @Path() northId: string,
+    @Query() folder: 'cache' | 'archive' | 'error',
+    @Request() request: CustomExpressRequest
+  ): Promise<void> {
+    const northService = request.services.northService as NorthService;
+    await northService.removeAllCacheContent(northId, folder);
+  }
+
+  /**
+   * Moves specific files between folders in the north connector cache
+   * @summary Move cache files
+   */
+  @Post('/{northId}/cache/move')
+  @SuccessResponse(204, 'No Content')
+  async moveCacheContent(
+    @Path() northId: string,
+    @Query() originFolder: 'cache' | 'archive' | 'error',
+    @Query() destinationFolder: 'cache' | 'archive' | 'error',
+    @Body() filenames: Array<string>,
+    @Request() request: CustomExpressRequest
+  ): Promise<void> {
+    const northService = request.services.northService as NorthService;
+    await northService.moveCacheContent(northId, originFolder, destinationFolder, filenames);
+  }
+
+  /**
+   * Moves all files between folders in the north connector cache
+   * @summary Move all cache files
+   */
+  @Post('/{northId}/cache/move-all')
+  @SuccessResponse(204, 'No Content')
+  async moveAllCacheContent(
+    @Path() northId: string,
+    @Query() originFolder: 'cache' | 'archive' | 'error',
+    @Query() destinationFolder: 'cache' | 'archive' | 'error',
+    @Request() request: CustomExpressRequest
+  ): Promise<void> {
+    const northService = request.services.northService as NorthService;
+    await northService.moveAllCacheContent(northId, originFolder, destinationFolder);
   }
 }

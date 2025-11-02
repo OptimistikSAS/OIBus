@@ -1,65 +1,114 @@
-import { KoaContext } from '../koa';
-import AbstractController from './abstract.controller';
-import { CustomTransformerCommand, TransformerDTO, TransformerSearchParam } from '../../../shared/model/transformer.model';
+import { Body, Controller, Delete, Get, Path, Post, Put, Query, Request, Route, SuccessResponse, Tags } from 'tsoa';
+import {
+  CustomTransformerCommandDTO,
+  CustomTransformerDTO,
+  TransformerDTO,
+  TransformerSearchParam
+} from '../../../shared/model/transformer.model';
 import { toTransformerDTO } from '../../service/transformer.service';
 import { Page } from '../../../shared/model/types';
 import { OIBusDataType } from '../../../shared/model/engine.model';
+import { CustomExpressRequest } from '../express';
 
-export default class TransformerController extends AbstractController {
-  async search(ctx: KoaContext<void, Page<TransformerDTO>>): Promise<void> {
+@Route('/api/transformers')
+@Tags('Transformers')
+/**
+ * Transformer Management API
+ * @description Endpoints for managing data transformers used to convert data between different formats
+ */
+export class TransformerController extends Controller {
+  /**
+   * Searches for transformers with optional filtering by type, input type, and output type
+   * @summary Search transformers
+   * @returns {Promise<Page<TransformerDTO>>} Paginated list of transformers
+   */
+  @Get('/search')
+  async search(
+    @Query() type: 'standard' | 'custom' | undefined,
+    @Query() inputType: OIBusDataType | undefined,
+    @Query() outputType: OIBusDataType | undefined,
+    @Query() page = 0,
+    @Request() request: CustomExpressRequest
+  ): Promise<Page<TransformerDTO>> {
     const searchParams: TransformerSearchParam = {
-      type: ctx.query.type as 'standard' | 'custom',
-      inputType: ctx.query.inputType as OIBusDataType,
-      outputType: ctx.query.outputType as OIBusDataType
+      type,
+      inputType,
+      outputType,
+      page: page ? parseInt(page.toString(), 10) : 0
     };
 
-    const page = ctx.app.transformerService.search(searchParams);
-    ctx.ok({
-      content: page.content.map(transformer => toTransformerDTO(transformer)),
-      totalElements: page.totalElements,
-      size: page.size,
-      number: page.number,
-      totalPages: page.totalPages
-    });
+    const transformerService = request.services.transformerService;
+    const result = transformerService.search(searchParams);
+
+    return {
+      content: result.content.map(transformer => toTransformerDTO(transformer)),
+      totalElements: result.totalElements,
+      size: result.size,
+      number: result.number,
+      totalPages: result.totalPages
+    };
   }
 
-  async findAll(ctx: KoaContext<void, Array<TransformerDTO>>): Promise<void> {
-    const result = ctx.app.transformerService.findAll();
-    ctx.ok(result.map(element => toTransformerDTO(element)));
+  /**
+   * Retrieves a complete list of all available transformers
+   * @summary List all transformers
+   * @returns {Promise<Array<TransformerDTO>>} Array of all transformer objects
+   */
+  @Get('/list')
+  async list(@Request() request: CustomExpressRequest): Promise<Array<TransformerDTO>> {
+    const transformerService = request.services.transformerService;
+    const result = transformerService.findAll();
+    return result.map(element => toTransformerDTO(element));
   }
 
-  async findById(ctx: KoaContext<void, TransformerDTO>): Promise<void> {
-    const transformer = ctx.app.transformerService.findById(ctx.params.id);
-    if (!transformer) {
-      return ctx.notFound();
-    }
-    ctx.ok(toTransformerDTO(transformer));
+  /**
+   * Retrieves a specific transformer by its unique identifier
+   * @summary Get transformer by ID
+   * @returns {Promise<TransformerDTO>} The transformer object
+   */
+  @Get('/{transformerId}')
+  async findById(@Path() transformerId: string, @Request() request: CustomExpressRequest): Promise<TransformerDTO> {
+    const transformerService = request.services.transformerService;
+    return toTransformerDTO(transformerService.findById(transformerId));
   }
 
-  async create(ctx: KoaContext<CustomTransformerCommand, TransformerDTO>): Promise<void> {
-    try {
-      const transformer = await ctx.app.transformerService.create(ctx.request.body as CustomTransformerCommand);
-      ctx.created(toTransformerDTO(transformer));
-    } catch (error: unknown) {
-      ctx.badRequest((error as Error).message);
-    }
+  /**
+   * Creates a new data transformer with the provided configuration
+   * @summary Create transformer
+   * @param {CustomTransformerCommandDTO} command.body.required - Transformer configuration
+   * @returns {Promise<TransformerDTO>} The created transformer
+   */
+  @Post('/')
+  @SuccessResponse(201, 'Transformer created successfully')
+  async create(@Body() command: CustomTransformerCommandDTO, @Request() request: CustomExpressRequest): Promise<CustomTransformerDTO> {
+    const transformerService = request.services.transformerService;
+    return toTransformerDTO(await transformerService.create(command)) as CustomTransformerDTO;
   }
 
-  async update(ctx: KoaContext<CustomTransformerCommand, void>) {
-    try {
-      await ctx.app.transformerService.update(ctx.params.id, ctx.request.body as CustomTransformerCommand);
-      ctx.noContent();
-    } catch (error: unknown) {
-      ctx.badRequest((error as Error).message);
-    }
+  /**
+   * Updates an existing custom transformer with new configuration
+   * @summary Update transformer
+   * @param {CustomTransformerCommandDTO} command.body.required - Updated transformer configuration
+   */
+  @Put('/{transformerId}')
+  @SuccessResponse(204, 'Transformer updated successfully')
+  async update(
+    @Path() transformerId: string,
+    @Body() command: CustomTransformerCommandDTO,
+    @Request() request: CustomExpressRequest
+  ): Promise<void> {
+    const transformerService = request.services.transformerService;
+    await transformerService.update(transformerId, command);
   }
 
-  async delete(ctx: KoaContext<void, void>): Promise<void> {
-    try {
-      await ctx.app.transformerService.delete(ctx.params.id);
-      ctx.noContent();
-    } catch (error: unknown) {
-      ctx.badRequest((error as Error).message);
-    }
+  /**
+   * Deletes a transformer by its unique identifier
+   * @summary Delete transformer
+   */
+  @Delete('/{transformerId}')
+  @SuccessResponse(204, 'Transformer deleted successfully')
+  async delete(@Path() transformerId: string, @Request() request: CustomExpressRequest): Promise<void> {
+    const transformerService = request.services.transformerService;
+    await transformerService.delete(transformerId);
   }
 }

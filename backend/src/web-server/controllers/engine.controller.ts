@@ -1,35 +1,77 @@
+import { Body, Controller, Get, Post, Put, Request, Route, SuccessResponse, Tags } from 'tsoa';
 import { EngineSettingsCommandDTO, EngineSettingsDTO, OIBusInfo } from '../../../shared/model/engine.model';
-import { KoaContext } from '../koa';
-import AbstractController from './abstract.controller';
+import { CustomExpressRequest } from '../express';
 import { toEngineSettingsDTO } from '../../service/oibus.service';
 
-export default class EngineController extends AbstractController {
-  async getEngineSettings(ctx: KoaContext<void, EngineSettingsDTO>): Promise<void> {
-    const settings = ctx.app.oIBusService.getEngineSettings();
-    ctx.ok(toEngineSettingsDTO(settings));
+@Route('/api/engine')
+@Tags('Engine')
+/**
+ * OIBus Engine Management API
+ * @description Endpoints for managing the OIBus engine settings, metrics, and status
+ */
+export class EngineController extends Controller {
+  /**
+   * Returns the current configuration settings of the OIBus engine
+   * @summary Retrieve engine configuration
+   * @returns {EngineSettingsDTO} The engine settings
+   */
+  @Get('')
+  async getEngineSettings(@Request() request: CustomExpressRequest): Promise<EngineSettingsDTO> {
+    const oIBusService = request.services.oIBusService;
+    return toEngineSettingsDTO(oIBusService.getEngineSettings());
   }
 
-  async updateEngineSettings(ctx: KoaContext<EngineSettingsCommandDTO, void>): Promise<void> {
-    await ctx.app.oIBusService.updateEngineSettings(ctx.request.body as EngineSettingsCommandDTO);
-    ctx.noContent();
+  /**
+   * Updates the configuration settings of the OIBus engine
+   * @summary Update engine configuration
+   * @param {EngineSettingsCommandDTO} command.body.required - Engine settings to update
+   */
+  @Put('')
+  @SuccessResponse(204, 'Engine settings updated successfully')
+  async updateEngineSettings(@Body() command: EngineSettingsCommandDTO, @Request() request: CustomExpressRequest): Promise<void> {
+    const oIBusService = request.services.oIBusService;
+    await oIBusService.updateEngineSettings(command);
   }
 
-  async resetEngineMetrics(ctx: KoaContext<void, void>): Promise<void> {
-    ctx.app.oIBusService.resetMetrics();
-    ctx.noContent();
+  /**
+   * Resets all metrics collected by the OIBus engine
+   * @summary Reset metrics
+   */
+  @Post('/metrics/reset')
+  @SuccessResponse(204, 'Engine metrics reset successfully')
+  async resetEngineMetrics(@Request() request: CustomExpressRequest): Promise<void> {
+    const oIBusService = request.services.oIBusService;
+    await oIBusService.resetEngineMetrics();
   }
 
-  async restart(ctx: KoaContext<void, void>): Promise<void> {
-    await ctx.app.oIBusService.restartOIBus();
-    ctx.noContent();
+  /**
+   * Restarts the OIBus process
+   * @summary Restart OIBus process
+   */
+  @Post('/restart')
+  @SuccessResponse(204, 'Engine restart initiated successfully')
+  async restart(@Request() request: CustomExpressRequest): Promise<void> {
+    const oIBusService = request.services.oIBusService;
+    await oIBusService.restart();
   }
 
-  async getOIBusInfo(ctx: KoaContext<void, OIBusInfo>): Promise<void> {
-    const oibusInfo = ctx.app.oIBusService.getOIBusInfo();
-    ctx.ok(oibusInfo);
+  /**
+   * Returns version and system information about the OIBus instance
+   * @summary Retrieve OIBus information
+   * @returns {OIBusInfo} OIBus information including version, build, and system details
+   */
+  @Get('/info')
+  async getInfo(@Request() request: CustomExpressRequest): Promise<OIBusInfo> {
+    const oIBusService = request.services.oIBusService;
+    return oIBusService.getInfo();
   }
 
-  async getOIBusStatus(ctx: KoaContext<void, void>): Promise<void> {
-    ctx.ok();
+  /**
+   * Checks the current status of the OIBus engine
+   * @summary Check OIBus status
+   */
+  @Get('/status')
+  async getOIBusStatus(@Request() _request: CustomExpressRequest): Promise<void> {
+    return;
   }
 }

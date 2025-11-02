@@ -1,32 +1,44 @@
-import NorthConnectorController from './north-connector.controller';
-import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
-import JoiValidator from './validators/joi.validator';
+import { NorthConnectorController } from './north-connector.controller';
+import { NorthConnectorCommandDTO, OIBusNorthType } from '../../../shared/model/north-connector.model';
+import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
-import { toNorthConnectorDTO, toNorthConnectorLightDTO } from '../../service/north.service';
-import pino from 'pino';
-import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import { toSouthConnectorLightDTO } from '../../service/south.service';
+import NorthServiceMock from '../../tests/__mocks__/service/north-service.mock';
+import { StandardTransformerDTO, TransformerDTOWithOptions } from '../../../shared/model/transformer.model';
+import { CacheMetadata } from '../../../shared/model/engine.model';
+import OibusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
 
-jest.mock('./validators/joi.validator');
-jest.mock('../../service/utils');
+// Mock the services
+jest.mock('../../service/north.service', () => ({
+  toNorthConnectorDTO: jest.fn().mockImplementation(connector => connector),
+  toNorthConnectorLightDTO: jest.fn().mockImplementation(connector => connector)
+}));
 
-const logger: pino.Logger = new PinoLogger();
-const ctx = new KoaContextMock();
-const validator = new JoiValidator();
-const northConnectorController = new NorthConnectorController(validator);
+describe('NorthConnectorController', () => {
+  let controller: NorthConnectorController;
+  const mockRequest: Partial<CustomExpressRequest> = {
+    services: {
+      northService: new NorthServiceMock(),
+      oIBusService: new OibusServiceMock()
+    },
+    res: {
+      setHeader: jest.fn(),
+      pipe: jest.fn()
+    }
+  } as unknown as CustomExpressRequest;
 
-describe('North connector controller', () => {
-  beforeEach(async () => {
+  beforeEach(() => {
     jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    controller = new NorthConnectorController();
   });
 
-  it('getNorthConnectorTypes() should return North connector types', async () => {
-    ctx.app.northService.getInstalledNorthManifests.mockReturnValueOnce([testData.north.manifest]);
+  it('should return north connector types', async () => {
+    const mockManifests = [testData.north.manifest];
+    (mockRequest.services!.northService.listManifest as jest.Mock).mockReturnValue(mockManifests);
 
-    await northConnectorController.getNorthConnectorTypes(ctx);
+    const result = controller.listManifest(mockRequest as CustomExpressRequest);
 
-    expect(ctx.ok).toHaveBeenCalledWith([
+    expect(mockRequest.services!.northService.listManifest).toHaveBeenCalled();
+    expect(result).toEqual([
       {
         id: testData.north.manifest.id,
         category: testData.north.manifest.category,
@@ -35,556 +47,255 @@ describe('North connector controller', () => {
     ]);
   });
 
-  it('getNorthConnectorManifest() should return North connector manifest', async () => {
-    ctx.params.id = testData.north.manifest.id;
-    ctx.app.northService.getInstalledNorthManifests.mockReturnValueOnce([testData.north.manifest]);
+  it('should return a north connector manifest', async () => {
+    const mockManifest = testData.north.manifest;
+    const type = testData.north.manifest.id;
+    (mockRequest.services!.northService.getManifest as jest.Mock).mockReturnValue(mockManifest);
 
-    await northConnectorController.getNorthConnectorManifest(ctx);
+    const result = controller.getManifest(type, mockRequest as CustomExpressRequest);
 
-    expect(ctx.ok).toHaveBeenCalledWith(testData.north.manifest);
+    expect(mockRequest.services!.northService.getManifest).toHaveBeenCalled();
+    expect(result).toEqual(mockManifest);
   });
 
-  it('getNorthConnectorManifest() should return not found', async () => {
-    ctx.params.id = 'invalid';
-    ctx.app.northService.getInstalledNorthManifests.mockReturnValueOnce([testData.north.manifest]);
+  it('should return a list of north connectors', async () => {
+    const mockNorthConnectors = testData.north.list;
+    (mockRequest.services!.northService.list as jest.Mock).mockReturnValue(mockNorthConnectors);
 
-    await northConnectorController.getNorthConnectorManifest(ctx);
+    const result = controller.list(mockRequest as CustomExpressRequest);
 
-    expect(ctx.throw).toHaveBeenCalledWith(404, 'North not found');
+    expect(mockRequest.services!.northService.list).toHaveBeenCalled();
+    expect(result).toEqual(mockNorthConnectors);
   });
 
-  it('findAll() should return North connectors', async () => {
-    ctx.app.northService.findAll.mockReturnValueOnce(testData.north.list);
+  it('should return a north connector by ID', async () => {
+    const mockNorthConnector = testData.north.list[0];
+    const northId = mockNorthConnector.id;
+    (mockRequest.services!.northService.findById as jest.Mock).mockReturnValue(mockNorthConnector);
 
-    await northConnectorController.findAll(ctx);
+    const result = await controller.findById(northId, mockRequest as CustomExpressRequest);
 
-    expect(ctx.app.northService.findAll).toHaveBeenCalled();
-    expect(ctx.ok).toHaveBeenCalledWith(testData.north.list.map(element => toNorthConnectorLightDTO(element)));
+    expect(mockRequest.services!.northService.findById).toHaveBeenCalledWith(northId);
+    expect(result).toEqual(mockNorthConnector);
   });
 
-  it('findById() should return North connector', async () => {
-    ctx.params.id = testData.north.list[0].id;
-    ctx.app.northService.findById.mockReturnValueOnce(testData.north.list[0]).mockReturnValueOnce(testData.north.list[1]);
+  it('should create a new north connector', async () => {
+    const command: NorthConnectorCommandDTO = testData.north.command;
+    const createdNorthConnector = testData.north.list[0];
+    (mockRequest.services!.northService.create as jest.Mock).mockResolvedValue(createdNorthConnector);
 
-    await northConnectorController.findById(ctx);
-    expect(ctx.app.northService.findById).toHaveBeenCalledWith(testData.north.list[0].id);
-    expect(ctx.ok).toHaveBeenCalledWith(toNorthConnectorDTO(testData.north.list[0], ctx.app.encryptionService));
+    const result = await controller.create(command, undefined, mockRequest as CustomExpressRequest);
 
-    ctx.params.id = testData.north.list[1].id;
-    await northConnectorController.findById(ctx);
-    expect(ctx.app.northService.findById).toHaveBeenCalledWith(testData.north.list[1].id);
-    expect(ctx.ok).toHaveBeenCalledWith(toNorthConnectorDTO(testData.north.list[1], ctx.app.encryptionService));
+    expect(mockRequest.services!.northService.create).toHaveBeenCalledWith(command, null);
+    expect(result).toEqual(createdNorthConnector);
   });
 
-  it('findById() should return found when North connector not found', async () => {
-    ctx.params.id = testData.north.list[0].id;
-    ctx.app.northService.findById.mockReturnValueOnce(null);
+  it('should update an existing north connector', async () => {
+    const northId = testData.north.list[0].id;
+    const command: NorthConnectorCommandDTO = testData.north.command;
+    (mockRequest.services!.northService.update as jest.Mock).mockResolvedValue(undefined);
 
-    await northConnectorController.findById(ctx);
+    await controller.update(northId, command, mockRequest as CustomExpressRequest);
 
-    expect(ctx.app.northService.findById).toHaveBeenCalledWith(testData.north.list[0].id);
-    expect(ctx.notFound).toHaveBeenCalled();
+    expect(mockRequest.services!.northService.update).toHaveBeenCalledWith(northId, command);
   });
 
-  it('create() should create North connector', async () => {
-    ctx.request.body = testData.north.command;
-    ctx.app.northService.createNorth.mockReturnValueOnce(testData.north.list[0]);
+  it('should delete a north connector', async () => {
+    const northId = testData.north.list[0].id;
+    (mockRequest.services!.northService.delete as jest.Mock).mockResolvedValue(undefined);
 
-    await northConnectorController.create(ctx);
-    expect(ctx.app.northService.createNorth).toHaveBeenCalledWith(testData.north.command, null);
-    expect(ctx.created).toHaveBeenCalledWith(toNorthConnectorDTO(testData.north.list[0], ctx.app.encryptionService));
+    await controller.delete(northId, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.northService.delete).toHaveBeenCalledWith(northId);
   });
 
-  it('create() should throw an error', async () => {
-    ctx.request.body = testData.north.command;
-    ctx.query.duplicate = 'northId';
-    ctx.app.northService.createNorth.mockImplementationOnce(() => {
-      throw new Error('error');
-    });
+  it('should start a north connector', async () => {
+    const northId = testData.north.list[0].id;
+    (mockRequest.services!.northService.start as jest.Mock).mockResolvedValue(undefined);
 
-    await northConnectorController.create(ctx);
-    expect(ctx.app.northService.createNorth).toHaveBeenCalledWith(testData.north.command, 'northId');
-    expect(ctx.badRequest).toHaveBeenCalledWith('error');
+    await controller.start(northId, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.northService.start).toHaveBeenCalledWith(northId);
   });
 
-  it('update() should update North connector', async () => {
-    ctx.request.body = testData.north.command;
-    ctx.params.id = testData.north.list[0].id;
+  it('should stop a north connector', async () => {
+    const northId = testData.north.list[0].id;
+    (mockRequest.services!.northService.stop as jest.Mock).mockResolvedValue(undefined);
 
-    await northConnectorController.updateNorth(ctx);
-    expect(ctx.app.northService.updateNorth).toHaveBeenCalledWith(testData.north.list[0].id, testData.north.command);
-    expect(ctx.noContent).toHaveBeenCalled();
+    await controller.stop(northId, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.northService.stop).toHaveBeenCalledWith(northId);
   });
 
-  it('update() should throw an error', async () => {
-    ctx.request.body = testData.north.command;
-    ctx.params.id = testData.north.list[0].id;
+  it('should reset north connector metrics', async () => {
+    const northId = testData.north.list[0].id;
+    (mockRequest.services!.oIBusService.resetNorthMetrics as jest.Mock).mockResolvedValue(undefined);
 
-    ctx.app.northService.updateNorth.mockImplementationOnce(() => {
-      throw new Error('error');
-    });
+    await controller.resetMetrics(northId, mockRequest as CustomExpressRequest);
 
-    await northConnectorController.updateNorth(ctx);
-    expect(ctx.app.northService.updateNorth).toHaveBeenCalledWith(testData.north.list[0].id, testData.north.command);
-    expect(ctx.badRequest).toHaveBeenCalledWith('error');
+    expect(mockRequest.services!.oIBusService.resetNorthMetrics).toHaveBeenCalledWith(northId);
   });
 
-  it('delete() should delete North connector', async () => {
-    ctx.params.id = testData.north.list[0].id;
+  it('should test north connection', async () => {
+    const northId = testData.north.list[0].id;
+    const northType: OIBusNorthType = testData.north.command.type;
+    const settings = testData.north.command.settings;
 
-    await northConnectorController.delete(ctx);
-    expect(ctx.app.northService.deleteNorth).toHaveBeenCalledWith(testData.north.list[0].id);
-    expect(ctx.noContent).toHaveBeenCalled();
+    (mockRequest.services!.northService.testNorth as jest.Mock).mockResolvedValue(undefined);
+
+    await controller.testNorth(northId, northType, settings, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.northService.testNorth).toHaveBeenCalledWith(northId, northType, settings);
   });
 
-  it('delete() should throw an error', async () => {
-    ctx.params.id = testData.north.list[0].id;
-    ctx.app.northService.deleteNorth.mockImplementationOnce(() => {
-      throw new Error('error');
-    });
+  it('should add or edit a transformer', async () => {
+    const northId = testData.north.list[0].id;
+    const transformer: TransformerDTOWithOptions = {
+      inputType: 'any',
+      transformer: testData.transformers.list[0] as StandardTransformerDTO,
+      options: {}
+    };
 
-    await northConnectorController.delete(ctx);
-    expect(ctx.app.northService.deleteNorth).toHaveBeenCalledWith(testData.north.list[0].id);
-    expect(ctx.badRequest).toHaveBeenCalledWith('error');
+    (mockRequest.services!.northService.addOrEditTransformer as jest.Mock).mockResolvedValue(undefined);
+
+    await controller.addOrEditTransformer(northId, transformer, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.northService.addOrEditTransformer).toHaveBeenCalledWith(northId, transformer);
   });
 
-  it('addOrEditTransformer() should add subscription', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.request.body = {};
+  it('should remove a transformer', async () => {
+    const northId = testData.north.list[0].id;
+    const transformerId = testData.transformers.list[0].id;
 
-    await northConnectorController.addOrEditTransformer(ctx);
+    (mockRequest.services!.northService.removeTransformer as jest.Mock).mockResolvedValue(undefined);
 
-    expect(ctx.app.northService.addOrEditTransformer).toHaveBeenCalledWith(testData.north.list[0].id, {});
-    expect(ctx.noContent).toHaveBeenCalled();
+    await controller.removeTransformer(northId, transformerId, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.northService.removeTransformer).toHaveBeenCalledWith(northId, transformerId);
   });
 
-  it('addOrEditTransformer() should return bad request', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.request.body = {};
-    ctx.app.northService.addOrEditTransformer.mockImplementationOnce(() => {
-      throw new Error('Not Found');
-    });
+  it('should add a subscription', async () => {
+    const northId = testData.north.list[0].id;
+    const southId = testData.south.list[0].id;
 
-    await northConnectorController.addOrEditTransformer(ctx);
+    (mockRequest.services!.northService.subscribeToSouth as jest.Mock).mockResolvedValue(undefined);
 
-    expect(ctx.app.northService.addOrEditTransformer).toHaveBeenCalledWith(testData.north.list[0].id, {});
-    expect(ctx.badRequest).toHaveBeenCalledWith('Not Found');
+    await controller.subscribeToSouth(northId, southId, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.northService.subscribeToSouth).toHaveBeenCalledWith(northId, southId);
   });
 
-  it('removeTransformer() should add subscription', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.params.transformerId = testData.transformers.list[0].id;
+  it('should remove a subscription', async () => {
+    const northId = testData.north.list[0].id;
+    const southId = testData.south.list[0].id;
 
-    await northConnectorController.removeTransformer(ctx);
+    (mockRequest.services!.northService.unsubscribeFromSouth as jest.Mock).mockResolvedValue(undefined);
 
-    expect(ctx.app.northService.removeTransformer).toHaveBeenCalledWith(testData.north.list[0].id, testData.transformers.list[0].id);
-    expect(ctx.noContent).toHaveBeenCalled();
+    await controller.unsubscribeFromSouth(northId, southId, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.northService.unsubscribeFromSouth).toHaveBeenCalledWith(northId, southId);
   });
 
-  it('removeTransformer() should return bad request', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.params.transformerId = testData.transformers.list[0].id;
-    ctx.app.northService.removeTransformer.mockImplementationOnce(() => {
-      throw new Error('Not Found');
-    });
+  it('should search cache content with default params', async () => {
+    const northId = testData.north.list[0].id;
+    const folder = 'cache';
 
-    await northConnectorController.removeTransformer(ctx);
+    const mockCacheMetadata: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [];
+    (mockRequest.services!.northService.searchCacheContent as jest.Mock).mockResolvedValue(mockCacheMetadata);
 
-    expect(ctx.app.northService.removeTransformer).toHaveBeenCalledWith(testData.north.list[0].id, testData.transformers.list[0].id);
-    expect(ctx.badRequest).toHaveBeenCalledWith('Not Found');
-  });
-
-  it('addSubscription() should add subscription', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.params.southId = testData.south.list[0].id;
-
-    await northConnectorController.addSubscription(ctx);
-
-    expect(ctx.app.northService.createSubscription).toHaveBeenCalledWith(testData.north.list[0].id, testData.south.list[0].id);
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('addSubscription() should return bad request', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.params.southId = testData.south.list[0].id;
-    ctx.app.northService.createSubscription.mockImplementationOnce(() => {
-      throw new Error('Not Found');
-    });
-
-    await northConnectorController.addSubscription(ctx);
-
-    expect(ctx.app.northService.createSubscription).toHaveBeenCalledWith(testData.north.list[0].id, testData.south.list[0].id);
-    expect(ctx.badRequest).toHaveBeenCalledWith('Not Found');
-  });
-
-  it('removeSubscription() should remove subscription', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.params.southId = testData.south.list[0].id;
-
-    await northConnectorController.removeSubscription(ctx);
-
-    expect(ctx.app.northService.deleteSubscription).toHaveBeenCalledWith(testData.north.list[0].id, testData.south.list[0].id);
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('removeSubscription() should return bad request', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.params.southId = testData.south.list[0].id;
-    ctx.app.northService.deleteSubscription.mockImplementationOnce(() => {
-      throw new Error('Not Found');
-    });
-
-    await northConnectorController.removeSubscription(ctx);
-
-    expect(ctx.app.northService.deleteSubscription).toHaveBeenCalledWith(testData.north.list[0].id, testData.south.list[0].id);
-    expect(ctx.badRequest).toHaveBeenCalledWith('Not Found');
-  });
-
-  it('start() should enable North connector', async () => {
-    ctx.params.id = testData.north.list[0].id;
-
-    await northConnectorController.start(ctx);
-
-    expect(ctx.app.northService.startNorth).toHaveBeenCalledWith(testData.north.list[0].id);
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('start() should throw an error', async () => {
-    ctx.params.id = testData.north.list[0].id;
-    ctx.app.northService.startNorth.mockImplementationOnce(() => {
-      throw new Error('error');
-    });
-
-    await northConnectorController.start(ctx);
-    expect(ctx.app.northService.startNorth).toHaveBeenCalledWith(testData.north.list[0].id);
-    expect(ctx.badRequest).toHaveBeenCalledWith('error');
-  });
-
-  it('stop() should disable North connector', async () => {
-    ctx.params.id = testData.north.list[0].id;
-
-    await northConnectorController.stop(ctx);
-
-    expect(ctx.app.northService.stopNorth).toHaveBeenCalledWith(testData.north.list[0].id);
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('stop() should throw an error', async () => {
-    ctx.params.id = testData.north.list[0].id;
-    ctx.app.northService.stopNorth.mockImplementationOnce(() => {
-      throw new Error('error');
-    });
-
-    await northConnectorController.stop(ctx);
-    expect(ctx.app.northService.stopNorth).toHaveBeenCalledWith(testData.north.list[0].id);
-    expect(ctx.badRequest).toHaveBeenCalledWith('error');
-  });
-
-  it('resetMetrics() should reset North metrics', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-
-    await northConnectorController.resetMetrics(ctx);
-    expect(ctx.app.oIBusService.resetNorthConnectorMetrics).toHaveBeenCalledWith(testData.north.list[0].id);
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('searchCacheContent() should search cache content with default params', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.query.folder = 'cache';
-    ctx.app.northService.searchCacheContent.mockReturnValueOnce([]);
-    await northConnectorController.searchCacheContent(ctx);
-    expect(ctx.app.northService.searchCacheContent).toHaveBeenCalledWith(
-      testData.north.list[0].id,
-      { start: null, end: null, nameContains: null },
-      'cache'
+    const result = await controller.searchCacheContent(
+      northId,
+      undefined,
+      undefined,
+      undefined,
+      folder,
+      mockRequest as CustomExpressRequest
     );
-    expect(ctx.ok).toHaveBeenCalledWith([]);
-  });
 
-  it('searchCacheContent() should fail to search if bad folder', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.query.folder = null;
-    await northConnectorController.searchCacheContent(ctx);
-    expect(ctx.app.northService.searchCacheContent).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith('A folder must be specified among "cache", "error" or "archive"');
-  });
-
-  it('searchCacheContent() should search cache content', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.query.start = testData.constants.dates.DATE_1;
-    ctx.query.end = testData.constants.dates.DATE_2;
-    ctx.query.nameContains = 'filename';
-    ctx.query.folder = 'cache';
-    ctx.app.northService.searchCacheContent.mockReturnValueOnce([]);
-    await northConnectorController.searchCacheContent(ctx);
-    expect(ctx.app.northService.searchCacheContent).toHaveBeenCalledWith(
-      testData.north.list[0].id,
-      { start: testData.constants.dates.DATE_1, end: testData.constants.dates.DATE_2, nameContains: 'filename' },
-      'cache'
+    expect(mockRequest.services!.northService.searchCacheContent).toHaveBeenCalledWith(
+      northId,
+      { start: undefined, end: undefined, nameContains: undefined },
+      folder
     );
-    expect(ctx.ok).toHaveBeenCalledWith([]);
+    expect(result).toEqual(mockCacheMetadata);
   });
 
-  it('getCacheContentFileStream() should get error file content', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.params.filename = 'my file';
-    ctx.query.folder = 'cache';
-    ctx.app.northService.getCacheContentFileStream.mockReturnValueOnce('file content');
-    await northConnectorController.getCacheContentFileStream(ctx);
-    expect(ctx.app.northService.getCacheContentFileStream).toHaveBeenCalledWith(testData.north.list[0].id, 'cache', 'my file');
-    expect(ctx.attachment).toHaveBeenCalledWith('my file');
-    expect(ctx.ok).toHaveBeenCalledWith('file content');
+  it('should search cache content with parameters', async () => {
+    const northId = testData.north.list[0].id;
+    const folder = 'cache';
+    const nameContains = 'test';
+    const start = testData.constants.dates.DATE_1;
+    const end = testData.constants.dates.DATE_2;
+
+    const mockCacheMetadata: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [];
+    (mockRequest.services!.northService.searchCacheContent as jest.Mock).mockResolvedValue(mockCacheMetadata);
+
+    const result = await controller.searchCacheContent(northId, nameContains, start, end, folder, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.northService.searchCacheContent).toHaveBeenCalledWith(northId, { start, end, nameContains }, folder);
+    expect(result).toEqual(mockCacheMetadata);
   });
 
-  it('getCacheContentFileStream() should fail to get file if bad folder', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.query.folder = null;
-    await northConnectorController.getCacheContentFileStream(ctx);
-    expect(ctx.app.northService.getCacheContentFileStream).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith('A folder must be specified among "cache", "error" or "archive"');
+  it('should get cache file content', async () => {
+    const northId = testData.north.list[0].id;
+    const folder = 'cache';
+    const filename = 'test-file';
+
+    const mockFileStream = { pipe: jest.fn() };
+    (mockRequest.services!.northService.getCacheFileContent as jest.Mock).mockResolvedValue(mockFileStream);
+
+    await controller.getCacheFileContent(northId, filename, folder, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.northService.getCacheFileContent).toHaveBeenCalledWith(northId, folder, filename);
+    expect(mockRequest.res!.setHeader).toHaveBeenCalledWith('Content-Disposition', `attachment; filename="${filename}"`);
+    expect(mockFileStream.pipe).toHaveBeenCalledWith(mockRequest.res);
   });
 
-  it('getCacheContentFileStream() should fail to get file if no filename', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.query.folder = 'cache';
-    ctx.params.filename = null;
-    await northConnectorController.getCacheContentFileStream(ctx);
-    expect(ctx.app.northService.getCacheContentFileStream).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith('A filename must be specified');
+  it('should remove cache content', async () => {
+    const northId = testData.north.list[0].id;
+    const folder = 'cache';
+    const filenames = ['file1', 'file2'];
+
+    (mockRequest.services!.northService.removeCacheContent as jest.Mock).mockResolvedValue(undefined);
+
+    await controller.removeCacheContent(northId, folder, filenames, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.northService.removeCacheContent).toHaveBeenCalledWith(northId, folder, filenames);
   });
 
-  it('getCacheContentFileStream() should not get error file content if null', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.params.filename = 'my file';
-    ctx.query.folder = 'cache';
-    ctx.app.northService.getCacheContentFileStream.mockReturnValueOnce(null);
-    await northConnectorController.getCacheContentFileStream(ctx);
-    expect(ctx.app.northService.getCacheContentFileStream).toHaveBeenCalledWith(testData.north.list[0].id, 'cache', 'my file');
-    expect(ctx.attachment).not.toHaveBeenCalled();
-    expect(ctx.notFound).toHaveBeenCalled();
+  it('should remove all cache content', async () => {
+    const northId = testData.north.list[0].id;
+    const folder = 'cache';
+
+    (mockRequest.services!.northService.removeAllCacheContent as jest.Mock).mockResolvedValue(undefined);
+
+    await controller.removeAllCacheContent(northId, folder, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.northService.removeAllCacheContent).toHaveBeenCalledWith(northId, folder);
   });
 
-  it('removeCacheContent() should fail to remove if bad folder', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.query.folder = null;
-    await northConnectorController.removeCacheContent(ctx);
-    expect(ctx.app.northService.removeCacheContent).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith('A folder must be specified among "cache", "error" or "archive"');
+  it('should move cache content', async () => {
+    const northId = testData.north.list[0].id;
+    const originFolder = 'cache';
+    const destinationFolder = 'archive';
+    const filenames = ['file1', 'file2'];
+
+    (mockRequest.services!.northService.moveCacheContent as jest.Mock).mockResolvedValue(undefined);
+
+    await controller.moveCacheContent(northId, originFolder, destinationFolder, filenames, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.northService.moveCacheContent).toHaveBeenCalledWith(northId, originFolder, destinationFolder, filenames);
   });
 
-  it('removeCacheContent() should not remove files if body is not an array', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.request.body = 'my file';
-    ctx.query.folder = 'cache';
-    await northConnectorController.removeCacheContent(ctx);
-    expect(ctx.app.northService.removeCacheContent).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith('Invalid file list');
-  });
+  it('should move all cache content', async () => {
+    const northId = testData.north.list[0].id;
+    const originFolder = 'cache';
+    const destinationFolder = 'archive';
 
-  it('removeCacheContent() should remove error files', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.query.folder = 'cache';
-    ctx.request.body = ['my file1', 'my file2'];
-    await northConnectorController.removeCacheContent(ctx);
-    expect(ctx.app.northService.removeCacheContent).toHaveBeenCalledWith(testData.north.list[0].id, 'cache', ['my file1', 'my file2']);
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
+    (mockRequest.services!.northService.moveAllCacheContent as jest.Mock).mockResolvedValue(undefined);
 
-  it('removeCacheContent() should remove error files with only one file', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.query.folder = 'cache';
-    ctx.request.body = ['my file'];
-    await northConnectorController.removeCacheContent(ctx);
-    expect(ctx.app.northService.removeCacheContent).toHaveBeenCalledWith(testData.north.list[0].id, 'cache', ['my file']);
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
+    await controller.moveAllCacheContent(northId, originFolder, destinationFolder, mockRequest as CustomExpressRequest);
 
-  it('moveCacheContent() should fail to move all if bad originFolder', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.query.originFolder = null;
-    await northConnectorController.moveCacheContent(ctx);
-    expect(ctx.app.northService.moveCacheContent).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith('The originFolder must be specified among "cache", "error" or "archive"');
-  });
-
-  it('moveCacheContent() should fail to move all if bad destinationFolder', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.query.originFolder = 'cache';
-    ctx.query.destinationFolder = null;
-    await northConnectorController.moveCacheContent(ctx);
-    expect(ctx.app.northService.moveCacheContent).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith('The destinationFolder must be specified among "cache", "error" or "archive"');
-  });
-
-  it('moveCacheContent() should not move files if body is not an array', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.request.body = 'my file';
-    ctx.query.originFolder = 'cache';
-    ctx.query.destinationFolder = 'error';
-    await northConnectorController.moveCacheContent(ctx);
-    expect(ctx.app.northService.moveCacheContent).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith('Invalid file list');
-  });
-
-  it('moveCacheContent() should move files', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.query.originFolder = 'cache';
-    ctx.query.destinationFolder = 'error';
-    ctx.request.body = ['my file'];
-    await northConnectorController.moveCacheContent(ctx);
-    expect(ctx.app.northService.moveCacheContent).toHaveBeenCalledWith(testData.north.list[0].id, 'cache', 'error', ['my file']);
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('removeAllCacheContent() should remove all cache content', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    await northConnectorController.removeAllCacheContent(ctx);
-    expect(ctx.app.northService.removeAllCacheContent).toHaveBeenCalledWith(testData.north.list[0].id, 'cache');
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('removeAllCacheContent() should fail to remove all if bad folder', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.query.folder = null;
-    await northConnectorController.removeAllCacheContent(ctx);
-    expect(ctx.app.northService.removeAllCacheContent).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith('A folder must be specified among "cache", "error" or "archive"');
-  });
-
-  it('moveAllCacheContent() should move all cache content', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    await northConnectorController.moveAllCacheContent(ctx);
-    expect(ctx.app.northService.moveAllCacheContent).toHaveBeenCalledWith(testData.north.list[0].id, 'cache', 'error');
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('moveAllCacheContent() should fail to move all if bad originFolder', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.query.originFolder = null;
-    await northConnectorController.moveAllCacheContent(ctx);
-    expect(ctx.app.northService.moveAllCacheContent).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith('The originFolder must be specified among "cache", "error" or "archive"');
-  });
-
-  it('moveAllCacheContent() should fail to move all if bad destinationFolder', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.query.originFolder = 'cache';
-    ctx.query.destinationFolder = null;
-    await northConnectorController.moveAllCacheContent(ctx);
-    expect(ctx.app.northService.moveAllCacheContent).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith('The destinationFolder must be specified among "cache", "error" or "archive"');
-  });
-
-  it('testNorthConnection() should test North connector settings', async () => {
-    ctx.params.id = testData.north.list[0].id;
-    ctx.request.body = testData.north.command.settings;
-    ctx.query.northType = testData.north.command.type;
-    ctx.app.logger.child.mockReturnValueOnce(logger);
-    ctx.app.northService.testNorth.mockResolvedValueOnce(undefined);
-
-    await northConnectorController.testNorthConnection(ctx);
-
-    expect(ctx.app.logger.child).toHaveBeenCalledWith(
-      {
-        scopeType: 'north',
-        scopeId: 'test',
-        scopeName: 'test'
-      },
-      { level: 'silent' }
-    );
-    expect(ctx.app.northService.testNorth).toHaveBeenCalledWith(
-      testData.north.list[0].id,
-      testData.north.command.type,
-      testData.north.command.settings,
-      logger
-    );
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('testNorthConnection() should return not found when North connector not found', async () => {
-    ctx.params.id = testData.north.list[0].id;
-    ctx.request.body = testData.north.command.settings;
-    ctx.query.northType = testData.north.command.type;
-    ctx.app.logger.child.mockReturnValueOnce(logger);
-    ctx.app.northService.testNorth.mockImplementationOnce(() => {
-      throw new Error('North connector testId1 not found');
-    });
-
-    await northConnectorController.testNorthConnection(ctx);
-
-    expect(ctx.app.logger.child).toHaveBeenCalledWith(
-      {
-        scopeType: 'north',
-        scopeId: 'test',
-        scopeName: 'test'
-      },
-      { level: 'silent' }
-    );
-    expect(ctx.app.northService.testNorth).toHaveBeenCalledWith(
-      testData.north.list[0].id,
-      testData.north.command.type,
-      testData.north.command.settings,
-      logger
-    );
-    expect(ctx.badRequest).toHaveBeenCalledWith('North connector testId1 not found');
-    expect(ctx.noContent).not.toHaveBeenCalled();
-  });
-
-  it('testNorthConnection() should throw bad request when validation fails', async () => {
-    ctx.params.id = testData.north.list[0].id;
-    ctx.request.body = testData.north.command.settings;
-    ctx.query.northType = testData.north.command.type;
-    ctx.app.logger.child.mockReturnValueOnce(logger);
-    ctx.app.northService.testNorth.mockImplementationOnce(() => {
-      throw new Error('validation error');
-    });
-
-    await northConnectorController.testNorthConnection(ctx);
-
-    expect(ctx.app.logger.child).toHaveBeenCalledWith(
-      {
-        scopeType: 'north',
-        scopeId: 'test',
-        scopeName: 'test'
-      },
-      { level: 'silent' }
-    );
-    expect(ctx.app.northService.testNorth).toHaveBeenCalledWith(
-      testData.north.list[0].id,
-      testData.north.command.type,
-      testData.north.command.settings,
-      logger
-    );
-    expect(ctx.badRequest).toHaveBeenCalledWith('validation error');
-    expect(ctx.noContent).not.toHaveBeenCalled();
-  });
-
-  it('testNorthConnection() should throw bad request when manifest not found', async () => {
-    ctx.params.id = testData.north.list[0].id;
-    ctx.request.body = testData.north.command.settings;
-    ctx.query.northType = testData.north.command.type;
-    ctx.app.logger.child.mockReturnValueOnce(logger);
-    ctx.app.northService.testNorth.mockImplementationOnce(() => {
-      throw new Error(`North manifest ${testData.north.list[0].type} not found`);
-    });
-
-    await northConnectorController.testNorthConnection(ctx);
-
-    expect(ctx.app.logger.child).toHaveBeenCalledWith(
-      {
-        scopeType: 'north',
-        scopeId: 'test',
-        scopeName: 'test'
-      },
-      { level: 'silent' }
-    );
-    expect(ctx.app.northService.testNorth).toHaveBeenCalledWith(
-      testData.north.list[0].id,
-      testData.north.command.type,
-      testData.north.command.settings,
-      logger
-    );
-    expect(ctx.badRequest).toHaveBeenCalledWith(`North manifest ${testData.north.list[0].type} not found`);
-    expect(ctx.noContent).not.toHaveBeenCalled();
+    expect(mockRequest.services!.northService.moveAllCacheContent).toHaveBeenCalledWith(northId, originFolder, destinationFolder);
   });
 });

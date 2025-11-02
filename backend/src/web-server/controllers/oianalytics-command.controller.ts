@@ -1,51 +1,63 @@
-import { KoaContext } from '../koa';
-import { Page } from '../../../shared/model/types';
-import AbstractController from './abstract.controller';
-import { CommandSearchParam, OIBusCommandDTO, OIBusCommandStatus } from '../../../shared/model/command.model';
-import OIAnalyticsCommandService, { toOIBusCommandDTO } from '../../service/oia/oianalytics-command.service';
-import JoiValidator from './validators/joi.validator';
-import Joi from 'joi';
+import { Controller, Delete, Get, Path, Query, Request, Route, SuccessResponse, Tags } from 'tsoa';
+import { Instant, Page } from '../../../shared/model/types';
+import { CommandSearchParam, OIBusCommandDTO, OIBusCommandStatus, OIBusCommandType } from '../../../shared/model/command.model';
+import { CustomExpressRequest } from '../express';
+import { toOIBusCommandDTO } from '../../service/oia/oianalytics-command.service';
 
-export default class OIAnalyticsCommandController extends AbstractController {
-  constructor(
-    protected readonly validator: JoiValidator,
-    protected readonly schema: Joi.ObjectSchema,
-    private oIAnalyticsCommandService: OIAnalyticsCommandService
-  ) {
-    super(validator, schema);
-  }
-
-  async search(ctx: KoaContext<void, Page<OIBusCommandDTO>>): Promise<void> {
-    const types: Array<string> = Array.isArray(ctx.query.types) ? ctx.query.types : [];
-    const status: Array<OIBusCommandStatus> = Array.isArray(ctx.query.status) ? (ctx.query.status as Array<OIBusCommandStatus>) : [];
-    if (typeof ctx.query.types === 'string') {
-      types.push(ctx.query.types);
-    }
-    if (typeof ctx.query.status === 'string') {
-      status.push(ctx.query.status as OIBusCommandStatus);
-    }
+@Route('/api/oianalytics/commands')
+@Tags('OIAnalytics Commands')
+/**
+ * OIAnalytics Command Management API
+ * @description Endpoints for managing OIAnalytics commands and their execution status
+ */
+export class OIAnalyticsCommandController extends Controller {
+  /**
+   * Searches OIAnalytics commands with optional filtering by type and status.
+   * @summary Search OIAnalytics commands
+   * @returns {Promise<Page<OIBusCommandDTO>>} Paginated list of commands
+   */
+  @Get('/search')
+  async search(
+    @Query() types: string | undefined,
+    @Query() status: string | undefined,
+    @Query() start: Instant | undefined,
+    @Query() end: Instant | undefined,
+    @Query() ack: boolean | undefined,
+    @Query() page = 0,
+    @Request() request: CustomExpressRequest
+  ): Promise<Page<OIBusCommandDTO>> {
+    const normalizedTypes = types ? (types.split(',').filter(type => type.trim() !== '') as Array<OIBusCommandType>) : [];
+    const normalizedStatus = status ? (status.split(',').filter(s => s.trim() !== '') as Array<OIBusCommandStatus>) : [];
 
     const searchParams: CommandSearchParam = {
-      types,
-      status
+      types: normalizedTypes,
+      status: normalizedStatus,
+      page: page ? parseInt(page.toString(), 10) : 0,
+      start,
+      end,
+      ack
     };
 
-    const page = this.oIAnalyticsCommandService.search(searchParams, ctx.query.page ? parseInt(ctx.query.page as string, 10) : 0);
-    ctx.ok({
-      content: page.content.map(command => toOIBusCommandDTO(command)),
-      totalElements: page.totalElements,
-      size: page.size,
-      number: page.number,
-      totalPages: page.totalPages
-    });
+    const oIAnalyticsCommandService = request.services.oIAnalyticsCommandService;
+    const pageResult = oIAnalyticsCommandService.search(searchParams);
+
+    return {
+      content: pageResult.content.map(command => toOIBusCommandDTO(command)),
+      totalElements: pageResult.totalElements,
+      size: pageResult.size,
+      number: pageResult.number,
+      totalPages: pageResult.totalPages
+    };
   }
 
-  async delete(ctx: KoaContext<void, void>): Promise<void> {
-    try {
-      this.oIAnalyticsCommandService.delete(ctx.params.id!);
-      ctx.noContent();
-    } catch (error: unknown) {
-      ctx.badRequest((error as Error).message);
-    }
+  /**
+   * Deletes an OIAnalytics command by its unique identifier
+   * @summary Delete OIAnalytics command
+   */
+  @Delete('/{commandId}')
+  @SuccessResponse(204, 'Command deleted successfully')
+  async delete(@Path() commandId: string, @Request() request: CustomExpressRequest): Promise<void> {
+    const oIAnalyticsCommandService = request.services.oIAnalyticsCommandService;
+    return oIAnalyticsCommandService.delete(commandId);
   }
 }

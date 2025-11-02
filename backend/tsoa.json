@@ -3,16 +3,72 @@
   "noImplicitAdditionalProperties": "throw-on-extras",
   "controllerPathGlobs": ["src/web-server/controllers/**/*.ts"],
   "spec": {
+    "name": "OIBus API",
+    "description": "OIBus API is a RESTful interface for managing industrial data flows. It allows you to configure connectors, schedule data collection, transform and route data, monitor system health, and secure communications. Designed for developers and system integrators, it enables seamless integration between industrial systems and enterprise applications.",
     "outputDirectory": "../documentation/docs/api",
+    "specFileBaseName": "openapi",
     "specVersion": 3,
-    "basePath": "/",
-    "securityDefinitions": {},
-    "specFileBaseName": "openapi"
+    "schemes": ["http"],
+    "contact": {
+      "email": "oibus@optimistik.com",
+      "name": "Optimistik SAS",
+      "url": "https://www.optimistik.com/"
+    },
+    "license": "EUPL",
+    "tags": [
+      {
+        "name": "North Connectors",
+        "description": "Endpoints for managing north connectors, subscriptions, and cache operations"
+      },
+      {
+        "name": "South Connectors",
+        "description": "Endpoints for managing south connectors, items, and related operations"
+      },
+      {
+        "name": "History Queries",
+        "description": "Endpoints for managing history queries, items, and cache operations"
+      },
+      {
+        "name": "Engine",
+        "description": "Endpoints for managing the OIBus engine settings, metrics, and status"
+      },
+      {
+        "name": "IP Filters",
+        "description": "Endpoints for managing IP filters used to control access to the system"
+      },
+      {
+        "name": "Scan Modes",
+        "description": "Endpoints for managing scan modes used to schedule data collection and processing"
+      },
+      {
+        "name": "Certificates",
+        "description": "Endpoints for managing SSL/TLS certificates used for secure communication"
+      },
+      {
+        "name": "Logs",
+        "description": "Endpoints for searching and retrieving system logs"
+      },
+      {
+        "name": "Users",
+        "description": "Endpoints for managing user accounts and authentication"
+      },
+      {
+        "name": "OIAnalytics Registration",
+        "description": "Endpoints for managing OIAnalytics service registration and connection settings"
+      },
+      {
+        "name": "OIAnalytics Commands",
+        "description": "Endpoints for managing OIAnalytics commands and their execution status"
+      },
+      {
+        "name": "Transformers",
+        "description": "Endpoints for managing data transformers used to convert data between different formats"
+      }
+    ],
+    "servers": ["localhost:2223"]
   },
   "routes": {
     "routesDir": "src/web-server",
-    "authenticationModule": "",
-    "iocModule": "",
     "routesFile": "routes.ts"
   }
 }

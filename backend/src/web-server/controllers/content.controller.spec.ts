@@ -1,68 +1,61 @@
-import Joi from 'joi';
+import { ContentController } from './content.controller';
+import { OIBusTimeValueContent } from '../../../shared/model/engine.model';
+import { CustomExpressRequest } from '../express';
+import { ValidationError } from 'joi';
+import OIBusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
 
-import ContentController from './content.controller';
-import JoiValidator from './validators/joi.validator';
-import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
-import { OIBusContent } from '../../../shared/model/engine.model';
+describe('ContentController', () => {
+  let controller: ContentController;
+  const mockRequest: Partial<CustomExpressRequest> = {
+    services: {
+      oIBusService: new OIBusServiceMock()
+    }
+  } as CustomExpressRequest;
 
-jest.mock('./validators/joi.validator');
-jest.mock('../../service/utils');
+  const timeValuesContent: OIBusTimeValueContent = {
+    type: 'time-values',
+    content: []
+  };
 
-const validator = new JoiValidator();
-const schema = Joi.object({});
-const oibusController = new ContentController(validator, schema);
-
-const ctx = new KoaContextMock();
-
-const content: OIBusContent = {
-  type: 'time-values',
-  content: []
-};
-
-const fileContent: OIBusContent = {
-  type: 'any',
-  filePath: 'filePath'
-};
-
-describe('Content controller', () => {
-  beforeEach(async () => {
+  beforeEach(() => {
     jest.clearAllMocks();
-    jest.useFakeTimers();
+    controller = new ContentController();
   });
 
-  it('should add values', async () => {
-    ctx.request.body = content;
-    ctx.request.query = { northId: 'northId' };
-    await oibusController.addContent(ctx);
-    expect(ctx.noContent).toHaveBeenCalled();
-    expect(ctx.app.oIBusService.addExternalContent).toHaveBeenCalledWith('northId', content, 'api');
+  it('should add time values content', async () => {
+    const northId = 'northId1,northId2';
+    (mockRequest.services!.oIBusService.addExternalContent as jest.Mock).mockResolvedValue(undefined);
+
+    await controller.addContent(northId, mockRequest as CustomExpressRequest, undefined, timeValuesContent);
+
+    expect(mockRequest.services!.oIBusService.addExternalContent).toHaveBeenCalledWith('northId1', timeValuesContent, 'api');
+    expect(mockRequest.services!.oIBusService.addExternalContent).toHaveBeenCalledWith('northId2', timeValuesContent, 'api');
   });
 
-  it('should properly manage internal error when adding values', async () => {
-    (ctx.app.oIBusService.addExternalContent as jest.Mock).mockImplementationOnce(() => {
-      throw new Error('internal error');
-    });
-    ctx.request.body = content;
-    ctx.request.query = { northId: ['northId1', 'northId2'] };
-    await oibusController.addContent(ctx);
-    expect(ctx.badRequest).toHaveBeenCalled();
-    expect(ctx.noContent).not.toHaveBeenCalled();
+  it('should add file content', async () => {
+    const northId = 'northId1';
+    const mockFile = {
+      path: 'filePath'
+    } as Express.Multer.File;
+
+    (mockRequest.services!.oIBusService.addExternalContent as jest.Mock).mockResolvedValue(undefined);
+
+    await controller.addContent(northId, mockRequest as CustomExpressRequest, mockFile);
+
+    expect(mockRequest.services!.oIBusService.addExternalContent).toHaveBeenCalledWith(
+      'northId1',
+      { type: 'any', filePath: 'filePath' },
+      'api'
+    );
   });
 
-  it('should return bad request if north Id not specified', async () => {
-    ctx.request.body = content;
-    ctx.request.query = { northId: undefined };
-    await oibusController.addContent(ctx);
-    expect(ctx.badRequest).toHaveBeenCalledWith('northId must be specified in query params');
-    expect(ctx.noContent).not.toHaveBeenCalled();
+  it('should throw error when northId is not specified', async () => {
+    await expect(controller.addContent(undefined, mockRequest as CustomExpressRequest)).rejects.toThrow(ValidationError);
   });
 
-  it('should add file', async () => {
-    ctx.request.query = { northId: 'northId' };
-    ctx.request.body = fileContent;
-    ctx.request.file = { path: 'filePath' };
-    await oibusController.addContent(ctx);
-    expect(ctx.noContent).toHaveBeenCalled();
-    expect(ctx.app.oIBusService.addExternalContent).toHaveBeenCalledWith('northId', { type: 'any', filePath: 'filePath' }, 'api');
+  it('should throw error when neither file nor timeValues is provided', async () => {
+    const northId = 'northId1';
+
+    await expect(controller.addContent(northId, mockRequest as CustomExpressRequest)).rejects.toThrow(ValidationError);
   });
 });

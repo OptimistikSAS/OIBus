@@ -1,159 +1,122 @@
-import UserController from './user.controller';
-import JoiValidator from './validators/joi.validator';
-import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
-import Joi from 'joi';
-import { createPageFromArray } from '../../../shared/model/types';
+import { UserController } from './user.controller';
+import { ChangePasswordCommand, UserCommandDTO, UserSearchParam } from '../../../shared/model/user.model';
+import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
-import { toUserDTO } from '../../service/user.service';
+import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
+import { createPageFromArray } from '../../../shared/model/types';
 
-jest.mock('./validators/joi.validator');
+// Mock the services
+jest.mock('../../service/user.service', () => ({
+  toUserDTO: jest.fn().mockImplementation(user => user)
+}));
 
-const ctx = new KoaContextMock();
-const validator = new JoiValidator();
-const schema = Joi.object({});
-const userController = new UserController(validator, schema);
+describe('UserController', () => {
+  let controller: UserController;
+  const mockRequest: Partial<CustomExpressRequest> = {
+    services: {
+      userService: new UserServiceMock()
+    }
+  } as CustomExpressRequest;
 
-describe('User controller', () => {
-  beforeEach(async () => {
+  beforeEach(() => {
     jest.clearAllMocks();
+    controller = new UserController();
   });
 
-  it('search() should return users', async () => {
+  it('should search for users with login parameter', async () => {
+    const login = 'login';
+    const page = 10;
+
+    const searchParams: UserSearchParam = {
+      page: page,
+      login: login
+    };
+
+    const expectedResult = createPageFromArray(testData.users.list, 25, page);
+    (mockRequest.services!.userService.search as jest.Mock).mockReturnValue(expectedResult);
+
+    const result = await controller.search(login, page, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.userService.search).toHaveBeenCalledWith(searchParams);
+    expect(result).toEqual({
+      ...expectedResult,
+      content: expectedResult.content
+    });
+  });
+
+  it('should search for users with default parameters', async () => {
+    const searchParams: UserSearchParam = {
+      page: 0,
+      login: undefined
+    };
+
     const expectedResult = createPageFromArray(testData.users.list, 25, 0);
-    ctx.query.page = '10';
-    ctx.query.login = 'login';
-    ctx.app.userService.search.mockReturnValue(expectedResult);
+    (mockRequest.services!.userService.search as jest.Mock).mockReturnValue(expectedResult);
 
-    await userController.search(ctx);
+    const result = await controller.search(undefined, undefined, mockRequest as CustomExpressRequest);
 
-    expect(ctx.app.userService.search).toHaveBeenCalledWith({ page: 10, login: 'login' });
-    expect(ctx.ok).toHaveBeenCalledWith({ ...expectedResult, content: expectedResult.content.map(element => toUserDTO(element)) });
+    expect(mockRequest.services!.userService.search).toHaveBeenCalledWith(searchParams);
+    expect(result).toEqual({
+      ...expectedResult,
+      content: expectedResult.content
+    });
   });
 
-  it('search() should return users when no params are provided', async () => {
-    const expectedResult = createPageFromArray(testData.users.list, 25, 0);
+  it('should return a user by ID', async () => {
+    const mockUser = testData.users.list[0];
+    const userId = mockUser.id;
+    (mockRequest.services!.userService.findById as jest.Mock).mockReturnValue(mockUser);
 
-    ctx.query = {};
-    ctx.app.userService.search.mockReturnValue(expectedResult);
+    const result = await controller.findById(userId, mockRequest as CustomExpressRequest);
 
-    await userController.search(ctx);
-
-    expect(ctx.app.userService.search).toHaveBeenCalledWith({ page: 0, login: undefined });
-    expect(ctx.ok).toHaveBeenCalledWith({ ...expectedResult, content: expectedResult.content.map(element => toUserDTO(element)) });
+    expect(mockRequest.services!.userService.findById).toHaveBeenCalledWith(userId);
+    expect(result).toEqual(mockUser);
   });
 
-  it('findById() should return user', async () => {
-    const id = 'id';
-    ctx.params.id = id;
-    ctx.app.userService.findById.mockReturnValue(testData.users.list[0]);
-
-    await userController.findById(ctx);
-
-    expect(ctx.app.userService.findById).toHaveBeenCalledWith(id);
-    expect(ctx.ok).toHaveBeenCalledWith(toUserDTO(testData.users.list[0]));
-  });
-
-  it('findById() should return not found', async () => {
-    const id = 'id';
-    ctx.params.id = id;
-    ctx.app.userService.findById.mockReturnValue(null);
-
-    await userController.findById(ctx);
-
-    expect(ctx.app.userService.findById).toHaveBeenCalledWith(id);
-    expect(ctx.notFound).toHaveBeenCalledWith();
-  });
-
-  it('create() should create user', async () => {
-    ctx.request.body = {
-      user: testData.users.command,
+  it('should create a new user', async () => {
+    const command: UserCommandDTO = testData.users.command;
+    const userWithPassword = {
+      user: command,
       password: 'password'
     };
-    ctx.app.userService.create.mockReturnValue(testData.users.list[0]);
+    const createdUser = testData.users.list[0];
+    (mockRequest.services!.userService.create as jest.Mock).mockResolvedValue(createdUser);
 
-    await userController.create(ctx);
+    const result = await controller.create(userWithPassword, mockRequest as CustomExpressRequest);
 
-    expect(ctx.app.userService.create).toHaveBeenCalledWith(testData.users.command, 'password');
-    expect(ctx.created).toHaveBeenCalledWith(toUserDTO(testData.users.list[0]));
+    expect(mockRequest.services!.userService.create).toHaveBeenCalledWith(command, 'password');
+    expect(result).toEqual(createdUser);
   });
 
-  it('create() should return bad request when validation fails', async () => {
-    ctx.request.body = {
-      user: testData.users.command,
-      password: 'password'
+  it('should update an existing user', async () => {
+    const userId = testData.users.list[0].id;
+    const command: UserCommandDTO = testData.users.command;
+    (mockRequest.services!.userService.update as jest.Mock).mockResolvedValue(undefined);
+
+    await controller.update(userId, command, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.userService.update).toHaveBeenCalledWith(userId, command);
+  });
+
+  it('should update user password', async () => {
+    const userId = testData.users.list[0].id;
+    const command: ChangePasswordCommand = {
+      newPassword: 'newPassword',
+      currentPassword: 'currentPassword'
     };
-    ctx.app.userService.create.mockImplementationOnce(() => {
-      throw new Error('invalid body');
-    });
+    (mockRequest.services!.userService.updatePassword as jest.Mock).mockResolvedValue(undefined);
 
-    await userController.create(ctx);
+    await controller.updatePassword(userId, command, mockRequest as CustomExpressRequest);
 
-    expect(ctx.badRequest).toHaveBeenCalledWith('invalid body');
+    expect(mockRequest.services!.userService.updatePassword).toHaveBeenCalledWith(userId, 'newPassword');
   });
 
-  it('update() should update user', async () => {
-    const id = 'id';
-    ctx.params.id = id;
-    ctx.request.body = testData.users.command;
+  it('should delete a user', async () => {
+    const userId = testData.users.list[0].id;
+    (mockRequest.services!.userService.delete as jest.Mock).mockResolvedValue(undefined);
 
-    await userController.update(ctx);
+    await controller.delete(userId, mockRequest as CustomExpressRequest);
 
-    expect(ctx.app.userService.update).toHaveBeenCalledWith(id, testData.users.command);
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('update() should return bad request', async () => {
-    ctx.request.body = testData.users.command;
-    ctx.app.userService.update.mockImplementationOnce(() => {
-      throw new Error('invalid body');
-    });
-
-    await userController.update(ctx);
-
-    expect(ctx.badRequest).toHaveBeenCalledWith('invalid body');
-  });
-
-  it('updatePassword() should update password', async () => {
-    const id = 'id';
-    ctx.params.id = id;
-    ctx.request.body = {
-      newPassword: 'password'
-    };
-
-    await userController.updatePassword(ctx);
-
-    expect(ctx.app.userService.updatePassword).toHaveBeenCalledWith(id, 'password');
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('updatePassword() should return bad request', async () => {
-    ctx.params.id = 'id';
-
-    ctx.app.userService.updatePassword.mockImplementationOnce(() => {
-      throw new Error('Password is required');
-    });
-    await userController.updatePassword(ctx);
-
-    expect(ctx.badRequest).toHaveBeenCalledWith('Password is required');
-  });
-
-  it('delete() should delete user', async () => {
-    const id = 'id';
-    ctx.params.id = id;
-
-    await userController.delete(ctx);
-
-    expect(ctx.app.userService.delete).toHaveBeenCalledWith(id);
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('delete() should return not found', async () => {
-    ctx.params.id = 'id';
-    ctx.app.userService.delete.mockImplementationOnce(() => {
-      throw new Error('User not found');
-    });
-    await userController.delete(ctx);
-
-    expect(ctx.badRequest).toHaveBeenCalledWith('User not found');
+    expect(mockRequest.services!.userService.delete).toHaveBeenCalledWith(userId);
   });
 });

@@ -1,112 +1,75 @@
-import Joi from 'joi';
-import JoiValidator from './validators/joi.validator';
-import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
-import CertificateController from './certificate.controller';
+import { CertificateController } from './certificate.controller';
+import { CertificateCommandDTO } from '../../../shared/model/certificate.model';
+import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
-import { toCertificateDTO } from '../../service/certificate.service';
+import CertificateServiceMock from '../../tests/__mocks__/service/certificate-service.mock';
 
-jest.mock('./validators/joi.validator');
+// Mock the services
+jest.mock('../../service/certificate.service', () => ({
+  toCertificateDTO: jest.fn().mockImplementation(cert => cert)
+}));
 
-const validator = new JoiValidator();
-const schema = Joi.object({});
-const certificateController = new CertificateController(validator, schema);
+describe('CertificateController', () => {
+  let controller: CertificateController;
+  const mockRequest: Partial<CustomExpressRequest> = {
+    services: {
+      certificateService: new CertificateServiceMock()
+    }
+  } as CustomExpressRequest;
 
-const ctx = new KoaContextMock();
-
-describe('Certificate controller', () => {
-  beforeEach(async () => {
+  beforeEach(() => {
     jest.clearAllMocks();
+    controller = new CertificateController();
   });
 
-  it('should find all certificates', async () => {
-    ctx.app.certificateService.findAll.mockReturnValue(testData.certificates.list);
+  it('should return a list of certificates', async () => {
+    const mockCertificates = testData.certificates.list;
+    mockRequest.services!.certificateService.list.mockReturnValue(mockCertificates);
 
-    await certificateController.findAll(ctx);
+    const result = await controller.list(mockRequest as CustomExpressRequest);
 
-    expect(ctx.app.certificateService.findAll).toHaveBeenCalled();
-    expect(ctx.ok).toHaveBeenCalledWith(testData.certificates.list.map(element => toCertificateDTO(element)));
+    expect(mockRequest.services!.certificateService.list).toHaveBeenCalled();
+    expect(result).toEqual(mockCertificates);
   });
 
-  it('should find a certificate by id', async () => {
-    ctx.params.id = 'id';
-    ctx.app.certificateService.findById.mockReturnValue(testData.certificates.list[0]);
+  it('should return a certificate by ID', async () => {
+    const mockCertificate = testData.certificates.list[0];
+    const certificateId = 'test-id';
+    mockRequest.services!.certificateService.findById.mockReturnValue(mockCertificate);
 
-    await certificateController.findById(ctx);
+    const result = await controller.findById(certificateId, mockRequest as CustomExpressRequest);
 
-    expect(ctx.app.certificateService.findById).toHaveBeenCalledWith('id');
-    expect(ctx.ok).toHaveBeenCalledWith(toCertificateDTO(testData.certificates.list[0]));
+    expect(mockRequest.services!.certificateService.findById).toHaveBeenCalledWith(certificateId);
+    expect(result).toEqual(mockCertificate);
   });
 
-  it('should return not found', async () => {
-    ctx.params.id = 'id';
-    ctx.app.certificateService.findById.mockReturnValue(null);
+  it('should create a new certificate', async () => {
+    const command: CertificateCommandDTO = testData.certificates.command;
+    const createdCertificate = testData.certificates.list[0];
+    mockRequest.services!.certificateService.create.mockResolvedValue(createdCertificate);
 
-    await certificateController.findById(ctx);
+    const result = await controller.create(command, mockRequest as CustomExpressRequest);
 
-    expect(ctx.app.certificateService.findById).toHaveBeenCalledWith('id');
-    expect(ctx.notFound).toHaveBeenCalledWith();
+    expect(mockRequest.services!.certificateService.create).toHaveBeenCalledWith(command);
+    expect(result).toEqual(createdCertificate);
   });
 
-  it('should create a certificate', async () => {
-    ctx.request.body = testData.certificates.command;
-    ctx.app.certificateService.create.mockReturnValue(testData.certificates.list[0]);
+  it('should update an existing certificate', async () => {
+    const certificateId = 'test-id';
+    const command: CertificateCommandDTO = testData.certificates.command;
+    mockRequest.services!.certificateService.update.mockResolvedValue(undefined);
 
-    await certificateController.create(ctx);
+    await controller.update(certificateId, command, mockRequest as CustomExpressRequest);
 
-    expect(ctx.app.certificateService.create).toHaveBeenCalledWith(testData.certificates.command);
-    expect(ctx.created).toHaveBeenCalledWith(toCertificateDTO(testData.certificates.list[0]));
-  });
-
-  it('should not create a certificate if bad request', async () => {
-    ctx.request.body = testData.certificates.command;
-    ctx.app.certificateService.create.mockImplementationOnce(() => {
-      throw new Error('bad request');
-    });
-    await certificateController.create(ctx);
-
-    expect(ctx.badRequest).toHaveBeenCalledWith('bad request');
-  });
-
-  it('should update a certificate', async () => {
-    ctx.params.id = 'id';
-    ctx.request.body = testData.certificates.command;
-
-    await certificateController.update(ctx);
-
-    expect(ctx.app.certificateService.update).toHaveBeenCalledWith('id', testData.certificates.command);
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('should not update a certificate if bad request', async () => {
-    ctx.params.id = 'id';
-    ctx.request.body = testData.certificates.command;
-    ctx.app.certificateService.update.mockImplementationOnce(() => {
-      throw new Error('bad request');
-    });
-
-    await certificateController.update(ctx);
-
-    expect(ctx.app.certificateService.update).toHaveBeenCalledWith('id', testData.certificates.command);
-    expect(ctx.badRequest).toHaveBeenCalledWith('bad request');
+    expect(mockRequest.services!.certificateService.update).toHaveBeenCalledWith(certificateId, command);
   });
 
   it('should delete a certificate', async () => {
-    ctx.params.id = 'id';
+    const certificateId = 'test-id';
+    mockRequest.services!.certificateService.delete.mockResolvedValue(undefined);
 
-    await certificateController.delete(ctx);
+    await controller.delete(certificateId, mockRequest as CustomExpressRequest);
 
-    expect(ctx.app.certificateService.delete).toHaveBeenCalledWith('id');
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('should return not found when deleting an unknown certificate', async () => {
-    ctx.params.id = 'id';
-    ctx.app.certificateService.delete.mockImplementationOnce(() => {
-      throw new Error('bad request');
-    });
-
-    await certificateController.delete(ctx);
-
-    expect(ctx.badRequest).toHaveBeenCalledWith('bad request');
+    expect(mockRequest.services!.certificateService.delete).toHaveBeenCalledWith(certificateId);
   });
 });

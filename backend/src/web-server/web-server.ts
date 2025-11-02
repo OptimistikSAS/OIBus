@@ -25,6 +25,10 @@ import IpFilterMiddleware from './middlewares/ip-filter.middleware';
 import { createInjectServicesMiddleware } from './middlewares/services.middleware';
 import { RegisterRoutes } from './routes';
 import path from 'path';
+import multer from 'multer';
+import { ValidateError } from 'tsoa';
+import { NotFoundError, OIBusValidationError } from '../model/types';
+import { ValidationError } from 'joi';
 
 /**
  * OIBus web server - using express
@@ -60,7 +64,7 @@ export default class WebServer {
     this._id = id;
     this._port = port;
     this._logger = logger;
-    this._whiteList = this.ipFilterService.findAll().map(filter => filter.address);
+    this._whiteList = this.ipFilterService.list().map(filter => filter.address);
   }
 
   get logger(): pino.Logger {
@@ -88,13 +92,25 @@ export default class WebServer {
     const ipFilter = new IpFilterMiddleware(this.whiteList, this.logger, this.ignoreIpFilters);
     this.app.use(ipFilter.middleware());
 
-    this.app.use(createInjectServicesMiddleware(this.scanModeService, this.certificateService));
+    this.app.use(
+      createInjectServicesMiddleware(
+        this.certificateService,
+        this.historyQueryService,
+        this.ipFilterService,
+        this.logService,
+        this.northService,
+        this.oIAnalyticsCommandService,
+        this.oIAnalyticsRegistrationService,
+        this.oIBusService,
+        this.scanModeService,
+        this.southService,
+        this.transformerService,
+        this.userService
+      )
+    );
 
     // Static files for web client
     this.app.use(express.static(path.join(__dirname, '../../../frontend/browser')));
-
-    // Password protection middleware
-    this.app.use(authMiddleware(this.userService, this.encryptionService));
 
     // CORS middleware
     this.app.use(this.setupCors());
@@ -114,12 +130,65 @@ export default class WebServer {
     this.app.use(express.json({ limit: '20mb' }));
     this.app.use(express.urlencoded({ extended: true, limit: '20mb' }));
 
+    // Create a function to check if a path is an API route
+    const isApiRoute = (path: string) => {
+      return path.startsWith('/api/');
+    };
+
+    // Create a function to check if a path is a static file
+    const isStaticFile = (path: string) => {
+      return path.startsWith('/assets/') || path === '/favicon.ico';
+    };
+
+    // Authentication middleware for API routes only
+    this.app.use((req, res, next) => {
+      if (isApiRoute(req.path)) {
+        return authMiddleware(this.userService, this.encryptionService)(req, res, next);
+      }
+      return next();
+    });
+
     // SSE middleware
     this.app.use(sseMiddleware(this.southService, this.northService, this.oIBusService, this.homeMetricsService, this.historyQueryService));
 
     // Routes
     this.app.get('/health', this.healthCheck.bind(this));
     this.setupRoutes(this.app);
+    this.app.use((err: unknown, req: express.Request, res: express.Response, next: express.NextFunction) => {
+      if (err instanceof NotFoundError) {
+        return res.status(404).json({ error: err.message });
+      } else if (err instanceof OIBusValidationError) {
+        // Validation Error trigger by tsoa at the HTTP layer layer
+        return res.status(400).json({
+          message: 'Validation Failed',
+          details: err.message
+        });
+      } else if (err instanceof ValidateError) {
+        // Validation Error trigger by tsoa at the HTTP layer layer
+        return res.status(422).json({
+          message: 'Validation Failed',
+          details: err.fields
+        });
+      } else if (err instanceof ValidationError) {
+        // Validation Error triggered by joi in the service layer
+        return res.status(400).json({
+          message: 'Validation Failed',
+          details: err.message
+        });
+      } else if (err) {
+        const message = err instanceof Error ? err.message : 'Internal Server Error';
+        return res.status(500).json({ error: message });
+      }
+      return next();
+    });
+
+    // Final middleware to serve Angular routes
+    this.app.use((req, res, next) => {
+      if (!isApiRoute(req.path) && !isStaticFile(req.path)) {
+        return res.sendFile(path.join(__dirname, '../../../frontend/browser', 'index.html'));
+      }
+      return next();
+    });
 
     // Error handling
     this.app.use(this.handle404.bind(this));
@@ -138,7 +207,7 @@ export default class WebServer {
 
   private setupCors(): express.RequestHandler {
     const corsOptions = {
-      origin: process.env.CORS_ORIGIN || '*',
+      origin: '*',
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
       credentials: true,
@@ -149,7 +218,14 @@ export default class WebServer {
 
   private setupRoutes(app: Express): void {
     // Routes are generated with the npm run generate:openapi command
-    RegisterRoutes(app);
+    RegisterRoutes(app, {
+      multer: multer({
+        limits: {
+          fieldNameSize: 120
+          // any other multer config
+        }
+      })
+    });
   }
 
   private healthCheck(_req: express.Request, res: express.Response): void {
@@ -221,16 +297,16 @@ export default class WebServer {
   }
 
   async stop(): Promise<void> {
-    if (this.webServer) {
-      await new Promise<void>((resolve, reject) => {
-        this.webServer?.close(err => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve();
-          }
-        });
+    if (!this.webServer) return;
+
+    try {
+      this.webServer.closeAllConnections();
+      await new Promise<void>(resolve => {
+        this.webServer!.close(() => resolve());
+        setTimeout(() => resolve(), 5000);
       });
+    } catch (error) {
+      this.logger.error(error);
     }
   }
 }

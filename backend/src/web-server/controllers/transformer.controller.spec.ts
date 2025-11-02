@@ -1,166 +1,122 @@
-import Joi from 'joi';
-import JoiValidator from './validators/joi.validator';
-import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
+import { TransformerController } from './transformer.controller';
+import { CustomTransformerCommandDTO, TransformerSearchParam } from '../../../shared/model/transformer.model';
+import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
-import TransformerController from './transformer.controller';
-import { toTransformerDTO } from '../../service/transformer.service';
-import { StandardTransformer } from '../../model/transformer.model';
-import IsoTransformer from '../../service/transformers/iso-transformer';
+import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';
+import { createPageFromArray } from '../../../shared/model/types';
+import { OIBusDataType } from '../../../shared/model/engine.model';
 
-jest.mock('./validators/joi.validator');
+// Mock the services
+jest.mock('../../service/transformer.service', () => ({
+  toTransformerDTO: jest.fn().mockImplementation(transformer => transformer)
+}));
 
-const validator = new JoiValidator();
-const schema = Joi.object({});
-const transformerController = new TransformerController(validator, schema);
+describe('TransformerController', () => {
+  let controller: TransformerController;
+  const mockRequest: Partial<CustomExpressRequest> = {
+    services: {
+      transformerService: new TransformerServiceMock()
+    }
+  } as CustomExpressRequest;
 
-const ctx = new KoaContextMock();
-
-describe('Transformer Controller', () => {
-  const standardTransformer: StandardTransformer = {
-    id: IsoTransformer.transformerName,
-    type: 'standard',
-    functionName: IsoTransformer.transformerName,
-    inputType: 'any',
-    outputType: 'any'
-  };
-
-  beforeEach(async () => {
+  beforeEach(() => {
     jest.clearAllMocks();
+    controller = new TransformerController();
   });
 
-  it('findAll() should return transformers', async () => {
-    ctx.app.transformerService.findAll.mockReturnValueOnce([...testData.transformers.list, standardTransformer]);
+  it('should search for transformers with parameters', async () => {
+    const type: 'standard' | 'custom' = 'custom';
+    const inputType: OIBusDataType = 'any';
+    const outputType: OIBusDataType = 'any';
+    const page = 1;
 
-    await transformerController.findAll(ctx);
+    const searchParams: TransformerSearchParam = {
+      type,
+      inputType,
+      outputType,
+      page
+    };
 
-    expect(ctx.app.transformerService.findAll).toHaveBeenCalled();
-    expect(ctx.ok).toHaveBeenCalledWith([
-      ...testData.transformers.list.map(element => toTransformerDTO(element)),
-      toTransformerDTO(standardTransformer)
-    ]);
-  });
+    const expectedResult = createPageFromArray(testData.transformers.list, 25, 0);
+    (mockRequest.services!.transformerService.search as jest.Mock).mockReturnValue(expectedResult);
 
-  it('search() should return transformers', async () => {
-    ctx.app.transformerService.search.mockReturnValueOnce({
-      content: [...testData.transformers.list, standardTransformer],
-      totalElements: testData.transformers.list.length + 1,
-      size: 25,
-      number: 1,
-      totalPages: 1
-    });
+    const result = await controller.search(type, inputType, outputType, page, mockRequest as CustomExpressRequest);
 
-    await transformerController.search(ctx);
-
-    expect(ctx.app.transformerService.search).toHaveBeenCalled();
-    expect(ctx.ok).toHaveBeenCalledWith({
-      content: [...testData.transformers.list.map(element => toTransformerDTO(element)), toTransformerDTO(standardTransformer)],
-      totalElements: testData.transformers.list.length + 1,
-      size: 25,
-      number: 1,
-      totalPages: 1
+    expect(mockRequest.services!.transformerService.search).toHaveBeenCalledWith(searchParams);
+    expect(result).toEqual({
+      ...expectedResult,
+      content: expectedResult.content
     });
   });
 
-  it('findById() should return a custom transformer', async () => {
-    const id = 'id';
+  it('should return transformers with default search parameters', async () => {
+    const searchParams: TransformerSearchParam = {
+      type: undefined,
+      inputType: undefined,
+      outputType: undefined,
+      page: 0
+    };
 
-    ctx.params.id = id;
-    ctx.app.transformerService.findById.mockReturnValueOnce(testData.transformers.list[0]);
+    const expectedResult = createPageFromArray(testData.transformers.list, 25, 0);
+    (mockRequest.services!.transformerService.search as jest.Mock).mockReturnValue(expectedResult);
 
-    await transformerController.findById(ctx);
+    const result = await controller.search(undefined, undefined, undefined, undefined, mockRequest as CustomExpressRequest);
 
-    expect(ctx.app.transformerService.findById).toHaveBeenCalledWith(id);
-    expect(ctx.ok).toHaveBeenCalledWith(toTransformerDTO(testData.transformers.list[0]));
-  });
-
-  it('findById() should return a standard transformer', async () => {
-    const id = 'id';
-
-    ctx.params.id = id;
-    ctx.app.transformerService.findById.mockReturnValueOnce(standardTransformer);
-
-    await transformerController.findById(ctx);
-
-    expect(ctx.app.transformerService.findById).toHaveBeenCalledWith(id);
-    expect(ctx.ok).toHaveBeenCalledWith(toTransformerDTO(standardTransformer));
-  });
-
-  it('findById() should return not found', async () => {
-    const id = 'id';
-    ctx.params.id = id;
-    ctx.app.transformerService.findById.mockReturnValueOnce(null);
-
-    await transformerController.findById(ctx);
-
-    expect(ctx.app.transformerService.findById).toHaveBeenCalledWith(id);
-    expect(ctx.notFound).toHaveBeenCalledWith();
-  });
-
-  it('create() should create a transformer', async () => {
-    ctx.request.body = testData.transformers.command;
-    ctx.app.transformerService.create.mockReturnValueOnce(testData.transformers.list[0]);
-
-    await transformerController.create(ctx);
-
-    expect(ctx.app.transformerService.create).toHaveBeenCalledWith(testData.transformers.command);
-    expect(ctx.created).toHaveBeenCalledWith(toTransformerDTO(testData.transformers.list[0]));
-  });
-
-  it('create() should throw bad request', async () => {
-    ctx.request.body = testData.transformers.command;
-    ctx.app.transformerService.create.mockImplementationOnce(() => {
-      throw Error('bad request');
+    expect(mockRequest.services!.transformerService.search).toHaveBeenCalledWith(searchParams);
+    expect(result).toEqual({
+      ...expectedResult,
+      content: expectedResult.content
     });
-
-    await transformerController.create(ctx);
-
-    expect(ctx.app.transformerService.create).toHaveBeenCalledWith(testData.transformers.command);
-    expect(ctx.badRequest).toHaveBeenCalledWith('bad request');
   });
 
-  it('update() should update a transformer', async () => {
-    ctx.params.id = 'id';
-    ctx.request.body = testData.transformers.command;
+  it('should return a list of all transformers', async () => {
+    const mockTransformers = testData.transformers.list;
+    (mockRequest.services!.transformerService.findAll as jest.Mock).mockReturnValue(mockTransformers);
 
-    await transformerController.update(ctx);
+    const result = await controller.list(mockRequest as CustomExpressRequest);
 
-    expect(ctx.app.transformerService.update).toHaveBeenCalledWith('id', testData.transformers.command);
-    expect(ctx.noContent).toHaveBeenCalled();
+    expect(mockRequest.services!.transformerService.findAll).toHaveBeenCalled();
+    expect(result).toEqual(mockTransformers);
   });
 
-  it('update() should throw bad request', async () => {
-    ctx.params.id = 'id';
-    ctx.request.body = testData.transformers.command;
-    ctx.app.transformerService.update.mockImplementationOnce(() => {
-      throw Error('bad request');
-    });
+  it('should return a transformer by ID', async () => {
+    const mockTransformer = testData.transformers.list[0];
+    const transformerId = mockTransformer.id;
+    (mockRequest.services!.transformerService.findById as jest.Mock).mockReturnValue(mockTransformer);
 
-    await transformerController.update(ctx);
+    const result = await controller.findById(transformerId, mockRequest as CustomExpressRequest);
 
-    expect(ctx.app.transformerService.update).toHaveBeenCalledWith('id', testData.transformers.command);
-    expect(ctx.badRequest).toHaveBeenCalledWith('bad request');
+    expect(mockRequest.services!.transformerService.findById).toHaveBeenCalledWith(transformerId);
+    expect(result).toEqual(mockTransformer);
   });
 
-  it('delete() should delete a transformer', async () => {
-    const id = 'id';
-    ctx.params.id = id;
+  it('should create a new custom transformer', async () => {
+    const command: CustomTransformerCommandDTO = testData.transformers.command;
+    const createdTransformer = testData.transformers.list[0];
+    (mockRequest.services!.transformerService.create as jest.Mock).mockResolvedValue(createdTransformer);
 
-    await transformerController.delete(ctx);
+    const result = await controller.create(command, mockRequest as CustomExpressRequest);
 
-    expect(ctx.app.transformerService.delete).toHaveBeenCalledWith(id);
-    expect(ctx.noContent).toHaveBeenCalled();
+    expect(mockRequest.services!.transformerService.create).toHaveBeenCalledWith(command);
+    expect(result).toEqual(createdTransformer);
   });
 
-  it('delete() should delete a transformer', async () => {
-    const id = 'id';
-    ctx.params.id = id;
-    ctx.app.transformerService.delete.mockImplementationOnce(() => {
-      throw Error('bad request');
-    });
+  it('should update an existing transformer', async () => {
+    const transformerId = testData.transformers.list[0].id;
+    const command: CustomTransformerCommandDTO = testData.transformers.command;
+    (mockRequest.services!.transformerService.update as jest.Mock).mockResolvedValue(undefined);
 
-    await transformerController.delete(ctx);
+    await controller.update(transformerId, command, mockRequest as CustomExpressRequest);
 
-    expect(ctx.app.transformerService.delete).toHaveBeenCalledWith(id);
-    expect(ctx.badRequest).toHaveBeenCalledWith('bad request');
+    expect(mockRequest.services!.transformerService.update).toHaveBeenCalledWith(transformerId, command);
+  });
+
+  it('should delete a transformer', async () => {
+    const transformerId = testData.transformers.list[0].id;
+    (mockRequest.services!.transformerService.delete as jest.Mock).mockResolvedValue(undefined);
+
+    await controller.delete(transformerId, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.transformerService.delete).toHaveBeenCalledWith(transformerId);
   });
 });
