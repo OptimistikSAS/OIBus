@@ -1,7 +1,6 @@
 import { ContentController } from './content.controller';
 import { OIBusTimeValueContent } from '../../../shared/model/engine.model';
 import { CustomExpressRequest } from '../express';
-import { ValidationError } from 'joi';
 import OIBusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
 
 describe('ContentController', () => {
@@ -25,14 +24,12 @@ describe('ContentController', () => {
   it('should add time values content', async () => {
     const northId = 'northId1,northId2';
     (mockRequest.services!.oIBusService.addExternalContent as jest.Mock).mockResolvedValue(undefined);
-
-    await controller.addContent(northId, mockRequest as CustomExpressRequest, undefined, timeValuesContent);
-
+    await controller.addContent(northId, timeValuesContent, mockRequest as CustomExpressRequest);
     expect(mockRequest.services!.oIBusService.addExternalContent).toHaveBeenCalledWith('northId1', timeValuesContent, 'api');
     expect(mockRequest.services!.oIBusService.addExternalContent).toHaveBeenCalledWith('northId2', timeValuesContent, 'api');
   });
 
-  it('should add file content', async () => {
+  it('should add file', async () => {
     const northId = 'northId1';
     const mockFile = {
       path: 'filePath'
@@ -40,22 +37,12 @@ describe('ContentController', () => {
 
     (mockRequest.services!.oIBusService.addExternalContent as jest.Mock).mockResolvedValue(undefined);
 
-    await controller.addContent(northId, mockRequest as CustomExpressRequest, mockFile);
+    await controller.addFile(northId, mockFile, mockRequest as CustomExpressRequest);
 
     expect(mockRequest.services!.oIBusService.addExternalContent).toHaveBeenCalledWith(
       'northId1',
       { type: 'any', filePath: 'filePath' },
       'api'
     );
-  });
-
-  it('should throw error when northId is not specified', async () => {
-    await expect(controller.addContent(undefined, mockRequest as CustomExpressRequest)).rejects.toThrow(ValidationError);
-  });
-
-  it('should throw error when neither file nor timeValues is provided', async () => {
-    const northId = 'northId1';
-
-    await expect(controller.addContent(northId, mockRequest as CustomExpressRequest)).rejects.toThrow(ValidationError);
   });
 });

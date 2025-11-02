@@ -6937,19 +6937,50 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
             }
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-        const argsContentController_addContent: Record<string, TsoaRoute.ParameterSchema> = {
-                northId: {"in":"query","name":"northId","required":true,"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},
+        const argsContentController_addFile: Record<string, TsoaRoute.ParameterSchema> = {
+                northId: {"in":"query","name":"northId","required":true,"dataType":"string"},
+                file: {"in":"formData","name":"file","required":true,"dataType":"file"},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
-                file: {"in":"formData","name":"file","dataType":"file"},
-                timeValues: {"in":"formData","name":"timeValues","dataType":"string"},
         };
-        app.post('/api/content',
+        app.post('/api/content/file',
             upload.fields([
                 {
                     name: "file",
                     maxCount: 1
                 }
             ]),
+            ...(fetchMiddlewares<RequestHandler>(ContentController)),
+            ...(fetchMiddlewares<RequestHandler>(ContentController.prototype.addFile)),
+
+            async function ContentController_addFile(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsContentController_addFile, request, response });
+
+                const controller = new ContentController();
+
+              await templateService.apiHandler({
+                methodName: 'addFile',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 204,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsContentController_addContent: Record<string, TsoaRoute.ParameterSchema> = {
+                northId: {"in":"query","name":"northId","required":true,"dataType":"string"},
+                content: {"in":"body","name":"content","required":true,"dataType":"union","subSchemas":[{"ref":"OIBusTimeValueContent"},{"ref":"OIBusSetpointContent"}]},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.post('/api/content/content',
             ...(fetchMiddlewares<RequestHandler>(ContentController)),
             ...(fetchMiddlewares<RequestHandler>(ContentController.prototype.addContent)),
 

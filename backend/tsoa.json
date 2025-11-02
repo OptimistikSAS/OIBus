@@ -33,6 +33,10 @@
         "description": "Endpoints for managing the OIBus engine settings, metrics, and status"
       },
       {
+        "name": "Content",
+        "description": "Endpoints to add data into OIBus directly through the API"
+      },
+      {
         "name": "IP Filters",
         "description": "Endpoints for managing IP filters used to control access to the system"
       },
