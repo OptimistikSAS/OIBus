@@ -15708,14 +15708,16 @@
 				"parameters": []
 			}
 		},
-		"/api/content": {
+		"/api/content/file": {
 			"post": {
-				"operationId": "AddContent",
+				"operationId": "AddFile",
 				"responses": {
 					"204": {
 						"description": "No Content"
 					}
 				},
+				"description": "Uploads a file and adds it to the specified North connector(s) cache.\nThe file will be processed according to the North connector's configuration.",
+				"summary": "Inject a file into North connector cache(s) queue",
 				"tags": [
 					"Content"
 				],
@@ -15731,7 +15733,7 @@
 					}
 				],
 				"requestBody": {
-					"required": false,
+					"required": true,
 					"content": {
 						"multipart/form-data": {
 							"schema": {
@@ -15740,11 +15742,54 @@
 									"file": {
 										"type": "string",
 										"format": "binary"
-									},
-									"timeValues": {
-										"type": "string"
 									}
-								}
+								},
+								"required": [
+									"file"
+								]
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/content/content": {
+			"post": {
+				"operationId": "AddContent",
+				"responses": {
+					"204": {
+						"description": "No Content"
+					}
+				},
+				"description": "Adds time-value or setpoint content directly to the specified North connector(s) cache queue.\nThis allows external systems to push processed data directly into OIBus.",
+				"summary": "Inject structured content into North connector cache(s) queue",
+				"tags": [
+					"Content"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "northId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"anyOf": [
+									{
+										"$ref": "#/components/schemas/OIBusTimeValueContent"
+									},
+									{
+										"$ref": "#/components/schemas/OIBusSetpointContent"
+									}
+								]
 							}
 						}
 					}
@@ -15923,6 +15968,10 @@
 		{
 			"name": "Engine",
 			"description": "Endpoints for managing the OIBus engine settings, metrics, and status"
+		},
+		{
+			"name": "Content",
+			"description": "Endpoints to add data into OIBus directly through the API"
 		},
 		{
 			"name": "IP Filters",
