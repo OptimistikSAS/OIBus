@@ -1668,7 +1668,7 @@ export interface OIBusTimeValue {
   data: {
     /**
      * The value of the point.
-     * @example 100
+     * @example "100"
      */
     value: string | number;
 
@@ -1690,7 +1690,7 @@ export interface OIBusTimeValue {
  *       "pointId": "point1",
  *       "timestamp": "2023-01-01T00:00:00Z",
  *       "data": {
- *         "value": 100
+ *         "value": "100"
  *       }
  *     }
  *   ]

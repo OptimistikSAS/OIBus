@@ -3,9 +3,10 @@ import testData from '../tests/utils/test-data';
 import { createPageFromArray } from '../../shared/model/types';
 import LogRepository from '../repository/logs/log.repository';
 import LogRepositoryMock from '../tests/__mocks__/repository/log/log-repository.mock';
-import LogService from './log.service';
+import LogService, { toLogDTO } from './log.service';
 import { DateTime } from 'luxon';
 import { LogSearchParam } from '../../shared/model/logs.model';
+import { NotFoundError } from '../model/types';
 
 jest.mock('./utils');
 jest.mock('../web-server/controllers/validators/joi.validator');
@@ -22,7 +23,7 @@ describe('Log Service', () => {
     service = new LogService(validator, logRepository);
   });
 
-  it('search() should search logs', () => {
+  it('should search logs', () => {
     const expectedResult = createPageFromArray(testData.logs.list, 25, 0);
     (logRepository.search as jest.Mock).mockReturnValueOnce(expectedResult);
 
@@ -41,21 +42,40 @@ describe('Log Service', () => {
     expect(result).toEqual(expectedResult);
   });
 
-  it('searchScopesByName() should find a scope', () => {
-    (logRepository.searchScopesByName as jest.Mock).mockReturnValueOnce([]);
+  it('should suggest scopes', () => {
+    (logRepository.suggestScopes as jest.Mock).mockReturnValueOnce([]);
 
-    const result = service.searchScopesByName('scopeName');
+    const result = service.suggestScopes('scopeName');
 
-    expect(logRepository.searchScopesByName).toHaveBeenCalledWith('scopeName');
+    expect(logRepository.suggestScopes).toHaveBeenCalledWith('scopeName');
     expect(result).toEqual([]);
   });
 
-  it('getScopeById() should find a scope', () => {
+  it('should get a scope', () => {
     (logRepository.getScopeById as jest.Mock).mockReturnValueOnce({ scopeId: 'scopeId', scopeName: 'scopeName' });
 
     const result = service.getScopeById('scopeId');
 
     expect(logRepository.getScopeById).toHaveBeenCalledWith('scopeId');
     expect(result).toEqual({ scopeId: 'scopeId', scopeName: 'scopeName' });
+  });
+
+  it('should not get if the scope is not found', async () => {
+    (logRepository.getScopeById as jest.Mock).mockReturnValueOnce(null);
+
+    expect(() => service.getScopeById('scopeId')).toThrow(new NotFoundError(`Scope "scopeId" not found`));
+    expect(logRepository.getScopeById).toHaveBeenCalledWith('scopeId');
+  });
+
+  it('should properly convert to DTO', () => {
+    const log = testData.logs.list[0];
+    expect(toLogDTO(log)).toEqual({
+      timestamp: log.timestamp,
+      level: log.level,
+      scopeType: log.scopeType,
+      scopeId: log.scopeId,
+      scopeName: log.scopeName,
+      message: log.message
+    });
   });
 });

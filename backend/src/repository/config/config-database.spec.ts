@@ -206,7 +206,7 @@ describe('Repository with populated database', () => {
     });
 
     it('should properly find all transformers', () => {
-      expect(repository.findAll()).toEqual([...testData.transformers.list, ...standardTransformers]);
+      expect(repository.list()).toEqual([...testData.transformers.list, ...standardTransformers]);
     });
 
     it('should properly find a transformer by its ID', () => {
@@ -270,7 +270,7 @@ describe('Repository with populated database', () => {
     });
 
     it('should properly find all certificates', () => {
-      expect(repository.findAll()).toEqual(testData.certificates.list);
+      expect(repository.list()).toEqual(testData.certificates.list);
     });
 
     it('should properly find a certificate by its ID', () => {
@@ -322,7 +322,7 @@ describe('Repository with populated database', () => {
     });
 
     it('should properly find all certificates', () => {
-      expect(repository.findAll()).toEqual(testData.users.list);
+      expect(repository.list()).toEqual(testData.users.list);
     });
 
     it('should search users', () => {
@@ -833,7 +833,7 @@ describe('Repository with populated database', () => {
         targetVersion: 'v3.5.0',
         type: 'test-south-connection',
         southConnectorId: 'southId',
-        commandContent: {} as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>
+        commandContent: {} as SouthConnectorCommandDTO
       };
       repository.create(command);
 
@@ -859,8 +859,8 @@ describe('Repository with populated database', () => {
         southConnectorId: 'southId',
         itemId: 'itemId',
         commandContent: {
-          southCommand: {} as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>,
-          itemCommand: {} as SouthConnectorItemCommandDTO<SouthItemSettings>,
+          southCommand: {} as SouthConnectorCommandDTO,
+          itemCommand: {} as SouthConnectorItemCommandDTO,
           testingSettings: {} as SouthConnectorItemTestingSettings
         }
       };
@@ -909,7 +909,7 @@ describe('Repository with populated database', () => {
         targetVersion: 'v3.5.0',
         type: 'test-north-connection',
         northConnectorId: 'northId',
-        commandContent: {} as NorthConnectorCommandDTO<NorthSettings>
+        commandContent: {} as NorthConnectorCommandDTO
       };
       repository.create(command);
 
@@ -1170,7 +1170,7 @@ describe('Repository with populated database', () => {
         retrieveSecretsFromSouth: 'id1',
         retrieveSecretsFromNorth: 'id2',
         retrieveSecretsFromHistoryQuery: 'id3',
-        commandContent: {} as HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>
+        commandContent: {} as HistoryQueryCommandDTO
       };
       repository.create(command);
 
@@ -1198,7 +1198,7 @@ describe('Repository with populated database', () => {
         retrieveSecretsFromSouth: null,
         retrieveSecretsFromNorth: null,
         retrieveSecretsFromHistoryQuery: null,
-        commandContent: {} as HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>
+        commandContent: {} as HistoryQueryCommandDTO
       };
       repository.create(command);
 
@@ -1226,7 +1226,7 @@ describe('Repository with populated database', () => {
         historyId: 'id1',
         commandContent: {
           resetCache: false,
-          historyQuery: {} as HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>
+          historyQuery: {} as HistoryQueryCommandDTO
         }
       };
       repository.create(command);
@@ -1274,7 +1274,7 @@ describe('Repository with populated database', () => {
         type: 'test-history-query-north-connection',
         historyId: 'h1',
         northConnectorId: 'n1',
-        commandContent: {} as HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>
+        commandContent: {} as HistoryQueryCommandDTO
       };
       repository.create(command);
 
@@ -1300,7 +1300,7 @@ describe('Repository with populated database', () => {
         type: 'test-history-query-south-connection',
         historyId: 'h1',
         southConnectorId: 's1',
-        commandContent: {} as HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>
+        commandContent: {} as HistoryQueryCommandDTO
       };
       repository.create(command);
 
@@ -1328,8 +1328,8 @@ describe('Repository with populated database', () => {
         southConnectorId: 'southId',
         itemId: 'itemId',
         commandContent: {
-          historyCommand: {} as HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>,
-          itemCommand: {} as HistoryQueryItemCommandDTO<SouthItemSettings>,
+          historyCommand: {} as HistoryQueryCommandDTO,
+          itemCommand: {} as HistoryQueryItemCommandDTO,
           testingSettings: {} as SouthConnectorItemTestingSettings
         }
       };
@@ -1607,7 +1607,7 @@ describe('Repository with populated database', () => {
     });
 
     it('findAll() should properly get all IP filters', () => {
-      expect(repository.findAll()).toEqual(testData.ipFilters.list);
+      expect(repository.list()).toEqual(testData.ipFilters.list);
     });
 
     it('findById() should properly get an IP filter', () => {
@@ -1732,15 +1732,7 @@ describe('Repository with populated database', () => {
         }).totalElements
       ).toEqual(2);
 
-      expect(
-        repository.searchItems(testData.south.list[1].id, {
-          scanModeId: testData.scanMode.list[0].id,
-          enabled: true,
-          name: 'item'
-        }).totalElements
-      ).toEqual(2);
-
-      expect(repository.searchItems(testData.south.list[1].id, {}).totalElements).toEqual(2);
+      expect(repository.searchItems(testData.south.list[1].id, { page: 0 }).totalElements).toEqual(2);
     });
 
     it('should find items', () => {

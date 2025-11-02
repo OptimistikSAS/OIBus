@@ -52,6 +52,7 @@ import { OIBusObjectAttribute } from '../../shared/model/form.model';
 import { toScanModeDTO } from './scan-mode.service';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { buildSouth } from '../south/south-connector-factory';
+import { NotFoundError, OIBusValidationError } from '../model/types';
 
 export const southManifestList: Array<SouthConnectorManifest> = [
   folderScannerManifest,
@@ -87,18 +88,118 @@ export default class SouthService {
     private readonly engine: DataStreamEngine
   ) {}
 
-  async testSouth(id: string, southType: OIBusSouthType, settingsToTest: SouthSettings): Promise<void> {
-    let southConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings> | null = null;
-    if (id !== 'create') {
-      southConnector = this.southConnectorRepository.findSouthById(id);
-      if (!southConnector) {
-        throw new Error(`South connector "${id}" not found`);
-      }
-    }
-    const manifest = this.getInstalledSouthManifests().find(southManifest => southManifest.id === southType);
+  listManifest(): Array<SouthConnectorManifest> {
+    return southManifestList;
+  }
+
+  getManifest(type: string): SouthConnectorManifest {
+    const manifest = southManifestList.find(element => element.id === type);
     if (!manifest) {
-      throw new Error(`South manifest "${southType}" not found`);
+      throw new NotFoundError(`South manifest "${type}" not found`);
     }
+    return manifest;
+  }
+
+  list(): Array<SouthConnectorEntityLight> {
+    return this.southConnectorRepository.findAllSouth();
+  }
+
+  findById(southId: string): SouthConnectorEntity<SouthSettings, SouthItemSettings> {
+    const south = this.southConnectorRepository.findSouthById(southId);
+    if (!south) {
+      throw new NotFoundError(`South "${southId}" not found`);
+    }
+    return south;
+  }
+
+  async create(
+    command: SouthConnectorCommandDTO,
+    retrieveSecretsFromSouth: string | null
+  ): Promise<SouthConnectorEntity<SouthSettings, SouthItemSettings>> {
+    const manifest = this.getManifest(command.type);
+    await this.validator.validateSettings(manifest.settings, command.settings);
+    // Check if item settings match the item schema, throw an error otherwise
+    const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
+      attribute => attribute.key === 'settings'
+    )! as OIBusObjectAttribute;
+    for (const item of command.items) {
+      await this.validator.validateSettings(itemSettingsManifest, item.settings);
+      item.id = null;
+    }
+
+    const southEntity = {} as SouthConnectorEntity<SouthSettings, SouthItemSettings>;
+    await copySouthConnectorCommandToSouthEntity(
+      southEntity,
+      command,
+      this.retrieveSecretsFromSouth(retrieveSecretsFromSouth, manifest),
+      this.scanModeRepository.findAll(),
+      !!retrieveSecretsFromSouth
+    );
+    this.southConnectorRepository.saveSouthConnector(southEntity);
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    await this.engine.createSouth(southEntity.id);
+    if (southEntity.enabled) {
+      await this.engine.startSouth(southEntity.id);
+    }
+    return southEntity;
+  }
+
+  async update(southId: string, command: SouthConnectorCommandDTO) {
+    const previousSettings = this.findById(southId);
+    const manifest = this.getManifest(command.type);
+    await this.validator.validateSettings(manifest.settings, command.settings);
+    // Check if item settings match the item schema, throw an error otherwise
+    const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
+      attribute => attribute.key === 'settings'
+    )! as OIBusObjectAttribute;
+    for (const item of command.items) {
+      await this.validator.validateSettings(itemSettingsManifest, item.settings);
+    }
+
+    const southEntity = { id: previousSettings.id } as SouthConnectorEntity<SouthSettings, SouthItemSettings>;
+    await copySouthConnectorCommandToSouthEntity(southEntity, command, previousSettings, this.scanModeRepository.findAll());
+    this.southConnectorRepository.saveSouthConnector(southEntity);
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    await this.engine.reloadSouth(southEntity);
+  }
+
+  async delete(southId: string): Promise<void> {
+    const southConnector = this.findById(southId);
+    await this.engine.deleteSouth(southConnector);
+    this.southConnectorRepository.deleteSouth(southConnector.id);
+    this.logRepository.deleteLogsByScopeId('south', southConnector.id);
+    this.southMetricsRepository.removeMetrics(southConnector.id);
+    this.southCacheRepository.deleteAllBySouthConnector(southConnector.id);
+    this.engine.updateNorthSubscriptions(southConnector.id); // Do this once it has been removed from the database to properly reload the subscription list
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+
+    this.engine.logger.info(`Deleted South connector "${southConnector.name}" (${southConnector.id})`);
+  }
+
+  async start(southId: string): Promise<void> {
+    const southConnector = this.findById(southId);
+    this.southConnectorRepository.start(southConnector.id);
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    await this.engine.startSouth(southConnector.id);
+  }
+
+  async stop(southId: string): Promise<void> {
+    const southConnector = this.findById(southId);
+    this.southConnectorRepository.stop(southConnector.id);
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    await this.engine.stopSouth(southConnector.id);
+  }
+
+  getSouthDataStream(southId: string): PassThrough | null {
+    return this.engine.getSouthDataStream(southId);
+  }
+
+  async testSouth(southId: string, southType: OIBusSouthType, settingsToTest: SouthSettings): Promise<void> {
+    let southConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings> | null = null;
+    if (southId !== 'create') {
+      southConnector = this.findById(southId);
+    }
+    const manifest = this.getManifest(southType);
     await this.validator.validateSettings(manifest.settings, settingsToTest);
 
     const testToRun: SouthConnectorEntity<SouthSettings, SouthItemSettings> = {
@@ -132,8 +233,8 @@ export default class SouthService {
     return await south.testConnection();
   }
 
-  async testSouthItem(
-    southConnectorId: string,
+  async testItem(
+    southId: string,
     southType: OIBusSouthType,
     itemName: string,
     southSettings: SouthSettings,
@@ -142,16 +243,10 @@ export default class SouthService {
     callback: (data: OIBusContent) => void
   ): Promise<void> {
     let southConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings> | null = null;
-    if (southConnectorId !== 'create') {
-      southConnector = this.southConnectorRepository.findSouthById(southConnectorId);
-      if (!southConnector) {
-        throw new Error(`South connector "${southConnectorId}" not found`);
-      }
+    if (southId !== 'create') {
+      southConnector = this.findById(southId);
     }
-    const manifest = this.getInstalledSouthManifests().find(southManifest => southManifest.id === southType);
-    if (!manifest) {
-      throw new Error(`South manifest "${southType}" not found`);
-    }
+    const manifest = this.getManifest(southType);
     await this.validator.validateSettings(manifest.settings, southSettings);
     const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'
@@ -201,141 +296,25 @@ export default class SouthService {
     return await south.testItem(testItemToRun, testingSettings, callback);
   }
 
-  findById<S extends SouthSettings, I extends SouthItemSettings>(southId: string): SouthConnectorEntity<S, I> | null {
-    return this.southConnectorRepository.findSouthById(southId);
-  }
-
-  findAll(): Array<SouthConnectorEntityLight> {
-    return this.southConnectorRepository.findAllSouth();
-  }
-
-  getInstalledSouthManifests(): Array<SouthConnectorManifest> {
-    return southManifestList;
-  }
-
-  async createSouth<S extends SouthSettings, I extends SouthItemSettings>(
-    command: SouthConnectorCommandDTO<S, I>,
-    retrieveSecretsFromSouth: string | null
-  ): Promise<SouthConnectorEntity<S, I>> {
-    const manifest = this.getInstalledSouthManifests().find(southManifest => southManifest.id === command.type);
-    if (!manifest) {
-      throw new Error(`South manifest does not exist for type "${command.type}"`);
-    }
-    await this.validator.validateSettings(manifest.settings, command.settings);
-    // Check if item settings match the item schema, throw an error otherwise
-    const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
-      attribute => attribute.key === 'settings'
-    )! as OIBusObjectAttribute;
-    for (const item of command.items) {
-      await this.validator.validateSettings(itemSettingsManifest, item.settings);
-    }
-
-    const southEntity = {} as SouthConnectorEntity<S, I>;
-    await copySouthConnectorCommandToSouthEntity(
-      southEntity,
-      command,
-      this.retrieveSecretsFromSouth(retrieveSecretsFromSouth, manifest),
-      this.scanModeRepository.findAll(),
-      !!retrieveSecretsFromSouth
-    );
-    this.southConnectorRepository.saveSouthConnector(southEntity);
-    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-    await this.engine.createSouth(southEntity.id);
-    if (southEntity.enabled) {
-      await this.engine.startSouth(southEntity.id);
-    }
-    return southEntity;
-  }
-
-  getSouthDataStream(southConnectorId: string): PassThrough | null {
-    return this.engine.getSouthDataStream(southConnectorId);
-  }
-
-  async updateSouth<S extends SouthSettings, I extends SouthItemSettings>(
-    southConnectorId: string,
-    command: SouthConnectorCommandDTO<S, I>
-  ) {
-    const previousSettings = this.southConnectorRepository.findSouthById<S, I>(southConnectorId);
-    if (!previousSettings) {
-      throw new Error(`South connector ${southConnectorId} does not exist`);
-    }
-    const manifest = this.getInstalledSouthManifests().find(southManifest => southManifest.id === command.type);
-    if (!manifest) {
-      throw new Error(`South manifest does not exist for type ${command.type}`);
-    }
-    await this.validator.validateSettings(manifest.settings, command.settings);
-
-    const southEntity = { id: previousSettings.id } as SouthConnectorEntity<S, I>;
-    await copySouthConnectorCommandToSouthEntity(southEntity, command, previousSettings, this.scanModeRepository.findAll());
-    this.southConnectorRepository.saveSouthConnector(southEntity);
-    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-    await this.engine.reloadSouth(southEntity);
-  }
-
-  async deleteSouth(southConnectorId: string): Promise<void> {
-    const southConnector = this.southConnectorRepository.findSouthById(southConnectorId);
-    if (!southConnector) {
-      throw new Error(`South connector ${southConnectorId} does not exist`);
-    }
-
-    await this.engine.deleteSouth(southConnector);
-    this.southConnectorRepository.deleteSouth(southConnector.id);
-    this.logRepository.deleteLogsByScopeId('south', southConnector.id);
-    this.southMetricsRepository.removeMetrics(southConnector.id);
-    this.southCacheRepository.deleteAllBySouthConnector(southConnector.id);
-
-    this.engine.updateNorthSubscriptions(southConnector.id); // Do this once it has been removed from the database to properly reload the subscription list
-    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-
-    this.engine.logger.info(`Deleted South connector "${southConnector.name}" (${southConnector.id})`);
-  }
-
-  async startSouth(southConnectorId: string): Promise<void> {
-    const southConnector = this.southConnectorRepository.findSouthById(southConnectorId);
-    if (!southConnector) {
-      throw new Error(`South connector "${southConnectorId}" does not exist`);
-    }
-
-    this.southConnectorRepository.start(southConnector.id);
-    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-    await this.engine.startSouth(southConnector.id);
-  }
-
-  async stopSouth(southConnectorId: string): Promise<void> {
-    const southConnector = this.southConnectorRepository.findSouthById(southConnectorId);
-    if (!southConnector) {
-      throw new Error(`South connector "${southConnectorId}" does not exist`);
-    }
-
-    this.southConnectorRepository.stop(southConnector.id);
-    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-    await this.engine.stopSouth(southConnector.id);
-  }
-
-  getSouthItems(southId: string): Array<SouthConnectorItemEntity<SouthItemSettings>> {
+  listItems(southId: string): Array<SouthConnectorItemEntity<SouthItemSettings>> {
     return this.southConnectorRepository.findAllItemsForSouth(southId);
   }
 
-  searchSouthItems(southId: string, searchParams: SouthConnectorItemSearchParam): Page<SouthConnectorItemEntity<SouthItemSettings>> {
+  searchItems(southId: string, searchParams: SouthConnectorItemSearchParam): Page<SouthConnectorItemEntity<SouthItemSettings>> {
     return this.southConnectorRepository.searchItems(southId, searchParams);
   }
 
-  findSouthConnectorItemById(southConnectorId: string, itemId: string): SouthConnectorItemEntity<SouthItemSettings> | null {
-    return this.southConnectorRepository.findItemById(southConnectorId, itemId);
+  findItemById(southId: string, itemId: string): SouthConnectorItemEntity<SouthItemSettings> {
+    const item = this.southConnectorRepository.findItemById(southId, itemId);
+    if (!item) {
+      throw new NotFoundError(`Item "${itemId}" not found`);
+    }
+    return item;
   }
 
-  async createItem(
-    southConnectorId: string,
-    command: SouthConnectorItemCommandDTO<SouthItemSettings>
-  ): Promise<SouthConnectorItemEntity<SouthItemSettings>> {
-    const southConnector = this.southConnectorRepository.findSouthById(southConnectorId);
-    if (!southConnector) {
-      throw new Error(`South connector "${southConnectorId}" does not exist`);
-    }
-    const manifest = this.getInstalledSouthManifests().find(southManifest => southManifest.id === southConnector.type);
-    if (!manifest) {
-      throw new Error(`South manifest does not exist for type "${southConnector.type}"`);
-    }
+  async createItem(southId: string, command: SouthConnectorItemCommandDTO): Promise<SouthConnectorItemEntity<SouthItemSettings>> {
+    const southConnector = this.findById(southId);
+    const manifest = this.getManifest(southConnector.type);
     const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'
     )! as OIBusObjectAttribute;
@@ -349,108 +328,79 @@ export default class SouthService {
     return southItemEntity;
   }
 
-  async updateItem(southConnectorId: string, itemId: string, command: SouthConnectorItemCommandDTO<SouthItemSettings>): Promise<void> {
-    const previousSettings = this.southConnectorRepository.findItemById(southConnectorId, itemId);
-    if (!previousSettings) {
-      throw new Error(`South item with ID "${itemId}" does not exist`);
-    }
-    const southConnector = this.southConnectorRepository.findSouthById(southConnectorId)!;
-    const manifest = this.getInstalledSouthManifests().find(southManifest => southManifest.id === southConnector.type);
-    if (!manifest) {
-      throw new Error(`South manifest does not exist for type "${southConnector.type}"`);
-    }
-
+  async updateItem(southId: string, itemId: string, command: SouthConnectorItemCommandDTO): Promise<void> {
+    const southConnector = this.findById(southId)!;
+    const existingItem = this.findItemById(southId, itemId);
+    const manifest = this.getManifest(southConnector.type);
     const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'
     )! as OIBusObjectAttribute;
     await this.validator.validateSettings(itemSettingsManifest, command.settings);
 
-    const southItemEntity = { id: previousSettings.id } as SouthConnectorItemEntity<SouthItemSettings>;
+    const southItemEntity = { id: existingItem.id } as SouthConnectorItemEntity<SouthItemSettings>;
     await copySouthItemCommandToSouthItemEntity(
       southItemEntity,
       command,
-      previousSettings,
+      existingItem,
       southConnector.type,
       this.scanModeRepository.findAll()
     );
-    this.southConnectorRepository.saveItem(southConnectorId, southItemEntity);
+    this.southConnectorRepository.saveItem(southId, southItemEntity);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     await this.engine.reloadSouthItems(southConnector);
   }
 
-  async deleteItem(southConnectorId: string, itemId: string): Promise<void> {
-    const southConnector = this.southConnectorRepository.findSouthById(southConnectorId);
-    if (!southConnector) {
-      throw new Error(`South connector "${southConnectorId}" does not exist`);
-    }
-    const southItem = this.southConnectorRepository.findItemById(southConnectorId, itemId);
-    if (!southItem) throw new Error(`South item "${itemId}" not found`);
-    this.southConnectorRepository.deleteItem(southItem.id);
-    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-    await this.engine.reloadSouthItems(southConnector);
-  }
-
-  async deleteAllItemsForSouthConnector(southConnectorId: string): Promise<void> {
-    const southConnector = this.southConnectorRepository.findSouthById(southConnectorId);
-    if (!southConnector) {
-      throw new Error(`South connector "${southConnectorId}" does not exist`);
-    }
-    this.southConnectorRepository.deleteAllItemsBySouth(southConnectorId);
-    this.southCacheRepository.deleteAllBySouthConnector(southConnectorId);
-    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-    await this.engine.reloadSouthItems(southConnector);
-  }
-
-  async enableItem(southConnectorId: string, itemId: string): Promise<void> {
-    const southConnector = this.southConnectorRepository.findSouthById(southConnectorId);
-    if (!southConnector) {
-      throw new Error(`South connector "${southConnectorId}" does not exist`);
-    }
-    const southItem = this.southConnectorRepository.findItemById(southConnectorId, itemId);
-    if (!southItem) {
-      throw new Error(`South item "${itemId}" not found`);
-    }
+  async enableItem(southId: string, itemId: string): Promise<void> {
+    const southConnector = this.findById(southId)!;
+    const southItem = this.findItemById(southId, itemId);
     this.southConnectorRepository.enableItem(southItem.id);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     await this.engine.reloadSouthItems(southConnector);
   }
 
-  async disableItem(southConnectorId: string, itemId: string): Promise<void> {
-    const southConnector = this.southConnectorRepository.findSouthById(southConnectorId);
-    if (!southConnector) {
-      throw new Error(`South connector "${southConnectorId}" does not exist`);
-    }
-    const southItem = this.southConnectorRepository.findItemById(southConnectorId, itemId);
-    if (!southItem) {
-      throw new Error(`South item "${itemId}" not found`);
-    }
+  async disableItem(southId: string, itemId: string): Promise<void> {
+    const southConnector = this.findById(southId)!;
+    const southItem = this.findItemById(southId, itemId);
     this.southConnectorRepository.disableItem(southItem.id);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-
     await this.engine.reloadSouthItems(southConnector);
   }
 
-  async checkCsvContentImport(
+  async deleteItem(southId: string, itemId: string): Promise<void> {
+    const southConnector = this.findById(southId)!;
+    const southItem = this.findItemById(southId, itemId);
+    this.southConnectorRepository.deleteItem(southItem.id);
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    await this.engine.reloadSouthItems(southConnector);
+  }
+
+  async deleteAllItems(southId: string): Promise<void> {
+    const southConnector = this.findById(southId)!;
+    this.southConnectorRepository.deleteAllItemsBySouth(southId);
+    this.southCacheRepository.deleteAllBySouthConnector(southId);
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    await this.engine.reloadSouthItems(southConnector);
+  }
+
+  async checkImportItems(
     southType: string,
     fileContent: string,
     delimiter: string,
-    existingItems: Array<SouthConnectorItemDTO<SouthItemSettings>>
+    existingItems: Array<SouthConnectorItemDTO>
   ): Promise<{
-    items: Array<SouthConnectorItemDTO<SouthItemSettings>>;
+    items: Array<SouthConnectorItemDTO>;
     errors: Array<{ item: Record<string, string>; error: string }>;
   }> {
-    const manifest = this.getInstalledSouthManifests().find(southManifest => southManifest.id === southType);
-    if (!manifest) {
-      throw new Error(`South manifest does not exist for type "${southType}"`);
-    }
-
+    const manifest = this.getManifest(southType);
     const csvContent = csv.parse(fileContent, { header: true, delimiter, skipEmptyLines: true });
     if (csvContent.meta.delimiter !== delimiter) {
-      throw new Error(`The entered delimiter "${delimiter}" does not correspond to the file delimiter "${csvContent.meta.delimiter}"`);
+      throw new OIBusValidationError(
+        `The entered delimiter "${delimiter}" does not correspond to the file delimiter "${csvContent.meta.delimiter}"`
+      );
     }
     const scanModes = this.scanModeRepository.findAll();
 
-    const validItems: Array<SouthConnectorItemDTO<SouthItemSettings>> = [];
+    const validItems: Array<SouthConnectorItemDTO> = [];
     const errors: Array<{ item: Record<string, string>; error: string }> = [];
     for (const data of csvContent.data) {
       const foundScanMode = scanModes.find(scanMode => scanMode.name === (data as Record<string, string>).scanMode);
@@ -461,7 +411,7 @@ export default class SouthService {
         });
         continue;
       }
-      const item: SouthConnectorItemDTO<SouthItemSettings> = {
+      const item: SouthConnectorItemDTO = {
         id: '',
         name: (data as Record<string, string>).name,
         enabled: stringToBoolean((data as Record<string, string>).enabled),
@@ -515,16 +465,9 @@ export default class SouthService {
     return { items: validItems, errors };
   }
 
-  async importItems(
-    southConnectorId: string,
-    items: Array<SouthConnectorItemCommandDTO<SouthItemSettings>>,
-    deleteItemsNotPresent = false
-  ) {
-    const southConnector = this.southConnectorRepository.findSouthById(southConnectorId);
-    if (!southConnector) {
-      throw new Error(`South connector "${southConnectorId}" does not exist`);
-    }
-    const manifest = this.getInstalledSouthManifests().find(southManifest => southManifest.id === southConnector.type)!;
+  async importItems(southId: string, items: Array<SouthConnectorItemCommandDTO>, deleteItemsNotPresent = false) {
+    const southConnector = this.findById(southId);
+    const manifest = this.getManifest(southConnector.type);
     const itemsToAdd: Array<SouthConnectorItemEntity<SouthItemSettings>> = [];
     const scanModes = this.scanModeRepository.findAll();
     const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
@@ -546,32 +489,23 @@ export default class SouthService {
     retrieveSecretsFromSouth: string | null,
     manifest: SouthConnectorManifest
   ): SouthConnectorEntity<SouthSettings, SouthItemSettings> | null {
-    if (!retrieveSecretsFromSouth) return null;
-    const source = this.southConnectorRepository.findSouthById(retrieveSecretsFromSouth);
-    if (!source) {
-      throw new Error(`Could not find South connector "${retrieveSecretsFromSouth}" to retrieve secrets from`);
+    if (!retrieveSecretsFromSouth) {
+      return null;
     }
+    const source = this.findById(retrieveSecretsFromSouth);
     if (source.type !== manifest.id) {
-      throw new Error(`South connector "${retrieveSecretsFromSouth}" (type "${source.type}") must be of the type "${manifest.id}"`);
+      throw new OIBusValidationError(
+        `South connector "${retrieveSecretsFromSouth}" (type "${source.type}") must be of the type "${manifest.id}"`
+      );
     }
     return source;
   }
 }
 
-export const toSouthConnectorLightDTO = (entity: SouthConnectorEntityLight): SouthConnectorLightDTO => {
-  return {
-    id: entity.id,
-    name: entity.name,
-    type: entity.type,
-    description: entity.description,
-    enabled: entity.enabled
-  };
-};
-
-const copySouthConnectorCommandToSouthEntity = async <S extends SouthSettings, I extends SouthItemSettings>(
-  southEntity: SouthConnectorEntity<S, I>,
-  command: SouthConnectorCommandDTO<S, I>,
-  currentSettings: SouthConnectorEntity<S, I> | null,
+const copySouthConnectorCommandToSouthEntity = async (
+  southEntity: SouthConnectorEntity<SouthSettings, SouthItemSettings>,
+  command: SouthConnectorCommandDTO,
+  currentSettings: SouthConnectorEntity<SouthSettings, SouthItemSettings> | null,
   scanModes: Array<ScanMode>,
   retrieveSecretsFromSouth = false
 ): Promise<void> => {
@@ -580,14 +514,14 @@ const copySouthConnectorCommandToSouthEntity = async <S extends SouthSettings, I
   southEntity.type = command.type;
   southEntity.description = command.description;
   southEntity.enabled = command.enabled;
-  southEntity.settings = await encryptionService.encryptConnectorSecrets<S>(
+  southEntity.settings = await encryptionService.encryptConnectorSecrets(
     command.settings,
     currentSettings?.settings || null,
     manifest.settings
   );
   southEntity.items = await Promise.all(
     command.items.map(async itemCommand => {
-      const itemEntity = {} as SouthConnectorItemEntity<I>;
+      const itemEntity = {} as SouthConnectorItemEntity<SouthItemSettings>;
       await copySouthItemCommandToSouthItemEntity(
         itemEntity,
         itemCommand,
@@ -601,10 +535,10 @@ const copySouthConnectorCommandToSouthEntity = async <S extends SouthSettings, I
   );
 };
 
-const copySouthItemCommandToSouthItemEntity = async <I extends SouthItemSettings>(
-  southItemEntity: SouthConnectorItemEntity<I>,
-  command: SouthConnectorItemCommandDTO<I>,
-  currentSettings: SouthConnectorItemEntity<I> | null,
+const copySouthItemCommandToSouthItemEntity = async (
+  southItemEntity: SouthConnectorItemEntity<SouthItemSettings>,
+  command: SouthConnectorItemCommandDTO,
+  currentSettings: SouthConnectorItemEntity<SouthItemSettings> | null,
   southType: string,
   scanModes: Array<ScanMode>,
   retrieveSecretsFromSouth = false
@@ -617,16 +551,24 @@ const copySouthItemCommandToSouthItemEntity = async <I extends SouthItemSettings
   southItemEntity.name = command.name;
   southItemEntity.enabled = command.enabled;
   southItemEntity.scanMode = checkScanMode(scanModes, command.scanModeId, command.scanModeName);
-  southItemEntity.settings = await encryptionService.encryptConnectorSecrets<I>(
+  southItemEntity.settings = await encryptionService.encryptConnectorSecrets(
     command.settings,
     currentSettings?.settings || null,
     itemSettingsManifest
   );
 };
 
-export const toSouthConnectorDTO = <S extends SouthSettings, I extends SouthItemSettings>(
-  southEntity: SouthConnectorEntity<S, I>
-): SouthConnectorDTO<S, I> => {
+export const toSouthConnectorLightDTO = (entity: SouthConnectorEntityLight): SouthConnectorLightDTO => {
+  return {
+    id: entity.id,
+    name: entity.name,
+    type: entity.type,
+    description: entity.description,
+    enabled: entity.enabled
+  };
+};
+
+export const toSouthConnectorDTO = (southEntity: SouthConnectorEntity<SouthSettings, SouthItemSettings>): SouthConnectorDTO => {
   const manifest = southManifestList.find(element => element.id === southEntity.type)!;
   return {
     id: southEntity.id,
@@ -634,15 +576,12 @@ export const toSouthConnectorDTO = <S extends SouthSettings, I extends SouthItem
     type: southEntity.type,
     description: southEntity.description,
     enabled: southEntity.enabled,
-    settings: encryptionService.filterSecrets<S>(southEntity.settings, manifest.settings),
-    items: southEntity.items.map(item => toSouthConnectorItemDTO<I>(item, southEntity.type))
+    settings: encryptionService.filterSecrets(southEntity.settings, manifest.settings),
+    items: southEntity.items.map(item => toSouthConnectorItemDTO(item, southEntity.type))
   };
 };
 
-export const toSouthConnectorItemDTO = <I extends SouthItemSettings>(
-  entity: SouthConnectorItemEntity<I>,
-  southType: string
-): SouthConnectorItemDTO<I> => {
+export const toSouthConnectorItemDTO = (entity: SouthConnectorItemEntity<SouthItemSettings>, southType: string): SouthConnectorItemDTO => {
   const manifest = southManifestList.find(element => element.id === southType)!;
   const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
     attribute => attribute.key === 'settings'
@@ -652,6 +591,6 @@ export const toSouthConnectorItemDTO = <I extends SouthItemSettings>(
     name: entity.name,
     enabled: entity.enabled,
     scanMode: toScanModeDTO(entity.scanMode),
-    settings: encryptionService.filterSecrets<I>(entity.settings, itemSettingsManifest)
+    settings: encryptionService.filterSecrets(entity.settings, itemSettingsManifest)
   };
 };

@@ -1,10 +1,11 @@
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import { userSchema } from '../web-server/controllers/validators/oibus-validation-schema';
 import testData from '../tests/utils/test-data';
-import UserService from './user.service';
+import UserService, { toUserDTO } from './user.service';
 import UserRepositoryMock from '../tests/__mocks__/repository/config/user-repository.mock';
 import UserRepository from '../repository/config/user.repository';
 import { createPageFromArray } from '../../shared/model/types';
+import { NotFoundError, OIBusValidationError } from '../model/types';
 
 jest.mock('./utils');
 jest.mock('../web-server/controllers/validators/joi.validator');
@@ -20,16 +21,16 @@ describe('User Service', () => {
     service = new UserService(validator, userRepository);
   });
 
-  it('findAll() should find all users', () => {
-    (userRepository.findAll as jest.Mock).mockReturnValueOnce(testData.users.list);
+  it('should list all users', () => {
+    (userRepository.list as jest.Mock).mockReturnValueOnce(testData.users.list);
 
-    const result = service.findAll();
+    const result = service.list();
 
-    expect(userRepository.findAll).toHaveBeenCalled();
+    expect(userRepository.list).toHaveBeenCalled();
     expect(result).toEqual(testData.users.list);
   });
 
-  it('findById() should find a user by id', () => {
+  it('should find a user by id', () => {
     (userRepository.findById as jest.Mock).mockReturnValueOnce(testData.users.list[0]);
 
     const result = service.findById(testData.users.list[0].id);
@@ -38,7 +39,16 @@ describe('User Service', () => {
     expect(result).toEqual(testData.users.list[0]);
   });
 
-  it('findByLogin() should find a user by login', () => {
+  it('should not get if the user is not found by id', async () => {
+    (userRepository.findById as jest.Mock).mockReturnValueOnce(null);
+
+    expect(() => service.findById(testData.users.list[0].id)).toThrow(
+      new NotFoundError(`User "${testData.users.list[0].id}" (id) not found`)
+    );
+    expect(userRepository.findById).toHaveBeenCalledWith(testData.users.list[0].id);
+  });
+
+  it('should find a user by login', () => {
     (userRepository.findByLogin as jest.Mock).mockReturnValueOnce(testData.users.list[0]);
 
     const result = service.findByLogin(testData.users.list[0].login);
@@ -47,7 +57,16 @@ describe('User Service', () => {
     expect(result).toEqual(testData.users.list[0]);
   });
 
-  it('getHashedPasswordByLogin() should retrieve hash password of a user by login', () => {
+  it('should not get if the user is not found by login', async () => {
+    (userRepository.findByLogin as jest.Mock).mockReturnValueOnce(null);
+
+    expect(() => service.findByLogin(testData.users.list[0].login)).toThrow(
+      new NotFoundError(`User "${testData.users.list[0].login}" (login) not found`)
+    );
+    expect(userRepository.findByLogin).toHaveBeenCalledWith(testData.users.list[0].login);
+  });
+
+  it('should retrieve hash password of a user by login', () => {
     (userRepository.getHashedPasswordByLogin as jest.Mock).mockReturnValueOnce('password');
 
     const result = service.getHashedPasswordByLogin(testData.users.list[0].login);
@@ -56,7 +75,7 @@ describe('User Service', () => {
     expect(result).toEqual('password');
   });
 
-  it('search() should search users', () => {
+  it('should search users', () => {
     const expectedResult = createPageFromArray(testData.users.list, 25, 0);
     (userRepository.search as jest.Mock).mockReturnValueOnce(expectedResult);
 
@@ -72,7 +91,7 @@ describe('User Service', () => {
     expect(result).toEqual(expectedResult);
   });
 
-  it('create() should create a user', async () => {
+  it('should create a user', async () => {
     (userRepository.create as jest.Mock).mockReturnValueOnce(testData.users.list[0]);
 
     const result = await service.create(testData.users.command, 'password');
@@ -82,13 +101,13 @@ describe('User Service', () => {
     expect(result).toEqual(testData.users.list[0]);
   });
 
-  it('create() should not create if the password is not provided', async () => {
-    await expect(service.create(testData.users.command, undefined)).rejects.toThrow(new Error(`Password is required`));
+  it('should not create if the password is not provided', async () => {
+    await expect(service.create(testData.users.command, undefined)).rejects.toThrow(new OIBusValidationError('Password is required'));
 
     expect(userRepository.create).not.toHaveBeenCalled();
   });
 
-  it('update() should update a user', async () => {
+  it('should update a user', async () => {
     (userRepository.findById as jest.Mock).mockReturnValueOnce(testData.users.list[0]);
 
     await service.update(testData.users.list[0].id, testData.users.command);
@@ -98,18 +117,18 @@ describe('User Service', () => {
     expect(userRepository.update).toHaveBeenCalledWith(testData.users.list[0].id, testData.users.command);
   });
 
-  it('update() should not update if the user is not found', async () => {
+  it('should not update if the user is not found', async () => {
     (userRepository.findById as jest.Mock).mockReturnValueOnce(null);
 
     await expect(service.update(testData.users.list[0].id, testData.users.command)).rejects.toThrow(
-      new Error(`User "${testData.users.list[0].id}" (id) not found`)
+      new NotFoundError(`User "${testData.users.list[0].id}" (id) not found`)
     );
 
     expect(userRepository.findById).toHaveBeenCalledWith(testData.users.list[0].id);
     expect(userRepository.update).not.toHaveBeenCalled();
   });
 
-  it('updatePassword() should update a user password', async () => {
+  it('should update a user password', async () => {
     (userRepository.findById as jest.Mock).mockReturnValueOnce(testData.users.list[0]);
 
     await service.updatePassword(testData.users.list[0].id, 'new password');
@@ -118,7 +137,7 @@ describe('User Service', () => {
     expect(userRepository.updatePassword).toHaveBeenCalledWith(testData.users.list[0].id, 'new password');
   });
 
-  it('updatePassword() should not update a user password if the password is not provided', async () => {
+  it('should not update a user password if the password is not provided', async () => {
     (userRepository.findById as jest.Mock).mockReturnValueOnce(testData.users.list[0]);
 
     await expect(service.updatePassword(testData.users.list[0].id, undefined)).rejects.toThrow(new Error(`Password is required`));
@@ -126,18 +145,18 @@ describe('User Service', () => {
     expect(userRepository.updatePassword).not.toHaveBeenCalled();
   });
 
-  it('updatePassword() should not update the password if the user is not found', async () => {
+  it('should not update the password if the user is not found', async () => {
     (userRepository.findById as jest.Mock).mockReturnValueOnce(null);
 
     await expect(service.updatePassword(testData.users.list[0].id, 'new password')).rejects.toThrow(
-      new Error(`User "${testData.users.list[0].id}" (id) not found`)
+      new NotFoundError(`User "${testData.users.list[0].id}" (id) not found`)
     );
 
     expect(userRepository.findById).toHaveBeenCalledWith(testData.users.list[0].id);
     expect(userRepository.updatePassword).not.toHaveBeenCalled();
   });
 
-  it('delete() should delete a user', async () => {
+  it('should delete a user', async () => {
     (userRepository.findById as jest.Mock).mockReturnValueOnce(testData.users.list[0]);
 
     await service.delete(testData.users.list[0].id);
@@ -146,12 +165,28 @@ describe('User Service', () => {
     expect(userRepository.delete).toHaveBeenCalledWith(testData.users.list[0].id);
   });
 
-  it('delete() should not delete if the user is not found', async () => {
+  it('should not delete if the user is not found', async () => {
     (userRepository.findById as jest.Mock).mockReturnValueOnce(null);
 
-    expect(() => service.delete(testData.users.list[0].id)).toThrow(new Error(`User "${testData.users.list[0].id}" (id) not found`));
+    expect(() => service.delete(testData.users.list[0].id)).toThrow(
+      new NotFoundError(`User "${testData.users.list[0].id}" (id) not found`)
+    );
 
     expect(userRepository.findById).toHaveBeenCalledWith(testData.users.list[0].id);
     expect(userRepository.delete).not.toHaveBeenCalled();
+  });
+
+  it('should properly convert to DTO', () => {
+    const user = testData.users.list[0];
+    expect(toUserDTO(user)).toEqual({
+      id: user.id,
+      login: user.login,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      language: user.language,
+      timezone: user.timezone,
+      friendlyName: `${user.firstName} ${user.lastName}`
+    });
   });
 });

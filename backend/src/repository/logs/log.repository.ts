@@ -68,7 +68,7 @@ export default class LogRepository {
     };
   }
 
-  searchScopesByName(name: string): Array<Scope> {
+  suggestScopes(name: string): Array<Scope> {
     const query = `SELECT DISTINCT scope_id AS scopeId, scope_name as scopeName FROM ${LOG_TABLE} WHERE scope_name LIKE '%' || ? || '%';`;
     return this.database.prepare(query).all(name) as Array<Scope>;
   }

@@ -3,7 +3,6 @@
  */
 export default jest.fn().mockImplementation(() => ({
   search: jest.fn(),
-  searchScopesByName: jest.fn(),
-  getScopeById: jest.fn(),
-  addLogsFromRemote: jest.fn()
+  suggestScopes: jest.fn(),
+  getScopeById: jest.fn()
 }));

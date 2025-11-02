@@ -18,8 +18,7 @@ import { ValidatedCronExpression } from '../../shared/model/scan-mode.model';
 import { SouthConnectorItemDTO } from '../../shared/model/south-connector.model';
 import { ScanMode } from '../model/scan-mode.model';
 import { HistoryQueryItemDTO } from '../../shared/model/history-query.model';
-import { SouthItemSettings } from '../../shared/model/south-settings.model';
-import { BaseFolders } from '../model/types';
+import { BaseFolders, NotFoundError, OIBusValidationError } from '../model/types';
 
 const COMPRESSION_LEVEL = 9;
 
@@ -647,20 +646,20 @@ export const validateCronExpression = (cron: string): ValidatedCronExpression =>
 
 export const checkScanMode = (scanModes: Array<ScanMode>, scanModeId: string | null, scanModeName: string | null): ScanMode => {
   if (!scanModeId && !scanModeName) {
-    throw new Error(`Scan mode not specified`);
+    throw new OIBusValidationError(`Scan mode not specified`);
   }
 
   const scanMode = scanModeId
     ? scanModes.find(element => element.id === scanModeId)
     : scanModes.find(element => element.name === scanModeName);
   if (!scanMode) {
-    throw new Error(`Scan mode "${scanModeName}" not found`);
+    throw new NotFoundError(`Scan mode "${scanModeName}" not found`);
   }
   return scanMode;
 };
 
-export const itemToFlattenedCSV = <I extends SouthItemSettings>(
-  items: Array<SouthConnectorItemDTO<I> | HistoryQueryItemDTO<I>>,
+export const itemToFlattenedCSV = (
+  items: Array<SouthConnectorItemDTO | HistoryQueryItemDTO>,
   delimiter: string,
   scanModes?: Array<ScanMode>
 ): string => {
@@ -672,7 +671,7 @@ export const itemToFlattenedCSV = <I extends SouthItemSettings>(
         ...item
       };
       if (scanModes) {
-        flattenedItem.scanMode = (item as SouthConnectorItemDTO<I>).scanMode.name;
+        flattenedItem.scanMode = (item as SouthConnectorItemDTO).scanMode.name;
       }
       for (const [itemSettingsKey, itemSettingsValue] of Object.entries(item.settings)) {
         columns.add(`settings_${itemSettingsKey}`);

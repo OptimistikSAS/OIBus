@@ -2,9 +2,7 @@ import { EngineSettingsCommandDTO } from './engine.model';
 import { Instant } from './types';
 import { ScanModeCommandDTO } from './scan-mode.model';
 import { SouthConnectorCommandDTO, SouthConnectorItemTestingSettings } from './south-connector.model';
-import { SouthItemSettings, SouthSettings } from './south-settings.model';
 import { NorthConnectorCommandDTO } from './north-connector.model';
-import { NorthSettings } from './north-settings.model';
 import { IPFilterCommandDTO } from './ip-filter.model';
 import { CertificateCommandDTO } from './certificate.model';
 import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO, HistoryQueryStatus } from './history-query.model';
@@ -746,7 +744,7 @@ export interface OIBusCreateSouthConnectorCommandDTO extends BaseOIBusCommandDTO
   /**
    * The content of the command, including south connector details.
    */
-  commandContent: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
+  commandContent: SouthConnectorCommandDTO;
 }
 
 /**
@@ -794,7 +792,7 @@ export interface OIBusUpdateSouthConnectorCommandDTO extends BaseOIBusCommandDTO
   /**
    * The content of the command, including updated south connector details.
    */
-  commandContent: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
+  commandContent: SouthConnectorCommandDTO;
 }
 
 /**
@@ -946,7 +944,7 @@ export interface OIBusCreateNorthConnectorCommandDTO extends BaseOIBusCommandDTO
   /**
    * The content of the command, including north connector details.
    */
-  commandContent: NorthConnectorCommandDTO<NorthSettings>;
+  commandContent: NorthConnectorCommandDTO;
 }
 
 /**
@@ -993,7 +991,7 @@ export interface OIBusUpdateNorthConnectorCommandDTO extends BaseOIBusCommandDTO
   /**
    * The content of the command, including updated north connector details.
    */
-  commandContent: NorthConnectorCommandDTO<NorthSettings>;
+  commandContent: NorthConnectorCommandDTO;
 }
 
 /**
@@ -1172,7 +1170,7 @@ export interface OIBusCreateHistoryQueryCommandDTO extends BaseOIBusCommandDTO {
   /**
    * The content of the command, including history query details.
    */
-  commandContent: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
+  commandContent: HistoryQueryCommandDTO;
 }
 
 /**
@@ -1238,7 +1236,7 @@ export interface OIBusUpdateHistoryQueryCommandDTO extends BaseOIBusCommandDTO {
     /**
      * The updated history query details.
      */
-    historyQuery: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
+    historyQuery: HistoryQueryCommandDTO;
   };
 }
 
@@ -1329,12 +1327,12 @@ export interface OIBusTestHistoryQueryNorthConnectionCommandDTO extends BaseOIBu
    * The ID of the north connector to test. Can be `null` to use the default north connector.
    * @example "north123"
    */
-  northConnectorId: string | null;
+  northConnectorId: string | undefined;
 
   /**
    * The content of the command, including history query details.
    */
-  commandContent: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
+  commandContent: HistoryQueryCommandDTO;
 }
 
 /**
@@ -1389,12 +1387,12 @@ export interface OIBusTestHistoryQuerySouthConnectionCommandDTO extends BaseOIBu
    * The ID of the south connector to test. Can be `null` to use the default south connector.
    * @example "south123"
    */
-  southConnectorId: string | null;
+  southConnectorId: string | undefined;
 
   /**
    * The content of the command, including history query details.
    */
-  commandContent: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
+  commandContent: HistoryQueryCommandDTO;
 }
 
 /**
@@ -1461,7 +1459,7 @@ export interface OIBusTestHistoryQuerySouthItemCommandDTO extends BaseOIBusComma
    * The ID of the south connector. Can be `null` to use the default south connector.
    * @example "south123"
    */
-  southConnectorId: string | null;
+  southConnectorId: string | undefined;
 
   /**
    * The ID of the item to test.
@@ -1476,12 +1474,12 @@ export interface OIBusTestHistoryQuerySouthItemCommandDTO extends BaseOIBusComma
     /**
      * The history query details.
      */
-    historyCommand: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
+    historyCommand: HistoryQueryCommandDTO;
 
     /**
      * The item details.
      */
-    itemCommand: HistoryQueryItemCommandDTO<SouthItemSettings>;
+    itemCommand: HistoryQueryItemCommandDTO;
 
     /**
      * The testing settings.

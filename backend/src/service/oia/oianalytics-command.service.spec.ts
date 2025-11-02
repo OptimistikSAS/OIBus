@@ -4,7 +4,7 @@ import ScanModeServiceMock from '../../tests/__mocks__/service/scan-mode-service
 import { encryptionService } from '../encryption.service';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import OIAnalyticsCommandService from './oianalytics-command.service';
+import OIAnalyticsCommandService, { toOIBusCommandDTO } from './oianalytics-command.service';
 import { version } from '../../../package.json';
 import ScanModeService from '../scan-mode.service';
 import OIBusService from '../oibus.service';
@@ -73,6 +73,7 @@ import HistoryQueryServiceMock from '../../tests/__mocks__/service/history-query
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
 import { OIAnalyticsFetchSetpointCommandDTO } from './oianalytics.model';
 import { OIBusContent } from '../../../shared/model/engine.model';
+import { NotFoundError } from '../../model/types';
 
 jest.mock('node:crypto');
 jest.mock('node:fs/promises');
@@ -107,7 +108,8 @@ describe('OIAnalytics Command Service', () => {
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
     (oIBusService.getEngineSettings as jest.Mock).mockReturnValue(testData.engine.settings);
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.commands.oIBusList).mockReturnValue([]);
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValue(testData.oIAnalytics.commands.oIBusList);
+    (oIAnalyticsCommandRepository.findById as jest.Mock).mockReturnValue(testData.oIAnalytics.commands.oIBusList[0]);
     (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock).mockReturnValue(testData.oIAnalytics.registration.completed);
     (getOIBusInfo as jest.Mock).mockReturnValue(testData.engine.oIBusInfo);
     (logger.child as jest.Mock).mockReturnValue(logger);
@@ -129,6 +131,23 @@ describe('OIAnalytics Command Service', () => {
       false,
       testData.engine.settings.launcherVersion
     );
+  });
+
+  it('should get a north connector', () => {
+    const result = service.findById(testData.oIAnalytics.commands.oIBusList[0].id);
+
+    expect(oIAnalyticsCommandRepository.findById).toHaveBeenCalledTimes(1);
+    expect(oIAnalyticsCommandRepository.findById).toHaveBeenCalledWith(testData.oIAnalytics.commands.oIBusList[0].id);
+    expect(result).toEqual(testData.oIAnalytics.commands.oIBusList[0]);
+  });
+
+  it('should throw an error when north connector does not exist', () => {
+    (oIAnalyticsCommandRepository.findById as jest.Mock).mockReturnValue(null);
+
+    expect(() => service.findById(testData.oIAnalytics.commands.oIBusList[0].id)).toThrow(
+      new NotFoundError(`OIAnalytics command "${testData.oIAnalytics.commands.oIBusList[0].id}" not found`)
+    );
+    expect(oIAnalyticsCommandRepository.findById).toHaveBeenCalledWith(testData.oIAnalytics.commands.oIBusList[0].id);
   });
 
   it('should properly start and stop service', async () => {
@@ -171,9 +190,9 @@ describe('OIAnalytics Command Service', () => {
   });
 
   it('should delete command', () => {
-    service.delete('id1');
+    service.delete(testData.oIAnalytics.commands.oIBusList[0].id);
 
-    expect(oIAnalyticsCommandRepository.delete).toHaveBeenCalledWith('id1');
+    expect(oIAnalyticsCommandRepository.delete).toHaveBeenCalledWith(testData.oIAnalytics.commands.oIBusList[0].id);
   });
 
   it('should check commands', async () => {
@@ -184,6 +203,7 @@ describe('OIAnalytics Command Service', () => {
       .mockReturnValueOnce(testData.oIAnalytics.registration.completed)
       .mockReturnValueOnce(testData.oIAnalytics.registration.completed)
       .mockReturnValueOnce(testData.oIAnalytics.registration.pending);
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.commands.oIBusList).mockReturnValue([]);
 
     service.checkCommands();
     await service.checkCommands();
@@ -597,7 +617,7 @@ describe('OIAnalytics Command Service', () => {
 
   it('should execute update-south command', async () => {
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([testData.oIAnalytics.commands.oIBusList[4]]); // update-south
-    (southService.getInstalledSouthManifests as jest.Mock).mockReturnValueOnce([
+    (southService.listManifest as jest.Mock).mockReturnValueOnce([
       {
         ...testData.south.manifest,
         id: (testData.oIAnalytics.commands.oIBusList[4] as OIBusUpdateSouthConnectorCommand).commandContent.type
@@ -607,7 +627,7 @@ describe('OIAnalytics Command Service', () => {
 
     await service.executeCommand();
 
-    expect(southService.updateSouth).toHaveBeenCalledWith(
+    expect(southService.update).toHaveBeenCalledWith(
       (testData.oIAnalytics.commands.oIBusList[4] as OIBusUpdateSouthConnectorCommand).southConnectorId,
       (testData.oIAnalytics.commands.oIBusList[4] as OIBusUpdateSouthConnectorCommand).commandContent
     );
@@ -620,7 +640,7 @@ describe('OIAnalytics Command Service', () => {
 
   it('should execute update-north command', async () => {
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([testData.oIAnalytics.commands.oIBusList[5]]); // update-north
-    (northService.getInstalledNorthManifests as jest.Mock).mockReturnValueOnce([
+    (northService.listManifest as jest.Mock).mockReturnValueOnce([
       {
         ...testData.south.manifest,
         id: (testData.oIAnalytics.commands.oIBusList[5] as OIBusUpdateNorthConnectorCommand).commandContent.type
@@ -628,7 +648,7 @@ describe('OIAnalytics Command Service', () => {
     ]);
     await service.executeCommand();
 
-    expect(northService.updateNorth).toHaveBeenCalledWith(
+    expect(northService.update).toHaveBeenCalledWith(
       (testData.oIAnalytics.commands.oIBusList[5] as OIBusUpdateNorthConnectorCommand).northConnectorId,
       (testData.oIAnalytics.commands.oIBusList[5] as OIBusUpdateNorthConnectorCommand).commandContent
     );
@@ -659,7 +679,7 @@ describe('OIAnalytics Command Service', () => {
 
     await service.executeCommand();
 
-    expect(southService.deleteSouth).toHaveBeenCalledWith(
+    expect(southService.delete).toHaveBeenCalledWith(
       (testData.oIAnalytics.commands.oIBusList[7] as OIBusDeleteSouthConnectorCommand).southConnectorId
     );
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
@@ -674,7 +694,7 @@ describe('OIAnalytics Command Service', () => {
 
     await service.executeCommand();
 
-    expect(northService.deleteNorth).toHaveBeenCalledWith(
+    expect(northService.delete).toHaveBeenCalledWith(
       (testData.oIAnalytics.commands.oIBusList[8] as OIBusDeleteNorthConnectorCommand).northConnectorId
     );
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
@@ -701,7 +721,7 @@ describe('OIAnalytics Command Service', () => {
 
   it('should execute create-south command', async () => {
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([testData.oIAnalytics.commands.oIBusList[10]]); // create-south
-    (southService.getInstalledSouthManifests as jest.Mock).mockReturnValueOnce([
+    (southService.listManifest as jest.Mock).mockReturnValueOnce([
       {
         ...testData.south.manifest,
         id: (testData.oIAnalytics.commands.oIBusList[10] as OIBusCreateSouthConnectorCommand).commandContent.type
@@ -710,7 +730,7 @@ describe('OIAnalytics Command Service', () => {
 
     await service.executeCommand();
 
-    expect(southService.createSouth).toHaveBeenCalledWith(
+    expect(southService.create).toHaveBeenCalledWith(
       (testData.oIAnalytics.commands.oIBusList[10] as OIBusCreateSouthConnectorCommand).commandContent,
       null
     );
@@ -723,7 +743,7 @@ describe('OIAnalytics Command Service', () => {
 
   it('should execute create-north command', async () => {
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([testData.oIAnalytics.commands.oIBusList[11]]); // create-north
-    (northService.getInstalledNorthManifests as jest.Mock).mockReturnValueOnce([
+    (northService.listManifest as jest.Mock).mockReturnValueOnce([
       {
         ...testData.south.manifest,
         id: (testData.oIAnalytics.commands.oIBusList[11] as OIBusCreateNorthConnectorCommand).commandContent.type
@@ -732,7 +752,7 @@ describe('OIAnalytics Command Service', () => {
 
     await service.executeCommand();
 
-    expect(northService.createNorth).toHaveBeenCalledWith(
+    expect(northService.create).toHaveBeenCalledWith(
       (testData.oIAnalytics.commands.oIBusList[11] as OIBusCreateNorthConnectorCommand).commandContent,
       null
     );
@@ -746,7 +766,7 @@ describe('OIAnalytics Command Service', () => {
   it('should execute create-or-update-south-items-from-csv command', async () => {
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([testData.oIAnalytics.commands.oIBusList[14]]); // create-or-update-south-items-from-csv
     (southService.findById as jest.Mock).mockReturnValueOnce(testData.south.list[0]);
-    (southService.checkCsvContentImport as jest.Mock).mockReturnValueOnce({
+    (southService.checkImportItems as jest.Mock).mockReturnValueOnce({
       items: [{ scanMode: testData.scanMode.list[0] }, { scanMode: testData.scanMode.list[0] }],
       errors: []
     });
@@ -756,7 +776,7 @@ describe('OIAnalytics Command Service', () => {
     expect(southService.findById).toHaveBeenCalledWith(
       (testData.oIAnalytics.commands.oIBusList[14] as OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand).southConnectorId
     );
-    expect(southService.checkCsvContentImport).toHaveBeenCalledWith(
+    expect(southService.checkImportItems).toHaveBeenCalledWith(
       testData.south.list[0].type,
       (testData.oIAnalytics.commands.oIBusList[14] as OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand).commandContent.csvContent,
       (testData.oIAnalytics.commands.oIBusList[14] as OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand).commandContent.delimiter,
@@ -788,7 +808,7 @@ describe('OIAnalytics Command Service', () => {
     command.commandContent.deleteItemsNotPresent = true;
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
     (southService.findById as jest.Mock).mockReturnValueOnce(testData.south.list[0]);
-    (southService.checkCsvContentImport as jest.Mock).mockReturnValueOnce({
+    (southService.checkImportItems as jest.Mock).mockReturnValueOnce({
       items: [{}, {}],
       errors: [
         { item: { name: 'item1' }, error: 'error1' },
@@ -798,7 +818,7 @@ describe('OIAnalytics Command Service', () => {
 
     await service.executeCommand();
 
-    expect(southService.checkCsvContentImport).toHaveBeenCalledWith(
+    expect(southService.checkImportItems).toHaveBeenCalledWith(
       testData.south.list[0].type,
       (testData.oIAnalytics.commands.oIBusList[14] as OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand).commandContent.csvContent,
       (testData.oIAnalytics.commands.oIBusList[14] as OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand).commandContent.delimiter,
@@ -813,13 +833,13 @@ describe('OIAnalytics Command Service', () => {
   it('should catch error when execution fails', async () => {
     const command = testData.oIAnalytics.commands.oIBusList[11];
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]); // create-north
-    (northService.getInstalledNorthManifests as jest.Mock).mockReturnValueOnce([
+    (northService.listManifest as jest.Mock).mockReturnValueOnce([
       {
         ...testData.south.manifest,
         id: (testData.oIAnalytics.commands.oIBusList[11] as OIBusCreateNorthConnectorCommand).commandContent.type
       }
     ]);
-    (northService.createNorth as jest.Mock).mockImplementationOnce(() => {
+    (northService.create as jest.Mock).mockImplementationOnce(() => {
       throw new Error('command execution error');
     });
 
@@ -1006,7 +1026,7 @@ describe('OIAnalytics Command Service', () => {
       commandContent: testData.south.command
     } as OIBusTestSouthConnectorCommand;
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
-    (southService.getInstalledSouthManifests as jest.Mock).mockReturnValueOnce([
+    (southService.listManifest as jest.Mock).mockReturnValueOnce([
       {
         ...testData.south.manifest,
         id: command.commandContent.type
@@ -1042,12 +1062,12 @@ describe('OIAnalytics Command Service', () => {
     } as OIBusTestSouthConnectorItemCommand;
 
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
-    (southService.testSouthItem as jest.Mock).mockImplementationOnce(
+    (southService.testItem as jest.Mock).mockImplementationOnce(
       (_southId, _southType, _itemName, _southSettings, _itemCommand, _testSettings, callback, _logger) => {
         callback({});
       }
     );
-    (southService.getInstalledSouthManifests as jest.Mock).mockReturnValueOnce([
+    (southService.listManifest as jest.Mock).mockReturnValueOnce([
       {
         ...testData.south.manifest,
         id: command.commandContent.southCommand.type
@@ -1057,7 +1077,7 @@ describe('OIAnalytics Command Service', () => {
 
     await service.executeCommand();
 
-    expect(southService.testSouthItem).toHaveBeenCalledWith(
+    expect(southService.testItem).toHaveBeenCalledWith(
       command.southConnectorId,
       command.commandContent.southCommand.type,
       command.commandContent.itemCommand.name,
@@ -1079,7 +1099,7 @@ describe('OIAnalytics Command Service', () => {
     } as OIBusTestNorthConnectorCommand;
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
 
-    (northService.getInstalledNorthManifests as jest.Mock).mockReturnValueOnce([
+    (northService.listManifest as jest.Mock).mockReturnValueOnce([
       {
         ...testData.north.manifest,
         id: command.commandContent.type
@@ -1105,19 +1125,19 @@ describe('OIAnalytics Command Service', () => {
       id: 'createHistoryQueryId',
       type: 'create-history-query',
       targetVersion: testData.engine.settings.version,
-      northConnectorId: null,
-      southConnectorId: null,
-      historyQueryId: null,
+      northConnectorId: undefined,
+      southConnectorId: undefined,
+      historyQueryId: undefined,
       commandContent: testData.historyQueries.command
     } as OIBusCreateHistoryQueryCommand;
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
-    (southService.getInstalledSouthManifests as jest.Mock).mockReturnValueOnce([
+    (southService.listManifest as jest.Mock).mockReturnValueOnce([
       {
         ...testData.south.manifest,
         id: testData.historyQueries.command.southType
       }
     ]);
-    (northService.getInstalledNorthManifests as jest.Mock).mockReturnValueOnce([
+    (northService.listManifest as jest.Mock).mockReturnValueOnce([
       {
         ...testData.north.manifest,
         id: testData.historyQueries.command.northType
@@ -1126,7 +1146,7 @@ describe('OIAnalytics Command Service', () => {
 
     await service.executeCommand();
 
-    expect(historyQueryService.createHistoryQuery).toHaveBeenCalledWith(command.commandContent, null, null, null);
+    expect(historyQueryService.create).toHaveBeenCalledWith(command.commandContent, undefined, undefined, undefined);
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       command.id,
       testData.constants.dates.FAKE_NOW,
@@ -1143,13 +1163,13 @@ describe('OIAnalytics Command Service', () => {
       commandContent: { resetCache: false, historyQuery: testData.historyQueries.command }
     } as OIBusUpdateHistoryQueryCommand;
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
-    (southService.getInstalledSouthManifests as jest.Mock).mockReturnValueOnce([
+    (southService.listManifest as jest.Mock).mockReturnValueOnce([
       {
         ...testData.south.manifest,
         id: testData.historyQueries.command.southType
       }
     ]);
-    (northService.getInstalledNorthManifests as jest.Mock).mockReturnValueOnce([
+    (northService.listManifest as jest.Mock).mockReturnValueOnce([
       {
         ...testData.north.manifest,
         id: testData.historyQueries.command.northType
@@ -1158,7 +1178,7 @@ describe('OIAnalytics Command Service', () => {
 
     await service.executeCommand();
 
-    expect(historyQueryService.updateHistoryQuery).toHaveBeenCalledWith(
+    expect(historyQueryService.update).toHaveBeenCalledWith(
       command.historyQueryId,
       command.commandContent.historyQuery,
       command.commandContent.resetCache
@@ -1181,7 +1201,7 @@ describe('OIAnalytics Command Service', () => {
 
     await service.executeCommand();
 
-    expect(historyQueryService.deleteHistoryQuery).toHaveBeenCalledWith(command.historyQueryId);
+    expect(historyQueryService.delete).toHaveBeenCalledWith(command.historyQueryId);
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       command.id,
       testData.constants.dates.FAKE_NOW,
@@ -1202,13 +1222,13 @@ describe('OIAnalytics Command Service', () => {
       }
     } as OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand;
     (historyQueryService.findById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0]);
-    (historyQueryService.checkCsvContentImport as jest.Mock).mockReturnValueOnce({ items: [{}, {}], errors: [] });
+    (historyQueryService.checkImportItems as jest.Mock).mockReturnValueOnce({ items: [{}, {}], errors: [] });
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
 
     await service.executeCommand();
 
     expect(historyQueryService.findById).toHaveBeenCalledWith(command.historyQueryId);
-    expect(historyQueryService.checkCsvContentImport).toHaveBeenCalledWith(
+    expect(historyQueryService.checkImportItems).toHaveBeenCalledWith(
       testData.historyQueries.list[0].southType,
       command.commandContent.csvContent,
       command.commandContent.delimiter,
@@ -1257,7 +1277,7 @@ describe('OIAnalytics Command Service', () => {
       }
     } as OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand;
     (historyQueryService.findById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0]);
-    (historyQueryService.checkCsvContentImport as jest.Mock).mockReturnValueOnce({
+    (historyQueryService.checkImportItems as jest.Mock).mockReturnValueOnce({
       items: [{}, {}],
       errors: [
         { item: { name: 'item1' }, error: 'error1' },
@@ -1265,11 +1285,11 @@ describe('OIAnalytics Command Service', () => {
       ]
     });
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
-    (historyQueryService.checkCsvContentImport as jest.Mock).mockReturnValueOnce({});
+    (historyQueryService.checkImportItems as jest.Mock).mockReturnValueOnce({});
 
     await service.executeCommand();
 
-    expect(historyQueryService.checkCsvContentImport).toHaveBeenCalledWith(
+    expect(historyQueryService.checkImportItems).toHaveBeenCalledWith(
       testData.historyQueries.list[0].southType,
       command.commandContent.csvContent,
       command.commandContent.delimiter,
@@ -1292,13 +1312,13 @@ describe('OIAnalytics Command Service', () => {
     } as OIBusTestHistoryQueryNorthConnectionCommand;
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
 
-    (southService.getInstalledSouthManifests as jest.Mock).mockReturnValueOnce([
+    (southService.listManifest as jest.Mock).mockReturnValueOnce([
       {
         ...testData.south.manifest,
         id: testData.historyQueries.command.southType
       }
     ]);
-    (northService.getInstalledNorthManifests as jest.Mock).mockReturnValueOnce([
+    (northService.listManifest as jest.Mock).mockReturnValueOnce([
       {
         ...testData.north.manifest,
         id: testData.historyQueries.command.northType
@@ -1331,13 +1351,13 @@ describe('OIAnalytics Command Service', () => {
     } as OIBusTestHistoryQuerySouthConnectionCommand;
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
 
-    (southService.getInstalledSouthManifests as jest.Mock).mockReturnValueOnce([
+    (southService.listManifest as jest.Mock).mockReturnValueOnce([
       {
         ...testData.south.manifest,
         id: testData.historyQueries.command.southType
       }
     ]);
-    (northService.getInstalledNorthManifests as jest.Mock).mockReturnValueOnce([
+    (northService.listManifest as jest.Mock).mockReturnValueOnce([
       {
         ...testData.north.manifest,
         id: testData.historyQueries.command.northType
@@ -1375,12 +1395,12 @@ describe('OIAnalytics Command Service', () => {
     } as OIBusTestHistoryQuerySouthItemCommand;
 
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
-    (historyQueryService.testSouthItem as jest.Mock).mockImplementationOnce(
+    (historyQueryService.testItem as jest.Mock).mockImplementationOnce(
       (_historyId, _southType, _itemName, _southId, _southSettings, _itemCommand, _testSettings, callback, _logger) => {
         callback({});
       }
     );
-    (southService.getInstalledSouthManifests as jest.Mock).mockReturnValueOnce([
+    (southService.listManifest as jest.Mock).mockReturnValueOnce([
       {
         ...testData.south.manifest,
         id: command.commandContent.historyCommand.southType
@@ -1389,7 +1409,7 @@ describe('OIAnalytics Command Service', () => {
     service['completeTestItemCommand'] = jest.fn();
     await service.executeCommand();
 
-    expect(historyQueryService.testSouthItem).toHaveBeenCalledWith(
+    expect(historyQueryService.testItem).toHaveBeenCalledWith(
       command.historyQueryId,
       command.commandContent.historyCommand.southType,
       command.commandContent.itemCommand.name,
@@ -1417,7 +1437,7 @@ describe('OIAnalytics Command Service', () => {
 
     await service.executeCommand();
 
-    expect(historyQueryService.startHistoryQuery).toHaveBeenCalledWith(command.historyQueryId);
+    expect(historyQueryService.start).toHaveBeenCalledWith(command.historyQueryId);
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       command.id,
       testData.constants.dates.FAKE_NOW,
@@ -1429,7 +1449,7 @@ describe('OIAnalytics Command Service', () => {
 
     await service.executeCommand();
 
-    expect(historyQueryService.pauseHistoryQuery).toHaveBeenCalledWith(command.historyQueryId);
+    expect(historyQueryService.pause).toHaveBeenCalledWith(command.historyQueryId);
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       command.id,
       testData.constants.dates.FAKE_NOW,
@@ -1723,5 +1743,10 @@ describe('OIAnalytics Command service with no commands and without update', () =
       testData.constants.dates.FAKE_NOW,
       JSON.stringify({ type: 'any', filePath: 'file.csv', truncated: false, totalSize: 0 })
     );
+  });
+
+  it('should properly convert to DTO', () => {
+    const command = testData.oIAnalytics.commands.oIBusList[0];
+    expect(toOIBusCommandDTO(command)).toEqual(command);
   });
 });

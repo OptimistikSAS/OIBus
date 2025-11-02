@@ -19,7 +19,7 @@ export default class ScanModeService {
     private dataStreamEngine: DataStreamEngine
   ) {}
 
-  findAll(): Array<ScanMode> {
+  list(): Array<ScanMode> {
     return this.scanModeRepository.findAll();
   }
 
@@ -40,12 +40,9 @@ export default class ScanModeService {
 
   async update(scanModeId: string, command: ScanModeCommandDTO): Promise<void> {
     await this.validator.validate(scanModeSchema, command);
-    const oldScanMode = this.scanModeRepository.findById(scanModeId);
-    if (!oldScanMode) {
-      throw new NotFoundError(`Scan mode "${scanModeId}" not found`);
-    }
-    this.scanModeRepository.update(scanModeId, command);
-    const newScanMode = this.scanModeRepository.findById(scanModeId)!;
+    const oldScanMode = this.findById(scanModeId);
+    this.scanModeRepository.update(oldScanMode.id, command);
+    const newScanMode = this.findById(scanModeId);
     if (oldScanMode.cron !== newScanMode.cron) {
       await this.dataStreamEngine.updateScanMode(newScanMode);
     }
@@ -53,12 +50,9 @@ export default class ScanModeService {
   }
 
   async delete(scanModeId: string): Promise<void> {
-    const scanMode = this.scanModeRepository.findById(scanModeId);
-    if (!scanMode) {
-      throw new NotFoundError(`Scan mode "${scanModeId}" not found`);
-    }
-    this.southCacheRepository.deleteAllByScanMode(scanModeId);
-    this.scanModeRepository.delete(scanModeId);
+    const scanMode = this.findById(scanModeId);
+    this.southCacheRepository.deleteAllByScanMode(scanMode.id);
+    this.scanModeRepository.delete(scanMode.id);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
 

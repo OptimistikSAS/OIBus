@@ -1,7 +1,7 @@
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import { transformerSchema } from '../web-server/controllers/validators/oibus-validation-schema';
 import testData from '../tests/utils/test-data';
-import TransformerService, { createTransformer, getStandardManifest } from './transformer.service';
+import TransformerService, { createTransformer, getStandardManifest, toTransformerDTO } from './transformer.service';
 import TransformerRepository from '../repository/config/transformer.repository';
 import TransformerRepositoryMock from '../tests/__mocks__/repository/config/transformer-repository.mock';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
@@ -19,6 +19,7 @@ import IgnoreTransformer from './transformers/ignore-transformer';
 import OIBusSetpointToMQTTTransformer from './transformers/setpoint/oibus-setpoint-to-mqtt-transformer';
 import OIBusSetpointToModbusTransformer from './transformers/setpoint/oibus-setpoint-to-modbus-transformer';
 import OIBusSetpointToOPCUATransformer from './transformers/setpoint/oibus-setpoint-to-opcua-transformer';
+import { NotFoundError } from '../model/types';
 
 jest.mock('papaparse');
 jest.mock('./utils');
@@ -36,7 +37,7 @@ describe('Transformer Service', () => {
     service = new TransformerService(validator, transformerRepository, oiAnalyticsMessageService);
   });
 
-  it('search() should search transformers', () => {
+  it('should search transformers', () => {
     (transformerRepository.search as jest.Mock).mockReturnValueOnce(testData.transformers.list);
 
     const result = service.search({
@@ -50,16 +51,16 @@ describe('Transformer Service', () => {
     expect(result).toEqual(testData.transformers.list);
   });
 
-  it('findAll() should find all transformers', () => {
-    (transformerRepository.findAll as jest.Mock).mockReturnValueOnce(testData.transformers.list);
+  it('should list all transformers', () => {
+    (transformerRepository.list as jest.Mock).mockReturnValueOnce(testData.transformers.list);
 
     const result = service.findAll();
 
-    expect(transformerRepository.findAll).toHaveBeenCalled();
+    expect(transformerRepository.list).toHaveBeenCalled();
     expect(result).toEqual(testData.transformers.list);
   });
 
-  it('findById() should find a transformer by id', () => {
+  it('should find a transformer by id', () => {
     (transformerRepository.findById as jest.Mock).mockReturnValueOnce(testData.transformers.list[0]);
 
     const result = service.findById(testData.transformers.list[0].id);
@@ -68,14 +69,23 @@ describe('Transformer Service', () => {
     expect(result).toEqual(testData.transformers.list[0]);
   });
 
-  it('create() should create a transformer', async () => {
+  it('should not get if the transformer is not found', async () => {
+    (transformerRepository.findById as jest.Mock).mockReturnValueOnce(null);
+
+    expect(() => service.findById(testData.transformers.list[0].id)).toThrow(
+      new NotFoundError(`Transformer "${testData.transformers.list[0].id}" not found`)
+    );
+    expect(transformerRepository.findById).toHaveBeenCalledWith(testData.transformers.list[0].id);
+  });
+
+  it('should create a transformer', async () => {
     const result = await service.create(testData.transformers.command);
 
     expect(validator.validate).toHaveBeenCalledWith(transformerSchema, testData.transformers.command);
     expect(result).toEqual(testData.transformers.command);
   });
 
-  it('update() should update a transformer', async () => {
+  it('should update a transformer', async () => {
     (transformerRepository.findById as jest.Mock).mockReturnValueOnce(testData.transformers.list[0]);
 
     await service.update(testData.transformers.list[0].id, testData.transformers.command);
@@ -89,7 +99,7 @@ describe('Transformer Service', () => {
     });
   });
 
-  it('update() should not update if the transformer is not found', async () => {
+  it('should not update if the transformer is not found', async () => {
     (transformerRepository.findById as jest.Mock).mockReturnValueOnce(null);
 
     await expect(service.update(testData.transformers.list[0].id, testData.transformers.command)).rejects.toThrow(
@@ -100,7 +110,7 @@ describe('Transformer Service', () => {
     expect(transformerRepository.save).not.toHaveBeenCalled();
   });
 
-  it('update() should not update if the transformer is a standard one', async () => {
+  it('should not update if the transformer is a standard one', async () => {
     const standardTransformer: StandardTransformer = {
       id: 'id',
       type: 'standard'
@@ -115,7 +125,7 @@ describe('Transformer Service', () => {
     expect(transformerRepository.save).not.toHaveBeenCalled();
   });
 
-  it('delete() should delete a transformer', async () => {
+  it('should delete a transformer', async () => {
     (transformerRepository.findById as jest.Mock).mockReturnValueOnce(testData.transformers.list[0]);
 
     await service.delete(testData.transformers.list[0].id);
@@ -124,7 +134,7 @@ describe('Transformer Service', () => {
     expect(transformerRepository.delete).toHaveBeenCalledWith(testData.transformers.list[0].id);
   });
 
-  it('delete() should not delete if the transformer is not found', async () => {
+  it('should not delete if the transformer is not found', async () => {
     (transformerRepository.findById as jest.Mock).mockReturnValueOnce(null);
 
     expect(() => service.delete(testData.transformers.list[0].id)).toThrow(
@@ -135,7 +145,7 @@ describe('Transformer Service', () => {
     expect(transformerRepository.delete).not.toHaveBeenCalled();
   });
 
-  it('delete() should not delete if the transformer is a standard one', async () => {
+  it('should not delete if the transformer is a standard one', async () => {
     const standardTransformer: StandardTransformer = {
       id: 'id',
       type: 'standard'
@@ -150,7 +160,7 @@ describe('Transformer Service', () => {
     expect(transformerRepository.save).not.toHaveBeenCalled();
   });
 
-  it('createTransformer() should create the transformer', async () => {
+  it('should create the transformer', async () => {
     const logger: pino.Logger = new PinoLogger();
 
     const transformer: StandardTransformer = JSON.parse(JSON.stringify(testData.transformers.list[0]));
@@ -207,7 +217,7 @@ describe('Transformer Service', () => {
     ).toThrow('Transformer transformerId1 (custom) not implemented');
   });
 
-  it('getStandardManifest() should get standard manifest', async () => {
+  it('should get standard manifest', async () => {
     expect(getStandardManifest('iso')).toEqual(IsoTransformer.manifestSettings);
     expect(getStandardManifest('ignore')).toEqual(IgnoreTransformer.manifestSettings);
     expect(getStandardManifest('time-values-to-csv')).toEqual(OIBusTimeValuesToCsvTransformer.manifestSettings);
@@ -219,5 +229,34 @@ describe('Transformer Service', () => {
     expect(getStandardManifest('setpoint-to-modbus')).toEqual(OIBusSetpointToModbusTransformer.manifestSettings);
     expect(getStandardManifest('setpoint-to-opcua')).toEqual(OIBusSetpointToOPCUATransformer.manifestSettings);
     expect(() => getStandardManifest('bad-id')).toThrow(`Could not find manifest for bad-id transformer`);
+  });
+
+  it('should properly convert to DTO', () => {
+    const customTransformer = testData.transformers.list[0] as CustomTransformer;
+    expect(toTransformerDTO(testData.transformers.list[0])).toEqual({
+      id: customTransformer.id,
+      type: customTransformer.type,
+      name: customTransformer.name,
+      description: customTransformer.description,
+      inputType: customTransformer.inputType,
+      outputType: customTransformer.outputType,
+      customCode: customTransformer.customCode,
+      manifest: customTransformer.customManifest
+    });
+    const standardTransformer: StandardTransformer = {
+      id: 'standardId',
+      inputType: 'time-values',
+      outputType: 'time-values',
+      type: 'standard',
+      functionName: 'iso'
+    };
+    expect(toTransformerDTO(standardTransformer)).toEqual({
+      id: standardTransformer.id,
+      type: standardTransformer.type,
+      inputType: standardTransformer.inputType,
+      outputType: standardTransformer.outputType,
+      functionName: standardTransformer.functionName,
+      manifest: IgnoreTransformer.manifestSettings
+    });
   });
 });

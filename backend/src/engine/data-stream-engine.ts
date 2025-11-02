@@ -179,7 +179,7 @@ export default class DataStreamEngine {
     return this.northConnectorMetrics.get(northConnectorId)?.stream || null;
   }
 
-  getNorthConnectorMetrics(): Record<string, NorthConnectorMetrics> {
+  getNorthMetrics(): Record<string, NorthConnectorMetrics> {
     const metricsList: Record<string, NorthConnectorMetrics> = {};
     for (const [id, value] of this.northConnectorMetrics.entries()) {
       metricsList[id] = value.metrics;
@@ -187,7 +187,7 @@ export default class DataStreamEngine {
     return metricsList;
   }
 
-  resetNorthConnectorMetrics(northConnectorId: string): PassThrough | null {
+  resetNorthMetrics(northConnectorId: string): PassThrough | null {
     return this.northConnectorMetrics.get(northConnectorId)?.resetMetrics() || null;
   }
 
@@ -266,7 +266,7 @@ export default class DataStreamEngine {
     return this.southConnectorMetrics.get(southConnectorId)?.stream || null;
   }
 
-  getSouthConnectorMetrics(): Record<string, SouthConnectorMetrics> {
+  getSouthMetrics(): Record<string, SouthConnectorMetrics> {
     const metricsList: Record<string, SouthConnectorMetrics> = {};
     for (const [id, value] of this.southConnectorMetrics.entries()) {
       metricsList[id] = value.metrics;
@@ -274,7 +274,7 @@ export default class DataStreamEngine {
     return metricsList;
   }
 
-  resetSouthConnectorMetrics(southConnectorId: string): PassThrough | null {
+  resetSouthMetrics(southConnectorId: string): PassThrough | null {
     return this.southConnectorMetrics.get(southConnectorId)?.resetMetrics() || null;
   }
 

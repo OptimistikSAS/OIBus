@@ -17,8 +17,8 @@ export default class CertificateService {
     private oIAnalyticsMessageService: OIAnalyticsMessageService
   ) {}
 
-  findAll(): Array<Certificate> {
-    return this.certificateRepository.findAll();
+  list(): Array<Certificate> {
+    return this.certificateRepository.list();
   }
 
   findById(certificateId: string): Certificate {
@@ -59,10 +59,7 @@ export default class CertificateService {
 
   async update(certificateId: string, command: CertificateCommandDTO): Promise<void> {
     await this.validator.validate(certificateSchema, command);
-    const certificate = this.certificateRepository.findById(certificateId);
-    if (!certificate) {
-      throw new NotFoundError(`Certificate "${certificateId}" not found`);
-    }
+    const certificate = this.findById(certificateId);
     if (command.regenerateCertificate) {
       const cert = this.encryptionService.generateSelfSignedCertificate({
         commonName: command.options!.commonName,
@@ -74,7 +71,7 @@ export default class CertificateService {
         keySize: command.options!.keySize
       });
       this.certificateRepository.update({
-        id: certificateId,
+        id: certificate.id,
         name: command.name,
         description: command.description,
         publicKey: cert.public,
@@ -86,17 +83,14 @@ export default class CertificateService {
           .toISO()!
       });
     } else {
-      this.certificateRepository.updateNameAndDescription(certificateId, command.name, command.description);
+      this.certificateRepository.updateNameAndDescription(certificate.id, command.name, command.description);
     }
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
 
   async delete(certificateId: string): Promise<void> {
-    const certificate = this.certificateRepository.findById(certificateId);
-    if (!certificate) {
-      throw new NotFoundError(`Certificate "${certificateId}" not found`);
-    }
-    this.certificateRepository.delete(certificateId);
+    const certificate = this.findById(certificateId);
+    this.certificateRepository.delete(certificate.id);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
 }

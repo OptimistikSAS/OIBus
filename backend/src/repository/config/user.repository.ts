@@ -19,15 +19,12 @@ const DEFAULT_USER: Omit<User, 'id'> = {
 };
 const DEFAULT_PASSWORD = 'pass';
 
-/**
- * Repository used for Users
- */
 export default class UserRepository {
   constructor(private readonly database: Database) {
     this.createDefault();
   }
 
-  findAll(): Array<User> {
+  list(): Array<User> {
     const query = `SELECT id, login, first_name, last_name, email, language, timezone FROM ${USERS_TABLE}`;
     return this.database
       .prepare(query)

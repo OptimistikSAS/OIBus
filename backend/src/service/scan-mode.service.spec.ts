@@ -33,7 +33,7 @@ describe('Scan Mode Service', () => {
   it('findAll() should find all scan modes', () => {
     (scanModeRepository.findAll as jest.Mock).mockReturnValueOnce(testData.scanMode.list);
 
-    const result = service.findAll();
+    const result = service.list();
 
     expect(scanModeRepository.findAll).toHaveBeenCalled();
     expect(result).toEqual(testData.scanMode.list.map(element => toScanModeDTO(element)));

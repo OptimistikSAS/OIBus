@@ -10,7 +10,7 @@ const IP_FILTERS_TABLE = 'ip_filters';
 export default class IpFilterRepository {
   constructor(private readonly database: Database) {}
 
-  findAll(): Array<IPFilter> {
+  list(): Array<IPFilter> {
     const query = `SELECT id, address, description FROM ${IP_FILTERS_TABLE};`;
     return this.database
       .prepare(query)

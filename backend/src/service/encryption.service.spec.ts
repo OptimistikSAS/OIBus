@@ -10,7 +10,7 @@ import EncryptionService, { CERT_FILE_NAME, CERT_PRIVATE_KEY_FILE_NAME, CERT_PUB
 import * as utils from './utils';
 
 import { SouthConnectorCommandDTO, SouthConnectorDTO } from '../../shared/model/south-connector.model';
-import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
+import { SouthSettings } from '../../shared/model/south-settings.model';
 import { OIBusArrayAttribute, OIBusObjectAttribute, OIBusSecretAttribute, OIBusStringAttribute } from '../../shared/model/form.model';
 
 jest.mock('./utils');
@@ -260,7 +260,7 @@ describe('Encryption service with crypto settings', () => {
   });
 
   it('should properly encrypt connector secrets', async () => {
-    const command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> = {
+    const command: SouthConnectorCommandDTO = {
       name: 'connector',
       type: 'opcua',
       description: 'my connector',
@@ -278,8 +278,8 @@ describe('Encryption service with crypto settings', () => {
           fieldGroup2: 'a group secret'
         }
       } as unknown as SouthSettings
-    } as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
-    const connector: SouthConnectorDTO<SouthSettings, SouthItemSettings> = {
+    } as SouthConnectorCommandDTO;
+    const connector: SouthConnectorDTO = {
       id: 'id1',
       name: 'connector',
       type: 'opcua',
@@ -290,7 +290,7 @@ describe('Encryption service with crypto settings', () => {
         field2: 'secret',
         field3: 'not a secret'
       } as unknown as SouthSettings
-    } as SouthConnectorDTO<SouthSettings, SouthItemSettings>;
+    } as SouthConnectorDTO;
 
     const update = jest.fn(() => 'encrypted secret');
     const final = jest.fn(() => '');
@@ -317,7 +317,7 @@ describe('Encryption service with crypto settings', () => {
   });
 
   it('should properly encrypt connector secrets when no secret provided', async () => {
-    const command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> = {
+    const command: SouthConnectorCommandDTO = {
       name: 'connector',
       type: 'opcua',
       description: 'my connector',
@@ -363,7 +363,7 @@ describe('Encryption service with crypto settings', () => {
   });
 
   it('should properly keep existing and encrypted connector secrets', async () => {
-    const command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> = {
+    const command: SouthConnectorCommandDTO = {
       name: 'connector',
       type: 'opcua',
       description: 'my connector',
@@ -383,7 +383,7 @@ describe('Encryption service with crypto settings', () => {
         }
       } as unknown as SouthSettings
     };
-    const connector: SouthConnectorDTO<SouthSettings, SouthItemSettings> = {
+    const connector: SouthConnectorDTO = {
       id: 'id1',
       name: 'connector',
       type: 'opcua',
@@ -402,7 +402,7 @@ describe('Encryption service with crypto settings', () => {
           fieldGroup2: 'a group secret'
         }
       } as unknown as SouthSettings
-    } as SouthConnectorDTO<SouthSettings, SouthItemSettings>;
+    } as SouthConnectorDTO;
     const expectedCommand = {
       field1: 'not a secret',
       field2: 'encrypted secret',
@@ -428,7 +428,7 @@ describe('Encryption service with crypto settings', () => {
   });
 
   it('should properly decrypt connector secrets', async () => {
-    const command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> = {
+    const command: SouthConnectorCommandDTO = {
       name: 'connector',
       type: 'opcua',
       description: 'my connector',
@@ -446,7 +446,7 @@ describe('Encryption service with crypto settings', () => {
           fieldGroup2: 'a group secret'
         }
       } as unknown as SouthSettings
-    } as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
+    } as SouthConnectorCommandDTO;
 
     const update = jest.fn(() => 'encrypted secret');
     const final = jest.fn(() => '');
@@ -473,7 +473,7 @@ describe('Encryption service with crypto settings', () => {
   });
 
   it('should properly filter out secret', () => {
-    const connector: SouthConnectorDTO<SouthSettings, SouthItemSettings> = {
+    const connector: SouthConnectorDTO = {
       id: 'id1',
       name: 'connector',
       type: 'opcua',
@@ -492,7 +492,7 @@ describe('Encryption service with crypto settings', () => {
           fieldGroup2: 'a group secret'
         }
       } as unknown as SouthSettings
-    } as SouthConnectorDTO<SouthSettings, SouthItemSettings>;
+    } as SouthConnectorDTO;
 
     expect(encryptionService.filterSecrets(connector.settings, manifest)).toEqual({
       field1: 'not a secret',
@@ -510,7 +510,7 @@ describe('Encryption service with crypto settings', () => {
   });
 
   it('should properly decrypt connector secrets with private key', async () => {
-    const command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> = {
+    const command: SouthConnectorCommandDTO = {
       name: 'connector',
       type: 'opcua',
       description: 'my connector',

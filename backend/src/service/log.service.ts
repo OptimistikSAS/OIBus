@@ -15,8 +15,8 @@ export default class LogService {
     return this.logRepository.search(searchParams);
   }
 
-  searchScopesByName(name: string): Array<Scope> {
-    return this.logRepository.searchScopesByName(name);
+  suggestScopes(name: string): Array<Scope> {
+    return this.logRepository.suggestScopes(name);
   }
 
   getScopeById(scopeId: string): Scope {
