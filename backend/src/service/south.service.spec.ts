@@ -1449,6 +1449,33 @@ describe('South Service', () => {
         expect(result).toHaveProperty('errors');
         expect(result.items).toHaveLength(2);
       });
+
+      it('should throw error if file is null or undefined', async () => {
+        await expect(service.checkArrayCSVImport(null as unknown as Express.Multer.File, ',', 'items', 'folder-scanner')).rejects.toThrow(
+          'File is null or undefined'
+        );
+      });
+
+      it('should throw error if file has neither buffer nor path', async () => {
+        const mockFile = {
+          fieldname: 'file',
+          originalname: 'test.csv',
+          mimetype: 'text/csv'
+        } as Express.Multer.File;
+
+        await expect(service.checkArrayCSVImport(mockFile, ',', 'items', 'folder-scanner')).rejects.toThrow(
+          'File has neither buffer nor path'
+        );
+      });
+
+      it('should throw error if file content is empty', async () => {
+        const mockFile = {
+          buffer: Buffer.from(''),
+          path: '/tmp/test.csv'
+        } as Express.Multer.File;
+
+        await expect(service.checkArrayCSVImport(mockFile, ',', 'items', 'folder-scanner')).rejects.toThrow('File content is empty');
+      });
     });
 
     describe('getArrayFieldItemsFromDatabase', () => {
@@ -1605,7 +1632,7 @@ describe('South Service', () => {
 
         (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(null);
 
-        expect(() => service.getArrayFieldItemsFromDatabase(southId, arrayKey)).toThrow('South connector "nonexistent" does not exist');
+        expect(() => service.getArrayFieldItemsFromDatabase(southId, arrayKey)).toThrow('South connector "nonexistent" not found');
       });
     });
 
@@ -1650,9 +1677,27 @@ describe('South Service', () => {
 
         (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(null);
 
-        await expect(service.checkArrayFileImport(southId, mockFile, delimiter, arrayKey)).rejects.toThrow(
-          'South connector "nonexistent" does not exist'
+        await expect(service.checkArrayFileImport(southId, mockFile, delimiter, arrayKey)).rejects.toThrow('South "nonexistent" not found');
+      });
+
+      it('should throw error if file is missing', async () => {
+        const southId = 'test-south-id';
+        const arrayKey = 'items';
+        const delimiter = ',';
+
+        await expect(service.checkArrayFileImport(southId, null as unknown as Express.Multer.File, delimiter, arrayKey)).rejects.toThrow(
+          'Missing file'
         );
+      });
+
+      it('should throw error if delimiter is missing', async () => {
+        const southId = 'test-south-id';
+        const arrayKey = 'items';
+        const mockFile = {
+          path: '/tmp/test.csv'
+        } as Express.Multer.File;
+
+        await expect(service.checkArrayFileImport(southId, mockFile, '', arrayKey)).rejects.toThrow('Missing delimiter');
       });
     });
 
@@ -1682,7 +1727,7 @@ describe('South Service', () => {
 
         (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(null);
 
-        await expect(service.importArrayField(southId, arrayKey, items)).rejects.toThrow('South connector "nonexistent" does not exist');
+        await expect(service.importArrayField(southId, arrayKey, items)).rejects.toThrow('South "nonexistent" not found');
       });
     });
   });

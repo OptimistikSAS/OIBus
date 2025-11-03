@@ -569,13 +569,24 @@ export class SouthConnectorController extends Controller {
     @Path() arrayKey: string,
     @FormField() delimiter: string,
     @UploadedFile('file') file: Express.Multer.File,
+    @UploadedFile('currentItems') currentItemsFile: Express.Multer.File | undefined,
     @Request() request: CustomExpressRequest
   ): Promise<SouthArrayCsvImportResponse> {
     const southService = request.services.southService as SouthService;
+
     if (!file) {
       throw new OIBusValidationError('Missing file "file"');
     }
-    return await southService.checkArrayFileImport(southId, file, delimiter, arrayKey);
+    if (!delimiter) {
+      throw new OIBusValidationError('Missing delimiter');
+    }
+
+    // Keep backwards compatibility when the frontend sends current items
+    if (currentItemsFile) {
+      void currentItemsFile.originalname;
+    }
+
+    return southService.checkArrayFileImport(southId, file, delimiter, arrayKey);
   }
 
   /**

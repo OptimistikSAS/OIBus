@@ -19,7 +19,9 @@
   }
 }
 
-// Ensure modal doesn't get too wide
+// Ensure modal doesn't get too wide and is centered horizontally
 .modal-dialog {
   max-width: 90vw;
+  margin-left: auto;
+  margin-right: auto;
 }

@@ -2191,6 +2191,35 @@ describe('Service utils', () => {
         expect(result.items).toHaveLength(1);
         expect(result.items[0]).toEqual({ name: 'only' });
       });
+
+      it('should handle non-Error exceptions thrown during validation', () => {
+        // Create a data object with a Proxy that throws a non-Error (string) when accessed
+        // This will cause unflattenObject to throw a non-Error exception
+        const throwableData = new Proxy(
+          { name: 'test' },
+          {
+            get: () => {
+              // Throw a string instead of an Error to test the String(error) branch
+              throw 'Non-Error string exception';
+            }
+          }
+        );
+
+        (csv.parse as jest.Mock).mockReturnValue({
+          data: [throwableData],
+          meta: { delimiter: ',' }
+        });
+
+        const csvContent = 'name\ntest';
+        const delimiter = ',';
+
+        const result = validateArrayCSVImport(csvContent, delimiter, mockArrayAttribute);
+
+        // Should catch the non-Error exception and convert it to a string
+        expect(result.errors.length).toBe(1);
+        expect(result.errors[0].error).toBe('Row 1: Non-Error string exception');
+        expect(result.items.length).toBe(0);
+      });
     });
   });
 });

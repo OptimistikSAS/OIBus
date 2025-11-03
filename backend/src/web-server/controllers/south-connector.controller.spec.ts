@@ -600,6 +600,7 @@ describe('SouthConnectorController', () => {
           mockArrayKey,
           mockDelimiter,
           mockFile,
+          undefined,
           mockRequest as CustomExpressRequest
         );
 
@@ -614,9 +615,48 @@ describe('SouthConnectorController', () => {
             mockArrayKey,
             mockDelimiter,
             undefined as unknown as Express.Multer.File,
+            undefined,
             mockRequest as CustomExpressRequest
           )
         ).rejects.toThrow('Missing file "file"');
+      });
+
+      it('should throw error if delimiter missing', async () => {
+        const mockFile = {
+          buffer: Buffer.from('test csv content')
+        } as Express.Multer.File;
+
+        await expect(
+          controller.checkImportArrayField(southId, mockArrayKey, '', mockFile, undefined, mockRequest as CustomExpressRequest)
+        ).rejects.toThrow('Missing delimiter');
+      });
+
+      it('should handle currentItemsFile when provided', async () => {
+        const mockResult = {
+          items: mockArrayData,
+          errors: []
+        };
+        const mockFile = {
+          buffer: Buffer.from('test csv content')
+        } as Express.Multer.File;
+        const currentItemsFile = {
+          buffer: Buffer.from('test'),
+          originalname: 'items.json'
+        } as Express.Multer.File;
+
+        mockSouthService.checkArrayFileImport.mockResolvedValueOnce(mockResult);
+
+        const result = await controller.checkImportArrayField(
+          southId,
+          mockArrayKey,
+          mockDelimiter,
+          mockFile,
+          currentItemsFile,
+          mockRequest as CustomExpressRequest
+        );
+
+        expect(mockSouthService.checkArrayFileImport).toHaveBeenCalledWith(southId, mockFile, mockDelimiter, mockArrayKey);
+        expect(result).toEqual(mockResult);
       });
     });
 

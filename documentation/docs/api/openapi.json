@@ -4692,6 +4692,48 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"Record_string.unknown_": {
+				"properties": {},
+				"additionalProperties": {},
+				"type": "object",
+				"description": "Construct a type with a set of properties K of type T"
+			},
+			"SouthArrayCsvImportResponse": {
+				"properties": {
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/Record_string.unknown_"
+						},
+						"type": "array",
+						"description": "Array of valid items that can be imported"
+					},
+					"errors": {
+						"items": {
+							"properties": {
+								"error": {
+									"type": "string"
+								},
+								"item": {
+									"$ref": "#/components/schemas/Record_string.string_"
+								}
+							},
+							"required": [
+								"error",
+								"item"
+							],
+							"type": "object"
+						},
+						"type": "array",
+						"description": "Array of items with errors"
+					}
+				},
+				"required": [
+					"items",
+					"errors"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"ScanModeCommandDTO": {
 				"description": "Command DTO for creating or updating a scan mode.\nUsed as the request body for scan mode creation/update endpoints.",
 				"properties": {
@@ -7834,12 +7876,6 @@
 						"$ref": "#/components/schemas/NorthSFTPSettings"
 					}
 				]
-			},
-			"Record_string.unknown_": {
-				"properties": {},
-				"additionalProperties": {},
-				"type": "object",
-				"description": "Construct a type with a set of properties K of type T"
 			},
 			"TransformerIdWithOptions": {
 				"description": "Data Transfer Object for referencing a transformer by ID with its options.\nUsed when only the transformer ID is needed along with configuration options.",
@@ -12582,6 +12618,172 @@
 					{
 						"in": "path",
 						"name": "southId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"multipart/form-data": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"items": {
+										"type": "string",
+										"format": "binary"
+									}
+								},
+								"required": [
+									"items"
+								]
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/south/{southId}/array/{arrayKey}/export": {
+			"put": {
+				"operationId": "ExportArrayField",
+				"responses": {
+					"204": {
+						"description": "No content"
+					}
+				},
+				"description": "Exports array field items to CSV format",
+				"summary": "Export array field to CSV",
+				"tags": [
+					"South Connectors"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "southId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "arrayKey",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/SouthCsvDelimiterRequest"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/south/{southId}/array/{arrayKey}/check-import": {
+			"post": {
+				"operationId": "CheckImportArrayField",
+				"responses": {
+					"200": {
+						"description": "Import validation results",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SouthArrayCsvImportResponse"
+								}
+							}
+						}
+					}
+				},
+				"description": "Validates a CSV file before importing array items and checks for conflicts with existing items",
+				"summary": "Check array CSV import",
+				"tags": [
+					"South Connectors"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "southId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "arrayKey",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"multipart/form-data": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"delimiter": {
+										"type": "string"
+									},
+									"file": {
+										"type": "string",
+										"format": "binary"
+									},
+									"currentItems": {
+										"type": "string",
+										"format": "binary"
+									}
+								},
+								"required": [
+									"delimiter",
+									"file",
+									"currentItems"
+								]
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/south/{southId}/array/{arrayKey}/import": {
+			"post": {
+				"operationId": "ImportArrayField",
+				"responses": {
+					"204": {
+						"description": "No Content"
+					}
+				},
+				"description": "Imports array items from a JSON file into a south connector array field",
+				"summary": "Import array field from JSON",
+				"tags": [
+					"South Connectors"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "southId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "arrayKey",
 						"required": true,
 						"schema": {
 							"type": "string"

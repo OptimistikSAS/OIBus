@@ -18,7 +18,6 @@ import { ValidatedCronExpression } from '../../shared/model/scan-mode.model';
 import { SouthConnectorItemDTO } from '../../shared/model/south-connector.model';
 import { ScanMode } from '../model/scan-mode.model';
 import { HistoryQueryItemDTO } from '../../shared/model/history-query.model';
-import { SouthItemSettings } from '../../shared/model/south-settings.model';
 import { BaseFolders, NotFoundError, OIBusValidationError } from '../model/types';
 import { OIBusArrayAttribute, OIBusObjectAttribute } from '../../shared/model/form.model';
 
@@ -765,7 +764,9 @@ export const validateArrayCSVImport = (
   const csvData = csv.parse(csvContent, { header: true, delimiter, skipEmptyLines: true });
 
   if (csvData.meta.delimiter !== delimiter) {
-    throw new Error(`The entered delimiter "${delimiter}" does not correspond to the file delimiter "${csvData.meta.delimiter}"`);
+    throw new OIBusValidationError(
+      `The entered delimiter "${delimiter}" does not correspond to the file delimiter "${csvData.meta.delimiter}"`
+    );
   }
 
   const validItems: Array<Record<string, unknown>> = [];
@@ -801,9 +802,10 @@ export const validateArrayCSVImport = (
 
       validItems.push(item);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       errors.push({
         item: data as Record<string, string>,
-        error: `Row ${index + 1}: ${(error as Error).message}`
+        error: `Row ${index + 1}: ${errorMessage}`
       });
     }
   }
