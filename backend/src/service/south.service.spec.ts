@@ -24,12 +24,12 @@ import DataStreamEngine from '../engine/data-stream-engine';
 import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
 import SouthConnectorMock from '../tests/__mocks__/south-connector.mock';
 import { stringToBoolean, arrayToFlattenedCSV, validateArrayCSVImport } from './utils';
-import multer from '@koa/multer';
 import csv from 'papaparse';
 import fs from 'node:fs/promises';
 import { buildSouth } from '../south/south-connector-factory';
 import { NotFoundError, OIBusValidationError } from '../model/types';
-import { OIBusSouthType, SouthConnectorEntityLight, SouthConnectorManifest } from '../model/south-connector.model';
+import { SouthConnectorEntityLight } from '../model/south-connector.model';
+import { OIBusSouthType, SouthConnectorManifest } from '../../shared/model/south-connector.model';
 
 jest.mock('../south/south-opcua/south-opcua');
 jest.mock('./metrics/south-connector-metrics.service');
@@ -688,7 +688,7 @@ describe('South Service', () => {
     } as SouthConnectorManifest;
 
     beforeEach(() => {
-      jest.spyOn(service, 'getInstalledSouthManifests').mockReturnValue([mockManifest]);
+      jest.spyOn(service, 'listManifest').mockReturnValue([mockManifest]);
     });
 
     describe('exportArrayToCSV', () => {
@@ -734,7 +734,7 @@ describe('South Service', () => {
           }
         } as unknown as SouthConnectorManifest;
 
-        jest.spyOn(service, 'getInstalledSouthManifests').mockReturnValue([nonArrayManifest]);
+        jest.spyOn(service, 'listManifest').mockReturnValue([nonArrayManifest]);
 
         const arrayData = [{ name: 'test1' }];
         const delimiter = ',';
@@ -761,7 +761,7 @@ describe('South Service', () => {
           }
         } as SouthConnectorManifest;
 
-        jest.spyOn(service, 'getInstalledSouthManifests').mockReturnValue([manifestWithItemsAttribute]);
+        jest.spyOn(service, 'listManifest').mockReturnValue([manifestWithItemsAttribute]);
 
         const arrayData = [{ name: 'test1' }, { name: 'test2' }];
         const delimiter = ',';
@@ -821,7 +821,7 @@ describe('South Service', () => {
           }
         } as SouthConnectorManifest;
 
-        jest.spyOn(service, 'getInstalledSouthManifests').mockReturnValue([manifestWithNestedArray]);
+        jest.spyOn(service, 'listManifest').mockReturnValue([manifestWithNestedArray]);
 
         const arrayData = [{ fieldName: 'test1' }, { fieldName: 'test2' }];
         const delimiter = ',';
@@ -888,7 +888,7 @@ describe('South Service', () => {
           }
         } as SouthConnectorManifest;
 
-        jest.spyOn(service, 'getInstalledSouthManifests').mockReturnValue([manifestWithDeepNestedArray]);
+        jest.spyOn(service, 'listManifest').mockReturnValue([manifestWithDeepNestedArray]);
 
         const arrayData = [{ fieldName: 'test1' }, { fieldName: 'test2' }];
         const delimiter = ',';
@@ -901,7 +901,7 @@ describe('South Service', () => {
       });
 
       it('should throw error if south manifest not found', () => {
-        jest.spyOn(service, 'getInstalledSouthManifests').mockReturnValue([]);
+        jest.spyOn(service, 'listManifest').mockReturnValue([]);
 
         const arrayData = [{ name: 'test1' }];
         const delimiter = ',';
@@ -940,7 +940,7 @@ describe('South Service', () => {
           }
         } as unknown as SouthConnectorManifest;
 
-        jest.spyOn(service, 'getInstalledSouthManifests').mockReturnValue([manifestWithNonArrayInNested]);
+        jest.spyOn(service, 'listManifest').mockReturnValue([manifestWithNonArrayInNested]);
 
         const arrayData = [{ name: 'test1' }];
         const delimiter = ',';
@@ -986,7 +986,7 @@ describe('South Service', () => {
           }
         } as SouthConnectorManifest;
 
-        jest.spyOn(service, 'getInstalledSouthManifests').mockReturnValue([manifestWithNestedObjectFirst]);
+        jest.spyOn(service, 'listManifest').mockReturnValue([manifestWithNestedObjectFirst]);
 
         const result = service.exportArrayToCSV(arrayData, delimiter, arrayKey, 'folder-scanner');
 
@@ -1006,7 +1006,7 @@ describe('South Service', () => {
 
         const mockFile = {
           path: '/tmp/test.csv'
-        } as multer.File;
+        } as Express.Multer.File;
         const delimiter = ',';
         const arrayKey = 'items';
 
@@ -1024,7 +1024,7 @@ describe('South Service', () => {
       it('should throw error if array field not found in manifest', async () => {
         const mockFile = {
           path: '/tmp/test.csv'
-        } as multer.File;
+        } as Express.Multer.File;
         const delimiter = ',';
         const arrayKey = 'nonexistent';
 
@@ -1052,11 +1052,11 @@ describe('South Service', () => {
           }
         } as unknown as SouthConnectorManifest;
 
-        jest.spyOn(service, 'getInstalledSouthManifests').mockReturnValue([nonArrayManifest]);
+        jest.spyOn(service, 'listManifest').mockReturnValue([nonArrayManifest]);
 
         const mockFile = {
           path: '/tmp/test.csv'
-        } as multer.File;
+        } as Express.Multer.File;
         const delimiter = ',';
         const arrayKey = 'items';
 
@@ -1088,11 +1088,11 @@ describe('South Service', () => {
           }
         } as SouthConnectorManifest;
 
-        jest.spyOn(service, 'getInstalledSouthManifests').mockReturnValue([manifestWithItemsAttribute]);
+        jest.spyOn(service, 'listManifest').mockReturnValue([manifestWithItemsAttribute]);
 
         const mockFile = {
           path: '/tmp/test.csv'
-        } as multer.File;
+        } as Express.Multer.File;
         const delimiter = ',';
         const arrayKey = 'items';
 
@@ -1158,11 +1158,11 @@ describe('South Service', () => {
           }
         } as SouthConnectorManifest;
 
-        jest.spyOn(service, 'getInstalledSouthManifests').mockReturnValue([manifestWithNestedArray]);
+        jest.spyOn(service, 'listManifest').mockReturnValue([manifestWithNestedArray]);
 
         const mockFile = {
           path: '/tmp/test.csv'
-        } as multer.File;
+        } as Express.Multer.File;
         const delimiter = ',';
         const arrayKey = 'dateTimeFields';
 
@@ -1235,11 +1235,11 @@ describe('South Service', () => {
           }
         } as SouthConnectorManifest;
 
-        jest.spyOn(service, 'getInstalledSouthManifests').mockReturnValue([manifestWithDeepNestedArray]);
+        jest.spyOn(service, 'listManifest').mockReturnValue([manifestWithDeepNestedArray]);
 
         const mockFile = {
           path: '/tmp/test.csv'
-        } as multer.File;
+        } as Express.Multer.File;
         const delimiter = ',';
         const arrayKey = 'dateTimeFields';
 
@@ -1253,11 +1253,11 @@ describe('South Service', () => {
       });
 
       it('should throw error if south manifest not found', async () => {
-        jest.spyOn(service, 'getInstalledSouthManifests').mockReturnValue([]);
+        jest.spyOn(service, 'listManifest').mockReturnValue([]);
 
         const mockFile = {
           path: '/tmp/test.csv'
-        } as multer.File;
+        } as Express.Multer.File;
         const delimiter = ',';
         const arrayKey = 'items';
 
@@ -1294,11 +1294,11 @@ describe('South Service', () => {
           }
         } as unknown as SouthConnectorManifest;
 
-        jest.spyOn(service, 'getInstalledSouthManifests').mockReturnValue([manifestWithNonArrayInNested]);
+        jest.spyOn(service, 'listManifest').mockReturnValue([manifestWithNonArrayInNested]);
 
         const mockFile = {
           path: '/tmp/test.csv'
-        } as multer.File;
+        } as Express.Multer.File;
         const delimiter = ',';
         const arrayKey = 'dateTimeFields';
 
@@ -1317,7 +1317,7 @@ describe('South Service', () => {
 
         const mockFile = {
           path: '/tmp/test.csv'
-        } as multer.File;
+        } as Express.Multer.File;
         const delimiter = ',';
         const arrayKey = 'items';
 
@@ -1349,7 +1349,7 @@ describe('South Service', () => {
           }
         } as SouthConnectorManifest;
 
-        jest.spyOn(service, 'getInstalledSouthManifests').mockReturnValue([manifestWithNestedObjectFirst]);
+        jest.spyOn(service, 'listManifest').mockReturnValue([manifestWithNestedObjectFirst]);
 
         const result = await service.checkArrayCSVImport(mockFile, delimiter, arrayKey, 'folder-scanner');
 
@@ -1362,7 +1362,7 @@ describe('South Service', () => {
       it('should handle manifest without items', async () => {
         const mockFile = {
           path: '/tmp/test.csv'
-        } as multer.File;
+        } as Express.Multer.File;
         const delimiter = ',';
         const arrayKey = 'nonexistent';
 
@@ -1371,7 +1371,7 @@ describe('South Service', () => {
           items: undefined
         } as unknown as SouthConnectorManifest;
 
-        jest.spyOn(service, 'getInstalledSouthManifests').mockReturnValue([manifestWithoutItems]);
+        jest.spyOn(service, 'listManifest').mockReturnValue([manifestWithoutItems]);
 
         await expect(service.checkArrayCSVImport(mockFile, delimiter, arrayKey, 'folder-scanner')).rejects.toThrow(
           'Array field "nonexistent" not found in manifest'
@@ -1381,7 +1381,7 @@ describe('South Service', () => {
       it('should handle manifest with items but without rootAttribute', async () => {
         const mockFile = {
           path: '/tmp/test.csv'
-        } as multer.File;
+        } as Express.Multer.File;
         const delimiter = ',';
         const arrayKey = 'nonexistent';
 
@@ -1398,7 +1398,7 @@ describe('South Service', () => {
           }
         } as unknown as SouthConnectorManifest;
 
-        jest.spyOn(service, 'getInstalledSouthManifests').mockReturnValue([manifestWithoutRootAttribute]);
+        jest.spyOn(service, 'listManifest').mockReturnValue([manifestWithoutRootAttribute]);
 
         await expect(service.checkArrayCSVImport(mockFile, delimiter, arrayKey, 'folder-scanner')).rejects.toThrow(
           'Array field "nonexistent" not found in manifest'
@@ -1416,7 +1416,7 @@ describe('South Service', () => {
         const existingItems = [{ name: 'existing1' }];
         const mockFile = {
           path: '/tmp/test.csv'
-        } as multer.File;
+        } as Express.Multer.File;
         const delimiter = ',';
         const arrayKey = 'items';
 
@@ -1425,6 +1425,29 @@ describe('South Service', () => {
         expect(validateArrayCSVImport).toHaveBeenCalledWith(mockFileContent, delimiter, mockArrayAttribute, existingItems);
         expect(result).toHaveProperty('items');
         expect(result).toHaveProperty('errors');
+      });
+
+      it('should use file.buffer when available instead of reading from path', async () => {
+        const mockFileContent = 'name\ntest1\ntest2';
+        (validateArrayCSVImport as jest.Mock).mockReturnValue({
+          items: [{ name: 'test1' }, { name: 'test2' }],
+          errors: []
+        });
+
+        const mockFile = {
+          buffer: Buffer.from(mockFileContent),
+          path: '/tmp/test.csv'
+        } as Express.Multer.File;
+        const delimiter = ',';
+        const arrayKey = 'items';
+
+        const result = await service.checkArrayCSVImport(mockFile, delimiter, arrayKey, 'folder-scanner');
+
+        expect(fs.readFile).not.toHaveBeenCalled();
+        expect(validateArrayCSVImport).toHaveBeenCalledWith(mockFileContent, delimiter, mockArrayAttribute, []);
+        expect(result).toHaveProperty('items');
+        expect(result).toHaveProperty('errors');
+        expect(result.items).toHaveLength(2);
       });
     });
 
@@ -1484,12 +1507,12 @@ describe('South Service', () => {
         ];
 
         (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(southConnector);
-        jest.spyOn(service, 'getSouthItems').mockReturnValueOnce(items as unknown as ReturnType<typeof service.getSouthItems>);
+        jest.spyOn(service, 'listItems').mockReturnValueOnce(items as unknown as ReturnType<typeof service.listItems>);
 
         const result = service.getArrayFieldItemsFromDatabase(southId, arrayKey);
 
         expect(result).toEqual([...arrayData1, ...arrayData2]);
-        expect(service.getSouthItems).toHaveBeenCalledWith(southId);
+        expect(service.listItems).toHaveBeenCalledWith(southId);
       });
 
       it('should return empty array when array field not found in settings or items', () => {
@@ -1504,7 +1527,7 @@ describe('South Service', () => {
         };
 
         (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(southConnector);
-        jest.spyOn(service, 'getSouthItems').mockReturnValueOnce([]);
+        jest.spyOn(service, 'listItems').mockReturnValueOnce([]);
 
         const result = service.getArrayFieldItemsFromDatabase(southId, arrayKey);
 
@@ -1548,12 +1571,12 @@ describe('South Service', () => {
         ];
 
         (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(southConnector);
-        jest.spyOn(service, 'getSouthItems').mockReturnValueOnce(items as unknown as ReturnType<typeof service.getSouthItems>);
+        jest.spyOn(service, 'listItems').mockReturnValueOnce(items as unknown as ReturnType<typeof service.listItems>);
 
         const result = service.getArrayFieldItemsFromDatabase(southId, arrayKey);
 
         expect(result).toEqual(arrayData);
-        expect(service.getSouthItems).toHaveBeenCalledWith(southId);
+        expect(service.listItems).toHaveBeenCalledWith(southId);
       });
 
       it('should filter out null and non-object items', () => {
@@ -1600,7 +1623,7 @@ describe('South Service', () => {
         const existingItems = [{ name: 'existing' }];
         const mockFile = {
           path: '/tmp/test.csv'
-        } as multer.File;
+        } as Express.Multer.File;
         const delimiter = ',';
 
         const southConnector = testData.south.list[0];
@@ -1622,7 +1645,7 @@ describe('South Service', () => {
         const arrayKey = 'items';
         const mockFile = {
           path: '/tmp/test.csv'
-        } as multer.File;
+        } as Express.Multer.File;
         const delimiter = ',';
 
         (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(null);

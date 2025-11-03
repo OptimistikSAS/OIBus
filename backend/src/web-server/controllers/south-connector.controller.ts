@@ -68,6 +68,17 @@ interface SouthCsvDelimiterRequest {
   delimiter: string;
 }
 
+/**
+ * @interface SouthArrayCsvImportResponse
+ * @description Response for array CSV import check operation
+ */
+interface SouthArrayCsvImportResponse {
+  /** Array of valid items that can be imported */
+  items: Array<Record<string, unknown>>;
+  /** Array of items with errors */
+  errors: Array<{ item: Record<string, string>; error: string }>;
+}
+
 @Route('/api/south')
 @Tags('South Connectors')
 /**
@@ -525,64 +536,65 @@ export class SouthConnectorController extends Controller {
     await southService.importItems(southId, items);
   }
 
-  async exportArrayField(ctx: KoaContext<{ delimiter: string; arrayKey: string }, string>): Promise<void> {
-    const { delimiter, arrayKey } = ctx.request.body!;
-
-    try {
-      const southConnector = ctx.app.southService.findById(ctx.params.southId);
-      if (!southConnector) {
-        return ctx.badRequest('South connector not found');
-      }
-
-      const arrayData = ctx.app.southService.getArrayFieldItemsFromDatabase(ctx.params.southId, arrayKey);
-      const csvContent = ctx.app.southService.exportArrayToCSV(arrayData, delimiter, arrayKey, southConnector.type);
-
-      ctx.body = csvContent;
-      ctx.set('Content-Type', 'text/csv');
-      ctx.set('Content-Disposition', `attachment; filename="${arrayKey}-export.csv"`);
-      ctx.ok();
-    } catch (error: unknown) {
-      ctx.badRequest((error as Error).message);
-    }
-  }
-
-  async checkImportArrayField(
-    ctx: KoaContext<
-      { delimiter: string; arrayKey: string; currentItems: string },
-      {
-        items: Array<Record<string, unknown>>;
-        errors: Array<{ item: Record<string, unknown>; error: string }>;
-      }
-    >
+  /**
+   * Exports array field items to CSV format
+   * @summary Export array field to CSV
+   * @responseHeader Content-Type text/csv; charset=utf-8
+   * @responseHeader Content-Disposition attachment; filename={arrayKey}-export.csv
+   */
+  @Put('/{southId}/array/{arrayKey}/export')
+  async exportArrayField(
+    @Path() southId: string,
+    @Path() arrayKey: string,
+    @Body() command: SouthCsvDelimiterRequest,
+    @Request() request: CustomExpressRequest
   ): Promise<void> {
-    const files = ctx.request.files as Record<string, Array<multer.File>>;
-    if (!files || !files['file']) {
-      return ctx.badRequest('Missing file "file"');
-    }
-
-    const { delimiter, arrayKey } = ctx.request.body!;
-
-    try {
-      return ctx.ok(await ctx.app.southService.checkArrayFileImport(ctx.params.southId, files['file'][0], delimiter, arrayKey));
-    } catch (error: unknown) {
-      return ctx.badRequest((error as Error).message);
-    }
+    const southService = request.services.southService as SouthService;
+    const southConnector = southService.findById(southId);
+    const arrayData = southService.getArrayFieldItemsFromDatabase(southId, arrayKey);
+    const csvContent = southService.exportArrayToCSV(arrayData, command.delimiter, arrayKey, southConnector.type);
+    request.res!.attachment(`${arrayKey}-export.csv`);
+    request.res!.contentType('text/csv; charset=utf-8');
+    request.res!.status(200).send(csvContent);
   }
 
-  async importArrayField(ctx: KoaContext<{ arrayKey: string }, void>): Promise<void> {
-    const files = ctx.request.files as Record<string, Array<multer.File>>;
-    if (!files || !files['items']) {
-      return ctx.badRequest('Missing file "items"');
+  /**
+   * Validates a CSV file before importing array items and checks for conflicts with existing items
+   * @summary Check array CSV import
+   * @returns {Promise<SouthArrayCsvImportResponse>} Import validation results
+   */
+  @Post('/{southId}/array/{arrayKey}/check-import')
+  async checkImportArrayField(
+    @Path() southId: string,
+    @Path() arrayKey: string,
+    @FormField() delimiter: string,
+    @UploadedFile('file') file: Express.Multer.File,
+    @Request() request: CustomExpressRequest
+  ): Promise<SouthArrayCsvImportResponse> {
+    const southService = request.services.southService as SouthService;
+    if (!file) {
+      throw new OIBusValidationError('Missing file "file"');
     }
+    return await southService.checkArrayFileImport(southId, file, delimiter, arrayKey);
+  }
 
-    const { arrayKey } = ctx.request.body!;
-    const items: Array<Record<string, unknown>> = JSON.parse((await fs.readFile(files['items'][0].path)).toString('utf8'));
-
-    try {
-      await ctx.app.southService.importArrayField(ctx.params.southId, arrayKey, items);
-    } catch (error: unknown) {
-      return ctx.badRequest((error as Error).message);
+  /**
+   * Imports array items from a JSON file into a south connector array field
+   * @summary Import array field from JSON
+   */
+  @Post('/{southId}/array/{arrayKey}/import')
+  @SuccessResponse(204, 'No Content')
+  async importArrayField(
+    @Path() southId: string,
+    @Path() arrayKey: string,
+    @UploadedFile('items') itemsFile: Express.Multer.File,
+    @Request() request: CustomExpressRequest
+  ): Promise<void> {
+    const southService = request.services.southService as SouthService;
+    if (!itemsFile) {
+      throw new OIBusValidationError('Missing file "items"');
     }
-    ctx.noContent();
+    const items: Array<Record<string, unknown>> = JSON.parse(itemsFile.buffer.toString('utf8'));
+    await southService.importArrayField(southId, arrayKey, items);
   }
 }

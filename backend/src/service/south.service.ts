@@ -1,6 +1,6 @@
 import { encryptionService } from './encryption.service';
-import pino from 'pino';
 import { arrayToFlattenedCSV, validateArrayCSVImport } from './utils';
+import fs from 'node:fs/promises';
 
 // South imports
 import {
@@ -583,7 +583,7 @@ export default class SouthService {
   }
 
   exportArrayToCSV(arrayData: Array<Record<string, unknown>>, delimiter: string, arrayKey: string, southType: OIBusSouthType): string {
-    const manifest = this.getInstalledSouthManifests().find(southManifest => southManifest.id === southType);
+    const manifest = this.listManifest().find((southManifest: SouthConnectorManifest) => southManifest.id === southType);
 
     if (!manifest) {
       throw new Error(`South manifest "${southType}" not found`);
@@ -612,7 +612,7 @@ export default class SouthService {
         (item): item is Record<string, unknown> => typeof item === 'object' && item !== null
       );
     } else {
-      const items = this.getSouthItems(southId);
+      const items = this.listItems(southId);
       const allArrayData: Array<Record<string, unknown>> = [];
 
       for (const item of items) {
@@ -632,7 +632,7 @@ export default class SouthService {
   }
 
   async checkArrayCSVImport(
-    file: multer.File,
+    file: Express.Multer.File,
     delimiter: string,
     arrayKey: string,
     southType: OIBusSouthType,
@@ -641,9 +641,9 @@ export default class SouthService {
     items: Array<Record<string, unknown>>;
     errors: Array<{ item: Record<string, string>; error: string }>;
   }> {
-    const fileContent = await fs.readFile(file.path);
+    const fileContent = file.buffer ? file.buffer.toString('utf8') : (await fs.readFile(file.path)).toString('utf8');
 
-    const manifest = this.getInstalledSouthManifests().find(southManifest => southManifest.id === southType);
+    const manifest = this.listManifest().find((southManifest: SouthConnectorManifest) => southManifest.id === southType);
 
     if (!manifest) {
       throw new Error(`South manifest "${southType}" not found`);
@@ -655,12 +655,12 @@ export default class SouthService {
       throw new Error(`Array field "${arrayKey}" not found in manifest`);
     }
 
-    return validateArrayCSVImport(fileContent.toString('utf8'), delimiter, arrayAttribute, existingItems);
+    return validateArrayCSVImport(fileContent, delimiter, arrayAttribute, existingItems);
   }
 
   async checkArrayFileImport(
     southId: string,
-    file: multer.File,
+    file: Express.Multer.File,
     delimiter: string,
     arrayKey: string
   ): Promise<{

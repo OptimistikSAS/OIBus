@@ -28,5 +28,10 @@ export default jest.fn().mockImplementation(() => ({
   deleteAllItems: jest.fn(),
   checkImportItems: jest.fn(),
   importItems: jest.fn(),
-  retrieveSecretsFromSouth: jest.fn()
+  retrieveSecretsFromSouth: jest.fn(),
+  exportArrayToCSV: jest.fn(),
+  getArrayFieldItemsFromDatabase: jest.fn(),
+  checkArrayFileImport: jest.fn(),
+  checkArrayCSVImport: jest.fn(),
+  importArrayField: jest.fn()
 }));

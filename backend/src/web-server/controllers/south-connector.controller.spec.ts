@@ -12,6 +12,7 @@ import { OIBusContent } from '../../../shared/model/engine.model';
 import ScanModeServiceMock from '../../tests/__mocks__/service/scan-mode-service.mock';
 import OibusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
 import { OIBusTestingError } from '../../model/types';
+import SouthService from '../../service/south.service';
 
 // Mock the services
 jest.mock('../../service/south.service', () => ({
@@ -26,6 +27,7 @@ jest.mock('../../service/utils', () => ({
 
 describe('SouthConnectorController', () => {
   let controller: SouthConnectorController;
+  let mockSouthService: jest.Mocked<SouthService>;
   const mockRequest: Partial<CustomExpressRequest> = {
     services: {
       southService: new SouthServiceMock(),
@@ -43,12 +45,7 @@ describe('SouthConnectorController', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     controller = new SouthConnectorController();
-
-    ctx.app.southService.exportArrayToCSV = jest.fn();
-    ctx.app.southService.getArrayFieldItemsFromDatabase = jest.fn();
-    ctx.app.southService.checkArrayFileImport = jest.fn();
-    ctx.app.southService.checkArrayCSVImport = jest.fn();
-    ctx.app.southService.importArrayField = jest.fn();
+    mockSouthService = mockRequest.services!.southService as jest.Mocked<SouthService>;
   });
 
   it('should return south connector types', async () => {
@@ -529,15 +526,7 @@ describe('SouthConnectorController', () => {
     const mockCsvContent = 'name\ntest1\ntest2';
     const mockArrayKey = 'items';
     const mockDelimiter = ',';
-
-    beforeEach(() => {
-      ctx.params.southId = testData.south.list[0].id;
-      ctx.params.arrayKey = mockArrayKey;
-      ctx.request.body = {
-        delimiter: mockDelimiter,
-        arrayKey: mockArrayKey
-      };
-    });
+    const southId = testData.south.list[0].id;
 
     describe('exportArrayField', () => {
       it('should export array field from main connector settings', async () => {
@@ -548,23 +537,20 @@ describe('SouthConnectorController', () => {
             [mockArrayKey]: mockArrayData
           }
         };
-        ctx.app.southService.findById.mockReturnValueOnce(mockSouthConnector);
-        ctx.app.southService.getArrayFieldItemsFromDatabase.mockReturnValueOnce(mockArrayData);
-        ctx.app.southService.exportArrayToCSV.mockReturnValueOnce(mockCsvContent);
+        (mockRequest.services!.southService.findById as jest.Mock).mockReturnValueOnce(mockSouthConnector);
 
-        await southConnectorController.exportArrayField(ctx);
+        mockSouthService.getArrayFieldItemsFromDatabase.mockReturnValueOnce(mockArrayData);
 
-        expect(ctx.app.southService.getArrayFieldItemsFromDatabase).toHaveBeenCalledWith(ctx.params.southId, mockArrayKey);
-        expect(ctx.app.southService.exportArrayToCSV).toHaveBeenCalledWith(
-          mockArrayData,
-          mockDelimiter,
-          mockArrayKey,
-          mockSouthConnector.type
-        );
-        expect(ctx.body).toBe(mockCsvContent);
-        expect(ctx.set).toHaveBeenCalledWith('Content-Type', 'text/csv');
-        expect(ctx.set).toHaveBeenCalledWith('Content-Disposition', `attachment; filename="${mockArrayKey}-export.csv"`);
-        expect(ctx.ok).toHaveBeenCalled();
+        mockSouthService.exportArrayToCSV.mockReturnValueOnce(mockCsvContent);
+
+        await controller.exportArrayField(southId, mockArrayKey, { delimiter: mockDelimiter }, mockRequest as CustomExpressRequest);
+
+        expect(mockSouthService.getArrayFieldItemsFromDatabase).toHaveBeenCalledWith(southId, mockArrayKey);
+
+        expect(mockSouthService.exportArrayToCSV).toHaveBeenCalledWith(mockArrayData, mockDelimiter, mockArrayKey, mockSouthConnector.type);
+        expect(mockRequest.res!.attachment).toHaveBeenCalledWith(`${mockArrayKey}-export.csv`);
+        expect(mockRequest.res!.contentType).toHaveBeenCalledWith('text/csv; charset=utf-8');
+        expect(mockRequest.res!.send).toHaveBeenCalledWith(mockCsvContent);
       });
 
       it('should export array field from item settings', async () => {
@@ -574,126 +560,88 @@ describe('SouthConnectorController', () => {
             ...testData.south.list[0].settings
           }
         };
-        ctx.app.southService.findById.mockReturnValueOnce(mockSouthConnector);
-        ctx.app.southService.getArrayFieldItemsFromDatabase.mockReturnValueOnce(mockArrayData);
-        ctx.app.southService.exportArrayToCSV.mockReturnValueOnce(mockCsvContent);
+        (mockRequest.services!.southService.findById as jest.Mock).mockReturnValueOnce(mockSouthConnector);
 
-        await southConnectorController.exportArrayField(ctx);
+        mockSouthService.getArrayFieldItemsFromDatabase.mockReturnValueOnce(mockArrayData);
 
-        expect(ctx.app.southService.getArrayFieldItemsFromDatabase).toHaveBeenCalledWith(ctx.params.southId, mockArrayKey);
-        expect(ctx.app.southService.exportArrayToCSV).toHaveBeenCalledWith(
-          mockArrayData,
-          mockDelimiter,
-          mockArrayKey,
-          mockSouthConnector.type
-        );
-        expect(ctx.body).toBe(mockCsvContent);
-        expect(ctx.ok).toHaveBeenCalled();
+        mockSouthService.exportArrayToCSV.mockReturnValueOnce(mockCsvContent);
+
+        await controller.exportArrayField(southId, mockArrayKey, { delimiter: mockDelimiter }, mockRequest as CustomExpressRequest);
+
+        expect(mockSouthService.getArrayFieldItemsFromDatabase).toHaveBeenCalledWith(southId, mockArrayKey);
+
+        expect(mockSouthService.exportArrayToCSV).toHaveBeenCalledWith(mockArrayData, mockDelimiter, mockArrayKey, mockSouthConnector.type);
+        expect(mockRequest.res!.send).toHaveBeenCalledWith(mockCsvContent);
       });
 
-      it('should return bad request if south connector not found', async () => {
-        ctx.app.southService.findById.mockReturnValueOnce(null);
+      it('should throw error if south connector not found', async () => {
+        (mockRequest.services!.southService.findById as jest.Mock).mockReturnValueOnce(null);
 
-        await southConnectorController.exportArrayField(ctx);
-
-        expect(ctx.badRequest).toHaveBeenCalledWith('South connector not found');
-      });
-
-      it('should return bad request if export fails', async () => {
-        ctx.app.southService.findById.mockReturnValueOnce(testData.south.list[0]);
-        ctx.app.southService.exportArrayToCSV.mockImplementation(() => {
-          throw new Error('Export failed');
-        });
-
-        await southConnectorController.exportArrayField(ctx);
-
-        expect(ctx.badRequest).toHaveBeenCalledWith('Export failed');
+        await expect(
+          controller.exportArrayField(southId, mockArrayKey, { delimiter: mockDelimiter }, mockRequest as CustomExpressRequest)
+        ).rejects.toThrow();
       });
     });
 
     describe('checkImportArrayField', () => {
-      beforeEach(() => {
-        ctx.request.files = {
-          file: [{ path: '/tmp/test.csv' }]
-        };
-      });
-
       it('should check import array field', async () => {
         const mockResult = {
           items: mockArrayData,
           errors: []
         };
-        ctx.request.body = {
-          delimiter: mockDelimiter,
-          arrayKey: mockArrayKey
-        };
-        ctx.app.southService.checkArrayFileImport.mockResolvedValueOnce(mockResult);
+        const mockFile = {
+          buffer: Buffer.from('test csv content')
+        } as Express.Multer.File;
 
-        await southConnectorController.checkImportArrayField(ctx);
+        mockSouthService.checkArrayFileImport.mockResolvedValueOnce(mockResult);
 
-        expect(ctx.app.southService.checkArrayFileImport).toHaveBeenCalledWith(
-          ctx.params.southId,
-          ctx.request.files.file[0],
+        const result = await controller.checkImportArrayField(
+          southId,
+          mockArrayKey,
           mockDelimiter,
-          mockArrayKey
+          mockFile,
+          mockRequest as CustomExpressRequest
         );
-        expect(ctx.ok).toHaveBeenCalledWith(mockResult);
+
+        expect(mockSouthService.checkArrayFileImport).toHaveBeenCalledWith(southId, mockFile, mockDelimiter, mockArrayKey);
+        expect(result).toEqual(mockResult);
       });
 
-      it('should return bad request if file missing', async () => {
-        ctx.request.files = {};
-
-        await southConnectorController.checkImportArrayField(ctx);
-
-        expect(ctx.badRequest).toHaveBeenCalledWith('Missing file "file"');
-      });
-
-      it('should return bad request if check fails', async () => {
-        ctx.request.body = {
-          delimiter: mockDelimiter,
-          arrayKey: mockArrayKey
-        };
-        ctx.app.southService.checkArrayFileImport.mockRejectedValueOnce(new Error('Check failed'));
-
-        await southConnectorController.checkImportArrayField(ctx);
-
-        expect(ctx.badRequest).toHaveBeenCalledWith('Check failed');
+      it('should throw error if file missing', async () => {
+        await expect(
+          controller.checkImportArrayField(
+            southId,
+            mockArrayKey,
+            mockDelimiter,
+            undefined as unknown as Express.Multer.File,
+            mockRequest as CustomExpressRequest
+          )
+        ).rejects.toThrow('Missing file "file"');
       });
     });
 
     describe('importArrayField', () => {
-      beforeEach(() => {
-        ctx.request.files = {
-          items: [{ path: '/tmp/items.json' }]
-        };
-        ctx.request.body = { arrayKey: mockArrayKey };
-        (fs.readFile as jest.Mock).mockResolvedValueOnce(JSON.stringify(mockArrayData));
-      });
-
       it('should import array field', async () => {
-        ctx.app.southService.importArrayField.mockResolvedValueOnce(undefined);
+        const mockItemsFile = {
+          buffer: Buffer.from(JSON.stringify(mockArrayData))
+        } as Express.Multer.File;
 
-        await southConnectorController.importArrayField(ctx);
+        mockSouthService.importArrayField.mockResolvedValueOnce(undefined);
 
-        expect(fs.readFile).toHaveBeenCalledWith('/tmp/items.json');
-        expect(ctx.app.southService.importArrayField).toHaveBeenCalledWith(testData.south.list[0].id, mockArrayKey, mockArrayData);
-        expect(ctx.noContent).toHaveBeenCalled();
+        await controller.importArrayField(southId, mockArrayKey, mockItemsFile, mockRequest as CustomExpressRequest);
+
+        expect(mockSouthService.importArrayField).toHaveBeenCalledWith(southId, mockArrayKey, mockArrayData);
       });
 
-      it('should return bad request if items file missing', async () => {
-        ctx.request.files = {};
-
-        await southConnectorController.importArrayField(ctx);
-
-        expect(ctx.badRequest).toHaveBeenCalledWith('Missing file "items"');
-      });
-
-      it('should return bad request if import fails', async () => {
-        ctx.app.southService.importArrayField.mockRejectedValueOnce(new Error('Import failed'));
-
-        await southConnectorController.importArrayField(ctx);
-
-        expect(ctx.badRequest).toHaveBeenCalledWith('Import failed');
+      it('should throw error if items file missing', async () => {
+        await expect(
+          controller.importArrayField(
+            southId,
+            mockArrayKey,
+            undefined as unknown as Express.Multer.File,
+            mockRequest as CustomExpressRequest
+          )
+        ).rejects.toThrow('Missing file "items"');
       });
     });
   });
