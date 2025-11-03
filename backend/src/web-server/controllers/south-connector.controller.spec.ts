@@ -45,6 +45,8 @@ describe('SouthConnectorController', () => {
     controller = new SouthConnectorController();
 
     ctx.app.southService.exportArrayToCSV = jest.fn();
+    ctx.app.southService.getArrayFieldItemsFromDatabase = jest.fn();
+    ctx.app.southService.checkArrayFileImport = jest.fn();
     ctx.app.southService.checkArrayCSVImport = jest.fn();
     ctx.app.southService.importArrayField = jest.fn();
   });
@@ -547,10 +549,12 @@ describe('SouthConnectorController', () => {
           }
         };
         ctx.app.southService.findById.mockReturnValueOnce(mockSouthConnector);
+        ctx.app.southService.getArrayFieldItemsFromDatabase.mockReturnValueOnce(mockArrayData);
         ctx.app.southService.exportArrayToCSV.mockReturnValueOnce(mockCsvContent);
 
         await southConnectorController.exportArrayField(ctx);
 
+        expect(ctx.app.southService.getArrayFieldItemsFromDatabase).toHaveBeenCalledWith(ctx.params.southId, mockArrayKey);
         expect(ctx.app.southService.exportArrayToCSV).toHaveBeenCalledWith(
           mockArrayData,
           mockDelimiter,
@@ -570,20 +574,13 @@ describe('SouthConnectorController', () => {
             ...testData.south.list[0].settings
           }
         };
-        const mockItems = [
-          {
-            id: 'item1',
-            settings: {
-              [mockArrayKey]: mockArrayData
-            }
-          }
-        ];
         ctx.app.southService.findById.mockReturnValueOnce(mockSouthConnector);
-        ctx.app.southService.getSouthItems.mockReturnValueOnce(mockItems);
+        ctx.app.southService.getArrayFieldItemsFromDatabase.mockReturnValueOnce(mockArrayData);
         ctx.app.southService.exportArrayToCSV.mockReturnValueOnce(mockCsvContent);
 
         await southConnectorController.exportArrayField(ctx);
 
+        expect(ctx.app.southService.getArrayFieldItemsFromDatabase).toHaveBeenCalledWith(ctx.params.southId, mockArrayKey);
         expect(ctx.app.southService.exportArrayToCSV).toHaveBeenCalledWith(
           mockArrayData,
           mockDelimiter,
@@ -628,46 +625,17 @@ describe('SouthConnectorController', () => {
         };
         ctx.request.body = {
           delimiter: mockDelimiter,
-          arrayKey: mockArrayKey,
-          currentItems: undefined
+          arrayKey: mockArrayKey
         };
-        ctx.app.southService.findById.mockReturnValueOnce(testData.south.list[0]);
-        ctx.app.southService.checkArrayCSVImport.mockResolvedValueOnce(mockResult);
+        ctx.app.southService.checkArrayFileImport.mockResolvedValueOnce(mockResult);
 
         await southConnectorController.checkImportArrayField(ctx);
 
-        expect(ctx.app.southService.checkArrayCSVImport).toHaveBeenCalledWith(
+        expect(ctx.app.southService.checkArrayFileImport).toHaveBeenCalledWith(
+          ctx.params.southId,
           ctx.request.files.file[0],
           mockDelimiter,
-          mockArrayKey,
-          testData.south.list[0].type,
-          []
-        );
-        expect(ctx.ok).toHaveBeenCalledWith(mockResult);
-      });
-
-      it('should check import array field with existing items', async () => {
-        const existingItems = [{ name: 'existing1' }, { name: 'existing2' }];
-        const mockResult = {
-          items: mockArrayData,
-          errors: []
-        };
-        ctx.request.body = {
-          delimiter: mockDelimiter,
-          arrayKey: mockArrayKey,
-          currentItems: JSON.stringify(existingItems)
-        };
-        ctx.app.southService.findById.mockReturnValueOnce(testData.south.list[0]);
-        ctx.app.southService.checkArrayCSVImport.mockResolvedValueOnce(mockResult);
-
-        await southConnectorController.checkImportArrayField(ctx);
-
-        expect(ctx.app.southService.checkArrayCSVImport).toHaveBeenCalledWith(
-          ctx.request.files.file[0],
-          mockDelimiter,
-          mockArrayKey,
-          testData.south.list[0].type,
-          existingItems
+          mockArrayKey
         );
         expect(ctx.ok).toHaveBeenCalledWith(mockResult);
       });
@@ -680,17 +648,12 @@ describe('SouthConnectorController', () => {
         expect(ctx.badRequest).toHaveBeenCalledWith('Missing file "file"');
       });
 
-      it('should return bad request if south connector not found', async () => {
-        ctx.app.southService.findById.mockReturnValueOnce(null);
-
-        await southConnectorController.checkImportArrayField(ctx);
-
-        expect(ctx.badRequest).toHaveBeenCalledWith('South connector not found');
-      });
-
       it('should return bad request if check fails', async () => {
-        ctx.app.southService.findById.mockReturnValueOnce(testData.south.list[0]);
-        ctx.app.southService.checkArrayCSVImport.mockRejectedValueOnce(new Error('Check failed'));
+        ctx.request.body = {
+          delimiter: mockDelimiter,
+          arrayKey: mockArrayKey
+        };
+        ctx.app.southService.checkArrayFileImport.mockRejectedValueOnce(new Error('Check failed'));
 
         await southConnectorController.checkImportArrayField(ctx);
 

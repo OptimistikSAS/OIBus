@@ -1428,6 +1428,211 @@ describe('South Service', () => {
       });
     });
 
+    describe('getArrayFieldItemsFromDatabase', () => {
+      it('should return array from main connector settings', () => {
+        const southId = 'test-south-id';
+        const arrayKey = 'items';
+        const arrayData = [{ name: 'item1' }, { name: 'item2' }];
+
+        const southConnector = {
+          ...testData.south.list[0],
+          settings: {
+            ...testData.south.list[0].settings,
+            [arrayKey]: arrayData
+          }
+        };
+
+        (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(southConnector);
+
+        const result = service.getArrayFieldItemsFromDatabase(southId, arrayKey);
+
+        expect(result).toEqual(arrayData);
+        expect(southConnectorRepository.findSouthById).toHaveBeenCalledWith(southId);
+      });
+
+      it('should return array from item settings when not in main settings', () => {
+        const southId = 'test-south-id';
+        const arrayKey = 'dateTimeFields';
+        const arrayData1 = [{ fieldName: 'field1' }];
+        const arrayData2 = [{ fieldName: 'field2' }];
+
+        const southConnector = {
+          ...testData.south.list[0],
+          settings: {
+            ...testData.south.list[0].settings
+          }
+        };
+
+        const item1Settings = {
+          ...testData.south.list[0].items[0].settings,
+          [arrayKey]: arrayData1
+        };
+        const item2Settings = {
+          ...testData.south.list[0].items[0].settings,
+          [arrayKey]: arrayData2
+        };
+
+        const items = [
+          {
+            ...testData.south.list[0].items[0],
+            settings: item1Settings
+          },
+          {
+            ...testData.south.list[0].items[0],
+            settings: item2Settings
+          }
+        ];
+
+        (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(southConnector);
+        jest.spyOn(service, 'getSouthItems').mockReturnValueOnce(items as unknown as ReturnType<typeof service.getSouthItems>);
+
+        const result = service.getArrayFieldItemsFromDatabase(southId, arrayKey);
+
+        expect(result).toEqual([...arrayData1, ...arrayData2]);
+        expect(service.getSouthItems).toHaveBeenCalledWith(southId);
+      });
+
+      it('should return empty array when array field not found in settings or items', () => {
+        const southId = 'test-south-id';
+        const arrayKey = 'nonexistent';
+
+        const southConnector = {
+          ...testData.south.list[0],
+          settings: {
+            ...testData.south.list[0].settings
+          }
+        };
+
+        (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(southConnector);
+        jest.spyOn(service, 'getSouthItems').mockReturnValueOnce([]);
+
+        const result = service.getArrayFieldItemsFromDatabase(southId, arrayKey);
+
+        expect(result).toEqual([]);
+      });
+
+      it('should skip items where arrayKey exists but is not an array', () => {
+        const southId = 'test-south-id';
+        const arrayKey = 'items';
+        const arrayData = [{ name: 'item1' }];
+
+        const southConnector = {
+          ...testData.south.list[0],
+          settings: {
+            ...testData.south.list[0].settings
+          }
+        };
+
+        const items = [
+          {
+            ...testData.south.list[0].items[0],
+            settings: {
+              ...testData.south.list[0].items[0].settings,
+              [arrayKey]: arrayData
+            }
+          },
+          {
+            ...testData.south.list[0].items[0],
+            settings: {
+              ...testData.south.list[0].items[0].settings,
+              [arrayKey]: 'not an array' // This should be skipped
+            }
+          },
+          {
+            ...testData.south.list[0].items[0],
+            settings: {
+              ...testData.south.list[0].items[0].settings,
+              [arrayKey]: 123 // This should be skipped
+            }
+          }
+        ];
+
+        (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(southConnector);
+        jest.spyOn(service, 'getSouthItems').mockReturnValueOnce(items as unknown as ReturnType<typeof service.getSouthItems>);
+
+        const result = service.getArrayFieldItemsFromDatabase(southId, arrayKey);
+
+        expect(result).toEqual(arrayData);
+        expect(service.getSouthItems).toHaveBeenCalledWith(southId);
+      });
+
+      it('should filter out null and non-object items', () => {
+        const southId = 'test-south-id';
+        const arrayKey = 'items';
+        const arrayData = [{ name: 'item1' }, null, 'string', { name: 'item2' }, 123];
+
+        const southConnector = {
+          ...testData.south.list[0],
+          settings: {
+            ...testData.south.list[0].settings,
+            [arrayKey]: arrayData
+          }
+        };
+
+        (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(southConnector);
+
+        const result = service.getArrayFieldItemsFromDatabase(southId, arrayKey);
+
+        expect(result).toEqual([{ name: 'item1' }, { name: 'item2' }]);
+      });
+
+      it('should throw error if south connector not found', () => {
+        const southId = 'nonexistent';
+        const arrayKey = 'items';
+
+        (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(null);
+
+        expect(() => service.getArrayFieldItemsFromDatabase(southId, arrayKey)).toThrow('South connector "nonexistent" does not exist');
+      });
+    });
+
+    describe('checkArrayFileImport', () => {
+      it('should validate CSV import with existing items', async () => {
+        const mockFileContent = 'name\ntest1\ntest2';
+        (fs.readFile as jest.Mock).mockResolvedValue(Buffer.from(mockFileContent));
+        (validateArrayCSVImport as jest.Mock).mockReturnValue({
+          items: [{ name: 'test1' }, { name: 'test2' }],
+          errors: []
+        });
+
+        const southId = 'test-south-id';
+        const arrayKey = 'items';
+        const existingItems = [{ name: 'existing' }];
+        const mockFile = {
+          path: '/tmp/test.csv'
+        } as multer.File;
+        const delimiter = ',';
+
+        const southConnector = testData.south.list[0];
+        (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(southConnector);
+        jest.spyOn(service, 'getArrayFieldItemsFromDatabase').mockReturnValueOnce(existingItems);
+
+        const result = await service.checkArrayFileImport(southId, mockFile, delimiter, arrayKey);
+
+        expect(southConnectorRepository.findSouthById).toHaveBeenCalledWith(southId);
+        expect(service.getArrayFieldItemsFromDatabase).toHaveBeenCalledWith(southId, arrayKey);
+        expect(fs.readFile).toHaveBeenCalledWith('/tmp/test.csv');
+        expect(validateArrayCSVImport).toHaveBeenCalledWith(mockFileContent, delimiter, mockArrayAttribute, existingItems);
+        expect(result).toHaveProperty('items');
+        expect(result).toHaveProperty('errors');
+      });
+
+      it('should throw error if south connector not found', async () => {
+        const southId = 'nonexistent';
+        const arrayKey = 'items';
+        const mockFile = {
+          path: '/tmp/test.csv'
+        } as multer.File;
+        const delimiter = ',';
+
+        (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(null);
+
+        await expect(service.checkArrayFileImport(southId, mockFile, delimiter, arrayKey)).rejects.toThrow(
+          'South connector "nonexistent" does not exist'
+        );
+      });
+    });
+
     describe('importArrayField', () => {
       it('should import array field', async () => {
         const southId = 'test-south-id';

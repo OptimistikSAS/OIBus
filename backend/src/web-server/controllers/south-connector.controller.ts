@@ -527,41 +527,16 @@ export class SouthConnectorController extends Controller {
 
   async exportArrayField(ctx: KoaContext<{ delimiter: string; arrayKey: string }, string>): Promise<void> {
     const { delimiter, arrayKey } = ctx.request.body!;
-    const southConnector = ctx.app.southService.findById(ctx.params.southId);
-
-    if (!southConnector) {
-      return ctx.badRequest('South connector not found');
-    }
 
     try {
-      // Check if the array field exists in the main connector settings
-      const settings = southConnector.settings as unknown as Record<string, unknown>;
-      let arrayData: Array<Record<string, unknown>> = [];
-
-      if (Array.isArray(settings[arrayKey])) {
-        // Array field is in main connector settings
-        arrayData = (settings[arrayKey] as Array<unknown>).filter(
-          (item): item is Record<string, unknown> => typeof item === 'object' && item !== null
-        );
-      } else {
-        // Array field might be in item settings - we need to collect from all items
-        const items = ctx.app.southService.getSouthItems(ctx.params.southId);
-        const allArrayData: Array<Record<string, unknown>> = [];
-
-        for (const item of items) {
-          const itemSettings = item.settings as unknown as Record<string, unknown>;
-          if (Array.isArray(itemSettings[arrayKey])) {
-            allArrayData.push(
-              ...(itemSettings[arrayKey] as Array<unknown>).filter(
-                (item: unknown): item is Record<string, unknown> => typeof item === 'object' && item !== null
-              )
-            );
-          }
-        }
-        arrayData = allArrayData;
+      const southConnector = ctx.app.southService.findById(ctx.params.southId);
+      if (!southConnector) {
+        return ctx.badRequest('South connector not found');
       }
 
+      const arrayData = ctx.app.southService.getArrayFieldItemsFromDatabase(ctx.params.southId, arrayKey);
       const csvContent = ctx.app.southService.exportArrayToCSV(arrayData, delimiter, arrayKey, southConnector.type);
+
       ctx.body = csvContent;
       ctx.set('Content-Type', 'text/csv');
       ctx.set('Content-Disposition', `attachment; filename="${arrayKey}-export.csv"`);
@@ -569,7 +544,6 @@ export class SouthConnectorController extends Controller {
     } catch (error: unknown) {
       ctx.badRequest((error as Error).message);
     }
-    return;
   }
 
   async checkImportArrayField(
@@ -586,18 +560,10 @@ export class SouthConnectorController extends Controller {
       return ctx.badRequest('Missing file "file"');
     }
 
-    const { delimiter, arrayKey, currentItems } = ctx.request.body!;
-    const southConnector = ctx.app.southService.findById(ctx.params.southId);
-
-    if (!southConnector) {
-      return ctx.badRequest('South connector not found');
-    }
+    const { delimiter, arrayKey } = ctx.request.body!;
 
     try {
-      const existingItems = currentItems ? JSON.parse(currentItems) : [];
-      return ctx.ok(
-        await ctx.app.southService.checkArrayCSVImport(files['file'][0], delimiter, arrayKey, southConnector.type, existingItems)
-      );
+      return ctx.ok(await ctx.app.southService.checkArrayFileImport(ctx.params.southId, files['file'][0], delimiter, arrayKey));
     } catch (error: unknown) {
       return ctx.badRequest((error as Error).message);
     }

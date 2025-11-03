@@ -598,6 +598,39 @@ export default class SouthService {
     return arrayToFlattenedCSV(arrayData, delimiter, arrayAttribute);
   }
 
+  getArrayFieldItemsFromDatabase(southId: string, arrayKey: string): Array<Record<string, unknown>> {
+    const southConnector = this.southConnectorRepository.findSouthById(southId);
+    if (!southConnector) {
+      throw new Error(`South connector "${southId}" does not exist`);
+    }
+
+    const settings = southConnector.settings as unknown as Record<string, unknown>;
+    let arrayData: Array<Record<string, unknown>> = [];
+
+    if (Array.isArray(settings[arrayKey])) {
+      arrayData = (settings[arrayKey] as Array<unknown>).filter(
+        (item): item is Record<string, unknown> => typeof item === 'object' && item !== null
+      );
+    } else {
+      const items = this.getSouthItems(southId);
+      const allArrayData: Array<Record<string, unknown>> = [];
+
+      for (const item of items) {
+        const itemSettings = item.settings as unknown as Record<string, unknown>;
+        if (Array.isArray(itemSettings[arrayKey])) {
+          allArrayData.push(
+            ...(itemSettings[arrayKey] as Array<unknown>).filter(
+              (item: unknown): item is Record<string, unknown> => typeof item === 'object' && item !== null
+            )
+          );
+        }
+      }
+      arrayData = allArrayData;
+    }
+
+    return arrayData;
+  }
+
   async checkArrayCSVImport(
     file: multer.File,
     delimiter: string,
@@ -623,6 +656,25 @@ export default class SouthService {
     }
 
     return validateArrayCSVImport(fileContent.toString('utf8'), delimiter, arrayAttribute, existingItems);
+  }
+
+  async checkArrayFileImport(
+    southId: string,
+    file: multer.File,
+    delimiter: string,
+    arrayKey: string
+  ): Promise<{
+    items: Array<Record<string, unknown>>;
+    errors: Array<{ item: Record<string, string>; error: string }>;
+  }> {
+    const southConnector = this.southConnectorRepository.findSouthById(southId);
+    if (!southConnector) {
+      throw new Error(`South connector "${southId}" does not exist`);
+    }
+
+    const existingItems = this.getArrayFieldItemsFromDatabase(southId, arrayKey);
+
+    return await this.checkArrayCSVImport(file, delimiter, arrayKey, southConnector.type, existingItems);
   }
 
   async importArrayField(southId: string, arrayKey: string, items: Array<Record<string, unknown>>): Promise<void> {

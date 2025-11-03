@@ -20,6 +20,8 @@ import { ExportItemModalComponent } from '../../export-item-modal/export-item-mo
 import { ImportItemModalComponent } from '../../import-item-modal/import-item-modal.component';
 import { ArrayExportImportService } from '../../../services/array-export-import.service';
 import { NotificationService } from '../../notification.service';
+import { ImportArrayValidationModalComponent } from './import-array-validation-modal/import-array-validation-modal.component';
+import { Modal } from '../../modal.service';
 
 interface Column {
   path: Array<string>;
@@ -243,13 +245,10 @@ export class OIBusArrayFormControlComponent {
       .checkImportArray(this.southId()!, this.arrayAttribute().key, file, delimiter, this.control().value || [])
       .subscribe({
         next: response => {
-          if (response.errors.length > 0) {
-            this.showValidationModal(response.items, response.errors);
-          } else {
-            this.control().setValue(response.items);
-            this.paginatedValues().gotoPage(0);
-            this.notificationService.success('common.import-success');
-          }
+          const modalRef = this.modalService.open(ImportArrayValidationModalComponent, { size: 'xl', backdrop: 'static' });
+          const component: ImportArrayValidationModalComponent = modalRef.componentInstance;
+          component.prepare(this.arrayAttribute(), response.items, response.errors);
+          this.refreshAfterImportModalClosed(modalRef);
         },
         error: () => {
           this.notificationService.error('common.import-error');
@@ -257,14 +256,19 @@ export class OIBusArrayFormControlComponent {
       });
   }
 
-  private showValidationModal(items: Array<Record<string, unknown>>, errors: Array<{ item: Record<string, string>; error: string }>) {
-    if (errors.length > 0) {
-      const errorMessages = errors.map(e => e.error).join('\n');
-      this.notificationService.errorMessage(`Import validation failed:\n${errorMessages}`);
-    } else {
-      this.control().setValue(items);
-      this.paginatedValues().gotoPage(0);
-      this.notificationService.success('common.import-success');
-    }
+  /**
+   * Refresh the array values when items are imported
+   */
+  private refreshAfterImportModalClosed(modalRef: Modal<ImportArrayValidationModalComponent>) {
+    modalRef.result.subscribe({
+      next: (importedItems: Array<Record<string, unknown>>) => {
+        this.control().setValue(importedItems);
+        this.paginatedValues().gotoPage(0);
+        this.notificationService.success('common.import-success');
+      },
+      error: () => {
+        this.notificationService.error('common.import-error');
+      }
+    });
   }
 }
