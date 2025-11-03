@@ -153,9 +153,8 @@ export default class SouthOPCUA
 
   override async testItem(
     item: SouthConnectorItemEntity<SouthOPCUAItemSettings>,
-    testingSettings: SouthConnectorItemTestingSettings,
-    callback: (data: OIBusContent) => void
-  ): Promise<void> {
+    testingSettings: SouthConnectorItemTestingSettings
+  ): Promise<OIBusContent> {
     const tempCertFolder = `opcua-test-${randomUUID()}`;
     await initOPCUACertificateFolders(tempCertFolder);
     const clientCertificateManager = new OPCUACertificateManager({
@@ -182,7 +181,7 @@ export default class SouthOPCUA
           true
         )) as OIBusContent;
       }
-      callback(content);
+      return content;
     } finally {
       await fs.rm(path.resolve(tempCertFolder), { recursive: true, force: true });
       if (session) {

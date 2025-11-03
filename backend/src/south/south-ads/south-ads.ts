@@ -196,17 +196,16 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
 
   override async testItem(
     item: SouthConnectorItemEntity<SouthADSItemSettings>,
-    _testingSettings: SouthConnectorItemTestingSettings,
-    callback: (data: OIBusContent) => void
-  ): Promise<void> {
+    _testingSettings: SouthConnectorItemTestingSettings
+  ): Promise<OIBusContent> {
     try {
       await this.connect();
       const dataValues: Array<OIBusTimeValue> = await this.readAdsSymbol(item, DateTime.now().toUTC().toISO()!);
       await this.disconnect();
-      callback({
+      return {
         type: 'time-values',
         content: dataValues
-      });
+      };
     } catch (error: unknown) {
       throw new Error(`Unable to connect. ${(error as Error).message}`);
     }

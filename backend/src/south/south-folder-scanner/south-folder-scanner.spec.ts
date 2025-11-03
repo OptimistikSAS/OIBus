@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import SouthFolderScanner from './south-folder-scanner';
-import { compress, createFolder } from '../../service/utils';
+import { compress } from '../../service/utils';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import { SouthFolderScannerItemSettings, SouthFolderScannerSettings } from '../../../shared/model/south-settings.model';
@@ -347,16 +347,15 @@ describe('SouthFolderScanner with compression', () => {
   });
 
   it('should test item', async () => {
-    const callback = jest.fn();
     south.testConnection = jest.fn();
     south.checkAge = jest.fn().mockReturnValueOnce(true).mockReturnValueOnce(false);
     fs.stat = jest.fn().mockReturnValueOnce({ mtimeMs: DateTime.now().toMillis() });
     fs.readdir = jest.fn().mockReturnValue(['file1.txt', 'file2.csv', 'file3.csv']);
 
-    await south.testItem(configuration.items[0], testData.south.itemTestingSettings, callback);
+    const result = await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
     expect(fs.readdir).toHaveBeenCalledTimes(1);
     expect(south.checkAge).toHaveBeenCalledTimes(2);
-    expect(callback).toHaveBeenCalledWith({
+    expect(result).toEqual({
       type: 'time-values',
       content: [
         {
@@ -369,16 +368,16 @@ describe('SouthFolderScanner with compression', () => {
   });
 
   it('should test item and throw an error', async () => {
-    const callback = jest.fn();
+    south.testConnection = jest.fn();
     south.checkAge = jest.fn().mockReturnValueOnce(true).mockReturnValueOnce(false);
     fs.stat = jest.fn();
     const error = new Error('Cannot read directory');
     fs.readdir = jest.fn().mockRejectedValue(error);
 
-    await expect(south.testItem(configuration.items[0], testData.south.itemTestingSettings, callback)).rejects.toThrow(error);
+    await expect(south.testItem(configuration.items[0], testData.south.itemTestingSettings)).rejects.toThrow(error);
 
+    expect(south.testConnection).toHaveBeenCalledTimes(1);
     expect(fs.readdir).toHaveBeenCalledTimes(1);
     expect(south.checkAge).not.toHaveBeenCalled();
-    expect(callback).not.toHaveBeenCalled();
   });
 });

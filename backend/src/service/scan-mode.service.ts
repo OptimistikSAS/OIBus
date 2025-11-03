@@ -7,8 +7,7 @@ import SouthCacheRepository from '../repository/cache/south-cache.repository';
 import { ScanMode } from '../model/scan-mode.model';
 import { validateCronExpression } from './utils';
 import DataStreamEngine from '../engine/data-stream-engine';
-import { NotFoundError } from '../model/types';
-import { ValidationError } from 'joi';
+import { NotFoundError, OIBusValidationError } from '../model/types';
 
 export default class ScanModeService {
   constructor(
@@ -59,7 +58,7 @@ export default class ScanModeService {
   async verifyCron(command: { cron: string }): Promise<ValidatedCronExpression> {
     const result = validateCronExpression(command.cron);
     if (!result.isValid) {
-      throw new ValidationError(result.errorMessage, [], null);
+      throw new OIBusValidationError(result.errorMessage);
     }
     return result;
   }

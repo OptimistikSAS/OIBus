@@ -551,11 +551,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
 
   abstract testConnection(): Promise<void>;
 
-  abstract testItem(
-    item: SouthConnectorItemEntity<I>,
-    testingSettings: SouthConnectorItemTestingSettings,
-    _callback: (data: OIBusContent) => void
-  ): Promise<void>;
+  abstract testItem(item: SouthConnectorItemEntity<I>, testingSettings: SouthConnectorItemTestingSettings): Promise<OIBusContent>;
 
   /**
    * Safely delete the cache entries of a south item, when the south item is deleted

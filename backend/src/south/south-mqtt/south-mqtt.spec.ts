@@ -384,8 +384,8 @@ describe('SouthMQTT', () => {
   it('should properly test item', async () => {
     south.disconnect = jest.fn();
     mqttStream.unsubscribeAsync = jest.fn();
-    const callback = jest.fn();
-    south.testItem(configuration.items[0], { history: undefined }, callback);
+
+    south.testItem(configuration.items[0], { history: undefined });
 
     await flushPromises();
     mqttStream.emit('message', 'myTopic', 'myMessage', { dup: false });
@@ -405,9 +405,8 @@ describe('SouthMQTT', () => {
     mqttStream.unsubscribeAsync = jest.fn().mockImplementationOnce(() => {
       throw new Error('unsubscribe error');
     });
-    const callback = jest.fn();
     let error;
-    south.testItem(configuration.items[0], { history: undefined }, callback).catch(err => (error = err));
+    south.testItem(configuration.items[0], { history: undefined }).catch(err => (error = err));
 
     await flushPromises();
     mqttStream.emit('message', 'myTopic', 'myMessage', { dup: false });
@@ -428,9 +427,8 @@ describe('SouthMQTT', () => {
     mqttStream.subscribeAsync = jest.fn().mockImplementationOnce(() => {
       throw new Error('subscribe error');
     });
-    const callback = jest.fn();
     let error;
-    south.testItem(configuration.items[0], { history: undefined }, callback).catch(err => (error = err));
+    south.testItem(configuration.items[0], { history: undefined }).catch(err => (error = err));
 
     await flushPromises();
 

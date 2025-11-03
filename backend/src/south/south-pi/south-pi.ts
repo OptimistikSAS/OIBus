@@ -75,9 +75,8 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
 
   override async testItem(
     item: SouthConnectorItemEntity<SouthPIItemSettings>,
-    testingSettings: SouthConnectorItemTestingSettings,
-    callback: (data: OIBusContent) => void
-  ): Promise<void> {
+    testingSettings: SouthConnectorItemTestingSettings
+  ): Promise<OIBusContent> {
     await this.connect();
     const content: OIBusContent = { type: 'time-values', content: [] };
 
@@ -118,7 +117,7 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
       await this.disconnect();
       throw new Error(`Error occurred when sending connect command to remote agent. ${response.statusCode}`);
     }
-    callback(content);
+    return content;
   }
 
   /**

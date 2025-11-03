@@ -133,11 +133,10 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
 
   override async testItem(
     item: SouthConnectorItemEntity<SouthMQTTItemSettings>,
-    _testingSettings: SouthConnectorItemTestingSettings,
-    callback: (data: OIBusContent) => void
-  ): Promise<void> {
+    _testingSettings: SouthConnectorItemTestingSettings
+  ): Promise<OIBusContent> {
     const options = await createConnectionOptions(this.connector.id, this.connector.settings, this.logger);
-    return new Promise<void>((resolve, reject) => {
+    return new Promise<OIBusContent>((resolve, reject) => {
       (async () => {
         try {
           const client = await mqtt.connectAsync(this.connector.settings.url, options);
@@ -146,11 +145,10 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
               const messageTimestamp: Instant = DateTime.now().toUTC().toISO()!;
               await client.unsubscribeAsync(item.settings.topic);
               client.end(true);
-              callback({
+              resolve({
                 type: 'time-values',
                 content: createContent(item, message.toString(), messageTimestamp, this.logger)
               });
-              resolve();
             } catch (error: unknown) {
               reject(`Error when testing item ${item.settings.topic} (received message "${message}"): ${(error as Error).message}`);
             }

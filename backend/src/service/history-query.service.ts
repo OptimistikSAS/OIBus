@@ -220,9 +220,8 @@ export default class HistoryQueryService {
     retrieveSecretsFromSouth: string | undefined,
     southSettings: SouthSettings,
     itemSettings: SouthItemSettings,
-    testingSettings: SouthConnectorItemTestingSettings,
-    callback: (data: OIBusContent) => void
-  ): Promise<void> {
+    testingSettings: SouthConnectorItemTestingSettings
+  ): Promise<OIBusContent> {
     let southSettingsFrom: SouthSettings | null = null;
     if (historyId !== 'create') {
       const historyQuery = this.findById(historyId);
@@ -246,8 +245,7 @@ export default class HistoryQueryService {
         southManifest.settings
       ),
       itemSettings,
-      testingSettings,
-      callback
+      testingSettings
     );
   }
 

@@ -351,9 +351,7 @@ describe('South OPC', () => {
       })
     );
 
-    const callback = jest.fn();
-    await south.testItem(configuration.items[0], testData.south.itemTestingSettings, callback);
-    expect(callback).toHaveBeenCalledTimes(1);
+    await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
 
     const { startTime, endTime } = testData.south.itemTestingSettings.history!;
     const fetchOptions = {
@@ -379,11 +377,9 @@ describe('South OPC', () => {
   it('should test item and throw error if bad status', async () => {
     (HTTPRequest as jest.Mock).mockResolvedValueOnce(createMockResponse(400));
 
-    const callback = jest.fn();
-    await expect(south.testItem(configuration.items[0], testData.south.itemTestingSettings, callback)).rejects.toThrow(
+    await expect(south.testItem(configuration.items[0], testData.south.itemTestingSettings)).rejects.toThrow(
       `Error occurred when sending connect command to remote agent. 400`
     );
-    expect(callback).not.toHaveBeenCalled();
 
     const { startTime, endTime } = testData.south.itemTestingSettings.history!;
     const fetchOptions = {

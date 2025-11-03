@@ -41,9 +41,8 @@ export default class SouthFTP extends SouthConnector<SouthFTPSettings, SouthFTPI
 
   override async testItem(
     item: SouthConnectorItemEntity<SouthFTPItemSettings>,
-    _testingSettings: SouthConnectorItemTestingSettings,
-    callback: (data: OIBusContent) => void
-  ): Promise<void> {
+    _testingSettings: SouthConnectorItemTestingSettings
+  ): Promise<OIBusContent> {
     const filesInFolder = await this.listFiles(item);
 
     const values: Array<OIBusTimeValue> = filesInFolder.map(file => ({
@@ -53,7 +52,7 @@ export default class SouthFTP extends SouthConnector<SouthFTPSettings, SouthFTPI
         .toISO()!,
       data: { value: file.name }
     }));
-    callback({ type: 'time-values', content: values });
+    return { type: 'time-values', content: values };
   }
 
   async start(): Promise<void> {

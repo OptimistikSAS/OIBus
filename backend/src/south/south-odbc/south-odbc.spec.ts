@@ -343,8 +343,7 @@ describe('SouthODBC odbc driver with authentication', () => {
       .fn()
       .mockReturnValue([{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }] as Array<OIBusTimeValue>);
 
-    const callback = jest.fn();
-    await south.testItem(configuration.items[0], testData.south.itemTestingSettings, callback);
+    await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
     expect(south.queryOdbcData).toHaveBeenCalledTimes(1);
   });
 
@@ -353,8 +352,7 @@ describe('SouthODBC odbc driver with authentication', () => {
       .fn()
       .mockReturnValue([{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }] as Array<OIBusTimeValue>);
 
-    const callback = jest.fn();
-    await south.testItem(configuration.items[1], testData.south.itemTestingSettings, callback);
+    await south.testItem(configuration.items[1], testData.south.itemTestingSettings);
     expect(south.queryOdbcData).toHaveBeenCalledTimes(1);
     expect(convertDateTimeToInstant).not.toHaveBeenCalled();
     expect(formatInstant).not.toHaveBeenCalled();
@@ -1196,8 +1194,7 @@ describe('SouthODBC odbc remote with authentication', () => {
       ]
     ]);
 
-    const callback = jest.fn();
-    await south.testItem(configuration.items[1], testData.south.itemTestingSettings, callback);
+    await south.testItem(configuration.items[1], testData.south.itemTestingSettings);
     expect(south.queryRemoteAgentData).toHaveBeenCalled();
   });
 

@@ -176,11 +176,7 @@ describe('SouthConnectorController', () => {
       filePath: '/path/to/file.json',
       content: '{"key": "value"}'
     };
-    (mockRequest.services!.southService.testItem as jest.Mock).mockImplementation(
-      (_southId, _southType, _itemName, _southSettings, _itemSettings, _testingSettings, callback) => {
-        callback(mockContent);
-      }
-    );
+    (mockRequest.services!.southService.testItem as jest.Mock).mockReturnValueOnce(mockContent);
 
     const result = await controller.testItem(southId, southType, itemName, requestBody, mockRequest as CustomExpressRequest);
 
@@ -190,8 +186,7 @@ describe('SouthConnectorController', () => {
       itemName,
       requestBody.southSettings,
       requestBody.itemSettings,
-      requestBody.testingSettings,
-      expect.any(Function)
+      requestBody.testingSettings
     );
     expect(result).toEqual(mockContent);
   });

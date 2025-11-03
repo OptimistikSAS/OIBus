@@ -13,6 +13,7 @@ import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata } from '../../../shared/model/engine.model';
 import { TransformerDTOWithOptions } from '../../../shared/model/transformer.model';
 import OIBusService from '../../service/oibus.service';
+import { OIBusTestingError } from '../../model/types';
 
 /**
  * @interface NorthConnectorType
@@ -182,7 +183,11 @@ export class NorthConnectorController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<void> {
     const northService = request.services.northService as NorthService;
-    await northService.testNorth(northId, northType, command);
+    try {
+      await northService.testNorth(northId, northType, command);
+    } catch (error: unknown) {
+      throw new OIBusTestingError((error as Error).message);
+    }
   }
 
   /**

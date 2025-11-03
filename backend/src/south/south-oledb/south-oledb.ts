@@ -104,9 +104,8 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
 
   override async testItem(
     item: SouthConnectorItemEntity<SouthOLEDBItemSettings>,
-    testingSettings: SouthConnectorItemTestingSettings,
-    callback: (data: OIBusContent) => void
-  ): Promise<void> {
+    testingSettings: SouthConnectorItemTestingSettings
+  ): Promise<OIBusContent> {
     const startTime = testingSettings.history!.startTime;
     const endTime = testingSettings.history!.endTime;
     const result = (await this.queryRemoteAgentData(item, startTime, endTime, true)) as string;
@@ -124,7 +123,7 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
         break;
       }
     }
-    callback(oibusContent);
+    return oibusContent;
   }
 
   /**

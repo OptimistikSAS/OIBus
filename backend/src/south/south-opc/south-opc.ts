@@ -97,9 +97,8 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
 
   override async testItem(
     item: SouthConnectorItemEntity<SouthOPCItemSettings>,
-    testingSettings: SouthConnectorItemTestingSettings,
-    callback: (data: OIBusContent) => void
-  ): Promise<void> {
+    testingSettings: SouthConnectorItemTestingSettings
+  ): Promise<OIBusContent> {
     const content: OIBusContent = { type: 'time-values', content: [] };
     const startTime = testingSettings.history!.startTime;
     const endTime = testingSettings.history!.endTime;
@@ -136,7 +135,7 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
     } else {
       throw new Error(`Error occurred when sending connect command to remote agent. ${response.statusCode}`);
     }
-    callback(content);
+    return content;
   }
 
   /**

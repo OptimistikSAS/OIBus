@@ -102,9 +102,8 @@ export default class SouthMySQL extends SouthConnector<SouthMySQLSettings, South
 
   override async testItem(
     item: SouthConnectorItemEntity<SouthMySQLItemSettings>,
-    testingSettings: SouthConnectorItemTestingSettings,
-    callback: (data: OIBusContent) => void
-  ): Promise<void> {
+    testingSettings: SouthConnectorItemTestingSettings
+  ): Promise<OIBusContent> {
     const config = await this.createConnectionOptions();
     const connection = await mysql.createConnection(config);
 
@@ -146,7 +145,7 @@ export default class SouthMySQL extends SouthConnector<SouthMySQLSettings, South
         break;
       }
     }
-    callback(oibusContent);
+    return oibusContent;
   }
 
   /**

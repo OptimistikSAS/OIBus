@@ -1,5 +1,4 @@
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
-import path from 'node:path';
 import SouthMySQL from './south-mysql';
 import * as utils from '../../service/utils';
 import { generateReplacementParameters } from '../../service/utils';
@@ -313,8 +312,7 @@ describe('SouthMySQL with authentication', () => {
 
     south.createConnectionOptions = jest.fn();
 
-    const callback = jest.fn();
-    await south.testItem(configuration.items[0], testData.south.itemTestingSettings, callback);
+    await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
     expect(south.createConnectionOptions).toHaveBeenCalled();
     expect(mysql.createConnection).toHaveBeenCalled();
     const { startTime, endTime } = testData.south.itemTestingSettings.history!;
@@ -340,8 +338,7 @@ describe('SouthMySQL with authentication', () => {
 
     south.createConnectionOptions = jest.fn();
 
-    const callback = jest.fn();
-    await south.testItem(configuration.items[1], testData.south.itemTestingSettings, callback);
+    await south.testItem(configuration.items[1], testData.south.itemTestingSettings);
     expect(south.createConnectionOptions).toHaveBeenCalled();
     expect(mysql.createConnection).toHaveBeenCalled();
     const { startTime, endTime } = testData.south.itemTestingSettings.history!;

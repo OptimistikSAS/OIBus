@@ -239,9 +239,8 @@ export default class SouthService {
     itemName: string,
     southSettings: SouthSettings,
     itemSettings: SouthItemSettings,
-    testingSettings: SouthConnectorItemTestingSettings,
-    callback: (data: OIBusContent) => void
-  ): Promise<void> {
+    testingSettings: SouthConnectorItemTestingSettings
+  ): Promise<OIBusContent> {
     let southConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings> | null = null;
     if (southId !== 'create' && southId !== 'history') {
       southConnector = this.findById(southId);
@@ -293,7 +292,7 @@ export default class SouthService {
       this.certificateRepository,
       this.oIAnalyticsRegistrationRepository
     );
-    return await south.testItem(testItemToRun, testingSettings, callback);
+    return await south.testItem(testItemToRun, testingSettings);
   }
 
   listItems(southId: string): Array<SouthConnectorItemEntity<SouthItemSettings>> {

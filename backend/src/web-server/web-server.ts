@@ -27,8 +27,7 @@ import { RegisterRoutes } from './routes';
 import path from 'path';
 import multer from 'multer';
 import { ValidateError } from 'tsoa';
-import { NotFoundError, OIBusValidationError } from '../model/types';
-import { ValidationError } from 'joi';
+import { NotFoundError, OIBusTestingError, OIBusValidationError } from '../model/types';
 
 /**
  * OIBus web server - using express
@@ -156,26 +155,31 @@ export default class WebServer {
     this.setupRoutes(this.app);
     this.app.use((err: unknown, req: express.Request, res: express.Response, next: express.NextFunction) => {
       if (err instanceof NotFoundError) {
+        // Not Found Error trigger by OIBus at the service layer if an entity is not found
         return res.status(404).json({ error: err.message });
-      } else if (err instanceof OIBusValidationError) {
-        // Validation Error trigger by tsoa at the HTTP layer layer
+      }
+      if (err instanceof OIBusValidationError) {
+        // Validation Error trigger by OIBus at the service layer
         return res.status(400).json({
           message: 'Validation Failed',
           details: err.message
         });
-      } else if (err instanceof ValidateError) {
-        // Validation Error trigger by tsoa at the HTTP layer layer
+      }
+      if (err instanceof OIBusTestingError) {
+        // Validation Error trigger by OIBus at the service layer
+        return res.status(400).json({
+          message: err.message,
+          details: 'Error while testing connection'
+        });
+      }
+      if (err instanceof ValidateError) {
+        // Validation Error trigger by tsoa at the HTTP layer
         return res.status(422).json({
           message: 'Validation Failed',
           details: err.fields
         });
-      } else if (err instanceof ValidationError) {
-        // Validation Error triggered by joi in the service layer
-        return res.status(400).json({
-          message: 'Validation Failed',
-          details: err.message
-        });
-      } else if (err) {
+      }
+      if (err) {
         const message = err instanceof Error ? err.message : 'Internal Server Error';
         return res.status(500).json({ error: message });
       }

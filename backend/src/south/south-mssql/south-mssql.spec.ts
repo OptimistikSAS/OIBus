@@ -276,8 +276,7 @@ describe('SouthMSSQL with authentication', () => {
     (utils.formatInstant as jest.Mock).mockReturnValue(formattedInstant);
     (utils.convertDateTimeToInstant as jest.Mock).mockImplementation(instant => instant);
 
-    const callback = jest.fn();
-    await south.testItem(configuration.items[0], testData.south.itemTestingSettings, callback);
+    await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
     const { startTime, endTime } = testData.south.itemTestingSettings.history!;
     expect(south.queryData).toHaveBeenCalledWith(configuration.items[0], startTime, endTime);
   });
@@ -291,8 +290,7 @@ describe('SouthMSSQL with authentication', () => {
     (utils.formatInstant as jest.Mock).mockReturnValue(formattedInstant);
     (utils.convertDateTimeToInstant as jest.Mock).mockImplementation(instant => instant);
 
-    const callback = jest.fn();
-    await south.testItem(configuration.items[1], testData.south.itemTestingSettings, callback);
+    await south.testItem(configuration.items[1], testData.south.itemTestingSettings);
     const { startTime, endTime } = testData.south.itemTestingSettings.history!;
     expect(south.queryData).toHaveBeenCalledWith(configuration.items[1], startTime, endTime);
   });

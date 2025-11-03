@@ -207,7 +207,6 @@ describe('History Query service', () => {
   });
 
   it('should test item in creation mode', async () => {
-    const callback = jest.fn();
     await service.testItem(
       'create',
       testData.south.command.type,
@@ -215,8 +214,7 @@ describe('History Query service', () => {
       undefined,
       testData.south.command.settings,
       testData.south.itemCommand.settings,
-      testData.south.itemTestingSettings,
-      callback
+      testData.south.itemTestingSettings
     );
 
     expect(southService.testItem).toHaveBeenCalledWith(
@@ -225,13 +223,11 @@ describe('History Query service', () => {
       testData.south.itemCommand.name,
       testData.south.command.settings,
       testData.south.itemCommand.settings,
-      testData.south.itemTestingSettings,
-      callback
+      testData.south.itemTestingSettings
     );
   });
 
   it('should test item in creation mode and retrieve secrets', async () => {
-    const callback = jest.fn();
     await service.testItem(
       'create',
       testData.south.command.type,
@@ -239,8 +235,7 @@ describe('History Query service', () => {
       testData.south.list[0].id,
       testData.south.command.settings,
       testData.south.itemCommand.settings,
-      testData.south.itemTestingSettings,
-      callback
+      testData.south.itemTestingSettings
     );
 
     expect(southService.testItem).toHaveBeenCalledWith(
@@ -249,13 +244,11 @@ describe('History Query service', () => {
       testData.south.itemCommand.name,
       testData.south.command.settings,
       testData.south.itemCommand.settings,
-      testData.south.itemTestingSettings,
-      callback
+      testData.south.itemTestingSettings
     );
   });
 
   it('should test item in edit mode', async () => {
-    const callback = jest.fn();
     await service.testItem(
       testData.historyQueries.list[0].id,
       testData.south.command.type,
@@ -263,8 +256,7 @@ describe('History Query service', () => {
       undefined,
       testData.south.command.settings,
       testData.south.itemCommand.settings,
-      testData.south.itemTestingSettings,
-      callback
+      testData.south.itemTestingSettings
     );
 
     expect(southService.testItem).toHaveBeenCalled();
