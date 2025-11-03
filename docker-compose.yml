@@ -34,7 +34,7 @@ services:
     restart: unless-stopped
 
   mqtt-simulator:
-    image: python:3.9-slim
+    image: python:3.14-slim
     container_name: mqtt-simulator
     volumes:
       - ./docker/mosquitto/mqtt_simulator.py:/app/mqtt_simulator.py
