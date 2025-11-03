@@ -1062,11 +1062,7 @@ describe('OIAnalytics Command Service', () => {
     } as OIBusTestSouthConnectorItemCommand;
 
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
-    (southService.testItem as jest.Mock).mockImplementationOnce(
-      (_southId, _southType, _itemName, _southSettings, _itemCommand, _testSettings, callback, _logger) => {
-        callback({});
-      }
-    );
+    (southService.testItem as jest.Mock).mockReturnValueOnce({});
     (southService.listManifest as jest.Mock).mockReturnValueOnce([
       {
         ...testData.south.manifest,
@@ -1083,8 +1079,7 @@ describe('OIAnalytics Command Service', () => {
       command.commandContent.itemCommand.name,
       command.commandContent.southCommand.settings,
       command.commandContent.itemCommand.settings,
-      command.commandContent.testingSettings,
-      expect.anything()
+      command.commandContent.testingSettings
     );
     expect(service['completeTestItemCommand']).toHaveBeenCalledWith(command, {});
   });
@@ -1395,11 +1390,7 @@ describe('OIAnalytics Command Service', () => {
     } as OIBusTestHistoryQuerySouthItemCommand;
 
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
-    (historyQueryService.testItem as jest.Mock).mockImplementationOnce(
-      (_historyId, _southType, _itemName, _southId, _southSettings, _itemCommand, _testSettings, callback, _logger) => {
-        callback({});
-      }
-    );
+    (historyQueryService.testItem as jest.Mock).mockReturnValueOnce({});
     (southService.listManifest as jest.Mock).mockReturnValueOnce([
       {
         ...testData.south.manifest,
@@ -1416,8 +1407,7 @@ describe('OIAnalytics Command Service', () => {
       command.southConnectorId,
       command.commandContent.historyCommand.southSettings,
       command.commandContent.itemCommand.settings,
-      command.commandContent.testingSettings,
-      expect.anything()
+      command.commandContent.testingSettings
     );
     expect(service['completeTestItemCommand']).toHaveBeenCalledWith(command, {});
   });

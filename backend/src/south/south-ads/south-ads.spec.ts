@@ -8,7 +8,6 @@ import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/sou
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import { SouthConnectorEntity } from '../../model/south-connector.model';
 import testData from '../../tests/utils/test-data';
-import fs from 'node:fs';
 
 jest.mock('node:fs/promises');
 const readValue = jest.fn();
@@ -516,36 +515,25 @@ describe('South ADS', () => {
     south.connect = jest.fn();
     south.disconnect = jest.fn();
     const readAdsSymbol = (south.readAdsSymbol = jest.fn());
-    readAdsSymbol.mockReturnValue([
-      {
-        pointId: 'pointId',
-        timestamp: '2024-06-10T14:00:00.000Z',
-        data: {
-          value: 1234
-        }
+    const mockedResult = {
+      pointId: 'pointId',
+      timestamp: '2024-06-10T14:00:00.000Z',
+      data: {
+        value: 1234
       }
-    ]);
+    };
+    readAdsSymbol.mockReturnValue([mockedResult]);
     await south.start();
-    const callback = jest.fn();
-    await south.testItem(configuration.items[0], testData.south.itemTestingSettings, callback);
+    const result = await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
     expect(south.disconnect).toHaveBeenCalledTimes(1);
+    expect(result).toEqual({ type: 'time-values', content: [mockedResult] });
   });
 
   it('should test item and throw an error', async () => {
     const connect = (south.connect = jest.fn());
     connect.mockRejectedValue('undefined');
-    const readAdsSymbol = (south.readAdsSymbol = jest.fn());
-    readAdsSymbol.mockReturnValue([
-      {
-        pointId: 'pointId',
-        timestamp: '2024-06-10T14:00:00.000Z',
-        data: {
-          value: 1234
-        }
-      }
-    ]);
-    const callback = jest.fn();
-    await expect(south.testItem(configuration.items[0], testData.south.itemTestingSettings, callback)).rejects.toThrow(
+
+    await expect(south.testItem(configuration.items[0], testData.south.itemTestingSettings)).rejects.toThrow(
       new Error(`Unable to connect. undefined`)
     );
   });

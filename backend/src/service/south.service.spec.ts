@@ -192,15 +192,13 @@ describe('South Service', () => {
   });
 
   it('should test item in creation mode', async () => {
-    const callback = jest.fn();
     await service.testItem(
       'create',
       testData.south.command.type,
       testData.south.itemCommand.name,
       testData.south.command.settings,
       testData.south.itemCommand.settings,
-      testData.south.itemTestingSettings,
-      callback
+      testData.south.itemTestingSettings
     );
 
     expect(buildSouth).toHaveBeenCalledTimes(1);
@@ -208,15 +206,13 @@ describe('South Service', () => {
   });
 
   it('should test item in edit mode', async () => {
-    const callback = jest.fn();
     await service.testItem(
       testData.south.list[0].id,
       testData.south.command.type,
       testData.south.itemCommand.name,
       testData.south.command.settings,
       testData.south.itemCommand.settings,
-      testData.south.itemTestingSettings,
-      callback
+      testData.south.itemTestingSettings
     );
 
     expect(buildSouth).toHaveBeenCalledTimes(1);

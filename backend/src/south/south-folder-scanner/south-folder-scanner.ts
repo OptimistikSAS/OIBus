@@ -10,7 +10,7 @@ import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model
 import { DateTime } from 'luxon';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import { Instant } from '../../model/types';
+import { Instant, OIBusTestingError } from '../../model/types';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 
 /**
@@ -36,26 +36,26 @@ export default class SouthFolderScanner
     try {
       await fs.access(inputFolder, fs.constants.F_OK);
     } catch (error: unknown) {
-      throw new Error(`Folder "${inputFolder}" does not exist: ${(error as Error).message}`);
+      throw new OIBusTestingError(`Folder "${inputFolder}" does not exist: ${(error as Error).message}`);
     }
 
     try {
       await fs.access(inputFolder, fs.constants.R_OK);
     } catch (error: unknown) {
-      throw new Error(`Read access error on "${inputFolder}": ${(error as Error).message}`);
+      throw new OIBusTestingError(`Read access error on "${inputFolder}": ${(error as Error).message}`);
     }
 
     const stat = await fs.stat(inputFolder);
     if (!stat.isDirectory()) {
-      throw new Error(`${inputFolder} is not a directory`);
+      throw new OIBusTestingError(`${inputFolder} is not a directory`);
     }
   }
 
   override async testItem(
     item: SouthConnectorItemEntity<SouthFolderScannerItemSettings>,
-    _testingSettings: SouthConnectorItemTestingSettings,
-    callback: (data: OIBusContent) => void
-  ): Promise<void> {
+    _testingSettings: SouthConnectorItemTestingSettings
+  ): Promise<OIBusContent> {
+    await this.testConnection();
     const inputFolder = path.resolve(this.connector.settings.inputFolder);
     const filesInFolder = await fs.readdir(inputFolder);
     const filteredFiles = filesInFolder.filter(file => file.match(item.settings.regex));
@@ -72,7 +72,7 @@ export default class SouthFolderScanner
       timestamp: file.modifyTime,
       data: { value: file.name }
     }));
-    callback({ type: 'time-values', content: values });
+    return { type: 'time-values', content: values };
   }
 
   async start(): Promise<void> {

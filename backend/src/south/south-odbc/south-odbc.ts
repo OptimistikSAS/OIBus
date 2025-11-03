@@ -94,9 +94,8 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
 
   override async testItem(
     item: SouthConnectorItemEntity<SouthODBCItemSettings>,
-    testingSettings: SouthConnectorItemTestingSettings,
-    callback: (data: OIBusContent) => void
-  ): Promise<void> {
+    testingSettings: SouthConnectorItemTestingSettings
+  ): Promise<OIBusContent> {
     const startTime = testingSettings.history!.startTime;
     const endTime = testingSettings.history!.endTime;
     let result: string;
@@ -138,7 +137,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
         break;
       }
     }
-    callback(oibusContent);
+    return oibusContent;
   }
 
   async testOdbcConnection(): Promise<void> {

@@ -75,14 +75,13 @@ export default class SouthOIAnalytics
 
   override async testItem(
     item: SouthConnectorItemEntity<SouthOIAnalyticsItemSettings>,
-    testingSettings: SouthConnectorItemTestingSettings,
-    callback: (data: OIBusContent) => void
-  ): Promise<void> {
+    testingSettings: SouthConnectorItemTestingSettings
+  ): Promise<OIBusContent> {
     const startTime = testingSettings.history!.startTime;
     const endTime = testingSettings.history!.endTime;
     const result: Array<OIATimeValues> = await this.queryData(item, startTime, endTime);
     const { formattedResult } = this.parseData(result);
-    callback({ type: 'time-values', content: formattedResult });
+    return { type: 'time-values', content: formattedResult };
   }
 
   /**

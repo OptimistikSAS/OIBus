@@ -32,7 +32,7 @@ import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-se
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata, OIBusContent } from '../../../shared/model/engine.model';
 import { TransformerDTOWithOptions } from '../../../shared/model/transformer.model';
-import { OIBusValidationError } from '../../model/types';
+import { OIBusTestingError, OIBusValidationError } from '../../model/types';
 
 /**
  * @interface HistorySouthItemTestRequest
@@ -197,7 +197,11 @@ export class HistoryQueryController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<void> {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
-    await historyQueryService.testNorth(historyId, northType, fromNorth, command);
+    try {
+      await historyQueryService.testNorth(historyId, northType, fromNorth, command);
+    } catch (error: unknown) {
+      throw new OIBusTestingError((error as Error).message);
+    }
   }
 
   /**
@@ -214,7 +218,11 @@ export class HistoryQueryController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<void> {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
-    await historyQueryService.testSouth(historyId, southType, fromSouth, command);
+    try {
+      await historyQueryService.testSouth(historyId, southType, fromSouth, command);
+    } catch (error: unknown) {
+      throw new OIBusTestingError((error as Error).message);
+    }
   }
 
   /**
@@ -231,20 +239,19 @@ export class HistoryQueryController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<OIBusContent> {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
-    return await new Promise<OIBusContent>(resolve => {
-      historyQueryService.testItem(
+    try {
+      return await historyQueryService.testItem(
         historyId,
         southType,
         itemName,
         fromSouth,
         command.southSettings,
         command.itemSettings,
-        command.testingSettings,
-        (data: OIBusContent) => {
-          resolve(data);
-        }
+        command.testingSettings
       );
-    });
+    } catch (error: unknown) {
+      throw new OIBusTestingError((error as Error).message);
+    }
   }
 
   /**

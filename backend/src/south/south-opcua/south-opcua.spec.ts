@@ -311,17 +311,12 @@ describe('SouthOPCUA', () => {
     south.getDAValues = jest.fn();
     south.getHAValues = jest.fn();
 
-    const callback = jest.fn();
-    await south.testItem(
-      configuration.items[0],
-      {
-        history: {
-          startTime: testData.constants.dates.DATE_1,
-          endTime: testData.constants.dates.DATE_2
-        }
-      },
-      callback
-    );
+    await south.testItem(configuration.items[0], {
+      history: {
+        startTime: testData.constants.dates.DATE_1,
+        endTime: testData.constants.dates.DATE_2
+      }
+    });
     expect(south.getHAValues).toHaveBeenCalledWith(
       [configuration.items[0]],
       testData.constants.dates.DATE_1,
@@ -335,7 +330,6 @@ describe('SouthOPCUA', () => {
     expect(south.createSession).toHaveBeenCalledTimes(1);
     expect(mockedClient.close).toHaveBeenCalledTimes(1);
     expect(fs.rm).toHaveBeenCalledWith(path.resolve('opcua-test-randomUUID'), { recursive: true, force: true });
-    expect(callback).toHaveBeenCalledTimes(1);
   });
 
   it('should properly test da item', async () => {
@@ -343,14 +337,12 @@ describe('SouthOPCUA', () => {
     south.createSession = jest.fn().mockReturnValueOnce(mockedClient);
     south.getDAValues = jest.fn();
     south.getHAValues = jest.fn();
-    const callback = jest.fn();
-    await south.testItem(configuration.items[3], { history: undefined }, callback);
+    await south.testItem(configuration.items[3], { history: undefined });
     expect(initOPCUACertificateFolders).toHaveBeenCalledWith('opcua-test-randomUUID');
     expect(resolveNodeId).toHaveBeenCalledWith(configuration.items[0].settings.nodeId);
     expect(south.createSession).toHaveBeenCalledTimes(1);
     expect(mockedClient.close).toHaveBeenCalledTimes(1);
     expect(fs.rm).toHaveBeenCalledWith(path.resolve('opcua-test-randomUUID'), { recursive: true, force: true });
-    expect(callback).toHaveBeenCalledTimes(1);
   });
 
   it('should properly throw error if test item fails', async () => {
@@ -359,12 +351,10 @@ describe('SouthOPCUA', () => {
     });
     south.getDAValues = jest.fn();
     south.getHAValues = jest.fn();
-    const callback = jest.fn();
-    await expect(south.testItem(configuration.items[3], { history: undefined }, callback)).rejects.toThrow('get session error');
+    await expect(south.testItem(configuration.items[3], { history: undefined })).rejects.toThrow('get session error');
     expect(initOPCUACertificateFolders).toHaveBeenCalledWith('opcua-test-randomUUID');
     expect(fs.rm).toHaveBeenCalledWith(path.resolve('opcua-test-randomUUID'), { recursive: true, force: true });
     expect(south.createSession).toHaveBeenCalledTimes(1);
-    expect(callback).not.toHaveBeenCalled();
     expect(south.getDAValues).not.toHaveBeenCalled();
     expect(south.getHAValues).not.toHaveBeenCalled();
   });

@@ -33,7 +33,7 @@ import { itemToFlattenedCSV } from '../../service/utils';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import ScanModeService from '../../service/scan-mode.service';
 import { OIBusContent } from '../../../shared/model/engine.model';
-import { OIBusValidationError } from '../../model/types';
+import { OIBusTestingError, OIBusValidationError } from '../../model/types';
 
 /**
  * @interface SouthItemTestRequest
@@ -212,7 +212,11 @@ export class SouthConnectorController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<void> {
     const southService = request.services.southService as SouthService;
-    await southService.testSouth(southId, southType, command);
+    try {
+      await southService.testSouth(southId, southType, command);
+    } catch (error: unknown) {
+      throw new OIBusTestingError((error as Error).message);
+    }
   }
 
   /**
@@ -229,19 +233,18 @@ export class SouthConnectorController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<OIBusContent> {
     const southService = request.services.southService as SouthService;
-    return await new Promise<OIBusContent>(resolve => {
-      southService.testItem(
+    try {
+      return await southService.testItem(
         southId,
         southType,
         itemName,
         command.southSettings,
         command.itemSettings,
-        command.testingSettings,
-        (data: OIBusContent) => {
-          resolve(data);
-        }
+        command.testingSettings
       );
-    });
+    } catch (error: unknown) {
+      throw new OIBusTestingError((error as Error).message);
+    }
   }
 
   /**

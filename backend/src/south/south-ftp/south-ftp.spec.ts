@@ -178,11 +178,10 @@ describe('SouthFTP', () => {
       mockFtpClient.list.mockResolvedValue([fileInfo]);
 
       const item = configuration.items[0];
-      const callback = jest.fn();
 
-      await south.testItem(item, { history: undefined }, callback);
+      const result = await south.testItem(item, { history: undefined });
 
-      expect(callback).toHaveBeenCalledWith({
+      expect(result).toEqual({
         type: 'time-values',
         content: [
           {
@@ -218,11 +217,10 @@ describe('SouthFTP', () => {
       south.listFiles = jest.fn().mockResolvedValue([fileInfoWithoutDate]);
 
       const item = configuration.items[0];
-      const callback = jest.fn();
 
-      await south.testItem(item, { history: undefined }, callback);
+      const result = await south.testItem(item, { history: undefined });
 
-      expect(callback).toHaveBeenCalledWith({
+      expect(result).toEqual({
         type: 'time-values',
         content: [
           {

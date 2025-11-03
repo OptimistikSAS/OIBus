@@ -19,6 +19,7 @@ import { OIBusContent } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import { OIBusTestingError } from '../../model/types';
 
 /**
  * Class SouthMSSQL - Retrieve data from MSSQL databases and send them to the cache as CSV files.
@@ -67,13 +68,15 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
       switch ((error as { code: string; message: string }).code) {
         case 'ETIMEOUT':
         case 'ESOCKET':
-          throw new Error(`Please check host and port. ${(error as { code: string; message: string }).message}`);
+          throw new OIBusTestingError(`Please check host and port. ${(error as { code: string; message: string }).message}`);
 
         case 'ELOGIN':
-          throw new Error(`Please check username, password and database name. ${(error as { code: string; message: string }).message}`);
+          throw new OIBusTestingError(
+            `Please check username, password and database name. ${(error as { code: string; message: string }).message}`
+          );
 
         default:
-          throw new Error(`Unable to connect to database. ${(error as { code: string; message: string }).message}`);
+          throw new OIBusTestingError(`Unable to connect to database. ${(error as { code: string; message: string }).message}`);
       }
     }
 
@@ -89,20 +92,19 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
       table_count = (recordset[0]?.table_count as number) ?? 0;
     } catch (error: unknown) {
       await pool.close();
-      throw new Error(`Unable to read tables in database "${this.connector.settings.database}". ${(error as Error).message}`);
+      throw new OIBusTestingError(`Unable to read tables in database "${this.connector.settings.database}". ${(error as Error).message}`);
     }
     await pool.close();
 
     if (table_count === 0) {
-      throw new Error(`Database "${this.connector.settings.database}" has no tables`);
+      throw new OIBusTestingError(`Database "${this.connector.settings.database}" has no tables`);
     }
   }
 
   override async testItem(
     item: SouthConnectorItemEntity<SouthMSSQLItemSettings>,
-    testingSettings: SouthConnectorItemTestingSettings,
-    callback: (data: OIBusContent) => void
-  ): Promise<void> {
+    testingSettings: SouthConnectorItemTestingSettings
+  ): Promise<OIBusContent> {
     const startTime = testingSettings.history!.startTime;
     const endTime = testingSettings.history!.endTime;
     const result: Array<Record<string, string | number>> = await this.queryData(item, startTime, endTime);
@@ -140,7 +142,7 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
         break;
       }
     }
-    callback(oibusContent);
+    return oibusContent;
   }
 
   /**

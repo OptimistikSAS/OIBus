@@ -308,7 +308,6 @@ describe('South PI', () => {
         })
       );
 
-    const callback = jest.fn();
     south.connect = jest.fn();
     south.disconnect = jest.fn();
     const { startTime, endTime } = testData.south.itemTestingSettings.history!;
@@ -329,19 +328,17 @@ describe('South PI', () => {
       headers: { 'Content-Type': 'application/json' }
     };
 
-    await south.testItem(configuration.items[0], testData.south.itemTestingSettings, callback);
+    await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
     expect(south.connect).toHaveBeenCalledTimes(1);
     expect(south.disconnect).toHaveBeenCalledTimes(1);
-    expect(callback).toHaveBeenCalledTimes(1);
     expect(HTTPRequest).toHaveBeenCalledWith(
       expect.objectContaining({ href: `${configuration.settings.agentUrl}/api/pi/${configuration.id}/read` }),
       fetchOptions
     );
 
-    await south.testItem(configuration.items[1], testData.south.itemTestingSettings, callback);
+    await south.testItem(configuration.items[1], testData.south.itemTestingSettings);
     expect(south.connect).toHaveBeenCalledTimes(2);
     expect(south.disconnect).toHaveBeenCalledTimes(2);
-    expect(callback).toHaveBeenCalledTimes(2);
     expect(HTTPRequest).toHaveBeenCalledWith(
       expect.objectContaining({ href: `${configuration.settings.agentUrl}/api/pi/${configuration.id}/read` }),
       fetchOptions
@@ -351,15 +348,13 @@ describe('South PI', () => {
   it('should test item and throw error if bad status', async () => {
     (HTTPRequest as jest.Mock).mockResolvedValueOnce(createMockResponse(400));
 
-    const callback = jest.fn();
     south.connect = jest.fn();
     south.disconnect = jest.fn();
-    await expect(south.testItem(configuration.items[0], testData.south.itemTestingSettings, callback)).rejects.toThrow(
+    await expect(south.testItem(configuration.items[0], testData.south.itemTestingSettings)).rejects.toThrow(
       `Error occurred when sending connect command to remote agent. 400`
     );
     expect(south.connect).toHaveBeenCalledTimes(1);
     expect(south.disconnect).toHaveBeenCalledTimes(1);
-    expect(callback).not.toHaveBeenCalled();
 
     const { startTime, endTime } = testData.south.itemTestingSettings.history!;
     const fetchOptions = {

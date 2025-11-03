@@ -88,19 +88,18 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
 
   override async testItem(
     item: SouthConnectorItemEntity<SouthModbusItemSettings>,
-    _testingSettings: SouthConnectorItemTestingSettings,
-    callback: (data: OIBusContent) => void
-  ): Promise<void> {
+    _testingSettings: SouthConnectorItemTestingSettings
+  ): Promise<OIBusContent> {
     try {
       const socket = new net.Socket();
       const modbusClient = new client.TCP(socket, this.connector.settings.slaveId);
       await connectSocket(socket, this.connector.settings);
       const dataValues: Array<OIBusTimeValue> = await this.modbusFunction(modbusClient, item);
-      callback({
+      await this.disconnect();
+      return {
         type: 'time-values',
         content: dataValues
-      });
-      await this.disconnect();
+      };
     } catch (error: unknown) {
       switch ((error as { code: string; message: string }).code) {
         case 'ENOTFOUND':

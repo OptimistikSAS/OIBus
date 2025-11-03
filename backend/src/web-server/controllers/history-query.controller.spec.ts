@@ -159,11 +159,7 @@ describe('HistoryQueryController', () => {
       filePath: '/path/to/file.json',
       content: '{"key": "value"}'
     };
-    (mockRequest.services!.historyQueryService.testItem as jest.Mock).mockImplementation(
-      (_historyQueryId, _southType, _itemName, _retrieveSecretsFromSouth, _southSettings, _itemSettings, _testingSettings, callback) => {
-        callback(mockContent);
-      }
-    );
+    (mockRequest.services!.historyQueryService.testItem as jest.Mock).mockReturnValueOnce(mockContent);
 
     const result = await controller.testItem(historyId, southType, itemName, fromSouth, requestBody, mockRequest as CustomExpressRequest);
 
@@ -174,8 +170,7 @@ describe('HistoryQueryController', () => {
       fromSouth,
       requestBody.southSettings,
       requestBody.itemSettings,
-      requestBody.testingSettings,
-      expect.any(Function)
+      requestBody.testingSettings
     );
     expect(result).toEqual(mockContent);
   });

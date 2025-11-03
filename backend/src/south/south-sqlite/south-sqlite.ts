@@ -68,9 +68,8 @@ export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, Sou
 
   override async testItem(
     item: SouthConnectorItemEntity<SouthSQLiteItemSettings>,
-    testingSettings: SouthConnectorItemTestingSettings,
-    callback: (data: OIBusContent) => void
-  ): Promise<void> {
+    testingSettings: SouthConnectorItemTestingSettings
+  ): Promise<OIBusContent> {
     const startTime = testingSettings.history!.startTime;
     const endTime = testingSettings.history!.endTime;
     const result: Array<Record<string, string | number>> = await this.queryData(item, startTime, endTime);
@@ -107,7 +106,7 @@ export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, Sou
         oibusContent = { type: 'any', filePath, content };
         break;
     }
-    callback(oibusContent);
+    return oibusContent;
   }
 
   /**

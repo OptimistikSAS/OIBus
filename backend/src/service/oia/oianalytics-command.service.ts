@@ -825,17 +825,15 @@ export default class OIAnalyticsCommandService {
   private async executeTestSouthItemCommand(command: OIBusTestSouthConnectorItemCommand, privateKey: string) {
     await this.decryptSouthItemSettings(command, privateKey);
 
-    await this.southService.testItem(
+    const result = await this.southService.testItem(
       command.southConnectorId,
       command.commandContent.southCommand.type,
       command.commandContent.itemCommand.name,
       command.commandContent.southCommand.settings,
       command.commandContent.itemCommand.settings,
-      command.commandContent.testingSettings,
-      result => {
-        this.completeTestItemCommand(command, result);
-      }
+      command.commandContent.testingSettings
     );
+    this.completeTestItemCommand(command, result);
   }
 
   private async decryptNorthSettings(
@@ -993,18 +991,16 @@ export default class OIAnalyticsCommandService {
   private async executeTestHistoryQuerySouthItemCommand(command: OIBusTestHistoryQuerySouthItemCommand, privateKey: string) {
     await this.decryptHistoryQuerySouthItemSettings(command, privateKey);
 
-    await this.historyQueryService.testItem(
+    const result = await this.historyQueryService.testItem(
       command.historyQueryId,
       command.commandContent.historyCommand.southType,
       command.commandContent.itemCommand.name,
       command.southConnectorId,
       command.commandContent.historyCommand.southSettings,
       command.commandContent.itemCommand.settings,
-      command.commandContent.testingSettings,
-      result => {
-        this.completeTestItemCommand(command, result);
-      }
+      command.commandContent.testingSettings
     );
+    this.completeTestItemCommand(command, result);
   }
 
   private async executeUpdateHistoryQueryStatusCommand(command: OIBusUpdateHistoryQueryStatusCommand) {

@@ -103,9 +103,8 @@ export default class SouthPostgreSQL
 
   override async testItem(
     item: SouthConnectorItemEntity<SouthPostgreSQLItemSettings>,
-    testingSettings: SouthConnectorItemTestingSettings,
-    callback: (data: OIBusContent) => void
-  ): Promise<void> {
+    testingSettings: SouthConnectorItemTestingSettings
+  ): Promise<OIBusContent> {
     const startTime = testingSettings.history!.startTime;
     const endTime = testingSettings.history!.endTime;
     const result: Array<Record<string, string | number>> = await this.queryData(item, startTime, endTime);
@@ -143,7 +142,7 @@ export default class SouthPostgreSQL
         break;
       }
     }
-    callback(oibusContent);
+    return oibusContent;
   }
 
   /**

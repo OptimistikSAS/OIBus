@@ -401,7 +401,6 @@ describe('South Modbus', () => {
 
   it('should properly test item', async () => {
     south = new SouthModbus(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
-    const callback = jest.fn();
 
     // Mock node:net Socket constructor and the used function
     (net.Socket as unknown as jest.Mock).mockReturnValue({
@@ -412,28 +411,25 @@ describe('South Modbus', () => {
       end: jest.fn()
     });
 
-    await expect(south.testItem(configuration.items[0], testData.south.itemTestingSettings, callback)).resolves.not.toThrow();
+    await expect(south.testItem(configuration.items[0], testData.south.itemTestingSettings)).resolves.not.toThrow();
   });
 
   it('should properly manage error on test item', async () => {
     let code: ErrorCodes;
     const errorMessage = 'Error creating connection to socket';
-    const callback = jest.fn();
 
     for (code in ERROR_CODES) {
       (connectSocket as jest.Mock).mockImplementationOnce(() => {
         throw new ModbusError(errorMessage, code);
       });
 
-      await expect(south.testItem(configuration.items[0], testData.south.itemTestingSettings, callback)).rejects.toThrow(
+      await expect(south.testItem(configuration.items[0], testData.south.itemTestingSettings)).rejects.toThrow(
         new Error(`${ERROR_CODES[code]}: ${errorMessage}`)
       );
     }
   });
 
   it('should fail to connect when testing items', async () => {
-    const callback = jest.fn();
-
     const mockedEmitter = new CustomStream();
     mockedEmitter.connect = (_connectionObject: unknown, _callback: () => Promise<void>) => {
       return _callback();
@@ -441,7 +437,7 @@ describe('South Modbus', () => {
     // Mock node:net Socket constructor and the used function
     (net.Socket as unknown as jest.Mock).mockImplementation(() => mockedEmitter);
 
-    south.testItem(configuration.items[0], testData.south.itemTestingSettings, callback).catch(() => null);
+    south.testItem(configuration.items[0], testData.south.itemTestingSettings).catch(() => null);
 
     expect(net.Socket).toHaveBeenCalledTimes(1);
   });

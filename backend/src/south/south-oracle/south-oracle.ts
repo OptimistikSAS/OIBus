@@ -100,9 +100,8 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
 
   override async testItem(
     item: SouthConnectorItemEntity<SouthOracleItemSettings>,
-    testingSettings: SouthConnectorItemTestingSettings,
-    callback: (data: OIBusContent) => void
-  ): Promise<void> {
+    testingSettings: SouthConnectorItemTestingSettings
+  ): Promise<OIBusContent> {
     const startTime = testingSettings.history!.startTime;
     const endTime = testingSettings.history!.endTime;
     const result: Array<Record<string, string | number>> = await this.queryData(item, startTime, endTime);
@@ -140,7 +139,7 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
         break;
       }
     }
-    callback(oibusContent);
+    return oibusContent;
   }
 
   /**
@@ -243,15 +242,13 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
       connection.callTimeout = item.settings.requestTimeout;
 
       const params = generateReplacementParameters(item.settings.query, oracleStartTime, oracleEndTime);
-      const { rows } = await connection.execute(
-        item.settings.query.replace(/@StartTime/g, ':date1').replace(/@EndTime/g, ':date2'),
-        params
-      );
+      const query = item.settings.query.replace(/@StartTime/g, ':date1').replace(/@EndTime/g, ':date2');
+      const result = await connection.execute(query, params);
       await connection.close();
-      if (!rows) {
+      if (!result.rows) {
         return [];
       }
-      return rows as Array<Record<string, string | number>>;
+      return result.rows as Array<Record<string, string | number>>;
     } catch (error) {
       if (connection) {
         await connection.close();
