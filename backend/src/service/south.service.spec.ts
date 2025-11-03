@@ -29,7 +29,7 @@ import csv from 'papaparse';
 import fs from 'node:fs/promises';
 import { buildSouth } from '../south/south-connector-factory';
 import { NotFoundError, OIBusValidationError } from '../model/types';
-import { SouthConnectorEntityLight, SouthConnectorManifest } from '../model/south-connector.model';
+import { OIBusSouthType, SouthConnectorEntityLight, SouthConnectorManifest } from '../model/south-connector.model';
 
 jest.mock('../south/south-opcua/south-opcua');
 jest.mock('./metrics/south-connector-metrics.service');
@@ -699,7 +699,7 @@ describe('South Service', () => {
         const delimiter = ',';
         const arrayKey = 'items';
 
-        const result = service.exportArrayToCSV(arrayData, delimiter, arrayKey);
+        const result = service.exportArrayToCSV(arrayData, delimiter, arrayKey, 'folder-scanner');
 
         expect(arrayToFlattenedCSV).toHaveBeenCalledWith(arrayData, delimiter, mockArrayAttribute);
         expect(result).toBe('name\ntest1\ntest2');
@@ -710,7 +710,9 @@ describe('South Service', () => {
         const delimiter = ',';
         const arrayKey = 'nonexistent';
 
-        expect(() => service.exportArrayToCSV(arrayData, delimiter, arrayKey)).toThrow('Array field "nonexistent" not found in manifest');
+        expect(() => service.exportArrayToCSV(arrayData, delimiter, arrayKey, 'folder-scanner')).toThrow(
+          'Array field "nonexistent" not found in manifest'
+        );
       });
 
       it('should throw error if field is not an array', () => {
@@ -738,7 +740,7 @@ describe('South Service', () => {
         const delimiter = ',';
         const arrayKey = 'items';
 
-        expect(() => service.exportArrayToCSV(arrayData, delimiter, arrayKey)).toThrow('Field "items" is not an array');
+        expect(() => service.exportArrayToCSV(arrayData, delimiter, arrayKey, 'folder-scanner')).toThrow('Field "items" is not an array');
       });
 
       it('should export array data to CSV when array attribute is in manifest.items.rootAttribute.attributes', () => {
@@ -765,7 +767,228 @@ describe('South Service', () => {
         const delimiter = ',';
         const arrayKey = 'items';
 
-        const result = service.exportArrayToCSV(arrayData, delimiter, arrayKey);
+        const result = service.exportArrayToCSV(arrayData, delimiter, arrayKey, 'folder-scanner');
+
+        expect(arrayToFlattenedCSV).toHaveBeenCalledWith(arrayData, delimiter, mockArrayAttribute);
+        expect(result).toBe('name\ntest1\ntest2');
+      });
+
+      it('should export array data to CSV when array attribute is nested in a settings object attribute', () => {
+        (arrayToFlattenedCSV as jest.Mock).mockReturnValue('fieldName\ntest1\ntest2');
+
+        const nestedArrayAttribute = {
+          type: 'array' as const,
+          key: 'dateTimeFields',
+          translationKey: 'test.dateTimeFields',
+          validators: [],
+          rootAttribute: {
+            type: 'object' as const,
+            key: 'dateTimeField',
+            translationKey: 'test.dateTimeField',
+            validators: [],
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'fieldName',
+                translationKey: 'test.fieldName',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { visible: true, wrapInBox: false, row: 0, columns: 12, displayInViewMode: true }
+              }
+            ],
+            enablingConditions: [],
+            displayProperties: { visible: true, wrapInBox: false }
+          },
+          paginate: false,
+          numberOfElementPerPage: 25
+        };
+
+        const manifestWithNestedArray = {
+          ...mockManifest,
+          settings: {
+            ...mockManifest.settings,
+            attributes: [
+              {
+                type: 'object' as const,
+                key: 'nestedSettings',
+                translationKey: 'test.nestedSettings',
+                validators: [],
+                enablingConditions: [],
+                displayProperties: { visible: true, wrapInBox: false },
+                attributes: [nestedArrayAttribute]
+              }
+            ]
+          }
+        } as SouthConnectorManifest;
+
+        jest.spyOn(service, 'getInstalledSouthManifests').mockReturnValue([manifestWithNestedArray]);
+
+        const arrayData = [{ fieldName: 'test1' }, { fieldName: 'test2' }];
+        const delimiter = ',';
+        const arrayKey = 'dateTimeFields';
+
+        const result = service.exportArrayToCSV(arrayData, delimiter, arrayKey, 'folder-scanner');
+
+        expect(arrayToFlattenedCSV).toHaveBeenCalledWith(arrayData, delimiter, nestedArrayAttribute);
+        expect(result).toBe('fieldName\ntest1\ntest2');
+      });
+
+      it('should export array data to CSV when array attribute is nested deep in items rootAttribute', () => {
+        (arrayToFlattenedCSV as jest.Mock).mockReturnValue('fieldName\ntest1\ntest2');
+
+        const nestedArrayAttribute = {
+          type: 'array' as const,
+          key: 'dateTimeFields',
+          translationKey: 'test.dateTimeFields',
+          validators: [],
+          rootAttribute: {
+            type: 'object' as const,
+            key: 'dateTimeField',
+            translationKey: 'test.dateTimeField',
+            validators: [],
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'fieldName',
+                translationKey: 'test.fieldName',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { visible: true, wrapInBox: false, row: 0, columns: 12, displayInViewMode: true }
+              }
+            ],
+            enablingConditions: [],
+            displayProperties: { visible: true, wrapInBox: false }
+          },
+          paginate: false,
+          numberOfElementPerPage: 25
+        };
+
+        const manifestWithDeepNestedArray = {
+          ...mockManifest,
+          settings: {
+            ...mockManifest.settings,
+            attributes: []
+          },
+          items: {
+            ...mockManifest.items!,
+            rootAttribute: {
+              ...mockManifest.items!.rootAttribute,
+              attributes: [
+                {
+                  type: 'object' as const,
+                  key: 'settings',
+                  translationKey: 'test.settings',
+                  validators: [],
+                  enablingConditions: [],
+                  displayProperties: { visible: true, wrapInBox: false },
+                  attributes: [nestedArrayAttribute]
+                }
+              ]
+            }
+          }
+        } as SouthConnectorManifest;
+
+        jest.spyOn(service, 'getInstalledSouthManifests').mockReturnValue([manifestWithDeepNestedArray]);
+
+        const arrayData = [{ fieldName: 'test1' }, { fieldName: 'test2' }];
+        const delimiter = ',';
+        const arrayKey = 'dateTimeFields';
+
+        const result = service.exportArrayToCSV(arrayData, delimiter, arrayKey, 'folder-scanner');
+
+        expect(arrayToFlattenedCSV).toHaveBeenCalledWith(arrayData, delimiter, nestedArrayAttribute);
+        expect(result).toBe('fieldName\ntest1\ntest2');
+      });
+
+      it('should throw error if south manifest not found', () => {
+        jest.spyOn(service, 'getInstalledSouthManifests').mockReturnValue([]);
+
+        const arrayData = [{ name: 'test1' }];
+        const delimiter = ',';
+        const arrayKey = 'items';
+
+        expect(() => service.exportArrayToCSV(arrayData, delimiter, arrayKey, 'nonexistent-type' as OIBusSouthType)).toThrow(
+          'South manifest "nonexistent-type" not found'
+        );
+      });
+
+      it('should throw error if array field is nested but key matches a non-array field', () => {
+        const manifestWithNonArrayInNested = {
+          ...mockManifest,
+          settings: {
+            ...mockManifest.settings,
+            attributes: [
+              {
+                type: 'object' as const,
+                key: 'nestedSettings',
+                translationKey: 'test.nestedSettings',
+                validators: [],
+                enablingConditions: [],
+                displayProperties: { visible: true, wrapInBox: false },
+                attributes: [
+                  {
+                    type: 'string' as const,
+                    key: 'dateTimeFields',
+                    translationKey: 'test.dateTimeFields',
+                    validators: [],
+                    defaultValue: null,
+                    displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+                  }
+                ]
+              }
+            ]
+          }
+        } as unknown as SouthConnectorManifest;
+
+        jest.spyOn(service, 'getInstalledSouthManifests').mockReturnValue([manifestWithNonArrayInNested]);
+
+        const arrayData = [{ name: 'test1' }];
+        const delimiter = ',';
+        const arrayKey = 'dateTimeFields';
+
+        expect(() => service.exportArrayToCSV(arrayData, delimiter, arrayKey, 'folder-scanner')).toThrow(
+          'Field "dateTimeFields" is not an array'
+        );
+      });
+
+      it('should continue searching after checking nested object that does not contain the array', () => {
+        (arrayToFlattenedCSV as jest.Mock).mockReturnValue('name\ntest1\ntest2');
+
+        const arrayData = [{ name: 'test1' }, { name: 'test2' }];
+        const delimiter = ',';
+        const arrayKey = 'items';
+
+        const manifestWithNestedObjectFirst = {
+          ...mockManifest,
+          settings: {
+            ...mockManifest.settings,
+            attributes: [
+              {
+                type: 'object' as const,
+                key: 'otherSettings',
+                translationKey: 'test.otherSettings',
+                validators: [],
+                enablingConditions: [],
+                displayProperties: { visible: true, wrapInBox: false },
+                attributes: [
+                  {
+                    type: 'string' as const,
+                    key: 'otherField',
+                    translationKey: 'test.otherField',
+                    validators: [],
+                    defaultValue: null,
+                    displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+                  }
+                ]
+              },
+              mockArrayAttribute
+            ]
+          }
+        } as SouthConnectorManifest;
+
+        jest.spyOn(service, 'getInstalledSouthManifests').mockReturnValue([manifestWithNestedObjectFirst]);
+
+        const result = service.exportArrayToCSV(arrayData, delimiter, arrayKey, 'folder-scanner');
 
         expect(arrayToFlattenedCSV).toHaveBeenCalledWith(arrayData, delimiter, mockArrayAttribute);
         expect(result).toBe('name\ntest1\ntest2');
@@ -787,7 +1010,7 @@ describe('South Service', () => {
         const delimiter = ',';
         const arrayKey = 'items';
 
-        const result = await service.checkArrayCSVImport(mockFile, delimiter, arrayKey);
+        const result = await service.checkArrayCSVImport(mockFile, delimiter, arrayKey, 'folder-scanner');
 
         expect(fs.readFile).toHaveBeenCalledWith('/tmp/test.csv');
         expect(validateArrayCSVImport).toHaveBeenCalledWith(mockFileContent, delimiter, mockArrayAttribute, []);
@@ -805,7 +1028,7 @@ describe('South Service', () => {
         const delimiter = ',';
         const arrayKey = 'nonexistent';
 
-        await expect(service.checkArrayCSVImport(mockFile, delimiter, arrayKey)).rejects.toThrow(
+        await expect(service.checkArrayCSVImport(mockFile, delimiter, arrayKey, 'folder-scanner')).rejects.toThrow(
           'Array field "nonexistent" not found in manifest'
         );
       });
@@ -837,7 +1060,9 @@ describe('South Service', () => {
         const delimiter = ',';
         const arrayKey = 'items';
 
-        await expect(service.checkArrayCSVImport(mockFile, delimiter, arrayKey)).rejects.toThrow('Field "items" is not an array');
+        await expect(service.checkArrayCSVImport(mockFile, delimiter, arrayKey, 'folder-scanner')).rejects.toThrow(
+          'Field "items" is not an array'
+        );
       });
 
       it('should validate CSV import when array attribute is in manifest.items.rootAttribute.attributes', async () => {
@@ -871,13 +1096,335 @@ describe('South Service', () => {
         const delimiter = ',';
         const arrayKey = 'items';
 
-        const result = await service.checkArrayCSVImport(mockFile, delimiter, arrayKey);
+        const result = await service.checkArrayCSVImport(mockFile, delimiter, arrayKey, 'folder-scanner');
 
         expect(fs.readFile).toHaveBeenCalledWith('/tmp/test.csv');
         expect(validateArrayCSVImport).toHaveBeenCalledWith(mockFileContent, delimiter, mockArrayAttribute, []);
         expect(result).toHaveProperty('items');
         expect(result).toHaveProperty('errors');
         expect(result.items).toHaveLength(2);
+      });
+
+      it('should validate CSV import when array attribute is nested in a settings object attribute', async () => {
+        const mockFileContent = 'fieldName\ntest1\ntest2';
+        (fs.readFile as jest.Mock).mockResolvedValue(Buffer.from(mockFileContent));
+        (validateArrayCSVImport as jest.Mock).mockReturnValue({
+          items: [{ fieldName: 'test1' }, { fieldName: 'test2' }],
+          errors: []
+        });
+
+        const nestedArrayAttribute = {
+          type: 'array' as const,
+          key: 'dateTimeFields',
+          translationKey: 'test.dateTimeFields',
+          validators: [],
+          rootAttribute: {
+            type: 'object' as const,
+            key: 'dateTimeField',
+            translationKey: 'test.dateTimeField',
+            validators: [],
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'fieldName',
+                translationKey: 'test.fieldName',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { visible: true, wrapInBox: false, row: 0, columns: 12, displayInViewMode: true }
+              }
+            ],
+            enablingConditions: [],
+            displayProperties: { visible: true, wrapInBox: false }
+          },
+          paginate: false,
+          numberOfElementPerPage: 25
+        };
+
+        const manifestWithNestedArray = {
+          ...mockManifest,
+          settings: {
+            ...mockManifest.settings,
+            attributes: [
+              {
+                type: 'object' as const,
+                key: 'nestedSettings',
+                translationKey: 'test.nestedSettings',
+                validators: [],
+                enablingConditions: [],
+                displayProperties: { visible: true, wrapInBox: false },
+                attributes: [nestedArrayAttribute]
+              }
+            ]
+          }
+        } as SouthConnectorManifest;
+
+        jest.spyOn(service, 'getInstalledSouthManifests').mockReturnValue([manifestWithNestedArray]);
+
+        const mockFile = {
+          path: '/tmp/test.csv'
+        } as multer.File;
+        const delimiter = ',';
+        const arrayKey = 'dateTimeFields';
+
+        const result = await service.checkArrayCSVImport(mockFile, delimiter, arrayKey, 'folder-scanner');
+
+        expect(fs.readFile).toHaveBeenCalledWith('/tmp/test.csv');
+        expect(validateArrayCSVImport).toHaveBeenCalledWith(mockFileContent, delimiter, nestedArrayAttribute, []);
+        expect(result).toHaveProperty('items');
+        expect(result).toHaveProperty('errors');
+        expect(result.items).toHaveLength(2);
+      });
+
+      it('should validate CSV import when array attribute is nested deep in items rootAttribute', async () => {
+        const mockFileContent = 'fieldName\ntest1\ntest2';
+        (fs.readFile as jest.Mock).mockResolvedValue(Buffer.from(mockFileContent));
+        (validateArrayCSVImport as jest.Mock).mockReturnValue({
+          items: [{ fieldName: 'test1' }, { fieldName: 'test2' }],
+          errors: []
+        });
+
+        const nestedArrayAttribute = {
+          type: 'array' as const,
+          key: 'dateTimeFields',
+          translationKey: 'test.dateTimeFields',
+          validators: [],
+          rootAttribute: {
+            type: 'object' as const,
+            key: 'dateTimeField',
+            translationKey: 'test.dateTimeField',
+            validators: [],
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'fieldName',
+                translationKey: 'test.fieldName',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { visible: true, wrapInBox: false, row: 0, columns: 12, displayInViewMode: true }
+              }
+            ],
+            enablingConditions: [],
+            displayProperties: { visible: true, wrapInBox: false }
+          },
+          paginate: false,
+          numberOfElementPerPage: 25
+        };
+
+        const manifestWithDeepNestedArray = {
+          ...mockManifest,
+          settings: {
+            ...mockManifest.settings,
+            attributes: []
+          },
+          items: {
+            ...mockManifest.items!,
+            rootAttribute: {
+              ...mockManifest.items!.rootAttribute,
+              attributes: [
+                {
+                  type: 'object' as const,
+                  key: 'settings',
+                  translationKey: 'test.settings',
+                  validators: [],
+                  enablingConditions: [],
+                  displayProperties: { visible: true, wrapInBox: false },
+                  attributes: [nestedArrayAttribute]
+                }
+              ]
+            }
+          }
+        } as SouthConnectorManifest;
+
+        jest.spyOn(service, 'getInstalledSouthManifests').mockReturnValue([manifestWithDeepNestedArray]);
+
+        const mockFile = {
+          path: '/tmp/test.csv'
+        } as multer.File;
+        const delimiter = ',';
+        const arrayKey = 'dateTimeFields';
+
+        const result = await service.checkArrayCSVImport(mockFile, delimiter, arrayKey, 'folder-scanner');
+
+        expect(fs.readFile).toHaveBeenCalledWith('/tmp/test.csv');
+        expect(validateArrayCSVImport).toHaveBeenCalledWith(mockFileContent, delimiter, nestedArrayAttribute, []);
+        expect(result).toHaveProperty('items');
+        expect(result).toHaveProperty('errors');
+        expect(result.items).toHaveLength(2);
+      });
+
+      it('should throw error if south manifest not found', async () => {
+        jest.spyOn(service, 'getInstalledSouthManifests').mockReturnValue([]);
+
+        const mockFile = {
+          path: '/tmp/test.csv'
+        } as multer.File;
+        const delimiter = ',';
+        const arrayKey = 'items';
+
+        await expect(service.checkArrayCSVImport(mockFile, delimiter, arrayKey, 'nonexistent-type' as OIBusSouthType)).rejects.toThrow(
+          'South manifest "nonexistent-type" not found'
+        );
+      });
+
+      it('should throw error if array field is nested but key matches a non-array field', async () => {
+        const manifestWithNonArrayInNested = {
+          ...mockManifest,
+          settings: {
+            ...mockManifest.settings,
+            attributes: [
+              {
+                type: 'object' as const,
+                key: 'nestedSettings',
+                translationKey: 'test.nestedSettings',
+                validators: [],
+                enablingConditions: [],
+                displayProperties: { visible: true, wrapInBox: false },
+                attributes: [
+                  {
+                    type: 'string' as const,
+                    key: 'dateTimeFields',
+                    translationKey: 'test.dateTimeFields',
+                    validators: [],
+                    defaultValue: null,
+                    displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+                  }
+                ]
+              }
+            ]
+          }
+        } as unknown as SouthConnectorManifest;
+
+        jest.spyOn(service, 'getInstalledSouthManifests').mockReturnValue([manifestWithNonArrayInNested]);
+
+        const mockFile = {
+          path: '/tmp/test.csv'
+        } as multer.File;
+        const delimiter = ',';
+        const arrayKey = 'dateTimeFields';
+
+        await expect(service.checkArrayCSVImport(mockFile, delimiter, arrayKey, 'folder-scanner')).rejects.toThrow(
+          'Field "dateTimeFields" is not an array'
+        );
+      });
+
+      it('should continue searching after checking nested object that does not contain the array', async () => {
+        const mockFileContent = 'name\ntest1\ntest2';
+        (fs.readFile as jest.Mock).mockResolvedValue(Buffer.from(mockFileContent));
+        (validateArrayCSVImport as jest.Mock).mockReturnValue({
+          items: [{ name: 'test1' }, { name: 'test2' }],
+          errors: []
+        });
+
+        const mockFile = {
+          path: '/tmp/test.csv'
+        } as multer.File;
+        const delimiter = ',';
+        const arrayKey = 'items';
+
+        const manifestWithNestedObjectFirst = {
+          ...mockManifest,
+          settings: {
+            ...mockManifest.settings,
+            attributes: [
+              {
+                type: 'object' as const,
+                key: 'otherSettings',
+                translationKey: 'test.otherSettings',
+                validators: [],
+                enablingConditions: [],
+                displayProperties: { visible: true, wrapInBox: false },
+                attributes: [
+                  {
+                    type: 'string' as const,
+                    key: 'otherField',
+                    translationKey: 'test.otherField',
+                    validators: [],
+                    defaultValue: null,
+                    displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+                  }
+                ]
+              },
+              mockArrayAttribute
+            ]
+          }
+        } as SouthConnectorManifest;
+
+        jest.spyOn(service, 'getInstalledSouthManifests').mockReturnValue([manifestWithNestedObjectFirst]);
+
+        const result = await service.checkArrayCSVImport(mockFile, delimiter, arrayKey, 'folder-scanner');
+
+        expect(fs.readFile).toHaveBeenCalledWith('/tmp/test.csv');
+        expect(validateArrayCSVImport).toHaveBeenCalledWith(mockFileContent, delimiter, mockArrayAttribute, []);
+        expect(result).toHaveProperty('items');
+        expect(result).toHaveProperty('errors');
+      });
+
+      it('should handle manifest without items', async () => {
+        const mockFile = {
+          path: '/tmp/test.csv'
+        } as multer.File;
+        const delimiter = ',';
+        const arrayKey = 'nonexistent';
+
+        const manifestWithoutItems = {
+          ...mockManifest,
+          items: undefined
+        } as unknown as SouthConnectorManifest;
+
+        jest.spyOn(service, 'getInstalledSouthManifests').mockReturnValue([manifestWithoutItems]);
+
+        await expect(service.checkArrayCSVImport(mockFile, delimiter, arrayKey, 'folder-scanner')).rejects.toThrow(
+          'Array field "nonexistent" not found in manifest'
+        );
+      });
+
+      it('should handle manifest with items but without rootAttribute', async () => {
+        const mockFile = {
+          path: '/tmp/test.csv'
+        } as multer.File;
+        const delimiter = ',';
+        const arrayKey = 'nonexistent';
+
+        const manifestWithoutRootAttribute = {
+          ...mockManifest,
+          items: {
+            type: 'array' as const,
+            key: 'items',
+            translationKey: 'test.items',
+            validators: [],
+            rootAttribute: undefined,
+            paginate: false,
+            numberOfElementPerPage: 25
+          }
+        } as unknown as SouthConnectorManifest;
+
+        jest.spyOn(service, 'getInstalledSouthManifests').mockReturnValue([manifestWithoutRootAttribute]);
+
+        await expect(service.checkArrayCSVImport(mockFile, delimiter, arrayKey, 'folder-scanner')).rejects.toThrow(
+          'Array field "nonexistent" not found in manifest'
+        );
+      });
+
+      it('should pass existingItems to validateArrayCSVImport', async () => {
+        const mockFileContent = 'name\ntest1\ntest2';
+        (fs.readFile as jest.Mock).mockResolvedValue(Buffer.from(mockFileContent));
+        (validateArrayCSVImport as jest.Mock).mockReturnValue({
+          items: [{ name: 'test1' }, { name: 'test2' }],
+          errors: []
+        });
+
+        const existingItems = [{ name: 'existing1' }];
+        const mockFile = {
+          path: '/tmp/test.csv'
+        } as multer.File;
+        const delimiter = ',';
+        const arrayKey = 'items';
+
+        const result = await service.checkArrayCSVImport(mockFile, delimiter, arrayKey, 'folder-scanner', existingItems);
+
+        expect(validateArrayCSVImport).toHaveBeenCalledWith(mockFileContent, delimiter, mockArrayAttribute, existingItems);
+        expect(result).toHaveProperty('items');
+        expect(result).toHaveProperty('errors');
       });
     });
 

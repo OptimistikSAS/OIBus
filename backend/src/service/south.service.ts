@@ -50,7 +50,7 @@ import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-
 import CertificateRepository from '../repository/config/certificate.repository';
 import DataStreamEngine from '../engine/data-stream-engine';
 import { PassThrough } from 'node:stream';
-import { OIBusObjectAttribute } from '../../shared/model/form.model';
+import { OIBusArrayAttribute, OIBusAttribute, OIBusObjectAttribute } from '../../shared/model/form.model';
 import { toScanModeDTO } from './scan-mode.service';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { buildSouth } from '../south/south-connector-factory';
@@ -549,23 +549,50 @@ export default class SouthService {
     return source;
   }
 
-  exportArrayToCSV(arrayData: Array<Record<string, unknown>>, delimiter: string, arrayKey: string): string {
-    const manifest = this.getInstalledSouthManifests().find(
-      m =>
-        m.settings.attributes.some(attr => attr.key === arrayKey) || m.items?.rootAttribute.attributes.some(attr => attr.key === arrayKey)
-    );
+  private findArrayAttributeInAttributes(arrayKey: string, attributes: Array<OIBusAttribute>): OIBusArrayAttribute | null {
+    for (const attribute of attributes) {
+      if (attribute.key === arrayKey) {
+        if (attribute.type !== 'array') {
+          throw new Error(`Field "${arrayKey}" is not an array`);
+        }
+        return attribute;
+      }
+
+      if (attribute.type === 'object') {
+        const nestedAttribute = this.findArrayAttributeInAttributes(arrayKey, attribute.attributes);
+        if (nestedAttribute) {
+          return nestedAttribute;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  private getArrayAttributeFromManifest(manifest: SouthConnectorManifest, arrayKey: string): OIBusArrayAttribute | null {
+    const settingsAttribute = this.findArrayAttributeInAttributes(arrayKey, manifest.settings.attributes);
+    if (settingsAttribute) {
+      return settingsAttribute;
+    }
+
+    if (!manifest.items?.rootAttribute) {
+      return null;
+    }
+
+    return this.findArrayAttributeInAttributes(arrayKey, manifest.items.rootAttribute.attributes);
+  }
+
+  exportArrayToCSV(arrayData: Array<Record<string, unknown>>, delimiter: string, arrayKey: string, southType: OIBusSouthType): string {
+    const manifest = this.getInstalledSouthManifests().find(southManifest => southManifest.id === southType);
 
     if (!manifest) {
+      throw new Error(`South manifest "${southType}" not found`);
+    }
+
+    const arrayAttribute = this.getArrayAttributeFromManifest(manifest, arrayKey);
+
+    if (!arrayAttribute) {
       throw new Error(`Array field "${arrayKey}" not found in manifest`);
-    }
-
-    let arrayAttribute = manifest.settings.attributes.find(attr => attr.key === arrayKey);
-    if (!arrayAttribute && manifest.items?.rootAttribute.attributes) {
-      arrayAttribute = manifest.items.rootAttribute.attributes.find(attr => attr.key === arrayKey);
-    }
-
-    if (!arrayAttribute || arrayAttribute.type !== 'array') {
-      throw new Error(`Field "${arrayKey}" is not an array`);
     }
 
     return arrayToFlattenedCSV(arrayData, delimiter, arrayAttribute);
@@ -575,6 +602,7 @@ export default class SouthService {
     file: multer.File,
     delimiter: string,
     arrayKey: string,
+    southType: OIBusSouthType,
     existingItems: Array<Record<string, unknown>> = []
   ): Promise<{
     items: Array<Record<string, unknown>>;
@@ -582,22 +610,16 @@ export default class SouthService {
   }> {
     const fileContent = await fs.readFile(file.path);
 
-    const manifest = this.getInstalledSouthManifests().find(
-      m =>
-        m.settings.attributes.some(attr => attr.key === arrayKey) || m.items?.rootAttribute.attributes.some(attr => attr.key === arrayKey)
-    );
+    const manifest = this.getInstalledSouthManifests().find(southManifest => southManifest.id === southType);
 
     if (!manifest) {
+      throw new Error(`South manifest "${southType}" not found`);
+    }
+
+    const arrayAttribute = this.getArrayAttributeFromManifest(manifest, arrayKey);
+
+    if (!arrayAttribute) {
       throw new Error(`Array field "${arrayKey}" not found in manifest`);
-    }
-
-    let arrayAttribute = manifest.settings.attributes.find(attr => attr.key === arrayKey);
-    if (!arrayAttribute && manifest.items?.rootAttribute.attributes) {
-      arrayAttribute = manifest.items.rootAttribute.attributes.find(attr => attr.key === arrayKey);
-    }
-
-    if (!arrayAttribute || arrayAttribute.type !== 'array') {
-      throw new Error(`Field "${arrayKey}" is not an array`);
     }
 
     return validateArrayCSVImport(fileContent.toString('utf8'), delimiter, arrayAttribute, existingItems);

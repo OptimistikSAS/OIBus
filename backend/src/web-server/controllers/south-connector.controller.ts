@@ -561,7 +561,7 @@ export class SouthConnectorController extends Controller {
         arrayData = allArrayData;
       }
 
-      const csvContent = ctx.app.southService.exportArrayToCSV(arrayData, delimiter, arrayKey);
+      const csvContent = ctx.app.southService.exportArrayToCSV(arrayData, delimiter, arrayKey, southConnector.type);
       ctx.body = csvContent;
       ctx.set('Content-Type', 'text/csv');
       ctx.set('Content-Disposition', `attachment; filename="${arrayKey}-export.csv"`);
@@ -595,7 +595,9 @@ export class SouthConnectorController extends Controller {
 
     try {
       const existingItems = currentItems ? JSON.parse(currentItems) : [];
-      return ctx.ok(await ctx.app.southService.checkArrayCSVImport(files['file'][0], delimiter, arrayKey, existingItems));
+      return ctx.ok(
+        await ctx.app.southService.checkArrayCSVImport(files['file'][0], delimiter, arrayKey, southConnector.type, existingItems)
+      );
     } catch (error: unknown) {
       return ctx.badRequest((error as Error).message);
     }

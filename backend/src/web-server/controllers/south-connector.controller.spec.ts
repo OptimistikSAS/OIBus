@@ -551,7 +551,12 @@ describe('SouthConnectorController', () => {
 
         await southConnectorController.exportArrayField(ctx);
 
-        expect(ctx.app.southService.exportArrayToCSV).toHaveBeenCalledWith(mockArrayData, mockDelimiter, mockArrayKey);
+        expect(ctx.app.southService.exportArrayToCSV).toHaveBeenCalledWith(
+          mockArrayData,
+          mockDelimiter,
+          mockArrayKey,
+          mockSouthConnector.type
+        );
         expect(ctx.body).toBe(mockCsvContent);
         expect(ctx.set).toHaveBeenCalledWith('Content-Type', 'text/csv');
         expect(ctx.set).toHaveBeenCalledWith('Content-Disposition', `attachment; filename="${mockArrayKey}-export.csv"`);
@@ -579,7 +584,12 @@ describe('SouthConnectorController', () => {
 
         await southConnectorController.exportArrayField(ctx);
 
-        expect(ctx.app.southService.exportArrayToCSV).toHaveBeenCalledWith(mockArrayData, mockDelimiter, mockArrayKey);
+        expect(ctx.app.southService.exportArrayToCSV).toHaveBeenCalledWith(
+          mockArrayData,
+          mockDelimiter,
+          mockArrayKey,
+          mockSouthConnector.type
+        );
         expect(ctx.body).toBe(mockCsvContent);
         expect(ctx.ok).toHaveBeenCalled();
       });
@@ -626,7 +636,13 @@ describe('SouthConnectorController', () => {
 
         await southConnectorController.checkImportArrayField(ctx);
 
-        expect(ctx.app.southService.checkArrayCSVImport).toHaveBeenCalledWith(ctx.request.files.file[0], mockDelimiter, mockArrayKey, []);
+        expect(ctx.app.southService.checkArrayCSVImport).toHaveBeenCalledWith(
+          ctx.request.files.file[0],
+          mockDelimiter,
+          mockArrayKey,
+          testData.south.list[0].type,
+          []
+        );
         expect(ctx.ok).toHaveBeenCalledWith(mockResult);
       });
 
@@ -650,6 +666,7 @@ describe('SouthConnectorController', () => {
           ctx.request.files.file[0],
           mockDelimiter,
           mockArrayKey,
+          testData.south.list[0].type,
           existingItems
         );
         expect(ctx.ok).toHaveBeenCalledWith(mockResult);
