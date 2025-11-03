@@ -16,8 +16,8 @@ import { isDisplayableAttribute } from '../dynamic-form.builder';
 import { ValErrorDelayDirective } from '../val-error-delay.directive';
 import { ValidationErrorsComponent } from 'ngx-valdemort';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ExportArrayModalComponent } from '../../export-array-modal/export-array-modal.component';
-import { ImportArrayModalComponent } from '../../import-array-modal/import-array-modal.component';
+import { ExportItemModalComponent } from '../../export-item-modal/export-item-modal.component';
+import { ImportItemModalComponent } from '../../import-item-modal/import-item-modal.component';
 import { ArrayExportImportService } from '../../../services/array-export-import.service';
 import { NotificationService } from '../../notification.service';
 
@@ -187,7 +187,7 @@ export class OIBusArrayFormControlComponent {
   }
 
   async exportArray() {
-    const modal = this.modalService.open(ExportArrayModalComponent);
+    const modal = this.modalService.open(ExportItemModalComponent);
     modal.componentInstance.prepare(this.arrayAttribute().key);
 
     modal.result.subscribe(result => {
@@ -208,27 +208,63 @@ export class OIBusArrayFormControlComponent {
   }
 
   async importArray() {
-    const modal = this.modalService.open(ImportArrayModalComponent);
-    modal.componentInstance.arrayKey = this.arrayAttribute().key;
+    const modal = this.modalService.open(ImportItemModalComponent, { backdrop: 'static' });
 
-    modal.result.subscribe(result => {
-      if (result) {
-        this.arrayExportImportService.validateAndImportCSV(result.file, result.delimiter, this.arrayAttribute()).subscribe({
-          next: response => {
-            if (response.errors.length > 0) {
-              modal.componentInstance.setValidationErrors(response.errors);
-              this.notificationService.errorMessage(`Import validation failed: ${response.errors.map(e => e.error).join(', ')}`);
-            } else {
-              this.control().setValue(response.items);
-              this.paginatedValues().gotoPage(0);
-              this.notificationService.success('common.import-success');
-            }
-          },
-          error: () => {
-            this.notificationService.error('common.import-error');
-          }
-        });
-      }
+    modal.componentInstance.expectedHeaders = this.getExpectedHeaders();
+    modal.componentInstance.optionalHeaders = [];
+
+    modal.result.subscribe(response => {
+      if (!response) return;
+      this.checkImportArray(response.file, response.delimiter);
     });
+  }
+
+  private getExpectedHeaders(): Array<string> {
+    const headers: Array<string> = [];
+
+    if (this.arrayAttribute().rootAttribute.attributes) {
+      this.arrayAttribute().rootAttribute.attributes.forEach(attr => {
+        if (attr.type === 'object' && 'attributes' in attr) {
+          // For nested objects, prefix with the attribute key
+          attr.attributes.forEach(subAttr => {
+            headers.push(`${attr.key}_${subAttr.key}`);
+          });
+        } else {
+          headers.push(attr.key);
+        }
+      });
+    }
+
+    return headers;
+  }
+
+  private checkImportArray(file: File, delimiter: string) {
+    this.arrayExportImportService
+      .checkImportArray(this.southId()!, this.arrayAttribute().key, file, delimiter, this.control().value || [])
+      .subscribe({
+        next: response => {
+          if (response.errors.length > 0) {
+            this.showValidationModal(response.items, response.errors);
+          } else {
+            this.control().setValue(response.items);
+            this.paginatedValues().gotoPage(0);
+            this.notificationService.success('common.import-success');
+          }
+        },
+        error: () => {
+          this.notificationService.error('common.import-error');
+        }
+      });
+  }
+
+  private showValidationModal(items: Array<Record<string, unknown>>, errors: Array<{ item: Record<string, string>; error: string }>) {
+    if (errors.length > 0) {
+      const errorMessages = errors.map(e => e.error).join('\n');
+      this.notificationService.errorMessage(`Import validation failed:\n${errorMessages}`);
+    } else {
+      this.control().setValue(items);
+      this.paginatedValues().gotoPage(0);
+      this.notificationService.success('common.import-success');
+    }
   }
 }

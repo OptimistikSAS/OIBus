@@ -2023,6 +2023,134 @@ describe('Service utils', () => {
       });
     });
 
+    describe('validateArrayCSVImport - duplicate and existing item checks', () => {
+      beforeEach(() => {
+        jest.clearAllMocks();
+      });
+
+      it('should detect duplicate item names in CSV file', () => {
+        (csv.parse as jest.Mock).mockReturnValue({
+          data: [
+            { name: 'test1', value: '100' },
+            { name: 'test1', value: '200' },
+            { name: 'test2', value: '300' }
+          ],
+          meta: { delimiter: ',' }
+        });
+
+        const csvContent = 'name,value\ntest1,100\ntest1,200\ntest2,300';
+        const delimiter = ',';
+
+        const result = validateArrayCSVImport(csvContent, delimiter, mockArrayAttribute, []);
+
+        expect(result.items).toHaveLength(2);
+        expect(result.items[0]).toEqual({ name: 'test1', value: 100 });
+        expect(result.items[1]).toEqual({ name: 'test2', value: 300 });
+        expect(result.errors).toHaveLength(1);
+        expect(result.errors[0].error).toBe('Row 2: Duplicate item name "test1" found in CSV file');
+        expect(result.errors[0].item).toEqual({ name: 'test1', value: '200' });
+      });
+
+      it('should detect item names that already exist in existingItems', () => {
+        (csv.parse as jest.Mock).mockReturnValue({
+          data: [
+            { name: 'existing1', value: '100' },
+            { name: 'existing2', value: '200' },
+            { name: 'new1', value: '300' }
+          ],
+          meta: { delimiter: ',' }
+        });
+
+        const csvContent = 'name,value\nexisting1,100\nexisting2,200\nnew1,300';
+        const delimiter = ',';
+        const existingItems = [
+          { name: 'existing1', value: 50 },
+          { name: 'existing2', value: 60 }
+        ];
+
+        const result = validateArrayCSVImport(csvContent, delimiter, mockArrayAttribute, existingItems);
+
+        expect(result.items).toHaveLength(1);
+        expect(result.items[0]).toEqual({ name: 'new1', value: 300 });
+        expect(result.errors).toHaveLength(2);
+        expect(result.errors[0].error).toBe('Row 1: Item name "existing1" already exists in the array');
+        expect(result.errors[0].item).toEqual({ name: 'existing1', value: '100' });
+        expect(result.errors[1].error).toBe('Row 2: Item name "existing2" already exists in the array');
+        expect(result.errors[1].item).toEqual({ name: 'existing2', value: '200' });
+      });
+
+      it('should handle both duplicate in CSV and existing items', () => {
+        (csv.parse as jest.Mock).mockReturnValue({
+          data: [
+            { name: 'existing1', value: '100' },
+            { name: 'duplicate', value: '200' },
+            { name: 'duplicate', value: '300' },
+            { name: 'new1', value: '400' }
+          ],
+          meta: { delimiter: ',' }
+        });
+
+        const csvContent = 'name,value\nexisting1,100\nduplicate,200\nduplicate,300\nnew1,400';
+        const delimiter = ',';
+        const existingItems = [{ name: 'existing1', value: 50 }];
+
+        const result = validateArrayCSVImport(csvContent, delimiter, mockArrayAttribute, existingItems);
+
+        expect(result.items).toHaveLength(2);
+        expect(result.items[0]).toEqual({ name: 'duplicate', value: 200 });
+        expect(result.items[1]).toEqual({ name: 'new1', value: 400 });
+        expect(result.errors).toHaveLength(2);
+        expect(result.errors[0].error).toBe('Row 1: Item name "existing1" already exists in the array');
+        expect(result.errors[1].error).toBe('Row 3: Duplicate item name "duplicate" found in CSV file');
+      });
+
+      it('should handle items without name/id/key/title using fallback to first string value', () => {
+        (csv.parse as jest.Mock).mockReturnValue({
+          data: [
+            { description: 'item1', value: '100' },
+            { description: 'item2', value: '200' }
+          ],
+          meta: { delimiter: ',' }
+        });
+
+        const csvContent = 'description,value\nitem1,100\nitem2,200';
+        const delimiter = ',';
+
+        const attributeWithoutNameKey = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'description',
+                translationKey: 'test.description',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { visible: true, wrapInBox: false, row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'number' as const,
+                key: 'value',
+                translationKey: 'test.value',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { visible: true, wrapInBox: false, row: 0, columns: 12, displayInViewMode: true },
+                unit: ''
+              }
+            ]
+          }
+        };
+
+        const result = validateArrayCSVImport(csvContent, delimiter, attributeWithoutNameKey, []);
+
+        expect(result.items).toHaveLength(2);
+        expect(result.items[0]).toEqual({ description: 'item1', value: 100 });
+        expect(result.items[1]).toEqual({ description: 'item2', value: 200 });
+        expect(result.errors).toHaveLength(0);
+      });
+    });
+
     describe('validateArrayCSVImport - missing flattened values for defined keys', () => {
       it('should handle missing flattened values for defined keys (no assignment)', () => {
         (csv.parse as jest.Mock).mockReturnValue({

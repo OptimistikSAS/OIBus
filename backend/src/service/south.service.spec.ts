@@ -740,6 +740,36 @@ describe('South Service', () => {
 
         expect(() => service.exportArrayToCSV(arrayData, delimiter, arrayKey)).toThrow('Field "items" is not an array');
       });
+
+      it('should export array data to CSV when array attribute is in manifest.items.rootAttribute.attributes', () => {
+        (arrayToFlattenedCSV as jest.Mock).mockReturnValue('name\ntest1\ntest2');
+
+        const manifestWithItemsAttribute = {
+          ...mockManifest,
+          settings: {
+            ...mockManifest.settings,
+            attributes: []
+          },
+          items: {
+            ...mockManifest.items!,
+            rootAttribute: {
+              ...mockManifest.items!.rootAttribute,
+              attributes: [mockArrayAttribute]
+            }
+          }
+        } as SouthConnectorManifest;
+
+        jest.spyOn(service, 'getInstalledSouthManifests').mockReturnValue([manifestWithItemsAttribute]);
+
+        const arrayData = [{ name: 'test1' }, { name: 'test2' }];
+        const delimiter = ',';
+        const arrayKey = 'items';
+
+        const result = service.exportArrayToCSV(arrayData, delimiter, arrayKey);
+
+        expect(arrayToFlattenedCSV).toHaveBeenCalledWith(arrayData, delimiter, mockArrayAttribute);
+        expect(result).toBe('name\ntest1\ntest2');
+      });
     });
 
     describe('checkArrayCSVImport', () => {
@@ -760,7 +790,7 @@ describe('South Service', () => {
         const result = await service.checkArrayCSVImport(mockFile, delimiter, arrayKey);
 
         expect(fs.readFile).toHaveBeenCalledWith('/tmp/test.csv');
-        expect(validateArrayCSVImport).toHaveBeenCalledWith(mockFileContent, delimiter, mockArrayAttribute);
+        expect(validateArrayCSVImport).toHaveBeenCalledWith(mockFileContent, delimiter, mockArrayAttribute, []);
         expect(result).toHaveProperty('items');
         expect(result).toHaveProperty('errors');
         expect(result.items).toHaveLength(2);
@@ -808,6 +838,46 @@ describe('South Service', () => {
         const arrayKey = 'items';
 
         await expect(service.checkArrayCSVImport(mockFile, delimiter, arrayKey)).rejects.toThrow('Field "items" is not an array');
+      });
+
+      it('should validate CSV import when array attribute is in manifest.items.rootAttribute.attributes', async () => {
+        const mockFileContent = 'name\ntest1\ntest2';
+        (fs.readFile as jest.Mock).mockResolvedValue(Buffer.from(mockFileContent));
+        (validateArrayCSVImport as jest.Mock).mockReturnValue({
+          items: [{ name: 'test1' }, { name: 'test2' }],
+          errors: []
+        });
+
+        const manifestWithItemsAttribute = {
+          ...mockManifest,
+          settings: {
+            ...mockManifest.settings,
+            attributes: []
+          },
+          items: {
+            ...mockManifest.items!,
+            rootAttribute: {
+              ...mockManifest.items!.rootAttribute,
+              attributes: [mockArrayAttribute]
+            }
+          }
+        } as SouthConnectorManifest;
+
+        jest.spyOn(service, 'getInstalledSouthManifests').mockReturnValue([manifestWithItemsAttribute]);
+
+        const mockFile = {
+          path: '/tmp/test.csv'
+        } as multer.File;
+        const delimiter = ',';
+        const arrayKey = 'items';
+
+        const result = await service.checkArrayCSVImport(mockFile, delimiter, arrayKey);
+
+        expect(fs.readFile).toHaveBeenCalledWith('/tmp/test.csv');
+        expect(validateArrayCSVImport).toHaveBeenCalledWith(mockFileContent, delimiter, mockArrayAttribute, []);
+        expect(result).toHaveProperty('items');
+        expect(result).toHaveProperty('errors');
+        expect(result.items).toHaveLength(2);
       });
     });
 

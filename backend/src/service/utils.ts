@@ -756,7 +756,8 @@ const flattenObject = (
 export const validateArrayCSVImport = (
   csvContent: string,
   delimiter: string,
-  arrayAttribute: OIBusArrayAttribute
+  arrayAttribute: OIBusArrayAttribute,
+  existingItems: Array<Record<string, unknown>> = []
 ): {
   items: Array<Record<string, unknown>>;
   errors: Array<{ item: Record<string, string>; error: string }>;
@@ -770,9 +771,34 @@ export const validateArrayCSVImport = (
   const validItems: Array<Record<string, unknown>> = [];
   const errors: Array<{ item: Record<string, string>; error: string }> = [];
 
+  const existingItemNames = new Set(existingItems.map(item => getItemName(item)).filter(name => name));
+  const seenNames = new Set<string>();
+
   for (const [index, data] of csvData.data.entries()) {
     try {
       const item = unflattenObject(data as Record<string, unknown>, arrayAttribute.rootAttribute);
+
+      const itemName = getItemName(item);
+      if (itemName) {
+        if (seenNames.has(itemName)) {
+          errors.push({
+            item: data as Record<string, string>,
+            error: `Row ${index + 1}: Duplicate item name "${itemName}" found in CSV file`
+          });
+          continue;
+        }
+        seenNames.add(itemName);
+
+        // Check against existing items
+        if (existingItemNames.has(itemName)) {
+          errors.push({
+            item: data as Record<string, string>,
+            error: `Row ${index + 1}: Item name "${itemName}" already exists in the array`
+          });
+          continue;
+        }
+      }
+
       validItems.push(item);
     } catch (error) {
       errors.push({
@@ -783,6 +809,21 @@ export const validateArrayCSVImport = (
   }
 
   return { items: validItems, errors };
+};
+
+const getItemName = (item: Record<string, unknown>): string => {
+  const nameKeys = ['name', 'id', 'key', 'title'];
+  for (const key of nameKeys) {
+    if (item[key] && typeof item[key] === 'string') {
+      return item[key] as string;
+    }
+  }
+  for (const [, value] of Object.entries(item)) {
+    if (typeof value === 'string' && value.trim()) {
+      return value;
+    }
+  }
+  return '';
 };
 
 const unflattenObject = (

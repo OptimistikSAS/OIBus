@@ -1799,7 +1799,9 @@
         "expected-format": "Expected format:",
         "actual-format": "Actual format:",
         "mqtt-topic-overlap-title": "MQTT Topic Overlap Error",
-        "mqtt-topic-overlap-description": "The CSV file contains MQTT topics that would create overlapping subscriptions. These conflicts must be resolved before importing."
+        "mqtt-topic-overlap-description": "The CSV file contains MQTT topics that would create overlapping subscriptions. These conflicts must be resolved before importing.",
+        "validation-errors-title": "Validation errors",
+        "validation-errors-description": "The CSV file contains validation errors that need to be fixed before importing."
       },
       "test": {
         "title": "Result for item {{name}}"

@@ -574,7 +574,7 @@ export class SouthConnectorController extends Controller {
 
   async checkImportArrayField(
     ctx: KoaContext<
-      { delimiter: string; arrayKey: string },
+      { delimiter: string; arrayKey: string; currentItems: string },
       {
         items: Array<Record<string, unknown>>;
         errors: Array<{ item: Record<string, unknown>; error: string }>;
@@ -586,7 +586,7 @@ export class SouthConnectorController extends Controller {
       return ctx.badRequest('Missing file "file"');
     }
 
-    const { delimiter, arrayKey } = ctx.request.body!;
+    const { delimiter, arrayKey, currentItems } = ctx.request.body!;
     const southConnector = ctx.app.southService.findById(ctx.params.southId);
 
     if (!southConnector) {
@@ -594,7 +594,8 @@ export class SouthConnectorController extends Controller {
     }
 
     try {
-      return ctx.ok(await ctx.app.southService.checkArrayCSVImport(files['file'][0], delimiter, arrayKey));
+      const existingItems = currentItems ? JSON.parse(currentItems) : [];
+      return ctx.ok(await ctx.app.southService.checkArrayCSVImport(files['file'][0], delimiter, arrayKey, existingItems));
     } catch (error: unknown) {
       return ctx.badRequest((error as Error).message);
     }

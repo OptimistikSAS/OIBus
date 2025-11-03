@@ -550,12 +550,20 @@ export default class SouthService {
   }
 
   exportArrayToCSV(arrayData: Array<Record<string, unknown>>, delimiter: string, arrayKey: string): string {
-    const manifest = this.getInstalledSouthManifests().find(m => m.settings.attributes.some(attr => attr.key === arrayKey));
+    const manifest = this.getInstalledSouthManifests().find(
+      m =>
+        m.settings.attributes.some(attr => attr.key === arrayKey) || m.items?.rootAttribute.attributes.some(attr => attr.key === arrayKey)
+    );
+
     if (!manifest) {
       throw new Error(`Array field "${arrayKey}" not found in manifest`);
     }
 
-    const arrayAttribute = manifest.settings.attributes.find(attr => attr.key === arrayKey);
+    let arrayAttribute = manifest.settings.attributes.find(attr => attr.key === arrayKey);
+    if (!arrayAttribute && manifest.items?.rootAttribute.attributes) {
+      arrayAttribute = manifest.items.rootAttribute.attributes.find(attr => attr.key === arrayKey);
+    }
+
     if (!arrayAttribute || arrayAttribute.type !== 'array') {
       throw new Error(`Field "${arrayKey}" is not an array`);
     }
@@ -566,23 +574,33 @@ export default class SouthService {
   async checkArrayCSVImport(
     file: multer.File,
     delimiter: string,
-    arrayKey: string
+    arrayKey: string,
+    existingItems: Array<Record<string, unknown>> = []
   ): Promise<{
     items: Array<Record<string, unknown>>;
     errors: Array<{ item: Record<string, string>; error: string }>;
   }> {
     const fileContent = await fs.readFile(file.path);
-    const manifest = this.getInstalledSouthManifests().find(m => m.settings.attributes.some(attr => attr.key === arrayKey));
+
+    const manifest = this.getInstalledSouthManifests().find(
+      m =>
+        m.settings.attributes.some(attr => attr.key === arrayKey) || m.items?.rootAttribute.attributes.some(attr => attr.key === arrayKey)
+    );
+
     if (!manifest) {
       throw new Error(`Array field "${arrayKey}" not found in manifest`);
     }
 
-    const arrayAttribute = manifest.settings.attributes.find(attr => attr.key === arrayKey);
+    let arrayAttribute = manifest.settings.attributes.find(attr => attr.key === arrayKey);
+    if (!arrayAttribute && manifest.items?.rootAttribute.attributes) {
+      arrayAttribute = manifest.items.rootAttribute.attributes.find(attr => attr.key === arrayKey);
+    }
+
     if (!arrayAttribute || arrayAttribute.type !== 'array') {
       throw new Error(`Field "${arrayKey}" is not an array`);
     }
 
-    return validateArrayCSVImport(fileContent.toString('utf8'), delimiter, arrayAttribute);
+    return validateArrayCSVImport(fileContent.toString('utf8'), delimiter, arrayAttribute, existingItems);
   }
 
   async importArrayField(southId: string, arrayKey: string, items: Array<Record<string, unknown>>): Promise<void> {

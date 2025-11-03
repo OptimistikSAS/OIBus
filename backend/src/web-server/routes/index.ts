@@ -276,10 +276,13 @@ router.put('/api/south/:southId/array/:arrayKey/export', (ctx: KoaContext<{ deli
 );
 router.post(
   '/api/south/:southId/array/:arrayKey/check-import',
-  upload.fields([{ name: 'file', maxCount: 1 }]),
+  upload.fields([
+    { name: 'file', maxCount: 1 },
+    { name: 'currentItems', maxCount: 1 }
+  ]),
   (
     ctx: KoaContext<
-      { delimiter: string; arrayKey: string },
+      { delimiter: string; arrayKey: string; currentItems: string },
       {
         items: Array<Record<string, unknown>>;
         errors: Array<{ item: Record<string, string>; error: string }>;

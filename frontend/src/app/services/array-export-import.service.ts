@@ -18,7 +18,8 @@ export class ArrayExportImportService {
     southId: string,
     arrayKey: string,
     file: File,
-    delimiter: string
+    delimiter: string,
+    existingItems: Array<Record<string, any>> = []
   ): Observable<{
     items: Array<Record<string, any>>;
     errors: Array<{ item: Record<string, string>; error: string }>;
@@ -27,6 +28,7 @@ export class ArrayExportImportService {
     formData.set('file', file);
     formData.set('delimiter', delimiter);
     formData.set('arrayKey', arrayKey);
+    formData.set('currentItems', new Blob([JSON.stringify(existingItems)], { type: 'application/json' }));
 
     return this.http.post<{
       items: Array<Record<string, any>>;
