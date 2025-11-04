@@ -1,25 +1,28 @@
-version: '3.8'
-
-x-mqtt-variables: &mqtt-variables
-  MQTT_USER: oibus
-  MQTT_PASSWORD: pass
-
 services:
   opcua-server:
     image: mcr.microsoft.com/iotedge/opc-plc:latest
-    container_name: opcua-plc
+    container_name: oibus_opcua-plc
     ports:
       - "50000:50000"
     volumes:
       - ./docker/opcua/nodes_config.json:/app/nodes_config.json
       - ./docker/opcua/pki:/app/pki
-#    command: --pn=50000 --autoaccept --sph --sn=5 --sr=10 --st=uint --fn=5 --fr=1 --ft=uint --gn=5 --nodesfile=/app/nodes_config.json
     command: --nodesfile=/app/nodes_config.json --autoaccept
+    restart: unless-stopped
+
+  modbus-server:
+    image: oitc/modbus-server
+    container_name: oibus_modbus-server
+    ports:
+      - "5020:5020"
+    volumes:
+      - ./docker/modbus/server_config.json:/server_config.json
+    command: -f /server_config.json
     restart: unless-stopped
 
   mqtt-broker:
     image: eclipse-mosquitto
-    container_name: mqtt-broker
+    container_name: oibus_mqtt-broker
     ports:
       - "1883:1883"
       - "9001:9001"  # WebSocket support
@@ -28,18 +31,21 @@ services:
       - ./docker/mosquitto/data:/mosquitto/data
       - ./docker/mosquitto/log:/mosquitto/log
       - ./docker/mosquitto/entrypoint.sh:/entrypoint.sh
-    environment: *mqtt-variables
+    environment:
+      MQTT_USER: oibus
+      MQTT_PASSWORD: ${MQTT_PASSWORD:-pass}
     entrypoint: /entrypoint.sh
     command: mosquitto -c /mosquitto/config/mosquitto.conf
     restart: unless-stopped
 
   mqtt-simulator:
     image: python:3.14-slim
-    container_name: mqtt-simulator
+    container_name: oibus_mqtt-simulator
     volumes:
       - ./docker/mosquitto/mqtt_simulator.py:/app/mqtt_simulator.py
     environment:
-      <<: *mqtt-variables
+      MQTT_USER: oibus
+      MQTT_PASSWORD: ${MQTT_PASSWORD:-pass}
       MQTT_BROKER: mqtt-broker
       MQTT_PORT: 1883
     working_dir: /app
@@ -47,13 +53,40 @@ services:
     depends_on:
       - mqtt-broker
 
-  modbus-server:
-    image: oitc/modbus-server
-    container_name: modbus-server
+  postgres:
+    image: postgres:latest
+    container_name: oibus_postgres
     ports:
-      - "5020:5020"
-    volumes:
-      - ./docker/modbus/server_config.json:/server_config.json
-    command: -f /server_config.json
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: oibus
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pass}
+      POSTGRES_DB: oibus-db
     restart: unless-stopped
 
+  oibus:
+    image: ghcr.io/optimistiksas/oibus:latest
+    container_name: oibus_runtime
+    ports:
+      - "2223:2223"
+    volumes:
+      - ./data-folder:/app/OIBus/OIBusData
+    restart: unless-stopped
+    profiles: [ "oibus" ]
+
+  nginx:
+    image: nginx:latest
+    container_name: oibus_nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx:/etc/nginx
+      - ./docker/nginx/certs:/etc/nginx/certs
+    environment:
+      - DOMAIN=${DOMAIN}
+    depends_on:
+      - oibus
+    restart: unless-stopped
+    profiles: [ "oibus" ]
+    entrypoint: /bin/sh -c "envsubst < /etc/nginx/oibus.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
