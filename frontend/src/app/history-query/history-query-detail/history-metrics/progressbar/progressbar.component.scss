@@ -1,5 +1,8 @@
 .oib-progressbar {
   position: relative;
+  display: inline-block;
+  width: 100%;
+  max-width: 10rem;
 }
 
 .oib-progressbar span {
@@ -7,4 +10,8 @@
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
+}
+
+.oib-progressbar ngb-progressbar {
+  width: 100%;
 }

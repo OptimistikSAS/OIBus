@@ -55,7 +55,6 @@
         <tr>
           <td translate="history-query.monitoring.north.cache-size-title"></td>
           <td
-            class="last-column-body"
             translate="history-query.monitoring.north.cache-size-value"
             [translateParams]="{
               currentSize: historyMetrics().north.currentCacheSize | fileSize,
@@ -68,7 +67,6 @@
         <tr>
           <td translate="history-query.monitoring.north.error-size-title"></td>
           <td
-            class="last-column-body"
             translate="history-query.monitoring.north.error-size-value"
             [translateParams]="{
               currentSize: historyMetrics().north.currentErrorSize | fileSize,
@@ -80,7 +78,6 @@
         <tr>
           <td translate="history-query.monitoring.north.archive-size-title"></td>
           <td
-            class="last-column-body"
             translate="history-query.monitoring.north.archive-size-value"
             [translateParams]="{
               currentSize: historyMetrics().north.currentArchiveSize | fileSize,
@@ -120,7 +117,7 @@
         }
         <!-- number of values for point connectors -->
         <tr>
-          <td style="width: 33%" translate="history-query.monitoring.south.number-of-values"></td>
+          <td translate="history-query.monitoring.south.number-of-values"></td>
           <td>{{ historyMetrics().south.numberOfValuesRetrieved }}</td>
         </tr>
         <!-- number of files for file connectors -->

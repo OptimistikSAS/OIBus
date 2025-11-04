@@ -1,0 +1,20 @@
+:host ::ng-deep .oib-table {
+  table-layout: auto;
+
+  tbody {
+    tr {
+      td:first-child {
+        width: 33%;
+        white-space: nowrap;
+      }
+
+      td:nth-child(2) {
+        width: auto;
+        white-space: normal;
+        overflow: visible;
+        text-overflow: unset;
+        word-break: break-word;
+      }
+    }
+  }
+}
