@@ -8,6 +8,8 @@
 /docker/mosquitto/config/password.txt
 /docker/modbus/data/*
 /docker/opcua/pki/*
+/docker/nginx/certs/*
+/docker/nginx/conf.d/*
 
 # Node
 /node_modules
