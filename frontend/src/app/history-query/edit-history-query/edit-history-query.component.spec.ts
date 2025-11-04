@@ -152,6 +152,7 @@ describe('EditHistoryQueryComponent', () => {
     scanModeService.list.and.returnValue(of(testData.scanMode.list));
     certificateService.list.and.returnValue(of([]));
     transformerService.list.and.returnValue(of([]));
+    historyQueryService.list.and.returnValue(of([]));
 
     historyQueryService.findById.and.returnValue(of(historyQuery));
     northConnectorService.getNorthManifest.and.returnValue(of(testData.north.manifest));
@@ -188,6 +189,7 @@ describe('EditHistoryQueryComponent', () => {
 
   it('should test north connection', () => {
     tester.componentInstance.northManifest = testData.north.manifest;
+    tester.componentInstance.southManifest = testData.south.manifest;
     tester.componentInstance.historyQuery = historyQuery;
 
     const spy = jasmine.createSpy();
@@ -197,12 +199,18 @@ describe('EditHistoryQueryComponent', () => {
       }
     } as Modal<unknown>);
 
+    // Ensure form is initialized before testing
+    if (!tester.componentInstance.form) {
+      tester.componentInstance.buildForm(null, null);
+    }
+
     tester.componentInstance.test('north');
     tester.detectChanges();
     expect(spy).toHaveBeenCalledWith('north', 'id1', historyQuery.northSettings, testData.north.manifest.id, null);
   });
 
   it('should test south connection', () => {
+    tester.componentInstance.northManifest = testData.north.manifest;
     tester.componentInstance.southManifest = testData.south.manifest;
     tester.componentInstance.historyQuery = historyQuery;
     const spy = jasmine.createSpy();
@@ -211,6 +219,11 @@ describe('EditHistoryQueryComponent', () => {
         runHistoryQueryTest: spy
       }
     } as Modal<unknown>);
+
+    // Ensure form is initialized before testing
+    if (!tester.componentInstance.form) {
+      tester.componentInstance.buildForm(null, null);
+    }
 
     tester.componentInstance.test('south');
     tester.detectChanges();

@@ -47,6 +47,13 @@ export default class TransformerService {
 
   async create(command: CustomTransformerCommandDTO): Promise<CustomTransformer> {
     await this.validator.validate(transformerSchema, command);
+
+    // Check for unique name (only custom transformers have names)
+    const existingTransformers = this.transformerRepository.list();
+    if (existingTransformers.some(t => t.type === 'custom' && (t as CustomTransformer).name === command.name)) {
+      throw new OIBusValidationError(`Transformer name "${command.name}" already exists`);
+    }
+
     const transformer = { type: 'custom' } as CustomTransformer;
     await copyTransformerCommandToTransformerEntity(transformer, command);
     this.transformerRepository.save(transformer);
@@ -60,6 +67,16 @@ export default class TransformerService {
     if (transformer.type === 'standard') {
       throw new OIBusValidationError(`Cannot edit standard transformer "${transformerId}"`);
     }
+
+    // Check for unique name (excluding current entity, only custom transformers have names)
+    const customTransformer = transformer as CustomTransformer;
+    if (command.name !== customTransformer.name) {
+      const existingTransformers = this.transformerRepository.list();
+      if (existingTransformers.some(t => t.type === 'custom' && t.id !== transformerId && (t as CustomTransformer).name === command.name)) {
+        throw new OIBusValidationError(`Transformer name "${command.name}" already exists`);
+      }
+    }
+
     await copyTransformerCommandToTransformerEntity(transformer as CustomTransformer, command);
     this.transformerRepository.save(transformer);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();

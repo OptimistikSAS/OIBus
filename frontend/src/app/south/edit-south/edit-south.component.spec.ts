@@ -71,6 +71,7 @@ describe('EditSouthComponent', () => {
 
     scanModeService.list.and.returnValue(of([]));
     certificateService.list.and.returnValue(of([]));
+    southConnectorService.list.and.returnValue(of([]));
 
     southConnectorService.getSouthManifest.and.returnValue(of(testData.south.manifest));
   });
@@ -886,6 +887,7 @@ describe('EditSouthComponent', () => {
     };
     beforeEach(() => {
       southConnectorService.getSouthManifest.and.returnValue(of(manifest));
+      southConnectorService.list.and.returnValue(of([]));
 
       TestBed.overrideProvider(ActivatedRoute, {
         useValue: stubRoute({ queryParams: { type: 'MQTT' } })

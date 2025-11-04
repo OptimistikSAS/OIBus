@@ -64,7 +64,7 @@ describe('North Service', () => {
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
     (buildNorth as jest.Mock).mockReturnValue(mockedNorth1);
-    (northConnectorRepository.findAllNorth as jest.Mock).mockReturnValue(testData.north.list);
+    (northConnectorRepository.findAllNorth as jest.Mock).mockReturnValue([]);
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(testData.north.list[0]);
     (scanModeRepository.findAll as jest.Mock).mockReturnValue(testData.scanMode.list);
     (transformerService.findAll as jest.Mock).mockReturnValue(testData.transformers.list);
@@ -163,12 +163,45 @@ describe('North Service', () => {
     );
   });
 
+  it('should not create a north connector with duplicate name', async () => {
+    (northConnectorRepository.findAllNorth as jest.Mock).mockReturnValue([{ id: 'existing-id', name: testData.north.command.name }]);
+
+    await expect(service.create(testData.north.command, null)).rejects.toThrow(
+      new OIBusValidationError(`North connector name "${testData.north.command.name}" already exists`)
+    );
+  });
+
   it('should update a north connector', async () => {
+    (northConnectorRepository.findAllNorth as jest.Mock).mockReturnValue(testData.north.list);
+    (transformerService.findAll as jest.Mock).mockReturnValue(testData.transformers.list);
     await service.update(testData.north.list[0].id, testData.north.command);
 
     expect(northConnectorRepository.saveNorthConnector).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
     expect(engine.reloadNorth).toHaveBeenCalledTimes(1);
+  });
+
+  it('should update a north connector with a new unique name', async () => {
+    const command = JSON.parse(JSON.stringify(testData.north.command));
+    command.name = 'Updated North Name';
+    (northConnectorRepository.findAllNorth as jest.Mock).mockReturnValue(testData.north.list);
+    (transformerService.findAll as jest.Mock).mockReturnValue(testData.transformers.list);
+
+    await service.update(testData.north.list[0].id, command);
+
+    expect(northConnectorRepository.saveNorthConnector).toHaveBeenCalledTimes(1);
+    expect(engine.reloadNorth).toHaveBeenCalledTimes(1);
+  });
+
+  it('should not update a north connector with duplicate name', async () => {
+    const command = JSON.parse(JSON.stringify(testData.north.command));
+    command.name = 'Duplicate Name';
+    (northConnectorRepository.findAllNorth as jest.Mock).mockReturnValue([{ id: 'other-id', name: 'Duplicate Name' }]);
+    (transformerService.findAll as jest.Mock).mockReturnValue(testData.transformers.list);
+
+    await expect(service.update(testData.north.list[0].id, command)).rejects.toThrow(
+      new OIBusValidationError(`North connector name "Duplicate Name" already exists`)
+    );
   });
 
   it('should delete a north connector', async () => {

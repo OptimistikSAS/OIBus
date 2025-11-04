@@ -6,6 +6,7 @@ import NorthServiceMock from '../../tests/__mocks__/service/north-service.mock';
 import { StandardTransformerDTO, TransformerDTOWithOptions } from '../../../shared/model/transformer.model';
 import { CacheMetadata } from '../../../shared/model/engine.model';
 import OibusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
+import { OIBusTestingError } from '../../model/types';
 
 // Mock the services
 jest.mock('../../service/north.service', () => ({
@@ -146,6 +147,19 @@ describe('NorthConnectorController', () => {
     await controller.testNorth(northId, northType, settings, mockRequest as CustomExpressRequest);
 
     expect(mockRequest.services!.northService.testNorth).toHaveBeenCalledWith(northId, northType, settings);
+  });
+
+  it('should throw OIBusTestingError when testing north connection fails', async () => {
+    const northId = testData.north.list[0].id;
+    const northType: OIBusNorthType = testData.north.command.type;
+    const settings = testData.north.command.settings;
+    const error = new Error('north connection failed');
+    (mockRequest.services!.northService.testNorth as jest.Mock).mockRejectedValue(error);
+
+    await controller.testNorth(northId, northType, settings, mockRequest as CustomExpressRequest).catch(caughtError => {
+      expect(caughtError).toBeInstanceOf(OIBusTestingError);
+      expect((caughtError as Error).message).toBe('north connection failed');
+    });
   });
 
   it('should add or edit a transformer', async () => {

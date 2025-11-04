@@ -19,7 +19,7 @@ import IgnoreTransformer from './transformers/ignore-transformer';
 import OIBusSetpointToMQTTTransformer from './transformers/setpoint/oibus-setpoint-to-mqtt-transformer';
 import OIBusSetpointToModbusTransformer from './transformers/setpoint/oibus-setpoint-to-modbus-transformer';
 import OIBusSetpointToOPCUATransformer from './transformers/setpoint/oibus-setpoint-to-opcua-transformer';
-import { NotFoundError } from '../model/types';
+import { NotFoundError, OIBusValidationError } from '../model/types';
 
 jest.mock('papaparse');
 jest.mock('./utils');
@@ -33,6 +33,7 @@ let service: TransformerService;
 describe('Transformer Service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    (transformerRepository.list as jest.Mock).mockReturnValue([]);
 
     service = new TransformerService(validator, transformerRepository, oiAnalyticsMessageService);
   });
@@ -79,14 +80,26 @@ describe('Transformer Service', () => {
   });
 
   it('should create a transformer', async () => {
+    (transformerRepository.list as jest.Mock).mockReturnValueOnce([]);
     const result = await service.create(testData.transformers.command);
 
     expect(validator.validate).toHaveBeenCalledWith(transformerSchema, testData.transformers.command);
     expect(result).toEqual(testData.transformers.command);
   });
 
+  it('should not create a transformer with duplicate name', async () => {
+    (transformerRepository.list as jest.Mock).mockReturnValueOnce([
+      { id: 'existing-id', type: 'custom', name: testData.transformers.command.name }
+    ]);
+
+    await expect(service.create(testData.transformers.command)).rejects.toThrow(
+      new OIBusValidationError(`Transformer name "${testData.transformers.command.name}" already exists`)
+    );
+  });
+
   it('should update a transformer', async () => {
     (transformerRepository.findById as jest.Mock).mockReturnValueOnce(testData.transformers.list[0]);
+    (transformerRepository.list as jest.Mock).mockReturnValueOnce(testData.transformers.list);
 
     await service.update(testData.transformers.list[0].id, testData.transformers.command);
 
@@ -94,6 +107,37 @@ describe('Transformer Service', () => {
     expect(transformerRepository.findById).toHaveBeenCalledWith(testData.transformers.list[0].id);
     expect(transformerRepository.save).toHaveBeenCalledWith({
       ...testData.transformers.command,
+      id: testData.transformers.list[0].id,
+      type: 'custom'
+    });
+  });
+
+  it('should update a transformer without changing the name', async () => {
+    const command = JSON.parse(JSON.stringify(testData.transformers.command));
+    command.name = (testData.transformers.list[0] as CustomTransformer).name;
+    (transformerRepository.findById as jest.Mock).mockReturnValueOnce(testData.transformers.list[0]);
+    (transformerRepository.list as jest.Mock).mockClear();
+
+    await service.update(testData.transformers.list[0].id, command);
+
+    expect(transformerRepository.save).toHaveBeenCalledWith({
+      ...command,
+      id: testData.transformers.list[0].id,
+      type: 'custom'
+    });
+    expect(transformerRepository.list).not.toHaveBeenCalled();
+  });
+
+  it('should update a transformer with a new unique name', async () => {
+    const command = JSON.parse(JSON.stringify(testData.transformers.command));
+    command.name = 'Updated Transformer Name';
+    (transformerRepository.findById as jest.Mock).mockReturnValueOnce(testData.transformers.list[0]);
+    (transformerRepository.list as jest.Mock).mockReturnValueOnce(testData.transformers.list);
+
+    await service.update(testData.transformers.list[0].id, command);
+
+    expect(transformerRepository.save).toHaveBeenCalledWith({
+      ...command,
       id: testData.transformers.list[0].id,
       type: 'custom'
     });
@@ -108,6 +152,18 @@ describe('Transformer Service', () => {
 
     expect(transformerRepository.findById).toHaveBeenCalledWith(testData.transformers.list[0].id);
     expect(transformerRepository.save).not.toHaveBeenCalled();
+  });
+
+  it('should not update a transformer with duplicate name', async () => {
+    const command = JSON.parse(JSON.stringify(testData.transformers.command));
+    command.name = 'Duplicate Name';
+    (transformerRepository.findById as jest.Mock).mockReturnValueOnce(testData.transformers.list[0]);
+    // Mock list to return existing custom transformer with same name but different id
+    (transformerRepository.list as jest.Mock).mockReturnValueOnce([{ id: 'other-id', type: 'custom', name: 'Duplicate Name' }]);
+
+    await expect(service.update(testData.transformers.list[0].id, command)).rejects.toThrow(
+      new OIBusValidationError(`Transformer name "Duplicate Name" already exists`)
+    );
   });
 
   it('should not update if the transformer is a standard one', async () => {

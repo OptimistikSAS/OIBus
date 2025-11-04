@@ -59,7 +59,7 @@ describe('South Service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (buildSouth as jest.Mock).mockReturnValue(mockedSouth1);
-    (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValue(testData.south.list);
+    (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValue([]);
     (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(testData.south.list[0]);
     (southConnectorRepository.findItemById as jest.Mock).mockReturnValue(testData.south.list[0].items[0]);
     (scanModeRepository.findAll as jest.Mock).mockReturnValue(testData.scanMode.list);
@@ -138,12 +138,43 @@ describe('South Service', () => {
     expect(engine.startSouth).not.toHaveBeenCalled();
   });
 
+  it('should not create a south connector with duplicate name', async () => {
+    service.retrieveSecretsFromSouth = jest.fn();
+    (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValue([{ id: 'existing-id', name: testData.south.command.name }]);
+
+    await expect(service.create(testData.south.command, null)).rejects.toThrow(
+      new OIBusValidationError(`South connector name "${testData.south.command.name}" already exists`)
+    );
+  });
+
   it('should update a south connector', async () => {
+    (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValue(testData.south.list);
     await service.update(testData.south.list[0].id, testData.south.command);
 
     expect(southConnectorRepository.saveSouthConnector).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
     expect(engine.reloadSouth).toHaveBeenCalledTimes(1);
+  });
+
+  it('should update a south connector with a new unique name', async () => {
+    const command = JSON.parse(JSON.stringify(testData.south.command));
+    command.name = 'Updated South Name';
+    (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValue(testData.south.list);
+
+    await service.update(testData.south.list[0].id, command);
+
+    expect(southConnectorRepository.saveSouthConnector).toHaveBeenCalledTimes(1);
+    expect(engine.reloadSouth).toHaveBeenCalledTimes(1);
+  });
+
+  it('should not update a south connector with duplicate name', async () => {
+    const command = JSON.parse(JSON.stringify(testData.south.command));
+    command.name = 'Duplicate Name';
+    (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValue([{ id: 'other-id', name: 'Duplicate Name' }]);
+
+    await expect(service.update(testData.south.list[0].id, command)).rejects.toThrow(
+      new OIBusValidationError(`South connector name "Duplicate Name" already exists`)
+    );
   });
 
   it('should delete a south connector', async () => {

@@ -75,6 +75,7 @@ describe('EditNorthComponent', () => {
     scanModeService.list.and.returnValue(of([]));
     certificateService.list.and.returnValue(of([]));
     transformerService.list.and.returnValue(of([]));
+    northConnectorService.list.and.returnValue(of([]));
 
     northConnectorService.getNorthManifest.and.returnValue(of(testData.north.manifest));
   });

@@ -47,6 +47,8 @@ describe('EditScanModeModalComponent', () => {
     fakeActiveModal = createMock(NgbActiveModal);
     scanModeService = createMock(ScanModeService);
 
+    scanModeService.list.and.returnValue(of([]));
+
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),

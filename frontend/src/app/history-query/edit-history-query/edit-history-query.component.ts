@@ -1,7 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { TranslateDirective } from '@ngx-translate/core';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
-import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
 import { NotificationService } from '../../shared/notification.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest, Observable, of, switchMap, tap } from 'rxjs';
@@ -17,7 +17,8 @@ import { NorthConnectorService } from '../../services/north-connector.service';
 import {
   HistoryQueryCommandDTO,
   HistoryQueryDTO,
-  HistoryQueryItemCommandDTO
+  HistoryQueryItemCommandDTO,
+  HistoryQueryLightDTO
 } from '../../../../../backend/shared/model/history-query.model';
 import {
   OIBusSouthType,
@@ -50,6 +51,7 @@ import { CanComponentDeactivate } from '../../shared/unsaved-changes.guard';
 import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
 import { DateRange, DateRangeSelectorComponent } from '../../shared/date-range-selector/date-range-selector.component';
 import { HistoryQueryTransformersComponent } from '../history-query-transformers/history-query-transformers.component';
+import { AbstractControl, ValidationErrors } from '@angular/forms';
 
 @Component({
   selector: 'oib-edit-history-query',
@@ -102,6 +104,7 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
   fromNorthId = '';
   duplicateId = '';
   saveItemChangesDirectly!: boolean;
+  existingHistoryQueries: Array<HistoryQueryLightDTO> = [];
 
   form: FormGroup<{
     name: FormControl<string>;
@@ -152,14 +155,16 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
       this.scanModeService.list(),
       this.certificateService.list(),
       this.transformerService.list(),
+      this.historyQueryService.list(),
       this.route.paramMap,
       this.route.queryParamMap
     ])
       .pipe(
-        switchMap(([scanModes, certificates, transformers, params, queryParams]) => {
+        switchMap(([scanModes, certificates, transformers, historyQueries, params, queryParams]) => {
           this.scanModes = scanModes.filter(scanMode => scanMode.id !== 'subscription');
           this.certificates = certificates;
           this.transformers = transformers;
+          this.existingHistoryQueries = historyQueries;
 
           const paramHistoryQueryId = params.get('historyQueryId');
           const paramDuplicateHistoryQueryId = queryParams.get('duplicate');
@@ -242,9 +247,29 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
       });
   }
 
+  private checkUniqueness(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const value = (control.value ?? '').toString().trim().toLowerCase();
+      if (!value) {
+        return null;
+      }
+
+      const isDuplicate = this.existingHistoryQueries.some(historyQuery => {
+        if (this.historyQuery && historyQuery.id === this.historyQuery.id) {
+          return false;
+        }
+        return historyQuery.name.trim().toLowerCase() === value;
+      });
+
+      return isDuplicate ? { mustBeUnique: true } : null;
+    };
+  }
+
   buildForm(northConnector: NorthConnectorDTO | null, southConnector: SouthConnectorDTO | null) {
     this.form = this.fb.group({
-      name: ['', Validators.required],
+      name: this.fb.control('', {
+        validators: [Validators.required, this.checkUniqueness()]
+      }),
       description: '',
       dateRange: [
         {
@@ -322,6 +347,8 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
       // we should provoke all value changes to make sure fields are properly hidden and disabled
       this.form.setValue(this.form.getRawValue());
     }
+
+    this.form.controls.name.updateValueAndValidity({ onlySelf: true, emitEvent: false });
   }
 
   canDeactivate(): Observable<boolean> | boolean {
@@ -332,7 +359,7 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
   }
 
   save() {
-    if (!this.form!.valid) {
+    if (!this.form?.valid) {
       return;
     }
 
