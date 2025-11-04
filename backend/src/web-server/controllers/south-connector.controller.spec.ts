@@ -162,17 +162,20 @@ describe('SouthConnectorController', () => {
     expect(mockRequest.services!.southService.testSouth).toHaveBeenCalledWith(southId, southType, settings);
   });
 
-  it('should throw OIBusTestingError when testing south connection fails', async () => {
+  it('should wrap errors when testing south connection', async () => {
     const southId = testData.south.list[0].id;
     const southType = testData.south.command.type;
     const settings = testData.south.command.settings;
-    const error = new Error('south connection failed');
-    (mockRequest.services!.southService.testSouth as jest.Mock).mockRejectedValue(error);
 
-    await controller.testConnection(southId, southType, settings, mockRequest as CustomExpressRequest).catch(caughtError => {
-      expect(caughtError).toBeInstanceOf(OIBusTestingError);
-      expect((caughtError as Error).message).toBe('south connection failed');
+    (mockRequest.services!.southService.testSouth as jest.Mock).mockRejectedValue(new Error('South connection failure'));
+
+    const promise = controller.testConnection(southId, southType, settings, mockRequest as CustomExpressRequest);
+
+    await expect(promise).rejects.toThrow('South connection failure');
+    await promise.catch(error => {
+      expect(error).toBeInstanceOf(OIBusTestingError);
     });
+    expect(mockRequest.services!.southService.testSouth).toHaveBeenCalledWith(southId, southType, settings);
   });
 
   it('should test a south connector item', async () => {
@@ -205,7 +208,7 @@ describe('SouthConnectorController', () => {
     expect(result).toEqual(mockContent);
   });
 
-  it('should throw OIBusTestingError when testing a south connector item fails', async () => {
+  it('should wrap errors when testing a south connector item', async () => {
     const southId = testData.south.list[0].id;
     const southType = testData.south.command.type;
     const itemName = testData.south.itemCommand.name;
@@ -214,13 +217,23 @@ describe('SouthConnectorController', () => {
       itemSettings: testData.south.itemCommand.settings,
       testingSettings: testData.south.itemTestingSettings
     };
-    const error = new Error('south item test failed');
-    (mockRequest.services!.southService.testItem as jest.Mock).mockRejectedValue(error);
 
-    await controller.testItem(southId, southType, itemName, requestBody, mockRequest as CustomExpressRequest).catch(caughtError => {
-      expect(caughtError).toBeInstanceOf(OIBusTestingError);
-      expect((caughtError as Error).message).toBe('south item test failed');
+    (mockRequest.services!.southService.testItem as jest.Mock).mockRejectedValue(new Error('South item failure'));
+
+    const promise = controller.testItem(southId, southType, itemName, requestBody, mockRequest as CustomExpressRequest);
+
+    await expect(promise).rejects.toThrow('South item failure');
+    await promise.catch(error => {
+      expect(error).toBeInstanceOf(OIBusTestingError);
     });
+    expect(mockRequest.services!.southService.testItem).toHaveBeenCalledWith(
+      southId,
+      southType,
+      itemName,
+      requestBody.southSettings,
+      requestBody.itemSettings,
+      requestBody.testingSettings
+    );
   });
 
   it('should return a list of south connector items', async () => {

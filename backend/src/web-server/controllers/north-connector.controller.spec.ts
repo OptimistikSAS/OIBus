@@ -149,17 +149,20 @@ describe('NorthConnectorController', () => {
     expect(mockRequest.services!.northService.testNorth).toHaveBeenCalledWith(northId, northType, settings);
   });
 
-  it('should throw OIBusTestingError when testing north connection fails', async () => {
+  it('should wrap errors when testing north connection', async () => {
     const northId = testData.north.list[0].id;
     const northType: OIBusNorthType = testData.north.command.type;
     const settings = testData.north.command.settings;
-    const error = new Error('north connection failed');
-    (mockRequest.services!.northService.testNorth as jest.Mock).mockRejectedValue(error);
 
-    await controller.testNorth(northId, northType, settings, mockRequest as CustomExpressRequest).catch(caughtError => {
-      expect(caughtError).toBeInstanceOf(OIBusTestingError);
-      expect((caughtError as Error).message).toBe('north connection failed');
+    (mockRequest.services!.northService.testNorth as jest.Mock).mockRejectedValue(new Error('North connection failure'));
+
+    const promise = controller.testNorth(northId, northType, settings, mockRequest as CustomExpressRequest);
+
+    await expect(promise).rejects.toThrow('North connection failure');
+    await promise.catch(error => {
+      expect(error).toBeInstanceOf(OIBusTestingError);
     });
+    expect(mockRequest.services!.northService.testNorth).toHaveBeenCalledWith(northId, northType, settings);
   });
 
   it('should add or edit a transformer', async () => {
