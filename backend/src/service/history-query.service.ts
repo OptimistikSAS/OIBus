@@ -74,6 +74,12 @@ export default class HistoryQueryService {
     const southManifest = this.southService.getManifest(command.southType);
     await this.validator.validateSettings(northManifest.settings, command.northSettings);
     await this.validator.validateSettings(southManifest.settings, command.southSettings);
+
+    // Check for unique name
+    const existingHistoryQueries = this.historyQueryRepository.findAllHistoryQueriesLight();
+    if (existingHistoryQueries.some(hq => hq.name === command.name)) {
+      throw new OIBusValidationError(`History query name "${command.name}" already exists`);
+    }
     // Check if item settings match the item schema, throw an error otherwise
     const itemSettingsManifest = southManifest.items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'
@@ -111,6 +117,14 @@ export default class HistoryQueryService {
     const southManifest = this.southService.getManifest(command.southType);
     await this.validator.validateSettings(northManifest.settings, previousSettings.northSettings);
     await this.validator.validateSettings(southManifest.settings, previousSettings.southSettings);
+
+    // Check for unique name (excluding current entity)
+    if (command.name !== previousSettings.name) {
+      const existingHistoryQueries = this.historyQueryRepository.findAllHistoryQueriesLight();
+      if (existingHistoryQueries.some(hq => hq.id !== historyId && hq.name === command.name)) {
+        throw new OIBusValidationError(`History query name "${command.name}" already exists`);
+      }
+    }
     // Check if item settings match the item schema, throw an error otherwise
     const itemSettingsManifest = southManifest.items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'

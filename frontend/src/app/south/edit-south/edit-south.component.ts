@@ -6,11 +6,12 @@ import {
   SouthConnectorCommandDTO,
   SouthConnectorDTO,
   SouthConnectorItemDTO,
+  SouthConnectorLightDTO,
   SouthConnectorManifest
 } from '../../../../../backend/shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
-import { FormControl, FormGroup, NonNullableFormBuilder, Validators } from '@angular/forms';
+import { FormControl, FormGroup, NonNullableFormBuilder, ValidatorFn, Validators } from '@angular/forms';
 import { NotificationService } from '../../shared/notification.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest, Observable, of, switchMap, tap } from 'rxjs';
@@ -30,6 +31,7 @@ import { addAttributeToForm, addEnablingConditions, asFormGroup } from '../../sh
 import { OIBusObjectFormControlComponent } from '../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
 import { CanComponentDeactivate } from '../../shared/unsaved-changes.guard';
 import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
+import { AbstractControl, ValidationErrors } from '@angular/forms';
 
 @Component({
   selector: 'oib-edit-south',
@@ -68,6 +70,7 @@ export class EditSouthComponent implements OnInit, CanComponentDeactivate {
   scanModes: Array<ScanModeDTO> = [];
   certificates: Array<CertificateDTO> = [];
   manifest: SouthConnectorManifest | null = null;
+  existingSouthConnectors: Array<SouthConnectorLightDTO> = [];
   form: FormGroup<{
     name: FormControl<string>;
     description: FormControl<string>;
@@ -78,11 +81,18 @@ export class EditSouthComponent implements OnInit, CanComponentDeactivate {
   inMemoryItems: Array<SouthConnectorItemDTO> = [];
 
   ngOnInit() {
-    combineLatest([this.scanModeService.list(), this.certificateService.list(), this.route.paramMap, this.route.queryParamMap])
+    combineLatest([
+      this.scanModeService.list(),
+      this.certificateService.list(),
+      this.southConnectorService.list(),
+      this.route.paramMap,
+      this.route.queryParamMap
+    ])
       .pipe(
-        switchMap(([scanModes, certificates, params, queryParams]) => {
+        switchMap(([scanModes, certificates, southConnectors, params, queryParams]) => {
           this.scanModes = scanModes;
           this.certificates = certificates;
+          this.existingSouthConnectors = southConnectors;
           const paramSouthId = params.get('southId');
           const duplicateSouthId = queryParams.get('duplicate');
           this.southType = queryParams.get('type') || '';
@@ -184,9 +194,29 @@ export class EditSouthComponent implements OnInit, CanComponentDeactivate {
     }
   }
 
+  private checkUniqueness(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const value = (control.value ?? '').toString().trim().toLowerCase();
+      if (!value) {
+        return null;
+      }
+
+      const isDuplicate = this.existingSouthConnectors.some(south => {
+        if (this.southConnector && south.id === this.southConnector.id) {
+          return false;
+        }
+        return south.name.trim().toLowerCase() === value;
+      });
+
+      return isDuplicate ? { mustBeUnique: true } : null;
+    };
+  }
+
   buildForm() {
     this.form = this.fb.group({
-      name: ['', Validators.required],
+      name: this.fb.control('', {
+        validators: [Validators.required, this.checkUniqueness()]
+      }),
       description: '',
       enabled: true as boolean,
       settings: this.fb.group({})
@@ -202,6 +232,8 @@ export class EditSouthComponent implements OnInit, CanComponentDeactivate {
       // we should provoke all value changes to make sure fields are properly hidden and disabled
       this.form.setValue(this.form.getRawValue());
     }
+
+    this.form.controls.name.updateValueAndValidity({ onlySelf: true, emitEvent: false });
   }
 
   get formSouthConnectorCommand(): SouthConnectorCommandDTO {

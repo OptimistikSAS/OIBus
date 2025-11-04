@@ -5,6 +5,19 @@ import testData from '../../tests/utils/test-data';
 import HistoryQueryServiceMock from '../../tests/__mocks__/service/history-query-service.mock';
 import { CacheMetadata, OIBusContent } from '../../../shared/model/engine.model';
 import { TransformerDTO, TransformerDTOWithOptions } from '../../../shared/model/transformer.model';
+import { OIBusTestingError } from '../../model/types';
+import { SouthSettings, SouthItemSettings } from '../../../shared/model/south-settings.model';
+
+interface HistorySouthItemTestRequest {
+  southSettings: SouthSettings;
+  itemSettings: SouthItemSettings;
+  testingSettings: {
+    history: {
+      startTime: string;
+      endTime: string;
+    };
+  };
+}
 
 // Mock the services
 jest.mock('../../service/history-query.service', () => ({
@@ -125,6 +138,20 @@ describe('HistoryQueryController', () => {
     expect(mockRequest.services!.historyQueryService.testNorth).toHaveBeenCalledWith(historyId, northType, fromNorth, settings);
   });
 
+  it('should throw OIBusTestingError when testing north connection fails', async () => {
+    const historyId = testData.historyQueries.list[0].id;
+    const northType = testData.north.command.type;
+    const fromNorth = testData.north.list[0].id;
+    const settings = testData.north.command.settings;
+    const error = new Error('north test failed');
+    (mockRequest.services!.historyQueryService.testNorth as jest.Mock).mockRejectedValue(error);
+
+    await controller.testNorth(historyId, northType, fromNorth, settings, mockRequest as CustomExpressRequest).catch(caughtError => {
+      expect(caughtError).toBeInstanceOf(OIBusTestingError);
+      expect((caughtError as Error).message).toBe('north test failed');
+    });
+  });
+
   it('should test south connection', async () => {
     const historyId = testData.historyQueries.list[0].id;
     const southType = testData.south.command.type;
@@ -136,6 +163,20 @@ describe('HistoryQueryController', () => {
     await controller.testSouth(historyId, southType, fromSouth, settings, mockRequest as CustomExpressRequest);
 
     expect(mockRequest.services!.historyQueryService.testSouth).toHaveBeenCalledWith(historyId, southType, fromSouth, settings);
+  });
+
+  it('should throw OIBusTestingError when testing south connection fails', async () => {
+    const historyId = testData.historyQueries.list[0].id;
+    const southType = testData.south.command.type;
+    const fromSouth = testData.south.list[0].id;
+    const settings = testData.south.command.settings;
+    const error = new Error('south test failed');
+    (mockRequest.services!.historyQueryService.testSouth as jest.Mock).mockRejectedValue(error);
+
+    await controller.testSouth(historyId, southType, fromSouth, settings, mockRequest as CustomExpressRequest).catch(caughtError => {
+      expect(caughtError).toBeInstanceOf(OIBusTestingError);
+      expect((caughtError as Error).message).toBe('south test failed');
+    });
   });
 
   it('should test a history query item', async () => {
@@ -161,18 +202,54 @@ describe('HistoryQueryController', () => {
     };
     (mockRequest.services!.historyQueryService.testItem as jest.Mock).mockReturnValueOnce(mockContent);
 
-    const result = await controller.testItem(historyId, southType, itemName, fromSouth, requestBody, mockRequest as CustomExpressRequest);
-
+    const result = await controller.testItem(
+      historyId,
+      southType,
+      itemName,
+      fromSouth,
+      {
+        southSettings: requestBody.southSettings,
+        itemSettings: requestBody.itemSettings,
+        testingSettings: requestBody.testingSettings
+      } as HistorySouthItemTestRequest,
+      mockRequest as CustomExpressRequest
+    );
     expect(mockRequest.services!.historyQueryService.testItem).toHaveBeenCalledWith(
       historyId,
       southType,
-      itemName || '',
+      itemName,
       fromSouth,
       requestBody.southSettings,
       requestBody.itemSettings,
       requestBody.testingSettings
     );
     expect(result).toEqual(mockContent);
+  });
+
+  it('should throw OIBusTestingError when testing a history query item fails', async () => {
+    const historyId = testData.historyQueries.list[0].id;
+    const southType = testData.south.command.type;
+    const itemName = testData.south.itemCommand.name;
+    const fromSouth = testData.south.list[0].id;
+    const requestBody = {
+      southSettings: testData.south.command.settings,
+      itemSettings: testData.south.itemCommand.settings,
+      testingSettings: {
+        history: {
+          startTime: testData.constants.dates.DATE_1,
+          endTime: testData.constants.dates.DATE_2
+        }
+      }
+    };
+    const error = new Error('item test failed');
+    (mockRequest.services!.historyQueryService.testItem as jest.Mock).mockRejectedValue(error);
+
+    await controller
+      .testItem(historyId, southType, itemName, fromSouth, requestBody as HistorySouthItemTestRequest, mockRequest as CustomExpressRequest)
+      .catch(caughtError => {
+        expect(caughtError).toBeInstanceOf(OIBusTestingError);
+        expect((caughtError as Error).message).toBe('item test failed');
+      });
   });
 
   it('should return a list of history query items', async () => {

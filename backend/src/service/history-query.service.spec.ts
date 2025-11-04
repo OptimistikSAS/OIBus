@@ -69,6 +69,7 @@ describe('History Query service', () => {
     (southService.findById as jest.Mock).mockReturnValue(testData.south.list[0]);
     (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValue(testData.historyQueries.list[0]);
     (historyQueryRepository.findHistoryQueryItemById as jest.Mock).mockReturnValue(testData.historyQueries.list[0].items[0]);
+    (historyQueryRepository.findAllHistoryQueriesLight as jest.Mock).mockReturnValue([]);
     (transformerService.findAll as jest.Mock).mockReturnValue(testData.transformers.list);
     (scanModeRepository.findAll as jest.Mock).mockReturnValue(testData.scanMode.list);
     (stringToBoolean as jest.Mock).mockReturnValue(true);
@@ -131,12 +132,57 @@ describe('History Query service', () => {
     );
   });
 
+  it('should not create a history query with duplicate name', async () => {
+    service.retrieveSecrets = jest.fn();
+    (historyQueryRepository.findAllHistoryQueriesLight as jest.Mock).mockReturnValue([
+      { id: 'existing-id', name: testData.historyQueries.command.name }
+    ]);
+
+    await expect(service.create(testData.historyQueries.command, undefined, undefined, undefined)).rejects.toThrow(
+      new OIBusValidationError(`History query name "${testData.historyQueries.command.name}" already exists`)
+    );
+  });
+
   it('should update a history query', async () => {
+    (historyQueryRepository.findAllHistoryQueriesLight as jest.Mock).mockReturnValue(testData.historyQueries.list);
     await service.update(testData.historyQueries.list[0].id, testData.historyQueries.command, false);
 
     expect(historyQueryRepository.saveHistoryQuery).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).toHaveBeenCalledTimes(1);
     expect(engine.reloadHistoryQuery).toHaveBeenCalledTimes(1);
+  });
+
+  it('should update a history query without changing the name', async () => {
+    const command = JSON.parse(JSON.stringify(testData.historyQueries.command));
+    command.name = testData.historyQueries.list[0].name;
+    (historyQueryRepository.findAllHistoryQueriesLight as jest.Mock).mockClear();
+
+    await service.update(testData.historyQueries.list[0].id, command, false);
+
+    expect(historyQueryRepository.saveHistoryQuery).toHaveBeenCalledTimes(1);
+    expect(engine.reloadHistoryQuery).toHaveBeenCalledTimes(1);
+    expect(historyQueryRepository.findAllHistoryQueriesLight).not.toHaveBeenCalled();
+  });
+
+  it('should update a history query with a new unique name', async () => {
+    const command = JSON.parse(JSON.stringify(testData.historyQueries.command));
+    command.name = 'Updated History Query Name';
+    (historyQueryRepository.findAllHistoryQueriesLight as jest.Mock).mockReturnValue(testData.historyQueries.list);
+
+    await service.update(testData.historyQueries.list[0].id, command, false);
+
+    expect(historyQueryRepository.saveHistoryQuery).toHaveBeenCalledTimes(1);
+    expect(engine.reloadHistoryQuery).toHaveBeenCalledTimes(1);
+  });
+
+  it('should not update a history query with duplicate name', async () => {
+    const command = JSON.parse(JSON.stringify(testData.historyQueries.command));
+    command.name = 'Duplicate Name';
+    (historyQueryRepository.findAllHistoryQueriesLight as jest.Mock).mockReturnValue([{ id: 'other-id', name: 'Duplicate Name' }]);
+
+    await expect(service.update(testData.historyQueries.list[0].id, command, false)).rejects.toThrow(
+      new OIBusValidationError(`History query name "Duplicate Name" already exists`)
+    );
   });
 
   it('should delete history query', async () => {

@@ -97,6 +97,12 @@ export default class NorthService {
     const manifest = this.getManifest(command.type);
     await this.validator.validateSettings(manifest.settings, command.settings);
 
+    // Check for unique name
+    const existingNorths = this.northConnectorRepository.findAllNorth();
+    if (existingNorths.some(north => north.name === command.name)) {
+      throw new OIBusValidationError(`North connector name "${command.name}" already exists`);
+    }
+
     const northEntity = {} as NorthConnectorEntity<NorthSettings>;
     await copyNorthConnectorCommandToNorthEntity(
       northEntity,
@@ -120,6 +126,14 @@ export default class NorthService {
     const previousSettings = this.findById(northId);
     const manifest = this.getManifest(command.type);
     await this.validator.validateSettings(manifest.settings, command.settings);
+
+    // Check for unique name (excluding current entity)
+    if (command.name !== previousSettings.name) {
+      const existingNorths = this.northConnectorRepository.findAllNorth();
+      if (existingNorths.some(north => north.id !== northId && north.name === command.name)) {
+        throw new OIBusValidationError(`North connector name "${command.name}" already exists`);
+      }
+    }
 
     const northEntity = { id: previousSettings.id } as NorthConnectorEntity<NorthSettings>;
     await copyNorthConnectorCommandToNorthEntity(

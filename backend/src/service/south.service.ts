@@ -118,6 +118,13 @@ export default class SouthService {
   ): Promise<SouthConnectorEntity<SouthSettings, SouthItemSettings>> {
     const manifest = this.getManifest(command.type);
     await this.validator.validateSettings(manifest.settings, command.settings);
+
+    // Check for unique name
+    const existingSouths = this.southConnectorRepository.findAllSouth();
+    if (existingSouths.some(south => south.name === command.name)) {
+      throw new OIBusValidationError(`South connector name "${command.name}" already exists`);
+    }
+
     // Check if item settings match the item schema, throw an error otherwise
     const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'
@@ -148,6 +155,15 @@ export default class SouthService {
     const previousSettings = this.findById(southId);
     const manifest = this.getManifest(command.type);
     await this.validator.validateSettings(manifest.settings, command.settings);
+
+    // Check for unique name (excluding current entity)
+    if (command.name !== previousSettings.name) {
+      const existingSouths = this.southConnectorRepository.findAllSouth();
+      if (existingSouths.some(south => south.id !== southId && south.name === command.name)) {
+        throw new OIBusValidationError(`South connector name "${command.name}" already exists`);
+      }
+    }
+
     // Check if item settings match the item schema, throw an error otherwise
     const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'

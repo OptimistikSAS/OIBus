@@ -1,7 +1,15 @@
 import { Component, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { AsyncValidatorFn, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { map, Observable, of, switchMap } from 'rxjs';
+import {
+  AbstractControl,
+  AsyncValidatorFn,
+  NonNullableFormBuilder,
+  ReactiveFormsModule,
+  ValidationErrors,
+  ValidatorFn,
+  Validators
+} from '@angular/forms';
+import { map, Observable, of, switchMap, take } from 'rxjs';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { TranslateDirective } from '@ngx-translate/core';
 import { ScanModeService } from '../../../services/scan-mode.service';
@@ -25,6 +33,29 @@ export class EditScanModeModalComponent {
   mode: 'create' | 'edit' = 'create';
   state = new ObservableState();
   scanMode: ScanModeDTO | null = null;
+  private existingScanModes: Array<ScanModeDTO> = [];
+  private scanModesLoaded = false;
+
+  constructor() {
+    // Load scan modes list for uniqueness validation asynchronously
+    // Note: form is initialized as a class field, so it's available here
+    this.scanModeService
+      .list()
+      .pipe(take(1))
+      .subscribe({
+        next: scanModes => {
+          this.existingScanModes = scanModes;
+          this.scanModesLoaded = true;
+          // Update validation once loaded - form should be available by now
+          this.form?.controls.name.updateValueAndValidity({ onlySelf: true, emitEvent: false });
+        },
+        error: () => {
+          // If list fails, just mark as loaded with empty array to avoid blocking validation
+          this.existingScanModes = [];
+          this.scanModesLoaded = true;
+        }
+      });
+  }
 
   /**
    * Custom validator for the cron field.
@@ -48,8 +79,28 @@ export class EditScanModeModalComponent {
     }
   };
 
+  private checkUniqueness(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const value = (control.value ?? '').toString().trim().toLowerCase();
+      if (!value || !this.scanModesLoaded) {
+        return null;
+      }
+
+      const isDuplicate = this.existingScanModes.some(scanMode => {
+        if (this.scanMode && scanMode.id === this.scanMode.id) {
+          return false;
+        }
+        return scanMode.name.trim().toLowerCase() === value;
+      });
+
+      return isDuplicate ? { mustBeUnique: true } : null;
+    };
+  }
+
   form = inject(NonNullableFormBuilder).group({
-    name: ['', Validators.required],
+    name: this.fb.control('', {
+      validators: [Validators.required, this.checkUniqueness()]
+    }),
     description: '',
     cron: this.fb.control('', {
       validators: Validators.required,
@@ -64,6 +115,10 @@ export class EditScanModeModalComponent {
    */
   prepareForCreation() {
     this.mode = 'create';
+    this.scanMode = null;
+    this.form.reset({ name: '', description: '', cron: '' });
+    this.cronValidationResponse = null;
+    this.form.controls.name.updateValueAndValidity({ onlySelf: true, emitEvent: false });
   }
 
   /**
@@ -78,6 +133,8 @@ export class EditScanModeModalComponent {
       description: scanMode.description,
       cron: scanMode.cron
     });
+    this.cronValidationResponse = null;
+    this.form.controls.name.updateValueAndValidity({ onlySelf: true, emitEvent: false });
   }
 
   canDismiss(): Observable<boolean> | boolean {

@@ -32,6 +32,13 @@ export default class ScanModeService {
 
   async create(command: ScanModeCommandDTO): Promise<ScanMode> {
     await this.validator.validate(scanModeSchema, command);
+
+    // Check for unique name
+    const existingScanModes = this.scanModeRepository.findAll();
+    if (existingScanModes.some(sm => sm.name === command.name)) {
+      throw new OIBusValidationError(`Scan mode name "${command.name}" already exists`);
+    }
+
     const scanMode = this.scanModeRepository.create(command);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     return scanMode;
@@ -40,6 +47,15 @@ export default class ScanModeService {
   async update(scanModeId: string, command: ScanModeCommandDTO): Promise<void> {
     await this.validator.validate(scanModeSchema, command);
     const oldScanMode = this.findById(scanModeId);
+
+    // Check for unique name (excluding current entity)
+    if (command.name !== oldScanMode.name) {
+      const existingScanModes = this.scanModeRepository.findAll();
+      if (existingScanModes.some(sm => sm.id !== scanModeId && sm.name === command.name)) {
+        throw new OIBusValidationError(`Scan mode name "${command.name}" already exists`);
+      }
+    }
+
     this.scanModeRepository.update(oldScanMode.id, command);
     const newScanMode = this.findById(scanModeId);
     if (oldScanMode.cron !== newScanMode.cron) {

@@ -2,15 +2,16 @@ import { Component, inject, OnInit } from '@angular/core';
 
 import { TranslateDirective } from '@ngx-translate/core';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
-import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
 import { NotificationService } from '../../shared/notification.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { combineLatest, Observable, of, switchMap, tap } from 'rxjs';
+import { combineLatest, of, switchMap, tap, Observable } from 'rxjs';
 import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
 import {
   NorthConnectorCommandDTO,
   NorthConnectorDTO,
+  NorthConnectorLightDTO,
   NorthConnectorManifest,
   OIBusNorthType
 } from '../../../../../backend/shared/model/north-connector.model';
@@ -35,6 +36,7 @@ import { OIBusScanModeFormControlComponent } from '../../shared/form/oibus-scan-
 import { NorthSubscriptionsComponent } from '../north-subscriptions/north-subscriptions.component';
 import { CanComponentDeactivate } from '../../shared/unsaved-changes.guard';
 import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
+import { AbstractControl, ValidationErrors } from '@angular/forms';
 
 @Component({
   selector: 'oib-edit-north',
@@ -79,6 +81,7 @@ export class EditNorthComponent implements OnInit, CanComponentDeactivate {
   transformers: Array<TransformerDTO> = [];
   certificates: Array<CertificateDTO> = [];
   manifest: NorthConnectorManifest | null = null;
+  existingNorthConnectors: Array<NorthConnectorLightDTO> = [];
 
   form: FormGroup<{
     name: FormControl<string>;
@@ -128,14 +131,16 @@ export class EditNorthComponent implements OnInit, CanComponentDeactivate {
       this.scanModeService.list(),
       this.certificateService.list(),
       this.transformerService.list(),
+      this.northConnectorService.list(),
       this.route.paramMap,
       this.route.queryParamMap
     ])
       .pipe(
-        switchMap(([scanModes, certificates, transformers, params, queryParams]) => {
+        switchMap(([scanModes, certificates, transformers, northConnectors, params, queryParams]) => {
           this.scanModes = scanModes.filter(scanMode => scanMode.id !== 'subscription');
           this.certificates = certificates;
           this.transformers = transformers;
+          this.existingNorthConnectors = northConnectors;
           const paramNorthId = params.get('northId');
           const duplicateNorthId = queryParams.get('duplicate');
           this.northType = queryParams.get('type') || '';
@@ -179,9 +184,29 @@ export class EditNorthComponent implements OnInit, CanComponentDeactivate {
       });
   }
 
+  private checkUniqueness(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const value = (control.value ?? '').toString().trim().toLowerCase();
+      if (!value) {
+        return null;
+      }
+
+      const isDuplicate = this.existingNorthConnectors.some(north => {
+        if (this.northConnector && north.id === this.northConnector.id) {
+          return false;
+        }
+        return north.name.trim().toLowerCase() === value;
+      });
+
+      return isDuplicate ? { mustBeUnique: true } : null;
+    };
+  }
+
   buildForm() {
     this.form = this.fb.group({
-      name: ['', Validators.required],
+      name: this.fb.control('', {
+        validators: [Validators.required, this.checkUniqueness()]
+      }),
       description: '',
       enabled: true as boolean,
       settings: this.fb.group({}),
@@ -225,6 +250,8 @@ export class EditNorthComponent implements OnInit, CanComponentDeactivate {
       // we should provoke all value changes to make sure fields are properly hidden and disabled
       this.form.setValue(this.form.getRawValue());
     }
+
+    this.form.controls.name.updateValueAndValidity({ onlySelf: true, emitEvent: false });
   }
 
   canDeactivate(): Observable<boolean> | boolean {
