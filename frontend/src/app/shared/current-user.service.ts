@@ -1,9 +1,10 @@
 import { Injectable, inject } from '@angular/core';
 import { catchError, Observable, of, shareReplay, switchMap } from 'rxjs';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { Timezone } from '../../../../backend/shared/model/types';
 import { UserDTO } from '../../../../backend/shared/model/user.model';
 import { WindowService } from './window.service';
+import { ignoreErrorIfStatusIs } from './error-interceptor.service';
 
 interface Token {
   access_token: string;
@@ -63,7 +64,8 @@ export class CurrentUserService {
   loginWithPassword(login: string, password: string): Observable<UserDTO | null> {
     const test = window.btoa(`${login}:${password}`);
     const headers = { authorization: `Basic ${test}` };
-    return this.http.post<Token>('/api/users/authentication', null, { headers }).pipe(
+    const context = ignoreErrorIfStatusIs(HttpStatusCode.Forbidden, HttpStatusCode.Unauthorized);
+    return this.http.post<Token>('/api/users/authentication', null, { headers, context }).pipe(
       switchMap(token => {
         this.windowService.setStorageItem('oibus-token', token.access_token);
         this.currentUser$ = this.retrieveConnection();

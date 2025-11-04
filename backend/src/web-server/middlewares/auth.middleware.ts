@@ -11,14 +11,18 @@ interface AuthConfig {
 }
 
 // Helper function for authentication errors
-const createAuthError = (res: Response, message = 'Unauthorized', status = 401) => {
-  const realm = 'Secure Area';
-  res.set(
-    'WWW-Authenticate',
-    `Basic realm="${realm
-      .replace(/\\/g, '\\\\') // escape \
-      .replace(/"/g, '\\"')}"` // escape "
-  );
+const createAuthError = (res: Response, message = 'Unauthorized', status = 401, challenge = true) => {
+  if (challenge) {
+    const realm = 'Secure Area';
+    res.set(
+      'WWW-Authenticate',
+      `Basic realm="${realm
+        .replace(/\\/g, '\\\\') // escape \
+        .replace(/"/g, '\\"')}"` // escape "
+    );
+  } else {
+    res.removeHeader('WWW-Authenticate');
+  }
   return res.status(status).json({
     error: message,
     status: status
@@ -27,23 +31,26 @@ const createAuthError = (res: Response, message = 'Unauthorized', status = 401) 
 
 const createAuthMiddleware = (config: AuthConfig) => {
   return async (req: Request, res: Response, next: NextFunction) => {
+    const shouldChallenge = req.path !== '/api/users/authentication';
+    const unauthorizedStatus = shouldChallenge ? 401 : 403;
+    const unauthorizedMessage = shouldChallenge ? 'Unauthorized' : 'Invalid credentials';
     try {
       let headerUser: BasicAuthResult | undefined;
       // Basic Auth
       if (req.headers?.authorization?.startsWith('Basic')) {
         const basicUser = basicAuth(req);
         if (!basicUser || !basicUser.name || !basicUser.pass) {
-          return createAuthError(res);
+          return createAuthError(res, unauthorizedMessage, unauthorizedStatus, shouldChallenge);
         }
 
         const hashedPassword = config.userService.getHashedPasswordByLogin(basicUser.name);
         if (!hashedPassword) {
-          return createAuthError(res);
+          return createAuthError(res, unauthorizedMessage, unauthorizedStatus, shouldChallenge);
         }
 
         const passwordVerified = await argon2.verify(hashedPassword, basicUser.pass);
         if (!passwordVerified) {
-          return createAuthError(res);
+          return createAuthError(res, unauthorizedMessage, unauthorizedStatus, shouldChallenge);
         }
 
         headerUser = { name: basicUser.name, pass: hashedPassword };
@@ -58,17 +65,17 @@ const createAuthMiddleware = (config: AuthConfig) => {
           }) as JwtPayload;
 
           if (!verifiedToken?.login) {
-            return createAuthError(res);
+            return createAuthError(res, unauthorizedMessage, unauthorizedStatus, shouldChallenge);
           }
 
           headerUser = { name: verifiedToken.login, pass: verifiedToken.password };
           const hashedPassword = config.userService.getHashedPasswordByLogin(headerUser.name);
 
           if (!hashedPassword || hashedPassword !== verifiedToken.password) {
-            return createAuthError(res);
+            return createAuthError(res, unauthorizedMessage, unauthorizedStatus, shouldChallenge);
           }
         } catch {
-          return createAuthError(res, 'Invalid token', 403);
+          return createAuthError(res, 'Invalid token', 403, shouldChallenge);
         }
       }
       // SSE Token Auth
@@ -81,29 +88,29 @@ const createAuthMiddleware = (config: AuthConfig) => {
           }) as JwtPayload;
 
           if (!verifiedToken?.login) {
-            return createAuthError(res);
+            return createAuthError(res, unauthorizedMessage, unauthorizedStatus, shouldChallenge);
           }
 
           headerUser = { name: verifiedToken.login, pass: verifiedToken.password };
           const hashedPassword = config.userService.getHashedPasswordByLogin(headerUser.name);
 
           if (!hashedPassword || hashedPassword !== verifiedToken.password) {
-            return createAuthError(res);
+            return createAuthError(res, unauthorizedMessage, unauthorizedStatus, shouldChallenge);
           }
         } catch {
-          return createAuthError(res, 'Invalid token', 403);
+          return createAuthError(res, 'Invalid token', 403, shouldChallenge);
         }
       }
       // No auth provided
       else {
-        return createAuthError(res);
+        return createAuthError(res, unauthorizedMessage, unauthorizedStatus, shouldChallenge);
       }
 
       // Handle current user endpoint
       if (req.path === '/api/users/current-user') {
         const currentUser = config.userService.findByLogin(headerUser.name);
         if (!currentUser) {
-          return createAuthError(res, 'User not found', 404);
+          return createAuthError(res, 'User not found', 404, shouldChallenge);
         }
         return res.status(200).json(currentUser);
       }
@@ -131,7 +138,7 @@ const createAuthMiddleware = (config: AuthConfig) => {
       return next();
     } catch (err) {
       console.error('Authentication error:', err);
-      return createAuthError(res, 'Authentication failed', 500);
+      return createAuthError(res, 'Authentication failed', 500, shouldChallenge);
     }
   };
 };
