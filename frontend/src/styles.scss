@@ -149,6 +149,14 @@ img.oib-image-header {
   color: $electricBlue;
 }
 
+ngb-timepicker .ngb-tp-chevron::before {
+  border-color: $yellow !important;
+}
+
+ngb-timepicker .ngb-tp-chevron:hover::before {
+  border-color: $electricBlue !important;
+}
+
 // container of the page + padding
 .oib-padded-container {
   padding-left: 2rem;
@@ -416,11 +424,14 @@ img.oib-image-header {
   border-top-left-radius: 1rem;
   border-top-right-radius: 1rem;
   // style in oib-box-title of primary button
-  .btn-primary, .btn-secondary, .btn-danger {
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger {
     margin-right: 0.75rem;
   }
 
-  .btn-primary, .btn-primary:focus {
+  .btn-primary,
+  .btn-primary:focus {
     border-radius: 0.5rem;
     color: $white;
     background-color: transparent;
@@ -435,7 +446,8 @@ img.oib-image-header {
     }
   }
 
-  .btn-secondary, .btn-secondary:focus {
+  .btn-secondary,
+  .btn-secondary:focus {
     border-radius: 0.5rem;
     color: $white;
     background-color: transparent;
@@ -443,14 +455,16 @@ img.oib-image-header {
     outline: 2px solid $yellow;
     outline-offset: -2px;
 
-    &:hover, &:active {
+    &:hover,
+    &:active {
       border-radius: 0.5rem;
       background-color: $yellow;
       color: $darkGrey;
     }
   }
 
-  .btn-danger, .btn-danger:focus {
+  .btn-danger,
+  .btn-danger:focus {
     border-radius: 0.5rem;
     color: $white;
     background-color: transparent;
@@ -465,7 +479,9 @@ img.oib-image-header {
     }
   }
 
-  .btn:disabled, .btn.disabled, fieldset:disabled .btn {
+  .btn:disabled,
+  .btn.disabled,
+  fieldset:disabled .btn {
     color: var(--bs-btn-disabled-color);
     pointer-events: none;
     outline: 2px solid $red;
@@ -523,7 +539,8 @@ img.oib-image-header {
   background-color: $yellow;
   border: none;
 
-  &:hover, &:active {
+  &:hover,
+  &:active {
     border-radius: 0.5rem;
     background-color: $blue;
     color: $darkGrey;
@@ -814,7 +831,7 @@ val-errors > div {
   box-sizing: content-box;
   border-radius: 1rem;
   //background-color: $lightGrey;
-  border: 0.20rem solid $lightGrey;
+  border: 0.2rem solid $lightGrey;
   margin-bottom: 1rem;
 
   .box {
@@ -823,4 +840,3 @@ val-errors > div {
     margin-left: -0.15rem;
   }
 }
-
