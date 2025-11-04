@@ -2025,9 +2025,9 @@
     "search": {
       "start": "Start",
       "end": "End",
-      "message-content": "Message",
-      "scope-type": "Type",
-      "scope": "Scope",
+      "message-content": "Log contains",
+      "scope-type": "Types",
+      "scope": "Scopes",
       "levels": "Levels"
     },
     "date": "Date",

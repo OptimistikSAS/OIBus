@@ -1,5 +1,11 @@
 @import '../../common.scss';
 
+.oib-search-form {
+  .row {
+    align-items: center;
+  }
+}
+
 .level-badge {
   display: inline-block;
   font-weight: bold;
