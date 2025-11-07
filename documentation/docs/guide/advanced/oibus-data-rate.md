@@ -142,8 +142,8 @@ Our primary focus will be on the data within the JSON file format. In this conte
 including:
 
 - The data sampling frequency.
-- The number of points grouped together for transmission (as defined by [Group Count](../north-connectors/common-settings#caching)).
-- The frequency of transmission (as defined by [Send Interval](../north-connectors/common-settings#caching)).
+- The number of points grouped together for transmission (as defined by [Group Count](../north-connectors/common-settings#cache-settings)).
+- The frequency of transmission (as defined by [Send Interval](../north-connectors/common-settings#cache-settings)).
 - The format of data and quality, specifically the number of characters used for precision.
 - The size of the data references.
 

@@ -2,66 +2,120 @@
 sidebar_position: 0
 ---
 
-# Concept
+# Common settings
 
-A North connector is employed to transmit data to a designated target application, extracting the data from its cache. Data can be delivered
-either as files or JSON payloads.
+A **North connector** sends data from OIBus to a target application. This page explains how to configure and manage
+North connectors.
 
-To add a North connector, navigate to the North page and click the '+' button. Choose one of the available North connector types and
-complete its settings. The form's structure varies depending on the chosen connector type, but certain principles remain consistent.
+## Adding a North Connector
 
-You can monitor the status of the North connector from its display page or make adjustments to its settings.
+1. Navigate to the **North** page.
+2. Click the **+** button.
+3. Select a North connector type from the available options.
+4. Complete the settings form (structure varies by connector type).
 
-## General settings
+You can monitor the connector's status or adjust its settings from its **display page** (accessible via the magnifying
+glass icon in the list).
 
-- **Name**: The connector's name serves as a user-friendly label to help you easily identify its purpose.
-- **Description**: You have the option to include a description to provide additional context, such as details about the connection, access
-  rights, or any unique characteristics.
-- **Toggle**: You can enable or disable the connector using the toggle switch. Additionally, you can toggle the connector from either the
-  North connector list or its dedicated display page (accessible via the magnifying glass icon of the list page).
+## General Settings
 
-## Specific section
+| Setting         | Description                                                                      |
+| --------------- | -------------------------------------------------------------------------------- |
+| **Name**        | A user-friendly label to identify the connector's purpose.                       |
+| **Description** | Optional details about the connection, access rights, or unique characteristics. |
+| **Toggle**      | Enable or disable the connector (from the list or its display page).             |
 
-Specific settings for the connector can be found in the respective connector's documentation for more detailed information.
+:::caution Disabled North Connectors
+A disabled North connector **will not cache any data**.
+:::
 
-## Caching
+## Cache Settings
 
-The caching section plays a crucial role in helping OIBus efficiently manage network congestion:
+### Trigger Conditions
 
-- **Send interval**: This setting allows you to schedule the transmission of data to a target application. Refer to the
-  [scan mode section](../engine/scan-modes.md) for configuring new scan modes.
-- **Retry interval**: Specifies the waiting period before attempting to resend data to a target application after a failure (measured in
-  milliseconds).
-- **Retry count**: Indicates the number of retry attempts before giving up and relocating failed data to the error folder.
-- **Max size**: This parameter defines the maximum size of the cache in megabytes (MB). Once the cache reaches its maximum size, any
-  additional data will be discarded.
-- **Group count** (for JSON payloads): Instead of waiting for the _Send interval_, this feature triggers the North connector to transmit
-  data as soon as the specified number of data items is reached.
-- **Max group count** (for JSON payloads): When the connection experiences prolonged downtime, the cache of a North connector may accumulate
-  a substantial amount of data. To prevent overwhelming the target or the network, this field can be set to split the data into multiple
-  smaller chunks, each sent separately at intervals defined by the _Send interval_.
-- **Send file immediately** (for files): This option enables the North connector to send the file directly, bypassing the _Send interval_
-  waiting period.
+Configure when data is sent to the target application:
 
-## Archive
+| Setting                | Description                                                                                                              |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| **Schedule**           | Define how often data is transmitted (e.g., "Every 10 seconds"). Configure using [scan modes](../engine/scan-modes.mdx). |
+| **Number of elements** | (JSON payloads) Send data when the specified number of elements is reached, bypassing the schedule.                      |
+| **Number of files**    | (Files) Send data when the specified number of files is reached, bypassing the schedule.                                 |
 
-You can also activate archive mode and define a **retention duration**. When archive mode is enabled, files will be preserved in the
-`archive` subfolder; otherwise, they will be deleted once transmitted to the North application.
+### Throttling
 
-If you set the retention duration to zero, it means that files will be retained indefinitely.
+Control data transmission to avoid overwhelming the target or network:
 
-:::caution Disk space
-If you opt to retain files indefinitely, it's essential to remember to periodically manually clear the archive folder.
-Failing to do so could result in the archive folder consuming a significant amount of disk space.
+| Setting                                 | Description                                                                                           |
+| --------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| **Minimum delay between transmissions** | Time (in milliseconds) to wait between transmissions.                                                 |
+| **Maximum number of elements**          | Maximum number of elements sent in a single transmission.                                             |
+| **Maximum storage size**                | Maximum size (in MB) for cache + error + archive. Excess data is discarded once the limit is reached. |
+
+### Errors
+
+Manage how OIBus handles transmission failures:
+
+| Setting                                 | Description                                                                    |
+| --------------------------------------- | ------------------------------------------------------------------------------ |
+| **Delay to wait before retry**          | Time (in milliseconds) to wait before retrying after a failure.                |
+| **Number of retry**                     | Number of retry attempts before moving failed data to the error folder.        |
+| **Retention duration for errored data** | Duration (in hours) to retain errored data. Set to `0` to retain indefinitely. |
+
+:::tip Retryable Send
+Some North connectors, such as the [OIAnalytics North Connector](./oianalytics.md), will **indefinitely retry** sending
+data for specific errors (e.g., network failures), even after the retry count is exceeded.
+:::
+
+### Archive
+
+Enable archiving to retain transmitted data:
+
+| Setting                                  | Description                                                                     |
+| ---------------------------------------- | ------------------------------------------------------------------------------- |
+| **Enabled**                              | Toggle to enable or disable archiving.                                          |
+| **Retention duration for archived data** | Duration (in hours) to retain archived data. Set to `0` to retain indefinitely. |
+
+:::caution Disk Space
+If files are retained indefinitely, manually clear the archive folder periodically to avoid excessive disk usage.
+:::
+
+## Transformers
+
+Transformers allow you to **modify or enrich data** before it is sent to the target application. You can apply one or
+more transformers to a North connector to:
+
+- **Filter data**: Include or exclude specific data points.
+- **Modify data**: Change values, rename fields, or restructure data.
+- **Enrich data**: Add additional context or metadata.
+- **Convert formats**: Transform data between different formats (e.g., JSON to CSV).
+
+### Adding a Transformer
+
+1. Navigate to the **Transformers** section in the North connector settings.
+2. Click **Add Transformer** and select a source type from the list.
+3. Choose an **available transformer** compatible with both the source type and the North Connector type.
+4. Configure the transformer settings as needed.
+
+:::info Standard Transformers
+Standard transformers are pre-built and available based on the source type and North connector type. These transformers
+cover common use cases and can be configured directly in the UI.
+:::
+
+:::tip Custom Transformers
+For advanced use cases, you can create custom transformers:
+
+- Go to the [Engine transformers section](../engine/transformers.mdx).
+- Create a new transformer with your own code.
+- Define configurable options for the transformer.
+
+Your custom transformer will then be available for selection in the North connector settings.
+
 :::
 
 ## Subscriptions
 
-By default, a North connector collects data from all activated South connectors. However, you have the option to subscribe a North connector
-to a particular South connector or a list of South connectors. In the Subscriptions section, you can add a specific South connector or an
-External source. This means that only data from the specified South connector or External Source will be included in the cache of this North
-connector. All other data will either be discarded or sent to other active North connectors that are subscribed to the data stream.
+By default, a North connector collects data from **all active South connectors**. You can restrict this by subscribing
+to specific: South connectors.
 
-:::caution
-No data for disabled North When a North connector is disabled, it will not store any data in its cache.
-:::
+Only data from the selected sources will be cached. Other data will be discarded or sent to other active North
+connectors.

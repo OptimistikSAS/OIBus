@@ -1,27 +1,35 @@
----
-sidebar_position: 6
----
-
 # Console
 
-Display filenames or values in Console (used for debug).
+The **Console North Connector** displays filenames or values directly in the console output, making it ideal for \*
+\*debugging and development purposes\*\*.
 
-## Specific settings
+## Specific Settings
 
-The console accepts just one option: `verbose`. When verbose mode is enabled, the received data is presented in detailed tables within the
-console. In contrast, with verbose mode disabled, only the count of values received by the North connector is displayed.
+| Setting     | Description                                                                                                              |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------ |
+| **Verbose** | When enabled, displays received data in **detailed tables**. When disabled, only shows the **count of values** received. |
 
-## Display Console in production
+## Using the Console in Production
 
-In a production environment, particularly on Windows or Linux, you might have OIBus running as a service. If you need to access the console
-output in such a scenario, you can follow these steps:
+In production environments where OIBus runs as a service (Windows/Linux), follow these steps to view console output:
 
-1. Stop the OIBus service.
-2. Launch OIBus from a terminal with administrative access, directly from its installation folder:
-   - On Windows: Execute the `go.bat` script.
-   - On Linux: Run the `go.sh` script.
+1. **Stop the OIBus service** using your OS service manager.
+2. **Launch OIBus manually** from a terminal with administrative privileges:
+   - **Windows**: Navigate to the installation folder and execute `go.bat`.
+   - **Linux**: Navigate to the installation folder and run `go.sh`.
+3. View the console output directly in the terminal.
 
-:::caution Restart the service
-When you exit the terminal and wish to run OIBus as a service once more, remember to restart the service
-using the OS service manager.
+:::caution Important
+After debugging, remember to:
+
+1. Exit the terminal session.
+2. **Restart the OIBus service** using your OS service manager to resume normal operation.
+
 :::
+
+## Best Practices
+
+- Use **verbose mode** during development or troubleshooting to inspect data structure and content.
+- Do not use in production to reduce console clutter.
+- For persistent data, consider using the [File Writer North Connector](../north-connectors/file-writer.md) instead of
+  relying solely on console output.

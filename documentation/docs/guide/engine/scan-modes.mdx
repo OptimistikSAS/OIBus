@@ -1,0 +1,51 @@
+---
+sidebar_position: 2
+---
+
+import CronTester from '../../../src/components/CronTester/index';
+
+# Scan Modes
+
+OIBus uses **Cron-defined scan modes** to schedule
+when [South connectors](../../guide/south-connectors/common-settings.md) retrieve or
+when [North connectors](../../guide/north-connectors/common-settings.md) send data. Scan modes allow you to automate
+data operations at specific dates and intervals.
+
+## Default Scan Modes
+
+OIBus provides six built-in scan modes for common scheduling needs:
+
+| Scan Mode        | Cron Expression | Description                                     |
+| ---------------- | --------------- | ----------------------------------------------- |
+| Every second     | `* * * * * *`   | Runs every second.                              |
+| Every 10 seconds | `/10 * * * * *` | Runs every 10 seconds.                          |
+| Every minute     | `0 * * * * *`   | Runs every minute at the 0-second mark.         |
+| Every 10 minutes | `0 /10 * * * *` | Runs every 10 minutes at the 0-second mark.     |
+| Every hour       | `0 0 * * * *`   | Runs every hour at the 0-minute, 0-second mark. |
+| Every 24 hours   | `0 0 0 * * *`   | Runs daily at midnight (00:00:00).              |
+
+## Custom Scan Modes
+
+You can create **custom scan modes** to fit your specific scheduling requirements:
+
+1. **Add a new scan mode**: Name it and specify a valid **Cron expression**.
+2. **Test your Cron expression**: Use tools like [crontab.cronhub.io](https://crontab.cronhub.io/) to validate your
+   expression before saving.
+
+### Tips for Cron Expressions
+
+- **Format**: Cron expressions consist of six fields:
+  `[seconds] [minutes] [hours] [day of month] [month] [day of week]`.
+- **Wildcards**: Use `*` to match any value (e.g., `* * * * * *` for every second).
+- **Intervals**: Use `/` to specify intervals (e.g., `/10` for every 10 seconds).
+- **Precision**: For predictable behavior, specify exact seconds or minutes (e.g., `0` for the top of the minute/hour).
+
+#### Example Cron Expressions
+
+- `30 * * * * *`: Runs at the 30-second mark of every minute.
+- `0 15 10 * * *`: Runs daily at 10:15:00 AM.
+- `0 0 22 * * 1`: Runs every Monday at 10:00:00 PM.
+
+### Test Your Cron Expression
+
+<CronTester />
