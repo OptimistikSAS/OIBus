@@ -1,0 +1,115 @@
+---
+sidebar_position: 2
+---
+
+import DataSizeComparison from '../../../src/components/DataSizeComparison/index';
+
+# Data Rate and Cache Sizing
+
+OIBus transmits data to target applications using two primary methods:
+
+## Transmission Methods
+
+| Method        | Description              | Use Cases                        |
+| ------------- | ------------------------ | -------------------------------- |
+| File Endpoint | Data stored in CSV files | Batch processing, large datasets |
+| JSON Payloads | Structured JSON objects  | Real-time systems, APIs          |
+
+## CSV Format Estimations
+
+### 1. Row Format
+
+```
+Timestamp,Reference,Value
+2020-02-01T20:04:00.000Z,Data001,12.0
+2020-02-01T20:04:00.000Z,Data002,10.0
+```
+
+**Size Calculation**:
+
+- Timestamp: 24 bytes
+- Reference: 7 bytes
+- Value: 4 bytes
+- Separators: 3 bytes
+  - **Total per row**: 38 bytes
+  - **Hourly estimate**: 60 points × 38 bytes = 2,280 bytes
+  - **With 2 files/hour**: ~4,560 bytes/hour
+
+### 2. Column Format
+
+```
+Timestamp,Data001,Data002,Data003
+2020-02-01T20:04:00.000Z,12.0,10.0,10.0
+```
+
+**Size Calculation**:
+
+- Timestamp: 24 bytes
+- Values: 3 × 4 bytes = 12 bytes
+- Separators: 4 bytes
+  - **Total per row**: 40 bytes
+  - **Hourly estimate**: 60 points × 40 bytes = 2,400 bytes
+  - **With 2 files/hour**: ~4,800 bytes/hour
+
+### 3. Column-Row Format
+
+```
+Timestamp,Reference,001,002,003
+2020-02-01T20:04:00.000Z,Data,12.0,10.0,10.0
+```
+
+**Size Calculation**:
+
+- Timestamp: 24 bytes
+- Reference: 4 bytes
+- Values: 3 × 4 bytes = 12 bytes
+- Separators: 5 bytes
+  - **Total per row**: 45 bytes
+  - **Hourly estimate**: 60 points × 45 bytes = 2,700 bytes
+  - **With 2 files/hour**: ~5,400 bytes/hour
+
+## JSON Payload Estimation
+
+### Format Example
+
+```json
+[
+  {
+    "timestamp": "2020-02-01T20:04:00.000Z",
+    "pointId": "Data001",
+    "data": {
+      "value": "12.0",
+      "quality": "192"
+    }
+  }
+]
+```
+
+**Size Breakdown**:
+| Component | Size (bytes) |
+|---------------|-------------|
+| Timestamp | 39 |
+| pointId | 20 ("Data001") |
+| Data object | 10 |
+| Value field | 15 ("12.0") |
+| Quality field | 16 ("192") |
+| Separators | 6 |
+| **Total** | **106** |
+
+**Transmission Example**:
+
+- 3 points/minute × 106 bytes = 318 bytes
+- **Daily estimate**: 318 × 60 × 24 = 457,920 bytes (~447KB)
+
+## Data Flow Comparison
+
+:::info How to Use
+
+1. Select your data format
+2. Enter your system parameters
+3. View estimated sizes and recommendations
+4. Adjust buffers based on your network reliability
+
+:::
+
+<DataSizeComparison />
