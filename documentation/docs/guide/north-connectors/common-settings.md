@@ -23,11 +23,19 @@ glass icon in the list).
 | --------------- | -------------------------------------------------------------------------------- |
 | **Name**        | A user-friendly label to identify the connector's purpose.                       |
 | **Description** | Optional details about the connection, access rights, or unique characteristics. |
-| **Toggle**      | Enable or disable the connector (from the list or its display page).             |
+| **Enabled**     | Enable or disable the connector (from the list or its display page).             |
 
 :::caution Disabled North Connectors
 A disabled North connector **will not cache any data**.
 :::
+
+## Specific Section
+
+Refer to each connector’s documentation for type-specific settings.
+
+### Testing Connection
+
+Use the **Test settings** button to verify your connection configuration.
 
 ## Cache Settings
 

@@ -1,33 +1,52 @@
----
-sidebar_position: 3
----
-
 import ItemSettings from './_south-sql-item-settings.mdx';
 import ThrottlingSettings from './_throttling-settings.mdx';
 
 # Microsoft SQL Server™
 
-Query Microsoft SQL Server™ (MSSQL) databases.
+Connect to and query Microsoft SQL Server™ (MSSQL) databases with OIBus.
 
-## Specific settings
+:::info Compatibility Notes
 
-When configuring the SQL connector to send SQL queries to a Microsoft SQL Server, you will need to provide the following details:
+- Supports SQL Server 2012 and later
+- Requires TCP/IP protocol to be enabled on SQL Server
 
-- **Host**: The address of the Microsoft SQL server.
-- **Port**: The MSSQL server port (default is 1433).
-- **Connection timeout**: Timeout setting for establishing the connection.
-- **Database**: The name of the database to connect to.
-- **Username**: The username used for authentication.
-- **Password**: The password used for authentication.
-- **Domain** (optional): This field is useful when connecting to an Active Directory domain.
-- **Use encryption**: Option to encrypt the data between the database and OIBus (note that encryption can potentially overload the server).
-- **Trust server certificate**: Option to accept server certificates even if they are outdated or self-signed.
-- **Request timeout**: Timeout for each SQL query.
-
-:::tip Database access
-It is strongly advised to use a read-only user when connecting to the database for security and data integrity
-purposes.
 :::
+
+## Specific Settings
+
+| Setting                  | Description                                            | Default Value | Notes                              |
+| ------------------------ | ------------------------------------------------------ | ------------- | ---------------------------------- |
+| Host                     | Address of the Microsoft SQL Server instance           | -             | IP address or hostname             |
+| Port                     | SQL Server port number                                 | 1433          | Standard MSSQL port                |
+| Connection timeout       | Maximum time (ms) to establish connection              | 5000          | Recommended: 5000-30000ms          |
+| Database                 | Name of the database to connect to                     | -             | Case-sensitive                     |
+| Use encryption           | Enable data encryption between OIBus and database      | Disabled      | May impact server performance      |
+| Trust server certificate | Accept self-signed or expired certificates             | Disabled      | Use with caution in production     |
+| Username                 | Authentication username                                | -             |                                    |
+| Password                 | Authentication password                                | -             |                                    |
+| Domain                   | Active Directory domain (optional)                     | -             | Required for domain authentication |
+| Request timeout          | Maximum execution time (ms) for individual SQL queries | -             | Recommended: 15000-60000ms         |
+
+### Security Best Practices
+
+- **User Permissions**: Always use a read-only database user
+- **Certificate Validation**: Only trust server certificates in development/test environments
+- **Encryption**: Enable for sensitive data, untrusted networks, or compliance requirements
+
+### Performance Considerations
+
+**Query Optimization**:
+
+- Use indexed columns in WHERE clauses
+- Limit result sets (avoid `SELECT *`)
+- Prefer parameterized queries
+
+**Resource Management**:
+
+- Encryption adds CPU overhead
+- Increase timeouts for long-running queries
+- Implement pagination for large result sets
+- Reuse connections where possible
 
 <ThrottlingSettings />
 

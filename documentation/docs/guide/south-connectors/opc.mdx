@@ -1,48 +1,67 @@
----
-sidebar_position: 10
----
-
 import ThrottlingSettings from './_throttling-settings.mdx';
 
 # OPC Classic™
 
-OPC Classic™ (HDA/DA) is a communication protocol used in the industrial world and developed by the
-[OPC Foundation](https://opcfoundation.org/). This technology has been replaced by OPCUA but is still widely used in the industry. To use
-OPC UA™ in OIBus, see the [OPC UA connector documentation](./opcua.mdx).
+Connect to OPC Classic™ servers using OIBus with the [OIBus Agent](../oibus-agent/installation.mdx).
 
-An HDA server allows to retrieve the history of data over a more or less long period, while a DA server allows to retrieve only the most
-recent value of a tag.
+:::info Technology Context
 
-Only OPC in HDA mode is supported by OIBus. This connector uses the [OIBus Agent](../oibus-agent/installation.mdx).
+- Industrial communication protocol by [OPC Foundation](https://opcfoundation.org/)
+- Supports both HDA and DA mode
+- Requires Windows-based OIBus Agent
+- For OPC UA, see [OPC UA connector](./opcua.mdx)
 
-:::caution
-The OIBus Agent must be installed on a Windows machine.
 :::
 
-## Specific settings
+:::caution System Requirements
+OIBus Agent **must** be installed on a Windows machine
+:::
 
-OIBus exchanges commands and data with the HDA agent through a TCP server/client communication. Therefore, several fields must be filled to
-make OIBus communicate with the OIBus Agent:
+## Specific Settings
 
-- **Remote agent URL**: Specify the URL of the remote OIBus agent, e.g., `http://ip-address-or-host:2224`.
-- **Connection timeout**: Set the timeout for establishing a connection.
-- **Retry interval**: Time to wait before retrying connection.
-- **Server host**: Address of the OPC server (from the remote OIBus agent machine).
-- **Server name**: Name of the OPC server (e.g. Matrikon.OPC.Simulation).
+| Setting          | Description                                | Example Value               |
+| ---------------- | ------------------------------------------ | --------------------------- |
+| Remote agent URL | Agent endpoint (e.g., `http://host:2224`)  | `http://192.168.1.100:2224` |
+| Retry interval   | Time (ms) before connection retry          | 10000                       |
+| Server URL       | Address of OPC server (from agent machine) | `localhost` or IP address   |
+| Server name      | OPC server name (ProgID)                   | `Matrikon.OPC.Simulation`   |
+| Mode             | Data access mode (DA or HDA)               | `HDA`                       |
 
 <ThrottlingSettings />
 
-## Item settings
+## Item Settings
 
-When configuring each item to retrieve data in JSON payload, you'll need to specify the following specific settings:
+| Setting    | Description                                                                   | Options/Examples                            |
+| ---------- | ----------------------------------------------------------------------------- | ------------------------------------------- |
+| Node ID    | Path to data in OPC server namespace                                          | `Channel1.Device1.Tag1`                     |
+| Aggregate  | Data aggregation method (verify server support)                               | `Raw`, `Average`, `Minimum`, `Maximum`, ... |
+| Resampling | Resample aggregated values at requested interval (requires non-Raw aggregate) | `None`, `1s`, `10s`, `1h`, ...              |
 
-- **Node ID**: The Node ID corresponds to the path of the data within the appropriate namespace on the OPC server.
-- **Aggregate**: Aggregate the retrieved values over the requested interval (be sure that the server supports the aggregate).
-- **Resampling**: When aggregate is different from `Raw`, it is possible to resample the retrieved values at the requested interval.
+:::caution Compatibility Notes
 
-:::caution Compatibility with the OPC server
-It's important to note that not all aggregation and resampling options are supported by OPC
-servers. To avoid compatibility issues, it's recommended to use `Raw` aggregation and `None` resampling whenever possible.  
+1. **Aggregation Support**: Not all servers support all aggregation methods
+2. **Resampling**: Only available when aggregate ≠ `Raw`
+3. **Recommended Settings**: Use `Raw` aggregation and `None` resampling for maximum compatibility
+4. **Server Capabilities**: Verify supported features with your OPC server documentation
+
 :::
 
-The name of the item will serve as a reference in JSON payloads, specifically in the `pointID` field for the North application.
+### Configuration Examples
+
+1. **Basic Configuration**:
+
+- Node ID: `Simulation Random.Int4`
+- Aggregate: `Raw`
+- Resampling: `None`
+
+2. **Aggregated Values**:
+
+- Node ID: `Production.Line1.Temperature`
+- Aggregate: `Average`
+- Resampling: `5m`
+
+3. **High-Frequency Data**:
+
+- Node ID: `Process.Vessel.Pressure`
+- Aggregate: `Minimum`
+- Resampling: `1s`

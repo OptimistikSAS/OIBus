@@ -1,31 +1,46 @@
----
-sidebar_position: 7
----
-
 import ItemSettings from './_south-sql-item-settings.mdx';
 import ThrottlingSettings from './_throttling-settings.mdx';
 
 # PostgreSQL
 
-Query PostgreSQL databases.
+Connect to and query PostgreSQL databases with OIBus.
 
-## Specific settings
+:::info Compatibility Notes
 
-When configuring the SQL connector to send SQL queries to a PostgreSQL Server, you will need to provide the following details:
+- Supports PostgreSQL 9.6 and later
 
-- **Host**: The address of the PostgreSQL server.
-- **Port**: The PostgreSQL server port (default is 5432).
-- **Connection timeout**: Timeout setting for establishing the connection.
-- **Database**: The name of the database to connect to.
-- **Username**: The username used for authentication.
-- **Password**: The password used for authentication.
-- **Request timeout**: Timeout for each SQL query.
-
-:::tip Database access
-It is strongly advised to use a read-only user when connecting to the database for security and data integrity
-purposes.
 :::
 
-<ThrottlingSettings />
+## Specific Settings
 
+| Setting            | Description                                            | Default Value | Notes                      |
+| ------------------ | ------------------------------------------------------ | ------------- | -------------------------- |
+| Host               | Address of the PostgreSQL server                       | -             | IP address or hostname     |
+| Port               | Server port number                                     | 5432          | Standard PostgreSQL port   |
+| SSL                | Enable encrypted connection                            | Disabled      | Recommended for production |
+| Database           | Name of the database to connect to                     | -             | Case-sensitive             |
+| Connection timeout | Maximum time (ms) to establish connection              | 10000         | Recommended: 5000-30000ms  |
+| Request timeout    | Maximum execution time (ms) for individual SQL queries | 15000         | Adjust for complex queries |
+| Username           | Authentication username                                | -             |                            |
+| Password           | Authentication password                                | -             |                            |
+
+:::tip Security Best Practices
+
+- Use a read-only database user
+
+:::
+
+### Performance Considerations
+
+**Query Optimization**:
+
+- Use indexed columns in WHERE clauses
+- Limit result sets (avoid `SELECT *`)
+
+**Resource Management**:
+
+- SSL encryption adds minimal overhead
+- Increase timeouts for large datasets or complex queries
+
+<ThrottlingSettings />
 <ItemSettings />

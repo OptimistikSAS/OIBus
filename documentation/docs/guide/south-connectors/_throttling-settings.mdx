@@ -1,11 +1,52 @@
-### Throttling settings
+### Throttling Settings
 
-For South connectors capable of historical data retrieval, you have the flexibility to request data in intervals. These intervals can vary
-in size, depending on factors such as the chosen scan mode or the presence of prolonged network failures.
+You can optimize data requests using throttling configurations. These settings help manage large data intervals and network conditions effectively.
 
-To handle such scenarios, the throttling settings enable you to divide large intervals into smaller sub-intervals, each no longer than the
-specified **Max read interval** (in seconds). These sub-intervals are requested with a delay defined by the **Read delay** setting (in
-milliseconds).
+#### Key Throttling Parameters
 
-In certain situations, adding an overlap to the query can be beneficial. You can achieve this by configuring the **overlap** field (in
-milliseconds): it will subtract this specified number of milliseconds from the `@StartTime` variable of the subsequent query.
+| Setting           | Description                                                                                                                                             | Data Type    | Example Value |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ------------- |
+| Max read interval | Maximum duration (in seconds) for each data request interval. Larger intervals are automatically divided into smaller chunks not exceeding this value.  | Seconds      | 3600          |
+| Read delay        | Delay (in milliseconds) between consecutive data requests. Helps prevent server overload.                                                               | Milliseconds | 1000          |
+| Overlap           | Time overlap (in milliseconds) between consecutive queries to ensure data continuity. This value is subtracted from the `@StartTime` of the next query. | Milliseconds | 60000         |
+
+#### How Throttling Works
+
+1. **Interval Division**:
+
+- Large time ranges are automatically split into smaller intervals
+- Each sub-interval does not exceed the `Max read interval` duration
+- Example: A 24-hour request with `Max read interval = 3600` (1 hour) will be split into 24 separate 1-hour requests
+
+2. **Request Timing**:
+
+- The `Read delay` introduces a pause between consecutive requests
+- Helps manage server load and prevents rate limiting
+- Particularly useful during network instability or when querying large datasets
+
+3. **Data Continuity**:
+
+- The `Overlap` setting ensures no gaps in your data
+- Creates a time buffer between consecutive queries
+- Example: With `Overlap = 60000` (1 minute), each query will include 1 minute of overlapping data with the previous query
+
+:::info Overlap Functionality
+The overlap setting modifies the `@StartTime` of each query by subtracting the overlap value from the calculated start time. This adjustment applies to the entire query range, not to individual sub-intervals when large requests are split into smaller chunks.
+
+This functionality is particularly useful when:
+
+- New data is ingested after previous queries have executed
+- You need to account for potential ingestion delays in the source system
+
+**Example**:
+With `overlap=60000` (1 minute), a query for the interval `[10:00-11:00]` will actually request `[9:59-11:00]`, ensuring capture of any late-arriving data from the previous time period.
+:::
+
+### Recommended Configurations
+
+| Scenario                       | Max read interval | Read delay | Overlap        |
+| ------------------------------ | ----------------- | ---------- | -------------- |
+| Stable network, small datasets | 3600 (1 hour)     | 500        | 0 (no overlap) |
+| Unstable network               | 1800 (30 min)     | 2000       | 0 (no overlap) |
+| Large historical retrievals    | 7200 (2 hours)    | 1000       | 0 (no overlap) |
+| Real-time with occasional gaps | 900 (15 min)      | 200        | 15000 (15 sec) |

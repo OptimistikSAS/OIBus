@@ -1,108 +1,102 @@
----
-sidebar_position: 16
----
-
 import ThrottlingSettings from './_throttling-settings.mdx';
 
 # OSIsoft PI System™
 
-OSIsoft PI System™ is a software platform used for collecting, and visualizing data from industrial operations. These data can be retrieved
-through the OSIsoft PI driver embedded in our [OIBus Agent](../oibus-agent/installation.mdx).
+Connect to OSIsoft PI System™ for industrial data collection and visualization using OIBus with the embedded PI driver in [OIBus Agent](../oibus-agent/installation.mdx).
 
-:::caution
-The OIBus Agent must be installed on a Windows machine. It can be installed on the same machine as OSIsoft PI or on another
-machine with the [PI SDK properly configured](#osisoft-pi-sdk-configuration).
+:::caution System Requirements
+
+- OIBus Agent **must** be installed on a Windows machine
+- Can be installed on PI Server machine or separate machine with [PI SDK configured](#osisoft-pi-sdk-configuration)
+
 :::
 
-## Specific settings
+## Connection Settings
 
-OIBus exchanges commands and data with the PI Agent through an HTTP communication. Therefore, several fields must be filled to make OIBus
-communicate with the PI Agent:
-
-- **Remote agent URL**: Specify the URL of the remote OIBus agent, e.g., `http://ip-address-or-host:2224`.
-- **Retry interval**: Time to wait before retrying connection.
+| Setting          | Description                                  | Default Value | Notes                        |
+| ---------------- | -------------------------------------------- | ------------- | ---------------------------- |
+| Remote agent URL | Agent endpoint (e.g., `http://host:2224`)    | -             | Required for all connections |
+| Retry interval   | Time (ms) to wait before retrying connection | 10000         | Recommended: 5000-15000ms    |
 
 <ThrottlingSettings />
 
-## Item settings
+## Item Configuration
 
-When configuring each item to retrieve data in JSON payload, you'll need to specify the following specific settings:
+### Point Access Methods
 
-- **Type**: pointId to access a point through its fully qualified ID, or pointQuery to access a list of points that
-- **Point ID**: The fully qualified ID of the point (without the server name)
-- **Point Query**: A selector to access multiple points at once. See
-  [this documentation](https://docs.aveva.com/bundle/af-sdk/page/html/pipoint-query-syntax-overview.htm#Examples) for example.
+| Setting     | Description                                                                                                                                        | Example Value             |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| Type        | Access method: `pointId` (single point) or `pointQuery` (multiple points)                                                                          | `pointId` or `pointQuery` |
+| Point ID    | Fully qualified point ID (without server name)                                                                                                     | `\\CDT158\SINUSOID`       |
+| Point Query | Query selector for multiple points (see [PI Point Query Syntax](https://docs.aveva.com/bundle/af-sdk/page/html/pipoint-query-syntax-overview.htm)) | `Name:='SINUSOID'`        |
 
-The name of the item will serve as a reference in JSON payloads if the type is pointId. For pointQuery items, the PI name will be used as
-reference.
+:::info Reference Names
 
-## OSIsoft PI SDK configuration
+- For `pointId`: Item name serves as reference in JSON payloads
+- For `pointQuery`: PI name is used as reference
+  :::
 
-When the OIBus Agent is installed on the machine of OSIsoft PI, there is no need to set a connection between the agent and PI because de SDK
-is included in PI System Access (PSA).
+## OSIsoft PI SDK Configuration
 
-However, some situations ask to install the OIBus Agent remotely, with the SDK.
+### Installation Requirements
 
-### Installation
+1. Install PI SDK on agent machine
+2. During installation, specify default data server
+3. If installing remotely:
 
-When installing the SDK, specify the default data server.
+- PI SDK must be properly configured
+- PI System Access (PSA) must be installed
 
-<div style={{ textAlign: 'center' }}>
+### User Configuration
 
-![PI SDK installation](../../../static/img/guide/south/osisoft-pi/0-installation.png)
+1. Create domain user account (accessible from both machines)
 
-</div>
+- If domain doesn't exist, create identical local users with same password
 
-### User creation and configuration
+2. Configure OIBus Agent service to run as this user
 
-Create a user account on the machine domain (this domain must be accessible from both machines). If the domain does not exist and cannot be
-created, it is possible to create one user on each machine, with the same password.
+### Trust Configuration
 
-OIBus Agent must be run with the user created on the previous step.
+1. Open PI System Management Tools
+2. Navigate to `Mapping & Trusts` → `Trusts` tab
+3. Create new trust with:
 
-### Trust configuration
+- OIBus Agent machine IP and Net Mask
+- Domain (if applicable)
+- PI Identity to connect with
 
-Open PI System Management Tools and create a trust from the `Mapping & Trusts` section, in the `Trusts` tab:
+### Mapping Configuration
 
-- IP address and Net Mask of the OIBus Agent machine
-- Domain (if existing)
-- PI Identity: choose the identity that needs to connect into PI
+1. In PI System Management Tools
+2. Navigate to `Mapping & Trusts` → `Mappings` tab
+3. Create new mapping with:
 
-<div style={{ textAlign: 'center' }}>
+- OIBus Agent service user
+- PI Identity from trust configuration
 
-![PI SDK add trust](../../../static/img/guide/south/osisoft-pi/1-add-trust.png)
-
-</div>
-
-The trust has been added on the trust list:
-
-<div style={{ textAlign: 'center' }}>
-
-![PI SDK list trust](../../../static/img/guide/south/osisoft-pi/2-trust-list.png)
-
-</div>
-
-### Mapping creation
-
-Still on the PI System Management Tools, create a mapping from the `Mapping & Trusts` section, in the `Mappings` tab:
-
-- Select the user used by the OIBus Agent service
-- PI Identity: the identity indicated in the trust
-
-<div style={{ textAlign: 'center' }}>
-
-![PI SDK add mapping](../../../static/img/guide/south/osisoft-pi/3-add-mapping.png)
-
-</div>
-
-The mapping has been added on the mapping list:
-
-<div style={{ textAlign: 'center' }}>
-
-![PI SDK list trust](../../../static/img/guide/south/osisoft-pi/4-mapping-list.png)
-
-</div>
-
-:::tip Log access
-It is possible to access the logs from PI System Management Tools in `Operation` → `Messages Logs`
+:::tip Log Access
+View system logs in PI System Management Tools:
+`Operation` → `Messages Logs`
 :::
+
+### Configuration Screenshots
+
+1. **SDK Installation**:
+   ![PI SDK installation](../../../static/img/guide/south/osisoft-pi/0-installation.png)
+   _Specify default data server during installation_
+
+2. **Trust Configuration**:
+   ![PI SDK add trust](../../../static/img/guide/south/osisoft-pi/1-add-trust.png)
+   _Configure trust for agent machine_
+
+3. **Trust List**:
+   ![PI SDK list trust](../../../static/img/guide/south/osisoft-pi/2-trust-list.png)
+   _Verified trust configuration_
+
+4. **Mapping Creation**:
+   ![PI SDK add mapping](../../../static/img/guide/south/osisoft-pi/3-add-mapping.png)
+   _Map agent user to PI identity_
+
+5. **Mapping List**:
+   ![PI SDK list trust](../../../static/img/guide/south/osisoft-pi/4-mapping-list.png)
+   _Verified user mapping_

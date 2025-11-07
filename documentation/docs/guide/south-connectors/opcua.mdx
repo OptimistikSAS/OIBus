@@ -1,106 +1,99 @@
----
-sidebar_position: 2
----
-
 import ThrottlingSettings from './_throttling-settings.mdx';
 
 # OPC UA™
 
-OPC UA™, which stands for OPC Unified Architecture, is a protocol designed for accessing data in both read and write modes. The data is
-organized within a tree-like address space and is referenced using unique identifiers known as node IDs. OPC UA is a modern standard that is
-based on TCP/IP and has replaced older OPC Classic™ (HDA/DA) technologies (refer to the [OPC Classic™ connector](./opc.mdx)). It is often
-natively embedded in industrial controllers.
+OPC Unified Architecture (OPC UA) protocol for secure industrial data access in read-only mode, supporting both Historical Access (HA) and Data Access (DA) modes.
 
-OPC UA incorporates two variants of the protocol: HA (Historical Access) and DA (Data Access). In HA mode, you can access a history of
-values over a specified time interval for the requested data points, whereas in DA mode, you can access the values at each request or listen
-to changes in the values.
+:::info Technology Overview
 
-OIBus integrates both OPC UA modes (HA and DA) in read-only mode, using the [node-opcua library](https://github.com/node-opcua/node-opcua).
+- Modern successor to OPC Classic™ (see [OPC Classic™ connector](./opc.mdx))
+- TCP/IP based with tree-like address space
+- Uses node IDs for data referencing
+- Implemented using [node-opcua library](https://github.com/node-opcua/node-opcua)
+- Natively embedded in many industrial controllers
+  :::
 
-## Specific settings
+## Specific Settings
 
-To establish a connection to an OPC UA server, OIBus requires several settings:
+### Connection Configuration
 
-- **URL**: This is the string used to connect to the server, and it follows the format `opc.tcp://<host>:<port>/<server-name>`.
-- **Retry interval** : The time to wait between reconnection attempts in the event of a connection failure.
-- **Security Mode** : Communication can be secured using the security mode and security policy fields. Available security modes include:
-  _None_, _Sign_, _SignAndEncrypt_.
-- **Security Policy** (Applicable when Security mode is not None): Security policies define the level of security for communication.
-  Available security policies include: None, Basic128, Basic192, Basic256, Basic128Rsa15, Basic192Rsa15, Basic256Rsa15, Basic256Sha256,
-  Aes128_Sha256_RsaOaep, PubSub_Aes128_CTR, PubSub_Aes256_CTR.
-- **Authentication**: Authentication options include None, Basic, and Certificate. Refer to the [security settings](#authentication) for
-  more details.
+| Setting                | Description                                                 |
+| ---------------------- | ----------------------------------------------------------- |
+| **Endpoint URL**       | URL of the OPC UA server (e.g., `opc.tcp://localhost:4840`) |
+| **Keep session alive** | Keep session alive between messages                         |
+| **Retry Interval**     | Delay between retries (in milliseconds)                     |
+| **Read timeout**       | Maximum execution time (ms) for requests                    |
 
-:::caution Compatibility with the OPC UA server
-It's essential to choose a security mode and security policy that are supported by the OPC
-UA server you are connecting to. Ensuring compatibility is crucial for a successful connection.
-:::
+### Security Settings
+
+| Setting             | Description                                                              |
+| ------------------- | ------------------------------------------------------------------------ |
+| **Security Mode**   | Security mode for the connection (None, Sign, SignAndEncrypt)            |
+| **Security Policy** | Security policy for the connection (None, Basic128Rsa15, Basic256, etc.) |
+
+### Authentication Methods
+
+| Method                | Description                                | Required Parameters             |
+| --------------------- | ------------------------------------------ | ------------------------------- |
+| **Anonymous**         | Connect without authentication.            | None                            |
+| **Username/Password** | Standard username/password authentication. | Username, Password              |
+| **Certificate**       | Authentication using client certificates.  | Client Certificate, Private Key |
 
 <ThrottlingSettings />
 
-## Item settings
+## Item Settings
 
-When configuring each item to retrieve data in JSON payload, you'll need to specify the following specific settings:
+| Setting    | Description                   | HA Mode Options                   | DA Mode Options |
+| ---------- | ----------------------------- | --------------------------------- | --------------- |
+| Node ID    | Data path in server namespace | `ns=3;i=1001` or `ns=3;s=Counter` | Same as HA      |
+| Mode       | Data access method            | HA or DA                          | -               |
+| Aggregate  | Value aggregation (HA only)   | `Raw`, `Average`, `Min`, `Max`    | N/A             |
+| Resampling | Interval resampling (HA only) | `None`, `1s`, `5m`, `1h`          | N/A             |
 
-- **Node ID**: The Node ID corresponds to the path of the data within the appropriate namespace on the OPC UA server. It's essential to
-  consider the supported node format of the server, which may use either numbers or strings. For example, on Prosys, `ns=3;i=1001` matches
-  `ns=3;s=Counter`.
-- **Mode**: You can select either HA (Historical Access) or DA (Data Access) mode, depending on your requirements.
-- **Aggregate** (HA mode only): In HA mode, there is an option to aggregate the retrieved values over the requested interval.
-- **Resampling** (HA mode only): Similarly, in HA mode, you can choose to resample the retrieved values at the requested interval.
+:::caution Server Compatibility
 
-:::caution Compatibility with the OPC UA server
-It's important to note that not all aggregation and resampling options are supported by OPC
-UA servers. To avoid compatibility issues, it's recommended to use `Raw` aggregation and `None` resampling whenever possible. Additionally,
-ensure that the selected mode (HA or DA) is supported by the server you are connecting to.
+1. Verify server supports selected mode (HA/DA)
+2. Not all servers support all aggregation/resampling options
+3. Recommended: Use `Raw` aggregation and `None` resampling
+
 :::
 
-The name of the item will serve as a reference in JSON payloads, specifically in the `pointID` field for the North application.
+## Security Configuration
 
-## Security settings
+### Communication Security
 
-### Communication
+- OIBus generates self-signed certificate on startup
+- Certificate location: `<south_cache>/opcua/`
+- Must be trusted by OPC UA server
+- Error if untrusted: `The connection may have been rejected by the server`
 
-When using a security mode other than _None_, a certificate is required to sign and potentially encrypt the communications. OIBus generates
-a self-signed certificate for securing communication with the OPC UA server during startup. You can locate the certificate used by OPC UA in
-the `opcua` folder of the South cache. This certificate must be trusted by the OPC UA server to enable secure communication.
+![Prosys Certificate Example](../../../static/img/guide/south/opcua/prosys-opcua-simulation-server-certificates.png)
 
-:::info Example on Prosys OPC UA Simulation Server
-![Prosys OPC UA Simulation Server Certificates](../../../static/img/guide/south/opcua/prosys-opcua-simulation-server-certificates.png) If
-the certificate is not trusted by the OPC UA server, you may encounter an error with the message:
-`Error: The connection  may have been rejected by the server`. :::
+### Certificate Management
 
-### Authentication
+1. **Communication Certificate**:
 
-The certificate used for client authentication must be added to the trusted user certificates list on the OPC UA server. It is managed
-separately from the self-signed certificate mentioned earlier, which is used for [securing communication](#communication).
+- Auto-generated by OIBus
+- Location: `<south_cache>/opcua/cert.pem`
 
-:::info Example on Prosys OPC UA Simulation Server
-For Prosys OPC UA servers, the certificate used to authenticate OIBus must be placed in
-the `.prosysopc\prosys-opc-ua-simulation-server\USERS_PKI\CA\certs` folder. Failure to do so may result in an error with the message:
-`Error: serviceResult = BadIdentityTokenRejected (0x80210000)`.
+2. **Authentication Certificate**:
 
-If a connection has previously been attempted and rejected, you should remove the certificate from the **rejected certificates** folder
-(`.prosysopc\prosys-opc-ua-simulation-server\USERS_PKI\CA\rejected`) and move it to the **trusted** folder
-(`.prosysopc\prosys-opc-ua-simulation-server\USERS_PKI\CA\certs`).
+- Must be added to server's trusted certificates
+- Prosys location: `.prosysopc\prosys-opc-ua-simulation-server\USERS_PKI\CA\certs`
+- Error if rejected: `BadIdentityTokenRejected (0x80210000)`
+
+:::info Prosys Specifics
+Move rejected certificates from:
+`.prosysopc\prosys-opc-ua-simulation-server\USERS_PKI\CA\rejected`
+to:
+`.prosysopc\prosys-opc-ua-simulation-server\USERS_PKI\CA\certs`
 :::
 
-### Use the same certificate for user authentication and secure communications
+## Certificate Creation for Prosys
 
-The same certificate can be used for both sign and encrypt operations and for authentication. To do that, the `cert.pem` and `private.pem`
-file paths must be specified. They are located in the south cache data stream folder (inside the opcua directory).
+1. Create `cert.conf`:
 
-On the OPC UA server side, the self-signed certificate (`cert.pem`) must be copied in the user certificates' folder.
-
-For example, with Prosys OPC UA Simulation Server: `.prosysopc\prosys-opc-ua-simulation-server\USERS_PKI\CA\certs`.
-
-## Using certificates with ProSys OPC UA Simulation Server
-
-You can create your self-signed certificate to authenticate OIBus with the **Cert** method.
-
-1. Create a cert.conf file:
-
-```
+```ini
 [ req ]
 default_bits = 2048
 default_md = sha256
@@ -128,22 +121,28 @@ organizationName = OI
 commonName = oibus
 ```
 
-2. Create a private key and certificate using the `cert.conf`:
+2. Generate certificate:
 
-```
+```bash
+# Create key and certificate
 openssl req -new -x509 -keyout oibus.key -out oibus.pem -config cert.conf
-```
 
-2. Remove private key passphrase:
-
-```
+# Remove passphrase
 openssl rsa -in oibus.key -out oibus.key
-```
 
-3. Create DER cert for ProSys:
-
-```
+# Convert to DER format
 openssl x509 -inform PEM -outform DER -in oibus.pem -out oibus.der
 ```
 
-4. Copy the DER cert in ProSys USERS_PKI certificate folder: `prosys-opc-ua-simulation-server\USERS_PKI\CA\certs`
+4. Install in Prosys:
+
+```bash
+cp oibus.der .prosysopc/prosys-opc-ua-simulation-server/USERS_PKI/CA/certs/
+```
+
+:::tip Single Certificate Usage
+The same certificate can be used for:
+
+- Secure communication (sign/encrypt)
+- Client authentication: Specify paths to `cert.pem` and `private.pem`
+  :::

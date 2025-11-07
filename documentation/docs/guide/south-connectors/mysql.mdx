@@ -1,28 +1,32 @@
----
-sidebar_position: 9
----
-
 import ItemSettings from './_south-sql-item-settings.mdx';
 import ThrottlingSettings from './_throttling-settings.mdx';
 
 # MySQL® / MariaDB™
 
-Query MySQL® or MariaDB™ databases.
+Connect to and query MySQL® or MariaDB™ databases with OIBus.
 
-## Specific settings
+:::info Compatibility Notes
 
-When configuring the SQL connector to send SQL queries to a MySQL / MariaDB Server, you will need to provide the following details:
+- Supports MySQL 5.7+
+- Supports MariaDB 10.2+
 
-- **Host**: The address of the MySQL / MariaDB server.
-- **Port**: The MySQL / MariaDB server port (default is 3306).
-- **Connection timeout**: Timeout setting for establishing the connection.
-- **Database**: The name of the database to connect to.
-- **Username**: The username used for authentication.
-- **Password**: The password used for authentication.
+:::
 
-:::tip Database access
-It is strongly advised to use a read-only user when connecting to the database for security and data integrity
-purposes.
+## Specific Settings
+
+| Setting            | Description                                  | Default Value | Notes                     |
+| ------------------ | -------------------------------------------- | ------------- | ------------------------- |
+| Host               | Address of the MySQL/MariaDB server instance | -             | IP address or hostname    |
+| Port               | Server port number                           | 3306          | Standard MySQL port       |
+| Connection timeout | Maximum time (ms) to establish connection    | 5000          | Recommended: 5000-30000ms |
+| Database           | Name of the database to connect to           | -             | Case-sensitive            |
+| Username           | Authentication username                      | -             |                           |
+| Password           | Authentication password                      | -             |                           |
+
+:::caution User Permissions
+
+Always use a read-only database user
+
 :::
 
 <ThrottlingSettings />
