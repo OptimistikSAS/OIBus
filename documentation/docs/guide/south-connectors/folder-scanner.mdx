@@ -1,0 +1,29 @@
+import RegexTester from '../../../src/components/RegexTester/index';
+
+# Folder Scanner
+
+The **Folder Scanner** South connector periodically scans a specified input folder for new files based on **regular expressions (Regexp)** defined in its items. Matching files are transmitted to North caches.
+
+## Specific Settings
+
+| Setting            | Description                                                                                                                                                                                                                    | Example Value               |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------- |
+| Input folder       | Path of the folder to scan. Can be **absolute** or **relative** (relative to the **Data folder** - see the _About_ section). Supports remote paths (e.g., `/remote.server/data` or `Z:\Remote disk\DATA`). **Case-sensitive**. | `/data/input` or `Z:\Files` |
+| Enable compression | If enabled, files are compressed using **gzip** before being sent to North caches.                                                                                                                                             | Enabled/Disabled            |
+
+:::caution User Access Requirements
+
+The user running OIBus (terminal user or service account) **must have read access** to the input folder. If **Preserve file** is disabled, **write access** is also required to delete files.
+
+:::
+
+## Item Settings
+
+| Setting               | Description                                                                                                                                                             | Example Value                           |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| RegExp                | Regular expression to filter files.                                                                                                                                     | `.*\.csv\|.*\xlsx` → CSV or Excel files |
+| Minimum age           | Minimum age (in ms) for files to be retrieved. Avoids corrupted files still being written. Default: `1000` ms.                                                          | `1000`                                  |
+| Preserve file         | If enabled, files are **not deleted** after retrieval. Useful if other applications need access. OIBus tracks modification time to avoid re-retrieving unchanged files. | Enabled/Disabled                        |
+| Ignored modified date | (_Requires **Preserve file**_) Forces retrieval even if the file's modification time hasn't changed. Useful for ensuring files are always processed.                    | Enabled/Disabled                        |
+
+<RegexTester />

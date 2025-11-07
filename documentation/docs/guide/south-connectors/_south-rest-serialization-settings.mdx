@@ -1,19 +1,33 @@
 ### CSV Serialization
 
-OIBus offers the option to serialize retrieved data into CSV files, and you can customize the serialization process with the following
-settings:
+OIBus provides flexible options for serializing retrieved data into CSV format with customizable output settings.
 
-- **Filename**: The name of the file where the result will be stored. You can use several internal variables like **@ConnectorName** (the
-  name of the connector) and **@CurrentDate** (the current date in `yyyy_MM_dd_HH_mm_ss_SSS` format - it is uncorrelated to the datetime
-  format of the serialization, used for datetime fields).
-- **Delimiter**: The delimiter to use in the CSV.
-- **Compression**: Choose whether to compress the file with gzip or not.
-- **Output datetime format**: Specify the format of the datetime in the CSV. OIBus will only convert the [datetime fields](#datetime-fields)
-  specified. The **@CurrentDate** variable used in the output filename won't be affected.
-- **Output timezone**: The timezone to use for storing the datetime.
+#### File Configuration
 
-## Splitting large queries
+| Setting     | Description                                       | Example Value                          |
+| ----------- | ------------------------------------------------- | -------------------------------------- |
+| Filename    | Name pattern for output files.                    | `data_@ConnectorName_@CurrentDate.csv` |
+| Delimiter   | Character used to separate values in the CSV file | `,` or `;`                             |
+| Compression | Enable gzip compression for output files          | Enabled/Disabled                       |
 
-In situations where a query may impose a significant load on the server, especially when a large time interval is requested and the
-@StartTime and @EndTime [query variables](#query-variables) are utilized, you can split the query into several sub-queries with smaller
-intervals. This can be achieved by configuring the **Max read interval** field in the [throttling settings](#throttling-settings).
+:::info Filename Variables
+The following variables can be used in filename patterns:
+
+- `@ConnectorName`: Automatically replaced with the connector's name
+- `@CurrentDate`: Inserts current timestamp in fixed `yyyy_MM_dd_HH_mm_ss_SSS` format
+  :::
+
+#### Temporal Data Handling
+
+| Setting                | Description                                                                                 | Example Value           |
+| ---------------------- | ------------------------------------------------------------------------------------------- | ----------------------- |
+| Output datetime format | Format pattern for datetime fields in the CSV (does not affect `@CurrentDate` in filenames) | `yyyy-MM-dd HH:mm:ss`   |
+| Output timezone        | Timezone used for datetime values in the CSV                                                | `UTC` or `Europe/Paris` |
+
+:::info Important Notes
+
+1. The `@CurrentDate` variable in filenames uses a fixed format (`yyyy_MM_dd_HH_mm_ss_SSS`) regardless of the datetime format setting
+2. Only [datetime fields](#datetime-fields) specified in your configuration will be formatted according to these settings
+3. Timezone conversion only applies to datetime values in the CSV content, not to the filename timestamp
+
+:::

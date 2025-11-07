@@ -1,0 +1,40 @@
+import RegexTester from '../../../src/components/RegexTester/index';
+
+# SFTP
+
+Securely transfer and read files from remote SFTP servers.
+
+## Specific Settings
+
+| Setting           | Description                                     |
+| ----------------- | ----------------------------------------------- |
+| **Host**          | IP address or hostname of the SFTP server.      |
+| **Port**          | Port for the connection (default: **8080**).    |
+| **Compress file** | Enable gzip compression before North processing |
+
+### Authentication Methods
+
+| Method                | Description                                      | Required Parameters                               |
+| --------------------- | ------------------------------------------------ | ------------------------------------------------- |
+| **Username/Password** | Standard username/password authentication.       | Username, Password                                |
+| **Private Key**       | Authentication using a private key (PEM format). | Username, Private Key Path, (Optional) Passphrase |
+
+:::info Private Key Notes
+
+- Supports passphrase-protected keys
+- Key format: PEM
+- Example path: `/home/user/.ssh/id_rsa` or `C:\Users\user\.ssh\id_rsa`
+
+:::
+
+## File Retrieval Settings
+
+| Setting               | Description                                                                                                                                                             | Example Values       |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| Remote folder         | Source directory path on SFTP server                                                                                                                                    | `/incoming/data`     |
+| RegExp                | File pattern filter (regular expression)                                                                                                                                | `.*\.txt`, `.*\.csv` |
+| Minimum age           | Minimum age (in ms) for files to be retrieved. Avoids corrupted files still being written. Default: `1000` ms.                                                          | `1000`               |
+| Preserve file         | If enabled, files are **not deleted** after retrieval. Useful if other applications need access. OIBus tracks modification time to avoid re-retrieving unchanged files. | Enabled/Disabled     |
+| Ignored modified date | (_Requires **Preserve file**_) Forces retrieval even if the file's modification time hasn't changed. Useful for ensuring files are always processed.                    | Enabled/Disabled     |
+
+<RegexTester />

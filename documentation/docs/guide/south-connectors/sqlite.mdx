@@ -1,17 +1,21 @@
----
-sidebar_position: 5
----
-
 import ItemSettings from './_south-sql-item-settings.mdx';
 import ThrottlingSettings from './_throttling-settings.mdx';
 
 # SQLite™
 
-Query SQLite™ databases.
+Connect to and query SQLite™ database files with OIBus.
 
-## Specific settings
+## Specific Settings
 
-- **Database path**: the path of the SQLite database
+| Setting       | Description                       | Example Value                    |
+| ------------- | --------------------------------- | -------------------------------- |
+| Database path | Full path to SQLite database file | `C:\databases\production.sqlite` |
+
+### Best Practices
+
+- Place database on fast storage (SSD recommended)
+- Avoid concurrent writes from multiple processes
+- Use WAL mode for better concurrency (PRAGMA journal_mode=WAL)
 
 <ThrottlingSettings />
 <ItemSettings />

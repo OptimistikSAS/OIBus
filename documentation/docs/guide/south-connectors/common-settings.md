@@ -2,220 +2,120 @@
 sidebar_position: 0
 ---
 
-# Concept
+# Common Settings
 
-A South connector is responsible for fetching data from a specific data source and forwarding that data into North caches. Each connector
-can request multiple items, and the nature of each item varies depending on the connector type. For example, an [MQTT item](./mqtt.md)
-subscribes to a topic from a remote broker, while an [MSSQL item](./mssql.mdx) regularly queries a Microsoft SQL database.
+A **South connector** fetches data from a specific source (e.g., MQTT broker, MSSQL database) and forwards it to North
+caches. Each connector can manage multiple items, with the nature of each item depending on the connector type (e.g.,
+subscribing to a topic, querying a database).
 
-To add a South connector, navigate to the South page and click the '+' button. Choose one of the available South connector types and
-complete its settings. The form structure may vary based on the selected connector type, but certain principles remain consistent.
+## Adding a South Connector
 
-You can monitor the status of the South connector from its display page or make adjustments to its settings.
+1. Navigate to the **South** page.
+2. Click the **+** button.
+3. Select a connector type and configure its settings.
+4. Monitor or adjust settings from the connector’s display page.
 
-## General settings
+## General Settings
 
-- **Name**: The connector's name serves as a user-friendly label to help you easily identify its purpose.
-- **Description**: You have the option to include a description to provide additional context, such as details about the connection, access
-  rights, or any unique characteristics.
-- **Toggle**: You can enable or disable the connector using the toggle switch. Additionally, you can toggle the connector from either the
-  South connector list or its dedicated display page (accessible via the magnifying glass icon of the list page).
+| Setting         | Description                                                                   |
+| --------------- | ----------------------------------------------------------------------------- |
+| **Name**        | User-friendly label for easy identification.                                  |
+| **Description** | Optional context (connection details, access rights, unique characteristics). |
+| **Enabled**     | Enable/disable the connector from the list or its display page.               |
 
-## Specific section
+## Specific Section
 
-Specific settings for the connector can be found in the respective connector's documentation for more detailed information.
+Refer to each connector’s documentation for type-specific settings.
 
-### Testing connection
+### Testing Connection
 
-The **Test settings** button provides a convenient way to verify and test your connection settings.
+Use the **Test settings** button to verify your connection configuration.
 
-## Item section
+## Item Section
 
-Items are entities responsible for retrieving data from the targeted data source, which can be fetched as either files or JSON payloads. A
-South connector can handle several items. When editing an item, you'll need to provide the following information:
+Items retrieve data as files or JSON payloads. Each item requires:
 
-- **Name**: The item's name serves as a reference for North target applications. It must be unique within a given South connector.
-- **Scan mode**: The [scan mode](../engine/scan-modes.mdx) indicates to OIBus when to request data. Some connectors (such as MQTT or OPCUA)
-  may have a `subscription` scan mode where the broker (MQTT) or server (OPCUA) sends data to OIBus.
-- **Specific settings** for items may vary based on the connector type.
+| Setting               | Description                                                                |
+| --------------------- | -------------------------------------------------------------------------- |
+| **Name**              | Unique reference for North target applications.                            |
+| **Scan mode**         | Determines when OIBus requests data (e.g., `subscription` for MQTT/OPCUA). |
+| **Specific settings** | Varies by connector type.                                                  |
 
-Additionally, each item can be disabled either from the item's edit form or from the connector's display page. When an item is disabled, it
-will not be requested by the connector.
+### Item Actions
 
-### Testing an item
+- **Disable/Enable**: Toggle from the item’s edit form or the connector’s display page.
+- **Test**: Verify item settings and results from the edit/create modal.
+  > **Tip**: Test connection settings before testing items.
 
-The settings of an item and its result can be tested using the associated button, which is accessible from the edit or create modal of the
-item.
+### Import/Export Items
 
-:::tip
-Ensure the connection settings have been successfully tested before proceeding to test the item.
-:::
+- **Export**: Download items as a CSV with columns: `name`, `enabled`, `scanMode`, and `settings_*`.
+- **Import**: Use a CSV template (export an existing list for reference).
+  > **Note**: The system validates for duplicates and correct formatting before adding items.
 
-### Item export
+## Max Instant and Scan Mode Management
 
-You can export items into a CSV file with the following columns:
+History-capable South connectors track the last `max_instant` in the `cache.db` database. Behavior varies by connector:
 
-- **name**: The name of the item.
-- **enabled**: A value of 1 if the item is enabled, or 0 if it's disabled.
-- **scanMode**: The name of the scan mode.
-- **settings\_\***: All specific settings for the item.
+- **Database connectors**: Always use `Max instant per item` internally.
+- **OPCUA** (HA mode), **OPC Classic** (HDA mode), **OSIsoft PI**: Choose between per-item or grouped `max_instant`.
 
-The exported file will be named after the connector: `connector.csv`.
+This section explains how OIBus manages the `max_instant` value when you modify the connector or item configuration. The
+behavior depends on whether **Max instant per item** is enabled or disabled, and the specific action you perform (e.g.,
+changing scan modes, removing items, or deleting the connector).
 
-### Item import
+### Max Instant Per Item: **Enabled**
 
-You can import items from a CSV file. To do this, it's recommended to first export a list of items so that you have a properly formatted
-file to use as a template for importing.
+- **Change scan mode**: Removes the old cache entry for the item and creates a new entry using the previous `max_instant`.
+- **Remove item**: Deletes the cache entry for this specific item.
+- **Remove connector**: Deletes all linked items and their associated cache entries.
 
-:::info
-When you upload a CSV file, the system will perform checks for duplicates and validate the settings. After the validation process,
-all correctly formatted items will be added.
-:::
+### Max Instant Per Item: **Disabled**
 
-### Changing scan mode and max instant issue
+When disabled, **all items sharing the same scan mode use a single `max_instant`**. This is especially useful for connectors where multiple data points are stored or updated simultaneously (e.g., OPCUA), as it ensures consistent timestamp tracking across items.
 
-History-capable South connectors maintain a record of the last maximum instant in the `cache.db` database's `cache_history` table. This
-section provides an in-depth explanation of how the max instant, associated with scan modes and items, operates.
+In this mode, the `max_instant` is tied to the **scan mode**, not individual items.
 
-For Database South connectors, the `Max instant per item` option is always enabled and cannot be changed. In South connectors like OPCUA (in
-HA mode), users have the choice to maintain one max instant per item, even if they share the same scan mode, or to group items with the same
-scan mode together, resulting in a single max instant.
+- **Change scan mode**:
+  - If the new scan mode has **no existing entry**: Removes the old entry (if no other items use it) and creates a new entry with the previous `max_instant`.
+  - If new scan mode **already has an entry**: No new entry; uses existing `max_instant`.
+    > **Warning**: Changing scan modes may cause duplicate queries or data loss if `max_instant` differs
+    > significantly.
+- **Remove item**: Deletes cache entry only if no other items use the same scan mode.
+- **Remove connector**: Deletes all items and cache entries.
 
-#### Max instant per item is `enabled`
+### Transitioning Between Modes (Max Instant Per Item)
 
-##### Change an item’s scan mode
+- **Disabled → Enabled**: Removes grouped cache entries, creates per-item entries with previous `max_instant`.
+- **Enabled → Disabled**: Removes per-item entries, creates grouped entries with the latest `max_instant` per scan mode.
+  > **Warning**: Data loss may occur if `max_instant` values differ.
 
-Changing an item's scan mode results in the removal of the previous cache entry and the creation of a new cache entry, utilizing the
-preceding `max_instant`.
+---
 
-- Example: changing the scan mode of item1 from `scan_prev` to `scan_new`.
+## Example Scenarios
 
-  **`cache_history` table (in `cache.db` database) before change** | south_id | scan_mode_id | item_id | max_instant |
-  |----------|--------------|---------|--------------------------| | south1 | scan_prev | item1 | 2024-02-16T00:00:00.000Z |
+### Max Instant Per Item: Enabled
 
-  **`cache_history` table (in `cache.db` database) after change** | south_id | scan_mode_id | item_id | max_instant |
-  |----------|--------------|---------|--------------------------| | south1 | scan_new | item1 | 2024-02-16T00:00:00.000Z |
+**Before**:
+| south_id | scan_mode_id | item_id | max_instant |
+|----------|--------------|---------|---------------------------|
+| south1 | scan_prev | item1 | 2024-02-16T00:00:00.000Z |
+| south1 | scan_prev | item2 | 2024-02-16T00:00:00.000Z |
 
-##### Remove an item
-
-It deletes the item from the `south_items` table in the `config.db` database and the corresponding entry from the `cache_history` table in
-the `cache.db` database.
-
-##### Remove the south
-
-It removes all linked items from the `south_items` table in the `config.db` database and their associated entries from the `cache_history`
-table in the `cache.db` database.
-
-#### Max instant per item is `disabled`
-
-##### Change an item’s scan mode
-
-- Example: The new scan mode is not present in the `cache_history` table (in `cache.db` database) It removes the previous cache entry, but
-  **only if there are no other items utilizing the previous scan mode**. Subsequently, it creates a new cache entry, utilizing the previous
-  **max_instant**.
-
-  **`south_items` table (in `config.db` database) before change** | south_id | scan_mode_id | item_id |
-  |----------|--------------|---------| | south1 | scan_prev | item1 | | south1 | scan_prev | item2 |
-
-  **`cache_history` table (in `cache.db` database) before change** | south_id | scan_mode_id | item_id | max_instant |
-  |----------|--------------|---------|--------------------------| | south1 | scan_prev | all | 2024-02-16T00:00:00.000Z |
-
-  **`south_items` table (in `config.db` database) after change** | south_id | scan_mode_id | item_id | |----------|--------------|---------|
-  | south1 | scan_new | item1 | | south1 | scan_prev | item2 |
-
-  **`cache_history` table (in `cache.db` database) after change** | south_id | scan_mode_id | item_id | max_instant |
-  |----------|--------------|---------|--------------------------| | south1 | scan_new | all | 2024-02-16T00:00:00.000Z | | south1 |
-  scan_prev | all | 2024-02-16T00:00:00.000Z |
-
-  In this scenario, a new cache entry is generated (`south1 → scan_new`), but the old one (`south1 → scan_prev`) is retained because `item2`
-  still employs the previous scan mode.
-
-  :::info
-
-- If `item1` was the sole item using `scan_prev`, the `south1 → scan_prev` entry would have been deleted. Consequently, if the scan
-  mode for `item1` is reverted to `scan_prev`, it will adopt the `max_instant` of the `scan_new`. However, if the `south1 → scan_prev`
-  combination still exists, please refer to the next case.
-- :::
-
-- Example: The new scan mode is present in the `cache_history` table (in `cache.db` database) It removes the previous cache entry, but
-  **only if there are no other items using the previous scan mode**, and it will **not** create a new cache entry nor update the existing
-  `max_instant`.
-
-  **`south_items` table (in `config.db` database) before change** | south_id | scan_mode_id | item_id |
-  |----------|--------------|---------| | south1 | scan_prev | item1 | | south1 | scan_prev | item2 | | south1 | scan_new | item3 |
-
-  **`cache_history` table (in `cache.db` database) before change** | south_id | scan_mode_id | item_id | max_instant |
-  |----------|--------------|---------|--------------------------| | south1 | scan_new | all | 2024-01-16T00:00:00.000Z | | south1 |
-  scan_prev | all | 2024-02-16T00:00:00.000Z |
-
-  **`south_items` table (in `config.db` database) after change** | south_id | scan_mode_id | item_id | |----------|--------------|---------|
-  | south1 | **scan_new** | item1 | | south1 | scan_prev | item2 | | south1 | scan_new | item3 |
-
-  **`cache_history` table (in `cache.db` database) after change** | south_id | scan_mode_id | item_id | max_instant |
-  |----------|--------------|---------|--------------------------| | south1 | scan_new | all | 2024-01-16T00:00:00.000Z | | south1 |
-  scan_prev | all | 2024-02-16T00:00:00.000Z |
-
-  In this case, a new cache entry is **not** created (`south1 → scan_new`) because it already exists in the table. Additionally, `scan_prev`
-  is not removed because `item2` still utilizes it.
-
-:::info
-If `item1` was the only item using `scan_prev`, the `south1 → scan_prev` entry would have been removed.  
-:::
-
-However, two issues arise:
-
-- `item1` is now utilizing a `max_instant` that is one month in the past compared to its previous `max_instant`. This results in duplicate
-  queries between the two `max_instant`. As `item1` transitions from `scan_prev` ( 2024-02-16) to `scan_new` (2024-01-16), it
-  retroactively processes data for the previous month.
-- Conversely, the same situation can occur in the opposite manner, resulting in a month's worth of data not being retrieved.
-
-##### Remove an item
-
-It deletes the cache entry in the `cache.db` database **only if there are no other items utilizing the same scan mode as the item**.
-
-##### Remove the south
-
-It removes all linked items from the `south_items` table in the `config.db` database and their associated entries from the `cache_history`
-table in the `cache.db` database.
-
-#### Max instant per item `disabled`→`enabled`
-
-It removes all cache entries with item_id `all` linked to the south, and it creates new cache entries for each item. The `max_instant` of
-these new entries will be the `max_instant` of the previously removed ones, based on scan mode.
-
-- Example **`south_items` table (in `config.db` database) before change** | south_id | scan_mode_id | item_id |
-  |----------|--------------|---------| | south1 | scan_prev | item1 | | south1 | scan_prev | item2 | | south1 | scan_new | item3 |
-
-  **`cache_history` table (in `cache.db` database) before change** | south_id | scan_mode_id | item_id | max_instant |
-  |----------|--------------|---------|--------------------------| | south1 | scan_new | all | 2024-01-16T00:00:00.000Z | | south1 |
-  scan_prev | all | 2024-02-16T00:00:00.000Z |
-
-  **`south_items` table (in `config.db` database) after change** | south_id | scan_mode_id | item_id | |----------|--------------|---------|
-  | south1 | scan_new | item1 | | south1 | scan_prev | item2 | | south1 | scan_new | item3 |
-
-  **`cache_history` table (in `cache.db` database) after change** | south_id | scan_mode_id | item_id | max_instant |
-  |----------|--------------|---------|--------------------------| | south1 | scan_prev | item1 | 2024-02-16T00:00:00.000Z | | south1 |
-  scan_prev | item2 | 2024-02-16T00:00:00.000Z | | south1 | scan_new | item3 | 2024-01-16T00:00:00.000Z |
-
-#### Max instant per item `enabled`→`disabled`
-
-It removes all cache entries associated with the south and establishes new cache entries for the scan modes utilized by the items. Only one
-entry is added per scan mode. Each new cache entry will have the **latest** `max_instant` from the list of previous items using the scan
-mode of that entry.
-
-- Example **`south_items` table (in `config.db` database) before change** | south_id | scan_mode_id | item_id |
-  |----------|--------------|---------| | south1 | scan_prev | item1 | | south1 | scan_prev | item2 | | south1 | scan_new | item3 |
-
-  **`cache_history` table (in `cache.db` database) before change** | south_id | scan_mode_id | item_id | max_instant |
-  |----------|--------------|---------|--------------------------| | south1 | scan_prev | item1 | 2024-02-16T00:00:00.000Z | | south1 |
-  scan_prev | item2 | 2024-02-20T00:00:00.000Z | | south1 | scan_new | item3 | 2024-01-16T00:00:00.000Z |
-
-  **`south_items` table (in `config.db` database) after change** | south_id | scan_mode_id | item_id | |----------|--------------|---------|
-  | south1 | scan_new | item1 | | south1 | scan_prev | item2 | | south1 | scan_new | item3 |
-
-  **`cache_history` table (in `cache.db` database) after change** | south_id | scan_mode_id | item_id | max_instant |
-  |----------|--------------|---------|--------------------------| | south1 | scan_new | all | 2024-01-16T00:00:00.000Z | | south1 |
-  scan_prev | all | 2024-02-20T00:00:00.000Z |
-
-  In this case the `max_instant` for `scan_prev` is set to 2024-02-20 instead of 2024-02-16, because it’s a newer date. It may cause data
-  loss.
+**After changing scan mode**:
+| south_id | scan_mode_id | item_id | max_instant |
+|----------|--------------|---------|---------------------------|
+| south1 | scan_new | item1 | 2024-02-16T00:00:00.000Z |
+| south1 | scan_prev | item2 | 2024-02-16T00:00:00.000Z |
+
+### Max Instant Per Item: Disabled
+
+**Before**:
+| south_id | scan_mode_id | item_id | max_instant |
+|----------|--------------|---------|---------------------------|
+| south1 | scan_prev | all | 2024-02-16T00:00:00.000Z |
+
+**After changing scan mode**:
+| south_id | scan_mode_id | item_id | max_instant |
+|----------|--------------|---------|---------------------------|
+| south1 | scan_new | all | 2024-02-16T00:00:00.000Z |

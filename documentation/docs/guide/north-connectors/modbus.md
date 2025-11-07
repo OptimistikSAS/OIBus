@@ -12,18 +12,18 @@ The **Modbus North Connector** enables OIBus to **write data to Modbus-compatibl
 
 ### Connection Configuration
 
-| Setting            | Description                                                   |
-| ------------------ | ------------------------------------------------------------- |
-| **Host**           | IP address of the Modbus server/device (e.g., `127.0.0.1`)    |
-| **Port**           | Port number for the Modbus connection (default: `502`)        |
-| **Retry interval** | Delay between retries for failed operations (in milliseconds) |
-| **Slave ID**       | Modbus slave device ID (typically `1` for master devices)     |
-| **Address offset** | Address offset type (Modbus, JBus)                            |
+| Setting            | Description                                                                                                              | Example Value   |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------ | --------------- |
+| **Host**           | IP address or hostname of the Modbus server machine.                                                                     | `192.168.1.100` |
+| **Port**           | Port to use for connection (502 by default).                                                                             | `502`           |
+| **Retry interval** | Time to wait (in ms) between reconnections after a connection failure.                                                   | `5000`          |
+| **Slave ID**       | Identifies the Modbus source machine (default is 1).                                                                     | `1`             |
+| **Address offset** | For most PLCs, there is no offset (Modbus option). Some PLCs may start the address range at 1 instead of 0 (JBus option) | `Modbus`        |
 
 ### Data Format Options
 
-| Setting        | Description                                                    |
-| -------------- | -------------------------------------------------------------- |
-| **Endianness** | Byte order for multi-byte values (Big endian or Little endian) |
-| **Swap Bytes** | Enable to swap byte order in 16-bit registers                  |
-| **Swap Words** | Enable to swap word order in 32-bit registers                  |
+| Setting        | Description                                                                                  |                  |
+| -------------- | -------------------------------------------------------------------------------------------- | ---------------- |
+| **Endianness** | Specifies the type of bit encoding (Big Endian or Little Endian).                            | `Big Endian`     |
+| **Swap Bytes** | Determines whether the bytes within a group of 16 bits (a word) should be inverted or not.   | Enabled/Disabled |
+| **Swap Words** | Indicates whether the words (16-bit groups) should be inverted or not within a 32-bit group. | Enabled/Disabled |

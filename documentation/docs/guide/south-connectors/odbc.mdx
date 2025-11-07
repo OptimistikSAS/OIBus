@@ -1,83 +1,71 @@
----
-sidebar_position: 14
----
-
 import ItemSettings from './_south-sql-item-settings.mdx';
 import ThrottlingSettings from './_throttling-settings.mdx';
 
 # ODBC
 
-Send SQL queries to a local ODBC driver or to a remote [OIBus Agent](../oibus-agent/odbc.md) that can manage ODBC queries on the same
-machine as the server.
+Connect to ODBC data sources either locally or through a remote [OIBus Agent](../oibus-agent/odbc.md). Particularly useful for systems like Aspen InfoPlus.21® (IP21) and other ODBC-compatible applications.
 
-The OIBus agent can be installed separately, as specified in its [documentation](../oibus-agent/installation).
+:::info Compatibility Notes
 
-This connector proves valuable when retrieving data from Aspen InfoPlus.21® (IP21) ODBC interfaces or other ODBC-compatible applications.
+- Works with any ODBC-compatible data source
+- Recommended for Aspen IP21 connections
+- Supports both local and remote driver configurations
 
-## Specific settings
-
-- **Use remote agent**: If disabled, ensure that an ODBC [driver is installed](#driver-installation) on the machine where OIBus is deployed.
-  Alternatively, you can opt to [install an OIBus agent](../oibus-agent/installation) on a remote machine equipped with the necessary
-  drivers.
-- **Remote agent URL**: Specify the URL of the remote OIBus agent, e.g., `http://ip-address-or-host:2224`.
-- **Connection timeout**: Timeout setting for establishing the connection.
-- **Retry interval**: Time to wait before retrying connection.
-- **Request timeout**: Determine the timeout duration for each query.
-- **Connection string**: The ODBC connection string.
-- **Password**: The authentication password, securely stored within OIBus configuration. If directly included in the connection string, the
-  password will be stored in plain text. When a password is used, OIBus appends `PWD=<password>` to the end of the connection string.
-
-Please ensure that the ODBC connection string adheres to the specified driver format, and it is imperative to have the driver specified in
-the connection string correctly installed.
-
-:::tip ODBC connection string example
-`Driver={driver name};SERVER=localhost,10014;TrustServerCertificate=yes;Database=test;UID=oibus;PWD=<secret>`
-
-The driver is either the name of the driver (Windows) or the path of the driver file (unix like systems). The port is optional, and can be
-replaced by `PORT=10014` (be sure to replace the comma `,` by a semicolon `;`).
 :::
+
+## Specific Settings
+
+| Setting            | Description                                      | Default Value | Notes                                                          |
+| ------------------ | ------------------------------------------------ | ------------- | -------------------------------------------------------------- |
+| Use remote agent   | Enable to use OIBus Agent on remote machine      | Disabled      | Requires [agent installation](../oibus-agent/installation.mdx) |
+| Remote agent URL   | Agent endpoint (e.g., `http://host:2224`)        | -             | Required when using remote agent                               |
+| Connection timeout | Maximum time (ms) to establish connection        | 15000         | Recommended: 5000-15000ms                                      |
+| Retry interval     | Time (ms) to wait before retrying connection     | 10000         |                                                                |
+| Connection string  | ODBC connection string in driver-specific format | -             | See examples below                                             |
+| Password           | Authentication password (stored securely)        | -             | Added as `PWD=<password>` if not in string                     |
+
+### Connection String Examples
+
+**Windows**:
+`Driver={driver name};SERVER=host;PORT=10014;Database=db;UID=user`
+
+> Example: `Driver={AspenTech SQLplus};HOST=ip21-server;PORT=10014;MAXROWS=12000000`
+
+**UNIX-like systems**:
+`Driver=/path/to/driver.so;SERVER=host;PORT=10014;Database=db;UID=user`
+
+> Example: `Driver=/opt/lib/libmsodbcsql.18.dylib;SERVER=localhost;Database=test`
+
+:::tip macOS Setup
+
+1. Install unixodbc: `brew install unixodbc`
+2. Verify installation: `odbcinst -j`
+3. List drivers: `cat /opt/homebrew/etc/odbcinst.ini`
+   :::
 
 ### Driver Installation
 
-On Windows, you can conveniently access the ODBC driver management tool, where you can specify the driver's name in the connection string,
-such as `MySQL ODBC 3.51 driver` or `SQL Server`.
+| Platform   | Installation Method                                        |
+| ---------- | ---------------------------------------------------------- |
+| Windows    | Use ODBC Data Source Administrator to configure drivers    |
+| UNIX/Linux | Install driver then specify full path in connection string |
+| macOS      | `brew install unixodbc` + driver installation              |
 
-On UNIX-like systems, you should first install the driver on your machine and then specify the driver's path in the connection string, like
-`/opt/lib/libmsodbcsql.18.dylib`, for example.
+### Aspen IP21 Configuration
 
-:::info ODBC diver on macOS
+For optimal IP21 performance:
 
-Install unixodbc: `brew install unixodbc`
+1. Install OIBus Agent on IP21 machine
+2. Use connection string: `Driver={AspenTech SQLplus};HOST=<host>;PORT=10014;MAXROWS=12000000`
+3. Ensure `AspenTech SQLplus` driver is installed on agent machine
+4. Configure agent service with appropriate permissions
 
-Check if the installation was successful and list the ODBC config files: `odbcinst -j`
+:::caution Authentication
 
-Check the installed drivers: `cat /opt/homebrew/etc/odbcinst.ini` :::
+- Passwords in connection strings are stored in plain text. Use **Password** field instead.
+- For local authentication, ensure OIBus Agent runs with proper permissions
 
-### Using OIBus with Aspen InfoPlus.21® (IP21)
-
-ODBC connections often suffer from latency issues, particularly during large historian queries, such as those involving IP21. This can place
-a heavy load on both the network and the server.
-
-To mitigate these challenges, we recommend installing the OIBus Agent as a service on the same machine as IP21. OIBus can then transmit
-queries to its agent using the HTTP protocol, and the agent can communicate directly with IP21 using ODBC, eliminating network latency.
-
-Of course, it's essential to ensure that the appropriate ODBC driver is installed **on the agent machine** and specified correctly in the
-connection string.
-
-:::tip IP21 ODBC driver
-To establish a connection to IP21 via ODBC, you will need the `AspenTech SQLplus` driver installed on your machine.
-Please ensure that this driver is correctly installed.
 :::
-
-:::caution ODBC Access
-Authentication can be handled either through the connection string or locally. When choosing local authentication,
-it's important to ensure that the OIBus agent runs with the appropriate permissions. You may need to run the service as a different user,
-which can be configured through the service management window.
-:::
-
-The following connection string works with a basic IP21 installation: `Driver={AspenTech SQLplus};HOST=<host>;PORT=10014;MAXROWS=12000000`
-
-In this example, the variable `MAXROWS` is used to customize the maximum number of rows return by IP21.
 
 <ThrottlingSettings />
 <ItemSettings />

@@ -1,67 +1,54 @@
----
-sidebar_position: 11
----
-
 import ItemSettings from './_south-sql-item-settings.mdx';
 import ThrottlingSettings from './_throttling-settings.mdx';
 
 # Oracle Database™
 
-Query data from an Oracle Database™.
+Connect to and query Oracle Database™ using OIBus with support for both thin and thick connection modes.
+
+## Version Compatibility
+
+| Oracle DB Version | Thin Mode | Thick Mode | Notes                              |
+| ----------------- | --------- | ---------- | ---------------------------------- |
+| 19c+              | ✅        | ✅         | Recommended                        |
+| 12.2 (12c R2)     | ✅        | ✅         | Minimum for thin mode              |
+| 12.1 (12c R1)     | ⚠️        | ✅         | Thin mode not officially supported |
+| 11.2 (11g R2)     | ❌        | ✅         | Minimum for thick mode             |
+| 10g or older      | ❌        | ❌         | Not compatible                     |
 
 ## Specific Settings
 
-To configure the SQL connector for querying an Oracle Server, provide the following details:
+| Setting               | Description                                                          | Default Value | Notes                                |
+| --------------------- | -------------------------------------------------------------------- | ------------- | ------------------------------------ |
+| Thick mode            | Uses Oracle Client Library for database access                       | Disabled      | Requires Instant Client installation |
+| Oracle Client Library | Path to Oracle Instant Client (e.g., `C:\oracle\instantclient_23_5`) | -             | Required for thick mode              |
+| Host                  | Address of the Oracle server                                         | -             |                                      |
+| Port                  | Server port                                                          | 1521          | Standard Oracle port                 |
+| Connection timeout    | Maximum time (ms) to establish connection                            | 15000         | Recommended: 5000-30000ms            |
+| Database              | Name/SID of the target database                                      | -             |                                      |
+| Username              | Authentication username                                              | -             |                                      |
+| Password              | Authentication password                                              | -             |                                      |
 
-- **Thick mode**: When enabled, uses the Oracle Client Library to access the database. More details
-  [here](https://node-oracledb.readthedocs.io/en/latest/user_guide/introduction.html#node-oracledb-thick-mode-architecture).
-  - **Oracle Client Library**: Path to the installed Oracle Client Library on the host machine. Specify the repository that contains the
-    library, for example `C:\oracle\instantclient_23_5`
-- **Host**: Address of the Oracle server.
-- **Port**: Server port (default is `1521`).
-- **Connection timeout**: Maximum time allowed to establish the connection (in ms).
-- **Database**: Name of the target database.
-- **Username**: Username for authentication.
-- **Password**: Corresponding password.
+### Connection Modes
 
-:::tip Thin vs. Thick Mode
-OIBus supports both _thin_ and _thick_ modes via the `oracledb` driver. Thin mode does **not** require the Oracle
-Instant Client, making it easier to set up (no native binaries, no `LD_LIBRARY_PATH` — just pure JavaScript). Refer to the compatibility
-matrix below to determine which mode is appropriate for your Oracle version.
-:::
+| Mode  | Description                    | Requirements         | Benefits                       |
+| ----- | ------------------------------ | -------------------- | ------------------------------ |
+| Thin  | Pure JavaScript implementation | None                 | Easy setup, no native binaries |
+| Thick | Uses Oracle Client Library     | Instant Client 18.5+ | Full feature support           |
 
-### Oracle Database Version Compatibility with OIBus
+:::info Oracle Instant Client
 
-| Oracle DB Version | Thin Mode Support           | Thick Mode Support (with Instant Client) | Notes                                    |
-| ----------------- | --------------------------- | ---------------------------------------- | ---------------------------------------- |
-| **19c or newer**  | ✅ Supported                | ✅ Supported                             | Recommended version                      |
-| **12.2** (12c R2) | ✅ Supported                | ✅ Supported                             | Minimum version for thin mode            |
-| **12.1** (12c R1) | ⚠️ Not officially supported | ✅ Supported                             | Thin mode may work but is not guaranteed |
-| **11.2** (11g R2) | ❌ Not supported            | ✅ Supported (with Instant Client 11.2+) | Minimum version for thick mode           |
-| **10g or older**  | ❌ Not supported            | ❌ Not supported                         | Not compatible with OIBus                |
+- **Required only for thick mode**
+- Minimum version: 18.5.0.0.0
+- Supports Oracle Database 11.2+
+- Download: [Oracle Instant Client](https://www.oracle.com/database/technologies/instant-client.html)
+  :::
 
-## Oracle Instant Client
+:::tip Security Best Practices
 
-Oracle Instant Client is **only required for thick mode**.
+- Use a read-only database user
+- Prefer thin mode when possible for simpler deployment
 
-In thick mode, OIBus’s compatibility with Oracle Database versions depends on the version of the Oracle Instant Client in use.
-
-According to Oracle’s client-server interoperability policy, Oracle Instant Client 18.x can connect to Oracle Database **11.2 and newer**.
-
-:::caution Minimum Oracle Instant Client Version
-The minimum supported version for Oracle Instant Client (Basic or Basic Light) is
-**18.5.0.0.0**.
-:::
-
-You can download the Oracle Instant Client [here](https://www.oracle.com/fr/database/technologies/instant-client/winx64-64-downloads.html).
-
-Thus, when using Oracle Instant Client 18.5.0.0.0 with OIBus, compatibility is ensured for Oracle Database **11.2 and above**.
-
-:::tip Best Practice for Database Access
-For security and data integrity, it is strongly recommended to use a **read-only** user when
-connecting to the database.
 :::
 
 <ThrottlingSettings />
-
 <ItemSettings />

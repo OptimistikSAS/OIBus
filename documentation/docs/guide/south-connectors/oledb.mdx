@@ -1,25 +1,27 @@
----
-sidebar_position: 15
----
-
 import ItemSettings from './_south-sql-item-settings.mdx';
 import ThrottlingSettings from './_throttling-settings.mdx';
 
 # OLEDB
 
-Send SQL queries to a remote [OIBus Agent](../oibus-agent/oledb.md) that can manage OLEDB queries on the same machine as the server.
+Connect to OLEDB data sources through a remote [OIBus Agent](../oibus-agent/oledb.md). Particularly useful for systems like OSIsoft PI System™ and other OLEDB-compatible applications.
 
-The OIBus agent can be installed separately, as specified in its [documentation](../oibus-agent/installation).
+:::info Compatibility Notes
 
-This connector proves valuable when retrieving data from OSIsoft PI System™ OLEDB interfaces or other OLEDB-compatible applications.
+- Requires OIBus Agent installation on target machine
+- Supports all OLEDB-compatible data sources
+- Optimized for OSIsoft PI System™ connections
 
-## Specific settings
+:::
 
-- **Remote agent URL**: Specify the URL of the remote OIBus agent, e.g., http://ip-address-or-host:2224.
-- **Connection timeout**: Timeout setting for establishing the connection.
-- **Request timeout**: Determine the timeout duration for each query.
-- **Retry interval**: Time to wait before retrying connection.
-- **Connection string**: The OLEDB connection string.
+## Specific Settings
+
+| Setting            | Description                                         | Default Value | Notes                              |
+| ------------------ | --------------------------------------------------- | ------------- | ---------------------------------- |
+| Remote agent URL   | Agent endpoint (e.g., `http://host:2224`)           | -             | Required for remote connections    |
+| Connection timeout | Maximum time (ms) to establish connection           | 15000         | Recommended: 5000-30000ms          |
+| Retry interval     | Time (ms) to wait before retrying connection        | 10000         |                                    |
+| Request timeout    | Maximum execution time (ms) for individual queries  | 15000         | Adjust for large historian queries |
+| Connection string  | OLEDB connection string in provider-specific format | -             | See examples below                 |
 
 <ThrottlingSettings />
 <ItemSettings />
