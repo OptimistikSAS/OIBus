@@ -1,0 +1,44 @@
+---
+sidebar_position: 3
+---
+
+import IPFilterTester from '../../../src/components/IPFilterTester/index';
+
+# IP Filters
+
+By default, OIBus only allows local access. If you need to access OIBus from a remote workstation, you must add the remote IP address.
+
+OIBus supports both **IPv4** and **IPv6** formats. Ensure the IP address is correctly specified.
+
+## Allow Remote Access
+
+To allow access from a remote IP address, you can use the following `curl` command with the default credentials:
+
+```bash title="Allow all IP addresses"
+curl --location 'http://localhost:2223//api/ip-filters' \
+--header 'Content-Type: application/json' \
+--header 'Accept: application/json' \
+--data '{
+  "address": "*",
+  "description": "Allow all traffic"
+}'
+```
+
+:::info
+For a complete list of available endpoints, visit the [API documentation page](../../api/index.mdx).
+:::
+
+:::danger
+Allowing all IP addresses (`"address": "*"`) can be risky, especially when using the [proxy server](./engine-settings.mdx#proxy-server). The proxy forwards requests without authentication, so it is safer to restrict access to trusted IP addresses.
+:::
+
+:::tip Best Practices
+
+- Restrict access to trusted IP addresses.
+- Avoid using "\*" in production environments.
+
+:::
+
+## Test IP Filter Rules
+
+<IPFilterTester />

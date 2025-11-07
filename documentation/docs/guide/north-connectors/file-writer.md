@@ -1,25 +1,37 @@
----
-sidebar_position: 2
----
-
 # File Writer
 
-Write files and data to the output folder.
+The **File Writer North Connector** writes files and data to a specified output folder on disk. This connector is useful
+for local storage, data processing pipelines, or integration with file-based systems.
 
-## Specific settings
+## Specific Settings
 
-- **Output folder**: This is the directory where files will be stored. In the case of a relative path, it is computed based on the **Data
-  folder** mentioned in the _About_ section.
-- **Prefix filename**: You can include a prefix to be added to the filename.
-- **Suffix filename**: You have the option to append a suffix to the filename, which appears just before the file extension.
+| Setting           | Description                                                                                                           |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------- |
+| **Output folder** | Directory where files will be stored. Relative paths are resolved based on the **Data folder** (see _About_ section). |
 
-:::tip
-Prefix and suffix options can incorporate the internal variables `@ConnectorName` and `@CurrentDate`. For instance, when using
-`@ConnectorName-` as a prefix and `-@CurrentDate` as a suffix, a filename like _example.file_ will result in an output format of
-`<ConnectorName>-example-<CurrentDate>.file`, where `<CurrentDate>` will be replaced with the current date and time in the
-**yyyy_MM_dd_HH_mm_ss_SSS** format.
+### File Naming Options
+
+| Setting             | Description                                                                                             |
+| ------------------- | ------------------------------------------------------------------------------------------------------- |
+| **Prefix filename** | Text to prepend to the filename. Supports internal variables like `@ConnectorName`.                     |
+| **Suffix filename** | Text to append to the filename (before the extension). Supports internal variables like `@CurrentDate`. |
+
+:::tip Dynamic Filenames
+Use internal variables to create dynamic filenames:
+
+- `@ConnectorName`: Inserts the name of the connector.
+- `@CurrentDate`: Inserts the current timestamp in `yyyy_MM_dd_HH_mm_ss_SSS` format.
+
+**Example**:
+With prefix `@ConnectorName-` and suffix `-@CurrentDate`, a file named `example.file` becomes:
+`<ConnectorName>-example-<CurrentDate>.file`
 :::
 
-## OIBus Time values
+## Best Practices
 
-OIBus time values are converted into CSV format before being written to disk.
+- Use **absolute paths** for the output folder to avoid ambiguity.
+- Create a **dedicated directory** for each connector to keep files organized.
+- Combine with [transformers](./common-settings#transformers) to:
+  - Convert data to other formats (e.g., JSON, CSV).
+  - Filter or enrich data before writing.
+- Monitor disk space usage, especially when processing large volumes of data.

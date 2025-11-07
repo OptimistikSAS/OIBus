@@ -1,29 +1,36 @@
----
-sidebar_position: 3
----
-
 # SFTP
 
-Upload files and data to an SFTP server.
+The **SFTP North Connector** securely uploads files and data to an **SFTP (SSH File Transfer Protocol) server**.
 
-## Specific settings
+## Specific Settings
 
-- **Host**: IP address or hostname of the SFTP server machine.
-- **Port**: The port to use for connection (8080 by default).
-- **Authentication**:
-  - Password: The username and password
-  - Private key: The username and the path of the private key (PEM format). A passphrase can be used with the private key.
-- **Remote folder**: This is the directory where files will be stored.
-- **Prefix**: You can include a prefix to be added to the filename.
-- **Suffix**: You have the option to append a suffix to the filename, which appears just before the file extension.
+| Setting  | Description                                |
+| -------- | ------------------------------------------ |
+| **Host** | IP address or hostname of the SFTP server. |
+| **Port** | Port for the connection (default: **22**). |
 
-:::tip
-Prefix and suffix options can incorporate the internal variables `@ConnectorName` and `@CurrentDate`. For instance, when using
-`@ConnectorName-` as a prefix and `-@CurrentDate` as a suffix, a filename like _example.file_ will result in an output format of
-`<ConnectorName>-example-<CurrentDate>.file`, where `<CurrentDate>` will be replaced with the current date and time in the
-**yyyy_MM_dd_HH_mm_ss_SSS** format.
+### Authentication Methods
+
+| Method                | Description                                      | Required Parameters                               |
+| --------------------- | ------------------------------------------------ | ------------------------------------------------- |
+| **Username/Password** | Standard username/password authentication.       | Username, Password                                |
+| **Private Key**       | Authentication using a private key (PEM format). | Username, Private Key Path, (Optional) Passphrase |
+
+### File Configuration
+
+| Setting           | Description                                                                                             |
+| ----------------- | ------------------------------------------------------------------------------------------------------- |
+| **Remote folder** | Directory on the SFTP server where files will be stored.                                                |
+| **Prefix**        | Text to prepend to the filename. Supports internal variables like `@ConnectorName`.                     |
+| **Suffix**        | Text to append to the filename (before the extension). Supports internal variables like `@CurrentDate`. |
+
+:::tip Dynamic Filenames
+Use internal variables to create dynamic filenames:
+
+- `@ConnectorName`: Inserts the name of the connector.
+- `@CurrentDate`: Inserts the current timestamp in `yyyy_MM_dd_HH_mm_ss_SSS` format.
+
+**Example**:
+With prefix `@ConnectorName-` and suffix `-@CurrentDate`, a file named `example.file` becomes:
+`<ConnectorName>-example-<CurrentDate>.file`
 :::
-
-## OIBus Time values
-
-OIBus time values are converted into CSV format before being sent to the SFTP server.

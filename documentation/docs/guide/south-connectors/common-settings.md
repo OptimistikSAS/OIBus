@@ -35,7 +35,7 @@ Items are entities responsible for retrieving data from the targeted data source
 South connector can handle several items. When editing an item, you'll need to provide the following information:
 
 - **Name**: The item's name serves as a reference for North target applications. It must be unique within a given South connector.
-- **Scan mode**: The [scan mode](../engine/scan-modes.md) indicates to OIBus when to request data. Some connectors (such as MQTT or OPCUA)
+- **Scan mode**: The [scan mode](../engine/scan-modes.mdx) indicates to OIBus when to request data. Some connectors (such as MQTT or OPCUA)
   may have a `subscription` scan mode where the broker (MQTT) or server (OPCUA) sends data to OIBus.
 - **Specific settings** for items may vary based on the connector type.
 

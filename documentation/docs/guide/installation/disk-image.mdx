@@ -79,119 +79,128 @@ for /f "tokens=3 delims=: " %%H in ('sc query "OIBus" ^| findstr "STATE"') do (
 echo OIBus service is now running.
 
 :: Execute the curl command to create North connector
-curl --location 'http://localhost:2223/api/north' \
+curl --location 'http://localhost:2223//api/north?duplicate=string' \
 --header 'Content-Type: application/json' \
---header 'Authorization: Basic YWRtaW46cGFzcw==' \
+--header 'Accept: application/json' \
 --data '{
-    "name": "North OIAnalytics",
-    "type": "oianalytics",
-    "description": "",
-    "enabled": true,
-    "settings": {
-        "useOiaModule": true,
-        "compress": false,
-        "timeout": 15000
+  "name": "North OIAnalytics",
+  "type": "oianalytics",
+  "description": "",
+  "enabled": true,
+  "settings": {
+    "useOiaModule": true,
+    "timeout": 15000,
+    "compress": false
+  },
+  "caching": {
+    "archive": {
+      "retentionDuration": 0,
+      "enabled": false
     },
-    "caching": {
-        "trigger": {
-            "scanModeId": null,
-            "scanModeName": "Every minute",
-            "numberOfElements": 10000,
-            "numberOfFiles": 1
-        },
-        "throttling": {
-            "runMinDelay": 200,
-            "maxSize": 0,
-            "maxNumberOfElements": 50000
-        },
-        "error": {
-            "retryInterval": 5000,
-            "retryCount": 3,
-            "retentionDuration": 72
-        },
-        "archive": {
-            "enabled": false,
-            "retentionDuration": 72
-        }
+    "error": {
+      "retentionDuration": 0,
+      "retryCount": 3,
+      "retryInterval": 5000
     },
-    "subscriptions": []
+    "throttling": {
+      "maxNumberOfElements": 10000,
+      "maxSize": 0,
+      "runMinDelay": 200
+    },
+    "trigger": {
+      "numberOfFiles": 1,
+      "numberOfElements": 1,
+      "scanModeName": "Every minute",
+      "scanModeId": null
+    }
+  },
+  "subscriptions": [],
+  "transformers": []
 }'
 
 :: Execute the curl command to create South connector
-curl --location 'http://localhost:2223/api/south' \
+curl --location 'http://localhost:2223//api/south?duplicate=string' \
 --header 'Content-Type: application/json' \
---header 'Authorization: Basic YWRtaW46cGFzcw==' \
+--header 'Accept: application/json' \
 --data '{
-    "name": "Modbus",
-    "type": "modbus",
-    "description": "Modbus South",
-    "enabled": true,
-    "settings": {
-        "host": "127.0.0.1",
-        "port": 502,
-        "retryInterval": 10000,
-        "slaveId": 1,
-        "addressOffset": "modbus",
-        "endianness": "big-endian",
-        "swapBytesInWords": false,
-        "swapWordsInDWords": false
+  "name": "Production Data Files",
+  "type": "folder-scanner",
+  "description": "Scans production data CSV files",
+  "enabled": true,
+  "settings": {
+    "throttling": {
+      "maxReadInterval": 2203.313621917009,
+      "readDelay": 1249.091912457465,
+      "overlap": 204.89678909715536
     },
-    "items": []
+    "host": "127.0.0.1",
+    "port": 502,
+    "retryInterval": 10000,
+    "slaveId": 1,
+    "addressOffset": "modbus",
+    "endianness": "big-endian",
+    "swapBytesInWords": false,
+    "swapWordsInDWords": true
+  },
+  "items": []
 }'
 
 :: Execute the curl command to create a scan mode
-curl --location 'http://localhost:2223/api/scan-modes' \
+curl --location 'http://localhost:2223//api/scan-modes' \
 --header 'Content-Type: application/json' \
---header 'Authorization: Basic YWRtaW46cGFzcw==' \
+--header 'Accept: application/json' \
 --data '{
-    "name": "Every 5 seconds",
-    "description": "Trigger every 5 seconds",
-    "cron": "*/5 * * * * *"
+  "name": "Daily Backup Scan",
+  "description": "Scans for new backup data every day at midnight",
+  "cron": "0 0 * * *"
 }'
 
 :: Execute the curl command to register OIBus
-curl --location --request PUT 'http://localhost:2223/api/registration' \
+curl --location 'http://localhost:2223//api/oianalytics/register' \
 --header 'Content-Type: application/json' \
---header 'Authorization: Basic YWRtaW46cGFzcw==' \
 --data '{
-    "host": "https://instance_name.optimistik.fr/",
+    "host": "https://instance.oianalytics.com",
     "useProxy": false,
+    "proxyUrl": null,
+    "proxyUsername": null,
+    "proxyPassword": null,
     "acceptUnauthorized": false,
     "commandRefreshInterval": 60,
-    "commandRetryInterval": 5,
-    "messageRetryInterval": 5,
+    "commandRetryInterval": 10,
+    "messageRetryInterval": 10,
     "commandPermissions": {
-        "updateVersion": true,
-        "restartEngine": true,
-        "regenerateCipherKeys": true,
-        "updateEngineSettings": true,
-        "updateRegistrationSettings": true,
-        "createScanMode": true,
-        "updateScanMode": true,
-        "deleteScanMode": true,
-        "createIpFilter": true,
-        "updateIpFilter": true,
-        "deleteIpFilter": true,
-        "createCertificate": true,
-        "updateCertificate": true,
-        "deleteCertificate": true,
-        "createHistoryQuery": true,
-        "updateHistoryQuery": true,
-        "deleteHistoryQuery": true,
-        "createOrUpdateHistoryItemsFromCsv": true,
-        "testHistoryNorthConnection": true,
-        "testHistorySouthConnection": true,
-        "testHistorySouthItem": true,
-        "createSouth": true,
-        "updateSouth": true,
-        "deleteSouth": true,
-        "createOrUpdateSouthItemsFromCsv": true,
-        "testSouthConnection": true,
-        "testSouthItem": true,
-        "createNorth": true,
-        "updateNorth": true,
+        "setpoint": true,
+        "testNorthConnection": true,
         "deleteNorth": true,
-        "testNorthConnection": true
+        "updateNorth": true,
+        "createNorth": true,
+        "testSouthItem": true,
+        "testSouthConnection": true,
+        "createOrUpdateSouthItemsFromCsv": true,
+        "deleteSouth": true,
+        "updateSouth": true,
+        "createSouth": true,
+        "testHistorySouthItem": true,
+        "testHistorySouthConnection": true,
+        "testHistoryNorthConnection": true,
+        "createOrUpdateHistoryItemsFromCsv": true,
+        "deleteHistoryQuery": true,
+        "updateHistoryQuery": true,
+        "createHistoryQuery": true,
+        "deleteCertificate": true,
+        "updateCertificate": true,
+        "createCertificate": true,
+        "deleteIpFilter": true,
+        "updateIpFilter": true,
+        "createIpFilter": true,
+        "deleteScanMode": true,
+        "updateScanMode": true,
+        "createScanMode": true,
+        "updateRegistrationSettings": true,
+        "updateEngineSettings": true,
+        "regenerateCipherKeys": true,
+        "restartEngine": true,
+        "updateVersion": true
     }
 }'
 
@@ -205,3 +214,7 @@ echo OIBus registration completed successfully.
 
 :END
 ```
+
+:::info
+For a complete list of available endpoints, visit the [API documentation page](../../api/index.mdx).
+:::

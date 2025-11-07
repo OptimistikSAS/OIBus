@@ -660,7 +660,7 @@
               "title": "Authentication",
               "access-key": "Access key",
               "sas-token": "SAS token",
-              "aad": "Application Active Directory",
+              "aad": "AAD - Application Active Directory",
               "external": "External"
             },
             "access-key": "Access key",
@@ -711,7 +711,7 @@
             "authentication": {
               "title": "Authentication",
               "none": "None",
-              "basic": "User",
+              "basic": "Username/Password",
               "cert": "Certificate",
               "username": "Username",
               "password": "Password",
@@ -732,12 +732,12 @@
               "accept-unauthorized": "Accept unauthorized",
               "authentication": {
                 "title": "Authentication",
-                "basic": "Access key",
+                "basic": "Access key/Secret",
                 "aad-client-secret": "Azure Active Directory with client secret",
                 "aad-certificate": "Azure Active Directory with certificate"
               },
               "access-key": "Access key",
-              "secret-key": "Secret key",
+              "secret-key": "Secret",
               "tenant-id": "Tenant ID",
               "client-id": "Client ID",
               "client-secret": "Client secret",
@@ -777,7 +777,7 @@
             "authentication": {
               "title": "Authentication",
               "none": "None",
-              "basic": "Password",
+              "basic": "Username/Password",
               "cert": "Certificate"
             },
             "username": "Username",
@@ -818,7 +818,7 @@
             "port": "Port",
             "authentication": {
               "title": "Authentication",
-              "password": "Password",
+              "password": "Username/Password",
               "private-key": "Private key"
             },
             "remote-folder": "Remote folder",

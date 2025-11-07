@@ -2,138 +2,131 @@
 sidebar_position: 1
 ---
 
-# Engine settings
+# Engine Settings
 
-## OIBus port
+## OIBus Name
 
-The default port for accessing OIBus settings through a web interface is 2223, and it is accessible at `http://localhost:2223`. You have the
-option to modify this port in the event of conflicts or for security purposes.
+Naming your OIBus instance is important, especially when managing multiple instances. A clear name helps identify each OIBus in logs, dashboards, and monitoring tools.
 
-## OIBus Proxy Server Configuration
+## OIBus Port
 
-OIBus can act as a proxy server by enabling the proxy option and configuring the listening port. This allows OIBus to forward HTTP(S)
-requests to the targeted host specified in the request.
+The default port for accessing OIBus settings via the web interface is **2223** (`http://localhost:2223`).
+You can change this port if needed—for example, to resolve conflicts or improve security.
 
-The proxy server functionality is particularly useful when two OIBus instances are deployed in separate networks:
+## Proxy Server
 
-- `OIBus1`: Installed in a network with internet access.
-- `OIBus2`: Installed in a network without internet access. By configuring OIBus1 as a proxy server, OIBus2 can send data to the internet
-  via OIBus1, provided the North connector allows it.
+OIBus can act as a **proxy server**, enabling it to forward HTTP(S) requests to a target host. This feature is especially useful when two OIBus instances are deployed in separate networks:
 
-To ensure proper operation:
+- **OIBus1**: Installed in a network with internet access.
+- **OIBus2**: Installed in a network without internet access.
 
-1. Firewall Configuration: If you have a firewall between `OIBus1` and `OIBus2`, make sure your firewall allows inbound connections (from
-   `OIBus2` machine) on the specified proxy port for the `OIBus1` machine.
-2. IP Filter: Ensure the IP address of the source system (`OIBus2`) is authorized in the [IP Filter](./ip-filters.md) section of `OIBus1`.
+By configuring **OIBus1** as a proxy server, **OIBus2** can send data to the internet through **OIBus1**, provided the North connector allows it.
+
+### Prerequisites
+
+1. **Firewall Configuration**: Ensure your firewall allows inbound connections from **OIBus2** to **OIBus1** on the specified proxy port.
+2. **IP Filter**: Authorize the IP address of **OIBus2** in the [IP Filter](./ip-filters.mdx) section of **OIBus1**.
 
 ### Configuration Steps
 
-1. On `OIBus1` (Proxy Server):
+#### On OIBus1 (Proxy Server)
 
-- Enable the proxy server option.
-- Set the listening port (e.g., 2224).
-- Ensure the firewall allows inbound connections on this port.
-- Authorize the IP address of `OIBus2` in the IP Filter section.
+1. Enable the **proxy server** option.
+2. Set the **listening port** (e.g., `2224`).
+3. Ensure the firewall allows inbound connections on this port.
+4. Authorize the IP address of **OIBus2** in the **IP Filter** section.
 
-2. On `OIBus2` (Proxy Client):
+#### On OIBus2 (Proxy Client)
 
-- Configure the North connector or OIAnalytics registration settings to use the proxy server.
-- Specify the address and port of OIBus1’s proxy server (e.g., http://oibus1.fr:2224).
+1. Configure the **North connector** or **OIAnalytics registration settings** to use the proxy server.
+2. Specify the address and port of **OIBus1**’s proxy server (e.g., `http://oibus1.fr:2224`).
 
-### Example: Azure Blob North Connector
-
-Here’s a practical example using an Azure Blob North Connector configured on `OIBus2.
+### Example
 
 #### Scenario
 
-- OIBus1:
+- **OIBus1**:
 - Acts as a proxy server.
-- Listens on port 2224.
-- Accessible at http://oibus1.fr.
-- OIBus2:
-- Configured with an [Azure Blob North Connector](../north-connectors/azure-blob.md) and an
-  [OIAnalytics North Connector](../north-connectors/oianalytics.md).
-- Sends data to Azure and OIAnalytics through the proxy server of `OIBus1`.
+- Listens on port `2224`.
+- Accessible at `http://oibus1.fr`.
+- **OIBus2**:
+- Configured with an [Azure Blob North Connector](../north-connectors/azure-blob.md) and an [OIAnalytics North Connector](../north-connectors/oianalytics.md).
+- Sends data to Azure and OIAnalytics via **OIBus1**’s proxy server.
 
-<div style={{ textAlign: 'center' }}>
-
-![Network proxy example](../../../static/img/guide/engine/proxy-network.svg)
-
-</div>
+<div style={{ textAlign: 'center' }}>![Network proxy example](../../../static/img/guide/engine/proxy-network.svg)</div>
 
 #### Configuration
 
-1. On `OIBus1`:
+1. **On OIBus1**:
 
-- Enable the proxy server and set it to listen on port 2224.
-- Authorize `OIBus2`'s IP address in the IP Filter.
+- Enable the proxy server and set it to listen on port `2224`.
+- Authorize **OIBus2**’s IP address in the **IP Filter**.
 
-<div style={{ textAlign: 'center' }}>
+<div style={{ textAlign: 'center' }}>![Proxy server example](../../../static/img/guide/engine/proxy-server-example.png)</div>
 
-![Proxy server example](../../../static/img/guide/engine/proxy-server-example.png)
+2. **On OIBus2**:
 
-</div>
+- In the **Azure Blob North Connector** settings, specify the proxy server:
+- **Proxy URL**: `http://oibus1.fr:2224`
 
-2. On `OIBus2`:
+<div style={{ textAlign: 'center' }}>![North proxy example](../../../static/img/guide/engine/north-proxy-example.png)</div>
 
-- In the Azure Blob North Connector settings, specify the proxy server:
-- Proxy URL: http://oibus1.fr:2224
-
-<div style={{ textAlign: 'center' }}>
-
-![North proxy example](../../../static/img/guide/engine/north-proxy-example.png)
-
-</div>
-
-This setup allows `OIBus2` to send data to Azure using `OIBus1` as an intermediary, even if `OIBus2`'s network lacks direct internet access.
-
-:::tip OIAnalytics
-If you use a [North OIAnalytics](../north-connectors/oianalytics.md) with
-[OIAnalytics registration](../advanced/oianalytics-registration.mdx), the proxy client settings are located in the registration settings.
+:::tip
+If you use a [North OIAnalytics](../north-connectors/oianalytics.md) with [OIAnalytics registration](../installation/oianalytics.mdx), configure the proxy client settings in the **registration settings**.
 :::
 
-## Logging parameters
+---
 
-OIBus logs encompass six levels, ranging from the most critical to the least:
+## Logging Parameters
 
-- None (deactivates the logs)
-- Error
-- Warning
-- Info
-- Debug
-- Trace
+OIBus supports six log levels, from most to least critical:
 
-Activating **Info** logs will automatically enable **Warning** and **Error** logs. Enabling **Error** logs will exclusively display Error
-logs. It's worth noting that activating **Trace** logs will generate highly detailed and verbose logs, primarily intended for advanced
-troubleshooting. Therefore, it's advisable to use **Trace** and **Debug** log levels specifically for troubleshooting purposes.
+| Log Level | Description                                                                  |
+| --------- | ---------------------------------------------------------------------------- |
+| None      | Deactivates all logs.                                                        |
+| Error     | Logs only errors.                                                            |
+| Warning   | Logs warnings and errors.                                                    |
+| Info      | Logs informational messages, warnings, and errors.                           |
+| Debug     | Logs detailed information for debugging, plus all above levels.              |
+| Trace     | Logs highly detailed and verbose information, primarily for troubleshooting. |
 
-### Console
-
-This section displays logs in the Console, alongside values if a [North Console connector ](../../guide/north-connectors/console) is used.
-To access these logs, execute OIBus from a terminal.
-
-### File
-
-To store logs in one or more files, you can configure the maximum file size and specify the number of files for log rotation.
-
-### SQLite
-
-To save logs in a local SQLite database for viewing in the **Logs tab** of OIBus, you can set a **maximum number of logs ** to prevent the
-database from becoming overly large. Older entries will be automatically purged.
-
-### Loki
-
-To transmit logs to a remote **Loki** instance, the logs are sent to the designated host in batches at a configurable time interval (default
-is 60 seconds). You have the flexibility to adjust this interval to control the batch size.
-
-Loki can be accessed directly using Basic Auth, where you provide a **username** and **password**.
-
-:::caution Loki logs with multiple OIBus
-Logs sent to Loki are identified by the OIBus ID. The name is sent alongside the ID. Ensure that
-you update this name correctly to locate your OIBus logs within your Loki instance, specially if you have several OIBus.
+:::caution
+Use **Trace** and **Debug** log levels only for troubleshooting, as they generate large volumes of data.
 :::
 
-### OIAnalytics
+### Log Output Options
 
-If OIBus [is registered](../advanced/oianalytics-registration.mdx), logs can be forwarded to OIAnalytics. Otherwise, these settings will be
-disregarded.
+#### OIAnalytics
+
+- If OIBus is [registered with OIAnalytics](../installation/oianalytics.mdx), logs can be forwarded to OIAnalytics.
+- These settings are ignored if OIBus is not registered.
+
+#### Database
+
+- Save logs in a local **SQLite database**.
+- View logs in the **Logs tab** of OIBus.
+- Set a **maximum number of logs** to prevent the database from growing too large. Older logs are automatically purged.
+
+#### File
+
+- Store logs in one or more files.
+- Configure:
+- **Maximum file size** (in MB)
+- **Number of files** for log rotation
+
+#### Loki
+
+- Send logs to a remote **Loki** instance in batches.
+- Configure:
+- **URL**
+- **Batch interval** (default: 60 seconds)
+- **Basic Auth credentials** (username and password)
+
+:::caution
+Logs sent to Loki are identified by the **OIBus ID** and name. Ensure the name is correctly set to locate your logs, especially if you have multiple OIBus instances.
+:::
+
+#### Console
+
+- Displays logs in the **Console**.
+- Accessible by running OIBus from a terminal.
