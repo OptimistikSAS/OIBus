@@ -5,46 +5,83 @@ sidebar_position: 2
 
 # Building OIBus
 
-OIBus uses [pkg](https://github.com/vercel/pkg) as its building tool.
+OIBus uses a [fork of pkg](https://github.com/yao-pkg/pkg) as its building tool to create platform-specific binaries.
 
-:::caution
-`pkg` is deprecated and for now, OIBus uses [a pkg fork](https://github.com/yao-pkg/pkg) that is compatible with latest versions
-of Node.js.
+:::caution pkg Version Note
+The original `pkg` is deprecated. OIBus uses a maintained fork that's compatible with modern Node.js versions.
 :::
 
-## Building binaries
+## 📦 Building Binaries
 
-- `npm run build:win`: Build OIBus for Windows x64 architecture
-- `npm run build:linux`: Build OIBus for x64 linux based architectures
-- `npm run build:linux-arm64`: Build OIBus for ARM64 linux based platform (like Raspberry 3 B+)
-- `npm run build:macos`: Build OIBus for macOS Intel chips
-- `npm run build:macos-arm64`: Build OIBus for macOS Apple chips
+### Available Build Commands
 
-## Starting the binary
+| Command                     | Platform | Architecture  | Description                                      |
+| --------------------------- | -------- | ------------- | ------------------------------------------------ |
+| `npm run build:win-x64`     | Windows  | x64           | Builds Windows executable                        |
+| `npm run build:linux-x64`   | Linux    | x64           | Builds for x64 Linux systems                     |
+| `npm run build:linux-arm64` | Linux    | ARM64         | Builds for ARM64 Linux (Raspberry Pi 3 B+, etc.) |
+| `npm run build:macos-x64`   | macOS    | Intel         | Builds for Intel-based Macs                      |
+| `npm run build:macos-arm64` | macOS    | Apple Silicon | Builds for M1/M2 Macs                            |
 
-The following commands start the appropriate binary with data-folder as the directory where to store the caches, configuration, logs...
+### Build Process Details
 
-- `npm run start:win`
-- `npm run start:linux`
-- `npm run start:linux-arm64`
-- `npm run start:macos`
-- `npm run start:macos-arm64`
+1. **Prerequisites**:
+   - Node.js installed (version specified in `.nvmrc`)
+   - All dependencies installed (`npm install`)
 
-## Windows Installer (Windows only)
+2. **Building**:
 
-The Windows Installer can be built with [Inno Setup](https://jrsoftware.org/isinfo.php), only on Windows platform.
+   ```bash
+   # Example: Build for Windows
+   npm run build:win
 
-However, because of some environment variables, the build action cannot be executed from Inno Setup directly. OIBus backend package.json
-file provide a npm command: `build:win-setup`. Before running it, you may need to set a few things up in order to manage the signing of the
-installer.
+   # Output will be in:
+   # ./dist/oibus-win-x64/
+   ```
 
-### Signing OIBus Windows Installer
+3. **Build Output**:
+   - Binaries are output to the `dist/` directory
+   - Each platform has its own subdirectory
+   - Includes all required assets and dependencies
 
-These commands can be used with **Powershell**, on a Windows system.
+## 🚀 Starting the Binary
 
-1. Create a `cert.conf` file:
+### Available Start Commands
 
-```
+| Command                     | Platform            | Description                 |
+| --------------------------- | ------------------- | --------------------------- |
+| `npm run start:win-x64`     | Windows             | Starts Windows binary       |
+| `npm run start:linux-x64`   | Linux               | Starts Linux binary         |
+| `npm run start:linux-arm64` | Linux ARM64         | Starts ARM64 Linux binary   |
+| `npm run start:macos-x64`   | macOS Intel         | Starts Intel Mac binary     |
+| `npm run start:macos-arm64` | macOS Apple Silicon | Starts Apple Silicon binary |
+
+### Data Folder
+
+All commands use `data-folder` as the default directory for:
+
+- Configuration files
+- Cache storage
+- Log files
+- Temporary data
+
+## Windows Installer
+
+The Windows installer is built using [Inno Setup](https://jrsoftware.org/isinfo.php).
+
+### Prerequisites
+
+- Windows operating system
+- [Inno Setup](https://jrsoftware.org/isinfo.php) installed
+- OpenSSL for certificate operations
+
+### Certificate Setup
+
+#### 1. Create Configuration File
+
+Create `cert.conf` with the following content:
+
+```ini
 [ req ]
 default_bits = 2048
 default_md = sha256
@@ -58,10 +95,10 @@ prompt = no
 basicConstraints = CA:FALSE
 nsCertType = client, server
 keyUsage = nonRepudiation, digitalSignature, keyEncipherment, dataEncipherment, keyCertSign
-extendedKeyUsage= serverAuth, clientAuth
+extendedKeyUsage = serverAuth, clientAuth
 nsComment = "OIBus Cert"
-subjectKeyIdentifier=hash
-authorityKeyIdentifier=keyid,issuer
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid,issuer
 subjectAltName = URI:urn:oibus,IP:127.0.0.1
 
 [ subject ]
@@ -72,32 +109,44 @@ organizationName = OI
 commonName = oibus
 ```
 
-2. Generate CSR (Certificate Signing Request) from `cert.conf` file, and keep secret the private.key:
+#### 2. Generate Certificate Files
 
-```
+Run these commands in **PowerShell**:
+
+```powershell
+# Generate private key and CSR
 openssl req -new -newkey rsa:4096 -keyout private.key -sha256 -nodes -out oibus.csr -config cert.conf
-```
 
-3. Create a local self-signed certificate
-
-```
+# Create self-signed certificate
 openssl x509 -req -in oibus.csr -signkey private.key -out oibus.crt
+
+# Convert to PFX format
+openssl pkcs12 -export -in oibus.crt -inkey private.key -out oibus.pfx -passout pass:password -name "OIBus"
+
+# Convert to base64
+$pfxContent = [System.Convert]::ToBase64String((Get-Content -Path "oibus.pfx" -Encoding Byte))
+$pfxContent | Out-File -FilePath "oibus64.pfx" -Encoding ASCII
 ```
 
-4. Convert the cert file to PFX file
+#### 3. Build the Installer
 
-```
-openssl pkcs12 -export -in oibus.crt -inkey private.key -out oibus.pfx -passout pass:password -name OIBus
+```powershell
+# Set environment variables
+$env:PFX_PASSWORD = "password"
+$env:PFX_PATH = "full\path\to\oibus64.pfx"
+
+# Run the build
+npm run build:win-setup
 ```
 
-5. Convert PFX certificate file to _base64_
+### Installer Build Process
 
-```
-base64 oibus.pfx > oibus64.pfx
-```
+1. The script:
+   - Compiles the binary (if not already built)
+   - Creates installer configuration
+   - Signs the executable
+   - Packages everything into an `.exe` installer
 
-6. Create the installer
-
-```
-$env:PFX_PASSWORD = "password" ; $env:PFX_PATH = "path" ; npm run build:win-setup
-```
+2. **Output**:
+   - Installer will be in `dist/setup/`
+   - Named `OIBus-Setup-{version}.exe`

@@ -3,97 +3,228 @@ displayed_sidebar: developerSidebar
 sidebar_position: 1
 ---
 
-# OIBus developer handbook
+# OIBus Developer Handbook
 
-If you want to contribute on OIBus, it's the right place to start ! We use a [GitHub repo](https://github.com/OptimistikSAS/OIBus). You may
-want to take a look at the known issues to start working on OIBus by fixing small items.
+Welcome to the OIBus developer community! This guide will help you get started with contributing to OIBus.
 
-If you want to improve OIBus with a new feature, please contact us first to discuss how to best implement it. You can start with a new
-**feature issue**.
+## 🚀 Getting Started
 
-But first, you may want to download OIBus and start it on your machine from its sources.
+### Prerequisites
 
-## Technologies
+Before you begin, ensure you have the following installed:
 
-- Install Node.js and NPM. Check the .nvm file to check on which version of Node.js OIBus run. Of course, you can directly use the
-  [nvm tool](https://github.com/nvm-sh/nvm)
-- OIBus configuration is stored on a local SQLite database. You may need a SQL explorer tool such as [DBeaver](https://dbeaver.io/)
-- OIBus can run on x64 or arm64 architectures (on Windows, Linux and Mac).
-- Frontend is build with [Angular](https://angular.io/). No need to install it globally, since it is embedded in the dev dependencies.
-- The documentation uses [Docusaurus](https://docusaurus.io/), based on [React](https://react.dev/)
+- [Git](https://git-scm.com/)
+- [Node.js](https://nodejs.org/) (check `.nvmrc` for required version)
+- [nvm](https://github.com/nvm-sh/nvm) (recommended for Node.js version management)
+- [SQLite browser](https://sqlitebrowser.org/) or [DBeaver](https://dbeaver.io/) (for database inspection)
+- Your preferred IDE (VS Code, IntelliJ, etc.)
 
-## Steps to try out the application
+### Recommended Tools
 
-### Fork the repository
+| Tool        | Purpose              | Installation                                        |
+| ----------- | -------------------- | --------------------------------------------------- |
+| Node.js     | JavaScript runtime   | [Download](https://nodejs.org/)                     |
+| nvm         | Node version manager | [Installation guide](https://github.com/nvm-sh/nvm) |
+| DBeaver     | Database management  | [Download](https://dbeaver.io/)                     |
+| VS Code     | Code editor          | [Download](https://code.visualstudio.com/)          |
+| Angular CLI | Frontend development | Installed via npm                                   |
 
-If you want to contribute into the project, first fork the repository, and clone it from your fork with:
+## 📥 Setting Up Your Development Environment
 
-`git clone git@github.com:<your-fork>/OIBus.git`.
+### 1. Get the Source Code
 
-You will be able to make contributions through [Pull Requests](#submit-your-improvements)
+Choose one of these options:
 
-Otherwise, **if you just want to try OIBus from source**, simply run:
+**Option A: For Contributors (Recommended)**
 
-`git clone git@github.com:OptimistikSAS/OIBus.git`
+```bash
+# Fork the repository on GitHub first
+git clone git@github.com:<your-username>/OIBus.git
+cd OIBus
+git remote add upstream git@github.com:OptimistikSAS/OIBus.git
+```
 
-### Init shared folder
+**Option B: For Evaluation Only**
 
-Shared folder contains model and some tools shared between frontend and backend. At first startup, you must beforehand go into the `shared`
-folder and run `npm install`.
+```bash
+git clone git@github.com:OptimistikSAS/OIBus.git
+cd OIBus
+```
 
-### Start the frontend
+### 2. Install Dependencies
 
-Open a terminal in the frontend folder (`cd frontend`)
+```bash
+# Install Node.js version specified in .nvmrc
+nvm install
+nvm use
+```
 
-- `npm install`
-- `npm build`: build the frontend that will be served by the backend
-- `npm start`: build the frontend and rebuild it on file changes. Useful when working on the frontend.
+### 3. Set Up the Backend
 
-:::caution
-The frontend is served from the backend, even with npm start. That means it won't reload automatically the web page when files
-change. Just reload your page manually.
+```bash
+cd backend
+npm install
+npm start  # Starts on http://localhost:2223
+```
+
+### 4. Set Up the Frontend
+
+```bash
+cd frontend
+npm install
+npm start  # Builds and watches for changes
+```
+
+:::caution Frontend Note
+The frontend is served by the backend. While `npm start` watches for changes, you'll need to **manually refresh** your browser to see updates.
 :::
 
-To test your code: `npm test` To check your files' linting: `npm run lint`
+### 5. Set Up Documentation
 
-### Start the backend
+```bash
+cd documentation
+npm install
+npm start  # Starts on http://localhost:3000
+```
 
-Open a terminal in the backend folder (`cd backend`)
+### 6. Verify Your Setup
 
-- `npm install`
-- `npm start`
-- Open up in the browser the following url: `http://localhost:2223`
+- Backend: [http://localhost:2223](http://localhost:2223)
+- Documentation: [http://localhost:3000](http://localhost:3000)
 
-The folder `data-folder` is used to store the cache, logs and configuration files.
+## 🛠 Development Workflow
 
-The project is up and running, but currently there are no South or North connectors. A simple way to try out OIBus is to create a
-[FolderScanner](../guide/south-connectors/folder-scanner.mdx) South connector and a [Console](../guide/north-connectors/console.md) North
-connector.
+### Project Structure
 
-### Start the documentation
+```
+OIBus/
+├── backend/          # Backend server (Node.js)
+├── frontend/         # Frontend application (Angular)
+├── documentation/    # Project documentation (Docusaurus)
+└── data-folder/      # Runtime data (created automatically)
+```
 
-Open a terminal in the documentation folder (`cd documentation`)
+### Quick Test Setup
 
-- `npm install`
-- `npm start`
-- Access the documentation on the following url: `http://localhost:3000`
+To verify everything works:
 
-## Submit your improvements
+1. Create a **FolderScanner** South connector (reads files from a directory)
+2. Create a **Console** North connector (outputs to console)
+3. Configure them to work together
 
-The default branch is `main`, every new branches must be created from this one. When you are satisfied with your changes, you can create a
-Pull Request from your Fork repository to the Main repository on GitHub.
+## 🔧 Development Guidelines
 
-### Naming convention
+### Branch Naming
 
-Branch naming convention: **descriptive-name-of-the-issue#\<issue-number\>**, for example: `fix-folder-scanner-path#1564`.
+```
+<type>/<descriptive-name>#<issue-number>
+```
 
-Commits and PR name convention must follow the [conventional commits standard](https://www.conventionalcommits.org/en/v1.0.0/).
+Examples:
 
-### Testing
+- `feature/add-new-connector#1234`
+- `fix/folder-scanner-bug#5678`
+- `docs/update-readme#9101`
 
-All changes must be tested (with [jest](https://jestjs.io/) on the backend, with [jasmine](https://angular.io/guide/testing) on the
-frontend) for three reasons:
+### Commit Messages
 
-- To be sure to properly understand your changes.
-- To be sure that your changes are properly integrated in the project.
-- To be sure we won't break your changes in futures modifications (if so, your tests will probably fail).
+Follow [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+<type>(<scope>): <description>
+
+[optional body]
+
+[optional footer]
+```
+
+Common types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
+
+### Testing Requirements
+
+All changes must include tests:
+
+- **Backend**: [Jest](https://jestjs.io/) tests
+- **Frontend**: [Jasmine](https://jasmine.github.io/) tests
+
+Run tests with:
+
+```bash
+# Backend tests
+cd backend
+npm test
+
+# Frontend tests
+cd frontend
+npm test
+
+# Linting
+npm run lint
+```
+
+## 📤 Submitting Contributions
+
+### Before You Start
+
+1. **Check existing issues** for similar work
+2. **Create a feature issue** if adding new functionality
+3. **Discuss your approach** with maintainers before coding
+
+### Pull Request Process
+
+1. Create a branch from `main` with proper naming
+2. Make your changes and commit with clear messages
+3. Push to your fork
+4. Create a Pull Request to `OptimistikSAS/OIBus:main`
+5. Ensure all tests pass
+6. Wait for code review and address feedback
+
+### Pull Request Checklist
+
+- [ ] Code follows project style guidelines
+- [ ] All tests pass
+- [ ] Documentation updated (if applicable)
+- [ ] Changes are backward compatible
+- [ ] New features include tests
+
+## 🤝 Community Guidelines
+
+### How to Contribute
+
+1. **Start small**: Fix typos, improve docs, or tackle "good first issue" labels
+2. **Ask questions**: Use GitHub discussions or issues
+3. **Be patient**: We'll review your PR as soon as possible
+4. **Stay engaged**: Be responsive to feedback
+
+### Code of Conduct
+
+We follow a [Code of Conduct](https://github.com/OptimistikSAS/OIBus/blob/main/DEVELOPER-GUIDELINES.md) to ensure a welcoming community.
+
+## 📚 Learning Resources
+
+### Technologies Used
+
+| Area          | Technology   | Learning Resources                                                          |
+| ------------- | ------------ | --------------------------------------------------------------------------- |
+| Backend       | Node.js      | [Node.js Docs](https://nodejs.org/en/docs/)                                 |
+| Frontend      | Angular      | [Angular Docs](https://angular.io/docs)                                     |
+| Documentation | Docusaurus   | [Docusaurus Docs](https://docusaurus.io/)                                   |
+| Testing       | Jest/Jasmine | [Jest Docs](https://jestjs.io/), [Jasmine Docs](https://jasmine.github.io/) |
+
+### Recommended Reading
+
+- [Angular Style Guide](https://angular.io/guide/styleguide)
+- [Node.js Best Practices](https://github.com/goldbergyoni/nodebestpractices)
+- [GitHub Flow](https://guides.github.com/introduction/flow/)
+
+## 🎯 First Contributions
+
+Looking for your first contribution? Check out:
+
+- [Good first issues](https://github.com/OptimistikSAS/OIBus/labels/good%20first%20issue)
+- [Documentation improvements](https://github.com/OptimistikSAS/OIBus/labels/documentation)
+- [Bug reports](https://github.com/OptimistikSAS/OIBus/labels/bug)
+
+---
+
+**Ready to contribute?** We're excited to have you! 🎉
