@@ -1,6 +1,6 @@
-<div style="text-align: center;">
-  ![OIBus](frontend/public/oibus.png)
-</div>
+<p align="center">
+  <img src="frontend/public/oibus.png" alt="OIBus">
+</p>
 
 # OIBus - Industrial Data Integration Platform
 
