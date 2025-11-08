@@ -3,32 +3,82 @@ displayed_sidebar: developerSidebar
 sidebar_position: 5
 ---
 
-# GitHub Release
+# GitHub Release Process
 
-OIBus uses [release-please](https://github.com/googleapis/release-please) and GitHub Action to automate release on push on the `stable`
-branch. It will release patch, minor or major version following the
-[conventional commit standard](https://www.conventionalcommits.org/en/v1.0.0/). Simply merge the release branch to create a release.
+OIBus uses [release-please](https://github.com/googleapis/release-please) with GitHub Actions to automate the release process. The version bump (patch, minor, or major) follows the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) standard.
 
-:::info Enable GitHub Action
-You may need to activate GitHub Actions on your fork to enable this feature.
-:::
+:::info GitHub Actions Requirement
+For this to work on your fork:
 
-## Create a pre-release for OIBus
+1. Enable GitHub Actions in your fork's settings
+2. Ensure you have write permissions to the repository
 
-On your fork, go to the GitHub release list, and click on `Draft a new release`.
+   :::
+
+## 📦 Automated Release Process
+
+### How It Works
+
+1. **Trigger**: When commits are added to the `stable` branch
+2. **Release PR**: release-please automatically creates a release Pull Request with:
+
+- Version bump based on commit types
+- Generated changelog
+- Updated package versions
+
+3. **Version Determination**: Based on commit messages since last release:
+
+- `fix:` → Patch version (0.0.x)
+- `feat:` → Minor version (0.x.0)
+- `feat!:`, `BREAKING CHANGE:` → Major version (x.0.0)
+
+4. **Release Creation**: When the release PR is merged to `stable`:
+
+- GitHub release is automatically created
+- Release branch is created/updated (e.g., `release-v1.2.3`)
+- Changelog is published
+
+### Release Types
+
+| Commit Type                  | Version Bump  | Example                  |
+| ---------------------------- | ------------- | ------------------------ |
+| `fix:`                       | Patch (0.0.x) | `fix: correct minor bug` |
+| `feat:`                      | Minor (0.x.0) | `feat: add new feature`  |
+| `feat!:`, `BREAKING CHANGE:` | Major (x.0.0) | `feat!: change API`      |
+
+## 🆕 Creating a Pre-Release
+
+For testing purposes before merging to `stable`, you can manually create pre-releases:
+
+### Step-by-Step Guide
+
+1. **Navigate to Releases**:
+
+- Go to your fork's GitHub repository
+- Click on "Releases" in the right sidebar
+- Click "Draft a new release"
 
 <div style={{ textAlign: 'center' }}>
-  <div>
-
-    ![Draft a GitHub release](../../static/img/developer/draft-release.png)
-
-  </div>
+  <div>![Draft a GitHub release](../../static/img/developer/draft-release.png)</div>
 </div>
 
-Then simply follow these steps:
+2. **Configure the Release**:
 
-- Choose a new tag name for your release
-- Select a target branch
-- Choose release title
-- Set as a pre-release
-- **Do not set as the latest release**
+- **Tag version**: Use semantic versioning (e.g., `v1.2.3-alpha.1`)
+- **Target**: Select your working branch (usually `main` or feature branch)
+- **Release title**: Follow pattern "v1.2.3 (Pre-release)"
+- **Description**: Add:
+  - Key changes since last release
+  - Known issues
+  - Testing instructions
+- **Pre-release**: ✅ Check this box
+- **Set as latest release**: ❌ **Do NOT check** this box
+
+3. **Pre-release Best Practices**:
+
+- Use suffixes: `-alpha.x`, `-beta.x`, `-rc.x`
+- Example: `v2.1.0-beta.1`
+- Include "[Pre-release]" in the title
+- Clearly mark experimental features
+
+4. **Publish**: Click "Publish release"
