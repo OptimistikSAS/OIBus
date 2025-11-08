@@ -1,49 +1,115 @@
-![OIBus](frontend/public/oibus.png)
+<div style="text-align: center;">
+  ![OIBus](frontend/public/oibus.png)
+</div>
 
-## OIBus
+# OIBus - Industrial Data Integration Platform
 
-OIBus is a software application that can be run on Windows, Linux, and Mac operating systems. It is designed to extract
-data from industrial sources by utilizing multiple protocols, such as OPCUA-HA, OPCHDA, Modbus, MQTT and many more.
-It can also retrieve data by scanning folders. Once the data is collected, OIBus can transmit it to your enterprise
-applications.
+OIBus is a cross-platform industrial data integration solution that simplifies data collection from various industrial
+sources and transmits it to enterprise applications.
 
-[**Optimistik**](https://optimistik.io) is using **OIBus** on many industrial sites to send data to its **OIAnalytics**
-solution to query from 10 to over 10.000 points with sampling rate at the second level.
+## 🌍 Platform Support
 
-OIBus [can be installed](https://oibus.optimistik.com/docs/guide/installation) and configured in minutes and does not
-need development skills.
+✅ Windows | ✅ Linux | ✅ macOS
 
-## Introduction
+## 🔗 Key Features
 
-OIBus is intended to simplify the data collection. We, at Optimistik, felt we had a missing piece between NodeRed and
-proprietary products for a tool able to solve most of the common requirements for industrial communications and very
-fast to set up.
+| Feature                    | Description                                                       |
+|----------------------------|-------------------------------------------------------------------|
+| **Multi-protocol Support** | OPC UA, OPC Classic, Modbus, MQTT, SQL, Folder Scanning, and more |
+| **Cross-platform**         | Runs on Windows, Linux, and macOS                                 |
+| **High Performance**       | Handles 10 to 10,000+ data points with second-level sampling      |
+| **No-code Configuration**  | Set up in minutes without development skills                      |
+| **Enterprise Integration** | Seamless connection to applications like OIAnalytics              |
 
-OIBus is composed of 3 layers.
+## 🏗 Architecture
 
-- The **Engine** that orchestrates everything and is configured through an admin interface
-- Several **South** connectors that will retrieve data from a given technology (SQL, OPCUA, MQTT, Modbus...)
-- Several **North** connectors that will be able to transfer the data to application such as OIAnalytics, folders...
+OIBus follows a modular 3-layer architecture:
 
-You can learn more about OIBus by reading [our documentation](https://oibus.optimistik.com/).
+1. **Engine Layer**
+    - Core orchestration system
+    - Web-based administration interface
+    - Configuration management
 
-## Build and deploy step
+2. **South Connectors**
+    - Protocol-specific data collection modules
+    - Supported protocols: OPC UA, OPC Classic, Modbus, MQTT, SQL, Folder Scanning, etc.
+    - Extensible architecture for new protocols
 
-* **Fork** the OIBus repository and clone it. Be sure to have Node.js and npm installed (LTS versions).
-* **Backend**: open a terminal in the backend folder `cd backend`
-    * Install the node dependencies: `npm install`
-    * Run the backend: `npm start`
-* **Frontend**: open a terminal in the frontend folder `cd frontend`
-    * Install the node dependencies : `npm install`
-    * Run the frontend: `npm start`
-    * Access the application on `http://localhost:2223` (default port)
-    * Log in using `admin/pass`
-* You can compile OIBus on your appropriate distribution. To do that:
-    * In the frontend folder, run `npm install` and `npm run build`
-    * In the backend folder, run the command associated to the distribution you want to build OIBus:
-      `npm run build:win`, `npm run build:linux`, `npm run build:macos`, `npm run build:macos-arm64`
-    * You can now start OIBus from its binaries with `npm run start:win`, `npm run start:linux`, `npm run start:macos`
-      or `npm run start:macos-arm64`
+3. **North Connectors**
+    - Data transmission to enterprise systems
+    - Supported destinations: OIAnalytics, folders, databases, APIs
+    - Customizable output formats
 
-A more complete developer guide is accessible
-on [our developer documentation](https://oibus.optimistik.com/docs/developer/).
+## 🚀 Getting Started
+
+### Quick Setup Guide
+
+1. **Installation**:
+    - [Download OIBus](https://oibus.optimistik.com/docs/guide/installation)
+    - Follow the [installation guide](https://oibus.optimistik.com/docs/guide/installation)
+
+2**Example Workflow**:
+    - Create a Folder Scanner South connector
+    - Create a Console North connector
+    - Configure data flow between them
+
+## 🛠 Development Setup
+
+### Prerequisites
+
+- Node.js (LTS version)
+- npm (comes with Node.js)
+- Git
+
+### Build and Run from Source
+
+1. **Fork and Clone**:
+   ```bash
+   git clone https://github.com/your-fork/OIBus.git
+   cd OIBus
+   ```
+
+2. **Backend Setup**:
+   ```bash
+   cd backend
+   npm install
+   npm start  # Starts backend on port 2223
+   ```
+
+3. **Frontend Setup**:
+   ```bash
+   cd frontend
+   npm install
+   npm start  # Builds and serves frontend
+   ```
+
+4. **Access Application**:
+    - Open [http://localhost:2223](http://localhost:2223)
+    - Default credentials: `admin/pass`
+
+## 🤝 Community and Support
+
+- **Issues**: Report bugs on [GitHub Issues](https://github.com/OptimistikSAS/OIBus/issues)
+- **Discussions**: Join the conversation on [GitHub Discussions](https://github.com/OptimistikSAS/OIBus/discussions)
+- **Professional Support**: Contact [Optimistik](https://optimistik.io)
+
+## 🔧 Extending OIBus
+
+Developers can extend OIBus by:
+
+- Creating custom South connectors for new protocols
+- Developing custom North connectors for new destinations
+
+
+
+## 🎯 Why Choose OIBus?
+
+✅ **Simple Setup** - Configure in minutes without coding
+
+✅ **Protocol Flexibility** - Support for all major industrial protocols
+
+✅ **Cross-Platform** - Runs on Windows, Linux, and macOS
+
+✅ **Enterprise Ready** - Scales from small deployments to enterprise solutions
+
+✅ **Open Architecture** - Extensible for custom requirements
