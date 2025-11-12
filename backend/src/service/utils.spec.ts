@@ -63,7 +63,7 @@ describe('Service utils', () => {
       (minimist as unknown as jest.Mock).mockReturnValue({});
       const result = getCommandLineArguments();
       expect(result).toEqual({
-        check: false,
+        version: false,
         configFile: path.resolve('./'),
         ignoreIpFilters: false,
         ignoreRemoteUpdate: false,
@@ -74,7 +74,7 @@ describe('Service utils', () => {
 
     it('should parse command line arguments with args', () => {
       (minimist as unknown as jest.Mock).mockReturnValue({
-        check: true,
+        version: true,
         config: 'myConfig.json',
         ignoreIpFilters: true,
         ignoreRemoteUpdate: true,
@@ -83,7 +83,7 @@ describe('Service utils', () => {
       });
       const result = getCommandLineArguments();
       expect(result).toEqual({
-        check: true,
+        version: true,
         configFile: path.resolve('myConfig.json'),
         ignoreIpFilters: true,
         ignoreRemoteUpdate: true,

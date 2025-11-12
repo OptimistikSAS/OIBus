@@ -4,6 +4,7 @@ import { spawn } from 'node:child_process';
 import { ChildProcessWithoutNullStreams } from 'child_process';
 import os from 'node:os';
 import { createFolder, filesExists, replaceConfigArgumentWithAbsolutePath } from './utils';
+import { version } from '../package.json';
 
 const STARTED_DELAY = 30000;
 const UPDATE_SETTINGS_FILE = 'update.json';
@@ -20,7 +21,7 @@ export default class Launcher {
     private updateDir: string,
     private backupDir: string,
     private config: string,
-    private check: boolean
+    private version: boolean
   ) {
     // The first argument is the binary being used. We must remove it since it's not used by the OIBus binary
     this.args = replaceConfigArgumentWithAbsolutePath(process.argv.slice(1), this.config);
@@ -29,7 +30,7 @@ export default class Launcher {
   async start(): Promise<void> {
     const oibusPath = this.getOibusPath();
 
-    if ((await this.checkForUpdate()) && !this.check) {
+    if ((await this.checkForUpdate()) && !this.version) {
       await this.update();
     }
 
@@ -56,8 +57,12 @@ export default class Launcher {
           return;
         }
 
-        if (this.check) {
-          console.info(`OIBus launcher started in check mode. Exiting process with code ${code}.`);
+        if (this.version) {
+          // If OIBus exited with an error, display launcher version as fallback
+          // Otherwise, OIBus already displayed both versions, so just exit
+          if (code !== 0) {
+            console.info(`Launcher version: ${version}`);
+          }
           process.exit(code);
         }
         if (!this.stopping) {
@@ -67,9 +72,18 @@ export default class Launcher {
 
       this.child.on('error', error => {
         console.error(`Failed to start OIBus: "${error.message}"`);
+        if (this.version) {
+          console.info(`Launcher version: ${version}`);
+          process.exit(1);
+        }
       });
     } catch (err) {
       console.error(err);
+      if (this.version) {
+        console.info(`Launcher version: ${version}`);
+        process.exit(1);
+        return;
+      }
       this.updated = false;
       this.stop();
       await this.rollback();
