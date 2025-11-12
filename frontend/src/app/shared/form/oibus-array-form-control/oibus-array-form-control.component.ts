@@ -16,6 +16,12 @@ import { isDisplayableAttribute } from '../dynamic-form.builder';
 import { ValErrorDelayDirective } from '../val-error-delay.directive';
 import { ValidationErrorsComponent } from 'ngx-valdemort';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ExportItemModalComponent } from '../../export-item-modal/export-item-modal.component';
+import { ImportItemModalComponent } from '../../import-item-modal/import-item-modal.component';
+import { NotificationService } from '../../notification.service';
+import { ImportArrayValidationModalComponent } from './import-array-validation-modal/import-array-validation-modal.component';
+import { Modal } from '../../modal.service';
+import { SouthConnectorService } from '../../../services/south-connector.service';
 
 interface Column {
   path: Array<string>;
@@ -48,12 +54,15 @@ interface Column {
 export class OIBusArrayFormControlComponent {
   private modalService = inject(ModalService);
   private translateService = inject(TranslateService);
+  private southConnectorService = inject(SouthConnectorService);
+  private notificationService = inject(NotificationService);
 
   scanModes = input.required<Array<ScanModeDTO>>();
   certificates = input.required<Array<CertificateDTO>>();
   parentGroup = input.required<FormGroup>();
   control = input.required<FormControl<Array<any>>>();
   arrayAttribute = input.required<OIBusArrayAttribute>();
+  southId = input<string>();
 
   private readonly controlValue = toSignal(toObservable(this.control).pipe(switchMap(c => c.valueChanges.pipe(startWith(c.value)))));
   readonly columns = computed(() => this.buildColumn(this.arrayAttribute().rootAttribute, []));
@@ -64,7 +73,7 @@ export class OIBusArrayFormControlComponent {
     return new ArrayPage([], 1);
   });
 
-  async addItem(event: Event) {
+  async addElement(event: Event) {
     event.preventDefault();
     const modal = this.modalService.open(OIBusEditArrayElementModalComponent, { size: 'xl' });
     modal.componentInstance.prepareForCreation(
@@ -80,7 +89,7 @@ export class OIBusArrayFormControlComponent {
     });
   }
 
-  async copyItem(element: any) {
+  async copyElement(element: any) {
     const modal = this.modalService.open(OIBusEditArrayElementModalComponent, { size: 'xl' });
     modal.componentInstance.prepareForCopy(
       this.scanModes(),
@@ -96,7 +105,7 @@ export class OIBusArrayFormControlComponent {
     });
   }
 
-  async editItem(element: any) {
+  async editElement(element: any) {
     const modal = this.modalService.open(OIBusEditArrayElementModalComponent, { size: 'xl' });
     modal.componentInstance.prepareForEdition(
       this.scanModes(),
@@ -116,7 +125,7 @@ export class OIBusArrayFormControlComponent {
     });
   }
 
-  deleteItem(element: any) {
+  deleteElement(element: any) {
     const newArray = [...this.control().value];
     const index = this.control().value.indexOf(element);
     newArray.splice(index, 1);
@@ -177,5 +186,117 @@ export class OIBusArrayFormControlComponent {
 
   getValueByPath(obj: any, path: Array<string>) {
     return path.reduce((acc, key) => acc && acc[key], obj);
+  }
+
+  async exportArray() {
+    const modal = this.modalService.open(ExportItemModalComponent);
+    modal.componentInstance.prepare(this.arrayAttribute().key);
+
+    modal.result.subscribe(result => {
+      if (result) {
+        const southId = this.southId();
+        const southType = this.resolveSouthType();
+        const arrayKey = this.arrayAttribute().key;
+        const delimiter = result.delimiter;
+        const elements = this.control().value || [];
+
+        if (!southId) {
+          this.notificationService.error('common.export-error');
+          return;
+        }
+
+        if (southId === 'create') {
+          if (!southType) {
+            this.notificationService.error('common.export-error');
+            return;
+          }
+          this.southConnectorService.arrayToCsv(southType, arrayKey, elements, delimiter).subscribe({
+            next: () => this.notificationService.success('common.export-success'),
+            error: () => this.notificationService.error('common.export-error')
+          });
+        } else {
+          this.southConnectorService.exportArray(southId, arrayKey, delimiter).subscribe({
+            next: () => this.notificationService.success('common.export-success'),
+            error: () => this.notificationService.error('common.export-error')
+          });
+        }
+      }
+    });
+  }
+
+  async importArray() {
+    const modal = this.modalService.open(ImportItemModalComponent, { backdrop: 'static' });
+
+    modal.componentInstance.expectedHeaders = this.getExpectedHeaders();
+    modal.componentInstance.optionalHeaders = [];
+
+    modal.result.subscribe(response => {
+      if (!response) return;
+      this.checkImportArray(response.file, response.delimiter);
+    });
+  }
+
+  private getExpectedHeaders(): Array<string> {
+    const headers: Array<string> = [];
+
+    if (this.arrayAttribute().rootAttribute.attributes) {
+      this.arrayAttribute().rootAttribute.attributes.forEach(attr => {
+        if (attr.type === 'object' && 'attributes' in attr) {
+          // For nested objects, prefix with the attribute key
+          attr.attributes.forEach(subAttr => {
+            headers.push(`${attr.key}_${subAttr.key}`);
+          });
+        } else {
+          headers.push(attr.key);
+        }
+      });
+    }
+
+    return headers;
+  }
+
+  private checkImportArray(file: File, delimiter: string) {
+    const southId = this.southId()!;
+    const southType = southId === 'create' ? this.resolveSouthType() : undefined;
+
+    if (southId === 'create' && !southType) {
+      this.notificationService.error('common.import-error');
+      return;
+    }
+
+    this.southConnectorService
+      .checkImportArray(southId, this.arrayAttribute().key, file, delimiter, this.control().value || [], southType)
+      .subscribe({
+        next: response => {
+          const modalRef = this.modalService.open(ImportArrayValidationModalComponent, { size: 'xl', backdrop: 'static' });
+          const component: ImportArrayValidationModalComponent = modalRef.componentInstance;
+          component.prepare(this.arrayAttribute(), response.elements, response.errors);
+          this.refreshAfterImportModalClosed(modalRef);
+        },
+        error: () => {
+          this.notificationService.error('common.import-error');
+        }
+      });
+  }
+
+  /**
+   * Refresh the array values when items are imported
+   */
+  private refreshAfterImportModalClosed(modalRef: Modal<ImportArrayValidationModalComponent>) {
+    modalRef.result.subscribe({
+      next: (importedElements: Array<Record<string, unknown>>) => {
+        this.control().setValue(importedElements);
+        this.paginatedValues().gotoPage(0);
+        this.notificationService.success('common.import-success');
+      },
+      error: () => {
+        this.notificationService.error('common.import-error');
+      }
+    });
+  }
+
+  private resolveSouthType(): string | undefined {
+    const rootGroup = this.parentGroup().root as FormGroup | undefined;
+    return rootGroup?.get('type')?.value;
   }
 }

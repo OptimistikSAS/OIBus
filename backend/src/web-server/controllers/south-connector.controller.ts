@@ -14,6 +14,7 @@ import {
   Tags,
   UploadedFile
 } from 'tsoa';
+import fs from 'node:fs/promises';
 import {
   OIBusSouthType,
   SouthConnectorCommandDTO,
@@ -66,6 +67,17 @@ interface SouthCsvImportResponse {
 interface SouthCsvDelimiterRequest {
   /** CSV delimiter character */
   delimiter: string;
+}
+
+/**
+ * @interface SouthArrayCsvImportResponse
+ * @description Response for array CSV import check operation
+ */
+interface SouthArrayCsvImportResponse {
+  /** Array of valid elements that can be imported */
+  elements: Array<Record<string, unknown>>;
+  /** Array of elements with errors */
+  errors: Array<{ element: Record<string, string>; error: string }>;
 }
 
 @Route('/api/south')
@@ -523,5 +535,153 @@ export class SouthConnectorController extends Controller {
     }
     const items: Array<SouthConnectorItemCommandDTO> = JSON.parse(itemsFile.buffer.toString('utf8'));
     await southService.importItems(southId, items);
+  }
+
+  /**
+   * Converts in-memory array elements to CSV format
+   * @summary Convert array elements to CSV
+   * @responseHeader Content-Type text/csv; charset=utf-8
+   * @responseHeader Content-Disposition attachment; filename={arrayKey}-export.csv
+   */
+  @Post('/{southType}/array/{arrayKey}/to-csv')
+  async arrayFieldToCsv(
+    @Path() southType: string,
+    @Path() arrayKey: string,
+    @FormField() delimiter: string,
+    @UploadedFile('elements') elementsFile: Express.Multer.File,
+    @Request() request: CustomExpressRequest
+  ): Promise<void> {
+    const southService = request.services.southService as SouthService;
+
+    const elementsContent = await this.getUploadedFileContent(elementsFile, 'elements');
+    let arrayElements: Array<Record<string, unknown>>;
+    try {
+      arrayElements = JSON.parse(elementsContent) as Array<Record<string, unknown>>;
+      if (!Array.isArray(arrayElements)) {
+        throw new Error('Invalid payload');
+      }
+    } catch (error) {
+      throw new OIBusValidationError(`Invalid JSON content for "elements": ${(error as Error).message}`);
+    }
+
+    const csvContent = southService.exportArrayElementsToCsv(arrayElements, delimiter, arrayKey, southType as OIBusSouthType);
+    request.res!.attachment(`${arrayKey}-export.csv`);
+    request.res!.contentType('text/csv; charset=utf-8');
+    request.res!.status(200).send(csvContent);
+  }
+
+  /**
+   * Exports array field elements to CSV format
+   * @summary Export array field to CSV
+   * @responseHeader Content-Type text/csv; charset=utf-8
+   * @responseHeader Content-Disposition attachment; filename={arrayKey}-export.csv
+   */
+  @Put('/{southId}/array/{arrayKey}/export')
+  async exportArrayField(
+    @Path() southId: string,
+    @Path() arrayKey: string,
+    @Body() command: SouthCsvDelimiterRequest,
+    @Request() request: CustomExpressRequest
+  ): Promise<void> {
+    const southService = request.services.southService as SouthService;
+    const southConnector = southService.findById(southId);
+    const arrayElements = southService.getArrayFieldElements(southId, arrayKey);
+    const csvContent = southService.exportArrayElementsToCsv(arrayElements, command.delimiter, arrayKey, southConnector.type);
+    request.res!.attachment(`${arrayKey}-export.csv`);
+    request.res!.contentType('text/csv; charset=utf-8');
+    request.res!.status(200).send(csvContent);
+  }
+
+  /**
+   * Validates a CSV file before importing array elements and checks for conflicts with existing elements
+   * @summary Check array CSV import
+   * @returns {Promise<SouthArrayCsvImportResponse>} Import validation results
+   */
+  @Post('/{southId}/array/{arrayKey}/import/check')
+  async checkImportArrayField(
+    @Path() southId: string,
+    @Path() arrayKey: string,
+    @FormField() delimiter: string,
+    @UploadedFile('file') file: Express.Multer.File,
+    @UploadedFile('currentElements') currentElementsFile: Express.Multer.File | undefined,
+    @FormField() southType: string | undefined,
+    @Request() request: CustomExpressRequest
+  ): Promise<SouthArrayCsvImportResponse> {
+    const southService = request.services.southService as SouthService;
+
+    const fileContent = await this.getUploadedFileContent(file, 'file');
+    const currentElements = await this.parseJsonArrayFile(currentElementsFile, 'currentElements', []);
+    const typeOverride = southType && southType.trim() ? (southType as OIBusSouthType) : undefined;
+
+    return southService.checkArrayFileImport(southId, fileContent, delimiter, arrayKey, currentElements, typeOverride);
+  }
+
+  /**
+   * Imports array elements from a JSON file into a south connector array field
+   * @summary Import array field from JSON
+   */
+  @Post('/{southId}/array/{arrayKey}/import')
+  @SuccessResponse(204, 'No Content')
+  async importArrayField(
+    @Path() southId: string,
+    @Path() arrayKey: string,
+    @UploadedFile('elements') elementsFile: Express.Multer.File,
+    @Request() request: CustomExpressRequest
+  ): Promise<void> {
+    const southService = request.services.southService as SouthService;
+    const elementsContent = await this.getUploadedFileContent(elementsFile, 'elements');
+    let arrayElements: Array<Record<string, unknown>>;
+    try {
+      arrayElements = JSON.parse(elementsContent) as Array<Record<string, unknown>>;
+      if (!Array.isArray(arrayElements)) {
+        throw new Error('Invalid payload');
+      }
+    } catch (error) {
+      throw new OIBusValidationError(`Invalid JSON content for "elements": ${(error as Error).message}`);
+    }
+    await southService.importArrayField(southId, arrayKey, arrayElements);
+  }
+
+  private async getUploadedFileContent(file: Express.Multer.File, fieldName: string): Promise<string> {
+    if (!file) {
+      throw new OIBusValidationError(`Missing file "${fieldName}"`);
+    }
+
+    if (file.buffer) {
+      return file.buffer.toString('utf8');
+    }
+    if (file.path) {
+      const buffer = await fs.readFile(file.path);
+      return buffer.toString('utf8');
+    }
+
+    throw new OIBusValidationError(
+      `File "${fieldName}" has neither buffer nor path. File object: ${JSON.stringify({
+        fieldname: file.fieldname,
+        originalname: file.originalname,
+        mimetype: file.mimetype
+      })}`
+    );
+  }
+
+  private async parseJsonArrayFile(
+    file: Express.Multer.File | undefined,
+    fieldName: string,
+    defaultValue: Array<Record<string, unknown>>
+  ): Promise<Array<Record<string, unknown>>> {
+    if (!file) {
+      return defaultValue;
+    }
+
+    const content = await this.getUploadedFileContent(file, fieldName);
+    try {
+      const parsed = JSON.parse(content);
+      if (!Array.isArray(parsed)) {
+        throw new Error('Invalid payload');
+      }
+      return parsed as Array<Record<string, unknown>>;
+    } catch (error) {
+      throw new OIBusValidationError(`Invalid JSON content for "${fieldName}": ${(error as Error).message}`);
+    }
   }
 }

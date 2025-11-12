@@ -7,6 +7,7 @@ import minimist from 'minimist';
 
 import { DateTime } from 'luxon';
 import {
+  arrayElementsToCsv,
   checkScanMode,
   compress,
   convertDateTimeToInstant,
@@ -31,7 +32,10 @@ import {
   stringToBoolean,
   testIPOnFilter,
   unzip,
-  validateCronExpression
+  validateArrayElementsImport,
+  validateCronExpression,
+  findArrayAttributeInAttributes,
+  getArrayAttributeDefinition
 } from './utils';
 import csv from 'papaparse';
 import pino from 'pino';
@@ -43,6 +47,7 @@ import { EngineSettingsDTO, OIBusInfo } from '../../shared/model/engine.model';
 import cronstrue from 'cronstrue';
 import testData from '../tests/utils/test-data';
 import { mockBaseFolders } from '../tests/utils/test-utils';
+import { OIBusArrayAttribute, OIBusAttribute } from 'shared/model/form.model';
 
 jest.mock('node:zlib');
 jest.mock('node:fs/promises');
@@ -1074,7 +1079,7 @@ describe('Service utils', () => {
     });
 
     it('should throw an error for non standard characters', () => {
-      expect(validateCronExpression('* * * * 5L')).toEqual({
+      expect(validateCronExpression('* * * 5L')).toEqual({
         isValid: false,
         errorMessage: 'Cron Expression: Non-standard characters: L',
         humanReadableForm: '',
@@ -1296,6 +1301,3498 @@ describe('Service utils', () => {
       expect(testIPOnFilter(ipFilters, '192.168.1.1')).toEqual(true);
       expect(testIPOnFilter(ipFilters, '::ffff:192.168.1.1')).toEqual(true);
       expect(testIPOnFilter(ipFilters, '2001:0db8:85a3:0000:0000:8a2e:0370:7334')).toEqual(true);
+    });
+  });
+
+  describe('Array CSV functionality', () => {
+    const mockArrayAttribute = {
+      type: 'array' as const,
+      key: 'items',
+      translationKey: 'test.items',
+      validators: [],
+      rootAttribute: {
+        type: 'object' as const,
+        key: 'item',
+        translationKey: 'test.item',
+        validators: [],
+        attributes: [
+          {
+            type: 'string' as const,
+            key: 'name',
+            translationKey: 'test.name',
+            validators: [],
+            defaultValue: null,
+            displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+          },
+          {
+            type: 'number' as const,
+            key: 'value',
+            translationKey: 'test.value',
+            validators: [],
+            defaultValue: null,
+            displayProperties: { row: 0, columns: 12, displayInViewMode: true },
+            unit: ''
+          }
+        ],
+        enablingConditions: [],
+        displayProperties: { visible: true, wrapInBox: false }
+      },
+      paginate: false,
+      numberOfElementPerPage: 25
+    };
+
+    describe('arrayElementsToCsv', () => {
+      beforeEach(() => {
+        jest.clearAllMocks();
+        (csv.unparse as jest.Mock).mockReturnValue('name,value\ntest1,100\ntest2,200');
+      });
+
+      it('should convert array items to flattened CSV', () => {
+        const arrayItems = [
+          { name: 'test1', value: 100 },
+          { name: 'test2', value: 200 }
+        ];
+        const delimiter = ',';
+
+        const properlyTypedMockArrayAttribute = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 'test.name',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'number' as const,
+                key: 'value',
+                translationKey: 'test.value',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              }
+            ]
+          }
+        };
+
+        properlyTypedMockArrayAttribute.rootAttribute.attributes = [
+          {
+            type: 'string' as const,
+            key: 'name',
+            translationKey: 'test.name',
+            validators: [],
+            defaultValue: null,
+            displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+          },
+          {
+            type: 'number' as const,
+            key: 'value',
+            translationKey: 'test.value',
+            validators: [],
+            defaultValue: null,
+            displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+          }
+        ];
+        const result = arrayElementsToCsv(arrayItems, delimiter, properlyTypedMockArrayAttribute as unknown as OIBusArrayAttribute);
+
+        expect(result).toContain('name,value');
+        expect(result).toContain('test1,100');
+        expect(result).toContain('test2,200');
+      });
+
+      it('should handle nested objects by stringifying them', () => {
+        (csv.unparse as jest.Mock).mockReturnValue('nested_prop\n"{\\"prop\\":\\"value1\\"}"\n"{\\"prop\\":\\"value2\\"}"');
+
+        const arrayAttributeWithNested = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'object' as const,
+                key: 'nested',
+                translationKey: 'test.nested',
+                validators: [],
+                attributes: [
+                  {
+                    type: 'string' as const,
+                    key: 'prop',
+                    translationKey: 'test.prop',
+                    validators: [],
+                    defaultValue: null,
+                    displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+                  }
+                ],
+                enablingConditions: [],
+                displayProperties: { visible: true, wrapInBox: false }
+              }
+            ]
+          }
+        };
+
+        const arrayItems = [{ nested: { prop: 'value1' } }, { nested: { prop: 'value2' } }];
+        const delimiter = ',';
+
+        const result = arrayElementsToCsv(arrayItems, delimiter, arrayAttributeWithNested);
+
+        expect(result).toContain('nested_prop');
+        expect(result).toContain('"{\\"prop\\":\\"value1\\"}"');
+        expect(result).toContain('"{\\"prop\\":\\"value2\\"}"');
+      });
+
+      it('should recursively flatten object attribute with proper object value', () => {
+        (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+          expect(data).toHaveLength(1);
+          expect(data[0]).toHaveProperty('nested_prop', 'value1');
+          expect(data[0]).not.toHaveProperty('nested');
+          return 'nested_prop\nvalue1';
+        });
+
+        const arrayAttributeWithNested = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'object' as const,
+                key: 'nested',
+                translationKey: 'test.nested',
+                validators: [],
+                attributes: [
+                  {
+                    type: 'string' as const,
+                    key: 'prop',
+                    translationKey: 'test.prop',
+                    validators: [],
+                    defaultValue: null,
+                    displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+                  }
+                ],
+                enablingConditions: [],
+                displayProperties: { visible: true, wrapInBox: false }
+              }
+            ]
+          }
+        };
+
+        const arrayItems = [{ nested: { prop: 'value1' } }];
+        const delimiter = ',';
+        arrayElementsToCsv(arrayItems, delimiter, arrayAttributeWithNested);
+      });
+
+      it('should handle object attribute with object value that has no matching properties', () => {
+        (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+          expect(data).toHaveLength(1);
+          expect(data[0]).toHaveProperty('name', 'test');
+          expect(Object.keys(data[0])).toEqual(['name']);
+          return 'name\ntest';
+        });
+
+        const attributeWithObjectNoMatch = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'object' as const,
+                key: 'obj',
+                translationKey: 't',
+                validators: [],
+                attributes: [
+                  {
+                    type: 'string' as const,
+                    key: 'expectedProp',
+                    translationKey: 't',
+                    validators: [],
+                    defaultValue: null,
+                    displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+                  }
+                ],
+                enablingConditions: [],
+                displayProperties: { visible: true, wrapInBox: false }
+              }
+            ]
+          }
+        };
+
+        const arrayItems = [{ name: 'test', obj: { otherProp: 'value' } }];
+        const delimiter = ',';
+        arrayElementsToCsv(arrayItems, delimiter, attributeWithObjectNoMatch as unknown as OIBusArrayAttribute);
+      });
+
+      it('should handle object attribute with empty object value', () => {
+        (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+          expect(data).toHaveLength(1);
+          expect(data[0]).toHaveProperty('name', 'test');
+          expect(Object.keys(data[0])).toEqual(['name']);
+          return 'name\ntest';
+        });
+
+        const attributeWithEmptyObject = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'object' as const,
+                key: 'obj',
+                translationKey: 't',
+                validators: [],
+                attributes: [
+                  {
+                    type: 'string' as const,
+                    key: 'prop',
+                    translationKey: 't',
+                    validators: [],
+                    defaultValue: null,
+                    displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+                  }
+                ],
+                enablingConditions: [],
+                displayProperties: { visible: true, wrapInBox: false }
+              }
+            ]
+          }
+        };
+
+        const arrayItems = [{ name: 'test', obj: {} }];
+        const delimiter = ',';
+        arrayElementsToCsv(arrayItems, delimiter, attributeWithEmptyObject as unknown as OIBusArrayAttribute);
+      });
+
+      it('should handle nested object attribute with empty nested object', () => {
+        (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+          expect(data).toHaveLength(1);
+          expect(data[0]).toHaveProperty('name', 'test');
+          expect(Object.keys(data[0])).toEqual(['name']);
+          return 'name\ntest';
+        });
+
+        const attributeWithNestedEmptyObject = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'object' as const,
+                key: 'obj',
+                translationKey: 't',
+                validators: [],
+                attributes: [
+                  {
+                    type: 'object' as const,
+                    key: 'nested',
+                    translationKey: 't',
+                    validators: [],
+                    attributes: [
+                      {
+                        type: 'string' as const,
+                        key: 'deepProp',
+                        translationKey: 't',
+                        validators: [],
+                        defaultValue: null,
+                        displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+                      }
+                    ],
+                    enablingConditions: [],
+                    displayProperties: { visible: true, wrapInBox: false }
+                  }
+                ],
+                enablingConditions: [],
+                displayProperties: { visible: true, wrapInBox: false }
+              }
+            ]
+          }
+        };
+
+        const arrayItems = [{ name: 'test', obj: { nested: {} } }];
+        const delimiter = ',';
+        arrayElementsToCsv(arrayItems, delimiter, attributeWithNestedEmptyObject as unknown as OIBusArrayAttribute);
+      });
+
+      it('should handle object attribute with nested object that has matching property but empty nested value', () => {
+        (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+          expect(data).toHaveLength(1);
+          expect(data[0]).toHaveProperty('name', 'test');
+          expect(Object.keys(data[0])).toEqual(['name']);
+          return 'name\ntest';
+        });
+
+        const attributeWithNestedMatchingButEmpty = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'object' as const,
+                key: 'obj',
+                translationKey: 't',
+                validators: [],
+                attributes: [
+                  {
+                    type: 'object' as const,
+                    key: 'nested',
+                    translationKey: 't',
+                    validators: [],
+                    attributes: [
+                      {
+                        type: 'string' as const,
+                        key: 'deepProp',
+                        translationKey: 't',
+                        validators: [],
+                        defaultValue: null,
+                        displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+                      }
+                    ],
+                    enablingConditions: [],
+                    displayProperties: { visible: true, wrapInBox: false }
+                  }
+                ],
+                enablingConditions: [],
+                displayProperties: { visible: true, wrapInBox: false }
+              }
+            ]
+          }
+        };
+
+        // obj has nested property that matches sub-attribute, but nested is empty object
+        const arrayItems = [{ name: 'test', obj: { nested: {} } }];
+        const delimiter = ',';
+        arrayElementsToCsv(arrayItems, delimiter, attributeWithNestedMatchingButEmpty as unknown as OIBusArrayAttribute);
+      });
+
+      it('should handle object attribute with Date object value when no sub-attributes', () => {
+        const dateValue = new Date('2023-01-01');
+        (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+          expect(data).toHaveLength(1);
+          expect(data[0]).toHaveProperty('name', 'test');
+          // When object attribute has no sub-attributes, recursive call returns early and Date is not added
+          expect(Object.keys(data[0])).toEqual(['name']);
+          return 'name\ntest';
+        });
+
+        const attributeWithDateObject = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'object' as const,
+                key: 'obj',
+                translationKey: 't',
+                validators: [],
+                attributes: [],
+                enablingConditions: [],
+                displayProperties: { visible: true, wrapInBox: false }
+              }
+            ]
+          }
+        };
+
+        const arrayItems = [{ name: 'test', obj: dateValue }];
+        const delimiter = ',';
+        arrayElementsToCsv(arrayItems, delimiter, attributeWithDateObject as unknown as OIBusArrayAttribute);
+      });
+
+      it('should handle object attribute with function value', () => {
+        const funcValue = () => 'test';
+        (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+          expect(data).toHaveLength(1);
+          expect(data[0]).toHaveProperty('name', 'test');
+          expect(data[0]).toHaveProperty('obj', funcValue);
+          return 'name,obj\ntest,function';
+        });
+
+        const attributeWithFunction = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'object' as const,
+                key: 'obj',
+                translationKey: 't',
+                validators: [],
+                attributes: [],
+                enablingConditions: [],
+                displayProperties: { visible: true, wrapInBox: false }
+              }
+            ]
+          }
+        };
+
+        const arrayItems = [{ name: 'test', obj: funcValue }];
+        const delimiter = ',';
+        arrayElementsToCsv(arrayItems, delimiter, attributeWithFunction as unknown as OIBusArrayAttribute);
+      });
+
+      it('should handle object attribute with RegExp value when no sub-attributes', () => {
+        const regexValue = /test/;
+        (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+          expect(data).toHaveLength(1);
+          expect(data[0]).toHaveProperty('name', 'test');
+          // When object attribute has no sub-attributes, recursive call returns early and RegExp is not added
+          expect(Object.keys(data[0])).toEqual(['name']);
+          return 'name\ntest';
+        });
+
+        const attributeWithRegExp = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'object' as const,
+                key: 'obj',
+                translationKey: 't',
+                validators: [],
+                attributes: [],
+                enablingConditions: [],
+                displayProperties: { visible: true, wrapInBox: false }
+              }
+            ]
+          }
+        };
+
+        const arrayItems = [{ name: 'test', obj: regexValue }];
+        const delimiter = ',';
+        arrayElementsToCsv(arrayItems, delimiter, attributeWithRegExp as unknown as OIBusArrayAttribute);
+      });
+
+      it('should handle object attribute with object value where all matching properties are null/undefined', () => {
+        (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+          expect(data).toHaveLength(1);
+          expect(data[0]).toHaveProperty('name', 'test');
+          // All matching properties are null/undefined, so nothing is added from recursive call
+          expect(Object.keys(data[0])).toEqual(['name']);
+          return 'name\ntest';
+        });
+
+        const attributeWithNullProperties = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'object' as const,
+                key: 'obj',
+                translationKey: 't',
+                validators: [],
+                attributes: [
+                  {
+                    type: 'string' as const,
+                    key: 'prop1',
+                    translationKey: 't',
+                    validators: [],
+                    defaultValue: null,
+                    displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+                  },
+                  {
+                    type: 'string' as const,
+                    key: 'prop2',
+                    translationKey: 't',
+                    validators: [],
+                    defaultValue: null,
+                    displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+                  }
+                ],
+                enablingConditions: [],
+                displayProperties: { visible: true, wrapInBox: false }
+              }
+            ]
+          }
+        };
+
+        // obj has properties that match sub-attributes, but all values are null/undefined
+        const arrayItems = [{ name: 'test', obj: { prop1: null, prop2: undefined } }];
+        const delimiter = ',';
+        arrayElementsToCsv(arrayItems, delimiter, attributeWithNullProperties as unknown as OIBusArrayAttribute);
+      });
+
+      it('should stringify object value for scalar type attribute', () => {
+        (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+          expect(data).toHaveLength(1);
+          expect(data[0]).toHaveProperty('name', 'test');
+          expect(data[0]).toHaveProperty('value', '{"nested":"object"}');
+          return 'name,value\ntest,"{\\"nested\\":\\"object\\"}"';
+        });
+
+        const attributeWithObjectInString = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'string' as const,
+                key: 'value',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              }
+            ]
+          }
+        };
+
+        const arrayItems = [{ name: 'test', value: { nested: 'object' } }];
+        const delimiter = ',';
+        arrayElementsToCsv(arrayItems, delimiter, attributeWithObjectInString as unknown as OIBusArrayAttribute);
+      });
+
+      it('should stringify array value for scalar type attribute', () => {
+        (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+          expect(data).toHaveLength(1);
+          expect(data[0]).toHaveProperty('name', 'test');
+          expect(data[0]).toHaveProperty('value', '[1,2,3]');
+          return 'name,value\ntest,"[1,2,3]"';
+        });
+
+        const attributeWithArrayInString = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'string' as const,
+                key: 'value',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              }
+            ]
+          }
+        };
+
+        const arrayItems = [{ name: 'test', value: [1, 2, 3] }];
+        const delimiter = ',';
+        arrayElementsToCsv(arrayItems, delimiter, attributeWithArrayInString as unknown as OIBusArrayAttribute);
+      });
+
+      it('should handle code type attribute with object value', () => {
+        (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+          expect(data).toHaveLength(1);
+          expect(data[0]).toHaveProperty('name', 'test');
+          expect(data[0]).toHaveProperty('code', '{"nested":"object"}');
+          return 'name,code\ntest,"{\\"nested\\":\\"object\\"}"';
+        });
+
+        const attributeWithCodeType = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'code' as const,
+                key: 'code',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              }
+            ]
+          }
+        };
+
+        const arrayItems = [{ name: 'test', code: { nested: 'object' } }];
+        const delimiter = ',';
+        arrayElementsToCsv(arrayItems, delimiter, attributeWithCodeType as unknown as OIBusArrayAttribute);
+      });
+
+      it('should handle timezone type attribute with primitive value', () => {
+        (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+          expect(data).toHaveLength(1);
+          expect(data[0]).toHaveProperty('name', 'test');
+          expect(data[0]).toHaveProperty('tz', 'UTC');
+          return 'name,tz\ntest,UTC';
+        });
+
+        const attributeWithTimezoneType = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'timezone' as const,
+                key: 'tz',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              }
+            ]
+          }
+        };
+
+        const arrayItems = [{ name: 'test', tz: 'UTC' }];
+        const delimiter = ',';
+        arrayElementsToCsv(arrayItems, delimiter, attributeWithTimezoneType as unknown as OIBusArrayAttribute);
+      });
+
+      it('should handle instant type attribute with primitive value', () => {
+        (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+          expect(data).toHaveLength(1);
+          expect(data[0]).toHaveProperty('name', 'test');
+          expect(data[0]).toHaveProperty('inst', '2023-01-01T00:00:00Z');
+          return 'name,inst\ntest,2023-01-01T00:00:00Z';
+        });
+
+        const attributeWithInstantType = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'instant' as const,
+                key: 'inst',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              }
+            ]
+          }
+        };
+
+        const arrayItems = [{ name: 'test', inst: '2023-01-01T00:00:00Z' }];
+        const delimiter = ',';
+        arrayElementsToCsv(arrayItems, delimiter, attributeWithInstantType as unknown as OIBusArrayAttribute);
+      });
+
+      it('should handle scan-mode type attribute with primitive value', () => {
+        (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+          expect(data).toHaveLength(1);
+          expect(data[0]).toHaveProperty('name', 'test');
+          expect(data[0]).toHaveProperty('mode', 'poll');
+          return 'name,mode\ntest,poll';
+        });
+
+        const attributeWithScanModeType = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'scan-mode' as const,
+                key: 'mode',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              }
+            ]
+          }
+        };
+
+        const arrayItems = [{ name: 'test', mode: 'poll' }];
+        const delimiter = ',';
+        arrayElementsToCsv(arrayItems, delimiter, attributeWithScanModeType as unknown as OIBusArrayAttribute);
+      });
+
+      it('should handle certificate type attribute with primitive value', () => {
+        (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+          expect(data).toHaveLength(1);
+          expect(data[0]).toHaveProperty('name', 'test');
+          expect(data[0]).toHaveProperty('cert', 'cert-value');
+          return 'name,cert\ntest,cert-value';
+        });
+
+        const attributeWithCertificateType = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'certificate' as const,
+                key: 'cert',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              }
+            ]
+          }
+        };
+
+        const arrayItems = [{ name: 'test', cert: 'cert-value' }];
+        const delimiter = ',';
+        arrayElementsToCsv(arrayItems, delimiter, attributeWithCertificateType as unknown as OIBusArrayAttribute);
+      });
+
+      it('should handle boolean type attribute with primitive value', () => {
+        (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+          expect(data).toHaveLength(1);
+          expect(data[0]).toHaveProperty('name', 'test');
+          expect(data[0]).toHaveProperty('enabled', true);
+          return 'name,enabled\ntest,true';
+        });
+
+        const attributeWithBooleanType = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'boolean' as const,
+                key: 'enabled',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              }
+            ]
+          }
+        };
+
+        const arrayItems = [{ name: 'test', enabled: true }];
+        const delimiter = ',';
+        arrayElementsToCsv(arrayItems, delimiter, attributeWithBooleanType as unknown as OIBusArrayAttribute);
+      });
+
+      it('should handle number type attribute with primitive value', () => {
+        (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+          expect(data).toHaveLength(1);
+          expect(data[0]).toHaveProperty('name', 'test');
+          expect(data[0]).toHaveProperty('count', 42);
+          return 'name,count\ntest,42';
+        });
+
+        const attributeWithNumberType = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'number' as const,
+                key: 'count',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              }
+            ]
+          }
+        };
+
+        const arrayItems = [{ name: 'test', count: 42 }];
+        const delimiter = ',';
+        arrayElementsToCsv(arrayItems, delimiter, attributeWithNumberType as unknown as OIBusArrayAttribute);
+      });
+
+      it('should handle string-select type attribute with primitive value', () => {
+        (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+          expect(data).toHaveLength(1);
+          expect(data[0]).toHaveProperty('name', 'test');
+          expect(data[0]).toHaveProperty('option', 'option1');
+          return 'name,option\ntest,option1';
+        });
+
+        const attributeWithStringSelectType = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'string-select' as const,
+                key: 'option',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              }
+            ]
+          }
+        };
+
+        const arrayItems = [{ name: 'test', option: 'option1' }];
+        const delimiter = ',';
+        arrayElementsToCsv(arrayItems, delimiter, attributeWithStringSelectType as unknown as OIBusArrayAttribute);
+      });
+
+      it('should handle secret type attribute with primitive value', () => {
+        (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+          expect(data).toHaveLength(1);
+          expect(data[0]).toHaveProperty('name', 'test');
+          expect(data[0]).toHaveProperty('password', 'secret123');
+          return 'name,password\ntest,secret123';
+        });
+
+        const attributeWithSecretType = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'secret' as const,
+                key: 'password',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              }
+            ]
+          }
+        };
+
+        const arrayItems = [{ name: 'test', password: 'secret123' }];
+        const delimiter = ',';
+        arrayElementsToCsv(arrayItems, delimiter, attributeWithSecretType as unknown as OIBusArrayAttribute);
+      });
+
+      it('should keep primitive values for object attributes when value is not an object', () => {
+        (csv.unparse as jest.Mock).mockImplementation((data, options) => {
+          expect(options).toEqual({ columns: ['nested'], delimiter: ',' });
+          expect(data).toEqual([{ nested: 'primitive' }]);
+          return 'nested\nprimitive';
+        });
+
+        const arrayAttributeWithObject = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'object' as const,
+                key: 'nested',
+                translationKey: 'test.nested',
+                validators: [],
+                attributes: [],
+                enablingConditions: [],
+                displayProperties: { visible: true, wrapInBox: false }
+              }
+            ]
+          }
+        };
+
+        const arrayItems = [{ nested: 'primitive' }];
+        const delimiter = ',';
+
+        const result = arrayElementsToCsv(arrayItems, delimiter, arrayAttributeWithObject);
+        expect(result).toBe('nested\nprimitive');
+      });
+
+      it('should keep primitive string value for object attribute with sub-attributes (else branch)', () => {
+        (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+          expect(data).toHaveLength(1);
+          expect(data[0]).toHaveProperty('name', 'test');
+          expect(data[0]).toHaveProperty('obj', 'primitive-string');
+          return 'name,obj\ntest,primitive-string';
+        });
+
+        const attributeWithObjectAndSubAttrs = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'object' as const,
+                key: 'obj',
+                translationKey: 't',
+                validators: [],
+                attributes: [
+                  {
+                    type: 'string' as const,
+                    key: 'subProp',
+                    translationKey: 't',
+                    validators: [],
+                    defaultValue: null,
+                    displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+                  }
+                ],
+                enablingConditions: [],
+                displayProperties: { visible: true, wrapInBox: false }
+              }
+            ]
+          }
+        };
+
+        // obj has sub-attributes but value is a primitive string (hits else branch at line 754)
+        const arrayItems = [{ name: 'test', obj: 'primitive-string' }];
+        const delimiter = ',';
+        arrayElementsToCsv(arrayItems, delimiter, attributeWithObjectAndSubAttrs as unknown as OIBusArrayAttribute);
+      });
+
+      it('should keep primitive number value for object attribute with sub-attributes (else branch)', () => {
+        (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+          expect(data).toHaveLength(1);
+          expect(data[0]).toHaveProperty('name', 'test');
+          expect(data[0]).toHaveProperty('obj', 42);
+          return 'name,obj\ntest,42';
+        });
+
+        const attributeWithObjectAndSubAttrs = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'object' as const,
+                key: 'obj',
+                translationKey: 't',
+                validators: [],
+                attributes: [
+                  {
+                    type: 'string' as const,
+                    key: 'subProp',
+                    translationKey: 't',
+                    validators: [],
+                    defaultValue: null,
+                    displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+                  }
+                ],
+                enablingConditions: [],
+                displayProperties: { visible: true, wrapInBox: false }
+              }
+            ]
+          }
+        };
+
+        // obj has sub-attributes but value is a primitive number (hits else branch at line 754)
+        const arrayItems = [{ name: 'test', obj: 42 }];
+        const delimiter = ',';
+        arrayElementsToCsv(arrayItems, delimiter, attributeWithObjectAndSubAttrs as unknown as OIBusArrayAttribute);
+      });
+
+      it('should keep primitive boolean value for object attribute with sub-attributes (else branch)', () => {
+        (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+          expect(data).toHaveLength(1);
+          expect(data[0]).toHaveProperty('name', 'test');
+          expect(data[0]).toHaveProperty('obj', true);
+          return 'name,obj\ntest,true';
+        });
+
+        const attributeWithObjectAndSubAttrs = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'object' as const,
+                key: 'obj',
+                translationKey: 't',
+                validators: [],
+                attributes: [
+                  {
+                    type: 'string' as const,
+                    key: 'subProp',
+                    translationKey: 't',
+                    validators: [],
+                    defaultValue: null,
+                    displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+                  }
+                ],
+                enablingConditions: [],
+                displayProperties: { visible: true, wrapInBox: false }
+              }
+            ]
+          }
+        };
+
+        // obj has sub-attributes but value is a primitive boolean (hits else branch at line 754)
+        const arrayItems = [{ name: 'test', obj: true }];
+        const delimiter = ',';
+        arrayElementsToCsv(arrayItems, delimiter, attributeWithObjectAndSubAttrs as unknown as OIBusArrayAttribute);
+      });
+
+      it('should keep falsy value (0) for object attribute with sub-attributes (else branch)', () => {
+        (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+          expect(data).toHaveLength(1);
+          expect(data[0]).toHaveProperty('name', 'test');
+          expect(data[0]).toHaveProperty('obj', 0);
+          return 'name,obj\ntest,0';
+        });
+
+        const attributeWithObjectAndSubAttrs = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'object' as const,
+                key: 'obj',
+                translationKey: 't',
+                validators: [],
+                attributes: [
+                  {
+                    type: 'string' as const,
+                    key: 'subProp',
+                    translationKey: 't',
+                    validators: [],
+                    defaultValue: null,
+                    displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+                  }
+                ],
+                enablingConditions: [],
+                displayProperties: { visible: true, wrapInBox: false }
+              }
+            ]
+          }
+        };
+
+        // obj has sub-attributes but value is 0 (falsy, hits else branch at line 754)
+        const arrayItems = [{ name: 'test', obj: 0 }];
+        const delimiter = ',';
+        arrayElementsToCsv(arrayItems, delimiter, attributeWithObjectAndSubAttrs as unknown as OIBusArrayAttribute);
+      });
+
+      it('should keep falsy value (false) for object attribute with sub-attributes (else branch)', () => {
+        (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+          expect(data).toHaveLength(1);
+          expect(data[0]).toHaveProperty('name', 'test');
+          expect(data[0]).toHaveProperty('obj', false);
+          return 'name,obj\ntest,false';
+        });
+
+        const attributeWithObjectAndSubAttrs = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'object' as const,
+                key: 'obj',
+                translationKey: 't',
+                validators: [],
+                attributes: [
+                  {
+                    type: 'string' as const,
+                    key: 'subProp',
+                    translationKey: 't',
+                    validators: [],
+                    defaultValue: null,
+                    displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+                  }
+                ],
+                enablingConditions: [],
+                displayProperties: { visible: true, wrapInBox: false }
+              }
+            ]
+          }
+        };
+
+        // obj has sub-attributes but value is false (falsy, hits else branch at line 754)
+        const arrayItems = [{ name: 'test', obj: false }];
+        const delimiter = ',';
+        arrayElementsToCsv(arrayItems, delimiter, attributeWithObjectAndSubAttrs as unknown as OIBusArrayAttribute);
+      });
+
+      it('should keep array value for object attribute with sub-attributes (else branch)', () => {
+        (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+          expect(data).toHaveLength(1);
+          expect(data[0]).toHaveProperty('name', 'test');
+          expect(data[0]).toHaveProperty('obj', [1, 2, 3]);
+          return 'name,obj\ntest,"[1,2,3]"';
+        });
+
+        const attributeWithObjectAndSubAttrs = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'object' as const,
+                key: 'obj',
+                translationKey: 't',
+                validators: [],
+                attributes: [
+                  {
+                    type: 'string' as const,
+                    key: 'subProp',
+                    translationKey: 't',
+                    validators: [],
+                    defaultValue: null,
+                    displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+                  }
+                ],
+                enablingConditions: [],
+                displayProperties: { visible: true, wrapInBox: false }
+              }
+            ]
+          }
+        };
+
+        // obj has sub-attributes but value is an array (hits else branch at line 754 because Array.isArray is true)
+        const arrayItems = [{ name: 'test', obj: [1, 2, 3] }];
+        const delimiter = ',';
+        arrayElementsToCsv(arrayItems, delimiter, attributeWithObjectAndSubAttrs as unknown as OIBusArrayAttribute);
+      });
+
+      it('should handle boolean type attribute with primitive value', () => {
+        (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+          expect(data).toHaveLength(1);
+          expect(data[0]).toHaveProperty('name', 'test');
+          expect(data[0]).toHaveProperty('flag', true);
+          return 'name,flag\ntest,true';
+        });
+
+        const attributeWithBooleanType = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'boolean' as const,
+                key: 'flag',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              }
+            ]
+          }
+        };
+
+        const arrayItems = [{ name: 'test', flag: true }];
+        const delimiter = ',';
+        arrayElementsToCsv(arrayItems, delimiter, attributeWithBooleanType as unknown as OIBusArrayAttribute);
+      });
+
+      it('should handle number type attribute with primitive value', () => {
+        (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+          expect(data).toHaveLength(1);
+          expect(data[0]).toHaveProperty('name', 'test');
+          expect(data[0]).toHaveProperty('count', 42);
+          return 'name,count\ntest,42';
+        });
+
+        const attributeWithNumberType = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'number' as const,
+                key: 'count',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              }
+            ]
+          }
+        };
+
+        const arrayItems = [{ name: 'test', count: 42 }];
+        const delimiter = ',';
+        arrayElementsToCsv(arrayItems, delimiter, attributeWithNumberType as unknown as OIBusArrayAttribute);
+      });
+
+      it('should handle string-select type attribute with primitive value', () => {
+        (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+          expect(data).toHaveLength(1);
+          expect(data[0]).toHaveProperty('name', 'test');
+          expect(data[0]).toHaveProperty('select', 'option1');
+          return 'name,select\ntest,option1';
+        });
+
+        const attributeWithStringSelectType = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'string-select' as const,
+                key: 'select',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              }
+            ]
+          }
+        };
+
+        const arrayItems = [{ name: 'test', select: 'option1' }];
+        const delimiter = ',';
+        arrayElementsToCsv(arrayItems, delimiter, attributeWithStringSelectType as unknown as OIBusArrayAttribute);
+      });
+
+      it('should handle secret type attribute with primitive value', () => {
+        (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+          expect(data).toHaveLength(1);
+          expect(data[0]).toHaveProperty('name', 'test');
+          expect(data[0]).toHaveProperty('secret', 'secret-value');
+          return 'name,secret\ntest,secret-value';
+        });
+
+        const attributeWithSecretType = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'secret' as const,
+                key: 'secret',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              }
+            ]
+          }
+        };
+
+        const arrayItems = [{ name: 'test', secret: 'secret-value' }];
+        const delimiter = ',';
+        arrayElementsToCsv(arrayItems, delimiter, attributeWithSecretType as unknown as OIBusArrayAttribute);
+      });
+
+      it('should handle default case with unknown type', () => {
+        (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+          expect(data).toHaveLength(1);
+          expect(data[0]).toHaveProperty('name', 'test');
+          expect(data[0]).toHaveProperty('unknown', 'value');
+          return 'name,unknown\ntest,value';
+        });
+
+        const attributeWithUnknownType = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'unknown-type' as never,
+                key: 'unknown',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              }
+            ]
+          }
+        };
+
+        const arrayItems = [{ name: 'test', unknown: 'value' }];
+        const delimiter = ',';
+        arrayElementsToCsv(arrayItems, delimiter, attributeWithUnknownType as unknown as OIBusArrayAttribute);
+      });
+
+      it('should handle default case with unknown type and object value', () => {
+        (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+          expect(data).toHaveLength(1);
+          expect(data[0]).toHaveProperty('name', 'test');
+          expect(data[0]).toHaveProperty('unknown', '{"nested":"object"}');
+          return 'name,unknown\ntest,"{\\"nested\\":\\"object\\"}"';
+        });
+
+        const attributeWithUnknownType = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'unknown-type' as never,
+                key: 'unknown',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              }
+            ]
+          }
+        };
+
+        const arrayItems = [{ name: 'test', unknown: { nested: 'object' } }];
+        const delimiter = ',';
+        arrayElementsToCsv(arrayItems, delimiter, attributeWithUnknownType as unknown as OIBusArrayAttribute);
+      });
+
+      it('should handle empty array', () => {
+        (csv.unparse as jest.Mock).mockReturnValue('');
+
+        const arrayItems: Array<Record<string, unknown>> = [];
+        const delimiter = ',';
+
+        const result = arrayElementsToCsv(arrayItems, delimiter, mockArrayAttribute);
+
+        expect(result).toBe('');
+      });
+
+      it('should return empty flattened output when root attribute is not an object', () => {
+        (csv.unparse as jest.Mock).mockImplementation((data, options) => {
+          expect(data).toEqual([{}]);
+          expect(options).toEqual({ columns: [], delimiter: ';' });
+          return 'mocked';
+        });
+
+        const nonObjectRootAttribute = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            type: 'string' as const,
+            key: 'value',
+            translationKey: 'test.value',
+            validators: [],
+            defaultValue: null,
+            displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+          }
+        } as unknown as OIBusArrayAttribute;
+
+        const arrayItems = [{ value: 'foo' }];
+        const delimiter = ';';
+
+        const result = arrayElementsToCsv(arrayItems, delimiter, nonObjectRootAttribute);
+        expect(result).toBe('mocked');
+      });
+    });
+
+    describe('validateArrayElementsImport', () => {
+      beforeEach(() => {
+        jest.clearAllMocks();
+        (csv.parse as jest.Mock).mockReturnValue({
+          data: [
+            { name: 'test1', value: '100' },
+            { name: 'test2', value: '200' }
+          ],
+          meta: { delimiter: ',' }
+        });
+      });
+
+      it('should validate CSV import successfully', () => {
+        const csvContent = 'name,value\ntest1,100\ntest2,200';
+        const delimiter = ',';
+
+        const result = validateArrayElementsImport(csvContent, delimiter, mockArrayAttribute);
+
+        expect(result.elements).toHaveLength(2);
+        expect(result.elements[0]).toEqual({ name: 'test1', value: 100 });
+        expect(result.elements[1]).toEqual({ name: 'test2', value: 200 });
+        expect(result.errors).toHaveLength(0);
+      });
+
+      it('should handle validation errors', async () => {
+        (csv.parse as jest.Mock).mockReturnValue({
+          data: [
+            { name: 'test1', value: 'invalid' },
+            { name: 'test2', value: '200' }
+          ],
+          meta: { delimiter: ',' }
+        });
+
+        const csvContent = 'name,value\ntest1,invalid\ntest2,200';
+        const delimiter = ',';
+
+        const result = validateArrayElementsImport(csvContent, delimiter, mockArrayAttribute);
+
+        expect(result.elements).toHaveLength(1);
+        expect(result.elements[0]).toEqual({ name: 'test2', value: 200 });
+        expect(result.errors).toHaveLength(1);
+        expect(result.errors[0].error).toContain('Row 1: Invalid number value "invalid"');
+      });
+
+      it('should throw error for delimiter mismatch', () => {
+        (csv.parse as jest.Mock).mockReturnValue({
+          data: [{ name: 'test1', value: '100' }],
+          meta: { delimiter: ';' }
+        });
+
+        const csvContent = 'name;value\ntest1;100';
+        const delimiter = ',';
+
+        expect(() => validateArrayElementsImport(csvContent, delimiter, mockArrayAttribute)).toThrow(
+          'The entered delimiter "," does not correspond to the file delimiter ";"'
+        );
+      });
+
+      it('should handle empty CSV', () => {
+        (csv.parse as jest.Mock).mockReturnValue({
+          data: [],
+          meta: { delimiter: ',' }
+        });
+
+        const csvContent = '';
+        const delimiter = ',';
+
+        const result = validateArrayElementsImport(csvContent, delimiter, mockArrayAttribute);
+
+        expect(result.elements).toHaveLength(0);
+        expect(result.errors).toHaveLength(0);
+      });
+
+      it('should handle errors during unflatten and collect them', () => {
+        // Create an attribute that will cause unflattenObject to throw
+        const attributeWithError = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'boolean' as const,
+                key: 'enabled',
+                translationKey: 'test.enabled',
+                validators: [],
+                defaultValue: false,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              // Intentionally insert an undefined attribute to trigger a runtime error
+              undefined as unknown as never
+            ]
+          }
+        } as unknown as OIBusArrayAttribute;
+
+        (csv.parse as jest.Mock).mockReturnValue({
+          data: [{ enabled: 'true' }, { enabled: 'false' }],
+          meta: { delimiter: ',' }
+        });
+
+        const csvContent = 'enabled\ntrue\nfalse';
+        const delimiter = ',';
+
+        const result = validateArrayElementsImport(csvContent, delimiter, attributeWithError);
+
+        expect(result.elements).toHaveLength(0);
+        expect(result.errors).toHaveLength(2);
+        expect(result.errors[0].error).toContain('Row 1:');
+        expect(result.errors[1].error).toContain('Row 2:');
+      });
+
+      it('should handle boolean type conversion', () => {
+        (csv.parse as jest.Mock).mockReturnValue({
+          data: [
+            { name: 'test1', enabled: 'true' },
+            { name: 'test2', enabled: 'false' }
+          ],
+          meta: { delimiter: ',' }
+        });
+
+        const csvContent = 'name,enabled\ntest1,true\ntest2,false';
+        const delimiter = ',';
+
+        const attributeWithBoolean = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 'test.name',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'boolean' as const,
+                key: 'enabled',
+                translationKey: 'test.enabled',
+                validators: [],
+                defaultValue: false,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              }
+            ]
+          }
+        };
+
+        const result = validateArrayElementsImport(csvContent, delimiter, attributeWithBoolean);
+
+        expect(result.elements).toHaveLength(2);
+        expect(result.elements[0]).toEqual({ name: 'test1', enabled: true });
+        expect(result.elements[1]).toEqual({ name: 'test2', enabled: false });
+      });
+
+      it('should skip boolean value when empty string', () => {
+        (csv.parse as jest.Mock).mockReturnValue({
+          data: [{ name: 'test1', enabled: '' }],
+          meta: { delimiter: ',' }
+        });
+
+        const csvContent = 'name,enabled\ntest1,';
+        const delimiter = ',';
+
+        const attributeWithBoolean = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 'test.name',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'boolean' as const,
+                key: 'enabled',
+                translationKey: 'test.enabled',
+                validators: [],
+                defaultValue: false,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              }
+            ]
+          }
+        };
+
+        const result = validateArrayElementsImport(csvContent, delimiter, attributeWithBoolean);
+
+        expect(result.elements).toHaveLength(1);
+        expect(result.elements[0]).toEqual({ name: 'test1' });
+      });
+
+      it('should handle number type conversion', () => {
+        (csv.parse as jest.Mock).mockReturnValue({
+          data: [
+            { name: 'test1', count: '100' },
+            { name: 'test2', count: '200' }
+          ],
+          meta: { delimiter: ',' }
+        });
+
+        const csvContent = 'name,count\ntest1,100\ntest2,200';
+        const delimiter = ',';
+
+        const attributeWithNumber = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 'test.name',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'number' as const,
+                key: 'count',
+                translationKey: 'test.count',
+                validators: [],
+                defaultValue: 0,
+                unit: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              }
+            ]
+          }
+        };
+
+        const result = validateArrayElementsImport(csvContent, delimiter, attributeWithNumber);
+
+        expect(result.elements).toHaveLength(2);
+        expect(result.elements[0]).toEqual({ name: 'test1', count: 100 });
+        expect(result.elements[1]).toEqual({ name: 'test2', count: 200 });
+      });
+
+      it('should skip number value when empty string', () => {
+        (csv.parse as jest.Mock).mockReturnValue({
+          data: [{ name: 'test1', count: '' }],
+          meta: { delimiter: ',' }
+        });
+
+        const csvContent = 'name,count\ntest1,';
+        const delimiter = ',';
+
+        const attributeWithNumber = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 'test.name',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'number' as const,
+                key: 'count',
+                translationKey: 'test.count',
+                validators: [],
+                defaultValue: 0,
+                unit: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              }
+            ]
+          }
+        };
+
+        const result = validateArrayElementsImport(csvContent, delimiter, attributeWithNumber);
+
+        expect(result.elements).toHaveLength(1);
+        expect(result.elements[0]).toEqual({ name: 'test1' });
+      });
+
+      it('should retain values for unsupported attribute types', () => {
+        (csv.parse as jest.Mock).mockReturnValue({
+          data: [{ name: 'test1', extra: 'custom' }],
+          meta: { delimiter: ',' }
+        });
+
+        const csvContent = 'name,extra\ntest1,custom';
+        const delimiter = ',';
+
+        const attributeWithCustom = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 'test.name',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'custom-unknown-type' as unknown,
+                key: 'extra',
+                translationKey: 'test.extra',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              }
+            ]
+          }
+        } as unknown as OIBusArrayAttribute;
+
+        const result = validateArrayElementsImport(csvContent, delimiter, attributeWithCustom);
+
+        expect(result.elements).toHaveLength(1);
+        expect(result.elements[0]).toEqual({ name: 'test1', extra: 'custom' });
+      });
+
+      it('should handle nested object types with recursive unflatten', () => {
+        (csv.parse as jest.Mock).mockReturnValue({
+          data: [
+            { name: 'test1', nested_prop: 'value1' },
+            { name: 'test2', nested_prop: 'value2' }
+          ],
+          meta: { delimiter: ',' }
+        });
+
+        const csvContent = 'name,nested_prop\ntest1,value1\ntest2,value2';
+        const delimiter = ',';
+
+        const attributeWithNestedObject = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 'test.name',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'object' as const,
+                key: 'nested',
+                translationKey: 'test.nested',
+                validators: [],
+                attributes: [
+                  {
+                    type: 'string' as const,
+                    key: 'prop',
+                    translationKey: 'test.prop',
+                    validators: [],
+                    defaultValue: null,
+                    displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+                  }
+                ],
+                enablingConditions: [],
+                displayProperties: { visible: true, wrapInBox: false }
+              }
+            ]
+          }
+        };
+
+        const result = validateArrayElementsImport(csvContent, delimiter, attributeWithNestedObject);
+
+        expect(result.elements).toHaveLength(2);
+        expect(result.elements[0]).toEqual({ name: 'test1', nested: { prop: 'value1' } });
+        expect(result.elements[1]).toEqual({ name: 'test2', nested: { prop: 'value2' } });
+      });
+
+      it('should handle default case for unknown types', () => {
+        (csv.parse as jest.Mock).mockReturnValue({
+          data: [{ name: 'test1', custom: 'customValue' }],
+          meta: { delimiter: ',' }
+        });
+
+        const csvContent = 'name,custom\ntest1,customValue';
+        const delimiter = ',';
+
+        const attributeWithCustomType = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 'test.name',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'custom-unknown-type',
+                key: 'custom',
+                translationKey: 'test.custom',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              }
+            ]
+          }
+        } as unknown as OIBusArrayAttribute;
+
+        const result = validateArrayElementsImport(csvContent, delimiter, attributeWithCustomType);
+
+        expect(result.elements).toHaveLength(1);
+        expect(result.elements[0]).toEqual({ name: 'test1', custom: 'customValue' });
+      });
+
+      it('should skip undefined values in default case', () => {
+        (csv.parse as jest.Mock).mockReturnValue({
+          data: [{ name: 'test1' }],
+          meta: { delimiter: ',' }
+        });
+
+        const csvContent = 'name\ntest1';
+        const delimiter = ',';
+
+        const attributeWithCustomType = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 'test.name',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'custom-unknown-type',
+                key: 'custom',
+                translationKey: 'test.custom',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              }
+            ]
+          }
+        } as unknown as OIBusArrayAttribute;
+
+        const result = validateArrayElementsImport(csvContent, delimiter, attributeWithCustomType);
+
+        expect(result.elements).toHaveLength(1);
+        expect(result.elements[0]).toEqual({ name: 'test1' });
+        expect(result.elements[0]).not.toHaveProperty('custom');
+      });
+
+      it('should recursively rebuild nested objects when only object attributes are present', () => {
+        (csv.parse as jest.Mock).mockReturnValue({
+          data: [{ nested_prop: 'value' }],
+          meta: { delimiter: ',' }
+        });
+
+        const csvContent = 'nested_prop\nvalue';
+        const delimiter = ',';
+
+        const attributeWithOnlyNested = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'object' as const,
+                key: 'nested',
+                translationKey: 'test.nested',
+                validators: [],
+                attributes: [
+                  {
+                    type: 'string' as const,
+                    key: 'prop',
+                    translationKey: 'test.prop',
+                    validators: [],
+                    defaultValue: null,
+                    displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+                  }
+                ],
+                enablingConditions: [],
+                displayProperties: { visible: true, wrapInBox: false }
+              }
+            ]
+          }
+        } as unknown as OIBusArrayAttribute;
+
+        const result = validateArrayElementsImport(csvContent, delimiter, attributeWithOnlyNested);
+        expect(result.elements).toEqual([{ nested: { prop: 'value' } }]);
+        expect(result.errors).toEqual([]);
+      });
+
+      it('should return empty objects when root attribute is not an object', () => {
+        (csv.parse as jest.Mock).mockReturnValue({
+          data: [{ value: 'abc' }],
+          meta: { delimiter: ';' }
+        });
+
+        const csvContent = 'value\nabc';
+        const delimiter = ';';
+
+        const attributeWithScalarRoot = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            type: 'string' as const,
+            key: 'value',
+            translationKey: 'test.value',
+            validators: [],
+            defaultValue: null,
+            displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+          }
+        } as unknown as OIBusArrayAttribute;
+
+        const result = validateArrayElementsImport(csvContent, delimiter, attributeWithScalarRoot);
+        expect(result.elements).toEqual([{}]);
+        expect(result.errors).toEqual([]);
+      });
+
+      it('should skip sub-attributes that have no key defined', () => {
+        (csv.parse as jest.Mock).mockReturnValue({
+          data: [{ name: 'test1', prop: 'value1' }],
+          meta: { delimiter: ',' }
+        });
+
+        const csvContent = 'name,prop\ntest1,value1';
+        const delimiter = ',';
+
+        const attributeWithMissingKeys = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'object' as const,
+                key: undefined,
+                translationKey: 'test.nested',
+                validators: [],
+                attributes: [
+                  {
+                    type: 'string' as const,
+                    key: 'prop',
+                    translationKey: 'test.prop',
+                    validators: [],
+                    defaultValue: null,
+                    displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+                  }
+                ],
+                enablingConditions: [],
+                displayProperties: { visible: true, wrapInBox: false }
+              },
+              {
+                type: 'string' as const,
+                key: undefined,
+                translationKey: 'test.ignored',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 'test.validName',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              }
+            ]
+          }
+        } as unknown as OIBusArrayAttribute;
+
+        const result = validateArrayElementsImport(csvContent, delimiter, attributeWithMissingKeys);
+
+        expect(result.elements).toEqual([{ name: 'test1' }]);
+        expect(result.errors).toEqual([]);
+      });
+    });
+
+    describe('arrayElementsToCsv - additional edge cases', () => {
+      it('should stringify non-object type attribute when value is an object', () => {
+        (csv.unparse as jest.Mock).mockImplementation(_data => {
+          return 'mocked';
+        });
+
+        const arrayAttributeWithMismatch = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'data',
+                translationKey: 'test.data',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              }
+            ]
+          }
+        };
+
+        // Provide an object value for a string-type attribute
+        const arrayItems = [{ data: { nested: 'value' } }];
+        const delimiter = ',';
+
+        arrayElementsToCsv(arrayItems, delimiter, arrayAttributeWithMismatch as unknown as OIBusArrayAttribute);
+
+        // Verify that csv.unparse was called with stringified object
+        expect(csv.unparse).toHaveBeenCalled();
+        const callArgs = (csv.unparse as jest.Mock).mock.calls[0][0];
+        expect(callArgs[0].data).toBe('{"nested":"value"}');
+      });
+
+      it('should skip undefined values when flattening (no output for missing keys)', () => {
+        (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+          expect(data).toHaveLength(1);
+          expect(data[0]).toHaveProperty('present', 'x');
+          expect(data[0]).not.toHaveProperty('absent');
+          return 'present\nx';
+        });
+
+        const attributeWithMissing = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'present',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'string' as const,
+                key: 'absent',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              }
+            ]
+          }
+        };
+
+        const arrayItems = [{ present: 'x' }];
+        const delimiter = ',';
+        arrayElementsToCsv(arrayItems, delimiter, attributeWithMissing as unknown as OIBusArrayAttribute);
+      });
+
+      it('should not recurse when nested value is null', () => {
+        (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+          expect(data).toHaveLength(1);
+          expect(data[0]).toHaveProperty('name', 'n');
+          expect(Object.keys(data[0])).toEqual(['name']);
+          return 'name\nn';
+        });
+
+        const attributeWithNullNested = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'object' as const,
+                key: 'nested',
+                translationKey: 't',
+                validators: [],
+                attributes: [
+                  {
+                    type: 'string' as const,
+                    key: 'prop',
+                    translationKey: 't',
+                    validators: [],
+                    defaultValue: null,
+                    displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+                  }
+                ],
+                enablingConditions: [],
+                displayProperties: { visible: true, wrapInBox: false }
+              }
+            ]
+          }
+        };
+
+        const arrayItems = [{ name: 'n', nested: null } as unknown as Record<string, unknown>];
+        const delimiter = ',';
+        arrayElementsToCsv(arrayItems, delimiter, attributeWithNullNested as unknown as OIBusArrayAttribute);
+      });
+
+      it('should handle object attribute with array value', () => {
+        (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+          expect(data).toHaveLength(1);
+          expect(data[0]).toHaveProperty('name', 'test');
+          expect(data[0]).toHaveProperty('obj', [1, 2, 3]);
+          return 'name,obj\ntest,"[1,2,3]"';
+        });
+
+        const attributeWithObjectArray = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'object' as const,
+                key: 'obj',
+                translationKey: 't',
+                validators: [],
+                attributes: [],
+                enablingConditions: [],
+                displayProperties: { visible: true, wrapInBox: false }
+              }
+            ]
+          }
+        };
+
+        const arrayItems = [{ name: 'test', obj: [1, 2, 3] }];
+        const delimiter = ',';
+        arrayElementsToCsv(arrayItems, delimiter, attributeWithObjectArray as unknown as OIBusArrayAttribute);
+      });
+
+      it('should handle object attribute with non-object value', () => {
+        (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+          expect(data).toHaveLength(1);
+          expect(data[0]).toHaveProperty('name', 'test');
+          expect(data[0]).toHaveProperty('obj', 'string-value');
+          return 'name,obj\ntest,string-value';
+        });
+
+        const attributeWithObjectString = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'object' as const,
+                key: 'obj',
+                translationKey: 't',
+                validators: [],
+                attributes: [],
+                enablingConditions: [],
+                displayProperties: { visible: true, wrapInBox: false }
+              }
+            ]
+          }
+        };
+
+        const arrayItems = [{ name: 'test', obj: 'string-value' }];
+        const delimiter = ',';
+        arrayElementsToCsv(arrayItems, delimiter, attributeWithObjectString as unknown as OIBusArrayAttribute);
+      });
+
+      it('should handle object attribute with falsy non-null value', () => {
+        (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+          expect(data).toHaveLength(1);
+          expect(data[0]).toHaveProperty('name', 'test');
+          expect(data[0]).toHaveProperty('obj', 0);
+          return 'name,obj\ntest,0';
+        });
+
+        const attributeWithObjectZero = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'object' as const,
+                key: 'obj',
+                translationKey: 't',
+                validators: [],
+                attributes: [],
+                enablingConditions: [],
+                displayProperties: { visible: true, wrapInBox: false }
+              }
+            ]
+          }
+        };
+
+        const arrayItems = [{ name: 'test', obj: 0 }];
+        const delimiter = ',';
+        arrayElementsToCsv(arrayItems, delimiter, attributeWithObjectZero as unknown as OIBusArrayAttribute);
+      });
+
+      it('should handle object attribute with false value', () => {
+        (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+          expect(data).toHaveLength(1);
+          expect(data[0]).toHaveProperty('name', 'test');
+          expect(data[0]).toHaveProperty('obj', false);
+          return 'name,obj\ntest,false';
+        });
+
+        const attributeWithObjectFalse = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'object' as const,
+                key: 'obj',
+                translationKey: 't',
+                validators: [],
+                attributes: [],
+                enablingConditions: [],
+                displayProperties: { visible: true, wrapInBox: false }
+              }
+            ]
+          }
+        };
+
+        const arrayItems = [{ name: 'test', obj: false }];
+        const delimiter = ',';
+        arrayElementsToCsv(arrayItems, delimiter, attributeWithObjectFalse as unknown as OIBusArrayAttribute);
+      });
+
+      it('should stringify array attribute values', () => {
+        (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+          expect(data).toHaveLength(1);
+          expect(data[0]).toHaveProperty('name', 'test');
+          expect(data[0]).toHaveProperty('arr', '[1,2,3]');
+          return 'name,arr\ntest,"[1,2,3]"';
+        });
+
+        const attributeWithArray = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'array' as const,
+                key: 'arr',
+                translationKey: 't',
+                validators: [],
+                rootAttribute: {
+                  type: 'object' as const,
+                  key: 'item',
+                  translationKey: 't',
+                  validators: [],
+                  attributes: [],
+                  enablingConditions: [],
+                  displayProperties: { visible: true, wrapInBox: false }
+                },
+                paginate: false,
+                numberOfElementPerPage: 25
+              }
+            ]
+          }
+        };
+
+        const arrayItems = [{ name: 'test', arr: [1, 2, 3] }];
+        const delimiter = ',';
+        arrayElementsToCsv(arrayItems, delimiter, attributeWithArray as unknown as OIBusArrayAttribute);
+      });
+
+      it('should skip attributes with undefined key', () => {
+        (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+          expect(data).toHaveLength(1);
+          expect(data[0]).toHaveProperty('name', 'test');
+          expect(data[0]).not.toHaveProperty('undefinedKey');
+          return 'name\ntest';
+        });
+
+        const attributeWithUndefinedKey = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'string' as const,
+                key: undefined,
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              }
+            ]
+          }
+        };
+
+        const arrayItems = [{ name: 'test', undefinedKey: 'value' }];
+        const delimiter = ',';
+        arrayElementsToCsv(arrayItems, delimiter, attributeWithUndefinedKey as unknown as OIBusArrayAttribute);
+      });
+
+      it('should handle default case for unknown attribute types', () => {
+        (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+          expect(data).toHaveLength(1);
+          expect(data[0]).toHaveProperty('name', 'test');
+          expect(data[0]).toHaveProperty('custom', 'customValue');
+          return 'name,custom\ntest,customValue';
+        });
+
+        const attributeWithCustomType = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'custom-unknown-type' as never,
+                key: 'custom',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              }
+            ]
+          }
+        };
+
+        const arrayItems = [{ name: 'test', custom: 'customValue' }];
+        const delimiter = ',';
+        arrayElementsToCsv(arrayItems, delimiter, attributeWithCustomType as unknown as OIBusArrayAttribute);
+      });
+
+      it('should stringify object values in default case', () => {
+        (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+          expect(data).toHaveLength(1);
+          expect(data[0]).toHaveProperty('name', 'test');
+          expect(data[0]).toHaveProperty('custom', '{"nested":"value"}');
+          return 'name,custom\ntest,"{\\"nested\\":\\"value\\"}"';
+        });
+
+        const attributeWithCustomType = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'custom-unknown-type' as never,
+                key: 'custom',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              }
+            ]
+          }
+        };
+
+        const arrayItems = [{ name: 'test', custom: { nested: 'value' } }];
+        const delimiter = ',';
+        arrayElementsToCsv(arrayItems, delimiter, attributeWithCustomType as unknown as OIBusArrayAttribute);
+      });
+
+      it('should handle non-object values in default case', () => {
+        (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+          expect(data).toHaveLength(1);
+          expect(data[0]).toHaveProperty('name', 'test');
+          expect(data[0]).toHaveProperty('custom', 123);
+          return 'name,custom\ntest,123';
+        });
+
+        const attributeWithCustomType = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'custom-unknown-type' as never,
+                key: 'custom',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              }
+            ]
+          }
+        };
+
+        const arrayItems = [{ name: 'test', custom: 123 }];
+        const delimiter = ',';
+        arrayElementsToCsv(arrayItems, delimiter, attributeWithCustomType as unknown as OIBusArrayAttribute);
+      });
+
+      it('should stringify array values in default case', () => {
+        (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+          expect(data).toHaveLength(1);
+          expect(data[0]).toHaveProperty('name', 'test');
+          expect(data[0]).toHaveProperty('custom', '[1,2,3]');
+          return 'name,custom\ntest,"[1,2,3]"';
+        });
+
+        const attributeWithCustomType = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'custom-unknown-type' as never,
+                key: 'custom',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              }
+            ]
+          }
+        };
+
+        const arrayItems = [{ name: 'test', custom: [1, 2, 3] }];
+        const delimiter = ',';
+        arrayElementsToCsv(arrayItems, delimiter, attributeWithCustomType as unknown as OIBusArrayAttribute);
+      });
+    });
+
+    describe('validateArrayElementsImport - duplicate and existing item checks', () => {
+      beforeEach(() => {
+        jest.clearAllMocks();
+      });
+
+      it('should detect duplicate item names in CSV file', () => {
+        (csv.parse as jest.Mock).mockReturnValue({
+          data: [
+            { name: 'test1', value: '100' },
+            { name: 'test1', value: '200' },
+            { name: 'test2', value: '300' }
+          ],
+          meta: { delimiter: ',' }
+        });
+
+        const csvContent = 'name,value\ntest1,100\ntest1,200\ntest2,300';
+        const delimiter = ',';
+
+        const result = validateArrayElementsImport(csvContent, delimiter, mockArrayAttribute, []);
+
+        expect(result.elements).toHaveLength(2);
+        expect(result.elements[0]).toEqual({ name: 'test1', value: 100 });
+        expect(result.elements[1]).toEqual({ name: 'test2', value: 300 });
+        expect(result.errors).toHaveLength(1);
+        expect(result.errors[0].error).toBe('Row 2: Duplicate element name "test1" found in CSV file');
+        expect(result.errors[0].element).toEqual({ name: 'test1', value: '200' });
+      });
+
+      it('should detect item names that already exist in existingItems', () => {
+        (csv.parse as jest.Mock).mockReturnValue({
+          data: [
+            { name: 'existing1', value: '100' },
+            { name: 'existing2', value: '200' },
+            { name: 'new1', value: '300' }
+          ],
+          meta: { delimiter: ',' }
+        });
+
+        const csvContent = 'name,value\nexisting1,100\nexisting2,200\nnew1,300';
+        const delimiter = ',';
+        const existingItems = [
+          { name: 'existing1', value: 50 },
+          { name: 'existing2', value: 60 }
+        ];
+
+        const result = validateArrayElementsImport(csvContent, delimiter, mockArrayAttribute, existingItems);
+
+        expect(result.elements).toHaveLength(1);
+        expect(result.elements[0]).toEqual({ name: 'new1', value: 300 });
+        expect(result.errors).toHaveLength(2);
+        expect(result.errors[0].error).toBe('Row 1: Element name "existing1" already exists in the array');
+        expect(result.errors[0].element).toEqual({ name: 'existing1', value: '100' });
+        expect(result.errors[1].error).toBe('Row 2: Element name "existing2" already exists in the array');
+        expect(result.errors[1].element).toEqual({ name: 'existing2', value: '200' });
+      });
+
+      it('should handle both duplicate in CSV and existing items', () => {
+        (csv.parse as jest.Mock).mockReturnValue({
+          data: [
+            { name: 'existing1', value: '100' },
+            { name: 'duplicate', value: '200' },
+            { name: 'duplicate', value: '300' },
+            { name: 'new1', value: '400' }
+          ],
+          meta: { delimiter: ',' }
+        });
+
+        const csvContent = 'name,value\nexisting1,100\nduplicate,200\nduplicate,300\nnew1,400';
+        const delimiter = ',';
+        const existingItems = [{ name: 'existing1', value: 50 }];
+
+        const result = validateArrayElementsImport(csvContent, delimiter, mockArrayAttribute, existingItems);
+
+        expect(result.elements).toHaveLength(2);
+        expect(result.elements[0]).toEqual({ name: 'duplicate', value: 200 });
+        expect(result.elements[1]).toEqual({ name: 'new1', value: 400 });
+        expect(result.errors).toHaveLength(2);
+        expect(result.errors[0].error).toBe('Row 1: Element name "existing1" already exists in the array');
+        expect(result.errors[1].error).toBe('Row 3: Duplicate element name "duplicate" found in CSV file');
+      });
+
+      it('should handle items without name/id/key/title using fallback to first string value', () => {
+        (csv.parse as jest.Mock).mockReturnValue({
+          data: [
+            { description: 'item1', value: '100' },
+            { description: 'item2', value: '200' }
+          ],
+          meta: { delimiter: ',' }
+        });
+
+        const csvContent = 'description,value\nitem1,100\nitem2,200';
+        const delimiter = ',';
+
+        const attributeWithoutNameKey = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'description',
+                translationKey: 'test.description',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'number' as const,
+                key: 'value',
+                translationKey: 'test.value',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true },
+                unit: ''
+              }
+            ]
+          }
+        };
+
+        const result = validateArrayElementsImport(csvContent, delimiter, attributeWithoutNameKey, []);
+
+        expect(result.elements).toHaveLength(2);
+        expect(result.elements[0]).toEqual({ description: 'item1', value: 100 });
+        expect(result.elements[1]).toEqual({ description: 'item2', value: 200 });
+        expect(result.errors).toHaveLength(0);
+      });
+    });
+
+    describe('validateArrayElementsImport - missing flattened values for defined keys', () => {
+      it('should handle missing flattened values for defined keys (no assignment)', () => {
+        (csv.parse as jest.Mock).mockReturnValue({
+          data: [{ name: 'only' }],
+          meta: { delimiter: ',' }
+        });
+
+        const csvContent = 'name\nonly';
+        const delimiter = ',';
+
+        const attributeWithMissingNumber = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'number' as const,
+                key: 'value',
+                translationKey: 't',
+                validators: [],
+                defaultValue: 0,
+                unit: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              }
+            ]
+          }
+        } as unknown as OIBusArrayAttribute;
+
+        const result = validateArrayElementsImport(csvContent, delimiter, attributeWithMissingNumber);
+        expect(result.elements).toHaveLength(1);
+        expect(result.elements[0]).toEqual({ name: 'only' });
+      });
+
+      it('should skip nested object when nested values are missing', () => {
+        (csv.parse as jest.Mock).mockReturnValue({
+          data: [{ name: 'only' }],
+          meta: { delimiter: ',' }
+        });
+
+        const csvContent = 'name\nonly';
+        const delimiter = ',';
+
+        const attributeWithNested = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'object' as const,
+                key: 'config',
+                translationKey: 't',
+                validators: [],
+                attributes: [
+                  {
+                    type: 'string' as const,
+                    key: 'prop',
+                    translationKey: 't',
+                    validators: [],
+                    defaultValue: null,
+                    displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+                  }
+                ],
+                enablingConditions: [],
+                displayProperties: { visible: true, wrapInBox: false }
+              }
+            ]
+          }
+        } as unknown as OIBusArrayAttribute;
+
+        const result = validateArrayElementsImport(csvContent, delimiter, attributeWithNested);
+        expect(result.elements).toHaveLength(1);
+        expect(result.elements[0]).toEqual({ name: 'only' });
+      });
+
+      it('should handle non-Error exceptions thrown during validation', () => {
+        // Create a data object with a Proxy that throws a non-Error (string) when accessed
+        // This will cause unflattenObject to throw a non-Error exception
+        const throwableData = new Proxy(
+          { name: 'test' },
+          {
+            get: () => {
+              // Throw a string instead of an Error to test the String(error) branch
+              throw 'Non-Error string exception';
+            }
+          }
+        );
+
+        (csv.parse as jest.Mock).mockReturnValue({
+          data: [throwableData],
+          meta: { delimiter: ',' }
+        });
+
+        const csvContent = 'name\ntest';
+        const delimiter = ',';
+
+        const result = validateArrayElementsImport(csvContent, delimiter, mockArrayAttribute);
+
+        // Should catch the non-Error exception and convert it to a string
+        expect(result.errors.length).toBe(1);
+        expect(result.errors[0].error).toBe('Row 1: Non-Error string exception');
+        expect(result.elements.length).toBe(0);
+      });
+    });
+
+    describe('parseArrayValue through unflattenObject', () => {
+      it('should parse valid JSON array string', () => {
+        (csv.parse as jest.Mock).mockReturnValue({
+          data: [{ name: 'test', arr: '[1,2,3]' }],
+          meta: { delimiter: ',' }
+        });
+
+        const csvContent = 'name,arr\ntest,"[1,2,3]"';
+        const delimiter = ',';
+
+        const attributeWithArray = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'array' as const,
+                key: 'arr',
+                translationKey: 't',
+                validators: [],
+                rootAttribute: {
+                  type: 'object' as const,
+                  key: 'item',
+                  translationKey: 't',
+                  validators: [],
+                  attributes: [],
+                  enablingConditions: [],
+                  displayProperties: { visible: true, wrapInBox: false }
+                },
+                paginate: false,
+                numberOfElementPerPage: 25
+              }
+            ]
+          }
+        };
+
+        const result = validateArrayElementsImport(csvContent, delimiter, attributeWithArray as unknown as OIBusArrayAttribute);
+        expect(result.elements).toHaveLength(1);
+        expect(result.elements[0]).toEqual({ name: 'test', arr: [1, 2, 3] });
+      });
+
+      it('should throw error for invalid array JSON string', () => {
+        (csv.parse as jest.Mock).mockReturnValue({
+          data: [{ name: 'test', arr: 'not-valid-json' }],
+          meta: { delimiter: ',' }
+        });
+
+        const csvContent = 'name,arr\ntest,not-valid-json';
+        const delimiter = ',';
+
+        const attributeWithArray = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'array' as const,
+                key: 'arr',
+                translationKey: 't',
+                validators: [],
+                rootAttribute: {
+                  type: 'object' as const,
+                  key: 'item',
+                  translationKey: 't',
+                  validators: [],
+                  attributes: [],
+                  enablingConditions: [],
+                  displayProperties: { visible: true, wrapInBox: false }
+                },
+                paginate: false,
+                numberOfElementPerPage: 25
+              }
+            ]
+          }
+        };
+
+        const result = validateArrayElementsImport(csvContent, delimiter, attributeWithArray as unknown as OIBusArrayAttribute);
+        expect(result.errors).toHaveLength(1);
+        expect(result.errors[0].error).toContain('Invalid array value for "arr"');
+      });
+
+      it('should throw error for non-array JSON value', () => {
+        (csv.parse as jest.Mock).mockReturnValue({
+          data: [{ name: 'test', arr: '{"not":"array"}' }],
+          meta: { delimiter: ',' }
+        });
+
+        const csvContent = 'name,arr\ntest,"{\\"not\\":\\"array\\"}"';
+        const delimiter = ',';
+
+        const attributeWithArray = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'array' as const,
+                key: 'arr',
+                translationKey: 't',
+                validators: [],
+                rootAttribute: {
+                  type: 'object' as const,
+                  key: 'item',
+                  translationKey: 't',
+                  validators: [],
+                  attributes: [],
+                  enablingConditions: [],
+                  displayProperties: { visible: true, wrapInBox: false }
+                },
+                paginate: false,
+                numberOfElementPerPage: 25
+              }
+            ]
+          }
+        };
+
+        const result = validateArrayElementsImport(csvContent, delimiter, attributeWithArray as unknown as OIBusArrayAttribute);
+        expect(result.errors).toHaveLength(1);
+        expect(result.errors[0].error).toContain('Invalid array value for "arr"');
+      });
+
+      it('should handle empty array value', () => {
+        (csv.parse as jest.Mock).mockReturnValue({
+          data: [{ name: 'test', arr: '' }],
+          meta: { delimiter: ',' }
+        });
+
+        const csvContent = 'name,arr\ntest,';
+        const delimiter = ',';
+
+        const attributeWithArray = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'array' as const,
+                key: 'arr',
+                translationKey: 't',
+                validators: [],
+                rootAttribute: {
+                  type: 'object' as const,
+                  key: 'item',
+                  translationKey: 't',
+                  validators: [],
+                  attributes: [],
+                  enablingConditions: [],
+                  displayProperties: { visible: true, wrapInBox: false }
+                },
+                paginate: false,
+                numberOfElementPerPage: 25
+              }
+            ]
+          }
+        };
+
+        const result = validateArrayElementsImport(csvContent, delimiter, attributeWithArray as unknown as OIBusArrayAttribute);
+        expect(result.elements).toHaveLength(1);
+        expect(result.elements[0]).toEqual({ name: 'test', arr: [] });
+      });
+
+      it('should handle array value that is already an array', () => {
+        (csv.parse as jest.Mock).mockReturnValue({
+          data: [{ name: 'test', arr: [1, 2, 3] }],
+          meta: { delimiter: ',' }
+        });
+
+        const csvContent = 'name,arr\ntest,"[1,2,3]"';
+        const delimiter = ',';
+
+        const attributeWithArray = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'array' as const,
+                key: 'arr',
+                translationKey: 't',
+                validators: [],
+                rootAttribute: {
+                  type: 'object' as const,
+                  key: 'item',
+                  translationKey: 't',
+                  validators: [],
+                  attributes: [],
+                  enablingConditions: [],
+                  displayProperties: { visible: true, wrapInBox: false }
+                },
+                paginate: false,
+                numberOfElementPerPage: 25
+              }
+            ]
+          }
+        };
+
+        const result = validateArrayElementsImport(csvContent, delimiter, attributeWithArray as unknown as OIBusArrayAttribute);
+        expect(result.elements).toHaveLength(1);
+        expect(result.elements[0]).toEqual({ name: 'test', arr: [1, 2, 3] });
+      });
+
+      it('should throw error for non-string, non-array value', () => {
+        (csv.parse as jest.Mock).mockReturnValue({
+          data: [{ name: 'test', arr: 123 }],
+          meta: { delimiter: ',' }
+        });
+
+        const csvContent = 'name,arr\ntest,123';
+        const delimiter = ',';
+
+        const attributeWithArray = {
+          ...mockArrayAttribute,
+          rootAttribute: {
+            ...mockArrayAttribute.rootAttribute,
+            attributes: [
+              {
+                type: 'string' as const,
+                key: 'name',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              },
+              {
+                type: 'array' as const,
+                key: 'arr',
+                translationKey: 't',
+                validators: [],
+                rootAttribute: {
+                  type: 'object' as const,
+                  key: 'item',
+                  translationKey: 't',
+                  validators: [],
+                  attributes: [],
+                  enablingConditions: [],
+                  displayProperties: { visible: true, wrapInBox: false }
+                },
+                paginate: false,
+                numberOfElementPerPage: 25
+              }
+            ]
+          }
+        };
+
+        const result = validateArrayElementsImport(csvContent, delimiter, attributeWithArray as unknown as OIBusArrayAttribute);
+        expect(result.errors).toHaveLength(1);
+        expect(result.errors[0].error).toContain('Invalid array value for "arr"');
+      });
+    });
+
+    describe('findArrayAttributeInAttributes', () => {
+      it('should find array attribute at root level', () => {
+        const attributes: Array<OIBusAttribute> = [
+          {
+            type: 'string',
+            key: 'name',
+            translationKey: 't',
+            validators: [],
+            defaultValue: null,
+            displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+          },
+          {
+            type: 'array',
+            key: 'items',
+            translationKey: 't',
+            validators: [],
+            rootAttribute: {
+              type: 'object',
+              key: 'item',
+              translationKey: 't',
+              validators: [],
+              attributes: [],
+              enablingConditions: [],
+              displayProperties: { visible: true, wrapInBox: false }
+            },
+            paginate: false,
+            numberOfElementPerPage: 25
+          }
+        ];
+
+        const result = findArrayAttributeInAttributes('items', attributes);
+        expect(result).not.toBeNull();
+        expect(result?.key).toBe('items');
+        expect(result?.type).toBe('array');
+      });
+
+      it('should find array attribute in nested object', () => {
+        const attributes: Array<OIBusAttribute> = [
+          {
+            type: 'object',
+            key: 'nested',
+            translationKey: 't',
+            validators: [],
+            attributes: [
+              {
+                type: 'array',
+                key: 'items',
+                translationKey: 't',
+                validators: [],
+                rootAttribute: {
+                  type: 'object',
+                  key: 'item',
+                  translationKey: 't',
+                  validators: [],
+                  attributes: [],
+                  enablingConditions: [],
+                  displayProperties: { visible: true, wrapInBox: false }
+                },
+                paginate: false,
+                numberOfElementPerPage: 25
+              }
+            ],
+            enablingConditions: [],
+            displayProperties: { visible: true, wrapInBox: false }
+          }
+        ];
+
+        const result = findArrayAttributeInAttributes('items', attributes);
+        expect(result).not.toBeNull();
+        expect(result?.key).toBe('items');
+        expect(result?.type).toBe('array');
+      });
+
+      it('should return null when nested search does not find array attribute', () => {
+        const attributes: Array<OIBusAttribute> = [
+          {
+            type: 'object',
+            key: 'nested',
+            translationKey: 't',
+            validators: [],
+            attributes: [
+              {
+                type: 'string',
+                key: 'other',
+                translationKey: 't',
+                validators: [],
+                defaultValue: null,
+                displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+              }
+            ],
+            enablingConditions: [],
+            displayProperties: { visible: true, wrapInBox: false }
+          }
+        ];
+
+        const result = findArrayAttributeInAttributes('items', attributes);
+        expect(result).toBeNull();
+      });
+
+      it('should return null if array attribute not found', () => {
+        const attributes: Array<OIBusAttribute> = [
+          {
+            type: 'string',
+            key: 'name',
+            translationKey: 't',
+            validators: [],
+            defaultValue: null,
+            displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+          }
+        ];
+
+        const result = findArrayAttributeInAttributes('items', attributes);
+        expect(result).toBeNull();
+      });
+
+      it('should throw error if field exists but is not an array', () => {
+        const attributes: Array<OIBusAttribute> = [
+          {
+            type: 'string',
+            key: 'items',
+            translationKey: 't',
+            validators: [],
+            defaultValue: null,
+            displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+          }
+        ];
+
+        expect(() => findArrayAttributeInAttributes('items', attributes)).toThrow('Field "items" is not an array');
+      });
+
+      it('should skip null/undefined attributes', () => {
+        const attributes: Array<OIBusAttribute | null | undefined> = [
+          null,
+          undefined,
+          {
+            type: 'array',
+            key: 'items',
+            translationKey: 't',
+            validators: [],
+            rootAttribute: {
+              type: 'object',
+              key: 'item',
+              translationKey: 't',
+              validators: [],
+              attributes: [],
+              enablingConditions: [],
+              displayProperties: { visible: true, wrapInBox: false }
+            },
+            paginate: false,
+            numberOfElementPerPage: 25
+          }
+        ];
+
+        const result = findArrayAttributeInAttributes('items', attributes as Array<OIBusAttribute>);
+        expect(result).not.toBeNull();
+        expect(result?.key).toBe('items');
+      });
+    });
+
+    describe('getArrayAttributeDefinition', () => {
+      it('should find array attribute in settings', () => {
+        const manifest = {
+          settings: {
+            attributes: [
+              {
+                type: 'array' as const,
+                key: 'items',
+                translationKey: 't',
+                validators: [],
+                rootAttribute: {
+                  type: 'object' as const,
+                  key: 'item',
+                  translationKey: 't',
+                  validators: [],
+                  attributes: [],
+                  enablingConditions: [],
+                  displayProperties: { visible: true, wrapInBox: false }
+                },
+                paginate: false,
+                numberOfElementPerPage: 25
+              }
+            ]
+          }
+        };
+
+        const result = getArrayAttributeDefinition(manifest, 'items');
+        expect(result).not.toBeNull();
+        expect(result.key).toBe('items');
+        expect(result.type).toBe('array');
+      });
+
+      it('should find array attribute in items', () => {
+        const manifest = {
+          settings: {
+            attributes: []
+          },
+          items: {
+            rootAttribute: {
+              type: 'object' as const,
+              key: 'root',
+              translationKey: 't',
+              validators: [],
+              attributes: [
+                {
+                  type: 'array' as const,
+                  key: 'items',
+                  translationKey: 't',
+                  validators: [],
+                  rootAttribute: {
+                    type: 'object' as const,
+                    key: 'item',
+                    translationKey: 't',
+                    validators: [],
+                    attributes: [],
+                    enablingConditions: [],
+                    displayProperties: { visible: true, wrapInBox: false }
+                  },
+                  paginate: false,
+                  numberOfElementPerPage: 25
+                }
+              ],
+              enablingConditions: [],
+              displayProperties: { visible: true, wrapInBox: false }
+            }
+          }
+        };
+
+        const result = getArrayAttributeDefinition(manifest, 'items');
+        expect(result).not.toBeNull();
+        expect(result.key).toBe('items');
+        expect(result.type).toBe('array');
+      });
+
+      it('should throw error if array attribute not found', () => {
+        const manifest = {
+          settings: {
+            attributes: []
+          }
+        };
+
+        expect(() => getArrayAttributeDefinition(manifest, 'items')).toThrow('Array field "items" not found in manifest');
+      });
+
+      it('should throw error if array attribute not found in items when fromItems is null', () => {
+        const manifest = {
+          settings: {
+            attributes: []
+          },
+          items: {
+            rootAttribute: {
+              type: 'object' as const,
+              key: 'root',
+              translationKey: 't',
+              validators: [],
+              attributes: [
+                {
+                  type: 'string' as const,
+                  key: 'other',
+                  translationKey: 't',
+                  validators: [],
+                  defaultValue: null,
+                  displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+                }
+              ],
+              enablingConditions: [],
+              displayProperties: { visible: true, wrapInBox: false }
+            }
+          }
+        };
+
+        expect(() => getArrayAttributeDefinition(manifest, 'items')).toThrow('Array field "items" not found in manifest');
+      });
     });
   });
 });

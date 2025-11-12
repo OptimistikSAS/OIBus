@@ -1,5 +1,5 @@
 import { encryptionService } from './encryption.service';
-
+import { arrayElementsToCsv, getArrayAttributeDefinition, validateArrayElementsImport } from './utils';
 // South imports
 import {
   OIBusSouthType,
@@ -545,6 +545,113 @@ export default class SouthService {
       );
     }
     return source;
+  }
+
+  exportArrayElementsToCsv(
+    arrayElements: Array<Record<string, unknown>>,
+    delimiter: string,
+    arrayKey: string,
+    southType: OIBusSouthType
+  ): string {
+    const manifest = this.getManifest(southType);
+    const arrayAttribute = getArrayAttributeDefinition(manifest, arrayKey);
+    return arrayElementsToCsv(arrayElements, delimiter, arrayAttribute);
+  }
+
+  getArrayFieldElements(southId: string, arrayKey: string): Array<Record<string, unknown>> {
+    const southConnector = this.findById(southId);
+
+    const settings = southConnector.settings as unknown as Record<string, unknown>;
+    let arrayElements: Array<Record<string, unknown>> = [];
+
+    if (Array.isArray(settings[arrayKey])) {
+      arrayElements = (settings[arrayKey] as Array<unknown>).filter(
+        (element): element is Record<string, unknown> => typeof element === 'object' && element !== null
+      );
+    } else {
+      const items = this.listItems(southId);
+      const allArrayElements: Array<Record<string, unknown>> = [];
+
+      for (const item of items) {
+        const itemSettings = item.settings as unknown as Record<string, unknown>;
+        if (Array.isArray(itemSettings[arrayKey])) {
+          allArrayElements.push(
+            ...(itemSettings[arrayKey] as Array<unknown>).filter(
+              (element: unknown): element is Record<string, unknown> => typeof element === 'object' && element !== null
+            )
+          );
+        }
+      }
+      arrayElements = allArrayElements;
+    }
+
+    return arrayElements;
+  }
+
+  async checkArrayElementsCsv(
+    fileContent: string,
+    delimiter: string,
+    arrayKey: string,
+    southType: OIBusSouthType,
+    existingElements: Array<Record<string, unknown>> = []
+  ): Promise<{
+    elements: Array<Record<string, unknown>>;
+    errors: Array<{ element: Record<string, string>; error: string }>;
+  }> {
+    if (!fileContent || fileContent.trim().length === 0) {
+      throw new OIBusValidationError('File content is empty');
+    }
+
+    const manifest = this.getManifest(southType);
+    const arrayAttribute = getArrayAttributeDefinition(manifest, arrayKey);
+
+    return validateArrayElementsImport(fileContent, delimiter, arrayAttribute, existingElements);
+  }
+
+  async checkArrayFileImport(
+    southId: string,
+    fileContent: string,
+    delimiter: string,
+    arrayKey: string,
+    currentElements: Array<Record<string, unknown>> = [],
+    southTypeOverride?: OIBusSouthType
+  ): Promise<{
+    elements: Array<Record<string, unknown>>;
+    errors: Array<{ element: Record<string, string>; error: string }>;
+  }> {
+    const isCreateMode = southId === 'create';
+
+    let southType: OIBusSouthType;
+    let existingElements: Array<Record<string, unknown>> = [];
+
+    if (isCreateMode) {
+      if (!southTypeOverride) {
+        throw new OIBusValidationError('Missing "southType" when validating array import in creation mode');
+      }
+      southType = southTypeOverride;
+      existingElements = [...currentElements];
+    } else {
+      const southConnector = this.findById(southId);
+      southType = southConnector.type;
+      existingElements = this.getArrayFieldElements(southId, arrayKey);
+      if (currentElements.length > 0) {
+        existingElements = [...existingElements, ...currentElements];
+      }
+    }
+
+    return await this.checkArrayElementsCsv(fileContent, delimiter, arrayKey, southType, existingElements);
+  }
+
+  async importArrayField(southId: string, arrayKey: string, elements: Array<Record<string, unknown>>): Promise<void> {
+    const southConnector = this.findById(southId);
+
+    const updatedSettings = { ...southConnector.settings };
+    (updatedSettings as Record<string, unknown>)[arrayKey] = elements;
+
+    this.southConnectorRepository.saveSouthConnector({
+      ...southConnector,
+      settings: updatedSettings
+    });
   }
 }
 
