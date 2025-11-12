@@ -14,17 +14,18 @@ export default class Launcher {
   private startedTimeout: NodeJS.Timeout | null = null;
   private child: ChildProcessWithoutNullStreams | null = null;
   private stopping = false;
-  private readonly args: Array<string> = [];
+  private readonly args: Array<string>;
 
   constructor(
     private workDir: string,
     private updateDir: string,
     private backupDir: string,
     private config: string,
-    private version: boolean
+    private version: boolean,
+    processArgs: Array<string>
   ) {
     // The first argument is the binary being used. We must remove it since it's not used by the OIBus binary
-    this.args = replaceConfigArgumentWithAbsolutePath(process.argv.slice(1), this.config);
+    this.args = replaceConfigArgumentWithAbsolutePath(processArgs, this.config);
   }
 
   async start(): Promise<void> {

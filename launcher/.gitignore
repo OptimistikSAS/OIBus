@@ -6,3 +6,4 @@ npm-debug.log
 /binaries/
 /update/
 /backup/
+/src/tests/coverage/
