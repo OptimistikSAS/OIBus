@@ -93,7 +93,7 @@ jobs:
       - name: Test OIBus run for ${{ matrix.config['friendlyName'] }}
         run: |
           cd build/bin/${{ matrix.config['platform'] }}
-          ./oibus-launcher --config ../../../data-folder --check true
+          ./oibus-launcher --config ../../../data-folder --version true
 
       - name: Package OIBus for ${{ matrix.config['friendlyName'] }}
         run: |

@@ -24,14 +24,14 @@ const COMPRESSION_LEVEL = 9;
 
 /**
  * Get config file from console arguments
- * @returns {Object} - the config file and check argument
+ * @returns {Object} - the config file and version argument
  */
 export const getCommandLineArguments = () => {
   const args = minimist(process.argv.slice(2));
   console.info(`OIBus starting with the following arguments: ${JSON.stringify(args)}`);
   const {
     config = './',
-    check = false,
+    version = false,
     ignoreIpFilters = false,
     ignoreRemoteUpdate = false,
     ignoreRemoteConfig = false,
@@ -39,7 +39,7 @@ export const getCommandLineArguments = () => {
   } = args;
   return {
     configFile: path.resolve(config),
-    check,
+    version,
     ignoreIpFilters: Boolean(ignoreIpFilters),
     ignoreRemoteUpdate: Boolean(ignoreRemoteUpdate),
     ignoreRemoteConfig: Boolean(ignoreRemoteConfig),

@@ -42,7 +42,7 @@ const METRICS_DB_NAME = 'metrics.db';
 const CERT_FOLDER = 'certs';
 
 (async () => {
-  const { configFile, check, ignoreIpFilters, ignoreRemoteUpdate, launcherVersion } = getCommandLineArguments();
+  const { configFile, version, ignoreIpFilters, ignoreRemoteUpdate, launcherVersion } = getCommandLineArguments();
 
   const binaryFolder = process.cwd();
 
@@ -90,9 +90,10 @@ const CERT_FOLDER = 'certs';
   }
   await encryptionService.init(cryptoSettings, path.resolve(CERT_FOLDER));
 
-  if (check) {
-    console.info('OIBus started in check mode. Exiting process.');
-    process.exit();
+  if (version) {
+    console.info(`OIBus version: ${oibusSettings.version}`);
+    console.info(`Launcher version: ${launcherVersion}`);
+    process.exit(0);
   }
 
   await createFolder(LOG_FOLDER_NAME);

@@ -8,9 +8,9 @@ const updateDir = path.resolve(process.cwd(), 'update');
 const backupDir = path.resolve(process.cwd(), 'backup');
 
 const args = minimist(process.argv.slice(2));
-const { config = './', check = false } = args;
+const { config = './', version = false } = args;
 
-const launcher = new Launcher(workDir, updateDir, backupDir, path.resolve(config), check);
+const launcher = new Launcher(workDir, updateDir, backupDir, path.resolve(config), version);
 launcher.start();
 
 let stopping = false;
