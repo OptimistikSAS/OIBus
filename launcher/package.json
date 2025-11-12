@@ -15,35 +15,49 @@
     "start:win-x64": "..\\build\\bin\\win-x64\\oibus-launcher.exe --config ..\\data-folder",
     "start:linux-x64": "../build/bin/linux-x64/oibus-launcher --config ../data-folder",
     "start:linux-arm64": "../build/bin/linux-arm64/oibus-launcher --config ../data-folder",
-    "build:win-x64": "rimraf ../build/bin/win-x64/oibus-launcher && npm run build && pkg ./dist/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/win-x64/oibus-launcher --target node22-win-x64",
-    "build:macos-x64": "rimraf ../build/bin/macos-x64/oibus-launcher && npm run build && pkg ./dist/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/macos-x64/oibus-launcher --target node22-macos-x64",
-    "build:macos-arm64": "rimraf ../build/bin/macos-arm64/oibus-launcher && npm run build && pkg ./dist/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/macos-arm64/oibus-launcher --target node22-macos-arm64",
-    "build:linux-x64": "rimraf ../build/bin/linux-x64/oibus-launcher && npm run build && pkg ./dist/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/linux-x64/oibus-launcher --target node22-linux-x64",
-    "build:linux-arm64": "rimraf ../build/bin/linux-arm64/oibus-launcher && npm run build && pkg ./dist/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/linux-arm64/oibus-launcher --target node22-linux-arm64",
+    "build:win-x64": "rimraf ../build/bin/win-x64/oibus-launcher && npm run build && pkg ./dist/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/win-x64/oibus-launcher --target node24-win-x64",
+    "build:macos-x64": "rimraf ../build/bin/macos-x64/oibus-launcher && npm run build && pkg ./dist/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/macos-x64/oibus-launcher --target node24-macos-x64",
+    "build:macos-arm64": "rimraf ../build/bin/macos-arm64/oibus-launcher && npm run build && pkg ./dist/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/macos-arm64/oibus-launcher --target node24-macos-arm64",
+    "build:linux-x64": "rimraf ../build/bin/linux-x64/oibus-launcher && npm run build && pkg ./dist/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/linux-x64/oibus-launcher --target node24-linux-x64",
+    "build:linux-arm64": "rimraf ../build/bin/linux-arm64/oibus-launcher && npm run build && pkg ./dist/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/linux-arm64/oibus-launcher --target node24-linux-arm64",
     "start": "tsc --sourceMap --project tsconfig.app.json && npm run start:launcher",
     "start:launcher": "node ./dist/src/index.js --config ../data-folder",
     "lint": "eslint src/",
     "lint:fix": "npm run lint -- --fix",
-    "build": "tsc --project tsconfig.app.json"
+    "build": "tsc --project tsconfig.app.json",
+    "test": "jest --config=src/tests/jest-ts.config.mjs --coverage",
+    "test:watch": "jest --config=src/tests/jest-ts.config.mjs --watch",
+    "test:coverage": "jest --config=src/tests/jest-ts.config.mjs --coverage"
   },
   "keywords": [
     "Optimistik"
   ],
   "dependencies": {
+    "argon2": "0.44.0",
+    "better-sqlite3": "12.4.1",
     "minimist": "1.2.8"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "7.6.13",
     "@types/minimist": "1.2.5",
+    "@types/jest": "30.0.0",
     "@types/node": "24.10.0",
+    "@yao-pkg/pkg": "6.10.1",
     "eslint": "9.39.0",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-prettier": "5.5.4",
     "prettier": "3.6.2",
-    "@yao-pkg/pkg": "6.10.1",
     "rimraf": "6.1.0",
     "tslib": "2.8.1",
+    "jest": "30.2.0",
+    "ts-jest": "29.4.5",
     "typescript": "5.4.5",
     "typescript-eslint": "8.46.2"
   },
-  "pkg": {}
+  "pkg": {
+    "assets": [
+      "node_modules/argon2/**/*.node",
+      "node_modules/better-sqlite3/**/*.node"
+    ]
+  }
 }
