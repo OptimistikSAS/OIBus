@@ -287,4 +287,51 @@ export class SouthConnectorService {
 
     return this.http.post<void>(`/api/south/${southId}/items/import`, formData);
   }
+
+  exportArray(southId: string, arrayKey: string, delimiter: string): Observable<void> {
+    return this.http
+      .put(`/api/south/${southId}/array/${arrayKey}/export`, { delimiter }, { responseType: 'blob', observe: 'response' })
+      .pipe(map(response => this.downloadService.download(response, `${arrayKey}-export.csv`)));
+  }
+
+  arrayToCsv(southType: string, arrayKey: string, elements: Array<Record<string, any>>, delimiter: string): Observable<void> {
+    const formData = new FormData();
+    formData.set('elements', new Blob([JSON.stringify(elements)], { type: 'application/json' }));
+    formData.set('delimiter', delimiter);
+
+    return this.http
+      .post(`/api/south/${southType}/array/${arrayKey}/to-csv`, formData, { responseType: 'blob', observe: 'response' })
+      .pipe(map(response => this.downloadService.download(response, `${arrayKey}-export.csv`)));
+  }
+
+  checkImportArray(
+    southId: string,
+    arrayKey: string,
+    file: File,
+    delimiter: string,
+    existingElements: Array<Record<string, any>> = [],
+    southType?: string
+  ): Observable<{
+    elements: Array<Record<string, any>>;
+    errors: Array<{ element: Record<string, string>; error: string }>;
+  }> {
+    const formData = new FormData();
+    formData.set('file', file);
+    formData.set('delimiter', delimiter);
+    formData.set('arrayKey', arrayKey);
+    formData.set('currentElements', new Blob([JSON.stringify(existingElements)], { type: 'application/json' }), 'currentElements.json');
+    // Always send southType to satisfy tsoa validation (empty string if not provided)
+    formData.set('southType', southType || '');
+
+    return this.http.post<{
+      elements: Array<Record<string, any>>;
+      errors: Array<{ element: Record<string, string>; error: string }>;
+    }>(`/api/south/${southId}/array/${arrayKey}/import/check`, formData);
+  }
+
+  importArray(southId: string, arrayKey: string, elements: Array<Record<string, any>>): Observable<void> {
+    const formData = new FormData();
+    formData.set('elements', new Blob([JSON.stringify(elements)], { type: 'application/json' }), 'elements.json');
+    return this.http.post<void>(`/api/south/${southId}/array/${arrayKey}/import`, formData);
+  }
 }

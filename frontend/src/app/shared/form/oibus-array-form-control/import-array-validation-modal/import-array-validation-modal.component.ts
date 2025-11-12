@@ -16,31 +16,31 @@ const PAGE_SIZE = 20;
 export class ImportArrayValidationModalComponent {
   private modal = inject(NgbActiveModal);
 
-  newItemList: Array<Record<string, unknown>> = [];
+  newElementList: Array<Record<string, unknown>> = [];
   errorList: Array<{
-    item: Record<string, string>;
+    element: Record<string, string>;
     error: string;
   }> = [];
   arrayAttribute!: OIBusArrayAttribute;
   columns: Array<string> = [];
-  displayedItemsNew: Page<Record<string, unknown>> = emptyPage();
-  displayedItemsError: Page<{
-    item: Record<string, string>;
+  displayedElementsNew: Page<Record<string, unknown>> = emptyPage();
+  displayedElementsError: Page<{
+    element: Record<string, string>;
     error: string;
   }> = emptyPage();
 
   prepare(
     arrayAttribute: OIBusArrayAttribute,
-    newItemList: Array<Record<string, unknown>>,
+    newElementList: Array<Record<string, unknown>>,
     errorList: Array<{
-      item: Record<string, string>;
+      element: Record<string, string>;
       error: string;
     }>
   ) {
     this.arrayAttribute = arrayAttribute;
-    this.newItemList = newItemList;
+    this.newElementList = newElementList;
     this.errorList = errorList;
-    this.columns = this.extractColumns(newItemList);
+    this.columns = this.extractColumns(newElementList);
     this.changePageNew(0);
     this.changePageError(0);
   }
@@ -50,25 +50,25 @@ export class ImportArrayValidationModalComponent {
   }
 
   submit() {
-    this.modal.close(this.newItemList);
+    this.modal.close(this.newElementList);
   }
 
   changePageNew(pageNumber: number) {
-    this.displayedItemsNew = this.createPageNew(pageNumber);
+    this.displayedElementsNew = this.createPageNew(pageNumber);
   }
 
   changePageError(pageNumber: number) {
-    this.displayedItemsError = this.createPageError(pageNumber);
+    this.displayedElementsError = this.createPageError(pageNumber);
   }
 
-  getItemDisplayName(item: Record<string, unknown>): string {
+  getElementDisplayName(element: Record<string, unknown>): string {
     const nameKeys = ['name', 'id', 'key', 'title', 'fieldName'];
     for (const key of nameKeys) {
-      if (item[key] && typeof item[key] === 'string') {
-        return item[key] as string;
+      if (element[key] && typeof element[key] === 'string') {
+        return element[key] as string;
       }
     }
-    for (const [, value] of Object.entries(item)) {
+    for (const [, value] of Object.entries(element)) {
       if (typeof value === 'string' && value.trim()) {
         return value;
       }
@@ -76,14 +76,14 @@ export class ImportArrayValidationModalComponent {
     return '';
   }
 
-  getErrorItemDisplayName(item: Record<string, string>): string {
+  getErrorElementDisplayName(element: Record<string, string>): string {
     const nameKeys = ['name', 'id', 'key', 'title', 'fieldName'];
     for (const key of nameKeys) {
-      if (item[key] && typeof item[key] === 'string') {
-        return item[key];
+      if (element[key] && typeof element[key] === 'string') {
+        return element[key];
       }
     }
-    for (const [, value] of Object.entries(item)) {
+    for (const [, value] of Object.entries(element)) {
       if (typeof value === 'string' && value.trim()) {
         return value;
       }
@@ -91,8 +91,8 @@ export class ImportArrayValidationModalComponent {
     return '';
   }
 
-  getFieldValue(item: Record<string, unknown>, column: string): string {
-    const value = this.getValueByPath(item, column);
+  getFieldValue(element: Record<string, unknown>, column: string): string {
+    const value = this.getValueByPath(element, column);
     if (value === undefined || value === null) {
       return '';
     }
@@ -110,10 +110,10 @@ export class ImportArrayValidationModalComponent {
     return keys.reduce((acc, key) => acc && acc[key], obj);
   }
 
-  private extractColumns(items: Array<Record<string, unknown>>): Array<string> {
+  private extractColumns(elements: Array<Record<string, unknown>>): Array<string> {
     const columnSet = new Set<string>();
-    items.forEach(item => {
-      Object.keys(item).forEach(key => {
+    elements.forEach(element => {
+      Object.keys(element).forEach(key => {
         columnSet.add(key);
       });
     });
@@ -121,11 +121,11 @@ export class ImportArrayValidationModalComponent {
   }
 
   private createPageNew(pageNumber: number): Page<Record<string, unknown>> {
-    return createPageFromArray(this.newItemList, PAGE_SIZE, pageNumber);
+    return createPageFromArray(this.newElementList, PAGE_SIZE, pageNumber);
   }
 
   private createPageError(pageNumber: number): Page<{
-    item: Record<string, string>;
+    element: Record<string, string>;
     error: string;
   }> {
     return createPageFromArray(this.errorList, PAGE_SIZE, pageNumber);

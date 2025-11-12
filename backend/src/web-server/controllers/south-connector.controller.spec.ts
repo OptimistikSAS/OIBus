@@ -13,6 +13,7 @@ import ScanModeServiceMock from '../../tests/__mocks__/service/scan-mode-service
 import OibusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
 import { OIBusTestingError } from '../../model/types';
 import SouthService from '../../service/south.service';
+import fs from 'node:fs/promises';
 
 // Mock the services
 jest.mock('../../service/south.service', () => ({
@@ -23,6 +24,10 @@ jest.mock('../../service/south.service', () => ({
 
 jest.mock('../../service/utils', () => ({
   itemToFlattenedCSV: jest.fn().mockReturnValue('csv content')
+}));
+
+jest.mock('node:fs/promises', () => ({
+  readFile: jest.fn()
 }));
 
 describe('SouthConnectorController', () => {
@@ -522,11 +527,59 @@ describe('SouthConnectorController', () => {
   });
 
   describe('Array export/import functionality', () => {
-    const mockArrayData = [{ name: 'test1' }, { name: 'test2' }];
+    const mockArrayElements = [{ name: 'test1' }, { name: 'test2' }];
     const mockCsvContent = 'name\ntest1\ntest2';
     const mockArrayKey = 'items';
     const mockDelimiter = ',';
     const southId = testData.south.list[0].id;
+
+    describe('arrayFieldToCsv', () => {
+      it('should convert array data to CSV', async () => {
+        const mockElementsFile = {
+          buffer: Buffer.from(JSON.stringify(mockArrayElements))
+        } as Express.Multer.File;
+
+        mockSouthService.exportArrayElementsToCsv.mockReturnValueOnce(mockCsvContent);
+
+        await controller.arrayFieldToCsv('opcua', mockArrayKey, mockDelimiter, mockElementsFile, mockRequest as CustomExpressRequest);
+
+        expect(mockSouthService.exportArrayElementsToCsv).toHaveBeenCalledWith(mockArrayElements, mockDelimiter, mockArrayKey, 'opcua');
+        expect(mockRequest.res!.attachment).toHaveBeenCalledWith(`${mockArrayKey}-export.csv`);
+        expect(mockRequest.res!.send).toHaveBeenCalledWith(mockCsvContent);
+      });
+
+      it('should throw an error if elements payload is invalid', async () => {
+        const invalidElementsFile = {
+          buffer: Buffer.from('not-json')
+        } as Express.Multer.File;
+
+        await expect(
+          controller.arrayFieldToCsv('opcua', mockArrayKey, mockDelimiter, invalidElementsFile, mockRequest as CustomExpressRequest)
+        ).rejects.toThrow('Invalid JSON content for "elements"');
+      });
+
+      it('should throw an error if elements payload is not an array', async () => {
+        const nonArrayElementsFile = {
+          buffer: Buffer.from(JSON.stringify({ not: 'an array' }))
+        } as Express.Multer.File;
+
+        await expect(
+          controller.arrayFieldToCsv('opcua', mockArrayKey, mockDelimiter, nonArrayElementsFile, mockRequest as CustomExpressRequest)
+        ).rejects.toThrow('Invalid JSON content for "elements"');
+      });
+
+      it('should throw error if file has neither buffer nor path', async () => {
+        const invalidFile = {
+          fieldname: 'elements',
+          originalname: 'test.json',
+          mimetype: 'application/json'
+        } as Express.Multer.File;
+
+        await expect(
+          controller.arrayFieldToCsv('opcua', mockArrayKey, mockDelimiter, invalidFile, mockRequest as CustomExpressRequest)
+        ).rejects.toThrow('File "elements" has neither buffer nor path');
+      });
+    });
 
     describe('exportArrayField', () => {
       it('should export array field from main connector settings', async () => {
@@ -534,20 +587,25 @@ describe('SouthConnectorController', () => {
           ...testData.south.list[0],
           settings: {
             ...testData.south.list[0].settings,
-            [mockArrayKey]: mockArrayData
+            [mockArrayKey]: mockArrayElements
           }
         };
         (mockRequest.services!.southService.findById as jest.Mock).mockReturnValueOnce(mockSouthConnector);
 
-        mockSouthService.getArrayFieldItemsFromDatabase.mockReturnValueOnce(mockArrayData);
+        mockSouthService.getArrayFieldElements.mockReturnValueOnce(mockArrayElements);
 
-        mockSouthService.exportArrayToCSV.mockReturnValueOnce(mockCsvContent);
+        mockSouthService.exportArrayElementsToCsv.mockReturnValueOnce(mockCsvContent);
 
         await controller.exportArrayField(southId, mockArrayKey, { delimiter: mockDelimiter }, mockRequest as CustomExpressRequest);
 
-        expect(mockSouthService.getArrayFieldItemsFromDatabase).toHaveBeenCalledWith(southId, mockArrayKey);
+        expect(mockSouthService.getArrayFieldElements).toHaveBeenCalledWith(southId, mockArrayKey);
 
-        expect(mockSouthService.exportArrayToCSV).toHaveBeenCalledWith(mockArrayData, mockDelimiter, mockArrayKey, mockSouthConnector.type);
+        expect(mockSouthService.exportArrayElementsToCsv).toHaveBeenCalledWith(
+          mockArrayElements,
+          mockDelimiter,
+          mockArrayKey,
+          mockSouthConnector.type
+        );
         expect(mockRequest.res!.attachment).toHaveBeenCalledWith(`${mockArrayKey}-export.csv`);
         expect(mockRequest.res!.contentType).toHaveBeenCalledWith('text/csv; charset=utf-8');
         expect(mockRequest.res!.send).toHaveBeenCalledWith(mockCsvContent);
@@ -562,15 +620,20 @@ describe('SouthConnectorController', () => {
         };
         (mockRequest.services!.southService.findById as jest.Mock).mockReturnValueOnce(mockSouthConnector);
 
-        mockSouthService.getArrayFieldItemsFromDatabase.mockReturnValueOnce(mockArrayData);
+        mockSouthService.getArrayFieldElements.mockReturnValueOnce(mockArrayElements);
 
-        mockSouthService.exportArrayToCSV.mockReturnValueOnce(mockCsvContent);
+        mockSouthService.exportArrayElementsToCsv.mockReturnValueOnce(mockCsvContent);
 
         await controller.exportArrayField(southId, mockArrayKey, { delimiter: mockDelimiter }, mockRequest as CustomExpressRequest);
 
-        expect(mockSouthService.getArrayFieldItemsFromDatabase).toHaveBeenCalledWith(southId, mockArrayKey);
+        expect(mockSouthService.getArrayFieldElements).toHaveBeenCalledWith(southId, mockArrayKey);
 
-        expect(mockSouthService.exportArrayToCSV).toHaveBeenCalledWith(mockArrayData, mockDelimiter, mockArrayKey, mockSouthConnector.type);
+        expect(mockSouthService.exportArrayElementsToCsv).toHaveBeenCalledWith(
+          mockArrayElements,
+          mockDelimiter,
+          mockArrayKey,
+          mockSouthConnector.type
+        );
         expect(mockRequest.res!.send).toHaveBeenCalledWith(mockCsvContent);
       });
 
@@ -586,7 +649,7 @@ describe('SouthConnectorController', () => {
     describe('checkImportArrayField', () => {
       it('should check import array field', async () => {
         const mockResult = {
-          items: mockArrayData,
+          elements: mockArrayElements,
           errors: []
         };
         const mockFile = {
@@ -601,10 +664,18 @@ describe('SouthConnectorController', () => {
           mockDelimiter,
           mockFile,
           undefined,
+          undefined,
           mockRequest as CustomExpressRequest
         );
 
-        expect(mockSouthService.checkArrayFileImport).toHaveBeenCalledWith(southId, mockFile, mockDelimiter, mockArrayKey);
+        expect(mockSouthService.checkArrayFileImport).toHaveBeenCalledWith(
+          southId,
+          'test csv content',
+          mockDelimiter,
+          mockArrayKey,
+          [],
+          undefined
+        );
         expect(result).toEqual(mockResult);
       });
 
@@ -616,32 +687,23 @@ describe('SouthConnectorController', () => {
             mockDelimiter,
             undefined as unknown as Express.Multer.File,
             undefined,
+            undefined,
             mockRequest as CustomExpressRequest
           )
         ).rejects.toThrow('Missing file "file"');
       });
 
-      it('should throw error if delimiter missing', async () => {
-        const mockFile = {
-          buffer: Buffer.from('test csv content')
-        } as Express.Multer.File;
-
-        await expect(
-          controller.checkImportArrayField(southId, mockArrayKey, '', mockFile, undefined, mockRequest as CustomExpressRequest)
-        ).rejects.toThrow('Missing delimiter');
-      });
-
       it('should handle currentItemsFile when provided', async () => {
         const mockResult = {
-          items: mockArrayData,
+          elements: mockArrayElements,
           errors: []
         };
         const mockFile = {
           buffer: Buffer.from('test csv content')
         } as Express.Multer.File;
-        const currentItemsFile = {
-          buffer: Buffer.from('test'),
-          originalname: 'items.json'
+        const currentElementsFile = {
+          buffer: Buffer.from(JSON.stringify([{ name: 'current' }])),
+          originalname: 'elements.json'
         } as Express.Multer.File;
 
         mockSouthService.checkArrayFileImport.mockResolvedValueOnce(mockResult);
@@ -651,26 +713,175 @@ describe('SouthConnectorController', () => {
           mockArrayKey,
           mockDelimiter,
           mockFile,
-          currentItemsFile,
+          currentElementsFile,
+          undefined,
           mockRequest as CustomExpressRequest
         );
 
-        expect(mockSouthService.checkArrayFileImport).toHaveBeenCalledWith(southId, mockFile, mockDelimiter, mockArrayKey);
+        expect(mockSouthService.checkArrayFileImport).toHaveBeenCalledWith(
+          southId,
+          'test csv content',
+          mockDelimiter,
+          mockArrayKey,
+          [{ name: 'current' }],
+          undefined
+        );
         expect(result).toEqual(mockResult);
+      });
+
+      it('should forward southType override when provided', async () => {
+        const mockFile = {
+          buffer: Buffer.from('test csv content')
+        } as Express.Multer.File;
+
+        await controller.checkImportArrayField(
+          'create',
+          mockArrayKey,
+          mockDelimiter,
+          mockFile,
+          undefined,
+          'opcua',
+          mockRequest as CustomExpressRequest
+        );
+
+        expect(mockSouthService.checkArrayFileImport).toHaveBeenCalledWith(
+          'create',
+          'test csv content',
+          mockDelimiter,
+          mockArrayKey,
+          [],
+          'opcua'
+        );
+      });
+
+      it('should handle file with path instead of buffer', async () => {
+        const mockResult = {
+          elements: mockArrayElements,
+          errors: []
+        };
+        const mockFile = {
+          path: '/tmp/test-file.csv'
+        } as Express.Multer.File;
+
+        (fs.readFile as jest.Mock).mockResolvedValueOnce(Buffer.from('test csv content'));
+        mockSouthService.checkArrayFileImport.mockResolvedValueOnce(mockResult);
+
+        const result = await controller.checkImportArrayField(
+          southId,
+          mockArrayKey,
+          mockDelimiter,
+          mockFile,
+          undefined,
+          undefined,
+          mockRequest as CustomExpressRequest
+        );
+
+        expect(fs.readFile).toHaveBeenCalledWith('/tmp/test-file.csv');
+        expect(mockSouthService.checkArrayFileImport).toHaveBeenCalledWith(
+          southId,
+          'test csv content',
+          mockDelimiter,
+          mockArrayKey,
+          [],
+          undefined
+        );
+        expect(result).toEqual(mockResult);
+      });
+
+      it('should throw error when currentElementsFile contains non-array JSON', async () => {
+        const mockFile = {
+          buffer: Buffer.from('test csv content')
+        } as Express.Multer.File;
+        const currentElementsFile = {
+          buffer: Buffer.from(JSON.stringify({ not: 'an array' })),
+          originalname: 'currentElements.json'
+        } as Express.Multer.File;
+
+        await expect(
+          controller.checkImportArrayField(
+            southId,
+            mockArrayKey,
+            mockDelimiter,
+            mockFile,
+            currentElementsFile,
+            undefined,
+            mockRequest as CustomExpressRequest
+          )
+        ).rejects.toThrow('Invalid JSON content for "currentElements"');
+      });
+
+      it('should throw error if file has neither buffer nor path', async () => {
+        const invalidFile = {
+          fieldname: 'file',
+          originalname: 'test.csv',
+          mimetype: 'text/csv'
+        } as Express.Multer.File;
+
+        await expect(
+          controller.checkImportArrayField(
+            southId,
+            mockArrayKey,
+            mockDelimiter,
+            invalidFile,
+            undefined,
+            undefined,
+            mockRequest as CustomExpressRequest
+          )
+        ).rejects.toThrow('File "file" has neither buffer nor path');
+      });
+
+      it('should handle fs.readFile error when reading from path', async () => {
+        const mockFile = {
+          path: '/tmp/test-file.csv'
+        } as Express.Multer.File;
+
+        (fs.readFile as jest.Mock).mockRejectedValueOnce(new Error('File not found'));
+
+        await expect(
+          controller.checkImportArrayField(
+            southId,
+            mockArrayKey,
+            mockDelimiter,
+            mockFile,
+            undefined,
+            undefined,
+            mockRequest as CustomExpressRequest
+          )
+        ).rejects.toThrow('File not found');
       });
     });
 
     describe('importArrayField', () => {
       it('should import array field', async () => {
-        const mockItemsFile = {
-          buffer: Buffer.from(JSON.stringify(mockArrayData))
+        const mockElementsFile = {
+          buffer: Buffer.from(JSON.stringify(mockArrayElements))
         } as Express.Multer.File;
 
         mockSouthService.importArrayField.mockResolvedValueOnce(undefined);
 
-        await controller.importArrayField(southId, mockArrayKey, mockItemsFile, mockRequest as CustomExpressRequest);
+        await controller.importArrayField(southId, mockArrayKey, mockElementsFile, mockRequest as CustomExpressRequest);
 
-        expect(mockSouthService.importArrayField).toHaveBeenCalledWith(southId, mockArrayKey, mockArrayData);
+        expect(mockSouthService.importArrayField).toHaveBeenCalledWith(southId, mockArrayKey, mockArrayElements);
+      });
+
+      it('should throw error when items payload is invalid', async () => {
+        const invalidItemsFile = {
+          buffer: Buffer.from('invalid json')
+        } as Express.Multer.File;
+
+        await expect(
+          controller.importArrayField(southId, mockArrayKey, invalidItemsFile, mockRequest as CustomExpressRequest)
+        ).rejects.toThrow('Invalid JSON content for "elements"');
+      });
+
+      it('should throw error when items payload is not an array', async () => {
+        const nonArrayItemsFile = {
+          buffer: Buffer.from(JSON.stringify({ not: 'an array' }))
+        } as Express.Multer.File;
+
+        await expect(
+          controller.importArrayField(southId, mockArrayKey, nonArrayItemsFile, mockRequest as CustomExpressRequest)
+        ).rejects.toThrow('Invalid JSON content for "elements"');
       });
 
       it('should throw error if items file missing', async () => {
@@ -681,7 +892,19 @@ describe('SouthConnectorController', () => {
             undefined as unknown as Express.Multer.File,
             mockRequest as CustomExpressRequest
           )
-        ).rejects.toThrow('Missing file "items"');
+        ).rejects.toThrow('Missing file "elements"');
+      });
+
+      it('should throw error if file has neither buffer nor path', async () => {
+        const invalidFile = {
+          fieldname: 'elements',
+          originalname: 'test.json',
+          mimetype: 'application/json'
+        } as Express.Multer.File;
+
+        await expect(
+          controller.importArrayField(southId, mockArrayKey, invalidFile, mockRequest as CustomExpressRequest)
+        ).rejects.toThrow('File "elements" has neither buffer nor path');
       });
     });
   });

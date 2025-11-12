@@ -19,7 +19,7 @@ import { SouthConnectorItemDTO } from '../../shared/model/south-connector.model'
 import { ScanMode } from '../model/scan-mode.model';
 import { HistoryQueryItemDTO } from '../../shared/model/history-query.model';
 import { BaseFolders, NotFoundError, OIBusValidationError } from '../model/types';
-import { OIBusArrayAttribute, OIBusObjectAttribute } from '../../shared/model/form.model';
+import { OIBusArrayAttribute, OIBusAttribute, OIBusObjectAttribute } from '../../shared/model/form.model';
 
 const COMPRESSION_LEVEL = 9;
 
@@ -698,28 +698,30 @@ export const stringToBoolean = (value: string): boolean => {
   return false;
 };
 
-export const arrayToFlattenedCSV = (
-  arrayItems: Array<Record<string, unknown>>,
+export const arrayElementsToCsv = (
+  arrayElements: Array<Record<string, unknown>>,
   delimiter: string,
   arrayAttribute: OIBusArrayAttribute
 ): string => {
   const columns: Set<string> = new Set<string>();
-  const flattenedItems: Array<Record<string, string | object | boolean>> = [];
+  const flattenedElements: Array<Record<string, string | object | boolean>> = [];
 
-  for (const item of arrayItems) {
-    const flattenedItem: Record<string, string | object | boolean> = {};
+  for (const element of arrayElements) {
+    const flattenedElement: Record<string, string | object | boolean> = {};
 
-    flattenObject(item, arrayAttribute.rootAttribute, flattenedItem, []);
+    flattenObject(element, arrayAttribute.rootAttribute, flattenedElement, []);
 
-    for (const key of Object.keys(flattenedItem)) {
+    for (const key of Object.keys(flattenedElement)) {
       columns.add(key);
     }
 
-    flattenedItems.push(flattenedItem);
+    flattenedElements.push(flattenedElement);
   }
 
-  return csv.unparse(flattenedItems, { columns: Array.from(columns), delimiter });
+  return csv.unparse(flattenedElements, { columns: Array.from(columns), delimiter });
 };
+
+const joinAttributeKey = (prefix: Array<string>, key: string): string => [...prefix, key].filter(Boolean).join('_');
 
 const flattenObject = (
   obj: Record<string, unknown>,
@@ -727,39 +729,60 @@ const flattenObject = (
   flattened: Record<string, unknown>,
   prefix: Array<string>
 ): void => {
-  if (attribute.type === 'object' && attribute.attributes) {
-    for (const subAttribute of attribute.attributes) {
-      const key = subAttribute.key;
-      const value = obj[key];
+  if (attribute.type !== 'object' || !attribute.attributes) {
+    return;
+  }
 
-      if (value !== undefined) {
-        const fullKey = [...prefix, key].join('_');
+  for (const subAttribute of attribute.attributes) {
+    const key = subAttribute.key;
+    if (key === undefined) {
+      continue;
+    }
 
-        if (subAttribute.type === 'object') {
-          // Ensure value is a non-null object before calling flattenObject
-          if (value && typeof value === 'object') {
-            flattenObject(value as Record<string, unknown>, subAttribute, flattened, [...prefix, key]);
-          }
+    const value = obj[key];
+    if (value === undefined || value === null) {
+      continue;
+    }
+
+    const fullKey = joinAttributeKey(prefix, key);
+
+    switch (subAttribute.type) {
+      case 'object':
+        if (value && typeof value === 'object' && !Array.isArray(value)) {
+          flattenObject(value as Record<string, unknown>, subAttribute as OIBusObjectAttribute, flattened, [...prefix, key]);
         } else {
-          if (typeof value === 'object' && value !== null) {
-            flattened[fullKey] = JSON.stringify(value);
-          } else {
-            flattened[fullKey] = value;
-          }
+          flattened[fullKey] = value;
         }
-      }
+        break;
+      case 'array':
+        flattened[fullKey] = JSON.stringify(value);
+        break;
+      case 'boolean':
+      case 'number':
+      case 'string':
+      case 'code':
+      case 'string-select':
+      case 'secret':
+      case 'timezone':
+      case 'instant':
+      case 'scan-mode':
+      case 'certificate':
+        flattened[fullKey] = typeof value === 'object' ? JSON.stringify(value) : value;
+        break;
+      default:
+        flattened[fullKey] = typeof value === 'object' ? JSON.stringify(value) : value;
     }
   }
 };
 
-export const validateArrayCSVImport = (
+export const validateArrayElementsImport = (
   csvContent: string,
   delimiter: string,
   arrayAttribute: OIBusArrayAttribute,
-  existingItems: Array<Record<string, unknown>> = []
+  existingElements: Array<Record<string, unknown>> = []
 ): {
-  items: Array<Record<string, unknown>>;
-  errors: Array<{ item: Record<string, string>; error: string }>;
+  elements: Array<Record<string, unknown>>;
+  errors: Array<{ element: Record<string, string>; error: string }>;
 } => {
   const csvData = csv.parse(csvContent, { header: true, delimiter, skipEmptyLines: true });
 
@@ -769,58 +792,58 @@ export const validateArrayCSVImport = (
     );
   }
 
-  const validItems: Array<Record<string, unknown>> = [];
-  const errors: Array<{ item: Record<string, string>; error: string }> = [];
+  const validElements: Array<Record<string, unknown>> = [];
+  const errors: Array<{ element: Record<string, string>; error: string }> = [];
 
-  const existingItemNames = new Set(existingItems.map(item => getItemName(item)).filter(name => name));
-  const seenNames = new Set<string>();
+  const existingElementNames = new Set(existingElements.map(element => getElementName(element)).filter(name => name));
+  const seenElementNames = new Set<string>();
 
   for (const [index, data] of csvData.data.entries()) {
     try {
-      const item = unflattenObject(data as Record<string, unknown>, arrayAttribute.rootAttribute);
+      const element = unflattenObject(data as Record<string, unknown>, arrayAttribute.rootAttribute);
 
-      const itemName = getItemName(item);
-      if (itemName) {
-        if (seenNames.has(itemName)) {
+      const elementName = getElementName(element);
+      if (elementName) {
+        if (seenElementNames.has(elementName)) {
           errors.push({
-            item: data as Record<string, string>,
-            error: `Row ${index + 1}: Duplicate item name "${itemName}" found in CSV file`
+            element: data as Record<string, string>,
+            error: `Row ${index + 1}: Duplicate element name "${elementName}" found in CSV file`
           });
           continue;
         }
-        seenNames.add(itemName);
+        seenElementNames.add(elementName);
 
-        // Check against existing items
-        if (existingItemNames.has(itemName)) {
+        // Check against existing elements
+        if (existingElementNames.has(elementName)) {
           errors.push({
-            item: data as Record<string, string>,
-            error: `Row ${index + 1}: Item name "${itemName}" already exists in the array`
+            element: data as Record<string, string>,
+            error: `Row ${index + 1}: Element name "${elementName}" already exists in the array`
           });
           continue;
         }
       }
 
-      validItems.push(item);
+      validElements.push(element);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       errors.push({
-        item: data as Record<string, string>,
+        element: data as Record<string, string>,
         error: `Row ${index + 1}: ${errorMessage}`
       });
     }
   }
 
-  return { items: validItems, errors };
+  return { elements: validElements, errors };
 };
 
-const getItemName = (item: Record<string, unknown>): string => {
-  const nameKeys = ['name', 'id', 'key', 'title'];
+const getElementName = (element: Record<string, unknown>): string => {
+  const nameKeys = ['name', 'id', 'key', 'title', 'fieldName'];
   for (const key of nameKeys) {
-    if (item[key] && typeof item[key] === 'string') {
-      return item[key] as string;
+    if (element[key] && typeof element[key] === 'string') {
+      return element[key] as string;
     }
   }
-  for (const [, value] of Object.entries(item)) {
+  for (const [, value] of Object.entries(element)) {
     if (typeof value === 'string' && value.trim()) {
       return value;
     }
@@ -828,58 +851,144 @@ const getItemName = (item: Record<string, unknown>): string => {
   return '';
 };
 
+const parseArrayValue = (rawValue: unknown, key: string): Array<unknown> => {
+  if (rawValue === undefined || rawValue === null || rawValue === '') {
+    return [];
+  }
+
+  if (Array.isArray(rawValue)) {
+    return rawValue;
+  }
+
+  if (typeof rawValue === 'string') {
+    try {
+      const parsed = JSON.parse(rawValue);
+      if (!Array.isArray(parsed)) {
+        throw new Error();
+      }
+      return parsed;
+    } catch {
+      throw new OIBusValidationError(`Invalid array value for "${key}"`);
+    }
+  }
+
+  throw new OIBusValidationError(`Invalid array value for "${key}"`);
+};
+
 const unflattenObject = (
   flattened: Record<string, unknown>,
-  attribute: { type: string; attributes?: Array<unknown>; key?: string }
+  attribute: OIBusObjectAttribute,
+  prefix: Array<string> = []
 ): Record<string, unknown> => {
   const result: Record<string, unknown> = {};
 
-  if (attribute.type === 'object' && Array.isArray(attribute.attributes)) {
-    for (const subAttributeUnknown of attribute.attributes) {
-      // Explicitly assert type for subAttribute
-      const subAttribute = subAttributeUnknown as {
-        type: string;
-        attributes?: Array<unknown>;
-        key?: string;
-      };
-      const key = subAttribute.key;
+  if (attribute.type !== 'object' || !Array.isArray(attribute.attributes)) {
+    return result;
+  }
 
-      if (subAttribute.type === 'object') {
-        if (key !== undefined) {
-          result[key] = unflattenObject(flattened, subAttribute);
+  for (const subAttributeUnknown of attribute.attributes) {
+    const subAttribute = subAttributeUnknown as OIBusAttribute;
+    const key = subAttribute.key;
+    if (key === undefined) {
+      continue;
+    }
+
+    const fullKey = joinAttributeKey(prefix, key);
+    const value = flattened[fullKey];
+
+    switch (subAttribute.type) {
+      case 'object': {
+        const nested = unflattenObject(flattened, subAttribute as OIBusObjectAttribute, [...prefix, key]);
+        if (Object.keys(nested).length > 0) {
+          result[key] = nested;
         }
-      } else {
-        if (key !== undefined) {
-          const value = flattened[key];
-          if (value !== undefined) {
-            // Handle type conversion based on attribute type
-            switch (subAttribute.type) {
-              case 'boolean':
-                result[key] = stringToBoolean(value as string);
-                break;
-              case 'number':
-                result[key] = Number(value);
-                break;
-              case 'string':
-              case 'code':
-              case 'string-select':
-              case 'secret':
-              case 'timezone':
-              case 'instant':
-              case 'scan-mode':
-              case 'certificate':
-                result[key] = String(value);
-                break;
-              default:
-                result[key] = value;
-            }
-          }
-        }
+        break;
       }
+      case 'array':
+        result[key] = parseArrayValue(value, fullKey);
+        break;
+      case 'boolean':
+        if (value !== undefined && value !== '') {
+          result[key] = stringToBoolean(String(value));
+        }
+        break;
+      case 'number':
+        if (value !== undefined && value !== '') {
+          const parsedNumber = Number(value);
+          if (Number.isNaN(parsedNumber)) {
+            throw new OIBusValidationError(`Invalid number value "${value}" for "${fullKey}"`);
+          }
+          result[key] = parsedNumber;
+        }
+        break;
+      case 'string':
+      case 'code':
+      case 'string-select':
+      case 'secret':
+      case 'timezone':
+      case 'instant':
+      case 'scan-mode':
+      case 'certificate':
+        if (value !== undefined) {
+          result[key] = String(value);
+        }
+        break;
+      default:
+        if (value !== undefined) {
+          result[key] = value;
+        }
     }
   }
 
   return result;
+};
+
+export const findArrayAttributeInAttributes = (arrayKey: string, attributes: Array<OIBusAttribute>): OIBusArrayAttribute | null => {
+  for (const attribute of attributes) {
+    if (!attribute) {
+      continue;
+    }
+
+    if (attribute.key === arrayKey) {
+      if (attribute.type !== 'array') {
+        throw new OIBusValidationError(`Field "${arrayKey}" is not an array`);
+      }
+      return attribute as OIBusArrayAttribute;
+    }
+
+    if (attribute.type === 'object' && 'attributes' in attribute && Array.isArray(attribute.attributes)) {
+      const nested = findArrayAttributeInAttributes(arrayKey, attribute.attributes as Array<OIBusAttribute>);
+      if (nested) {
+        return nested;
+      }
+    }
+  }
+
+  return null;
+};
+
+export const getArrayAttributeDefinition = <
+  T extends {
+    settings: { attributes: Array<OIBusAttribute> };
+    items?: { rootAttribute?: OIBusObjectAttribute };
+  }
+>(
+  manifest: T,
+  arrayKey: string
+): OIBusArrayAttribute => {
+  const fromSettings = findArrayAttributeInAttributes(arrayKey, manifest.settings.attributes);
+  if (fromSettings) {
+    return fromSettings;
+  }
+
+  if (manifest.items?.rootAttribute?.attributes) {
+    const fromItems = findArrayAttributeInAttributes(arrayKey, manifest.items.rootAttribute.attributes as Array<OIBusAttribute>);
+    if (fromItems) {
+      return fromItems;
+    }
+  }
+
+  throw new NotFoundError(`Array field "${arrayKey}" not found in manifest`);
 };
 
 const formatRegex = (ip: string) => {

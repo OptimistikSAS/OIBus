@@ -4700,12 +4700,12 @@
 			},
 			"SouthArrayCsvImportResponse": {
 				"properties": {
-					"items": {
+					"elements": {
 						"items": {
 							"$ref": "#/components/schemas/Record_string.unknown_"
 						},
 						"type": "array",
-						"description": "Array of valid items that can be imported"
+						"description": "Array of valid elements that can be imported"
 					},
 					"errors": {
 						"items": {
@@ -4713,22 +4713,22 @@
 								"error": {
 									"type": "string"
 								},
-								"item": {
+								"element": {
 									"$ref": "#/components/schemas/Record_string.string_"
 								}
 							},
 							"required": [
 								"error",
-								"item"
+								"element"
 							],
 							"type": "object"
 						},
 						"type": "array",
-						"description": "Array of items with errors"
+						"description": "Array of elements with errors"
 					}
 				},
 				"required": [
-					"items",
+					"elements",
 					"errors"
 				],
 				"type": "object",
@@ -12645,6 +12645,63 @@
 				}
 			}
 		},
+		"/api/south/{southType}/array/{arrayKey}/to-csv": {
+			"post": {
+				"operationId": "ArrayFieldToCsv",
+				"responses": {
+					"204": {
+						"description": "No content"
+					}
+				},
+				"description": "Converts in-memory array elements to CSV format",
+				"summary": "Convert array elements to CSV",
+				"tags": [
+					"South Connectors"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "southType",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "arrayKey",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"multipart/form-data": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"delimiter": {
+										"type": "string"
+									},
+									"elements": {
+										"type": "string",
+										"format": "binary"
+									}
+								},
+								"required": [
+									"delimiter",
+									"elements"
+								]
+							}
+						}
+					}
+				}
+			}
+		},
 		"/api/south/{southId}/array/{arrayKey}/export": {
 			"put": {
 				"operationId": "ExportArrayField",
@@ -12653,7 +12710,7 @@
 						"description": "No content"
 					}
 				},
-				"description": "Exports array field items to CSV format",
+				"description": "Exports array field elements to CSV format",
 				"summary": "Export array field to CSV",
 				"tags": [
 					"South Connectors"
@@ -12689,7 +12746,7 @@
 				}
 			}
 		},
-		"/api/south/{southId}/array/{arrayKey}/check-import": {
+		"/api/south/{southId}/array/{arrayKey}/import/check": {
 			"post": {
 				"operationId": "CheckImportArrayField",
 				"responses": {
@@ -12704,7 +12761,7 @@
 						}
 					}
 				},
-				"description": "Validates a CSV file before importing array items and checks for conflicts with existing items",
+				"description": "Validates a CSV file before importing array elements and checks for conflicts with existing elements",
 				"summary": "Check array CSV import",
 				"tags": [
 					"South Connectors"
@@ -12742,15 +12799,19 @@
 										"type": "string",
 										"format": "binary"
 									},
-									"currentItems": {
+									"currentElements": {
 										"type": "string",
 										"format": "binary"
+									},
+									"southType": {
+										"type": "string"
 									}
 								},
 								"required": [
 									"delimiter",
 									"file",
-									"currentItems"
+									"currentElements",
+									"southType"
 								]
 							}
 						}
@@ -12766,7 +12827,7 @@
 						"description": "No Content"
 					}
 				},
-				"description": "Imports array items from a JSON file into a south connector array field",
+				"description": "Imports array elements from a JSON file into a south connector array field",
 				"summary": "Import array field from JSON",
 				"tags": [
 					"South Connectors"
@@ -12797,13 +12858,13 @@
 							"schema": {
 								"type": "object",
 								"properties": {
-									"items": {
+									"elements": {
 										"type": "string",
 										"format": "binary"
 									}
 								},
 								"required": [
-									"items"
+									"elements"
 								]
 							}
 						}

@@ -286,6 +286,69 @@ describe('SouthConnectorService', () => {
     expect(actualImportation).toBe(true);
   });
 
+  it('should export array elements', () => {
+    spyOn(downloadService, 'download');
+
+    service.exportArray('id1', 'arrayKey', ';').subscribe();
+
+    const request = http.expectOne({ method: 'PUT', url: '/api/south/id1/array/arrayKey/export' });
+    request.flush(new Blob());
+
+    expect(downloadService.download).toHaveBeenCalled();
+  });
+
+  it('should convert array elements to csv', () => {
+    spyOn(downloadService, 'download');
+
+    service.arrayToCsv('opcua', 'arrayKey', [{ name: 'value' }], ',').subscribe();
+
+    const request = http.expectOne({ method: 'POST', url: '/api/south/opcua/array/arrayKey/to-csv' });
+    request.flush(new Blob());
+
+    expect(downloadService.download).toHaveBeenCalled();
+  });
+
+  it('should check import array elements', () => {
+    const file = new Blob(['content']) as File;
+    const expectedFormData = new FormData();
+    expectedFormData.set('file', file);
+    expectedFormData.set('delimiter', ';');
+    expectedFormData.set('arrayKey', 'arrayKey');
+    expectedFormData.set(
+      'currentElements',
+      new Blob([JSON.stringify([{ name: 'existing' }])], { type: 'application/json' }),
+      'currentElements.json'
+    );
+    expectedFormData.set('southType', 'opcua');
+    let completed = false;
+
+    service.checkImportArray('create', 'arrayKey', file, ';', [{ name: 'existing' }], 'opcua').subscribe(() => {
+      completed = true;
+    });
+
+    const request = http.expectOne({ method: 'POST', url: '/api/south/create/array/arrayKey/import/check' });
+    expect(request.request.body).toEqual(expectedFormData);
+    request.flush({ elements: [], errors: [] });
+
+    expect(completed).toBeTrue();
+  });
+
+  it('should import array elements', () => {
+    const expectedFormData = new FormData();
+    expectedFormData.set('elements', new Blob([JSON.stringify([{ name: 'value' }])], { type: 'application/json' }), 'elements.json');
+    let completed = false;
+
+    service.importArray('id1', 'arrayKey', [{ name: 'value' }]).subscribe(() => {
+      completed = true;
+    });
+
+    const request = http.expectOne({ method: 'POST', url: '/api/south/id1/array/arrayKey/import' });
+    expect(request.request.body).toEqual(expectedFormData);
+    request.flush(null);
+
+    expect(completed).toBeTrue();
+  });
+
   it('should test a South connector connection', () => {
     let done = false;
     const command = testData.south.command;

@@ -1,7 +1,5 @@
 import { encryptionService } from './encryption.service';
-import { arrayToFlattenedCSV, validateArrayCSVImport } from './utils';
-import fs from 'node:fs/promises';
-
+import { arrayElementsToCsv, getArrayAttributeDefinition, validateArrayElementsImport } from './utils';
 // South imports
 import {
   OIBusSouthType,
@@ -50,7 +48,7 @@ import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-
 import CertificateRepository from '../repository/config/certificate.repository';
 import DataStreamEngine from '../engine/data-stream-engine';
 import { PassThrough } from 'node:stream';
-import { OIBusArrayAttribute, OIBusAttribute, OIBusObjectAttribute } from '../../shared/model/form.model';
+import { OIBusObjectAttribute } from '../../shared/model/form.model';
 import { toScanModeDTO } from './scan-mode.service';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { buildSouth } from '../south/south-connector-factory';
@@ -549,159 +547,106 @@ export default class SouthService {
     return source;
   }
 
-  private findArrayAttributeInAttributes(arrayKey: string, attributes: Array<OIBusAttribute>): OIBusArrayAttribute | null {
-    for (const attribute of attributes) {
-      if (attribute.key === arrayKey) {
-        if (attribute.type !== 'array') {
-          throw new OIBusValidationError(`Field "${arrayKey}" is not an array`);
-        }
-        return attribute;
-      }
-
-      if (attribute.type === 'object') {
-        const nestedAttribute = this.findArrayAttributeInAttributes(arrayKey, attribute.attributes);
-        if (nestedAttribute) {
-          return nestedAttribute;
-        }
-      }
-    }
-
-    return null;
+  exportArrayElementsToCsv(
+    arrayElements: Array<Record<string, unknown>>,
+    delimiter: string,
+    arrayKey: string,
+    southType: OIBusSouthType
+  ): string {
+    const manifest = this.getManifest(southType);
+    const arrayAttribute = getArrayAttributeDefinition(manifest, arrayKey);
+    return arrayElementsToCsv(arrayElements, delimiter, arrayAttribute);
   }
 
-  private getArrayAttributeFromManifest(manifest: SouthConnectorManifest, arrayKey: string): OIBusArrayAttribute | null {
-    const settingsAttribute = this.findArrayAttributeInAttributes(arrayKey, manifest.settings.attributes);
-    if (settingsAttribute) {
-      return settingsAttribute;
-    }
-
-    if (!manifest.items?.rootAttribute) {
-      return null;
-    }
-
-    return this.findArrayAttributeInAttributes(arrayKey, manifest.items.rootAttribute.attributes);
-  }
-
-  exportArrayToCSV(arrayData: Array<Record<string, unknown>>, delimiter: string, arrayKey: string, southType: OIBusSouthType): string {
-    const manifest = this.listManifest().find((southManifest: SouthConnectorManifest) => southManifest.id === southType);
-
-    if (!manifest) {
-      throw new NotFoundError(`South manifest "${southType}" not found`);
-    }
-
-    const arrayAttribute = this.getArrayAttributeFromManifest(manifest, arrayKey);
-
-    if (!arrayAttribute) {
-      throw new NotFoundError(`Array field "${arrayKey}" not found in manifest`);
-    }
-
-    return arrayToFlattenedCSV(arrayData, delimiter, arrayAttribute);
-  }
-
-  getArrayFieldItemsFromDatabase(southId: string, arrayKey: string): Array<Record<string, unknown>> {
-    const southConnector = this.southConnectorRepository.findSouthById(southId);
-    if (!southConnector) {
-      throw new NotFoundError(`South connector "${southId}" not found`);
-    }
+  getArrayFieldElements(southId: string, arrayKey: string): Array<Record<string, unknown>> {
+    const southConnector = this.findById(southId);
 
     const settings = southConnector.settings as unknown as Record<string, unknown>;
-    let arrayData: Array<Record<string, unknown>> = [];
+    let arrayElements: Array<Record<string, unknown>> = [];
 
     if (Array.isArray(settings[arrayKey])) {
-      arrayData = (settings[arrayKey] as Array<unknown>).filter(
-        (item): item is Record<string, unknown> => typeof item === 'object' && item !== null
+      arrayElements = (settings[arrayKey] as Array<unknown>).filter(
+        (element): element is Record<string, unknown> => typeof element === 'object' && element !== null
       );
     } else {
       const items = this.listItems(southId);
-      const allArrayData: Array<Record<string, unknown>> = [];
+      const allArrayElements: Array<Record<string, unknown>> = [];
 
       for (const item of items) {
         const itemSettings = item.settings as unknown as Record<string, unknown>;
         if (Array.isArray(itemSettings[arrayKey])) {
-          allArrayData.push(
+          allArrayElements.push(
             ...(itemSettings[arrayKey] as Array<unknown>).filter(
-              (item: unknown): item is Record<string, unknown> => typeof item === 'object' && item !== null
+              (element: unknown): element is Record<string, unknown> => typeof element === 'object' && element !== null
             )
           );
         }
       }
-      arrayData = allArrayData;
+      arrayElements = allArrayElements;
     }
 
-    return arrayData;
+    return arrayElements;
   }
 
-  async checkArrayCSVImport(
-    file: Express.Multer.File,
+  async checkArrayElementsCsv(
+    fileContent: string,
     delimiter: string,
     arrayKey: string,
     southType: OIBusSouthType,
-    existingItems: Array<Record<string, unknown>> = []
+    existingElements: Array<Record<string, unknown>> = []
   ): Promise<{
-    items: Array<Record<string, unknown>>;
-    errors: Array<{ item: Record<string, string>; error: string }>;
+    elements: Array<Record<string, unknown>>;
+    errors: Array<{ element: Record<string, string>; error: string }>;
   }> {
-    if (!file) {
-      throw new OIBusValidationError('File is null or undefined');
-    }
-
-    let fileContent: string;
-    if (file.buffer) {
-      fileContent = file.buffer.toString('utf8');
-    } else if (file.path) {
-      fileContent = (await fs.readFile(file.path)).toString('utf8');
-    } else {
-      throw new OIBusValidationError(
-        `File has neither buffer nor path. File object: ${JSON.stringify({ fieldname: file.fieldname, originalname: file.originalname, mimetype: file.mimetype })}`
-      );
-    }
-
     if (!fileContent || fileContent.trim().length === 0) {
       throw new OIBusValidationError('File content is empty');
     }
 
-    const manifest = this.listManifest().find((southManifest: SouthConnectorManifest) => southManifest.id === southType);
+    const manifest = this.getManifest(southType);
+    const arrayAttribute = getArrayAttributeDefinition(manifest, arrayKey);
 
-    if (!manifest) {
-      throw new NotFoundError(`South manifest "${southType}" not found`);
-    }
-
-    const arrayAttribute = this.getArrayAttributeFromManifest(manifest, arrayKey);
-
-    if (!arrayAttribute) {
-      throw new NotFoundError(`Array field "${arrayKey}" not found in manifest`);
-    }
-
-    return validateArrayCSVImport(fileContent, delimiter, arrayAttribute, existingItems);
+    return validateArrayElementsImport(fileContent, delimiter, arrayAttribute, existingElements);
   }
 
   async checkArrayFileImport(
     southId: string,
-    file: Express.Multer.File,
+    fileContent: string,
     delimiter: string,
-    arrayKey: string
+    arrayKey: string,
+    currentElements: Array<Record<string, unknown>> = [],
+    southTypeOverride?: OIBusSouthType
   ): Promise<{
-    items: Array<Record<string, unknown>>;
-    errors: Array<{ item: Record<string, string>; error: string }>;
+    elements: Array<Record<string, unknown>>;
+    errors: Array<{ element: Record<string, string>; error: string }>;
   }> {
-    if (!file) {
-      throw new OIBusValidationError('Missing file');
-    }
-    if (!delimiter) {
-      throw new OIBusValidationError('Missing delimiter');
+    const isCreateMode = southId === 'create';
+
+    let southType: OIBusSouthType;
+    let existingElements: Array<Record<string, unknown>> = [];
+
+    if (isCreateMode) {
+      if (!southTypeOverride) {
+        throw new OIBusValidationError('Missing "southType" when validating array import in creation mode');
+      }
+      southType = southTypeOverride;
+      existingElements = [...currentElements];
+    } else {
+      const southConnector = this.findById(southId);
+      southType = southConnector.type;
+      existingElements = this.getArrayFieldElements(southId, arrayKey);
+      if (currentElements.length > 0) {
+        existingElements = [...existingElements, ...currentElements];
+      }
     }
 
-    const southConnector = this.findById(southId);
-    const existingItems = this.getArrayFieldItemsFromDatabase(southId, arrayKey);
-
-    return await this.checkArrayCSVImport(file, delimiter, arrayKey, southConnector.type, existingItems);
+    return await this.checkArrayElementsCsv(fileContent, delimiter, arrayKey, southType, existingElements);
   }
 
-  async importArrayField(southId: string, arrayKey: string, items: Array<Record<string, unknown>>): Promise<void> {
+  async importArrayField(southId: string, arrayKey: string, elements: Array<Record<string, unknown>>): Promise<void> {
     const southConnector = this.findById(southId);
 
     const updatedSettings = { ...southConnector.settings };
-    (updatedSettings as Record<string, unknown>)[arrayKey] = items;
+    (updatedSettings as Record<string, unknown>)[arrayKey] = elements;
 
     this.southConnectorRepository.saveSouthConnector({
       ...southConnector,

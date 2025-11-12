@@ -7,8 +7,8 @@
           type="button"
           class="btn btn-primary btn-sm oib-box-btn"
           [ngbTooltip]="'configuration.oibus.edit-array-element-modal.tooltips.add' | translate"
-          (click)="addItem($event)"
-          id="oibus-array-add-button"
+          (click)="addElement($event)"
+          id="oibus-array-add-element-button"
         >
           <span class="fa fa-plus"></span>
         </button>
@@ -62,7 +62,7 @@
                 type="button"
                 class="btn btn-sm btn-link btn-link-bold edit-button px-1 py-0"
                 [ngbTooltip]="'configuration.oibus.edit-array-element-modal.tooltips.edit' | translate"
-                (click)="editItem(element)"
+                (click)="editElement(element)"
               >
                 <span class="fa fa-pencil"></span>
               </button>
@@ -70,7 +70,7 @@
                 type="button"
                 class="btn btn-sm btn-link btn-link-bold copy-button px-1 py-0"
                 [ngbTooltip]="'configuration.oibus.edit-array-element-modal.tooltips.copy' | translate"
-                (click)="copyItem(element)"
+                (click)="copyElement(element)"
               >
                 <span class="fa fa-copy"></span>
               </button>
@@ -78,7 +78,7 @@
                 type="button"
                 class="btn btn-sm btn-link btn-link-bold delete-button px-1 py-0"
                 [ngbTooltip]="'configuration.oibus.edit-array-element-modal.tooltips.delete' | translate"
-                (click)="deleteItem(element)"
+                (click)="deleteElement(element)"
               >
                 <span class="fa fa-trash"></span>
               </button>

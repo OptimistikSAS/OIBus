@@ -1709,8 +1709,8 @@ const models: TsoaRoute.Models = {
     "SouthArrayCsvImportResponse": {
         "dataType": "refObject",
         "properties": {
-            "items": {"dataType":"array","array":{"dataType":"refAlias","ref":"Record_string.unknown_"},"required":true},
-            "errors": {"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"error":{"dataType":"string","required":true},"item":{"ref":"Record_string.string_","required":true}}},"required":true},
+            "elements": {"dataType":"array","array":{"dataType":"refAlias","ref":"Record_string.unknown_"},"required":true},
+            "errors": {"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"error":{"dataType":"string","required":true},"element":{"ref":"Record_string.string_","required":true}}},"required":true},
         },
         "additionalProperties": false,
     },
@@ -4339,6 +4339,46 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
             }
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsSouthConnectorController_arrayFieldToCsv: Record<string, TsoaRoute.ParameterSchema> = {
+                southType: {"in":"path","name":"southType","required":true,"dataType":"string"},
+                arrayKey: {"in":"path","name":"arrayKey","required":true,"dataType":"string"},
+                delimiter: {"in":"formData","name":"delimiter","required":true,"dataType":"string"},
+                elementsFile: {"in":"formData","name":"elements","required":true,"dataType":"file"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.post('/api/south/:southType/array/:arrayKey/to-csv',
+            upload.fields([
+                {
+                    name: "elements",
+                    maxCount: 1
+                }
+            ]),
+            ...(fetchMiddlewares<RequestHandler>(SouthConnectorController)),
+            ...(fetchMiddlewares<RequestHandler>(SouthConnectorController.prototype.arrayFieldToCsv)),
+
+            async function SouthConnectorController_arrayFieldToCsv(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsSouthConnectorController_arrayFieldToCsv, request, response });
+
+                const controller = new SouthConnectorController();
+
+              await templateService.apiHandler({
+                methodName: 'arrayFieldToCsv',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsSouthConnectorController_exportArrayField: Record<string, TsoaRoute.ParameterSchema> = {
                 southId: {"in":"path","name":"southId","required":true,"dataType":"string"},
                 arrayKey: {"in":"path","name":"arrayKey","required":true,"dataType":"string"},
@@ -4377,17 +4417,18 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 arrayKey: {"in":"path","name":"arrayKey","required":true,"dataType":"string"},
                 delimiter: {"in":"formData","name":"delimiter","required":true,"dataType":"string"},
                 file: {"in":"formData","name":"file","required":true,"dataType":"file"},
-                currentItemsFile: {"in":"formData","name":"currentItems","required":true,"dataType":"file"},
+                currentElementsFile: {"in":"formData","name":"currentElements","required":true,"dataType":"file"},
+                southType: {"in":"formData","name":"southType","required":true,"dataType":"string"},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
         };
-        app.post('/api/south/:southId/array/:arrayKey/check-import',
+        app.post('/api/south/:southId/array/:arrayKey/import/check',
             upload.fields([
                 {
                     name: "file",
                     maxCount: 1
                 },
                 {
-                    name: "currentItems",
+                    name: "currentElements",
                     maxCount: 1
                 }
             ]),
@@ -4420,13 +4461,13 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
         const argsSouthConnectorController_importArrayField: Record<string, TsoaRoute.ParameterSchema> = {
                 southId: {"in":"path","name":"southId","required":true,"dataType":"string"},
                 arrayKey: {"in":"path","name":"arrayKey","required":true,"dataType":"string"},
-                itemsFile: {"in":"formData","name":"items","required":true,"dataType":"file"},
+                elementsFile: {"in":"formData","name":"elements","required":true,"dataType":"file"},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
         };
         app.post('/api/south/:southId/array/:arrayKey/import',
             upload.fields([
                 {
-                    name: "items",
+                    name: "elements",
                     maxCount: 1
                 }
             ]),

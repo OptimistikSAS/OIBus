@@ -10,8 +10,8 @@ import { OIBusArrayAttribute } from '../../../../../../backend/shared/model/form
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { MockModalService, provideModalTesting } from '../../mock-modal.service.spec';
 import { OIBusEditArrayElementModalComponent } from './oibus-edit-array-element-modal/oibus-edit-array-element-modal.component';
-import { ArrayExportImportService } from '../../../services/array-export-import.service';
 import { NotificationService } from '../../notification.service';
+import { SouthConnectorService } from '../../../services/south-connector.service';
 
 @Component({
   template: `<form [formGroup]="formGroup">
@@ -66,7 +66,7 @@ class TestComponentTester extends ComponentTester<TestComponent> {
   }
 
   get addElement() {
-    return this.button('#oibus-array-add-button')!;
+    return this.button('#oibus-array-add-element-button')!;
   }
 
   get editButtons() {
@@ -91,7 +91,7 @@ describe('OIBusArrayFormControlComponent', () => {
         provideHttpClientTesting(),
         provideI18nTesting(),
         provideModalTesting(),
-        { provide: ArrayExportImportService, useValue: createMock(ArrayExportImportService) },
+        { provide: SouthConnectorService, useValue: createMock(SouthConnectorService) },
         { provide: NotificationService, useValue: createMock(NotificationService) }
       ]
     });

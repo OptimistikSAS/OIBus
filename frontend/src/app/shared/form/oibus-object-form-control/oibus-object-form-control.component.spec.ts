@@ -9,10 +9,10 @@ import { CertificateDTO } from '../../../../../../backend/shared/model/certifica
 import { OIBusObjectAttribute } from '../../../../../../backend/shared/model/form.model';
 import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.model';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
-import { ArrayExportImportService } from '../../../services/array-export-import.service';
 import { NotificationService } from '../../notification.service';
 import { ModalService } from '../../modal.service';
 import { OIBusObjectFormControlComponent } from './oibus-object-form-control.component';
+import { SouthConnectorService } from '../../../services/south-connector.service';
 
 @Component({
   template: `
@@ -129,7 +129,7 @@ describe('OIBusObjectFormControlComponent', () => {
       providers: [
         provideI18nTesting(),
         provideHttpClientTesting(),
-        { provide: ArrayExportImportService, useValue: createMock(ArrayExportImportService) },
+        { provide: SouthConnectorService, useValue: createMock(SouthConnectorService) },
         { provide: NotificationService, useValue: createMock(NotificationService) },
         { provide: ModalService, useValue: createMock(ModalService) }
       ]

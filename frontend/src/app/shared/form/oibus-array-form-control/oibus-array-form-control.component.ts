@@ -18,10 +18,10 @@ import { ValidationErrorsComponent } from 'ngx-valdemort';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ExportItemModalComponent } from '../../export-item-modal/export-item-modal.component';
 import { ImportItemModalComponent } from '../../import-item-modal/import-item-modal.component';
-import { ArrayExportImportService } from '../../../services/array-export-import.service';
 import { NotificationService } from '../../notification.service';
 import { ImportArrayValidationModalComponent } from './import-array-validation-modal/import-array-validation-modal.component';
 import { Modal } from '../../modal.service';
+import { SouthConnectorService } from '../../../services/south-connector.service';
 
 interface Column {
   path: Array<string>;
@@ -54,7 +54,7 @@ interface Column {
 export class OIBusArrayFormControlComponent {
   private modalService = inject(ModalService);
   private translateService = inject(TranslateService);
-  private arrayExportImportService = inject(ArrayExportImportService);
+  private southConnectorService = inject(SouthConnectorService);
   private notificationService = inject(NotificationService);
 
   scanModes = input.required<Array<ScanModeDTO>>();
@@ -73,7 +73,7 @@ export class OIBusArrayFormControlComponent {
     return new ArrayPage([], 1);
   });
 
-  async addItem(event: Event) {
+  async addElement(event: Event) {
     event.preventDefault();
     const modal = this.modalService.open(OIBusEditArrayElementModalComponent, { size: 'xl' });
     modal.componentInstance.prepareForCreation(
@@ -89,7 +89,7 @@ export class OIBusArrayFormControlComponent {
     });
   }
 
-  async copyItem(element: any) {
+  async copyElement(element: any) {
     const modal = this.modalService.open(OIBusEditArrayElementModalComponent, { size: 'xl' });
     modal.componentInstance.prepareForCopy(
       this.scanModes(),
@@ -105,7 +105,7 @@ export class OIBusArrayFormControlComponent {
     });
   }
 
-  async editItem(element: any) {
+  async editElement(element: any) {
     const modal = this.modalService.open(OIBusEditArrayElementModalComponent, { size: 'xl' });
     modal.componentInstance.prepareForEdition(
       this.scanModes(),
@@ -125,7 +125,7 @@ export class OIBusArrayFormControlComponent {
     });
   }
 
-  deleteItem(element: any) {
+  deleteElement(element: any) {
     const newArray = [...this.control().value];
     const index = this.control().value.indexOf(element);
     newArray.splice(index, 1);
@@ -194,17 +194,32 @@ export class OIBusArrayFormControlComponent {
 
     modal.result.subscribe(result => {
       if (result) {
-        const arrayData = this.control().value || [];
-        const csvContent = this.arrayExportImportService.exportArrayToCSV(arrayData, result.delimiter, this.arrayAttribute());
+        const southId = this.southId();
+        const southType = this.resolveSouthType();
+        const arrayKey = this.arrayAttribute().key;
+        const delimiter = result.delimiter;
+        const elements = this.control().value || [];
 
-        const blob = new Blob([csvContent], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = result.fileName + '.csv';
-        link.click();
-        window.URL.revokeObjectURL(url);
-        this.notificationService.success('common.export-success');
+        if (!southId) {
+          this.notificationService.error('common.export-error');
+          return;
+        }
+
+        if (southId === 'create') {
+          if (!southType) {
+            this.notificationService.error('common.export-error');
+            return;
+          }
+          this.southConnectorService.arrayToCsv(southType, arrayKey, elements, delimiter).subscribe({
+            next: () => this.notificationService.success('common.export-success'),
+            error: () => this.notificationService.error('common.export-error')
+          });
+        } else {
+          this.southConnectorService.exportArray(southId, arrayKey, delimiter).subscribe({
+            next: () => this.notificationService.success('common.export-success'),
+            error: () => this.notificationService.error('common.export-error')
+          });
+        }
       }
     });
   }
@@ -241,13 +256,21 @@ export class OIBusArrayFormControlComponent {
   }
 
   private checkImportArray(file: File, delimiter: string) {
-    this.arrayExportImportService
-      .checkImportArray(this.southId()!, this.arrayAttribute().key, file, delimiter, this.control().value || [])
+    const southId = this.southId()!;
+    const southType = southId === 'create' ? this.resolveSouthType() : undefined;
+
+    if (southId === 'create' && !southType) {
+      this.notificationService.error('common.import-error');
+      return;
+    }
+
+    this.southConnectorService
+      .checkImportArray(southId, this.arrayAttribute().key, file, delimiter, this.control().value || [], southType)
       .subscribe({
         next: response => {
           const modalRef = this.modalService.open(ImportArrayValidationModalComponent, { size: 'xl', backdrop: 'static' });
           const component: ImportArrayValidationModalComponent = modalRef.componentInstance;
-          component.prepare(this.arrayAttribute(), response.items, response.errors);
+          component.prepare(this.arrayAttribute(), response.elements, response.errors);
           this.refreshAfterImportModalClosed(modalRef);
         },
         error: () => {
@@ -261,8 +284,8 @@ export class OIBusArrayFormControlComponent {
    */
   private refreshAfterImportModalClosed(modalRef: Modal<ImportArrayValidationModalComponent>) {
     modalRef.result.subscribe({
-      next: (importedItems: Array<Record<string, unknown>>) => {
-        this.control().setValue(importedItems);
+      next: (importedElements: Array<Record<string, unknown>>) => {
+        this.control().setValue(importedElements);
         this.paginatedValues().gotoPage(0);
         this.notificationService.success('common.import-success');
       },
@@ -270,5 +293,10 @@ export class OIBusArrayFormControlComponent {
         this.notificationService.error('common.import-error');
       }
     });
+  }
+
+  private resolveSouthType(): string | undefined {
+    const rootGroup = this.parentGroup().root as FormGroup | undefined;
+    return rootGroup?.get('type')?.value;
   }
 }
