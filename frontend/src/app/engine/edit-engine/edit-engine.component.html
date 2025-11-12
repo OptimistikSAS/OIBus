@@ -56,52 +56,36 @@
           <!-- Logger settings -->
           <oib-box boxTitle="engine.logger.title">
             <div formGroupName="logParameters">
-              <div class="row" formGroupName="console">
-                <div class="col-4">
-                  <div class="form-group">
-                    <label class="form-label" for="console-level" translate="engine.logger.console.level"></label>
-                    <select formControlName="level" class="form-select mb-2 mr-sm-2" id="console-level">
-                      @for (level of logLevels; track level) {
-                        <option [ngValue]="level" [translate]="'enums.log-levels.' + level"></option>
-                      }
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <!-- File settings -->
-              <div class="row" formGroupName="file">
-                <!-- Level -->
-                <div class="col-4">
-                  <div class="form-group">
-                    <label class="form-label" for="file-level" translate="engine.logger.file.level"></label>
-                    <select formControlName="level" class="form-select mb-2 mr-sm-2" id="file-level">
-                      @for (level of logLevels; track level) {
-                        <option [ngValue]="level" [translate]="'enums.log-levels.' + level"></option>
-                      }
-                    </select>
-                  </div>
-                </div>
-                <!-- Max file size -->
-                <div class="col-4">
-                  <div class="form-group">
-                    <label class="form-label" for="file-max-file-size" translate="engine.logger.file.max-file-size"></label>
-                    <div class="input-group">
-                      <input type="number" formControlName="maxFileSize" id="file-max-file-size" class="form-control" />
-                      <span class="input-group-text" translate="common.unit.MB"></span>
+              <!-- OIAnalytics settings -->
+              <ng-container formGroupName="oia">
+                <div class="row">
+                  <!-- Level -->
+                  <div class="col-4">
+                    <div class="form-group">
+                      <label class="form-label" for="oia-level" translate="engine.logger.oia.level"></label>
+                      <select formControlName="level" class="form-select mb-2 mr-sm-2" id="oia-level">
+                        @for (level of logLevels; track level) {
+                          <option [ngValue]="level" [translate]="'enums.log-levels.' + level"></option>
+                        }
+                      </select>
                     </div>
-                    <val-errors controlName="maxFileSize" />
                   </div>
+
+                  <!-- Interval -->
+                  @if (!isLevelSilent('oia')) {
+                    <div class="col-4">
+                      <div class="form-group">
+                        <label class="form-label" for="oia-interval" translate="engine.logger.oia.interval"></label>
+                        <div class="input-group">
+                          <input type="number" formControlName="interval" id="oia-interval" class="form-control" />
+                          <span class="input-group-text" translate="common.unit.s"></span>
+                        </div>
+                        <val-errors controlName="interval" />
+                      </div>
+                    </div>
+                  }
                 </div>
-                <!-- Number of files -->
-                <div class="col-4">
-                  <div class="form-group">
-                    <label class="form-label" for="file-number-of-files" translate="engine.logger.file.number-of-files"></label>
-                    <input type="number" formControlName="numberOfFiles" id="file-number-of-files" class="form-control" />
-                    <val-errors controlName="numberOfFiles" />
-                  </div>
-                </div>
-              </div>
+              </ng-container>
 
               <!-- Database settings -->
               <div class="row" formGroupName="database">
@@ -118,17 +102,55 @@
                 </div>
 
                 <!-- Max number of logs -->
+                @if (!isLevelSilent('database')) {
+                  <div class="col-4">
+                    <div class="form-group">
+                      <label
+                        class="form-label"
+                        for="database-max-number-of-logs"
+                        translate="engine.logger.database.max-number-of-logs"
+                      ></label>
+                      <input type="number" formControlName="maxNumberOfLogs" id="database-max-number-of-logs" class="form-control" />
+                      <val-errors controlName="maxNumberOfLogs" />
+                    </div>
+                  </div>
+                }
+              </div>
+
+              <!-- File settings -->
+              <div class="row" formGroupName="file">
+                <!-- Level -->
                 <div class="col-4">
                   <div class="form-group">
-                    <label
-                      class="form-label"
-                      for="database-max-number-of-logs"
-                      translate="engine.logger.database.max-number-of-logs"
-                    ></label>
-                    <input type="number" formControlName="maxNumberOfLogs" id="database-max-number-of-logs" class="form-control" />
-                    <val-errors controlName="maxNumberOfLogs" />
+                    <label class="form-label" for="file-level" translate="engine.logger.file.level"></label>
+                    <select formControlName="level" class="form-select mb-2 mr-sm-2" id="file-level">
+                      @for (level of logLevels; track level) {
+                        <option [ngValue]="level" [translate]="'enums.log-levels.' + level"></option>
+                      }
+                    </select>
                   </div>
                 </div>
+                <!-- Max file size -->
+                @if (!isLevelSilent('file')) {
+                  <div class="col-4">
+                    <div class="form-group">
+                      <label class="form-label" for="file-max-file-size" translate="engine.logger.file.max-file-size"></label>
+                      <div class="input-group">
+                        <input type="number" formControlName="maxFileSize" id="file-max-file-size" class="form-control" />
+                        <span class="input-group-text" translate="common.unit.MB"></span>
+                      </div>
+                      <val-errors controlName="maxFileSize" />
+                    </div>
+                  </div>
+                  <!-- Number of files -->
+                  <div class="col-4">
+                    <div class="form-group">
+                      <label class="form-label" for="file-number-of-files" translate="engine.logger.file.number-of-files"></label>
+                      <input type="number" formControlName="numberOfFiles" id="file-number-of-files" class="form-control" />
+                      <val-errors controlName="numberOfFiles" />
+                    </div>
+                  </div>
+                }
               </div>
 
               <!-- Loki settings -->
@@ -147,75 +169,64 @@
                   </div>
 
                   <!-- Interval -->
-                  <div class="col-4">
-                    <div class="form-group">
-                      <label class="form-label" for="loki-interval" translate="engine.logger.loki.interval"></label>
-                      <div class="input-group">
-                        <input type="number" formControlName="interval" id="loki-interval" class="form-control" />
-                        <span class="input-group-text" translate="common.unit.s"></span>
+                  @if (!isLevelSilent('loki')) {
+                    <div class="col-4">
+                      <div class="form-group">
+                        <label class="form-label" for="loki-interval" translate="engine.logger.loki.interval"></label>
+                        <div class="input-group">
+                          <input type="number" formControlName="interval" id="loki-interval" class="form-control" />
+                          <span class="input-group-text" translate="common.unit.s"></span>
+                        </div>
+                        <val-errors controlName="interval" />
                       </div>
-                      <val-errors controlName="interval" />
                     </div>
-                  </div>
+                  }
                 </div>
 
-                <div class="row">
-                  <!-- Address -->
-                  <div class="col-6">
-                    <div class="form-group">
-                      <label class="form-label" for="loki-address" translate="engine.logger.loki.address"></label>
-                      <input formControlName="address" id="loki-address" class="form-control" />
-                      <val-errors controlName="address" />
+                @if (!isLevelSilent('loki')) {
+                  <div class="row">
+                    <!-- Address -->
+                    <div class="col-6">
+                      <div class="form-group">
+                        <label class="form-label" for="loki-address" translate="engine.logger.loki.address"></label>
+                        <input formControlName="address" id="loki-address" class="form-control" />
+                        <val-errors controlName="address" />
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div class="row">
-                  <div class="col-4">
-                    <div class="form-group">
-                      <label class="form-label" for="loki-username" translate="engine.logger.loki.username"></label>
-                      <input formControlName="username" id="loki-username" class="form-control" />
-                      <val-errors controlName="username" />
+                  <div class="row">
+                    <div class="col-4">
+                      <div class="form-group">
+                        <label class="form-label" for="loki-username" translate="engine.logger.loki.username"></label>
+                        <input formControlName="username" id="loki-username" class="form-control" />
+                        <val-errors controlName="username" />
+                      </div>
+                    </div>
+                    <div class="col-4">
+                      <div class="form-group">
+                        <label class="form-label" for="loki-password" translate="engine.logger.loki.password"></label>
+                        <input type="password" formControlName="password" id="loki-password" class="form-control" />
+                        <val-errors controlName="password" />
+                      </div>
                     </div>
                   </div>
-                  <div class="col-4">
-                    <div class="form-group">
-                      <label class="form-label" for="loki-password" translate="engine.logger.loki.password"></label>
-                      <input type="password" formControlName="password" id="loki-password" class="form-control" />
-                      <val-errors controlName="password" />
-                    </div>
-                  </div>
-                </div>
+                }
               </ng-container>
 
-              <!-- OIA settings -->
-              <ng-container formGroupName="oia">
-                <div class="row">
-                  <!-- Level -->
-                  <div class="col-4">
-                    <div class="form-group">
-                      <label class="form-label" for="oia-level" translate="engine.logger.oia.level"></label>
-                      <select formControlName="level" class="form-select mb-2 mr-sm-2" id="oia-level">
-                        @for (level of logLevels; track level) {
-                          <option [ngValue]="level" [translate]="'enums.log-levels.' + level"></option>
-                        }
-                      </select>
-                    </div>
-                  </div>
-
-                  <!-- Interval -->
-                  <div class="col-4">
-                    <div class="form-group">
-                      <label class="form-label" for="oia-interval" translate="engine.logger.oia.interval"></label>
-                      <div class="input-group">
-                        <input type="number" formControlName="interval" id="oia-interval" class="form-control" />
-                        <span class="input-group-text" translate="common.unit.s"></span>
-                      </div>
-                      <val-errors controlName="interval" />
-                    </div>
+              <!-- Console settings -->
+              <div class="row" formGroupName="console">
+                <div class="col-4">
+                  <div class="form-group">
+                    <label class="form-label" for="console-level" translate="engine.logger.console.level"></label>
+                    <select formControlName="level" class="form-select mb-2 mr-sm-2" id="console-level">
+                      @for (level of logLevels; track level) {
+                        <option [ngValue]="level" [translate]="'enums.log-levels.' + level"></option>
+                      }
+                    </select>
                   </div>
                 </div>
-              </ng-container>
+              </div>
             </div>
           </oib-box>
         </div>
