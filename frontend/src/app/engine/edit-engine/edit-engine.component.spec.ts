@@ -165,14 +165,14 @@ describe('EditEngineComponent', () => {
     expect(tester.fileMaxFileSize).toHaveValue(engineSettings.logParameters.file.maxFileSize.toString());
     expect(tester.fileNumberOfFiles).toHaveValue(engineSettings.logParameters.file.numberOfFiles.toString());
     expect(tester.databaseLevel).toHaveSelectedLabel('Silent');
-    expect(tester.databaseMaxNumberOfLogs).toHaveValue('100000');
+    // databaseMaxNumberOfLogs is hidden when level is 'silent', so we can't check its value
     expect(tester.lokiLevel).toHaveSelectedLabel('Error');
     expect(tester.lokiInterval).toHaveValue(engineSettings.logParameters.loki.interval.toString());
     expect(tester.lokiAddress).toHaveValue(engineSettings.logParameters.loki.address);
     expect(tester.lokiUsername).toHaveValue(engineSettings.logParameters.loki.username);
     expect(tester.lokiPassword).toHaveValue(engineSettings.logParameters.loki.password);
     expect(tester.oiaLevel).toHaveSelectedLabel('Silent');
-    expect(tester.oiaInterval).toHaveValue(engineSettings.logParameters.oia.interval.toString());
+    // oiaInterval is hidden when level is 'silent', so we can't check its value
   });
 
   it('should update engine settings', () => {

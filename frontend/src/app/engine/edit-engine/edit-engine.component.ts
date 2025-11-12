@@ -77,14 +77,147 @@ export class EditEngineComponent implements OnInit, CanComponentDeactivate {
         this.engineForm.controls.proxyPort.enable();
       } else {
         this.engineForm.controls.proxyPort.disable();
+        this.engineForm.controls.proxyPort.setValue(null);
       }
     });
+
+    // Handle conditional validators based on log levels
+    const logParams = this.engineForm.controls.logParameters;
+
+    // OIA level changes
+    logParams.controls.oia.controls.level.valueChanges.subscribe(level => {
+      const intervalControl = logParams.controls.oia.controls.interval;
+      if (level === 'silent') {
+        intervalControl.clearValidators();
+        intervalControl.disable();
+      } else {
+        intervalControl.setValidators([Validators.required, Validators.min(10)]);
+        intervalControl.enable();
+      }
+      intervalControl.updateValueAndValidity();
+    });
+
+    // Database level changes
+    logParams.controls.database.controls.level.valueChanges.subscribe(level => {
+      const maxLogsControl = logParams.controls.database.controls.maxNumberOfLogs;
+      if (level === 'silent') {
+        maxLogsControl.clearValidators();
+        maxLogsControl.disable();
+      } else {
+        maxLogsControl.setValidators([Validators.required, Validators.min(100_000)]);
+        maxLogsControl.enable();
+      }
+      maxLogsControl.updateValueAndValidity();
+    });
+
+    // File level changes
+    logParams.controls.file.controls.level.valueChanges.subscribe(level => {
+      const maxFileSizeControl = logParams.controls.file.controls.maxFileSize;
+      const numberOfFilesControl = logParams.controls.file.controls.numberOfFiles;
+      if (level === 'silent') {
+        maxFileSizeControl.clearValidators();
+        maxFileSizeControl.disable();
+        numberOfFilesControl.clearValidators();
+        numberOfFilesControl.disable();
+      } else {
+        maxFileSizeControl.setValidators([Validators.required, Validators.min(1), Validators.max(50)]);
+        maxFileSizeControl.enable();
+        numberOfFilesControl.setValidators([Validators.required, Validators.min(1)]);
+        numberOfFilesControl.enable();
+      }
+      maxFileSizeControl.updateValueAndValidity();
+      numberOfFilesControl.updateValueAndValidity();
+    });
+
+    // Loki level changes
+    logParams.controls.loki.controls.level.valueChanges.subscribe(level => {
+      const intervalControl = logParams.controls.loki.controls.interval;
+      const addressControl = logParams.controls.loki.controls.address;
+      if (level === 'silent') {
+        intervalControl.clearValidators();
+        intervalControl.disable();
+        addressControl.clearValidators();
+        addressControl.disable();
+      } else {
+        intervalControl.setValidators([Validators.required, Validators.min(10)]);
+        intervalControl.enable();
+        addressControl.setValidators([Validators.pattern(/http.*/)]);
+        addressControl.enable();
+      }
+      intervalControl.updateValueAndValidity();
+      addressControl.updateValueAndValidity();
+    });
+  }
+
+  isLevelSilent(category: 'console' | 'file' | 'database' | 'loki' | 'oia'): boolean {
+    const level = this.engineForm.controls.logParameters.controls[category].controls.level.value;
+    return level === 'silent';
   }
 
   ngOnInit(): void {
     this.engineService.getEngineSettings().subscribe(settings => {
       this.engineForm.patchValue(settings);
+      // Initialize validators based on current levels after patching
+      this.initializeValidators();
     });
+  }
+
+  private initializeValidators(): void {
+    const logParams = this.engineForm.controls.logParameters;
+
+    // Initialize OIA validators
+    const oiaLevel = logParams.controls.oia.controls.level.value;
+    const oiaIntervalControl = logParams.controls.oia.controls.interval;
+    if (oiaLevel === 'silent') {
+      oiaIntervalControl.clearValidators();
+      oiaIntervalControl.disable();
+    } else {
+      oiaIntervalControl.setValidators([Validators.required, Validators.min(10)]);
+      oiaIntervalControl.enable();
+    }
+
+    // Initialize Database validators
+    const dbLevel = logParams.controls.database.controls.level.value;
+    const maxLogsControl = logParams.controls.database.controls.maxNumberOfLogs;
+    if (dbLevel === 'silent') {
+      maxLogsControl.clearValidators();
+      maxLogsControl.disable();
+    } else {
+      maxLogsControl.setValidators([Validators.required, Validators.min(100_000)]);
+      maxLogsControl.enable();
+    }
+
+    // Initialize File validators
+    const fileLevel = logParams.controls.file.controls.level.value;
+    const maxFileSizeControl = logParams.controls.file.controls.maxFileSize;
+    const numberOfFilesControl = logParams.controls.file.controls.numberOfFiles;
+    if (fileLevel === 'silent') {
+      maxFileSizeControl.clearValidators();
+      maxFileSizeControl.disable();
+      numberOfFilesControl.clearValidators();
+      numberOfFilesControl.disable();
+    } else {
+      maxFileSizeControl.setValidators([Validators.required, Validators.min(1), Validators.max(50)]);
+      maxFileSizeControl.enable();
+      numberOfFilesControl.setValidators([Validators.required, Validators.min(1)]);
+      numberOfFilesControl.enable();
+    }
+
+    // Initialize Loki validators
+    const lokiLevel = logParams.controls.loki.controls.level.value;
+    const lokiIntervalControl = logParams.controls.loki.controls.interval;
+    const lokiAddressControl = logParams.controls.loki.controls.address;
+    if (lokiLevel === 'silent') {
+      lokiIntervalControl.clearValidators();
+      lokiIntervalControl.disable();
+      lokiAddressControl.clearValidators();
+      lokiAddressControl.disable();
+    } else {
+      lokiIntervalControl.setValidators([Validators.required, Validators.min(10)]);
+      lokiIntervalControl.enable();
+      lokiAddressControl.setValidators([Validators.pattern(/http.*/)]);
+      lokiAddressControl.enable();
+    }
   }
 
   canDeactivate(): Observable<boolean> | boolean {
@@ -99,12 +232,13 @@ export class EditEngineComponent implements OnInit, CanComponentDeactivate {
       return;
     }
 
-    const formValue = this.engineForm.value;
+    // Use getRawValue() to include disabled field values
+    const formValue = this.engineForm.getRawValue();
     const updatedSettings: EngineSettingsCommandDTO = {
       name: formValue.name!,
       port: formValue.port!,
       proxyEnabled: formValue.proxyEnabled!,
-      proxyPort: formValue.proxyPort! || null,
+      proxyPort: formValue.proxyEnabled ? formValue.proxyPort || null : null,
       logParameters: {
         console: {
           level: formValue.logParameters!.console!.level!
