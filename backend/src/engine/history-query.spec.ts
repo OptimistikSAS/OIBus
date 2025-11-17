@@ -218,10 +218,10 @@ describe('HistoryQuery enabled', () => {
     await historyQuery.start();
     await historyQuery.finish();
 
-    expect(logger.debug).toHaveBeenCalledWith(`History query "${testData.historyQueries.list[0].name}" is still running`);
+    expect(logger.trace).toHaveBeenCalledWith(`History query "${testData.historyQueries.list[0].name}" is still running`);
     expect(oianalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).not.toHaveBeenCalled();
     await historyQuery.finish();
-    expect(logger.debug).toHaveBeenCalledTimes(2);
+    expect(logger.trace).toHaveBeenCalledTimes(2);
 
     mockedSouth1.historyIsRunning = false;
     await historyQuery.finish();
