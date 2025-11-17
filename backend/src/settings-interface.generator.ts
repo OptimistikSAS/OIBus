@@ -340,6 +340,8 @@ function buildSouthInterfaceName(connectorId: string, itemInterface: boolean): s
       return `SouthOracle${prefix}Settings`;
     case 'postgresql':
       return `SouthPostgreSQL${prefix}Settings`;
+    case 'rest-api':
+      return `SouthRestAPI${prefix}Settings`;
     case 'sqlite':
       return `SouthSQLite${prefix}Settings`;
     case 'sftp':

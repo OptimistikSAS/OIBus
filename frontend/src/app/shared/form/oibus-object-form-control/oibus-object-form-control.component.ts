@@ -1,4 +1,4 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, effect, input } from '@angular/core';
 import { AbstractControl, ControlContainer, FormControl, FormGroup, FormGroupName, ReactiveFormsModule } from '@angular/forms';
 
 import { TranslateDirective } from '@ngx-translate/core';
@@ -96,9 +96,14 @@ export class OIBusObjectFormControlComponent {
           break;
       }
     });
-    addEnablingConditions(this.group(), this.objectAttribute().enablingConditions);
     return rows;
   });
+
+  constructor() {
+    effect(() => {
+      addEnablingConditions(this.group(), this.objectAttribute().enablingConditions);
+    });
+  }
 
   asFormGroup(abstractControl: AbstractControl): FormGroup {
     return abstractControl as FormGroup;
