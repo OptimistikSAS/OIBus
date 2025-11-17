@@ -156,7 +156,7 @@ export default class HistoryQuery {
       await this.stop();
       this.finishEvent.emit('finished');
     } else {
-      this.logger.debug(`History query "${this.historyConfiguration.name}" is still running`);
+      this.logger.trace(`History query "${this.historyConfiguration.name}" is still running`);
     }
   }
 
