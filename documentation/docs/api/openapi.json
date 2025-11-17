@@ -1287,6 +1287,7 @@
 					"oracle",
 					"osisoft-pi",
 					"postgresql",
+					"rest-api",
 					"sftp",
 					"sqlite"
 				],
@@ -2556,6 +2557,128 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"SouthRestAPISettingsThrottling": {
+				"properties": {
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double"
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double"
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"maxReadInterval",
+					"readDelay",
+					"overlap"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthRestAPISettingsAuthentication": {
+				"type": "string",
+				"enum": [
+					"none",
+					"basic",
+					"bearer"
+				]
+			},
+			"SouthRestAPISettingsTestMethod": {
+				"type": "string",
+				"enum": [
+					"GET",
+					"POST",
+					"PUT"
+				]
+			},
+			"SouthRestAPISettingsTest": {
+				"properties": {
+					"method": {
+						"$ref": "#/components/schemas/SouthRestAPISettingsTestMethod"
+					},
+					"endpoint": {
+						"type": "string"
+					},
+					"body": {
+						"type": "string",
+						"nullable": true
+					},
+					"successCode": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"method",
+					"endpoint",
+					"successCode"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthRestAPISettings": {
+				"properties": {
+					"throttling": {
+						"$ref": "#/components/schemas/SouthRestAPISettingsThrottling"
+					},
+					"host": {
+						"type": "string"
+					},
+					"acceptUnauthorized": {
+						"type": "boolean"
+					},
+					"authentication": {
+						"$ref": "#/components/schemas/SouthRestAPISettingsAuthentication"
+					},
+					"username": {
+						"type": "string"
+					},
+					"password": {
+						"type": "string",
+						"nullable": true
+					},
+					"token": {
+						"type": "string",
+						"nullable": true
+					},
+					"test": {
+						"$ref": "#/components/schemas/SouthRestAPISettingsTest"
+					},
+					"timeout": {
+						"type": "number",
+						"format": "double"
+					},
+					"useProxy": {
+						"type": "boolean"
+					},
+					"proxyUrl": {
+						"type": "string"
+					},
+					"proxyUsername": {
+						"type": "string"
+					},
+					"proxyPassword": {
+						"type": "string",
+						"nullable": true
+					}
+				},
+				"required": [
+					"throttling",
+					"host",
+					"acceptUnauthorized",
+					"authentication",
+					"test",
+					"timeout",
+					"useProxy"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"SouthSFTPSettingsAuthentication": {
 				"type": "string",
 				"enum": [
@@ -2688,6 +2811,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/SouthPostgreSQLSettings"
+					},
+					{
+						"$ref": "#/components/schemas/SouthRestAPISettings"
 					},
 					{
 						"$ref": "#/components/schemas/SouthSFTPSettings"
@@ -3928,6 +4054,200 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"SouthRestAPIItemSettingsMethod": {
+				"type": "string",
+				"enum": [
+					"GET",
+					"POST",
+					"PUT",
+					"PATCH",
+					"DELETE"
+				]
+			},
+			"SouthRestAPIItemSettingsQueryParams": {
+				"properties": {
+					"key": {
+						"type": "string"
+					},
+					"value": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"key",
+					"value"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthRestAPIItemSettingsHeaders": {
+				"properties": {
+					"key": {
+						"type": "string"
+					},
+					"value": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"key",
+					"value"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthRestAPIItemSettingsReturnType": {
+				"type": "string",
+				"enum": [
+					"file",
+					"body"
+				]
+			},
+			"SouthRestAPIItemSettingsDateTimeFieldsType": {
+				"type": "string",
+				"enum": [
+					"string",
+					"iso-string",
+					"unix-epoch",
+					"unix-epoch-ms"
+				]
+			},
+			"SouthRestAPIItemSettingsDateTimeFields": {
+				"properties": {
+					"jsonPath": {
+						"type": "string"
+					},
+					"fieldName": {
+						"type": "string",
+						"nullable": true
+					},
+					"useAsReference": {
+						"type": "boolean"
+					},
+					"type": {
+						"$ref": "#/components/schemas/SouthRestAPIItemSettingsDateTimeFieldsType"
+					},
+					"timezone": {
+						"$ref": "#/components/schemas/Timezone"
+					},
+					"format": {
+						"type": "string"
+					},
+					"locale": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"jsonPath",
+					"fieldName",
+					"useAsReference",
+					"type"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthRestAPIItemSettingsSerializationType": {
+				"type": "string",
+				"enum": [
+					"csv"
+				],
+				"nullable": false
+			},
+			"SouthRestAPIItemSettingsSerializationDelimiter": {
+				"type": "string",
+				"enum": [
+					"DOT",
+					"SEMI_COLON",
+					"COLON",
+					"COMMA",
+					"NON_BREAKING_SPACE",
+					"SLASH",
+					"TAB",
+					"PIPE"
+				]
+			},
+			"SouthRestAPIItemSettingsSerialization": {
+				"properties": {
+					"type": {
+						"$ref": "#/components/schemas/SouthRestAPIItemSettingsSerializationType"
+					},
+					"filename": {
+						"type": "string"
+					},
+					"delimiter": {
+						"$ref": "#/components/schemas/SouthRestAPIItemSettingsSerializationDelimiter"
+					},
+					"compression": {
+						"type": "boolean"
+					},
+					"outputTimestampFormat": {
+						"type": "string"
+					},
+					"outputTimezone": {
+						"$ref": "#/components/schemas/Timezone"
+					}
+				},
+				"required": [
+					"type",
+					"filename",
+					"delimiter",
+					"compression",
+					"outputTimestampFormat",
+					"outputTimezone"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthRestAPIItemSettings": {
+				"properties": {
+					"method": {
+						"$ref": "#/components/schemas/SouthRestAPIItemSettingsMethod"
+					},
+					"endpoint": {
+						"type": "string"
+					},
+					"queryParams": {
+						"items": {
+							"$ref": "#/components/schemas/SouthRestAPIItemSettingsQueryParams"
+						},
+						"type": "array",
+						"nullable": true
+					},
+					"body": {
+						"type": "string",
+						"nullable": true
+					},
+					"headers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthRestAPIItemSettingsHeaders"
+						},
+						"type": "array",
+						"nullable": true
+					},
+					"returnType": {
+						"$ref": "#/components/schemas/SouthRestAPIItemSettingsReturnType"
+					},
+					"dateTimeFields": {
+						"items": {
+							"$ref": "#/components/schemas/SouthRestAPIItemSettingsDateTimeFields"
+						},
+						"type": "array",
+						"nullable": true
+					},
+					"serialization": {
+						"$ref": "#/components/schemas/SouthRestAPIItemSettingsSerialization"
+					}
+				},
+				"required": [
+					"method",
+					"endpoint",
+					"queryParams",
+					"headers",
+					"returnType"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"SouthSFTPItemSettings": {
 				"properties": {
 					"remoteFolder": {
@@ -4116,6 +4436,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/SouthPostgreSQLItemSettings"
+					},
+					{
+						"$ref": "#/components/schemas/SouthRestAPIItemSettings"
 					},
 					{
 						"$ref": "#/components/schemas/SouthSFTPItemSettings"
@@ -11121,7 +11444,7 @@
 	},
 	"info": {
 		"title": "OIBus API",
-		"version": "3.6.9",
+		"version": "3.7.1",
 		"description": "OIBus API is a RESTful interface for managing industrial data flows. It allows you to configure connectors, schedule data collection, transform and route data, monitor system health, and secure communications. Designed for developers and system integrators, it enables seamless integration between industrial systems and enterprise applications.",
 		"license": {
 			"name": "EUPL"
