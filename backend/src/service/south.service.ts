@@ -30,6 +30,7 @@ import oledbManifest from '../south/south-oledb/manifest';
 import piManifest from '../south/south-pi/manifest';
 import sftpManifest from '../south/south-sftp/manifest';
 import ftpManifest from '../south/south-ftp/manifest';
+import restApiManifest from '../south/south-rest-api/manifest';
 import { OIBusContent } from '../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorEntityLight, SouthConnectorItemEntity } from '../model/south-connector.model';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
@@ -70,6 +71,7 @@ export const southManifestList: Array<SouthConnectorManifest> = [
   modbusManifest,
   oianalyticsManifest,
   piManifest,
+  restApiManifest,
   sftpManifest,
   ftpManifest
 ];
