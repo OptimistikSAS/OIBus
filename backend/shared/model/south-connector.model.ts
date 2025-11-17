@@ -76,6 +76,7 @@ export const OIBUS_SOUTH_TYPES = [
   'oracle', // Oracle database
   'osisoft-pi', // OSIsoft PI System
   'postgresql', // PostgreSQL database
+  'rest-api', // REST API connector
   'sftp', // SFTP file transfer protocol
   'sqlite' // SQLite database
 ] as const;
