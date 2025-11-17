@@ -274,6 +274,7 @@
       "oracle": "Oracle Database™",
       "osisoft-pi": "OSIsoft PI System™",
       "postgresql": "PostgreSQL",
+      "rest-api": "REST API",
       "sftp": "SFTP",
       "sqlite": "SQLite™"
     },
@@ -293,6 +294,7 @@
       "oracle": "Query data from an Oracle Database™",
       "osisoft-pi": "Establish a connection with an OIBus Agent to access data from a PI System™",
       "postgresql": "Query PostgreSQL databases",
+      "rest-api": "Collect data from REST API endpoints",
       "sftp": "Read files from a remote SFTP server",
       "sqlite": "Query  SQLite™ databases"
     }
@@ -1264,6 +1266,42 @@
             "username": "Username",
             "password": "Password"
           },
+          "rest-api": {
+            "throttling": {
+              "title": "Throttling",
+              "max-read-interval": "Max read interval",
+              "read-delay": "Read delay",
+              "overlap": "Overlap"
+            },
+            "host": "Host",
+            "accept-unauthorized": "Accept unauthorized certificate",
+            "authentication": {
+              "title": "Authentication",
+              "none": "None",
+              "basic": "Basic (username/password)",
+              "bearer": "Bearer token"
+            },
+            "username": "Username",
+            "password": "Password",
+            "token": "Bearer token",
+            "test": {
+              "title": "Test configuration",
+              "endpoint": "Test endpoint",
+              "method": {
+                "title": "Test method",
+                "GET": "GET",
+                "POST": "POST",
+                "PUT": "PUT"
+              },
+              "body": "Body (JSON)",
+              "success-code": "Expected success code"
+            },
+            "timeout": "Request timeout",
+            "use-proxy": "Use proxy",
+            "proxy-url": "Proxy URL",
+            "proxy-username": "Proxy username",
+            "proxy-password": "Proxy password"
+          },
           "sftp": {
             "host": "Host",
             "port": "Port",
@@ -1748,6 +1786,74 @@
                   "SLASH": "Slash /",
                   "TAB": "Tab",
                   "NON_BREAKING_SPACE": "Space",
+                  "PIPE": "Pipe |"
+                },
+                "compression": "Compression",
+                "output-timestamp-format": "Output date time format",
+                "output-timezone": "Output timezone"
+              }
+            },
+            "rest-api": {
+              "method": {
+                "title": "HTTP method",
+                "GET": "GET",
+                "POST": "POST",
+                "PUT": "PUT",
+                "PATCH": "PATCH",
+                "DELETE": "DELETE"
+              },
+              "endpoint": "Endpoint",
+              "query-params": {
+                "title": "Query parameters",
+                "query-param": "Query parameter",
+                "key": "Key",
+                "value": "Value"
+              },
+              "body": "Request body (JSON)",
+              "headers": {
+                "title": "Headers",
+                "header": "Header",
+                "key": "Header name",
+                "value": "Header value"
+              },
+              "return-type": {
+                "title": "Return type",
+                "body": "Body (JSON / XML)",
+                "file": "File (Content-Disposition)"
+              },
+              "date-time-fields": {
+                "title": "Date time fields",
+                "date-time-field": "Date time field",
+                "json-path": "JSONPath",
+                "field-name": "Field name",
+                "use-as-reference": "Reference timestamp",
+                "type": {
+                  "title": "Type",
+                  "iso-string": "ISO string",
+                  "unix-epoch": "Unix epoch (s)",
+                  "unix-epoch-ms": "Unix epoch (ms)",
+                  "string": "String"
+                },
+                "timezone": "Timezone",
+                "format": "Format",
+                "locale": "Locale"
+              },
+              "serialization": {
+                "title": "Serialization",
+                "type": {
+                  "title": "Type",
+                  "csv": "CSV"
+                },
+                "filename": "Filename",
+                "delimiter": {
+                  "title": "Delimiter",
+                  "DOT": "Dot .",
+                  "SEMI_COLON": "Semi colon ;",
+                  "COLON": "Colon :",
+                  "COMMA": "Comma ,",
+                  "NON_BREAKING_SPACE": "Space",
+                  "SLASH": "Slash /",
+                  "TAB": "Tab",
                   "PIPE": "Pipe |"
                 },
                 "compression": "Compression",
