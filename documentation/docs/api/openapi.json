@@ -1287,6 +1287,7 @@
 					"oracle",
 					"osisoft-pi",
 					"postgresql",
+					"rest-api",
 					"sftp",
 					"sqlite"
 				],
@@ -2536,6 +2537,112 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"Throttling": {
+				"properties": {
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double"
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double"
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"maxReadInterval",
+					"readDelay",
+					"overlap"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"Authentication": {
+				"type": "string",
+				"enum": [
+					"none",
+					"basic",
+					"bearer"
+				]
+			},
+			"TestMethod": {
+				"type": "string",
+				"enum": [
+					"GET",
+					"POST",
+					"PUT"
+				]
+			},
+			"SouthRestAPISettings": {
+				"properties": {
+					"throttling": {
+						"$ref": "#/components/schemas/Throttling"
+					},
+					"host": {
+						"type": "string"
+					},
+					"acceptUnauthorized": {
+						"type": "boolean"
+					},
+					"authentication": {
+						"$ref": "#/components/schemas/Authentication"
+					},
+					"username": {
+						"type": "string"
+					},
+					"password": {
+						"type": "string",
+						"nullable": true
+					},
+					"token": {
+						"type": "string",
+						"nullable": true
+					},
+					"testEndpoint": {
+						"type": "string"
+					},
+					"testMethod": {
+						"$ref": "#/components/schemas/TestMethod"
+					},
+					"successCode": {
+						"type": "number",
+						"format": "double"
+					},
+					"timeout": {
+						"type": "number",
+						"format": "double"
+					},
+					"useProxy": {
+						"type": "boolean"
+					},
+					"proxyUrl": {
+						"type": "string"
+					},
+					"proxyUsername": {
+						"type": "string"
+					},
+					"proxyPassword": {
+						"type": "string",
+						"nullable": true
+					}
+				},
+				"required": [
+					"throttling",
+					"host",
+					"acceptUnauthorized",
+					"authentication",
+					"testEndpoint",
+					"testMethod",
+					"successCode",
+					"timeout",
+					"useProxy"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"SouthSFTPSettingsAuthentication": {
 				"type": "string",
 				"enum": [
@@ -2668,6 +2775,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/SouthPostgreSQLSettings"
+					},
+					{
+						"$ref": "#/components/schemas/SouthRestAPISettings"
 					},
 					{
 						"$ref": "#/components/schemas/SouthSFTPSettings"
@@ -3908,6 +4018,202 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"Method": {
+				"type": "string",
+				"enum": [
+					"GET",
+					"POST",
+					"PUT",
+					"DELETE"
+				]
+			},
+			"QueryParams": {
+				"properties": {
+					"key": {
+						"type": "string"
+					},
+					"value": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"key",
+					"value"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"Headers": {
+				"properties": {
+					"key": {
+						"type": "string"
+					},
+					"value": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"key",
+					"value"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ReturnType": {
+				"type": "string",
+				"enum": [
+					"file",
+					"body"
+				]
+			},
+			"DateTimeFieldsType": {
+				"type": "string",
+				"enum": [
+					"string",
+					"iso-string",
+					"unix-epoch",
+					"unix-epoch-ms"
+				]
+			},
+			"DateTimeFields": {
+				"properties": {
+					"jsonPath": {
+						"type": "string"
+					},
+					"fieldName": {
+						"type": "string",
+						"nullable": true
+					},
+					"useAsReference": {
+						"type": "boolean"
+					},
+					"type": {
+						"$ref": "#/components/schemas/DateTimeFieldsType"
+					},
+					"timezone": {
+						"$ref": "#/components/schemas/Timezone"
+					},
+					"format": {
+						"type": "string"
+					},
+					"locale": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"jsonPath",
+					"fieldName",
+					"useAsReference",
+					"type"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SerializationType": {
+				"type": "string",
+				"enum": [
+					"csv"
+				],
+				"nullable": false
+			},
+			"SerializationDelimiter": {
+				"type": "string",
+				"enum": [
+					"DOT",
+					"SEMI_COLON",
+					"COLON",
+					"COMMA",
+					"NON_BREAKING_SPACE",
+					"SLASH",
+					"TAB",
+					"PIPE"
+				]
+			},
+			"Serialization": {
+				"properties": {
+					"type": {
+						"$ref": "#/components/schemas/SerializationType"
+					},
+					"filename": {
+						"type": "string"
+					},
+					"delimiter": {
+						"$ref": "#/components/schemas/SerializationDelimiter"
+					},
+					"compression": {
+						"type": "boolean"
+					},
+					"outputTimestampFormat": {
+						"type": "string"
+					},
+					"outputTimezone": {
+						"$ref": "#/components/schemas/Timezone"
+					}
+				},
+				"required": [
+					"type",
+					"filename",
+					"delimiter",
+					"compression",
+					"outputTimestampFormat",
+					"outputTimezone"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthRestAPIItemSettings": {
+				"properties": {
+					"method": {
+						"$ref": "#/components/schemas/Method"
+					},
+					"endpoint": {
+						"type": "string"
+					},
+					"queryParams": {
+						"items": {
+							"$ref": "#/components/schemas/QueryParams"
+						},
+						"type": "array",
+						"nullable": true
+					},
+					"body": {
+						"type": "string",
+						"nullable": true
+					},
+					"headers": {
+						"items": {
+							"$ref": "#/components/schemas/Headers"
+						},
+						"type": "array",
+						"nullable": true
+					},
+					"returnType": {
+						"$ref": "#/components/schemas/ReturnType"
+					},
+					"dateTimeFields": {
+						"items": {
+							"$ref": "#/components/schemas/DateTimeFields"
+						},
+						"type": "array",
+						"nullable": true
+					},
+					"serialization": {
+						"$ref": "#/components/schemas/Serialization"
+					}
+				},
+				"required": [
+					"method",
+					"endpoint",
+					"queryParams",
+					"body",
+					"headers",
+					"returnType",
+					"dateTimeFields",
+					"serialization"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"SouthSFTPItemSettings": {
 				"properties": {
 					"remoteFolder": {
@@ -4096,6 +4402,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/SouthPostgreSQLItemSettings"
+					},
+					{
+						"$ref": "#/components/schemas/SouthRestAPIItemSettings"
 					},
 					{
 						"$ref": "#/components/schemas/SouthSFTPItemSettings"

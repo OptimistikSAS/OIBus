@@ -285,6 +285,27 @@ export const SOUTH_POSTGRE_S_Q_L_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = [
 ] as const;
 export type SouthPostgreSQLItemSettingsSerializationDelimiter = (typeof SOUTH_POSTGRE_S_Q_L_ITEM_SETTINGS_SERIALIZATION_DELIMITERS)[number];
 
+export const AUTHENTICATIONS = ['none', 'basic', 'bearer'] as const;
+export type Authentication = (typeof AUTHENTICATIONS)[number];
+
+export const TEST_METHODS = ['GET', 'POST', 'PUT'] as const;
+export type TestMethod = (typeof TEST_METHODS)[number];
+
+export const DATE_TIME_FIELDS_TYPES = ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'] as const;
+export type DateTimeFieldsType = (typeof DATE_TIME_FIELDS_TYPES)[number];
+
+export const SERIALIZATION_TYPES = ['csv'] as const;
+export type SerializationType = (typeof SERIALIZATION_TYPES)[number];
+
+export const SERIALIZATION_DELIMITERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'] as const;
+export type SerializationDelimiter = (typeof SERIALIZATION_DELIMITERS)[number];
+
+export const METHODS = ['GET', 'POST', 'PUT', 'DELETE'] as const;
+export type Method = (typeof METHODS)[number];
+
+export const RETURN_TYPES = ['body', 'file'] as const;
+export type ReturnType = (typeof RETURN_TYPES)[number];
+
 export const SOUTH_S_F_T_P_SETTINGS_AUTHENTICATIONS = ['password', 'private-key'] as const;
 export type SouthSFTPSettingsAuthentication = (typeof SOUTH_S_F_T_P_SETTINGS_AUTHENTICATIONS)[number];
 
@@ -403,6 +424,12 @@ export interface SouthPISettingsThrottling {
 }
 
 export interface SouthPostgreSQLSettingsThrottling {
+  maxReadInterval: number;
+  readDelay: number;
+  overlap: number;
+}
+
+export interface Throttling {
   maxReadInterval: number;
   readDelay: number;
   overlap: number;
@@ -567,6 +594,24 @@ export interface SouthPostgreSQLSettings {
   password: string | null;
 }
 
+export interface SouthRestAPISettings {
+  throttling: Throttling;
+  host: string;
+  acceptUnauthorized: boolean;
+  authentication: Authentication;
+  username?: string;
+  password?: string | null;
+  token?: string | null;
+  testEndpoint: string;
+  testMethod: TestMethod;
+  successCode: number;
+  timeout: number;
+  useProxy: boolean;
+  proxyUrl?: string;
+  proxyUsername?: string;
+  proxyPassword?: string | null;
+}
+
 export interface SouthSFTPSettings {
   host: string;
   port: number;
@@ -599,6 +644,7 @@ export type SouthSettings =
   | SouthOracleSettings
   | SouthPISettings
   | SouthPostgreSQLSettings
+  | SouthRestAPISettings
   | SouthSFTPSettings
   | SouthSQLiteSettings;
 
@@ -758,6 +804,35 @@ export interface SouthPostgreSQLItemSettingsSerialization {
   outputTimezone: Timezone;
 }
 
+export interface QueryParams {
+  key: string;
+  value: string;
+}
+
+export interface Headers {
+  key: string;
+  value: string;
+}
+
+export interface DateTimeFields {
+  jsonPath: string;
+  fieldName: string | null;
+  useAsReference: boolean;
+  type: DateTimeFieldsType;
+  timezone?: Timezone;
+  format?: string;
+  locale?: string;
+}
+
+export interface Serialization {
+  type: SerializationType;
+  filename: string;
+  delimiter: SerializationDelimiter;
+  compression: boolean;
+  outputTimestampFormat: string;
+  outputTimezone: Timezone;
+}
+
 export interface SouthSQLiteItemSettingsDateTimeFields {
   fieldName: string;
   useAsReference: boolean;
@@ -870,6 +945,17 @@ export interface SouthPostgreSQLItemSettings {
   serialization: SouthPostgreSQLItemSettingsSerialization;
 }
 
+export interface SouthRestAPIItemSettings {
+  method: Method;
+  endpoint: string;
+  queryParams: Array<QueryParams> | null;
+  body: string | null;
+  headers: Array<Headers> | null;
+  returnType: ReturnType;
+  dateTimeFields: Array<DateTimeFields> | null;
+  serialization: Serialization;
+}
+
 export interface SouthSFTPItemSettings {
   remoteFolder: string;
   regex: string;
@@ -900,5 +986,6 @@ export type SouthItemSettings =
   | SouthOracleItemSettings
   | SouthPIItemSettings
   | SouthPostgreSQLItemSettings
+  | SouthRestAPIItemSettings
   | SouthSFTPItemSettings
   | SouthSQLiteItemSettings;
