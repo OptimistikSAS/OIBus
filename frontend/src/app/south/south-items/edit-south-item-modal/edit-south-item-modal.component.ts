@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, forwardRef, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import {
   AbstractControl,
@@ -26,6 +26,7 @@ import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-obje
 import { CertificateDTO } from '../../../../../../backend/shared/model/certificate.model';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { Observable } from 'rxjs';
+import { OIBUS_FORM_MODE } from '../../../shared/form/oibus-form-mode.token';
 
 @Component({
   selector: 'oib-edit-south-item-modal',
@@ -38,6 +39,13 @@ import { Observable } from 'rxjs';
     ReactiveFormsModule,
     OI_FORM_VALIDATION_DIRECTIVES,
     OIBusObjectFormControlComponent
+  ],
+  viewProviders: [
+    {
+      provide: OIBUS_FORM_MODE,
+      useFactory: (component: EditSouthItemModalComponent) => () => (component.mode === 'edit' ? 'edit' : 'create'),
+      deps: [forwardRef(() => EditSouthItemModalComponent)]
+    }
   ]
 })
 export class EditSouthItemModalComponent {

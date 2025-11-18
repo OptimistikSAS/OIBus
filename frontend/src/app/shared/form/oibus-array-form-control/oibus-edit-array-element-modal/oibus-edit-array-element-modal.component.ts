@@ -8,13 +8,21 @@ import { OIBusObjectAttribute } from '../../../../../../../backend/shared/model/
 import { ScanModeDTO } from '../../../../../../../backend/shared/model/scan-mode.model';
 import { CertificateDTO } from '../../../../../../../backend/shared/model/certificate.model';
 import { addAttributeToForm } from '../../dynamic-form.builder';
+import { OIBUS_FORM_MODE } from '../../oibus-form-mode.token';
 
 @Component({
   selector: 'oib-oibus-edit-array-element-modal',
   templateUrl: './oibus-edit-array-element-modal.component.html',
   styleUrl: './oibus-edit-array-element-modal.component.scss',
   // Remove circular dependencies between OIBusObjectFormControlComponent and OIBusEditArrayElementModalComponent with forwardRef
-  imports: [ReactiveFormsModule, TranslateDirective, SaveButtonComponent, forwardRef(() => OIBusObjectFormControlComponent)]
+  imports: [ReactiveFormsModule, TranslateDirective, SaveButtonComponent, forwardRef(() => OIBusObjectFormControlComponent)],
+  viewProviders: [
+    {
+      provide: OIBUS_FORM_MODE,
+      useFactory: (component: OIBusEditArrayElementModalComponent) => () => component.mode,
+      deps: [forwardRef(() => OIBusEditArrayElementModalComponent)]
+    }
+  ]
 })
 export class OIBusEditArrayElementModalComponent {
   private activeModal = inject(NgbActiveModal);

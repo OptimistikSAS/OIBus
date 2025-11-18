@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, forwardRef, inject, OnInit } from '@angular/core';
 import { TranslateDirective } from '@ngx-translate/core';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
@@ -52,6 +52,7 @@ import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-
 import { DateRange, DateRangeSelectorComponent } from '../../shared/date-range-selector/date-range-selector.component';
 import { HistoryQueryTransformersComponent } from '../history-query-transformers/history-query-transformers.component';
 import { AbstractControl, ValidationErrors } from '@angular/forms';
+import { OIBUS_FORM_MODE } from '../../shared/form/oibus-form-mode.token';
 
 @Component({
   selector: 'oib-edit-history-query',
@@ -73,7 +74,14 @@ import { AbstractControl, ValidationErrors } from '@angular/forms';
     HistoryQueryTransformersComponent
   ],
   templateUrl: './edit-history-query.component.html',
-  styleUrl: './edit-history-query.component.scss'
+  styleUrl: './edit-history-query.component.scss',
+  viewProviders: [
+    {
+      provide: OIBUS_FORM_MODE,
+      useFactory: (component: EditHistoryQueryComponent) => () => component.mode,
+      deps: [forwardRef(() => EditHistoryQueryComponent)]
+    }
+  ]
 })
 export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate {
   private historyQueryService = inject(HistoryQueryService);

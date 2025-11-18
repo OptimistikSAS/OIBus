@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, forwardRef, inject, OnInit } from '@angular/core';
 
 import { TranslateDirective } from '@ngx-translate/core';
 import {
@@ -32,6 +32,7 @@ import { OIBusObjectFormControlComponent } from '../../shared/form/oibus-object-
 import { CanComponentDeactivate } from '../../shared/unsaved-changes.guard';
 import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
 import { AbstractControl, ValidationErrors } from '@angular/forms';
+import { OIBUS_FORM_MODE } from '../../shared/form/oibus-form-mode.token';
 
 @Component({
   selector: 'oib-edit-south',
@@ -48,7 +49,14 @@ import { AbstractControl, ValidationErrors } from '@angular/forms';
     OIBusObjectFormControlComponent
   ],
   templateUrl: './edit-south.component.html',
-  styleUrl: './edit-south.component.scss'
+  styleUrl: './edit-south.component.scss',
+  viewProviders: [
+    {
+      provide: OIBUS_FORM_MODE,
+      useFactory: (component: EditSouthComponent) => () => component.mode,
+      deps: [forwardRef(() => EditSouthComponent)]
+    }
+  ]
 })
 export class EditSouthComponent implements OnInit, CanComponentDeactivate {
   private southConnectorService = inject(SouthConnectorService);

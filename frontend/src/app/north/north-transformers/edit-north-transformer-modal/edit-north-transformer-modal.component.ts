@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, forwardRef, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Observable, of, switchMap } from 'rxjs';
@@ -12,12 +12,20 @@ import { OIBusObjectAttribute } from '../../../../../../backend/shared/model/for
 import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.model';
 import { CertificateDTO } from '../../../../../../backend/shared/model/certificate.model';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
+import { OIBUS_FORM_MODE } from '../../../shared/form/oibus-form-mode.token';
 
 @Component({
   selector: 'oib-edit-north-transformer-modal',
   templateUrl: './edit-north-transformer-modal.component.html',
   styleUrl: './edit-north-transformer-modal.component.scss',
-  imports: [ReactiveFormsModule, TranslateDirective, SaveButtonComponent, TranslatePipe, OIBusObjectFormControlComponent]
+  imports: [ReactiveFormsModule, TranslateDirective, SaveButtonComponent, TranslatePipe, OIBusObjectFormControlComponent],
+  viewProviders: [
+    {
+      provide: OIBUS_FORM_MODE,
+      useFactory: (component: EditNorthTransformerModalComponent) => () => component.mode,
+      deps: [forwardRef(() => EditNorthTransformerModalComponent)]
+    }
+  ]
 })
 export class EditNorthTransformerModalComponent {
   private modal = inject(NgbActiveModal);
@@ -26,6 +34,7 @@ export class EditNorthTransformerModalComponent {
   private transformerService = inject(TransformerService);
 
   state = new ObservableState();
+  mode: 'create' | 'edit' = 'create';
   form: FormGroup<{
     transformerId: FormControl<string | null>;
     options: FormGroup;
@@ -46,6 +55,7 @@ export class EditNorthTransformerModalComponent {
     transformers: Array<TransformerDTO>,
     supportedOutputTypes: Array<string>
   ) {
+    this.mode = 'create';
     this.scanModes = scanModes;
     this.certificates = certificates;
     this.selectableInputs = selectableInputs;
@@ -75,6 +85,7 @@ export class EditNorthTransformerModalComponent {
     transformers: Array<TransformerDTO>,
     supportedOutputTypes: Array<string>
   ) {
+    this.mode = 'edit';
     this.scanModes = scanModes;
     this.certificates = certificates;
     this.supportedOutputTypes = supportedOutputTypes;
