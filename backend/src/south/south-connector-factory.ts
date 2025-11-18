@@ -36,6 +36,8 @@ import {
   SouthPISettings,
   SouthPostgreSQLItemSettings,
   SouthPostgreSQLSettings,
+  SouthRestAPIItemSettings,
+  SouthRestAPISettings,
   SouthSettings,
   SouthSFTPItemSettings,
   SouthSFTPSettings,
@@ -56,6 +58,7 @@ import SouthOPCUA from '../south/south-opcua/south-opcua';
 import SouthOracle from '../south/south-oracle/south-oracle';
 import SouthPI from '../south/south-pi/south-pi';
 import SouthPostgreSQL from '../south/south-postgresql/south-postgresql';
+import SouthRestAPI from '../south/south-rest-api/south-rest-api';
 import SouthSFTP from '../south/south-sftp/south-sftp';
 import SouthFTP from '../south/south-ftp/south-ftp';
 import SouthSQLite from '../south/south-sqlite/south-sqlite';
@@ -184,6 +187,15 @@ export const buildSouth = (
         southCacheRepository,
         logger,
         southCacheFolder
+      );
+    case 'rest-api':
+      return new SouthRestAPI(
+        settings as SouthConnectorEntity<SouthRestAPISettings, SouthRestAPIItemSettings>,
+        addContent,
+        southCacheRepository,
+        logger,
+        southCacheFolder,
+        certificateRepository
       );
     case 'sftp':
       return new SouthSFTP(
