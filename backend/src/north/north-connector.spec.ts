@@ -67,6 +67,8 @@ describe('NorthConnector', () => {
 
     (dirSize as jest.Mock).mockReturnValue(123);
     (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
+    (cacheService.getNumberOfElementsInQueue as jest.Mock).mockReturnValue(0);
+    (cacheService.getNumberOfRawFilesInQueue as jest.Mock).mockReturnValue(0);
 
     north = new NorthFileWriter(
       testData.north.list[0] as NorthConnectorEntity<NorthFileWriterSettings>,
@@ -89,6 +91,13 @@ describe('NorthConnector', () => {
       `North connector "${testData.north.list[0].name}" of type ${testData.north.list[0].type} started`
     );
     expect(north.connectorConfiguration).toEqual(testData.north.list[0]);
+  });
+
+  it('should set and get connector configuration', () => {
+    const newConfig = JSON.parse(JSON.stringify(testData.north.list[0]));
+    newConfig.name = 'Updated Name';
+    north.connectorConfiguration = newConfig;
+    expect(north.connectorConfiguration).toEqual(newConfig);
   });
 
   it('should properly update cache size', () => {
@@ -204,6 +213,20 @@ describe('NorthConnector', () => {
   it('should properly disconnect', async () => {
     await north.disconnect();
     expect(logger.info).toHaveBeenCalledWith(`"${testData.north.list[0].name}" (${testData.north.list[0].id}) disconnected`);
+  });
+
+  it('should properly disconnect and clear debounce timeout', async () => {
+    north['cacheLogDebounceTimeout'] = setTimeout(() => {}, 10000);
+    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+
+    await north.disconnect();
+
+    expect(clearTimeoutSpy).toHaveBeenCalled();
+    expect(north['cacheLogDebounceTimeout']).toBeNull();
+    expect(north['cacheLogDebounceFlag']).toBe(false);
+    expect(logger.info).toHaveBeenCalledWith(`"${testData.north.list[0].name}" (${testData.north.list[0].id}) disconnected`);
+
+    clearTimeoutSpy.mockRestore();
   });
 
   it('should properly stop', async () => {
@@ -443,6 +466,8 @@ describe('NorthConnector', () => {
     (fsAsync.stat as jest.Mock).mockReturnValueOnce({ size: 100, ctimeMs: 123 });
     (generateRandomId as jest.Mock).mockReturnValueOnce('1234567890');
     (Readable.from as jest.Mock).mockReturnValueOnce('readStream');
+    (cacheService.getNumberOfElementsInQueue as jest.Mock).mockReturnValueOnce((testData.oibusContent[0].content as Array<object>).length);
+    (cacheService.getNumberOfRawFilesInQueue as jest.Mock).mockReturnValueOnce(1);
     const metadata: CacheMetadata = {
       contentFile: '1234567890.json',
       contentSize: 100,
@@ -473,6 +498,92 @@ describe('NorthConnector', () => {
       }
     );
     expect(cacheService.addCacheContentToQueue).toHaveBeenCalledWith({ metadataFilename: '1234567890.json', metadata });
+    expect(logger.debug).toHaveBeenCalledWith(
+      expect.objectContaining({
+        cacheState: expect.objectContaining({
+          queuedElements: metadata.numberOfElement,
+          queuedRawFiles: 1
+        }),
+        lastAddedContent: expect.objectContaining({
+          contentType: metadata.contentType,
+          numberOfElement: metadata.numberOfElement,
+          contentSize: metadata.contentSize,
+          source: metadata.source
+        })
+      }),
+      expect.stringContaining('Cache updated')
+    );
+  });
+
+  it('should debounce cache state logging', async () => {
+    north['connector'].caching.throttling.maxNumberOfElements = 0;
+    (fsAsync.stat as jest.Mock).mockReturnValue({ size: 100, ctimeMs: 123 });
+    (generateRandomId as jest.Mock).mockReturnValue('1234567890');
+    (Readable.from as jest.Mock).mockReturnValue('readStream');
+    (cacheService.getNumberOfElementsInQueue as jest.Mock).mockReturnValue(3);
+    (cacheService.getNumberOfRawFilesInQueue as jest.Mock).mockReturnValue(1);
+
+    const metadata: CacheMetadata = {
+      contentFile: '1234567890.json',
+      contentSize: 100,
+      numberOfElement: 3,
+      createdAt: DateTime.fromMillis(123).toUTC().toISO()!,
+      contentType: 'time-values',
+      source: 'south',
+      options: {}
+    };
+    (oiBusTransformer.transform as jest.Mock).mockReturnValue({ metadata, output: 'output' });
+
+    await north.cacheContent(testData.oibusContent[0], 'south');
+    const cacheLogCalls = (logger.debug as jest.Mock).mock.calls.filter(
+      call => typeof call[1] === 'string' && call[1].includes('Cache updated')
+    );
+    expect(cacheLogCalls.length).toBe(1);
+    expect(north['cacheLogDebounceFlag']).toBe(true);
+    expect(north['cacheLogDebounceTimeout']).not.toBeNull();
+
+    const previousCallCount = (logger.debug as jest.Mock).mock.calls.length;
+    await north.cacheContent(testData.oibusContent[0], 'south');
+    const newCacheLogCalls = (logger.debug as jest.Mock).mock.calls
+      .slice(previousCallCount)
+      .filter(call => typeof call[1] === 'string' && call[1].includes('Cache updated'));
+    expect(newCacheLogCalls.length).toBe(0);
+
+    jest.runOnlyPendingTimers();
+    expect(north['cacheLogDebounceFlag']).toBe(false);
+  });
+
+  it('should clear existing timeout when logging again before timeout expires', async () => {
+    north['connector'].caching.throttling.maxNumberOfElements = 0;
+    (fsAsync.stat as jest.Mock).mockReturnValue({ size: 100, ctimeMs: 123 });
+    (generateRandomId as jest.Mock).mockReturnValue('1234567890');
+    (Readable.from as jest.Mock).mockReturnValue('readStream');
+    (cacheService.getNumberOfElementsInQueue as jest.Mock).mockReturnValue(3);
+    (cacheService.getNumberOfRawFilesInQueue as jest.Mock).mockReturnValue(1);
+
+    const metadata: CacheMetadata = {
+      contentFile: '1234567890.json',
+      contentSize: 100,
+      numberOfElement: 3,
+      createdAt: DateTime.fromMillis(123).toUTC().toISO()!,
+      contentType: 'time-values',
+      source: 'south',
+      options: {}
+    };
+    (oiBusTransformer.transform as jest.Mock).mockReturnValue({ metadata, output: 'output' });
+    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+
+    await north.cacheContent(testData.oibusContent[0], 'south');
+    const firstTimeout = north['cacheLogDebounceTimeout'];
+
+    jest.advanceTimersByTime(9000);
+    north['cacheLogDebounceFlag'] = false;
+
+    await north.cacheContent(testData.oibusContent[0], 'south');
+    expect(clearTimeoutSpy).toHaveBeenCalledWith(firstTimeout);
+    expect(north['cacheLogDebounceTimeout']).not.toBe(firstTimeout);
+
+    clearTimeoutSpy.mockRestore();
   });
 
   it('should cache json content with maxSendCount', async () => {
