@@ -56,6 +56,8 @@ export default abstract class NorthConnector<T extends NorthSettings> {
 
   private cacheSizeWarningHasBeenTriggered = false;
   private stopping = false;
+  private cacheLogDebounceFlag = false;
+  private cacheLogDebounceTimeout: NodeJS.Timeout | null = null;
 
   protected constructor(
     protected connector: NorthConnectorEntity<T>,
@@ -423,6 +425,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     );
     this.cacheService.addCacheContentToQueue({ metadataFilename, metadata });
     this.metricsEvent.emit('cache-content-size', fileStat.size);
+    this.logCacheState(metadata);
   }
 
   isCacheEmpty(): boolean {
@@ -484,6 +487,11 @@ export default abstract class NorthConnector<T extends NorthSettings> {
    * North connector implementation to allow disconnecting to a third party application for example.
    */
   async disconnect(): Promise<void> {
+    if (this.cacheLogDebounceTimeout) {
+      clearTimeout(this.cacheLogDebounceTimeout);
+      this.cacheLogDebounceTimeout = null;
+    }
+    this.cacheLogDebounceFlag = false;
     this.logger.info(`"${this.connector.name}" (${this.connector.id}) disconnected`);
   }
 
@@ -562,4 +570,51 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   abstract handleContent(cacheMetadata: CacheMetadata): Promise<void>;
 
   abstract supportedTypes(): Array<string>;
+
+  private logCacheState(metadata: CacheMetadata): void {
+    // Debounce logging to prevent verbose output during heavy data loads
+    if (this.cacheLogDebounceFlag) {
+      return;
+    }
+
+    const cacheSnapshot = {
+      cacheSizeBytes: this.cacheSize.cacheSize,
+      errorSizeBytes: this.cacheSize.errorSize,
+      archiveSizeBytes: this.cacheSize.archiveSize,
+      queuedElements: this.cacheService.getNumberOfElementsInQueue(),
+      queuedRawFiles: this.cacheService.getNumberOfRawFilesInQueue()
+    };
+
+    const cacheSizeMB = Math.floor((cacheSnapshot.cacheSizeBytes / 1024 / 1024) * 100) / 100;
+    const errorSizeMB = Math.floor((cacheSnapshot.errorSizeBytes / 1024 / 1024) * 100) / 100;
+    const archiveSizeMB = Math.floor((cacheSnapshot.archiveSizeBytes / 1024 / 1024) * 100) / 100;
+
+    this.logger.debug(
+      {
+        cacheState: {
+          ...cacheSnapshot,
+          cacheSizeMB,
+          errorSizeMB,
+          archiveSizeMB
+        },
+        lastAddedContent: {
+          contentType: metadata.contentType,
+          numberOfElement: metadata.numberOfElement,
+          contentSize: metadata.contentSize,
+          source: metadata.source
+        }
+      },
+      `Cache updated: ${cacheSnapshot.queuedElements} time-values and ${cacheSnapshot.queuedRawFiles} raw file(s) in queue. ` +
+        `Cache: ${cacheSizeMB} MB, Error: ${errorSizeMB} MB, Archive: ${archiveSizeMB} MB`
+    );
+
+    // Set debounce flag and reset after 10 seconds
+    this.cacheLogDebounceFlag = true;
+    if (this.cacheLogDebounceTimeout) {
+      clearTimeout(this.cacheLogDebounceTimeout);
+    }
+    this.cacheLogDebounceTimeout = setTimeout(() => {
+      this.cacheLogDebounceFlag = false;
+    }, 10000);
+  }
 }
