@@ -67,6 +67,8 @@ describe('NorthConnector', () => {
 
     (dirSize as jest.Mock).mockReturnValue(123);
     (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
+    (cacheService.getNumberOfElementsInQueue as jest.Mock).mockReturnValue(0);
+    (cacheService.getNumberOfRawFilesInQueue as jest.Mock).mockReturnValue(0);
 
     north = new NorthFileWriter(
       testData.north.list[0] as NorthConnectorEntity<NorthFileWriterSettings>,
@@ -443,6 +445,8 @@ describe('NorthConnector', () => {
     (fsAsync.stat as jest.Mock).mockReturnValueOnce({ size: 100, ctimeMs: 123 });
     (generateRandomId as jest.Mock).mockReturnValueOnce('1234567890');
     (Readable.from as jest.Mock).mockReturnValueOnce('readStream');
+    (cacheService.getNumberOfElementsInQueue as jest.Mock).mockReturnValueOnce((testData.oibusContent[0].content as Array<object>).length);
+    (cacheService.getNumberOfRawFilesInQueue as jest.Mock).mockReturnValueOnce(1);
     const metadata: CacheMetadata = {
       contentFile: '1234567890.json',
       contentSize: 100,
@@ -473,6 +477,21 @@ describe('NorthConnector', () => {
       }
     );
     expect(cacheService.addCacheContentToQueue).toHaveBeenCalledWith({ metadataFilename: '1234567890.json', metadata });
+    expect(logger.debug).toHaveBeenCalledWith(
+      expect.objectContaining({
+        cacheState: expect.objectContaining({
+          queuedElements: metadata.numberOfElement,
+          queuedRawFiles: 1
+        }),
+        lastAddedContent: expect.objectContaining({
+          contentType: metadata.contentType,
+          numberOfElement: metadata.numberOfElement,
+          contentSize: metadata.contentSize,
+          source: metadata.source
+        })
+      }),
+      expect.stringContaining('Cache content added')
+    );
   });
 
   it('should cache json content with maxSendCount', async () => {
