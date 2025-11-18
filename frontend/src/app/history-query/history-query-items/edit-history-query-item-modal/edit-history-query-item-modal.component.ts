@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, forwardRef, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import {
   AbstractControl,
@@ -21,6 +21,7 @@ import SouthItemTestComponent from '../../../south/south-items/south-item-test/s
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { HistoryQueryItemCommandDTO, HistoryQueryItemDTO } from '../../../../../../backend/shared/model/history-query.model';
 import { OIBusObjectAttribute } from '../../../../../../backend/shared/model/form.model';
+import { OIBUS_FORM_MODE } from '../../../shared/form/oibus-form-mode.token';
 
 @Component({
   selector: 'oib-edit-history-query-item-modal',
@@ -34,6 +35,13 @@ import { OIBusObjectAttribute } from '../../../../../../backend/shared/model/for
     OIBusObjectFormControlComponent,
     SaveButtonComponent,
     SouthItemTestComponent
+  ],
+  viewProviders: [
+    {
+      provide: OIBUS_FORM_MODE,
+      useFactory: (component: EditHistoryQueryItemModalComponent) => () => (component.mode === 'edit' ? 'edit' : 'create'),
+      deps: [forwardRef(() => EditHistoryQueryItemModalComponent)]
+    }
   ]
 })
 export class EditHistoryQueryItemModalComponent {

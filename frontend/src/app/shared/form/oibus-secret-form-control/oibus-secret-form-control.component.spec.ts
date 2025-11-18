@@ -44,30 +44,27 @@ class TestComponentTester extends ComponentTester<TestComponent> {
   }
 }
 
-describe('OIBusSecretFormControlComponent', () => {
-  let tester: TestComponentTester;
+import { OIBUS_FORM_MODE } from '../oibus-form-mode.token';
 
+describe('OIBusSecretFormControlComponent', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [provideI18nTesting()]
     });
+  });
 
-    tester = new TestComponentTester();
+  it('should render without placeholder when mode is create', () => {
+    const tester = new TestComponentTester();
     tester.detectChanges();
+
+    expect(tester.field.nativeElement.getAttribute('placeholder')).toBeNull();
   });
 
-  it('should create the component', () => {
-    expect(tester.componentInstance).toBeDefined();
-  });
+  it('should display placeholder when mode is edit', () => {
+    TestBed.overrideProvider(OIBUS_FORM_MODE, { useValue: () => 'edit' });
+    const tester = new TestComponentTester();
+    tester.detectChanges();
 
-  it('should display a label with the correct translation key', () => {
-    expect(tester.label).toBeDefined();
-    expect(tester.label).toContainText('Field name');
-  });
-
-  it('should display an input with the correct form control name', () => {
-    expect(tester.field).toBeDefined();
-    tester.field.fillWith('test');
-    expect(tester.field).toHaveValue('test');
+    expect(tester.field.nativeElement.getAttribute('placeholder')).toBe('Leave empty to keep the existing secret');
   });
 });

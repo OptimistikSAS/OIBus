@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, forwardRef, inject, OnInit } from '@angular/core';
 
 import { TranslateDirective } from '@ngx-translate/core';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
@@ -37,6 +37,7 @@ import { NorthSubscriptionsComponent } from '../north-subscriptions/north-subscr
 import { CanComponentDeactivate } from '../../shared/unsaved-changes.guard';
 import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
 import { AbstractControl, ValidationErrors } from '@angular/forms';
+import { OIBUS_FORM_MODE } from '../../shared/form/oibus-form-mode.token';
 
 @Component({
   selector: 'oib-edit-north',
@@ -56,7 +57,14 @@ import { AbstractControl, ValidationErrors } from '@angular/forms';
     NorthSubscriptionsComponent
   ],
   templateUrl: './edit-north.component.html',
-  styleUrl: './edit-north.component.scss'
+  styleUrl: './edit-north.component.scss',
+  viewProviders: [
+    {
+      provide: OIBUS_FORM_MODE,
+      useFactory: (component: EditNorthComponent) => () => component.mode,
+      deps: [forwardRef(() => EditNorthComponent)]
+    }
+  ]
 })
 export class EditNorthComponent implements OnInit, CanComponentDeactivate {
   private northConnectorService = inject(NorthConnectorService);

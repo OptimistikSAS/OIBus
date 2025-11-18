@@ -623,6 +623,9 @@
   },
   "configuration": {
     "oibus": {
+      "secret": {
+        "placeholder": "Leave empty to keep the existing secret"
+      },
       "edit-array-element-modal": {
         "title": {
           "create": "Create an element",
