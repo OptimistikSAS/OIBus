@@ -212,8 +212,19 @@ const manifest: SouthConnectorManifest = {
         ],
         displayProperties: {
           row: 3,
-          columns: 12,
+          columns: 9,
           displayInViewMode: true
+        }
+      },
+      {
+        type: 'secret',
+        key: 'password',
+        translationKey: 'configuration.oibus.manifest.south.oledb.password',
+        validators: [],
+        displayProperties: {
+          row: 3,
+          columns: 3,
+          displayInViewMode: false
         }
       }
     ]

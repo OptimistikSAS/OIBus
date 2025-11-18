@@ -2139,6 +2139,10 @@
 					},
 					"connectionString": {
 						"type": "string"
+					},
+					"password": {
+						"type": "string",
+						"nullable": true
 					}
 				},
 				"required": [
@@ -2147,7 +2151,8 @@
 					"connectionTimeout",
 					"retryInterval",
 					"requestTimeout",
-					"connectionString"
+					"connectionString",
+					"password"
 				],
 				"type": "object",
 				"additionalProperties": false

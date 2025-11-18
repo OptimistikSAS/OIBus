@@ -1,3 +1,4 @@
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import path from 'node:path';
 import pino from 'pino';
 import * as utils from '../../service/utils';
@@ -20,6 +21,9 @@ import { createMockResponse } from '../../tests/__mocks__/undici.mock';
 jest.mock('node:fs/promises');
 jest.mock('../../service/http-request.utils');
 jest.mock('../../service/utils');
+jest.mock('../../service/encryption.service', () => ({
+  encryptionService: new EncryptionServiceMock('', '')
+}));
 
 const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
 const southCacheService = new SouthCacheServiceMock();
@@ -51,6 +55,7 @@ describe('SouthOLEDB', () => {
       },
       agentUrl: 'http://localhost:2224',
       connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
+      password: 'encrypted-password',
       connectionTimeout: 1000,
       retryInterval: 1000,
       requestTimeout: 1000
@@ -146,6 +151,7 @@ describe('SouthOLEDB', () => {
       }
     ]
   };
+  const connectionStringWithPassword = 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes;Password=encrypted-password;';
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -174,7 +180,7 @@ describe('SouthOLEDB', () => {
       {
         method: 'PUT',
         body: JSON.stringify({
-          connectionString: configuration.settings.connectionString,
+          connectionString: connectionStringWithPassword,
           connectionTimeout: configuration.settings.connectionTimeout
         }),
         headers: {
@@ -192,6 +198,75 @@ describe('SouthOLEDB', () => {
     );
   });
 
+  it('should connect without password when not provided', async () => {
+    const configurationWithoutPassword: SouthConnectorEntity<SouthOLEDBSettings, SouthOLEDBItemSettings> = {
+      ...configuration,
+      settings: {
+        ...configuration.settings,
+        password: null
+      }
+    };
+    const southWithoutPassword = new SouthOLEDB(
+      configurationWithoutPassword,
+      addContentCallback,
+      southCacheRepository,
+      logger,
+      'cacheFolder'
+    );
+
+    await southWithoutPassword.connect();
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        href: `${configurationWithoutPassword.settings.agentUrl}/api/ole/${configurationWithoutPassword.id}/connect`
+      }),
+      {
+        method: 'PUT',
+        body: JSON.stringify({
+          connectionString: configurationWithoutPassword.settings.connectionString,
+          connectionTimeout: configurationWithoutPassword.settings.connectionTimeout
+        }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+  });
+
+  it('should avoid adding duplicate semicolons when password is provided', async () => {
+    const configurationWithTrailingSemicolon: SouthConnectorEntity<SouthOLEDBSettings, SouthOLEDBItemSettings> = {
+      ...configuration,
+      settings: {
+        ...configuration.settings,
+        connectionString: `${configuration.settings.connectionString};`
+      }
+    };
+    const southWithTrailingSemicolon = new SouthOLEDB(
+      configurationWithTrailingSemicolon,
+      addContentCallback,
+      southCacheRepository,
+      logger,
+      'cacheFolder'
+    );
+    const expectedConnectionString = `${configurationWithTrailingSemicolon.settings.connectionString}Password=encrypted-password;`;
+
+    await southWithTrailingSemicolon.connect();
+    expect(HTTPRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        href: `${configurationWithTrailingSemicolon.settings.agentUrl}/api/ole/${configurationWithTrailingSemicolon.id}/connect`
+      }),
+      {
+        method: 'PUT',
+        body: JSON.stringify({
+          connectionString: expectedConnectionString,
+          connectionTimeout: configurationWithTrailingSemicolon.settings.connectionTimeout
+        }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+  });
+
   it('should properly reconnect to when connection fails ', async () => {
     (HTTPRequest as jest.Mock).mockRejectedValueOnce(new Error('connection failed'));
 
@@ -201,7 +276,7 @@ describe('SouthOLEDB', () => {
       {
         method: 'PUT',
         body: JSON.stringify({
-          connectionString: configuration.settings.connectionString,
+          connectionString: connectionStringWithPassword,
           connectionTimeout: configuration.settings.connectionTimeout
         }),
         headers: {
@@ -212,6 +287,7 @@ describe('SouthOLEDB', () => {
 
     expect(HTTPRequest).toHaveBeenCalledTimes(1);
     jest.advanceTimersByTime(configuration.settings.retryInterval);
+    await jest.runOnlyPendingTimersAsync();
     expect(HTTPRequest).toHaveBeenCalledTimes(2);
   });
 
@@ -282,7 +358,7 @@ describe('SouthOLEDB', () => {
       {
         method: 'PUT',
         body: JSON.stringify({
-          connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
+          connectionString: connectionStringWithPassword,
           sql: 'query1',
           readTimeout: 1000,
           timeColumn: 'timestamp',
@@ -338,7 +414,7 @@ describe('SouthOLEDB', () => {
       {
         method: 'PUT',
         body: JSON.stringify({
-          connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
+          connectionString: connectionStringWithPassword,
           sql: 'query2',
           readTimeout: 1000,
           delimiter: 'COMMA',
@@ -428,7 +504,7 @@ describe('SouthOLEDB', () => {
       {
         method: 'PUT',
         body: JSON.stringify({
-          connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
+          connectionString: connectionStringWithPassword,
           sql: 'query1',
           readTimeout: 1000,
           timeColumn: 'timestamp',
@@ -448,6 +524,9 @@ describe('SouthOLEDB', () => {
   it('should test connection successfully', async () => {
     (HTTPRequest as jest.Mock).mockResolvedValueOnce(createMockResponse(200));
     await expect(south.testConnection()).resolves.not.toThrow();
+    expect(logger.info).toHaveBeenCalledWith(
+      'Testing OLE OIBus Agent connection on http://localhost:2224 with "Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes;Password=<secret>;"'
+    );
   });
 
   it('should test connection fail', async () => {

@@ -1054,7 +1054,8 @@
             "connection-timeout": "Connection timeout",
             "retry-interval": "Retry interval",
             "request-timeout": "Request timeout",
-            "connection-string": "Connection string"
+            "connection-string": "Connection string",
+            "password": "Password"
           },
           "opc": {
             "throttling": {
