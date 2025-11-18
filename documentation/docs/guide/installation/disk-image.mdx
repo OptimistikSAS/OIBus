@@ -34,10 +34,49 @@ Additional curl commands can be added to the installation script for initial set
 @echo off
 :: This script checks if OIBus is already installed. If not, it waits for the network, installs OIBus, waits for the service to start, and registers it.
 
+:: Path to the installation script (assumes it is in the same folder as this script)
+:: Set the path before et local
+set INSTALL_SCRIPT_PATH=%~dp0install.bat
+
+setlocal enabledelayedexpansion
+
+set USERNAME=admin
+set PASSWORD=pass
+set OIANALYTICS_URL=https://instance.optimistik.fr/
+
+:: Default values
+set n=OIBus
+set c=C:\OIBusData
+
+:PARSE_PARAMETERS
+if "%~1"=="" goto PARSE_PARAMETERS_DONE
+if "%~1"=="-n" (
+    set "n=%~2"
+    shift
+    shift
+    goto PARSE_PARAMETERS
+)
+if "%~1"=="-c" (
+    set "c=%~2"
+    shift
+    shift
+    goto PARSE_PARAMETERS
+)
+shift
+goto PARSE_PARAMETERS
+:PARSE_PARAMETERS_DONE
+
+:: Check if running as Admin
+net session >nul 2>&1
+if %errorLevel% neq 0 (
+    echo This script must be run as Administrator.
+    exit /b 1
+)
+
 :: Check if OIBus service is already installed
-sc query "OIBus" >nul 2>&1
+sc query "%n%" >nul 2>&1
 if %errorlevel% equ 0 (
-    echo OIBus service is already installed. Skipping installation.
+    echo %n% service is already installed. Skipping installation.
     goto END
 )
 
@@ -51,168 +90,87 @@ if %errorlevel% neq 0 (
 )
 echo Network service is running.
 
-:: Set the directory where OIBus data will be stored (optional, if not set, the installation script will prompt)
-set OIBUS_DATA_DIR=C:\OIBusData
+:: Create data directory if it doesn't exist
+if not exist "%c%" mkdir "%c%"
 
-:: Path to the installation script (assumes it is in the same folder as this script)
-set INSTALL_SCRIPT_PATH=%~dp0install_oibus.bat
-
-:: Call the installation script, passing the data directory as a parameter if needed
-call "%INSTALL_SCRIPT_PATH%" -c "%OIBUS_DATA_DIR%"
-
-:: Check the error level to see if the installation was successful
+:: Call the installation script, passing the data directory as a parameter
+call "%INSTALL_SCRIPT_PATH%" -c "%c%" -n "%n%"
 if %errorlevel% neq 0 (
-    echo Error: OIBus installation failed.
+    echo Error: %n% installation failed.
     exit /b %errorlevel%
 )
 
-:CHECK_SERVICE_RUNNING
 :: Wait for the OIBus service to be running
-echo Waiting for OIBus service to start...
+echo Waiting for %n% service to start...
 :WAIT_FOR_OIBUS
-for /f "tokens=3 delims=: " %%H in ('sc query "OIBus" ^| findstr "STATE"') do (
+for /f "tokens=3 delims=: " %%H in ('sc query "%n%" ^| findstr "STATE"') do (
     if /I "%%H" NEQ "RUNNING" (
         timeout /t 5 >nul
         goto WAIT_FOR_OIBUS
     )
 )
-echo OIBus service is now running.
+echo %n% service is now running.
+
+:: Wait for the OIBus web server to be up
+echo Waiting for %n% web server to be up...
+:WAIT_FOR_WEB
+curl --silent --output NUL --fail http://localhost:2223/api
+if %errorlevel% neq 0 (
+    timeout /t 5 >nul
+    goto WAIT_FOR_WEB
+)
+echo %n% web server is now up.
 
 :: Execute the curl command to create North connector
-curl --location 'http://localhost:2223//api/north?duplicate=string' \
---header 'Content-Type: application/json' \
---header 'Accept: application/json' \
---data '{
-  "name": "North OIAnalytics",
-  "type": "oianalytics",
-  "description": "",
-  "enabled": true,
-  "settings": {
-    "useOiaModule": true,
-    "timeout": 15000,
-    "compress": false
-  },
-  "caching": {
-    "archive": {
-      "retentionDuration": 0,
-      "enabled": false
-    },
-    "error": {
-      "retentionDuration": 0,
-      "retryCount": 3,
-      "retryInterval": 5000
-    },
-    "throttling": {
-      "maxNumberOfElements": 10000,
-      "maxSize": 0,
-      "runMinDelay": 200
-    },
-    "trigger": {
-      "numberOfFiles": 1,
-      "numberOfElements": 1,
-      "scanModeName": "Every minute",
-      "scanModeId": null
-    }
-  },
-  "subscriptions": [],
-  "transformers": []
-}'
+echo Creating North connector...
+curl --location --user %USERNAME%:%PASSWORD% "http://localhost:2223/api/north" ^
+--header "Content-Type: application/json" ^
+--header "Accept: application/json" ^
+--data "{\"name\": \"North OIAnalytics\", \"type\": \"oianalytics\", \"description\": \"\", \"enabled\": true, \"settings\": {\"useOiaModule\": true, \"timeout\": 15000, \"compress\": false}, \"caching\": {\"archive\": {\"retentionDuration\": 0, \"enabled\": false}, \"error\": {\"retentionDuration\": 0, \"retryCount\": 3, \"retryInterval\": 5000}, \"throttling\": {\"maxNumberOfElements\": 10000, \"maxSize\": 0, \"runMinDelay\": 200}, \"trigger\": {\"numberOfFiles\": 1, \"numberOfElements\": 1, \"scanModeName\": \"Every minute\", \"scanModeId\": null}}, \"subscriptions\": [], \"transformers\": []}"
+echo.
+if %errorlevel% neq 0 (
+    echo Error: Failed to create North connector.
+    exit /b %errorlevel%
+)
 
 :: Execute the curl command to create South connector
-curl --location 'http://localhost:2223//api/south?duplicate=string' \
---header 'Content-Type: application/json' \
---header 'Accept: application/json' \
---data '{
-  "name": "Production Data Files",
-  "type": "folder-scanner",
-  "description": "Scans production data CSV files",
-  "enabled": true,
-  "settings": {
-    "throttling": {
-      "maxReadInterval": 2203.313621917009,
-      "readDelay": 1249.091912457465,
-      "overlap": 204.89678909715536
-    },
-    "host": "127.0.0.1",
-    "port": 502,
-    "retryInterval": 10000,
-    "slaveId": 1,
-    "addressOffset": "modbus",
-    "endianness": "big-endian",
-    "swapBytesInWords": false,
-    "swapWordsInDWords": true
-  },
-  "items": []
-}'
+echo Creating South connector...
+curl --location --user %USERNAME%:%PASSWORD% "http://localhost:2223/api/south" ^
+--header "Content-Type: application/json" ^
+--header "Accept: application/json" ^
+--data "{\"name\": \"Modbus\", \"type\": \"modbus\", \"description\": \"\", \"enabled\": true, \"settings\": {\"host\": \"127.0.0.1\", \"port\": 502, \"retryInterval\": 10000, \"slaveId\": 1, \"addressOffset\": \"modbus\", \"endianness\": \"big-endian\", \"swapBytesInWords\": false, \"swapWordsInDWords\": false}, \"items\": []}"
+echo.
+if %errorlevel% neq 0 (
+    echo Error: Failed to create South connector.
+    exit /b %errorlevel%
+)
 
 :: Execute the curl command to create a scan mode
-curl --location 'http://localhost:2223//api/scan-modes' \
---header 'Content-Type: application/json' \
---header 'Accept: application/json' \
---data '{
-  "name": "Daily Backup Scan",
-  "description": "Scans for new backup data every day at midnight",
-  "cron": "0 0 * * *"
-}'
+echo Creating scan mode...
+curl --location --user %USERNAME%:%PASSWORD% "http://localhost:2223/api/scan-modes" ^
+--header "Content-Type: application/json" ^
+--header "Accept: application/json" ^
+--data "{\"name\": \"Daily Backup Scan\", \"description\": \"Scans for new backup data every day at midnight\", \"cron\": \"0 0 * * *\"}"
+echo.
+if %errorlevel% neq 0 (
+    echo Error: Failed to create scan mode.
+    exit /b %errorlevel%
+)
 
 :: Execute the curl command to register OIBus
-curl --location 'http://localhost:2223//api/oianalytics/register' \
---header 'Content-Type: application/json' \
---data '{
-    "host": "https://instance.oianalytics.com",
-    "useProxy": false,
-    "proxyUrl": null,
-    "proxyUsername": null,
-    "proxyPassword": null,
-    "acceptUnauthorized": false,
-    "commandRefreshInterval": 60,
-    "commandRetryInterval": 10,
-    "messageRetryInterval": 10,
-    "commandPermissions": {
-        "setpoint": true,
-        "testNorthConnection": true,
-        "deleteNorth": true,
-        "updateNorth": true,
-        "createNorth": true,
-        "testSouthItem": true,
-        "testSouthConnection": true,
-        "createOrUpdateSouthItemsFromCsv": true,
-        "deleteSouth": true,
-        "updateSouth": true,
-        "createSouth": true,
-        "testHistorySouthItem": true,
-        "testHistorySouthConnection": true,
-        "testHistoryNorthConnection": true,
-        "createOrUpdateHistoryItemsFromCsv": true,
-        "deleteHistoryQuery": true,
-        "updateHistoryQuery": true,
-        "createHistoryQuery": true,
-        "deleteCertificate": true,
-        "updateCertificate": true,
-        "createCertificate": true,
-        "deleteIpFilter": true,
-        "updateIpFilter": true,
-        "createIpFilter": true,
-        "deleteScanMode": true,
-        "updateScanMode": true,
-        "createScanMode": true,
-        "updateRegistrationSettings": true,
-        "updateEngineSettings": true,
-        "regenerateCipherKeys": true,
-        "restartEngine": true,
-        "updateVersion": true
-    }
-}'
-
-
+echo Registering OIBus...
+curl --location --user %USERNAME%:%PASSWORD% "http://localhost:2223/api/oianalytics/register" ^
+--header "Content-Type: application/json" ^
+--data "{\"host\": \"%HOST_URL%\", \"useProxy\": false, \"proxyUrl\": null, \"proxyUsername\": null, \"proxyPassword\": null, \"acceptUnauthorized\": false, \"commandRefreshInterval\": 60, \"commandRetryInterval\": 10, \"messageRetryInterval\": 10, \"commandPermissions\": {\"setpoint\": true, \"testNorthConnection\": true, \"deleteNorth\": true, \"updateNorth\": true, \"createNorth\": true, \"testSouthItem\": true, \"testSouthConnection\": true, \"createOrUpdateSouthItemsFromCsv\": true, \"deleteSouth\": true, \"updateSouth\": true, \"createSouth\": true, \"testHistorySouthItem\": true, \"testHistorySouthConnection\": true, \"testHistoryNorthConnection\": true, \"createOrUpdateHistoryItemsFromCsv\": true, \"deleteHistoryQuery\": true, \"updateHistoryQuery\": true, \"createHistoryQuery\": true, \"deleteCertificate\": true, \"updateCertificate\": true, \"createCertificate\": true, \"deleteIpFilter\": true, \"updateIpFilter\": true, \"createIpFilter\": true, \"deleteScanMode\": true, \"updateScanMode\": true, \"createScanMode\": true, \"updateRegistrationSettings\": true, \"updateEngineSettings\": true, \"regenerateCipherKeys\": true, \"restartEngine\": true, \"updateVersion\": true}}"
+echo.
 if %errorlevel% neq 0 (
     echo Error: Failed to register OIBus.
     exit /b %errorlevel%
 )
 
 echo OIBus registration completed successfully.
-
 :END
+
 ```
 
 :::info
