@@ -705,6 +705,7 @@ const models: TsoaRoute.Models = {
             "retryInterval": {"dataType":"double","required":true},
             "requestTimeout": {"dataType":"double","required":true},
             "connectionString": {"dataType":"string","required":true},
+            "password": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },

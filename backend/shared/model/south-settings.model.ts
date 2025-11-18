@@ -514,6 +514,7 @@ export interface SouthOLEDBSettings {
   retryInterval: number;
   requestTimeout: number;
   connectionString: string;
+  password: string | null;
 }
 
 export interface SouthOPCSettings {

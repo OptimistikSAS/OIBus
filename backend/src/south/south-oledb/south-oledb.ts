@@ -10,6 +10,7 @@ import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { HTTPRequest, ReqOptions } from '../../service/http-request.utils';
+import { encryptionService } from '../../service/encryption.service';
 
 /**
  * Class SouthOLEDB - Retrieve data from SQL databases with OLEDB driver and send them to the cache as CSV files.
@@ -32,11 +33,12 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
   override async connect(): Promise<void> {
     try {
       this.connected = false;
+      const { connectionString } = await this.buildConnectionString(this.connector.settings);
       const fetchOptions: ReqOptions = {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          connectionString: this.connector.settings.connectionString,
+          connectionString,
           connectionTimeout: this.connector.settings.connectionTimeout
         })
       };
@@ -72,9 +74,8 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
   }
 
   override async testConnection(): Promise<void> {
-    this.logger.info(
-      `Testing OLE OIBus Agent connection on ${this.connector.settings.agentUrl} with "${this.connector.settings.connectionString}"`
-    );
+    const { connectionString, logValue } = await this.buildConnectionString(this.connector.settings);
+    this.logger.info(`Testing OLE OIBus Agent connection on ${this.connector.settings.agentUrl} with "${logValue}"`);
 
     const headers: Record<string, string> = {};
     headers['Content-Type'] = 'application/json';
@@ -82,7 +83,7 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        connectionString: this.connector.settings.connectionString,
+        connectionString,
         connectionTimeout: this.connector.settings.connectionTimeout
       })
     };
@@ -173,12 +174,13 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
     const oleEndTime = referenceTimestampField ? formatInstant(endTime, referenceTimestampField) : endTime;
     const adaptedQuery = item.settings.query.replace(/@StartTime/g, `${oleStartTime}`).replace(/@EndTime/g, `${oleEndTime}`);
     logQuery(adaptedQuery, oleStartTime, oleEndTime, this.logger);
+    const { connectionString } = await this.buildConnectionString(this.connector.settings);
 
     const fetchOptions: ReqOptions = {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        connectionString: this.connector.settings.connectionString,
+        connectionString,
         sql: adaptedQuery,
         readTimeout: this.connector.settings.requestTimeout,
         timeColumn: referenceTimestampField?.fieldName,
@@ -231,5 +233,22 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
     }
 
     return updatedStartTime;
+  }
+
+  private async buildConnectionString(settings: SouthOLEDBSettings): Promise<{ connectionString: string; logValue: string }> {
+    let connectionString = settings.connectionString.trimEnd();
+    let logValue = connectionString;
+
+    if (settings.password) {
+      if (!connectionString.endsWith(';')) {
+        connectionString += ';';
+        logValue += ';';
+      }
+      const decryptedPassword = await encryptionService.decryptText(settings.password);
+      connectionString += `Password=${decryptedPassword};`;
+      logValue += 'Password=<secret>;';
+    }
+
+    return { connectionString, logValue };
   }
 }
