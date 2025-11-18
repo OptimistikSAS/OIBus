@@ -99,7 +99,7 @@ import TabItem from '@theme/TabItem';
     2. **Run the Installation Script**
     Open an **administrator terminal** in the extracted folder and run:
     ``` commandline title="Usage"
-    install.bat -c=[your-data-folder-path]
+    install.bat -c "[your-data-folder-path]"
     ```
     Replace `[your-data-folder-path]` with the actual path where you want to store OIBus data (e.g., C:\OIBusData or
     D:\OIBusData).
@@ -112,7 +112,7 @@ import TabItem from '@theme/TabItem';
 
     **Example:**
     ``` commandline title="Example with terminal outputs"
-    install.bat -c="D:\OIBusData"
+    install.bat -c "D:\OIBusData"
     > Administrator permissions required. Detecting permission...
     > Stopping OIBus service...
     > Installing OIBus as Windows service...
@@ -128,7 +128,7 @@ import TabItem from '@theme/TabItem';
     ```
 
     :::tip
-    Use `-n="Service Name"` to customize the OIBus service name. This method is useful if you need to **run multiple
+    Use `-n "Service Name"` to customize the OIBus service name. This method is useful if you need to **run multiple
     OIBus services on the same machine**.
 
     By default, the service name is OIBus.
@@ -146,7 +146,7 @@ import TabItem from '@theme/TabItem';
     ## Uninstall OIBus
     Run the following command in an **administrator terminal**:
     ```` commandline title="Example with terminal outputs"
-    uninstall.bat
+    uninstall.bat -n "OIBus"
     > Administrator permissions required. Detecting permission...
     > Stopping OIBus service...
     > Removing OIBus service...
