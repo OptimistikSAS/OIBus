@@ -1,39 +1,67 @@
+; --- Dynamic Definitions ---
+
+; 1. Handle Application Version
+#ifndef MyAppVersion
+  #define MyAppVersion "0.0.0-LOCAL"
+#endif
+
+; 2. Handle Code Signing
+#ifdef MyCertFile
+  #define EnableSigning
+#endif
+
+; --- Standard Definitions ---
 #define MyAppName "OIBus"
 #define MyAppPublisher "Optimistik SAS"
-#define MyAppURL "https://optimistik.io/oibus/"
+#define MyAppURL "https://oibus.optimistik.com/"
+#define PublisherURL "https://optimistik.com/"
+#define GitHubURL "https://github.com/OptimistikSAS/OIBus"
 #define MyDateTime GetDateTimeString('yyyy/mm/dd hh:nn:ss', '-', ':')
 
 [Setup]
-SignedUninstaller=yes
-SignTool=signtool /fd SHA256 /tr http://timestamp.comodoca.com /td SHA256 /n $q{#MyAppPublisher}$q /d $q{#MyAppName}$q /f $q{#MyCertFile}$q /p $q{#MyCertPassword}$q $f
+; --- Signing Configuration ---
+#ifdef EnableSigning
+  SignedUninstaller=yes
+  SignTool=signtool /fd SHA256 /tr http://timestamp.comodoca.com /td SHA256 /n $q{#MyAppPublisher}$q /d $q{#MyAppName}$q /f $q{#MyCertFile}$q /p $q{#MyCertPassword}$q $f
+#else
+  SignedUninstaller=no
+#endif
+
+; App Metadata
 AppId=A4DCC920-510F-4D9D-AD02-67AA402EC010
 AppName={#MyAppName}
-// MyAppVersion is set by the npm command build-win-setup on release
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
-AppPublisherURL={#MyAppURL}
-AppSupportURL=https://oibus.optimistik.com/
+AppPublisherURL={#PublisherURL}
+AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
+
+; Architecture & Paths
 ArchitecturesAllowed=x64
+ArchitecturesInstallIn64BitMode=x64
+DefaultDirName={autopf}\{#MyAppName}
+OutputDir=..\..\bin\win-setup-release
+OutputBaseFilename=oibus-setup
+
+; Settings
 Compression=lzma
-DefaultDirName=C:\Program Files\{#MyAppName}
+SolidCompression=yes
 DirExistsWarning=yes
 DisableWelcomePage=no
 DisableDirPage=no
 DisableProgramGroupPage=yes
-LicenseFile=..\..\..\LICENSE
-OutputDir=..\..\bin\win-setup-release
-OutputBaseFilename=oibus-setup
 PrivilegesRequired=admin
-SolidCompression=yes
 UsePreviousAppDir=no
 UserInfoPage=no
+
+; Visuals
 SetupIconFile=..\..\..\frontend\public\favicon.ico
 WizardImageFile=installer_oibus.bmp
 WizardSmallImageFile=installer_small.bmp
 WizardStyle=modern
 WizardSizePercent=100
 WizardResizable=no
+LicenseFile=..\..\..\LICENSE
 
 [Languages]
 Name: "en"; MessagesFile: "compiler:Default.isl"
@@ -49,187 +77,161 @@ Source: "..\..\bin\win-x64\nssm.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\bin\win-x64\oibus-launcher.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\bin\win-x64\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 
+[Registry]
+; We use the dynamic {code:GetServiceName} to create a unique registry key for this service instance
+Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Services\{code:GetServiceName}"; ValueType: string; ValueName: "DataDir"; ValueData: "{code:GetDataDir}"; Flags: uninsdeletevalue
+
 [Messages]
-WelcomeLabel2=This will install [name/ver] on your computer.%n%n%nIMPORTANT:%nInternet Explorer is NOT supported. OIBus can only be configured using an up-to-date browser, like Google Chrome, Mozilla Firefox or Microsoft Edge.
+WelcomeLabel2=This will install [name/ver] on your computer.%n%n%nIMPORTANT:%nOIBus requires a modern web browser for configuration (Chrome, Firefox, Edge, Safari, etc.). Internet Explorer is not supported.
+
+[UninstallDelete]
+Name: "{app}\install.log"; Type: files
+Name: "{app}\go.bat"; Type: files
+; We must delete the service name file used by the uninstaller
+Name: "{app}\service.name"; Type: files
+
+Name: "{app}\binaries"; Type: filesandordirs
+Name: "{app}\update"; Type: filesandordirs
+Name: "{app}\backup"; Type: filesandordirs
+Name: "{app}"; Type: dirifempty
 
 [Code]
 var
   OverwriteConfig: boolean;
   ConfExists: boolean;
-  OIBus_DataDirPage: TInputDirWizardPage;
-  AfterID: Integer;
 
-// Delete OIBusData folder
-function DeleteDataDir(DirToDelete: string): Boolean;
-var
-  CacheFolder: string;
-  LogsFolder: string;
-  CertsFolder: string;
-  SettingsFile: string;
-  CryptoFile: string;
+  // Custom Page UI Elements
+  ConfigPage: TWizardPage;
+  ServiceNameEdit: TNewEdit;
+  DataDirEdit: TNewEdit;
+
+  // Global variables to store user choices
+  FinalServiceName: String;
+  FinalDataDir: String;
+
+// --- Getter Functions for [Registry] ---
+
+function GetDataDir(Param: String): String;
 begin
-    CacheFolder := DirToDelete + '\cache\'
-    LogsFolder := DirToDelete + '\logs\'
-    CertsFolder := DirToDelete + '\certs\'
-    SettingsFile := DirToDelete + '\oibus.db'
-    CryptoFile := DirToDelete + '\crypto.db'
-    if (DirExists(CacheFolder) and not DelTree(CacheFolder, True, True, True)) then
-    begin
-      MsgBox('Error: Directory ' + CacheFolder + ' could not be removed', mbError, MB_OK)
-      Result := False
-    end
-    else if (DirExists(LogsFolder) and not DelTree(LogsFolder, True, True, True)) then
-    begin
-      MsgBox('Error: Directory ' + LogsFolder + ' could not be removed', mbError, MB_OK)
-      Result := False
-    end
-    else if (DirExists(CertsFolder) and not DelTree(CertsFolder, True, True, True)) then
-    begin
-      MsgBox('Error: Directory ' + CertsFolder + ' could not be removed', mbError, MB_OK)
-      Result := False
-    end
-    else if not DelTree(SettingsFile, False, True, False) then
-    begin
-      MsgBox('Error: File ' + SettingsFile + ' could not be removed', mbError, MB_OK)
-      Result := False
-    end
-    else if not DelTree(CryptoFile, False, True, False) then
-        begin
-          MsgBox('Error: File ' + CryptoFile + ' could not be removed', mbError, MB_OK)
-          Result := False
-        end
-    else
-    begin
-      Sleep(400)
-      Result := True
-    end
+  Result := FinalDataDir;
 end;
 
-// Delete custom-made registry-entries
-function DeleteMyRegistry: Boolean;
+function GetServiceName(Param: String): String;
 begin
-  if RegValueExists(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Services\OIBus', 'DataDir') then
-  begin
-    if not RegDeleteValue(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Services\OIBus', 'DataDir') then
-      Result := False
-    else
-      Result := True
-  end
-  else
-    Result := True
+  Result := FinalServiceName;
 end;
 
-// Create (or overwrite existing) OIBus_Data directory
-function CreateDataDir: Boolean;
-var
-  DirCreated: Boolean;
-begin
-  Result := True;
-  if not DirExists(OIBus_DataDirPage.Values[0]) then
-  begin
-    DirCreated := CreateDir(OIBus_DataDirPage.Values[0])
-    if not DirCreated then
-    begin
-      MsgBox('Error: Directory ' + OIBus_DataDirPage.Values[0] + ' could not be created', mbError, MB_OK)
-      Result := False;
-    end
-  end
-  else
-  begin
-    if (OverwriteConfig and DirExists(OIBus_DataDirPage.Values[0])) then
-    begin
-      if not DeleteDataDir(OIBus_DataDirPage.Values[0]) then
-        Result := False
-    end;
-  end;
-end;
+// --- Helper Functions ---
 
-// Execute commands with parameters (and eventual redirection of return-value) ==> cf. InstallProgram
 function ExecCmd(Prog: string; Params: string; WorkingDir: string): Boolean;
 var
   ResultCode: Integer;
-  ExecReturn: Boolean;
 begin
-  ExecReturn := ShellExec('', Prog, Params, WorkingDir, SW_HIDE, ewWaitUntilTerminated, ResultCode)
-  if ExecReturn then
+  if ShellExec('', Prog, Params, WorkingDir, SW_HIDE, ewWaitUntilTerminated, ResultCode) then
     Result := True
   else
   begin
-    MsgBox('ERROR: Failed to execute :' + Prog + Params, mbError, MB_OK)
-    MsgBox('Error-message : ' + SysErrorMessage(ResultCode), mbError, MB_OK)
+    MsgBox('ERROR: Failed to execute: ' + Prog + ' ' + Params + #13#10 + 'Error-message: ' + SysErrorMessage(ResultCode), mbError, MB_OK);
     Result := False;
   end;
 end;
 
-// Service installation
-function InstallProgram(): Boolean;
+// --- UI Logic (Service Name + Data Dir Page) ---
+
+procedure OnBrowseButtonClick(Sender: TObject);
 var
-  LogPath: string;
+  Dir: String;
 begin
-  LogPath := ExpandConstant('{app}') + '\install.log';
-  if not SaveStringToFile(LogPath, '{#MyDateTime}' + #13#10, True) then
-    Result := False
-  else if not SaveStringToFile(LogPath, 'nssm.exe stop OIBus >nul 2>&1 "' + ExpandConstant('{app}') + '"' + #13#10, True) then
-    Result := False
-  else if not ExecCmd('nssm.exe', 'stop OIBus >nul 2>&1', ExpandConstant('{app}')) then
-    Result := False
-  else if not SaveStringToFile(LogPath, 'nssm.exe install OIBus "' + ExpandConstant('{app}') + '\oibus-launcher.exe" "--config ""' + OIBus_DataDirPage.Values[0] + '"""' + #13#10, True) then
-    Result := False
-  else  if not ExecCmd('nssm.exe', 'install OIBus "' + ExpandConstant('{app}') + '\oibus-launcher.exe" "--config ""' + OIBus_DataDirPage.Values[0] + '"""', ExpandConstant('{app}')) then
-    Result := False
-  else if not SaveStringToFile(LogPath, 'nssm.exe set OIBus Application "' + ExpandConstant('{app}') + '\oibus-launcher.exe' + #13#10, True) then
-    Result := False
-  else  if not ExecCmd('nssm.exe', 'set OIBus Application "' + ExpandConstant('{app}') + '\oibus-launcher.exe', ExpandConstant('{app}')) then
-    Result := False
-  else if not SaveStringToFile(LogPath, 'nssm.exe set OIBus AppParameters --config "' + OIBus_DataDirPage.Values[0] + '"' + #13#10, True) then
-    Result := False
-  else  if not ExecCmd('nssm.exe', 'set OIBus AppParameters "--config "' + OIBus_DataDirPage.Values[0] + '"', ExpandConstant('{app}')) then
-    Result := False
-  else if not SaveStringToFile(LogPath, 'nssm.exe set OIBus AppDirectory "' + ExpandConstant('{app}') + '"' + #13#10, True) then
-    Result := False
-  else if not ExecCmd('nssm.exe', 'set OIBus AppDirectory "' + ExpandConstant('{app}') + '"', ExpandConstant('{app}')) then
-    Result := False
-  else if not SaveStringToFile(LogPath, 'nssm.exe set OIBus AppNoConsole 1' + #13#10, True) then
-    Result := False
-  else if not ExecCmd('nssm.exe', 'set OIBus AppNoConsole 1', ExpandConstant('{app}')) then
-    Result := False
-  else if not SaveStringToFile(LogPath, 'nssm.exe start OIBus "' + ExpandConstant('{app}') + '"' + #13#10, True) then
-    Result := False
-  else if not ExecCmd('nssm.exe', 'start OIBus', ExpandConstant('{app}')) then
-    Result := False
-  else
-    Result := True;
+  Dir := DataDirEdit.Text;
+  if BrowseForFolder('Select OIBus Data Directory', Dir, True) then
+  begin
+    DataDirEdit.Text := Dir;
+  end;
 end;
 
-// Generate go.bat file used to run OIBus from a terminal window
-function CreateLauncherFile: Boolean;
+procedure InitializeWizard();
 var
-  FileContent: ansistring;
-  ConfigFilePath: string;
-begin;
-    ConfigFilePath := OIBus_DataDirPage.Values[0];
-    FileContent := 'echo Stopping OIBus service... You can restart it from the Windows Service Manager' + #13#10
-          + 'nssm.exe stop OIBus' + #13#10
-          + '"' + ExpandConstant('{app}') + '\oibus-launcher.exe" --config "' + ConfigFilePath + '"'
-    if not SaveStringToFile(ExpandConstant('{app}') + '\go.bat', FileContent, False) then
-      Result := False
-    else
-      Result := True
+  lblService, lblData: TNewStaticText;
+  btnBrowse: TButton;
+begin
+  // Create the Custom Page
+  ConfigPage := CreateCustomPage(wpSelectTasks, 'Service Configuration', 'Configure the Windows Service and Data Storage');
+
+  // 1. Service Name Section
+  lblService := TNewStaticText.Create(ConfigPage);
+  lblService.Parent := ConfigPage.Surface;
+  lblService.Caption := 'Service Name (Unique name for this instance):';
+  lblService.Top := 0;
+  lblService.Left := 0;
+  lblService.Width := ConfigPage.SurfaceWidth;
+
+  ServiceNameEdit := TNewEdit.Create(ConfigPage);
+  ServiceNameEdit.Parent := ConfigPage.Surface;
+  ServiceNameEdit.Text := 'OIBus'; // Default Value
+  ServiceNameEdit.Top := lblService.Top + lblService.Height + ScaleY(8);
+  ServiceNameEdit.Left := 0;
+  ServiceNameEdit.Width := ConfigPage.SurfaceWidth;
+
+  // 2. Data Directory Section
+  lblData := TNewStaticText.Create(ConfigPage);
+  lblData.Parent := ConfigPage.Surface;
+  lblData.Caption := 'Data Directory (Where configuration and logs are stored):';
+  lblData.Top := ServiceNameEdit.Top + ServiceNameEdit.Height + ScaleY(20);
+  lblData.Left := 0;
+  lblData.Width := ConfigPage.SurfaceWidth;
+
+  btnBrowse := TButton.Create(ConfigPage);
+  btnBrowse.Parent := ConfigPage.Surface;
+  btnBrowse.Caption := 'Browse...';
+  btnBrowse.Width := ScaleX(75);
+  btnBrowse.Height := ScaleY(23);
+  btnBrowse.Left := ConfigPage.SurfaceWidth - btnBrowse.Width; // Align right
+  btnBrowse.Top := lblData.Top + lblData.Height + ScaleY(8);
+  btnBrowse.OnClick := @OnBrowseButtonClick;
+
+  DataDirEdit := TNewEdit.Create(ConfigPage);
+  DataDirEdit.Parent := ConfigPage.Surface;
+  DataDirEdit.Text := 'C:\OIBusData'; // Default Value
+  DataDirEdit.Top := btnBrowse.Top;
+  DataDirEdit.Left := 0;
+  DataDirEdit.Width := ConfigPage.SurfaceWidth - btnBrowse.Width - ScaleX(10);
 end;
 
-// Checking user-input
+// --- Validation & Overwrite Check ---
+
 function NextButtonClick(CurPageID: Integer): Boolean;
 var
   SettingsFile: string;
 begin
   Result := True;
-  SettingsFile := OIBus_DataDirPage.Values[0] + '\oibus.db';
-  if (CurPageID = OIBus_DataDirPage.ID) then
+
+  if (CurPageID = ConfigPage.ID) then
   begin
+    // 1. Capture values
+    FinalServiceName := ServiceNameEdit.Text;
+    FinalDataDir := DataDirEdit.Text;
+
+    // 2. Validation
+    if Length(FinalServiceName) = 0 then
+    begin
+      MsgBox('You must enter a Service Name.', mbError, MB_OK);
+      Result := False;
+      Exit;
+    end;
+
+    if Length(FinalDataDir) = 0 then
+    begin
+      MsgBox('You must enter a Data Directory.', mbError, MB_OK);
+      Result := False;
+      Exit;
+    end;
+
+    // 3. Overwrite Check
+    SettingsFile := AddBackslash(FinalDataDir) + 'oibus.db';
     if FileExists(SettingsFile) then
     begin
       ConfExists := True;
-      if MsgBox('An configuration file was found at ' + OIBus_DataDirPage.Values[0] + '. Do you want to use it?', mbInformation, MB_YESNO) = IDNO then
+      if MsgBox('A configuration file was found at ' + FinalDataDir + '. Do you want to use it?', mbInformation, MB_YESNO) = IDNO then
       begin
         if MsgBox('WARNING: Overwriting the current setup will delete all credentials, logs and data.' + #13#10 + 'Are you sure you want to proceed?', mbInformation, MB_YESNO) = IDNO then
           OverwriteConfig := False
@@ -242,113 +244,184 @@ begin
   end;
 end;
 
-function StopProgram(): Boolean;
+// --- Installation Logic ---
+
+function UpdateReadyMemo(Space, NewLine, MemoUserInfoInfo, MemoDirInfo, MemoTypeInfo, MemoComponentsInfo, MemoGroupInfo, MemoTasksInfo: String): String;
+var
+  S: String;
 begin
-  if not ExecCmd(ExpandConstant('{sys}') + '\sc.exe', 'stop OIBus', ExpandConstant('{app}')) then
-    Result := False
-  else
-    begin
-      Result := True
-      Sleep(400)
-    end
+  S := '';
+
+  // Add standard Destination Directory info
+  if MemoDirInfo <> '' then
+    S := S + MemoDirInfo + NewLine + NewLine;
+
+  // Add our Custom Service Configuration info
+  S := S + 'Service Configuration:' + NewLine;
+  S := S + Space + 'Service Name: ' + FinalServiceName + NewLine;
+  S := S + Space + 'Data Directory: ' + FinalDataDir + NewLine;
+
+  Result := S;
 end;
+
+function InstallProgram(): Boolean;
+var
+  LogPath, AppDir, NssmPath, LauncherPath: string;
+begin
+  Result := False;
+  AppDir := ExpandConstant('{app}');
+  NssmPath := AppDir + '\nssm.exe';
+  LauncherPath := AppDir + '\oibus-launcher.exe';
+  LogPath := AppDir + '\install.log';
+
+  SaveStringToFile(LogPath, '{#MyDateTime}' + #13#10, True);
+
+  // 1. Stop (Safety check)
+  ExecCmd(NssmPath, 'stop "' + FinalServiceName + '"', AppDir);
+
+  // 2. Install Service with Dynamic Name
+  if not ExecCmd(NssmPath, 'install "' + FinalServiceName + '" "' + LauncherPath + '" "--config ""' + FinalDataDir + '"""', AppDir) then Exit;
+
+  // 3. Configure Service
+  ExecCmd(NssmPath, 'set "' + FinalServiceName + '" DisplayName "' + FinalServiceName + ' (OIBus Collector)"', AppDir);
+  if not ExecCmd(NssmPath, 'set "' + FinalServiceName + '" Application "' + LauncherPath + '"', AppDir) then Exit;
+  if not ExecCmd(NssmPath, 'set "' + FinalServiceName + '" AppParameters "--config ""' + FinalDataDir + '"""', AppDir) then Exit;
+  if not ExecCmd(NssmPath, 'set "' + FinalServiceName + '" AppDirectory "' + AppDir + '"', AppDir) then Exit;
+
+  ExecCmd(NssmPath, 'set "' + FinalServiceName + '" AppNoConsole 1', AppDir);
+
+  // 4. Start Service
+  if not ExecCmd(NssmPath, 'start "' + FinalServiceName + '"', AppDir) then
+  begin
+     MsgBox('Warning: The OIBus service failed to start automatically. Please try starting it from Windows Services.', mbError, MB_OK);
+  end;
+
+  Result := True;
+end;
+
+function CreateLauncherFile: Boolean;
+var
+  FileContent: string;
+begin;
+    FileContent := '@echo off' + #13#10
+          + 'echo Stopping ' + FinalServiceName + ' service...' + #13#10
+          + 'nssm.exe stop "' + FinalServiceName + '"' + #13#10
+          + '"' + ExpandConstant('{app}') + '\oibus-launcher.exe" --config "' + FinalDataDir + '"' + #13#10
+          + 'pause';
+    Result := SaveStringToFile(ExpandConstant('{app}') + '\go.bat', FileContent, False);
+end;
+
+function DeleteDataDir(DirToDelete: string): Boolean;
+var
+  CacheFolder, LogsFolder, CertsFolder, SettingsFile, CryptoFile: string;
+begin
+    CacheFolder := AddBackslash(DirToDelete) + 'cache';
+    LogsFolder := AddBackslash(DirToDelete) + 'logs';
+    CertsFolder := AddBackslash(DirToDelete) + 'certs';
+    SettingsFile := AddBackslash(DirToDelete) + 'oibus.db';
+    CryptoFile := AddBackslash(DirToDelete) + 'crypto.db';
+
+    if DirExists(CacheFolder) then DelTree(CacheFolder, True, True, True);
+    if DirExists(LogsFolder) then DelTree(LogsFolder, True, True, True);
+    if DirExists(CertsFolder) then DelTree(CertsFolder, True, True, True);
+    if FileExists(SettingsFile) then DeleteFile(SettingsFile);
+    if FileExists(CryptoFile) then DeleteFile(CryptoFile);
+    Result := True;
+end;
+
+function CreateDataDir: Boolean;
+begin
+  Result := True;
+  if (OverwriteConfig and DirExists(FinalDataDir)) then
+  begin
+     DeleteDataDir(FinalDataDir);
+  end;
+
+  if not DirExists(FinalDataDir) then
+    if not ForceDirectories(FinalDataDir) then Result := False;
+end;
+
+// --- Step Change Events ---
 
 procedure CurStepChanged(CurStep: TSetupStep);
 var
-  Dir: string;
+  LegacySvcName: String;
+  LegacySvcNameAnsi: AnsiString;
 begin
   if CurStep = ssInstall then
   begin
-      if RegValueExists(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Services\OIBus', 'ImagePath') then
-      begin
-        if RegQueryStringValue(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Services\OIBus', 'ImagePath', Dir) then
+     // Initialize default
+     LegacySvcName := 'OIBus';
+
+     // Try to load existing name if available
+     if FileExists(ExpandConstant('{app}\service.name')) then
+     begin
+        // Load into AnsiString buffer first
+        if LoadStringFromFile(ExpandConstant('{app}\service.name'), LegacySvcNameAnsi) then
         begin
-          ExecCmd(ExpandConstant('{sys}') + '\sc.exe', 'stop OIBus', Dir + '\..\')
-          Sleep(400);
+            LegacySvcName := String(LegacySvcNameAnsi);
         end;
-      end;
+     end;
+
+     ExecCmd(ExpandConstant('{cmd}'), '/C "sc.exe stop "' + LegacySvcName + '" >nul 2>&1"', '');
+     Sleep(1000);
   end;
+
   if CurStep = ssPostInstall then
   begin
-    // 1# Creating/overwriting OIBusData
+    // Save the service name for the Uninstaller!
+    SaveStringToFile(ExpandConstant('{app}\service.name'), FinalServiceName, False);
+
     if not CreateDataDir then
-      MsgBox('ERROR : OIBus data directory Setup failed when creating data directory.', mbCriticalError, MB_OK)
+      MsgBox('ERROR : OIBus data directory Setup failed.', mbCriticalError, MB_OK)
     else begin
-      // 2# Saving OIBusData folder-path to registry for later use
-      if not RegWriteStringValue(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Services\OIBus', 'DataDir', OIBus_DataDirPage.Values[0]) then
-      begin
-        MsgBox('ERROR : could not write in registry ; Setup failed.', mbError, MB_OK)
-        DeleteMyRegistry
-      end
-      // 3# creating go.bat file
-      else if not CreateLauncherFile() then
-      begin
-        MsgBox('ERROR : Launcher file creation failed', mbCriticalError, MB_OK);
-        DeleteMyRegistry
-      end
-      // 4# executing install related commands
+      if not CreateLauncherFile() then
+        MsgBox('ERROR : Launcher file creation failed', mbCriticalError, MB_OK)
       else if not InstallProgram() then
-      begin
-        MsgBox('ERROR : Installation has failed', mbCriticalError, MB_OK)
-        DeleteMyRegistry;
-      end;
+        MsgBox('ERROR : Installation has failed', mbCriticalError, MB_OK);
     end;
   end;
 end;
 
-function InitializeSetup: Boolean;
-begin
-  OverwriteConfig := False;
-  ConfExists := False;
-  Result := True;
-end;
-
-procedure InitializeWizard();
-begin
-  AfterID := wpSelectTasks;
-  // Page for user input : OIBus_Data folder-path
-  OIBus_DataDirPage := CreateInputDirPage(AfterID, 'Select OIBus data-directory', 'Where do you want to save your OIBus-related data (configuration, cache, logs...) ?', '', False, 'OIBusData');
-  OIBus_DataDirPage.Add('&To continue, click Next. If you would like to select a different folder, click Browse.');
-  OIBus_DataDirPage.Values[0] := 'C:\OIBusData\';
-  AfterID := OIBus_DataDirPage.ID;
-end;
+// --- Uninstallation Logic ---
 
 procedure CurUninstallStepChanged(RunStep: TUninstallStep);
 var
-  DirToDelete: string;
+  DirToDelete, SvcName: string;
+  ServiceNameFile: string;
+  SvcNameAnsi: AnsiString;
 begin
   if RunStep = usUninstall then
   begin
-    if not StopProgram() then
-      MsgBox('ERROR : OIBus could not be stop', mbCriticalError, MB_OK)
-    else
+    // 1. Determine Service Name
+    SvcName := 'OIBus'; // Fallback default
+
+    ServiceNameFile := ExpandConstant('{app}\service.name');
+    if FileExists(ServiceNameFile) then
     begin
-      if MsgBox('Do you wish to remove all OIBus data (cache, logs...)? All data, credentials and logs about your current OIBus will be permanently erased.', mbInformation, MB_YESNO) = IDYES then
+      // Load into AnsiString buffer first
+      if LoadStringFromFile(ServiceNameFile, SvcNameAnsi) then
       begin
-        if RegQueryStringValue(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Services\OIBus', 'DataDir', DirToDelete) then
-        begin
-          DeleteDataDir(DirToDelete)
-          RemoveDir(DirToDelete)
-        end
-        else
-          MsgBox('ERROR : Could not read OIBus DataDir registry', mbCriticalError, MB_OK);
-        ExecCmd(ExpandConstant('{sys}') + '\sc.exe', 'stop OIBus >nul 2>&1', ExpandConstant('{app}'));
-        ExecCmd(ExpandConstant('{sys}') + '\sc.exe', 'delete OIBus >nul 2>&1', ExpandConstant('{app}'));
-      end
-      else
-        ExecCmd(ExpandConstant('{sys}') + '\sc.exe', 'stop OIBus >nul 2>&1', ExpandConstant('{app}'));
-        ExecCmd(ExpandConstant('{sys}') + '\sc.exe', 'delete OIBus >nul 2>&1', ExpandConstant('{app}'));
-    end
-  end
+         SvcName := String(SvcNameAnsi);
+      end;
+    end;
+
+    // 2. Stop Service
+    ExecCmd(ExpandConstant('{cmd}'), '/C "sc.exe stop "' + SvcName + '" >nul 2>&1"', '');
+    Sleep(1000);
+
+    // 3. Data Removal
+    if MsgBox('Do you wish to remove all data for service "' + SvcName + '" (cache, logs...)?', mbInformation, MB_YESNO) = IDYES then
+    begin
+      // Look up data dir in the specific registry key for this service
+      if RegQueryStringValue(HKLM, 'SYSTEM\CurrentControlSet\Services\' + SvcName, 'DataDir', DirToDelete) then
+      begin
+        DeleteDataDir(DirToDelete);
+        RemoveDir(DirToDelete);
+      end;
+    end;
+
+    // 4. Delete Service
+    ExecCmd(ExpandConstant('{cmd}'), '/C "sc.exe delete "' + SvcName + '" >nul 2>&1"', '');
+  end;
 end;
-
-
-[UninstallDelete]
-Name: {app}\LICENSE; Type: files
-Name: {app}\nssm.exe; Type: files
-Name: {app}\install.log; Type: files
-Name: {app}\go.bat; Type: files
-Name: {app}\binaries; Type: filesandordirs
-Name: {app}\update; Type: filesandordirs
-Name: {app}\backup; Type: filesandordirs
-Name: {app}; Type: dirifempty
