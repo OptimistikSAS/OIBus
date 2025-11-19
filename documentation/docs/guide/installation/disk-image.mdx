@@ -30,6 +30,9 @@ Additional curl commands can be added to the installation script for initial set
 
 ## Sample Installation Script
 
+The following script automates the installation, startup, and registration of OIBus. The `OIANALYTICS_URL` can be
+customized to point to your OIAnalytics instance. If you don’t use OIAnalytics, you can omit the registration step.
+
 ```batch
 @echo off
 :: This script checks if OIBus is already installed. If not, it waits for the network, installs OIBus, waits for the service to start, and registers it.
@@ -126,7 +129,7 @@ echo Creating North connector...
 curl --location --user %USERNAME%:%PASSWORD% "http://localhost:2223/api/north" ^
 --header "Content-Type: application/json" ^
 --header "Accept: application/json" ^
---data "{\"name\": \"North OIAnalytics\", \"type\": \"oianalytics\", \"description\": \"\", \"enabled\": true, \"settings\": {\"useOiaModule\": true, \"timeout\": 15000, \"compress\": false}, \"caching\": {\"archive\": {\"retentionDuration\": 0, \"enabled\": false}, \"error\": {\"retentionDuration\": 0, \"retryCount\": 3, \"retryInterval\": 5000}, \"throttling\": {\"maxNumberOfElements\": 10000, \"maxSize\": 0, \"runMinDelay\": 200}, \"trigger\": {\"numberOfFiles\": 1, \"numberOfElements\": 1, \"scanModeName\": \"Every minute\", \"scanModeId\": null}}, \"subscriptions\": [], \"transformers\": []}"
+--data "{\"name\": \"North OIAnalytics\", \"type\": \"oianalytics\", \"description\": \"\", \"enabled\": true, \"settings\": {\"useOiaModule\": true, \"timeout\": 15000, \"compress\": false}, \"caching\": {\"archive\": {\"retentionDuration\": 0, \"enabled\": false}, \"error\": {\"retentionDuration\": 0, \"retryCount\": 3, \"retryInterval\": 5000}, \"throttling\": {\"maxNumberOfElements\": 10000, \"maxSize\": 0, \"runMinDelay\": 200}, \"trigger\": {\"numberOfFiles\": 1, \"numberOfElements\": 1, \"scanModeName\": \"Every minute\", \"scanModeId\": \"\"}}, \"subscriptions\": [], \"transformers\": []}"
 echo.
 if %errorlevel% neq 0 (
     echo Error: Failed to create North connector.
@@ -161,14 +164,13 @@ if %errorlevel% neq 0 (
 echo Registering OIBus...
 curl --location --user %USERNAME%:%PASSWORD% "http://localhost:2223/api/oianalytics/register" ^
 --header "Content-Type: application/json" ^
---data "{\"host\": \"%HOST_URL%\", \"useProxy\": false, \"proxyUrl\": null, \"proxyUsername\": null, \"proxyPassword\": null, \"acceptUnauthorized\": false, \"commandRefreshInterval\": 60, \"commandRetryInterval\": 10, \"messageRetryInterval\": 10, \"commandPermissions\": {\"setpoint\": true, \"testNorthConnection\": true, \"deleteNorth\": true, \"updateNorth\": true, \"createNorth\": true, \"testSouthItem\": true, \"testSouthConnection\": true, \"createOrUpdateSouthItemsFromCsv\": true, \"deleteSouth\": true, \"updateSouth\": true, \"createSouth\": true, \"testHistorySouthItem\": true, \"testHistorySouthConnection\": true, \"testHistoryNorthConnection\": true, \"createOrUpdateHistoryItemsFromCsv\": true, \"deleteHistoryQuery\": true, \"updateHistoryQuery\": true, \"createHistoryQuery\": true, \"deleteCertificate\": true, \"updateCertificate\": true, \"createCertificate\": true, \"deleteIpFilter\": true, \"updateIpFilter\": true, \"createIpFilter\": true, \"deleteScanMode\": true, \"updateScanMode\": true, \"createScanMode\": true, \"updateRegistrationSettings\": true, \"updateEngineSettings\": true, \"regenerateCipherKeys\": true, \"restartEngine\": true, \"updateVersion\": true}}"
+--data "{\"host\": \"%OIANALYTICS_URL%\", \"useProxy\": false, \"proxyUrl\": \"\", \"proxyUsername\": \"\", \"proxyPassword\": \"\", \"acceptUnauthorized\": false, \"commandRefreshInterval\": 60, \"commandRetryInterval\": 10, \"messageRetryInterval\": 10, \"commandPermissions\": {\"setpoint\": true, \"testNorthConnection\": true, \"deleteNorth\": true, \"updateNorth\": true, \"createNorth\": true, \"testSouthItem\": true, \"testSouthConnection\": true, \"createOrUpdateSouthItemsFromCsv\": true, \"deleteSouth\": true, \"updateSouth\": true, \"createSouth\": true, \"testHistorySouthItem\": true, \"testHistorySouthConnection\": true, \"testHistoryNorthConnection\": true, \"createOrUpdateHistoryItemsFromCsv\": true, \"deleteHistoryQuery\": true, \"updateHistoryQuery\": true, \"createHistoryQuery\": true, \"deleteCertificate\": true, \"updateCertificate\": true, \"createCertificate\": true, \"deleteIpFilter\": true, \"updateIpFilter\": true, \"createIpFilter\": true, \"deleteScanMode\": true, \"updateScanMode\": true, \"createScanMode\": true, \"updateRegistrationSettings\": true, \"updateEngineSettings\": true, \"regenerateCipherKeys\": true, \"restartEngine\": true, \"updateVersion\": true}}"
 echo.
 if %errorlevel% neq 0 (
     echo Error: Failed to register OIBus.
     exit /b %errorlevel%
 )
 
-echo OIBus registration completed successfully.
 :END
 
 ```
@@ -176,3 +178,9 @@ echo OIBus registration completed successfully.
 :::info
 For a complete list of available endpoints, visit the [API documentation page](../../api/index.mdx).
 :::
+
+### Usage
+
+```batch
+.\mass-install.bat -n "OIBus" -c "C:\OIBusData"
+```
