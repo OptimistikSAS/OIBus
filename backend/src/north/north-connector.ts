@@ -423,6 +423,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     );
     this.cacheService.addCacheContentToQueue({ metadataFilename, metadata });
     this.metricsEvent.emit('cache-content-size', fileStat.size);
+    this.logCacheState(metadata);
   }
 
   isCacheEmpty(): boolean {
@@ -562,4 +563,27 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   abstract handleContent(cacheMetadata: CacheMetadata): Promise<void>;
 
   abstract supportedTypes(): Array<string>;
+
+  private logCacheState(metadata: CacheMetadata): void {
+    const cacheSnapshot = {
+      cacheSizeBytes: this.cacheSize.cacheSize,
+      errorSizeBytes: this.cacheSize.errorSize,
+      archiveSizeBytes: this.cacheSize.archiveSize,
+      queuedElements: this.cacheService.getNumberOfElementsInQueue(),
+      queuedRawFiles: this.cacheService.getNumberOfRawFilesInQueue()
+    };
+
+    this.logger.debug(
+      {
+        cacheState: cacheSnapshot,
+        lastAddedContent: {
+          contentType: metadata.contentType,
+          numberOfElement: metadata.numberOfElement,
+          contentSize: metadata.contentSize,
+          source: metadata.source
+        }
+      },
+      `Cache content added: ${cacheSnapshot.queuedElements} elements across ${cacheSnapshot.queuedRawFiles} file(s)`
+    );
+  }
 }
