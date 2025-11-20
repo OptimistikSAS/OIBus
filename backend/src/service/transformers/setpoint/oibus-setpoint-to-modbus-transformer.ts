@@ -75,14 +75,14 @@ export default class OIBusSetpointToModbusTransformer extends OIBusTransformer {
         {
           type: 'array',
           key: 'mapping',
-          translationKey: 'configuration.oibus.manifest.transformers.mapping.title',
+          translationKey: 'configuration.oibus.manifest.transformers.setpoint-to-modbus.mapping.title',
           paginate: true,
           numberOfElementPerPage: 20,
           validators: [],
           rootAttribute: {
             type: 'object',
             key: 'item',
-            translationKey: 'configuration.oibus.manifest.transformers.mapping.title',
+            translationKey: 'configuration.oibus.manifest.transformers.setpoint-to-modbus.mapping.title',
             displayProperties: {
               visible: true,
               wrapInBox: false
@@ -93,7 +93,7 @@ export default class OIBusSetpointToModbusTransformer extends OIBusTransformer {
               {
                 type: 'string',
                 key: 'reference',
-                translationKey: 'configuration.oibus.manifest.transformers.mapping.reference',
+                translationKey: 'configuration.oibus.manifest.transformers.setpoint-to-modbus.mapping.reference',
                 defaultValue: null,
                 validators: [
                   {
@@ -110,7 +110,7 @@ export default class OIBusSetpointToModbusTransformer extends OIBusTransformer {
               {
                 type: 'string',
                 key: 'address',
-                translationKey: 'configuration.oibus.manifest.transformers.mapping.modbus.address',
+                translationKey: 'configuration.oibus.manifest.transformers.setpoint-to-modbus.mapping.address',
                 defaultValue: null,
                 validators: [
                   {
@@ -127,7 +127,7 @@ export default class OIBusSetpointToModbusTransformer extends OIBusTransformer {
               {
                 type: 'string-select',
                 key: 'modbusType',
-                translationKey: 'configuration.oibus.manifest.transformers.mapping.modbus.modbus-type',
+                translationKey: 'configuration.oibus.manifest.transformers.setpoint-to-modbus.mapping.modbus-type',
                 defaultValue: 'register',
                 selectableValues: ['coil', 'register'],
                 validators: [

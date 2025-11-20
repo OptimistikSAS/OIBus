@@ -874,22 +874,74 @@
             "timestamp-format": "Timestamp output format",
             "timezone": "Output timezone"
           },
-          "mapping": {
-            "title": "Mapping table",
-            "point-id": "Point ID (Reference)",
-            "reference": "Reference",
-            "mqtt": {
-              "topic": "MQTT Topic"
-            },
-            "modbus": {
+          "time-values-to-modbus": {
+            "mapping": {
+              "title": "Mapping table",
+              "point-id": "Point ID (Reference)",
               "address": "Modbus address",
               "modbus-type": {
                 "title": "Modbus type",
                 "coil": "Coil",
                 "register": "Register"
               }
-            },
-            "opcua": {
+            }
+          },
+          "time-values-to-mqtt": {
+            "mapping": {
+              "title": "Mapping table",
+              "point-id": "Point ID (Reference)",
+              "topic": "MQTT Topic"
+            }
+          },
+          "time-values-to-opcua": {
+            "mapping": {
+              "title": "Mapping table",
+              "point-id": "Point ID (Reference)",
+              "node-id": "OPCUA Node ID",
+              "data-type": {
+                "title": "Data type",
+                "boolean": "Boolean",
+                "s-byte": "SByte",
+                "byte": "Byte",
+                "int16": "Int16",
+                "uint16": "UInt16",
+                "int32": "Int32",
+                "uint32": "UInt32",
+                "int64": "Int64",
+                "uint64": "UInt64",
+                "float": "Float",
+                "double": "Double",
+                "string": "String",
+                "date-time": "Date Time"
+              }
+            }
+          },
+          "setpoint-to-modbus": {
+            "mapping": {
+              "title": "Mapping table",
+              "point-id": "Point ID (Reference)",
+              "reference": "Reference",
+              "address": "Modbus address",
+              "modbus-type": {
+                "title": "Modbus type",
+                "coil": "Coil",
+                "register": "Register"
+              }
+            }
+          },
+          "setpoint-to-mqtt": {
+            "mapping": {
+              "title": "Mapping table",
+              "point-id": "Point ID (Reference)",
+              "reference": "Reference",
+              "topic": "MQTT Topic"
+            }
+          },
+          "setpoint-to-opcua": {
+            "mapping": {
+              "title": "Mapping table",
+              "point-id": "Point ID (Reference)",
+              "reference": "Reference",
               "node-id": "OPCUA Node ID",
               "data-type": {
                 "title": "Data type",

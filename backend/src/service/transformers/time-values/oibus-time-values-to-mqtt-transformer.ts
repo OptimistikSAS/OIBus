@@ -73,14 +73,14 @@ export default class OIBusTimeValuesToMQTTTransformer extends OIBusTransformer {
         {
           type: 'array',
           key: 'mapping',
-          translationKey: 'configuration.oibus.manifest.transformers.mapping.title',
+          translationKey: 'configuration.oibus.manifest.transformers.time-values-to-mqtt.mapping.title',
           paginate: true,
           numberOfElementPerPage: 20,
           validators: [],
           rootAttribute: {
             type: 'object',
             key: 'item',
-            translationKey: 'configuration.oibus.manifest.transformers.mapping.title',
+            translationKey: 'configuration.oibus.manifest.transformers.time-values-to-mqtt.mapping.title',
             displayProperties: {
               visible: true,
               wrapInBox: false
@@ -91,7 +91,7 @@ export default class OIBusTimeValuesToMQTTTransformer extends OIBusTransformer {
               {
                 type: 'string',
                 key: 'pointId',
-                translationKey: 'configuration.oibus.manifest.transformers.mapping.point-id',
+                translationKey: 'configuration.oibus.manifest.transformers.time-values-to-mqtt.mapping.point-id',
                 defaultValue: null,
                 validators: [
                   {
@@ -101,14 +101,14 @@ export default class OIBusTimeValuesToMQTTTransformer extends OIBusTransformer {
                 ],
                 displayProperties: {
                   row: 0,
-                  columns: 4,
+                  columns: 6,
                   displayInViewMode: true
                 }
               },
               {
                 type: 'string',
                 key: 'topic',
-                translationKey: 'configuration.oibus.manifest.transformers.mapping.mqtt.topic',
+                translationKey: 'configuration.oibus.manifest.transformers.time-values-to-mqtt.mapping.topic',
                 defaultValue: null,
                 validators: [
                   {
@@ -118,7 +118,7 @@ export default class OIBusTimeValuesToMQTTTransformer extends OIBusTransformer {
                 ],
                 displayProperties: {
                   row: 0,
-                  columns: 4,
+                  columns: 6,
                   displayInViewMode: true
                 }
               }
