@@ -84,14 +84,14 @@ describe('OIBusSetpointToMQTTTransformer', () => {
         {
           type: 'array',
           key: 'mapping',
-          translationKey: 'configuration.oibus.manifest.transformers.mapping.title',
+          translationKey: 'configuration.oibus.manifest.transformers.setpoint-to-mqtt.mapping.title',
           paginate: true,
           numberOfElementPerPage: 20,
           validators: [],
           rootAttribute: {
             type: 'object',
             key: 'item',
-            translationKey: 'configuration.oibus.manifest.transformers.mapping.title',
+            translationKey: 'configuration.oibus.manifest.transformers.setpoint-to-mqtt.mapping.title',
             displayProperties: {
               visible: true,
               wrapInBox: false
@@ -102,7 +102,7 @@ describe('OIBusSetpointToMQTTTransformer', () => {
               {
                 type: 'string',
                 key: 'reference',
-                translationKey: 'configuration.oibus.manifest.transformers.mapping.reference',
+                translationKey: 'configuration.oibus.manifest.transformers.setpoint-to-mqtt.mapping.reference',
                 defaultValue: null,
                 validators: [
                   {
@@ -112,14 +112,14 @@ describe('OIBusSetpointToMQTTTransformer', () => {
                 ],
                 displayProperties: {
                   row: 0,
-                  columns: 4,
+                  columns: 6,
                   displayInViewMode: true
                 }
               },
               {
                 type: 'string',
                 key: 'topic',
-                translationKey: 'configuration.oibus.manifest.transformers.mapping.mqtt.topic',
+                translationKey: 'configuration.oibus.manifest.transformers.setpoint-to-mqtt.mapping.topic',
                 defaultValue: null,
                 validators: [
                   {
@@ -129,7 +129,7 @@ describe('OIBusSetpointToMQTTTransformer', () => {
                 ],
                 displayProperties: {
                   row: 0,
-                  columns: 4,
+                  columns: 6,
                   displayInViewMode: true
                 }
               }
