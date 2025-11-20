@@ -189,7 +189,7 @@ export default class OIBusTimeValuesToCsvTransformer extends OIBusTransformer {
           type: 'string-select',
           key: 'timestampType',
           translationKey: 'configuration.oibus.manifest.transformers.time-values-to-csv.timestamp-type',
-          defaultValue: 'string',
+          defaultValue: 'iso-string',
           selectableValues: ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'],
           validators: [
             {
