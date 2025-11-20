@@ -1,8 +1,6 @@
 import { Knex } from 'knex';
 import CreateTableBuilder = Knex.CreateTableBuilder;
 
-const LOG_LEVELS = ['silent', 'error', 'warn', 'info', 'debug', 'trace'] as const;
-
 const SOUTH_CONNECTORS_TABLE = 'south_connectors';
 const SOUTH_ITEMS_TABLE = 'south_items';
 const SUBSCRIPTION_TABLE = 'subscription';
