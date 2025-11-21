@@ -21,10 +21,6 @@ export class NonEditableTypeaheadDirective {
   onBlur() {
     if (!this.ngControl.value && !this.typeahead.editable) {
       this.elementRef.nativeElement.value = '';
-      // TODO remove this once https://github.com/ng-bootstrap/ng-bootstrap/issues/4777 is fixed
-      if (this.ngControl.value === undefined) {
-        this.ngControl.control!.setValue(null);
-      }
     }
   }
 }
