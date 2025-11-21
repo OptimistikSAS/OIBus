@@ -306,7 +306,8 @@ class CustomStream extends Stream {
 describe('connectSocket', () => {
   const mockConnectionSettings: SouthModbusSettings = {
     host: '127.0.0.1',
-    port: 502
+    port: 502,
+    connectTimeout: 30000
   } as SouthModbusSettings;
 
   let mockSocket: net.Socket;
@@ -322,7 +323,7 @@ describe('connectSocket', () => {
 
   describe('successful connection', () => {
     it('should resolve when socket connects', async () => {
-      const connectPromise = connectSocket(mockSocket, mockConnectionSettings, 1000);
+      const connectPromise = connectSocket(mockSocket, mockConnectionSettings);
       // Simulate successful connection
       mockSocket.emit('connect');
       await expect(connectPromise).resolves.not.toThrow();
@@ -337,10 +338,10 @@ describe('connectSocket', () => {
   describe('connection timeout', () => {
     it('should reject with timeout error', async () => {
       jest.useFakeTimers();
-      const connectPromise = connectSocket(mockSocket, mockConnectionSettings, 100);
+      const connectPromise = connectSocket(mockSocket, mockConnectionSettings);
       // Fast-forward time to trigger timeout
-      jest.advanceTimersByTime(100);
-      await expect(connectPromise).rejects.toThrow(new Error('Modbus connection timeout after 100 ms'));
+      jest.advanceTimersByTime(30000);
+      await expect(connectPromise).rejects.toThrow(new Error('Modbus connection timeout after 30000 ms'));
       expect(mockSocket.destroy).toHaveBeenCalled();
       jest.useRealTimers();
     });
@@ -349,7 +350,7 @@ describe('connectSocket', () => {
   describe('connection error', () => {
     it('should reject with socket error', async () => {
       const testError = new Error('Connection refused');
-      const connectPromise = connectSocket(mockSocket, mockConnectionSettings, 1000);
+      const connectPromise = connectSocket(mockSocket, mockConnectionSettings);
       // Simulate socket error
       mockSocket.emit('error', testError);
       await expect(connectPromise).rejects.toThrow(testError);
@@ -368,8 +369,8 @@ describe('connectSocket', () => {
 
     it('should remove all listeners and destroy socket on timeout', async () => {
       jest.useFakeTimers();
-      const connectPromise = connectSocket(mockSocket, mockConnectionSettings, 100);
-      jest.advanceTimersByTime(100);
+      const connectPromise = connectSocket(mockSocket, mockConnectionSettings);
+      jest.advanceTimersByTime(30000);
       await expect(connectPromise).rejects.toThrow();
       expect(mockSocket.removeAllListeners).toHaveBeenCalled();
       expect(mockSocket.destroy).toHaveBeenCalled();

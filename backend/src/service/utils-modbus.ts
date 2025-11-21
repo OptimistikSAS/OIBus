@@ -125,19 +125,15 @@ export const getNumberOfWords = (dataType: string): number => {
   return 1;
 };
 
-export const connectSocket = async (
-  socket: net.Socket,
-  connectionSettings: SouthModbusSettings | NorthModbusSettings,
-  timeoutMs = 10_000 // TODO: add connectionTimeout settings
-): Promise<void> => {
+export const connectSocket = async (socket: net.Socket, connectionSettings: SouthModbusSettings | NorthModbusSettings): Promise<void> => {
   return new Promise<void>((resolve, reject) => {
     // Set up a timeout to reject if connection takes too long
     const timeout = setTimeout(() => {
       clearTimeout(timeout);
       socket.removeAllListeners();
       socket.destroy();
-      reject(new Error(`Modbus connection timeout after ${timeoutMs} ms`));
-    }, timeoutMs);
+      reject(new Error(`Modbus connection timeout after ${connectionSettings.connectTimeout} ms`));
+    }, connectionSettings.connectTimeout);
 
     socket.once('error', (error: Error) => {
       clearTimeout(timeout);
