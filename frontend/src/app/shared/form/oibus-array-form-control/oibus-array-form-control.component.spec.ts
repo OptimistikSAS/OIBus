@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { Component } from '@angular/core';
 import { ComponentTester, createMock, TestButton } from 'ngx-speculoos';
@@ -9,6 +10,8 @@ import { OIBusArrayAttribute } from '../../../../../../backend/shared/model/form
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { MockModalService, provideModalTesting } from '../../mock-modal.service.spec';
 import { OIBusEditArrayElementModalComponent } from './oibus-edit-array-element-modal/oibus-edit-array-element-modal.component';
+import { NotificationService } from '../../notification.service';
+import { SouthConnectorService } from '../../../services/south-connector.service';
 
 @Component({
   template: `<form [formGroup]="formGroup">
@@ -63,7 +66,7 @@ class TestComponentTester extends ComponentTester<TestComponent> {
   }
 
   get addElement() {
-    return this.button('#oibus-array-add-button')!;
+    return this.button('#oibus-array-add-element-button')!;
   }
 
   get editButtons() {
@@ -84,7 +87,13 @@ describe('OIBusArrayFormControlComponent', () => {
 
   beforeEach(async () => {
     TestBed.configureTestingModule({
-      providers: [provideI18nTesting(), provideModalTesting()]
+      providers: [
+        provideHttpClientTesting(),
+        provideI18nTesting(),
+        provideModalTesting(),
+        { provide: SouthConnectorService, useValue: createMock(SouthConnectorService) },
+        { provide: NotificationService, useValue: createMock(NotificationService) }
+      ]
     });
 
     tester = new TestComponentTester();

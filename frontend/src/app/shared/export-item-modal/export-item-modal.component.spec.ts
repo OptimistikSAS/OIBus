@@ -21,8 +21,8 @@ class ExportSouthItemModalComponentTester extends ComponentTester<ExportItemModa
     return this.select('#delimiter')!;
   }
 
-  get fileName() {
-    return this.input('#fileName');
+  get filename() {
+    return this.input('#filename')!;
   }
 }
 
@@ -42,10 +42,10 @@ describe('ExportSouthItemModalComponent', () => {
   it('should send a delimiter', async () => {
     await tester.change();
     tester.delimiter.selectLabel('Comma ,');
-    tester.fileName!.fillWith('south-item');
+    tester.filename.fillWith('south-item');
 
     tester.saveButton.click();
-    expect(fakeActiveModal.close).toHaveBeenCalledWith({ delimiter: ',', fileName: 'south-item' });
+    expect(fakeActiveModal.close).toHaveBeenCalledWith({ delimiter: ',', filename: 'south-item' });
   });
 
   it('should cancel', async () => {

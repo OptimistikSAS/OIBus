@@ -3,7 +3,7 @@
 </div>
 <div class="modal-body">
   <div>
-    <div [formGroup]="exportForm" class="form-group">
+    <div [formGroup]="form" class="form-group">
       <div>
         <label class="col form-label" for="delimiter" translate="common.delimiter"></label>
         <select formControlName="delimiter" class="form-select w-50 mb-3" id="delimiter">
@@ -13,8 +13,8 @@
         </select>
       </div>
       <div>
-        <label class="form-label" for="fileName" translate="north.caching.filename"></label>
-        <input formControlName="fileName" id="fileName" class="form-control" [value]="fileName" />
+        <label class="form-label" for="filename" translate="north.caching.filename"></label>
+        <input formControlName="filename" id="filename" class="form-control" />
       </div>
     </div>
   </div>

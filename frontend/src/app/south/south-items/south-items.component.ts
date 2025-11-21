@@ -328,10 +328,11 @@ export class SouthItemsComponent implements OnInit {
 
   exportItems() {
     const modalRef = this.modalService.open(ExportItemModalComponent, { backdrop: 'static' });
-    modalRef.componentInstance.prepare(this.southConnector()?.name);
+    const filename = `${this.southConnector()?.name || 'items'}`;
+    modalRef.componentInstance.prepare(filename);
     modalRef.result.subscribe(response => {
       if (response && this.southId() !== 'create') {
-        this.southConnectorService.exportItems(this.southId(), response.fileName, response.delimiter).subscribe();
+        this.southConnectorService.exportItems(this.southId(), response.filename, response.delimiter).subscribe();
       } else if (response && this.southId() === 'create') {
         this.southConnectorService
           .itemsToCsv(
@@ -344,7 +345,7 @@ export class SouthItemsComponent implements OnInit {
               scanModeId: item.scanMode.id,
               scanModeName: item.scanMode.name
             })),
-            response.fileName,
+            response.filename,
             response.delimiter
           )
           .subscribe();
@@ -379,15 +380,12 @@ export class SouthItemsComponent implements OnInit {
   }
 
   importItems() {
-    const modalRef = this.modalService.open(ImportItemModalComponent, { backdrop: 'static' });
-
+    const modal = this.modalService.open(ImportItemModalComponent, { backdrop: 'static' });
     const expectedHeaders = ['name', 'enabled'];
     const optionalHeaders: Array<string> = [];
-
     if (this.scanModes().length > 0) {
       expectedHeaders.push('scanMode');
     }
-
     const settingsAttribute = this.southManifest().items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'
     )! as OIBusObjectAttribute;
@@ -399,17 +397,18 @@ export class SouthItemsComponent implements OnInit {
       }
     });
 
-    modalRef.componentInstance.expectedHeaders = expectedHeaders;
-    modalRef.componentInstance.optionalHeaders = optionalHeaders;
-
     if (this.southManifest().id === 'mqtt') {
-      modalRef.componentInstance.isMqttConnector = true;
-      modalRef.componentInstance.existingMqttTopics = this.allItems
-        .map(item => (item.settings as any)?.topic)
-        .filter(topic => topic && typeof topic === 'string' && topic.trim());
+      modal.componentInstance.prepare(
+        expectedHeaders,
+        optionalHeaders,
+        this.allItems.map(item => (item.settings as any)?.topic).filter(topic => topic && typeof topic === 'string' && topic.trim()),
+        true
+      );
+    } else {
+      modal.componentInstance.prepare(expectedHeaders, optionalHeaders, [], false);
     }
 
-    modalRef.result.subscribe(response => {
+    modal.result.subscribe(response => {
       if (!response) return;
       this.checkImportItems(response.file, response.delimiter);
     });
