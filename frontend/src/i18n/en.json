@@ -1178,6 +1178,8 @@
             "keep-session-alive": "Keep session alive",
             "read-timeout": "Read timeout",
             "retry-interval": "Retry interval",
+            "flush-message-timeout": "Delay between flush",
+            "max-number-of-messages": "Number of messages before flush",
             "security-mode": {
               "title": "Security mode",
               "none": "None",

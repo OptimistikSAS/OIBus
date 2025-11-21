@@ -127,7 +127,9 @@ describe('Service utils OPCUA', () => {
         securityPolicy: 'none',
         keepSessionAlive: false,
         retryInterval: 10_000,
-        readTimeout: 15_000
+        readTimeout: 15_000,
+        flushMessageTimeout: 1000,
+        maxNumberOfMessages: 1000
       };
       expect(await createSessionConfigs('connectorId', 'connectorName', southSettings, {} as OPCUACertificateManager, 15_000)).toEqual({
         options: {
@@ -168,7 +170,9 @@ describe('Service utils OPCUA', () => {
         securityPolicy: 'none',
         keepSessionAlive: false,
         retryInterval: 10_000,
-        readTimeout: 15_000
+        readTimeout: 15_000,
+        flushMessageTimeout: 1000,
+        maxNumberOfMessages: 1000
       };
       expect(await createSessionConfigs('connectorId', 'connectorName', southSettings, {} as OPCUACertificateManager, 15_000)).toEqual({
         options: {

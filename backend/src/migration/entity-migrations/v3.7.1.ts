@@ -6,6 +6,7 @@ const REGISTRATIONS_TABLE = 'registrations';
 const OIANALYTICS_MESSAGE_TABLE = 'oianalytics_messages';
 const NORTH_CONNECTORS_TABLE = 'north_connectors';
 const SOUTH_CONNECTORS_TABLE = 'south_connectors';
+const HISTORY_QUERIES_TABLE = 'history_queries';
 
 interface OldSouthModbusSettings {
   host: string;
@@ -30,6 +31,72 @@ interface NewSouthModbusSettings {
   swapWordsInDWords: boolean;
 }
 
+interface OldSouthOPCUASettings {
+  throttling: {
+    maxReadInterval: number;
+    readDelay: number;
+    overlap: number;
+    maxInstantPerItem: boolean;
+  };
+  sharedConnection: boolean;
+  url: string;
+  keepSessionAlive: boolean;
+  readTimeout: number;
+  retryInterval: number;
+  securityMode: 'none' | 'sign' | 'sign-and-encrypt';
+  securityPolicy?:
+    | 'none'
+    | 'basic128'
+    | 'basic192'
+    | 'basic192-rsa15'
+    | 'basic256-rsa15'
+    | 'basic256-sha256'
+    | 'aes128-sha256-rsa-oaep'
+    | 'pub-sub-aes-128-ctr'
+    | 'pub-sub-aes-256-ctr';
+  authentication: {
+    type: 'none' | 'basic' | 'cert';
+    username?: string;
+    password?: string | null;
+    certFilePath?: string;
+    keyFilePath?: string;
+  };
+}
+
+interface NewSouthOPCUASettings {
+  throttling: {
+    maxReadInterval: number;
+    readDelay: number;
+    overlap: number;
+    maxInstantPerItem: boolean;
+  };
+  sharedConnection: boolean;
+  url: string;
+  keepSessionAlive: boolean;
+  readTimeout: number;
+  retryInterval: number;
+  maxNumberOfMessages: number;
+  flushMessageTimeout: number;
+  securityMode: 'none' | 'sign' | 'sign-and-encrypt';
+  securityPolicy?:
+    | 'none'
+    | 'basic128'
+    | 'basic192'
+    | 'basic192-rsa15'
+    | 'basic256-rsa15'
+    | 'basic256-sha256'
+    | 'aes128-sha256-rsa-oaep'
+    | 'pub-sub-aes-128-ctr'
+    | 'pub-sub-aes-256-ctr';
+  authentication: {
+    type: 'none' | 'basic' | 'cert';
+    username?: string;
+    password?: string | null;
+    certFilePath?: string;
+    keyFilePath?: string;
+  };
+}
+
 export async function up(knex: Knex): Promise<void> {
   await removeCommandsEnum(knex);
   await removeEngineLogEnum(knex);
@@ -37,6 +104,7 @@ export async function up(knex: Knex): Promise<void> {
   await removeRegistrationEnum(knex);
   await removeOIAnalyticsMessagesEnum(knex);
   await addModbusConnectionTimeout(knex);
+  await addOPCUAFlushSettings(knex);
 }
 
 async function removeCommandsEnum(knex: Knex): Promise<void> {
@@ -178,6 +246,36 @@ async function addModbusConnectionTimeout(knex: Knex): Promise<void> {
     await knex(NORTH_CONNECTORS_TABLE)
       .update({ settings: JSON.stringify(newSettings) })
       .where('id', connector.id);
+  }
+}
+
+async function addOPCUAFlushSettings(knex: Knex): Promise<void> {
+  const oldSouth: Array<{
+    id: string;
+    type: string;
+    settings: string;
+  }> = await knex(SOUTH_CONNECTORS_TABLE).select('id', 'type', 'settings').where('type', 'opcua');
+
+  for (const connector of oldSouth) {
+    const oldSettings = JSON.parse(connector.settings) as OldSouthOPCUASettings;
+    const newSettings: NewSouthOPCUASettings = { ...oldSettings, flushMessageTimeout: 1000, maxNumberOfMessages: 1000 };
+    await knex(SOUTH_CONNECTORS_TABLE)
+      .update({ settings: JSON.stringify(newSettings) })
+      .where('id', connector.id);
+  }
+
+  const oldHistories: Array<{
+    id: string;
+    south_type: string;
+    south_settings: string;
+  }> = await knex(HISTORY_QUERIES_TABLE).select('id', 'south_type', 'south_settings').where('south_type', 'opcua');
+
+  for (const history of oldHistories) {
+    const oldSettings = JSON.parse(history.south_settings) as OldSouthOPCUASettings;
+    const newSettings: NewSouthOPCUASettings = { ...oldSettings, flushMessageTimeout: 1000, maxNumberOfMessages: 1000 };
+    await knex(HISTORY_QUERIES_TABLE)
+      .update({ south_settings: JSON.stringify(newSettings) })
+      .where('id', history.id);
   }
 }
 

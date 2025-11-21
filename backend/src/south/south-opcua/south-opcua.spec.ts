@@ -115,6 +115,8 @@ describe('SouthOPCUA', () => {
       url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
       retryInterval: 10000,
       readTimeout: 15000,
+      flushMessageTimeout: 1000,
+      maxNumberOfMessages: 1000,
       authentication: {
         type: 'none'
       },
@@ -915,7 +917,7 @@ describe('SouthOPCUA', () => {
 
     south.flushMessages = jest.fn();
     (parseOPCUAValue as jest.Mock).mockReturnValueOnce('').mockReturnValue('parsedValue');
-    south['MAX_NUMBER_OF_MESSAGES'] = 2;
+    south['connector'].settings.maxNumberOfMessages = 2;
     stream.emit('changed', { value: { value: 1, dataType: DataType.Null }, sourceTimestamp: DateTime.now(), statusCode: StatusCodes.Good });
     stream.emit('changed', { value: { value: 1, dataType: DataType.Null }, sourceTimestamp: DateTime.now(), statusCode: StatusCodes.Good });
     expect(south.flushMessages).not.toHaveBeenCalled();
