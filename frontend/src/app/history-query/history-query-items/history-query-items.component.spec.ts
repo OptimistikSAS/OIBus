@@ -545,7 +545,6 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
 
     const mockModalRef = {
       componentInstance: {
-        expectedHeaders: [],
         prepare: jasmine.createSpy('prepare')
       },
       result: of({ file: new File([''], 'test.csv'), delimiter: ',' })
@@ -568,19 +567,18 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
       expect(modalService.open).toHaveBeenCalledWith(ImportItemModalComponent, { backdrop: 'static' });
 
       const modalRef = (modalService.open as jasmine.Spy).calls.mostRecent().returnValue as { componentInstance: any };
-      expect(modalRef.componentInstance.expectedHeaders).toEqual([
-        'name',
-        'enabled',
-        'settings_objectArray',
-        'settings_objectSettings',
-        'settings_objectValue'
-      ]);
+      expect(modalRef.componentInstance.prepare).toHaveBeenCalledWith(
+        ['name', 'enabled', 'settings_objectArray', 'settings_objectSettings', 'settings_objectValue'],
+        ['scanMode'],
+        [],
+        false
+      );
     });
 
     it('should call checkImportItems when file is selected', () => {
       const mockFile = new File(['name,enabled\ntest,true'], 'test.csv');
       const mockModalRef = {
-        componentInstance: { expectedHeaders: [] },
+        componentInstance: { prepare: jasmine.createSpy('prepare') },
         result: of({ file: mockFile, delimiter: ',' })
       };
       modalService.open.and.returnValue(mockModalRef as any);
@@ -615,7 +613,7 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
 
       modalService.open.and.returnValues(
         {
-          componentInstance: { expectedHeaders: [] },
+          componentInstance: { prepare: jasmine.createSpy('prepare') },
           result: of({ file: new File([''], 'test.csv'), delimiter: ',' })
         } as any,
         {
@@ -671,7 +669,7 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
 
       modalService.open.and.returnValues(
         {
-          componentInstance: { expectedHeaders: [] },
+          componentInstance: { prepare: jasmine.createSpy('prepare') },
           result: of({ file: new File([''], 'test.csv'), delimiter: ',' })
         } as any,
         {
@@ -719,7 +717,7 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
 
       modalService.open.and.returnValues(
         {
-          componentInstance: { expectedHeaders: [] },
+          componentInstance: { prepare: jasmine.createSpy('prepare') },
           result: of({ file: new File([''], 'test.csv'), delimiter: ',' })
         } as any,
         {
@@ -791,7 +789,7 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
 
       modalService.open.and.returnValues(
         {
-          componentInstance: { expectedHeaders: [] },
+          componentInstance: { prepare: jasmine.createSpy('prepare') },
           result: of({ file: new File([''], 'test.csv'), delimiter: ',' })
         } as any,
         {
@@ -839,7 +837,7 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
 
       modalService.open.and.returnValues(
         {
-          componentInstance: { expectedHeaders: [] },
+          componentInstance: { prepare: jasmine.createSpy('prepare') },
           result: of({ file: new File([''], 'test.csv'), delimiter: ',' })
         } as any,
         {
@@ -899,20 +897,12 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
       expect(modalService.open).toHaveBeenCalledWith(ImportItemModalComponent, { backdrop: 'static' });
 
       const modalRef = (modalService.open as jasmine.Spy).calls.mostRecent().returnValue as { componentInstance: any };
-      expect(modalRef.componentInstance.expectedHeaders).toEqual([
-        'name',
-        'enabled',
-        'settings_query',
-        'settings_timeout',
-        'settings_enabled'
-      ]);
-    });
-
-    it('should not include scanMode in headers since history query items do not have scan modes', () => {
-      tester.button('#import-button')!.click();
-      const modalRef = (modalService.open as jasmine.Spy).calls.mostRecent().returnValue as { componentInstance: any };
-
-      expect(modalRef.componentInstance.expectedHeaders).not.toContain('scanMode');
+      expect(modalRef.componentInstance.prepare).toHaveBeenCalledWith(
+        ['name', 'enabled', 'settings_query', 'settings_timeout', 'settings_enabled'],
+        ['scanMode'],
+        [],
+        false
+      );
     });
   });
 
@@ -924,7 +914,7 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
 
     it('should not proceed with import when modal is cancelled', () => {
       const mockModalRef = {
-        componentInstance: { expectedHeaders: [] },
+        componentInstance: { prepare: jasmine.createSpy('prepare') },
         result: of(null)
       };
       modalService.open.and.returnValue(mockModalRef as any);
@@ -944,7 +934,7 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
     it('should handle service errors gracefully', () => {
       const mockFile = new File(['name,enabled\ntest,true'], 'test.csv');
       const mockModalRef = {
-        componentInstance: { expectedHeaders: [] },
+        componentInstance: { prepare: jasmine.createSpy('prepare') },
         result: of({ file: mockFile, delimiter: ',' })
       };
 

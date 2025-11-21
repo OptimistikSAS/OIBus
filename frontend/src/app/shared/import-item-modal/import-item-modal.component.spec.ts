@@ -28,10 +28,6 @@ class ImportSouthItemModalComponentTester extends ComponentTester<ImportItemModa
   get errorAlert() {
     return this.element('.alert-danger');
   }
-
-  get delimiterSelect() {
-    return this.select('#delimiter')!;
-  }
 }
 
 describe('ImportSouthItemModalComponent', () => {
@@ -161,7 +157,7 @@ describe('ImportSouthItemModalComponent', () => {
 
     expect(comp.validationError).toBeTruthy();
 
-    comp.importForm.get('delimiter')?.setValue('SEMI_COLON');
+    comp.form.get('delimiter')?.setValue('SEMI_COLON');
     await comp.onDelimiterChange();
     await tester.change();
 
@@ -202,18 +198,6 @@ describe('ImportSouthItemModalComponent', () => {
 
     expect(comp.onFileSelected).toHaveBeenCalledWith(file);
     expect(comp.selectedFile).toBe(file);
-  });
-
-  it('should return correct delimiter for each CsvCharacter', () => {
-    const comp = tester.componentInstance;
-    expect(comp.findCorrespondingDelimiter('DOT')).toBe('.');
-    expect(comp.findCorrespondingDelimiter('SEMI_COLON')).toBe(';');
-    expect(comp.findCorrespondingDelimiter('COLON')).toBe(':');
-    expect(comp.findCorrespondingDelimiter('COMMA')).toBe(',');
-    expect(comp.findCorrespondingDelimiter('SLASH')).toBe('/');
-    expect(comp.findCorrespondingDelimiter('TAB')).toBe('  ');
-    expect(comp.findCorrespondingDelimiter('NON_BREAKING_SPACE')).toBe(' ');
-    expect(comp.findCorrespondingDelimiter('PIPE')).toBe('|');
   });
 
   it('should handle empty file', async () => {
