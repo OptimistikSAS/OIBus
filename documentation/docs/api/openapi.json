@@ -2333,6 +2333,14 @@
 						"type": "number",
 						"format": "double"
 					},
+					"maxNumberOfMessages": {
+						"type": "number",
+						"format": "double"
+					},
+					"flushMessageTimeout": {
+						"type": "number",
+						"format": "double"
+					},
 					"securityMode": {
 						"$ref": "#/components/schemas/SouthOPCUASettingsSecurityMode"
 					},
@@ -2350,6 +2358,8 @@
 					"keepSessionAlive",
 					"readTimeout",
 					"retryInterval",
+					"maxNumberOfMessages",
+					"flushMessageTimeout",
 					"securityMode",
 					"authentication"
 				],

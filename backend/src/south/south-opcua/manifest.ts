@@ -235,6 +235,58 @@ const manifest: SouthConnectorManifest = {
         }
       },
       {
+        type: 'number',
+        key: 'maxNumberOfMessages',
+        translationKey: 'configuration.oibus.manifest.south.opcua.max-number-of-messages',
+        defaultValue: 1000,
+        unit: null,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          },
+          {
+            type: 'MINIMUM',
+            arguments: ['1']
+          },
+          {
+            type: 'MAXIMUM',
+            arguments: ['1000000']
+          }
+        ],
+        displayProperties: {
+          row: 3,
+          columns: 4,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'number',
+        key: 'flushMessageTimeout',
+        translationKey: 'configuration.oibus.manifest.south.opcua.flush-message-timeout',
+        unit: 'ms',
+        defaultValue: 1000,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          },
+          {
+            type: 'MINIMUM',
+            arguments: ['1']
+          },
+          {
+            type: 'MAXIMUM',
+            arguments: ['1000000']
+          }
+        ],
+        displayProperties: {
+          row: 3,
+          columns: 4,
+          displayInViewMode: true
+        }
+      },
+      {
         type: 'string-select',
         key: 'securityMode',
         translationKey: 'configuration.oibus.manifest.south.opcua.security-mode',
@@ -247,7 +299,7 @@ const manifest: SouthConnectorManifest = {
           }
         ],
         displayProperties: {
-          row: 3,
+          row: 4,
           columns: 6,
           displayInViewMode: true
         }
@@ -275,7 +327,7 @@ const manifest: SouthConnectorManifest = {
           }
         ],
         displayProperties: {
-          row: 3,
+          row: 4,
           columns: 6,
           displayInViewMode: true
         }

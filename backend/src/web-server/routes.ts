@@ -787,6 +787,8 @@ const models: TsoaRoute.Models = {
             "keepSessionAlive": {"dataType":"boolean","required":true},
             "readTimeout": {"dataType":"double","required":true},
             "retryInterval": {"dataType":"double","required":true},
+            "maxNumberOfMessages": {"dataType":"double","required":true},
+            "flushMessageTimeout": {"dataType":"double","required":true},
             "securityMode": {"ref":"SouthOPCUASettingsSecurityMode","required":true},
             "securityPolicy": {"ref":"SouthOPCUASettingsSecurityPolicy"},
             "authentication": {"ref":"SouthOPCUASettingsAuthentication","required":true},

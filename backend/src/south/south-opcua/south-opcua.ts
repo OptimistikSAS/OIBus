@@ -41,10 +41,6 @@ export default class SouthOPCUA
   extends SouthConnector<SouthOPCUASettings, SouthOPCUAItemSettings>
   implements QueriesHistory, QueriesLastPoint, QueriesSubscription
 {
-  // TODO: add these as settings
-  private MAX_NUMBER_OF_MESSAGES = 1000;
-  private FLUSH_MESSAGE_TIMEOUT = 1000;
-
   private clientCertificateManager: OPCUACertificateManager | null = null;
   private disconnecting = false;
   private connecting = false;
@@ -489,7 +485,7 @@ export default class SouthOPCUA
         publishingEnabled: true,
         priority: 10
       });
-      this.flushTimeout = setTimeout(this.flushMessages.bind(this), this.FLUSH_MESSAGE_TIMEOUT);
+      this.flushTimeout = setTimeout(this.flushMessages.bind(this), this.connector.settings.flushMessageTimeout);
     }
 
     for (const item of items) {
@@ -526,7 +522,7 @@ export default class SouthOPCUA
               quality: dataValue.statusCode.name
             }
           });
-          if (this.bufferedValues.length >= this.MAX_NUMBER_OF_MESSAGES) {
+          if (this.bufferedValues.length >= this.connector.settings.maxNumberOfMessages) {
             await this.flushMessages();
           }
         }
@@ -553,7 +549,7 @@ export default class SouthOPCUA
         this.logger.error(`Error when flushing messages: ${(error as Error).message}`);
       }
     }
-    this.flushTimeout = setTimeout(this.flushMessages.bind(this), this.FLUSH_MESSAGE_TIMEOUT);
+    this.flushTimeout = setTimeout(this.flushMessages.bind(this), this.connector.settings.flushMessageTimeout);
   }
 
   async unsubscribe(items: Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>): Promise<void> {
