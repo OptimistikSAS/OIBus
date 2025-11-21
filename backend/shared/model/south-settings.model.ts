@@ -445,6 +445,7 @@ export interface SouthFTPSettings {
 export interface SouthModbusSettings {
   host: string;
   port: number;
+  connectTimeout: number;
   retryInterval: number;
   slaveId: number;
   addressOffset: SouthModbusSettingsAddressOffset;
