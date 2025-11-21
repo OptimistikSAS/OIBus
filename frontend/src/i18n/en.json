@@ -696,6 +696,7 @@
           "modbus": {
             "host": "Host",
             "port": "Port",
+            "connect-timeout": "Connection timeout",
             "retry-interval": "Retry interval",
             "slave-id": "Slave ID",
             "address-offset": {
@@ -1011,6 +1012,7 @@
           "modbus": {
             "host": "Host",
             "port": "Port",
+            "connect-timeout": "Connection timeout",
             "retry-interval": "Retry interval",
             "slave-id": "Slave ID",
             "address-offset": {
@@ -1660,7 +1662,8 @@
                   "iso-string": "ISO String",
                   "unix-epoch": "UNIX epoch (s)",
                   "unix-epoch-ms": "UNIX epoch (ms)",
-                  "string": "String"
+                  "string": "String",
+                  "date-time": "DateTime"
                 },
                 "timezone": "Timezone",
                 "format": "Format",

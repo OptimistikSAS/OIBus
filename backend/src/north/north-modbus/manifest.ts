@@ -28,7 +28,7 @@ const manifest: NorthConnectorManifest = {
         ],
         displayProperties: {
           row: 0,
-          columns: 9,
+          columns: 4,
           displayInViewMode: true
         }
       },
@@ -54,7 +54,33 @@ const manifest: NorthConnectorManifest = {
         ],
         displayProperties: {
           row: 0,
-          columns: 3,
+          columns: 4,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'number',
+        key: 'connectTimeout',
+        translationKey: 'configuration.oibus.manifest.north.mqtt.connect-timeout',
+        unit: 'ms',
+        defaultValue: 10000,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          },
+          {
+            type: 'MINIMUM',
+            arguments: ['100']
+          },
+          {
+            type: 'MAXIMUM',
+            arguments: ['60000']
+          }
+        ],
+        displayProperties: {
+          row: 0,
+          columns: 4,
           displayInViewMode: true
         }
       },
@@ -75,12 +101,12 @@ const manifest: NorthConnectorManifest = {
           },
           {
             type: 'MAXIMUM',
-            arguments: ['30000']
+            arguments: ['60000']
           }
         ],
         displayProperties: {
-          row: 0,
-          columns: 3,
+          row: 1,
+          columns: 4,
           displayInViewMode: true
         }
       },
@@ -105,8 +131,8 @@ const manifest: NorthConnectorManifest = {
           }
         ],
         displayProperties: {
-          row: 0,
-          columns: 3,
+          row: 1,
+          columns: 4,
           displayInViewMode: true
         }
       },
@@ -141,7 +167,7 @@ const manifest: NorthConnectorManifest = {
           }
         ],
         displayProperties: {
-          row: 1,
+          row: 2,
           columns: 4,
           displayInViewMode: true
         }

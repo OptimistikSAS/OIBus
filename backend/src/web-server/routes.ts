@@ -513,6 +513,7 @@ const models: TsoaRoute.Models = {
         "properties": {
             "host": {"dataType":"string","required":true},
             "port": {"dataType":"double","required":true},
+            "connectTimeout": {"dataType":"double","required":true},
             "retryInterval": {"dataType":"double","required":true},
             "slaveId": {"dataType":"double","required":true},
             "addressOffset": {"ref":"SouthModbusSettingsAddressOffset","required":true},
@@ -2218,6 +2219,7 @@ const models: TsoaRoute.Models = {
         "properties": {
             "host": {"dataType":"string","required":true},
             "port": {"dataType":"double","required":true},
+            "connectTimeout": {"dataType":"double","required":true},
             "retryInterval": {"dataType":"double","required":true},
             "slaveId": {"dataType":"double","required":true},
             "addressOffset": {"ref":"NorthModbusSettingsAddressOffset","required":true},
