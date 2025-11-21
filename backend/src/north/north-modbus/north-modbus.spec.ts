@@ -17,7 +17,6 @@ import fs from 'node:fs/promises';
 import ModbusTCPClient from 'jsmodbus/dist/modbus-tcp-client';
 import { OIBusModbusValue } from '../../service/transformers/connector-types.model';
 import { connectSocket } from '../../service/utils-modbus';
-import { ClientSession } from 'node-opcua';
 
 jest.mock('node:fs/promises');
 jest.mock('node:net');
@@ -101,7 +100,8 @@ describe('NorthModbus', () => {
       endianness: 'big-endian',
       swapBytesInWords: false,
       swapWordsInDWords: false,
-      retryInterval: 10000
+      retryInterval: 10000,
+      connectTimeout: 30000
     };
     (csv.unparse as jest.Mock).mockReturnValue('csv content');
     (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
@@ -230,8 +230,7 @@ describe('NorthModbus', () => {
   it('handle values to call modbus function and manage errors', async () => {
     const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
 
-    const mockedClient = {} as unknown as ModbusTCPClient;
-    north['modbusClient'] = mockedClient;
+    north['modbusClient'] = {} as unknown as ModbusTCPClient;
     const values: Array<OIBusModbusValue> = [
       {
         address: '0x002',

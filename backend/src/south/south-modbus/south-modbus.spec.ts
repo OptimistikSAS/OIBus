@@ -91,7 +91,8 @@ describe('South Modbus', () => {
       endianness: 'big-endian',
       swapBytesInWords: false,
       swapWordsInDWords: false,
-      retryInterval: 10000
+      retryInterval: 10000,
+      connectTimeout: 30000
     },
     items: [
       {

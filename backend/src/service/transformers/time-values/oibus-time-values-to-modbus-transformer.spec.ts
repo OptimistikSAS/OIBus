@@ -94,14 +94,14 @@ describe('OIBusTimeValuesToModbusTransformer', () => {
         {
           type: 'array',
           key: 'mapping',
-          translationKey: 'configuration.oibus.manifest.transformers.mapping.title',
+          translationKey: 'configuration.oibus.manifest.transformers.time-values-to-modbus.mapping.title',
           paginate: true,
           numberOfElementPerPage: 20,
           validators: [],
           rootAttribute: {
             type: 'object',
             key: 'item',
-            translationKey: 'configuration.oibus.manifest.transformers.mapping.title',
+            translationKey: 'configuration.oibus.manifest.transformers.time-values-to-modbus.mapping.title',
             displayProperties: {
               visible: true,
               wrapInBox: false
@@ -112,7 +112,7 @@ describe('OIBusTimeValuesToModbusTransformer', () => {
               {
                 type: 'string',
                 key: 'pointId',
-                translationKey: 'configuration.oibus.manifest.transformers.mapping.point-id',
+                translationKey: 'configuration.oibus.manifest.transformers.time-values-to-modbus.mapping.point-id',
                 defaultValue: null,
                 validators: [
                   {
@@ -129,7 +129,7 @@ describe('OIBusTimeValuesToModbusTransformer', () => {
               {
                 type: 'string',
                 key: 'address',
-                translationKey: 'configuration.oibus.manifest.transformers.mapping.modbus.address',
+                translationKey: 'configuration.oibus.manifest.transformers.time-values-to-modbus.mapping.address',
                 defaultValue: null,
                 validators: [
                   {
@@ -146,7 +146,7 @@ describe('OIBusTimeValuesToModbusTransformer', () => {
               {
                 type: 'string-select',
                 key: 'modbusType',
-                translationKey: 'configuration.oibus.manifest.transformers.mapping.modbus.modbus-type',
+                translationKey: 'configuration.oibus.manifest.transformers.time-values-to-modbus.mapping.modbus-type',
                 defaultValue: 'register',
                 selectableValues: ['coil', 'register'],
                 validators: [

@@ -1,9 +1,10 @@
-import { Component, Input, inject, OnInit } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
 import { CsvCharacter, ALL_CSV_CHARACTERS } from '../../../../../backend/shared/model/types';
 import { NonNullableFormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CsvValidationError, MqttTopicValidationError, validateCsvHeaders, validateCsvMqttTopics } from '../form/validators';
+import { convertCsvDelimiter } from '../utils/csv.utils';
 
 @Component({
   selector: 'oib-import-item-modal',
@@ -11,14 +12,14 @@ import { CsvValidationError, MqttTopicValidationError, validateCsvHeaders, valid
   styleUrl: './import-item-modal.component.scss',
   imports: [TranslateDirective, ReactiveFormsModule]
 })
-export class ImportItemModalComponent implements OnInit {
+export class ImportItemModalComponent {
   private modal = inject(NgbActiveModal);
   private fb = inject(NonNullableFormBuilder);
 
-  @Input() expectedHeaders: Array<string> = [];
-  @Input() optionalHeaders: Array<string> = [];
-  @Input() existingMqttTopics: Array<string> = [];
-  @Input() isMqttConnector = false;
+  expectedHeaders: Array<string> = [];
+  optionalHeaders: Array<string> = [];
+  existingMqttTopics: Array<string> = [];
+  isMqttConnector = false;
 
   readonly csvDelimiters = ALL_CSV_CHARACTERS;
   initializeFile = new File([''], 'Choose a file');
@@ -26,19 +27,19 @@ export class ImportItemModalComponent implements OnInit {
   validationError: CsvValidationError | null = null;
   mqttValidationError: MqttTopicValidationError | null = null;
 
-  importForm = this.fb.group({
+  form = this.fb.group({
     delimiter: ['COMMA' as CsvCharacter, Validators.required]
   });
 
-  ngOnInit(): void {
-    const settings = {
-      delimiter: 'COMMA' as CsvCharacter
-    };
-    this.importForm.patchValue(settings);
+  prepare(expectedHeaders: Array<string>, optionalHeaders: Array<string>, existingMqttTopics: Array<string>, isMqttConnector: boolean) {
+    this.expectedHeaders = expectedHeaders;
+    this.optionalHeaders = optionalHeaders;
+    this.existingMqttTopics = existingMqttTopics;
+    this.isMqttConnector = isMqttConnector;
   }
 
   get canSave(): boolean {
-    return this.selectedFile !== this.initializeFile && !this.validationError && !this.mqttValidationError && this.importForm.valid;
+    return this.selectedFile !== this.initializeFile && !this.validationError && !this.mqttValidationError && this.form.valid;
   }
 
   public async onFileSelected(file: File): Promise<void> {
@@ -47,7 +48,7 @@ export class ImportItemModalComponent implements OnInit {
     this.mqttValidationError = null;
 
     if (file !== this.initializeFile) {
-      const delimiter = this.findCorrespondingDelimiter(this.importForm.get('delimiter')?.value as CsvCharacter);
+      const delimiter = convertCsvDelimiter(this.form.get('delimiter')?.value as CsvCharacter);
 
       this.validationError = await validateCsvHeaders(file, delimiter, this.expectedHeaders, this.optionalHeaders);
 
@@ -59,7 +60,7 @@ export class ImportItemModalComponent implements OnInit {
 
   async onDelimiterChange(): Promise<void> {
     if (this.selectedFile !== this.initializeFile) {
-      const delimiter = this.findCorrespondingDelimiter(this.importForm.get('delimiter')?.value as CsvCharacter);
+      const delimiter = convertCsvDelimiter(this.form.get('delimiter')?.value as CsvCharacter);
 
       this.validationError = await validateCsvHeaders(this.selectedFile, delimiter, this.expectedHeaders, this.optionalHeaders);
 
@@ -76,11 +77,10 @@ export class ImportItemModalComponent implements OnInit {
       return;
     }
 
-    const formValue = this.importForm.value;
-    const selectedDelimiter = this.findCorrespondingDelimiter(formValue.delimiter!);
+    const formValue = this.form.value;
 
     this.modal.close({
-      delimiter: selectedDelimiter,
+      delimiter: convertCsvDelimiter(formValue.delimiter!),
       file: this.selectedFile
     });
   }
@@ -107,35 +107,6 @@ export class ImportItemModalComponent implements OnInit {
     if (file) {
       await this.onFileSelected(file);
       fileInput.value = '';
-    }
-  }
-
-  findCorrespondingDelimiter(delimiter: CsvCharacter) {
-    switch (delimiter) {
-      case 'DOT': {
-        return '.';
-      }
-      case 'SEMI_COLON': {
-        return ';';
-      }
-      case 'COLON': {
-        return ':';
-      }
-      case 'COMMA': {
-        return ',';
-      }
-      case 'SLASH': {
-        return '/';
-      }
-      case 'TAB': {
-        return '  ';
-      }
-      case 'NON_BREAKING_SPACE': {
-        return ' ';
-      }
-      case 'PIPE': {
-        return '|';
-      }
     }
   }
 }

@@ -73,14 +73,14 @@ export default class OIBusSetpointToOPCUATransformer extends OIBusTransformer {
         {
           type: 'array',
           key: 'mapping',
-          translationKey: 'configuration.oibus.manifest.transformers.mapping.title',
+          translationKey: 'configuration.oibus.manifest.transformers.setpoint-to-opcua.mapping.title',
           paginate: true,
           numberOfElementPerPage: 20,
           validators: [],
           rootAttribute: {
             type: 'object',
             key: 'item',
-            translationKey: 'configuration.oibus.manifest.transformers.mapping.title',
+            translationKey: 'configuration.oibus.manifest.transformers.setpoint-to-opcua.mapping.title',
             displayProperties: {
               visible: true,
               wrapInBox: false
@@ -91,7 +91,7 @@ export default class OIBusSetpointToOPCUATransformer extends OIBusTransformer {
               {
                 type: 'string',
                 key: 'reference',
-                translationKey: 'configuration.oibus.manifest.transformers.mapping.reference',
+                translationKey: 'configuration.oibus.manifest.transformers.setpoint-to-opcua.mapping.reference',
                 defaultValue: null,
                 validators: [
                   {
@@ -108,7 +108,7 @@ export default class OIBusSetpointToOPCUATransformer extends OIBusTransformer {
               {
                 type: 'string',
                 key: 'nodeId',
-                translationKey: 'configuration.oibus.manifest.transformers.mapping.opcua.node-id',
+                translationKey: 'configuration.oibus.manifest.transformers.setpoint-to-opcua.mapping.node-id',
                 defaultValue: null,
                 validators: [
                   {

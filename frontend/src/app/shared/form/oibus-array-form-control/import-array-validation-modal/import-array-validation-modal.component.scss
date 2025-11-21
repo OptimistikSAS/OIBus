@@ -1,0 +1,27 @@
+.text-truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.table-responsive {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.oib-simple-table {
+  table-layout: fixed;
+  width: 100%;
+
+  th, td {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+}
+
+// Ensure modal doesn't get too wide and is centered horizontally
+.modal-dialog {
+  max-width: 90vw;
+  margin-left: auto;
+  margin-right: auto;
+}

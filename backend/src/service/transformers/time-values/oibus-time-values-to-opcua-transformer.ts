@@ -73,14 +73,14 @@ export default class OIBusTimeValuesToOPCUATransformer extends OIBusTransformer 
         {
           type: 'array',
           key: 'mapping',
-          translationKey: 'configuration.oibus.manifest.transformers.mapping.title',
+          translationKey: 'configuration.oibus.manifest.transformers.time-values-to-opcua.mapping.title',
           paginate: true,
           numberOfElementPerPage: 20,
           validators: [],
           rootAttribute: {
             type: 'object',
             key: 'item',
-            translationKey: 'configuration.oibus.manifest.transformers.mapping.title',
+            translationKey: 'configuration.oibus.manifest.transformers.time-values-to-opcua.mapping.title',
             displayProperties: {
               visible: true,
               wrapInBox: false
@@ -91,7 +91,7 @@ export default class OIBusTimeValuesToOPCUATransformer extends OIBusTransformer 
               {
                 type: 'string',
                 key: 'pointId',
-                translationKey: 'configuration.oibus.manifest.transformers.mapping.point-id',
+                translationKey: 'configuration.oibus.manifest.transformers.time-values-to-opcua.mapping.point-id',
                 defaultValue: null,
                 validators: [
                   {
@@ -108,7 +108,7 @@ export default class OIBusTimeValuesToOPCUATransformer extends OIBusTransformer 
               {
                 type: 'string',
                 key: 'nodeId',
-                translationKey: 'configuration.oibus.manifest.transformers.mapping.opcua.node-id',
+                translationKey: 'configuration.oibus.manifest.transformers.time-values-to-opcua.mapping.node-id',
                 defaultValue: null,
                 validators: [
                   {

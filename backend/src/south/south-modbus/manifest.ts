@@ -65,6 +65,32 @@ const manifest: SouthConnectorManifest = {
       },
       {
         type: 'number',
+        key: 'connectTimeout',
+        translationKey: 'configuration.oibus.manifest.south.modbus.connect-timeout',
+        unit: 'ms',
+        defaultValue: 10000,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          },
+          {
+            type: 'MINIMUM',
+            arguments: ['100']
+          },
+          {
+            type: 'MAXIMUM',
+            arguments: ['60000']
+          }
+        ],
+        displayProperties: {
+          row: 0,
+          columns: 4,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'number',
         key: 'retryInterval',
         translationKey: 'configuration.oibus.manifest.south.modbus.retry-interval',
         unit: 'ms',
@@ -84,7 +110,7 @@ const manifest: SouthConnectorManifest = {
           }
         ],
         displayProperties: {
-          row: 0,
+          row: 1,
           columns: 4,
           displayInViewMode: true
         }
@@ -146,7 +172,7 @@ const manifest: SouthConnectorManifest = {
           }
         ],
         displayProperties: {
-          row: 1,
+          row: 2,
           columns: 4,
           displayInViewMode: true
         }

@@ -278,12 +278,13 @@ export class HistoryQueryItemsComponent implements OnInit {
 
   exportItems() {
     const modalRef = this.modalService.open(ExportItemModalComponent, { backdrop: 'static' });
-    modalRef.componentInstance.prepare(this.historyQuery()?.name);
+    const filename = `${this.historyQuery()?.name || 'items'}`;
+    modalRef.componentInstance.prepare(filename);
     modalRef.result.subscribe(response => {
       if (response.delimiter && this.historyId() !== 'create') {
-        this.historyQueryService.exportItems(this.historyId(), response.fileName, response.delimiter).subscribe();
+        this.historyQueryService.exportItems(this.historyId(), response.filename, response.delimiter).subscribe();
       } else if (response && this.historyId() === 'create') {
-        this.historyQueryService.itemsToCsv(this.southManifest().id, this.allItems, response.fileName, response.delimiter).subscribe();
+        this.historyQueryService.itemsToCsv(this.southManifest().id, this.allItems, response.filename, response.delimiter).subscribe();
       }
     });
   }
@@ -316,7 +317,6 @@ export class HistoryQueryItemsComponent implements OnInit {
 
   importItems() {
     const modalRef = this.modalService.open(ImportItemModalComponent, { backdrop: 'static' });
-
     const expectedHeaders = ['name', 'enabled'];
     const optionalHeaders: Array<string> = ['scanMode'];
 
@@ -331,17 +331,7 @@ export class HistoryQueryItemsComponent implements OnInit {
         expectedHeaders.push(`settings_${setting.key}`);
       }
     });
-
-    modalRef.componentInstance.expectedHeaders = expectedHeaders;
-    modalRef.componentInstance.optionalHeaders = optionalHeaders;
-
-    if (this.southManifest().id === 'mqtt') {
-      modalRef.componentInstance.isMqttConnector = true;
-      modalRef.componentInstance.existingMqttTopics = this.allItems
-        .map(item => (item.settings as any)?.topic)
-        .filter(topic => topic && typeof topic === 'string' && topic.trim());
-    }
-
+    modalRef.componentInstance.prepare(expectedHeaders, optionalHeaders, [], false);
     modalRef.result.subscribe(response => {
       if (!response) return;
       this.checkImportItems(response.file, response.delimiter);

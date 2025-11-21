@@ -1,5 +1,4 @@
 import { Knex } from 'knex';
-import { SouthOLEDBSettingsThrottling, SouthPostgreSQLSettingsThrottling } from '../../../shared/model/south-settings.model';
 
 const TRANSFORMERS_TABLE = 'transformers';
 const NORTH_TRANSFORMERS_TABLE = 'north_transformers';
@@ -10,7 +9,11 @@ const HISTORY_QUERIES_TABLE = 'history_queries';
 const REGISTRATIONS_TABLE = 'registrations';
 
 interface OldSouthPostgreSQLSettings {
-  throttling: SouthPostgreSQLSettingsThrottling;
+  throttling: {
+    maxReadInterval: number;
+    readDelay: number;
+    overlap: number;
+  };
   host: string;
   port: number;
   database: string;
@@ -21,7 +24,11 @@ interface OldSouthPostgreSQLSettings {
 }
 
 interface NewSouthPostgreSQLSettings {
-  throttling: SouthPostgreSQLSettingsThrottling;
+  throttling: {
+    maxReadInterval: number;
+    readDelay: number;
+    overlap: number;
+  };
   host: string;
   port: number;
   sslMode: boolean;
@@ -33,7 +40,11 @@ interface NewSouthPostgreSQLSettings {
 }
 
 interface OldSouthOLEDBSettings {
-  throttling: SouthOLEDBSettingsThrottling;
+  throttling: {
+    maxReadInterval: number;
+    readDelay: number;
+    overlap: number;
+  };
   agentUrl: string;
   connectionTimeout: number;
   retryInterval: number;
@@ -42,7 +53,11 @@ interface OldSouthOLEDBSettings {
 }
 
 interface NewSouthOLEDBSettings {
-  throttling: SouthOLEDBSettingsThrottling;
+  throttling: {
+    maxReadInterval: number;
+    readDelay: number;
+    overlap: number;
+  };
   agentUrl: string;
   connectionTimeout: number;
   retryInterval: number;
@@ -58,31 +73,6 @@ export async function up(knex: Knex): Promise<void> {
   await updateRegistrationSettings(knex);
   await updatePostgresqlSettings(knex);
   await updateOleDBSettings(knex);
-
-  // TODO on 3.7.1
-  // TODO: remove enum on command table
-  // made on 3.2 :table.enum('type', OIBUS_COMMAND_TYPES).notNullable();
-  //     table.enum('status', OIBUS_COMMAND_STATUS).notNullable();
-
-  // TODO : remove enum on registration
-  // table.enum('status', REGISTRATION_STATUS).notNullable().defaultTo('NOT_REGISTERED');
-
-  // TODO: remove enum on oianalytics message
-  //     table.enum('status', OIANALYTICS_MESSAGE_STATUS).notNullable().defaultTo('PENDING');
-
-  // TODO : remove enum on engine log level
-  // table.enum('log_oia_level', LOG_LEVELS).notNullable().defaultTo('silent');
-  // table.enum('log_console_level', LOG_LEVELS).notNullable().defaultTo('silent');
-  //     table.enum('log_file_level', LOG_LEVELS).notNullable().defaultTo('silent');
-  //     table.enum('log_database_level', LOG_LEVELS).notNullable().defaultTo('silent');
-  //table.string('log_loki_level').notNullable().defaultTo('silent');
-
-  // TODO: remove enum on history query
-  // table.enum('status', HISTORY_QUERY_STATUS).notNullable().defaultTo('PENDING');
-
-  // TODO on log migration: remove enum on logs
-  // table.enum('level', LOG_LEVELS).notNullable();
-  // table.enum('scope_type', SCOPE_TYPES).notNullable();
 }
 
 async function createTransformersTable(knex: Knex): Promise<void> {

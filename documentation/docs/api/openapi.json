@@ -1643,6 +1643,10 @@
 						"type": "number",
 						"format": "double"
 					},
+					"connectTimeout": {
+						"type": "number",
+						"format": "double"
+					},
 					"retryInterval": {
 						"type": "number",
 						"format": "double"
@@ -1667,6 +1671,7 @@
 				"required": [
 					"host",
 					"port",
+					"connectTimeout",
 					"retryInterval",
 					"slaveId",
 					"addressOffset",
@@ -2328,6 +2333,14 @@
 						"type": "number",
 						"format": "double"
 					},
+					"maxNumberOfMessages": {
+						"type": "number",
+						"format": "double"
+					},
+					"flushMessageTimeout": {
+						"type": "number",
+						"format": "double"
+					},
 					"securityMode": {
 						"$ref": "#/components/schemas/SouthOPCUASettingsSecurityMode"
 					},
@@ -2345,6 +2358,8 @@
 					"keepSessionAlive",
 					"readTimeout",
 					"retryInterval",
+					"maxNumberOfMessages",
+					"flushMessageTimeout",
 					"securityMode",
 					"authentication"
 				],
@@ -7359,6 +7374,10 @@
 						"type": "number",
 						"format": "double"
 					},
+					"connectTimeout": {
+						"type": "number",
+						"format": "double"
+					},
 					"retryInterval": {
 						"type": "number",
 						"format": "double"
@@ -7383,6 +7402,7 @@
 				"required": [
 					"host",
 					"port",
+					"connectTimeout",
 					"retryInterval",
 					"slaveId",
 					"addressOffset",

@@ -98,7 +98,7 @@ export class EditNorthTransformerModalComponent {
     this.buildForm();
     this.createOptionsForm(transformerWithOptionsToEdit.transformer);
     // trigger rebuild of options form
-    this.form!.setValue(
+    this.form!.patchValue(
       { transformerId: transformerWithOptionsToEdit.transformer.id, options: transformerWithOptionsToEdit.options },
       { emitEvent: false }
     );

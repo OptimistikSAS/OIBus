@@ -11,7 +11,7 @@ import { By } from '@angular/platform-browser';
 import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
 import { TransformerDTO } from '../../../../../../backend/shared/model/transformer.model';
 
-class EditNorthTransformerModalComponentTester extends ComponentTester<EditHistoryQueryTransformerModalComponent> {
+class EditHistoryQueryTransformerModalComponentTester extends ComponentTester<EditHistoryQueryTransformerModalComponent> {
   constructor() {
     super(EditHistoryQueryTransformerModalComponent);
   }
@@ -69,7 +69,7 @@ const transformer: TransformerDTO = {
             {
               type: 'string',
               key: 'pointId',
-              translationKey: 'configuration.oibus.manifest.transformers.mapping.point-id',
+              translationKey: 'configuration.oibus.manifest.transformers.time-values-to-modbus.mapping.point-id',
               defaultValue: null,
               validators: [
                 {
@@ -86,7 +86,7 @@ const transformer: TransformerDTO = {
             {
               type: 'string',
               key: 'address',
-              translationKey: 'configuration.oibus.manifest.transformers.mapping.modbus.address',
+              translationKey: 'configuration.oibus.manifest.transformers.time-values-to-modbus.mapping.address',
               defaultValue: null,
               validators: [
                 {
@@ -103,7 +103,7 @@ const transformer: TransformerDTO = {
             {
               type: 'string-select',
               key: 'modbusType',
-              translationKey: 'configuration.oibus.manifest.transformers.mapping.modbus.modbus-type',
+              translationKey: 'configuration.oibus.manifest.transformers.time-values-to-modbus.mapping.modbus-type',
               defaultValue: 'register',
               selectableValues: ['coil', 'register'],
               validators: [
@@ -131,8 +131,8 @@ const transformer: TransformerDTO = {
   }
 };
 
-describe('EditNorthTransformerModalComponent', () => {
-  let tester: EditNorthTransformerModalComponentTester;
+describe('EditHistoryQueryTransformerModalComponent', () => {
+  let tester: EditHistoryQueryTransformerModalComponentTester;
   let fakeActiveModal: NgbActiveModal;
   let transformerService: jasmine.SpyObj<TransformerService>;
 
@@ -151,7 +151,7 @@ describe('EditNorthTransformerModalComponent', () => {
 
     TestBed.createComponent(DefaultValidationErrorsComponent).detectChanges();
 
-    tester = new EditNorthTransformerModalComponentTester();
+    tester = new EditHistoryQueryTransformerModalComponentTester();
   });
 
   it('should cancel', () => {

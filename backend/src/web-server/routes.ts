@@ -513,6 +513,7 @@ const models: TsoaRoute.Models = {
         "properties": {
             "host": {"dataType":"string","required":true},
             "port": {"dataType":"double","required":true},
+            "connectTimeout": {"dataType":"double","required":true},
             "retryInterval": {"dataType":"double","required":true},
             "slaveId": {"dataType":"double","required":true},
             "addressOffset": {"ref":"SouthModbusSettingsAddressOffset","required":true},
@@ -786,6 +787,8 @@ const models: TsoaRoute.Models = {
             "keepSessionAlive": {"dataType":"boolean","required":true},
             "readTimeout": {"dataType":"double","required":true},
             "retryInterval": {"dataType":"double","required":true},
+            "maxNumberOfMessages": {"dataType":"double","required":true},
+            "flushMessageTimeout": {"dataType":"double","required":true},
             "securityMode": {"ref":"SouthOPCUASettingsSecurityMode","required":true},
             "securityPolicy": {"ref":"SouthOPCUASettingsSecurityPolicy"},
             "authentication": {"ref":"SouthOPCUASettingsAuthentication","required":true},
@@ -2218,6 +2221,7 @@ const models: TsoaRoute.Models = {
         "properties": {
             "host": {"dataType":"string","required":true},
             "port": {"dataType":"double","required":true},
+            "connectTimeout": {"dataType":"double","required":true},
             "retryInterval": {"dataType":"double","required":true},
             "slaveId": {"dataType":"double","required":true},
             "addressOffset": {"ref":"NorthModbusSettingsAddressOffset","required":true},
