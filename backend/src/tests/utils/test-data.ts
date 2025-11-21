@@ -491,6 +491,8 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
       url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
       retryInterval: 10000,
       readTimeout: 15000,
+      flushMessageTimeout: 1000,
+      maxNumberOfMessages: 1000,
       authentication: {
         type: 'none'
       },

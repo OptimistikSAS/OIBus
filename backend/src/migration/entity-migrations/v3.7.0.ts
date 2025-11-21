@@ -1,5 +1,4 @@
 import { Knex } from 'knex';
-import { SouthOLEDBSettingsThrottling, SouthPostgreSQLSettingsThrottling } from '../../../shared/model/south-settings.model';
 
 const TRANSFORMERS_TABLE = 'transformers';
 const NORTH_TRANSFORMERS_TABLE = 'north_transformers';
@@ -10,7 +9,11 @@ const HISTORY_QUERIES_TABLE = 'history_queries';
 const REGISTRATIONS_TABLE = 'registrations';
 
 interface OldSouthPostgreSQLSettings {
-  throttling: SouthPostgreSQLSettingsThrottling;
+  throttling: {
+    maxReadInterval: number;
+    readDelay: number;
+    overlap: number;
+  };
   host: string;
   port: number;
   database: string;
@@ -21,7 +24,11 @@ interface OldSouthPostgreSQLSettings {
 }
 
 interface NewSouthPostgreSQLSettings {
-  throttling: SouthPostgreSQLSettingsThrottling;
+  throttling: {
+    maxReadInterval: number;
+    readDelay: number;
+    overlap: number;
+  };
   host: string;
   port: number;
   sslMode: boolean;
@@ -33,7 +40,11 @@ interface NewSouthPostgreSQLSettings {
 }
 
 interface OldSouthOLEDBSettings {
-  throttling: SouthOLEDBSettingsThrottling;
+  throttling: {
+    maxReadInterval: number;
+    readDelay: number;
+    overlap: number;
+  };
   agentUrl: string;
   connectionTimeout: number;
   retryInterval: number;
@@ -42,7 +53,11 @@ interface OldSouthOLEDBSettings {
 }
 
 interface NewSouthOLEDBSettings {
-  throttling: SouthOLEDBSettingsThrottling;
+  throttling: {
+    maxReadInterval: number;
+    readDelay: number;
+    overlap: number;
+  };
   agentUrl: string;
   connectionTimeout: number;
   retryInterval: number;
