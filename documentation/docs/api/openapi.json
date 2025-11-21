@@ -1643,6 +1643,10 @@
 						"type": "number",
 						"format": "double"
 					},
+					"connectTimeout": {
+						"type": "number",
+						"format": "double"
+					},
 					"retryInterval": {
 						"type": "number",
 						"format": "double"
@@ -1667,6 +1671,7 @@
 				"required": [
 					"host",
 					"port",
+					"connectTimeout",
 					"retryInterval",
 					"slaveId",
 					"addressOffset",
@@ -7359,6 +7364,10 @@
 						"type": "number",
 						"format": "double"
 					},
+					"connectTimeout": {
+						"type": "number",
+						"format": "double"
+					},
 					"retryInterval": {
 						"type": "number",
 						"format": "double"
@@ -7383,6 +7392,7 @@
 				"required": [
 					"host",
 					"port",
+					"connectTimeout",
 					"retryInterval",
 					"slaveId",
 					"addressOffset",

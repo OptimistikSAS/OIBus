@@ -4,6 +4,31 @@ const ENGINES_TABLE = 'engines';
 const COMMANDS_TABLE = 'commands';
 const REGISTRATIONS_TABLE = 'registrations';
 const OIANALYTICS_MESSAGE_TABLE = 'oianalytics_messages';
+const NORTH_CONNECTORS_TABLE = 'north_connectors';
+const SOUTH_CONNECTORS_TABLE = 'south_connectors';
+
+interface OldSouthModbusSettings {
+  host: string;
+  port: number;
+  retryInterval: number;
+  slaveId: number;
+  addressOffset: 'modbus' | 'jbus';
+  endianness: 'big-endian' | 'little-endian';
+  swapBytesInWords: boolean;
+  swapWordsInDWords: boolean;
+}
+
+interface NewSouthModbusSettings {
+  host: string;
+  port: number;
+  connectTimeout: number;
+  retryInterval: number;
+  slaveId: number;
+  addressOffset: 'modbus' | 'jbus';
+  endianness: 'big-endian' | 'little-endian';
+  swapBytesInWords: boolean;
+  swapWordsInDWords: boolean;
+}
 
 export async function up(knex: Knex): Promise<void> {
   await removeCommandsEnum(knex);
@@ -11,6 +36,7 @@ export async function up(knex: Knex): Promise<void> {
   await removeRegistrationEnum(knex);
   await removeRegistrationEnum(knex);
   await removeOIAnalyticsMessagesEnum(knex);
+  await addModbusConnectionTimeout(knex);
 }
 
 async function removeCommandsEnum(knex: Knex): Promise<void> {
@@ -123,6 +149,36 @@ async function removeOIAnalyticsMessagesEnum(knex: Knex): Promise<void> {
   await knex.schema.alterTable(OIANALYTICS_MESSAGE_TABLE, table => {
     table.dropColumn('status_old');
   });
+}
+
+async function addModbusConnectionTimeout(knex: Knex): Promise<void> {
+  const oldSouth: Array<{
+    id: string;
+    type: string;
+    settings: string;
+  }> = await knex(SOUTH_CONNECTORS_TABLE).select('id', 'type', 'settings').where('type', 'modbus');
+
+  for (const connector of oldSouth) {
+    const oldSettings = JSON.parse(connector.settings) as OldSouthModbusSettings;
+    const newSettings: NewSouthModbusSettings = { ...oldSettings, connectTimeout: 10000 };
+    await knex(SOUTH_CONNECTORS_TABLE)
+      .update({ settings: JSON.stringify(newSettings) })
+      .where('id', connector.id);
+  }
+
+  const oldNorth: Array<{
+    id: string;
+    type: string;
+    settings: string;
+  }> = await knex(NORTH_CONNECTORS_TABLE).select('id', 'type', 'settings').where('type', 'modbus');
+
+  for (const connector of oldNorth) {
+    const oldSettings = JSON.parse(connector.settings) as OldSouthModbusSettings;
+    const newSettings: NewSouthModbusSettings = { ...oldSettings, connectTimeout: 10000 };
+    await knex(NORTH_CONNECTORS_TABLE)
+      .update({ settings: JSON.stringify(newSettings) })
+      .where('id', connector.id);
+  }
 }
 
 export async function down(_knex: Knex): Promise<void> {
