@@ -21,11 +21,6 @@ runs:
       with:
         node-version-file: backend/package.json
 
-    - name: Get current date
-      shell: bash
-      id: date
-      run: echo "date=$(date +'calendar-week-%W')" >> $GITHUB_OUTPUT
-
     - name: Load cached node_modules
       id: cache-deps
       uses: actions/cache@v4

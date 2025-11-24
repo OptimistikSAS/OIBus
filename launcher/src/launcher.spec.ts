@@ -19,7 +19,7 @@ const createMockChildProcess = (): MockChildProcess => {
   const stdoutOnMock = jest.fn();
   const stderrOnMock = jest.fn();
 
-  const mockChild = {
+  return {
     kill: killMock as (signal?: NodeJS.Signals | number) => boolean,
     stdout: { on: stdoutOnMock } as Readable & { on: typeof stdoutOnMock },
     stderr: { on: stderrOnMock } as Readable & { on: typeof stderrOnMock },
@@ -29,8 +29,6 @@ const createMockChildProcess = (): MockChildProcess => {
     stdoutOnMock,
     stderrOnMock
   } as MockChildProcess;
-
-  return mockChild;
 };
 
 type MockChildProcess = Partial<ChildProcessWithoutNullStreams> & {
@@ -165,6 +163,7 @@ describe('Launcher', () => {
 
   describe('getOibusPath', () => {
     it('returns resolved path to oibus executable in workDir', () => {
+      jest.spyOn(os, 'type').mockReturnValue('Linux' as NodeJS.Platform);
       const launcher = createAndTrackLauncher(workDir, updateDir, backupDir, configDir, false, []);
       const oibusPath = launcher.getOibusPath();
 
@@ -174,6 +173,7 @@ describe('Launcher', () => {
 
   describe('getOibusUpdatePath', () => {
     it('returns resolved path to oibus executable in updateDir/binaries', () => {
+      jest.spyOn(os, 'type').mockReturnValue('Linux' as NodeJS.Platform);
       const launcher = createAndTrackLauncher(workDir, updateDir, backupDir, configDir, false, []);
       const updatePath = launcher.getOibusUpdatePath();
 
@@ -183,6 +183,7 @@ describe('Launcher', () => {
 
   describe('getOibusBackupPath', () => {
     it('returns resolved path to oibus executable in backupDir', () => {
+      jest.spyOn(os, 'type').mockReturnValue('Linux' as NodeJS.Platform);
       const launcher = createAndTrackLauncher(workDir, updateDir, backupDir, configDir, false, []);
       const backupPath = launcher.getOibusBackupPath();
 
@@ -192,6 +193,7 @@ describe('Launcher', () => {
 
   describe('getOibusLauncherBackupPath', () => {
     it('returns resolved path to launcher backup in current working directory', () => {
+      jest.spyOn(os, 'type').mockReturnValue('Linux' as NodeJS.Platform);
       const launcher = createAndTrackLauncher(workDir, updateDir, backupDir, configDir, false, []);
       const launcherBackupPath = launcher.getOibusLauncherBackupPath();
 
@@ -200,6 +202,11 @@ describe('Launcher', () => {
   });
 
   describe('checkForUpdate', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+      jest.spyOn(os, 'type').mockReturnValue('Linux' as NodeJS.Platform);
+    });
+
     it('returns true when update file exists', async () => {
       const launcher = createAndTrackLauncher(workDir, updateDir, backupDir, configDir, false, []);
       const updateBinaryPath = path.resolve(updateDir, 'binaries', 'oibus');
@@ -221,6 +228,11 @@ describe('Launcher', () => {
   });
 
   describe('stop', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+      jest.spyOn(os, 'type').mockReturnValue('Linux' as NodeJS.Platform);
+    });
+
     it('kills child process when it exists', async () => {
       const launcher = createAndTrackLauncher(workDir, updateDir, backupDir, configDir, false, []);
       const oibusPath = path.resolve(workDir, 'oibus');
@@ -244,6 +256,11 @@ describe('Launcher', () => {
   });
 
   describe('start', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+      jest.spyOn(os, 'type').mockReturnValue('Linux' as NodeJS.Platform);
+    });
+
     it('starts OIBus without update when no update exists', async () => {
       const launcher = createAndTrackLauncher(workDir, updateDir, backupDir, configDir, false, []);
       const oibusPath = path.resolve(workDir, 'oibus');
@@ -639,6 +656,11 @@ describe('Launcher', () => {
   });
 
   describe('update', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+      jest.spyOn(os, 'type').mockReturnValue('Linux' as NodeJS.Platform);
+    });
+
     it('performs update with default backup folders', async () => {
       const launcher = createAndTrackLauncher(workDir, updateDir, backupDir, configDir, false, []);
       const oibusPath = path.resolve(workDir, 'oibus');
@@ -755,6 +777,11 @@ describe('Launcher', () => {
   });
 
   describe('rollback', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+      jest.spyOn(os, 'type').mockReturnValue('Linux' as NodeJS.Platform);
+    });
+
     it('rolls back binary and data folder', async () => {
       const launcher = createAndTrackLauncher(workDir, updateDir, backupDir, configDir, false, []);
       const oibusPath = path.resolve(workDir, 'oibus');
@@ -776,6 +803,11 @@ describe('Launcher', () => {
   });
 
   describe('handleOibusStarted', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+      jest.spyOn(os, 'type').mockReturnValue('Linux' as NodeJS.Platform);
+    });
+
     it('cleans up backup files and settings', async () => {
       const launcher = createAndTrackLauncher(workDir, updateDir, backupDir, configDir, false, []);
       const oibusPath = path.resolve(workDir, 'oibus');
@@ -829,6 +861,11 @@ describe('Launcher', () => {
   });
 
   describe('backupDataFolder', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+      jest.spyOn(os, 'type').mockReturnValue('Linux' as NodeJS.Platform);
+    });
+
     it('backs up data folder matching pattern', async () => {
       const launcher = createAndTrackLauncher(workDir, updateDir, backupDir, configDir, false, []);
       const cacheDir = path.join(configDir, 'cache');
