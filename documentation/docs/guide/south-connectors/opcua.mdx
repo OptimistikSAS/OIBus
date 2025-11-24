@@ -24,6 +24,13 @@ OPC Unified Architecture (OPC UA) protocol for secure industrial data access in 
 | **Retry Interval**     | Delay between retries (in milliseconds)                     |
 | **Read timeout**       | Maximum execution time (ms) for requests                    |
 
+### Data Throttling
+
+| Setting                         | Description                                                                    | Example Value |
+| ------------------------------- | ------------------------------------------------------------------------------ | ------------- |
+| Number of messages before flush | Number of messages to accumulate before flushing to North caches               | `1000`        |
+| Delay between flush             | Time delay (in milliseconds) between automatic flushes of accumulated messages | `1000`        |
+
 ### Security Settings
 
 | Setting             | Description                                                              |
