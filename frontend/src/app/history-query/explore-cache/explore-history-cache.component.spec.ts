@@ -4,7 +4,6 @@ import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
-import { provideHttpClient } from '@angular/common/http';
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 import { HistoryQueryService } from '../../services/history-query.service';
 import { HistoryQueryDTO } from '../../../../../backend/shared/model/history-query.model';
@@ -74,14 +73,13 @@ describe('ExploreHistoryCacheComponent', () => {
     northTransformers: []
   } as HistoryQueryDTO;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     historyQueryService = createMock(HistoryQueryService);
 
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
         provideRouter([]),
-        provideHttpClient(),
         {
           provide: ActivatedRoute,
           useValue: stubRoute({
@@ -96,7 +94,7 @@ describe('ExploreHistoryCacheComponent', () => {
     historyQueryService.findById.and.returnValue(of(historyQuery));
     historyQueryService.searchCacheContent.and.returnValue(of([]));
     tester = new ExploreHistoryCacheComponentTester();
-    tester.detectChanges();
+    await tester.change();
   });
 
   it('should have a title, error and archive list components', () => {

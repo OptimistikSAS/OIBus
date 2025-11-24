@@ -57,9 +57,9 @@ describe('SaveButton', () => {
   });
 
   describe('with form attribute and without id attribute', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       tester = new TestComponentTester();
-      tester.detectChanges();
+      await tester.change();
     });
 
     it('should display the button by default', () => {
@@ -73,7 +73,7 @@ describe('SaveButton', () => {
       expect(tester.spinner).toBeNull();
     });
 
-    it('should disable the button and display the spinner when saving', fakeAsync(() => {
+    it('should disable the button and display the spinner when saving', fakeAsync(async () => {
       tester.saveButton.click();
 
       expect(tester.saveButton).toContainText('Save');
@@ -82,7 +82,7 @@ describe('SaveButton', () => {
       expect(tester.saveIcon).toBeNull();
 
       tick(500);
-      tester.detectChanges();
+      await tester.change();
       expect(tester.saveButton.disabled).toBe(false);
       expect(tester.spinner).toBeNull();
       expect(tester.saveIcon).not.toBeNull();
@@ -96,27 +96,27 @@ describe('SaveButton', () => {
       expect(tester.saveIcon).toBeNull();
 
       tick(500);
-      tester.detectChanges();
+      await tester.change();
       expect(tester.saveButton.disabled).toBe(false);
       expect(tester.spinner).toBeNull();
       expect(tester.saveIcon).not.toBeNull();
     }));
 
-    it('should disable the button when forceDisabled', () => {
+    it('should disable the button when forceDisabled', async () => {
       tester.componentInstance.forceDisabled = true;
-      tester.detectChanges();
+      await tester.change();
 
       expect(tester.saveButton.disabled).toBeTrue();
 
       tester.componentInstance.forceDisabled = false;
-      tester.detectChanges();
+      await tester.change();
 
       expect(tester.saveButton.disabled).toBeFalse();
     });
   });
 
   describe('without form attribute and with id attribute', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       TestBed.overrideTemplate(
         TestComponent,
         `
@@ -127,7 +127,7 @@ describe('SaveButton', () => {
       );
 
       tester = new TestComponentTester();
-      tester.detectChanges();
+      await tester.change();
     });
 
     it('should have no form attribute and the specified id the button by default', () => {

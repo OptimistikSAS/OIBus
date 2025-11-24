@@ -26,7 +26,7 @@ describe('ImportSouthItemsModalComponent', () => {
   let fakeActiveModal: NgbActiveModal;
   const southConnector = testData.south.list[0] as SouthConnectorDTO;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     fakeActiveModal = createMock(NgbActiveModal);
 
     TestBed.configureTestingModule({
@@ -49,7 +49,7 @@ describe('ImportSouthItemsModalComponent', () => {
       [{ item: { name: 'item2' }, error: '' }],
       testData.scanMode.list
     );
-    tester.detectChanges();
+    await tester.change();
   });
 
   it('should save if valid', fakeAsync(() => {

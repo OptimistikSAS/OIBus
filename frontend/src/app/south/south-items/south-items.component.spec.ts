@@ -8,7 +8,6 @@ import {
 } from '../../../../../backend/shared/model/south-connector.model';
 import { SouthItemSettings, SouthSQLiteItemSettingsSerialization } from '../../../../../backend/shared/model/south-settings.model';
 import { of } from 'rxjs';
-import { provideHttpClient } from '@angular/common/http';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
@@ -19,6 +18,7 @@ import { ImportItemModalComponent } from '../../shared/import-item-modal/import-
 import { ModalService } from '../../shared/modal.service';
 import { ImportSouthItemsModalComponent } from './import-south-items-modal/import-south-items-modal.component';
 import { OIBusBooleanAttribute, OIBusNumberAttribute, OIBusStringAttribute } from '../../../../../backend/shared/model/form.model';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 const testSouthConnector: SouthConnectorDTO = {
   id: 'southId',
@@ -138,7 +138,7 @@ describe('SouthItemsComponent with saving changes directly', () => {
   let confirmationService: jasmine.SpyObj<ConfirmationService>;
   let notificationService: jasmine.SpyObj<NotificationService>;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     southConnectorService = createMock(SouthConnectorService);
     confirmationService = createMock(ConfirmationService);
     notificationService = createMock(NotificationService);
@@ -146,7 +146,7 @@ describe('SouthItemsComponent with saving changes directly', () => {
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
-        provideHttpClient(),
+        provideHttpClientTesting(),
         { provide: SouthConnectorService, useValue: southConnectorService },
         { provide: ConfirmationService, useValue: confirmationService },
         { provide: NotificationService, useValue: notificationService }
@@ -164,7 +164,7 @@ describe('SouthItemsComponent with saving changes directly', () => {
 
     tester = new SouthItemsComponentTester(southConnectorService);
     tester.componentInstance.saveChangesDirectly = true;
-    tester.detectChanges();
+    await tester.change();
   });
 
   it('should display items', () => {
@@ -243,7 +243,12 @@ describe('SouthItemsComponent with saving changes directly', () => {
 
   it('should delete one item', () => {
     // mock API response to delete first item
-    southConnectorService.findById.and.returnValue(of({ ...testSouthConnector, items: testSouthConnector.items.slice(1) }));
+    southConnectorService.findById.and.returnValue(
+      of({
+        ...testSouthConnector,
+        items: testSouthConnector.items.slice(1)
+      })
+    );
 
     tester.southItems[0].button('.delete-south-item')!.click();
 
@@ -271,16 +276,16 @@ describe('SouthItemsComponent with saving changes directly', () => {
     expect(tester.tableItemNames).toEqual(['item1', 'item1-copy']);
   });
 
-  it('should filter items', fakeAsync(() => {
+  it('should filter items', fakeAsync(async () => {
     const filterInput = tester.input('.oib-box-input-header');
     filterInput?.fillWith('item1');
     tick(300); // skip the 200ms debounce time
-    tester.detectChanges();
+    await tester.change();
 
     expect(tester.tableItemNames).toEqual(['item1', 'item1-copy']);
   }));
 
-  it('should not reset sorting after filtering', fakeAsync(() => {
+  it('should not reset sorting after filtering', fakeAsync(async () => {
     // Sort items descending
     tester.sortByNameBtn.click(); // Ascending
     tester.sortByNameBtn.click(); // Descending
@@ -289,16 +294,16 @@ describe('SouthItemsComponent with saving changes directly', () => {
     const filterInput = tester.input('.oib-box-input-header');
     filterInput?.fillWith('item');
     tick(300); // skip the 200ms debounce time
-    tester.detectChanges();
+    await tester.change();
 
     expect(tester.tableItemNames).toEqual(['item3', 'item1-copy', 'item1']);
   }));
 
-  it('should be able to delete item when filtering', fakeAsync(() => {
+  it('should be able to delete item when filtering', fakeAsync(async () => {
     const filterInput = tester.input('.oib-box-input-header');
     filterInput?.fillWith('item3');
     tick(300); // skip the 200ms debounce time
-    tester.detectChanges();
+    await tester.change();
 
     expect(tester.tableItemNames).toEqual(['item3']);
 
@@ -318,7 +323,7 @@ describe('SouthItemsComponent with saving changes directly', () => {
     // Empty filter and make sure the items are correct
     filterInput?.fillWith('');
     tick(300); // skip the 200ms debounce time
-    tester.detectChanges();
+    await tester.change();
     expect(tester.tableItemNames).toEqual(['item1', 'item1-copy']);
   }));
 });
@@ -329,7 +334,7 @@ describe('SouthItemsComponent without saving changes directly', () => {
   let confirmationService: jasmine.SpyObj<ConfirmationService>;
   let notificationService: jasmine.SpyObj<NotificationService>;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     southConnectorService = createMock(SouthConnectorService);
     confirmationService = createMock(ConfirmationService);
     notificationService = createMock(NotificationService);
@@ -337,7 +342,7 @@ describe('SouthItemsComponent without saving changes directly', () => {
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
-        provideHttpClient(),
+        provideHttpClientTesting(),
         { provide: SouthConnectorService, useValue: southConnectorService },
         { provide: ConfirmationService, useValue: confirmationService },
         { provide: NotificationService, useValue: notificationService }
@@ -355,7 +360,7 @@ describe('SouthItemsComponent without saving changes directly', () => {
 
     tester = new SouthItemsComponentTester(southConnectorService);
     tester.componentInstance.saveChangesDirectly = false;
-    tester.detectChanges();
+    await tester.change();
   });
 
   it('should display items', () => {
@@ -441,16 +446,16 @@ describe('SouthItemsComponent without saving changes directly', () => {
     expect(tester.tableItemNames).toEqual(['item1', 'item1-copy']);
   });
 
-  it('should filter items', fakeAsync(() => {
+  it('should filter items', fakeAsync(async () => {
     const filterInput = tester.input('.oib-box-input-header');
     filterInput?.fillWith('item1');
     tick(300); // skip the 200ms debounce time
-    tester.detectChanges();
+    await tester.change();
 
     expect(tester.tableItemNames).toEqual(['item1', 'item1-copy']);
   }));
 
-  it('should not reset sorting after filtering', fakeAsync(() => {
+  it('should not reset sorting after filtering', fakeAsync(async () => {
     // Sort items descending
     tester.sortByNameBtn.click(); // Ascending
     tester.sortByNameBtn.click(); // Descending
@@ -459,16 +464,16 @@ describe('SouthItemsComponent without saving changes directly', () => {
     const filterInput = tester.input('.oib-box-input-header');
     filterInput?.fillWith('item');
     tick(300); // skip the 200ms debounce time
-    tester.detectChanges();
+    await tester.change();
 
     expect(tester.tableItemNames).toEqual(['item3', 'item1-copy', 'item1']);
   }));
 
-  it('should be able to delete item when filtering', fakeAsync(() => {
+  it('should be able to delete item when filtering', fakeAsync(async () => {
     const filterInput = tester.input('.oib-box-input-header');
     filterInput?.fillWith('item3');
     tick(300); // skip the 200ms debounce time
-    tester.detectChanges();
+    await tester.change();
 
     expect(tester.tableItemNames).toEqual(['item3']);
 
@@ -482,7 +487,7 @@ describe('SouthItemsComponent without saving changes directly', () => {
     // Empty filter and make sure the items are correct
     filterInput?.fillWith('');
     tick(300); // skip the 200ms debounce time
-    tester.detectChanges();
+    await tester.change();
     expect(tester.tableItemNames).toEqual(['item1', 'item1-copy']);
   }));
 });
@@ -503,7 +508,7 @@ describe('SouthItemsComponent CSV Import Tests', () => {
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
-        provideHttpClient(),
+        provideHttpClientTesting(),
         { provide: SouthConnectorService, useValue: southConnectorService },
         { provide: ConfirmationService, useValue: confirmationService },
         { provide: NotificationService, useValue: notificationService },
@@ -533,9 +538,9 @@ describe('SouthItemsComponent CSV Import Tests', () => {
   });
 
   describe('with saveChangesDirectly = true', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       tester.componentInstance.saveChangesDirectly = true;
-      tester.detectChanges();
+      await tester.change();
     });
 
     it('should open import modal and set expected headers', () => {
@@ -555,9 +560,9 @@ describe('SouthItemsComponent CSV Import Tests', () => {
       ]);
     });
 
-    it('should set expected headers without scanMode when no scan modes available', () => {
+    it('should set expected headers without scanMode when no scan modes available', async () => {
       tester.componentInstance.scanModes = [];
-      tester.detectChanges();
+      await tester.change();
 
       const importButton = tester.button('#import-button')!;
       importButton.click();
@@ -715,9 +720,9 @@ describe('SouthItemsComponent CSV Import Tests', () => {
   });
 
   describe('with saveChangesDirectly = false', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       tester.componentInstance.saveChangesDirectly = false;
-      tester.detectChanges();
+      await tester.change();
     });
 
     it('should add items to allItems array instead of calling service', () => {
@@ -792,7 +797,7 @@ describe('SouthItemsComponent CSV Import Tests', () => {
   });
 
   describe('Expected headers generation', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       tester.componentInstance.saveChangesDirectly = true;
       const specificManifest = structuredClone(testData.south.manifest);
       specificManifest.items.rootAttribute.attributes = [
@@ -827,7 +832,7 @@ describe('SouthItemsComponent CSV Import Tests', () => {
       ];
 
       tester.componentInstance.manifest = specificManifest;
-      tester.detectChanges();
+      await tester.change();
     });
 
     it('should include all manifest settings in expected headers', () => {
@@ -846,9 +851,9 @@ describe('SouthItemsComponent CSV Import Tests', () => {
       ]);
     });
 
-    it('should not include scanMode in headers when no scan modes available', () => {
+    it('should not include scanMode in headers when no scan modes available', async () => {
       tester.componentInstance.scanModes = [];
-      tester.detectChanges();
+      await tester.change();
 
       tester.button('#import-button')!.click();
       const modalRef = (modalService.open as jasmine.Spy).calls.mostRecent().returnValue as { componentInstance: any };
@@ -858,9 +863,9 @@ describe('SouthItemsComponent CSV Import Tests', () => {
   });
 
   describe('Modal cancellation', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       tester.componentInstance.saveChangesDirectly = true;
-      tester.detectChanges();
+      await tester.change();
     });
 
     it('should not proceed with import when modal is cancelled', () => {
@@ -877,9 +882,9 @@ describe('SouthItemsComponent CSV Import Tests', () => {
   });
 
   describe('Mass actions', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       tester.componentInstance.southConnector = testSouthConnector;
-      tester.detectChanges();
+      await tester.change();
     });
 
     it('should have mass action functionality available', () => {

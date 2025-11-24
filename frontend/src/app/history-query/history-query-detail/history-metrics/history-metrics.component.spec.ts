@@ -6,7 +6,6 @@ import { Component } from '@angular/core';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { HistoryQueryDTO } from '../../../../../../backend/shared/model/history-query.model';
 import { HistoryQueryMetrics } from '../../../../../../backend/shared/model/engine.model';
-import { provideHttpClient } from '@angular/common/http';
 import { SouthSettings } from '../../../../../../backend/shared/model/south-settings.model';
 import { NorthSettings } from '../../../../../../backend/shared/model/north-settings.model';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
@@ -111,16 +110,16 @@ class HistoryMetricsComponentTester extends ComponentTester<TestComponent> {
 describe('HistoryMetricsComponent', () => {
   let tester: HistoryMetricsComponentTester;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideI18nTesting(), provideHttpClient()]
+      providers: [provideI18nTesting()]
     });
 
     tester = new HistoryMetricsComponentTester();
   });
 
-  it('should display a title', () => {
-    tester.detectChanges();
+  it('should display a title', async () => {
+    await tester.change();
     expect(tester.title).toContainText('metrics');
   });
 });

@@ -44,14 +44,14 @@ class TestComponentTester extends ComponentTester<TestComponent> {
 describe('DatepickerContainerComponent', () => {
   let tester: TestComponentTester;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     TestBed.configureTestingModule({
       imports: [TranslateModule.forRoot()],
       providers: [noAnimation]
     });
 
     tester = new TestComponentTester();
-    tester.detectChanges();
+    await tester.change();
   });
 
   it('should display an input, a toggle button, and toggle the datepicker', () => {

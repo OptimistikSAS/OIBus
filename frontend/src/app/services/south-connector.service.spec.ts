@@ -12,7 +12,6 @@ import {
 import { Page } from '../../../../backend/shared/model/types';
 import { toPage } from '../shared/test-utils';
 import { DownloadService } from './download.service';
-import { provideHttpClient } from '@angular/common/http';
 import { SouthItemSettings } from '../../../../backend/shared/model/south-settings.model';
 import testData from '../../../../backend/src/tests/utils/test-data';
 
@@ -23,7 +22,7 @@ describe('SouthConnectorService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()]
+      providers: [provideHttpClientTesting()]
     });
     http = TestBed.inject(HttpTestingController);
     service = TestBed.inject(SouthConnectorService);

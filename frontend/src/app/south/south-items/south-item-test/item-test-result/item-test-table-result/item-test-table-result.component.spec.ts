@@ -42,13 +42,13 @@ class ItemTestTableResultComponentTester extends ComponentTester<TestComponent> 
 describe('ItemTestTableResultComponent', () => {
   let tester: ItemTestTableResultComponentTester;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     TestBed.configureTestingModule({
       providers: [provideI18nTesting()]
     });
 
     tester = new ItemTestTableResultComponentTester();
-    tester.detectChanges();
+    await tester.change();
   });
 
   it('should display time values as a table', () => {
@@ -66,13 +66,13 @@ describe('ItemTestTableResultComponent', () => {
     }
   });
 
-  it('should display csv as a table', () => {
+  it('should display csv as a table', async () => {
     tester.changeContent({
       type: 'any',
       filePath: 'test.csv',
       content: 'foo,bar,baz\n1234,string with spaces,5678'
     });
-    tester.detectChanges();
+    await tester.change();
 
     // Make sure the columns are what we expect them to be
     const headers = tester.tableHeaders;
@@ -87,13 +87,13 @@ describe('ItemTestTableResultComponent', () => {
     expect(columns[2].nativeElement.innerText).toBe('5678');
   });
 
-  it('should not display csv as a table', () => {
+  it('should not display csv as a table', async () => {
     tester.changeContent({
       type: 'any',
       filePath: 'test.csv',
       content: ''
     });
-    tester.detectChanges();
+    await tester.change();
 
     // Make sure the columns are what we expect them to be
     expect(tester.tableHeaders.length).toBe(0);
@@ -135,9 +135,9 @@ describe('ItemTestTableResultComponent', () => {
     ).toEqual(null);
   });
 
-  it('should empty the table if cleaned', () => {
+  it('should empty the table if cleaned', async () => {
     tester.componentInstance.testedComponent().cleanup();
-    tester.detectChanges();
+    await tester.change();
     expect(tester.tableRows.length).toBe(0);
   });
 

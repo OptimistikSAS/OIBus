@@ -5,10 +5,10 @@ import { ComponentTester, createMock, TestButton } from 'ngx-speculoos';
 import { provideI18nTesting } from '../../i18n/mock-i18n';
 import { NorthConnectorService } from '../services/north-connector.service';
 import { provideRouter } from '@angular/router';
-import { provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
 import { NorthConnectorLightDTO } from '../../../../backend/shared/model/north-connector.model';
 import { NotificationService } from '../shared/notification.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 class NorthListComponentTester extends ComponentTester<NorthListComponent> {
   constructor() {
@@ -45,7 +45,7 @@ describe('NorthListComponent', () => {
     }
   ];
 
-  beforeEach(() => {
+  beforeEach(async () => {
     northConnectorService = createMock(NorthConnectorService);
     notificationService = createMock(NotificationService);
 
@@ -53,7 +53,7 @@ describe('NorthListComponent', () => {
       providers: [
         provideI18nTesting(),
         provideRouter([]),
-        provideHttpClient(),
+        provideHttpClientTesting(),
         { provide: NorthConnectorService, useValue: northConnectorService },
         { provide: NotificationService, useValue: notificationService }
       ]
@@ -64,7 +64,7 @@ describe('NorthListComponent', () => {
     northConnectorService.stop.and.returnValue(of(undefined));
 
     tester = new NorthListComponentTester();
-    tester.detectChanges();
+    await tester.change();
   });
 
   it('should display the north  list', () => {

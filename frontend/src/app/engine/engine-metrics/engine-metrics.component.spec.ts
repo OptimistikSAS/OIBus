@@ -6,11 +6,11 @@ import { Component } from '@angular/core';
 import { NotificationService } from '../../shared/notification.service';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { EngineService } from '../../services/engine.service';
-import { provideHttpClient } from '@angular/common/http';
 import testData from '../../../../../backend/src/tests/utils/test-data';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 @Component({
-  template: `<oib-engine-metrics [metrics]="metrics" />`,
+  template: ` <oib-engine-metrics [metrics]="metrics" />`,
   imports: [EngineMetricsComponent]
 })
 class TestComponent {
@@ -31,13 +31,13 @@ describe('EngineMetricsComponent', () => {
   let tester: EngineMetricsComponentTester;
   let notificationService: jasmine.SpyObj<NotificationService>;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     const engineService = createMock(EngineService);
     notificationService = createMock(NotificationService);
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
-        provideHttpClient(),
+        provideHttpClientTesting(),
         { provide: EngineService, useValue: engineService },
         { provide: NotificationService, useValue: notificationService }
       ]
@@ -46,8 +46,8 @@ describe('EngineMetricsComponent', () => {
     tester = new EngineMetricsComponentTester();
   });
 
-  it('should not have a title', () => {
-    tester.detectChanges();
+  it('should not have a title', async () => {
+    await tester.change();
     expect(tester.title).toContainText('Metrics');
   });
 });

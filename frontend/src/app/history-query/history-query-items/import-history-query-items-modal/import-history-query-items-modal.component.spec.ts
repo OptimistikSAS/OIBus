@@ -27,7 +27,7 @@ describe('ImportHistoryQueryItemsModalComponent', () => {
 
   const manifest = testData.south.manifest;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     fakeActiveModal = createMock(NgbActiveModal);
 
     TestBed.configureTestingModule({
@@ -48,7 +48,7 @@ describe('ImportHistoryQueryItemsModalComponent', () => {
       ],
       [{ item: { name: 'item2' } as HistoryQueryItemDTO, error: '' }]
     );
-    tester.detectChanges();
+    await tester.change();
   });
 
   it('should save if valid', fakeAsync(() => {

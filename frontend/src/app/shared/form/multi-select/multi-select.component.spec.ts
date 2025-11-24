@@ -84,54 +84,54 @@ describe('MultiSelectComponent', () => {
       tester = new TestComponentTester();
     });
 
-    it('should display nothing if no placeholder and no selection', () => {
-      tester.detectChanges();
+    it('should display nothing if no placeholder and no selection', async () => {
+      await tester.change();
       expect(tester.multiSelect).toHaveText('');
     });
 
-    it('should display placeholder if placeholder and no selection', () => {
+    it('should display placeholder if placeholder and no selection', async () => {
       tester.componentInstance.placeholder = 'Choose a user';
-      tester.detectChanges();
+      await tester.change();
       expect(tester.multiSelect).toHaveText('Choose a user');
     });
 
-    it('should display the selection, ordered the same way as the options', () => {
+    it('should display the selection, ordered the same way as the options', async () => {
       tester.usersCtrl.setValue([tester.componentInstance.users[2].id, tester.componentInstance.users[0].id]);
-      tester.detectChanges();
+      await tester.change();
       expect(tester.multiSelect).toHaveText('Cedric, Marouane');
     });
 
-    it('should be pristine and not touched initially', () => {
-      tester.detectChanges();
+    it('should be pristine and not touched initially', async () => {
+      await tester.change();
       expect(tester.componentInstance.form.pristine).toBe(true);
       expect(tester.componentInstance.form.touched).toBe(false);
     });
 
-    it('should be pristine and not touched initially, even if pre-populated', () => {
+    it('should be pristine and not touched initially, even if pre-populated', async () => {
       tester.usersCtrl.setValue([tester.componentInstance.users[2].id, tester.componentInstance.users[0].id]);
-      tester.detectChanges();
+      await tester.change();
 
       expect(tester.usersCtrl.pristine).toBe(true);
       expect(tester.usersCtrl.touched).toBe(false);
       expect(tester.usersCtrl.value!.sort()).toEqual([1, 3]);
     });
 
-    it('should be keep phantom selected values', () => {
+    it('should be keep phantom selected values', async () => {
       tester.usersCtrl.setValue([tester.componentInstance.users[2].id, tester.componentInstance.users[0].id, 42]);
-      tester.detectChanges();
+      await tester.change();
 
       expect(tester.usersCtrl.value!.sort()).toEqual([1, 3, 42]);
     });
 
-    it('should become touched when losing focus', () => {
-      tester.detectChanges();
+    it('should become touched when losing focus', async () => {
+      await tester.change();
       tester.multiSelect.nativeElement.focus();
       tester.multiSelect.dispatchEventOfType('blur');
       expect(tester.usersCtrl.touched).toBe(true);
     });
 
-    it('should select and de-select values by clicking options', () => {
-      tester.detectChanges();
+    it('should select and de-select values by clicking options', async () => {
+      await tester.change();
       tester.toggle();
       expect(tester.option(0)).toHaveText('Cedric');
       expect(tester.option(0)).not.toHaveClass('selected');
@@ -152,18 +152,18 @@ describe('MultiSelectComponent', () => {
       expect(tester.usersCtrl.value!.sort()).toEqual([2]);
     });
 
-    it('should have pre-selected options', () => {
+    it('should have pre-selected options', async () => {
       tester.usersCtrl.setValue([tester.componentInstance.users[2].id, tester.componentInstance.users[0].id]);
 
-      tester.detectChanges();
+      await tester.change();
       tester.toggle();
       expect(tester.option(0)).toHaveClass('selected');
       expect(tester.option(1)).not.toHaveClass('selected');
       expect(tester.option(2)).toHaveClass('selected');
     });
 
-    it('should focus the main button when closed', fakeAsync(() => {
-      tester.detectChanges();
+    it('should focus the main button when closed', fakeAsync(async () => {
+      await tester.change();
       tester.toggle();
       tick();
 
@@ -172,8 +172,8 @@ describe('MultiSelectComponent', () => {
       expect(document.activeElement).toBe(tester.multiSelect.nativeElement);
     }));
 
-    it('should emit a change event when the user changes the selection', () => {
-      tester.detectChanges();
+    it('should emit a change event when the user changes the selection', async () => {
+      await tester.change();
       tester.toggle();
 
       tester.option(0).click();
@@ -205,19 +205,19 @@ describe('MultiSelectComponent', () => {
       tester = new TestComponentTester();
     });
 
-    it('should display nothing if no placeholder and no selection', () => {
-      tester.detectChanges();
+    it('should display nothing if no placeholder and no selection', async () => {
+      await tester.change();
       expect(tester.multiSelect).toHaveText('');
     });
 
-    it('should display the selection, ordered the same way as the options', () => {
+    it('should display the selection, ordered the same way as the options', async () => {
       tester.usersCtrl.setValue([{ ...tester.componentInstance.users[2] }, { ...tester.componentInstance.users[0] }]);
-      tester.detectChanges();
+      await tester.change();
       expect(tester.multiSelect).toHaveText('Cedric, Marouane');
     });
 
-    it('should select and de-select values by clicking options', () => {
-      tester.detectChanges();
+    it('should select and de-select values by clicking options', async () => {
+      await tester.change();
       tester.toggle();
       expect(tester.option(0)).toHaveText('Cedric');
       expect(tester.option(0)).not.toHaveClass('selected');
@@ -237,10 +237,10 @@ describe('MultiSelectComponent', () => {
       expect(tester.usersCtrl.value).toEqual([{ id: 2, name: 'JB' }]);
     });
 
-    it('should have pre-selected options', () => {
+    it('should have pre-selected options', async () => {
       tester.usersCtrl.setValue([{ ...tester.componentInstance.users[2] }, { ...tester.componentInstance.users[0] }]);
 
-      tester.detectChanges();
+      await tester.change();
       tester.toggle();
       expect(tester.option(0)).toHaveClass('selected');
       expect(tester.option(1)).not.toHaveClass('selected');

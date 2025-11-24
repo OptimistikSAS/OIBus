@@ -6,7 +6,6 @@ import { of } from 'rxjs';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { ScanModeService } from '../../services/scan-mode.service';
-import { provideHttpClient } from '@angular/common/http';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { NorthConnectorDTO } from '../../../../../backend/shared/model/north-connector.model';
 import { CertificateService } from '../../services/certificate.service';
@@ -63,7 +62,6 @@ describe('EditNorthComponent', () => {
       providers: [
         provideI18nTesting(),
         provideRouter([]),
-        provideHttpClient(),
         provideHttpClientTesting(),
         { provide: NorthConnectorService, useValue: northConnectorService },
         { provide: ScanModeService, useValue: scanModeService },
@@ -81,11 +79,11 @@ describe('EditNorthComponent', () => {
   });
 
   describe('create mode', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute({ queryParams: { type: 'console' } }) });
 
       tester = new EditNorthComponentTester();
-      tester.detectChanges();
+      await tester.change();
     });
 
     it('should display general settings', () => {
@@ -131,12 +129,12 @@ describe('EditNorthComponent', () => {
       transformers: []
     };
 
-    beforeEach(() => {
+    beforeEach(async () => {
       TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute({ params: { northId: 'id1' } }) });
 
       northConnectorService.findById.and.returnValue(of(northConnector));
       tester = new EditNorthComponentTester();
-      tester.detectChanges();
+      await tester.change();
     });
     it('should display general settings', () => {
       expect(northConnectorService.findById).toHaveBeenCalledWith('id1');

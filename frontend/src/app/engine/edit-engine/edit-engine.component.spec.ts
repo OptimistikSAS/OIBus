@@ -4,11 +4,11 @@ import { EditEngineComponent } from './edit-engine.component';
 import { ComponentTester, createMock } from 'ngx-speculoos';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { provideRouter } from '@angular/router';
-import { provideHttpClient } from '@angular/common/http';
 import { EngineSettingsDTO } from '../../../../../backend/shared/model/engine.model';
 import { EngineService } from '../../services/engine.service';
 import { of } from 'rxjs';
 import { NotificationService } from '../../shared/notification.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 class EditEngineComponentTester extends ComponentTester<EditEngineComponent> {
   constructor() {
@@ -132,13 +132,13 @@ describe('EditEngineComponent', () => {
     }
   };
 
-  beforeEach(() => {
+  beforeEach(async () => {
     engineService = createMock(EngineService);
     notificationService = createMock(NotificationService);
 
     TestBed.configureTestingModule({
       providers: [
-        provideHttpClient(),
+        provideHttpClientTesting(),
         provideRouter([]),
         provideI18nTesting(),
         { provide: EngineService, useValue: engineService },
@@ -151,7 +151,7 @@ describe('EditEngineComponent', () => {
     engineService.updateEngineSettings.and.returnValue(of(undefined));
 
     tester = new EditEngineComponentTester();
-    tester.detectChanges();
+    await tester.change();
   });
 
   it('should display title and filled form', () => {

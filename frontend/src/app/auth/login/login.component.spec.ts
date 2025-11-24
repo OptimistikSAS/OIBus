@@ -4,10 +4,10 @@ import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { Router } from '@angular/router';
 import { CurrentUserService } from '../../shared/current-user.service';
-import { provideHttpClient } from '@angular/common/http';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
 import { RequestedUrlService } from '../authentication.guard';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 class LoginComponentTester extends ComponentTester<LoginComponent> {
   constructor() {
@@ -37,7 +37,7 @@ describe('LoginComponent', () => {
   let currentUserService: jasmine.SpyObj<CurrentUserService>;
   let router: jasmine.SpyObj<Router>;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     currentUserService = createMock(CurrentUserService);
     router = createMock(Router);
 
@@ -46,7 +46,7 @@ describe('LoginComponent', () => {
 
     TestBed.configureTestingModule({
       providers: [
-        provideHttpClient(),
+        provideHttpClientTesting(),
         provideI18nTesting(),
         { provide: Router, useValue: router },
         { provide: CurrentUserService, useValue: currentUserService },
@@ -57,7 +57,7 @@ describe('LoginComponent', () => {
     TestBed.createComponent(DefaultValidationErrorsComponent).detectChanges();
 
     tester = new LoginComponentTester();
-    tester.detectChanges();
+    await tester.change();
   });
 
   it('should display an empty form', () => {

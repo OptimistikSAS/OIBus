@@ -3,7 +3,6 @@ import { TestBed } from '@angular/core/testing';
 import { HistoryQueryDetailComponent } from './history-query-detail.component';
 import { ComponentTester, createMock, stubRoute } from 'ngx-speculoos';
 import { of } from 'rxjs';
-import { provideHttpClient } from '@angular/common/http';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { HistoryQueryService } from '../../services/history-query.service';
@@ -122,7 +121,6 @@ describe('HistoryQueryDetailComponent', () => {
       providers: [
         provideI18nTesting(),
         provideRouter([]),
-        provideHttpClient(),
         {
           provide: ActivatedRoute,
           useValue: stubRoute({
@@ -155,8 +153,8 @@ describe('HistoryQueryDetailComponent', () => {
     tester = new HistoryQueryDetailComponentTester();
   });
 
-  it('should display History query detail', () => {
-    tester.detectChanges();
+  it('should display History query detail', async () => {
+    await tester.change();
     expect(tester.title).toContainText(historyQuery.name);
     const southSettings = tester.southSettings;
     expect(southSettings).toBeDefined();
@@ -165,19 +163,19 @@ describe('HistoryQueryDetailComponent', () => {
     expect(northSettings).toBeDefined();
   });
 
-  it('should display items', () => {
-    tester.detectChanges();
+  it('should display items', async () => {
+    await tester.change();
     expect(tester.items.length).toBe(1);
     const item = tester.items[0];
     expect(item.elements('td')[2]).toContainText('item1');
   });
 
-  it('should display logs', () => {
-    tester.detectChanges();
+  it('should display logs', async () => {
+    await tester.change();
     expect(tester.historyQueryLogs.length).toBe(1);
   });
 
-  it('should test north connection', () => {
+  it('should test north connection', async () => {
     tester.componentInstance.northManifest = northManifest;
     tester.componentInstance.historyQuery = historyQuery;
 
@@ -189,11 +187,11 @@ describe('HistoryQueryDetailComponent', () => {
     } as Modal<unknown>);
 
     tester.componentInstance.test('north');
-    tester.detectChanges();
+    await tester.change();
     expect(spy).toHaveBeenCalledWith('north', 'id1', historyQuery.northSettings, historyQuery.northType);
   });
 
-  it('should test south connection', () => {
+  it('should test south connection', async () => {
     tester.componentInstance.southManifest = southManifest;
     tester.componentInstance.historyQuery = historyQuery;
 
@@ -205,7 +203,7 @@ describe('HistoryQueryDetailComponent', () => {
     } as Modal<unknown>);
 
     tester.componentInstance.test('south');
-    tester.detectChanges();
+    await tester.change();
     expect(spy).toHaveBeenCalledWith('south', 'id1', historyQuery.southSettings, historyQuery.southType);
   });
 });

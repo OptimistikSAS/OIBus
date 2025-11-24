@@ -39,8 +39,8 @@ describe('ExportSouthItemModalComponent', () => {
     tester = new ExportSouthItemModalComponentTester();
   });
 
-  it('should send a delimiter', () => {
-    tester.detectChanges();
+  it('should send a delimiter', async () => {
+    await tester.change();
     tester.delimiter.selectLabel('Comma ,');
     tester.fileName!.fillWith('south-item');
 
@@ -48,8 +48,8 @@ describe('ExportSouthItemModalComponent', () => {
     expect(fakeActiveModal.close).toHaveBeenCalledWith({ delimiter: ',', fileName: 'south-item' });
   });
 
-  it('should cancel', () => {
-    tester.detectChanges();
+  it('should cancel', async () => {
+    await tester.change();
 
     tester.cancelButton.click();
     expect(fakeActiveModal.close).toHaveBeenCalled();

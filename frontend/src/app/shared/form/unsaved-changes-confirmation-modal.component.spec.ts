@@ -30,7 +30,7 @@ describe('UnsavedChangesConfirmationModalComponent', () => {
   let tester: UnsavedChangesConfirmationModalComponentTester;
   let fakeActiveModal: jasmine.SpyObj<NgbActiveModal>;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     fakeActiveModal = createMock(NgbActiveModal);
 
     TestBed.configureTestingModule({
@@ -38,7 +38,7 @@ describe('UnsavedChangesConfirmationModalComponent', () => {
     });
 
     tester = new UnsavedChangesConfirmationModalComponentTester();
-    tester.detectChanges();
+    await tester.change();
   });
 
   it('should display the modal content', () => {

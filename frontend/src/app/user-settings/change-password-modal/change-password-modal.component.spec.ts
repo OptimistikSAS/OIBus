@@ -47,7 +47,7 @@ describe('ChangePasswordModalComponent', () => {
 
   let userSettings: UserDTO;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     activeModal = createMock(NgbActiveModal);
     userSettingsService = createMock(UserSettingsService);
 
@@ -65,7 +65,7 @@ describe('ChangePasswordModalComponent', () => {
     TestBed.createComponent(DefaultValidationErrorsComponent).detectChanges();
 
     tester = new ChangePasswordModalComponentTester();
-    tester.detectChanges();
+    await tester.change();
   });
 
   it('should display an empty form', () => {

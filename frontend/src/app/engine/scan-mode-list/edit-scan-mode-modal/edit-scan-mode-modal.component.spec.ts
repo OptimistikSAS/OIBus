@@ -63,10 +63,10 @@ describe('EditScanModeModalComponent', () => {
   });
 
   describe('create mode', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       scanModeService.verifyCron.and.returnValue(of({ isValid: true, errorMessage: '', nextExecutions: [], humanReadableForm: '' }));
       tester.componentInstance.prepareForCreation();
-      tester.detectChanges();
+      await tester.change();
     });
 
     it('should have an empty form', () => {
@@ -100,13 +100,13 @@ describe('EditScanModeModalComponent', () => {
       expect(tester.validationErrors[0].nativeElement.textContent).toContain('bad cron');
     }));
 
-    it('should save if valid', fakeAsync(() => {
+    it('should save if valid', fakeAsync(async () => {
       tester.name.fillWith('test');
       tester.description.fillWith('desc');
       tester.cron.fillWith('* * * * * *');
       flush();
 
-      tester.detectChanges();
+      await tester.change();
 
       const createdScanMode = {
         id: 'id1'
@@ -139,12 +139,12 @@ describe('EditScanModeModalComponent', () => {
       cron: '* * * * * *'
     };
 
-    beforeEach(() => {
+    beforeEach(async () => {
       scanModeService.verifyCron.and.returnValue(of({ isValid: true, errorMessage: '', nextExecutions: [], humanReadableForm: '' }));
       scanModeService.findById.and.returnValue(of(scanModeToUpdate));
 
       tester.componentInstance.prepareForEdition(scanModeToUpdate);
-      tester.detectChanges();
+      await tester.change();
     });
 
     it('should have a populated form', () => {

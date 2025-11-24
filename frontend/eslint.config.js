@@ -74,6 +74,7 @@ export default [
             ignoreRestSiblings: true
           }
         ],
+        'require-await': 'error',
         'no-case-declarations': 'off',
         'no-restricted-syntax': [
           'error',

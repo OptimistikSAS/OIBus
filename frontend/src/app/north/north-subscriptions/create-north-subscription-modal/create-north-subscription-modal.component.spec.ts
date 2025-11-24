@@ -42,7 +42,7 @@ describe('CreateNorthSubscriptionModalComponent', () => {
     { id: 'id2', name: 'South2', type: 'modbus' } as SouthConnectorLightDTO
   ];
 
-  beforeEach(() => {
+  beforeEach(async () => {
     fakeActiveModal = createMock(NgbActiveModal);
     northConnectorService = createMock(NorthConnectorService);
     notificationService = createMock(NotificationService);
@@ -61,7 +61,7 @@ describe('CreateNorthSubscriptionModalComponent', () => {
     tester = new CreateNorthSubscriptionModalComponentTester();
     tester.componentInstance.prepareForCreation(southConnectors);
     northConnectorService.addSubscription.and.returnValue(of(undefined));
-    tester.detectChanges();
+    await tester.change();
   });
 
   it('should have an empty form', () => {

@@ -46,14 +46,14 @@ describe('OpenTypeaheadOnFocusDirective', () => {
   let tester: TestComponentTester;
   let userService: UserService;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     TestBed.configureTestingModule({
       providers: [provideNgbConfigTesting(), UserService]
     });
     userService = TestBed.inject(UserService);
     spyOn(userService, 'suggestByText').and.callThrough();
     tester = new TestComponentTester();
-    tester.detectChanges();
+    await tester.change();
   });
 
   it('should call search on focus', fakeAsync(() => {

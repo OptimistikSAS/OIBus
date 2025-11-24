@@ -80,9 +80,9 @@ describe('IpFilterListComponent', () => {
   });
 
   describe('with ip filter', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       ipFilterService.list.and.returnValue(of(ipFilters));
-      tester.detectChanges();
+      await tester.change();
     });
 
     it('should display a list of ip filters', () => {
@@ -134,9 +134,9 @@ describe('IpFilterListComponent', () => {
   });
 
   describe('with no ip filter', () => {
-    it('should display an empty list', () => {
+    it('should display an empty list', async () => {
       ipFilterService.list.and.returnValue(of([]));
-      tester.detectChanges();
+      await tester.change();
       expect(tester.noIpFilter).toContainText('No IP filter');
     });
   });

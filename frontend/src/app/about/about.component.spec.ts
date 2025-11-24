@@ -65,20 +65,20 @@ describe('AboutComponent', () => {
     });
   });
 
-  it('should have static info', () => {
+  it('should have static info', async () => {
     engineService.getInfo.and.returnValue(EMPTY);
     tester = new AboutComponentTester();
-    tester.detectChanges();
+    await tester.change();
     expect(tester.officialSite).toContainText('Official site');
     expect(tester.license).toContainText('License');
     expect(tester.version).toContainText('Version');
     expect(tester.versionSpinner).toBeDefined();
   });
 
-  it('should have dynamic info', () => {
+  it('should have dynamic info', async () => {
     engineService.getInfo.and.returnValue(of(testData.engine.oIBusInfo));
     tester = new AboutComponentTester();
-    tester.detectChanges();
+    await tester.change();
 
     expect(tester.officialSite).toContainText('Official site');
     expect(tester.license).toContainText('License');

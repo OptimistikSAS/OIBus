@@ -7,7 +7,7 @@ import { HistoryQueryDTO, HistoryQueryItemDTO, HistoryQueryLightDTO } from '../.
 import { toPage } from '../shared/test-utils';
 import { Page } from '../../../../backend/shared/model/types';
 import { DownloadService } from './download.service';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 import { SouthItemSettings } from '../../../../backend/shared/model/south-settings.model';
 import { CacheMetadata } from '../../../../backend/shared/model/engine.model';
 import testData from '../../../../backend/src/tests/utils/test-data';
@@ -20,7 +20,7 @@ describe('HistoryQueryService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()]
+      providers: [provideHttpClientTesting()]
     });
     http = TestBed.inject(HttpTestingController);
     service = TestBed.inject(HistoryQueryService);

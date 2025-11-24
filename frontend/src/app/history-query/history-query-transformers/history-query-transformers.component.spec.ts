@@ -10,7 +10,7 @@ import { FormControl, NonNullableFormBuilder } from '@angular/forms';
 import { HistoryQueryService } from '../../services/history-query.service';
 
 @Component({
-  template: `<oib-history-query-transformers
+  template: ` <oib-history-query-transformers
     [northManifest]="northManifest"
     [transformers]="transformers"
     [certificates]="[]"
@@ -44,7 +44,7 @@ describe('HistoryQueryTransformersComponent', () => {
   let tester: HistoryQueryTransformersComponentTester;
   let historyQueryService: jasmine.SpyObj<HistoryQueryService>;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     historyQueryService = createMock(HistoryQueryService);
 
     TestBed.configureTestingModule({
@@ -52,10 +52,10 @@ describe('HistoryQueryTransformersComponent', () => {
     });
 
     tester = new HistoryQueryTransformersComponentTester();
+    await tester.change();
   });
 
   it('should display forms with types', () => {
-    tester.detectChanges();
     expect(tester.transformers.length).toEqual(0);
   });
 });

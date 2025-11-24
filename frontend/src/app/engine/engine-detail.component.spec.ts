@@ -6,7 +6,6 @@ import { EngineSettingsDTO } from '../../../../backend/shared/model/engine.model
 import { of, Subject } from 'rxjs';
 import { EngineService } from '../services/engine.service';
 import { provideI18nTesting } from '../../i18n/mock-i18n';
-import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { ScanModeListComponent } from './scan-mode-list/scan-mode-list.component';
 import { IpFilterListComponent } from './ip-filter-list/ip-filter-list.component';
@@ -75,7 +74,7 @@ describe('EngineDetailComponent', () => {
     proxyPort: 8888
   } as EngineSettingsDTO;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     engineService = createMock(EngineService);
     scanModeService = createMock(ScanModeService);
     ipFilterService = createMock(IpFilterService);
@@ -86,7 +85,6 @@ describe('EngineDetailComponent', () => {
       providers: [
         provideI18nTesting(),
         provideRouter([]),
-        provideHttpClient(),
         provideHttpClientTesting(),
         { provide: EngineService, useValue: engineService },
         { provide: ScanModeService, useValue: scanModeService },
@@ -101,7 +99,7 @@ describe('EngineDetailComponent', () => {
     ipFilterService.list.and.returnValue(of([]));
 
     tester = new EngineComponentTester();
-    tester.detectChanges();
+    await tester.change();
   });
 
   it('should display engine settings', () => {
@@ -123,7 +121,7 @@ describe('EngineDetailComponent', () => {
     expect(tester.ipFilterList).toBeDefined();
   });
 
-  it('should restart', () => {
+  it('should restart', async () => {
     const restartSubject = new Subject<void>();
     engineService.restart.and.returnValue(restartSubject);
     confirmationService.confirm.and.returnValue(of(undefined));
@@ -133,7 +131,7 @@ describe('EngineDetailComponent', () => {
     expect(tester.restartButton.disabled).toBeTrue();
 
     restartSubject.next();
-    tester.detectChanges();
+    await tester.change();
 
     expect(engineService.restart).toHaveBeenCalled();
     expect(notificationService.success).toHaveBeenCalledWith('engine.restart-complete');

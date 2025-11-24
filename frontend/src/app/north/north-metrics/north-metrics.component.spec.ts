@@ -6,11 +6,10 @@ import { Component } from '@angular/core';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { NotificationService } from '../../shared/notification.service';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
-import { provideHttpClient } from '@angular/common/http';
 import testData from '../../../../../backend/src/tests/utils/test-data';
 
 @Component({
-  template: `<oib-north-metrics [connectorMetrics]="metrics" [northConnector]="northConnector" [manifest]="manifest" />`,
+  template: ` <oib-north-metrics [connectorMetrics]="metrics" [northConnector]="northConnector" [manifest]="manifest" />`,
   imports: [NorthMetricsComponent]
 })
 class TestComponent {
@@ -34,14 +33,13 @@ describe('NorthMetricsComponent', () => {
   let northConnectorService: jasmine.SpyObj<NorthConnectorService>;
   let notificationService: jasmine.SpyObj<NotificationService>;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     northConnectorService = createMock(NorthConnectorService);
     notificationService = createMock(NotificationService);
 
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
-        provideHttpClient(),
         { provide: NorthConnectorService, useValue: northConnectorService },
         { provide: NotificationService, useValue: notificationService }
       ]
@@ -50,8 +48,8 @@ describe('NorthMetricsComponent', () => {
     tester = new NorthMetricsComponentTester();
   });
 
-  it('should display a title', () => {
-    tester.detectChanges();
+  it('should display a title', async () => {
+    await tester.change();
     expect(tester.title).toContainText('North 1 metrics');
   });
 });

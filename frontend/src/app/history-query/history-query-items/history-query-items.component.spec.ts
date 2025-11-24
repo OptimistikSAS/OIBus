@@ -1,7 +1,6 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ComponentTester, createMock, TestInput } from 'ngx-speculoos';
 import { of } from 'rxjs';
-import { provideHttpClient } from '@angular/common/http';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
@@ -87,7 +86,7 @@ const testHistoryQuery: HistoryQueryDTO = {
 };
 
 @Component({
-  template: `<oib-history-query-items
+  template: ` <oib-history-query-items
     [historyId]="historyQuery.id"
     [historyQuery]="historyQuery"
     [southManifest]="manifest"
@@ -103,6 +102,7 @@ class TestComponent {
   manifest = testData.south.manifest;
   saveChangesDirectly!: boolean;
   inMemoryItems: Array<HistoryQueryItemCommandDTO> = [];
+
   updateInMemoryItems(items: Array<HistoryQueryItemCommandDTO> | null) {
     if (items) {
       this.inMemoryItems = items;
@@ -113,6 +113,7 @@ class TestComponent {
       });
     }
   }
+
   southCommand = testData.south.command;
 }
 
@@ -158,7 +159,7 @@ describe('HistoryQueryItemsComponent with saving changes directly', () => {
   let notificationService: jasmine.SpyObj<NotificationService>;
   let modalService: jasmine.SpyObj<ModalService>;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     historyQueryService = createMock(HistoryQueryService);
     confirmationService = createMock(ConfirmationService);
     notificationService = createMock(NotificationService);
@@ -167,7 +168,6 @@ describe('HistoryQueryItemsComponent with saving changes directly', () => {
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
-        provideHttpClient(),
         { provide: HistoryQueryService, useValue: historyQueryService },
         { provide: ConfirmationService, useValue: confirmationService },
         { provide: NotificationService, useValue: notificationService },
@@ -196,7 +196,7 @@ describe('HistoryQueryItemsComponent with saving changes directly', () => {
 
     tester = new HistoryQueryItemsComponentTester(historyQueryService);
     tester.componentInstance.saveChangesDirectly = true;
-    tester.detectChanges();
+    await tester.change();
   });
 
   it('should display items', () => {
@@ -268,23 +268,28 @@ describe('HistoryQueryItemsComponent with saving changes directly', () => {
     expect(tester.tableItemNames).toEqual(['item3', 'item1-copy', 'item1']);
 
     // mock API response to delete third item
-    historyQueryService.findById.and.returnValue(of({ ...testHistoryQuery, items: testHistoryQuery.items.slice(0, 2) }));
+    historyQueryService.findById.and.returnValue(
+      of({
+        ...testHistoryQuery,
+        items: testHistoryQuery.items.slice(0, 2)
+      })
+    );
 
     tester.southItems[2].button('.delete-south-item')!.click();
 
     expect(tester.tableItemNames).toEqual(['item1', 'item1-copy']);
   });
 
-  it('should filter items', fakeAsync(() => {
+  it('should filter items', fakeAsync(async () => {
     const filterInput = tester.input('.oib-box-input-header');
     filterInput?.fillWith('item1');
     tick(300); // skip the 200ms debounce time
-    tester.detectChanges();
+    await tester.change();
 
     expect(tester.tableItemNames).toEqual(['item1', 'item1-copy']);
   }));
 
-  it('should not reset sorting after filtering', fakeAsync(() => {
+  it('should not reset sorting after filtering', fakeAsync(async () => {
     // Sort items descending
     tester.sortByNameBtn.click(); // Ascending
     tester.sortByNameBtn.click(); // Descending
@@ -293,21 +298,26 @@ describe('HistoryQueryItemsComponent with saving changes directly', () => {
     const filterInput = tester.input('.oib-box-input-header');
     filterInput?.fillWith('item1');
     tick(300); // skip the 200ms debounce time
-    tester.detectChanges();
+    await tester.change();
 
     expect(tester.tableItemNames).toEqual(['item1-copy', 'item1']);
   }));
 
-  it('should be able to delete item when filtering', fakeAsync(() => {
+  it('should be able to delete item when filtering', fakeAsync(async () => {
     const filterInput = tester.input('.oib-box-input-header');
     filterInput?.fillWith('item3');
     tick(300); // skip the 200ms debounce time
-    tester.detectChanges();
+    await tester.change();
 
     expect(tester.tableItemNames).toEqual(['item3']);
 
     // Delete the third item in the list
-    historyQueryService.findById.and.returnValue(of({ ...testHistoryQuery, items: testHistoryQuery.items.slice(0, 2) }));
+    historyQueryService.findById.and.returnValue(
+      of({
+        ...testHistoryQuery,
+        items: testHistoryQuery.items.slice(0, 2)
+      })
+    );
     tester.southItems[0].button('.delete-south-item')!.click();
 
     expect(confirmationService.confirm).toHaveBeenCalledTimes(1);
@@ -317,7 +327,7 @@ describe('HistoryQueryItemsComponent with saving changes directly', () => {
     // Empty filter and make sure the items are correct
     filterInput?.fillWith('');
     tick(300); // skip the 200ms debounce time
-    tester.detectChanges();
+    await tester.change();
     expect(tester.tableItemNames).toEqual(['item1', 'item1-copy']);
   }));
 
@@ -355,7 +365,7 @@ describe('HistoryQueryItemsComponent without saving changes directly', () => {
   let notificationService: jasmine.SpyObj<NotificationService>;
   let modalService: jasmine.SpyObj<ModalService>;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     historyQueryService = createMock(HistoryQueryService);
     confirmationService = createMock(ConfirmationService);
     notificationService = createMock(NotificationService);
@@ -364,7 +374,6 @@ describe('HistoryQueryItemsComponent without saving changes directly', () => {
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
-        provideHttpClient(),
         { provide: HistoryQueryService, useValue: historyQueryService },
         { provide: ConfirmationService, useValue: confirmationService },
         { provide: NotificationService, useValue: notificationService },
@@ -393,7 +402,7 @@ describe('HistoryQueryItemsComponent without saving changes directly', () => {
 
     tester = new HistoryQueryItemsComponentTester(historyQueryService);
     tester.componentInstance.saveChangesDirectly = false;
-    tester.detectChanges();
+    await tester.change();
   });
 
   it('should display items', () => {
@@ -456,16 +465,16 @@ describe('HistoryQueryItemsComponent without saving changes directly', () => {
     expect(tester.tableItemNames).toEqual(['item1', 'item1-copy']);
   });
 
-  it('should filter items', fakeAsync(() => {
+  it('should filter items', fakeAsync(async () => {
     const filterInput = tester.input('.oib-box-input-header');
     filterInput?.fillWith('item1');
     tick(300); // skip the 200ms debounce time
-    tester.detectChanges();
+    await tester.change();
 
     expect(tester.tableItemNames).toEqual(['item1', 'item1-copy']);
   }));
 
-  it('should not reset sorting after filtering', fakeAsync(() => {
+  it('should not reset sorting after filtering', fakeAsync(async () => {
     // Sort items descending
     tester.sortByNameBtn.click(); // Ascending
     tester.sortByNameBtn.click(); // Descending
@@ -474,16 +483,16 @@ describe('HistoryQueryItemsComponent without saving changes directly', () => {
     const filterInput = tester.input('.oib-box-input-header');
     filterInput?.fillWith('item1');
     tick(300); // skip the 200ms debounce time
-    tester.detectChanges();
+    await tester.change();
 
     expect(tester.tableItemNames).toEqual(['item1-copy', 'item1']);
   }));
 
-  it('should be able to delete item when filtering', fakeAsync(() => {
+  it('should be able to delete item when filtering', fakeAsync(async () => {
     const filterInput = tester.input('.oib-box-input-header');
     filterInput?.fillWith('item3');
     tick(300); // skip the 200ms debounce time
-    tester.detectChanges();
+    await tester.change();
 
     expect(tester.tableItemNames).toEqual(['item3']);
 
@@ -497,7 +506,7 @@ describe('HistoryQueryItemsComponent without saving changes directly', () => {
     // Empty filter and make sure the items are correct
     filterInput?.fillWith('');
     tick(300); // skip the 200ms debounce time
-    tester.detectChanges();
+    await tester.change();
     expect(tester.tableItemNames).toEqual(['item1', 'item1-copy']);
   }));
 });
@@ -518,7 +527,6 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
-        provideHttpClient(),
         { provide: HistoryQueryService, useValue: historyQueryService },
         { provide: ConfirmationService, useValue: confirmationService },
         { provide: NotificationService, useValue: notificationService },
@@ -548,9 +556,9 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
   });
 
   describe('with saveChangesDirectly = true', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       tester.componentInstance.saveChangesDirectly = true;
-      tester.detectChanges();
+      await tester.change();
     });
 
     it('should open import modal and set expected headers', () => {
@@ -594,7 +602,11 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
           id: 'new1',
           name: 'newItem1',
           enabled: true,
-          settings: { query: 'SELECT 1', dateTimeFields: [], serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization }
+          settings: {
+            query: 'SELECT 1',
+            dateTimeFields: [],
+            serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization
+          }
         }
       ];
       const mockErrors = [{ item: mockItems[0], error: 'Invalid query' }];
@@ -614,7 +626,10 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
 
       tester.button('#import-button')!.click();
 
-      expect(modalService.open).toHaveBeenCalledWith(ImportHistoryQueryItemsModalComponent, { size: 'xl', backdrop: 'static' });
+      expect(modalService.open).toHaveBeenCalledWith(ImportHistoryQueryItemsModalComponent, {
+        size: 'xl',
+        backdrop: 'static'
+      });
 
       const lastModal = (modalService.open as jasmine.Spy).calls.mostRecent().returnValue as { componentInstance: any };
       expect(lastModal.componentInstance.prepare).toHaveBeenCalledWith(
@@ -631,7 +646,11 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
           id: 'new1',
           name: 'newItem1',
           enabled: true,
-          settings: { query: 'SELECT 1', dateTimeFields: [], serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization }
+          settings: {
+            query: 'SELECT 1',
+            dateTimeFields: [],
+            serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization
+          }
         }
       ];
 
@@ -640,7 +659,11 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
           id: 'new1',
           name: 'newItem1',
           enabled: true,
-          settings: { query: 'SELECT 1', dateTimeFields: [], serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization }
+          settings: {
+            query: 'SELECT 1',
+            dateTimeFields: [],
+            serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization
+          }
         }
       ];
 
@@ -671,7 +694,11 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
           id: 'new1',
           name: 'newItem1',
           enabled: true,
-          settings: { query: 'SELECT 1', dateTimeFields: [], serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization }
+          settings: {
+            query: 'SELECT 1',
+            dateTimeFields: [],
+            serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization
+          }
         }
       ];
 
@@ -680,7 +707,11 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
           id: 'new1',
           name: 'newItem1',
           enabled: true,
-          settings: { query: 'SELECT 1', dateTimeFields: [], serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization }
+          settings: {
+            query: 'SELECT 1',
+            dateTimeFields: [],
+            serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization
+          }
         }
       ];
 
@@ -704,9 +735,9 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
   });
 
   describe('with saveChangesDirectly = false', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       tester.componentInstance.saveChangesDirectly = false;
-      tester.detectChanges();
+      await tester.change();
     });
 
     it('should add items to allItems array instead of calling service', () => {
@@ -715,13 +746,21 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
           id: 'new1',
           name: 'newItem1',
           enabled: true,
-          settings: { query: 'SELECT 1', dateTimeFields: [], serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization }
+          settings: {
+            query: 'SELECT 1',
+            dateTimeFields: [],
+            serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization
+          }
         },
         {
           id: 'new2',
           name: 'newItem2',
           enabled: false,
-          settings: { query: 'SELECT 1', dateTimeFields: [], serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization }
+          settings: {
+            query: 'SELECT 1',
+            dateTimeFields: [],
+            serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization
+          }
         }
       ];
 
@@ -730,13 +769,21 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
           id: 'new1',
           name: 'newItem1',
           enabled: true,
-          settings: { query: 'SELECT 1', dateTimeFields: [], serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization }
+          settings: {
+            query: 'SELECT 1',
+            dateTimeFields: [],
+            serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization
+          }
         },
         {
           id: 'new2',
           name: 'newItem2',
           enabled: false,
-          settings: { query: 'SELECT 1', dateTimeFields: [], serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization }
+          settings: {
+            query: 'SELECT 1',
+            dateTimeFields: [],
+            serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization
+          }
         }
       ];
 
@@ -767,7 +814,11 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
           id: 'new1',
           name: 'newItem1',
           enabled: true,
-          settings: { query: 'SELECT 1', dateTimeFields: [], serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization }
+          settings: {
+            query: 'SELECT 1',
+            dateTimeFields: [],
+            serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization
+          }
         }
       ];
 
@@ -776,7 +827,11 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
           id: 'new1',
           name: 'newItem1',
           enabled: true,
-          settings: { query: 'SELECT 1', dateTimeFields: [], serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization }
+          settings: {
+            query: 'SELECT 1',
+            dateTimeFields: [],
+            serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization
+          }
         }
       ];
 
@@ -801,7 +856,7 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
   });
 
   describe('Expected headers generation', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       tester.componentInstance.saveChangesDirectly = true;
       const specificManifest = structuredClone(testData.south.manifest);
       specificManifest.items.rootAttribute.attributes = [
@@ -835,7 +890,7 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
         }
       ];
       tester.componentInstance.manifest = specificManifest;
-      tester.detectChanges();
+      await tester.change();
     });
 
     it('should include all manifest settings in expected headers', () => {
@@ -862,9 +917,9 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
   });
 
   describe('Modal cancellation', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       tester.componentInstance.saveChangesDirectly = true;
-      tester.detectChanges();
+      await tester.change();
     });
 
     it('should not proceed with import when modal is cancelled', () => {
@@ -881,9 +936,9 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
   });
 
   describe('Error handling', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       tester.componentInstance.saveChangesDirectly = true;
-      tester.detectChanges();
+      await tester.change();
     });
 
     it('should handle service errors gracefully', () => {
@@ -903,9 +958,9 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
   });
 
   describe('Mass actions', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       tester.componentInstance.historyQuery = testHistoryQuery;
-      tester.detectChanges();
+      await tester.change();
     });
 
     it('should have mass action functionality available', () => {

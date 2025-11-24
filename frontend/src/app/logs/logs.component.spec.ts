@@ -4,7 +4,6 @@ import { LogsComponent } from './logs.component';
 import { ComponentTester, createMock, stubRoute } from 'ngx-speculoos';
 import { provideI18nTesting } from '../../i18n/mock-i18n';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
-import { provideHttpClient } from '@angular/common/http';
 import { LogService } from '../services/log.service';
 import { DEFAULT_TZ, Page } from '../../../../backend/shared/model/types';
 import { LogDTO, Scope } from '../../../../backend/shared/model/logs.model';
@@ -13,6 +12,7 @@ import { emptyPage, toPage } from '../shared/test-utils';
 import { DateTime } from 'luxon';
 import { PageLoader } from '../shared/page-loader.service';
 import { TYPEAHEAD_DEBOUNCE_TIME } from '../shared/form/typeahead';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 class LogsComponentTester extends ComponentTester<LogsComponent> {
   constructor() {
@@ -41,14 +41,6 @@ class LogsComponentTester extends ComponentTester<LogsComponent> {
 
   get playIcon() {
     return this.element('#auto-reload-toggle .fa-play');
-  }
-
-  expandSearchAccordion() {
-    const accordionButton = this.element('button[ngbAccordionButton]');
-    if (accordionButton) {
-      (accordionButton.nativeElement as HTMLElement).click();
-      this.detectChanges();
-    }
   }
 
   setEmbedded(embedded: boolean) {
@@ -104,7 +96,7 @@ describe('LogsComponent', () => {
       providers: [
         provideI18nTesting(),
         provideRouter([]),
-        provideHttpClient(),
+        provideHttpClientTesting(),
         { provide: LogService, useValue: logService },
         { provide: PageLoader, useValue: pageLoader },
         { provide: ActivatedRoute, useValue: route }
@@ -114,18 +106,18 @@ describe('LogsComponent', () => {
     tester = new LogsComponentTester();
   });
 
-  it('should have empty page', () => {
+  it('should have empty page', async () => {
     logService.search.and.returnValue(of(emptyLogPage));
-    tester.detectChanges();
+    await tester.change();
 
     expect(tester.emptyContainer).toContainText('No log found');
   });
 
-  it('should have log page', fakeAsync(() => {
+  it('should have log page', fakeAsync(async () => {
     logService.search.and.returnValue(of(logPage));
-    tester.detectChanges();
+    await tester.change();
     tick();
-    tester.detectChanges();
+    await tester.change();
 
     // Default timezone is Europe/Paris
     expect(logService.search).toHaveBeenCalledWith({
@@ -199,14 +191,14 @@ describe('LogsComponent', () => {
     expect(params.page).toBe(2);
   });
 
-  it('should fetch logs periodically if page is 0, no end date, and not paused', fakeAsync(() => {
+  it('should fetch logs periodically if page is 0, no end date, and not paused', fakeAsync(async () => {
     pageLoader.pageLoads$ = new BehaviorSubject<number>(0);
     tester.componentInstance.autoReloadPaused.set(false);
     logService.search.and.returnValue(of(logPage));
 
-    tester.detectChanges();
+    await tester.change();
     tick(10_000); // Advance 10 seconds
-    tester.detectChanges();
+    await tester.change();
 
     expect(logService.search).toHaveBeenCalledTimes(2); // Initial + after timer
   }));
@@ -243,7 +235,7 @@ describe('LogsComponent', () => {
       expect(tester.playIcon).toBeTruthy();
     }));
 
-    it('should toggle auto-reload state when button is clicked', fakeAsync(() => {
+    it('should toggle auto-reload state when button is clicked', fakeAsync(async () => {
       tester.setEmbedded(false);
       tick(100);
 
@@ -254,7 +246,7 @@ describe('LogsComponent', () => {
       // Click to pause
       tester.autoReloadButton!.click();
       tick(100);
-      tester.detectChanges();
+      await tester.change();
 
       expect(tester.componentInstance.autoReloadPaused()).toBe(true);
       expect(tester.playIcon).toBeTruthy();
@@ -263,14 +255,14 @@ describe('LogsComponent', () => {
       // Click to resume
       tester.autoReloadButton!.click();
       tick(100);
-      tester.detectChanges();
+      await tester.change();
 
       expect(tester.componentInstance.autoReloadPaused()).toBe(false);
       expect(tester.pauseIcon).toBeTruthy();
       expect(tester.playIcon).toBeFalsy();
     }));
 
-    it('should not trigger immediate reload when resuming with end date', fakeAsync(() => {
+    it('should not trigger immediate reload when resuming with end date', fakeAsync(async () => {
       tester.setEmbedded(false);
       tick(100);
 
@@ -280,7 +272,7 @@ describe('LogsComponent', () => {
       // Pause and then resume
       tester.componentInstance.autoReloadPaused.set(true);
       tick(100);
-      tester.detectChanges();
+      await tester.change();
 
       // Ensure button is available before clicking
       expect(tester.autoReloadButton).toBeTruthy();

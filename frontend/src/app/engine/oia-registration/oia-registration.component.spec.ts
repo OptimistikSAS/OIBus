@@ -7,7 +7,6 @@ import { ActivatedRoute, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { EngineService } from '../../services/engine.service';
 import { RegistrationSettingsDTO } from '../../../../../backend/shared/model/engine.model';
-import { provideHttpClient } from '@angular/common/http';
 import { OibusCommandService } from '../../services/oibus-command.service';
 import { emptyPage } from '../../shared/test-utils';
 import { OIBusCommandDTO } from '../../../../../backend/shared/model/command.model';
@@ -61,7 +60,6 @@ describe('OIARegistrationComponent', () => {
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
-        provideHttpClient(),
         provideRouter([]),
         { provide: ActivatedRoute, useValue: route },
         { provide: EngineService, useValue: engineService },
@@ -75,10 +73,10 @@ describe('OIARegistrationComponent', () => {
     tester = new OIARegistrationComponentTester();
   });
 
-  it('should display title and settings', fakeAsync(() => {
-    tester.detectChanges();
+  it('should display title and settings', fakeAsync(async () => {
+    await tester.change();
     tick(3000);
-    tester.detectChanges();
+    await tester.change();
 
     expect(tester.title).toContainText('OIAnalytics registration');
     discardPeriodicTasks();

@@ -40,11 +40,11 @@ class FormComponentTester extends ComponentTester<FormComponent> {
 describe('FormControlValidationDirective', () => {
   let tester: FormComponentTester;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     TestBed.configureTestingModule({});
 
     tester = new FormComponentTester();
-    tester.detectChanges();
+    await tester.change();
   });
 
   it('should add the is-invalid CSS class when touched', () => {

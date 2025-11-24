@@ -34,7 +34,7 @@ describe('HistoryCacheContentComponent', () => {
   let tester: HistoryCacheContentComponentTester;
   let historyQueryService: jasmine.SpyObj<HistoryQueryService>;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     historyQueryService = createMock(HistoryQueryService);
 
     TestBed.configureTestingModule({
@@ -46,7 +46,7 @@ describe('HistoryCacheContentComponent', () => {
     historyQueryService.removeCacheContent.and.returnValue(of());
     historyQueryService.moveCacheContent.and.returnValue(of());
     historyQueryService.getCacheFileContent.and.returnValue(of());
-    tester.detectChanges();
+    await tester.change();
   });
 
   it('should have no archive files', () => {

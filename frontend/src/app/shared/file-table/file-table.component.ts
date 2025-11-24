@@ -1,5 +1,5 @@
 import { Component, computed, input, linkedSignal, output, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { DatetimePipe } from '../datetime.pipe';
 import { FileSizePipe } from '../file-size.pipe';
@@ -20,7 +20,7 @@ const enum ColumnSortState {
   selector: 'oib-file-table',
   templateUrl: './file-table.component.html',
   styleUrl: './file-table.component.scss',
-  imports: [CommonModule, TranslateDirective, DatetimePipe, FileSizePipe, NgbTooltipModule, TranslatePipe, PaginationComponent]
+  imports: [TranslateDirective, DatetimePipe, FileSizePipe, NgbTooltipModule, TranslatePipe, PaginationComponent]
 })
 export class FileTableComponent {
   readonly cacheType = input.required<'cache' | 'error' | 'archive'>();

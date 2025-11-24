@@ -42,7 +42,7 @@ describe('ItemTestCodeblockResultComponent', () => {
   let writeValueSpy: jasmine.Spy<(value: string) => void>;
   let changeLanguageSpy: jasmine.Spy<(language: string) => void>;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     TestBed.configureTestingModule({
       providers: [provideI18nTesting()]
     });
@@ -53,28 +53,28 @@ describe('ItemTestCodeblockResultComponent', () => {
     writeValueSpy = spyOn(tester.componentInstance.testedComponent().codeBlock(), 'writeValue');
     changeLanguageSpy = spyOn(tester.componentInstance.testedComponent().codeBlock(), 'changeLanguage');
 
-    tester.detectChanges();
+    await tester.change();
   });
 
   it('should write json content stringified', () => {
     expect(writeValueChunkedSpy).toHaveBeenCalledWith(JSON.stringify(tester.componentInstance.content.content, null, 2));
   });
 
-  it('should write plaintext content stringified', () => {
+  it('should write plaintext content stringified', async () => {
     tester.changeContentType('plaintext');
-    tester.detectChanges();
+    await tester.change();
 
     // plaintext -> time-values -> simple stringify
     expect(writeValueChunkedSpy).toHaveBeenCalledWith(JSON.stringify(tester.componentInstance.content.content));
 
     // plaintext -> any -> with content
     tester.changeContent({ type: 'any', filePath: '/path/to/file', content: 'foo bar' });
-    tester.detectChanges();
+    await tester.change();
     expect(writeValueChunkedSpy).toHaveBeenCalledWith('foo bar');
 
     // plaintext -> any -> without content
     tester.changeContent({ type: 'any', filePath: '/path/to/file' });
-    tester.detectChanges();
+    await tester.change();
     expect(writeValueChunkedSpy).toHaveBeenCalledWith('/path/to/file');
   });
 
@@ -96,9 +96,9 @@ describe('ItemTestCodeblockResultComponent', () => {
     ).toEqual(null);
   });
 
-  it('should empty the contents if cleaned', () => {
+  it('should empty the contents if cleaned', async () => {
     tester.componentInstance.testedComponent().cleanup();
-    tester.detectChanges();
+    await tester.change();
 
     expect(writeValueSpy).toHaveBeenCalledWith('');
     expect(changeLanguageSpy).toHaveBeenCalledWith('plaintext');

@@ -36,7 +36,7 @@ export class TestTypeahead extends TestInput {
    * Dispatches a 'Press Enter' event on the input,
    * then ticks for the necessary debounce time.
    */
-  async pressEnter() {
+  pressEnter() {
     const pressEnterEvent = new KeyboardEvent('keydown', {
       key: 'Enter',
       bubbles: true

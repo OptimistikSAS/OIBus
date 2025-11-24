@@ -4,7 +4,6 @@ import { SouthListComponent } from './south-list.component';
 import { provideI18nTesting } from '../../i18n/mock-i18n';
 import { ComponentTester, createMock, TestButton } from 'ngx-speculoos';
 import { provideRouter } from '@angular/router';
-import { provideHttpClient } from '@angular/common/http';
 import { SouthConnectorService } from '../services/south-connector.service';
 import { of } from 'rxjs';
 import { NotificationService } from '../shared/notification.service';
@@ -23,13 +22,14 @@ class SouthListComponentTester extends ComponentTester<SouthListComponent> {
     return this.elements('tbody tr');
   }
 }
+
 describe('SouthListComponent', () => {
   let tester: SouthListComponentTester;
   let southConnectorService: jasmine.SpyObj<SouthConnectorService>;
   let notificationService: jasmine.SpyObj<NotificationService>;
   const southConnectors = testData.south.list;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     southConnectorService = createMock(SouthConnectorService);
     notificationService = createMock(NotificationService);
 
@@ -37,7 +37,6 @@ describe('SouthListComponent', () => {
       providers: [
         provideI18nTesting(),
         provideRouter([]),
-        provideHttpClient(),
         { provide: SouthConnectorService, useValue: southConnectorService },
         { provide: NotificationService, useValue: notificationService }
       ]
@@ -48,7 +47,7 @@ describe('SouthListComponent', () => {
     southConnectorService.stop.and.returnValue(of(undefined));
 
     tester = new SouthListComponentTester();
-    tester.detectChanges();
+    await tester.change();
   });
 
   it('should display a list', () => {

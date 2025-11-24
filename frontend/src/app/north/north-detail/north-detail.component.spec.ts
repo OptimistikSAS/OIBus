@@ -3,7 +3,6 @@ import { TestBed } from '@angular/core/testing';
 import { NorthDetailComponent } from './north-detail.component';
 import { ComponentTester, createMock, stubRoute } from 'ngx-speculoos';
 import { of } from 'rxjs';
-import { provideHttpClient } from '@angular/common/http';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { NorthConnectorService } from '../../services/north-connector.service';
@@ -63,7 +62,6 @@ describe('NorthDetailComponent', () => {
       providers: [
         provideI18nTesting(),
         provideRouter([]),
-        provideHttpClient(),
         provideHttpClientTesting(),
         {
           provide: ActivatedRoute,
@@ -94,8 +92,8 @@ describe('NorthDetailComponent', () => {
     tester = new NorthDetailComponentTester();
   });
 
-  it('should display north connector detail', () => {
-    tester.detectChanges();
+  it('should display north connector detail', async () => {
+    await tester.change();
     expect(tester.title).toContainText(northConnector.name);
     const settings = tester.northSettings;
     expect(settings.length).toBe(1);
@@ -103,21 +101,21 @@ describe('NorthDetailComponent', () => {
     expect(settings[0]).toContainText('active');
   });
 
-  it('should display logs', () => {
-    tester.detectChanges();
+  it('should display logs', async () => {
+    await tester.change();
     expect(tester.northLogs.length).toBe(1);
   });
 
-  it('should stop north', () => {
-    tester.detectChanges();
+  it('should stop north', async () => {
+    await tester.change();
     tester.toggleButton.click();
     expect(northConnectorService.stop).toHaveBeenCalledWith(northConnector.id);
     expect(notificationService.success).toHaveBeenCalledWith('north.stopped', { name: northConnector.name });
   });
 
-  it('should start north', () => {
+  it('should start north', async () => {
     northConnectorService.findById.and.returnValue(of({ ...northConnector, enabled: false }));
-    tester.detectChanges();
+    await tester.change();
     tester.toggleButton.click();
     expect(northConnectorService.start).toHaveBeenCalledWith(northConnector.id);
     expect(notificationService.success).toHaveBeenCalledWith('north.started', { name: northConnector.name });

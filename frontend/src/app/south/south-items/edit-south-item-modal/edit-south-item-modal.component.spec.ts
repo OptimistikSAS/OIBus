@@ -6,7 +6,6 @@ import { DefaultValidationErrorsComponent } from '../../../shared/default-valida
 import { SouthConnectorItemDTO } from '../../../../../../backend/shared/model/south-connector.model';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { SouthItemSettings } from '../../../../../../backend/shared/model/south-settings.model';
-import { provideHttpClient } from '@angular/common/http';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { of } from 'rxjs';
@@ -74,7 +73,6 @@ describe('EditSouthItemModalComponent', () => {
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
-        provideHttpClient(),
         { provide: NgbActiveModal, useValue: fakeActiveModal },
         { provide: UnsavedChangesConfirmationService, useValue: unsavedChangesConfirmationService }
       ]
@@ -86,9 +84,9 @@ describe('EditSouthItemModalComponent', () => {
   });
 
   describe('create mode', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       tester.componentInstance.prepareForCreation(allItems, scanModes, [], southId, southConnectorCommand, manifest);
-      tester.detectChanges();
+      await tester.change();
     });
 
     it('should have an empty form', () => {
@@ -104,11 +102,11 @@ describe('EditSouthItemModalComponent', () => {
       expect(fakeActiveModal.close).not.toHaveBeenCalled();
     });
 
-    it('should save if valid', fakeAsync(() => {
+    it('should save if valid', fakeAsync(async () => {
       tester.name.fillWith('MyName');
       tester.scanMode.selectLabel('scanMode2');
 
-      tester.detectChanges();
+      await tester.change();
 
       tester.save.click();
       expect(fakeActiveModal.close).toHaveBeenCalledWith({
@@ -134,9 +132,9 @@ describe('EditSouthItemModalComponent', () => {
       expect(result).toBe(true);
     });
 
-    it('should return observable from canDismiss when form is dirty', () => {
+    it('should return observable from canDismiss when form is dirty', async () => {
       tester.name.fillWith('test name');
-      tester.detectChanges();
+      await tester.change();
 
       unsavedChangesConfirmationService.confirmUnsavedChanges.and.returnValue(of(true));
 
@@ -146,10 +144,10 @@ describe('EditSouthItemModalComponent', () => {
       expect(unsavedChangesConfirmationService.confirmUnsavedChanges).toHaveBeenCalled();
     });
 
-    it('should call unsaved changes service when form is dirty and canDismiss is called', () => {
+    it('should call unsaved changes service when form is dirty and canDismiss is called', async () => {
       // Make form dirty
       tester.name.fillWith('test name');
-      tester.detectChanges();
+      await tester.change();
 
       unsavedChangesConfirmationService.confirmUnsavedChanges.and.returnValue(of(false));
 
@@ -164,9 +162,9 @@ describe('EditSouthItemModalComponent', () => {
       expect(unsavedChangesConfirmationService.confirmUnsavedChanges).toHaveBeenCalled();
     });
 
-    it('should allow dismissal when user confirms leaving', () => {
+    it('should allow dismissal when user confirms leaving', async () => {
       tester.name.fillWith('test name');
-      tester.detectChanges();
+      await tester.change();
 
       unsavedChangesConfirmationService.confirmUnsavedChanges.and.returnValue(of(true));
 
@@ -179,9 +177,9 @@ describe('EditSouthItemModalComponent', () => {
       }
     });
 
-    it('should prevent dismissal when user cancels leaving', () => {
+    it('should prevent dismissal when user cancels leaving', async () => {
       tester.name.fillWith('test name');
-      tester.detectChanges();
+      await tester.change();
 
       unsavedChangesConfirmationService.confirmUnsavedChanges.and.returnValue(of(false));
 
@@ -204,15 +202,15 @@ describe('EditSouthItemModalComponent', () => {
       settings: {} as SouthItemSettings
     };
 
-    it('should duplicate item', () => {
+    it('should duplicate item', async () => {
       tester.componentInstance.prepareForCopy(allItems, scanModes, [], southItem, southId, southConnectorCommand, manifest);
-      tester.detectChanges();
+      await tester.change();
       expect(tester.name).toHaveValue('myName-copy');
 
       tester.name.fillWith('MyName-2');
       tester.scanMode.selectLabel('scanMode2');
 
-      tester.detectChanges();
+      await tester.change();
 
       tester.save.click();
       expect(fakeActiveModal.close).toHaveBeenCalledWith({
@@ -238,9 +236,9 @@ describe('EditSouthItemModalComponent', () => {
       settings: {} as SouthItemSettings
     };
 
-    beforeEach(() => {
+    beforeEach(async () => {
       tester.componentInstance.prepareForEdition(allItems, scanModes, [], southItem, southId, southConnectorCommand, manifest, 0);
-      tester.detectChanges();
+      await tester.change();
     });
 
     it('should have a populated form', () => {

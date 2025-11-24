@@ -7,7 +7,6 @@ import { NotificationService } from '../../../shared/notification.service';
 import { SouthConnectorService } from '../../../services/south-connector.service';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { SouthConnectorMetrics } from '../../../../../../backend/shared/model/engine.model';
-import { provideHttpClient } from '@angular/common/http';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
 
 @Component({
@@ -35,13 +34,12 @@ describe('SouthMetricsComponent', () => {
   let southConnectorService: jasmine.SpyObj<SouthConnectorService>;
   let notificationService: jasmine.SpyObj<NotificationService>;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     southConnectorService = createMock(SouthConnectorService);
     notificationService = createMock(NotificationService);
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
-        provideHttpClient(),
         { provide: SouthConnectorService, useValue: southConnectorService },
         { provide: NotificationService, useValue: notificationService }
       ]
@@ -50,8 +48,8 @@ describe('SouthMetricsComponent', () => {
     tester = new SouthDataComponentTester();
   });
 
-  it('should have a title', () => {
-    tester.detectChanges();
+  it('should have a title', async () => {
+    await tester.change();
     expect(tester.title).toContainText('South 1 metrics');
   });
 });

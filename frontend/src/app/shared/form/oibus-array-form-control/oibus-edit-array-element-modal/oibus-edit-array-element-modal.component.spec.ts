@@ -3,7 +3,6 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { OIBusObjectFormControlComponent } from '../../oibus-object-form-control/oibus-object-form-control.component';
-import { provideHttpClient } from '@angular/common/http';
 import { OIBusEditArrayElementModalComponent } from './oibus-edit-array-element-modal.component';
 import { FormGroup } from '@angular/forms';
 import testData from '../../../../../../../backend/src/tests/utils/test-data';
@@ -56,7 +55,7 @@ describe('OIBusEditArrayElementModalComponent', () => {
     fakeActiveModal = createMock(NgbActiveModal);
 
     TestBed.configureTestingModule({
-      providers: [provideI18nTesting(), provideHttpClient(), { provide: NgbActiveModal, useValue: fakeActiveModal }]
+      providers: [provideI18nTesting(), { provide: NgbActiveModal, useValue: fakeActiveModal }]
     });
 
     TestBed.createComponent(DefaultValidationErrorsComponent).detectChanges();
@@ -69,27 +68,27 @@ describe('OIBusEditArrayElementModalComponent', () => {
     expect(fakeActiveModal.dismiss).toHaveBeenCalled();
   });
 
-  it('should create an element', () => {
+  it('should create an element', async () => {
     tester.componentInstance.prepareForCreation(scanModes, certificates, form, objectAttribute);
-    tester.detectChanges();
+    await tester.change();
     expect(tester.title).toContainText('Create an element');
     expect(tester.settings).toBeDefined();
     tester.save.click();
     expect(fakeActiveModal.close).toHaveBeenCalledWith({});
   });
 
-  it('should edit an element', () => {
+  it('should edit an element', async () => {
     tester.componentInstance.prepareForEdition(scanModes, certificates, form, {}, objectAttribute);
-    tester.detectChanges();
+    await tester.change();
     expect(tester.title).toContainText('Edit an element');
     expect(tester.settings).toBeDefined();
     tester.save.click();
     expect(fakeActiveModal.close).toHaveBeenCalledWith({});
   });
 
-  it('should copy an element', () => {
+  it('should copy an element', async () => {
     tester.componentInstance.prepareForCopy(scanModes, certificates, form, {}, objectAttribute);
-    tester.detectChanges();
+    await tester.change();
     expect(tester.title).toContainText('Create an element');
     expect(tester.settings).toBeDefined();
     tester.save.click();

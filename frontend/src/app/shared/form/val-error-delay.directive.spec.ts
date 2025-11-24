@@ -24,11 +24,11 @@ class TestComponentTester extends ComponentTester<TestComponent> {
 describe('ValErrorAnimationDirective', () => {
   let tester: TestComponentTester;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     TestBed.configureTestingModule({});
 
     tester = new TestComponentTester();
-    tester.detectChanges();
+    await tester.change();
   });
 
   // Using fakeAsync does not work here, probably because the directive does everything out of the Angular zone.

@@ -4,7 +4,6 @@ import { SouthDetailComponent } from './south-detail.component';
 import { ComponentTester, createMock, stubRoute } from 'ngx-speculoos';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { of } from 'rxjs';
-import { provideHttpClient } from '@angular/common/http';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { ConfirmationService } from '../../shared/confirmation.service';
@@ -14,6 +13,7 @@ import { EngineService } from '../../services/engine.service';
 import testData from '../../../../../backend/src/tests/utils/test-data';
 import { CertificateService } from '../../services/certificate.service';
 import { SouthConnectorDTO } from '../../../../../backend/shared/model/south-connector.model';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 class SouthDisplayComponentTester extends ComponentTester<SouthDetailComponent> {
   constructor() {
@@ -66,7 +66,7 @@ describe('SouthDetailComponent', () => {
       providers: [
         provideI18nTesting(),
         provideRouter([]),
-        provideHttpClient(),
+        provideHttpClientTesting(),
         {
           provide: ActivatedRoute,
           useValue: stubRoute({
@@ -88,7 +88,10 @@ describe('SouthDetailComponent', () => {
     certificateService.list.and.returnValue(of(testData.certificates.list));
     engineService.getInfo.and.returnValue(of(engineInfo));
     southConnectorService.findById.and.returnValue(
-      of({ ...southConnector, items: southConnector.items.map(element => ({ ...element, scanModeId: element.scanMode.id })) })
+      of({
+        ...southConnector,
+        items: southConnector.items.map(element => ({ ...element, scanModeId: element.scanMode.id }))
+      })
     );
     southConnectorService.getSouthManifest.and.returnValue(of(manifest));
     southConnectorService.start.and.returnValue(of(undefined));
@@ -97,8 +100,8 @@ describe('SouthDetailComponent', () => {
     tester = new SouthDisplayComponentTester();
   });
 
-  it('should display south connector detail', () => {
-    tester.detectChanges();
+  it('should display south connector detail', async () => {
+    await tester.change();
     expect(tester.title).toContainText(southConnector.name);
     const settings = tester.southSettings;
     expect(settings.length).toBe(1);
@@ -106,27 +109,27 @@ describe('SouthDetailComponent', () => {
     expect(settings[0]).toContainText('active');
   });
 
-  it('should display items', () => {
-    tester.detectChanges();
+  it('should display items', async () => {
+    await tester.change();
     expect(tester.southItems.length).toBe(2);
     const item = tester.southItems[0];
     expect(item.elements('td')[2]).toContainText('item1');
     expect(item.elements('td')[3]).toContainText('scanMode1');
   });
 
-  it('should display logs', () => {
-    tester.detectChanges();
+  it('should display logs', async () => {
+    await tester.change();
     expect(tester.southLogs.length).toBe(1);
   });
 
-  it('should stop south', () => {
-    tester.detectChanges();
+  it('should stop south', async () => {
+    await tester.change();
     tester.toggleButton.click();
     expect(southConnectorService.stop).toHaveBeenCalledWith(southConnector.id);
     expect(notificationService.success).toHaveBeenCalledWith('south.stopped', { name: southConnector.name });
   });
 
-  it('should start south', () => {
+  it('should start south', async () => {
     southConnectorService.findById.and.returnValue(
       of({
         ...southConnector,
@@ -134,7 +137,7 @@ describe('SouthDetailComponent', () => {
         enabled: false
       })
     );
-    tester.detectChanges();
+    await tester.change();
     tester.toggleButton.click();
     expect(southConnectorService.start).toHaveBeenCalledWith(southConnector.id);
     expect(notificationService.success).toHaveBeenCalledWith('south.started', { name: southConnector.name });

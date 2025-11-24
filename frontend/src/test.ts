@@ -2,6 +2,7 @@
 import { getTestBed } from '@angular/core/testing';
 import { BrowserTestingModule, platformBrowserTesting } from '@angular/platform-browser/testing';
 import { speculoosMatchers } from 'ngx-speculoos';
+import { NgModule, provideZoneChangeDetection } from '@angular/core';
 
 beforeEach(() => {
   jasmine.addMatchers(speculoosMatchers);
@@ -16,8 +17,14 @@ afterEach(() => {
   expect(console.error).withContext('There should be no console errors (see src/test.ts)').not.toHaveBeenCalled();
 });
 
+// Since Angular v21, zoneless is the default, so we explicitly add provideZoneChangeDetection for our tests
+@NgModule({
+  providers: [provideZoneChangeDetection()]
+})
+export class ZoneTestModule {}
+
 // First, initialize the Angular testing environment.
-getTestBed().initTestEnvironment(BrowserTestingModule, platformBrowserTesting(), {
+getTestBed().initTestEnvironment([BrowserTestingModule, ZoneTestModule], platformBrowserTesting(), {
   errorOnUnknownElements: true,
   errorOnUnknownProperties: true
 });

@@ -5,7 +5,7 @@ import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { LoadingSpinnerComponent } from './loading-spinner.component';
 
 @Component({
-  template: `<oib-loading-spinner />`,
+  template: ` <oib-loading-spinner />`,
   imports: [LoadingSpinnerComponent]
 })
 class TestComponent {
@@ -28,14 +28,14 @@ class TestComponentTester extends ComponentTester<TestComponent> {
 describe('LoadingSpinnerComponent', () => {
   let tester: TestComponentTester;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     TestBed.configureTestingModule({
       imports: [TestComponent],
       providers: [provideI18nTesting()]
     });
 
     tester = new TestComponentTester();
-    tester.detectChanges();
+    await tester.change();
   });
 
   it('should display a spinner', () => {

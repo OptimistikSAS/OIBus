@@ -7,10 +7,10 @@ import { of } from 'rxjs';
 import { CertificateService } from '../../services/certificate.service';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
-import { provideHttpClient } from '@angular/common/http';
 import { provideModalTesting } from '../../shared/mock-modal.service.spec';
 import testData from '../../../../../backend/src/tests/utils/test-data';
 import { ModalService } from '../../shared/modal.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 class CertificateListComponentTester extends ComponentTester<CertificateListComponent> {
   constructor() {
@@ -60,7 +60,7 @@ describe('CertificateListComponent', () => {
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
-        provideHttpClient(),
+        provideHttpClientTesting(),
         provideModalTesting(),
         { provide: CertificateService, useValue: certificateService },
         { provide: ConfirmationService, useValue: confirmationService },
@@ -80,10 +80,10 @@ describe('CertificateListComponent', () => {
   });
 
   describe('with certificate', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       certificateService.list.and.returnValue(of(certificates));
       tester = new CertificateListComponentTester();
-      tester.detectChanges();
+      await tester.change();
     });
 
     it('should display a list of certificates', () => {
@@ -142,10 +142,10 @@ describe('CertificateListComponent', () => {
   });
 
   describe('with no certificate', () => {
-    it('should display an empty list', () => {
+    it('should display an empty list', async () => {
       certificateService.list.and.returnValue(of([]));
       tester = new CertificateListComponentTester();
-      tester.detectChanges();
+      await tester.change();
       expect(tester.noCertificate).toContainText('No certificate');
     });
   });
