@@ -5,6 +5,10 @@ on:
   release:
     types: [ published ]
 
+permissions:
+  contents: write
+  packages: write
+
 jobs:
   build:
     name: Build for ${{ matrix.config['friendlyName'] }}
@@ -24,18 +28,6 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: ${{ github.ref }}
-
-      - name: Use Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version-file: backend/package.json
-
-      - name: Install InnoSetup
-        if: ${{ matrix.config['platform'] == 'win-x64' }}
-        shell: pwsh
-        run: |
-          Invoke-WebRequest -Uri https://jrsoftware.org/download.php/is.exe -OutFile C:\\is.exe
-          Start-Process -FilePath C:\\is.exe -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART" -Wait
 
       - name: Get release info
         id: release_info
@@ -57,26 +49,13 @@ jobs:
           echo "Pre-release: ${{ steps.release_info.outputs.prerelease }}"
           echo "Tag name: ${{ steps.release_info.outputs.tag_name }}"
 
-      - name: Setup launcher environment
-        uses: ./.github/actions/setup_launcher_environment
+      - name: Setup environment
+        uses: ./.github/actions/setup_environment
         with:
           cache_version: ${{ secrets.GH_ACTIONS_CACHE_KEY }}
           prerelease: ${{ steps.release_info.outputs.prerelease }}
           tag_name: ${{ steps.release_info.outputs.tag_name }}
 
-      - name: Setup backend environment
-        uses: ./.github/actions/setup_backend_environment
-        with:
-          cache_version: ${{ secrets.GH_ACTIONS_CACHE_KEY }}
-          prerelease: ${{ steps.release_info.outputs.prerelease }}
-          tag_name: ${{ steps.release_info.outputs.tag_name }}
-
-      - name: Setup frontend environment
-        uses: ./.github/actions/setup_frontend_environment
-        with:
-          cache_version: ${{ secrets.GH_ACTIONS_CACHE_KEY }}
-          prerelease: ${{ steps.release_info.outputs.prerelease }}
-          tag_name: ${{ steps.release_info.outputs.tag_name }}
 
       - name: Bundle OIBus frontend for ${{ matrix.config['friendlyName'] }}
         working-directory: ./frontend
@@ -90,7 +69,7 @@ jobs:
         working-directory: ./backend
         run: npm run build:${{ matrix.config['platform'] }}
 
-      - name: Test OIBus run for ${{ matrix.config['friendlyName'] }}
+      - name: Test OIBus runtime for ${{ matrix.config['friendlyName'] }}
         run: |
           cd build/bin/${{ matrix.config['platform'] }}
           ./oibus-launcher --config ../../../data-folder --version true
@@ -106,29 +85,53 @@ jobs:
         run:
           gh release upload ${{ github.ref_name }} ./build/bin/${{ matrix.config['archiveName'] }}-${{ github.ref_name }}.zip
 
-      - name: Package Windows installer
-        env:
-          PFX_PASSWORD: ${{ secrets.PFX_PASSWORD }}
-          PFX_BASE64_CONTENT: ${{ secrets.PFX_BASE64_CONTENT }}
-          PFX_PATH: C://oibus.pfx
+      # --- WINDOWS SPECIFIC ---
+      - name: Cache Inno Setup
+        if: ${{ matrix.config['platform'] == 'win-x64' }}
+        id: cache-inno
+        uses: actions/cache@v4
+        with:
+          path: C:\is.exe
+          key: inno-setup-6
+
+      - name: Install InnoSetup
         if: ${{ matrix.config['platform'] == 'win-x64' }}
         shell: pwsh
+        run: |
+          if (-Not (Test-Path "C:\is.exe")) {
+            Invoke-WebRequest -Uri https://jrsoftware.org/download.php/is.exe -OutFile C:\\is.exe
+          }
+          if (-Not (Test-Path "C:\Program Files (x86)\Inno Setup 6\iscc.exe")) {
+            Start-Process -FilePath C:\\is.exe -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART" -Wait
+          }
+
+      - name: Package Windows installer
+        if: ${{ matrix.config['platform'] == 'win-x64' }}
+        shell: pwsh
+        env:
+          PFX_BASE64_CONTENT: ${{ secrets.PFX_BASE64_CONTENT }}
+          PFX_PASSWORD: ${{ secrets.PFX_PASSWORD }}
+          PFX_PATH: "$env:TEMP\\oibus.pfx"
         working-directory: ./backend
         run: |
-          $encodedBytes = [System.Convert]::FromBase64String("$env:PFX_BASE64_CONTENT")
-          Set-Content -Path "$env:PFX_PATH" -AsByteStream -Value $encodedBytes
-          npm run build:win-setup-x64
-          Remove-Item -Path "$env:PFX_PATH";
+          try {
+            $encodedBytes = [System.Convert]::FromBase64String("$env:PFX_BASE64_CONTENT")
+            Set-Content -Path "$env:PFX_PATH" -AsByteStream -Value $encodedBytes
+            $env:PFX_PATH = "$env:PFX_PATH"
+            npm run build:win-setup-x64
+          }
+          finally {
+            if (Test-Path "$env:PFX_PATH") {
+              Remove-Item -Path "$env:PFX_PATH" -Force
+            }
+          }
 
-      - name: Rename windows installer
-        if: ${{ matrix.config['platform'] == 'win-x64' }}
-        run: mv ./build/bin/win-setup-release/oibus-setup.exe ./build/bin/win-setup-release/${{ matrix.config['archiveName'] }}-setup-${{ github.ref_name }}.exe
-
-      - name: Upload Windows installer Artifact ${{ matrix.config['archiveName'] }}
+      - name: Rename & Upload Windows installer
         if: ${{ matrix.config['platform'] == 'win-x64' }}
         env:
           GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
-        run:
+        run: |
+          mv ./build/bin/win-setup-release/oibus-setup.exe ./build/bin/win-setup-release/${{ matrix.config['archiveName'] }}-setup-${{ github.ref_name }}.exe
           gh release upload ${{ github.ref_name }} ./build/bin/win-setup-release/${{ matrix.config['archiveName'] }}-setup-${{ github.ref_name }}.exe
 
     outputs:
@@ -139,6 +142,7 @@ jobs:
     name: 'Release OIBus docker container'
     needs: [ build ]
     uses: ./.github/workflows/docker.yml
+    secrets: inherit
     with:
       tag: ${{ needs.build.outputs.release_name }}
       prerelease: ${{ needs.build.outputs.prerelease }}
