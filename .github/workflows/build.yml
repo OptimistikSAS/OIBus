@@ -111,7 +111,7 @@ jobs:
         env:
           PFX_BASE64_CONTENT: ${{ secrets.PFX_BASE64_CONTENT }}
           PFX_PASSWORD: ${{ secrets.PFX_PASSWORD }}
-          PFX_PATH: "$env:TEMP\\oibus.pfx"
+          PFX_PATH: "C:\\oibus.pfx"
         working-directory: ./backend
         run: |
           try {
