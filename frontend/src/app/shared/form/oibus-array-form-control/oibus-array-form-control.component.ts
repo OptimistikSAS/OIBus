@@ -73,7 +73,7 @@ export class OIBusArrayFormControlComponent {
     return new ArrayPage([], 1);
   });
 
-  async addElement(event: Event) {
+  addElement(event: Event) {
     event.preventDefault();
     const modal = this.modalService.open(OIBusEditArrayElementModalComponent, { size: 'xl' });
     modal.componentInstance.prepareForCreation(
@@ -89,7 +89,7 @@ export class OIBusArrayFormControlComponent {
     });
   }
 
-  async copyElement(element: any) {
+  copyElement(element: any) {
     const modal = this.modalService.open(OIBusEditArrayElementModalComponent, { size: 'xl' });
     modal.componentInstance.prepareForCopy(
       this.scanModes(),
@@ -105,7 +105,7 @@ export class OIBusArrayFormControlComponent {
     });
   }
 
-  async editElement(element: any) {
+  editElement(element: any) {
     const modal = this.modalService.open(OIBusEditArrayElementModalComponent, { size: 'xl' });
     modal.componentInstance.prepareForEdition(
       this.scanModes(),
@@ -188,7 +188,7 @@ export class OIBusArrayFormControlComponent {
     return path.reduce((acc, key) => acc && acc[key], obj);
   }
 
-  async exportArray() {
+  exportArray() {
     const modal = this.modalService.open(ExportItemModalComponent);
     modal.componentInstance.prepare(this.arrayAttribute().key);
 
@@ -201,7 +201,7 @@ export class OIBusArrayFormControlComponent {
     });
   }
 
-  async importArray() {
+  importArray() {
     const modal = this.modalService.open(ImportItemModalComponent, { backdrop: 'static' });
     const headers: Array<string> = [];
     if (this.arrayAttribute().rootAttribute.attributes) {
