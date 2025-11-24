@@ -141,7 +141,7 @@ echo Creating South connector...
 curl --location --user %USERNAME%:%PASSWORD% "http://localhost:2223/api/south" ^
 --header "Content-Type: application/json" ^
 --header "Accept: application/json" ^
---data "{\"name\": \"Modbus\", \"type\": \"modbus\", \"description\": \"\", \"enabled\": true, \"settings\": {\"host\": \"127.0.0.1\", \"port\": 502, \"retryInterval\": 10000, \"slaveId\": 1, \"addressOffset\": \"modbus\", \"endianness\": \"big-endian\", \"swapBytesInWords\": false, \"swapWordsInDWords\": false}, \"items\": []}"
+--data "{\"name\": \"Modbus\", \"type\": \"modbus\", \"description\": \"\", \"enabled\": true, \"settings\": {\"host\": \"127.0.0.1\", \"port\": 502, \"connectTimeout\": 10000, \"retryInterval\": 10000, \"slaveId\": 1, \"addressOffset\": \"modbus\", \"endianness\": \"big-endian\", \"swapBytesInWords\": false, \"swapWordsInDWords\": false}, \"items\": []}"
 echo.
 if %errorlevel% neq 0 (
     echo Error: Failed to create South connector.
