@@ -1,5 +1,20 @@
 # Changelog
 
+## [3.7.1](https://github.com/OptimistikSAS/OIBus/compare/v3.7.0...v3.7.1) (2025-11-24)
+
+
+### Bug Fixes
+
+* fix oibus array async/await methods ([76f9abf](https://github.com/OptimistikSAS/OIBus/commit/76f9abf9da291e66acc3d2afced8aedb14ceeaaf))
+* **forms:** added export and import functionality with modals for array element in forms ([5a88308](https://github.com/OptimistikSAS/OIBus/commit/5a883084aec819a7f81670b207c24af75cb30333))
+* **forms:** remove undefined conversion in typeahead ([9877de1](https://github.com/OptimistikSAS/OIBus/commit/9877de12df6326a848222f20131596a52d75c80e))
+* **migration:** replace enum by string in model ([fd4d957](https://github.com/OptimistikSAS/OIBus/commit/fd4d957ecfdf2cb79406a7a977fb8d1ec51772d7))
+* **modbus:** add connection timeout for north and south modbus connector ([cb5712d](https://github.com/OptimistikSAS/OIBus/commit/cb5712d69b820910c3a38c538de5634b88f7cd4d))
+* **opcua:** add maxNumberOfMessages flushMessageTimeout for south opcua connectors ([f2add93](https://github.com/OptimistikSAS/OIBus/commit/f2add93734f1e0c63ccf964af6054016a677f0e3))
+* **transformer:** add options to time values to csv transformer ([14b57e7](https://github.com/OptimistikSAS/OIBus/commit/14b57e7b253f1f8aea039b5afe7134b75a4f4b2b))
+* **transformer:** fix default value in edit mode patch value ([807ec33](https://github.com/OptimistikSAS/OIBus/commit/807ec33db6b7e94f2c6e21820e0e0405d6f94fea))
+* **transformer:** fix translation for oibus transformers ([04072c9](https://github.com/OptimistikSAS/OIBus/commit/04072c946a5f30a16dd3107ef4d8deb353b0cddd))
+
 ## [3.7.0](https://github.com/OptimistikSAS/OIBus/compare/v3.6.9...v3.7.0) (2025-11-24)
 
 
