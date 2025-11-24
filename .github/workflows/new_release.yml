@@ -36,9 +36,5 @@ jobs:
       - name: Deploy documentation
         if: ${{ steps.release.outputs.release_created }}
         uses: ./.github/actions/deploy_documentation
-
-
-
-
-          
-          
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}

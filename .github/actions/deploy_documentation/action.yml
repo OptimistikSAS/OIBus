@@ -1,5 +1,9 @@
 name: Setup environment
 description: "Checkout project, set up Node, build and deploy documentation"
+inputs:
+  github_token:
+    description: 'GitHub Token for deployment'
+    required: true
 
 runs:
   using: "composite"
@@ -25,7 +29,7 @@ runs:
       if: ${{ steps.release.outputs.release_created }}
       uses: peaceiris/actions-gh-pages@v4
       with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+        github_token: ${{ inputs.github_token }}
         # Build output to publish to the `gh-pages` branch:
         publish_dir: ./documentation/build
         # The following lines assign commit authorship to the official

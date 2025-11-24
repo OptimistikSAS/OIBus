@@ -159,5 +159,3 @@ jobs:
           job-status: ${{ needs.docker.result }}
           slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
           channel: oibus-ci
-
-
