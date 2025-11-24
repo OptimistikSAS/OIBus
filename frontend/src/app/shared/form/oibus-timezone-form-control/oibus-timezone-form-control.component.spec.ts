@@ -9,6 +9,7 @@ import { TestTypeahead } from '../typeahead.test-utils';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 
 @Component({
+  selector: 'test-oibus-timezone-form-control-component',
   template: `
     <form [formGroup]="formGroup">
       <ng-container formGroupName="testGroup">

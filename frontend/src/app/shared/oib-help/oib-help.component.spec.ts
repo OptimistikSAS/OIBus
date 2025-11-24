@@ -5,6 +5,7 @@ import { OibHelpComponent } from './oib-help.component';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
+  selector: 'test-oib-help-component',
   template: ` <oib-help [url]="url" />`,
   imports: [OibHelpComponent, TranslateModule]
 })

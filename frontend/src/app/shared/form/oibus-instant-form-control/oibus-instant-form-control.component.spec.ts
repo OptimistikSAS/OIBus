@@ -8,6 +8,7 @@ import { OIBusInstantFormControlComponent } from './oibus-instant-form-control.c
 import { provideCurrentUser } from '../../current-user-testing';
 
 @Component({
+  selector: 'test-oibus-instant-form-control-component',
   template: `
     <form [formGroup]="formGroup">
       <ng-container formGroupName="testGroup">

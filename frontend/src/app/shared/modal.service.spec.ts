@@ -5,6 +5,7 @@ import { NgbModal, NgbModalOptions, NgbModalRef } from '@ng-bootstrap/ng-bootstr
 import { ModalService } from './modal.service';
 
 @Component({
+  selector: 'test-modal-component',
   template: 'Hello'
 })
 export class TestModalComponent {}

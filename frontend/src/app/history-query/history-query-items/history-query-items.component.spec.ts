@@ -86,6 +86,7 @@ const testHistoryQuery: HistoryQueryDTO = {
 };
 
 @Component({
+  selector: 'test-history-query-items-component',
   template: ` <oib-history-query-items
     [historyId]="historyQuery.id"
     [historyQuery]="historyQuery"

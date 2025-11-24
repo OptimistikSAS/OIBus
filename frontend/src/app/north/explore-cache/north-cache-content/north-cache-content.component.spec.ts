@@ -9,6 +9,7 @@ import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
 
 @Component({
+  selector: 'test-north-cache-content-component',
   template: `<oib-north-cache-content cacheType="cache" #component [northConnector]="northConnector" />`,
   imports: [NorthCacheContentComponent]
 })

@@ -9,6 +9,7 @@ import testData from '../../../../../../backend/src/tests/utils/test-data';
 import { OibusCertificateFormControlComponent } from './oibus-certificate-form-control.component';
 
 @Component({
+  selector: 'test-oibus-certificate-form-control-component',
   template: `
     <form [formGroup]="formGroup">
       <ng-container formGroupName="testGroup">

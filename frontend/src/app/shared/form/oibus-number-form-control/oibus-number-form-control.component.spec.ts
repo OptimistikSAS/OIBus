@@ -7,6 +7,7 @@ import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { OIBusNumberFormControlComponent } from './oibus-number-form-control.component';
 
 @Component({
+  selector: 'test-oibus-number-form-control-component',
   template: `
     <form [formGroup]="formGroup">
       <ng-container formGroupName="testGroup">

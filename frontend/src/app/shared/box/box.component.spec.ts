@@ -6,6 +6,7 @@ import { BoxComponent, BoxTitleDirective } from './box.component';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 
 @Component({
+  selector: 'test-box-component',
   template: ` <oib-box [boxTitle]="title"> This is the content</oib-box>`,
   imports: [BoxComponent]
 })

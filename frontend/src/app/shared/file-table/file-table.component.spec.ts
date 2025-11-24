@@ -95,6 +95,7 @@ const unsortedFiles: Array<{ metadataFilename: string; metadata: CacheMetadata }
 ];
 
 @Component({
+  selector: 'test-file-table-component',
   template: `
     <oib-file-table
       [files]="files()"
