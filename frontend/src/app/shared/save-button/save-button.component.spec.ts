@@ -8,6 +8,7 @@ import { ObservableState } from './save-button.component';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 
 @Component({
+  selector: 'test-save-button-component',
   template: `
     <form [formGroup]="form" id="test-form" (ngSubmit)="save()">
       <button [oib-save-button]="state" form="test-form" [forceDisabled]="forceDisabled"></button>

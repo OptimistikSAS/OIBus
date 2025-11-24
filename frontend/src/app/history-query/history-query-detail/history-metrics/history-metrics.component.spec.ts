@@ -11,6 +11,7 @@ import { NorthSettings } from '../../../../../../backend/shared/model/north-sett
 import testData from '../../../../../../backend/src/tests/utils/test-data';
 
 @Component({
+  selector: 'test-history-metrics-component',
   template: `<oib-history-metrics
     [historyMetrics]="historyMetrics"
     [historyQuery]="historyQuery"

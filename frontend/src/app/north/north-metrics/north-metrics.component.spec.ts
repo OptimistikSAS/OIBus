@@ -9,6 +9,7 @@ import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import testData from '../../../../../backend/src/tests/utils/test-data';
 
 @Component({
+  selector: 'test-north-metrics-component',
   template: ` <oib-north-metrics [connectorMetrics]="metrics" [northConnector]="northConnector" [manifest]="manifest" />`,
   imports: [NorthMetricsComponent]
 })
