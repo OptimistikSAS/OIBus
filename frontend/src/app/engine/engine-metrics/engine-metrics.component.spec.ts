@@ -10,7 +10,7 @@ import testData from '../../../../../backend/src/tests/utils/test-data';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 @Component({
-  selector: 'test-engine-metrics-component',
+  selector: 'oib-test-engine-metrics-component',
   template: ` <oib-engine-metrics [metrics]="metrics" />`,
   imports: [EngineMetricsComponent]
 })

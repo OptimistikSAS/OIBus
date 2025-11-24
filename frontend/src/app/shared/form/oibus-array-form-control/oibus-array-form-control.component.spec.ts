@@ -14,7 +14,7 @@ import { NotificationService } from '../../notification.service';
 import { SouthConnectorService } from '../../../services/south-connector.service';
 
 @Component({
-  selector: 'test-oibus-array-form-control-component',
+  selector: 'oib-test-oibus-array-form-control-component',
   template: `<form [formGroup]="formGroup">
     <ng-container formGroupName="testGroup">
       <oib-oibus-array-form-control

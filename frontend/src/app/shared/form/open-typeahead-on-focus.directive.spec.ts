@@ -16,7 +16,7 @@ class UserService {
 }
 
 @Component({
-  selector: 'test-open-typeahead-on-focus-component',
+  selector: 'oib-test-open-typeahead-on-focus-component',
   template: '<input [ngbTypeahead]="search" [formControl]="name"/>',
   imports: [ReactiveFormsModule, NgbTypeahead, OpenTypeaheadOnFocusDirective]
 })

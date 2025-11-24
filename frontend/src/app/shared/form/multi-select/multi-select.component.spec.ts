@@ -13,7 +13,7 @@ interface User {
 }
 
 @Component({
-  selector: 'test-multi-select-component',
+  selector: 'oib-test-multi-select-component',
   template: `
     <form [formGroup]="form">
       <oib-multi-select [placeholder]="placeholder" formControlName="users" (selectionChange)="changeEvent = $event">

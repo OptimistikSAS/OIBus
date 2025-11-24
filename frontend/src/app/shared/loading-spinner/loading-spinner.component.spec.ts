@@ -5,7 +5,7 @@ import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { LoadingSpinnerComponent } from './loading-spinner.component';
 
 @Component({
-  selector: 'test-loading-spinner-component',
+  selector: 'oib-test-loading-spinner-component',
   template: ` <oib-loading-spinner />`,
   imports: [LoadingSpinnerComponent]
 })
