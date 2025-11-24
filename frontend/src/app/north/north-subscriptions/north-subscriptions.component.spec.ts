@@ -11,7 +11,7 @@ import { of } from 'rxjs';
 import { NotificationService } from '../../shared/notification.service';
 
 @Component({
-  selector: 'test-north-subscriptions-component',
+  selector: 'oib-test-north-subscriptions-component',
   template: ` <oib-north-subscriptions [northConnector]="northConnector" />`,
   imports: [NorthSubscriptionsComponent]
 })

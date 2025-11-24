@@ -8,7 +8,7 @@ import { noAnimation } from '../test-utils';
 import { DatepickerContainerComponent } from './datepicker-container.component';
 
 @Component({
-  selector: 'test-datepicker-container-component',
+  selector: 'oib-test-datepicker-container-component',
   template: `
     <oib-datepicker-container class="foo">
       <input class="form-control" [formControl]="dateCtrl" ngbDatepicker />

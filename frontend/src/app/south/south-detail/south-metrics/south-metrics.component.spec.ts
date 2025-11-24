@@ -10,7 +10,7 @@ import { SouthConnectorMetrics } from '../../../../../../backend/shared/model/en
 import testData from '../../../../../../backend/src/tests/utils/test-data';
 
 @Component({
-  selector: 'test-south-metrics-component',
+  selector: 'oib-test-south-metrics-component',
   template: ` <oib-south-metrics [connectorMetrics]="metrics" [southConnector]="southConnector" [manifest]="manifest" />`,
   imports: [SouthMetricsComponent]
 })

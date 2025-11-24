@@ -9,7 +9,7 @@ import { OIBusScanModeFormControlComponent } from './oibus-scan-mode-form-contro
 import testData from '../../../../../../backend/src/tests/utils/test-data';
 
 @Component({
-  selector: 'test-oibus-scan-mode-form-control-component',
+  selector: 'oib-test-oibus-scan-mode-form-control-component',
   template: `
     <form [formGroup]="formGroup">
       <ng-container formGroupName="testGroup">

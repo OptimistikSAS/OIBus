@@ -6,7 +6,7 @@ import { provideI18nTesting } from '../../../../../i18n/mock-i18n';
 import { OIBusTimeValueContent } from '../../../../../../../backend/shared/model/engine.model';
 
 @Component({
-  selector: 'test-item-test-result-component',
+  selector: 'oib-test-item-test-result-component',
   template: ` <oib-item-test-result #testedComponent />`,
   imports: [ItemTestResultComponent]
 })

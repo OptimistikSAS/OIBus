@@ -5,7 +5,7 @@ import { LegendComponent } from './legend.component';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 
 @Component({
-  selector: 'test-legend-component',
+  selector: 'oib-test-legend-component',
   template: `<oib-legend [legendList]="legend" />`,
   imports: [LegendComponent]
 })

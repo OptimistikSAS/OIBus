@@ -15,7 +15,7 @@ import { OIBusObjectFormControlComponent } from './oibus-object-form-control.com
 import { SouthConnectorService } from '../../../services/south-connector.service';
 
 @Component({
-  selector: 'test-oibus-object-form-control-host-component',
+  selector: 'oib-test-oibus-object-form-control-host-component',
   template: `
     <form [formGroup]="parentGroup">
       <ng-container formGroupName="root">

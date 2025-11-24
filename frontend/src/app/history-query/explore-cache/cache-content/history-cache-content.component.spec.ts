@@ -9,7 +9,7 @@ import { HistoryQueryDTO } from '../../../../../../backend/shared/model/history-
 import { HistoryQueryService } from '../../../services/history-query.service';
 
 @Component({
-  selector: 'test-history-cache-content-component',
+  selector: 'oib-test-history-cache-content-component',
   template: ` <oib-history-cache-content cacheType="cache" #component [historyQuery]="historyQuery" />`,
   imports: [HistoryCacheContentComponent]
 })
