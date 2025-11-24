@@ -61,9 +61,9 @@ describe('EditIpFilterModalComponent', () => {
   });
 
   describe('create mode', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       tester.componentInstance.prepareForCreation();
-      tester.detectChanges();
+      await tester.change();
     });
 
     it('should have an empty form', () => {
@@ -79,11 +79,11 @@ describe('EditIpFilterModalComponent', () => {
       expect(fakeActiveModal.close).not.toHaveBeenCalled();
     });
 
-    it('should save if valid', fakeAsync(() => {
+    it('should save if valid', fakeAsync(async () => {
       tester.address.fillWith('127.0.0.1');
       tester.description.fillWith('desc');
 
-      tester.detectChanges();
+      await tester.change();
 
       const createdProxy = {
         id: 'id1'
@@ -114,11 +114,11 @@ describe('EditIpFilterModalComponent', () => {
       description: 'My IP Filter 1'
     };
 
-    beforeEach(() => {
+    beforeEach(async () => {
       ipFilterService.findById.and.returnValue(of(ipFilterToUpdate));
 
       tester.componentInstance.prepareForEdition(ipFilterToUpdate);
-      tester.detectChanges();
+      await tester.change();
     });
 
     it('should have a populated form', () => {
@@ -160,9 +160,9 @@ describe('EditIpFilterModalComponent', () => {
   });
 
   describe('unsaved changes', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       tester.componentInstance.prepareForCreation();
-      tester.detectChanges();
+      await tester.change();
     });
 
     it('should return true from canDismiss when form is pristine', () => {
@@ -170,9 +170,9 @@ describe('EditIpFilterModalComponent', () => {
       expect(result).toBe(true);
     });
 
-    it('should return observable from canDismiss when form is dirty', () => {
+    it('should return observable from canDismiss when form is dirty', async () => {
       tester.address.fillWith('test address');
-      tester.detectChanges();
+      await tester.change();
 
       unsavedChangesConfirmationService.confirmUnsavedChanges.and.returnValue(of(true));
 
@@ -182,9 +182,9 @@ describe('EditIpFilterModalComponent', () => {
       expect(unsavedChangesConfirmationService.confirmUnsavedChanges).toHaveBeenCalled();
     });
 
-    it('should allow dismissal when user confirms leaving', () => {
+    it('should allow dismissal when user confirms leaving', async () => {
       tester.address.fillWith('test address');
-      tester.detectChanges();
+      await tester.change();
 
       unsavedChangesConfirmationService.confirmUnsavedChanges.and.returnValue(of(true));
 
@@ -197,9 +197,9 @@ describe('EditIpFilterModalComponent', () => {
       }
     });
 
-    it('should prevent dismissal when user cancels leaving', () => {
+    it('should prevent dismissal when user cancels leaving', async () => {
       tester.address.fillWith('test address');
-      tester.detectChanges();
+      await tester.change();
 
       unsavedChangesConfirmationService.confirmUnsavedChanges.and.returnValue(of(false));
 

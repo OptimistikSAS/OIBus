@@ -67,15 +67,15 @@ describe('TestConnectionResultModalComponent', () => {
       southConnectorService.testConnection.and.returnValue(of(undefined));
     });
 
-    it('should be loading', () => {
+    it('should be loading', async () => {
       tester.componentInstance.runTest('south', southConnector.id, southConnector.settings, southConnector.type);
-      tester.detectChanges();
+      await tester.change();
       expect(tester.spinner).toBeDefined();
     });
 
-    it('should display success', () => {
+    it('should display success', async () => {
       tester.componentInstance.runTest('south', southConnector.id, southConnector.settings, southConnector.type);
-      tester.detectChanges();
+      await tester.change();
 
       expect(southConnectorService.testConnection).toHaveBeenCalledWith(southConnector.id, southConnector.settings, southConnector.type);
       expect(tester.success).toContainText('Connection successfully tested');
@@ -83,9 +83,9 @@ describe('TestConnectionResultModalComponent', () => {
       expect(tester.error).toBeNull();
     });
 
-    it('should display success without south', () => {
+    it('should display success without south', async () => {
       tester.componentInstance.runTest('south', null, southConnector.settings, southConnector.type);
-      tester.detectChanges();
+      await tester.change();
 
       expect(southConnectorService.testConnection).toHaveBeenCalledWith('create', southConnector.settings, southConnector.type);
       expect(tester.success).toContainText('Connection successfully tested');
@@ -93,19 +93,19 @@ describe('TestConnectionResultModalComponent', () => {
       expect(tester.error).toBeNull();
     });
 
-    it('should display error', fakeAsync(() => {
+    it('should display error', fakeAsync(async () => {
       southConnectorService.testConnection.and.returnValue(throwError(() => new HttpErrorResponse({ error: { message: 'failure' } })));
       tester.componentInstance.runTest('south', southConnector.id, southConnector.settings, southConnector.type);
 
-      tester.detectChanges();
+      await tester.change();
       expect(tester.error).toContainText('failure');
       expect(tester.spinner).toBeNull();
       expect(tester.success).toBeNull();
     }));
 
-    it('should cancel', () => {
+    it('should cancel', async () => {
       tester.componentInstance.runTest('south', southConnector.id, southConnector.settings, southConnector.type);
-      tester.detectChanges();
+      await tester.change();
       tester.cancel.click();
       expect(fakeActiveModal.dismiss).toHaveBeenCalled();
     });
@@ -125,15 +125,15 @@ describe('TestConnectionResultModalComponent', () => {
       northConnectorService.testConnection.and.returnValue(of(undefined));
     });
 
-    it('should be loading', () => {
+    it('should be loading', async () => {
       tester.componentInstance.runTest('north', northConnector.id, northConnector.settings, northConnector.type);
-      tester.detectChanges();
+      await tester.change();
       expect(tester.spinner).toBeDefined();
     });
 
-    it('should display success', () => {
+    it('should display success', async () => {
       tester.componentInstance.runTest('north', northConnector.id, northConnector.settings, northConnector.type);
-      tester.detectChanges();
+      await tester.change();
 
       expect(northConnectorService.testConnection).toHaveBeenCalledWith(northConnector.id, northConnector.settings, northConnector.type);
       expect(tester.success).toContainText('Connection successfully tested');
@@ -141,9 +141,9 @@ describe('TestConnectionResultModalComponent', () => {
       expect(tester.error).toBeNull();
     });
 
-    it('should display success without north', () => {
+    it('should display success without north', async () => {
       tester.componentInstance.runTest('north', null, northConnector.settings, northConnector.type);
-      tester.detectChanges();
+      await tester.change();
 
       expect(northConnectorService.testConnection).toHaveBeenCalledWith('create', northConnector.settings, northConnector.type);
       expect(tester.success).toContainText('Connection successfully tested');
@@ -151,19 +151,19 @@ describe('TestConnectionResultModalComponent', () => {
       expect(tester.error).toBeNull();
     });
 
-    it('should display error', fakeAsync(() => {
+    it('should display error', fakeAsync(async () => {
       northConnectorService.testConnection.and.returnValue(throwError(() => new HttpErrorResponse({ error: { message: 'failure' } })));
       tester.componentInstance.runTest('north', northConnector.id, northConnector.settings, northConnector.type);
 
-      tester.detectChanges();
+      await tester.change();
       expect(tester.error).toContainText('failure');
       expect(tester.spinner).toBeNull();
       expect(tester.success).toBeNull();
     }));
 
-    it('should cancel', () => {
+    it('should cancel', async () => {
       tester.componentInstance.runTest('north', northConnector.id, northConnector.settings, northConnector.type);
-      tester.detectChanges();
+      await tester.change();
       tester.cancel.click();
       expect(fakeActiveModal.dismiss).toHaveBeenCalled();
     });
@@ -179,19 +179,19 @@ describe('TestConnectionResultModalComponent', () => {
       historyQueryService.testNorthConnection.and.returnValue(of(undefined));
     });
 
-    it('should be loading', () => {
+    it('should be loading', async () => {
       tester.componentInstance.runHistoryQueryTest('north', 'historyId', northCommand.settings, northCommand.type);
-      tester.detectChanges();
+      await tester.change();
       expect(tester.spinner).toBeDefined();
 
       tester.componentInstance.runHistoryQueryTest('north', 'historyId', northCommand.settings, northCommand.type, 'fromNorthId');
-      tester.detectChanges();
+      await tester.change();
       expect(tester.spinner).toBeDefined();
     });
 
-    it('should display success', () => {
+    it('should display success', async () => {
       tester.componentInstance.runHistoryQueryTest('north', 'historyId', northCommand.settings, northCommand.type);
-      tester.detectChanges();
+      await tester.change();
 
       expect(historyQueryService.testNorthConnection).toHaveBeenCalledWith('historyId', northCommand.settings, northCommand.type, null);
       expect(tester.success).toContainText('Connection successfully tested');
@@ -199,7 +199,7 @@ describe('TestConnectionResultModalComponent', () => {
       expect(tester.error).toBeNull();
 
       tester.componentInstance.runHistoryQueryTest('north', 'historyId', northCommand.settings, northCommand.type, 'fromNorthId');
-      tester.detectChanges();
+      await tester.change();
 
       expect(historyQueryService.testNorthConnection).toHaveBeenCalledWith(
         'historyId',
@@ -212,9 +212,9 @@ describe('TestConnectionResultModalComponent', () => {
       expect(tester.error).toBeNull();
     });
 
-    it('should display success without history id', () => {
+    it('should display success without history id', async () => {
       tester.componentInstance.runHistoryQueryTest('north', null, northCommand.settings, northCommand.type);
-      tester.detectChanges();
+      await tester.change();
 
       expect(historyQueryService.testNorthConnection).toHaveBeenCalledWith('create', northCommand.settings, northCommand.type, null);
       expect(tester.success).toContainText('Connection successfully tested');
@@ -222,7 +222,7 @@ describe('TestConnectionResultModalComponent', () => {
       expect(tester.error).toBeNull();
 
       tester.componentInstance.runHistoryQueryTest('north', null, northCommand.settings, northCommand.type, 'fromNorthId');
-      tester.detectChanges();
+      await tester.change();
 
       expect(historyQueryService.testNorthConnection).toHaveBeenCalledWith(
         'create',
@@ -235,19 +235,19 @@ describe('TestConnectionResultModalComponent', () => {
       expect(tester.error).toBeNull();
     });
 
-    it('should display error', fakeAsync(() => {
+    it('should display error', fakeAsync(async () => {
       historyQueryService.testNorthConnection.and.returnValue(throwError(() => new HttpErrorResponse({ error: { message: 'failure' } })));
       tester.componentInstance.runHistoryQueryTest('north', 'historyId', northCommand.settings, northCommand.type);
 
-      tester.detectChanges();
+      await tester.change();
       expect(tester.error).toContainText('failure');
       expect(tester.spinner).toBeNull();
       expect(tester.success).toBeNull();
     }));
 
-    it('should cancel', () => {
+    it('should cancel', async () => {
       tester.componentInstance.runHistoryQueryTest('north', 'historyId', northCommand.settings, northCommand.type);
-      tester.detectChanges();
+      await tester.change();
       tester.cancel.click();
       expect(fakeActiveModal.dismiss).toHaveBeenCalled();
     });
@@ -263,19 +263,19 @@ describe('TestConnectionResultModalComponent', () => {
       historyQueryService.testSouthConnection.and.returnValue(of(undefined));
     });
 
-    it('should be loading', () => {
+    it('should be loading', async () => {
       tester.componentInstance.runHistoryQueryTest('south', 'historyId', southCommand.settings, southCommand.type);
-      tester.detectChanges();
+      await tester.change();
       expect(tester.spinner).toBeDefined();
 
       tester.componentInstance.runHistoryQueryTest('south', 'historyId', southCommand.settings, southCommand.type, 'fromSouthId');
-      tester.detectChanges();
+      await tester.change();
       expect(tester.spinner).toBeDefined();
     });
 
-    it('should display success', () => {
+    it('should display success', async () => {
       tester.componentInstance.runHistoryQueryTest('south', 'historyId', southCommand.settings, southCommand.type);
-      tester.detectChanges();
+      await tester.change();
 
       expect(historyQueryService.testSouthConnection).toHaveBeenCalledWith('historyId', southCommand.settings, southCommand.type, null);
       expect(tester.success).toContainText('Connection successfully tested');
@@ -283,7 +283,7 @@ describe('TestConnectionResultModalComponent', () => {
       expect(tester.error).toBeNull();
 
       tester.componentInstance.runHistoryQueryTest('south', 'historyId', southCommand.settings, southCommand.type, 'fromSouthId');
-      tester.detectChanges();
+      await tester.change();
 
       expect(historyQueryService.testSouthConnection).toHaveBeenCalledWith(
         'historyId',
@@ -296,9 +296,9 @@ describe('TestConnectionResultModalComponent', () => {
       expect(tester.error).toBeNull();
     });
 
-    it('should display success without history id', () => {
+    it('should display success without history id', async () => {
       tester.componentInstance.runHistoryQueryTest('south', null, southCommand.settings, southCommand.type);
-      tester.detectChanges();
+      await tester.change();
 
       expect(historyQueryService.testSouthConnection).toHaveBeenCalledWith('create', southCommand.settings, southCommand.type, null);
       expect(tester.success).toContainText('Connection successfully tested');
@@ -306,7 +306,7 @@ describe('TestConnectionResultModalComponent', () => {
       expect(tester.error).toBeNull();
 
       tester.componentInstance.runHistoryQueryTest('south', null, southCommand.settings, southCommand.type, 'fromSouthId');
-      tester.detectChanges();
+      await tester.change();
 
       expect(historyQueryService.testSouthConnection).toHaveBeenCalledWith(
         'create',
@@ -319,19 +319,19 @@ describe('TestConnectionResultModalComponent', () => {
       expect(tester.error).toBeNull();
     });
 
-    it('should display error', fakeAsync(() => {
+    it('should display error', fakeAsync(async () => {
       historyQueryService.testSouthConnection.and.returnValue(throwError(() => new HttpErrorResponse({ error: { message: 'failure' } })));
       tester.componentInstance.runHistoryQueryTest('south', 'historyId', southCommand.settings, southCommand.type);
 
-      tester.detectChanges();
+      await tester.change();
       expect(tester.error).toContainText('failure');
       expect(tester.spinner).toBeNull();
       expect(tester.success).toBeNull();
     }));
 
-    it('should cancel', () => {
+    it('should cancel', async () => {
       tester.componentInstance.runHistoryQueryTest('south', 'historyId', southCommand.settings, southCommand.type);
-      tester.detectChanges();
+      await tester.change();
       tester.cancel.click();
       expect(fakeActiveModal.dismiss).toHaveBeenCalled();
     });

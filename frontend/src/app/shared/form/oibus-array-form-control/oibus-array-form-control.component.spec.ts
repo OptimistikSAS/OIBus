@@ -82,13 +82,13 @@ class TestComponentTester extends ComponentTester<TestComponent> {
 describe('OIBusArrayFormControlComponent', () => {
   let tester: TestComponentTester;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     TestBed.configureTestingModule({
       providers: [provideI18nTesting(), provideModalTesting()]
     });
 
     tester = new TestComponentTester();
-    tester.detectChanges();
+    await tester.change();
   });
 
   it('should add an element', async () => {

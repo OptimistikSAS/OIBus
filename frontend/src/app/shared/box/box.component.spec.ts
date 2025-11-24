@@ -37,9 +37,9 @@ describe('BoxComponent', () => {
   });
 
   describe('with string title', () => {
-    it('should display string title', () => {
+    it('should display string title', async () => {
       tester = new TestComponentTester();
-      tester.detectChanges();
+      await tester.change();
       expect(tester.title).toContainText('Yes');
       expect(tester.content).toContainText('This is the content');
       expect(tester.content).toBeVisible();
@@ -64,9 +64,9 @@ describe('BoxComponent', () => {
       });
     });
 
-    it('should display string title', () => {
+    it('should display string title', async () => {
       tester = new TestComponentTester();
-      tester.detectChanges();
+      await tester.change();
 
       expect(tester.title).toContainText('Hello from template');
       expect(tester.content).toContainText('This is the content');

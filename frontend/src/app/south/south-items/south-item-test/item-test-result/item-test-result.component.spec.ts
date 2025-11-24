@@ -28,7 +28,7 @@ describe('ItemTestResultComponent', () => {
     });
 
     tester = new ItemTestResultComponentTester();
-    tester.detectChanges();
+    await tester.change();
   });
 
   it('should display a table result', () => {
@@ -46,7 +46,7 @@ describe('ItemTestResultComponent', () => {
     expect(changeActiveComponentSpy).toHaveBeenCalledWith('table', { content: testResult });
   });
 
-  it('should display a json result', () => {
+  it('should display a json result', async () => {
     const changeActiveComponentSpy = spyOn<any>(tester.componentInstance.testedComponent(), 'changeActiveComponent');
     const testResult: OIBusTimeValueContent = {
       type: 'time-values',
@@ -59,7 +59,7 @@ describe('ItemTestResultComponent', () => {
     expect(tester.componentInstance.testedComponent()['_availableDisplayModes']).toEqual(['table', 'json', 'any']);
     // The first one should be the default, so we need to change it to 'json'
     tester.componentInstance.testedComponent().changeDisplayMode('json');
-    tester.detectChanges();
+    await tester.change();
     expect(tester.componentInstance.testedComponent()['_currentDisplayMode']).toEqual('json');
 
     // We make sure the displayed result will be 'raw'
@@ -67,7 +67,7 @@ describe('ItemTestResultComponent', () => {
     expect(changeActiveComponentSpy).toHaveBeenCalledWith('codeblock', { content: testResult, contentType: 'json' });
   });
 
-  it('should display a raw result', () => {
+  it('should display a raw result', async () => {
     const changeActiveComponentSpy = spyOn<any>(tester.componentInstance.testedComponent(), 'changeActiveComponent');
     const testResult: OIBusTimeValueContent = {
       type: 'time-values',
@@ -80,7 +80,7 @@ describe('ItemTestResultComponent', () => {
     expect(tester.componentInstance.testedComponent()['_availableDisplayModes']).toEqual(['table', 'json', 'any']);
     // The first one should be the default, so we need to change it to 'any'
     tester.componentInstance.testedComponent().changeDisplayMode('any');
-    tester.detectChanges();
+    await tester.change();
     expect(tester.componentInstance.testedComponent()['_currentDisplayMode']).toEqual('any');
 
     // We make sure the displayed result will be 'raw'

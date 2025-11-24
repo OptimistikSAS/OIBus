@@ -21,12 +21,12 @@ describe('PageTitleDirective', () => {
   let titleService: Title;
   let tester: TestComponentTester;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     TestBed.configureTestingModule({});
 
     titleService = TestBed.inject(Title);
     tester = new TestComponentTester();
-    tester.detectChanges();
+    await tester.change();
   });
 
   it('should set the page title', () => {

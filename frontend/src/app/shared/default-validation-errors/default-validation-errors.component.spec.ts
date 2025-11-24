@@ -47,13 +47,13 @@ class TestComponentTester extends ComponentTester<TestComponent> {
 describe('DefaultValidationErrorsComponent', () => {
   let tester: TestComponentTester;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     TestBed.configureTestingModule({
       providers: [provideI18nTesting()]
     });
 
     tester = new TestComponentTester();
-    tester.detectChanges();
+    await tester.change();
   });
 
   it('should display validation error with default message', () => {

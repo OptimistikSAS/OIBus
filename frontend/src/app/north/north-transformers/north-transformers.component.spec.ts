@@ -49,8 +49,8 @@ describe('NorthTransformersComponent', () => {
     tester = new NorthTransformersComponentTester();
   });
 
-  it('should display forms with types', () => {
-    tester.detectChanges();
+  it('should display forms with types', async () => {
+    await tester.change();
     expect(tester.transformers.length).toEqual(0);
   });
 });

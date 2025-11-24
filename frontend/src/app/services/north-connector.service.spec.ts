@@ -9,7 +9,7 @@ import {
   NorthConnectorManifest,
   NorthType
 } from '../../../../backend/shared/model/north-connector.model';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 import { CacheMetadata } from '../../../../backend/shared/model/engine.model';
 import testData from '../../../../backend/src/tests/utils/test-data';
 import { TransformerDTOWithOptions } from '../../../../backend/shared/model/transformer.model';
@@ -20,7 +20,7 @@ describe('NorthConnectorService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()]
+      providers: [provideHttpClientTesting()]
     });
     http = TestBed.inject(HttpTestingController);
     service = TestBed.inject(NorthConnectorService);
@@ -135,7 +135,15 @@ describe('NorthConnectorService', () => {
     const northCacheFiles: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [];
 
     service
-      .searchCacheContent('id1', { start: '2020-01-01T00:00:00.000Z', end: '2021-01-01T00:00:00.000Z', nameContains: 'file' }, 'cache')
+      .searchCacheContent(
+        'id1',
+        {
+          start: '2020-01-01T00:00:00.000Z',
+          end: '2021-01-01T00:00:00.000Z',
+          nameContains: 'file'
+        },
+        'cache'
+      )
       .subscribe(c => (expectedNorthCacheFiles = c));
 
     http
@@ -152,7 +160,12 @@ describe('NorthConnectorService', () => {
     const northCacheFileContent = new Blob(['test'], { type: 'text/plain' });
     service.getCacheFileContent('id1', 'cache', 'file1').subscribe(c => (httpResponse = c));
 
-    http.expectOne({ url: '/api/north/id1/cache/content/file1?folder=cache', method: 'GET' }).flush(northCacheFileContent);
+    http
+      .expectOne({
+        url: '/api/north/id1/cache/content/file1?folder=cache',
+        method: 'GET'
+      })
+      .flush(northCacheFileContent);
     expect(httpResponse!.body).toEqual(northCacheFileContent);
   });
 

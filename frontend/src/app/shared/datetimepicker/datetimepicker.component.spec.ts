@@ -51,7 +51,7 @@ describe('DatetimepickerComponent', () => {
   });
 
   describe('with default templates', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       TestBed.overrideTemplate(
         TestComponent,
         `
@@ -65,7 +65,7 @@ describe('DatetimepickerComponent', () => {
         }
       });
       tester = new TestComponentTester();
-      tester.detectChanges();
+      await tester.change();
     });
 
     it('should display an empty date and 00:00 by default', () => {
@@ -83,9 +83,9 @@ describe('DatetimepickerComponent', () => {
       expect(tester.componentInstance.form.value.from).toBe('2019-10-01T22:00:00.000Z');
     });
 
-    it('should display form control value', () => {
+    it('should display form control value', async () => {
       tester.componentInstance.form.setValue({ from: '2019-10-02T14:15:00Z' });
-      tester.detectChanges();
+      await tester.change();
 
       expect(tester.datetimepicker.displayedValue).toBe('02/10/2019 16:15');
     });
@@ -104,21 +104,21 @@ describe('DatetimepickerComponent', () => {
       expect(tester.componentInstance.form.touched).toBe(true);
     });
 
-    it('should become disabled when the control is disabled', () => {
+    it('should become disabled when the control is disabled', async () => {
       expect(tester.componentInstance.form.touched).toBe(false);
 
       tester.componentInstance.form.disable();
-      tester.detectChanges();
+      await tester.change();
 
       expect(tester.datetimepicker.date.disabled).toBe(true);
       expect(tester.datetimepicker.hour.disabled).toBe(true);
       expect(tester.datetimepicker.minute.disabled).toBe(true);
     });
 
-    it('should validate the date and propagate the error', () => {
+    it('should validate the date and propagate the error', async () => {
       tester.datetimepicker.fillWith('02/13/2019', '00', '00');
 
-      tester.detectChanges();
+      await tester.change();
 
       expect(tester.componentInstance.form.value.from).toBeNull();
       expect(tester.componentInstance.form.get('from')!.getError('ngbDate')).not.toBeNull();
@@ -126,7 +126,7 @@ describe('DatetimepickerComponent', () => {
   });
 
   describe('with timezone', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       TestBed.overrideTemplate(
         TestComponent,
         `
@@ -140,7 +140,7 @@ describe('DatetimepickerComponent', () => {
         }
       });
       tester = new TestComponentTester();
-      tester.detectChanges();
+      await tester.change();
     });
 
     it('should allow entering a date and a time', () => {
@@ -149,16 +149,16 @@ describe('DatetimepickerComponent', () => {
       expect(tester.componentInstance.form.value.from).toBe('2019-10-02T00:00:00.000Z');
     });
 
-    it('should display form control value', () => {
+    it('should display form control value', async () => {
       tester.componentInstance.form.setValue({ from: '2019-10-02T14:15:00Z' });
-      tester.detectChanges();
+      await tester.change();
 
       expect(tester.datetimepicker.displayedValue).toBe('02/10/2019 14:15');
     });
   });
 
   describe('with custom templates', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       TestBed.overrideTemplate(
         TestComponent,
         `
@@ -181,7 +181,7 @@ describe('DatetimepickerComponent', () => {
         }
       });
       tester = new TestComponentTester();
-      tester.detectChanges();
+      await tester.change();
     });
 
     it('should use custom templates', () => {

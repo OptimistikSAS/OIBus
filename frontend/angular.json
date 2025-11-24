@@ -82,9 +82,6 @@
           },
           "defaultConfiguration": "development"
         },
-        "extract-i18n": {
-          "builder": "@angular/build:extract-i18n"
-        },
         "lint": {
           "builder": "@angular-eslint/builder:lint",
           "options": {
@@ -130,6 +127,7 @@
     }
   },
   "cli": {
+    "packageManager": "npm",
     "analytics": false
   },
   "schematics": {

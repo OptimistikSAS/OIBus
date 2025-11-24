@@ -83,9 +83,9 @@ describe('ScanModeListComponent', () => {
   });
 
   describe('with scan mode', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       scanModeService.list.and.returnValue(of(scanModes));
-      tester.detectChanges();
+      await tester.change();
     });
 
     it('should display a list of scan modes', () => {
@@ -157,9 +157,9 @@ describe('ScanModeListComponent', () => {
   });
 
   describe('with no scan mode', () => {
-    it('should display an empty list', () => {
+    it('should display an empty list', async () => {
       scanModeService.list.and.returnValue(of([]));
-      tester.detectChanges();
+      await tester.change();
 
       expect(tester.title).toContainText('Scan mode');
       expect(tester.noScanMode).toContainText('No scan mode');

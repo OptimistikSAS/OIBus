@@ -6,7 +6,6 @@ import { of } from 'rxjs';
 import { NorthConnectorDTO } from '../../../../../backend/shared/model/north-connector.model';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
-import { provideHttpClient } from '@angular/common/http';
 import testData from '../../../../../backend/src/tests/utils/test-data';
 
 class ExploreNorthCacheComponentTester extends ComponentTester<ExploreNorthCacheComponent> {
@@ -64,14 +63,13 @@ describe('ExploreNorthCacheComponent', () => {
     }
   } as NorthConnectorDTO;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     northConnectorService = createMock(NorthConnectorService);
 
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
         provideRouter([]),
-        provideHttpClient(),
         {
           provide: ActivatedRoute,
           useValue: stubRoute({
@@ -86,7 +84,7 @@ describe('ExploreNorthCacheComponent', () => {
     northConnectorService.findById.and.returnValue(of(northConnector));
     northConnectorService.searchCacheContent.and.returnValue(of([]));
     tester = new ExploreNorthCacheComponentTester();
-    tester.detectChanges();
+    await tester.change();
   });
 
   it('should have a title, error and archive list components', () => {

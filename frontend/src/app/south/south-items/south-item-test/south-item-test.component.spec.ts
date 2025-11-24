@@ -3,7 +3,7 @@ import { ComponentTester, createMock } from 'ngx-speculoos';
 import { SouthConnectorService } from '../../../services/south-connector.service';
 import { SouthConnectorItemDTO, SouthConnectorManifest } from '../../../../../../backend/shared/model/south-connector.model';
 import { delay, of, throwError } from 'rxjs';
-import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import SouthItemTestComponent from './south-item-test.component';
 import { Component, ViewChild } from '@angular/core';
@@ -115,11 +115,10 @@ describe('SouthItemTestComponent', () => {
     };
   });
 
-  beforeEach(() => {
+  beforeEach(async () => {
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
-        provideHttpClient(),
         // IMPORTANT! In order for the datetime picker to work properly, this needs to be added!
         provideDatepicker(),
         { provide: SouthConnectorService, useValue: southConnectorService },
@@ -139,14 +138,14 @@ describe('SouthItemTestComponent', () => {
     tester = new SouthItemTestComponentTester();
     tester.changeType('south');
     tester.changeEntityId('southId');
-    tester.detectChanges();
+    await tester.change();
 
     spyOn(tester.testResultViewComponent, 'displayInfo');
     spyOn(tester.testResultViewComponent, 'displayResult');
     spyOn(tester.testResultViewComponent, 'displayError');
     spyOn(tester.testResultViewComponent, 'changeDisplayMode');
     spyOn(tester.testResultViewComponent, 'displayLoading');
-    tester.detectChanges();
+    await tester.change();
   });
 
   afterEach(() => {
@@ -154,32 +153,40 @@ describe('SouthItemTestComponent', () => {
   });
 
   const testCases = [
-    { type: 'south' as 'south' | 'history-south', entityId: 'southId', service: { testItem: southConnectorService!.testItem } },
-    { type: 'history-south' as 'south' | 'history-south', entityId: 'historyId', service: { testItem: historyQueryService!.testItem } }
+    {
+      type: 'south' as 'south' | 'history-south',
+      entityId: 'southId',
+      service: { testItem: southConnectorService!.testItem }
+    },
+    {
+      type: 'history-south' as 'south' | 'history-south',
+      entityId: 'historyId',
+      service: { testItem: historyQueryService!.testItem }
+    }
   ];
 
   testCases.forEach(testCase => {
-    it(`[${testCase.type}] should show history related settings`, () => {
+    it(`[${testCase.type}] should show history related settings`, async () => {
       tester.changeSupportsHistory(true);
-      tester.detectChanges();
+      await tester.change();
 
       expect(tester.historyGroup).toBeDefined();
       expect(tester.dateRangeSelector).toBeDefined();
     });
 
-    it(`[${testCase.type}] should hide history related settings`, () => {
+    it(`[${testCase.type}] should hide history related settings`, async () => {
       tester.changeSupportsHistory(false);
-      tester.detectChanges();
+      await tester.change();
 
       expect(tester.historyGroup).toBeNull();
       expect(tester.dateRangeSelector).toBeNull();
     });
 
-    it(`[${testCase.type}] should test the item with default history settings`, () => {
+    it(`[${testCase.type}] should test the item with default history settings`, async () => {
       tester.changeSupportsHistory(true);
       tester.changeType(testCase.type);
       tester.changeEntityId(testCase.entityId);
-      tester.detectChanges();
+      await tester.change();
 
       tester.testButton.click();
 
@@ -230,11 +237,11 @@ describe('SouthItemTestComponent', () => {
       expect(tester.componentInstance.testedComponent.isTestRunning).toBeFalse();
     });
 
-    it(`[${testCase.type}] should test the item with custom history settings`, () => {
+    it(`[${testCase.type}] should test the item with custom history settings`, async () => {
       tester.changeSupportsHistory(true);
       tester.changeType(testCase.type);
       tester.changeEntityId(testCase.entityId);
-      tester.detectChanges();
+      await tester.change();
 
       const formValues = tester.testingSettingsForm?.value;
       const defaultSettings = {
@@ -257,7 +264,7 @@ describe('SouthItemTestComponent', () => {
 
       // Set custom date range
       tester.setDateRange('2023-01-01T00:00:00.000Z', '2023-01-01T00:10:00.000Z');
-      tester.detectChanges();
+      await tester.change();
 
       tester.testButton.click();
 
@@ -290,11 +297,11 @@ describe('SouthItemTestComponent', () => {
       expect(tester.componentInstance.testedComponent.isTestRunning).toBeFalse();
     });
 
-    it(`[${testCase.type}] should test the item without history`, () => {
+    it(`[${testCase.type}] should test the item without history`, async () => {
       tester.changeSupportsHistory(false);
       tester.changeType(testCase.type);
       tester.changeEntityId(testCase.entityId);
-      tester.detectChanges();
+      await tester.change();
 
       tester.testButton.click();
 
@@ -332,11 +339,11 @@ describe('SouthItemTestComponent', () => {
       expect(tester.componentInstance.testedComponent.isTestRunning).toBeFalse();
     });
 
-    it(`[${testCase.type}] should cancel the item test`, fakeAsync(() => {
+    it(`[${testCase.type}] should cancel the item test`, fakeAsync(async () => {
       tester.changeSupportsHistory(false);
       tester.changeType(testCase.type);
       tester.changeEntityId(testCase.entityId);
-      tester.detectChanges();
+      await tester.change();
 
       testCase.service.testItem.and.returnValue(
         of({
@@ -379,12 +386,12 @@ describe('SouthItemTestComponent', () => {
 
       // wait for a bit, but not enough for the test request to finish
       tick(1000);
-      tester.detectChanges();
+      await tester.change();
 
       tester.cancelTestButton.click();
 
       flushMicrotasks();
-      tester.detectChanges();
+      await tester.change();
 
       // values are not displayed
       expect(tester.testResultViewComponent.displayInfo).toHaveBeenCalled();
@@ -392,11 +399,11 @@ describe('SouthItemTestComponent', () => {
       expect(tester.componentInstance.testedComponent.isTestRunning).toBeFalse();
     }));
 
-    it(`[${testCase.type}] should not cancel the item test when it's already finished`, fakeAsync(() => {
+    it(`[${testCase.type}] should not cancel the item test when it's already finished`, fakeAsync(async () => {
       tester.changeSupportsHistory(false);
       tester.changeType(testCase.type);
       tester.changeEntityId(testCase.entityId);
-      tester.detectChanges();
+      await tester.change();
 
       testCase.service.testItem.and.returnValue(
         of({
@@ -439,10 +446,10 @@ describe('SouthItemTestComponent', () => {
 
       // wait for more time than needed for the test request
       tick(5000);
-      tester.detectChanges();
+      await tester.change();
 
       flushMicrotasks();
-      tester.detectChanges();
+      await tester.change();
 
       // now the button is not clickable
       tester.cancelTestButton.click();
@@ -452,11 +459,11 @@ describe('SouthItemTestComponent', () => {
       expect(tester.componentInstance.testedComponent.isTestRunning).toBeFalse();
     }));
 
-    it(`[${testCase.type}] should handle test request error`, () => {
+    it(`[${testCase.type}] should handle test request error`, async () => {
       tester.changeSupportsHistory(false);
       tester.changeType(testCase.type);
       tester.changeEntityId(testCase.entityId);
-      tester.detectChanges();
+      await tester.change();
 
       const error: HttpErrorResponse = new HttpErrorResponse({
         error: 'cannot make request',
@@ -503,11 +510,11 @@ describe('SouthItemTestComponent', () => {
       expect(tester.componentInstance.testedComponent.isTestRunning).toBeFalse();
     });
 
-    it(`[${testCase.type}] should handle time values as well`, () => {
+    it(`[${testCase.type}] should handle time values as well`, async () => {
       tester.changeSupportsHistory(false);
       tester.changeType(testCase.type);
       tester.changeEntityId(testCase.entityId);
-      tester.detectChanges();
+      await tester.change();
 
       const result = { type: 'time-values', content: [{ pointId: 'pointId' }] } as OIBusTimeValueContent;
       testCase.service.testItem.and.returnValue(of(result));
@@ -548,11 +555,11 @@ describe('SouthItemTestComponent', () => {
       expect(tester.componentInstance.testedComponent.isTestRunning).toBeFalse();
     });
 
-    it(`[${testCase.type}] should be able to change display mode`, () => {
+    it(`[${testCase.type}] should be able to change display mode`, async () => {
       tester.changeSupportsHistory(false);
       tester.changeType(testCase.type);
       tester.changeEntityId(testCase.entityId);
-      tester.detectChanges();
+      await tester.change();
 
       const result = { type: 'time-values', content: [{ pointId: 'pointId' }] } as OIBusTimeValueContent;
       testCase.service.testItem.and.returnValue(of(result));
@@ -562,28 +569,28 @@ describe('SouthItemTestComponent', () => {
       // Mocking display mode changes after test data has been received
       tester.componentInstance.testedComponent.availableDisplayModes = ['table', 'any'];
       tester.componentInstance.testedComponent.currentDisplayMode = 'table';
-      tester.detectChanges();
+      await tester.change();
       tester.button('#view-dropdown')!.click();
       tester.button('.dropdown-item:not(.active)')!.click();
-      tester.detectChanges();
+      await tester.change();
 
       expect(tester.testResultViewComponent.changeDisplayMode).toHaveBeenCalledWith('any');
       expect(tester.testResultViewComponent.displayResult).toHaveBeenCalledWith(result);
       expect(tester.componentInstance.testedComponent.isTestRunning).toBeFalse();
     });
 
-    it(`[${testCase.type}] should not retrieve settings if form is invalid`, () => {
+    it(`[${testCase.type}] should not retrieve settings if form is invalid`, async () => {
       tester.changeSupportsHistory(true);
       tester.changeType(testCase.type);
       tester.changeEntityId(testCase.entityId);
-      tester.detectChanges();
+      await tester.change();
 
       const historyGroup = tester.testingSettingsForm.get('history');
       if (historyGroup) {
         historyGroup.get('dateRange')?.setValue(null);
         historyGroup.get('dateRange')?.markAsTouched();
       }
-      tester.detectChanges();
+      await tester.change();
 
       tester.testButton.click();
 
@@ -593,10 +600,10 @@ describe('SouthItemTestComponent', () => {
     });
   });
 
-  it('should not make request if the type provided is unsupported', () => {
+  it('should not make request if the type provided is unsupported', async () => {
     tester.changeType('unsupported' as 'south' | 'history-south');
     tester.changeEntityId('entityId');
-    tester.detectChanges();
+    await tester.change();
 
     tester.testButton.click();
     expect(tester.testResultViewComponent.displayResult).not.toHaveBeenCalled();

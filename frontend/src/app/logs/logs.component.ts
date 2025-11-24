@@ -34,7 +34,7 @@ import { ScopeTypesEnumPipe } from '../shared/scope-types-enum.pipe';
 import { NgbAccordionModule, NgbTooltip, NgbTypeahead, NgbTypeaheadSelectItemEvent } from '@ng-bootstrap/ng-bootstrap';
 import { PillComponent } from '../shared/pill/pill.component';
 import { LegendComponent } from '../shared/legend/legend.component';
-import { NgClass, NgOptimizedImage } from '@angular/common';
+import { NgOptimizedImage } from '@angular/common';
 import { TYPEAHEAD_DEBOUNCE_TIME } from '../shared/form/typeahead';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../shared/form/form-validation-directives';
 import { TranslateModule } from '@ngx-translate/core';
@@ -56,7 +56,6 @@ import { toObservable } from '@angular/core/rxjs-interop';
     NgbTypeahead,
     PillComponent,
     LegendComponent,
-    NgClass,
     NgbAccordionModule,
     OI_FORM_VALIDATION_DIRECTIVES,
     NgbAccordionModule,

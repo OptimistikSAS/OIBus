@@ -37,7 +37,7 @@ describe('AppComponent', () => {
     timezone: 'Asia/Tokyo'
   } as UserDTO;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     windowService = createMock(WindowService);
     currentUserService = createMock(CurrentUserService);
     engineService = createMock(EngineService);
@@ -55,7 +55,7 @@ describe('AppComponent', () => {
     currentUserService.get.and.returnValue(of(currentUser));
     engineService.getInfo.and.returnValue(of({ version: '3.0' } as OIBusInfo));
     tester = new AppComponentTester();
-    tester.detectChanges();
+    await tester.change();
   });
 
   it(`should have a navbar`, () => {

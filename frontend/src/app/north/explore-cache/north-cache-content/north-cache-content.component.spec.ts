@@ -34,7 +34,7 @@ describe('NorthCacheContent', () => {
   let tester: NorthCacheContentComponentTester;
   let northConnectorService: jasmine.SpyObj<NorthConnectorService>;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     northConnectorService = createMock(NorthConnectorService);
 
     TestBed.configureTestingModule({
@@ -46,7 +46,7 @@ describe('NorthCacheContent', () => {
     northConnectorService.removeCacheContent.and.returnValue(of());
     northConnectorService.moveCacheContent.and.returnValue(of());
     northConnectorService.getCacheFileContent.and.returnValue(of());
-    tester.detectChanges();
+    await tester.change();
   });
 
   it('should have no archive files', () => {

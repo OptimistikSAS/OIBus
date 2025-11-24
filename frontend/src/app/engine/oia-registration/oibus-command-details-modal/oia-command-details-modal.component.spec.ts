@@ -69,17 +69,17 @@ describe('OIBusCommandDetailsModalComponent', () => {
     tester = new OIBusCommandDetailsModalComponentTester();
   });
 
-  it('should close', () => {
+  it('should close', async () => {
     tester.componentInstance.prepare(command1);
-    tester.detectChanges();
+    await tester.change();
 
     tester.close.click();
     expect(activeModal.dismiss).toHaveBeenCalled();
   });
 
-  it('should display an update version command', () => {
+  it('should display an update version command', async () => {
     tester.componentInstance.prepare(command1);
-    tester.detectChanges();
+    await tester.change();
 
     expect(tester.commandResults).toContainText(' ');
     expect(tester.commandContents.elements('li').length).toEqual(4);
@@ -89,9 +89,9 @@ describe('OIBusCommandDetailsModalComponent', () => {
     expect(tester.commandContents.elements('li')[3]).toContainText(command1.commandContent.backupFolders);
   });
 
-  it('should display an update south command', () => {
+  it('should display an update south command', async () => {
     tester.componentInstance.prepare(command2);
-    tester.detectChanges();
+    await tester.change();
 
     expect(tester.commandResults).toContainText(command2.result!);
     expect(tester.commandContents.elements('li').length).toEqual(3);

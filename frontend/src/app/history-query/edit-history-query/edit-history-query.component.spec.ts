@@ -6,7 +6,6 @@ import { of } from 'rxjs';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { ScanModeService } from '../../services/scan-mode.service';
-import { provideHttpClient } from '@angular/common/http';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { HistoryQueryService } from '../../services/history-query.service';
@@ -117,7 +116,7 @@ describe('EditHistoryQueryComponent', () => {
     northTransformers: []
   };
 
-  beforeEach(() => {
+  beforeEach(async () => {
     northConnectorService = createMock(NorthConnectorService);
     southConnectorService = createMock(SouthConnectorService);
     historyQueryService = createMock(HistoryQueryService);
@@ -130,7 +129,6 @@ describe('EditHistoryQueryComponent', () => {
       providers: [
         provideI18nTesting(),
         provideRouter([]),
-        provideHttpClient(),
         { provide: NorthConnectorService, useValue: northConnectorService },
         { provide: SouthConnectorService, useValue: southConnectorService },
         { provide: HistoryQueryService, useValue: historyQueryService },
@@ -159,7 +157,7 @@ describe('EditHistoryQueryComponent', () => {
     southConnectorService.getSouthManifest.and.returnValue(of(testData.south.manifest));
 
     tester = new EditHistoryQueryComponentTester();
-    tester.detectChanges();
+    await tester.change();
   });
 
   it('should display general settings', () => {
@@ -180,14 +178,14 @@ describe('EditHistoryQueryComponent', () => {
     });
   });
 
-  it('should display south sharing input when connection can be shared', () => {
+  it('should display south sharing input when connection can be shared', async () => {
     southConnectorService.getSouthManifest.and.returnValue(of(testData.south.manifest));
     tester = new EditHistoryQueryComponentTester();
-    tester.detectChanges();
+    await tester.change();
     expect(tester.sharedConnection).toBeDefined();
   });
 
-  it('should test north connection', () => {
+  it('should test north connection', async () => {
     tester.componentInstance.northManifest = testData.north.manifest;
     tester.componentInstance.southManifest = testData.south.manifest;
     tester.componentInstance.historyQuery = historyQuery;
@@ -205,11 +203,11 @@ describe('EditHistoryQueryComponent', () => {
     }
 
     tester.componentInstance.test('north');
-    tester.detectChanges();
+    await tester.change();
     expect(spy).toHaveBeenCalledWith('north', 'id1', historyQuery.northSettings, testData.north.manifest.id, null);
   });
 
-  it('should test south connection', () => {
+  it('should test south connection', async () => {
     tester.componentInstance.northManifest = testData.north.manifest;
     tester.componentInstance.southManifest = testData.south.manifest;
     tester.componentInstance.historyQuery = historyQuery;
@@ -226,18 +224,18 @@ describe('EditHistoryQueryComponent', () => {
     }
 
     tester.componentInstance.test('south');
-    tester.detectChanges();
+    await tester.change();
     expect(spy).toHaveBeenCalledWith('south', 'id1', historyQuery.southSettings, testData.south.manifest.id, null);
   });
 
-  it('should validate date range properly', () => {
+  it('should validate date range properly', async () => {
     const validDateRange: DateRange = {
       startTime: '2023-01-01T00:00:00.000Z',
       endTime: '2024-01-01T00:00:00.000Z'
     };
 
     tester.componentInstance.form?.controls.dateRange.setValue(validDateRange);
-    tester.detectChanges();
+    await tester.change();
 
     expect(tester.componentInstance.form?.controls.dateRange.errors).toBeFalsy();
   });

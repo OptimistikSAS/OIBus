@@ -4,7 +4,6 @@ import { OibusCommandService } from './oibus-command.service';
 import { OIBusCommandDTO } from '../../../../backend/shared/model/command.model';
 import { Page } from '../../../../backend/shared/model/types';
 import { toPage } from '../shared/test-utils';
-import { provideHttpClient } from '@angular/common/http';
 
 describe('OibusCommandService', () => {
   let http: HttpTestingController;
@@ -12,7 +11,7 @@ describe('OibusCommandService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()]
+      providers: [provideHttpClientTesting()]
     });
     http = TestBed.inject(HttpTestingController);
     service = TestBed.inject(OibusCommandService);
@@ -25,7 +24,14 @@ describe('OibusCommandService', () => {
     const commands = toPage<OIBusCommandDTO>([{ id: '1' }] as Array<OIBusCommandDTO>);
 
     service
-      .search({ page: 0, types: ['update-version'], status: ['COMPLETED', 'CANCELLED'], ack: undefined, start: undefined, end: undefined })
+      .search({
+        page: 0,
+        types: ['update-version'],
+        status: ['COMPLETED', 'CANCELLED'],
+        ack: undefined,
+        start: undefined,
+        end: undefined
+      })
       .subscribe(c => (expectedCommands = c));
 
     http

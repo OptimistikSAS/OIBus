@@ -43,7 +43,7 @@ describe('HomeComponent', () => {
   let northService: jasmine.SpyObj<NorthConnectorService>;
   let engineService: jasmine.SpyObj<EngineService>;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     southService = createMock(SouthConnectorService);
     northService = createMock(NorthConnectorService);
     engineService = createMock(EngineService);
@@ -77,7 +77,7 @@ describe('HomeComponent', () => {
     southService.getSouthManifest.and.returnValue(of({} as SouthConnectorManifest));
 
     tester = new HomeComponentTester();
-    tester.detectChanges();
+    await tester.change();
   });
 
   it('should display titles', () => {

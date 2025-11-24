@@ -31,15 +31,15 @@ describe('ResetCacheModalComponent', () => {
     tester = new ResetCacheModalComponentTester();
   });
 
-  it('should send yes', () => {
-    tester.detectChanges();
+  it('should send yes', async () => {
+    await tester.change();
 
     tester.yesButton.click();
     expect(fakeActiveModal.close).toHaveBeenCalledWith(true);
   });
 
-  it('should send no', () => {
-    tester.detectChanges();
+  it('should send no', async () => {
+    await tester.change();
 
     tester.noButton.click();
     expect(fakeActiveModal.close).toHaveBeenCalledWith(false);

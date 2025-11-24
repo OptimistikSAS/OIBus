@@ -5,7 +5,6 @@ import { Page } from '../../../../backend/shared/model/types';
 import { toPage } from '../shared/test-utils';
 import { LogService } from './log.service';
 import { LogDTO, Scope } from '../../../../backend/shared/model/logs.model';
-import { provideHttpClient } from '@angular/common/http';
 
 describe('LogService', () => {
   let http: HttpTestingController;
@@ -13,7 +12,7 @@ describe('LogService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()]
+      providers: [provideHttpClientTesting()]
     });
     http = TestBed.inject(HttpTestingController);
     service = TestBed.inject(LogService);

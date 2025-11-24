@@ -130,17 +130,17 @@ describe('RegisterOibusModalComponent', () => {
     tester = new RegisterOibusModalComponentTester();
   });
 
-  it('should have an empty form in register mode', () => {
+  it('should have an empty form in register mode', async () => {
     tester.componentInstance.prepare({ host: '' } as RegistrationSettingsDTO, 'register');
-    tester.detectChanges();
+    await tester.change();
     expect(tester.host).toHaveValue('');
     expect(tester.acceptUnauthorized).not.toBeChecked();
     expect(tester.useProxy).not.toBeChecked();
   });
 
-  it('should not register if invalid', () => {
+  it('should not register if invalid', async () => {
     tester.componentInstance.prepare({ host: '' } as RegistrationSettingsDTO, 'register');
-    tester.detectChanges();
+    await tester.change();
     tester.save.click();
 
     // host and the three intervals
@@ -148,9 +148,9 @@ describe('RegisterOibusModalComponent', () => {
     expect(fakeActiveModal.close).not.toHaveBeenCalled();
   });
 
-  it('should register if valid', fakeAsync(() => {
+  it('should register if valid', fakeAsync(async () => {
     tester.componentInstance.prepare({ host: '' } as RegistrationSettingsDTO, 'register');
-    tester.detectChanges();
+    await tester.change();
     tester.host.fillWith('http://localhost:4200');
     tester.acceptUnauthorized.check();
     tester.useProxy.check();
@@ -160,7 +160,7 @@ describe('RegisterOibusModalComponent', () => {
     tester.commandRefreshInterval.fillWith('15');
     tester.commandRetryInterval.fillWith('10');
     tester.messageRetryInterval.fillWith('5');
-    tester.detectChanges();
+    await tester.change();
     tester.save.click();
 
     const expectedCommand: RegistrationSettingsCommandDTO = {
@@ -212,22 +212,22 @@ describe('RegisterOibusModalComponent', () => {
     expect(engineService.register).toHaveBeenCalledWith(expectedCommand);
   }));
 
-  it('should cancel in register mode', () => {
+  it('should cancel in register mode', async () => {
     tester.componentInstance.prepare({ host: '' } as RegistrationSettingsDTO, 'register');
-    tester.detectChanges();
+    await tester.change();
     tester.cancel.click();
     expect(fakeActiveModal.dismiss).toHaveBeenCalled();
   });
 
-  it('should have an empty form in edit mode', () => {
+  it('should have an empty form in edit mode', async () => {
     tester.componentInstance.prepare({ host: '' } as RegistrationSettingsDTO, 'edit');
-    tester.detectChanges();
+    await tester.change();
     expect(tester.host).toHaveValue('');
     expect(tester.acceptUnauthorized).not.toBeChecked();
     expect(tester.useProxy).not.toBeChecked();
   });
 
-  it('should edit registration if valid', fakeAsync(() => {
+  it('should edit registration if valid', fakeAsync(async () => {
     tester.componentInstance.prepare(
       {
         id: 'id',
@@ -274,13 +274,13 @@ describe('RegisterOibusModalComponent', () => {
       } as RegistrationSettingsDTO,
       'edit'
     );
-    tester.detectChanges();
+    await tester.change();
     tester.acceptUnauthorized.check();
     tester.useProxy.check();
     tester.proxyUrl.fillWith('http://localhost:8080');
     tester.proxyUsername.fillWith('user');
     tester.proxyPassword.fillWith('pass');
-    tester.detectChanges();
+    await tester.change();
     tester.save.click();
 
     const expectedCommand: RegistrationSettingsCommandDTO = {
@@ -332,17 +332,17 @@ describe('RegisterOibusModalComponent', () => {
     expect(engineService.editRegistrationSettings).toHaveBeenCalledWith(expectedCommand);
   }));
 
-  it('should cancel in edit mode', () => {
+  it('should cancel in edit mode', async () => {
     tester.componentInstance.prepare({ host: '' } as RegistrationSettingsDTO, 'edit');
-    tester.detectChanges();
+    await tester.change();
     tester.cancel.click();
     expect(fakeActiveModal.dismiss).toHaveBeenCalled();
   });
 
   describe('Permission buttons', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       tester.componentInstance.prepare({ host: 'http://localhost:4200' } as RegistrationSettingsDTO, 'register');
-      tester.detectChanges();
+      await tester.change();
     });
 
     it('should have enable all and disable all buttons', () => {
@@ -350,18 +350,18 @@ describe('RegisterOibusModalComponent', () => {
       expect(tester.disableAllPermissionsButton).toBeTruthy();
     });
 
-    it('should enable all permissions when enable all button is clicked', () => {
+    it('should enable all permissions when enable all button is clicked', async () => {
       tester.updateVersionPermission.uncheck();
       tester.restartEnginePermission.uncheck();
       tester.createScanModePermission.uncheck();
-      tester.detectChanges();
+      await tester.change();
 
       expect(tester.updateVersionPermission).not.toBeChecked();
       expect(tester.restartEnginePermission).not.toBeChecked();
       expect(tester.createScanModePermission).not.toBeChecked();
 
       tester.enableAllPermissionsButton.click();
-      tester.detectChanges();
+      await tester.change();
 
       expect(tester.updateVersionPermission).toBeChecked();
       expect(tester.restartEnginePermission).toBeChecked();
@@ -370,13 +370,13 @@ describe('RegisterOibusModalComponent', () => {
       expect(tester.testSouthConnectionPermission).toBeChecked();
     });
 
-    it('should disable all permissions when disable all button is clicked', () => {
+    it('should disable all permissions when disable all button is clicked', async () => {
       expect(tester.updateVersionPermission).toBeChecked();
       expect(tester.restartEnginePermission).toBeChecked();
       expect(tester.createScanModePermission).toBeChecked();
 
       tester.disableAllPermissionsButton.click();
-      tester.detectChanges();
+      await tester.change();
 
       expect(tester.updateVersionPermission).not.toBeChecked();
       expect(tester.restartEnginePermission).not.toBeChecked();
@@ -390,18 +390,18 @@ describe('RegisterOibusModalComponent', () => {
       expect(tester.disableAllPermissionsButton.nativeElement.disabled).toBeFalse();
     });
 
-    it('should disable disable all button when all permissions are already disabled', () => {
+    it('should disable disable all button when all permissions are already disabled', async () => {
       tester.disableAllPermissionsButton.click();
-      tester.detectChanges();
+      await tester.change();
 
       expect(tester.disableAllPermissionsButton.nativeElement.disabled).toBeTrue();
       expect(tester.enableAllPermissionsButton.nativeElement.disabled).toBeFalse();
     });
 
-    it('should enable both buttons when some permissions are enabled and some are disabled', () => {
+    it('should enable both buttons when some permissions are enabled and some are disabled', async () => {
       tester.updateVersionPermission.uncheck();
       tester.restartEnginePermission.uncheck();
-      tester.detectChanges();
+      await tester.change();
 
       expect(tester.enableAllPermissionsButton.nativeElement.disabled).toBeFalse();
       expect(tester.disableAllPermissionsButton.nativeElement.disabled).toBeFalse();
@@ -412,18 +412,18 @@ describe('RegisterOibusModalComponent', () => {
       expect(tester.componentInstance.allPermissionsDisabled).toBe(false);
     });
 
-    it('should correctly identify when all permissions are disabled', () => {
+    it('should correctly identify when all permissions are disabled', async () => {
       tester.componentInstance.disableAllPermissions();
-      tester.detectChanges();
+      await tester.change();
 
       expect(tester.componentInstance.allPermissionsEnabled).toBe(false);
       expect(tester.componentInstance.allPermissionsDisabled).toBe(true);
     });
 
-    it('should correctly identify when some permissions are enabled and some are disabled', () => {
+    it('should correctly identify when some permissions are enabled and some are disabled', async () => {
       tester.updateVersionPermission.uncheck();
       tester.restartEnginePermission.uncheck();
-      tester.detectChanges();
+      await tester.change();
 
       expect(tester.componentInstance.allPermissionsEnabled).toBe(false);
       expect(tester.componentInstance.allPermissionsDisabled).toBe(false);

@@ -31,7 +31,7 @@ describe('ChooseSouthConnectorTypeModalComponent', () => {
   let southConnectorService: jasmine.SpyObj<SouthConnectorService>;
   let router: jasmine.SpyObj<Router>;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     fakeActiveModal = createMock(NgbActiveModal);
     southConnectorService = createMock(SouthConnectorService);
     router = createMock(Router);
@@ -61,7 +61,7 @@ describe('ChooseSouthConnectorTypeModalComponent', () => {
     );
 
     tester = new ChooseSouthConnectorTypeModalComponentTester();
-    tester.detectChanges();
+    await tester.change();
   });
 
   it('should choose', () => {

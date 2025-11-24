@@ -9,7 +9,7 @@ import { emptyPage, toPage } from '../test-utils';
 import { Page } from '../../../../../backend/shared/model/types';
 
 @Component({
-  template: `<oib-pagination [page]="page" (pageChanged)="pageChanged($event)" [navigate]="navigate" />`,
+  template: ` <oib-pagination [page]="page" (pageChanged)="pageChanged($event)" [navigate]="navigate" />`,
   imports: [PaginationComponent]
 })
 class TestComponent {
@@ -47,26 +47,26 @@ describe('PaginationComponent', () => {
       tester = new TestComponentTester();
     });
 
-    it('should not display pagination if page is empty', () => {
+    it('should not display pagination if page is empty', async () => {
       tester.componentInstance.page = emptyPage();
 
-      tester.detectChanges();
+      await tester.change();
 
       expect(tester.ngbPagination).toBeNull();
     });
 
-    it('should not display pagination if page is alone', () => {
+    it('should not display pagination if page is alone', async () => {
       tester.componentInstance.page = toPage(['a'], 1);
 
-      tester.detectChanges();
+      await tester.change();
 
       expect(tester.ngbPagination).toBeNull();
     });
 
-    it('should emit event when page changes', fakeAsync(() => {
+    it('should emit event when page changes', fakeAsync(async () => {
       tester.componentInstance.page = toPage(['a'], 21, 1, 20);
 
-      tester.detectChanges();
+      await tester.change();
       expect(tester.ngbPagination.page).toBe(2);
 
       tester.firstPageLink.click();
@@ -95,8 +95,8 @@ describe('PaginationComponent', () => {
       tester.componentInstance.page = toPage(['a'], 21, 1, 20);
     });
 
-    it('should not navigate if navigate is false', fakeAsync(() => {
-      tester.detectChanges();
+    it('should not navigate if navigate is false', fakeAsync(async () => {
+      await tester.change();
 
       tester.firstPageLink.click();
       tick();
@@ -105,15 +105,19 @@ describe('PaginationComponent', () => {
       expect(tester.componentInstance.newPage).toBe(0);
     }));
 
-    it('should navigate if navigate is true', fakeAsync(() => {
+    it('should navigate if navigate is true', fakeAsync(async () => {
       tester.componentInstance.navigate = true;
 
-      tester.detectChanges();
+      await tester.change();
 
       tester.firstPageLink.click();
       tick();
 
-      expect(router.navigate).toHaveBeenCalledWith(['.'], { relativeTo: route, queryParams: { page: 0 }, queryParamsHandling: 'merge' });
+      expect(router.navigate).toHaveBeenCalledWith(['.'], {
+        relativeTo: route,
+        queryParams: { page: 0 },
+        queryParamsHandling: 'merge'
+      });
       expect(tester.componentInstance.newPage).toBe(0);
     }));
   });

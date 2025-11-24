@@ -7,7 +7,6 @@ import { of } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { ScanModeService } from '../../services/scan-mode.service';
-import { provideHttpClient } from '@angular/common/http';
 import { SouthConnectorDTO, SouthConnectorManifest } from '../../../../../backend/shared/model/south-connector.model';
 import { SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 import testData from '../../../../../backend/src/tests/utils/test-data';
@@ -62,7 +61,6 @@ describe('EditSouthComponent', () => {
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
-        provideHttpClient(),
         { provide: SouthConnectorService, useValue: southConnectorService },
         { provide: ScanModeService, useValue: scanModeService },
         { provide: CertificateService, useValue: certificateService }
@@ -77,13 +75,13 @@ describe('EditSouthComponent', () => {
   });
 
   describe('create mode', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       TestBed.overrideProvider(ActivatedRoute, {
         useValue: stubRoute({ queryParams: { type: 'SQL' } })
       });
 
       tester = new EditSouthComponentTester();
-      tester.detectChanges();
+      await tester.change();
     });
 
     it('should display general settings', () => {
@@ -107,7 +105,7 @@ describe('EditSouthComponent', () => {
       items: []
     };
 
-    beforeEach(() => {
+    beforeEach(async () => {
       TestBed.overrideProvider(ActivatedRoute, {
         useValue: stubRoute({
           params: { southId: 'id1' },
@@ -117,7 +115,7 @@ describe('EditSouthComponent', () => {
 
       southConnectorService.findById.and.returnValue(of(southConnector));
       tester = new EditSouthComponentTester();
-      tester.detectChanges();
+      await tester.change();
     });
 
     it('should display general settings', () => {
@@ -894,17 +892,17 @@ describe('EditSouthComponent', () => {
       });
     });
 
-    it('should load MQTT connector manifest', () => {
+    it('should load MQTT connector manifest', async () => {
       tester = new EditSouthComponentTester();
-      tester.detectChanges();
+      await tester.change();
 
       expect(tester.title).toContainText('Create MQTT south connector');
       expect(southConnectorService.getSouthManifest).toHaveBeenCalledWith('MQTT');
     });
 
-    it('should display MQTT-specific settings form', () => {
+    it('should display MQTT-specific settings form', async () => {
       tester = new EditSouthComponentTester();
-      tester.detectChanges();
+      await tester.change();
 
       expect(tester.specificForm).toBeDefined();
       expect(tester.specificTitle).toContainText('MQTT settings');

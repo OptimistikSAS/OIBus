@@ -53,17 +53,17 @@ describe('OIBusSecretFormControlComponent', () => {
     });
   });
 
-  it('should render without placeholder when mode is create', () => {
+  it('should render without placeholder when mode is create', async () => {
     const tester = new TestComponentTester();
-    tester.detectChanges();
+    await tester.change();
 
     expect(tester.field.nativeElement.getAttribute('placeholder')).toBeNull();
   });
 
-  it('should display placeholder when mode is edit', () => {
+  it('should display placeholder when mode is edit', async () => {
     TestBed.overrideProvider(OIBUS_FORM_MODE, { useValue: () => 'edit' });
     const tester = new TestComponentTester();
-    tester.detectChanges();
+    await tester.change();
 
     expect(tester.field.nativeElement.getAttribute('placeholder')).toBe('Leave empty to keep the existing secret');
   });

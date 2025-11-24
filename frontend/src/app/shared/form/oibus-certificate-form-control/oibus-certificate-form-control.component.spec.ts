@@ -54,13 +54,13 @@ class TestComponentTester extends ComponentTester<TestComponent> {
 describe('OIBusCertificateFormControlComponent', () => {
   let tester: TestComponentTester;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     TestBed.configureTestingModule({
       providers: [provideI18nTesting()]
     });
 
     tester = new TestComponentTester();
-    tester.detectChanges();
+    await tester.change();
   });
 
   it('should create the component', () => {

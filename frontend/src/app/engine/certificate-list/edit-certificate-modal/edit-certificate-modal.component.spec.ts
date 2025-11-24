@@ -93,9 +93,9 @@ describe('EditCertificateModalComponent', () => {
   });
 
   describe('create mode', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       tester.componentInstance.prepareForCreation();
-      tester.detectChanges();
+      await tester.change();
     });
 
     it('should have an empty form with default and with regenerate not visible', () => {
@@ -115,7 +115,7 @@ describe('EditCertificateModalComponent', () => {
       expect(fakeActiveModal.close).not.toHaveBeenCalled();
     });
 
-    it('should save if valid', () => {
+    it('should save if valid', async () => {
       tester.name.fillWith('cert1');
       tester.description.fillWith('desc');
       tester.countryName.fillWith('fr');
@@ -126,7 +126,7 @@ describe('EditCertificateModalComponent', () => {
       tester.keySize.fillWith('2048');
       tester.daysBeforeExpiry.fillWith('4');
 
-      tester.detectChanges();
+      await tester.change();
 
       const createdCertificate = {
         id: 'id1'
@@ -170,10 +170,10 @@ describe('EditCertificateModalComponent', () => {
       expiry: '2033-01-01T00:00:00Z'
     };
 
-    beforeEach(() => {
+    beforeEach(async () => {
       certificateService.findById.and.returnValue(of(certificateToUpdate));
       tester.componentInstance.prepareForEdition(certificateToUpdate);
-      tester.detectChanges();
+      await tester.change();
     });
 
     it('should have a populated form', () => {
@@ -250,9 +250,9 @@ describe('EditCertificateModalComponent', () => {
   });
 
   describe('unsaved changes', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       tester.componentInstance.prepareForCreation();
-      tester.detectChanges();
+      await tester.change();
     });
 
     it('should return true from canDismiss when form is pristine', () => {
@@ -260,10 +260,10 @@ describe('EditCertificateModalComponent', () => {
       expect(result).toBe(true);
     });
 
-    it('should return observable from canDismiss when form is dirty', () => {
+    it('should return observable from canDismiss when form is dirty', async () => {
       // Make form dirty
       tester.name.fillWith('test name');
-      tester.detectChanges();
+      await tester.change();
 
       unsavedChangesConfirmationService.confirmUnsavedChanges.and.returnValue(of(true));
 
@@ -273,9 +273,9 @@ describe('EditCertificateModalComponent', () => {
       expect(unsavedChangesConfirmationService.confirmUnsavedChanges).toHaveBeenCalled();
     });
 
-    it('should allow dismissal when user confirms leaving', () => {
+    it('should allow dismissal when user confirms leaving', async () => {
       tester.name.fillWith('test name');
-      tester.detectChanges();
+      await tester.change();
 
       unsavedChangesConfirmationService.confirmUnsavedChanges.and.returnValue(of(true));
 
@@ -288,9 +288,9 @@ describe('EditCertificateModalComponent', () => {
       }
     });
 
-    it('should prevent dismissal when user cancels leaving', () => {
+    it('should prevent dismissal when user cancels leaving', async () => {
       tester.name.fillWith('test name');
-      tester.detectChanges();
+      await tester.change();
 
       unsavedChangesConfirmationService.confirmUnsavedChanges.and.returnValue(of(false));
 

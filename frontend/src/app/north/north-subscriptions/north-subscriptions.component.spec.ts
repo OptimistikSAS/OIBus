@@ -11,7 +11,7 @@ import { of } from 'rxjs';
 import { NotificationService } from '../../shared/notification.service';
 
 @Component({
-  template: `<oib-north-subscriptions [northConnector]="northConnector" />`,
+  template: ` <oib-north-subscriptions [northConnector]="northConnector" />`,
   imports: [NorthSubscriptionsComponent]
 })
 class TestComponent {
@@ -46,10 +46,6 @@ class NorthSubscriptionsComponentTester extends ComponentTester<TestComponent> {
     return this.element('#title')!;
   }
 
-  get addSubscription() {
-    return this.button('#add-subscription')!;
-  }
-
   get subscriptions() {
     return this.elements('tbody tr');
   }
@@ -61,7 +57,7 @@ describe('NorthSubscriptionsComponent', () => {
   let southService: jasmine.SpyObj<SouthConnectorService>;
   let notificationService: jasmine.SpyObj<NotificationService>;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     northService = createMock(NorthConnectorService);
     southService = createMock(SouthConnectorService);
     notificationService = createMock(NotificationService);
@@ -78,11 +74,10 @@ describe('NorthSubscriptionsComponent', () => {
     southService.list.and.returnValue(of([]));
 
     tester = new NorthSubscriptionsComponentTester();
+    await tester.change();
   });
 
   it('should display a list of subscriptions', () => {
-    tester.detectChanges();
-
     expect(tester.title).toContainText('Subscriptions');
     expect(tester.subscriptions.length).toEqual(2);
     expect(tester.subscriptions[0].elements('td').length).toEqual(2);

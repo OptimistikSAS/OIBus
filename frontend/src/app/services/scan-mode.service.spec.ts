@@ -3,7 +3,6 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ScanModeService } from './scan-mode.service';
 import { ScanModeDTO, ValidatedCronExpression } from '../../../../backend/shared/model/scan-mode.model';
-import { provideHttpClient } from '@angular/common/http';
 import testData from '../../../../backend/src/tests/utils/test-data';
 
 describe('ScanModeService', () => {
@@ -12,7 +11,7 @@ describe('ScanModeService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()]
+      providers: [provideHttpClientTesting()]
     });
     http = TestBed.inject(HttpTestingController);
     service = TestBed.inject(ScanModeService);
@@ -71,7 +70,12 @@ describe('ScanModeService', () => {
 
   it('should verify a cron expression', () => {
     let expectedValidatedCronExpression: ValidatedCronExpression | null = null;
-    const validatedCronExpression: ValidatedCronExpression = { isValid: true, errorMessage: '', nextExecutions: [], humanReadableForm: '' };
+    const validatedCronExpression: ValidatedCronExpression = {
+      isValid: true,
+      errorMessage: '',
+      nextExecutions: [],
+      humanReadableForm: ''
+    };
 
     service.verifyCron('* * * * * *').subscribe(c => (expectedValidatedCronExpression = c));
 

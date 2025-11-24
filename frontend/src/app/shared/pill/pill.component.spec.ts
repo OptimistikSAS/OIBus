@@ -31,13 +31,13 @@ class TestComponentTester extends ComponentTester<TestComponent> {
 describe('PillComponent', () => {
   let tester: TestComponentTester;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     TestBed.configureTestingModule({
       imports: [TestComponent, TranslateModule.forRoot()]
     });
 
     tester = new TestComponentTester();
-    tester.detectChanges();
+    await tester.change();
   });
 
   it('should display a pill and button to remove it', () => {
@@ -52,9 +52,9 @@ describe('PillComponent', () => {
     expect(tester.componentInstance.removed).toBe(true);
   });
 
-  it('should not have a button if not removable', () => {
+  it('should not have a button if not removable', async () => {
     tester.componentInstance.removable = false;
-    tester.detectChanges();
+    await tester.change();
     expect(tester.pill).toContainText('Pill content');
     // no button
     expect(tester.removeButton).toBeNull();

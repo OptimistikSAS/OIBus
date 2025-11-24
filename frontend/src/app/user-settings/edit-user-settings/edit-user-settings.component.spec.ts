@@ -86,8 +86,8 @@ describe('EditUserSettingsComponent', () => {
     tester = new EditUserSettingsComponentTester();
   });
 
-  it('should display a populated form', () => {
-    tester.detectChanges();
+  it('should display a populated form', async () => {
+    await tester.change();
 
     expect(tester.title).toContainText('admin');
     expect(tester.firstName).toHaveValue('Admin');
@@ -95,8 +95,8 @@ describe('EditUserSettingsComponent', () => {
     expect(tester.timezone).toHaveValue('Europe/Paris');
   });
 
-  it('should save without reloading if language and timezone are not changed', fakeAsync(() => {
-    tester.detectChanges();
+  it('should save without reloading if language and timezone are not changed', fakeAsync(async () => {
+    await tester.change();
 
     tester.firstName.fillWith('another');
     tester.lastName.fillWith('user');
@@ -123,8 +123,8 @@ describe('EditUserSettingsComponent', () => {
     expect(windowService.reload).not.toHaveBeenCalled();
   }));
 
-  it('should save and reload if timezone is changed', fakeAsync(() => {
-    tester.detectChanges();
+  it('should save and reload if timezone is changed', fakeAsync(async () => {
+    await tester.change();
 
     tester.timezone.fillWith('Asia/T');
     tester.timezone.selectLabel('Asia/Tokyo');
@@ -150,10 +150,10 @@ describe('EditUserSettingsComponent', () => {
     expect(windowService.reload).toHaveBeenCalled();
   }));
 
-  it('should open the change password modal', () => {
+  it('should open the change password modal', async () => {
     const mockModalService = TestBed.inject(MockModalService);
     spyOn(mockModalService, 'open').and.callThrough();
-    tester.detectChanges();
+    await tester.change();
     mockModalService.mockClosedModal(ChangePasswordModalComponent);
 
     tester.changePassword.click();

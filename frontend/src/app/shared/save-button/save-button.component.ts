@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 import { BehaviorSubject, defer, finalize, Observable, switchMap } from 'rxjs';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { TranslateDirective } from '@ngx-translate/core';
-import { AsyncPipe, NgClass } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 
 /**
  * A class that holds the state of an observable,
@@ -41,7 +41,7 @@ export class ObservableState {
     '[attr.id]': 'id()',
     '[disabled]': 'isDisabled()'
   },
-  imports: [NgClass, TranslateDirective, AsyncPipe]
+  imports: [TranslateDirective, AsyncPipe]
 })
 export class SaveButtonComponent {
   readonly form = input<string>();

@@ -25,13 +25,13 @@ class TestComponentTester extends ComponentTester<TestComponent> {
 describe('OibHelpComponent', () => {
   let tester: TestComponentTester;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     TestBed.configureTestingModule({
       imports: [TestComponent, TranslateModule.forRoot()]
     });
 
     tester = new TestComponentTester();
-    tester.detectChanges();
+    await tester.change();
   });
 
   it('should display a info circle', () => {

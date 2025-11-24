@@ -3,7 +3,6 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { IpFilterService } from './ip-filter.service';
 import { IPFilterDTO } from '../../../../backend/shared/model/ip-filter.model';
-import { provideHttpClient } from '@angular/common/http';
 import testData from '../../../../backend/src/tests/utils/test-data';
 
 describe('IpFilterService', () => {
@@ -12,7 +11,7 @@ describe('IpFilterService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()]
+      providers: [provideHttpClientTesting()]
     });
     http = TestBed.inject(HttpTestingController);
     service = TestBed.inject(IpFilterService);

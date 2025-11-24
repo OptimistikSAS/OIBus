@@ -4,7 +4,6 @@ import { HistoryQueryListComponent } from './history-query-list.component';
 import { ComponentTester, createMock } from 'ngx-speculoos';
 import { provideI18nTesting } from '../../i18n/mock-i18n';
 import { provideRouter } from '@angular/router';
-import { provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
 import { HistoryQueryLightDTO } from '../../../../backend/shared/model/history-query.model';
 import { HistoryQueryService } from '../services/history-query.service';
@@ -23,6 +22,7 @@ class HistoryQueryListComponentTester extends ComponentTester<HistoryQueryListCo
     return this.elements('tbody tr');
   }
 }
+
 describe('HistoryQueryListComponent', () => {
   let tester: HistoryQueryListComponentTester;
   let historyQueryService: jasmine.SpyObj<HistoryQueryService>;
@@ -47,7 +47,7 @@ describe('HistoryQueryListComponent', () => {
     } as HistoryQueryLightDTO
   ];
 
-  beforeEach(() => {
+  beforeEach(async () => {
     historyQueryService = createMock(HistoryQueryService);
     notificationService = createMock(NotificationService);
 
@@ -55,7 +55,6 @@ describe('HistoryQueryListComponent', () => {
       providers: [
         provideI18nTesting(),
         provideRouter([]),
-        provideHttpClient(),
         { provide: HistoryQueryService, useValue: historyQueryService },
         { provide: NotificationService, useValue: notificationService }
       ]
@@ -66,7 +65,7 @@ describe('HistoryQueryListComponent', () => {
     historyQueryService.pause.and.returnValue(of(undefined));
 
     tester = new HistoryQueryListComponentTester();
-    tester.detectChanges();
+    await tester.change();
   });
 
   it('should display title', () => {

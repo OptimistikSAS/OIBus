@@ -1,7 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { FileTableComponent } from './file-table.component';
-import { provideHttpClient } from '@angular/common/http';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { ComponentTester, TestButton } from 'ngx-speculoos';
 import { CacheMetadata } from '../../../../../backend/shared/model/engine.model';
@@ -140,10 +139,6 @@ class FileTestComponentTester extends ComponentTester<FileTableTestComponent> {
     return this.elements('.modification-date');
   }
 
-  get actionGroups() {
-    return this.elements('.action-buttons');
-  }
-
   get removeButton() {
     return this.element('.fa-trash')! as TestButton;
   }
@@ -168,13 +163,13 @@ class FileTestComponentTester extends ComponentTester<FileTableTestComponent> {
 describe('FileTableComponent', () => {
   let tester: FileTestComponentTester;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     TestBed.configureTestingModule({
-      providers: [provideI18nTesting(), provideHttpClient()]
+      providers: [provideI18nTesting()]
     });
 
     tester = new FileTestComponentTester();
-    tester.detectChanges();
+    await tester.change();
   });
 
   it('should display files', () => {
@@ -199,9 +194,9 @@ describe('FileTableComponent', () => {
     ]);
   });
 
-  it('should correctly sort files', () => {
+  it('should correctly sort files', async () => {
     tester.sortByFilenameButton.click();
-    tester.detectChanges();
+    await tester.change();
     expect(tester.filenames[0]).toHaveText('8-1696843490050.txt');
     expect(tester.sortByFilenameButton.element('span.fa')).toHaveClass('fa-sort-desc');
 
@@ -214,23 +209,23 @@ describe('FileTableComponent', () => {
     expect(tester.sortByFilenameButton.element('span.fa')).toHaveClass('fa-sort-asc');
   });
 
-  it('should correctly check files', () => {
+  it('should correctly check files', async () => {
     expect(tester.checkboxes.length).toBe(7);
 
     tester.checkboxes[0].check();
-    tester.detectChanges();
+    await tester.change();
     expect(tester.componentInstance.selectedFiles().length).toBe(1);
 
     tester.checkboxes[1].check();
-    tester.detectChanges();
+    await tester.change();
     expect(tester.componentInstance.selectedFiles().length).toBe(2);
 
     tester.checkboxes[2].check();
-    tester.detectChanges();
+    await tester.change();
     expect(tester.componentInstance.selectedFiles().length).toBe(3);
 
     tester.checkboxes[0].uncheck();
-    tester.detectChanges();
+    await tester.change();
     expect(tester.componentInstance.selectedFiles().length).toBe(2);
   });
 
@@ -241,12 +236,12 @@ describe('FileTableComponent', () => {
     expect(tester.componentInstance.selectedFiles()).toEqual([]);
   });
 
-  it('should refresh table', () => {
+  it('should refresh table', async () => {
     const newFiles = [...unsortedFiles];
     newFiles.pop();
 
     tester.componentInstance.files.set(newFiles);
-    tester.detectChanges();
+    await tester.change();
 
     // Files changed
     expect(tester.filenames.length).toBe(6);

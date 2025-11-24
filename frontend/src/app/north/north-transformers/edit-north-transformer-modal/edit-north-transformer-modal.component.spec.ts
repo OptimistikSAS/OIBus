@@ -2,7 +2,6 @@ import { EditNorthTransformerModalComponent } from './edit-north-transformer-mod
 import { ComponentTester, createMock } from 'ngx-speculoos';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
 import { TransformerService } from '../../../services/transformer.service';
@@ -143,7 +142,6 @@ describe('EditNorthTransformerModalComponent', () => {
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
-        provideHttpClient(),
         { provide: NgbActiveModal, useValue: fakeActiveModal },
         { provide: TransformerService, useValue: transformerService }
       ]
@@ -159,16 +157,16 @@ describe('EditNorthTransformerModalComponent', () => {
     expect(fakeActiveModal.dismiss).toHaveBeenCalled();
   });
 
-  it('should display title and form, and validate without transformers', () => {
+  it('should display title and form, and validate without transformers', async () => {
     tester.componentInstance.prepareForCreation([], [], [], [transformer], []);
-    tester.detectChanges();
+    await tester.change();
     expect(tester.title).toContainText('Choose how to handle payloads');
     expect(tester.options).toBeNull();
     tester.save.click();
     expect(fakeActiveModal.close).not.toHaveBeenCalled();
   });
 
-  it('should validate with transformers', () => {
+  it('should validate with transformers', async () => {
     transformerService.findById.and.returnValue(of(transformer));
     tester.componentInstance.prepareForEdition(
       [],
@@ -186,7 +184,7 @@ describe('EditNorthTransformerModalComponent', () => {
       [transformer],
       ['mqtt']
     );
-    tester.detectChanges();
+    await tester.change();
     expect(tester.transformerSelect).toBeDefined();
     expect(tester.options).toBeDefined();
     expect(tester.title).toContainText('Choose how to handle payloads');

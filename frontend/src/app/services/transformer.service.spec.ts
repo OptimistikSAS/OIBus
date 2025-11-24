@@ -1,7 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideHttpClient } from '@angular/common/http';
 import { TransformerService } from './transformer.service';
 import { TransformerDTO } from '../../../../backend/shared/model/transformer.model';
 import testData from '../../../../backend/src/tests/utils/test-data';
@@ -12,7 +11,7 @@ describe('TransformerService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()]
+      providers: [provideHttpClientTesting()]
     });
     http = TestBed.inject(HttpTestingController);
     service = TestBed.inject(TransformerService);

@@ -119,10 +119,10 @@ describe('CreateHistoryQueryModalComponent', () => {
   });
 
   describe('with no existing connector', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       northConnectorService.list.and.returnValue(of([]));
       southConnectorService.list.and.returnValue(of([]));
-      tester.detectChanges();
+      await tester.change();
     });
 
     it('should choose from new connectors', () => {
@@ -191,11 +191,11 @@ describe('CreateHistoryQueryModalComponent', () => {
       }
     ];
 
-    beforeEach(() => {
+    beforeEach(async () => {
       northConnectorService.list.and.returnValue(of(northConnectors));
 
       southConnectorService.list.and.returnValue(of(southConnectors));
-      tester.detectChanges();
+      await tester.change();
     });
 
     it('should choose from existing connectors', () => {
@@ -223,8 +223,8 @@ describe('CreateHistoryQueryModalComponent', () => {
     });
   });
 
-  it('should cancel', () => {
-    tester.detectChanges();
+  it('should cancel', async () => {
+    await tester.change();
 
     tester.cancel.click();
     expect(fakeActiveModal.dismiss).toHaveBeenCalled();

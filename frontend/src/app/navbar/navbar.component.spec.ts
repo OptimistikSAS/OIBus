@@ -54,16 +54,16 @@ describe('NavbarComponent', () => {
     tester = new NavbarComponentTester();
   });
 
-  it('should not display menu items when there is no user', () => {
+  it('should not display menu items when there is no user', async () => {
     currentUserService.get.and.returnValue(of(null));
 
-    tester.detectChanges();
+    await tester.change();
 
     expect(tester.navItems.length).toBe(0);
   });
 
-  it('should have a navbar with nav items', () => {
-    tester.detectChanges();
+  it('should have a navbar with nav items', async () => {
+    await tester.change();
     expect(tester.navItems.length).toBe(11);
     expect(tester.navItems[0]).toContainText('Engine');
     expect(tester.navItems[1]).toContainText('North');
@@ -73,14 +73,14 @@ describe('NavbarComponent', () => {
     expect(tester.navItems[5]).toContainText('About');
   });
 
-  it('should display version when it is available and there is a user', () => {
-    tester.detectChanges();
+  it('should display version when it is available and there is a user', async () => {
+    await tester.change();
 
     expect(tester.version).toContainText('Version: 3.0');
   });
 
-  it('should logout and navigate to login page', () => {
-    tester.detectChanges();
+  it('should logout and navigate to login page', async () => {
+    await tester.change();
 
     tester.componentInstance.logout();
     expect(currentUserService.logout).toHaveBeenCalled();

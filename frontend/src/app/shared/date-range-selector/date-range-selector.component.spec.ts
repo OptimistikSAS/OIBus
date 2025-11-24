@@ -8,7 +8,6 @@ import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 
 import { DateRangeSelectorComponent, DateRange } from './date-range-selector.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideHttpClient } from '@angular/common/http';
 
 @Pipe({ name: 'translate', standalone: true })
 class MockTranslatePipe implements PipeTransform {
@@ -56,7 +55,7 @@ describe('DateRangeSelectorComponent', () => {
         MockTranslateDirective,
         TranslateModule.forRoot()
       ],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClientTesting()],
       schemas: [CUSTOM_ELEMENTS_SCHEMA]
     })
       .overrideComponent(DateRangeSelectorComponent, {
