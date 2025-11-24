@@ -4,6 +4,7 @@ import { ComponentTester } from 'ngx-speculoos';
 import { ValErrorDelayDirective } from './val-error-delay.directive';
 
 @Component({
+  selector: 'test-val-error-delay-component',
   template: '<val-errors>@if (showError) {<div>test</div>}</val-errors>',
   imports: [ValErrorDelayDirective]
 })

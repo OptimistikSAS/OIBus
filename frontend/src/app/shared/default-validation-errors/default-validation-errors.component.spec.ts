@@ -9,6 +9,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 
 @Component({
+  selector: 'test-default-validation-errors-component',
   template: `
     <oib-default-validation-errors />
     <form [formGroup]="form">

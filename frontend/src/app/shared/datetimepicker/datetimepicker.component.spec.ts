@@ -12,6 +12,7 @@ import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { provideCurrentUser } from '../current-user-testing';
 
 @Component({
+  selector: 'test-datetimepicker-component',
   template: '',
   imports: [ReactiveFormsModule]
 })

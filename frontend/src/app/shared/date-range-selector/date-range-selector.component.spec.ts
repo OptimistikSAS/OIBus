@@ -22,6 +22,7 @@ class MockTranslateDirective {
 }
 
 @Component({
+  selector: 'test-date-range-selector-host-component',
   template: `
     <form [formGroup]="testForm">
       <oib-date-range-selector formControlName="dateRange" [startLabel]="startLabel" [endLabel]="endLabel" [defaultRange]="defaultRange" />

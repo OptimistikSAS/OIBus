@@ -7,6 +7,7 @@ import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { OIBusBooleanFormControlComponent } from './oibus-boolean-form-control.component';
 
 @Component({
+  selector: 'test-oibus-boolean-form-control-component',
   template: `
     <form [formGroup]="formGroup">
       <ng-container formGroupName="testGroup">

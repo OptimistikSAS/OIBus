@@ -7,6 +7,7 @@ import { OIBusStringAttribute } from '../../../../../../backend/shared/model/for
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 
 @Component({
+  selector: 'test-oibus-string-form-control-component',
   template: `
     <form [formGroup]="formGroup">
       <ng-container formGroupName="testGroup">
