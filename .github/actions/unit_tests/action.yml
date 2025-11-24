@@ -38,3 +38,13 @@ runs:
       shell: bash
       working-directory: frontend
       run: npm test
+
+    - name: Build launcher
+      shell: bash
+      working-directory: launcher
+      run: npm run build
+
+    - name: Run launcher unit tests
+      shell: bash
+      working-directory: launcher
+      run: npm test
