@@ -4,7 +4,7 @@ import { ProgressbarComponent } from './progressbar.component';
 import { Component, signal } from '@angular/core';
 
 @Component({
-  selector: 'test-progressbar-component',
+  selector: 'oib-test-progressbar-component',
   template: '<oib-progressbar [value]="value()" [max]="max()" [animated]="animated()" />',
   imports: [ProgressbarComponent]
 })

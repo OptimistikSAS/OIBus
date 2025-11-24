@@ -15,7 +15,7 @@ import { OIBusContent, OIBusRawContent, OIBusTimeValueContent } from '../../../.
 import testData from '../../../../../../backend/src/tests/utils/test-data';
 
 @Component({
-  selector: 'test-south-item-test-component',
+  selector: 'oib-test-south-item-test-component',
   template: ` <oib-south-item-test
     #testedComponent
     [type]="type"

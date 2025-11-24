@@ -8,7 +8,7 @@ import { OIBusCodeFormControlComponent } from './oibus-code-form-control.compone
 import { By } from '@angular/platform-browser';
 
 @Component({
-  selector: 'test-oibus-code-form-control-component',
+  selector: 'oib-test-oibus-code-form-control-component',
   template: `
     <form [formGroup]="formGroup">
       <ng-container formGroupName="testGroup">

@@ -5,7 +5,7 @@ import { TestBed } from '@angular/core/testing';
 import { ComponentTester } from 'ngx-speculoos';
 
 @Component({
-  selector: 'test-form-control-validation-component',
+  selector: 'oib-test-form-control-validation-component',
   template: `
     <form [formGroup]="personForm" (ngSubmit)="submit()">
       <div class="form-group">

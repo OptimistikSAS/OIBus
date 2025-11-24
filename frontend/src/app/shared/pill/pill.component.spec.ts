@@ -5,7 +5,7 @@ import { PillComponent } from './pill.component';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-  selector: 'test-pill-component',
+  selector: 'oib-test-pill-component',
   template: ` <oib-pill [type]="type" [removable]="removable" (removed)="removed = true">Pill content</oib-pill>`,
   imports: [PillComponent, TranslateModule]
 })

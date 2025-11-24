@@ -43,7 +43,7 @@ class ModalComponentTester {
  * A test component just to be able to create a fixture to detect changes
  */
 @Component({
-  selector: 'test-confirmation-modal-component',
+  selector: 'oib-test-confirmation-modal-component',
   template: ''
 })
 class TestComponent {}

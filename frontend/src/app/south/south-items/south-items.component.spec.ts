@@ -55,7 +55,7 @@ const testSouthConnector: SouthConnectorDTO = {
 } as SouthConnectorDTO;
 
 @Component({
-  selector: 'test-south-items-component',
+  selector: 'oib-test-south-items-component',
   template: ` <oib-south-items
     [southId]="southConnector.id"
     [southConnector]="southConnector"

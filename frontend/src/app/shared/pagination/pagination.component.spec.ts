@@ -9,7 +9,7 @@ import { emptyPage, toPage } from '../test-utils';
 import { Page } from '../../../../../backend/shared/model/types';
 
 @Component({
-  selector: 'test-pagination-component',
+  selector: 'oib-test-pagination-component',
   template: ` <oib-pagination [page]="page" (pageChanged)="pageChanged($event)" [navigate]="navigate" />`,
   imports: [PaginationComponent]
 })

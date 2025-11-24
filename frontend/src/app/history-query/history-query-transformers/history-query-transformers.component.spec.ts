@@ -10,7 +10,7 @@ import { FormControl, NonNullableFormBuilder } from '@angular/forms';
 import { HistoryQueryService } from '../../services/history-query.service';
 
 @Component({
-  selector: 'test-history-query-transformers-component',
+  selector: 'oib-test-history-query-transformers-component',
   template: ` <oib-history-query-transformers
     [northManifest]="northManifest"
     [transformers]="transformers"
