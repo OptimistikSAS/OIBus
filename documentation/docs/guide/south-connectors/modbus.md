@@ -8,13 +8,14 @@ the [jsmodbus](https://github.com/Cloud-Automation/node-modbus) library **in TCP
 
 ### Connection Configuration
 
-| Setting            | Description                                                                                                              | Example Value   |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------ | --------------- |
-| **Host**           | IP address or hostname of the Modbus server machine.                                                                     | `192.168.1.100` |
-| **Port**           | Port to use for connection (502 by default).                                                                             | `502`           |
-| **Retry interval** | Time to wait (in ms) between reconnections after a connection failure.                                                   | `5000`          |
-| **Slave ID**       | Identifies the Modbus source machine (default is 1).                                                                     | `1`             |
-| **Address offset** | For most PLCs, there is no offset (Modbus option). Some PLCs may start the address range at 1 instead of 0 (JBus option) | `Modbus`        |
+| Setting                | Description                                                                                                              | Example Value   |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------ | --------------- |
+| **Host**               | IP address or hostname of the Modbus server machine.                                                                     | `192.168.1.100` |
+| **Port**               | Port to use for connection (502 by default).                                                                             | `502`           |
+| **Connection timeout** | Maximum time to wait for a connection (in milliseconds).                                                                 | `10000`         |
+| **Retry interval**     | Time to wait (in milliseconds) between reconnections after a connection failure.                                         | `5000`          |
+| **Slave ID**           | Identifies the Modbus source machine (default is 1).                                                                     | `1`             |
+| **Address offset**     | For most PLCs, there is no offset (Modbus option). Some PLCs may start the address range at 1 instead of 0 (JBus option) | `Modbus`        |
 
 ### Data Format Options
 
