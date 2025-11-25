@@ -5,7 +5,8 @@ import {
   getProxyOptions,
   buildHttpOptions,
   parseData,
-  OIATimeValues
+  OIATimeValues,
+  testOIAnalyticsConnection
 } from './utils-oianalytics';
 import { encryptionService } from './encryption.service';
 import { ClientSecretCredential, ClientCertificateCredential } from '@azure/identity';
@@ -13,8 +14,12 @@ import CertificateRepository from '../repository/config/certificate.repository';
 import { OIAnalyticsRegistration } from '../model/oianalytics-registration.model';
 import { NorthOIAnalyticsSettingsSpecificSettings } from '../../shared/model/north-settings.model';
 import { Certificate } from '../model/certificate.model';
+import { HTTPRequest } from './http-request.utils';
+import { createMockResponse } from '../tests/__mocks__/undici.mock';
+import testData from '../tests/utils/test-data';
 
 // Mock dependencies
+jest.mock('./http-request.utils');
 jest.mock('./encryption.service');
 jest.mock('@azure/identity');
 
@@ -284,6 +289,73 @@ describe('utils-oianalytics', () => {
       const { maxInstant } = parseData(input);
       // maxInstant should be the later date
       expect(maxInstant).toBe('2023-01-02T00:00:00.000Z');
+    });
+  });
+
+  describe('testOIAnalyticsConnection', () => {
+    const mockRegistration = testData.oIAnalytics.registration.completed as OIAnalyticsRegistration;
+    const mockSpecificSettings = { host: 'https://spec-host' } as NorthOIAnalyticsSettingsSpecificSettings;
+
+    it('should succeed when API returns 200', async () => {
+      (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(200, 'OK'));
+
+      await expect(testOIAnalyticsConnection(true, mockRegistration, null, 30000, null, false)).resolves.not.toThrow();
+
+      expect(HTTPRequest).toHaveBeenCalledWith(
+        expect.objectContaining({ href: 'http://localhost:4200/api/optimistik/oibus/status' }),
+        expect.anything()
+      );
+    });
+
+    it('should use specific settings host when useOIAnalyticsRegistration is false', async () => {
+      (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(200, 'OK'));
+
+      await expect(testOIAnalyticsConnection(false, mockRegistration, mockSpecificSettings, 30000, null, false)).resolves.not.toThrow();
+
+      expect(HTTPRequest).toHaveBeenCalledWith(
+        expect.objectContaining({ href: 'https://spec-host/api/optimistik/oibus/status' }),
+        expect.anything()
+      );
+    });
+
+    it('should throw error when fetch fails (Network Error)', async () => {
+      const error = new Error('Network Error');
+      (HTTPRequest as jest.Mock).mockRejectedValue(error);
+
+      await expect(testOIAnalyticsConnection(true, mockRegistration, null, 30000, null, false)).rejects.toThrow(`Fetch error ${error}`);
+    });
+
+    it('should throw error when API returns 500', async () => {
+      (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(500, 'Internal Server Error'));
+
+      await expect(testOIAnalyticsConnection(true, mockRegistration, null, 30000, null, false)).rejects.toThrow(
+        'HTTP request failed with status code 500'
+      );
+    });
+
+    describe('401 Handling', () => {
+      it('should throw error on 401 if accept401AsSuccess is false', async () => {
+        (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(401, 'Unauthorized'));
+
+        await expect(testOIAnalyticsConnection(true, mockRegistration, null, 30000, null, false)).rejects.toThrow(
+          'HTTP request failed with status code 401'
+        );
+      });
+
+      it('should SUCCEED on 401 if accept401AsSuccess is true', async () => {
+        // This simulates the initial registration check where we might not have a token yet
+        (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(401, 'Unauthorized'));
+
+        await expect(testOIAnalyticsConnection(true, mockRegistration, null, 30000, null, true)).resolves.not.toThrow();
+      });
+
+      it('should still throw on other errors (e.g. 403) even if accept401AsSuccess is true', async () => {
+        (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(403, 'Forbidden'));
+
+        await expect(testOIAnalyticsConnection(true, mockRegistration, null, 30000, null, true)).rejects.toThrow(
+          'HTTP request failed with status code 403'
+        );
+      });
     });
   });
 });

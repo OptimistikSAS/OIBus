@@ -968,12 +968,12 @@ export interface SouthPostgreSQLItemSettings {
 export interface SouthRestAPIItemSettings {
   method: SouthRestAPIItemSettingsMethod;
   endpoint: string;
-  queryParams: Array<SouthRestAPIItemSettingsQueryParams> | null;
+  queryParams: Array<SouthRestAPIItemSettingsQueryParams>;
   body?: string | null;
   headers: Array<SouthRestAPIItemSettingsHeaders> | null;
   returnType: SouthRestAPIItemSettingsReturnType;
-  dateTimeFields?: Array<SouthRestAPIItemSettingsDateTimeFields> | null;
-  serialization?: SouthRestAPIItemSettingsSerialization;
+  dateTimeFields: Array<SouthRestAPIItemSettingsDateTimeFields> | null;
+  serialization: SouthRestAPIItemSettingsSerialization;
 }
 
 export interface SouthSFTPItemSettings {

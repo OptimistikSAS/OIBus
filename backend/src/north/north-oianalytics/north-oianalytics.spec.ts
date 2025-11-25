@@ -14,7 +14,7 @@ import { HTTPRequest } from '../../service/http-request.utils';
 import { createMockResponse } from '../../tests/__mocks__/undici.mock';
 import FormData from 'form-data';
 import { OIBusError } from '../../model/engine.model';
-import { buildHttpOptions, getHost } from '../../service/utils-oianalytics';
+import { buildHttpOptions, getHost, testOIAnalyticsConnection } from '../../service/utils-oianalytics';
 import { compress, filesExists } from '../../service/utils';
 import zlib from 'node:zlib';
 import CacheService from '../../service/cache/cache.service';
@@ -115,24 +115,17 @@ describe('NorthOIAnalytics', () => {
   });
 
   describe('testConnection', () => {
-    it('should succeed when API returns 200', async () => {
+    it('should properly call test utils function', async () => {
       await expect(north.testConnection()).resolves.not.toThrow();
 
-      expect(buildHttpOptions).toHaveBeenCalledWith('GET', false, expect.anything(), expect.anything(), 30000, certificateRepository);
-      expect(HTTPRequest).toHaveBeenCalledWith(
-        expect.objectContaining({ href: 'https://mock-host/api/optimistik/oibus/status' }),
-        expect.anything()
+      expect(testOIAnalyticsConnection).toHaveBeenCalledWith(
+        baseConfiguration.settings.useOiaModule,
+        testData.oIAnalytics.registration.completed,
+        baseConfiguration.settings.specificSettings,
+        baseConfiguration.settings.timeout * 1000,
+        certificateRepository,
+        false
       );
-    });
-
-    it('should throw error when API returns non-200', async () => {
-      (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(500, 'Error'));
-      await expect(north.testConnection()).rejects.toThrow('HTTP request failed with status code 500');
-    });
-
-    it('should throw error when fetch fails', async () => {
-      (HTTPRequest as jest.Mock).mockRejectedValue(new Error('Network Error'));
-      await expect(north.testConnection()).rejects.toThrow('Fetch error Error: Network Error');
     });
   });
 

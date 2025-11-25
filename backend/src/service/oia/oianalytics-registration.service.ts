@@ -1,3 +1,4 @@
+import { testOIAnalyticsConnection } from '../utils-oianalytics';
 import { getOIBusInfo } from '../utils';
 import { encryptionService } from '../encryption.service';
 import pino from 'pino';
@@ -101,10 +102,6 @@ export default class OIAnalyticsRegistrationService {
       return;
     }
     const registrationSettings = this.oIAnalyticsRegistrationRepository.get()!;
-    if (!registrationSettings.checkUrl) {
-      this.logger.error(`Error while checking registration status: could not retrieve check URL`);
-      return;
-    }
     this.ongoingCheckRegistration = true;
     try {
       const result = await this.oIAnalyticsClient.checkRegistration(registrationSettings);
@@ -147,6 +144,18 @@ export default class OIAnalyticsRegistrationService {
 
   async updateKeys(privateKey: string, publicKey: string): Promise<void> {
     this.oIAnalyticsRegistrationRepository.updateKeys(await encryptionService.encryptText(privateKey), publicKey);
+  }
+
+  async testConnection(command: RegistrationSettingsCommandDTO): Promise<void> {
+    await this.validator.validate(registrationSchema, command);
+
+    // When registering for the first time (PENDING status), accept 401 as success
+    // because the token hasn't been retrieved yet
+    const currentRegistration = this.oIAnalyticsRegistrationRepository.get()!;
+    const accept401AsSuccess = currentRegistration.status !== 'REGISTERED' || !currentRegistration.token;
+
+    // Test the connection with the provided settings
+    await testOIAnalyticsConnection(true, command as OIAnalyticsRegistration, null, 30_000, null, accept401AsSuccess);
   }
 
   unregister(): void {

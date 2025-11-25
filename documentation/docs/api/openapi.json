@@ -22748,6 +22748,33 @@
 				}
 			}
 		},
+		"/api/oianalytics/registration/test-connection": {
+			"post": {
+				"operationId": "TestConnection",
+				"responses": {
+					"204": {
+						"description": "Connection test successful"
+					}
+				},
+				"description": "Test connection to OIAnalytics service with the provided settings",
+				"summary": "Test connection",
+				"tags": [
+					"OIAnalytics Registration"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/RegistrationSettingsCommandDTO"
+							}
+						}
+					}
+				}
+			}
+		},
 		"/api/oianalytics/unregister": {
 			"post": {
 				"operationId": "Unregister",

@@ -5,7 +5,6 @@ import pino from 'pino';
 import crypto from 'node:crypto';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import { getOIBusInfo } from '../utils';
-import OIAnalyticsRegistrationService, { toOIAnalyticsRegistrationDTO } from './oianalytics-registration.service';
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import OianalyticsRegistrationRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
 import EngineRepository from '../../repository/config/engine.repository';
@@ -17,11 +16,12 @@ import JoiValidator from '../../web-server/controllers/validators/joi.validator'
 import OIAnalyticsClient from './oianalytics-client.service';
 import OianalyticsClientMock from '../../tests/__mocks__/service/oia/oianalytics-client.mock';
 import { NotFoundError } from '../../model/types';
+import OIAnalyticsRegistrationService, { toOIAnalyticsRegistrationDTO } from './oianalytics-registration.service';
 
 jest.mock('node:fs/promises');
-jest.mock('node:crypto');
 jest.mock('../../web-server/controllers/validators/joi.validator');
 jest.mock('../utils');
+jest.mock('../utils-oianalytics');
 
 jest.mock('../encryption.service', () => ({
   encryptionService: new EncryptionServiceMock('', '')
@@ -78,6 +78,7 @@ describe('OIAnalytics Registration Service', () => {
   });
 
   it('should register', async () => {
+    const generateKeyPairSyncMocked = jest.spyOn(crypto, 'generateKeyPairSync');
     (oIAnalyticsRegistrationRepository.get as jest.Mock)
       .mockReturnValueOnce(testData.oIAnalytics.registration.completed)
       .mockReturnValueOnce(testData.oIAnalytics.registration.completed);
@@ -88,7 +89,7 @@ describe('OIAnalytics Registration Service', () => {
       activationCode: '123ABC'
     };
     (oIAnalyticsClient.register as jest.Mock).mockReturnValueOnce(result).mockReturnValueOnce(result);
-    (crypto.generateKeyPairSync as jest.Mock)
+    (generateKeyPairSyncMocked as jest.Mock)
       .mockReturnValueOnce({ publicKey: 'public key', privateKey: 'private key' })
       .mockReturnValueOnce({ publicKey: 'public key', privateKey: 'private key' });
 
@@ -344,17 +345,6 @@ describe('OIAnalytics Registration Service', () => {
 
     expect(oIAnalyticsClient.checkRegistration).toHaveBeenCalledTimes(1);
     expect(logger.error).toHaveBeenCalledWith(`Error while checking registration: error`);
-  });
-
-  it('should check registration and fail when registration check url not set', async () => {
-    const specificRegistration: OIAnalyticsRegistration = JSON.parse(JSON.stringify(testData.oIAnalytics.registration.pending));
-    specificRegistration.checkUrl = '';
-    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce(specificRegistration);
-
-    await service.checkRegistration();
-
-    expect(logger.error).toHaveBeenCalledWith('Error while checking registration status: could not retrieve check URL');
-    expect(oIAnalyticsClient.checkRegistration as jest.Mock).not.toHaveBeenCalled();
   });
 
   it('should properly convert to DTO', () => {

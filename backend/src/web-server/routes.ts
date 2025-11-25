@@ -6898,6 +6898,37 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
             }
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsOIAnalyticsRegistrationController_testConnection: Record<string, TsoaRoute.ParameterSchema> = {
+                requestBody: {"in":"body","name":"requestBody","required":true,"ref":"RegistrationSettingsCommandDTO"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.post('/api/oianalytics/registration/test-connection',
+            ...(fetchMiddlewares<RequestHandler>(OIAnalyticsRegistrationController)),
+            ...(fetchMiddlewares<RequestHandler>(OIAnalyticsRegistrationController.prototype.testConnection)),
+
+            async function OIAnalyticsRegistrationController_testConnection(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsOIAnalyticsRegistrationController_testConnection, request, response });
+
+                const controller = new OIAnalyticsRegistrationController();
+
+              await templateService.apiHandler({
+                methodName: 'testConnection',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 204,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsOIAnalyticsRegistrationController_unregister: Record<string, TsoaRoute.ParameterSchema> = {
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
         };
