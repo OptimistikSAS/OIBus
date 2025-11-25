@@ -49,9 +49,22 @@ export class OIAnalyticsRegistrationController extends Controller {
   }
 
   /**
+   * Test connection to OIAnalytics service with the provided settings
+   * @summary Test connection
+   * @param {RegistrationSettingsCommandDTO} requestBody.body.required - Connection settings to test
+   */
+  @Post('/registration/test-connection')
+  @SuccessResponse(204, 'Connection test successful')
+  async testConnection(@Body() requestBody: RegistrationSettingsCommandDTO, @Request() request: CustomExpressRequest): Promise<void> {
+    const oIAnalyticsRegistrationService = request.services.oIAnalyticsRegistrationService;
+    await oIAnalyticsRegistrationService.testConnection(requestBody);
+  }
+
+  /**
    * Unregister from OIAnalytics service. OIBus will still be registered on OIAnalytics. It must be removed manually
    * @summary Unregister service
    */
+
   @Post('/unregister')
   @SuccessResponse(204, 'Unregistration completed successfully')
   async unregister(@Request() request: CustomExpressRequest): Promise<void> {
