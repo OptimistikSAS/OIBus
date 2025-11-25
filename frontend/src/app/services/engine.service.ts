@@ -66,6 +66,13 @@ export class EngineService {
     return this.http.put<void>(`/api/oianalytics/registration`, command);
   }
 
+  /**
+   * Test connection to OIAnalytics with the provided settings
+   */
+  testOIAnalyticsConnection(command: RegistrationSettingsCommandDTO): Observable<void> {
+    return this.http.post<void>(`/api/oianalytics/registration/test-connection`, command);
+  }
+
   unregister(): Observable<void> {
     return this.http.post<void>(`/api/oianalytics/unregister`, null);
   }

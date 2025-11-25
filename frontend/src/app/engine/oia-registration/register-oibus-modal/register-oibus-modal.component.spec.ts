@@ -154,9 +154,14 @@ describe('RegisterOibusModalComponent', () => {
     tester.host.fillWith('http://localhost:4200');
     tester.acceptUnauthorized.check();
     tester.useProxy.check();
+    await tester.change();
+    // Wait for the form to update before accessing proxy controls
+    expect(tester.proxyUrl).toBeTruthy();
     tester.proxyUrl.fillWith('http://localhost:8080');
     tester.proxyUsername.fillWith('user');
     tester.proxyPassword.fillWith('pass');
+    // Add change detection for other inputs as well if necessary
+    await tester.change();
     tester.commandRefreshInterval.fillWith('15');
     tester.commandRetryInterval.fillWith('10');
     tester.messageRetryInterval.fillWith('5');
@@ -277,6 +282,9 @@ describe('RegisterOibusModalComponent', () => {
     await tester.change();
     tester.acceptUnauthorized.check();
     tester.useProxy.check();
+    await tester.change();
+    // Wait for the form to update before accessing proxy controls
+    expect(tester.proxyUrl).toBeTruthy();
     tester.proxyUrl.fillWith('http://localhost:8080');
     tester.proxyUsername.fillWith('user');
     tester.proxyPassword.fillWith('pass');
