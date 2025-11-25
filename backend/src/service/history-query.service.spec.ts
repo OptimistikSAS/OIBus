@@ -32,6 +32,7 @@ import { stringToBoolean } from './utils';
 import { HistoryQueryEntityLight } from '../model/histor-query.model';
 import { NotFoundError, OIBusValidationError } from '../model/types';
 import manifest from '../south/south-mssql/manifest';
+import { HistoryQueryItemDTO } from '../../shared/model/history-query.model';
 
 jest.mock('papaparse');
 jest.mock('node:fs/promises');
@@ -510,7 +511,7 @@ describe('History Query service', () => {
       testData.historyQueries.command.southType,
       'file content',
       ',',
-      testData.historyQueries.list[0].items as any
+      testData.historyQueries.list[0].items as Array<HistoryQueryItemDTO>
     );
     expect(result).toEqual({
       items: [
@@ -591,7 +592,7 @@ describe('History Query service', () => {
       testData.historyQueries.command.southType,
       'file content',
       ',',
-      testData.historyQueries.list[1].items as any
+      testData.historyQueries.list[1].items as Array<HistoryQueryItemDTO>
     );
     expect(result).toEqual({
       items: [

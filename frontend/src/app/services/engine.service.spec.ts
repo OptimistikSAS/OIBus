@@ -86,4 +86,13 @@ describe('EngineService', () => {
     testRequest.flush(null);
     expect(done).toBe(true);
   });
+
+  it('should test registration connection', () => {
+    let done = false;
+    const command = testData.oIAnalytics.registration.command;
+    service.testOIAnalyticsConnection(command).subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/oianalytics/registration/test-connection' });
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
 });
