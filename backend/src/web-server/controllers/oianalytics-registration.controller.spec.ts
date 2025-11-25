@@ -57,4 +57,13 @@ describe('OIAnalyticsRegistrationController', () => {
 
     expect(mockRequest.services!.oIAnalyticsRegistrationService.unregister).toHaveBeenCalled();
   });
+
+  it('should test connection', async () => {
+    const command: RegistrationSettingsCommandDTO = testData.oIAnalytics.registration.command;
+    (mockRequest.services!.oIAnalyticsRegistrationService.testConnection as jest.Mock).mockResolvedValue(undefined);
+
+    await controller.testConnection(command, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.oIAnalyticsRegistrationService.testConnection).toHaveBeenCalledWith(command);
+  });
 });
