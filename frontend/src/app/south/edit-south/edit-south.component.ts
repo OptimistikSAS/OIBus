@@ -72,7 +72,7 @@ export class EditSouthComponent implements OnInit, CanComponentDeactivate {
   mode: 'create' | 'edit' = 'create';
   southId!: string;
   southConnector: SouthConnectorDTO | null = null;
-  southType = '';
+  southType: OIBusSouthType | null = null;
   duplicateId = '';
   state = new ObservableState();
   scanModes: Array<ScanModeDTO> = [];
@@ -103,7 +103,7 @@ export class EditSouthComponent implements OnInit, CanComponentDeactivate {
           this.existingSouthConnectors = southConnectors;
           const paramSouthId = params.get('southId');
           const duplicateSouthId = queryParams.get('duplicate');
-          this.southType = queryParams.get('type') || '';
+          this.southType = (queryParams.get('type') as OIBusSouthType) || null;
 
           // if there is a South ID, we are editing a South connector
           if (paramSouthId) {
@@ -130,7 +130,7 @@ export class EditSouthComponent implements OnInit, CanComponentDeactivate {
             this.southType = southConnector.type;
             this.inMemoryItems = southConnector.items;
           }
-          return this.southConnectorService.getSouthManifest(this.southType);
+          return this.southConnectorService.getSouthManifest(this.southType!);
         })
       )
       .subscribe(manifest => {
@@ -248,7 +248,7 @@ export class EditSouthComponent implements OnInit, CanComponentDeactivate {
     const formValue = this.form!.value;
     return {
       name: formValue.name!,
-      type: this.southType as OIBusSouthType,
+      type: this.southType!,
       description: formValue.description!,
       enabled: formValue.enabled!,
       settings: formValue.settings!,
