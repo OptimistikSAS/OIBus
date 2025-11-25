@@ -7,8 +7,15 @@
   </div>
 </div>
 <ng-template #defaultDateTemplate let-formControl>
-  <oib-datepicker-container>
-    <input [formControl]="formControl" class="form-control" ngbDatepicker />
+  <oib-datepicker-container #container>
+    <input
+      [formControl]="formControl"
+      class="form-control"
+      ngbDatepicker
+      container="body"
+      placement="bottom-end"
+      [positionTarget]="container.toggleButton().nativeElement"
+    />
   </oib-datepicker-container>
 </ng-template>
 <ng-template #defaultTimeTemplate let-formControl>

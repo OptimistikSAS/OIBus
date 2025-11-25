@@ -157,6 +157,14 @@ ngb-timepicker .ngb-tp-chevron:hover::before {
   border-color: $electricBlue !important;
 }
 
+.ngb-dp-navigation-chevron {
+  border-color: $orange !important;
+}
+
+.ngb-dp-arrow-btn:hover .ngb-dp-navigation-chevron {
+  border-color: $electricBlue !important;
+}
+
 // container of the page + padding
 .oib-padded-container {
   padding-left: 2rem;
