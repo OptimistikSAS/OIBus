@@ -387,7 +387,11 @@
       "expiration-date": "Expired on",
       "registered": "OIBus registered on {{ activationDate }}",
       "enable-all": "Enable All",
-      "disable-all": "Disable All"
+      "disable-all": "Disable All",
+      "test-connection": "Test connection",
+      "test-connection-section": "Test connection",
+      "test-connection-success": "Connection successful",
+      "test-connection-error": "Error when testing connection"
     },
     "commands": {
       "title": "Command list",

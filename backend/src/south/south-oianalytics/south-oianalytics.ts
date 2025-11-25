@@ -14,6 +14,7 @@ import OIAnalyticsRegistrationRepository from '../../repository/config/oianalyti
 import CertificateRepository from '../../repository/config/certificate.repository';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { HTTPRequest, ReqAuthOptions, ReqOptions, ReqProxyOptions, ReqResponse } from '../../service/http-request.utils';
+import { testOIAnalyticsConnection } from '../../service/oia/oianalytics.utils';
 
 interface OIATimeValues {
   type: string;
@@ -52,25 +53,18 @@ export default class SouthOIAnalytics
 
   override async testConnection(): Promise<void> {
     const host = this.getHost();
-    const requestUrl = new URL('/api/optimistik/oibus/status', host);
+    const { proxy, acceptUnauthorized } = this.getProxyOptions();
 
-    let response: ReqResponse;
-    try {
-      const { proxy, acceptUnauthorized } = this.getProxyOptions();
-      const fetchOptions: ReqOptions = {
-        method: 'GET',
-        auth: await this.getAuthorizationOptions(),
-        proxy,
-        timeout: this.connector.settings.timeout * 1000,
-        acceptUnauthorized
-      };
-      response = await HTTPRequest(requestUrl, fetchOptions);
-    } catch (error) {
-      throw new Error(`Fetch error ${error}`);
-    }
-    if (!response.ok) {
-      throw new Error(`HTTP request failed with status code ${response.statusCode} and message: ${await response.body.text()}`);
-    }
+    await testOIAnalyticsConnection({
+      host,
+      timeout: this.connector.settings.timeout,
+      acceptUnauthorized,
+      useProxy: proxy !== undefined,
+      proxyUrl: proxy?.url,
+      proxyUsername: proxy?.auth?.type === 'url' ? proxy.auth.username : undefined,
+      proxyPassword: proxy?.auth?.type === 'url' ? proxy.auth.password : undefined,
+      auth: await this.getAuthorizationOptions()
+    });
   }
 
   override async testItem(
