@@ -118,7 +118,7 @@ const baseConfiguration: SouthConnectorEntity<SouthRestAPISettings, SouthRestAPI
       settings: {
         method: 'GET',
         endpoint: '/export',
-        queryParams: null,
+        queryParams: [],
         body: null,
         headers: null,
         returnType: 'file',
