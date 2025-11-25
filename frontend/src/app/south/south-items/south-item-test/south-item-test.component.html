@@ -56,7 +56,7 @@
   @if (testingSettingsForm) {
     <form [formGroup]="testingSettingsForm" id="testing-settings-form">
       @if (supportsHistorySettings) {
-        <div class="form-group" formGroupName="history" id="history">
+        <div class="form-group mx-2" formGroupName="history" id="history">
           <oib-date-range-selector
             formControlName="dateRange"
             [startLabel]="'south.test-item.query-start'"
