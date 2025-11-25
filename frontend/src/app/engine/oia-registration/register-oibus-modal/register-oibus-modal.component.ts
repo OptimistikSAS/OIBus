@@ -5,9 +5,10 @@ import { ObservableState, SaveButtonComponent } from '../../../shared/save-butto
 import { TranslateDirective } from '@ngx-translate/core';
 import { EngineService } from '../../../services/engine.service';
 import { RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../../../../../backend/shared/model/engine.model';
-import { BoxComponent } from '../../../shared/box/box.component';
+import { BoxComponent, BoxTitleDirective } from '../../../shared/box/box.component';
 import { OibusCommandTypeEnumPipe } from '../../../shared/oibus-command-type-enum.pipe';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
+import { NotificationService } from '../../../shared/notification.service';
 
 @Component({
   selector: 'oib-register-oibus-modal',
@@ -18,6 +19,7 @@ import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validat
     TranslateDirective,
     OibusCommandTypeEnumPipe,
     BoxComponent,
+    BoxTitleDirective,
     OI_FORM_VALIDATION_DIRECTIVES,
     SaveButtonComponent
   ]
@@ -26,7 +28,13 @@ export class RegisterOibusModalComponent {
   private modal = inject(NgbActiveModal);
   private oibusService = inject(EngineService);
   private fb = inject(NonNullableFormBuilder);
+  private notificationService = inject(NotificationService);
   state = new ObservableState();
+  testState = new ObservableState();
+  testLoading = false;
+  testSuccess = false;
+  testError: string | null = null;
+
   form = this.fb.group({
     host: ['', Validators.required],
     useProxy: [false as boolean, Validators.required],
@@ -100,6 +108,81 @@ export class RegisterOibusModalComponent {
 
   cancel() {
     this.modal.dismiss();
+  }
+
+  testConnection() {
+    if (!this.form.valid) {
+      return;
+    }
+
+    const formValue = this.form.value;
+    const commandHost = this.mode === 'edit' ? this.host : formValue.host!;
+
+    const command: RegistrationSettingsCommandDTO = {
+      host: commandHost,
+      acceptUnauthorized: formValue.acceptUnauthorized!,
+      useProxy: formValue.useProxy!,
+      proxyUrl: formValue.proxyUrl!,
+      proxyUsername: formValue.proxyUsername!,
+      proxyPassword: formValue.proxyPassword!,
+      commandRefreshInterval: formValue.commandRefreshInterval!,
+      commandRetryInterval: formValue.commandRetryInterval!,
+      messageRetryInterval: formValue.messageRetryInterval!,
+      commandPermissions: {
+        updateVersion: formValue.commandPermissions!.updateVersion!,
+        restartEngine: formValue.commandPermissions!.restartEngine!,
+        regenerateCipherKeys: formValue.commandPermissions!.regenerateCipherKeys!,
+        updateEngineSettings: formValue.commandPermissions!.updateEngineSettings!,
+        updateRegistrationSettings: formValue.commandPermissions!.updateRegistrationSettings!,
+        createScanMode: formValue.commandPermissions!.createScanMode!,
+        updateScanMode: formValue.commandPermissions!.updateScanMode!,
+        deleteScanMode: formValue.commandPermissions!.deleteScanMode!,
+        createIpFilter: formValue.commandPermissions!.createIpFilter!,
+        updateIpFilter: formValue.commandPermissions!.updateIpFilter!,
+        deleteIpFilter: formValue.commandPermissions!.deleteIpFilter!,
+        createCertificate: formValue.commandPermissions!.createCertificate!,
+        updateCertificate: formValue.commandPermissions!.updateCertificate!,
+        deleteCertificate: formValue.commandPermissions!.deleteCertificate!,
+        createHistoryQuery: formValue.commandPermissions!.createHistoryQuery!,
+        updateHistoryQuery: formValue.commandPermissions!.updateHistoryQuery!,
+        deleteHistoryQuery: formValue.commandPermissions!.deleteHistoryQuery!,
+        createOrUpdateHistoryItemsFromCsv: formValue.commandPermissions!.createOrUpdateHistoryItemsFromCsv!,
+        testHistoryNorthConnection: formValue.commandPermissions!.testHistoryNorthConnection!,
+        testHistorySouthConnection: formValue.commandPermissions!.testHistorySouthConnection!,
+        testHistorySouthItem: formValue.commandPermissions!.testHistorySouthItem!,
+        createSouth: formValue.commandPermissions!.createSouth!,
+        updateSouth: formValue.commandPermissions!.updateSouth!,
+        deleteSouth: formValue.commandPermissions!.deleteSouth!,
+        createOrUpdateSouthItemsFromCsv: formValue.commandPermissions!.createOrUpdateSouthItemsFromCsv!,
+        testSouthConnection: formValue.commandPermissions!.testSouthConnection!,
+        testSouthItem: formValue.commandPermissions!.testSouthItem!,
+        createNorth: formValue.commandPermissions!.createNorth!,
+        updateNorth: formValue.commandPermissions!.updateNorth!,
+        deleteNorth: formValue.commandPermissions!.deleteNorth!,
+        testNorthConnection: formValue.commandPermissions!.testNorthConnection!,
+        setpoint: formValue.commandPermissions!.setpoint!
+      }
+    };
+
+    // Reset test state
+    this.testLoading = true;
+    this.testSuccess = false;
+    this.testError = null;
+
+    this.oibusService
+      .testOIAnalyticsConnection(command)
+      .pipe(this.testState.pendingUntilFinalization())
+      .subscribe({
+        next: () => {
+          this.testSuccess = true;
+          this.testLoading = false;
+          this.notificationService.success('oia-module.registration.test-connection-success');
+        },
+        error: (httpError: any) => {
+          this.testError = httpError.error?.message || httpError.message || 'Unknown error occurred';
+          this.testLoading = false;
+        }
+      });
   }
 
   save() {
