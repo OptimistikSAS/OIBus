@@ -97,9 +97,8 @@ export class ManifestAttributesArrayComponent {
   }
 
   private async openAttributeEditor(): Promise<Modal<ManifestAttributeEditorModalComponent>> {
-    const { ManifestAttributeEditorModalComponent } = await import(
-      '../manifest-attribute-editor-modal/manifest-attribute-editor-modal.component'
-    );
+    const { ManifestAttributeEditorModalComponent } =
+      await import('../manifest-attribute-editor-modal/manifest-attribute-editor-modal.component');
     return this.modalService.open<ManifestAttributeEditorModalComponent>(ManifestAttributeEditorModalComponent, {
       size: 'lg'
     });
