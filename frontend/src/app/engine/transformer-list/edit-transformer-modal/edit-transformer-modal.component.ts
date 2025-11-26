@@ -184,7 +184,7 @@ function transform(inputData, source, filename, options) {
     const formValue = this.form.value;
 
     if (this.mode === 'create') {
-      const command: CustomTransformerCommand = {
+      const command: CustomTransformerCommandDTO = {
         type: 'custom',
         inputType: this.inputType.value!,
         outputType: this.outputType.value!,
