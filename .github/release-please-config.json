@@ -54,6 +54,11 @@
     },
     {
       "type": "json",
+      "path": "documentation/docs/api/openapi.json",
+      "jsonpath": "info.version"
+    },
+    {
+      "type": "json",
       "path": "launcher/package.json",
       "jsonpath": "version"
     },
