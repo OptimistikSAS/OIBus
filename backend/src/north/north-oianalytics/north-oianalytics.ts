@@ -74,6 +74,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
         return this.handleFile(cacheMetadata.contentFile);
 
       case 'time-values':
+      case 'oianalytics':
         return this.handleValues(JSON.parse(await fs.readFile(cacheMetadata.contentFile, { encoding: 'utf-8' })) as Array<OIBusTimeValue>);
     }
   }
@@ -319,6 +320,6 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
   }
 
   supportedTypes(): Array<string> {
-    return ['any', 'time-values'];
+    return ['any', 'time-values', 'oianalytics'];
   }
 }

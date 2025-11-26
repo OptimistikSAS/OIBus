@@ -20,6 +20,7 @@ import OIBusSetpointToMQTTTransformer from './transformers/setpoint/oibus-setpoi
 import OIBusSetpointToModbusTransformer from './transformers/setpoint/oibus-setpoint-to-modbus-transformer';
 import OIBusSetpointToOPCUATransformer from './transformers/setpoint/oibus-setpoint-to-opcua-transformer';
 import { NotFoundError, OIBusValidationError } from '../model/types';
+import OIBusTimeValuesToOIAnalyticsTransformer from './transformers/time-values/oibus-time-values-to-oianalytics-transformer';
 
 jest.mock('papaparse');
 jest.mock('./utils');
@@ -246,6 +247,11 @@ describe('Transformer Service', () => {
       OIBusTimeValuesToMQTTTransformer
     );
 
+    transformer.functionName = 'time-values-to-oianalytics';
+    expect(createTransformer({ transformer, options: {}, inputType: 'time-values' }, testData.north.list[0], logger)).toBeInstanceOf(
+      OIBusTimeValuesToOIAnalyticsTransformer
+    );
+
     transformer.functionName = 'setpoint-to-mqtt';
     expect(createTransformer({ transformer, options: {}, inputType: 'setpoint' }, testData.north.list[0], logger)).toBeInstanceOf(
       OIBusSetpointToMQTTTransformer
@@ -281,6 +287,7 @@ describe('Transformer Service', () => {
     expect(getStandardManifest('time-values-to-modbus')).toEqual(OIBusTimeValuesToModbusTransformer.manifestSettings);
     expect(getStandardManifest('time-values-to-opcua')).toEqual(OIBusTimeValuesToOPCUATransformer.manifestSettings);
     expect(getStandardManifest('time-values-to-mqtt')).toEqual(OIBusTimeValuesToMQTTTransformer.manifestSettings);
+    expect(getStandardManifest('time-values-to-oianalytics')).toEqual(OIBusTimeValuesToOIAnalyticsTransformer.manifestSettings);
     expect(getStandardManifest('setpoint-to-mqtt')).toEqual(OIBusSetpointToMQTTTransformer.manifestSettings);
     expect(getStandardManifest('setpoint-to-modbus')).toEqual(OIBusSetpointToModbusTransformer.manifestSettings);
     expect(getStandardManifest('setpoint-to-opcua')).toEqual(OIBusSetpointToOPCUATransformer.manifestSettings);
