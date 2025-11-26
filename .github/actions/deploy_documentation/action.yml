@@ -26,7 +26,6 @@ runs:
         npm run build
 
     - name: Deploy documentation
-      if: ${{ steps.release.outputs.release_created }}
       uses: peaceiris/actions-gh-pages@v4
       with:
         github_token: ${{ inputs.github_token }}
