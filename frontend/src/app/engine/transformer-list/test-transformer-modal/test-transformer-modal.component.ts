@@ -7,7 +7,7 @@ import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validat
 import { OibCodeBlockComponent } from '../../../shared/form/oib-code-block/oib-code-block.component';
 import { ManifestAttributesArrayComponent } from '../../../shared/form/manifest-builder/manifest-attributes-array/manifest-attributes-array.component';
 import { TransformerService } from '../../../services/transformer.service';
-import { CustomTransformerDTO, CustomTransformerCommand } from '../../../../../../backend/shared/model/transformer.model';
+import { CustomTransformerDTO, CustomTransformerCommandDTO } from '../../../../../../backend/shared/model/transformer.model';
 import { OibusInputDataTypeEnumPipe } from '../../../shared/oibus-input-data-type-enum.pipe';
 
 @Component({
@@ -30,7 +30,7 @@ export class TestTransformerModalComponent {
   private fb = inject(NonNullableFormBuilder);
 
   readonly transformer = signal<CustomTransformerDTO | null>(null);
-  readonly transformerCommand = signal<CustomTransformerCommand | null>(null);
+  readonly transformerCommand = signal<CustomTransformerCommandDTO | null>(null);
   readonly isCreationMode = signal<boolean>(false);
   readonly inputTemplate = signal<string>('');
   readonly output = signal<string>('');
@@ -56,7 +56,7 @@ export class TestTransformerModalComponent {
     }
   }
 
-  prepareForCreationMode(command: CustomTransformerCommand, customManifest?: any) {
+  prepareForCreationMode(command: CustomTransformerCommandDTO, customManifest?: any) {
     this.transformerCommand.set(command);
     this.isCreationMode.set(true);
     this.loadInputTemplate();
