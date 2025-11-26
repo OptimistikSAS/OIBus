@@ -58,7 +58,7 @@ describe('EditTransformerModalComponent', () => {
   let fakeActiveModal: NgbActiveModal;
   let transformerService: jasmine.SpyObj<TransformerService>;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     transformerService = createMock(TransformerService);
     fakeActiveModal = createMock(NgbActiveModal);
 
@@ -88,9 +88,9 @@ describe('EditTransformerModalComponent', () => {
     tester = new EditTransformerModalComponentTester();
   });
 
-  it('should create', () => {
+  it('should create', async () => {
     tester.componentInstance.prepareForCreation();
-    tester.detectChanges();
+    await tester.change();
 
     expect(tester.inputType).toBeDefined();
     expect(tester.outputType).toBeDefined();
@@ -98,14 +98,14 @@ describe('EditTransformerModalComponent', () => {
 
     expect(tester.languageDisclaimer).toContainText('Select a programming language first.');
 
-    tester.inputType.selectValue('any');
-    tester.outputType.selectValue('any');
-    tester.language.selectValue('javascript');
-    tester.name.fillWith('my new transformer');
-    tester.description.fillWith('my description');
+    await tester.inputType.selectValue('any');
+    await tester.outputType.selectValue('any');
+    await tester.language.selectValue('javascript');
+    await tester.name.fillWith('my new transformer');
+    await tester.description.fillWith('my description');
     tester.componentInstance.form.get('customCode')!.setValue('my code');
 
-    tester.save.click();
+    await tester.save.click();
 
     expect(transformerService.create).toHaveBeenCalledWith({
       type: 'custom',
@@ -131,17 +131,17 @@ describe('EditTransformerModalComponent', () => {
     expect(fakeActiveModal.close).toHaveBeenCalledWith(testData.transformers.customList[0]);
   });
 
-  it('should update', () => {
+  it('should update', async () => {
     tester.componentInstance.prepareForEdition(testData.transformers.customList[0]);
-    tester.detectChanges();
+    await tester.change();
 
     expect(tester.inputType).toBeNull();
     expect(tester.outputType).toBeNull();
     expect(tester.language).toBeNull();
 
-    tester.name.fillWith('updated name');
+    await tester.name.fillWith('updated name');
 
-    tester.save.click();
+    await tester.save.click();
 
     expect(transformerService.update).toHaveBeenCalledWith(testData.transformers.customList[0].id, {
       type: 'custom',
@@ -168,11 +168,11 @@ describe('EditTransformerModalComponent', () => {
     expect(fakeActiveModal.close).toHaveBeenCalledWith(testData.transformers.customList[0]);
   });
 
-  it('should not save if invalid', () => {
+  it('should not save if invalid', async () => {
     tester.componentInstance.prepareForCreation();
-    tester.detectChanges();
+    await tester.change();
 
-    tester.save.click();
+    await tester.save.click();
 
     // Form should be invalid and not save
     expect(tester.componentInstance.form?.valid).toBeFalsy();
