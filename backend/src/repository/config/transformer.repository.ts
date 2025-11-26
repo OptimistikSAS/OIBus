@@ -15,6 +15,7 @@ import { OIBusObjectAttribute } from '../../../shared/model/form.model';
 import OIBusSetpointToModbusTransformer from '../../service/transformers/setpoint/oibus-setpoint-to-modbus-transformer';
 import OIBusSetpointToOPCUATransformer from '../../service/transformers/setpoint/oibus-setpoint-to-opcua-transformer';
 import OIBusSetpointToMQTTTransformer from '../../service/transformers/setpoint/oibus-setpoint-to-mqtt-transformer';
+import OIBusTimeValuesToOIAnalyticsTransformer from '../../service/transformers/time-values/oibus-time-values-to-oianalytics-transformer';
 
 const TRANSFORMERS_TABLE = 'transformers';
 const PAGE_SIZE = 10;
@@ -218,6 +219,16 @@ export default class TransformerRepository {
         functionName: OIBusSetpointToMQTTTransformer.transformerName,
         inputType: 'setpoint',
         outputType: 'mqtt'
+      };
+      this.createStandardTransformer(standardTransformer);
+    }
+    if (!this.findByFunctionName(OIBusTimeValuesToOIAnalyticsTransformer.transformerName)) {
+      const standardTransformer: StandardTransformer = {
+        id: generateRandomId(6),
+        type: 'standard',
+        functionName: OIBusTimeValuesToOIAnalyticsTransformer.transformerName,
+        inputType: 'time-values',
+        outputType: 'oianalytics'
       };
       this.createStandardTransformer(standardTransformer);
     }

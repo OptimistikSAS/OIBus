@@ -77,6 +77,7 @@ import OIBusSetpointToModbusTransformer from '../../service/transformers/setpoin
 import OIBusSetpointToMQTTTransformer from '../../service/transformers/setpoint/oibus-setpoint-to-mqtt-transformer';
 import OIBusSetpointToOPCUATransformer from '../../service/transformers/setpoint/oibus-setpoint-to-opcua-transformer';
 import { TransformerDTO } from '../../../shared/model/transformer.model';
+import OIBusTimeValuesToOIAnalyticsTransformer from '../../service/transformers/time-values/oibus-time-values-to-oianalytics-transformer';
 
 jest.mock('../../service/utils');
 jest.mock('argon2');
@@ -189,6 +190,13 @@ describe('Repository with populated database', () => {
         inputType: 'setpoint',
         functionName: OIBusSetpointToMQTTTransformer.transformerName,
         outputType: 'mqtt',
+        type: 'standard'
+      },
+      {
+        id: 'standardTransformer10',
+        inputType: 'time-values',
+        functionName: OIBusTimeValuesToOIAnalyticsTransformer.transformerName,
+        outputType: 'oianalytics',
         type: 'standard'
       }
     ];
