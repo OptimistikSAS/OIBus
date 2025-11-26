@@ -21,6 +21,7 @@ import OIBusSetpointToModbusTransformer from './transformers/setpoint/oibus-setp
 import OIBusSetpointToMQTTTransformer from './transformers/setpoint/oibus-setpoint-to-mqtt-transformer';
 import OIBusSetpointToOPCUATransformer from './transformers/setpoint/oibus-setpoint-to-opcua-transformer';
 import { NotFoundError, OIBusValidationError } from '../model/types';
+import OIBusTimeValuesToOIAnalyticsTransformer from './transformers/time-values/oibus-time-values-to-oianalytics-transformer';
 
 export default class TransformerService {
   constructor(
@@ -176,6 +177,14 @@ export const createTransformer = (
           transformerWithOptions.options
         );
       }
+      case OIBusTimeValuesToOIAnalyticsTransformer.transformerName: {
+        return new OIBusTimeValuesToOIAnalyticsTransformer(
+          logger,
+          transformerWithOptions.transformer,
+          northConnector,
+          transformerWithOptions.options
+        );
+      }
       case OIBusSetpointToModbusTransformer.transformerName: {
         return new OIBusSetpointToModbusTransformer(
           logger,
@@ -227,6 +236,9 @@ export const getStandardManifest = (functionName: string): OIBusObjectAttribute 
     }
     case OIBusTimeValuesToModbusTransformer.transformerName: {
       return OIBusTimeValuesToModbusTransformer.manifestSettings;
+    }
+    case OIBusTimeValuesToOIAnalyticsTransformer.transformerName: {
+      return OIBusTimeValuesToOIAnalyticsTransformer.manifestSettings;
     }
     case OIBusSetpointToModbusTransformer.transformerName: {
       return OIBusSetpointToModbusTransformer.manifestSettings;

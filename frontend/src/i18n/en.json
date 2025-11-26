@@ -853,6 +853,7 @@
             "time-values-to-mqtt": "OIBus time values into MQTT payloads",
             "time-values-to-opcua": "OIBus time values into OPCUA values",
             "time-values-to-modbus": "OIBus time values into Modbus values",
+            "time-values-to-oianalytics": "OIBus time values into OIAnalytics optimized values",
             "setpoint-to-mqtt": "Setpoints into MQTT payloads",
             "setpoint-to-opcua": "Setpoints into OPCUA values",
             "setpoint-to-modbus": "Setpoints into Modbus values"
@@ -901,6 +902,15 @@
               "title": "Mapping table",
               "point-id": "Point ID (Reference)",
               "topic": "MQTT Topic"
+            }
+          },
+          "time-values-to-oianalytics": {
+            "precision": {
+              "title": "Timestamp precision",
+              "ms": "Millisecond",
+              "s": "Second",
+              "min": "Minute",
+              "hr": "Hour"
             }
           },
           "time-values-to-opcua": {
