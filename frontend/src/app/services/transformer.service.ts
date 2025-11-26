@@ -81,7 +81,7 @@ export class TransformerService {
    * @param command - the transformer command to test
    * @param testRequest - the test request with input data and options
    */
-  testDefinition(command: CustomTransformerCommand, testRequest: TransformerTestRequest): Observable<TransformerTestResponse> {
+  testDefinition(command: CustomTransformerCommandDTO, testRequest: TransformerTestRequest): Observable<TransformerTestResponse> {
     let transformerId: string;
     return this.create(command).pipe(
       switchMap(transformer => {
