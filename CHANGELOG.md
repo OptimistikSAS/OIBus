@@ -1,5 +1,19 @@
 # Changelog
 
+## [3.7.2](https://github.com/OptimistikSAS/OIBus/compare/v3.7.1...v3.7.2) (2025-11-26)
+
+
+### Bug Fixes
+
+* **doc:** properly update in the ci the oibus api version ([5243115](https://github.com/OptimistikSAS/OIBus/commit/52431156774b9c299c6ba97fba5bdea6dfd83aa0))
+* **frontend:** added margin to form groups for improved layout consistency ([0dce295](https://github.com/OptimistikSAS/OIBus/commit/0dce295f4bcde105c50e88955b7990709085d042))
+* **frontend:** added selectors to component test host components to prevent warnings in tests ([3f04f8a](https://github.com/OptimistikSAS/OIBus/commit/3f04f8af615b63e4922250f4a76ec120e24f3721))
+* **frontend:** enhanced datepicker styling and functionality with calendar button improvements ([6289f35](https://github.com/OptimistikSAS/OIBus/commit/6289f35760991b4b43b31c9117cd07fdeb680eca))
+* **frontend:** fixed linter error related to test selectors ([6ec0f9e](https://github.com/OptimistikSAS/OIBus/commit/6ec0f9ea4ff1a3c28d2daf8e0090fb5a7ccf51dc))
+* **north:** enhanced cache logging with detailed state information ([a557fc5](https://github.com/OptimistikSAS/OIBus/commit/a557fc5e1e5912c7374b210328041deea8a65bec))
+* **oianalytics:** add oianalytics time values transformer ([4c50e2e](https://github.com/OptimistikSAS/OIBus/commit/4c50e2e3f2a7d39c32c13505566a76ebc5be465b))
+* **south:** enforce max instant per item into boolean ([41528e1](https://github.com/OptimistikSAS/OIBus/commit/41528e1a07961569d38d6d65282b9a22f03b2c66))
+
 ## [3.7.1](https://github.com/OptimistikSAS/OIBus/compare/v3.7.0...v3.7.1) (2025-11-24)
 
 
