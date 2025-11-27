@@ -5,7 +5,7 @@
 </div>
 <div class="modal-body">
   @if (elementManifest) {
-    <form [id]="'edit-array-element-form-' + elementManifest.key" [formGroup]="form" (ngSubmit)="submit()">
+    <form [id]="'edit-array-element-form-' + elementManifest.key" [formGroup]="form">
       <ng-container [formGroupName]="elementManifest.key">
         <oib-oibus-object-form-control
           [scanModes]="scanModes"
@@ -20,7 +20,7 @@
 <div class="modal-footer">
   <div class="btn-group pull-right">
     @if (elementManifest) {
-      <button [oib-save-button]="state" [form]="'edit-array-element-form-' + elementManifest.key"></button>
+      <button type="button" class="btn btn-primary" (click)="submit()" translate="common.ok" id="save-button"></button>
     }
     <button type="button" class="btn btn-cancel" (click)="dismiss()" translate="common.close" id="cancel-button"></button>
   </div>

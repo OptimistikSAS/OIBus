@@ -189,7 +189,7 @@ ngb-timepicker .ngb-tp-chevron:hover::before {
 }
 
 .accordion-body .oib-search-form {
-  border-radius: 0rem 0rem 1rem 1rem;
+  border-radius: 0 0 1rem 1rem;
 }
 
 // display of grey empty field under a oib-box-title
@@ -492,7 +492,6 @@ ngb-timepicker .ngb-tp-chevron:hover::before {
   fieldset:disabled .btn {
     color: var(--bs-btn-disabled-color);
     pointer-events: none;
-    outline: 2px solid $red;
     outline-offset: -2px;
     opacity: 0.4;
   }
