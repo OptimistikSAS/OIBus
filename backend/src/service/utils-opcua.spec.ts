@@ -421,6 +421,15 @@ describe('Service utils OPCUA', () => {
       expect(result).toBe('test');
     });
 
+    it('should return empty string if DataType.String has a null value', () => {
+      const opcuaVariant = {
+        dataType: DataType.String,
+        value: null
+      } as Variant;
+      const result = parseOPCUAValue('item1', opcuaVariant, logger);
+      expect(result).toBe('');
+    });
+
     it('should return the string representation for numeric DataTypes', () => {
       const testCases = [
         { dataType: DataType.Float, value: 3.14 },

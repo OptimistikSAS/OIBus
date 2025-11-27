@@ -232,7 +232,7 @@ export const getTimestamp = (dataValue: DataValue, settings: SouthOPCUAItemSetti
 export const parseOPCUAValue = (itemName: string, opcuaVariant: Variant, logger: pino.Logger): string => {
   switch (opcuaVariant.dataType) {
     case DataType.String:
-      return opcuaVariant.value.split('\0')[0];
+      return opcuaVariant.value ? opcuaVariant.value.split('\0')[0] : '';
     case DataType.Float:
     case DataType.Double:
     case DataType.SByte:
