@@ -3,7 +3,6 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AbstractControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { TranslateDirective } from '@ngx-translate/core';
 import { OIBusObjectFormControlComponent } from '../../oibus-object-form-control/oibus-object-form-control.component';
-import { ObservableState, SaveButtonComponent } from '../../../save-button/save-button.component';
 import { OIBusObjectAttribute } from '../../../../../../../backend/shared/model/form.model';
 import { ScanModeDTO } from '../../../../../../../backend/shared/model/scan-mode.model';
 import { CertificateDTO } from '../../../../../../../backend/shared/model/certificate.model';
@@ -15,7 +14,7 @@ import { OIBUS_FORM_MODE } from '../../oibus-form-mode.token';
   templateUrl: './oibus-edit-array-element-modal.component.html',
   styleUrl: './oibus-edit-array-element-modal.component.scss',
   // Remove circular dependencies between OIBusObjectFormControlComponent and OIBusEditArrayElementModalComponent with forwardRef
-  imports: [ReactiveFormsModule, TranslateDirective, SaveButtonComponent, forwardRef(() => OIBusObjectFormControlComponent)],
+  imports: [ReactiveFormsModule, TranslateDirective, forwardRef(() => OIBusObjectFormControlComponent)],
   viewProviders: [
     {
       provide: OIBUS_FORM_MODE,
@@ -32,7 +31,6 @@ export class OIBusEditArrayElementModalComponent {
   certificates: Array<CertificateDTO> = [];
   parentGroup: FormGroup<any> | null = null;
 
-  state = new ObservableState();
   elementManifest: OIBusObjectAttribute | null = null;
 
   private readonly fb = inject(NonNullableFormBuilder);
