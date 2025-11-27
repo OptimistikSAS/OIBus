@@ -850,13 +850,13 @@
             "iso": "No transform",
             "time-values-to-csv": "OIBus time values into CSV",
             "time-values-to-json": "OIBus time values into raw JSON",
-            "time-values-to-mqtt": "OIBus time values into MQTT payloads",
-            "time-values-to-opcua": "OIBus time values into OPCUA values",
             "time-values-to-modbus": "OIBus time values into Modbus values",
+            "time-values-to-mqtt": "OIBus time values into MQTT payloads",
             "time-values-to-oianalytics": "OIBus time values into OIAnalytics optimized values",
+            "time-values-to-opcua": "OIBus time values into OPCUA values",
+            "setpoint-to-modbus": "Setpoints into Modbus values",
             "setpoint-to-mqtt": "Setpoints into MQTT payloads",
-            "setpoint-to-opcua": "Setpoints into OPCUA values",
-            "setpoint-to-modbus": "Setpoints into Modbus values"
+            "setpoint-to-opcua": "Setpoints into OPCUA values"
           },
           "time-values-to-csv": {
             "filename": "Filename",
