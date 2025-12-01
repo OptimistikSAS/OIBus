@@ -124,10 +124,10 @@ export default class EncryptionService<TInitialized extends boolean = false> {
       [
         { name: 'commonName', value: options.commonName },
         { name: 'countryName', value: options.countryName },
-        { name: 'stateOrProvinceName', value: options.stateOrProvinceName },
+        { shortName: 'ST', value: options.stateOrProvinceName },
         { name: 'localityName', value: options.localityName },
         { name: 'organizationName', value: options.organizationName }
-      ],
+      ].filter(attr => attr.value && attr.value.trim() !== ''), // ignore empty fields
       {
         keySize: options.keySize,
         notAfterDate: DateTime.now().plus({ days: options.daysBeforeExpiry }).toJSDate(),
@@ -136,30 +136,27 @@ export default class EncryptionService<TInitialized extends boolean = false> {
         extensions: [
           {
             name: 'basicConstraints',
-            cA: false
+            cA: false,
+            critical: true
           },
           {
             name: 'keyUsage',
-            keyCertSign: true,
-            digitalSignature: true,
-            nonRepudiation: true,
-            keyEncipherment: true,
-            dataEncipherment: true
+            usages: ['digitalSignature', 'keyEncipherment', 'dataEncipherment', 'nonRepudiation', 'keyCertSign']
           },
           {
             name: 'extKeyUsage',
-            clientAuth: true,
-            serverAuth: true
+            usages: ['clientAuth', 'serverAuth']
           },
           {
             name: 'subjectAltName',
             altNames: [
               {
-                type: 6, // URI
+                type: 'uri',
                 value: `urn:${os.hostname()}:OIBus`
               },
               {
-                type: 2, // DNS
+                // v5 uses string types, not numeric IDs (type: 2 is now "dns")
+                type: 'dns',
                 value: os.hostname()
               }
             ]
