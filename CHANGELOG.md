@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.7.4](https://github.com/OptimistikSAS/OIBus/compare/v3.7.3...v3.7.4) (2025-12-01)
+
+
+### Bug Fixes
+
+* **encryption:** fix encryptino service with latest selfsigned version ([2e1115c](https://github.com/OptimistikSAS/OIBus/commit/2e1115c45d223b2a79552855d942c8a376d4c68d))
+* **wording:** fix export wording ([134e46d](https://github.com/OptimistikSAS/OIBus/commit/134e46db314d030308f50db2b478f190a1272b90))
+
 ## [3.7.3](https://github.com/OptimistikSAS/OIBus/compare/v3.7.2...v3.7.3) (2025-12-01)
 
 
