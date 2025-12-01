@@ -66,7 +66,7 @@ const flattenObject = (
     switch (subAttribute.type) {
       case 'object':
         if (value && typeof value === 'object' && !Array.isArray(value)) {
-          flattenObject(value as Record<string, unknown>, subAttribute as OIBusObjectAttribute, flattened, [...prefix, key]);
+          flattened[fullKey] = JSON.stringify(value);
         } else {
           flattened[fullKey] = value;
         }
@@ -115,10 +115,7 @@ const unflattenObject = (
 
     switch (subAttribute.type) {
       case 'object': {
-        const nested = unflattenObject(flattened, subAttribute as OIBusObjectAttribute, [...prefix, key]);
-        if (Object.keys(nested).length > 0) {
-          result[key] = nested;
-        }
+        result[key] = JSON.parse(value as string);
         break;
       }
       case 'array':

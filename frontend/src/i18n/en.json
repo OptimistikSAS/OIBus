@@ -1881,7 +1881,12 @@
     },
     "items": {
       "title": "Items",
-      "export": "Export",
+      "export": {
+        "button": "Export",
+        "title": "Export options",
+        "element-name": "Name",
+        "export-filename": "Filename"
+      },
       "import": {
         "button": "Import",
         "imported": "Items imported",
@@ -1891,7 +1896,8 @@
         "valid-title": "These items will be created",
         "csv-file": "CSV File",
         "format-error-title": "CSV Format Error",
-        "format-error-description": "The selected CSV file format does not match the expected format for this connector type.",
+        "select-file": "Choose a file",
+        "format-error-description": "The selected CSV file format does not match the expected format",
         "missing-columns": "Missing columns:",
         "extra-columns": "Extra columns:",
         "expected-format": "Expected format:",
