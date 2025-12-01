@@ -31,7 +31,7 @@ export default class CertificateService {
 
   async create(command: CertificateCommandDTO): Promise<Certificate> {
     await this.validator.validate(certificateSchema, command);
-    const cert = this.encryptionService.generateSelfSignedCertificate({
+    const cert = await this.encryptionService.generateSelfSignedCertificate({
       commonName: command.options!.commonName,
       organizationName: command.options!.organizationName,
       countryName: command.options!.countryName,
@@ -61,7 +61,7 @@ export default class CertificateService {
     await this.validator.validate(certificateSchema, command);
     const certificate = this.findById(certificateId);
     if (command.regenerateCertificate) {
-      const cert = this.encryptionService.generateSelfSignedCertificate({
+      const cert = await this.encryptionService.generateSelfSignedCertificate({
         commonName: command.options!.commonName,
         organizationName: command.options!.organizationName,
         countryName: command.options!.countryName,
