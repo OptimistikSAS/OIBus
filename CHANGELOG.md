@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.7.4](https://github.com/OptimistikSAS/OIBus/compare/v3.7.3...v3.7.4) (2025-12-01)
+
+
+### Bug Fixes
+
+* **encryption:** adapt self-signed generate option ([b3f3a49](https://github.com/OptimistikSAS/OIBus/commit/b3f3a49183a192123ca735b644ab5e3806bdf858))
+* **encryption:** fix encryptino service with latest selfsigned version ([492bdfe](https://github.com/OptimistikSAS/OIBus/commit/492bdfe5e73dc6be2a308fef157e1af87f18667b))
+* **opcua:** fix opcua item types in migration ([1875a56](https://github.com/OptimistikSAS/OIBus/commit/1875a56995c31323462a2ccc5d35525333a49e0e))
+* **wording:** fix export wording ([29227a6](https://github.com/OptimistikSAS/OIBus/commit/29227a61ffe4bb93b8ae09a766ea0d98d8ef5261))
+
 ## [3.7.3](https://github.com/OptimistikSAS/OIBus/compare/v3.7.2...v3.7.3) (2025-12-01)
 
 
