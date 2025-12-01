@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.7.3](https://github.com/OptimistikSAS/OIBus/compare/v3.7.2...v3.7.3) (2025-12-01)
+
+
+### Bug Fixes
+
+* **forms:** fix export and import of array elements ([886a980](https://github.com/OptimistikSAS/OIBus/commit/886a980abe4f002a1a9e11916eebc4e2d22e28ac))
+* **frontend:** fix element validation wording and disabled button outline ([4fbecf7](https://github.com/OptimistikSAS/OIBus/commit/4fbecf746fed24a6982859c6d0a33f6088d627f0))
+* **opcua:** properly manage null string ([5e6e795](https://github.com/OptimistikSAS/OIBus/commit/5e6e795d84d2af1ca1e7b2ae4c9d03dda6a14c59))
+* **transformers:** fix wording for OIAnalytics time values transformer ([8c953c2](https://github.com/OptimistikSAS/OIBus/commit/8c953c2beb77a71c8e04205c220ca65d3f033a4f))
+* **translation:** fix transformers translation ([a9f6d70](https://github.com/OptimistikSAS/OIBus/commit/a9f6d70dc9a4df686ef9a29c4e2632a9de8eb655))
+
 ## [3.7.2](https://github.com/OptimistikSAS/OIBus/compare/v3.7.1...v3.7.2) (2025-11-26)
 
 
