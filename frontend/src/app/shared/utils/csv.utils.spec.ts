@@ -111,7 +111,7 @@ describe('csv.utils', () => {
       const [data, config] = unparseSpy.calls.mostRecent().args;
       expect(config.delimiter).toBe(';');
       // The key should be joined with underscore
-      expect(data[0]['nested_prop']).toBe('val');
+      expect(data[0]['nested']).toBe(JSON.stringify({ prop: 'val' }));
     });
 
     it('should stringify arrays and objects within special fields', () => {
@@ -162,7 +162,7 @@ describe('csv.utils', () => {
       exportArrayElements(attribute as unknown as OIBusArrayAttribute, items, ',');
 
       const [data] = unparseSpy.calls.mostRecent().args;
-      expect(data[0]['level1_level2']).toBe('final');
+      expect(data[0]['level1']).toBe(JSON.stringify({ level2: 'final' }));
     });
   });
 
@@ -254,7 +254,7 @@ describe('csv.utils', () => {
 
       const file = createMockFile('');
       parseSpy.and.returnValue({
-        data: [{ parent_child: 'nested-value' }],
+        data: [{ parent: JSON.stringify({ child: 'nested-value' }) }],
         meta: { delimiter: ',' }
       } as any);
 
