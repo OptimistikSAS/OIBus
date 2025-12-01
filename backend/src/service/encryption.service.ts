@@ -9,6 +9,7 @@ import { createFolder, filesExists } from './utils';
 import { CryptoSettings } from '../../shared/model/engine.model';
 import { CertificateOptions } from '../../shared/model/certificate.model';
 import { OIBusObjectAttribute } from '../../shared/model/form.model';
+import { DateTime } from 'luxon';
 
 export const CERT_PRIVATE_KEY_FILE_NAME = 'private.pem';
 export const CERT_PUBLIC_KEY_FILE_NAME = 'public.pem';
@@ -101,7 +102,7 @@ export default class EncryptionService<TInitialized extends boolean = false> {
       !(await filesExists(this.getPrivateKeyPath())) ||
       !(await filesExists(this.getPublicKeyPath()))
     ) {
-      const certificate = this.generateSelfSignedCertificate({
+      const certificate = await this.generateSelfSignedCertificate({
         commonName: 'OIBus',
         countryName: 'FR',
         stateOrProvinceName: 'Savoie',
@@ -118,8 +119,8 @@ export default class EncryptionService<TInitialized extends boolean = false> {
     this.initialized = true;
   }
 
-  generateSelfSignedCertificate(options: CertificateOptions): GenerateResult {
-    return selfSigned.generate(
+  async generateSelfSignedCertificate(options: CertificateOptions): Promise<GenerateResult> {
+    return await selfSigned.generate(
       [
         { name: 'commonName', value: options.commonName },
         { name: 'countryName', value: options.countryName },
@@ -129,7 +130,7 @@ export default class EncryptionService<TInitialized extends boolean = false> {
       ],
       {
         keySize: options.keySize,
-        days: options.daysBeforeExpiry,
+        notAfterDate: DateTime.now().plus({ days: options.daysBeforeExpiry }).toJSDate(),
         algorithm: 'sha256',
         pkcs7: true,
         extensions: [
