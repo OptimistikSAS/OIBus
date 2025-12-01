@@ -852,7 +852,7 @@
             "time-values-to-json": "OIBus time values into raw JSON",
             "time-values-to-modbus": "OIBus time values into Modbus values",
             "time-values-to-mqtt": "OIBus time values into MQTT payloads",
-            "time-values-to-oianalytics": "OIBus time values into OIAnalytics optimized values",
+            "time-values-to-oianalytics": "OIAnalytics - Select timestamp precision and remove optional fields from OIBus time values",
             "time-values-to-opcua": "OIBus time values into OPCUA values",
             "setpoint-to-modbus": "Setpoints into Modbus values",
             "setpoint-to-mqtt": "Setpoints into MQTT payloads",
