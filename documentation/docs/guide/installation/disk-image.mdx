@@ -97,7 +97,7 @@ echo Network service is running.
 if not exist "%c%" mkdir "%c%"
 
 :: Call the installation script, passing the data directory as a parameter
-call "%INSTALL_SCRIPT_PATH%" -c "%c%" -n "%n%"
+call "%INSTALL_SCRIPT_PATH%" -c %c% -n %n%
 if %errorlevel% neq 0 (
     echo Error: %n% installation failed.
     exit /b %errorlevel%
@@ -124,12 +124,24 @@ if %errorlevel% neq 0 (
 )
 echo %n% web server is now up.
 
+:: Execute the curl command to create a scan mode
+echo Creating scan mode...
+curl --location --user %USERNAME%:%PASSWORD% "http://localhost:2223/api/scan-modes" ^
+--header "Content-Type: application/json" ^
+--header "Accept: application/json" ^
+--data "{\"name\": \"Every 2 minutes\", \"description\": \"\", \"cron\": \"0 */2 * * * *\"}"
+echo.
+if %errorlevel% neq 0 (
+    echo Error: Failed to create scan mode.
+    exit /b %errorlevel%
+)
+
 :: Execute the curl command to create North connector
 echo Creating North connector...
 curl --location --user %USERNAME%:%PASSWORD% "http://localhost:2223/api/north" ^
 --header "Content-Type: application/json" ^
 --header "Accept: application/json" ^
---data "{\"name\": \"North OIAnalytics\", \"type\": \"oianalytics\", \"description\": \"\", \"enabled\": true, \"settings\": {\"useOiaModule\": true, \"timeout\": 15000, \"compress\": false}, \"caching\": {\"archive\": {\"retentionDuration\": 0, \"enabled\": false}, \"error\": {\"retentionDuration\": 0, \"retryCount\": 3, \"retryInterval\": 5000}, \"throttling\": {\"maxNumberOfElements\": 10000, \"maxSize\": 0, \"runMinDelay\": 200}, \"trigger\": {\"numberOfFiles\": 1, \"numberOfElements\": 1, \"scanModeName\": \"Every minute\", \"scanModeId\": \"\"}}, \"subscriptions\": [], \"transformers\": []}"
+--data "{\"name\": \"North OIAnalytics\", \"type\": \"oianalytics\", \"description\": \"\", \"enabled\": true, \"settings\": {\"useOiaModule\": true, \"timeout\": 15000, \"compress\": false}, \"caching\": {\"archive\": {\"retentionDuration\": 0, \"enabled\": false}, \"error\": {\"retentionDuration\": 0, \"retryCount\": 3, \"retryInterval\": 5000}, \"throttling\": {\"maxNumberOfElements\": 10000, \"maxSize\": 0, \"runMinDelay\": 200}, \"trigger\": {\"numberOfFiles\": 1, \"numberOfElements\": 1, \"scanModeName\": \"Every 2 minutes\", \"scanModeId\": \"\"}}, \"subscriptions\": [], \"transformers\": []}"
 echo.
 if %errorlevel% neq 0 (
     echo Error: Failed to create North connector.
@@ -145,18 +157,6 @@ curl --location --user %USERNAME%:%PASSWORD% "http://localhost:2223/api/south" ^
 echo.
 if %errorlevel% neq 0 (
     echo Error: Failed to create South connector.
-    exit /b %errorlevel%
-)
-
-:: Execute the curl command to create a scan mode
-echo Creating scan mode...
-curl --location --user %USERNAME%:%PASSWORD% "http://localhost:2223/api/scan-modes" ^
---header "Content-Type: application/json" ^
---header "Accept: application/json" ^
---data "{\"name\": \"Daily Backup Scan\", \"description\": \"Scans for new backup data every day at midnight\", \"cron\": \"0 0 * * *\"}"
-echo.
-if %errorlevel% neq 0 (
-    echo Error: Failed to create scan mode.
     exit /b %errorlevel%
 )
 
