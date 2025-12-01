@@ -594,7 +594,12 @@ const manifest: SouthConnectorManifest = {
                   values: ['average', 'minimum', 'maximum', 'count']
                 }
               ],
-              validators: [],
+              validators: [
+                {
+                  type: 'REQUIRED',
+                  arguments: []
+                }
+              ],
               attributes: [
                 {
                   type: 'string-select',
