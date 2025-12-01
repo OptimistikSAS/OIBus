@@ -3649,12 +3649,7 @@
 						"$ref": "#/components/schemas/SouthOPCUAItemSettingsMode"
 					},
 					"haMode": {
-						"allOf": [
-							{
-								"$ref": "#/components/schemas/SouthOPCUAItemSettingsHaMode"
-							}
-						],
-						"nullable": true
+						"$ref": "#/components/schemas/SouthOPCUAItemSettingsHaMode"
 					},
 					"timestampOrigin": {
 						"$ref": "#/components/schemas/SouthOPCUAItemSettingsTimestampOrigin"
