@@ -851,7 +851,7 @@ export interface SouthOPCItemSettings {
 export interface SouthOPCUAItemSettings {
   nodeId: string;
   mode: SouthOPCUAItemSettingsMode;
-  haMode?: SouthOPCUAItemSettingsHaMode | null;
+  haMode?: SouthOPCUAItemSettingsHaMode;
   timestampOrigin?: SouthOPCUAItemSettingsTimestampOrigin;
 }
 

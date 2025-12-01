@@ -1340,7 +1340,7 @@ const models: TsoaRoute.Models = {
         "properties": {
             "nodeId": {"dataType":"string","required":true},
             "mode": {"ref":"SouthOPCUAItemSettingsMode","required":true},
-            "haMode": {"dataType":"union","subSchemas":[{"ref":"SouthOPCUAItemSettingsHaMode"},{"dataType":"enum","enums":[null]}]},
+            "haMode": {"ref":"SouthOPCUAItemSettingsHaMode"},
             "timestampOrigin": {"ref":"SouthOPCUAItemSettingsTimestampOrigin"},
         },
         "additionalProperties": false,
