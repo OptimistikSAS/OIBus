@@ -12,6 +12,8 @@ import * as utils from './utils';
 import { SouthConnectorCommandDTO, SouthConnectorDTO } from '../../shared/model/south-connector.model';
 import { SouthSettings } from '../../shared/model/south-settings.model';
 import { OIBusArrayAttribute, OIBusObjectAttribute, OIBusSecretAttribute, OIBusStringAttribute } from '../../shared/model/form.model';
+import testData from '../tests/utils/test-data';
+import { DateTime } from 'luxon';
 
 jest.mock('./utils');
 jest.mock('node:fs/promises');
@@ -95,8 +97,8 @@ const certFolder = 'certFolder';
 describe('Encryption service with crypto settings', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
-    // Mock custom cert exists
     (utils.filesExists as jest.Mock).mockResolvedValue(true);
 
     await encryptionService.init(cryptoSettings, certFolder);
@@ -140,7 +142,7 @@ describe('Encryption service with crypto settings', () => {
       ],
       {
         keySize: 4096,
-        days: 36500,
+        notAfterDate: DateTime.now().plus({ days: 36500 }).toJSDate(),
         algorithm: 'sha256',
         pkcs7: true,
         extensions: [
