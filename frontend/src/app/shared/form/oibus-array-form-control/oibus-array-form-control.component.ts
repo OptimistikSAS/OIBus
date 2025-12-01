@@ -2,7 +2,7 @@ import { Component, computed, inject, input } from '@angular/core';
 import { ControlContainer, FormControl, FormGroup, FormGroupName, ReactiveFormsModule } from '@angular/forms';
 
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { startWith, switchMap } from 'rxjs';
+import { of, startWith, switchMap } from 'rxjs';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { OIBusArrayAttribute, OIBusAttributeType, OIBusObjectAttribute } from '../../../../../../backend/shared/model/form.model';
 import { BoxComponent, BoxTitleDirective } from '../../box/box.component';
@@ -204,23 +204,28 @@ export class OIBusArrayFormControlComponent {
   importArray() {
     const modal = this.modalService.open(ImportItemModalComponent, { backdrop: 'static' });
     const headers: Array<string> = [];
+    const optionalHeaders: Array<string> = [];
     if (this.arrayAttribute().rootAttribute.attributes) {
       this.arrayAttribute().rootAttribute.attributes.forEach(attr => {
-        if (attr.type === 'object' && 'attributes' in attr) {
-          // For nested objects, prefix with the attribute key
-          attr.attributes.forEach(subAttr => {
-            headers.push(`${attr.key}_${subAttr.key}`);
-          });
-        } else {
+        if (
+          attr.validators.some(validation => validation.type === 'REQUIRED') &&
+          !this.arrayAttribute().rootAttribute.enablingConditions.some(condition => condition.targetPathFromRoot === attr.key)
+        ) {
           headers.push(attr.key);
+        } else {
+          optionalHeaders.push(attr.key);
         }
       });
     }
-    modal.componentInstance.prepare(headers, [], [], false);
-    modal.result.subscribe(response => {
-      if (!response) return;
-      this.checkImportArray(response.file, response.delimiter);
-    });
+    modal.componentInstance.prepare(headers, optionalHeaders, [], false);
+    modal.result
+      .pipe(
+        switchMap(response => {
+          if (!response) return of(null);
+          return this.checkImportArray(response.file, response.delimiter);
+        })
+      )
+      .subscribe();
   }
 
   private async checkImportArray(file: File, delimiter: string) {

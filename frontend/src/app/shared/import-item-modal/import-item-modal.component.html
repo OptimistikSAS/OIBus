@@ -64,7 +64,11 @@
       (dragover)="onImportDragOver($event)"
       id="import-button"
     >
-      <span>{{ selectedFile.name }}</span>
+      @if (selectedFile.name) {
+        <span>{{ selectedFile.name }}</span>
+      } @else {
+        <span translate="configuration.oibus.oibus-details.dynamic-forms.array.import.select-file"></span>
+      }
     </button>
   </div>
   <div [formGroup]="form" class="form-group row justify-content-center">
