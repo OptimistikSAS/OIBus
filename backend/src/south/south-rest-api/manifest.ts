@@ -34,6 +34,21 @@ const manifest: SouthConnectorManifest = {
         values: ['bearer']
       },
       {
+        referralPathFromRoot: 'authentication',
+        targetPathFromRoot: 'apiKey',
+        values: ['api-key']
+      },
+      {
+        referralPathFromRoot: 'authentication',
+        targetPathFromRoot: 'apiValue',
+        values: ['api-key']
+      },
+      {
+        referralPathFromRoot: 'authentication',
+        targetPathFromRoot: 'addTo',
+        values: ['api-key']
+      },
+      {
         referralPathFromRoot: 'useProxy',
         targetPathFromRoot: 'proxyUrl',
         values: [true]
@@ -178,7 +193,7 @@ const manifest: SouthConnectorManifest = {
         key: 'authentication',
         translationKey: 'configuration.oibus.manifest.south.rest-api.authentication',
         defaultValue: 'none',
-        selectableValues: ['none', 'basic', 'bearer'],
+        selectableValues: ['none', 'basic', 'bearer', 'api-key'],
         validators: [
           {
             type: 'REQUIRED',
@@ -224,6 +239,52 @@ const manifest: SouthConnectorManifest = {
         key: 'token',
         translationKey: 'configuration.oibus.manifest.south.rest-api.token',
         validators: [],
+        displayProperties: {
+          row: 2,
+          columns: 4,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'string',
+        key: 'apiKey',
+        translationKey: 'configuration.oibus.manifest.south.rest-api.api-key',
+        defaultValue: null,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          }
+        ],
+        displayProperties: {
+          row: 2,
+          columns: 4,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'secret',
+        key: 'apiValue',
+        translationKey: 'configuration.oibus.manifest.south.rest-api.api-value',
+        validators: [],
+        displayProperties: {
+          row: 2,
+          columns: 4,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'string-select',
+        key: 'addTo',
+        translationKey: 'configuration.oibus.manifest.south.rest-api.add-to',
+        defaultValue: 'header',
+        selectableValues: ['header', 'query-params'],
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          }
+        ],
         displayProperties: {
           row: 2,
           columns: 4,

@@ -13,6 +13,7 @@ import type { Stats } from 'node:fs';
 import { HTTPRequest, ReqOptions } from '../../service/http-request.utils';
 import { createMockResponse } from '../../tests/__mocks__/undici.mock';
 import * as utils from '../../service/utils';
+import { encryptionService } from '../../service/encryption.service';
 
 jest.mock('../../service/utils', () => {
   const actualUtils = jest.requireActual('../../service/utils');
@@ -738,5 +739,104 @@ describe('SouthRestAPI connector', () => {
     await south.queryData(bodyItem(), '2024-01-01T00:00:00Z', '2024-01-01T01:00:00Z');
     const options = getRequestOptions(httpRequestMock.mock.calls.length - 1);
     expect(options.proxy).toEqual({ url: 'http://proxy.local:8080' });
+  });
+
+  it('should support API key authentication with header', async () => {
+    const configuration = createConfiguration();
+    configuration.settings.authentication = 'api-key';
+    configuration.settings.apiKey = 'X-API-Key';
+    configuration.settings.apiValue = 'encrypted-api-value';
+    configuration.settings.addTo = 'header';
+    const instance = new SouthRestAPI(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+
+    const decryptTextMock = jest.spyOn(encryptionService, 'decryptText').mockResolvedValue('decrypted-api-value');
+    const response = createMockResponse(200, [], { 'content-type': 'application/json' });
+    httpRequestMock.mockResolvedValueOnce(response);
+
+    await instance.queryData(bodyItem(), '2024-01-01T00:00:00Z', '2024-01-01T01:00:00Z');
+    const options = getRequestOptions(httpRequestMock.mock.calls.length - 1);
+    expect(options.auth).toBeUndefined();
+    expect((options.headers as Record<string, string>)['X-API-Key']).toBe('decrypted-api-value');
+    expect(decryptTextMock).toHaveBeenCalledWith('encrypted-api-value');
+  });
+
+  it('should support API key authentication with query params', async () => {
+    const configuration = createConfiguration();
+    configuration.settings.authentication = 'api-key';
+    configuration.settings.apiKey = 'api_key';
+    configuration.settings.apiValue = 'encrypted-api-value';
+    configuration.settings.addTo = 'query-params';
+    const instance = new SouthRestAPI(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+
+    const decryptTextMock = jest.spyOn(encryptionService, 'decryptText').mockResolvedValue('decrypted-api-value');
+    const response = createMockResponse(200, [], { 'content-type': 'application/json' });
+    httpRequestMock.mockResolvedValueOnce(response);
+
+    await instance.queryData(bodyItem(), '2024-01-01T00:00:00Z', '2024-01-01T01:00:00Z');
+    const [url] = httpRequestMock.mock.calls[httpRequestMock.mock.calls.length - 1];
+    expect((url as URL).searchParams.get('api_key')).toBe('decrypted-api-value');
+    const options = getRequestOptions(httpRequestMock.mock.calls.length - 1);
+    expect(options.auth).toBeUndefined();
+    expect(decryptTextMock).toHaveBeenCalledWith('encrypted-api-value');
+  });
+
+  it('should handle API key authentication when headers are not initialized', async () => {
+    const configuration = createConfiguration();
+    configuration.settings.authentication = 'api-key';
+    configuration.settings.apiKey = 'X-API-Key';
+    configuration.settings.apiValue = 'encrypted-api-value';
+    configuration.settings.addTo = 'header';
+    const instance = new SouthRestAPI(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+
+    const decryptTextMock = jest.spyOn(encryptionService, 'decryptText').mockResolvedValue('decrypted-api-value');
+    const response = createMockResponse(200, [], { 'content-type': 'application/json' });
+    httpRequestMock.mockResolvedValueOnce(response);
+
+    const item = bodyItem();
+    item.settings.headers = null;
+    await instance.queryData(item, '2024-01-01T00:00:00Z', '2024-01-01T01:00:00Z');
+    const options = getRequestOptions(httpRequestMock.mock.calls.length - 1);
+    expect(options.auth).toBeUndefined();
+    expect((options.headers as Record<string, string>)['X-API-Key']).toBe('decrypted-api-value');
+    expect(decryptTextMock).toHaveBeenCalledWith('encrypted-api-value');
+  });
+
+  it('should return undefined auth when authentication is api-key', async () => {
+    const configuration = createConfiguration();
+    configuration.settings.authentication = 'api-key';
+    configuration.settings.apiKey = 'X-API-Key';
+    configuration.settings.apiValue = 'encrypted-api-value';
+    configuration.settings.addTo = 'header';
+    const instance = new SouthRestAPI(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+
+    const response = createMockResponse(200, [], { 'content-type': 'application/json' });
+    httpRequestMock.mockResolvedValueOnce(response);
+
+    await instance.testConnection();
+    const options = getRequestOptions(httpRequestMock.mock.calls.length - 1);
+    expect(options.auth).toBeUndefined();
+  });
+
+  it('should handle API key authentication when addTo is undefined', async () => {
+    const configuration = createConfiguration();
+    configuration.settings.authentication = 'api-key';
+    configuration.settings.apiKey = 'X-API-Key';
+    configuration.settings.apiValue = 'encrypted-api-value';
+    configuration.settings.addTo = undefined;
+    const instance = new SouthRestAPI(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+
+    const decryptTextMock = jest.spyOn(encryptionService, 'decryptText').mockResolvedValue('decrypted-api-value');
+    const response = createMockResponse(200, [], { 'content-type': 'application/json' });
+    httpRequestMock.mockResolvedValueOnce(response);
+
+    await instance.queryData(bodyItem(), '2024-01-01T00:00:00Z', '2024-01-01T01:00:00Z');
+    const options = getRequestOptions(httpRequestMock.mock.calls.length - 1);
+    expect(options.auth).toBeUndefined();
+    // When addTo is undefined, neither header nor query-params should be set
+    expect((options.headers as Record<string, string>)?.['X-API-Key']).toBeUndefined();
+    const [url] = httpRequestMock.mock.calls[httpRequestMock.mock.calls.length - 1];
+    expect((url as URL).searchParams.get('X-API-Key')).toBeNull();
+    // decryptText should still be called because authentication is api-key
+    expect(decryptTextMock).toHaveBeenCalledWith('encrypted-api-value');
   });
 });
