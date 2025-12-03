@@ -113,6 +113,21 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "TransformerLanguage": {
+        "dataType": "refAlias",
+        "type": {"dataType":"string","validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "InputType": {
+        "dataType": "refAlias",
+        "type": {"dataType":"string","validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "OutputType": {
+        "dataType": "refAlias",
+        "type": {"dataType":"string","validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusObjectAttribute": {
         "dataType": "refObject",
         "properties": {
@@ -329,12 +344,13 @@ const models: TsoaRoute.Models = {
         "properties": {
             "id": {"dataType":"string","required":true},
             "type": {"dataType":"enum","enums":["custom"],"required":true},
-            "inputType": {"dataType":"string","required":true},
-            "outputType": {"dataType":"string","required":true},
+            "inputType": {"ref":"InputType","required":true},
+            "outputType": {"ref":"OutputType","required":true},
             "manifest": {"ref":"OIBusObjectAttribute","required":true},
             "name": {"dataType":"string","required":true},
             "description": {"dataType":"string","required":true},
             "customCode": {"dataType":"string","required":true},
+            "language": {"ref":"TransformerLanguage","required":true},
         },
         "additionalProperties": false,
     },
@@ -344,8 +360,8 @@ const models: TsoaRoute.Models = {
         "properties": {
             "id": {"dataType":"string","required":true},
             "type": {"dataType":"enum","enums":["standard"],"required":true},
-            "inputType": {"dataType":"string","required":true},
-            "outputType": {"dataType":"string","required":true},
+            "inputType": {"ref":"InputType","required":true},
+            "outputType": {"ref":"OutputType","required":true},
             "manifest": {"ref":"OIBusObjectAttribute","required":true},
             "functionName": {"dataType":"string","required":true},
         },
@@ -384,13 +400,33 @@ const models: TsoaRoute.Models = {
             "description": {"dataType":"string","required":true},
             "customCode": {"dataType":"string","required":true},
             "customManifest": {"ref":"OIBusObjectAttribute","required":true},
+            "language": {"ref":"TransformerLanguage","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "TransformerTestRequest": {
+        "dataType": "refObject",
+        "properties": {
+            "inputData": {"dataType":"string","required":true},
+            "options": {"dataType":"object"},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "InputTemplate": {
+        "dataType": "refObject",
+        "properties": {
+            "type": {"ref":"InputType","required":true},
+            "data": {"dataType":"string","required":true},
+            "description": {"dataType":"string","required":true},
         },
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusSouthType": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["ads"]},{"dataType":"enum","enums":["folder-scanner"]},{"dataType":"enum","enums":["ftp"]},{"dataType":"enum","enums":["modbus"]},{"dataType":"enum","enums":["mqtt"]},{"dataType":"enum","enums":["mssql"]},{"dataType":"enum","enums":["mysql"]},{"dataType":"enum","enums":["odbc"]},{"dataType":"enum","enums":["oianalytics"]},{"dataType":"enum","enums":["oledb"]},{"dataType":"enum","enums":["opc"]},{"dataType":"enum","enums":["opcua"]},{"dataType":"enum","enums":["oracle"]},{"dataType":"enum","enums":["osisoft-pi"]},{"dataType":"enum","enums":["postgresql"]},{"dataType":"enum","enums":["rest-api"]},{"dataType":"enum","enums":["sftp"]},{"dataType":"enum","enums":["sqlite"]}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["opcua"]},{"dataType":"enum","enums":["mqtt"]},{"dataType":"enum","enums":["modbus"]},{"dataType":"enum","enums":["oianalytics"]},{"dataType":"enum","enums":["ads"]},{"dataType":"enum","enums":["folder-scanner"]},{"dataType":"enum","enums":["ftp"]},{"dataType":"enum","enums":["mssql"]},{"dataType":"enum","enums":["mysql"]},{"dataType":"enum","enums":["odbc"]},{"dataType":"enum","enums":["oledb"]},{"dataType":"enum","enums":["opc"]},{"dataType":"enum","enums":["oracle"]},{"dataType":"enum","enums":["osisoft-pi"]},{"dataType":"enum","enums":["postgresql"]},{"dataType":"enum","enums":["rest-api"]},{"dataType":"enum","enums":["sftp"]},{"dataType":"enum","enums":["sqlite"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusSouthCategory": {
@@ -881,7 +917,12 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthRestAPISettingsAuthentication": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["none"]},{"dataType":"enum","enums":["basic"]},{"dataType":"enum","enums":["bearer"]}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["none"]},{"dataType":"enum","enums":["basic"]},{"dataType":"enum","enums":["bearer"]},{"dataType":"enum","enums":["api-key"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestAPISettingsAddTo": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["header"]},{"dataType":"enum","enums":["query-params"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthRestAPISettingsTestMethod": {
@@ -910,6 +951,9 @@ const models: TsoaRoute.Models = {
             "username": {"dataType":"string"},
             "password": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
             "token": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+            "apiKey": {"dataType":"string"},
+            "apiValue": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+            "addTo": {"ref":"SouthRestAPISettingsAddTo"},
             "test": {"ref":"SouthRestAPISettingsTest","required":true},
             "timeout": {"dataType":"double","required":true},
             "useProxy": {"dataType":"boolean","required":true},
@@ -2277,7 +2321,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusNorthType": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["modbus"]},{"dataType":"enum","enums":["mqtt"]},{"dataType":"enum","enums":["oianalytics"]},{"dataType":"enum","enums":["opcua"]},{"dataType":"enum","enums":["sftp"]},{"dataType":"enum","enums":["azure-blob"]},{"dataType":"enum","enums":["aws-s3"]},{"dataType":"enum","enums":["console"]},{"dataType":"enum","enums":["file-writer"]},{"dataType":"enum","enums":["rest"]}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["opcua"]},{"dataType":"enum","enums":["mqtt"]},{"dataType":"enum","enums":["modbus"]},{"dataType":"enum","enums":["oianalytics"]},{"dataType":"enum","enums":["sftp"]},{"dataType":"enum","enums":["azure-blob"]},{"dataType":"enum","enums":["aws-s3"]},{"dataType":"enum","enums":["console"]},{"dataType":"enum","enums":["file-writer"]},{"dataType":"enum","enums":["rest"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "NorthAmazonS3Settings": {
@@ -2905,7 +2949,7 @@ const models: TsoaRoute.Models = {
     "TransformerDTOWithOptions": {
         "dataType": "refObject",
         "properties": {
-            "inputType": {"dataType":"string","required":true},
+            "inputType": {"ref":"InputType","required":true},
             "transformer": {"ref":"TransformerDTO","required":true},
             "options": {"ref":"Record_string.unknown_","required":true},
         },
@@ -3549,6 +3593,69 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 next,
                 validatedArgs,
                 successStatus: 204,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsTransformerController_test: Record<string, TsoaRoute.ParameterSchema> = {
+                transformerId: {"in":"path","name":"transformerId","required":true,"dataType":"string"},
+                command: {"in":"body","name":"command","required":true,"ref":"TransformerTestRequest"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.post('/api/transformers/:transformerId/test',
+            ...(fetchMiddlewares<RequestHandler>(TransformerController)),
+            ...(fetchMiddlewares<RequestHandler>(TransformerController.prototype.test)),
+
+            async function TransformerController_test(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsTransformerController_test, request, response });
+
+                const controller = new TransformerController();
+
+              await templateService.apiHandler({
+                methodName: 'test',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 204,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsTransformerController_getInputTemplate: Record<string, TsoaRoute.ParameterSchema> = {
+                inputType: {"in":"path","name":"inputType","required":true,"ref":"InputType"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.get('/api/transformers/template/:inputType',
+            ...(fetchMiddlewares<RequestHandler>(TransformerController)),
+            ...(fetchMiddlewares<RequestHandler>(TransformerController.prototype.getInputTemplate)),
+
+            async function TransformerController_getInputTemplate(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsTransformerController_getInputTemplate, request, response });
+
+                const controller = new TransformerController();
+
+              await templateService.apiHandler({
+                methodName: 'getInputTemplate',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
               });
             } catch (err) {
                 return next(err);
