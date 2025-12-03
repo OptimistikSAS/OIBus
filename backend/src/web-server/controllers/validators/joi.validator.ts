@@ -145,7 +145,7 @@ export default class JoiValidator {
     const subSchema: Record<string, AnySchema> = {};
     objectAttribute.attributes.forEach(formControl => {
       subSchema[formControl.key] = this.generateJoiSchemaFromOibFormControl(formControl)[formControl.key];
-      const enablingCondition = objectAttribute.enablingConditions.find(element => element.targetPathFromRoot === formControl.key);
+      const enablingCondition = objectAttribute.enablingConditions?.find(element => element.targetPathFromRoot === formControl.key);
       if (enablingCondition) {
         subSchema[formControl.key] = subSchema[formControl.key].when(enablingCondition.referralPathFromRoot, {
           is: Joi.any().valid(...enablingCondition.values),
@@ -192,7 +192,7 @@ export default class JoiValidator {
 
     objectAttribute.attributes.forEach(subControl => {
       subSchema[subControl.key] = this.generateJoiSchemaFromOibFormControl(subControl)[subControl.key];
-      const enablingCondition = objectAttribute.enablingConditions.find(element => element.targetPathFromRoot === subControl.key);
+      const enablingCondition = objectAttribute.enablingConditions?.find(element => element.targetPathFromRoot === subControl.key);
       if (enablingCondition) {
         subSchema[subControl.key] = subSchema[subControl.key].when(enablingCondition.referralPathFromRoot, {
           is: Joi.any().valid(...enablingCondition.values),
