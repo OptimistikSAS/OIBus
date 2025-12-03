@@ -1404,11 +1404,19 @@
               "title": "Authentication",
               "none": "None",
               "basic": "Basic (username/password)",
-              "bearer": "Bearer token"
+              "bearer": "Bearer token",
+              "api-key": "API key"
             },
             "username": "Username",
             "password": "Password",
             "token": "Bearer token",
+            "api-key": "API key",
+            "api-value": "API value",
+            "add-to": {
+              "title": "Add to",
+              "header": "Header",
+              "query-params": "Query parameters"
+            },
             "test": {
               "title": "Test configuration",
               "endpoint": "Test endpoint",

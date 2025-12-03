@@ -19,6 +19,7 @@ import path from 'node:path';
 import fs from 'node:fs/promises';
 import { replaceVariablesInJsonBody } from './utils';
 import { parseJsonPath } from './jsonpath-utils';
+import { encryptionService } from '../../service/encryption.service';
 
 const extractFieldNameFromJsonPath = (jsonPath: string): string => {
   const segments = jsonPath.split('.');
@@ -55,6 +56,9 @@ export default class SouthRestAPI extends SouthConnector<SouthRestAPISettings, S
         acceptUnauthorized,
         body: this.connector.settings.test.body && ['POST', 'PUT'].includes(testMethod) ? this.connector.settings.test.body : undefined
       };
+
+      await this.handleApiKeyAuth(fetchOptions, requestUrl);
+
       response = await HTTPRequest(requestUrl, fetchOptions);
     } catch (error) {
       throw new Error(`Fetch error ${error}`);
@@ -207,6 +211,8 @@ export default class SouthRestAPI extends SouthConnector<SouthRestAPISettings, S
       timeout: this.connector.settings.timeout * 1000,
       acceptUnauthorized
     };
+
+    await this.handleApiKeyAuth(fetchOptions, requestUrl);
 
     const response = await HTTPRequest(requestUrl, fetchOptions);
     if (!response.ok) {
@@ -390,9 +396,29 @@ export default class SouthRestAPI extends SouthConnector<SouthRestAPISettings, S
         };
       }
 
+      case 'api-key': {
+        // API Key auth is handled separately in handleApiKeyAuth()
+        return undefined;
+      }
+
       case 'none':
       default:
         return undefined;
+    }
+  }
+
+  private async handleApiKeyAuth(options: ReqOptions, url: URL): Promise<void> {
+    const settings = this.connector.settings;
+
+    if (settings.authentication === 'api-key' && settings.apiKey && settings.apiValue) {
+      const apiValue = await encryptionService.decryptText(settings.apiValue);
+
+      if (settings.addTo === 'header') {
+        if (!options.headers) options.headers = {};
+        (options.headers as Record<string, string>)[settings.apiKey] = apiValue;
+      } else if (settings.addTo === 'query-params') {
+        url.searchParams.append(settings.apiKey, apiValue);
+      }
     }
   }
 
