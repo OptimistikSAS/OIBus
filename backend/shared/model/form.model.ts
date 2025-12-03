@@ -141,6 +141,15 @@ export interface OIBusEnablingCondition {
    * @example ["MQTT"]
    */
   values: Array<string | number | boolean>;
+
+  /**
+   * Operator to use for the condition.
+   * EQUALS: The referral attribute value must be equal to one of the values.
+   * CONTAINS: The referral attribute value must contain one of the values (string only).
+   *
+   * @example "EQUALS"
+   */
+  operator?: 'EQUALS' | 'CONTAINS';
 }
 
 /**
@@ -173,6 +182,11 @@ interface BaseOIBusAttribute {
    * Validators to apply to this attribute.
    */
   validators: Array<OIBusAttributeValidator>;
+
+  /**
+   * Conditions that determine when this attribute should be enabled.
+   */
+  enablingConditions?: Array<OIBusEnablingCondition>;
 }
 
 /**
@@ -200,11 +214,6 @@ export interface OIBusObjectAttribute extends BaseOIBusAttribute {
    * Child attributes contained within this object.
    */
   attributes: Array<OIBusAttribute>;
-
-  /**
-   * Conditions that determine when this object should be enabled.
-   */
-  enablingConditions: Array<OIBusEnablingCondition>;
 
   /**
    * Display properties for this object.

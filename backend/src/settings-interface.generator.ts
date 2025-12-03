@@ -184,46 +184,50 @@ function generateInterface(interfaceName: string, settings: OIBusObjectAttribute
       case 'string':
       case 'secret':
       case 'code':
-        attributes.push({ key: setting.key, type: 'string', ...checkIfNullableOrUndefined(setting, settings.enablingConditions) });
+        attributes.push({ key: setting.key, type: 'string', ...checkIfNullableOrUndefined(setting, settings.enablingConditions ?? []) });
         break;
       case 'string-select':
         const enumName = `${interfaceName}${capitalizeFirstLetter(setting.key)}`;
         typesToGenerate.enums.push({ name: enumName, values: setting.selectableValues });
-        attributes.push({ key: setting.key, type: `${enumName}`, ...checkIfNullableOrUndefined(setting, settings.enablingConditions) });
+        attributes.push({
+          key: setting.key,
+          type: `${enumName}`,
+          ...checkIfNullableOrUndefined(setting, settings.enablingConditions ?? [])
+        });
         break;
       case 'boolean':
-        attributes.push({ key: setting.key, type: 'boolean', ...checkIfNullableOrUndefined(setting, settings.enablingConditions) });
+        attributes.push({ key: setting.key, type: 'boolean', ...checkIfNullableOrUndefined(setting, settings.enablingConditions ?? []) });
         break;
       case 'scan-mode':
         typesToGenerate.imports.add(SCAN_MODE_IMPORT);
-        attributes.push({ key: setting.key, type: 'ScanMode', ...checkIfNullableOrUndefined(setting, settings.enablingConditions) });
+        attributes.push({ key: setting.key, type: 'ScanMode', ...checkIfNullableOrUndefined(setting, settings.enablingConditions ?? []) });
         break;
       case 'certificate':
-        attributes.push({ key: setting.key, type: 'string', ...checkIfNullableOrUndefined(setting, settings.enablingConditions) });
+        attributes.push({ key: setting.key, type: 'string', ...checkIfNullableOrUndefined(setting, settings.enablingConditions ?? []) });
         break;
       case 'timezone':
         typesToGenerate.imports.add(TIMEZONE_IMPORT);
-        attributes.push({ key: setting.key, type: 'Timezone', ...checkIfNullableOrUndefined(setting, settings.enablingConditions) });
+        attributes.push({ key: setting.key, type: 'Timezone', ...checkIfNullableOrUndefined(setting, settings.enablingConditions ?? []) });
         break;
       case 'array':
         attributes.push({
           key: setting.key,
           type: `Array<${interfaceName}${capitalizeFirstLetter(setting.key)}>`,
-          ...checkIfNullableOrUndefined(setting, settings.enablingConditions)
+          ...checkIfNullableOrUndefined(setting, settings.enablingConditions ?? [])
         });
         break;
       case 'object':
         attributes.push({
           key: setting.key,
           type: `${interfaceName}${capitalizeFirstLetter(setting.key)}`,
-          ...checkIfNullableOrUndefined(setting, settings.enablingConditions)
+          ...checkIfNullableOrUndefined(setting, settings.enablingConditions ?? [])
         });
         break;
       case 'number':
         attributes.push({
           key: setting.key,
           type: 'number',
-          ...checkIfNullableOrUndefined(setting, settings.enablingConditions)
+          ...checkIfNullableOrUndefined(setting, settings.enablingConditions ?? [])
         });
         break;
     }
@@ -236,11 +240,11 @@ function generateInterface(interfaceName: string, settings: OIBusObjectAttribute
  */
 function checkIfNullableOrUndefined(
   setting: OIBusAttribute,
-  enablingConditions: Array<OIBusEnablingCondition>
+  enablingConditions?: Array<OIBusEnablingCondition>
 ): { nullable: boolean; undefinable: boolean } {
   // if the setting has no validators, it is nullable
   const nullable = !setting.validators ? true : setting.validators.filter(validator => validator.type === 'REQUIRED').length === 0;
-  const undefinable = !!enablingConditions.find(enablingCondition => enablingCondition.targetPathFromRoot === setting.key);
+  const undefinable = !!enablingConditions?.find(enablingCondition => enablingCondition.targetPathFromRoot === setting.key);
 
   return { nullable, undefinable };
 }

@@ -140,7 +140,7 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
         this.northDisplayedSettings = northManifest.settings.attributes
           .filter(setting => isDisplayableAttribute(setting))
           .filter(setting => {
-            const condition = northManifest.settings.enablingConditions.find(
+            const condition = northManifest.settings.enablingConditions?.find(
               enablingCondition => enablingCondition.targetPathFromRoot === setting.key
             );
             return (
@@ -164,7 +164,7 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
         this.southDisplayedSettings = southManifest.settings.attributes
           .filter(setting => isDisplayableAttribute(setting))
           .filter(setting => {
-            const condition = southManifest.settings.enablingConditions.find(
+            const condition = southManifest.settings.enablingConditions?.find(
               enablingCondition => enablingCondition.targetPathFromRoot === setting.key
             );
             return (

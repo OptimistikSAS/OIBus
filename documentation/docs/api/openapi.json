@@ -263,19 +263,19 @@
 						"type": "array",
 						"description": "Validators to apply to this attribute."
 					},
+					"enablingConditions": {
+						"items": {
+							"$ref": "#/components/schemas/OIBusEnablingCondition"
+						},
+						"type": "array",
+						"description": "Conditions that determine when this attribute should be enabled."
+					},
 					"attributes": {
 						"items": {
 							"$ref": "#/components/schemas/OIBusAttribute"
 						},
 						"type": "array",
 						"description": "Child attributes contained within this object."
-					},
-					"enablingConditions": {
-						"items": {
-							"$ref": "#/components/schemas/OIBusEnablingCondition"
-						},
-						"type": "array",
-						"description": "Conditions that determine when this object should be enabled."
 					},
 					"displayProperties": {
 						"$ref": "#/components/schemas/OIBusObjectDisplayProperties",
@@ -288,7 +288,6 @@
 					"translationKey",
 					"validators",
 					"attributes",
-					"enablingConditions",
 					"displayProperties"
 				],
 				"type": "object",
@@ -380,6 +379,58 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"OIBusEnablingCondition": {
+				"description": "Condition that determines when an attribute should be enabled/disabled.\nUsed for dynamic form behavior based on other field values.",
+				"properties": {
+					"targetPathFromRoot": {
+						"type": "string",
+						"description": "Path to the attribute that should be enabled/disabled.",
+						"example": "protocol"
+					},
+					"referralPathFromRoot": {
+						"type": "string",
+						"description": "Path to the attribute whose value determines the enabling condition.",
+						"example": "connection.type"
+					},
+					"values": {
+						"items": {
+							"anyOf": [
+								{
+									"type": "string"
+								},
+								{
+									"type": "number",
+									"format": "double"
+								},
+								{
+									"type": "boolean"
+								}
+							]
+						},
+						"type": "array",
+						"description": "Values of the referral attribute that will enable the target attribute.",
+						"example": [
+							"MQTT"
+						]
+					},
+					"operator": {
+						"type": "string",
+						"enum": [
+							"EQUALS",
+							"CONTAINS"
+						],
+						"description": "Operator to use for the condition.\nEQUALS: The referral attribute value must be equal to one of the values.\nCONTAINS: The referral attribute value must contain one of the values (string only).",
+						"example": "EQUALS"
+					}
+				},
+				"required": [
+					"targetPathFromRoot",
+					"referralPathFromRoot",
+					"values"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"OIBusStringAttribute": {
 				"description": "Text input attribute.",
 				"properties": {
@@ -407,6 +458,13 @@
 						},
 						"type": "array",
 						"description": "Validators to apply to this attribute."
+					},
+					"enablingConditions": {
+						"items": {
+							"$ref": "#/components/schemas/OIBusEnablingCondition"
+						},
+						"type": "array",
+						"description": "Conditions that determine when this attribute should be enabled."
 					},
 					"displayProperties": {
 						"$ref": "#/components/schemas/OIBusAttributeDisplayProperties",
@@ -457,6 +515,13 @@
 						},
 						"type": "array",
 						"description": "Validators to apply to this attribute."
+					},
+					"enablingConditions": {
+						"items": {
+							"$ref": "#/components/schemas/OIBusEnablingCondition"
+						},
+						"type": "array",
+						"description": "Conditions that determine when this attribute should be enabled."
 					},
 					"displayProperties": {
 						"$ref": "#/components/schemas/OIBusAttributeDisplayProperties",
@@ -517,6 +582,13 @@
 						},
 						"type": "array",
 						"description": "Validators to apply to this attribute."
+					},
+					"enablingConditions": {
+						"items": {
+							"$ref": "#/components/schemas/OIBusEnablingCondition"
+						},
+						"type": "array",
+						"description": "Conditions that determine when this attribute should be enabled."
 					},
 					"displayProperties": {
 						"$ref": "#/components/schemas/OIBusAttributeDisplayProperties",
@@ -581,6 +653,13 @@
 						"type": "array",
 						"description": "Validators to apply to this attribute."
 					},
+					"enablingConditions": {
+						"items": {
+							"$ref": "#/components/schemas/OIBusEnablingCondition"
+						},
+						"type": "array",
+						"description": "Conditions that determine when this attribute should be enabled."
+					},
 					"displayProperties": {
 						"$ref": "#/components/schemas/OIBusAttributeDisplayProperties",
 						"description": "Display properties for this attribute."
@@ -623,6 +702,13 @@
 						},
 						"type": "array",
 						"description": "Validators to apply to this attribute."
+					},
+					"enablingConditions": {
+						"items": {
+							"$ref": "#/components/schemas/OIBusEnablingCondition"
+						},
+						"type": "array",
+						"description": "Conditions that determine when this attribute should be enabled."
 					},
 					"displayProperties": {
 						"$ref": "#/components/schemas/OIBusAttributeDisplayProperties",
@@ -682,6 +768,13 @@
 						"type": "array",
 						"description": "Validators to apply to this attribute."
 					},
+					"enablingConditions": {
+						"items": {
+							"$ref": "#/components/schemas/OIBusEnablingCondition"
+						},
+						"type": "array",
+						"description": "Conditions that determine when this attribute should be enabled."
+					},
 					"displayProperties": {
 						"$ref": "#/components/schemas/OIBusAttributeDisplayProperties",
 						"description": "Display properties for this attribute."
@@ -731,6 +824,13 @@
 						"type": "array",
 						"description": "Validators to apply to this attribute."
 					},
+					"enablingConditions": {
+						"items": {
+							"$ref": "#/components/schemas/OIBusEnablingCondition"
+						},
+						"type": "array",
+						"description": "Conditions that determine when this attribute should be enabled."
+					},
 					"displayProperties": {
 						"$ref": "#/components/schemas/OIBusAttributeDisplayProperties",
 						"description": "Display properties for this attribute."
@@ -773,6 +873,13 @@
 						},
 						"type": "array",
 						"description": "Validators to apply to this attribute."
+					},
+					"enablingConditions": {
+						"items": {
+							"$ref": "#/components/schemas/OIBusEnablingCondition"
+						},
+						"type": "array",
+						"description": "Conditions that determine when this attribute should be enabled."
 					},
 					"displayProperties": {
 						"$ref": "#/components/schemas/OIBusAttributeDisplayProperties",
@@ -828,6 +935,13 @@
 						"type": "array",
 						"description": "Validators to apply to this attribute."
 					},
+					"enablingConditions": {
+						"items": {
+							"$ref": "#/components/schemas/OIBusEnablingCondition"
+						},
+						"type": "array",
+						"description": "Conditions that determine when this attribute should be enabled."
+					},
 					"displayProperties": {
 						"$ref": "#/components/schemas/OIBusAttributeDisplayProperties",
 						"description": "Display properties for this attribute."
@@ -870,6 +984,13 @@
 						},
 						"type": "array",
 						"description": "Validators to apply to this attribute."
+					},
+					"enablingConditions": {
+						"items": {
+							"$ref": "#/components/schemas/OIBusEnablingCondition"
+						},
+						"type": "array",
+						"description": "Conditions that determine when this attribute should be enabled."
 					},
 					"displayProperties": {
 						"$ref": "#/components/schemas/OIBusAttributeDisplayProperties",
@@ -920,6 +1041,13 @@
 						},
 						"type": "array",
 						"description": "Validators to apply to this attribute."
+					},
+					"enablingConditions": {
+						"items": {
+							"$ref": "#/components/schemas/OIBusEnablingCondition"
+						},
+						"type": "array",
+						"description": "Conditions that determine when this attribute should be enabled."
 					},
 					"paginate": {
 						"type": "boolean",
@@ -989,49 +1117,6 @@
 					}
 				],
 				"description": "Union type representing all possible OIBus form attributes.\nIncludes both displayable attributes and array/object containers."
-			},
-			"OIBusEnablingCondition": {
-				"description": "Condition that determines when an attribute should be enabled/disabled.\nUsed for dynamic form behavior based on other field values.",
-				"properties": {
-					"targetPathFromRoot": {
-						"type": "string",
-						"description": "Path to the attribute that should be enabled/disabled.",
-						"example": "protocol"
-					},
-					"referralPathFromRoot": {
-						"type": "string",
-						"description": "Path to the attribute whose value determines the enabling condition.",
-						"example": "connection.type"
-					},
-					"values": {
-						"items": {
-							"anyOf": [
-								{
-									"type": "string"
-								},
-								{
-									"type": "number",
-									"format": "double"
-								},
-								{
-									"type": "boolean"
-								}
-							]
-						},
-						"type": "array",
-						"description": "Values of the referral attribute that will enable the target attribute.",
-						"example": [
-							"MQTT"
-						]
-					}
-				},
-				"required": [
-					"targetPathFromRoot",
-					"referralPathFromRoot",
-					"values"
-				],
-				"type": "object",
-				"additionalProperties": false
 			},
 			"OIBusObjectDisplayProperties": {
 				"description": "Display properties for object-type form attributes.\nControls visibility and styling of object containers.",
@@ -4132,6 +4217,15 @@
 					"DELETE"
 				]
 			},
+			"SouthRestAPIItemSettingsQueryParamsDateTimeType": {
+				"type": "string",
+				"enum": [
+					"string",
+					"iso-string",
+					"unix-epoch",
+					"unix-epoch-ms"
+				]
+			},
 			"SouthRestAPIItemSettingsQueryParams": {
 				"properties": {
 					"key": {
@@ -4139,14 +4233,55 @@
 					},
 					"value": {
 						"type": "string"
+					},
+					"dateTimeType": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthRestAPIItemSettingsQueryParamsDateTimeType"
+							}
+						],
+						"nullable": true
+					},
+					"dateTimeTimezone": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Timezone"
+							}
+						],
+						"nullable": true
+					},
+					"dateTimeFormat": {
+						"type": "string",
+						"nullable": true
 					}
 				},
 				"required": [
 					"key",
-					"value"
+					"value",
+					"dateTimeType",
+					"dateTimeTimezone",
+					"dateTimeFormat"
 				],
 				"type": "object",
 				"additionalProperties": false
+			},
+			"SouthRestAPIItemSettingsBodyDateTimeType": {
+				"type": "string",
+				"enum": [
+					"string",
+					"iso-string",
+					"unix-epoch",
+					"unix-epoch-ms"
+				]
+			},
+			"SouthRestAPIItemSettingsHeadersDateTimeType": {
+				"type": "string",
+				"enum": [
+					"string",
+					"iso-string",
+					"unix-epoch",
+					"unix-epoch-ms"
+				]
 			},
 			"SouthRestAPIItemSettingsHeaders": {
 				"properties": {
@@ -4155,11 +4290,34 @@
 					},
 					"value": {
 						"type": "string"
+					},
+					"dateTimeType": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthRestAPIItemSettingsHeadersDateTimeType"
+							}
+						],
+						"nullable": true
+					},
+					"dateTimeTimezone": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Timezone"
+							}
+						],
+						"nullable": true
+					},
+					"dateTimeFormat": {
+						"type": "string",
+						"nullable": true
 					}
 				},
 				"required": [
 					"key",
-					"value"
+					"value",
+					"dateTimeType",
+					"dateTimeTimezone",
+					"dateTimeFormat"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -4285,6 +4443,26 @@
 						"type": "string",
 						"nullable": true
 					},
+					"bodyDateTimeType": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthRestAPIItemSettingsBodyDateTimeType"
+							}
+						],
+						"nullable": true
+					},
+					"bodyDateTimeTimezone": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Timezone"
+							}
+						],
+						"nullable": true
+					},
+					"bodyDateTimeFormat": {
+						"type": "string",
+						"nullable": true
+					},
 					"headers": {
 						"items": {
 							"$ref": "#/components/schemas/SouthRestAPIItemSettingsHeaders"
@@ -4310,6 +4488,9 @@
 					"method",
 					"endpoint",
 					"queryParams",
+					"bodyDateTimeType",
+					"bodyDateTimeTimezone",
+					"bodyDateTimeFormat",
 					"headers",
 					"returnType"
 				],

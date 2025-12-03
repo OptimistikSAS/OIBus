@@ -58,25 +58,69 @@ export function createControl(fb: NonNullableFormBuilder, attribute: OIBusContro
   }
 }
 
-export function addEnablingConditions(form: FormGroup, enablingConditions: Array<OIBusEnablingCondition>) {
-  enablingConditions.forEach(condition => {
-    const referenceControl = form.get(condition.referralPathFromRoot);
-    const targetControl = form.get(condition.targetPathFromRoot);
+export function addEnablingConditions(form: FormGroup, enablingConditions: Array<OIBusEnablingCondition> | undefined) {
+  if (!enablingConditions || enablingConditions.length === 0) {
+    return;
+  }
+  const conditionsByTarget = new Map<string, Array<OIBusEnablingCondition>>();
 
-    if (!targetControl || !referenceControl) {
+  enablingConditions.forEach(condition => {
+    if (!conditionsByTarget.has(condition.targetPathFromRoot)) {
+      conditionsByTarget.set(condition.targetPathFromRoot, []);
+    }
+    conditionsByTarget.get(condition.targetPathFromRoot)!.push(condition);
+  });
+
+  conditionsByTarget.forEach((conditions, targetPath) => {
+    const targetControl = form.get(targetPath);
+    if (!targetControl) {
       throw new Error('wrong configuration in manifest');
     }
 
-    if (condition.values.includes(referenceControl.value)) {
+    const checkCondition = (value: any, condition: OIBusEnablingCondition): boolean => {
+      const operator = condition.operator || 'EQUALS';
+      if (operator === 'CONTAINS') {
+        // For CONTAINS, check if the reference value (string) contains any of the condition values
+        if (typeof value === 'string') {
+          return condition.values.some(conditionValue => value.includes(String(conditionValue)));
+        }
+        return false;
+      } else {
+        // Default EQUALS behavior
+        return condition.values.includes(value);
+      }
+    };
+
+    const checkAllConditions = (): boolean => {
+      return conditions.every(condition => {
+        const referenceControl = form.get(condition.referralPathFromRoot);
+        if (!referenceControl) {
+          throw new Error('wrong configuration in manifest');
+        }
+        return checkCondition(referenceControl.value, condition);
+      });
+    };
+
+    if (checkAllConditions()) {
       targetControl.enable();
     } else {
       targetControl.disable();
     }
-    referenceControl.valueChanges.subscribe(newValue => {
-      if (condition.values.includes(newValue)) {
-        targetControl.enable();
-      } else {
-        targetControl.disable();
+
+    const processedReferrals = new Set<string>();
+    conditions.forEach(condition => {
+      if (processedReferrals.has(condition.referralPathFromRoot)) return;
+      processedReferrals.add(condition.referralPathFromRoot);
+
+      const referenceControl = form.get(condition.referralPathFromRoot);
+      if (referenceControl) {
+        referenceControl.valueChanges.subscribe(() => {
+          if (checkAllConditions()) {
+            targetControl.enable();
+          } else {
+            targetControl.disable();
+          }
+        });
       }
     });
   });
