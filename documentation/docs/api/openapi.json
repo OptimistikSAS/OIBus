@@ -226,6 +226,15 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"TransformerLanguage": {
+				"type": "string"
+			},
+			"InputType": {
+				"type": "string"
+			},
+			"OutputType": {
+				"type": "string"
+			},
 			"OIBusObjectAttribute": {
 				"description": "Object-type attribute that groups related attributes.\nUsed to create nested form structures.",
 				"properties": {
@@ -1062,12 +1071,12 @@
 						"description": "The type of the transformer (always 'custom' for this interface)."
 					},
 					"inputType": {
-						"type": "string",
+						"$ref": "#/components/schemas/InputType",
 						"description": "The input data type that the transformer accepts.",
 						"example": "string"
 					},
 					"outputType": {
-						"type": "string",
+						"$ref": "#/components/schemas/OutputType",
 						"description": "The output data type that the transformer produces.",
 						"example": "number"
 					},
@@ -1089,6 +1098,9 @@
 						"type": "string",
 						"description": "The custom JavaScript code that implements the transformation logic.",
 						"example": "function transform(input) { return parseFloat(input); }"
+					},
+					"language": {
+						"$ref": "#/components/schemas/TransformerLanguage"
 					}
 				},
 				"required": [
@@ -1099,7 +1111,8 @@
 					"manifest",
 					"name",
 					"description",
-					"customCode"
+					"customCode",
+					"language"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -1121,12 +1134,12 @@
 						"description": "The type of the transformer (always 'standard' for this interface)."
 					},
 					"inputType": {
-						"type": "string",
+						"$ref": "#/components/schemas/InputType",
 						"description": "The input data type that the transformer accepts.",
 						"example": "string"
 					},
 					"outputType": {
-						"type": "string",
+						"$ref": "#/components/schemas/OutputType",
 						"description": "The output data type that the transformer produces.",
 						"example": "number"
 					},
@@ -1255,6 +1268,11 @@
 					"customManifest": {
 						"$ref": "#/components/schemas/OIBusObjectAttribute",
 						"description": "The manifest describing the transformer's input/output structure and attributes."
+					},
+					"language": {
+						"$ref": "#/components/schemas/TransformerLanguage",
+						"description": "The language of the custom code",
+						"example": "javascript"
 					}
 				},
 				"required": [
@@ -1264,7 +1282,44 @@
 					"name",
 					"description",
 					"customCode",
-					"customManifest"
+					"customManifest",
+					"language"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"TransformerTestRequest": {
+				"properties": {
+					"inputData": {
+						"type": "string"
+					},
+					"options": {
+						"additionalProperties": false,
+						"type": "object"
+					}
+				},
+				"required": [
+					"inputData"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"InputTemplate": {
+				"properties": {
+					"type": {
+						"$ref": "#/components/schemas/InputType"
+					},
+					"data": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"type",
+					"data",
+					"description"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -1272,18 +1327,18 @@
 			"OIBusSouthType": {
 				"type": "string",
 				"enum": [
+					"opcua",
+					"mqtt",
+					"modbus",
+					"oianalytics",
 					"ads",
 					"folder-scanner",
 					"ftp",
-					"modbus",
-					"mqtt",
 					"mssql",
 					"mysql",
 					"odbc",
-					"oianalytics",
 					"oledb",
 					"opc",
-					"opcua",
 					"oracle",
 					"osisoft-pi",
 					"postgresql",
@@ -7697,7 +7752,15 @@
 				"enum": [
 					"none",
 					"basic",
-					"bearer"
+					"bearer",
+					"api-key"
+				]
+			},
+			"SouthRestAPISettingsAddTo": {
+				"type": "string",
+				"enum": [
+					"header",
+					"query-params"
 				]
 			},
 			"SouthRestAPISettingsTestMethod": {
@@ -7757,6 +7820,16 @@
 					"token": {
 						"type": "string",
 						"nullable": true
+					},
+					"apiKey": {
+						"type": "string"
+					},
+					"apiValue": {
+						"type": "string",
+						"nullable": true
+					},
+					"addTo": {
+						"$ref": "#/components/schemas/SouthRestAPISettingsAddTo"
 					},
 					"test": {
 						"$ref": "#/components/schemas/SouthRestAPISettingsTest"
@@ -11103,7 +11176,7 @@
 					"inputType": {
 						"type": "string",
 						"description": "The input data type that the transformer accepts.",
-						"example": "string"
+						"example": "time-values"
 					},
 					"transformerId": {
 						"type": "string",
@@ -16395,10 +16468,10 @@
 			"OIBusNorthType": {
 				"type": "string",
 				"enum": [
-					"modbus",
-					"mqtt",
-					"oianalytics",
 					"opcua",
+					"mqtt",
+					"modbus",
+					"oianalytics",
 					"sftp",
 					"aws-s3",
 					"azure-blob",
@@ -16536,7 +16609,7 @@
 				"description": "Data Transfer Object for a transformer with its options.\nUsed when a transformer needs to be applied with specific configuration options.",
 				"properties": {
 					"inputType": {
-						"type": "string",
+						"$ref": "#/components/schemas/InputType",
 						"description": "The input data type that the transformer accepts.",
 						"example": "string"
 					},
@@ -21393,6 +21466,71 @@
 						}
 					}
 				}
+			}
+		},
+		"/api/transformers/{transformerId}/test": {
+			"post": {
+				"operationId": "Test",
+				"responses": {
+					"204": {
+						"description": "No Content"
+					}
+				},
+				"tags": [
+					"Transformers"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "transformerId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/TransformerTestRequest"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/transformers/template/{inputType}": {
+			"get": {
+				"operationId": "GetInputTemplate",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/InputTemplate"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Transformers"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "inputType",
+						"required": true,
+						"schema": {
+							"$ref": "#/components/schemas/InputType"
+						}
+					}
+				]
 			}
 		},
 		"/api/south/types": {
