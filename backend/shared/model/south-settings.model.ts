@@ -288,8 +288,11 @@ export type SouthPostgreSQLItemSettingsSerializationDelimiter = (typeof SOUTH_PO
 export const SOUTH_REST_A_P_I_SETTINGS_TEST_METHODS = ['GET', 'POST', 'PUT'] as const;
 export type SouthRestAPISettingsTestMethod = (typeof SOUTH_REST_A_P_I_SETTINGS_TEST_METHODS)[number];
 
-export const SOUTH_REST_A_P_I_SETTINGS_AUTHENTICATIONS = ['none', 'basic', 'bearer'] as const;
+export const SOUTH_REST_A_P_I_SETTINGS_AUTHENTICATIONS = ['none', 'basic', 'bearer', 'api-key'] as const;
 export type SouthRestAPISettingsAuthentication = (typeof SOUTH_REST_A_P_I_SETTINGS_AUTHENTICATIONS)[number];
+
+export const SOUTH_REST_A_P_I_SETTINGS_ADD_TOS = ['header', 'query-params'] as const;
+export type SouthRestAPISettingsAddTo = (typeof SOUTH_REST_A_P_I_SETTINGS_ADD_TOS)[number];
 
 export const SOUTH_REST_A_P_I_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'] as const;
 export type SouthRestAPIItemSettingsDateTimeFieldsType = (typeof SOUTH_REST_A_P_I_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
@@ -622,6 +625,9 @@ export interface SouthRestAPISettings {
   username?: string;
   password?: string | null;
   token?: string | null;
+  apiKey?: string;
+  apiValue?: string | null;
+  addTo?: SouthRestAPISettingsAddTo;
   test: SouthRestAPISettingsTest;
   timeout: number;
   useProxy: boolean;
