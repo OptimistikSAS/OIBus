@@ -152,7 +152,7 @@ export class OIBusArrayFormControlComponent {
       this.arrayAttribute().rootAttribute.attributes.forEach(attr => {
         if (
           attr.validators.some(validation => validation.type === 'REQUIRED') &&
-          !this.arrayAttribute().rootAttribute.enablingConditions.some(condition => condition.targetPathFromRoot === attr.key)
+          !this.arrayAttribute().rootAttribute.enablingConditions?.some(condition => condition.targetPathFromRoot === attr.key)
         ) {
           headers.push(attr.key);
         } else {

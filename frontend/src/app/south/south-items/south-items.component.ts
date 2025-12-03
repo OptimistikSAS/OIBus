@@ -390,7 +390,7 @@ export class SouthItemsComponent implements OnInit {
       attribute => attribute.key === 'settings'
     )! as OIBusObjectAttribute;
     settingsAttribute.attributes.forEach(setting => {
-      if (settingsAttribute.enablingConditions.find(element => element.targetPathFromRoot === setting.key)) {
+      if (settingsAttribute.enablingConditions?.find(element => element.targetPathFromRoot === setting.key)) {
         optionalHeaders.push(`settings_${setting.key}`);
       } else {
         expectedHeaders.push(`settings_${setting.key}`);

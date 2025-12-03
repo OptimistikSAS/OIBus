@@ -58,7 +58,10 @@ export function createControl(fb: NonNullableFormBuilder, attribute: OIBusContro
   }
 }
 
-export function addEnablingConditions(form: FormGroup, enablingConditions: Array<OIBusEnablingCondition>) {
+export function addEnablingConditions(form: FormGroup, enablingConditions: Array<OIBusEnablingCondition> | undefined) {
+  if (!enablingConditions || enablingConditions.length === 0) {
+    return;
+  }
   const conditionsByTarget = new Map<string, Array<OIBusEnablingCondition>>();
 
   enablingConditions.forEach(condition => {

@@ -114,7 +114,7 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
         this.displayedSettings = manifest.settings.attributes
           .filter(setting => isDisplayableAttribute(setting))
           .filter(setting => {
-            const condition = manifest.settings.enablingConditions.find(
+            const condition = manifest.settings.enablingConditions?.find(
               enablingCondition => enablingCondition.targetPathFromRoot === setting.key
             );
             return (
