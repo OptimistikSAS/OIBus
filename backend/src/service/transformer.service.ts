@@ -2,7 +2,15 @@ import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import { transformerSchema } from '../web-server/controllers/validators/oibus-validation-schema';
 import TransformerRepository from '../repository/config/transformer.repository';
 import { CustomTransformer, Transformer, TransformerWithOptions } from '../model/transformer.model';
-import { CustomTransformerCommandDTO, TransformerDTO, TransformerSearchParam } from '../../shared/model/transformer.model';
+import {
+  CustomTransformerCommandDTO,
+  InputTemplate,
+  InputType,
+  TransformerDTO,
+  TransformerSearchParam,
+  TransformerTestRequest,
+  TransformerTestResponse
+} from '../../shared/model/transformer.model';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import { Page } from '../../shared/model/types';
 import { NorthConnectorEntity } from '../model/north-connector.model';
@@ -20,8 +28,12 @@ import { OIBusObjectAttribute } from '../../shared/model/form.model';
 import OIBusSetpointToModbusTransformer from './transformers/setpoint/oibus-setpoint-to-modbus-transformer';
 import OIBusSetpointToMQTTTransformer from './transformers/setpoint/oibus-setpoint-to-mqtt-transformer';
 import OIBusSetpointToOPCUATransformer from './transformers/setpoint/oibus-setpoint-to-opcua-transformer';
-import { NotFoundError, OIBusValidationError } from '../model/types';
 import OIBusTimeValuesToOIAnalyticsTransformer from './transformers/time-values/oibus-time-values-to-oianalytics-transformer';
+import { NotFoundError, OIBusValidationError } from '../model/types';
+import OIBusCustomTransformer from './transformers/oibus-custom-transformer';
+import { Readable } from 'node:stream';
+import { DateTime } from 'luxon';
+import { OIBusSetpoint, OIBusTimeValue } from '../../shared/model/engine.model';
 
 export default class TransformerService {
   constructor(
@@ -91,6 +103,163 @@ export default class TransformerService {
     this.transformerRepository.delete(transformerId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
+
+  async test(id: string, testRequest: TransformerTestRequest): Promise<TransformerTestResponse> {
+    const transformer = this.findById(id);
+    if (transformer.type === 'standard') {
+      throw new OIBusValidationError(`Cannot test standard transformer "${transformer.functionName}"`);
+    }
+
+    const customTransformer = transformer as CustomTransformer;
+
+    // Create a mock north connector for testing
+    const mockNorthConnector = {
+      id: 'test-connector',
+      name: 'Test Connector',
+      type: 'test',
+      description: 'Mock connector for testing',
+      enabled: true,
+      settings: {},
+      caching: {
+        enabled: false,
+        maxSize: 0,
+        maxCount: 0,
+        throttling: {
+          maxNumberOfElements: 0,
+          maxDuration: 0
+        }
+      },
+      transformers: []
+    } as unknown as NorthConnectorEntity<NorthSettings>;
+
+    // Create a mock logger
+    const mockLogger = pino({ level: 'silent' });
+
+    // Create the custom transformer instance
+    const transformerInstance = new OIBusCustomTransformer(mockLogger, customTransformer, mockNorthConnector, testRequest.options || {});
+
+    // Execute the transformer
+    const inputStream = Readable.from([Buffer.from(testRequest.inputData, 'utf-8')]);
+    const { metadata, output } = await transformerInstance.transform(inputStream, 'test-source', 'test-input.json');
+
+    return {
+      output,
+      metadata: {
+        contentType: metadata.contentType,
+        numberOfElement: metadata.numberOfElement
+      }
+    };
+  }
+
+  generateTemplate(inputType: InputType): InputTemplate {
+    switch (inputType) {
+      case 'time-values':
+        return this.generateTimeValuesTemplate();
+      case 'setpoint':
+        return this.generateSetpointTemplate();
+      case 'any':
+      default:
+        return this.generateFileTemplate();
+    }
+  }
+
+  /**
+   * Generate input template for time-values input type
+   */
+  private generateTimeValuesTemplate(): InputTemplate {
+    const now = DateTime.now().toUTC().toISO()!;
+    const timeValues: Array<OIBusTimeValue> = [
+      {
+        pointId: 'temperature_sensor_01',
+        timestamp: now,
+        data: {
+          value: 23.5,
+          unit: '°C',
+          quality: 'good'
+        }
+      },
+      {
+        pointId: 'pressure_sensor_01',
+        timestamp: now,
+        data: {
+          value: 1013.25,
+          unit: 'hPa',
+          quality: 'good'
+        }
+      },
+      {
+        pointId: 'humidity_sensor_01',
+        timestamp: now,
+        data: {
+          value: 65.2,
+          unit: '%',
+          quality: 'good'
+        }
+      }
+    ];
+
+    return {
+      type: 'time-values',
+      data: JSON.stringify(timeValues, null, 2),
+      description: 'Sample time-series data with multiple sensor readings'
+    };
+  }
+
+  /**
+   * Generate input template for setpoint input type
+   */
+  private generateSetpointTemplate(): InputTemplate {
+    const setpoints: Array<OIBusSetpoint> = [
+      {
+        reference: 'setpoint_temperature',
+        value: 22.0
+      },
+      {
+        reference: 'setpoint_pressure',
+        value: 1000.0
+      },
+      {
+        reference: 'setpoint_enabled',
+        value: true
+      },
+      {
+        reference: 'setpoint_mode',
+        value: 'auto'
+      }
+    ];
+
+    return {
+      type: 'setpoint',
+      data: JSON.stringify(setpoints, null, 2),
+      description: 'Sample setpoint commands for various parameters'
+    };
+  }
+
+  /**
+   * Generate input template for any (file) input type
+   */
+  private generateFileTemplate(): InputTemplate {
+    const fileContent = {
+      timestamp: DateTime.now().toUTC().toISO(),
+      source: 'test_device',
+      measurements: {
+        temperature: 23.5,
+        humidity: 65.2,
+        pressure: 1013.25
+      },
+      metadata: {
+        device_id: 'sensor_001',
+        location: 'building_a_floor_2',
+        firmware_version: '1.2.3'
+      }
+    };
+
+    return {
+      type: 'any',
+      data: JSON.stringify(fileContent, null, 2),
+      description: 'Sample file content with structured data'
+    };
+  }
 }
 
 export const copyTransformerCommandToTransformerEntity = async (
@@ -102,6 +271,7 @@ export const copyTransformerCommandToTransformerEntity = async (
   transformer.inputType = command.inputType;
   transformer.outputType = command.outputType;
   transformer.customCode = command.customCode;
+  transformer.language = command.language;
   transformer.customManifest = command.customManifest;
 };
 
@@ -125,6 +295,7 @@ export const toTransformerDTO = (transformer: Transformer): TransformerDTO => {
         inputType: transformer.inputType,
         outputType: transformer.outputType,
         customCode: transformer.customCode,
+        language: transformer.language,
         manifest: transformer.customManifest
       };
   }
@@ -209,9 +380,15 @@ export const createTransformer = (
           transformerWithOptions.options
         );
       }
+
+      default:
+        throw new Error(
+          `Transformer ${transformerWithOptions.transformer.id} (${transformerWithOptions.transformer.type}) not implemented`
+        );
     }
+  } else {
+    return new OIBusCustomTransformer(logger, transformerWithOptions.transformer, northConnector, transformerWithOptions.options);
   }
-  throw new Error(`Transformer ${transformerWithOptions.transformer.id} (${transformerWithOptions.transformer.type}) not implemented`);
 };
 
 export const getStandardManifest = (functionName: string): OIBusObjectAttribute => {

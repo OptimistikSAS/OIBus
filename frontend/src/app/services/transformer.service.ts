@@ -1,7 +1,14 @@
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { switchMap, finalize } from 'rxjs/operators';
 import { inject, Injectable } from '@angular/core';
-import { CustomTransformerCommandDTO, TransformerDTO } from '../../../../backend/shared/model/transformer.model';
+import {
+  CustomTransformerCommandDTO,
+  TransformerDTO,
+  TransformerTestRequest,
+  TransformerTestResponse,
+  InputTemplate
+} from '../../../../backend/shared/model/transformer.model';
 
 /**
  * Service used to interact with the backend for CRUD operations on Transformers
@@ -50,5 +57,38 @@ export class TransformerService {
    */
   delete(transformerId: string) {
     return this.http.delete<void>(`/api/transformers/${transformerId}`);
+  }
+
+  /**
+   * Test a custom transformer with input data
+   * @param transformerId - the ID of the transformer to test
+   * @param testRequest - the test request with input data and options
+   */
+  test(transformerId: string, testRequest: TransformerTestRequest): Observable<TransformerTestResponse> {
+    return this.http.post<TransformerTestResponse>(`/api/transformers/${transformerId}/test`, testRequest);
+  }
+
+  /**
+   * Get input template for a specific input type
+   * @param inputType - the input type to get template for
+   */
+  getInputTemplate(inputType: string): Observable<InputTemplate> {
+    return this.http.get<InputTemplate>(`/api/transformers/input-template?inputType=${inputType}`);
+  }
+
+  /**
+   * Test a transformer definition by temporarily creating it
+   * @param command - the transformer command to test
+   * @param testRequest - the test request with input data and options
+   */
+  testDefinition(command: CustomTransformerCommandDTO, testRequest: TransformerTestRequest): Observable<TransformerTestResponse> {
+    let transformerId: string;
+    return this.create(command).pipe(
+      switchMap(transformer => {
+        transformerId = transformer.id;
+        return this.test(transformer.id, testRequest);
+      }),
+      finalize(() => this.delete(transformerId!).subscribe())
+    );
   }
 }

@@ -226,6 +226,15 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"TransformerLanguage": {
+				"type": "string"
+			},
+			"InputType": {
+				"type": "string"
+			},
+			"OutputType": {
+				"type": "string"
+			},
 			"OIBusObjectAttribute": {
 				"description": "Object-type attribute that groups related attributes.\nUsed to create nested form structures.",
 				"properties": {
@@ -1062,12 +1071,12 @@
 						"description": "The type of the transformer (always 'custom' for this interface)."
 					},
 					"inputType": {
-						"type": "string",
+						"$ref": "#/components/schemas/InputType",
 						"description": "The input data type that the transformer accepts.",
 						"example": "string"
 					},
 					"outputType": {
-						"type": "string",
+						"$ref": "#/components/schemas/OutputType",
 						"description": "The output data type that the transformer produces.",
 						"example": "number"
 					},
@@ -1089,6 +1098,9 @@
 						"type": "string",
 						"description": "The custom JavaScript code that implements the transformation logic.",
 						"example": "function transform(input) { return parseFloat(input); }"
+					},
+					"language": {
+						"$ref": "#/components/schemas/TransformerLanguage"
 					}
 				},
 				"required": [
@@ -1099,7 +1111,8 @@
 					"manifest",
 					"name",
 					"description",
-					"customCode"
+					"customCode",
+					"language"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -1121,12 +1134,12 @@
 						"description": "The type of the transformer (always 'standard' for this interface)."
 					},
 					"inputType": {
-						"type": "string",
+						"$ref": "#/components/schemas/InputType",
 						"description": "The input data type that the transformer accepts.",
 						"example": "string"
 					},
 					"outputType": {
-						"type": "string",
+						"$ref": "#/components/schemas/OutputType",
 						"description": "The output data type that the transformer produces.",
 						"example": "number"
 					},
@@ -1255,6 +1268,11 @@
 					"customManifest": {
 						"$ref": "#/components/schemas/OIBusObjectAttribute",
 						"description": "The manifest describing the transformer's input/output structure and attributes."
+					},
+					"language": {
+						"$ref": "#/components/schemas/TransformerLanguage",
+						"description": "The language of the custom code",
+						"example": "javascript"
 					}
 				},
 				"required": [
@@ -1264,7 +1282,44 @@
 					"name",
 					"description",
 					"customCode",
-					"customManifest"
+					"customManifest",
+					"language"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"TransformerTestRequest": {
+				"properties": {
+					"inputData": {
+						"type": "string"
+					},
+					"options": {
+						"additionalProperties": false,
+						"type": "object"
+					}
+				},
+				"required": [
+					"inputData"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"InputTemplate": {
+				"properties": {
+					"type": {
+						"$ref": "#/components/schemas/InputType"
+					},
+					"data": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"type",
+					"data",
+					"description"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -1272,21 +1327,22 @@
 			"OIBusSouthType": {
 				"type": "string",
 				"enum": [
+					"opcua",
+					"mqtt",
+					"modbus",
+					"oianalytics",
 					"ads",
 					"folder-scanner",
 					"ftp",
-					"modbus",
-					"mqtt",
 					"mssql",
 					"mysql",
 					"odbc",
-					"oianalytics",
 					"oledb",
 					"opc",
-					"opcua",
 					"oracle",
 					"osisoft-pi",
 					"postgresql",
+					"rest-api",
 					"sftp",
 					"sqlite"
 				],
@@ -2556,6 +2612,146 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"SouthRestAPISettingsThrottling": {
+				"properties": {
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double"
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double"
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"maxReadInterval",
+					"readDelay",
+					"overlap"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthRestAPISettingsAuthentication": {
+				"type": "string",
+				"enum": [
+					"none",
+					"basic",
+					"bearer",
+					"api-key"
+				]
+			},
+			"SouthRestAPISettingsAddTo": {
+				"type": "string",
+				"enum": [
+					"header",
+					"query-params"
+				]
+			},
+			"SouthRestAPISettingsTestMethod": {
+				"type": "string",
+				"enum": [
+					"GET",
+					"POST",
+					"PUT"
+				]
+			},
+			"SouthRestAPISettingsTest": {
+				"properties": {
+					"method": {
+						"$ref": "#/components/schemas/SouthRestAPISettingsTestMethod"
+					},
+					"endpoint": {
+						"type": "string"
+					},
+					"body": {
+						"type": "string",
+						"nullable": true
+					},
+					"successCode": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"method",
+					"endpoint",
+					"successCode"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthRestAPISettings": {
+				"properties": {
+					"throttling": {
+						"$ref": "#/components/schemas/SouthRestAPISettingsThrottling"
+					},
+					"host": {
+						"type": "string"
+					},
+					"acceptUnauthorized": {
+						"type": "boolean"
+					},
+					"authentication": {
+						"$ref": "#/components/schemas/SouthRestAPISettingsAuthentication"
+					},
+					"username": {
+						"type": "string"
+					},
+					"password": {
+						"type": "string",
+						"nullable": true
+					},
+					"token": {
+						"type": "string",
+						"nullable": true
+					},
+					"apiKey": {
+						"type": "string"
+					},
+					"apiValue": {
+						"type": "string",
+						"nullable": true
+					},
+					"addTo": {
+						"$ref": "#/components/schemas/SouthRestAPISettingsAddTo"
+					},
+					"test": {
+						"$ref": "#/components/schemas/SouthRestAPISettingsTest"
+					},
+					"timeout": {
+						"type": "number",
+						"format": "double"
+					},
+					"useProxy": {
+						"type": "boolean"
+					},
+					"proxyUrl": {
+						"type": "string"
+					},
+					"proxyUsername": {
+						"type": "string"
+					},
+					"proxyPassword": {
+						"type": "string",
+						"nullable": true
+					}
+				},
+				"required": [
+					"throttling",
+					"host",
+					"acceptUnauthorized",
+					"authentication",
+					"test",
+					"timeout",
+					"useProxy"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"SouthSFTPSettingsAuthentication": {
 				"type": "string",
 				"enum": [
@@ -2688,6 +2884,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/SouthPostgreSQLSettings"
+					},
+					{
+						"$ref": "#/components/schemas/SouthRestAPISettings"
 					},
 					{
 						"$ref": "#/components/schemas/SouthSFTPSettings"
@@ -3923,6 +4122,200 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"SouthRestAPIItemSettingsMethod": {
+				"type": "string",
+				"enum": [
+					"GET",
+					"POST",
+					"PUT",
+					"PATCH",
+					"DELETE"
+				]
+			},
+			"SouthRestAPIItemSettingsQueryParams": {
+				"properties": {
+					"key": {
+						"type": "string"
+					},
+					"value": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"key",
+					"value"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthRestAPIItemSettingsHeaders": {
+				"properties": {
+					"key": {
+						"type": "string"
+					},
+					"value": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"key",
+					"value"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthRestAPIItemSettingsReturnType": {
+				"type": "string",
+				"enum": [
+					"file",
+					"body"
+				]
+			},
+			"SouthRestAPIItemSettingsDateTimeFieldsType": {
+				"type": "string",
+				"enum": [
+					"string",
+					"iso-string",
+					"unix-epoch",
+					"unix-epoch-ms"
+				]
+			},
+			"SouthRestAPIItemSettingsDateTimeFields": {
+				"properties": {
+					"jsonPath": {
+						"type": "string"
+					},
+					"fieldName": {
+						"type": "string",
+						"nullable": true
+					},
+					"useAsReference": {
+						"type": "boolean"
+					},
+					"type": {
+						"$ref": "#/components/schemas/SouthRestAPIItemSettingsDateTimeFieldsType"
+					},
+					"timezone": {
+						"$ref": "#/components/schemas/Timezone"
+					},
+					"format": {
+						"type": "string"
+					},
+					"locale": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"jsonPath",
+					"fieldName",
+					"useAsReference",
+					"type"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthRestAPIItemSettingsSerializationType": {
+				"type": "string",
+				"enum": [
+					"csv"
+				],
+				"nullable": false
+			},
+			"SouthRestAPIItemSettingsSerializationDelimiter": {
+				"type": "string",
+				"enum": [
+					"DOT",
+					"SEMI_COLON",
+					"COLON",
+					"COMMA",
+					"NON_BREAKING_SPACE",
+					"SLASH",
+					"TAB",
+					"PIPE"
+				]
+			},
+			"SouthRestAPIItemSettingsSerialization": {
+				"properties": {
+					"type": {
+						"$ref": "#/components/schemas/SouthRestAPIItemSettingsSerializationType"
+					},
+					"filename": {
+						"type": "string"
+					},
+					"delimiter": {
+						"$ref": "#/components/schemas/SouthRestAPIItemSettingsSerializationDelimiter"
+					},
+					"compression": {
+						"type": "boolean"
+					},
+					"outputTimestampFormat": {
+						"type": "string"
+					},
+					"outputTimezone": {
+						"$ref": "#/components/schemas/Timezone"
+					}
+				},
+				"required": [
+					"type",
+					"filename",
+					"delimiter",
+					"compression",
+					"outputTimestampFormat",
+					"outputTimezone"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthRestAPIItemSettings": {
+				"properties": {
+					"method": {
+						"$ref": "#/components/schemas/SouthRestAPIItemSettingsMethod"
+					},
+					"endpoint": {
+						"type": "string"
+					},
+					"queryParams": {
+						"items": {
+							"$ref": "#/components/schemas/SouthRestAPIItemSettingsQueryParams"
+						},
+						"type": "array",
+						"nullable": true
+					},
+					"body": {
+						"type": "string",
+						"nullable": true
+					},
+					"headers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthRestAPIItemSettingsHeaders"
+						},
+						"type": "array",
+						"nullable": true
+					},
+					"returnType": {
+						"$ref": "#/components/schemas/SouthRestAPIItemSettingsReturnType"
+					},
+					"dateTimeFields": {
+						"items": {
+							"$ref": "#/components/schemas/SouthRestAPIItemSettingsDateTimeFields"
+						},
+						"type": "array",
+						"nullable": true
+					},
+					"serialization": {
+						"$ref": "#/components/schemas/SouthRestAPIItemSettingsSerialization"
+					}
+				},
+				"required": [
+					"method",
+					"endpoint",
+					"queryParams",
+					"headers",
+					"returnType"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"SouthSFTPItemSettings": {
 				"properties": {
 					"remoteFolder": {
@@ -4111,6 +4504,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/SouthPostgreSQLItemSettings"
+					},
+					{
+						"$ref": "#/components/schemas/SouthRestAPIItemSettings"
 					},
 					{
 						"$ref": "#/components/schemas/SouthSFTPItemSettings"
@@ -7176,10 +7572,10 @@
 			"OIBusNorthType": {
 				"type": "string",
 				"enum": [
-					"modbus",
-					"mqtt",
-					"oianalytics",
 					"opcua",
+					"mqtt",
+					"modbus",
+					"oianalytics",
 					"sftp",
 					"azure-blob",
 					"aws-s3",
@@ -7867,7 +8263,7 @@
 					"inputType": {
 						"type": "string",
 						"description": "The input data type that the transformer accepts.",
-						"example": "string"
+						"example": "time-values"
 					},
 					"transformerId": {
 						"type": "string",
@@ -9837,7 +10233,7 @@
 				"description": "Data Transfer Object for a transformer with its options.\nUsed when a transformer needs to be applied with specific configuration options.",
 				"properties": {
 					"inputType": {
-						"type": "string",
+						"$ref": "#/components/schemas/InputType",
 						"description": "The input data type that the transformer accepts.",
 						"example": "string"
 					},
@@ -11544,6 +11940,71 @@
 				}
 			}
 		},
+		"/api/transformers/{transformerId}/test": {
+			"post": {
+				"operationId": "Test",
+				"responses": {
+					"204": {
+						"description": "No Content"
+					}
+				},
+				"tags": [
+					"Transformers"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "transformerId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/TransformerTestRequest"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/transformers/template/{inputType}": {
+			"get": {
+				"operationId": "GetInputTemplate",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/InputTemplate"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Transformers"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "inputType",
+						"required": true,
+						"schema": {
+							"$ref": "#/components/schemas/InputType"
+						}
+					}
+				]
+			}
+		},
 		"/api/south/types": {
 			"get": {
 				"operationId": "ListManifest",
@@ -12880,6 +13341,33 @@
 				},
 				"description": "Registers the current instance of OIBus with the OIAnalytics service",
 				"summary": "Register service",
+				"tags": [
+					"OIAnalytics Registration"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/RegistrationSettingsCommandDTO"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/oianalytics/registration/test-connection": {
+			"post": {
+				"operationId": "TestConnection",
+				"responses": {
+					"204": {
+						"description": "Connection test successful"
+					}
+				},
+				"description": "Test connection to OIAnalytics service with the provided settings",
+				"summary": "Test connection",
 				"tags": [
 					"OIAnalytics Registration"
 				],

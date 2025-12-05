@@ -217,10 +217,22 @@
       "update-history-query-status": "Update history query status",
       "setpoint": "Setpoint"
     },
-    "oibus-data-type": {
+    "oibus-input-data-type": {
       "any": "Any",
-      "time-values": "OIBus time values",
-      "setpoint": "Setpoints"
+      "setpoint": "Setpoints",
+      "time-values": "OIBus time values"
+    },
+    "oibus-output-data-type": {
+      "any": "Any",
+      "mqtt": "MQTT",
+      "modbus": "Modbus",
+      "oianalytics": "OIAnalytics optimized time values",
+      "opcua": "OPCUA",
+      "time-values": "OIBus time values"
+    },
+    "oibus-transformer-language": {
+      "javascript": "JavaScript",
+      "typescript": "TypeScript"
     },
     "oibus-north-category": {
       "debug": "Debug",
@@ -274,6 +286,7 @@
       "oracle": "Oracle Database™",
       "osisoft-pi": "OSIsoft PI System™",
       "postgresql": "PostgreSQL",
+      "rest-api": "REST API",
       "sftp": "SFTP",
       "sqlite": "SQLite™"
     },
@@ -293,6 +306,7 @@
       "oracle": "Query data from an Oracle Database™",
       "osisoft-pi": "Establish a connection with an OIBus Agent to access data from a PI System™",
       "postgresql": "Query PostgreSQL databases",
+      "rest-api": "Collect data from REST API endpoints",
       "sftp": "Read files from a remote SFTP server",
       "sqlite": "Query  SQLite™ databases"
     }
@@ -382,7 +396,11 @@
       "expiration-date": "Expired on",
       "registered": "OIBus registered on {{ activationDate }}",
       "enable-all": "Enable All",
-      "disable-all": "Disable All"
+      "disable-all": "Disable All",
+      "test-connection": "Test connection",
+      "test-connection-section": "Test connection",
+      "test-connection-success": "Connection successful",
+      "test-connection-error": "Error when testing connection"
     },
     "commands": {
       "title": "Command list",
@@ -845,6 +863,17 @@
           }
         },
         "transformers": {
+          "title": "Transform payloads",
+          "input-type": "Source type",
+          "output-type": "Destination type",
+          "transformer": "Transformer",
+          "add": "Add a transformer",
+          "list": "Custom Transformers",
+          "none": "No Custom Transformer",
+          "created": "Transformer {{ name }} created",
+          "edited": "Transformer {{ name }} edited",
+          "confirm-deletion": "Are you sure you want to delete the custom transformer {{ name }}?",
+          "deleted": "Transformer {{ name }} deleted",
           "standard": {
             "ignore": "Ignore",
             "iso": "No transform",
@@ -857,6 +886,101 @@
             "setpoint-to-modbus": "Setpoints into Modbus values",
             "setpoint-to-mqtt": "Setpoints into MQTT payloads",
             "setpoint-to-opcua": "Setpoints into OPCUA values"
+          },
+          "choose-transformer-modal": {
+            "title": "Choose how to handle payloads",
+            "transformer": "Transformer to apply",
+            "options": "Options"
+          },
+          "edit-transformer-modal": {
+            "create-title": "Create a Custom Transformer",
+            "edit-title": "Edit a Custom Transformer",
+            "input-type": "Input",
+            "output-type": "Output",
+            "name": "Name",
+            "description": "Description",
+            "custom-code": "Code",
+            "language": "Language",
+            "custom-manifest": "Options",
+            "select-language": "Select a programming language first.",
+            "test": "Test",
+            "tooltips": {
+              "add": "Add a Custom Transformer",
+              "edit": "Edit this Custom Transformer",
+              "delete": "Delete this Custom Transformer"
+            }
+          },
+          "test-transformer-modal": {
+            "title": "Test Custom Transformer",
+            "transformer": "Transformer",
+            "input-type": "Input Type",
+            "input-data": "Input Data",
+            "options": "Options",
+            "output": "Output",
+            "results": "Results",
+            "success": "Test completed successfully",
+            "test": "Run Test"
+          },
+          "attributes": {
+            "attribute": "Attribute",
+            "sub-attribute": "Sub-attribute",
+            "root-attribute": "Root attribute",
+            "root-attribute-item": "Root attribute item",
+            "key": "Key",
+            "type": {
+              "title": "Type",
+              "string": "String",
+              "number": "Number",
+              "instant": "Instant",
+              "string-select": "String select",
+              "secret": "Secret",
+              "code": "Code",
+              "boolean": "Boolean",
+              "scan-mode": "Scan mode",
+              "certificate": "Certificate",
+              "timezone": "Timezone",
+              "array": "Array",
+              "object": "Object"
+            },
+            "translation-key": "Translation key",
+            "visible": "Visible",
+            "wrap-in-box": "Wrap in Box",
+            "attributes": "Attributes",
+            "add": "Add Attribute",
+            "none": "No attributes defined",
+            "default-value": "Default Value",
+            "unit": "Unit",
+            "selectable-values": "Selectable Values",
+            "selectable-values-help": "Comma-separated list of values",
+            "content-type": {
+              "title": "Content Type",
+              "json": "JSON",
+              "sql": "SQL"
+            },
+            "acceptable-type": {
+              "title": "Acceptable Type",
+              "POLL": "Poll",
+              "SUBSCRIPTION": "Subscription",
+              "SUBSCRIPTION_AND_POLL": "Subscription and Poll"
+            },
+            "paginate": "Paginate",
+            "number-of-elements-per-page": "Number of elements per page",
+            "display-properties": {
+              "visible": "Visible",
+              "wrap-in-box": "Wrap in box"
+            },
+            "row": "Row",
+            "columns": "Columns",
+            "display-in-view-mode": "Display in View Mode",
+            "nested-attributes": "Nested Attributes",
+            "nested-context": "Nested Attributes — {{ path }}",
+            "secret-info": "Secret fields are used for sensitive data",
+            "instant-info": "Instant fields are used for timestamp values",
+            "certificate-info": "Certificate fields are used for SSL certificates",
+            "edit-transformer-modal": {
+              "create-title": "Create Attribute",
+              "edit-title": "Edit Attribute"
+            }
           },
           "time-values-to-csv": {
             "filename": "Filename",
@@ -1263,6 +1387,50 @@
             "database": "Database",
             "username": "Username",
             "password": "Password"
+          },
+          "rest-api": {
+            "throttling": {
+              "title": "Throttling",
+              "max-read-interval": "Max read interval",
+              "read-delay": "Read delay",
+              "overlap": "Overlap"
+            },
+            "host": "Host",
+            "accept-unauthorized": "Accept unauthorized certificate",
+            "authentication": {
+              "title": "Authentication",
+              "none": "None",
+              "basic": "Basic (username/password)",
+              "bearer": "Bearer token",
+              "api-key": "API key"
+            },
+            "username": "Username",
+            "password": "Password",
+            "token": "Bearer token",
+            "api-key": "API key",
+            "api-value": "API value",
+            "add-to": {
+              "title": "Add to",
+              "header": "Header",
+              "query-params": "Query parameters"
+            },
+            "test": {
+              "title": "Test configuration",
+              "endpoint": "Test endpoint",
+              "method": {
+                "title": "Test method",
+                "GET": "GET",
+                "POST": "POST",
+                "PUT": "PUT"
+              },
+              "body": "Body (JSON)",
+              "success-code": "Expected success code"
+            },
+            "timeout": "Request timeout",
+            "use-proxy": "Use proxy",
+            "proxy-url": "Proxy URL",
+            "proxy-username": "Proxy username",
+            "proxy-password": "Proxy password"
           },
           "sftp": {
             "host": "Host",
@@ -1748,6 +1916,74 @@
                   "SLASH": "Slash /",
                   "TAB": "Tab",
                   "NON_BREAKING_SPACE": "Space",
+                  "PIPE": "Pipe |"
+                },
+                "compression": "Compression",
+                "output-timestamp-format": "Output date time format",
+                "output-timezone": "Output timezone"
+              }
+            },
+            "rest-api": {
+              "method": {
+                "title": "HTTP method",
+                "GET": "GET",
+                "POST": "POST",
+                "PUT": "PUT",
+                "PATCH": "PATCH",
+                "DELETE": "DELETE"
+              },
+              "endpoint": "Endpoint",
+              "query-params": {
+                "title": "Query parameters",
+                "query-param": "Query parameter",
+                "key": "Key",
+                "value": "Value"
+              },
+              "body": "Request body (JSON)",
+              "headers": {
+                "title": "Headers",
+                "header": "Header",
+                "key": "Header name",
+                "value": "Header value"
+              },
+              "return-type": {
+                "title": "Return type",
+                "body": "Body (JSON / XML)",
+                "file": "File (Content-Disposition)"
+              },
+              "date-time-fields": {
+                "title": "Date time fields",
+                "date-time-field": "Date time field",
+                "json-path": "JSONPath",
+                "field-name": "Field name",
+                "use-as-reference": "Reference timestamp",
+                "type": {
+                  "title": "Type",
+                  "iso-string": "ISO string",
+                  "unix-epoch": "Unix epoch (s)",
+                  "unix-epoch-ms": "Unix epoch (ms)",
+                  "string": "String"
+                },
+                "timezone": "Timezone",
+                "format": "Format",
+                "locale": "Locale"
+              },
+              "serialization": {
+                "title": "Serialization",
+                "type": {
+                  "title": "Type",
+                  "csv": "CSV"
+                },
+                "filename": "Filename",
+                "delimiter": {
+                  "title": "Delimiter",
+                  "DOT": "Dot .",
+                  "SEMI_COLON": "Semi colon ;",
+                  "COLON": "Colon :",
+                  "COMMA": "Comma ,",
+                  "NON_BREAKING_SPACE": "Space",
+                  "SLASH": "Slash /",
+                  "TAB": "Tab",
                   "PIPE": "Pipe |"
                 },
                 "compression": "Compression",
