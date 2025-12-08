@@ -84,11 +84,16 @@ const baseConfiguration: SouthConnectorEntity<SouthRestAPISettings, SouthRestAPI
         method: 'POST',
         endpoint: '/data',
         queryParams: [
-          { key: 'from', value: '@StartTime' },
-          { key: 'size', value: '10' }
+          { key: 'from', value: '@StartTime', dateTimeType: null, dateTimeTimezone: null, dateTimeFormat: null },
+          { key: 'size', value: '10', dateTimeType: null, dateTimeTimezone: null, dateTimeFormat: null }
         ],
         body: '{"range":{"from":"@StartTime","to":"@EndTime"}}',
-        headers: [{ key: 'X-Window', value: 'from:@StartTime,to:@EndTime' }],
+        bodyDateTimeType: null,
+        bodyDateTimeTimezone: null,
+        bodyDateTimeFormat: null,
+        headers: [
+          { key: 'X-Window', value: 'from:@StartTime,to:@EndTime', dateTimeType: null, dateTimeTimezone: null, dateTimeFormat: null }
+        ],
         returnType: 'body',
         dateTimeFields: [
           {
@@ -121,6 +126,9 @@ const baseConfiguration: SouthConnectorEntity<SouthRestAPISettings, SouthRestAPI
         endpoint: '/export',
         queryParams: null,
         body: null,
+        bodyDateTimeType: null,
+        bodyDateTimeTimezone: null,
+        bodyDateTimeFormat: null,
         headers: null,
         returnType: 'file',
         dateTimeFields: null,
@@ -627,8 +635,8 @@ describe('SouthRestAPI connector', () => {
   it('replaces headers when no reference timestamp field is configured', async () => {
     const item = bodyItem();
     item.settings.headers = [
-      { key: 'X-Test', value: 'window:@StartTime-@EndTime' },
-      { key: 'X-End', value: 'end:@EndTime' }
+      { key: 'X-Test', value: 'window:@StartTime-@EndTime', dateTimeType: null, dateTimeTimezone: null, dateTimeFormat: null },
+      { key: 'X-End', value: 'end:@EndTime', dateTimeType: null, dateTimeTimezone: null, dateTimeFormat: null }
     ];
     item.settings.dateTimeFields = null;
     const response = createMockResponse(200, [], { 'content-type': 'application/json' });
@@ -642,7 +650,7 @@ describe('SouthRestAPI connector', () => {
 
   it('keeps headers unchanged when no placeholders are present', async () => {
     const item = bodyItem();
-    item.settings.headers = [{ key: 'X-Static', value: 'static' }];
+    item.settings.headers = [{ key: 'X-Static', value: 'static', dateTimeType: null, dateTimeTimezone: null, dateTimeFormat: null }];
     const response = createMockResponse(200, [], { 'content-type': 'application/json' });
     httpRequestMock.mockResolvedValueOnce(response);
 
@@ -838,5 +846,214 @@ describe('SouthRestAPI connector', () => {
     expect((url as URL).searchParams.get('X-API-Key')).toBeNull();
     // decryptText should still be called because authentication is api-key
     expect(decryptTextMock).toHaveBeenCalledWith('encrypted-api-value');
+  });
+
+  it('should format query params with dateTime configuration', async () => {
+    const item = bodyItem();
+    item.settings.queryParams = [
+      {
+        key: 'start',
+        value: '@StartTime',
+        dateTimeType: 'unix-epoch',
+        dateTimeTimezone: null,
+        dateTimeFormat: null
+      },
+      {
+        key: 'end',
+        value: '@EndTime',
+        dateTimeType: 'string',
+        dateTimeTimezone: 'Europe/Paris',
+        dateTimeFormat: 'yyyy-MM-dd'
+      }
+    ];
+    const response = createMockResponse(200, [], { 'content-type': 'application/json' });
+    httpRequestMock.mockResolvedValueOnce(response);
+    formatInstantMock.mockImplementation((instant, options) => {
+      if (options.type === 'unix-epoch') return '1704067200';
+      if (options.type === 'string') {
+        return instant === '2024-01-01T00:00:00Z' ? '2024-01-01' : '2024-01-02';
+      }
+      return instant;
+    });
+
+    await south.queryData(item, '2024-01-01T00:00:00Z', '2024-01-01T01:00:00Z');
+    const options = getRequestOptions(httpRequestMock.mock.calls.length - 1);
+    expect(options.query).toEqual({ start: '1704067200', end: '2024-01-02' });
+    expect(formatInstantMock).toHaveBeenCalledWith('2024-01-01T00:00:00Z', {
+      type: 'unix-epoch',
+      timezone: undefined,
+      format: undefined,
+      locale: 'en-En'
+    });
+    expect(formatInstantMock).toHaveBeenCalledWith('2024-01-01T01:00:00Z', {
+      type: 'string',
+      timezone: 'Europe/Paris',
+      format: 'yyyy-MM-dd',
+      locale: 'en-En'
+    });
+  });
+
+  it('should format query params with @EndTime only and dateTimeType', async () => {
+    const item = bodyItem();
+    item.settings.queryParams = [
+      {
+        key: 'end',
+        value: '@EndTime',
+        dateTimeType: 'iso-string',
+        dateTimeTimezone: null,
+        dateTimeFormat: null
+      }
+    ];
+    const response = createMockResponse(200, [], { 'content-type': 'application/json' });
+    httpRequestMock.mockResolvedValueOnce(response);
+    formatInstantMock.mockReturnValue('2024-01-01T01:00:00.000Z');
+
+    await south.queryData(item, '2024-01-01T00:00:00Z', '2024-01-01T01:00:00Z');
+    const options = getRequestOptions(httpRequestMock.mock.calls.length - 1);
+    expect(options.query).toEqual({ end: '2024-01-01T01:00:00.000Z' });
+    expect(formatInstantMock).toHaveBeenCalledWith('2024-01-01T01:00:00Z', {
+      type: 'iso-string',
+      timezone: undefined,
+      format: undefined,
+      locale: 'en-En'
+    });
+  });
+
+  it('should use endTime directly when query param has @EndTime but no dateTimeType', async () => {
+    const item = bodyItem();
+    item.settings.queryParams = [
+      {
+        key: 'end',
+        value: '@EndTime',
+        dateTimeType: null,
+        dateTimeTimezone: null,
+        dateTimeFormat: null
+      }
+    ];
+    item.settings.dateTimeFields = null; // Remove dateTimeFields to avoid formatInstant calls during parsing
+    const response = createMockResponse(200, [], { 'content-type': 'application/json' });
+    httpRequestMock.mockResolvedValueOnce(response);
+    formatInstantMock.mockClear(); // Clear any previous calls
+
+    await south.queryData(item, '2024-01-01T00:00:00Z', '2024-01-01T01:00:00Z');
+    const options = getRequestOptions(httpRequestMock.mock.calls.length - 1);
+    expect(options.query).toEqual({ end: '2024-01-01T01:00:00Z' });
+    // formatInstant should not be called for query param replacement when dateTimeType is null
+    // Since dateTimeFields is null, formatInstant should not be called at all
+    expect(formatInstantMock).not.toHaveBeenCalled();
+  });
+
+  it('should format headers with dateTime configuration', async () => {
+    const item = bodyItem();
+    item.settings.headers = [
+      {
+        key: 'X-Start',
+        value: 'start:@StartTime',
+        dateTimeType: 'unix-epoch-ms',
+        dateTimeTimezone: null,
+        dateTimeFormat: null
+      },
+      {
+        key: 'X-Range',
+        value: '@StartTime to @EndTime',
+        dateTimeType: 'string',
+        dateTimeTimezone: 'UTC',
+        dateTimeFormat: 'yyyy/MM/dd HH:mm'
+      }
+    ];
+    const response = createMockResponse(200, [], { 'content-type': 'application/json' });
+    httpRequestMock.mockResolvedValueOnce(response);
+    formatInstantMock.mockImplementation((instant, options) => {
+      if (options.type === 'unix-epoch-ms') return '1704067200000';
+      if (options.type === 'string') return instant === '2024-01-01T00:00:00Z' ? '2024/01/01 00:00' : '2024/01/01 01:00';
+      return instant;
+    });
+
+    await south.queryData(item, '2024-01-01T00:00:00Z', '2024-01-01T01:00:00Z');
+    const options = getRequestOptions(httpRequestMock.mock.calls.length - 1);
+    const headers = options.headers as Record<string, string>;
+    expect(headers['X-Start']).toBe('start:1704067200000');
+    expect(headers['X-Range']).toBe('2024/01/01 00:00 to 2024/01/01 01:00');
+  });
+
+  it('should format headers with @EndTime only and dateTimeType', async () => {
+    const item = bodyItem();
+    item.settings.headers = [
+      {
+        key: 'X-End',
+        value: '@EndTime',
+        dateTimeType: 'unix-epoch-ms',
+        dateTimeTimezone: null,
+        dateTimeFormat: null
+      }
+    ];
+    const response = createMockResponse(200, [], { 'content-type': 'application/json' });
+    httpRequestMock.mockResolvedValueOnce(response);
+    formatInstantMock.mockReturnValue('1704070800000');
+
+    await south.queryData(item, '2024-01-01T00:00:00Z', '2024-01-01T01:00:00Z');
+    const options = getRequestOptions(httpRequestMock.mock.calls.length - 1);
+    const headers = options.headers as Record<string, string>;
+    expect(headers['X-End']).toBe('1704070800000');
+    expect(formatInstantMock).toHaveBeenCalledWith('2024-01-01T01:00:00Z', {
+      type: 'unix-epoch-ms',
+      timezone: undefined,
+      format: undefined,
+      locale: 'en-En'
+    });
+  });
+
+  it('should format body with bodyDateTimeType configuration', async () => {
+    const item = bodyItem();
+    item.settings.body = '{"from":"@StartTime","to":"@EndTime"}';
+    item.settings.bodyDateTimeType = 'unix-epoch';
+    item.settings.bodyDateTimeTimezone = null;
+    item.settings.bodyDateTimeFormat = null;
+    const response = createMockResponse(200, [], { 'content-type': 'application/json' });
+    httpRequestMock.mockResolvedValueOnce(response);
+    formatInstantMock.mockImplementation((instant, options) => {
+      if (options.type === 'unix-epoch') return instant === '2024-01-01T00:00:00Z' ? 1704067200 : 1704070800;
+      return instant;
+    });
+
+    await south.queryData(item, '2024-01-01T00:00:00Z', '2024-01-01T01:00:00Z');
+    const options = getRequestOptions(httpRequestMock.mock.calls.length - 1);
+    expect(options.body).toBe('{"from":1704067200,"to":1704070800}');
+  });
+
+  it('should use bodyDateTimeType with string format and timezone', async () => {
+    const item = bodyItem();
+    item.settings.body = '{"timestamp":"@StartTime"}';
+    item.settings.bodyDateTimeType = 'string';
+    item.settings.bodyDateTimeTimezone = 'America/New_York';
+    item.settings.bodyDateTimeFormat = 'MM/dd/yyyy HH:mm:ss';
+    const response = createMockResponse(200, [], { 'content-type': 'application/json' });
+    httpRequestMock.mockResolvedValueOnce(response);
+    formatInstantMock.mockReturnValue('01/01/2024 00:00:00');
+
+    await south.queryData(item, '2024-01-01T00:00:00Z', '2024-01-01T01:00:00Z');
+    const options = getRequestOptions(httpRequestMock.mock.calls.length - 1);
+    expect(options.body).toBe('{"timestamp":"01/01/2024 00:00:00"}');
+    expect(formatInstantMock).toHaveBeenCalledWith('2024-01-01T00:00:00Z', {
+      type: 'string',
+      timezone: 'America/New_York',
+      format: 'MM/dd/yyyy HH:mm:ss',
+      locale: 'en-En'
+    });
+  });
+
+  it('should skip body dateTime configuration when body is not used', async () => {
+    const item = bodyItem();
+    item.settings.method = 'GET';
+    item.settings.body = '{"from":"@StartTime"}';
+    item.settings.bodyDateTimeType = 'unix-epoch';
+    item.settings.bodyDateTimeTimezone = null;
+    item.settings.bodyDateTimeFormat = null;
+    const response = createMockResponse(200, [], { 'content-type': 'application/json' });
+    httpRequestMock.mockResolvedValueOnce(response);
+
+    await south.queryData(item, '2024-01-01T00:00:00Z', '2024-01-01T01:00:00Z');
+    const options = getRequestOptions(httpRequestMock.mock.calls.length - 1);
+    expect(options.body).toBeUndefined();
   });
 });

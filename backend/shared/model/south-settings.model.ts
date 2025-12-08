@@ -294,6 +294,12 @@ export type SouthRestAPISettingsAuthentication = (typeof SOUTH_REST_A_P_I_SETTIN
 export const SOUTH_REST_A_P_I_SETTINGS_ADD_TOS = ['header', 'query-params'] as const;
 export type SouthRestAPISettingsAddTo = (typeof SOUTH_REST_A_P_I_SETTINGS_ADD_TOS)[number];
 
+export const SOUTH_REST_A_P_I_ITEM_SETTINGS_QUERY_PARAMS_DATE_TIME_TYPES = ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'] as const;
+export type SouthRestAPIItemSettingsQueryParamsDateTimeType = (typeof SOUTH_REST_A_P_I_ITEM_SETTINGS_QUERY_PARAMS_DATE_TIME_TYPES)[number];
+
+export const SOUTH_REST_A_P_I_ITEM_SETTINGS_HEADERS_DATE_TIME_TYPES = ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'] as const;
+export type SouthRestAPIItemSettingsHeadersDateTimeType = (typeof SOUTH_REST_A_P_I_ITEM_SETTINGS_HEADERS_DATE_TIME_TYPES)[number];
+
 export const SOUTH_REST_A_P_I_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'] as const;
 export type SouthRestAPIItemSettingsDateTimeFieldsType = (typeof SOUTH_REST_A_P_I_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
 
@@ -314,6 +320,9 @@ export type SouthRestAPIItemSettingsSerializationDelimiter = (typeof SOUTH_REST_
 
 export const SOUTH_REST_A_P_I_ITEM_SETTINGS_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as const;
 export type SouthRestAPIItemSettingsMethod = (typeof SOUTH_REST_A_P_I_ITEM_SETTINGS_METHODS)[number];
+
+export const SOUTH_REST_A_P_I_ITEM_SETTINGS_BODY_DATE_TIME_TYPES = ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'] as const;
+export type SouthRestAPIItemSettingsBodyDateTimeType = (typeof SOUTH_REST_A_P_I_ITEM_SETTINGS_BODY_DATE_TIME_TYPES)[number];
 
 export const SOUTH_REST_A_P_I_ITEM_SETTINGS_RETURN_TYPES = ['body', 'file'] as const;
 export type SouthRestAPIItemSettingsReturnType = (typeof SOUTH_REST_A_P_I_ITEM_SETTINGS_RETURN_TYPES)[number];
@@ -831,11 +840,17 @@ export interface SouthPostgreSQLItemSettingsSerialization {
 export interface SouthRestAPIItemSettingsQueryParams {
   key: string;
   value: string;
+  dateTimeType?: SouthRestAPIItemSettingsQueryParamsDateTimeType | null;
+  dateTimeTimezone?: Timezone | null;
+  dateTimeFormat?: string | null;
 }
 
 export interface SouthRestAPIItemSettingsHeaders {
   key: string;
   value: string;
+  dateTimeType?: SouthRestAPIItemSettingsHeadersDateTimeType | null;
+  dateTimeTimezone?: Timezone | null;
+  dateTimeFormat?: string | null;
 }
 
 export interface SouthRestAPIItemSettingsDateTimeFields {
@@ -974,6 +989,9 @@ export interface SouthRestAPIItemSettings {
   endpoint: string;
   queryParams: Array<SouthRestAPIItemSettingsQueryParams> | null;
   body?: string | null;
+  bodyDateTimeType?: SouthRestAPIItemSettingsBodyDateTimeType | null;
+  bodyDateTimeTimezone?: Timezone | null;
+  bodyDateTimeFormat?: string | null;
   headers: Array<SouthRestAPIItemSettingsHeaders> | null;
   returnType: SouthRestAPIItemSettingsReturnType;
   dateTimeFields?: Array<SouthRestAPIItemSettingsDateTimeFields> | null;
