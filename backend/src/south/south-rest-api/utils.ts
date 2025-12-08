@@ -15,25 +15,44 @@ export function replaceVariablesInJsonBody(
     timezone?: string;
     format?: string;
     locale?: string;
-  }>
+  }>,
+  bodyDateTimeConfig?: {
+    type?: DateTimeType;
+    timezone?: string;
+    format?: string;
+  }
 ): string {
   const referenceTimestampField = dateTimeFields.find(field => field.useAsReference);
-  const formattedStartTime = referenceTimestampField
+  const formattedStartTime = bodyDateTimeConfig?.type
     ? formatInstant(startTime, {
-        type: referenceTimestampField.type,
-        timezone: referenceTimestampField.timezone,
-        format: referenceTimestampField.format,
-        locale: referenceTimestampField.locale
+        type: bodyDateTimeConfig.type,
+        timezone: bodyDateTimeConfig.timezone,
+        format: bodyDateTimeConfig.format,
+        locale: 'en-En'
       })
-    : startTime;
-  const formattedEndTime = referenceTimestampField
+    : referenceTimestampField
+      ? formatInstant(startTime, {
+          type: referenceTimestampField.type,
+          timezone: referenceTimestampField.timezone,
+          format: referenceTimestampField.format,
+          locale: referenceTimestampField.locale
+        })
+      : startTime;
+  const formattedEndTime = bodyDateTimeConfig?.type
     ? formatInstant(endTime, {
-        type: referenceTimestampField.type,
-        timezone: referenceTimestampField.timezone,
-        format: referenceTimestampField.format,
-        locale: referenceTimestampField.locale
+        type: bodyDateTimeConfig.type,
+        timezone: bodyDateTimeConfig.timezone,
+        format: bodyDateTimeConfig.format,
+        locale: 'en-En'
       })
-    : endTime;
+    : referenceTimestampField
+      ? formatInstant(endTime, {
+          type: referenceTimestampField.type,
+          timezone: referenceTimestampField.timezone,
+          format: referenceTimestampField.format,
+          locale: referenceTimestampField.locale
+        })
+      : endTime;
 
   try {
     const parsed = JSON.parse(body);
