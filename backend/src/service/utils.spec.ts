@@ -1189,7 +1189,7 @@ describe('Service utils', () => {
             {
               ...testData.south.list[2].items[0]
             }
-          ],
+          ] as any,
           ',',
           testData.scanMode.list
         )
@@ -1206,7 +1206,7 @@ describe('Service utils', () => {
             {
               ...testData.south.list[2].items[0]
             }
-          ],
+          ] as any,
           ','
         )
       ).toEqual('csv content');

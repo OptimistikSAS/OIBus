@@ -373,7 +373,7 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
 
     const formValue = this.form!.value;
     const dateRange = formValue.dateRange!;
-    const command: HistoryQueryCommandDTO = {
+    const command = {
       name: formValue.name!,
       description: formValue.description!,
       startTime: dateRange.startTime,
@@ -404,21 +404,20 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
           retentionDuration: formValue.caching!.archive!.retentionDuration!
         }
       },
-      items:
-        this.saveItemChangesDirectly && this.historyQuery
-          ? this.historyQuery.items.map(item => ({
-              id: item.id,
-              name: item.name,
-              enabled: item.enabled,
-              settings: item.settings
-            }))
-          : this.inMemoryItems,
+      items: (this.saveItemChangesDirectly && this.historyQuery
+        ? this.historyQuery.items.map(item => ({
+            id: item.id,
+            name: item.name,
+            enabled: item.enabled,
+            settings: item.settings
+          }))
+        : this.inMemoryItems) as any,
       northTransformers: this.inMemoryTransformersWithOptions.map(element => ({
         transformerId: element.transformer.id,
         options: element.options,
         inputType: element.inputType
       }))
-    };
+    } as HistoryQueryCommandDTO;
 
     if (this.mode === 'edit') {
       const modalRef = this.modalService.open(ResetCacheHistoryQueryModalComponent);

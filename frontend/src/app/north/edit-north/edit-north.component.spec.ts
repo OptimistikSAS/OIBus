@@ -9,7 +9,7 @@ import { ScanModeService } from '../../services/scan-mode.service';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { NorthConnectorDTO } from '../../../../../backend/shared/model/north-connector.model';
 import { CertificateService } from '../../services/certificate.service';
-import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
+import { NorthConsoleSettings } from '../../../../../backend/shared/model/north-settings.model';
 import { TransformerService } from '../../services/transformer.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import testData from '../../../../../backend/src/tests/utils/test-data';
@@ -103,7 +103,9 @@ describe('EditNorthComponent', () => {
       name: 'North Connector',
       description: 'My North connector description',
       enabled: true,
-      settings: {} as NorthSettings,
+      settings: {
+        verbose: false
+      } as NorthConsoleSettings,
       caching: {
         trigger: {
           scanMode: testData.scanMode.list[0],

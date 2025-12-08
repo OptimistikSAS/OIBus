@@ -3,7 +3,7 @@ import { ComponentTester, createMock } from 'ngx-speculoos';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { fakeAsync, TestBed } from '@angular/core/testing';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
-import { SouthItemSettings } from '../../../../../../backend/shared/model/south-settings.model';
+import { SouthFolderScannerItemSettings } from '../../../../../../backend/shared/model/south-settings.model';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
 import { SouthConnectorDTO } from '../../../../../../backend/shared/model/south-connector.model';
 
@@ -42,7 +42,7 @@ describe('ImportSouthItemsModalComponent', () => {
           id: '',
           name: 'item999',
           enabled: true,
-          settings: {} as SouthItemSettings,
+          settings: { regex: '*', minAge: 100, preserveFiles: true } as SouthFolderScannerItemSettings,
           scanMode: testData.scanMode.list[0]
         }
       ],
@@ -59,7 +59,7 @@ describe('ImportSouthItemsModalComponent', () => {
         id: '',
         name: 'item999',
         enabled: true,
-        settings: {} as SouthItemSettings,
+        settings: { regex: '*', minAge: 100, preserveFiles: true } as SouthFolderScannerItemSettings,
         scanMode: testData.scanMode.list[0]
       }
     ]);

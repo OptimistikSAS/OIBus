@@ -1,5 +1,40 @@
 import { BaseEntity, Instant } from './types';
-import { SouthItemSettings, SouthSettings } from './south-settings.model';
+import {
+  SouthADSItemSettings,
+  SouthADSSettings,
+  SouthFolderScannerItemSettings,
+  SouthFolderScannerSettings,
+  SouthFTPItemSettings,
+  SouthFTPSettings,
+  SouthModbusItemSettings,
+  SouthModbusSettings,
+  SouthMQTTItemSettings,
+  SouthMQTTSettings,
+  SouthMSSQLItemSettings,
+  SouthMSSQLSettings,
+  SouthMySQLItemSettings,
+  SouthMySQLSettings,
+  SouthODBCItemSettings,
+  SouthODBCSettings,
+  SouthOIAnalyticsItemSettings,
+  SouthOIAnalyticsSettings,
+  SouthOLEDBItemSettings,
+  SouthOLEDBSettings,
+  SouthOPCItemSettings,
+  SouthOPCSettings,
+  SouthOPCUAItemSettings,
+  SouthOPCUASettings,
+  SouthOracleItemSettings,
+  SouthOracleSettings,
+  SouthPIItemSettings,
+  SouthPISettings,
+  SouthPostgreSQLItemSettings,
+  SouthPostgreSQLSettings,
+  SouthSFTPItemSettings,
+  SouthSFTPSettings,
+  SouthSQLiteItemSettings,
+  SouthSQLiteSettings
+} from './south-settings.model';
 import { ScanModeDTO } from './scan-mode.model';
 import { OIBusArrayAttribute, OIBusObjectAttribute } from './form.model';
 
@@ -139,11 +174,7 @@ export interface SouthConnectorLightDTO extends BaseEntity {
   enabled: boolean;
 }
 
-/**
- * Data Transfer Object for a South connector.
- * Contains all configuration details and current state of a South connector.
- */
-export interface SouthConnectorDTO extends BaseEntity {
+export interface SouthConnectorTypedDTO<T extends OIBusSouthType, S, IS> extends BaseEntity {
   /**
    * The name of the South connector.
    *
@@ -156,7 +187,7 @@ export interface SouthConnectorDTO extends BaseEntity {
    *
    * @example "folder-scanner"
    */
-  type: OIBusSouthType;
+  type: T;
 
   /**
    * Description of the South connector's purpose.
@@ -174,26 +205,65 @@ export interface SouthConnectorDTO extends BaseEntity {
 
   /**
    * Configuration settings specific to this South connector type.
-   *
-   * @example
-   * {
-   *   "inputFolder": "./input",
-   *   "compression": true
-   * }
    */
-  settings: SouthSettings;
+  settings: S;
 
   /**
    * List of items (data points) configured for this connector.
    */
-  items: Array<SouthConnectorItemDTO>;
+  items: Array<SouthConnectorItemTypedDTO<IS>>;
+}
+
+export interface SouthConnectorItemTypedDTO<IS> extends BaseEntity {
+  /**
+   * The name of the item.
+   *
+   * @example "Temperature Logs"
+   */
+  name: string;
+
+  /**
+   * Whether this item is enabled and should be collected.
+   *
+   * @example true
+   */
+  enabled: boolean;
+
+  /**
+   * Item-specific settings for data collection.
+   */
+  settings: IS;
+
+  /**
+   * The scan mode configuration for this item.
+   */
+  scanMode: ScanModeDTO;
 }
 
 /**
- * Command Data Transfer Object for creating or updating a South connector.
- * Used as the request body for South connector creation/update endpoints.
+ * Data Transfer Object for a South connector.
+ * Contains all configuration details and current state of a South connector.
  */
-export interface SouthConnectorCommandDTO {
+export type SouthConnectorDTO =
+  | SouthConnectorTypedDTO<'ads', SouthADSSettings, SouthADSItemSettings>
+  | SouthConnectorTypedDTO<'folder-scanner', SouthFolderScannerSettings, SouthFolderScannerItemSettings>
+  | SouthConnectorTypedDTO<'ftp', SouthFTPSettings, SouthFTPItemSettings>
+  | SouthConnectorTypedDTO<'modbus', SouthModbusSettings, SouthModbusItemSettings>
+  | SouthConnectorTypedDTO<'mqtt', SouthMQTTSettings, SouthMQTTItemSettings>
+  | SouthConnectorTypedDTO<'mssql', SouthMSSQLSettings, SouthMSSQLItemSettings>
+  | SouthConnectorTypedDTO<'mysql', SouthMySQLSettings, SouthMySQLItemSettings>
+  | SouthConnectorTypedDTO<'odbc', SouthODBCSettings, SouthODBCItemSettings>
+  | SouthConnectorTypedDTO<'oianalytics', SouthOIAnalyticsSettings, SouthOIAnalyticsItemSettings>
+  | SouthConnectorTypedDTO<'oledb', SouthOLEDBSettings, SouthOLEDBItemSettings>
+  | SouthConnectorTypedDTO<'opc', SouthOPCSettings, SouthOPCItemSettings>
+  | SouthConnectorTypedDTO<'opcua', SouthOPCUASettings, SouthOPCUAItemSettings>
+  | SouthConnectorTypedDTO<'oracle', SouthOracleSettings, SouthOracleItemSettings>
+  | SouthConnectorTypedDTO<'osisoft-pi', SouthPISettings, SouthPIItemSettings>
+  | SouthConnectorTypedDTO<'postgresql', SouthPostgreSQLSettings, SouthPostgreSQLItemSettings>
+  | SouthConnectorTypedDTO<'sftp', SouthSFTPSettings, SouthSFTPItemSettings>
+  | SouthConnectorTypedDTO<'sqlite', SouthSQLiteSettings, SouthSQLiteItemSettings>;
+
+export interface SouthConnectorCommandTypedDTO<T extends OIBusSouthType, S, IS> {
   /**
    * The name of the South connector.
    *
@@ -206,7 +276,7 @@ export interface SouthConnectorCommandDTO {
    *
    * @example "folder-scanner"
    */
-  type: OIBusSouthType;
+  type: T;
 
   /**
    * Description of the South connector's purpose.
@@ -224,64 +294,16 @@ export interface SouthConnectorCommandDTO {
 
   /**
    * Configuration settings specific to this South connector type.
-   *
-   * @example
-   * {
-   *   "inputFolder": "./input",
-   *   "compression": true
-   * }
    */
-  settings: SouthSettings;
+  settings: S;
 
   /**
    * List of items (data points) to configure for this connector.
    */
-  items: Array<SouthConnectorItemCommandDTO>;
+  items: Array<SouthConnectorItemCommandTypedDTO<IS>>;
 }
 
-/**
- * Data Transfer Object for an item to query within a South connector.
- * Represents an individual data point or file to be collected.
- */
-export interface SouthConnectorItemDTO extends BaseEntity {
-  /**
-   * The name of the item.
-   *
-   * @example "Temperature Logs"
-   */
-  name: string;
-
-  /**
-   * Whether this item is enabled and should be collected.
-   *
-   * @example true
-   */
-  enabled: boolean;
-
-  /**
-   * Item-specific settings for data collection.
-   *
-   * @example
-   * {
-   *   "regex": "*.csv"
-   *   "minAge": 1000,
-   *   "preserveFiles": true,
-   *   "ignoreModifiedDate": false
-   * }
-   */
-  settings: SouthItemSettings;
-
-  /**
-   * The scan mode configuration for this item.
-   */
-  scanMode: ScanModeDTO;
-}
-
-/**
- * Command Data Transfer Object for creating or updating a South connector item.
- * Used as the request body for South connector item creation/update endpoints.
- */
-export interface SouthConnectorItemCommandDTO {
+export interface SouthConnectorItemCommandTypedDTO<IS> {
   /**
    * The ID of the item (null when creating a new item).
    *
@@ -305,16 +327,8 @@ export interface SouthConnectorItemCommandDTO {
 
   /**
    * Item-specific settings for data collection.
-   *
-   * @example
-   * {
-   *   "regex": "*.csv"
-   *   "minAge": 1000,
-   *   "preserveFiles": true,
-   *   "ignoreModifiedDate": false
-   * }
    */
-  settings: SouthItemSettings;
+  settings: IS;
 
   /**
    * The ID of the scan mode to use for this item.
@@ -332,6 +346,75 @@ export interface SouthConnectorItemCommandDTO {
    */
   scanModeName: string | null;
 }
+
+/**
+ * Command Data Transfer Object for creating or updating a South connector.
+ * Used as the request body for South connector creation/update endpoints.
+ */
+export type SouthConnectorCommandDTO =
+  | SouthConnectorCommandTypedDTO<'ads', SouthADSSettings, SouthADSItemSettings>
+  | SouthConnectorCommandTypedDTO<'folder-scanner', SouthFolderScannerSettings, SouthFolderScannerItemSettings>
+  | SouthConnectorCommandTypedDTO<'ftp', SouthFTPSettings, SouthFTPItemSettings>
+  | SouthConnectorCommandTypedDTO<'modbus', SouthModbusSettings, SouthModbusItemSettings>
+  | SouthConnectorCommandTypedDTO<'mqtt', SouthMQTTSettings, SouthMQTTItemSettings>
+  | SouthConnectorCommandTypedDTO<'mssql', SouthMSSQLSettings, SouthMSSQLItemSettings>
+  | SouthConnectorCommandTypedDTO<'mysql', SouthMySQLSettings, SouthMySQLItemSettings>
+  | SouthConnectorCommandTypedDTO<'odbc', SouthODBCSettings, SouthODBCItemSettings>
+  | SouthConnectorCommandTypedDTO<'oianalytics', SouthOIAnalyticsSettings, SouthOIAnalyticsItemSettings>
+  | SouthConnectorCommandTypedDTO<'oledb', SouthOLEDBSettings, SouthOLEDBItemSettings>
+  | SouthConnectorCommandTypedDTO<'opc', SouthOPCSettings, SouthOPCItemSettings>
+  | SouthConnectorCommandTypedDTO<'opcua', SouthOPCUASettings, SouthOPCUAItemSettings>
+  | SouthConnectorCommandTypedDTO<'oracle', SouthOracleSettings, SouthOracleItemSettings>
+  | SouthConnectorCommandTypedDTO<'osisoft-pi', SouthPISettings, SouthPIItemSettings>
+  | SouthConnectorCommandTypedDTO<'postgresql', SouthPostgreSQLSettings, SouthPostgreSQLItemSettings>
+  | SouthConnectorCommandTypedDTO<'sftp', SouthSFTPSettings, SouthSFTPItemSettings>
+  | SouthConnectorCommandTypedDTO<'sqlite', SouthSQLiteSettings, SouthSQLiteItemSettings>;
+
+/**
+ * Data Transfer Object for an item to query within a South connector.
+ * Represents an individual data point or file to be collected.
+ */
+export type SouthConnectorItemDTO =
+  | SouthConnectorItemTypedDTO<SouthADSItemSettings>
+  | SouthConnectorItemTypedDTO<SouthFolderScannerItemSettings>
+  | SouthConnectorItemTypedDTO<SouthFTPItemSettings>
+  | SouthConnectorItemTypedDTO<SouthModbusItemSettings>
+  | SouthConnectorItemTypedDTO<SouthMQTTItemSettings>
+  | SouthConnectorItemTypedDTO<SouthMSSQLItemSettings>
+  | SouthConnectorItemTypedDTO<SouthMySQLItemSettings>
+  | SouthConnectorItemTypedDTO<SouthODBCItemSettings>
+  | SouthConnectorItemTypedDTO<SouthOIAnalyticsItemSettings>
+  | SouthConnectorItemTypedDTO<SouthOLEDBItemSettings>
+  | SouthConnectorItemTypedDTO<SouthOPCItemSettings>
+  | SouthConnectorItemTypedDTO<SouthOPCUAItemSettings>
+  | SouthConnectorItemTypedDTO<SouthOracleItemSettings>
+  | SouthConnectorItemTypedDTO<SouthPIItemSettings>
+  | SouthConnectorItemTypedDTO<SouthPostgreSQLItemSettings>
+  | SouthConnectorItemTypedDTO<SouthSFTPItemSettings>
+  | SouthConnectorItemTypedDTO<SouthSQLiteItemSettings>;
+
+/**
+ * Command Data Transfer Object for creating or updating a South connector item.
+ * Used as the request body for South connector item creation/update endpoints.
+ */
+export type SouthConnectorItemCommandDTO =
+  | SouthConnectorItemCommandTypedDTO<SouthADSItemSettings>
+  | SouthConnectorItemCommandTypedDTO<SouthFolderScannerItemSettings>
+  | SouthConnectorItemCommandTypedDTO<SouthFTPItemSettings>
+  | SouthConnectorItemCommandTypedDTO<SouthModbusItemSettings>
+  | SouthConnectorItemCommandTypedDTO<SouthMQTTItemSettings>
+  | SouthConnectorItemCommandTypedDTO<SouthMSSQLItemSettings>
+  | SouthConnectorItemCommandTypedDTO<SouthMySQLItemSettings>
+  | SouthConnectorItemCommandTypedDTO<SouthODBCItemSettings>
+  | SouthConnectorItemCommandTypedDTO<SouthOIAnalyticsItemSettings>
+  | SouthConnectorItemCommandTypedDTO<SouthOLEDBItemSettings>
+  | SouthConnectorItemCommandTypedDTO<SouthOPCItemSettings>
+  | SouthConnectorItemCommandTypedDTO<SouthOPCUAItemSettings>
+  | SouthConnectorItemCommandTypedDTO<SouthOracleItemSettings>
+  | SouthConnectorItemCommandTypedDTO<SouthPIItemSettings>
+  | SouthConnectorItemCommandTypedDTO<SouthPostgreSQLItemSettings>
+  | SouthConnectorItemCommandTypedDTO<SouthSFTPItemSettings>
+  | SouthConnectorItemCommandTypedDTO<SouthSQLiteItemSettings>;
 
 /**
  * Settings for testing a South connector item.

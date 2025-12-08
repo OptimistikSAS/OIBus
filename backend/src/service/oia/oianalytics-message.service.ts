@@ -35,6 +35,7 @@ import HistoryQueryRepository from '../../repository/config/history-query.reposi
 import TransformerRepository from '../../repository/config/transformer.repository';
 import { getStandardManifest } from '../transformer.service';
 import { OIBusObjectAttribute } from '../../../shared/model/form.model';
+import { HistoryQueryCommandDTO } from '../../../shared/model/history-query.model';
 
 const STOP_TIMEOUT = 30_000;
 
@@ -258,7 +259,7 @@ export default class OIAnalyticsMessageService {
           attribute => attribute.key === 'settings'
         )! as OIBusObjectAttribute;
         const northManifest = northManifestList.find(manifest => manifest.id === historyQuery.northType)!;
-        return {
+        const result = {
           oIBusInternalId: historyQuery.id,
           settings: {
             name: historyQuery.name,
@@ -305,6 +306,8 @@ export default class OIAnalyticsMessageService {
             }))
           }
         };
+        // Type assertion is safe because we know the southType and northType match the settings at runtime
+        return result as { oIBusInternalId: string; settings: HistoryQueryCommandDTO };
       })
     };
   }
@@ -425,7 +428,7 @@ export default class OIAnalyticsMessageService {
       const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
         attribute => attribute.key === 'settings'
       )! as OIBusObjectAttribute;
-      return {
+      const result = {
         oIBusInternalId: south.id,
         type: south.type,
         settings: {
@@ -444,6 +447,8 @@ export default class OIAnalyticsMessageService {
           }))
         }
       };
+      // Type assertion is safe because we know the type field matches the settings and items at runtime
+      return result as OIAnalyticsSouthCommandDTO;
     });
   }
 
@@ -452,7 +457,7 @@ export default class OIAnalyticsMessageService {
     return norths.map(northLight => {
       const north = this.northRepository.findNorthById(northLight.id)!;
       const manifest = northManifestList.find(manifest => manifest.id === north.type)!;
-      return {
+      const result = {
         oIBusInternalId: north.id,
         type: north.type,
         settings: {
@@ -491,6 +496,8 @@ export default class OIAnalyticsMessageService {
           }))
         }
       };
+      // Type assertion is safe because we know the type field matches the settings at runtime
+      return result as OIAnalyticsNorthCommandDTO;
     });
   }
 
