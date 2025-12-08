@@ -326,6 +326,7 @@ const models: TsoaRoute.Models = {
             "targetPathFromRoot": {"dataType":"string","required":true},
             "referralPathFromRoot": {"dataType":"string","required":true},
             "values": {"dataType":"array","array":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"double"},{"dataType":"boolean"}]},"required":true},
+            "operator": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["EQUALS"]},{"dataType":"enum","enums":["CONTAINS"]}]},
         },
         "additionalProperties": false,
     },
@@ -1564,13 +1565,31 @@ const models: TsoaRoute.Models = {
         "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["GET"]},{"dataType":"enum","enums":["POST"]},{"dataType":"enum","enums":["PUT"]},{"dataType":"enum","enums":["PATCH"]},{"dataType":"enum","enums":["DELETE"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestAPIItemSettingsQueryParamsDateTimeType": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["string"]},{"dataType":"enum","enums":["iso-string"]},{"dataType":"enum","enums":["unix-epoch"]},{"dataType":"enum","enums":["unix-epoch-ms"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthRestAPIItemSettingsQueryParams": {
         "dataType": "refObject",
         "properties": {
             "key": {"dataType":"string","required":true},
             "value": {"dataType":"string","required":true},
+            "dateTimeType": {"dataType":"union","subSchemas":[{"ref":"SouthRestAPIItemSettingsQueryParamsDateTimeType"},{"dataType":"enum","enums":[null]}]},
+            "dateTimeTimezone": {"dataType":"union","subSchemas":[{"ref":"Timezone"},{"dataType":"enum","enums":[null]}]},
+            "dateTimeFormat": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
         },
         "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestAPIItemSettingsBodyDateTimeType": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["string"]},{"dataType":"enum","enums":["iso-string"]},{"dataType":"enum","enums":["unix-epoch"]},{"dataType":"enum","enums":["unix-epoch-ms"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestAPIItemSettingsHeadersDateTimeType": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["string"]},{"dataType":"enum","enums":["iso-string"]},{"dataType":"enum","enums":["unix-epoch"]},{"dataType":"enum","enums":["unix-epoch-ms"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthRestAPIItemSettingsHeaders": {
@@ -1578,6 +1597,9 @@ const models: TsoaRoute.Models = {
         "properties": {
             "key": {"dataType":"string","required":true},
             "value": {"dataType":"string","required":true},
+            "dateTimeType": {"dataType":"union","subSchemas":[{"ref":"SouthRestAPIItemSettingsHeadersDateTimeType"},{"dataType":"enum","enums":[null]}]},
+            "dateTimeTimezone": {"dataType":"union","subSchemas":[{"ref":"Timezone"},{"dataType":"enum","enums":[null]}]},
+            "dateTimeFormat": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
         },
         "additionalProperties": false,
     },
@@ -1636,6 +1658,9 @@ const models: TsoaRoute.Models = {
             "endpoint": {"dataType":"string","required":true},
             "queryParams": {"dataType":"union","subSchemas":[{"dataType":"array","array":{"dataType":"refObject","ref":"SouthRestAPIItemSettingsQueryParams"}},{"dataType":"enum","enums":[null]}],"required":true},
             "body": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+            "bodyDateTimeType": {"dataType":"union","subSchemas":[{"ref":"SouthRestAPIItemSettingsBodyDateTimeType"},{"dataType":"enum","enums":[null]}]},
+            "bodyDateTimeTimezone": {"dataType":"union","subSchemas":[{"ref":"Timezone"},{"dataType":"enum","enums":[null]}]},
+            "bodyDateTimeFormat": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
             "headers": {"dataType":"union","subSchemas":[{"dataType":"array","array":{"dataType":"refObject","ref":"SouthRestAPIItemSettingsHeaders"}},{"dataType":"enum","enums":[null]}],"required":true},
             "returnType": {"ref":"SouthRestAPIItemSettingsReturnType","required":true},
             "dateTimeFields": {"dataType":"union","subSchemas":[{"dataType":"array","array":{"dataType":"refObject","ref":"SouthRestAPIItemSettingsDateTimeFields"}},{"dataType":"enum","enums":[null]}]},
