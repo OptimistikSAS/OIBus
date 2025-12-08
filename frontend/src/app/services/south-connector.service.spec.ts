@@ -12,7 +12,7 @@ import {
 import { Page } from '../../../../backend/shared/model/types';
 import { toPage } from '../shared/test-utils';
 import { DownloadService } from './download.service';
-import { SouthItemSettings } from '../../../../backend/shared/model/south-settings.model';
+import { SouthFolderScannerItemSettings } from '../../../../backend/shared/model/south-settings.model';
 import testData from '../../../../backend/src/tests/utils/test-data';
 
 describe('SouthConnectorService', () => {
@@ -104,7 +104,13 @@ describe('SouthConnectorService', () => {
   it('should search South connector items', () => {
     let expectedSouthConnectorItems: Page<SouthConnectorItemDTO> | null = null;
     const southConnectorItems = toPage<SouthConnectorItemDTO>([
-      { id: 'southItemId', name: 'MySouthItem', enabled: true, scanMode: testData.scanMode.list[0], settings: {} as SouthItemSettings }
+      {
+        id: 'southItemId',
+        name: 'MySouthItem',
+        enabled: true,
+        scanMode: testData.scanMode.list[0],
+        settings: { regex: '*', minAge: 100, preserveFiles: true } as SouthFolderScannerItemSettings
+      }
     ]);
 
     service

@@ -188,7 +188,7 @@ describe('SouthItemsComponent with saving changes directly', () => {
   });
 
   it('should delete all', () => {
-    southConnectorService.findById.and.returnValue(of({ ...testSouthConnector, items: [] }));
+    southConnectorService.findById.and.returnValue(of({ ...testSouthConnector, items: [] } as any));
 
     tester.deleteAllButton.click();
 
@@ -248,7 +248,7 @@ describe('SouthItemsComponent with saving changes directly', () => {
       of({
         ...testSouthConnector,
         items: testSouthConnector.items.slice(1)
-      })
+      } as any)
     );
 
     tester.southItems[0].button('.delete-south-item')!.click();
@@ -269,7 +269,7 @@ describe('SouthItemsComponent with saving changes directly', () => {
       of({
         ...testSouthConnector,
         items: testSouthConnector.items.slice(0, 2)
-      })
+      } as any)
     );
 
     tester.southItems[2].button('.delete-south-item')!.click();
@@ -313,7 +313,7 @@ describe('SouthItemsComponent with saving changes directly', () => {
       of({
         ...testSouthConnector,
         items: testSouthConnector.items.slice(0, 2)
-      })
+      } as any)
     );
     tester.southItems[0].button('.delete-south-item')!.click();
 
@@ -691,7 +691,7 @@ describe('SouthItemsComponent CSV Import Tests', () => {
           settings: item.settings,
           scanModeId: item.scanMode.id,
           scanModeName: null
-        }))
+        })) as any
       );
       expect(notificationService.success).toHaveBeenCalledWith('south.items.import.imported');
     });

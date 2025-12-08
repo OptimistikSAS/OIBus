@@ -11,8 +11,10 @@ import { SouthConnectorService } from '../../services/south-connector.service';
 import { HistoryQueryService } from '../../services/history-query.service';
 import { HistoryQueryDTO } from '../../../../../backend/shared/model/history-query.model';
 import { Modal, ModalService } from '../../shared/modal.service';
-import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
-import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
+import { SouthMSSQLSettings, SouthMSSQLItemSettings } from '../../../../../backend/shared/model/south-settings.model';
+import { NorthConsoleSettings } from '../../../../../backend/shared/model/north-settings.model';
+import { NorthConnectorCommandDTO, NorthConnectorCommandTypedDTO } from '../../../../../backend/shared/model/north-connector.model';
+import { SouthConnectorCommandDTO, SouthConnectorCommandTypedDTO } from '../../../../../backend/shared/model/south-connector.model';
 import { TransformerService } from '../../services/transformer.service';
 import { CertificateService } from '../../services/certificate.service';
 import testData from '../../../../../backend/src/tests/utils/test-data';
@@ -80,8 +82,27 @@ describe('EditHistoryQueryComponent', () => {
     endTime: '2023-02-01T00:00:00.000Z',
     northType: 'console',
     southType: 'mssql',
-    northSettings: {} as NorthSettings,
-    southSettings: {} as SouthSettings,
+    northSettings: {
+      verbose: false
+    } as NorthConsoleSettings,
+    southSettings: {
+      throttling: {
+        maxInstantPerItem: false,
+        maxReadInterval: 3600,
+        readDelay: 200,
+        overlap: 0
+      },
+      host: 'host',
+      port: 1433,
+      connectionTimeout: 1_000,
+      database: 'database',
+      username: 'oibus',
+      password: 'pass',
+      domain: 'domain',
+      encryption: true,
+      trustServerCertificate: true,
+      requestTimeout: 5_000
+    } as SouthMSSQLSettings,
     caching: {
       trigger: {
         scanMode: { id: 'scanModeId1', name: 'scan mode', description: '', cron: '* * * *' },
@@ -109,8 +130,17 @@ describe('EditHistoryQueryComponent', () => {
         name: 'item1',
         enabled: true,
         settings: {
-          query: 'sql'
-        } as SouthItemSettings
+          query: 'SELECT * FROM table',
+          dateTimeFields: [],
+          serialization: {
+            type: 'csv',
+            filename: 'output.csv',
+            delimiter: 'DOT',
+            compression: false,
+            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss',
+            outputTimezone: 'Europe/Paris'
+          }
+        } as SouthMSSQLItemSettings
       }
     ],
     northTransformers: []
@@ -189,6 +219,7 @@ describe('EditHistoryQueryComponent', () => {
     tester.componentInstance.northManifest = testData.north.manifest;
     tester.componentInstance.southManifest = testData.south.manifest;
     tester.componentInstance.historyQuery = historyQuery;
+    tester.componentInstance.northType = historyQuery.northType;
 
     const spy = jasmine.createSpy();
     modalService.open.and.returnValue({
@@ -197,10 +228,30 @@ describe('EditHistoryQueryComponent', () => {
       }
     } as Modal<unknown>);
 
-    // Ensure form is initialized before testing
-    if (!tester.componentInstance.form) {
-      tester.componentInstance.buildForm(null, null);
-    }
+    // Rebuild form with history query to ensure values are set
+    tester.componentInstance.buildForm(null, null);
+    // Spy on the getter to return the correct values
+    const northCommand: NorthConnectorCommandTypedDTO<'console', NorthConsoleSettings> = {
+      name: historyQuery.name,
+      type: 'console',
+      description: historyQuery.description,
+      enabled: true,
+      settings: historyQuery.northSettings as NorthConsoleSettings,
+      caching: {
+        trigger: {
+          scanModeId: historyQuery.caching.trigger.scanMode.id,
+          scanModeName: historyQuery.caching.trigger.scanMode.name,
+          numberOfElements: historyQuery.caching.trigger.numberOfElements,
+          numberOfFiles: historyQuery.caching.trigger.numberOfFiles
+        },
+        throttling: historyQuery.caching.throttling,
+        error: historyQuery.caching.error,
+        archive: historyQuery.caching.archive
+      },
+      subscriptions: [],
+      transformers: []
+    };
+    spyOnProperty(tester.componentInstance, 'northConnectorCommand', 'get').and.returnValue(northCommand as NorthConnectorCommandDTO);
 
     tester.componentInstance.test('north');
     await tester.change();
@@ -211,6 +262,7 @@ describe('EditHistoryQueryComponent', () => {
     tester.componentInstance.northManifest = testData.north.manifest;
     tester.componentInstance.southManifest = testData.south.manifest;
     tester.componentInstance.historyQuery = historyQuery;
+    tester.componentInstance.southType = historyQuery.southType;
     const spy = jasmine.createSpy();
     modalService.open.and.returnValue({
       componentInstance: {
@@ -218,14 +270,22 @@ describe('EditHistoryQueryComponent', () => {
       }
     } as Modal<unknown>);
 
-    // Ensure form is initialized before testing
-    if (!tester.componentInstance.form) {
-      tester.componentInstance.buildForm(null, null);
-    }
+    // Rebuild form with history query to ensure values are set
+    tester.componentInstance.buildForm(null, null);
+    // Spy on the getter to return the correct values
+    const southCommand: SouthConnectorCommandTypedDTO<'mssql', SouthMSSQLSettings, SouthMSSQLItemSettings> = {
+      name: historyQuery.name,
+      type: 'mssql',
+      description: historyQuery.description,
+      enabled: true,
+      settings: historyQuery.southSettings as SouthMSSQLSettings,
+      items: []
+    };
+    spyOnProperty(tester.componentInstance, 'southConnectorCommand', 'get').and.returnValue(southCommand as SouthConnectorCommandDTO);
 
     tester.componentInstance.test('south');
     await tester.change();
-    expect(spy).toHaveBeenCalledWith('south', 'id1', historyQuery.southSettings, testData.south.manifest.id, null);
+    expect(spy).toHaveBeenCalledWith('south', 'id1', historyQuery.southSettings, historyQuery.southType, null);
   });
 
   it('should validate date range properly', async () => {

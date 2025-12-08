@@ -224,7 +224,7 @@ export class SouthItemsComponent implements OnInit {
               scanModeId: command.scanMode.id,
               scanModeName: null,
               settings: command.settings
-            });
+            } as any);
           } else {
             this.allItems.push({
               id: command.id,
@@ -232,7 +232,7 @@ export class SouthItemsComponent implements OnInit {
               enabled: command.enabled,
               scanMode: command.scanMode,
               settings: command.settings
-            });
+            } as any);
             return of(null);
           }
         })
@@ -263,11 +263,11 @@ export class SouthItemsComponent implements OnInit {
               settings: command.settings,
               scanModeName: null,
               scanModeId: command.scanMode.id
-            });
+            } as any);
           } else {
             this.allItems = this.allItems.filter(item => item.name !== oldItem.name);
             // Preserve id when present, merge changes otherwise
-            this.allItems.push({ ...oldItem, ...command, id: (oldItem as any).id ?? command.id ?? null });
+            this.allItems.push({ ...oldItem, ...command, id: (oldItem as any).id ?? command.id ?? null } as any);
             return of(null);
           }
         })
@@ -344,7 +344,7 @@ export class SouthItemsComponent implements OnInit {
               settings: item.settings,
               scanModeId: item.scanMode.id,
               scanModeName: item.scanMode.name
-            })),
+            })) as any,
             response.filename,
             response.delimiter
           )
@@ -448,10 +448,10 @@ export class SouthItemsComponent implements OnInit {
                 settings: item.settings,
                 scanModeId: item.scanMode.id,
                 scanModeName: null
-              }))
+              })) as any
             );
           } else {
-            this.allItems.push(...newItems);
+            this.allItems.push(...(newItems as any));
             return of(null);
           }
         })

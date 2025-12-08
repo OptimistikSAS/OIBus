@@ -4,7 +4,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { fakeAsync, TestBed } from '@angular/core/testing';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { HistoryQueryItemDTO } from '../../../../../../backend/shared/model/history-query.model';
-import { SouthItemSettings } from '../../../../../../backend/shared/model/south-settings.model';
+import { SouthFolderScannerItemSettings } from '../../../../../../backend/shared/model/south-settings.model';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
 
 class ImportSouthItemsModalComponentTester extends ComponentTester<ImportHistoryQueryItemsModalComponent> {
@@ -37,13 +37,17 @@ describe('ImportHistoryQueryItemsModalComponent', () => {
     tester = new ImportSouthItemsModalComponentTester();
     tester.componentInstance.prepare(
       manifest,
-      testData.historyQueries.list[0].items,
+      testData.historyQueries.list[0].items as any,
       [
         {
           id: '',
           name: 'item999',
           enabled: true,
-          settings: {} as SouthItemSettings
+          settings: {
+            regex: '*',
+            minAge: 100,
+            preserveFiles: true
+          } as SouthFolderScannerItemSettings
         }
       ],
       [{ item: { name: 'item2' } as HistoryQueryItemDTO, error: '' }]
@@ -58,7 +62,11 @@ describe('ImportHistoryQueryItemsModalComponent', () => {
         id: '',
         name: 'item999',
         enabled: true,
-        settings: {} as SouthItemSettings
+        settings: {
+          regex: '*',
+          minAge: 100,
+          preserveFiles: true
+        } as SouthFolderScannerItemSettings
       }
     ]);
   }));

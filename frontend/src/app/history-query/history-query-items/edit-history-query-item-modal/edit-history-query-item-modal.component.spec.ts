@@ -5,7 +5,7 @@ import { fakeAsync, TestBed } from '@angular/core/testing';
 import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { HistoryQueryItemDTO } from '../../../../../../backend/shared/model/history-query.model';
-import { SouthItemSettings } from '../../../../../../backend/shared/model/south-settings.model';
+import { SouthFolderScannerItemSettings } from '../../../../../../backend/shared/model/south-settings.model';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { of } from 'rxjs';
@@ -49,13 +49,21 @@ describe('EditHistoryQueryItemModalComponent', () => {
       id: 'id1',
       enabled: true,
       name: 'item',
-      settings: {} as SouthItemSettings
+      settings: {
+        regex: '*',
+        minAge: 100,
+        preserveFiles: true
+      } as SouthFolderScannerItemSettings
     },
     {
       id: 'id2',
       enabled: true,
       name: 'item2',
-      settings: {} as SouthItemSettings
+      settings: {
+        regex: '*',
+        minAge: 100,
+        preserveFiles: true
+      } as SouthFolderScannerItemSettings
     }
   ];
 
@@ -118,7 +126,11 @@ describe('EditHistoryQueryItemModalComponent', () => {
       id: 'id1',
       name: 'myName',
       enabled: true,
-      settings: {} as SouthItemSettings
+      settings: {
+        regex: '*',
+        minAge: 100,
+        preserveFiles: true
+      } as SouthFolderScannerItemSettings
     };
 
     it('should duplicate item', async () => {
@@ -145,7 +157,11 @@ describe('EditHistoryQueryItemModalComponent', () => {
       id: 'id1',
       name: 'myName',
       enabled: true,
-      settings: {} as SouthItemSettings
+      settings: {
+        regex: '*',
+        minAge: 100,
+        preserveFiles: true
+      } as SouthFolderScannerItemSettings
     };
 
     beforeEach(async () => {

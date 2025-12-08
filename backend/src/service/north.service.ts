@@ -427,7 +427,7 @@ export const toNorthConnectorDTO = (northEntity: NorthConnectorEntity<NorthSetti
       options: transformerWithOptions.options,
       inputType: transformerWithOptions.inputType
     }))
-  };
+  } as NorthConnectorDTO;
 };
 
 export const copyNorthConnectorCommandToNorthEntity = async (

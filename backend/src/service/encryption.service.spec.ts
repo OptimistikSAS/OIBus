@@ -10,7 +10,7 @@ import EncryptionService, { CERT_FILE_NAME, CERT_PRIVATE_KEY_FILE_NAME, CERT_PUB
 import * as utils from './utils';
 
 import { SouthConnectorCommandDTO, SouthConnectorDTO } from '../../shared/model/south-connector.model';
-import { SouthSettings } from '../../shared/model/south-settings.model';
+import { SouthSettings, SouthOPCUASettings } from '../../shared/model/south-settings.model';
 import { OIBusArrayAttribute, OIBusObjectAttribute, OIBusSecretAttribute, OIBusStringAttribute } from '../../shared/model/form.model';
 import testData from '../tests/utils/test-data';
 import { DateTime } from 'luxon';
@@ -276,7 +276,7 @@ describe('Encryption service with crypto settings', () => {
           fieldGroup1: 'not a group secret',
           fieldGroup2: 'a group secret'
         }
-      } as unknown as SouthSettings
+      } as unknown as SouthOPCUASettings
     } as SouthConnectorCommandDTO;
     const connector: SouthConnectorDTO = {
       id: 'id1',
@@ -288,7 +288,7 @@ describe('Encryption service with crypto settings', () => {
         field1: 'not a secret',
         field2: 'secret',
         field3: 'not a secret'
-      } as unknown as SouthSettings
+      } as unknown as SouthOPCUASettings
     } as SouthConnectorDTO;
 
     const update = jest.fn(() => 'encrypted secret');
@@ -334,7 +334,7 @@ describe('Encryption service with crypto settings', () => {
           fieldGroup1: 'not a group secret',
           fieldGroup2: 'a group secret'
         }
-      } as unknown as SouthSettings
+      } as unknown as SouthOPCUASettings
     };
 
     const update = jest.fn(() => 'encrypted secret');
@@ -380,7 +380,7 @@ describe('Encryption service with crypto settings', () => {
           fieldGroup1: 'not a group secret',
           fieldGroup2: ''
         }
-      } as unknown as SouthSettings
+      } as unknown as SouthOPCUASettings
     };
     const connector: SouthConnectorDTO = {
       id: 'id1',
@@ -400,7 +400,7 @@ describe('Encryption service with crypto settings', () => {
           fieldGroup1: 'not a group secret',
           fieldGroup2: 'a group secret'
         }
-      } as unknown as SouthSettings
+      } as unknown as SouthOPCUASettings
     } as SouthConnectorDTO;
     const expectedCommand = {
       field1: 'not a secret',
@@ -444,7 +444,7 @@ describe('Encryption service with crypto settings', () => {
           fieldGroup1: 'not a group secret',
           fieldGroup2: 'a group secret'
         }
-      } as unknown as SouthSettings
+      } as unknown as SouthOPCUASettings
     } as SouthConnectorCommandDTO;
 
     const update = jest.fn(() => 'encrypted secret');
@@ -490,7 +490,7 @@ describe('Encryption service with crypto settings', () => {
           fieldGroup1: 'not a group secret',
           fieldGroup2: 'a group secret'
         }
-      } as unknown as SouthSettings
+      } as unknown as SouthOPCUASettings
     } as SouthConnectorDTO;
 
     expect(encryptionService.filterSecrets(connector.settings, manifest)).toEqual({
@@ -527,7 +527,7 @@ describe('Encryption service with crypto settings', () => {
           fieldGroup1: 'not a group secret',
           fieldGroup2: 'a group secret'
         }
-      } as unknown as SouthSettings
+      } as unknown as SouthOPCUASettings
     };
     (crypto.privateDecrypt as jest.Mock).mockImplementation(() => 'encrypted secret');
     const expectedCommand = {

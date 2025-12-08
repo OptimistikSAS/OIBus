@@ -8,7 +8,7 @@ import { ActivatedRoute } from '@angular/router';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { SouthConnectorDTO, SouthConnectorManifest } from '../../../../../backend/shared/model/south-connector.model';
-import { SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
+import { SouthMSSQLSettings } from '../../../../../backend/shared/model/south-settings.model';
 import testData from '../../../../../backend/src/tests/utils/test-data';
 import { OIBusObjectFormControlComponent } from '../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
 import { CertificateService } from '../../services/certificate.service';
@@ -101,7 +101,24 @@ describe('EditSouthComponent', () => {
       name: 'My South Connector 1',
       description: 'My South connector description',
       enabled: true,
-      settings: {} as SouthSettings,
+      settings: {
+        throttling: {
+          maxInstantPerItem: false,
+          maxReadInterval: 3600,
+          readDelay: 200,
+          overlap: 0
+        },
+        host: 'host',
+        port: 1433,
+        connectionTimeout: 1_000,
+        database: 'database',
+        username: 'oibus',
+        password: 'pass',
+        domain: 'domain',
+        encryption: true,
+        trustServerCertificate: true,
+        requestTimeout: 5_000
+      } as SouthMSSQLSettings,
       items: []
     };
 

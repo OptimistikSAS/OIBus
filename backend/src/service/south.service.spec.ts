@@ -439,7 +439,7 @@ describe('South Service', () => {
       throw new Error(`validation error`);
     });
 
-    const result = await service.checkImportItems(testData.south.list[0].type, 'file content', ',', testData.south.list[0].items);
+    const result = await service.checkImportItems(testData.south.list[0].type, 'file content', ',', testData.south.list[0].items as any);
     expect(result).toEqual({
       items: [
         {
@@ -531,7 +531,7 @@ describe('South Service', () => {
       meta: { delimiter: ',' },
       data: csvData
     });
-    const result = await service.checkImportItems(testData.south.list[1].type, 'file content', ',', testData.south.list[1].items);
+    const result = await service.checkImportItems(testData.south.list[1].type, 'file content', ',', testData.south.list[1].items as any);
     expect(result).toEqual({
       items: [
         {

@@ -1,6 +1,17 @@
 import { OIBusDataType } from './engine.model';
 import { BaseEntity } from './types';
-import { NorthSettings } from './north-settings.model';
+import {
+  NorthAmazonS3Settings,
+  NorthAzureBlobSettings,
+  NorthConsoleSettings,
+  NorthFileWriterSettings,
+  NorthModbusSettings,
+  NorthMQTTSettings,
+  NorthOIAnalyticsSettings,
+  NorthOPCUASettings,
+  NorthRESTSettings,
+  NorthSFTPSettings
+} from './north-settings.model';
 import { ScanModeDTO } from './scan-mode.model';
 import { SouthConnectorLightDTO } from './south-connector.model';
 import { TransformerDTOWithOptions, TransformerIdWithOptions } from './transformer.model';
@@ -97,11 +108,7 @@ export interface NorthConnectorLightDTO extends BaseEntity {
   enabled: boolean;
 }
 
-/**
- * Data Transfer Object for a North connector.
- * Contains all configuration details of a North connector.
- */
-export interface NorthConnectorDTO extends BaseEntity {
+export interface NorthConnectorTypedDTO<T extends OIBusNorthType, S> extends BaseEntity {
   /**
    * The name of the North connector.
    *
@@ -113,7 +120,7 @@ export interface NorthConnectorDTO extends BaseEntity {
    *
    * @example "console"
    */
-  type: OIBusNorthType;
+  type: T;
   /**
    * The description of the North connector.
    *
@@ -128,13 +135,8 @@ export interface NorthConnectorDTO extends BaseEntity {
   enabled: boolean;
   /**
    * The settings specific to the North connector type.
-   *
-   * @example
-   * {
-   *   "verbose": true
-   * }
    */
-  settings: NorthSettings;
+  settings: S;
   /**
    * The caching configuration for the North connector.
    */
@@ -235,10 +237,22 @@ export interface NorthConnectorDTO extends BaseEntity {
 }
 
 /**
- * Command Data Transfer Object for creating or updating a North connector.
- * Used as the request body for North connector creation/update endpoints.
+ * Data Transfer Object for a North connector.
+ * Contains all configuration details of a North connector.
  */
-export interface NorthConnectorCommandDTO {
+export type NorthConnectorDTO =
+  | NorthConnectorTypedDTO<'aws-s3', NorthAmazonS3Settings>
+  | NorthConnectorTypedDTO<'azure-blob', NorthAzureBlobSettings>
+  | NorthConnectorTypedDTO<'console', NorthConsoleSettings>
+  | NorthConnectorTypedDTO<'file-writer', NorthFileWriterSettings>
+  | NorthConnectorTypedDTO<'modbus', NorthModbusSettings>
+  | NorthConnectorTypedDTO<'mqtt', NorthMQTTSettings>
+  | NorthConnectorTypedDTO<'oianalytics', NorthOIAnalyticsSettings>
+  | NorthConnectorTypedDTO<'opcua', NorthOPCUASettings>
+  | NorthConnectorTypedDTO<'rest', NorthRESTSettings>
+  | NorthConnectorTypedDTO<'sftp', NorthSFTPSettings>;
+
+export interface NorthConnectorCommandTypedDTO<T extends OIBusNorthType, S> {
   /**
    * The name of the North connector.
    *
@@ -250,7 +264,7 @@ export interface NorthConnectorCommandDTO {
    *
    * @example "console"
    */
-  type: OIBusNorthType;
+  type: T;
   /**
    * The description of the North connector.
    *
@@ -265,13 +279,8 @@ export interface NorthConnectorCommandDTO {
   enabled: boolean;
   /**
    * The settings specific to the North connector type.
-   *
-   * @example
-   * {
-   *   "verbose": true,
-   * }
    */
-  settings: NorthSettings;
+  settings: S;
   /**
    * The caching configuration for the North connector.
    */
@@ -382,6 +391,22 @@ export interface NorthConnectorCommandDTO {
    */
   transformers: Array<TransformerIdWithOptions>;
 }
+
+/**
+ * Command Data Transfer Object for creating or updating a North connector.
+ * Used as the request body for North connector creation/update endpoints.
+ */
+export type NorthConnectorCommandDTO =
+  | NorthConnectorCommandTypedDTO<'aws-s3', NorthAmazonS3Settings>
+  | NorthConnectorCommandTypedDTO<'azure-blob', NorthAzureBlobSettings>
+  | NorthConnectorCommandTypedDTO<'console', NorthConsoleSettings>
+  | NorthConnectorCommandTypedDTO<'file-writer', NorthFileWriterSettings>
+  | NorthConnectorCommandTypedDTO<'modbus', NorthModbusSettings>
+  | NorthConnectorCommandTypedDTO<'mqtt', NorthMQTTSettings>
+  | NorthConnectorCommandTypedDTO<'oianalytics', NorthOIAnalyticsSettings>
+  | NorthConnectorCommandTypedDTO<'opcua', NorthOPCUASettings>
+  | NorthConnectorCommandTypedDTO<'rest', NorthRESTSettings>
+  | NorthConnectorCommandTypedDTO<'sftp', NorthSFTPSettings>;
 
 /**
  * Manifest for a North connector type.

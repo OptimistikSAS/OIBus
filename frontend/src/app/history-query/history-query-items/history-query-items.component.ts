@@ -199,7 +199,7 @@ export class HistoryQueryItemsComponent implements OnInit {
               name: command.name,
               enabled: command.enabled,
               settings: { ...command.settings }
-            });
+            } as any);
             return of(null);
           }
         })

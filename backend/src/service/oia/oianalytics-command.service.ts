@@ -58,10 +58,11 @@ import { EventEmitter } from 'node:events';
 import IPFilterService from '../ip-filter.service';
 import CertificateService from '../certificate.service';
 import HistoryQueryService from '../history-query.service';
-import { HistoryQueryCommandDTO } from '../../../shared/model/history-query.model';
+import { HistoryQueryCommandDTO, HistoryQueryItemDTO } from '../../../shared/model/history-query.model';
 import { OIBusObjectAttribute } from '../../../shared/model/form.model';
 import { OIBusContent } from '../../../shared/model/engine.model';
 import { NotFoundError } from '../../model/types';
+import { SouthConnectorItemDTO, SouthConnectorItemCommandDTO } from '../../../shared/model/south-connector.model';
 
 const UPDATE_SETTINGS_FILE = 'update.json';
 
@@ -731,7 +732,8 @@ export default class OIAnalyticsCommandService {
       manifest.settings,
       privateKey
     );
-    command.commandContent.items = await Promise.all(
+    // Type assertion is safe because we know the items match the connector type at runtime
+    command.commandContent.items = (await Promise.all(
       command.commandContent.items.map(async item => ({
         id: item.id,
         enabled: item.enabled,
@@ -740,7 +742,7 @@ export default class OIAnalyticsCommandService {
         scanModeId: item.scanModeId,
         scanModeName: item.scanModeName
       }))
-    );
+    )) as typeof command.commandContent.items;
   }
 
   private async decryptSouthItemSettings(command: OIBusTestSouthConnectorItemCommand, privateKey: string) {
@@ -787,7 +789,8 @@ export default class OIAnalyticsCommandService {
       southConnector.type,
       command.commandContent.csvContent,
       command.commandContent.delimiter,
-      command.commandContent.deleteItemsNotPresent ? [] : southConnector.items
+      // Type assertion is safe because checkImportItems accepts the union type
+      command.commandContent.deleteItemsNotPresent ? [] : (southConnector.items as Array<SouthConnectorItemDTO>)
     );
 
     if (errors.length > 0) {
@@ -797,6 +800,7 @@ export default class OIAnalyticsCommandService {
       }
       throw new Error(stringError);
     }
+    // Type assertion is safe because items come from checkImportItems which validates the type
     await this.southService.importItems(
       southConnector.id,
       items.map(item => ({
@@ -806,7 +810,7 @@ export default class OIAnalyticsCommandService {
         settings: item.settings,
         scanModeId: item.scanMode.id,
         scanModeName: null
-      })),
+      })) as Array<SouthConnectorItemCommandDTO>,
       command.commandContent.deleteItemsNotPresent
     );
     this.oIAnalyticsCommandRepository.markAsCompleted(
@@ -879,14 +883,15 @@ export default class OIAnalyticsCommandService {
     )! as OIBusObjectAttribute;
     command.northSettings = await encryptionService.decryptSecretsWithPrivateKey(command.northSettings, northManifest.settings, privateKey);
     command.southSettings = await encryptionService.decryptSecretsWithPrivateKey(command.southSettings, southManifest.settings, privateKey);
-    command.items = await Promise.all(
+    // Type assertion is safe because we know the items match the history query type at runtime
+    command.items = (await Promise.all(
       command.items.map(async item => ({
         id: item.id,
         enabled: item.enabled,
         name: item.name,
         settings: await encryptionService.decryptSecretsWithPrivateKey(item.settings, itemSettingsManifest, privateKey)
       }))
-    );
+    )) as typeof command.items;
   }
 
   private async decryptHistoryQuerySouthItemSettings(command: OIBusTestHistoryQuerySouthItemCommand, privateKey: string) {
@@ -940,7 +945,8 @@ export default class OIAnalyticsCommandService {
       historyQuery.southType,
       command.commandContent.csvContent,
       command.commandContent.delimiter,
-      command.commandContent.deleteItemsNotPresent ? [] : historyQuery.items
+      // Type assertion is safe because checkImportItems accepts the union type
+      command.commandContent.deleteItemsNotPresent ? [] : (historyQuery.items as Array<HistoryQueryItemDTO>)
     );
 
     if (errors.length > 0) {
