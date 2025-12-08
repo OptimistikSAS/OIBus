@@ -30,6 +30,8 @@ import {
   SouthPISettings,
   SouthPostgreSQLItemSettings,
   SouthPostgreSQLSettings,
+  SouthRestAPIItemSettings,
+  SouthRestAPISettings,
   SouthSFTPItemSettings,
   SouthSFTPSettings,
   SouthSQLiteItemSettings,
@@ -261,6 +263,7 @@ export type SouthConnectorDTO =
   | SouthConnectorTypedDTO<'oracle', SouthOracleSettings, SouthOracleItemSettings>
   | SouthConnectorTypedDTO<'osisoft-pi', SouthPISettings, SouthPIItemSettings>
   | SouthConnectorTypedDTO<'postgresql', SouthPostgreSQLSettings, SouthPostgreSQLItemSettings>
+  | SouthConnectorTypedDTO<'rest-api', SouthRestAPISettings, SouthRestAPIItemSettings>
   | SouthConnectorTypedDTO<'sftp', SouthSFTPSettings, SouthSFTPItemSettings>
   | SouthConnectorTypedDTO<'sqlite', SouthSQLiteSettings, SouthSQLiteItemSettings>;
 
@@ -368,6 +371,7 @@ export type SouthConnectorCommandDTO =
   | SouthConnectorCommandTypedDTO<'oracle', SouthOracleSettings, SouthOracleItemSettings>
   | SouthConnectorCommandTypedDTO<'osisoft-pi', SouthPISettings, SouthPIItemSettings>
   | SouthConnectorCommandTypedDTO<'postgresql', SouthPostgreSQLSettings, SouthPostgreSQLItemSettings>
+  | SouthConnectorCommandTypedDTO<'rest-api', SouthRestAPISettings, SouthRestAPIItemSettings>
   | SouthConnectorCommandTypedDTO<'sftp', SouthSFTPSettings, SouthSFTPItemSettings>
   | SouthConnectorCommandTypedDTO<'sqlite', SouthSQLiteSettings, SouthSQLiteItemSettings>;
 
@@ -391,6 +395,7 @@ export type SouthConnectorItemDTO =
   | SouthConnectorItemTypedDTO<SouthOracleItemSettings>
   | SouthConnectorItemTypedDTO<SouthPIItemSettings>
   | SouthConnectorItemTypedDTO<SouthPostgreSQLItemSettings>
+  | SouthConnectorItemTypedDTO<SouthRestAPIItemSettings>
   | SouthConnectorItemTypedDTO<SouthSFTPItemSettings>
   | SouthConnectorItemTypedDTO<SouthSQLiteItemSettings>;
 
@@ -414,6 +419,7 @@ export type SouthConnectorItemCommandDTO =
   | SouthConnectorItemCommandTypedDTO<SouthOracleItemSettings>
   | SouthConnectorItemCommandTypedDTO<SouthPIItemSettings>
   | SouthConnectorItemCommandTypedDTO<SouthPostgreSQLItemSettings>
+  | SouthConnectorItemCommandTypedDTO<SouthRestAPIItemSettings>
   | SouthConnectorItemCommandTypedDTO<SouthSFTPItemSettings>
   | SouthConnectorItemCommandTypedDTO<SouthSQLiteItemSettings>;
 

@@ -94,10 +94,11 @@ export class HistoryQueryItemsComponent implements OnInit {
       // initialize/update item list
       if (!historyQuery) {
         this.allItems = this.southConnectorCommand().items.map(item => ({
-          ...item,
-          // Keep existing id when editing
-          id: item.id
-        }));
+          id: item.id,
+          name: item.name,
+          enabled: item.enabled,
+          settings: item.settings
+        })) as any;
       } else {
         this.allItems = historyQuery.items.map(item => ({
           ...item,

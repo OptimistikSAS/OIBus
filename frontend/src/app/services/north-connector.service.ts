@@ -32,7 +32,7 @@ export class NorthConnectorService {
   /**
    * Get a North connectors manifest
    */
-  getNorthManifest(type: string): Observable<NorthConnectorManifest> {
+  getNorthManifest(type: OIBusNorthType): Observable<NorthConnectorManifest> {
     return this.http.get<NorthConnectorManifest>(`/api/north/manifests/${type}`);
   }
 
