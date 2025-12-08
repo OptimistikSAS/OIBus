@@ -5,7 +5,7 @@ import { fakeAsync, TestBed } from '@angular/core/testing';
 import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
 import { SouthConnectorItemDTO } from '../../../../../../backend/shared/model/south-connector.model';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
-import { SouthItemSettings } from '../../../../../../backend/shared/model/south-settings.model';
+import { SouthFolderScannerItemSettings } from '../../../../../../backend/shared/model/south-settings.model';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { of } from 'rxjs';
@@ -54,14 +54,14 @@ describe('EditSouthItemModalComponent', () => {
       enabled: true,
       name: 'item',
       scanMode: testData.scanMode.list[0],
-      settings: {} as SouthItemSettings
+      settings: { regex: '*', minAge: 100, preserveFiles: true } as SouthFolderScannerItemSettings
     },
     {
       id: 'id2',
       enabled: true,
       name: 'item2',
       scanMode: testData.scanMode.list[0],
-      settings: {} as SouthItemSettings
+      settings: { regex: '*', minAge: 100, preserveFiles: true } as SouthFolderScannerItemSettings
     }
   ];
   const scanModes = testData.scanMode.list;
@@ -199,7 +199,7 @@ describe('EditSouthItemModalComponent', () => {
       name: 'myName',
       enabled: true,
       scanMode: testData.scanMode.list[0],
-      settings: {} as SouthItemSettings
+      settings: { regex: '*', minAge: 100, preserveFiles: true } as SouthFolderScannerItemSettings
     };
 
     it('should duplicate item', async () => {
@@ -233,7 +233,7 @@ describe('EditSouthItemModalComponent', () => {
       name: 'myName',
       enabled: true,
       scanMode: testData.scanMode.list[0],
-      settings: {} as SouthItemSettings
+      settings: { regex: '*', minAge: 100, preserveFiles: true } as SouthFolderScannerItemSettings
     };
 
     beforeEach(async () => {

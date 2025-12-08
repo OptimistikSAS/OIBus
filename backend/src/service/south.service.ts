@@ -457,13 +457,13 @@ export default class SouthService {
         });
         continue;
       }
-      const item: SouthConnectorItemDTO = {
+      const item = {
         id: '',
         name: (data as Record<string, string>).name,
         enabled: stringToBoolean((data as Record<string, string>).enabled),
         scanMode: foundScanMode,
         settings: {} as SouthItemSettings
-      };
+      } as SouthConnectorItemDTO;
       if (existingItems.find(existingItem => existingItem.name === item.name)) {
         errors.push({
           item: data as Record<string, string>,
@@ -616,15 +616,18 @@ export const toSouthConnectorLightDTO = (entity: SouthConnectorEntityLight): Sou
 
 export const toSouthConnectorDTO = (southEntity: SouthConnectorEntity<SouthSettings, SouthItemSettings>): SouthConnectorDTO => {
   const manifest = southManifestList.find(element => element.id === southEntity.type)!;
-  return {
+  const items = southEntity.items.map(item => toSouthConnectorItemDTO(item, southEntity.type));
+  const baseDTO = {
     id: southEntity.id,
     name: southEntity.name,
     type: southEntity.type,
     description: southEntity.description,
     enabled: southEntity.enabled,
     settings: encryptionService.filterSecrets(southEntity.settings, manifest.settings),
-    items: southEntity.items.map(item => toSouthConnectorItemDTO(item, southEntity.type))
+    items
   };
+  // Type assertion is safe because we know the type field matches the settings and items at runtime
+  return baseDTO as SouthConnectorDTO;
 };
 
 export const toSouthConnectorItemDTO = (entity: SouthConnectorItemEntity<SouthItemSettings>, southType: string): SouthConnectorItemDTO => {
@@ -638,5 +641,5 @@ export const toSouthConnectorItemDTO = (entity: SouthConnectorItemEntity<SouthIt
     enabled: entity.enabled,
     scanMode: toScanModeDTO(entity.scanMode),
     settings: encryptionService.filterSecrets(entity.settings, itemSettingsManifest)
-  };
+  } as SouthConnectorItemDTO;
 };

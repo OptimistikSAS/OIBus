@@ -259,7 +259,7 @@ export class EditSouthComponent implements OnInit, CanComponentDeactivate {
         settings: item.settings,
         scanModeId: item.scanMode.id,
         scanModeName: null
-      }))
+      })) as any
     };
   }
 

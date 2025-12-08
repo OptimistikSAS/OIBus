@@ -216,7 +216,7 @@ export class SouthDetailComponent implements OnInit, OnDestroy {
         settings: item.settings,
         scanModeId: item.scanMode.id,
         scanModeName: null
-      }))
+      })) as any
     };
 
     return command;
