@@ -1023,6 +1023,15 @@
 						"example": [
 							"MQTT"
 						]
+					},
+					"operator": {
+						"type": "string",
+						"enum": [
+							"EQUALS",
+							"CONTAINS"
+						],
+						"description": "Operator to use for the condition.\nEQUALS: The referral attribute value must be equal to one of the values.\nCONTAINS: The referral attribute value must contain one of the values (string only).",
+						"example": "EQUALS"
 					}
 				},
 				"required": [
@@ -8115,6 +8124,15 @@
 					"DELETE"
 				]
 			},
+			"SouthRestAPIItemSettingsQueryParamsDateTimeType": {
+				"type": "string",
+				"enum": [
+					"string",
+					"iso-string",
+					"unix-epoch",
+					"unix-epoch-ms"
+				]
+			},
 			"SouthRestAPIItemSettingsQueryParams": {
 				"properties": {
 					"key": {
@@ -8122,6 +8140,26 @@
 					},
 					"value": {
 						"type": "string"
+					},
+					"dateTimeType": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthRestAPIItemSettingsQueryParamsDateTimeType"
+							}
+						],
+						"nullable": true
+					},
+					"dateTimeTimezone": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Timezone"
+							}
+						],
+						"nullable": true
+					},
+					"dateTimeFormat": {
+						"type": "string",
+						"nullable": true
 					}
 				},
 				"required": [
@@ -8131,6 +8169,24 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"SouthRestAPIItemSettingsBodyDateTimeType": {
+				"type": "string",
+				"enum": [
+					"string",
+					"iso-string",
+					"unix-epoch",
+					"unix-epoch-ms"
+				]
+			},
+			"SouthRestAPIItemSettingsHeadersDateTimeType": {
+				"type": "string",
+				"enum": [
+					"string",
+					"iso-string",
+					"unix-epoch",
+					"unix-epoch-ms"
+				]
+			},
 			"SouthRestAPIItemSettingsHeaders": {
 				"properties": {
 					"key": {
@@ -8138,6 +8194,26 @@
 					},
 					"value": {
 						"type": "string"
+					},
+					"dateTimeType": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthRestAPIItemSettingsHeadersDateTimeType"
+							}
+						],
+						"nullable": true
+					},
+					"dateTimeTimezone": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Timezone"
+							}
+						],
+						"nullable": true
+					},
+					"dateTimeFormat": {
+						"type": "string",
+						"nullable": true
 					}
 				},
 				"required": [
@@ -8265,6 +8341,26 @@
 						"nullable": true
 					},
 					"body": {
+						"type": "string",
+						"nullable": true
+					},
+					"bodyDateTimeType": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthRestAPIItemSettingsBodyDateTimeType"
+							}
+						],
+						"nullable": true
+					},
+					"bodyDateTimeTimezone": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Timezone"
+							}
+						],
+						"nullable": true
+					},
+					"bodyDateTimeFormat": {
 						"type": "string",
 						"nullable": true
 					},
