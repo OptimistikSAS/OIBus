@@ -559,6 +559,34 @@ const manifest: SouthConnectorManifest = {
               referralPathFromRoot: 'method',
               targetPathFromRoot: 'body',
               values: ['POST', 'PUT', 'PATCH', 'DELETE']
+            },
+            {
+              referralPathFromRoot: 'body',
+              targetPathFromRoot: 'bodyDateTimeType',
+              values: ['@StartTime', '@EndTime'],
+              operator: 'CONTAINS'
+            },
+            {
+              referralPathFromRoot: 'bodyDateTimeType',
+              targetPathFromRoot: 'bodyDateTimeTimezone',
+              values: ['string']
+            },
+            {
+              referralPathFromRoot: 'body',
+              targetPathFromRoot: 'bodyDateTimeTimezone',
+              values: ['@StartTime', '@EndTime'],
+              operator: 'CONTAINS'
+            },
+            {
+              referralPathFromRoot: 'bodyDateTimeType',
+              targetPathFromRoot: 'bodyDateTimeFormat',
+              values: ['string']
+            },
+            {
+              referralPathFromRoot: 'body',
+              targetPathFromRoot: 'bodyDateTimeFormat',
+              values: ['@StartTime', '@EndTime'],
+              operator: 'CONTAINS'
             }
           ],
           validators: [],
@@ -613,7 +641,36 @@ const manifest: SouthConnectorManifest = {
                   visible: true,
                   wrapInBox: false
                 },
-                enablingConditions: [],
+                enablingConditions: [
+                  {
+                    referralPathFromRoot: 'value',
+                    targetPathFromRoot: 'dateTimeType',
+                    values: ['@StartTime', '@EndTime'],
+                    operator: 'CONTAINS'
+                  },
+                  {
+                    referralPathFromRoot: 'dateTimeType',
+                    targetPathFromRoot: 'dateTimeTimezone',
+                    values: ['string']
+                  },
+                  {
+                    referralPathFromRoot: 'value',
+                    targetPathFromRoot: 'dateTimeTimezone',
+                    values: ['@StartTime', '@EndTime'],
+                    operator: 'CONTAINS'
+                  },
+                  {
+                    referralPathFromRoot: 'dateTimeType',
+                    targetPathFromRoot: 'dateTimeFormat',
+                    values: ['string']
+                  },
+                  {
+                    referralPathFromRoot: 'value',
+                    targetPathFromRoot: 'dateTimeFormat',
+                    values: ['@StartTime', '@EndTime'],
+                    operator: 'CONTAINS'
+                  }
+                ],
                 validators: [],
                 attributes: [
                   {
@@ -649,6 +706,43 @@ const manifest: SouthConnectorManifest = {
                       columns: 4,
                       displayInViewMode: true
                     }
+                  },
+                  {
+                    type: 'string-select',
+                    key: 'dateTimeType',
+                    translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time-fields.type',
+                    defaultValue: 'iso-string',
+                    selectableValues: ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'],
+                    validators: [],
+                    displayProperties: {
+                      row: 1,
+                      columns: 4,
+                      displayInViewMode: true
+                    }
+                  },
+                  {
+                    type: 'timezone',
+                    key: 'dateTimeTimezone',
+                    translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time-fields.timezone',
+                    defaultValue: 'UTC',
+                    validators: [],
+                    displayProperties: {
+                      row: 1,
+                      columns: 4,
+                      displayInViewMode: true
+                    }
+                  },
+                  {
+                    type: 'string',
+                    key: 'dateTimeFormat',
+                    translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time-fields.format',
+                    defaultValue: 'yyyy-MM-dd HH:mm:ss',
+                    validators: [],
+                    displayProperties: {
+                      row: 1,
+                      columns: 4,
+                      displayInViewMode: true
+                    }
                   }
                 ]
               }
@@ -667,6 +761,43 @@ const manifest: SouthConnectorManifest = {
               }
             },
             {
+              type: 'string-select',
+              key: 'bodyDateTimeType',
+              translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time-fields.type',
+              defaultValue: 'iso-string',
+              selectableValues: ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'],
+              validators: [],
+              displayProperties: {
+                row: 3,
+                columns: 4,
+                displayInViewMode: true
+              }
+            },
+            {
+              type: 'timezone',
+              key: 'bodyDateTimeTimezone',
+              translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time-fields.timezone',
+              defaultValue: 'UTC',
+              validators: [],
+              displayProperties: {
+                row: 3,
+                columns: 4,
+                displayInViewMode: true
+              }
+            },
+            {
+              type: 'string',
+              key: 'bodyDateTimeFormat',
+              translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time-fields.format',
+              defaultValue: 'yyyy-MM-dd HH:mm:ss',
+              validators: [],
+              displayProperties: {
+                row: 3,
+                columns: 4,
+                displayInViewMode: true
+              }
+            },
+            {
               type: 'array',
               key: 'headers',
               translationKey: 'configuration.oibus.manifest.south.items.rest-api.headers',
@@ -681,7 +812,36 @@ const manifest: SouthConnectorManifest = {
                   visible: true,
                   wrapInBox: false
                 },
-                enablingConditions: [],
+                enablingConditions: [
+                  {
+                    referralPathFromRoot: 'value',
+                    targetPathFromRoot: 'dateTimeType',
+                    values: ['@StartTime', '@EndTime'],
+                    operator: 'CONTAINS'
+                  },
+                  {
+                    referralPathFromRoot: 'dateTimeType',
+                    targetPathFromRoot: 'dateTimeTimezone',
+                    values: ['string']
+                  },
+                  {
+                    referralPathFromRoot: 'value',
+                    targetPathFromRoot: 'dateTimeTimezone',
+                    values: ['@StartTime', '@EndTime'],
+                    operator: 'CONTAINS'
+                  },
+                  {
+                    referralPathFromRoot: 'dateTimeType',
+                    targetPathFromRoot: 'dateTimeFormat',
+                    values: ['string']
+                  },
+                  {
+                    referralPathFromRoot: 'value',
+                    targetPathFromRoot: 'dateTimeFormat',
+                    values: ['@StartTime', '@EndTime'],
+                    operator: 'CONTAINS'
+                  }
+                ],
                 validators: [],
                 attributes: [
                   {
@@ -714,6 +874,43 @@ const manifest: SouthConnectorManifest = {
                     ],
                     displayProperties: {
                       row: 0,
+                      columns: 4,
+                      displayInViewMode: true
+                    }
+                  },
+                  {
+                    type: 'string-select',
+                    key: 'dateTimeType',
+                    translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time-fields.type',
+                    defaultValue: 'iso-string',
+                    selectableValues: ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'],
+                    validators: [],
+                    displayProperties: {
+                      row: 1,
+                      columns: 4,
+                      displayInViewMode: true
+                    }
+                  },
+                  {
+                    type: 'timezone',
+                    key: 'dateTimeTimezone',
+                    translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time-fields.timezone',
+                    defaultValue: 'UTC',
+                    validators: [],
+                    displayProperties: {
+                      row: 1,
+                      columns: 4,
+                      displayInViewMode: true
+                    }
+                  },
+                  {
+                    type: 'string',
+                    key: 'dateTimeFormat',
+                    translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time-fields.format',
+                    defaultValue: 'yyyy-MM-dd HH:mm:ss',
+                    validators: [],
+                    displayProperties: {
+                      row: 1,
                       columns: 4,
                       displayInViewMode: true
                     }
