@@ -1,5 +1,5 @@
 import SouthConnector from '../south-connector';
-import { formatQueryParams, formatInstant, convertDateTimeToInstant } from '../../service/utils';
+import { formatInstant, convertDateTimeToInstant } from '../../service/utils';
 import pino from 'pino';
 import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
@@ -153,11 +153,46 @@ export default class SouthRestAPI extends SouthConnector<SouthRestAPISettings, S
     const host = this.connector.settings.host;
     const requestUrl = new URL(item.settings.endpoint, host);
 
-    const query = formatQueryParams(startTime, endTime, item.settings.queryParams || []);
+    const query: Record<string, string | number> = {};
+    if (item.settings.queryParams) {
+      for (const queryParam of item.settings.queryParams) {
+        let value = queryParam.value;
+        if (value.includes('@StartTime')) {
+          const formattedStartTime = queryParam.dateTimeType
+            ? formatInstant(startTime, {
+                type: queryParam.dateTimeType,
+                timezone: queryParam.dateTimeTimezone || undefined,
+                format: queryParam.dateTimeFormat || undefined,
+                locale: 'en-En'
+              })
+            : startTime;
+          value = value.replace(/@StartTime/g, String(formattedStartTime));
+        }
+        if (value.includes('@EndTime')) {
+          const formattedEndTime = queryParam.dateTimeType
+            ? formatInstant(endTime, {
+                type: queryParam.dateTimeType,
+                timezone: queryParam.dateTimeTimezone || undefined,
+                format: queryParam.dateTimeFormat || undefined,
+                locale: 'en-En'
+              })
+            : endTime;
+          value = value.replace(/@EndTime/g, String(formattedEndTime));
+        }
+        query[queryParam.key] = value;
+      }
+    }
 
     let body: string | undefined;
     if (item.settings.body && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(item.settings.method || 'GET')) {
-      body = replaceVariablesInJsonBody(item.settings.body, startTime, endTime, item.settings.dateTimeFields || []);
+      const bodyDateTimeConfig = item.settings.bodyDateTimeType
+        ? {
+            type: item.settings.bodyDateTimeType,
+            timezone: item.settings.bodyDateTimeTimezone || undefined,
+            format: item.settings.bodyDateTimeFormat || undefined
+          }
+        : undefined;
+      body = replaceVariablesInJsonBody(item.settings.body, startTime, endTime, item.settings.dateTimeFields || [], bodyDateTimeConfig);
     }
 
     const headers: Record<string, string> = {};
@@ -165,25 +200,23 @@ export default class SouthRestAPI extends SouthConnector<SouthRestAPISettings, S
       for (const header of item.settings.headers) {
         let headerValue = header.value;
         if (headerValue.includes('@StartTime')) {
-          const referenceTimestampField = item.settings.dateTimeFields?.find(field => field.useAsReference);
-          const formattedStartTime = referenceTimestampField
+          const formattedStartTime = header.dateTimeType
             ? formatInstant(startTime, {
-                type: referenceTimestampField.type,
-                timezone: referenceTimestampField.timezone,
-                format: referenceTimestampField.format,
-                locale: referenceTimestampField.locale
+                type: header.dateTimeType,
+                timezone: header.dateTimeTimezone || undefined,
+                format: header.dateTimeFormat || undefined,
+                locale: 'en-En'
               })
             : startTime;
           headerValue = headerValue.replace(/@StartTime/g, String(formattedStartTime));
         }
         if (headerValue.includes('@EndTime')) {
-          const referenceTimestampField = item.settings.dateTimeFields?.find(field => field.useAsReference);
-          const formattedEndTime = referenceTimestampField
+          const formattedEndTime = header.dateTimeType
             ? formatInstant(endTime, {
-                type: referenceTimestampField.type,
-                timezone: referenceTimestampField.timezone,
-                format: referenceTimestampField.format,
-                locale: referenceTimestampField.locale
+                type: header.dateTimeType,
+                timezone: header.dateTimeTimezone || undefined,
+                format: header.dateTimeFormat || undefined,
+                locale: 'en-En'
               })
             : endTime;
           headerValue = headerValue.replace(/@EndTime/g, String(formattedEndTime));
