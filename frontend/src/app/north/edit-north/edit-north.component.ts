@@ -81,7 +81,7 @@ export class EditNorthComponent implements OnInit, CanComponentDeactivate {
   mode: 'create' | 'edit' = 'create';
   northId!: string;
   northConnector: NorthConnectorDTO | null = null;
-  northType = '';
+  northType: OIBusNorthType | null = null;
   duplicateId = '';
   state = new ObservableState();
   loading = true;
@@ -151,7 +151,7 @@ export class EditNorthComponent implements OnInit, CanComponentDeactivate {
           this.existingNorthConnectors = northConnectors;
           const paramNorthId = params.get('northId');
           const duplicateNorthId = queryParams.get('duplicate');
-          this.northType = queryParams.get('type') || '';
+          this.northType = (queryParams.get('type') as OIBusNorthType) || null;
 
           // if there is a North ID, we are editing a North connector
           if (paramNorthId) {
@@ -178,7 +178,7 @@ export class EditNorthComponent implements OnInit, CanComponentDeactivate {
           if (northConnector) {
             this.northType = northConnector.type;
           }
-          return this.northConnectorService.getNorthManifest(this.northType);
+          return this.northConnectorService.getNorthManifest(this.northType!);
         })
       )
       .subscribe(manifest => {
