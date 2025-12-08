@@ -106,9 +106,9 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
   certificates: Array<CertificateDTO> = [];
   northManifest: NorthConnectorManifest | null = null;
   southManifest: SouthConnectorManifest | null = null;
-  southType = '';
+  southType: OIBusSouthType | null = null;
   fromSouthId = '';
-  northType = '';
+  northType: OIBusNorthType | null = null;
   fromNorthId = '';
   duplicateId = '';
   saveItemChangesDirectly!: boolean;
@@ -198,12 +198,12 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
               if (southId) {
                 southObs = this.southConnectorService.findById(southId);
               } else {
-                this.southType = queryParams.get('southType') || '';
+                this.southType = (queryParams.get('southType') as OIBusSouthType) || null;
               }
               if (northId) {
                 northObs = this.northConnectorService.findById(northId);
               } else {
-                this.northType = queryParams.get('northType') || '';
+                this.northType = (queryParams.get('northType') as OIBusNorthType) || null;
               }
             }
           }
@@ -230,8 +230,8 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
             }
           }
           return combineLatest([
-            this.northConnectorService.getNorthManifest(this.northType),
-            this.southConnectorService.getSouthManifest(this.southType),
+            this.northConnectorService.getNorthManifest(this.northType!),
+            this.southConnectorService.getSouthManifest(this.southType!),
             of(southConnector),
             of(northConnector)
           ]);
@@ -330,12 +330,15 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
     } else {
       if (southConnector) {
         this.form.controls.southSettings.patchValue(southConnector.settings);
-        this.inMemoryItems = southConnector.items.map(item => ({
-          id: null,
-          name: item.name,
-          enabled: item.enabled,
-          settings: item.settings
-        })) as any;
+        this.inMemoryItems = southConnector.items.map(
+          item =>
+            ({
+              id: null,
+              name: item.name,
+              enabled: item.enabled,
+              settings: item.settings
+            }) as any
+        );
       }
       if (northConnector) {
         northConnector.caching.trigger.scanMode = this.scanModes.find(

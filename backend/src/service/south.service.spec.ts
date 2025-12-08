@@ -28,6 +28,7 @@ import { NotFoundError, OIBusValidationError } from '../model/types';
 import csv from 'papaparse';
 import { stringToBoolean } from './utils';
 import { SouthConnectorEntityLight } from '../model/south-connector.model';
+import { SouthConnectorItemDTO } from '../../shared/model/south-connector.model';
 
 jest.mock('../south/south-opcua/south-opcua');
 jest.mock('./metrics/south-connector-metrics.service');
@@ -439,7 +440,12 @@ describe('South Service', () => {
       throw new Error(`validation error`);
     });
 
-    const result = await service.checkImportItems(testData.south.list[0].type, 'file content', ',', testData.south.list[0].items as any);
+    const result = await service.checkImportItems(
+      testData.south.list[0].type,
+      'file content',
+      ',',
+      testData.south.list[0].items as Array<SouthConnectorItemDTO>
+    );
     expect(result).toEqual({
       items: [
         {
@@ -531,7 +537,12 @@ describe('South Service', () => {
       meta: { delimiter: ',' },
       data: csvData
     });
-    const result = await service.checkImportItems(testData.south.list[1].type, 'file content', ',', testData.south.list[1].items as any);
+    const result = await service.checkImportItems(
+      testData.south.list[1].type,
+      'file content',
+      ',',
+      testData.south.list[1].items as Array<SouthConnectorItemDTO>
+    );
     expect(result).toEqual({
       items: [
         {
