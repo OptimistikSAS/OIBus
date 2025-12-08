@@ -91,7 +91,7 @@ describe('SouthDetailComponent', () => {
       of({
         ...southConnector,
         items: southConnector.items.map(element => ({ ...element, scanModeId: element.scanMode.id }))
-      })
+      } as any)
     );
     southConnectorService.getSouthManifest.and.returnValue(of(manifest));
     southConnectorService.start.and.returnValue(of(undefined));
@@ -135,7 +135,7 @@ describe('SouthDetailComponent', () => {
         ...southConnector,
         items: southConnector.items.map(element => ({ ...element, scanModeId: element.scanMode.id })),
         enabled: false
-      })
+      } as any)
     );
     await tester.change();
     tester.toggleButton.click();

@@ -8,7 +8,7 @@ import { toPage } from '../shared/test-utils';
 import { Page } from '../../../../backend/shared/model/types';
 import { DownloadService } from './download.service';
 import { HttpResponse } from '@angular/common/http';
-import { SouthItemSettings } from '../../../../backend/shared/model/south-settings.model';
+import { SouthFolderScannerItemSettings } from '../../../../backend/shared/model/south-settings.model';
 import { CacheMetadata } from '../../../../backend/shared/model/engine.model';
 import testData from '../../../../backend/src/tests/utils/test-data';
 import { TransformerDTOWithOptions } from '../../../../backend/shared/model/transformer.model';
@@ -97,7 +97,12 @@ describe('HistoryQueryService', () => {
   it('should search History query items', () => {
     let expectedItems: Page<HistoryQueryItemDTO> | null = null;
     const southConnectorItems = toPage<HistoryQueryItemDTO>([
-      { id: 'itemId', name: 'MySouthItem', enabled: true, settings: {} as SouthItemSettings }
+      {
+        id: 'itemId',
+        name: 'MySouthItem',
+        enabled: true,
+        settings: { regex: '*', minAge: 100, preserveFiles: true } as SouthFolderScannerItemSettings
+      }
     ]);
 
     service.searchItems('id1', { name: undefined, enabled: undefined, page: 0 }).subscribe(c => (expectedItems = c));

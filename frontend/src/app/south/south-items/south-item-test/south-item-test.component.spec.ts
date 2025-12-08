@@ -7,7 +7,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import SouthItemTestComponent from './south-item-test.component';
 import { Component, ViewChild } from '@angular/core';
-import { SouthItemSettings } from '../../../../../../backend/shared/model/south-settings.model';
+import { SouthFolderScannerItemSettings } from '../../../../../../backend/shared/model/south-settings.model';
 import { HistoryQueryService } from '../../../services/history-query.service';
 import { DateTime, Settings } from 'luxon';
 import { provideDatepicker } from '../../../shared/datepicker.providers';
@@ -37,8 +37,10 @@ class TestComponent {
     name: 'item1',
     enabled: true,
     settings: {
-      query: 'sql'
-    } as SouthItemSettings,
+      regex: '*',
+      minAge: 100,
+      preserveFiles: true
+    } as SouthFolderScannerItemSettings,
     scanMode: testData.scanMode.list[0]
   };
   connectorCommand = testData.south.command;
@@ -216,8 +218,10 @@ describe('SouthItemTestComponent', () => {
           tester.componentInstance.item.name,
           tester.componentInstance.connectorCommand.settings,
           {
-            query: 'sql'
-          } as SouthItemSettings,
+            regex: '*',
+            minAge: 100,
+            preserveFiles: true
+          } as SouthFolderScannerItemSettings,
           expectedSettings
         );
       } else {
@@ -228,8 +232,10 @@ describe('SouthItemTestComponent', () => {
           tester.componentInstance.item.name,
           tester.componentInstance.connectorCommand.settings,
           {
-            query: 'sql'
-          } as SouthItemSettings,
+            regex: '*',
+            minAge: 100,
+            preserveFiles: true
+          } as SouthFolderScannerItemSettings,
           expectedSettings
         );
       }
@@ -276,8 +282,10 @@ describe('SouthItemTestComponent', () => {
           tester.componentInstance.item.name,
           tester.componentInstance.connectorCommand.settings,
           {
-            query: 'sql'
-          } as SouthItemSettings,
+            regex: '*',
+            minAge: 100,
+            preserveFiles: true
+          } as SouthFolderScannerItemSettings,
           expectedSettings
         );
       } else {
@@ -288,8 +296,10 @@ describe('SouthItemTestComponent', () => {
           tester.componentInstance.item.name,
           tester.componentInstance.connectorCommand.settings,
           {
-            query: 'sql'
-          } as SouthItemSettings,
+            regex: '*',
+            minAge: 100,
+            preserveFiles: true
+          } as SouthFolderScannerItemSettings,
           expectedSettings
         );
       }
@@ -318,8 +328,10 @@ describe('SouthItemTestComponent', () => {
           tester.componentInstance.item.name,
           tester.componentInstance.connectorCommand.settings,
           {
-            query: 'sql'
-          } as SouthItemSettings,
+            regex: '*',
+            minAge: 100,
+            preserveFiles: true
+          } as SouthFolderScannerItemSettings,
           expectedSettings
         );
       } else {
@@ -330,8 +342,10 @@ describe('SouthItemTestComponent', () => {
           tester.componentInstance.item.name,
           tester.componentInstance.connectorCommand.settings,
           {
-            query: 'sql'
-          } as SouthItemSettings,
+            regex: '*',
+            minAge: 100,
+            preserveFiles: true
+          } as SouthFolderScannerItemSettings,
           expectedSettings
         );
       }
@@ -367,8 +381,10 @@ describe('SouthItemTestComponent', () => {
           tester.componentInstance.item.name,
           tester.componentInstance.connectorCommand.settings,
           {
-            query: 'sql'
-          } as SouthItemSettings,
+            regex: '*',
+            minAge: 100,
+            preserveFiles: true
+          } as SouthFolderScannerItemSettings,
           expectedSettings
         );
       } else {
@@ -379,8 +395,10 @@ describe('SouthItemTestComponent', () => {
           tester.componentInstance.item.name,
           tester.componentInstance.connectorCommand.settings,
           {
-            query: 'sql'
-          } as SouthItemSettings,
+            regex: '*',
+            minAge: 100,
+            preserveFiles: true
+          } as SouthFolderScannerItemSettings,
           expectedSettings
         );
       }
@@ -427,8 +445,10 @@ describe('SouthItemTestComponent', () => {
           tester.componentInstance.item.name,
           tester.componentInstance.connectorCommand.settings,
           {
-            query: 'sql'
-          } as SouthItemSettings,
+            regex: '*',
+            minAge: 100,
+            preserveFiles: true
+          } as SouthFolderScannerItemSettings,
           expectedSettings
         );
       } else {
@@ -439,8 +459,10 @@ describe('SouthItemTestComponent', () => {
           tester.componentInstance.item.name,
           tester.componentInstance.connectorCommand.settings,
           {
-            query: 'sql'
-          } as SouthItemSettings,
+            regex: '*',
+            minAge: 100,
+            preserveFiles: true
+          } as SouthFolderScannerItemSettings,
           expectedSettings
         );
       }
@@ -488,8 +510,10 @@ describe('SouthItemTestComponent', () => {
           tester.componentInstance.item.name,
           tester.componentInstance.connectorCommand.settings,
           {
-            query: 'sql'
-          } as SouthItemSettings,
+            regex: '*',
+            minAge: 100,
+            preserveFiles: true
+          } as SouthFolderScannerItemSettings,
           expectedSettings
         );
       } else {
@@ -500,8 +524,10 @@ describe('SouthItemTestComponent', () => {
           tester.componentInstance.item.name,
           tester.componentInstance.connectorCommand.settings,
           {
-            query: 'sql'
-          } as SouthItemSettings,
+            regex: '*',
+            minAge: 100,
+            preserveFiles: true
+          } as SouthFolderScannerItemSettings,
           expectedSettings
         );
       }
@@ -534,8 +560,10 @@ describe('SouthItemTestComponent', () => {
           tester.componentInstance.item.name,
           tester.componentInstance.connectorCommand.settings,
           {
-            query: 'sql'
-          } as SouthItemSettings,
+            regex: '*',
+            minAge: 100,
+            preserveFiles: true
+          } as SouthFolderScannerItemSettings,
           expectedSettings
         );
       } else {
@@ -546,8 +574,10 @@ describe('SouthItemTestComponent', () => {
           tester.componentInstance.item.name,
           tester.componentInstance.connectorCommand.settings,
           {
-            query: 'sql'
-          } as SouthItemSettings,
+            regex: '*',
+            minAge: 100,
+            preserveFiles: true
+          } as SouthFolderScannerItemSettings,
           expectedSettings
         );
       }

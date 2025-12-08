@@ -6,8 +6,8 @@ import { Component } from '@angular/core';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { HistoryQueryDTO } from '../../../../../../backend/shared/model/history-query.model';
 import { HistoryQueryMetrics } from '../../../../../../backend/shared/model/engine.model';
-import { SouthSettings } from '../../../../../../backend/shared/model/south-settings.model';
-import { NorthSettings } from '../../../../../../backend/shared/model/north-settings.model';
+import { SouthOPCUASettings } from '../../../../../../backend/shared/model/south-settings.model';
+import { NorthConsoleSettings } from '../../../../../../backend/shared/model/north-settings.model';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
 
 @Component({
@@ -34,11 +34,28 @@ class TestComponent {
     startTime: '2023-01-01T00:00:00.000Z',
     endTime: '2023-01-01T00:00:00.000Z',
     southSettings: {
-      database: 'my database'
-    } as SouthSettings,
+      throttling: {
+        maxInstantPerItem: false,
+        maxReadInterval: 3600,
+        readDelay: 200,
+        overlap: 0
+      },
+      sharedConnection: false,
+      url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
+      retryInterval: 10000,
+      readTimeout: 15000,
+      flushMessageTimeout: 1000,
+      maxNumberOfMessages: 1000,
+      authentication: {
+        type: 'none'
+      },
+      securityMode: 'none',
+      securityPolicy: 'none',
+      keepSessionAlive: false
+    } as SouthOPCUASettings,
     northSettings: {
-      host: 'localhost'
-    } as NorthSettings,
+      verbose: false
+    } as NorthConsoleSettings,
     caching: {
       trigger: {
         scanMode: { id: 'scanModeId1', name: 'scan mode', description: '', cron: '* * * *' },

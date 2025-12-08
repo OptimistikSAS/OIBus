@@ -12,8 +12,8 @@ import { NorthConnectorService } from '../../services/north-connector.service';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { EngineService } from '../../services/engine.service';
 import { Modal, ModalService } from '../../shared/modal.service';
-import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
-import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
+import { SouthOPCUASettings, SouthOPCUAItemSettings } from '../../../../../backend/shared/model/south-settings.model';
+import { NorthConsoleSettings } from '../../../../../backend/shared/model/north-settings.model';
 import testData from '../../../../../backend/src/tests/utils/test-data';
 import { CertificateService } from '../../services/certificate.service';
 import { TransformerService } from '../../services/transformer.service';
@@ -67,11 +67,28 @@ describe('HistoryQueryDetailComponent', () => {
     startTime: '2023-01-01T00:00:00.000Z',
     endTime: '2023-01-01T00:00:00.000Z',
     southSettings: {
-      database: 'my database'
-    } as SouthSettings,
+      throttling: {
+        maxInstantPerItem: false,
+        maxReadInterval: 3600,
+        readDelay: 200,
+        overlap: 0
+      },
+      sharedConnection: false,
+      url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
+      retryInterval: 10000,
+      readTimeout: 15000,
+      flushMessageTimeout: 1000,
+      maxNumberOfMessages: 1000,
+      authentication: {
+        type: 'none'
+      },
+      securityMode: 'none',
+      securityPolicy: 'none',
+      keepSessionAlive: false
+    } as SouthOPCUASettings,
     northSettings: {
-      host: 'localhost'
-    } as NorthSettings,
+      verbose: false
+    } as NorthConsoleSettings,
     caching: {
       trigger: {
         scanMode: { id: 'scanModeId1', name: 'scan mode', description: '', cron: '* * * *' },
@@ -99,8 +116,9 @@ describe('HistoryQueryDetailComponent', () => {
         name: 'item1',
         enabled: true,
         settings: {
-          query: 'sql'
-        } as SouthItemSettings
+          nodeId: 'ns=2;s=MyNode',
+          mode: 'ha'
+        } as SouthOPCUAItemSettings
       }
     ],
     northTransformers: []

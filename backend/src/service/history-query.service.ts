@@ -394,12 +394,12 @@ export default class HistoryQueryService {
     const validItems: Array<HistoryQueryItemDTO> = [];
     const errors: Array<{ item: Record<string, string>; error: string }> = [];
     for (const data of csvContent.data) {
-      const item: HistoryQueryItemDTO = {
+      const item = {
         id: '',
         name: (data as unknown as Record<string, string>).name,
         enabled: stringToBoolean((data as unknown as Record<string, string>).enabled),
         settings: {} as SouthItemSettings
-      };
+      } as HistoryQueryItemDTO;
       if (existingItems.find(existingItem => existingItem.name === item.name)) {
         errors.push({
           item: data as Record<string, string>,
@@ -682,7 +682,8 @@ export const toHistoryQueryLightDTO = (historyQuery: HistoryQueryEntityLight): H
 export const toHistoryQueryDTO = (historyQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>): HistoryQueryDTO => {
   const southManifest = southManifestList.find(element => element.id === historyQuery.southType)!;
   const northManifest = northManifestList.find(element => element.id === historyQuery.northType)!;
-  return {
+  const items = historyQuery.items.map(item => toHistoryQueryItemDTO(item, historyQuery.southType));
+  const baseDTO = {
     id: historyQuery.id,
     name: historyQuery.name,
     description: historyQuery.description,
@@ -714,13 +715,15 @@ export const toHistoryQueryDTO = (historyQuery: HistoryQueryEntity<SouthSettings
         retentionDuration: historyQuery.caching.archive.retentionDuration
       }
     },
-    items: historyQuery.items.map(item => toHistoryQueryItemDTO(item, historyQuery.southType)),
+    items,
     northTransformers: historyQuery.northTransformers.map(transformerWithOptions => ({
       transformer: toTransformerDTO(transformerWithOptions.transformer),
       options: transformerWithOptions.options,
       inputType: transformerWithOptions.inputType
     }))
   };
+  // Type assertion is safe because we know the southType and northType fields match the settings and items at runtime
+  return baseDTO as HistoryQueryDTO;
 };
 
 export const toHistoryQueryItemDTO = (
@@ -736,5 +739,5 @@ export const toHistoryQueryItemDTO = (
     name: historyQueryItem.name,
     enabled: historyQueryItem.enabled,
     settings: encryptionService.filterSecrets<SouthItemSettings>(historyQueryItem.settings, itemSettingsManifest)
-  };
+  } as HistoryQueryItemDTO;
 };

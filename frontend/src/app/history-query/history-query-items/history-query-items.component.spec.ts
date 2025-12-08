@@ -8,12 +8,8 @@ import { Component } from '@angular/core';
 import { HistoryQueryItemsComponent } from './history-query-items.component';
 import { HistoryQueryDTO, HistoryQueryItemCommandDTO, HistoryQueryItemDTO } from '../../../../../backend/shared/model/history-query.model';
 import { HistoryQueryService } from '../../services/history-query.service';
-import {
-  SouthItemSettings,
-  SouthSettings,
-  SouthSQLiteItemSettingsSerialization
-} from '../../../../../backend/shared/model/south-settings.model';
-import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
+import { SouthOPCUASettings, SouthOPCUAItemSettings } from '../../../../../backend/shared/model/south-settings.model';
+import { NorthFileWriterSettings } from '../../../../../backend/shared/model/north-settings.model';
 import { ModalService } from '../../shared/modal.service';
 import { ImportItemModalComponent } from '../../shared/import-item-modal/import-item-modal.component';
 import { ImportHistoryQueryItemsModalComponent } from './import-history-query-items-modal/import-history-query-items-modal.component';
@@ -30,11 +26,30 @@ const testHistoryQuery: HistoryQueryDTO = {
   startTime: '2023-01-01T00:00:00.000Z',
   endTime: '2023-01-01T00:00:00.000Z',
   southSettings: {
-    database: 'my database'
-  } as SouthSettings,
+    throttling: {
+      maxInstantPerItem: false,
+      maxReadInterval: 3600,
+      readDelay: 200,
+      overlap: 0
+    },
+    sharedConnection: false,
+    url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
+    retryInterval: 10000,
+    readTimeout: 15000,
+    flushMessageTimeout: 1000,
+    maxNumberOfMessages: 1000,
+    authentication: {
+      type: 'none'
+    },
+    securityMode: 'none',
+    securityPolicy: 'none',
+    keepSessionAlive: false
+  } as SouthOPCUASettings,
   northSettings: {
-    host: 'localhost'
-  } as NorthSettings,
+    outputFolder: 'output-folder',
+    prefix: 'prefix-',
+    suffix: '-suffix'
+  } as NorthFileWriterSettings,
   caching: {
     trigger: {
       scanMode: { id: 'scanModeId1', name: 'scan mode', description: '', cron: '* * * *' },
@@ -62,24 +77,24 @@ const testHistoryQuery: HistoryQueryDTO = {
       name: 'item1',
       enabled: true,
       settings: {
-        query: 'sql'
-      } as SouthItemSettings
+        mode: 'ha'
+      } as SouthOPCUAItemSettings
     },
     {
       id: 'id2',
       name: 'item1-copy',
       enabled: false,
       settings: {
-        query: 'sql'
-      } as SouthItemSettings
+        mode: 'ha'
+      } as SouthOPCUAItemSettings
     },
     {
       id: 'id3',
       name: 'item3',
       enabled: false,
       settings: {
-        query: 'sql'
-      } as SouthItemSettings
+        mode: 'ha'
+      } as SouthOPCUAItemSettings
     }
   ],
   northTransformers: []
@@ -602,10 +617,9 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
           name: 'newItem1',
           enabled: true,
           settings: {
-            query: 'SELECT 1',
-            dateTimeFields: [],
-            serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization
-          }
+            nodeId: 'ns=2;s=MyNode',
+            mode: 'ha'
+          } as SouthOPCUAItemSettings
         }
       ];
       const mockErrors = [{ item: mockItems[0], error: 'Invalid query' }];
@@ -646,10 +660,9 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
           name: 'newItem1',
           enabled: true,
           settings: {
-            query: 'SELECT 1',
-            dateTimeFields: [],
-            serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization
-          }
+            nodeId: 'ns=2;s=MyNode',
+            mode: 'ha'
+          } as SouthOPCUAItemSettings
         }
       ];
 
@@ -659,10 +672,9 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
           name: 'newItem1',
           enabled: true,
           settings: {
-            query: 'SELECT 1',
-            dateTimeFields: [],
-            serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization
-          }
+            nodeId: 'ns=2;s=MyNode',
+            mode: 'ha'
+          } as SouthOPCUAItemSettings
         }
       ];
 
@@ -694,10 +706,9 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
           name: 'newItem1',
           enabled: true,
           settings: {
-            query: 'SELECT 1',
-            dateTimeFields: [],
-            serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization
-          }
+            nodeId: 'ns=2;s=MyNode',
+            mode: 'ha'
+          } as SouthOPCUAItemSettings
         }
       ];
 
@@ -707,10 +718,9 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
           name: 'newItem1',
           enabled: true,
           settings: {
-            query: 'SELECT 1',
-            dateTimeFields: [],
-            serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization
-          }
+            nodeId: 'ns=2;s=MyNode',
+            mode: 'ha'
+          } as SouthOPCUAItemSettings
         }
       ];
 
@@ -746,20 +756,18 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
           name: 'newItem1',
           enabled: true,
           settings: {
-            query: 'SELECT 1',
-            dateTimeFields: [],
-            serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization
-          }
+            nodeId: 'ns=2;s=MyNode',
+            mode: 'ha'
+          } as SouthOPCUAItemSettings
         },
         {
           id: 'new2',
           name: 'newItem2',
           enabled: false,
           settings: {
-            query: 'SELECT 1',
-            dateTimeFields: [],
-            serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization
-          }
+            nodeId: 'ns=2;s=MyNode2',
+            mode: 'da'
+          } as SouthOPCUAItemSettings
         }
       ];
 
@@ -769,20 +777,18 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
           name: 'newItem1',
           enabled: true,
           settings: {
-            query: 'SELECT 1',
-            dateTimeFields: [],
-            serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization
-          }
+            nodeId: 'ns=2;s=MyNode',
+            mode: 'ha'
+          } as SouthOPCUAItemSettings
         },
         {
           id: 'new2',
           name: 'newItem2',
           enabled: false,
           settings: {
-            query: 'SELECT 1',
-            dateTimeFields: [],
-            serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization
-          }
+            nodeId: 'ns=2;s=MyNode2',
+            mode: 'da'
+          } as SouthOPCUAItemSettings
         }
       ];
 
@@ -814,10 +820,9 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
           name: 'newItem1',
           enabled: true,
           settings: {
-            query: 'SELECT 1',
-            dateTimeFields: [],
-            serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization
-          }
+            nodeId: 'ns=2;s=MyNode',
+            mode: 'ha'
+          } as SouthOPCUAItemSettings
         }
       ];
 
@@ -827,10 +832,9 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
           name: 'newItem1',
           enabled: true,
           settings: {
-            query: 'SELECT 1',
-            dateTimeFields: [],
-            serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization
-          }
+            nodeId: 'ns=2;s=MyNode',
+            mode: 'ha'
+          } as SouthOPCUAItemSettings
         }
       ];
 

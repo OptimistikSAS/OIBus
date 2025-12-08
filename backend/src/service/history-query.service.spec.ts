@@ -510,7 +510,7 @@ describe('History Query service', () => {
       testData.historyQueries.command.southType,
       'file content',
       ',',
-      testData.historyQueries.list[0].items
+      testData.historyQueries.list[0].items as any
     );
     expect(result).toEqual({
       items: [
@@ -591,7 +591,7 @@ describe('History Query service', () => {
       testData.historyQueries.command.southType,
       'file content',
       ',',
-      testData.historyQueries.list[1].items
+      testData.historyQueries.list[1].items as any
     );
     expect(result).toEqual({
       items: [

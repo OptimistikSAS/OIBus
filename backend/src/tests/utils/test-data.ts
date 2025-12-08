@@ -24,7 +24,7 @@ import { OIBusCommand } from '../../model/oianalytics-command.model';
 import { OIAnalyticsFetchCommandDTO } from '../../service/oia/oianalytics.model';
 import { OIAnalyticsMessage } from '../../model/oianalytics-message.model';
 import { SouthConnectorEntity } from '../../model/south-connector.model';
-import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
+import { SouthItemSettings, SouthMSSQLItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import { HistoryQueryEntity } from '../../model/histor-query.model';
 import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO } from '../../../shared/model/history-query.model';
@@ -798,13 +798,35 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
         id: 'historyQueryItem1',
         name: 'item1',
         enabled: true,
-        settings: {} as SouthItemSettings
+        settings: {
+          query: 'SELECT * FROM table1',
+          dateTimeFields: null,
+          serialization: {
+            type: 'csv',
+            filename: 'item1.csv',
+            delimiter: 'COMMA',
+            compression: false,
+            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+            outputTimezone: 'UTC'
+          }
+        } as SouthMSSQLItemSettings
       },
       {
         id: 'historyQueryItem2',
         name: 'item2',
         enabled: true,
-        settings: {} as SouthItemSettings
+        settings: {
+          query: 'SELECT * FROM table2',
+          dateTimeFields: null,
+          serialization: {
+            type: 'csv',
+            filename: 'item2.csv',
+            delimiter: 'COMMA',
+            compression: false,
+            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+            outputTimezone: 'UTC'
+          }
+        } as SouthMSSQLItemSettings
       }
     ],
     northTransformers: [
@@ -869,7 +891,18 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
         id: 'historyQueryItem3',
         name: 'item3',
         enabled: true,
-        settings: {} as SouthItemSettings
+        settings: {
+          query: 'SELECT * FROM table3',
+          dateTimeFields: null,
+          serialization: {
+            type: 'csv',
+            filename: 'item3.csv',
+            delimiter: 'COMMA',
+            compression: false,
+            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+            outputTimezone: 'UTC'
+          }
+        } as SouthMSSQLItemSettings
       }
     ],
     northTransformers: []
@@ -931,7 +964,18 @@ const historyQueryCommand: HistoryQueryCommandDTO = {
       id: 'historyQueryItem4',
       name: 'item4',
       enabled: true,
-      settings: {} as SouthItemSettings
+      settings: {
+        query: 'SELECT * FROM table4',
+        dateTimeFields: null,
+        serialization: {
+          type: 'csv',
+          filename: 'item4.csv',
+          delimiter: 'COMMA',
+          compression: false,
+          outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+          outputTimezone: 'UTC'
+        }
+      } as SouthMSSQLItemSettings
     }
   ],
   northTransformers: [
@@ -943,7 +987,18 @@ const historyQueryItemCommand: HistoryQueryItemCommandDTO = {
   id: 'newHistoryQueryItemId',
   name: 'New History query Item',
   enabled: true,
-  settings: {} as SouthItemSettings
+  settings: {
+    query: 'SELECT * FROM newTable',
+    dateTimeFields: null,
+    serialization: {
+      type: 'csv',
+      filename: 'newItem.csv',
+      delimiter: 'COMMA',
+      compression: false,
+      outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+      outputTimezone: 'UTC'
+    }
+  } as SouthMSSQLItemSettings
 };
 
 const engineSettings: EngineSettings = {
