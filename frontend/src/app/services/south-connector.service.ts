@@ -38,7 +38,7 @@ export class SouthConnectorService {
   /**
    * Get a South connector manifest
    */
-  getSouthManifest(type: string): Observable<SouthConnectorManifest> {
+  getSouthManifest(type: OIBusSouthType): Observable<SouthConnectorManifest> {
     return this.http.get<SouthConnectorManifest>(`/api/south/manifests/${type}`);
   }
 
