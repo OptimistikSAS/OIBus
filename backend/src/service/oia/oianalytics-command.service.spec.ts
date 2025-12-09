@@ -30,6 +30,14 @@ import {
   OIBusDeleteNorthConnectorCommand,
   OIBusDeleteScanModeCommand,
   OIBusDeleteSouthConnectorCommand,
+  OIBusGetHistoryCacheFileContentCommand,
+  OIBusGetNorthCacheFileContentCommand,
+  OIBusMoveHistoryCacheContentCommand,
+  OIBusMoveNorthCacheContentCommand,
+  OIBusRemoveHistoryCacheContentCommand,
+  OIBusRemoveNorthCacheContentCommand,
+  OIBusSearchHistoryCacheContentCommand,
+  OIBusSearchNorthCacheContentCommand,
   OIBusTestHistoryQueryNorthConnectionCommand,
   OIBusTestHistoryQuerySouthConnectionCommand,
   OIBusTestHistoryQuerySouthItemCommand,
@@ -1482,6 +1490,587 @@ describe('OIAnalytics Command Service', () => {
     expect(northService.executeSetpoint).toHaveBeenCalledWith(command.northConnectorId, command.commandContent, expect.anything());
 
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(command.id, testData.constants.dates.FAKE_NOW, 'ok');
+  });
+
+  it('should execute search-north-cache-content command', async () => {
+    const command: OIBusSearchNorthCacheContentCommand = {
+      id: 'searchNorthCacheContentId',
+      type: 'search-north-cache-content',
+      targetVersion: testData.engine.settings.version,
+      status: 'RETRIEVED',
+      ack: false,
+      retrievedDate: testData.constants.dates.FAKE_NOW,
+      completedDate: null,
+      result: null,
+      northConnectorId: 'northId1',
+      commandContent: {
+        searchParams: { start: undefined, end: undefined, nameContains: 'test' },
+        folder: 'cache',
+        commandPermissions: {
+          searchCacheContent: true
+        }
+      }
+    } as OIBusSearchNorthCacheContentCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    (northService.searchCacheContent as jest.Mock).mockReturnValueOnce({ files: [] });
+
+    await service.executeCommand();
+
+    expect(northService.searchCacheContent).toHaveBeenCalledWith(
+      command.northConnectorId,
+      command.commandContent.searchParams,
+      command.commandContent.folder
+    );
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      JSON.stringify({ files: [] })
+    );
+  });
+
+  it('should execute search-history-cache-content command', async () => {
+    const command: OIBusSearchHistoryCacheContentCommand = {
+      id: 'searchHistoryCacheContentId',
+      type: 'search-history-cache-content',
+      targetVersion: testData.engine.settings.version,
+      status: 'RETRIEVED',
+      ack: false,
+      retrievedDate: testData.constants.dates.FAKE_NOW,
+      completedDate: null,
+      result: null,
+      historyQueryId: 'historyId1',
+      commandContent: {
+        searchParams: { start: undefined, end: undefined, nameContains: 'test' },
+        folder: 'archive',
+        commandPermissions: {
+          searchCacheContent: true
+        }
+      }
+    } as OIBusSearchHistoryCacheContentCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    (historyQueryService.searchCacheContent as jest.Mock).mockReturnValueOnce({ files: [] });
+
+    await service.executeCommand();
+
+    expect(historyQueryService.searchCacheContent).toHaveBeenCalledWith(
+      command.historyQueryId,
+      command.commandContent.searchParams,
+      command.commandContent.folder
+    );
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      JSON.stringify({ files: [] })
+    );
+  });
+
+  it('should execute get-north-cache-file-content command', async () => {
+    const command: OIBusGetNorthCacheFileContentCommand = {
+      id: 'getNorthCacheFileContentId',
+      type: 'get-north-cache-file-content',
+      targetVersion: testData.engine.settings.version,
+      status: 'RETRIEVED',
+      ack: false,
+      retrievedDate: testData.constants.dates.FAKE_NOW,
+      completedDate: null,
+      result: null,
+      northConnectorId: 'northId1',
+      commandContent: {
+        folder: 'cache',
+        filename: 'file.txt',
+        commandPermissions: {
+          getCacheFileContent: true
+        }
+      }
+    } as OIBusGetNorthCacheFileContentCommand;
+    const mockStream = {
+      [Symbol.asyncIterator]: async function* () {
+        yield Buffer.from('test content');
+      }
+    } as unknown as NodeJS.ReadableStream;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    (northService.getCacheFileContent as jest.Mock).mockReturnValueOnce(mockStream);
+
+    await service.executeCommand();
+
+    expect(northService.getCacheFileContent).toHaveBeenCalledWith(
+      command.northConnectorId,
+      command.commandContent.folder,
+      command.commandContent.filename
+    );
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      expect.stringContaining('"content":"test content"')
+    );
+  });
+
+  it('should execute get-history-cache-file-content command', async () => {
+    const command: OIBusGetHistoryCacheFileContentCommand = {
+      id: 'getHistoryCacheFileContentId',
+      type: 'get-history-cache-file-content',
+      targetVersion: testData.engine.settings.version,
+      status: 'RETRIEVED',
+      ack: false,
+      retrievedDate: testData.constants.dates.FAKE_NOW,
+      completedDate: null,
+      result: null,
+      historyQueryId: 'historyId1',
+      commandContent: {
+        folder: 'error',
+        filename: 'file.txt',
+        commandPermissions: {
+          getCacheFileContent: true
+        }
+      }
+    } as OIBusGetHistoryCacheFileContentCommand;
+    const mockStream = {
+      [Symbol.asyncIterator]: async function* () {
+        yield Buffer.from('test content');
+      }
+    } as unknown as NodeJS.ReadableStream;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    (historyQueryService.getCacheFileContent as jest.Mock).mockReturnValueOnce(mockStream);
+
+    await service.executeCommand();
+
+    expect(historyQueryService.getCacheFileContent).toHaveBeenCalledWith(
+      command.historyQueryId,
+      command.commandContent.folder,
+      command.commandContent.filename
+    );
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      expect.stringContaining('"content":"test content"')
+    );
+  });
+
+  it('should execute get-north-cache-file-content command with truncated content', async () => {
+    const command: OIBusGetNorthCacheFileContentCommand = {
+      id: 'getNorthCacheFileContentId',
+      type: 'get-north-cache-file-content',
+      targetVersion: testData.engine.settings.version,
+      status: 'RETRIEVED',
+      ack: false,
+      retrievedDate: testData.constants.dates.FAKE_NOW,
+      completedDate: null,
+      result: null,
+      northConnectorId: 'northId1',
+      commandContent: {
+        folder: 'cache',
+        filename: 'file.txt',
+        commandPermissions: {
+          getCacheFileContent: true
+        }
+      }
+    } as OIBusGetNorthCacheFileContentCommand;
+    const largeContent = Buffer.alloc(1024 * 501); // Larger than 500KB limit
+    const mockStream = {
+      [Symbol.asyncIterator]: async function* () {
+        yield largeContent;
+      }
+    } as unknown as NodeJS.ReadableStream;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    (northService.getCacheFileContent as jest.Mock).mockReturnValueOnce(mockStream);
+
+    await service.executeCommand();
+
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      expect.stringContaining('"truncated":true')
+    );
+  });
+
+  it('should execute get-north-cache-file-content command with content that exceeds limit after partial read', async () => {
+    const command: OIBusGetNorthCacheFileContentCommand = {
+      id: 'getNorthCacheFileContentId2',
+      type: 'get-north-cache-file-content',
+      targetVersion: testData.engine.settings.version,
+      status: 'RETRIEVED',
+      ack: false,
+      retrievedDate: testData.constants.dates.FAKE_NOW,
+      completedDate: null,
+      result: null,
+      northConnectorId: 'northId1',
+      commandContent: {
+        folder: 'cache',
+        filename: 'file.txt',
+        commandPermissions: {
+          getCacheFileContent: true
+        }
+      }
+    } as OIBusGetNorthCacheFileContentCommand;
+    // First chunk fills most of the limit, second chunk exceeds it
+    const firstChunk = Buffer.alloc(1024 * 499); // 499KB
+    const secondChunk = Buffer.alloc(1024 * 10); // 10KB - will exceed the 500KB limit
+    const mockStream = {
+      [Symbol.asyncIterator]: async function* () {
+        yield firstChunk;
+        yield secondChunk;
+      }
+    } as unknown as NodeJS.ReadableStream;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    (northService.getCacheFileContent as jest.Mock).mockReturnValueOnce(mockStream);
+
+    await service.executeCommand();
+
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      expect.stringContaining('"truncated":true')
+    );
+    // Verify that remaining > 0 branch was hit by checking totalSize is exactly MAX_SIZE
+    const callArgs = (oIAnalyticsCommandRepository.markAsCompleted as jest.Mock).mock.calls[
+      (oIAnalyticsCommandRepository.markAsCompleted as jest.Mock).mock.calls.length - 1
+    ];
+    const result = JSON.parse(callArgs[2]);
+    expect(result.totalSize).toBe(1024 * 500); // Should be exactly MAX_SIZE
+    expect(result.truncated).toBe(true);
+  });
+
+  it('should execute get-history-cache-file-content command with content that exceeds limit after partial read', async () => {
+    const command: OIBusGetHistoryCacheFileContentCommand = {
+      id: 'getHistoryCacheFileContentId2',
+      type: 'get-history-cache-file-content',
+      targetVersion: testData.engine.settings.version,
+      status: 'RETRIEVED',
+      ack: false,
+      retrievedDate: testData.constants.dates.FAKE_NOW,
+      completedDate: null,
+      result: null,
+      historyQueryId: 'historyId1',
+      commandContent: {
+        folder: 'error',
+        filename: 'file.txt',
+        commandPermissions: {
+          getCacheFileContent: true
+        }
+      }
+    } as OIBusGetHistoryCacheFileContentCommand;
+    // First chunk fills most of the limit, second chunk exceeds it
+    // Use sizes that ensure remaining > 0 branch is hit
+    const firstChunk = Buffer.alloc(1024 * 499); // 499KB
+    const secondChunk = Buffer.alloc(1024 * 10); // 10KB - will exceed the 500KB limit
+    const mockStream = {
+      [Symbol.asyncIterator]: async function* () {
+        yield firstChunk;
+        yield secondChunk;
+      }
+    } as unknown as NodeJS.ReadableStream;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    (historyQueryService.getCacheFileContent as jest.Mock).mockReturnValueOnce(mockStream);
+
+    await service.executeCommand();
+
+    expect(historyQueryService.getCacheFileContent).toHaveBeenCalledWith(
+      command.historyQueryId,
+      command.commandContent.folder,
+      command.commandContent.filename
+    );
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      expect.stringContaining('"truncated":true')
+    );
+    // Verify that remaining > 0 branch was hit by checking totalSize is exactly MAX_SIZE
+    const callArgs = (oIAnalyticsCommandRepository.markAsCompleted as jest.Mock).mock.calls[
+      (oIAnalyticsCommandRepository.markAsCompleted as jest.Mock).mock.calls.length - 1
+    ];
+    const result = JSON.parse(callArgs[2]);
+    expect(result.totalSize).toBe(1024 * 500); // Should be exactly MAX_SIZE
+    expect(result.truncated).toBe(true);
+  });
+
+  it('should execute remove-north-cache-content command', async () => {
+    const command: OIBusRemoveNorthCacheContentCommand = {
+      id: 'removeNorthCacheContentId',
+      type: 'remove-north-cache-content',
+      targetVersion: testData.engine.settings.version,
+      status: 'RETRIEVED',
+      ack: false,
+      retrievedDate: testData.constants.dates.FAKE_NOW,
+      completedDate: null,
+      result: null,
+      northConnectorId: 'northId1',
+      commandContent: {
+        folder: 'cache',
+        metadataFilenameList: ['file1.txt', 'file2.txt'],
+        commandPermissions: {
+          removeCacheContent: true
+        }
+      }
+    } as OIBusRemoveNorthCacheContentCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    (northService.removeCacheContent as jest.Mock).mockResolvedValueOnce(undefined);
+
+    await service.executeCommand();
+
+    expect(northService.removeCacheContent).toHaveBeenCalledWith(
+      command.northConnectorId,
+      command.commandContent.folder,
+      command.commandContent.metadataFilenameList
+    );
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      'Content removed successfully'
+    );
+  });
+
+  it('should execute remove-history-cache-content command', async () => {
+    const command: OIBusRemoveHistoryCacheContentCommand = {
+      id: 'removeHistoryCacheContentId',
+      type: 'remove-history-cache-content',
+      targetVersion: testData.engine.settings.version,
+      status: 'RETRIEVED',
+      ack: false,
+      retrievedDate: testData.constants.dates.FAKE_NOW,
+      completedDate: null,
+      result: null,
+      historyQueryId: 'historyId1',
+      commandContent: {
+        folder: 'archive',
+        metadataFilenameList: ['file1.txt'],
+        commandPermissions: {
+          removeCacheContent: true
+        }
+      }
+    } as OIBusRemoveHistoryCacheContentCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    (historyQueryService.removeCacheContent as jest.Mock).mockResolvedValueOnce(undefined);
+
+    await service.executeCommand();
+
+    expect(historyQueryService.removeCacheContent).toHaveBeenCalledWith(
+      command.historyQueryId,
+      command.commandContent.folder,
+      command.commandContent.metadataFilenameList
+    );
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      'Content removed successfully'
+    );
+  });
+
+  it('should execute move-north-cache-content command', async () => {
+    const command: OIBusMoveNorthCacheContentCommand = {
+      id: 'moveNorthCacheContentId',
+      type: 'move-north-cache-content',
+      targetVersion: testData.engine.settings.version,
+      status: 'RETRIEVED',
+      ack: false,
+      retrievedDate: testData.constants.dates.FAKE_NOW,
+      completedDate: null,
+      result: null,
+      northConnectorId: 'northId1',
+      commandContent: {
+        originFolder: 'cache',
+        destinationFolder: 'archive',
+        cacheContentList: ['file1.txt', 'file2.txt'],
+        commandPermissions: {
+          moveCacheContent: true
+        }
+      }
+    } as OIBusMoveNorthCacheContentCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    (northService.moveCacheContent as jest.Mock).mockResolvedValueOnce(undefined);
+
+    await service.executeCommand();
+
+    expect(northService.moveCacheContent).toHaveBeenCalledWith(
+      command.northConnectorId,
+      command.commandContent.originFolder,
+      command.commandContent.destinationFolder,
+      command.commandContent.cacheContentList
+    );
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      'Content moved successfully'
+    );
+  });
+
+  it('should execute move-history-cache-content command', async () => {
+    const command: OIBusMoveHistoryCacheContentCommand = {
+      id: 'moveHistoryCacheContentId',
+      type: 'move-history-cache-content',
+      targetVersion: testData.engine.settings.version,
+      status: 'RETRIEVED',
+      ack: false,
+      retrievedDate: testData.constants.dates.FAKE_NOW,
+      completedDate: null,
+      result: null,
+      historyQueryId: 'historyId1',
+      commandContent: {
+        originFolder: 'error',
+        destinationFolder: 'cache',
+        cacheContentList: ['file1.txt'],
+        commandPermissions: {
+          moveCacheContent: true
+        }
+      }
+    } as OIBusMoveHistoryCacheContentCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    (historyQueryService.moveCacheContent as jest.Mock).mockResolvedValueOnce(undefined);
+
+    await service.executeCommand();
+
+    expect(historyQueryService.moveCacheContent).toHaveBeenCalledWith(
+      command.historyQueryId,
+      command.commandContent.originFolder,
+      command.commandContent.destinationFolder,
+      command.commandContent.cacheContentList
+    );
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      'Content moved successfully'
+    );
+  });
+
+  it('should not execute cache command if permission is not right', async () => {
+    const command: OIBusSearchNorthCacheContentCommand = {
+      id: 'searchNorthCacheContentId',
+      type: 'search-north-cache-content',
+      targetVersion: testData.engine.settings.version,
+      status: 'RETRIEVED',
+      ack: false,
+      retrievedDate: testData.constants.dates.FAKE_NOW,
+      completedDate: null,
+      result: null,
+      northConnectorId: 'northId1',
+      commandContent: {
+        searchParams: { start: undefined, end: undefined, nameContains: undefined, pattern: undefined },
+        folder: 'cache',
+        commandPermissions: {
+          searchCacheContent: true
+        }
+      }
+    } as OIBusSearchNorthCacheContentCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock).mockReturnValueOnce({
+      ...testData.oIAnalytics.registration.completed,
+      commandPermissions: {
+        ...testData.oIAnalytics.registration.completed.commandPermissions,
+        searchCacheContent: false
+      }
+    });
+
+    await service.executeCommand();
+
+    expect(oIAnalyticsCommandRepository.markAsErrored).toHaveBeenCalledWith(
+      command.id,
+      `Command ${command.id} of type ${command.type} is not authorized`
+    );
+  });
+
+  it('should not execute get-cache-file-content command if permission is not right', async () => {
+    const command: OIBusGetNorthCacheFileContentCommand = {
+      id: 'getNorthCacheFileContentId',
+      type: 'get-north-cache-file-content',
+      targetVersion: testData.engine.settings.version,
+      status: 'RETRIEVED',
+      ack: false,
+      retrievedDate: testData.constants.dates.FAKE_NOW,
+      completedDate: null,
+      result: null,
+      northConnectorId: 'northId1',
+      commandContent: {
+        folder: 'cache',
+        filename: 'file.txt',
+        commandPermissions: {
+          getCacheFileContent: true
+        }
+      }
+    } as OIBusGetNorthCacheFileContentCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock).mockReturnValueOnce({
+      ...testData.oIAnalytics.registration.completed,
+      commandPermissions: {
+        ...testData.oIAnalytics.registration.completed.commandPermissions,
+        getCacheFileContent: false
+      }
+    });
+
+    await service.executeCommand();
+
+    expect(oIAnalyticsCommandRepository.markAsErrored).toHaveBeenCalledWith(
+      command.id,
+      `Command ${command.id} of type ${command.type} is not authorized`
+    );
+  });
+
+  it('should not execute remove-cache-content command if permission is not right', async () => {
+    const command: OIBusRemoveNorthCacheContentCommand = {
+      id: 'removeNorthCacheContentId',
+      type: 'remove-north-cache-content',
+      targetVersion: testData.engine.settings.version,
+      status: 'RETRIEVED',
+      ack: false,
+      retrievedDate: testData.constants.dates.FAKE_NOW,
+      completedDate: null,
+      result: null,
+      northConnectorId: 'northId1',
+      commandContent: {
+        folder: 'cache',
+        metadataFilenameList: ['file1.txt'],
+        commandPermissions: {
+          removeCacheContent: true
+        }
+      }
+    } as OIBusRemoveNorthCacheContentCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock).mockReturnValueOnce({
+      ...testData.oIAnalytics.registration.completed,
+      commandPermissions: {
+        ...testData.oIAnalytics.registration.completed.commandPermissions,
+        removeCacheContent: false
+      }
+    });
+
+    await service.executeCommand();
+
+    expect(oIAnalyticsCommandRepository.markAsErrored).toHaveBeenCalledWith(
+      command.id,
+      `Command ${command.id} of type ${command.type} is not authorized`
+    );
+  });
+
+  it('should not execute move-cache-content command if permission is not right', async () => {
+    const command: OIBusMoveNorthCacheContentCommand = {
+      id: 'moveNorthCacheContentId',
+      type: 'move-north-cache-content',
+      targetVersion: testData.engine.settings.version,
+      status: 'RETRIEVED',
+      ack: false,
+      retrievedDate: testData.constants.dates.FAKE_NOW,
+      completedDate: null,
+      result: null,
+      northConnectorId: 'northId1',
+      commandContent: {
+        originFolder: 'cache',
+        destinationFolder: 'archive',
+        cacheContentList: ['file1.txt']
+      }
+    } as OIBusMoveNorthCacheContentCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock).mockReturnValueOnce({
+      ...testData.oIAnalytics.registration.completed,
+      commandPermissions: {
+        ...testData.oIAnalytics.registration.completed.commandPermissions,
+        moveCacheContent: false
+      }
+    });
+
+    await service.executeCommand();
+
+    expect(oIAnalyticsCommandRepository.markAsErrored).toHaveBeenCalledWith(
+      command.id,
+      `Command ${command.id} of type ${command.type} is not authorized`
+    );
   });
 });
 
