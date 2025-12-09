@@ -77,7 +77,15 @@ export class RegisterOibusModalComponent {
       updateNorth: [true, Validators.required],
       deleteNorth: [true, Validators.required],
       testNorthConnection: [true, Validators.required],
-      setpoint: [true, Validators.required]
+      setpoint: [true, Validators.required],
+      searchHistoryCacheContent: [true, Validators.required],
+      getHistoryCacheFileContent: [true, Validators.required],
+      removeHistoryCacheContent: [true, Validators.required],
+      moveHistoryCacheContent: [true, Validators.required],
+      searchNorthCacheContent: [true, Validators.required],
+      getNorthCacheFileContent: [true, Validators.required],
+      removeNorthCacheContent: [true, Validators.required],
+      moveNorthCacheContent: [true, Validators.required]
     })
   });
   mode: 'register' | 'edit' = 'register';
@@ -160,7 +168,15 @@ export class RegisterOibusModalComponent {
         updateNorth: formValue.commandPermissions!.updateNorth!,
         deleteNorth: formValue.commandPermissions!.deleteNorth!,
         testNorthConnection: formValue.commandPermissions!.testNorthConnection!,
-        setpoint: formValue.commandPermissions!.setpoint!
+        setpoint: formValue.commandPermissions!.setpoint!,
+        searchNorthCacheContent: formValue.commandPermissions!.searchNorthCacheContent!,
+        getNorthCacheFileContent: formValue.commandPermissions!.getNorthCacheFileContent!,
+        removeNorthCacheContent: formValue.commandPermissions!.removeNorthCacheContent!,
+        moveNorthCacheContent: formValue.commandPermissions!.moveNorthCacheContent!,
+        searchHistoryCacheContent: formValue.commandPermissions!.searchHistoryCacheContent!,
+        getHistoryCacheFileContent: formValue.commandPermissions!.getHistoryCacheFileContent!,
+        removeHistoryCacheContent: formValue.commandPermissions!.removeHistoryCacheContent!,
+        moveHistoryCacheContent: formValue.commandPermissions!.moveHistoryCacheContent!
       }
     };
 
@@ -235,7 +251,15 @@ export class RegisterOibusModalComponent {
         updateNorth: formValue.commandPermissions!.updateNorth!,
         deleteNorth: formValue.commandPermissions!.deleteNorth!,
         testNorthConnection: formValue.commandPermissions!.testNorthConnection!,
-        setpoint: formValue.commandPermissions!.setpoint!
+        setpoint: formValue.commandPermissions!.setpoint!,
+        searchNorthCacheContent: formValue.commandPermissions!.searchNorthCacheContent!,
+        getNorthCacheFileContent: formValue.commandPermissions!.getNorthCacheFileContent!,
+        removeNorthCacheContent: formValue.commandPermissions!.removeNorthCacheContent!,
+        moveNorthCacheContent: formValue.commandPermissions!.moveNorthCacheContent!,
+        searchHistoryCacheContent: formValue.commandPermissions!.searchHistoryCacheContent!,
+        getHistoryCacheFileContent: formValue.commandPermissions!.getHistoryCacheFileContent!,
+        removeHistoryCacheContent: formValue.commandPermissions!.removeHistoryCacheContent!,
+        moveHistoryCacheContent: formValue.commandPermissions!.moveHistoryCacheContent!
       }
     };
     if (this.mode === 'register') {
