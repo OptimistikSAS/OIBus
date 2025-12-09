@@ -218,7 +218,15 @@
       "test-history-query-south-item": "Test south item",
       "create-or-update-history-query-south-items-from-csv": "Load south items from CSV",
       "update-history-query-status": "Update history query status",
-      "setpoint": "Setpoint"
+      "setpoint": "Setpoint",
+      "search-north-cache-content": "Search cache content",
+      "search-history-cache-content": "Search cache content",
+      "get-north-cache-file-content": "Get cache file",
+      "get-history-cache-file-content": "Get cache file",
+      "remove-north-cache-content": "Remove cache files",
+      "remove-history-cache-content": "Remove cache files",
+      "move-north-cache-content": "Move cache files",
+      "move-history-cache-content": "Move cache files"
     },
     "oibus-input-data-type": {
       "any": "Any",
@@ -430,6 +438,8 @@
       "test-connector": "Test connectors",
       "history-query": "History query",
       "test-history-query": "Test history queries",
+      "north-cache": "North cache management",
+      "history-cache": "History cache management",
       "setpoint": "Setpoint",
       "details-modal": {
         "title": "Command {{ type }}",

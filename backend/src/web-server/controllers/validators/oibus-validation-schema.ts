@@ -117,7 +117,15 @@ const registrationSchema: Joi.ObjectSchema = Joi.object({
     updateNorth: Joi.boolean().required(),
     deleteNorth: Joi.boolean().required(),
     testNorthConnection: Joi.boolean().required(),
-    setpoint: Joi.boolean().required()
+    setpoint: Joi.boolean().required(),
+    searchNorthCacheContent: Joi.boolean().required(),
+    getNorthCacheFileContent: Joi.boolean().required(),
+    removeNorthCacheContent: Joi.boolean().required(),
+    moveNorthCacheContent: Joi.boolean().required(),
+    searchHistoryCacheContent: Joi.boolean().required(),
+    getHistoryCacheFileContent: Joi.boolean().required(),
+    removeHistoryCacheContent: Joi.boolean().required(),
+    moveHistoryCacheContent: Joi.boolean().required()
   }).required()
 });
 

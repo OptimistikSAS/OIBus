@@ -1328,7 +1328,15 @@ const oIAnalyticsRegistrationRegistered: OIAnalyticsRegistration = {
     updateNorth: true,
     deleteNorth: true,
     testNorthConnection: true,
-    setpoint: true
+    setpoint: true,
+    searchHistoryCacheContent: true,
+    getHistoryCacheFileContent: true,
+    removeHistoryCacheContent: true,
+    moveHistoryCacheContent: true,
+    searchNorthCacheContent: true,
+    getNorthCacheFileContent: true,
+    removeNorthCacheContent: true,
+    moveNorthCacheContent: true
   }
 };
 const oIAnalyticsRegistrationPending: OIAnalyticsRegistration = {
@@ -1385,7 +1393,15 @@ const oIAnalyticsRegistrationPending: OIAnalyticsRegistration = {
     updateNorth: true,
     deleteNorth: true,
     testNorthConnection: true,
-    setpoint: true
+    setpoint: true,
+    searchHistoryCacheContent: true,
+    getHistoryCacheFileContent: true,
+    removeHistoryCacheContent: true,
+    moveHistoryCacheContent: true,
+    searchNorthCacheContent: true,
+    getNorthCacheFileContent: true,
+    removeNorthCacheContent: true,
+    moveNorthCacheContent: true
   }
 };
 const oIAnalyticsRegistrationCommand: OIAnalyticsRegistrationEditCommand = {
@@ -1433,7 +1449,15 @@ const oIAnalyticsRegistrationCommand: OIAnalyticsRegistrationEditCommand = {
     updateNorth: true,
     deleteNorth: true,
     testNorthConnection: true,
-    setpoint: true
+    setpoint: true,
+    searchHistoryCacheContent: true,
+    getHistoryCacheFileContent: true,
+    removeHistoryCacheContent: true,
+    moveHistoryCacheContent: true,
+    searchNorthCacheContent: true,
+    getNorthCacheFileContent: true,
+    removeNorthCacheContent: true,
+    moveNorthCacheContent: true
   }
 };
 
@@ -1660,7 +1684,15 @@ const oIBusCommands: Array<OIBusCommand> = [
         updateNorth: true,
         deleteNorth: true,
         testNorthConnection: true,
-        setpoint: true
+        setpoint: true,
+        searchHistoryCacheContent: true,
+        getHistoryCacheFileContent: true,
+        removeHistoryCacheContent: true,
+        moveHistoryCacheContent: true,
+        searchNorthCacheContent: true,
+        getNorthCacheFileContent: true,
+        removeNorthCacheContent: true,
+        moveNorthCacheContent: true
       }
     }
   }
