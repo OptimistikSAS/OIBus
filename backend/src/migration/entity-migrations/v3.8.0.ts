@@ -8,6 +8,7 @@ const NORTH_TRANSFORMERS_TABLE = 'north_transformers';
 const HISTORY_QUERY_TRANSFORMERS_TABLE = 'history_query_transformers';
 const SOUTH_CONNECTORS_TABLE = 'south_connectors';
 const SUBSCRIPTION_TABLE = 'subscription';
+const REGISTRATIONS_TABLE = 'registrations';
 
 interface OldNorthRESTSettings {
   host: string;
@@ -68,10 +69,34 @@ interface NewNorthRESTSettings {
   };
 }
 export async function up(knex: Knex): Promise<void> {
+  await updateRegistrationSettings(knex);
   await updateTransformersTable(knex);
   await updateNorthRestConnectors(knex);
   await createDefaultTransformers(knex);
   await migrateSubscriptionsToTransformers(knex);
+}
+
+async function updateRegistrationSettings(knex: Knex): Promise<void> {
+  await knex.schema.alterTable(REGISTRATIONS_TABLE, table => {
+    table.boolean('command_search_history_cache_content');
+    table.boolean('command_get_history_cache_file_content');
+    table.boolean('command_remove_history_cache_content');
+    table.boolean('command_move_history_cache_content');
+    table.boolean('command_search_north_cache_content');
+    table.boolean('command_get_north_cache_file_content');
+    table.boolean('command_remove_north_cache_content');
+    table.boolean('command_move_north_cache_content');
+  });
+  await knex(REGISTRATIONS_TABLE).update({
+    command_search_history_cache_content: true,
+    command_get_history_cache_file_content: true,
+    command_remove_history_cache_content: true,
+    command_move_history_cache_content: true,
+    command_search_north_cache_content: true,
+    command_get_north_cache_file_content: true,
+    command_remove_north_cache_content: true,
+    command_move_north_cache_content: true
+  });
 }
 
 async function updateTransformersTable(knex: Knex): Promise<void> {
