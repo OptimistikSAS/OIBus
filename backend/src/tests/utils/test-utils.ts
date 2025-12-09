@@ -378,7 +378,11 @@ const createOIAnalyticsRegistration = async (database: knex.Knex, registration: 
       command_update_north: registration.commandPermissions.updateNorth,
       command_delete_north: registration.commandPermissions.deleteNorth,
       command_test_north_connection: registration.commandPermissions.testNorthConnection,
-      command_setpoint: registration.commandPermissions.setpoint
+      command_setpoint: registration.commandPermissions.setpoint,
+      command_search_cache_content: registration.commandPermissions.searchCacheContent,
+      command_get_cache_file_content: registration.commandPermissions.getCacheFileContent,
+      command_remove_cache_content: registration.commandPermissions.removeCacheContent,
+      command_move_cache_content: registration.commandPermissions.moveCacheContent
     })
     .into('registrations');
 };

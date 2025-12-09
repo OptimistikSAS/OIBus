@@ -552,7 +552,11 @@ describe('OIAnalytics Command Service', () => {
         updateNorth: false,
         deleteNorth: false,
         testNorthConnection: false,
-        setpoint: false
+        setpoint: false,
+        searchCacheContent: false,
+        getCacheFileContent: false,
+        removeCacheContent: false,
+        moveCacheContent: false
       }
     };
 
