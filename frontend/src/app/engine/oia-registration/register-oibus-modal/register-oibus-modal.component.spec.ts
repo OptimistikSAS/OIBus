@@ -89,21 +89,6 @@ class RegisterOibusModalComponentTester extends ComponentTester<RegisterOibusMod
   get cancel() {
     return this.button('#cancel-button')!;
   }
-
-  get allPermissionCheckboxes() {
-    const checkboxes = Array.from((this.fixture.nativeElement as HTMLElement).querySelectorAll('input[type="checkbox"]'));
-    if (!checkboxes || checkboxes.length === 0) {
-      return [];
-    }
-    return checkboxes.filter(
-      (checkbox: Element) =>
-        (checkbox as HTMLInputElement).id.includes('update-version') ||
-        (checkbox as HTMLInputElement).id.includes('restart-engine') ||
-        (checkbox as HTMLInputElement).id.includes('create-scan-mode') ||
-        (checkbox as HTMLInputElement).id.includes('create-north') ||
-        (checkbox as HTMLInputElement).id.includes('test-south-connection')
-    );
-  }
 }
 
 describe('RegisterOibusModalComponent', () => {
@@ -210,7 +195,15 @@ describe('RegisterOibusModalComponent', () => {
         updateNorth: true,
         deleteNorth: true,
         testNorthConnection: true,
-        setpoint: true
+        setpoint: true,
+        searchHistoryCacheContent: true,
+        getHistoryCacheFileContent: true,
+        removeHistoryCacheContent: true,
+        moveHistoryCacheContent: true,
+        searchNorthCacheContent: true,
+        getNorthCacheFileContent: true,
+        removeNorthCacheContent: true,
+        moveNorthCacheContent: true
       }
     };
 
@@ -267,14 +260,28 @@ describe('RegisterOibusModalComponent', () => {
           updateHistoryQuery: true,
           deleteHistoryQuery: true,
           createOrUpdateHistoryItemsFromCsv: true,
+          testHistoryNorthConnection: true,
+          testHistorySouthConnection: true,
+          testHistorySouthItem: true,
           createSouth: true,
           updateSouth: true,
           deleteSouth: true,
           createOrUpdateSouthItemsFromCsv: true,
+          testSouthConnection: true,
+          testSouthItem: true,
           createNorth: true,
           updateNorth: true,
           deleteNorth: true,
-          setpoint: true
+          testNorthConnection: true,
+          setpoint: true,
+          searchHistoryCacheContent: true,
+          getHistoryCacheFileContent: true,
+          removeHistoryCacheContent: true,
+          moveHistoryCacheContent: true,
+          searchNorthCacheContent: true,
+          getNorthCacheFileContent: true,
+          removeNorthCacheContent: true,
+          moveNorthCacheContent: true
         }
       } as RegistrationSettingsDTO,
       'edit'
@@ -333,7 +340,15 @@ describe('RegisterOibusModalComponent', () => {
         updateNorth: true,
         deleteNorth: true,
         testNorthConnection: true,
-        setpoint: true
+        setpoint: true,
+        searchHistoryCacheContent: true,
+        getHistoryCacheFileContent: true,
+        removeHistoryCacheContent: true,
+        moveHistoryCacheContent: true,
+        searchNorthCacheContent: true,
+        getNorthCacheFileContent: true,
+        removeNorthCacheContent: true,
+        moveNorthCacheContent: true
       }
     };
 

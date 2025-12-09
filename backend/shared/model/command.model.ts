@@ -1,4 +1,4 @@
-import { EngineSettingsCommandDTO } from './engine.model';
+import { EngineSettingsCommandDTO, CacheSearchParam } from './engine.model';
 import { Instant } from './types';
 import { ScanModeCommandDTO } from './scan-mode.model';
 import { SouthConnectorCommandDTO, SouthConnectorItemTestingSettings } from './south-connector.model';
@@ -43,7 +43,15 @@ export const OIBUS_COMMAND_TYPES = [
   'test-history-query-south-item',
   'create-or-update-history-query-south-items-from-csv',
   'update-history-query-status',
-  'setpoint'
+  'setpoint',
+  'search-north-cache-content',
+  'search-history-cache-content',
+  'get-north-cache-file-content',
+  'get-history-cache-file-content',
+  'remove-north-cache-content',
+  'remove-history-cache-content',
+  'move-north-cache-content',
+  'move-history-cache-content'
 ] as const;
 
 /**
@@ -1025,6 +1033,80 @@ export interface OIBusSetpointCommandDTO extends BaseOIBusCommandDTO {
   }>;
 }
 
+export interface OIBusSearchNorthCacheContentCommandDTO extends BaseOIBusCommandDTO {
+  type: 'search-north-cache-content';
+  northConnectorId: string;
+  commandContent: {
+    searchParams: CacheSearchParam;
+    folder: 'cache' | 'archive' | 'error';
+  };
+}
+
+export interface OIBusSearchHistoryCacheContentCommandDTO extends BaseOIBusCommandDTO {
+  type: 'search-history-cache-content';
+  historyQueryId: string;
+  commandContent: {
+    searchParams: CacheSearchParam;
+    folder: 'cache' | 'archive' | 'error';
+  };
+}
+
+export interface OIBusGetNorthCacheFileContentCommandDTO extends BaseOIBusCommandDTO {
+  type: 'get-north-cache-file-content';
+  northConnectorId: string;
+  commandContent: {
+    folder: 'cache' | 'archive' | 'error';
+    filename: string;
+  };
+}
+
+export interface OIBusGetHistoryCacheFileContentCommandDTO extends BaseOIBusCommandDTO {
+  type: 'get-history-cache-file-content';
+  historyQueryId: string;
+  commandContent: {
+    folder: 'cache' | 'archive' | 'error';
+    filename: string;
+  };
+}
+
+export interface OIBusRemoveNorthCacheContentCommandDTO extends BaseOIBusCommandDTO {
+  type: 'remove-north-cache-content';
+  northConnectorId: string;
+  commandContent: {
+    folder: 'cache' | 'archive' | 'error';
+    metadataFilenameList: Array<string>;
+  };
+}
+
+export interface OIBusRemoveHistoryCacheContentCommandDTO extends BaseOIBusCommandDTO {
+  type: 'remove-history-cache-content';
+  historyQueryId: string;
+  commandContent: {
+    folder: 'cache' | 'archive' | 'error';
+    metadataFilenameList: Array<string>;
+  };
+}
+
+export interface OIBusMoveNorthCacheContentCommandDTO extends BaseOIBusCommandDTO {
+  type: 'move-north-cache-content';
+  northConnectorId: string;
+  commandContent: {
+    originFolder: 'cache' | 'archive' | 'error';
+    destinationFolder: 'cache' | 'archive' | 'error';
+    cacheContentList: Array<string>;
+  };
+}
+
+export interface OIBusMoveHistoryCacheContentCommandDTO extends BaseOIBusCommandDTO {
+  type: 'move-history-cache-content';
+  historyQueryId: string;
+  commandContent: {
+    originFolder: 'cache' | 'archive' | 'error';
+    destinationFolder: 'cache' | 'archive' | 'error';
+    cacheContentList: Array<string>;
+  };
+}
+
 /**
  * Union type representing all possible OIBus command DTOs.
  */
@@ -1061,7 +1143,15 @@ export type OIBusCommandDTO =
   | OIBusTestHistoryQuerySouthItemCommandDTO
   | OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommandDTO
   | OIBusUpdateHistoryQueryStatusCommandDTO
-  | OIBusSetpointCommandDTO;
+  | OIBusSetpointCommandDTO
+  | OIBusSearchNorthCacheContentCommandDTO
+  | OIBusSearchHistoryCacheContentCommandDTO
+  | OIBusGetNorthCacheFileContentCommandDTO
+  | OIBusGetHistoryCacheFileContentCommandDTO
+  | OIBusRemoveNorthCacheContentCommandDTO
+  | OIBusRemoveHistoryCacheContentCommandDTO
+  | OIBusMoveNorthCacheContentCommandDTO
+  | OIBusMoveHistoryCacheContentCommandDTO;
 
 /**
  * Parameters for searching commands.

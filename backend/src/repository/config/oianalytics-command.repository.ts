@@ -770,6 +770,110 @@ export default class OIAnalyticsCommandRepository {
           northConnectorId: command.north_connector_id as string,
           commandContent: JSON.parse(command.command_content as string)
         };
+      case 'search-north-cache-content':
+        return {
+          id: command.id as string,
+          type: 'search-north-cache-content',
+          status: command.status as OIBusCommandStatus,
+          ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
+          retrievedDate: command.retrieved_date as Instant,
+          completedDate: command.completed_date as Instant,
+          result: command.result as string,
+          northConnectorId: command.north_connector_id as string,
+          commandContent: JSON.parse(command.command_content as string)
+        };
+      case 'search-history-cache-content':
+        return {
+          id: command.id as string,
+          type: 'search-history-cache-content',
+          status: command.status as OIBusCommandStatus,
+          ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
+          retrievedDate: command.retrieved_date as Instant,
+          completedDate: command.completed_date as Instant,
+          result: command.result as string,
+          historyQueryId: command.history_id as string,
+          commandContent: JSON.parse(command.command_content as string)
+        };
+      case 'get-north-cache-file-content':
+        return {
+          id: command.id as string,
+          type: 'get-north-cache-file-content',
+          status: command.status as OIBusCommandStatus,
+          ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
+          retrievedDate: command.retrieved_date as Instant,
+          completedDate: command.completed_date as Instant,
+          result: command.result as string,
+          northConnectorId: command.north_connector_id as string,
+          commandContent: JSON.parse(command.command_content as string)
+        };
+      case 'get-history-cache-file-content':
+        return {
+          id: command.id as string,
+          type: 'get-history-cache-file-content',
+          status: command.status as OIBusCommandStatus,
+          ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
+          retrievedDate: command.retrieved_date as Instant,
+          completedDate: command.completed_date as Instant,
+          result: command.result as string,
+          historyQueryId: command.history_id as string,
+          commandContent: JSON.parse(command.command_content as string)
+        };
+      case 'remove-north-cache-content':
+        return {
+          id: command.id as string,
+          type: 'remove-north-cache-content',
+          status: command.status as OIBusCommandStatus,
+          ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
+          retrievedDate: command.retrieved_date as Instant,
+          completedDate: command.completed_date as Instant,
+          result: command.result as string,
+          northConnectorId: command.north_connector_id as string,
+          commandContent: JSON.parse(command.command_content as string)
+        };
+      case 'remove-history-cache-content':
+        return {
+          id: command.id as string,
+          type: 'remove-history-cache-content',
+          status: command.status as OIBusCommandStatus,
+          ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
+          retrievedDate: command.retrieved_date as Instant,
+          completedDate: command.completed_date as Instant,
+          result: command.result as string,
+          historyQueryId: command.history_id as string,
+          commandContent: JSON.parse(command.command_content as string)
+        };
+      case 'move-north-cache-content':
+        return {
+          id: command.id as string,
+          type: 'move-north-cache-content',
+          status: command.status as OIBusCommandStatus,
+          ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
+          retrievedDate: command.retrieved_date as Instant,
+          completedDate: command.completed_date as Instant,
+          result: command.result as string,
+          northConnectorId: command.north_connector_id as string,
+          commandContent: JSON.parse(command.command_content as string)
+        };
+      case 'move-history-cache-content':
+        return {
+          id: command.id as string,
+          type: 'move-history-cache-content',
+          status: command.status as OIBusCommandStatus,
+          ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
+          retrievedDate: command.retrieved_date as Instant,
+          completedDate: command.completed_date as Instant,
+          result: command.result as string,
+          historyQueryId: command.history_id as string,
+          commandContent: JSON.parse(command.command_content as string)
+        };
     }
   }
 }

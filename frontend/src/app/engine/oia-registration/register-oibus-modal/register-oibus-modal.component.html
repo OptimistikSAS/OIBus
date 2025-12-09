@@ -287,6 +287,54 @@
           </div>
         </div>
         <div class="row mb-2">
+          <label class="form-label" translate="oia-module.commands.north-cache"></label>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input formControlName="searchNorthCacheContent" id="search-north-cache-content" type="checkbox" class="form-check-input" />
+                <label class="form-check-label" for="search-north-cache-content">{{
+                  'search-north-cache-content' | oibusCommandTypeEnum
+                }}</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input
+                  formControlName="getNorthCacheFileContent"
+                  id="get-north-cache-file-content"
+                  type="checkbox"
+                  class="form-check-input"
+                />
+                <label class="form-check-label" for="get-north-cache-file-content">{{
+                  'get-north-cache-file-content' | oibusCommandTypeEnum
+                }}</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input formControlName="removeNorthCacheContent" id="remove-north-cache-content" type="checkbox" class="form-check-input" />
+                <label class="form-check-label" for="remove-north-cache-content">{{
+                  'remove-north-cache-content' | oibusCommandTypeEnum
+                }}</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input formControlName="moveNorthCacheContent" id="move-north-cache-content" type="checkbox" class="form-check-input" />
+                <label class="form-check-label" for="move-north-cache-content">{{
+                  'move-north-cache-content' | oibusCommandTypeEnum
+                }}</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row mb-2">
           <label class="form-label" translate="oia-module.commands.south-connector"></label>
           <div class="col-3">
             <div class="form-group">
@@ -435,6 +483,64 @@
                 <input formControlName="testHistorySouthItem" id="test-history-query-south-item" type="checkbox" class="form-check-input" />
                 <label class="form-check-label" for="test-history-query-south-item">{{
                   'test-history-query-south-item' | oibusCommandTypeEnum
+                }}</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row mb-2">
+          <label class="form-label" translate="oia-module.commands.history-cache"></label>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input
+                  formControlName="searchHistoryCacheContent"
+                  id="search-history-cache-content"
+                  type="checkbox"
+                  class="form-check-input"
+                />
+                <label class="form-check-label" for="search-history-cache-content">{{
+                  'search-history-cache-content' | oibusCommandTypeEnum
+                }}</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input
+                  formControlName="getHistoryCacheFileContent"
+                  id="get-history-cache-file-content"
+                  type="checkbox"
+                  class="form-check-input"
+                />
+                <label class="form-check-label" for="get-history-cache-file-content">{{
+                  'get-history-cache-file-content' | oibusCommandTypeEnum
+                }}</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input
+                  formControlName="removeHistoryCacheContent"
+                  id="remove-history-cache-content"
+                  type="checkbox"
+                  class="form-check-input"
+                />
+                <label class="form-check-label" for="remove-history-cache-content">{{
+                  'remove-history-cache-content' | oibusCommandTypeEnum
+                }}</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input formControlName="moveHistoryCacheContent" id="move-history-cache-content" type="checkbox" class="form-check-input" />
+                <label class="form-check-label" for="move-history-cache-content">{{
+                  'move-history-cache-content' | oibusCommandTypeEnum
                 }}</label>
               </div>
             </div>
