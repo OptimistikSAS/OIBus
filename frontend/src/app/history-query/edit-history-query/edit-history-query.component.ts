@@ -216,15 +216,7 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
           if (historyQuery) {
             this.southType = historyQuery.southType;
             this.northType = historyQuery.northType;
-
-            // When changes are not saved directly, items come from memory
-            if (!this.saveItemChangesDirectly) {
-              this.inMemoryItems = historyQuery.items.map(item => ({
-                ...item,
-                // In edit mode, keep existing ids; in duplicate/create, ids are reset upstream
-                id: this.mode === 'edit' ? item.id : null
-              }));
-            }
+            this.inMemoryItems = historyQuery.items;
           }
           // creating new from an existing south and north connector
           else {
@@ -339,10 +331,11 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
       if (southConnector) {
         this.form.controls.southSettings.patchValue(southConnector.settings);
         this.inMemoryItems = southConnector.items.map(item => ({
-          ...item,
-          id: null, // we need to remove the existing ids
-          scanModeId: undefined // remove scanModeId retrieved from south connector
-        }));
+          id: null,
+          name: item.name,
+          enabled: item.enabled,
+          settings: item.settings
+        })) as any;
       }
       if (northConnector) {
         northConnector.caching.trigger.scanMode = this.scanModes.find(

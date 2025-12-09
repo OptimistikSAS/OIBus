@@ -93,7 +93,7 @@ export class SouthItemsComponent implements OnInit {
   searchControl = inject(NonNullableFormBuilder).control(null as string | null);
 
   // Mass action properties
-  selectedItems = new Set<string>();
+  selectedItems = new Map<string, SouthConnectorItemDTO>();
   isAllSelected = false;
   isIndeterminate = false;
 
@@ -113,7 +113,7 @@ export class SouthItemsComponent implements OnInit {
       this.allItems = southConnector.items.map(item => ({
         ...item,
         // Keep existing id when editing; when creating/duplicating, ids are handled by parent component
-        id: item.id ?? null
+        id: item.id
       }));
 
       // reset column sorting
@@ -514,20 +514,18 @@ export class SouthItemsComponent implements OnInit {
   }
 
   // Mass action methods
-  toggleItemSelection(itemId: string) {
-    if (this.selectedItems.has(itemId)) {
-      this.selectedItems.delete(itemId);
+  toggleItemSelection(item: SouthConnectorItemDTO) {
+    if (this.selectedItems.has(item.name)) {
+      this.selectedItems.delete(item.name);
     } else {
-      this.selectedItems.add(itemId);
+      this.selectedItems.set(item.name, item);
     }
     this.updateSelectionState();
   }
 
   selectAll() {
     this.filteredItems.forEach(item => {
-      if (item.id) {
-        this.selectedItems.add(item.id);
-      }
+      this.selectedItems.set(item.name, item);
     });
     this.updateSelectionState();
   }
@@ -550,10 +548,9 @@ export class SouthItemsComponent implements OnInit {
   }
 
   enableSelectedItems() {
-    const itemIds = Array.from(this.selectedItems);
-    if (itemIds.length === 0) return;
-
     if (this.saveChangesDirectly()) {
+      const itemIds = Array.from(this.selectedItems.values(), item => item.id);
+      if (itemIds.length === 0) return;
       this.southConnectorService.enableItems(this.southId(), itemIds).subscribe({
         next: () => {
           this.notificationService.success('south.items.enabled-multiple', { count: itemIds.length.toString() });
@@ -567,7 +564,7 @@ export class SouthItemsComponent implements OnInit {
       });
     } else {
       this.allItems = this.allItems.map(item => {
-        if (itemIds.includes(item.id!)) {
+        if (this.selectedItems.has(item.name)) {
           return { ...item, enabled: true };
         }
         return item;
@@ -580,10 +577,9 @@ export class SouthItemsComponent implements OnInit {
   }
 
   disableSelectedItems() {
-    const itemIds = Array.from(this.selectedItems);
-    if (itemIds.length === 0) return;
-
     if (this.saveChangesDirectly()) {
+      const itemIds = Array.from(this.selectedItems.values(), item => item.id);
+      if (itemIds.length === 0) return;
       this.southConnectorService.disableItems(this.southId(), itemIds).subscribe({
         next: () => {
           this.notificationService.success('south.items.disabled-multiple', { count: itemIds.length.toString() });
@@ -597,7 +593,7 @@ export class SouthItemsComponent implements OnInit {
       });
     } else {
       this.allItems = this.allItems.map(item => {
-        if (itemIds.includes(item.id!)) {
+        if (this.selectedItems.has(item.name)) {
           return { ...item, enabled: false };
         }
         return item;
@@ -610,16 +606,15 @@ export class SouthItemsComponent implements OnInit {
   }
 
   deleteSelectedItems() {
-    const itemIds = Array.from(this.selectedItems);
-    if (itemIds.length === 0) return;
-
     this.confirmationService
       .confirm({
         messageKey: 'south.items.delete-multiple-message',
-        interpolateParams: { count: itemIds.length.toString() }
+        interpolateParams: { count: this.selectedItems.size.toString() }
       })
       .subscribe(() => {
         if (this.saveChangesDirectly()) {
+          const itemIds = Array.from(this.selectedItems.values(), item => item.id);
+          if (itemIds.length === 0) return;
           this.southConnectorService.deleteItems(this.southId(), itemIds).subscribe({
             next: () => {
               this.notificationService.success('south.items.deleted-multiple', { count: itemIds.length.toString() });
@@ -632,7 +627,7 @@ export class SouthItemsComponent implements OnInit {
             }
           });
         } else {
-          this.allItems = this.allItems.filter(item => !itemIds.includes(item.id!));
+          this.allItems = this.allItems.filter(item => !this.selectedItems.has(item.name));
           this.selectedItems.clear();
           this.updateSelectionState();
           this.inMemoryItems.emit(this.allItems);
