@@ -56,6 +56,14 @@ export interface OIAnalyticsRegistration extends BaseEntity {
     deleteNorth: boolean;
     testNorthConnection: boolean;
     setpoint: boolean;
+    searchNorthCacheContent: boolean;
+    getNorthCacheFileContent: boolean;
+    removeNorthCacheContent: boolean;
+    moveNorthCacheContent: boolean;
+    searchHistoryCacheContent: boolean;
+    getHistoryCacheFileContent: boolean;
+    removeHistoryCacheContent: boolean;
+    moveHistoryCacheContent: boolean;
   };
 }
 
@@ -106,5 +114,13 @@ export interface OIAnalyticsRegistrationEditCommand {
     deleteNorth: boolean;
     testNorthConnection: boolean;
     setpoint: boolean;
+    searchNorthCacheContent: boolean;
+    getNorthCacheFileContent: boolean;
+    removeNorthCacheContent: boolean;
+    moveNorthCacheContent: boolean;
+    searchHistoryCacheContent: boolean;
+    getHistoryCacheFileContent: boolean;
+    removeHistoryCacheContent: boolean;
+    moveHistoryCacheContent: boolean;
   };
 }
