@@ -214,7 +214,15 @@ describe('RegisterOibusModalComponent', () => {
         updateNorth: true,
         deleteNorth: true,
         testNorthConnection: true,
-        setpoint: true
+        setpoint: true,
+        searchHistoryCacheContent: true,
+        getHistoryCacheFileContent: true,
+        removeHistoryCacheContent: true,
+        moveHistoryCacheContent: true,
+        searchNorthCacheContent: true,
+        getNorthCacheFileContent: true,
+        removeNorthCacheContent: true,
+        moveNorthCacheContent: true
       }
     };
 
@@ -275,14 +283,28 @@ describe('RegisterOibusModalComponent', () => {
           updateHistoryQuery: true,
           deleteHistoryQuery: true,
           createOrUpdateHistoryItemsFromCsv: true,
+          testHistoryNorthConnection: true,
+          testHistorySouthConnection: true,
+          testHistorySouthItem: true,
           createSouth: true,
           updateSouth: true,
           deleteSouth: true,
           createOrUpdateSouthItemsFromCsv: true,
+          testSouthConnection: true,
+          testSouthItem: true,
           createNorth: true,
           updateNorth: true,
           deleteNorth: true,
-          setpoint: true
+          testNorthConnection: true,
+          setpoint: true,
+          searchHistoryCacheContent: true,
+          getHistoryCacheFileContent: true,
+          removeHistoryCacheContent: true,
+          moveHistoryCacheContent: true,
+          searchNorthCacheContent: true,
+          getNorthCacheFileContent: true,
+          removeNorthCacheContent: true,
+          moveNorthCacheContent: true
         }
       } as RegistrationSettingsDTO,
       'edit'
@@ -346,7 +368,15 @@ describe('RegisterOibusModalComponent', () => {
         updateNorth: true,
         deleteNorth: true,
         testNorthConnection: true,
-        setpoint: true
+        setpoint: true,
+        searchHistoryCacheContent: true,
+        getHistoryCacheFileContent: true,
+        removeHistoryCacheContent: true,
+        moveHistoryCacheContent: true,
+        searchNorthCacheContent: true,
+        getNorthCacheFileContent: true,
+        removeNorthCacheContent: true,
+        moveNorthCacheContent: true
       }
     };
 
