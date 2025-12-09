@@ -9130,6 +9130,46 @@
 					},
 					"commandPermissions": {
 						"properties": {
+							"moveNorthCacheContent": {
+								"type": "boolean",
+								"description": "Permission to move cache content.",
+								"example": true
+							},
+							"removeNorthCacheContent": {
+								"type": "boolean",
+								"description": "Permission to remove cache content.",
+								"example": true
+							},
+							"getNorthCacheFileContent": {
+								"type": "boolean",
+								"description": "Permission to get cache file content.",
+								"example": true
+							},
+							"searchNorthCacheContent": {
+								"type": "boolean",
+								"description": "Permission to search cache content.",
+								"example": true
+							},
+							"moveHistoryCacheContent": {
+								"type": "boolean",
+								"description": "Permission to move cache content.",
+								"example": true
+							},
+							"removeHistoryCacheContent": {
+								"type": "boolean",
+								"description": "Permission to remove cache content.",
+								"example": true
+							},
+							"getHistoryCacheFileContent": {
+								"type": "boolean",
+								"description": "Permission to get cache file content.",
+								"example": true
+							},
+							"searchHistoryCacheContent": {
+								"type": "boolean",
+								"description": "Permission to search cache content.",
+								"example": true
+							},
 							"setpoint": {
 								"type": "boolean",
 								"description": "Permission to apply setpoints.",
@@ -9262,6 +9302,14 @@
 							}
 						},
 						"required": [
+							"moveNorthCacheContent",
+							"removeNorthCacheContent",
+							"getNorthCacheFileContent",
+							"searchNorthCacheContent",
+							"moveHistoryCacheContent",
+							"removeHistoryCacheContent",
+							"getHistoryCacheFileContent",
+							"searchHistoryCacheContent",
 							"setpoint",
 							"deleteNorth",
 							"updateNorth",
@@ -9368,6 +9416,46 @@
 					},
 					"commandPermissions": {
 						"properties": {
+							"moveNorthCacheContent": {
+								"type": "boolean",
+								"description": "Permission to move cache content.",
+								"example": true
+							},
+							"removeNorthCacheContent": {
+								"type": "boolean",
+								"description": "Permission to remove cache content.",
+								"example": true
+							},
+							"getNorthCacheFileContent": {
+								"type": "boolean",
+								"description": "Permission to get cache file content.",
+								"example": true
+							},
+							"searchNorthCacheContent": {
+								"type": "boolean",
+								"description": "Permission to search cache content.",
+								"example": true
+							},
+							"moveHistoryCacheContent": {
+								"type": "boolean",
+								"description": "Permission to move cache content.",
+								"example": true
+							},
+							"removeHistoryCacheContent": {
+								"type": "boolean",
+								"description": "Permission to remove cache content.",
+								"example": true
+							},
+							"getHistoryCacheFileContent": {
+								"type": "boolean",
+								"description": "Permission to get cache file content.",
+								"example": true
+							},
+							"searchHistoryCacheContent": {
+								"type": "boolean",
+								"description": "Permission to search cache content.",
+								"example": true
+							},
 							"setpoint": {
 								"type": "boolean",
 								"description": "Permission to apply setpoints.",
@@ -9530,6 +9618,14 @@
 							}
 						},
 						"required": [
+							"moveNorthCacheContent",
+							"removeNorthCacheContent",
+							"getNorthCacheFileContent",
+							"searchNorthCacheContent",
+							"moveHistoryCacheContent",
+							"removeHistoryCacheContent",
+							"getHistoryCacheFileContent",
+							"searchHistoryCacheContent",
 							"setpoint",
 							"testNorthConnection",
 							"deleteNorth",
@@ -9617,7 +9713,15 @@
 					"test-history-query-south-connection",
 					"test-history-query-south-item",
 					"create-or-update-history-query-south-items-from-csv",
-					"update-history-query-status"
+					"update-history-query-status",
+					"search-north-cache-content",
+					"search-history-cache-content",
+					"get-north-cache-file-content",
+					"get-history-cache-file-content",
+					"remove-north-cache-content",
+					"remove-history-cache-content",
+					"move-north-cache-content",
+					"move-history-cache-content"
 				],
 				"description": "Type representing an OIBus command type."
 			},
@@ -16745,6 +16849,762 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"CacheSearchParam": {
+				"description": "Parameters for searching the cache.",
+				"properties": {
+					"start": {
+						"type": "string",
+						"description": "The start time for the search.",
+						"example": "2023-01-01T00:00:00Z"
+					},
+					"end": {
+						"type": "string",
+						"description": "The end time for the search.",
+						"example": "2023-01-02T00:00:00Z"
+					},
+					"nameContains": {
+						"type": "string",
+						"description": "A string that the content name must contain.",
+						"example": "example"
+					}
+				},
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OIBusSearchNorthCacheContentCommandDTO": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the command.",
+						"example": "cmd123"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"search-north-cache-content"
+						],
+						"nullable": false,
+						"description": "The type of the command."
+					},
+					"status": {
+						"$ref": "#/components/schemas/OIBusCommandStatus",
+						"description": "The current status of the command."
+					},
+					"ack": {
+						"type": "boolean",
+						"description": "Whether the command has been acknowledged.",
+						"example": true
+					},
+					"retrievedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was retrieved.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"completedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was completed.",
+						"example": "2023-10-31T12:35:56.789Z"
+					},
+					"result": {
+						"type": "string",
+						"nullable": true,
+						"description": "The result of the command execution.",
+						"example": "Success"
+					},
+					"northConnectorId": {
+						"type": "string"
+					},
+					"commandContent": {
+						"properties": {
+							"folder": {
+								"type": "string",
+								"enum": [
+									"cache",
+									"archive",
+									"error"
+								]
+							},
+							"searchParams": {
+								"$ref": "#/components/schemas/CacheSearchParam"
+							}
+						},
+						"required": [
+							"folder",
+							"searchParams"
+						],
+						"type": "object"
+					}
+				},
+				"required": [
+					"id",
+					"type",
+					"status",
+					"ack",
+					"retrievedDate",
+					"completedDate",
+					"result",
+					"northConnectorId",
+					"commandContent"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OIBusSearchHistoryCacheContentCommandDTO": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the command.",
+						"example": "cmd123"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"search-history-cache-content"
+						],
+						"nullable": false,
+						"description": "The type of the command."
+					},
+					"status": {
+						"$ref": "#/components/schemas/OIBusCommandStatus",
+						"description": "The current status of the command."
+					},
+					"ack": {
+						"type": "boolean",
+						"description": "Whether the command has been acknowledged.",
+						"example": true
+					},
+					"retrievedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was retrieved.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"completedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was completed.",
+						"example": "2023-10-31T12:35:56.789Z"
+					},
+					"result": {
+						"type": "string",
+						"nullable": true,
+						"description": "The result of the command execution.",
+						"example": "Success"
+					},
+					"historyQueryId": {
+						"type": "string"
+					},
+					"commandContent": {
+						"properties": {
+							"folder": {
+								"type": "string",
+								"enum": [
+									"cache",
+									"archive",
+									"error"
+								]
+							},
+							"searchParams": {
+								"$ref": "#/components/schemas/CacheSearchParam"
+							}
+						},
+						"required": [
+							"folder",
+							"searchParams"
+						],
+						"type": "object"
+					}
+				},
+				"required": [
+					"id",
+					"type",
+					"status",
+					"ack",
+					"retrievedDate",
+					"completedDate",
+					"result",
+					"historyQueryId",
+					"commandContent"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OIBusGetNorthCacheFileContentCommandDTO": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the command.",
+						"example": "cmd123"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"get-north-cache-file-content"
+						],
+						"nullable": false,
+						"description": "The type of the command."
+					},
+					"status": {
+						"$ref": "#/components/schemas/OIBusCommandStatus",
+						"description": "The current status of the command."
+					},
+					"ack": {
+						"type": "boolean",
+						"description": "Whether the command has been acknowledged.",
+						"example": true
+					},
+					"retrievedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was retrieved.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"completedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was completed.",
+						"example": "2023-10-31T12:35:56.789Z"
+					},
+					"result": {
+						"type": "string",
+						"nullable": true,
+						"description": "The result of the command execution.",
+						"example": "Success"
+					},
+					"northConnectorId": {
+						"type": "string"
+					},
+					"commandContent": {
+						"properties": {
+							"filename": {
+								"type": "string"
+							},
+							"folder": {
+								"type": "string",
+								"enum": [
+									"cache",
+									"archive",
+									"error"
+								]
+							}
+						},
+						"required": [
+							"filename",
+							"folder"
+						],
+						"type": "object"
+					}
+				},
+				"required": [
+					"id",
+					"type",
+					"status",
+					"ack",
+					"retrievedDate",
+					"completedDate",
+					"result",
+					"northConnectorId",
+					"commandContent"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OIBusGetHistoryCacheFileContentCommandDTO": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the command.",
+						"example": "cmd123"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"get-history-cache-file-content"
+						],
+						"nullable": false,
+						"description": "The type of the command."
+					},
+					"status": {
+						"$ref": "#/components/schemas/OIBusCommandStatus",
+						"description": "The current status of the command."
+					},
+					"ack": {
+						"type": "boolean",
+						"description": "Whether the command has been acknowledged.",
+						"example": true
+					},
+					"retrievedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was retrieved.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"completedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was completed.",
+						"example": "2023-10-31T12:35:56.789Z"
+					},
+					"result": {
+						"type": "string",
+						"nullable": true,
+						"description": "The result of the command execution.",
+						"example": "Success"
+					},
+					"historyQueryId": {
+						"type": "string"
+					},
+					"commandContent": {
+						"properties": {
+							"filename": {
+								"type": "string"
+							},
+							"folder": {
+								"type": "string",
+								"enum": [
+									"cache",
+									"archive",
+									"error"
+								]
+							}
+						},
+						"required": [
+							"filename",
+							"folder"
+						],
+						"type": "object"
+					}
+				},
+				"required": [
+					"id",
+					"type",
+					"status",
+					"ack",
+					"retrievedDate",
+					"completedDate",
+					"result",
+					"historyQueryId",
+					"commandContent"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OIBusRemoveNorthCacheContentCommandDTO": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the command.",
+						"example": "cmd123"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"remove-north-cache-content"
+						],
+						"nullable": false,
+						"description": "The type of the command."
+					},
+					"status": {
+						"$ref": "#/components/schemas/OIBusCommandStatus",
+						"description": "The current status of the command."
+					},
+					"ack": {
+						"type": "boolean",
+						"description": "Whether the command has been acknowledged.",
+						"example": true
+					},
+					"retrievedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was retrieved.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"completedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was completed.",
+						"example": "2023-10-31T12:35:56.789Z"
+					},
+					"result": {
+						"type": "string",
+						"nullable": true,
+						"description": "The result of the command execution.",
+						"example": "Success"
+					},
+					"northConnectorId": {
+						"type": "string"
+					},
+					"commandContent": {
+						"properties": {
+							"metadataFilenameList": {
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							},
+							"folder": {
+								"type": "string",
+								"enum": [
+									"cache",
+									"archive",
+									"error"
+								]
+							}
+						},
+						"required": [
+							"metadataFilenameList",
+							"folder"
+						],
+						"type": "object"
+					}
+				},
+				"required": [
+					"id",
+					"type",
+					"status",
+					"ack",
+					"retrievedDate",
+					"completedDate",
+					"result",
+					"northConnectorId",
+					"commandContent"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OIBusRemoveHistoryCacheContentCommandDTO": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the command.",
+						"example": "cmd123"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"remove-history-cache-content"
+						],
+						"nullable": false,
+						"description": "The type of the command."
+					},
+					"status": {
+						"$ref": "#/components/schemas/OIBusCommandStatus",
+						"description": "The current status of the command."
+					},
+					"ack": {
+						"type": "boolean",
+						"description": "Whether the command has been acknowledged.",
+						"example": true
+					},
+					"retrievedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was retrieved.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"completedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was completed.",
+						"example": "2023-10-31T12:35:56.789Z"
+					},
+					"result": {
+						"type": "string",
+						"nullable": true,
+						"description": "The result of the command execution.",
+						"example": "Success"
+					},
+					"historyQueryId": {
+						"type": "string"
+					},
+					"commandContent": {
+						"properties": {
+							"metadataFilenameList": {
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							},
+							"folder": {
+								"type": "string",
+								"enum": [
+									"cache",
+									"archive",
+									"error"
+								]
+							}
+						},
+						"required": [
+							"metadataFilenameList",
+							"folder"
+						],
+						"type": "object"
+					}
+				},
+				"required": [
+					"id",
+					"type",
+					"status",
+					"ack",
+					"retrievedDate",
+					"completedDate",
+					"result",
+					"historyQueryId",
+					"commandContent"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OIBusMoveNorthCacheContentCommandDTO": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the command.",
+						"example": "cmd123"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"move-north-cache-content"
+						],
+						"nullable": false,
+						"description": "The type of the command."
+					},
+					"status": {
+						"$ref": "#/components/schemas/OIBusCommandStatus",
+						"description": "The current status of the command."
+					},
+					"ack": {
+						"type": "boolean",
+						"description": "Whether the command has been acknowledged.",
+						"example": true
+					},
+					"retrievedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was retrieved.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"completedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was completed.",
+						"example": "2023-10-31T12:35:56.789Z"
+					},
+					"result": {
+						"type": "string",
+						"nullable": true,
+						"description": "The result of the command execution.",
+						"example": "Success"
+					},
+					"northConnectorId": {
+						"type": "string"
+					},
+					"commandContent": {
+						"properties": {
+							"cacheContentList": {
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							},
+							"destinationFolder": {
+								"type": "string",
+								"enum": [
+									"cache",
+									"archive",
+									"error"
+								]
+							},
+							"originFolder": {
+								"type": "string",
+								"enum": [
+									"cache",
+									"archive",
+									"error"
+								]
+							}
+						},
+						"required": [
+							"cacheContentList",
+							"destinationFolder",
+							"originFolder"
+						],
+						"type": "object"
+					}
+				},
+				"required": [
+					"id",
+					"type",
+					"status",
+					"ack",
+					"retrievedDate",
+					"completedDate",
+					"result",
+					"northConnectorId",
+					"commandContent"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OIBusMoveHistoryCacheContentCommandDTO": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the command.",
+						"example": "cmd123"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"move-history-cache-content"
+						],
+						"nullable": false,
+						"description": "The type of the command."
+					},
+					"status": {
+						"$ref": "#/components/schemas/OIBusCommandStatus",
+						"description": "The current status of the command."
+					},
+					"ack": {
+						"type": "boolean",
+						"description": "Whether the command has been acknowledged.",
+						"example": true
+					},
+					"retrievedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was retrieved.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"completedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was completed.",
+						"example": "2023-10-31T12:35:56.789Z"
+					},
+					"result": {
+						"type": "string",
+						"nullable": true,
+						"description": "The result of the command execution.",
+						"example": "Success"
+					},
+					"historyQueryId": {
+						"type": "string"
+					},
+					"commandContent": {
+						"properties": {
+							"cacheContentList": {
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							},
+							"destinationFolder": {
+								"type": "string",
+								"enum": [
+									"cache",
+									"archive",
+									"error"
+								]
+							},
+							"originFolder": {
+								"type": "string",
+								"enum": [
+									"cache",
+									"archive",
+									"error"
+								]
+							}
+						},
+						"required": [
+							"cacheContentList",
+							"destinationFolder",
+							"originFolder"
+						],
+						"type": "object"
+					}
+				},
+				"required": [
+					"id",
+					"type",
+					"status",
+					"ack",
+					"retrievedDate",
+					"completedDate",
+					"result",
+					"historyQueryId",
+					"commandContent"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"OIBusCommandDTO": {
 				"anyOf": [
 					{
@@ -16845,6 +17705,30 @@
 					},
 					{
 						"$ref": "#/components/schemas/OIBusSetpointCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/OIBusSearchNorthCacheContentCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/OIBusSearchHistoryCacheContentCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/OIBusGetNorthCacheFileContentCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/OIBusGetHistoryCacheFileContentCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/OIBusRemoveNorthCacheContentCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/OIBusRemoveHistoryCacheContentCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/OIBusMoveNorthCacheContentCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/OIBusMoveHistoryCacheContentCommandDTO"
 					}
 				],
 				"description": "Union type representing all possible OIBus command DTOs."
