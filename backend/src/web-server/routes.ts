@@ -2950,7 +2950,7 @@ const models: TsoaRoute.Models = {
             "commandRefreshInterval": {"dataType":"double","required":true},
             "commandRetryInterval": {"dataType":"double","required":true},
             "messageRetryInterval": {"dataType":"double","required":true},
-            "commandPermissions": {"dataType":"nestedObjectLiteral","nestedProperties":{"setpoint":{"dataType":"boolean","required":true},"deleteNorth":{"dataType":"boolean","required":true},"updateNorth":{"dataType":"boolean","required":true},"createNorth":{"dataType":"boolean","required":true},"createOrUpdateSouthItemsFromCsv":{"dataType":"boolean","required":true},"deleteSouth":{"dataType":"boolean","required":true},"updateSouth":{"dataType":"boolean","required":true},"createSouth":{"dataType":"boolean","required":true},"createOrUpdateHistoryItemsFromCsv":{"dataType":"boolean","required":true},"deleteHistoryQuery":{"dataType":"boolean","required":true},"updateHistoryQuery":{"dataType":"boolean","required":true},"createHistoryQuery":{"dataType":"boolean","required":true},"deleteCertificate":{"dataType":"boolean","required":true},"updateCertificate":{"dataType":"boolean","required":true},"createCertificate":{"dataType":"boolean","required":true},"deleteIpFilter":{"dataType":"boolean","required":true},"updateIpFilter":{"dataType":"boolean","required":true},"createIpFilter":{"dataType":"boolean","required":true},"deleteScanMode":{"dataType":"boolean","required":true},"updateScanMode":{"dataType":"boolean","required":true},"createScanMode":{"dataType":"boolean","required":true},"updateRegistrationSettings":{"dataType":"boolean","required":true},"updateEngineSettings":{"dataType":"boolean","required":true},"regenerateCipherKeys":{"dataType":"boolean","required":true},"restartEngine":{"dataType":"boolean","required":true},"updateVersion":{"dataType":"boolean","required":true}},"required":true},
+            "commandPermissions": {"dataType":"nestedObjectLiteral","nestedProperties":{"moveNorthCacheContent":{"dataType":"boolean","required":true},"removeNorthCacheContent":{"dataType":"boolean","required":true},"getNorthCacheFileContent":{"dataType":"boolean","required":true},"searchNorthCacheContent":{"dataType":"boolean","required":true},"moveHistoryCacheContent":{"dataType":"boolean","required":true},"removeHistoryCacheContent":{"dataType":"boolean","required":true},"getHistoryCacheFileContent":{"dataType":"boolean","required":true},"searchHistoryCacheContent":{"dataType":"boolean","required":true},"setpoint":{"dataType":"boolean","required":true},"deleteNorth":{"dataType":"boolean","required":true},"updateNorth":{"dataType":"boolean","required":true},"createNorth":{"dataType":"boolean","required":true},"createOrUpdateSouthItemsFromCsv":{"dataType":"boolean","required":true},"deleteSouth":{"dataType":"boolean","required":true},"updateSouth":{"dataType":"boolean","required":true},"createSouth":{"dataType":"boolean","required":true},"createOrUpdateHistoryItemsFromCsv":{"dataType":"boolean","required":true},"deleteHistoryQuery":{"dataType":"boolean","required":true},"updateHistoryQuery":{"dataType":"boolean","required":true},"createHistoryQuery":{"dataType":"boolean","required":true},"deleteCertificate":{"dataType":"boolean","required":true},"updateCertificate":{"dataType":"boolean","required":true},"createCertificate":{"dataType":"boolean","required":true},"deleteIpFilter":{"dataType":"boolean","required":true},"updateIpFilter":{"dataType":"boolean","required":true},"createIpFilter":{"dataType":"boolean","required":true},"deleteScanMode":{"dataType":"boolean","required":true},"updateScanMode":{"dataType":"boolean","required":true},"createScanMode":{"dataType":"boolean","required":true},"updateRegistrationSettings":{"dataType":"boolean","required":true},"updateEngineSettings":{"dataType":"boolean","required":true},"regenerateCipherKeys":{"dataType":"boolean","required":true},"restartEngine":{"dataType":"boolean","required":true},"updateVersion":{"dataType":"boolean","required":true}},"required":true},
         },
         "additionalProperties": false,
     },
@@ -2967,14 +2967,14 @@ const models: TsoaRoute.Models = {
             "commandRefreshInterval": {"dataType":"double","required":true},
             "commandRetryInterval": {"dataType":"double","required":true},
             "messageRetryInterval": {"dataType":"double","required":true},
-            "commandPermissions": {"dataType":"nestedObjectLiteral","nestedProperties":{"setpoint":{"dataType":"boolean","required":true},"testNorthConnection":{"dataType":"boolean","required":true},"deleteNorth":{"dataType":"boolean","required":true},"updateNorth":{"dataType":"boolean","required":true},"createNorth":{"dataType":"boolean","required":true},"testSouthItem":{"dataType":"boolean","required":true},"testSouthConnection":{"dataType":"boolean","required":true},"createOrUpdateSouthItemsFromCsv":{"dataType":"boolean","required":true},"deleteSouth":{"dataType":"boolean","required":true},"updateSouth":{"dataType":"boolean","required":true},"createSouth":{"dataType":"boolean","required":true},"testHistorySouthItem":{"dataType":"boolean","required":true},"testHistorySouthConnection":{"dataType":"boolean","required":true},"testHistoryNorthConnection":{"dataType":"boolean","required":true},"createOrUpdateHistoryItemsFromCsv":{"dataType":"boolean","required":true},"deleteHistoryQuery":{"dataType":"boolean","required":true},"updateHistoryQuery":{"dataType":"boolean","required":true},"createHistoryQuery":{"dataType":"boolean","required":true},"deleteCertificate":{"dataType":"boolean","required":true},"updateCertificate":{"dataType":"boolean","required":true},"createCertificate":{"dataType":"boolean","required":true},"deleteIpFilter":{"dataType":"boolean","required":true},"updateIpFilter":{"dataType":"boolean","required":true},"createIpFilter":{"dataType":"boolean","required":true},"deleteScanMode":{"dataType":"boolean","required":true},"updateScanMode":{"dataType":"boolean","required":true},"createScanMode":{"dataType":"boolean","required":true},"updateRegistrationSettings":{"dataType":"boolean","required":true},"updateEngineSettings":{"dataType":"boolean","required":true},"regenerateCipherKeys":{"dataType":"boolean","required":true},"restartEngine":{"dataType":"boolean","required":true},"updateVersion":{"dataType":"boolean","required":true}},"required":true},
+            "commandPermissions": {"dataType":"nestedObjectLiteral","nestedProperties":{"moveNorthCacheContent":{"dataType":"boolean","required":true},"removeNorthCacheContent":{"dataType":"boolean","required":true},"getNorthCacheFileContent":{"dataType":"boolean","required":true},"searchNorthCacheContent":{"dataType":"boolean","required":true},"moveHistoryCacheContent":{"dataType":"boolean","required":true},"removeHistoryCacheContent":{"dataType":"boolean","required":true},"getHistoryCacheFileContent":{"dataType":"boolean","required":true},"searchHistoryCacheContent":{"dataType":"boolean","required":true},"setpoint":{"dataType":"boolean","required":true},"testNorthConnection":{"dataType":"boolean","required":true},"deleteNorth":{"dataType":"boolean","required":true},"updateNorth":{"dataType":"boolean","required":true},"createNorth":{"dataType":"boolean","required":true},"testSouthItem":{"dataType":"boolean","required":true},"testSouthConnection":{"dataType":"boolean","required":true},"createOrUpdateSouthItemsFromCsv":{"dataType":"boolean","required":true},"deleteSouth":{"dataType":"boolean","required":true},"updateSouth":{"dataType":"boolean","required":true},"createSouth":{"dataType":"boolean","required":true},"testHistorySouthItem":{"dataType":"boolean","required":true},"testHistorySouthConnection":{"dataType":"boolean","required":true},"testHistoryNorthConnection":{"dataType":"boolean","required":true},"createOrUpdateHistoryItemsFromCsv":{"dataType":"boolean","required":true},"deleteHistoryQuery":{"dataType":"boolean","required":true},"updateHistoryQuery":{"dataType":"boolean","required":true},"createHistoryQuery":{"dataType":"boolean","required":true},"deleteCertificate":{"dataType":"boolean","required":true},"updateCertificate":{"dataType":"boolean","required":true},"createCertificate":{"dataType":"boolean","required":true},"deleteIpFilter":{"dataType":"boolean","required":true},"updateIpFilter":{"dataType":"boolean","required":true},"createIpFilter":{"dataType":"boolean","required":true},"deleteScanMode":{"dataType":"boolean","required":true},"updateScanMode":{"dataType":"boolean","required":true},"createScanMode":{"dataType":"boolean","required":true},"updateRegistrationSettings":{"dataType":"boolean","required":true},"updateEngineSettings":{"dataType":"boolean","required":true},"regenerateCipherKeys":{"dataType":"boolean","required":true},"restartEngine":{"dataType":"boolean","required":true},"updateVersion":{"dataType":"boolean","required":true}},"required":true},
         },
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusCommandType": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["setpoint"]},{"dataType":"enum","enums":["update-version"]},{"dataType":"enum","enums":["restart-engine"]},{"dataType":"enum","enums":["regenerate-cipher-keys"]},{"dataType":"enum","enums":["update-engine-settings"]},{"dataType":"enum","enums":["update-registration-settings"]},{"dataType":"enum","enums":["create-scan-mode"]},{"dataType":"enum","enums":["update-scan-mode"]},{"dataType":"enum","enums":["delete-scan-mode"]},{"dataType":"enum","enums":["create-ip-filter"]},{"dataType":"enum","enums":["update-ip-filter"]},{"dataType":"enum","enums":["delete-ip-filter"]},{"dataType":"enum","enums":["create-certificate"]},{"dataType":"enum","enums":["update-certificate"]},{"dataType":"enum","enums":["delete-certificate"]},{"dataType":"enum","enums":["create-south"]},{"dataType":"enum","enums":["update-south"]},{"dataType":"enum","enums":["delete-south"]},{"dataType":"enum","enums":["test-south-connection"]},{"dataType":"enum","enums":["test-south-item"]},{"dataType":"enum","enums":["create-north"]},{"dataType":"enum","enums":["update-north"]},{"dataType":"enum","enums":["delete-north"]},{"dataType":"enum","enums":["test-north-connection"]},{"dataType":"enum","enums":["create-or-update-south-items-from-csv"]},{"dataType":"enum","enums":["create-history-query"]},{"dataType":"enum","enums":["update-history-query"]},{"dataType":"enum","enums":["delete-history-query"]},{"dataType":"enum","enums":["test-history-query-north-connection"]},{"dataType":"enum","enums":["test-history-query-south-connection"]},{"dataType":"enum","enums":["test-history-query-south-item"]},{"dataType":"enum","enums":["create-or-update-history-query-south-items-from-csv"]},{"dataType":"enum","enums":["update-history-query-status"]}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["setpoint"]},{"dataType":"enum","enums":["update-version"]},{"dataType":"enum","enums":["restart-engine"]},{"dataType":"enum","enums":["regenerate-cipher-keys"]},{"dataType":"enum","enums":["update-engine-settings"]},{"dataType":"enum","enums":["update-registration-settings"]},{"dataType":"enum","enums":["create-scan-mode"]},{"dataType":"enum","enums":["update-scan-mode"]},{"dataType":"enum","enums":["delete-scan-mode"]},{"dataType":"enum","enums":["create-ip-filter"]},{"dataType":"enum","enums":["update-ip-filter"]},{"dataType":"enum","enums":["delete-ip-filter"]},{"dataType":"enum","enums":["create-certificate"]},{"dataType":"enum","enums":["update-certificate"]},{"dataType":"enum","enums":["delete-certificate"]},{"dataType":"enum","enums":["create-south"]},{"dataType":"enum","enums":["update-south"]},{"dataType":"enum","enums":["delete-south"]},{"dataType":"enum","enums":["test-south-connection"]},{"dataType":"enum","enums":["test-south-item"]},{"dataType":"enum","enums":["create-north"]},{"dataType":"enum","enums":["update-north"]},{"dataType":"enum","enums":["delete-north"]},{"dataType":"enum","enums":["test-north-connection"]},{"dataType":"enum","enums":["create-or-update-south-items-from-csv"]},{"dataType":"enum","enums":["create-history-query"]},{"dataType":"enum","enums":["update-history-query"]},{"dataType":"enum","enums":["delete-history-query"]},{"dataType":"enum","enums":["test-history-query-north-connection"]},{"dataType":"enum","enums":["test-history-query-south-connection"]},{"dataType":"enum","enums":["test-history-query-south-item"]},{"dataType":"enum","enums":["create-or-update-history-query-south-items-from-csv"]},{"dataType":"enum","enums":["update-history-query-status"]},{"dataType":"enum","enums":["search-north-cache-content"]},{"dataType":"enum","enums":["search-history-cache-content"]},{"dataType":"enum","enums":["get-north-cache-file-content"]},{"dataType":"enum","enums":["get-history-cache-file-content"]},{"dataType":"enum","enums":["remove-north-cache-content"]},{"dataType":"enum","enums":["remove-history-cache-content"]},{"dataType":"enum","enums":["move-north-cache-content"]},{"dataType":"enum","enums":["move-history-cache-content"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusCommandStatus": {
@@ -4566,9 +4566,147 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "CacheSearchParam": {
+        "dataType": "refObject",
+        "properties": {
+            "start": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}],"required":true},
+            "end": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}],"required":true},
+            "nameContains": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}],"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "OIBusSearchNorthCacheContentCommandDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"string","required":true},
+            "type": {"dataType":"enum","enums":["search-north-cache-content"],"required":true},
+            "status": {"ref":"OIBusCommandStatus","required":true},
+            "ack": {"dataType":"boolean","required":true},
+            "retrievedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
+            "completedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
+            "result": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "northConnectorId": {"dataType":"string","required":true},
+            "commandContent": {"dataType":"nestedObjectLiteral","nestedProperties":{"folder":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["archive"]},{"dataType":"enum","enums":["error"]}],"required":true},"searchParams":{"ref":"CacheSearchParam","required":true}},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "OIBusSearchHistoryCacheContentCommandDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"string","required":true},
+            "type": {"dataType":"enum","enums":["search-history-cache-content"],"required":true},
+            "status": {"ref":"OIBusCommandStatus","required":true},
+            "ack": {"dataType":"boolean","required":true},
+            "retrievedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
+            "completedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
+            "result": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "historyQueryId": {"dataType":"string","required":true},
+            "commandContent": {"dataType":"nestedObjectLiteral","nestedProperties":{"folder":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["archive"]},{"dataType":"enum","enums":["error"]}],"required":true},"searchParams":{"ref":"CacheSearchParam","required":true}},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "OIBusGetNorthCacheFileContentCommandDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"string","required":true},
+            "type": {"dataType":"enum","enums":["get-north-cache-file-content"],"required":true},
+            "status": {"ref":"OIBusCommandStatus","required":true},
+            "ack": {"dataType":"boolean","required":true},
+            "retrievedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
+            "completedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
+            "result": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "northConnectorId": {"dataType":"string","required":true},
+            "commandContent": {"dataType":"nestedObjectLiteral","nestedProperties":{"filename":{"dataType":"string","required":true},"folder":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["archive"]},{"dataType":"enum","enums":["error"]}],"required":true}},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "OIBusGetHistoryCacheFileContentCommandDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"string","required":true},
+            "type": {"dataType":"enum","enums":["get-history-cache-file-content"],"required":true},
+            "status": {"ref":"OIBusCommandStatus","required":true},
+            "ack": {"dataType":"boolean","required":true},
+            "retrievedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
+            "completedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
+            "result": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "historyQueryId": {"dataType":"string","required":true},
+            "commandContent": {"dataType":"nestedObjectLiteral","nestedProperties":{"filename":{"dataType":"string","required":true},"folder":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["archive"]},{"dataType":"enum","enums":["error"]}],"required":true}},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "OIBusRemoveNorthCacheContentCommandDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"string","required":true},
+            "type": {"dataType":"enum","enums":["remove-north-cache-content"],"required":true},
+            "status": {"ref":"OIBusCommandStatus","required":true},
+            "ack": {"dataType":"boolean","required":true},
+            "retrievedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
+            "completedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
+            "result": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "northConnectorId": {"dataType":"string","required":true},
+            "commandContent": {"dataType":"nestedObjectLiteral","nestedProperties":{"metadataFilenameList":{"dataType":"array","array":{"dataType":"string"},"required":true},"folder":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["archive"]},{"dataType":"enum","enums":["error"]}],"required":true}},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "OIBusRemoveHistoryCacheContentCommandDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"string","required":true},
+            "type": {"dataType":"enum","enums":["remove-history-cache-content"],"required":true},
+            "status": {"ref":"OIBusCommandStatus","required":true},
+            "ack": {"dataType":"boolean","required":true},
+            "retrievedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
+            "completedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
+            "result": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "historyQueryId": {"dataType":"string","required":true},
+            "commandContent": {"dataType":"nestedObjectLiteral","nestedProperties":{"metadataFilenameList":{"dataType":"array","array":{"dataType":"string"},"required":true},"folder":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["archive"]},{"dataType":"enum","enums":["error"]}],"required":true}},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "OIBusMoveNorthCacheContentCommandDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"string","required":true},
+            "type": {"dataType":"enum","enums":["move-north-cache-content"],"required":true},
+            "status": {"ref":"OIBusCommandStatus","required":true},
+            "ack": {"dataType":"boolean","required":true},
+            "retrievedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
+            "completedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
+            "result": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "northConnectorId": {"dataType":"string","required":true},
+            "commandContent": {"dataType":"nestedObjectLiteral","nestedProperties":{"cacheContentList":{"dataType":"array","array":{"dataType":"string"},"required":true},"destinationFolder":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["archive"]},{"dataType":"enum","enums":["error"]}],"required":true},"originFolder":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["archive"]},{"dataType":"enum","enums":["error"]}],"required":true}},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "OIBusMoveHistoryCacheContentCommandDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"string","required":true},
+            "type": {"dataType":"enum","enums":["move-history-cache-content"],"required":true},
+            "status": {"ref":"OIBusCommandStatus","required":true},
+            "ack": {"dataType":"boolean","required":true},
+            "retrievedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
+            "completedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
+            "result": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "historyQueryId": {"dataType":"string","required":true},
+            "commandContent": {"dataType":"nestedObjectLiteral","nestedProperties":{"cacheContentList":{"dataType":"array","array":{"dataType":"string"},"required":true},"destinationFolder":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["archive"]},{"dataType":"enum","enums":["error"]}],"required":true},"originFolder":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["archive"]},{"dataType":"enum","enums":["error"]}],"required":true}},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusCommandDTO": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"ref":"OIBusUpdateVersionCommandDTO"},{"ref":"OIBusRegenerateCipherKeysCommandDTO"},{"ref":"OIBusRestartEngineCommandDTO"},{"ref":"OIBusUpdateEngineSettingsCommandDTO"},{"ref":"OIBusUpdateRegistrationSettingsCommandDTO"},{"ref":"OIBusCreateScanModeCommandDTO"},{"ref":"OIBusUpdateScanModeCommandDTO"},{"ref":"OIBusDeleteScanModeCommandDTO"},{"ref":"OIBusCreateIPFilterCommandDTO"},{"ref":"OIBusUpdateIPFilterCommandDTO"},{"ref":"OIBusDeleteIPFilterCommandDTO"},{"ref":"OIBusCreateCertificateCommandDTO"},{"ref":"OIBusUpdateCertificateCommandDTO"},{"ref":"OIBusDeleteCertificateCommandDTO"},{"ref":"OIBusCreateSouthConnectorCommandDTO"},{"ref":"OIBusUpdateSouthConnectorCommandDTO"},{"ref":"OIBusDeleteSouthConnectorCommandDTO"},{"ref":"OIBusTestSouthConnectorCommandDTO"},{"ref":"OIBusTestSouthConnectorItemCommandDTO"},{"ref":"OIBusCreateNorthConnectorCommandDTO"},{"ref":"OIBusUpdateNorthConnectorCommandDTO"},{"ref":"OIBusDeleteNorthConnectorCommandDTO"},{"ref":"OIBusTestNorthConnectorCommandDTO"},{"ref":"OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommandDTO"},{"ref":"OIBusCreateHistoryQueryCommandDTO"},{"ref":"OIBusUpdateHistoryQueryCommandDTO"},{"ref":"OIBusDeleteHistoryQueryCommandDTO"},{"ref":"OIBusTestHistoryQueryNorthConnectionCommandDTO"},{"ref":"OIBusTestHistoryQuerySouthConnectionCommandDTO"},{"ref":"OIBusTestHistoryQuerySouthItemCommandDTO"},{"ref":"OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommandDTO"},{"ref":"OIBusUpdateHistoryQueryStatusCommandDTO"},{"ref":"OIBusSetpointCommandDTO"}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"ref":"OIBusUpdateVersionCommandDTO"},{"ref":"OIBusRegenerateCipherKeysCommandDTO"},{"ref":"OIBusRestartEngineCommandDTO"},{"ref":"OIBusUpdateEngineSettingsCommandDTO"},{"ref":"OIBusUpdateRegistrationSettingsCommandDTO"},{"ref":"OIBusCreateScanModeCommandDTO"},{"ref":"OIBusUpdateScanModeCommandDTO"},{"ref":"OIBusDeleteScanModeCommandDTO"},{"ref":"OIBusCreateIPFilterCommandDTO"},{"ref":"OIBusUpdateIPFilterCommandDTO"},{"ref":"OIBusDeleteIPFilterCommandDTO"},{"ref":"OIBusCreateCertificateCommandDTO"},{"ref":"OIBusUpdateCertificateCommandDTO"},{"ref":"OIBusDeleteCertificateCommandDTO"},{"ref":"OIBusCreateSouthConnectorCommandDTO"},{"ref":"OIBusUpdateSouthConnectorCommandDTO"},{"ref":"OIBusDeleteSouthConnectorCommandDTO"},{"ref":"OIBusTestSouthConnectorCommandDTO"},{"ref":"OIBusTestSouthConnectorItemCommandDTO"},{"ref":"OIBusCreateNorthConnectorCommandDTO"},{"ref":"OIBusUpdateNorthConnectorCommandDTO"},{"ref":"OIBusDeleteNorthConnectorCommandDTO"},{"ref":"OIBusTestNorthConnectorCommandDTO"},{"ref":"OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommandDTO"},{"ref":"OIBusCreateHistoryQueryCommandDTO"},{"ref":"OIBusUpdateHistoryQueryCommandDTO"},{"ref":"OIBusDeleteHistoryQueryCommandDTO"},{"ref":"OIBusTestHistoryQueryNorthConnectionCommandDTO"},{"ref":"OIBusTestHistoryQuerySouthConnectionCommandDTO"},{"ref":"OIBusTestHistoryQuerySouthItemCommandDTO"},{"ref":"OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommandDTO"},{"ref":"OIBusUpdateHistoryQueryStatusCommandDTO"},{"ref":"OIBusSetpointCommandDTO"},{"ref":"OIBusSearchNorthCacheContentCommandDTO"},{"ref":"OIBusSearchHistoryCacheContentCommandDTO"},{"ref":"OIBusGetNorthCacheFileContentCommandDTO"},{"ref":"OIBusGetHistoryCacheFileContentCommandDTO"},{"ref":"OIBusRemoveNorthCacheContentCommandDTO"},{"ref":"OIBusRemoveHistoryCacheContentCommandDTO"},{"ref":"OIBusMoveNorthCacheContentCommandDTO"},{"ref":"OIBusMoveHistoryCacheContentCommandDTO"}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "Page_OIBusCommandDTO_": {

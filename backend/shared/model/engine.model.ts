@@ -408,6 +408,54 @@ export interface RegistrationSettingsDTO extends BaseEntity {
      * @example true
      */
     setpoint: boolean;
+
+    /**
+     * Permission to search cache content.
+     * @example true
+     */
+    searchHistoryCacheContent: boolean;
+
+    /**
+     * Permission to get cache file content.
+     * @example true
+     */
+    getHistoryCacheFileContent: boolean;
+
+    /**
+     * Permission to remove cache content.
+     * @example true
+     */
+    removeHistoryCacheContent: boolean;
+
+    /**
+     * Permission to move cache content.
+     * @example true
+     */
+    moveHistoryCacheContent: boolean;
+
+    /**
+     * Permission to search cache content.
+     * @example true
+     */
+    searchNorthCacheContent: boolean;
+
+    /**
+     * Permission to get cache file content.
+     * @example true
+     */
+    getNorthCacheFileContent: boolean;
+
+    /**
+     * Permission to remove cache content.
+     * @example true
+     */
+    removeNorthCacheContent: boolean;
+
+    /**
+     * Permission to move cache content.
+     * @example true
+     */
+    moveNorthCacheContent: boolean;
   };
 }
 
@@ -665,6 +713,54 @@ export interface RegistrationSettingsCommandDTO {
      * @example true
      */
     setpoint: boolean;
+
+    /**
+     * Permission to search cache content.
+     * @example true
+     */
+    searchHistoryCacheContent: boolean;
+
+    /**
+     * Permission to get cache file content.
+     * @example true
+     */
+    getHistoryCacheFileContent: boolean;
+
+    /**
+     * Permission to remove cache content.
+     * @example true
+     */
+    removeHistoryCacheContent: boolean;
+
+    /**
+     * Permission to move cache content.
+     * @example true
+     */
+    moveHistoryCacheContent: boolean;
+
+    /**
+     * Permission to search cache content.
+     * @example true
+     */
+    searchNorthCacheContent: boolean;
+
+    /**
+     * Permission to get cache file content.
+     * @example true
+     */
+    getNorthCacheFileContent: boolean;
+
+    /**
+     * Permission to remove cache content.
+     * @example true
+     */
+    removeNorthCacheContent: boolean;
+
+    /**
+     * Permission to move cache content.
+     * @example true
+     */
+    moveNorthCacheContent: boolean;
   };
 }
 
