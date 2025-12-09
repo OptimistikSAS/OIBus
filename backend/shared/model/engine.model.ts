@@ -408,6 +408,30 @@ export interface RegistrationSettingsDTO extends BaseEntity {
      * @example true
      */
     setpoint: boolean;
+
+    /**
+     * Permission to search cache content.
+     * @example true
+     */
+    searchCacheContent: boolean;
+
+    /**
+     * Permission to get cache file content.
+     * @example true
+     */
+    getCacheFileContent: boolean;
+
+    /**
+     * Permission to remove cache content.
+     * @example true
+     */
+    removeCacheContent: boolean;
+
+    /**
+     * Permission to move cache content.
+     * @example true
+     */
+    moveCacheContent: boolean;
   };
 }
 
@@ -665,6 +689,30 @@ export interface RegistrationSettingsCommandDTO {
      * @example true
      */
     setpoint: boolean;
+
+    /**
+     * Permission to search cache content.
+     * @example true
+     */
+    searchCacheContent: boolean;
+
+    /**
+     * Permission to get cache file content.
+     * @example true
+     */
+    getCacheFileContent: boolean;
+
+    /**
+     * Permission to remove cache content.
+     * @example true
+     */
+    removeCacheContent: boolean;
+
+    /**
+     * Permission to move cache content.
+     * @example true
+     */
+    moveCacheContent: boolean;
   };
 }
 

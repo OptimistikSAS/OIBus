@@ -115,9 +115,17 @@ async function createHistoryTransformersTable(knex: Knex): Promise<void> {
 async function updateRegistrationSettings(knex: Knex): Promise<void> {
   await knex.schema.alterTable(REGISTRATIONS_TABLE, table => {
     table.boolean('command_setpoint');
+    table.boolean('command_search_cache_content');
+    table.boolean('command_get_cache_file_content');
+    table.boolean('command_remove_cache_content');
+    table.boolean('command_move_cache_content');
   });
   await knex(REGISTRATIONS_TABLE).update({
-    command_setpoint: true
+    command_setpoint: true,
+    command_search_cache_content: true,
+    command_get_cache_file_content: true,
+    command_remove_cache_content: true,
+    command_move_cache_content: true
   });
 }
 

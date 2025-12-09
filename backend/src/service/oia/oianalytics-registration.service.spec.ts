@@ -165,7 +165,11 @@ describe('OIAnalytics Registration Service', () => {
         updateNorth: true,
         deleteNorth: true,
         testNorthConnection: true,
-        setpoint: true
+        setpoint: true,
+        searchCacheContent: true,
+        getCacheFileContent: true,
+        removeCacheContent: true,
+        moveCacheContent: true
       }
     };
     const result = {
@@ -326,7 +330,11 @@ describe('OIAnalytics Registration Service', () => {
         updateNorth: true,
         deleteNorth: true,
         testNorthConnection: true,
-        setpoint: true
+        setpoint: true,
+        searchCacheContent: true,
+        getCacheFileContent: true,
+        removeCacheContent: true,
+        moveCacheContent: true
       }
     };
     (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.registration.completed);

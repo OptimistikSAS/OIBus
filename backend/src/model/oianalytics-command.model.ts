@@ -11,6 +11,7 @@ import { NorthConnectorCommandDTO } from '../../shared/model/north-connector.mod
 import { IPFilterCommandDTO } from '../../shared/model/ip-filter.model';
 import { CertificateCommandDTO } from '../../shared/model/certificate.model';
 import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO, HistoryQueryStatus } from '../../shared/model/history-query.model';
+import { CacheSearchParam } from '../../shared/model/engine.model';
 
 export interface BaseOIBusCommand extends BaseEntity {
   type: OIBusCommandType;
@@ -281,6 +282,104 @@ export interface OIBusSetpointCommand extends BaseOIBusCommand {
   }>;
 }
 
+export interface OIBusSearchNorthCacheContentCommand extends BaseOIBusCommand {
+  type: 'search-north-cache-content';
+  northConnectorId: string;
+  commandContent: {
+    searchParams: CacheSearchParam;
+    folder: 'cache' | 'archive' | 'error';
+    commandPermissions: {
+      searchCacheContent: boolean;
+    };
+  };
+}
+
+export interface OIBusSearchHistoryCacheContentCommand extends BaseOIBusCommand {
+  type: 'search-history-cache-content';
+  historyQueryId: string;
+  commandContent: {
+    searchParams: CacheSearchParam;
+    folder: 'cache' | 'archive' | 'error';
+    commandPermissions: {
+      searchCacheContent: boolean;
+    };
+  };
+}
+
+export interface OIBusGetNorthCacheFileContentCommand extends BaseOIBusCommand {
+  type: 'get-north-cache-file-content';
+  northConnectorId: string;
+  commandContent: {
+    folder: 'cache' | 'archive' | 'error';
+    filename: string;
+    commandPermissions: {
+      getCacheFileContent: boolean;
+    };
+  };
+}
+
+export interface OIBusGetHistoryCacheFileContentCommand extends BaseOIBusCommand {
+  type: 'get-history-cache-file-content';
+  historyQueryId: string;
+  commandContent: {
+    folder: 'cache' | 'archive' | 'error';
+    filename: string;
+    commandPermissions: {
+      getCacheFileContent: boolean;
+    };
+  };
+}
+
+export interface OIBusRemoveNorthCacheContentCommand extends BaseOIBusCommand {
+  type: 'remove-north-cache-content';
+  northConnectorId: string;
+  commandContent: {
+    folder: 'cache' | 'archive' | 'error';
+    metadataFilenameList: string[];
+    commandPermissions: {
+      removeCacheContent: boolean;
+    };
+  };
+}
+
+export interface OIBusRemoveHistoryCacheContentCommand extends BaseOIBusCommand {
+  type: 'remove-history-cache-content';
+  historyQueryId: string;
+  commandContent: {
+    folder: 'cache' | 'archive' | 'error';
+    metadataFilenameList: string[];
+    commandPermissions: {
+      removeCacheContent: boolean;
+    };
+  };
+}
+
+export interface OIBusMoveNorthCacheContentCommand extends BaseOIBusCommand {
+  type: 'move-north-cache-content';
+  northConnectorId: string;
+  commandContent: {
+    originFolder: 'cache' | 'archive' | 'error';
+    destinationFolder: 'cache' | 'archive' | 'error';
+    cacheContentList: string[];
+    commandPermissions: {
+      moveCacheContent: boolean;
+    };
+  };
+}
+
+export interface OIBusMoveHistoryCacheContentCommand extends BaseOIBusCommand {
+  type: 'move-history-cache-content';
+  historyQueryId: string;
+  commandContent: {
+    originFolder: 'cache' | 'archive' | 'error';
+    destinationFolder: 'cache' | 'archive' | 'error';
+    cacheContentList: string[];
+    commandPermissions: {
+      moveCacheContent: boolean;
+    };
+  };
+}
+
 export type OIBusCommand =
   | OIBusUpdateVersionCommand
   | OIBusRestartEngineCommand
@@ -314,4 +413,12 @@ export type OIBusCommand =
   | OIBusTestHistoryQuerySouthItemCommand
   | OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand
   | OIBusUpdateHistoryQueryStatusCommand
-  | OIBusSetpointCommand;
+  | OIBusSetpointCommand
+  | OIBusSearchNorthCacheContentCommand
+  | OIBusSearchHistoryCacheContentCommand
+  | OIBusGetNorthCacheFileContentCommand
+  | OIBusGetHistoryCacheFileContentCommand
+  | OIBusRemoveNorthCacheContentCommand
+  | OIBusRemoveHistoryCacheContentCommand
+  | OIBusMoveNorthCacheContentCommand
+  | OIBusMoveHistoryCacheContentCommand;

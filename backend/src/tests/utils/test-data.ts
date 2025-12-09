@@ -1298,7 +1298,11 @@ const oIAnalyticsRegistrationRegistered: OIAnalyticsRegistration = {
     updateNorth: true,
     deleteNorth: true,
     testNorthConnection: true,
-    setpoint: true
+    setpoint: true,
+    searchCacheContent: true,
+    getCacheFileContent: true,
+    removeCacheContent: true,
+    moveCacheContent: true
   }
 };
 const oIAnalyticsRegistrationPending: OIAnalyticsRegistration = {
@@ -1352,7 +1356,11 @@ const oIAnalyticsRegistrationPending: OIAnalyticsRegistration = {
     updateNorth: true,
     deleteNorth: true,
     testNorthConnection: true,
-    setpoint: true
+    setpoint: true,
+    searchCacheContent: true,
+    getCacheFileContent: true,
+    removeCacheContent: true,
+    moveCacheContent: true
   }
 };
 const oIAnalyticsRegistrationCommand: OIAnalyticsRegistrationEditCommand = {
@@ -1397,7 +1405,11 @@ const oIAnalyticsRegistrationCommand: OIAnalyticsRegistrationEditCommand = {
     updateNorth: true,
     deleteNorth: true,
     testNorthConnection: true,
-    setpoint: true
+    setpoint: true,
+    searchCacheContent: true,
+    getCacheFileContent: true,
+    removeCacheContent: true,
+    moveCacheContent: true
   }
 };
 
