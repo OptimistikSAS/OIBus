@@ -222,7 +222,7 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
 
     (HTTPRequest as jest.Mock).mockResolvedValueOnce(createMockResponse(400, 'statusText'));
 
-    await expect(north.testConnection()).rejects.toThrow(`HTTP request failed with status code 400 and message: "statusText"`);
+    await expect(north.testConnection()).rejects.toThrow(`HTTP request failed with status code 400 and message: statusText`);
 
     expect(HTTPRequest).toHaveBeenCalledWith(
       expect.objectContaining({ href: `${hostname}/api/optimistik/oibus/status` }),
@@ -361,7 +361,7 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
         source: 'south',
         options: {}
       })
-    ).rejects.toThrow(new OIBusError(`Error 400: "statusText"`, false));
+    ).rejects.toThrow(new OIBusError(`Error 400: statusText`, false));
 
     expect(HTTPRequest).toHaveBeenCalledWith(
       expect.objectContaining({ href: `${hostname}/api/oianalytics/oibus/time-values` }),
@@ -516,7 +516,7 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
       ...proxyOptions
     };
 
-    await expect(north.handleFile(filePath)).rejects.toThrow(new OIBusError(`Error 501: "statusText"`, false));
+    await expect(north.handleFile(filePath)).rejects.toThrow(new OIBusError(`Error 501: statusText`, false));
 
     expect(HTTPRequest).toHaveBeenCalledWith(
       expect.objectContaining({ href: `${hostname}/api/oianalytics/file-uploads` }),
