@@ -13,7 +13,6 @@ const pipelineAsync = promisify(pipeline);
 interface TransformerOptions {
   filename: string;
   delimiter: 'DOT' | 'SEMI_COLON' | 'COLON' | 'COMMA' | 'NON_BREAKING_SPACE' | 'SLASH' | 'TAB' | 'PIPE';
-  compression: boolean;
   pointIdColumnTitle: string;
   valueColumnTitle: string;
   timestampColumnTitle: string;
@@ -115,23 +114,6 @@ export default class OIBusTimeValuesToCsvTransformer extends OIBusTransformer {
             row: 0,
             columns: 4,
             displayInViewMode: false
-          }
-        },
-        {
-          type: 'boolean',
-          key: 'compression',
-          translationKey: 'configuration.oibus.manifest.transformers.time-values-to-csv.compression',
-          defaultValue: false,
-          validators: [
-            {
-              type: 'REQUIRED',
-              arguments: []
-            }
-          ],
-          displayProperties: {
-            row: 0,
-            columns: 4,
-            displayInViewMode: true
           }
         },
         {

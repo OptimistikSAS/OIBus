@@ -5555,6 +5555,538 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"SouthRestAPISettingsThrottling": {
+				"properties": {
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double"
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double"
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"maxReadInterval",
+					"readDelay",
+					"overlap"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthRestAPISettingsAuthentication": {
+				"type": "string",
+				"enum": [
+					"none",
+					"basic",
+					"bearer",
+					"api-key"
+				]
+			},
+			"SouthRestAPISettingsAddTo": {
+				"type": "string",
+				"enum": [
+					"header",
+					"query-params"
+				]
+			},
+			"SouthRestAPISettingsTestMethod": {
+				"type": "string",
+				"enum": [
+					"GET",
+					"POST",
+					"PUT"
+				]
+			},
+			"SouthRestAPISettingsTest": {
+				"properties": {
+					"method": {
+						"$ref": "#/components/schemas/SouthRestAPISettingsTestMethod"
+					},
+					"endpoint": {
+						"type": "string"
+					},
+					"body": {
+						"type": "string",
+						"nullable": true
+					},
+					"successCode": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"method",
+					"endpoint",
+					"successCode"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthRestAPISettings": {
+				"properties": {
+					"throttling": {
+						"$ref": "#/components/schemas/SouthRestAPISettingsThrottling"
+					},
+					"host": {
+						"type": "string"
+					},
+					"acceptUnauthorized": {
+						"type": "boolean"
+					},
+					"timeout": {
+						"type": "number",
+						"format": "double"
+					},
+					"authentication": {
+						"$ref": "#/components/schemas/SouthRestAPISettingsAuthentication"
+					},
+					"username": {
+						"type": "string"
+					},
+					"password": {
+						"type": "string",
+						"nullable": true
+					},
+					"token": {
+						"type": "string",
+						"nullable": true
+					},
+					"addTo": {
+						"$ref": "#/components/schemas/SouthRestAPISettingsAddTo"
+					},
+					"apiKey": {
+						"type": "string"
+					},
+					"apiValue": {
+						"type": "string",
+						"nullable": true
+					},
+					"useProxy": {
+						"type": "boolean"
+					},
+					"proxyUrl": {
+						"type": "string"
+					},
+					"proxyUsername": {
+						"type": "string"
+					},
+					"proxyPassword": {
+						"type": "string",
+						"nullable": true
+					},
+					"test": {
+						"$ref": "#/components/schemas/SouthRestAPISettingsTest"
+					}
+				},
+				"required": [
+					"throttling",
+					"host",
+					"acceptUnauthorized",
+					"timeout",
+					"authentication",
+					"useProxy",
+					"test"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthRestAPIItemSettingsMethod": {
+				"type": "string",
+				"enum": [
+					"GET",
+					"POST",
+					"PUT",
+					"PATCH",
+					"DELETE"
+				]
+			},
+			"SouthRestAPIItemSettingsReturnType": {
+				"type": "string",
+				"enum": [
+					"file",
+					"body"
+				]
+			},
+			"SouthRestAPIItemSettingsQueryParamsDateTimeInputType": {
+				"type": "string",
+				"enum": [
+					"string",
+					"iso-string",
+					"unix-epoch",
+					"unix-epoch-ms"
+				]
+			},
+			"SouthRestAPIItemSettingsQueryParamsDateTimeInput": {
+				"properties": {
+					"type": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthRestAPIItemSettingsQueryParamsDateTimeInputType"
+							}
+						],
+						"nullable": true
+					},
+					"timezone": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Timezone"
+							}
+						],
+						"nullable": true
+					},
+					"format": {
+						"type": "string",
+						"nullable": true
+					}
+				},
+				"required": [
+					"type"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthRestAPIItemSettingsQueryParams": {
+				"properties": {
+					"key": {
+						"type": "string"
+					},
+					"value": {
+						"type": "string"
+					},
+					"dateTimeInput": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthRestAPIItemSettingsQueryParamsDateTimeInput"
+							}
+						],
+						"nullable": true
+					}
+				},
+				"required": [
+					"key",
+					"value"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthRestAPIItemSettingsHeadersDateTimeType": {
+				"type": "string",
+				"enum": [
+					"string",
+					"iso-string",
+					"unix-epoch",
+					"unix-epoch-ms"
+				]
+			},
+			"SouthRestAPIItemSettingsHeaders": {
+				"properties": {
+					"key": {
+						"type": "string"
+					},
+					"value": {
+						"type": "string"
+					},
+					"dateTimeType": {
+						"$ref": "#/components/schemas/SouthRestAPIItemSettingsHeadersDateTimeType"
+					},
+					"dateTimeTimezone": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Timezone"
+							}
+						],
+						"nullable": true
+					},
+					"dateTimeFormat": {
+						"type": "string",
+						"nullable": true
+					}
+				},
+				"required": [
+					"key",
+					"value"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthRestAPIItemSettingsBodyDateTimeInputType": {
+				"type": "string",
+				"enum": [
+					"string",
+					"iso-string",
+					"unix-epoch",
+					"unix-epoch-ms"
+				]
+			},
+			"SouthRestAPIItemSettingsBodyDateTimeInput": {
+				"properties": {
+					"type": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthRestAPIItemSettingsBodyDateTimeInputType"
+							}
+						],
+						"nullable": true
+					},
+					"timezone": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Timezone"
+							}
+						],
+						"nullable": true
+					},
+					"format": {
+						"type": "string",
+						"nullable": true
+					}
+				},
+				"required": [
+					"type"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthRestAPIItemSettingsBody": {
+				"properties": {
+					"content": {
+						"type": "string",
+						"nullable": true
+					},
+					"dateTimeInput": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthRestAPIItemSettingsBodyDateTimeInput"
+							}
+						],
+						"nullable": true
+					}
+				},
+				"required": [
+					"content"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthRestAPIItemSettingsTrackingInstantDateTimeInputType": {
+				"type": "string",
+				"enum": [
+					"string",
+					"iso-string",
+					"unix-epoch",
+					"unix-epoch-ms"
+				]
+			},
+			"SouthRestAPIItemSettingsTrackingInstantDateTimeInput": {
+				"properties": {
+					"type": {
+						"$ref": "#/components/schemas/SouthRestAPIItemSettingsTrackingInstantDateTimeInputType"
+					},
+					"timezone": {
+						"$ref": "#/components/schemas/Timezone"
+					},
+					"format": {
+						"type": "string"
+					},
+					"locale": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"type"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthRestAPIItemSettingsTrackingInstant": {
+				"properties": {
+					"trackInstant": {
+						"type": "boolean"
+					},
+					"jsonPath": {
+						"type": "string"
+					},
+					"dateTimeInput": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthRestAPIItemSettingsTrackingInstantDateTimeInput"
+							}
+						],
+						"nullable": true
+					}
+				},
+				"required": [
+					"trackInstant"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthRestAPIItemSettings": {
+				"properties": {
+					"method": {
+						"$ref": "#/components/schemas/SouthRestAPIItemSettingsMethod"
+					},
+					"endpoint": {
+						"type": "string"
+					},
+					"returnType": {
+						"$ref": "#/components/schemas/SouthRestAPIItemSettingsReturnType"
+					},
+					"queryParams": {
+						"items": {
+							"$ref": "#/components/schemas/SouthRestAPIItemSettingsQueryParams"
+						},
+						"type": "array"
+					},
+					"headers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthRestAPIItemSettingsHeaders"
+						},
+						"type": "array"
+					},
+					"body": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthRestAPIItemSettingsBody"
+							}
+						],
+						"nullable": true
+					},
+					"trackingInstant": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthRestAPIItemSettingsTrackingInstant"
+							}
+						],
+						"nullable": true
+					}
+				},
+				"required": [
+					"method",
+					"endpoint",
+					"returnType",
+					"queryParams",
+					"headers"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthConnectorItemTypedDTO_SouthRestAPIItemSettings_": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the entity.",
+						"example": "entity123"
+					},
+					"creationDate": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was created.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"lastEditInstant": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was last edited.",
+						"example": "2023-10-31T13:45:00.123Z"
+					},
+					"name": {
+						"type": "string",
+						"description": "The name of the item.",
+						"example": "Temperature Logs"
+					},
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether this item is enabled and should be collected.",
+						"example": true
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthRestAPIItemSettings",
+						"description": "Item-specific settings for data collection."
+					},
+					"scanMode": {
+						"$ref": "#/components/schemas/ScanModeDTO",
+						"description": "The scan mode configuration for this item."
+					}
+				},
+				"required": [
+					"id",
+					"name",
+					"enabled",
+					"settings",
+					"scanMode"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthConnectorTypedDTO_rest-api.SouthRestAPISettings.SouthRestAPIItemSettings_": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the entity.",
+						"example": "entity123"
+					},
+					"creationDate": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was created.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"lastEditInstant": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was last edited.",
+						"example": "2023-10-31T13:45:00.123Z"
+					},
+					"name": {
+						"type": "string",
+						"description": "The name of the South connector.",
+						"example": "Production Data Files"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"rest-api"
+						],
+						"nullable": false,
+						"description": "The type of the South connector.",
+						"example": "folder-scanner"
+					},
+					"description": {
+						"type": "string",
+						"description": "Description of the South connector's purpose.",
+						"example": "Scans production data CSV files"
+					},
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether the South connector is enabled and active.",
+						"example": true
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthRestAPISettings",
+						"description": "Configuration settings specific to this South connector type."
+					},
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/SouthConnectorItemTypedDTO_SouthRestAPIItemSettings_"
+						},
+						"type": "array",
+						"description": "List of items (data points) configured for this connector."
+					}
+				},
+				"required": [
+					"id",
+					"name",
+					"type",
+					"description",
+					"enabled",
+					"settings",
+					"items"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"SouthSFTPSettingsAuthentication": {
 				"type": "string",
 				"enum": [
@@ -6051,6 +6583,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/SouthConnectorTypedDTO_postgresql.SouthPostgreSQLSettings.SouthPostgreSQLItemSettings_"
+					},
+					{
+						"$ref": "#/components/schemas/SouthConnectorTypedDTO_rest-api.SouthRestAPISettings.SouthRestAPIItemSettings_"
 					},
 					{
 						"$ref": "#/components/schemas/SouthConnectorTypedDTO_sftp.SouthSFTPSettings.SouthSFTPItemSettings_"
@@ -7486,6 +8021,101 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"SouthConnectorItemCommandTypedDTO_SouthRestAPIItemSettings_": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the item (null when creating a new item).",
+						"example": null
+					},
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether this item should be enabled.",
+						"example": true
+					},
+					"name": {
+						"type": "string",
+						"description": "The name of the item.",
+						"example": "Temperature Logs"
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthRestAPIItemSettings",
+						"description": "Item-specific settings for data collection."
+					},
+					"scanModeId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the scan mode to use for this item.\nNull when the scan mode should be determined by the system.",
+						"example": "periodic-5min"
+					},
+					"scanModeName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the scan mode to use when ID is not available.\nNull when not specifying by name.",
+						"example": null
+					}
+				},
+				"required": [
+					"id",
+					"enabled",
+					"name",
+					"settings",
+					"scanModeId",
+					"scanModeName"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthConnectorCommandTypedDTO_rest-api.SouthRestAPISettings.SouthRestAPIItemSettings_": {
+				"properties": {
+					"name": {
+						"type": "string",
+						"description": "The name of the South connector.",
+						"example": "Production Data Files"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"rest-api"
+						],
+						"nullable": false,
+						"description": "The type of the South connector.",
+						"example": "folder-scanner"
+					},
+					"description": {
+						"type": "string",
+						"description": "Description of the South connector's purpose.",
+						"example": "Scans production data CSV files"
+					},
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether the South connector should be enabled.",
+						"example": true
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthRestAPISettings",
+						"description": "Configuration settings specific to this South connector type."
+					},
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/SouthConnectorItemCommandTypedDTO_SouthRestAPIItemSettings_"
+						},
+						"type": "array",
+						"description": "List of items (data points) to configure for this connector."
+					}
+				},
+				"required": [
+					"name",
+					"type",
+					"description",
+					"enabled",
+					"settings",
+					"items"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"SouthConnectorItemCommandTypedDTO_SouthSFTPItemSettings_": {
 				"properties": {
 					"id": {
@@ -7724,6 +8354,9 @@
 						"$ref": "#/components/schemas/SouthConnectorCommandTypedDTO_postgresql.SouthPostgreSQLSettings.SouthPostgreSQLItemSettings_"
 					},
 					{
+						"$ref": "#/components/schemas/SouthConnectorCommandTypedDTO_rest-api.SouthRestAPISettings.SouthRestAPIItemSettings_"
+					},
+					{
 						"$ref": "#/components/schemas/SouthConnectorCommandTypedDTO_sftp.SouthSFTPSettings.SouthSFTPItemSettings_"
 					},
 					{
@@ -7731,146 +8364,6 @@
 					}
 				],
 				"description": "Command Data Transfer Object for creating or updating a South connector.\nUsed as the request body for South connector creation/update endpoints."
-			},
-			"SouthRestAPISettingsThrottling": {
-				"properties": {
-					"maxReadInterval": {
-						"type": "number",
-						"format": "double"
-					},
-					"readDelay": {
-						"type": "number",
-						"format": "double"
-					},
-					"overlap": {
-						"type": "number",
-						"format": "double"
-					}
-				},
-				"required": [
-					"maxReadInterval",
-					"readDelay",
-					"overlap"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"SouthRestAPISettingsAuthentication": {
-				"type": "string",
-				"enum": [
-					"none",
-					"basic",
-					"bearer",
-					"api-key"
-				]
-			},
-			"SouthRestAPISettingsAddTo": {
-				"type": "string",
-				"enum": [
-					"header",
-					"query-params"
-				]
-			},
-			"SouthRestAPISettingsTestMethod": {
-				"type": "string",
-				"enum": [
-					"GET",
-					"POST",
-					"PUT"
-				]
-			},
-			"SouthRestAPISettingsTest": {
-				"properties": {
-					"method": {
-						"$ref": "#/components/schemas/SouthRestAPISettingsTestMethod"
-					},
-					"endpoint": {
-						"type": "string"
-					},
-					"body": {
-						"type": "string",
-						"nullable": true
-					},
-					"successCode": {
-						"type": "number",
-						"format": "double"
-					}
-				},
-				"required": [
-					"method",
-					"endpoint",
-					"successCode"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"SouthRestAPISettings": {
-				"properties": {
-					"throttling": {
-						"$ref": "#/components/schemas/SouthRestAPISettingsThrottling"
-					},
-					"host": {
-						"type": "string"
-					},
-					"acceptUnauthorized": {
-						"type": "boolean"
-					},
-					"authentication": {
-						"$ref": "#/components/schemas/SouthRestAPISettingsAuthentication"
-					},
-					"username": {
-						"type": "string"
-					},
-					"password": {
-						"type": "string",
-						"nullable": true
-					},
-					"token": {
-						"type": "string",
-						"nullable": true
-					},
-					"apiKey": {
-						"type": "string"
-					},
-					"apiValue": {
-						"type": "string",
-						"nullable": true
-					},
-					"addTo": {
-						"$ref": "#/components/schemas/SouthRestAPISettingsAddTo"
-					},
-					"test": {
-						"$ref": "#/components/schemas/SouthRestAPISettingsTest"
-					},
-					"timeout": {
-						"type": "number",
-						"format": "double"
-					},
-					"useProxy": {
-						"type": "boolean"
-					},
-					"proxyUrl": {
-						"type": "string"
-					},
-					"proxyUsername": {
-						"type": "string"
-					},
-					"proxyPassword": {
-						"type": "string",
-						"nullable": true
-					}
-				},
-				"required": [
-					"throttling",
-					"host",
-					"acceptUnauthorized",
-					"authentication",
-					"test",
-					"timeout",
-					"useProxy"
-				],
-				"type": "object",
-				"additionalProperties": false
 			},
 			"SouthSettings": {
 				"anyOf": [
@@ -8114,287 +8607,6 @@
 				],
 				"description": "Type representing OIBus content."
 			},
-			"SouthRestAPIItemSettingsMethod": {
-				"type": "string",
-				"enum": [
-					"GET",
-					"POST",
-					"PUT",
-					"PATCH",
-					"DELETE"
-				]
-			},
-			"SouthRestAPIItemSettingsQueryParamsDateTimeType": {
-				"type": "string",
-				"enum": [
-					"string",
-					"iso-string",
-					"unix-epoch",
-					"unix-epoch-ms"
-				]
-			},
-			"SouthRestAPIItemSettingsQueryParams": {
-				"properties": {
-					"key": {
-						"type": "string"
-					},
-					"value": {
-						"type": "string"
-					},
-					"dateTimeType": {
-						"allOf": [
-							{
-								"$ref": "#/components/schemas/SouthRestAPIItemSettingsQueryParamsDateTimeType"
-							}
-						],
-						"nullable": true
-					},
-					"dateTimeTimezone": {
-						"allOf": [
-							{
-								"$ref": "#/components/schemas/Timezone"
-							}
-						],
-						"nullable": true
-					},
-					"dateTimeFormat": {
-						"type": "string",
-						"nullable": true
-					}
-				},
-				"required": [
-					"key",
-					"value"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"SouthRestAPIItemSettingsBodyDateTimeType": {
-				"type": "string",
-				"enum": [
-					"string",
-					"iso-string",
-					"unix-epoch",
-					"unix-epoch-ms"
-				]
-			},
-			"SouthRestAPIItemSettingsHeadersDateTimeType": {
-				"type": "string",
-				"enum": [
-					"string",
-					"iso-string",
-					"unix-epoch",
-					"unix-epoch-ms"
-				]
-			},
-			"SouthRestAPIItemSettingsHeaders": {
-				"properties": {
-					"key": {
-						"type": "string"
-					},
-					"value": {
-						"type": "string"
-					},
-					"dateTimeType": {
-						"allOf": [
-							{
-								"$ref": "#/components/schemas/SouthRestAPIItemSettingsHeadersDateTimeType"
-							}
-						],
-						"nullable": true
-					},
-					"dateTimeTimezone": {
-						"allOf": [
-							{
-								"$ref": "#/components/schemas/Timezone"
-							}
-						],
-						"nullable": true
-					},
-					"dateTimeFormat": {
-						"type": "string",
-						"nullable": true
-					}
-				},
-				"required": [
-					"key",
-					"value"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"SouthRestAPIItemSettingsReturnType": {
-				"type": "string",
-				"enum": [
-					"file",
-					"body"
-				]
-			},
-			"SouthRestAPIItemSettingsDateTimeFieldsType": {
-				"type": "string",
-				"enum": [
-					"string",
-					"iso-string",
-					"unix-epoch",
-					"unix-epoch-ms"
-				]
-			},
-			"SouthRestAPIItemSettingsDateTimeFields": {
-				"properties": {
-					"jsonPath": {
-						"type": "string"
-					},
-					"fieldName": {
-						"type": "string",
-						"nullable": true
-					},
-					"useAsReference": {
-						"type": "boolean"
-					},
-					"type": {
-						"$ref": "#/components/schemas/SouthRestAPIItemSettingsDateTimeFieldsType"
-					},
-					"timezone": {
-						"$ref": "#/components/schemas/Timezone"
-					},
-					"format": {
-						"type": "string"
-					},
-					"locale": {
-						"type": "string"
-					}
-				},
-				"required": [
-					"jsonPath",
-					"fieldName",
-					"useAsReference",
-					"type"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"SouthRestAPIItemSettingsSerializationType": {
-				"type": "string",
-				"enum": [
-					"csv"
-				],
-				"nullable": false
-			},
-			"SouthRestAPIItemSettingsSerializationDelimiter": {
-				"type": "string",
-				"enum": [
-					"DOT",
-					"SEMI_COLON",
-					"COLON",
-					"COMMA",
-					"NON_BREAKING_SPACE",
-					"SLASH",
-					"TAB",
-					"PIPE"
-				]
-			},
-			"SouthRestAPIItemSettingsSerialization": {
-				"properties": {
-					"type": {
-						"$ref": "#/components/schemas/SouthRestAPIItemSettingsSerializationType"
-					},
-					"filename": {
-						"type": "string"
-					},
-					"delimiter": {
-						"$ref": "#/components/schemas/SouthRestAPIItemSettingsSerializationDelimiter"
-					},
-					"compression": {
-						"type": "boolean"
-					},
-					"outputTimestampFormat": {
-						"type": "string"
-					},
-					"outputTimezone": {
-						"$ref": "#/components/schemas/Timezone"
-					}
-				},
-				"required": [
-					"type",
-					"filename",
-					"delimiter",
-					"compression",
-					"outputTimestampFormat",
-					"outputTimezone"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"SouthRestAPIItemSettings": {
-				"properties": {
-					"method": {
-						"$ref": "#/components/schemas/SouthRestAPIItemSettingsMethod"
-					},
-					"endpoint": {
-						"type": "string"
-					},
-					"queryParams": {
-						"items": {
-							"$ref": "#/components/schemas/SouthRestAPIItemSettingsQueryParams"
-						},
-						"type": "array",
-						"nullable": true
-					},
-					"body": {
-						"type": "string",
-						"nullable": true
-					},
-					"bodyDateTimeType": {
-						"allOf": [
-							{
-								"$ref": "#/components/schemas/SouthRestAPIItemSettingsBodyDateTimeType"
-							}
-						],
-						"nullable": true
-					},
-					"bodyDateTimeTimezone": {
-						"allOf": [
-							{
-								"$ref": "#/components/schemas/Timezone"
-							}
-						],
-						"nullable": true
-					},
-					"bodyDateTimeFormat": {
-						"type": "string",
-						"nullable": true
-					},
-					"headers": {
-						"items": {
-							"$ref": "#/components/schemas/SouthRestAPIItemSettingsHeaders"
-						},
-						"type": "array",
-						"nullable": true
-					},
-					"returnType": {
-						"$ref": "#/components/schemas/SouthRestAPIItemSettingsReturnType"
-					},
-					"dateTimeFields": {
-						"items": {
-							"$ref": "#/components/schemas/SouthRestAPIItemSettingsDateTimeFields"
-						},
-						"type": "array",
-						"nullable": true
-					},
-					"serialization": {
-						"$ref": "#/components/schemas/SouthRestAPIItemSettingsSerialization"
-					}
-				},
-				"required": [
-					"method",
-					"endpoint",
-					"queryParams",
-					"headers",
-					"returnType"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
 			"SouthItemSettings": {
 				"anyOf": [
 					{
@@ -8549,6 +8761,9 @@
 						"$ref": "#/components/schemas/SouthConnectorItemTypedDTO_SouthPostgreSQLItemSettings_"
 					},
 					{
+						"$ref": "#/components/schemas/SouthConnectorItemTypedDTO_SouthRestAPIItemSettings_"
+					},
+					{
 						"$ref": "#/components/schemas/SouthConnectorItemTypedDTO_SouthSFTPItemSettings_"
 					},
 					{
@@ -8648,6 +8863,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/SouthConnectorItemCommandTypedDTO_SouthPostgreSQLItemSettings_"
+					},
+					{
+						"$ref": "#/components/schemas/SouthConnectorItemCommandTypedDTO_SouthRestAPIItemSettings_"
 					},
 					{
 						"$ref": "#/components/schemas/SouthConnectorItemCommandTypedDTO_SouthSFTPItemSettings_"
@@ -15084,6 +15302,58 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"HistoryQueryItemCommandTypedDTO_SouthRestAPIItemSettings_": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"nullable": true
+					},
+					"name": {
+						"type": "string"
+					},
+					"enabled": {
+						"type": "boolean"
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthRestAPIItemSettings"
+					}
+				},
+				"required": [
+					"id",
+					"name",
+					"enabled",
+					"settings"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"HistoryQuerySouthCommandTypedDTO_rest-api.SouthRestAPISettings.SouthRestAPIItemSettings_": {
+				"properties": {
+					"southType": {
+						"type": "string",
+						"enum": [
+							"rest-api"
+						],
+						"nullable": false
+					},
+					"southSettings": {
+						"$ref": "#/components/schemas/SouthRestAPISettings"
+					},
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/HistoryQueryItemCommandTypedDTO_SouthRestAPIItemSettings_"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"southType",
+					"southSettings",
+					"items"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"HistoryQueryItemCommandTypedDTO_SouthSFTPItemSettings_": {
 				"properties": {
 					"id": {
@@ -15439,6 +15709,9 @@
 							},
 							{
 								"$ref": "#/components/schemas/HistoryQuerySouthCommandTypedDTO_postgresql.SouthPostgreSQLSettings.SouthPostgreSQLItemSettings_"
+							},
+							{
+								"$ref": "#/components/schemas/HistoryQuerySouthCommandTypedDTO_rest-api.SouthRestAPISettings.SouthRestAPIItemSettings_"
 							},
 							{
 								"$ref": "#/components/schemas/HistoryQuerySouthCommandTypedDTO_sftp.SouthSFTPSettings.SouthSFTPItemSettings_"
@@ -15950,6 +16223,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/HistoryQueryItemCommandTypedDTO_SouthPostgreSQLItemSettings_"
+					},
+					{
+						"$ref": "#/components/schemas/HistoryQueryItemCommandTypedDTO_SouthRestAPIItemSettings_"
 					},
 					{
 						"$ref": "#/components/schemas/HistoryQueryItemCommandTypedDTO_SouthSFTPItemSettings_"
@@ -20132,6 +20408,69 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"HistoryQueryItemTypedDTO_SouthRestAPIItemSettings_": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the entity.",
+						"example": "entity123"
+					},
+					"creationDate": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was created.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"lastEditInstant": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was last edited.",
+						"example": "2023-10-31T13:45:00.123Z"
+					},
+					"name": {
+						"type": "string"
+					},
+					"enabled": {
+						"type": "boolean"
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthRestAPIItemSettings"
+					}
+				},
+				"required": [
+					"id",
+					"name",
+					"enabled",
+					"settings"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"HistoryQuerySouthTypedDTO_rest-api.SouthRestAPISettings.SouthRestAPIItemSettings_": {
+				"properties": {
+					"southType": {
+						"type": "string",
+						"enum": [
+							"rest-api"
+						],
+						"nullable": false
+					},
+					"southSettings": {
+						"$ref": "#/components/schemas/SouthRestAPISettings"
+					},
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/HistoryQueryItemTypedDTO_SouthRestAPIItemSettings_"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"southType",
+					"southSettings",
+					"items"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"HistoryQueryItemTypedDTO_SouthSFTPItemSettings_": {
 				"properties": {
 					"id": {
@@ -20514,6 +20853,9 @@
 								"$ref": "#/components/schemas/HistoryQuerySouthTypedDTO_postgresql.SouthPostgreSQLSettings.SouthPostgreSQLItemSettings_"
 							},
 							{
+								"$ref": "#/components/schemas/HistoryQuerySouthTypedDTO_rest-api.SouthRestAPISettings.SouthRestAPIItemSettings_"
+							},
+							{
 								"$ref": "#/components/schemas/HistoryQuerySouthTypedDTO_sftp.SouthSFTPSettings.SouthSFTPItemSettings_"
 							},
 							{
@@ -20648,6 +20990,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/HistoryQueryItemTypedDTO_SouthPostgreSQLItemSettings_"
+					},
+					{
+						"$ref": "#/components/schemas/HistoryQueryItemTypedDTO_SouthRestAPIItemSettings_"
 					},
 					{
 						"$ref": "#/components/schemas/HistoryQueryItemTypedDTO_SouthSFTPItemSettings_"

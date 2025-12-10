@@ -33,7 +33,7 @@ describe('OIAnalytics Client', () => {
         timeout: 10_000
       }
     );
-    await expect(service.updateCommandStatus(testData.oIAnalytics.registration.completed, 'payload')).rejects.toThrow('400 - "error"');
+    await expect(service.updateCommandStatus(testData.oIAnalytics.registration.completed, 'payload')).rejects.toThrow('400 - error');
   });
 
   it('should not update command status without registration token', async () => {
@@ -63,7 +63,7 @@ describe('OIAnalytics Client', () => {
     );
     await expect(
       service.retrieveCancelledCommands(testData.oIAnalytics.registration.completed, testData.oIAnalytics.commands.oIBusList)
-    ).rejects.toThrow('400 - "error"');
+    ).rejects.toThrow('400 - error');
   });
 
   it('should not retrieve cancelled commands without registration token', async () => {
@@ -90,7 +90,7 @@ describe('OIAnalytics Client', () => {
         timeout: 10_000
       }
     );
-    await expect(service.retrievePendingCommands(testData.oIAnalytics.registration.completed)).rejects.toThrow('400 - "error"');
+    await expect(service.retrievePendingCommands(testData.oIAnalytics.registration.completed)).rejects.toThrow('400 - error');
   });
 
   it('should not retrieve pending commands without registration token', async () => {
@@ -134,7 +134,7 @@ describe('OIAnalytics Client', () => {
       }
     );
     await expect(service.register(testData.oIAnalytics.registration.completed, testData.engine.oIBusInfo, 'public key')).rejects.toThrow(
-      '400 - "error"'
+      '400 - error'
     );
   });
 
@@ -158,7 +158,7 @@ describe('OIAnalytics Client', () => {
         timeout: 10_000
       }
     );
-    await expect(service.checkRegistration(testData.oIAnalytics.registration.completed)).rejects.toThrow('400 - "error"');
+    await expect(service.checkRegistration(testData.oIAnalytics.registration.completed)).rejects.toThrow('400 - error');
   });
 
   it('should not check registration without check url', async () => {
@@ -185,7 +185,7 @@ describe('OIAnalytics Client', () => {
         timeout: 10_000
       }
     );
-    await expect(service.sendConfiguration(testData.oIAnalytics.registration.completed, 'payload')).rejects.toThrow('400 - "error"');
+    await expect(service.sendConfiguration(testData.oIAnalytics.registration.completed, 'payload')).rejects.toThrow('400 - error');
   });
 
   it('should not send configuration without registration token', async () => {
@@ -212,7 +212,7 @@ describe('OIAnalytics Client', () => {
         timeout: 10_000
       }
     );
-    await expect(service.sendHistoryQuery(testData.oIAnalytics.registration.completed, 'payload')).rejects.toThrow('400 - "error"');
+    await expect(service.sendHistoryQuery(testData.oIAnalytics.registration.completed, 'payload')).rejects.toThrow('400 - error');
   });
 
   it('should not send save history query without registration token', async () => {
@@ -239,7 +239,7 @@ describe('OIAnalytics Client', () => {
         timeout: 10_000
       }
     );
-    await expect(service.deleteHistoryQuery(testData.oIAnalytics.registration.completed, 'historyId')).rejects.toThrow('400 - "error"');
+    await expect(service.deleteHistoryQuery(testData.oIAnalytics.registration.completed, 'historyId')).rejects.toThrow('400 - error');
   });
 
   it('should not send delete history query without registration token', async () => {
@@ -296,7 +296,7 @@ describe('OIAnalytics Client', () => {
         'assetId',
         'filename.zip'
       )
-    ).rejects.toThrow('400 - "error"');
+    ).rejects.toThrow('400 - error');
   });
 
   it('should download file without proxy user', async () => {

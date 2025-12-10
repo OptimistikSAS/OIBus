@@ -13,7 +13,7 @@ import SouthCacheRepository from '../../repository/cache/south-cache.repository'
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import CertificateRepository from '../../repository/config/certificate.repository';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
-import { HTTPRequest, ReqAuthOptions, ReqOptions, ReqProxyOptions, ReqResponse } from '../../service/http-request.utils';
+import { HTTPRequest, ReqAuthOptions, ReqOptions, ReqProxyOptions } from '../../service/http-request.utils';
 import { testOIAnalyticsConnection } from '../../service/oia/oianalytics.utils';
 
 interface OIATimeValues {

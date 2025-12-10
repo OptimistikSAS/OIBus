@@ -180,7 +180,7 @@ describe('SouthOIAnalytics with Basic auth', () => {
       .mockResolvedValueOnce(createMockResponse(401, 'Unauthorized'));
 
     await expect(south.testConnection()).resolves.not.toThrow();
-    await expect(south.testConnection()).rejects.toThrow(`HTTP request failed with status code 401 and message: "Unauthorized"`);
+    await expect(south.testConnection()).rejects.toThrow(`HTTP request failed with status code 401 and message: Unauthorized`);
   });
 
   it('should properly run historyQuery', async () => {
@@ -219,7 +219,7 @@ describe('SouthOIAnalytics with Basic auth', () => {
     (HTTPRequest as jest.Mock).mockResolvedValueOnce(createMockResponse(400, 'statusText'));
 
     await expect(south.queryData(configuration.items[0], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z')).rejects.toThrow(
-      'HTTP request failed with status code 400 and message: "statusText"'
+      'HTTP request failed with status code 400 and message: statusText'
     );
 
     const query = {

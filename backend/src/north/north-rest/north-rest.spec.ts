@@ -268,7 +268,7 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
     (HTTPRequest as jest.Mock).mockResolvedValueOnce(createMockResponse(500, 'Internal Server Error'));
 
     await expect(north.testConnection()).rejects.toThrow(
-      new OIBusError('HTTP request failed with status code 500 and message: "Internal Server Error"', false)
+      new OIBusError('HTTP request failed with status code 500 and message: Internal Server Error', false)
     );
 
     expect(HTTPRequest).toHaveBeenCalledWith(new URL(settings.testPath, settings.host), expectedReqOptions);
@@ -446,7 +446,7 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
         source: 'south',
         options: {}
       })
-    ).rejects.toThrow(new OIBusError('HTTP request failed with status code 500 and message: "Internal Server Error"', false));
+    ).rejects.toThrow(new OIBusError('HTTP request failed with status code 500 and message: Internal Server Error', false));
 
     expect(HTTPRequest).toHaveBeenCalledWith(new URL(settings.endpoint, settings.host), expectedReqOptions);
   });
@@ -477,7 +477,7 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
         source: 'south',
         options: {}
       })
-    ).rejects.toThrow(new OIBusError('HTTP request failed with status code 401 and message: "Internal Server Error"', true));
+    ).rejects.toThrow(new OIBusError('HTTP request failed with status code 401 and message: Internal Server Error', true));
 
     expect(HTTPRequest).toHaveBeenCalledWith(new URL(settings.endpoint, settings.host), expectedReqOptions);
   });
