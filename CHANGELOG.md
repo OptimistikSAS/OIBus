@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.7.5](https://github.com/OptimistikSAS/OIBus/compare/v3.7.4...v3.7.5) (2025-12-10)
+
+
+### Bug Fixes
+
+* improved typed dtos for south north and history ([d9264c4](https://github.com/OptimistikSAS/OIBus/commit/d9264c4d92dac278fd8de007a33eb9d0c8f2e3ef))
+* **items:** properly (un)select items on creation and history queries ([c3a55d5](https://github.com/OptimistikSAS/OIBus/commit/c3a55d555830201a1c5f85b11fdc6bba8a20574b))
+
 ## [3.7.4](https://github.com/OptimistikSAS/OIBus/compare/v3.7.3...v3.7.4) (2025-12-01)
 
 
