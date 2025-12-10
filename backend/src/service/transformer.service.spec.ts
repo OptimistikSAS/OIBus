@@ -22,6 +22,8 @@ import OIBusSetpointToOPCUATransformer from './transformers/setpoint/oibus-setpo
 import OIBusTimeValuesToOIAnalyticsTransformer from './transformers/time-values/oibus-time-values-to-oianalytics-transformer';
 import OIBusCustomTransformer from './transformers/oibus-custom-transformer';
 import { NotFoundError, OIBusValidationError } from '../model/types';
+import JSONToTimeValuesTransformer from './transformers/time-values/json-to-time-values-transformer';
+import JSONToCSVTransformer from './transformers/time-values/json-to-csv-transformer';
 
 jest.mock('papaparse');
 jest.mock('./utils');
@@ -268,6 +270,16 @@ describe('Transformer Service', () => {
       OIBusSetpointToOPCUATransformer
     );
 
+    transformer.functionName = 'json-to-time-values';
+    expect(createTransformer({ transformer, options: {}, inputType: 'any' }, testData.north.list[0], logger)).toBeInstanceOf(
+      JSONToTimeValuesTransformer
+    );
+
+    transformer.functionName = 'json-to-csv';
+    expect(createTransformer({ transformer, options: {}, inputType: 'any' }, testData.north.list[0], logger)).toBeInstanceOf(
+      JSONToCSVTransformer
+    );
+
     transformer.functionName = 'bad-id';
     expect(() => createTransformer({ transformer, options: {}, inputType: 'any' }, testData.north.list[0], logger)).toThrow(
       'Transformer transformerId1 (standard) not implemented'
@@ -468,6 +480,8 @@ describe('Transformer Service', () => {
   it('should get standard manifest', async () => {
     expect(getStandardManifest('iso')).toEqual(IsoTransformer.manifestSettings);
     expect(getStandardManifest('ignore')).toEqual(IgnoreTransformer.manifestSettings);
+    expect(getStandardManifest('json-to-time-values')).toEqual(JSONToTimeValuesTransformer.manifestSettings);
+    expect(getStandardManifest('json-to-csv')).toEqual(JSONToCSVTransformer.manifestSettings);
     expect(getStandardManifest('time-values-to-csv')).toEqual(OIBusTimeValuesToCsvTransformer.manifestSettings);
     expect(getStandardManifest('time-values-to-json')).toEqual(OIBusTimeValuesToJSONTransformer.manifestSettings);
     expect(getStandardManifest('time-values-to-modbus')).toEqual(OIBusTimeValuesToModbusTransformer.manifestSettings);

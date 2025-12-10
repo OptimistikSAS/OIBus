@@ -186,7 +186,7 @@ describe('South PI', () => {
       .mockResolvedValueOnce(createMockResponse(500, 'another error'));
 
     await expect(south.testConnection()).rejects.toThrow(
-      new Error(`Error occurred when sending connect command to remote agent with status 400. "bad request"`)
+      new Error(`Error occurred when sending connect command to remote agent with status 400. bad request`)
     );
 
     await expect(south.testConnection()).rejects.toThrow(
@@ -269,7 +269,7 @@ describe('South PI', () => {
     (HTTPRequest as jest.Mock).mockResolvedValueOnce(createMockResponse(400, 'bad request')).mockResolvedValueOnce(createMockResponse(500));
 
     await expect(south.historyQuery(configuration.items, startTime, endTime)).rejects.toThrow(
-      `Error occurred when querying remote agent with status 400: "bad request"`
+      `Error occurred when querying remote agent with status 400: bad request`
     );
     await expect(south.historyQuery(configuration.items, startTime, endTime)).rejects.toThrow(
       `Error occurred when querying remote agent with status 500`
