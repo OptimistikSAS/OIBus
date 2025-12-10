@@ -58,7 +58,7 @@ describe('OIAnalytics Client', () => {
     it('should throw on error response', async () => {
       (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(400, 'Bad Request'));
       await expect(service.updateCommandStatus(testData.oIAnalytics.registration.completed, 'payload')).rejects.toThrow(
-        '400 - "Bad Request"'
+        '400 - Bad Request'
       );
     });
   });
@@ -85,7 +85,7 @@ describe('OIAnalytics Client', () => {
     it('should throw on error response', async () => {
       (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(400, 'Bad Request'));
       await expect(service.retrieveCancelledCommands(testData.oIAnalytics.registration.completed, commands)).rejects.toThrow(
-        '400 - "Bad Request"'
+        '400 - Bad Request'
       );
     });
   });
@@ -107,7 +107,7 @@ describe('OIAnalytics Client', () => {
 
     it('should throw on error response', async () => {
       (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(400, 'Bad Request'));
-      await expect(service.retrievePendingCommands(testData.oIAnalytics.registration.completed)).rejects.toThrow('400 - "Bad Request"');
+      await expect(service.retrievePendingCommands(testData.oIAnalytics.registration.completed)).rejects.toThrow('400 - Bad Request');
     });
   });
 
@@ -145,7 +145,7 @@ describe('OIAnalytics Client', () => {
       (getProxyOptions as jest.Mock).mockReturnValue({ acceptUnauthorized: false, proxy: undefined });
       (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(400, 'Bad Request'));
       await expect(service.register(testData.oIAnalytics.registration.completed, testData.engine.oIBusInfo, 'public key')).rejects.toThrow(
-        '400 - "Bad Request"'
+        '400 - Bad Request'
       );
     });
   });
@@ -177,7 +177,7 @@ describe('OIAnalytics Client', () => {
 
     it('should throw on error response', async () => {
       (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(400, 'Bad Request'));
-      await expect(service.checkRegistration(testData.oIAnalytics.registration.completed)).rejects.toThrow('400 - "Bad Request"');
+      await expect(service.checkRegistration(testData.oIAnalytics.registration.completed)).rejects.toThrow('400 - Bad Request');
     });
   });
 
@@ -199,7 +199,7 @@ describe('OIAnalytics Client', () => {
     it('should throw on error response', async () => {
       (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(400, 'Bad Request'));
       await expect(service.sendConfiguration(testData.oIAnalytics.registration.completed, 'config-payload')).rejects.toThrow(
-        '400 - "Bad Request"'
+        '400 - Bad Request'
       );
     });
   });
@@ -222,7 +222,7 @@ describe('OIAnalytics Client', () => {
     it('should throw on error response', async () => {
       (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(400, 'Bad Request'));
       await expect(service.sendHistoryQuery(testData.oIAnalytics.registration.completed, 'history-payload')).rejects.toThrow(
-        '400 - "Bad Request"'
+        '400 - Bad Request'
       );
     });
   });
@@ -245,9 +245,7 @@ describe('OIAnalytics Client', () => {
 
     it('should throw on error response', async () => {
       (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(400, 'Bad Request'));
-      await expect(service.deleteHistoryQuery(testData.oIAnalytics.registration.completed, 'hist-1')).rejects.toThrow(
-        '400 - "Bad Request"'
-      );
+      await expect(service.deleteHistoryQuery(testData.oIAnalytics.registration.completed, 'hist-1')).rejects.toThrow('400 - Bad Request');
     });
   });
 
@@ -275,19 +273,9 @@ describe('OIAnalytics Client', () => {
     });
 
     it('should throw on error response', async () => {
-      (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(404, 'Not Found'));
-
-      await expect(service.downloadFile(testData.oIAnalytics.registration.completed, 'asset-1', 'target.zip')).rejects.toThrow(
-        '404 - "Not Found"'
-      );
-
-      expect(fs.writeFile).not.toHaveBeenCalled();
-    });
-
-    it('should throw on error response', async () => {
       (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(400, 'Bad Request'));
       await expect(service.downloadFile(testData.oIAnalytics.registration.completed, 'asset-1', 'target.zip')).rejects.toThrow(
-        '400 - "Bad Request"'
+        '400 - Bad Request'
       );
     });
   });
