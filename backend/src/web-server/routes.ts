@@ -1920,6 +1920,211 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestAPISettingsThrottling": {
+        "dataType": "refObject",
+        "properties": {
+            "maxReadInterval": {"dataType":"double","required":true},
+            "readDelay": {"dataType":"double","required":true},
+            "overlap": {"dataType":"double","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestAPISettingsAuthentication": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["none"]},{"dataType":"enum","enums":["basic"]},{"dataType":"enum","enums":["bearer"]},{"dataType":"enum","enums":["api-key"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestAPISettingsAddTo": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["header"]},{"dataType":"enum","enums":["query-params"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestAPISettingsTestMethod": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["GET"]},{"dataType":"enum","enums":["POST"]},{"dataType":"enum","enums":["PUT"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestAPISettingsTest": {
+        "dataType": "refObject",
+        "properties": {
+            "method": {"ref":"SouthRestAPISettingsTestMethod","required":true},
+            "endpoint": {"dataType":"string","required":true},
+            "body": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+            "successCode": {"dataType":"double","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestAPISettings": {
+        "dataType": "refObject",
+        "properties": {
+            "throttling": {"ref":"SouthRestAPISettingsThrottling","required":true},
+            "host": {"dataType":"string","required":true},
+            "acceptUnauthorized": {"dataType":"boolean","required":true},
+            "timeout": {"dataType":"double","required":true},
+            "authentication": {"ref":"SouthRestAPISettingsAuthentication","required":true},
+            "username": {"dataType":"string"},
+            "password": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+            "token": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+            "addTo": {"ref":"SouthRestAPISettingsAddTo"},
+            "apiKey": {"dataType":"string"},
+            "apiValue": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+            "useProxy": {"dataType":"boolean","required":true},
+            "proxyUrl": {"dataType":"string"},
+            "proxyUsername": {"dataType":"string"},
+            "proxyPassword": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+            "test": {"ref":"SouthRestAPISettingsTest","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestAPIItemSettingsMethod": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["GET"]},{"dataType":"enum","enums":["POST"]},{"dataType":"enum","enums":["PUT"]},{"dataType":"enum","enums":["PATCH"]},{"dataType":"enum","enums":["DELETE"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestAPIItemSettingsReturnType": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["file"]},{"dataType":"enum","enums":["body"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestAPIItemSettingsQueryParamsDateTimeInputType": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["string"]},{"dataType":"enum","enums":["iso-string"]},{"dataType":"enum","enums":["unix-epoch"]},{"dataType":"enum","enums":["unix-epoch-ms"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestAPIItemSettingsQueryParamsDateTimeInput": {
+        "dataType": "refObject",
+        "properties": {
+            "type": {"dataType":"union","subSchemas":[{"ref":"SouthRestAPIItemSettingsQueryParamsDateTimeInputType"},{"dataType":"enum","enums":[null]}],"required":true},
+            "timezone": {"dataType":"union","subSchemas":[{"ref":"Timezone"},{"dataType":"enum","enums":[null]}]},
+            "format": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestAPIItemSettingsQueryParams": {
+        "dataType": "refObject",
+        "properties": {
+            "key": {"dataType":"string","required":true},
+            "value": {"dataType":"string","required":true},
+            "dateTimeInput": {"dataType":"union","subSchemas":[{"ref":"SouthRestAPIItemSettingsQueryParamsDateTimeInput"},{"dataType":"enum","enums":[null]}]},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestAPIItemSettingsHeadersDateTimeType": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["string"]},{"dataType":"enum","enums":["iso-string"]},{"dataType":"enum","enums":["unix-epoch"]},{"dataType":"enum","enums":["unix-epoch-ms"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestAPIItemSettingsHeaders": {
+        "dataType": "refObject",
+        "properties": {
+            "key": {"dataType":"string","required":true},
+            "value": {"dataType":"string","required":true},
+            "dateTimeType": {"ref":"SouthRestAPIItemSettingsHeadersDateTimeType"},
+            "dateTimeTimezone": {"dataType":"union","subSchemas":[{"ref":"Timezone"},{"dataType":"enum","enums":[null]}]},
+            "dateTimeFormat": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestAPIItemSettingsBodyDateTimeInputType": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["string"]},{"dataType":"enum","enums":["iso-string"]},{"dataType":"enum","enums":["unix-epoch"]},{"dataType":"enum","enums":["unix-epoch-ms"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestAPIItemSettingsBodyDateTimeInput": {
+        "dataType": "refObject",
+        "properties": {
+            "type": {"dataType":"union","subSchemas":[{"ref":"SouthRestAPIItemSettingsBodyDateTimeInputType"},{"dataType":"enum","enums":[null]}],"required":true},
+            "timezone": {"dataType":"union","subSchemas":[{"ref":"Timezone"},{"dataType":"enum","enums":[null]}]},
+            "format": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestAPIItemSettingsBody": {
+        "dataType": "refObject",
+        "properties": {
+            "content": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "dateTimeInput": {"dataType":"union","subSchemas":[{"ref":"SouthRestAPIItemSettingsBodyDateTimeInput"},{"dataType":"enum","enums":[null]}]},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestAPIItemSettingsTrackingInstantDateTimeInputType": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["string"]},{"dataType":"enum","enums":["iso-string"]},{"dataType":"enum","enums":["unix-epoch"]},{"dataType":"enum","enums":["unix-epoch-ms"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestAPIItemSettingsTrackingInstantDateTimeInput": {
+        "dataType": "refObject",
+        "properties": {
+            "type": {"ref":"SouthRestAPIItemSettingsTrackingInstantDateTimeInputType","required":true},
+            "timezone": {"ref":"Timezone"},
+            "format": {"dataType":"string"},
+            "locale": {"dataType":"string"},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestAPIItemSettingsTrackingInstant": {
+        "dataType": "refObject",
+        "properties": {
+            "trackInstant": {"dataType":"boolean","required":true},
+            "jsonPath": {"dataType":"string"},
+            "dateTimeInput": {"dataType":"union","subSchemas":[{"ref":"SouthRestAPIItemSettingsTrackingInstantDateTimeInput"},{"dataType":"enum","enums":[null]}]},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestAPIItemSettings": {
+        "dataType": "refObject",
+        "properties": {
+            "method": {"ref":"SouthRestAPIItemSettingsMethod","required":true},
+            "endpoint": {"dataType":"string","required":true},
+            "returnType": {"ref":"SouthRestAPIItemSettingsReturnType","required":true},
+            "queryParams": {"dataType":"array","array":{"dataType":"refObject","ref":"SouthRestAPIItemSettingsQueryParams"},"required":true},
+            "headers": {"dataType":"array","array":{"dataType":"refObject","ref":"SouthRestAPIItemSettingsHeaders"},"required":true},
+            "body": {"dataType":"union","subSchemas":[{"ref":"SouthRestAPIItemSettingsBody"},{"dataType":"enum","enums":[null]}]},
+            "trackingInstant": {"dataType":"union","subSchemas":[{"ref":"SouthRestAPIItemSettingsTrackingInstant"},{"dataType":"enum","enums":[null]}]},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthConnectorItemTypedDTO_SouthRestAPIItemSettings_": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"string","required":true},
+            "creationDate": {"ref":"Instant"},
+            "lastEditInstant": {"ref":"Instant"},
+            "name": {"dataType":"string","required":true},
+            "enabled": {"dataType":"boolean","required":true},
+            "settings": {"ref":"SouthRestAPIItemSettings","required":true},
+            "scanMode": {"ref":"ScanModeDTO","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthConnectorTypedDTO_rest-api.SouthRestAPISettings.SouthRestAPIItemSettings_": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"string","required":true},
+            "creationDate": {"ref":"Instant"},
+            "lastEditInstant": {"ref":"Instant"},
+            "name": {"dataType":"string","required":true},
+            "type": {"dataType":"enum","enums":["rest-api"],"required":true},
+            "description": {"dataType":"string","required":true},
+            "enabled": {"dataType":"boolean","required":true},
+            "settings": {"ref":"SouthRestAPISettings","required":true},
+            "items": {"dataType":"array","array":{"dataType":"refObject","ref":"SouthConnectorItemTypedDTO_SouthRestAPIItemSettings_"},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthSFTPSettingsAuthentication": {
         "dataType": "refAlias",
         "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["password"]},{"dataType":"enum","enums":["private-key"]}],"validators":{}},
@@ -2084,7 +2289,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthConnectorDTO": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"ref":"SouthConnectorTypedDTO_ads.SouthADSSettings.SouthADSItemSettings_"},{"ref":"SouthConnectorTypedDTO_folder-scanner.SouthFolderScannerSettings.SouthFolderScannerItemSettings_"},{"ref":"SouthConnectorTypedDTO_ftp.SouthFTPSettings.SouthFTPItemSettings_"},{"ref":"SouthConnectorTypedDTO_modbus.SouthModbusSettings.SouthModbusItemSettings_"},{"ref":"SouthConnectorTypedDTO_mqtt.SouthMQTTSettings.SouthMQTTItemSettings_"},{"ref":"SouthConnectorTypedDTO_mssql.SouthMSSQLSettings.SouthMSSQLItemSettings_"},{"ref":"SouthConnectorTypedDTO_mysql.SouthMySQLSettings.SouthMySQLItemSettings_"},{"ref":"SouthConnectorTypedDTO_odbc.SouthODBCSettings.SouthODBCItemSettings_"},{"ref":"SouthConnectorTypedDTO_oianalytics.SouthOIAnalyticsSettings.SouthOIAnalyticsItemSettings_"},{"ref":"SouthConnectorTypedDTO_oledb.SouthOLEDBSettings.SouthOLEDBItemSettings_"},{"ref":"SouthConnectorTypedDTO_opc.SouthOPCSettings.SouthOPCItemSettings_"},{"ref":"SouthConnectorTypedDTO_opcua.SouthOPCUASettings.SouthOPCUAItemSettings_"},{"ref":"SouthConnectorTypedDTO_oracle.SouthOracleSettings.SouthOracleItemSettings_"},{"ref":"SouthConnectorTypedDTO_osisoft-pi.SouthPISettings.SouthPIItemSettings_"},{"ref":"SouthConnectorTypedDTO_postgresql.SouthPostgreSQLSettings.SouthPostgreSQLItemSettings_"},{"ref":"SouthConnectorTypedDTO_sftp.SouthSFTPSettings.SouthSFTPItemSettings_"},{"ref":"SouthConnectorTypedDTO_sqlite.SouthSQLiteSettings.SouthSQLiteItemSettings_"}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"ref":"SouthConnectorTypedDTO_ads.SouthADSSettings.SouthADSItemSettings_"},{"ref":"SouthConnectorTypedDTO_folder-scanner.SouthFolderScannerSettings.SouthFolderScannerItemSettings_"},{"ref":"SouthConnectorTypedDTO_ftp.SouthFTPSettings.SouthFTPItemSettings_"},{"ref":"SouthConnectorTypedDTO_modbus.SouthModbusSettings.SouthModbusItemSettings_"},{"ref":"SouthConnectorTypedDTO_mqtt.SouthMQTTSettings.SouthMQTTItemSettings_"},{"ref":"SouthConnectorTypedDTO_mssql.SouthMSSQLSettings.SouthMSSQLItemSettings_"},{"ref":"SouthConnectorTypedDTO_mysql.SouthMySQLSettings.SouthMySQLItemSettings_"},{"ref":"SouthConnectorTypedDTO_odbc.SouthODBCSettings.SouthODBCItemSettings_"},{"ref":"SouthConnectorTypedDTO_oianalytics.SouthOIAnalyticsSettings.SouthOIAnalyticsItemSettings_"},{"ref":"SouthConnectorTypedDTO_oledb.SouthOLEDBSettings.SouthOLEDBItemSettings_"},{"ref":"SouthConnectorTypedDTO_opc.SouthOPCSettings.SouthOPCItemSettings_"},{"ref":"SouthConnectorTypedDTO_opcua.SouthOPCUASettings.SouthOPCUAItemSettings_"},{"ref":"SouthConnectorTypedDTO_oracle.SouthOracleSettings.SouthOracleItemSettings_"},{"ref":"SouthConnectorTypedDTO_osisoft-pi.SouthPISettings.SouthPIItemSettings_"},{"ref":"SouthConnectorTypedDTO_postgresql.SouthPostgreSQLSettings.SouthPostgreSQLItemSettings_"},{"ref":"SouthConnectorTypedDTO_rest-api.SouthRestAPISettings.SouthRestAPIItemSettings_"},{"ref":"SouthConnectorTypedDTO_sftp.SouthSFTPSettings.SouthSFTPItemSettings_"},{"ref":"SouthConnectorTypedDTO_sqlite.SouthSQLiteSettings.SouthSQLiteItemSettings_"}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthConnectorItemCommandTypedDTO_SouthADSItemSettings_": {
@@ -2477,6 +2682,32 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthConnectorItemCommandTypedDTO_SouthRestAPIItemSettings_": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "enabled": {"dataType":"boolean","required":true},
+            "name": {"dataType":"string","required":true},
+            "settings": {"ref":"SouthRestAPIItemSettings","required":true},
+            "scanModeId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "scanModeName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthConnectorCommandTypedDTO_rest-api.SouthRestAPISettings.SouthRestAPIItemSettings_": {
+        "dataType": "refObject",
+        "properties": {
+            "name": {"dataType":"string","required":true},
+            "type": {"dataType":"enum","enums":["rest-api"],"required":true},
+            "description": {"dataType":"string","required":true},
+            "enabled": {"dataType":"boolean","required":true},
+            "settings": {"ref":"SouthRestAPISettings","required":true},
+            "items": {"dataType":"array","array":{"dataType":"refObject","ref":"SouthConnectorItemCommandTypedDTO_SouthRestAPIItemSettings_"},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthConnectorItemCommandTypedDTO_SouthSFTPItemSettings_": {
         "dataType": "refObject",
         "properties": {
@@ -2531,66 +2762,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthConnectorCommandDTO": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"ref":"SouthConnectorCommandTypedDTO_ads.SouthADSSettings.SouthADSItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_folder-scanner.SouthFolderScannerSettings.SouthFolderScannerItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_ftp.SouthFTPSettings.SouthFTPItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_modbus.SouthModbusSettings.SouthModbusItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_mqtt.SouthMQTTSettings.SouthMQTTItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_mssql.SouthMSSQLSettings.SouthMSSQLItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_mysql.SouthMySQLSettings.SouthMySQLItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_odbc.SouthODBCSettings.SouthODBCItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_oianalytics.SouthOIAnalyticsSettings.SouthOIAnalyticsItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_oledb.SouthOLEDBSettings.SouthOLEDBItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_opc.SouthOPCSettings.SouthOPCItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_opcua.SouthOPCUASettings.SouthOPCUAItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_oracle.SouthOracleSettings.SouthOracleItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_osisoft-pi.SouthPISettings.SouthPIItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_postgresql.SouthPostgreSQLSettings.SouthPostgreSQLItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_sftp.SouthSFTPSettings.SouthSFTPItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_sqlite.SouthSQLiteSettings.SouthSQLiteItemSettings_"}],"validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthRestAPISettingsThrottling": {
-        "dataType": "refObject",
-        "properties": {
-            "maxReadInterval": {"dataType":"double","required":true},
-            "readDelay": {"dataType":"double","required":true},
-            "overlap": {"dataType":"double","required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthRestAPISettingsAuthentication": {
-        "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["none"]},{"dataType":"enum","enums":["basic"]},{"dataType":"enum","enums":["bearer"]},{"dataType":"enum","enums":["api-key"]}],"validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthRestAPISettingsAddTo": {
-        "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["header"]},{"dataType":"enum","enums":["query-params"]}],"validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthRestAPISettingsTestMethod": {
-        "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["GET"]},{"dataType":"enum","enums":["POST"]},{"dataType":"enum","enums":["PUT"]}],"validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthRestAPISettingsTest": {
-        "dataType": "refObject",
-        "properties": {
-            "method": {"ref":"SouthRestAPISettingsTestMethod","required":true},
-            "endpoint": {"dataType":"string","required":true},
-            "body": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
-            "successCode": {"dataType":"double","required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthRestAPISettings": {
-        "dataType": "refObject",
-        "properties": {
-            "throttling": {"ref":"SouthRestAPISettingsThrottling","required":true},
-            "host": {"dataType":"string","required":true},
-            "acceptUnauthorized": {"dataType":"boolean","required":true},
-            "authentication": {"ref":"SouthRestAPISettingsAuthentication","required":true},
-            "username": {"dataType":"string"},
-            "password": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
-            "token": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
-            "apiKey": {"dataType":"string"},
-            "apiValue": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
-            "addTo": {"ref":"SouthRestAPISettingsAddTo"},
-            "test": {"ref":"SouthRestAPISettingsTest","required":true},
-            "timeout": {"dataType":"double","required":true},
-            "useProxy": {"dataType":"boolean","required":true},
-            "proxyUrl": {"dataType":"string"},
-            "proxyUsername": {"dataType":"string"},
-            "proxyPassword": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
-        },
-        "additionalProperties": false,
+        "type": {"dataType":"union","subSchemas":[{"ref":"SouthConnectorCommandTypedDTO_ads.SouthADSSettings.SouthADSItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_folder-scanner.SouthFolderScannerSettings.SouthFolderScannerItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_ftp.SouthFTPSettings.SouthFTPItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_modbus.SouthModbusSettings.SouthModbusItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_mqtt.SouthMQTTSettings.SouthMQTTItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_mssql.SouthMSSQLSettings.SouthMSSQLItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_mysql.SouthMySQLSettings.SouthMySQLItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_odbc.SouthODBCSettings.SouthODBCItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_oianalytics.SouthOIAnalyticsSettings.SouthOIAnalyticsItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_oledb.SouthOLEDBSettings.SouthOLEDBItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_opc.SouthOPCSettings.SouthOPCItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_opcua.SouthOPCUASettings.SouthOPCUAItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_oracle.SouthOracleSettings.SouthOracleItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_osisoft-pi.SouthPISettings.SouthPIItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_postgresql.SouthPostgreSQLSettings.SouthPostgreSQLItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_rest-api.SouthRestAPISettings.SouthRestAPIItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_sftp.SouthSFTPSettings.SouthSFTPItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_sqlite.SouthSQLiteSettings.SouthSQLiteItemSettings_"}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthSettings": {
@@ -2650,115 +2822,6 @@ const models: TsoaRoute.Models = {
         "type": {"dataType":"union","subSchemas":[{"ref":"OIBusTimeValueContent"},{"ref":"OIBusRawContent"},{"ref":"OIBusSetpointContent"}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthRestAPIItemSettingsMethod": {
-        "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["GET"]},{"dataType":"enum","enums":["POST"]},{"dataType":"enum","enums":["PUT"]},{"dataType":"enum","enums":["PATCH"]},{"dataType":"enum","enums":["DELETE"]}],"validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthRestAPIItemSettingsQueryParamsDateTimeType": {
-        "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["string"]},{"dataType":"enum","enums":["iso-string"]},{"dataType":"enum","enums":["unix-epoch"]},{"dataType":"enum","enums":["unix-epoch-ms"]}],"validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthRestAPIItemSettingsQueryParams": {
-        "dataType": "refObject",
-        "properties": {
-            "key": {"dataType":"string","required":true},
-            "value": {"dataType":"string","required":true},
-            "dateTimeType": {"dataType":"union","subSchemas":[{"ref":"SouthRestAPIItemSettingsQueryParamsDateTimeType"},{"dataType":"enum","enums":[null]}]},
-            "dateTimeTimezone": {"dataType":"union","subSchemas":[{"ref":"Timezone"},{"dataType":"enum","enums":[null]}]},
-            "dateTimeFormat": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthRestAPIItemSettingsBodyDateTimeType": {
-        "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["string"]},{"dataType":"enum","enums":["iso-string"]},{"dataType":"enum","enums":["unix-epoch"]},{"dataType":"enum","enums":["unix-epoch-ms"]}],"validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthRestAPIItemSettingsHeadersDateTimeType": {
-        "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["string"]},{"dataType":"enum","enums":["iso-string"]},{"dataType":"enum","enums":["unix-epoch"]},{"dataType":"enum","enums":["unix-epoch-ms"]}],"validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthRestAPIItemSettingsHeaders": {
-        "dataType": "refObject",
-        "properties": {
-            "key": {"dataType":"string","required":true},
-            "value": {"dataType":"string","required":true},
-            "dateTimeType": {"dataType":"union","subSchemas":[{"ref":"SouthRestAPIItemSettingsHeadersDateTimeType"},{"dataType":"enum","enums":[null]}]},
-            "dateTimeTimezone": {"dataType":"union","subSchemas":[{"ref":"Timezone"},{"dataType":"enum","enums":[null]}]},
-            "dateTimeFormat": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthRestAPIItemSettingsReturnType": {
-        "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["file"]},{"dataType":"enum","enums":["body"]}],"validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthRestAPIItemSettingsDateTimeFieldsType": {
-        "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["string"]},{"dataType":"enum","enums":["iso-string"]},{"dataType":"enum","enums":["unix-epoch"]},{"dataType":"enum","enums":["unix-epoch-ms"]}],"validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthRestAPIItemSettingsDateTimeFields": {
-        "dataType": "refObject",
-        "properties": {
-            "jsonPath": {"dataType":"string","required":true},
-            "fieldName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
-            "useAsReference": {"dataType":"boolean","required":true},
-            "type": {"ref":"SouthRestAPIItemSettingsDateTimeFieldsType","required":true},
-            "timezone": {"ref":"Timezone"},
-            "format": {"dataType":"string"},
-            "locale": {"dataType":"string"},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthRestAPIItemSettingsSerializationType": {
-        "dataType": "refAlias",
-        "type": {"dataType":"enum","enums":["csv"],"validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthRestAPIItemSettingsSerializationDelimiter": {
-        "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["DOT"]},{"dataType":"enum","enums":["SEMI_COLON"]},{"dataType":"enum","enums":["COLON"]},{"dataType":"enum","enums":["COMMA"]},{"dataType":"enum","enums":["NON_BREAKING_SPACE"]},{"dataType":"enum","enums":["SLASH"]},{"dataType":"enum","enums":["TAB"]},{"dataType":"enum","enums":["PIPE"]}],"validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthRestAPIItemSettingsSerialization": {
-        "dataType": "refObject",
-        "properties": {
-            "type": {"ref":"SouthRestAPIItemSettingsSerializationType","required":true},
-            "filename": {"dataType":"string","required":true},
-            "delimiter": {"ref":"SouthRestAPIItemSettingsSerializationDelimiter","required":true},
-            "compression": {"dataType":"boolean","required":true},
-            "outputTimestampFormat": {"dataType":"string","required":true},
-            "outputTimezone": {"ref":"Timezone","required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthRestAPIItemSettings": {
-        "dataType": "refObject",
-        "properties": {
-            "method": {"ref":"SouthRestAPIItemSettingsMethod","required":true},
-            "endpoint": {"dataType":"string","required":true},
-            "queryParams": {"dataType":"union","subSchemas":[{"dataType":"array","array":{"dataType":"refObject","ref":"SouthRestAPIItemSettingsQueryParams"}},{"dataType":"enum","enums":[null]}],"required":true},
-            "body": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
-            "bodyDateTimeType": {"dataType":"union","subSchemas":[{"ref":"SouthRestAPIItemSettingsBodyDateTimeType"},{"dataType":"enum","enums":[null]}]},
-            "bodyDateTimeTimezone": {"dataType":"union","subSchemas":[{"ref":"Timezone"},{"dataType":"enum","enums":[null]}]},
-            "bodyDateTimeFormat": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
-            "headers": {"dataType":"union","subSchemas":[{"dataType":"array","array":{"dataType":"refObject","ref":"SouthRestAPIItemSettingsHeaders"}},{"dataType":"enum","enums":[null]}],"required":true},
-            "returnType": {"ref":"SouthRestAPIItemSettingsReturnType","required":true},
-            "dateTimeFields": {"dataType":"union","subSchemas":[{"dataType":"array","array":{"dataType":"refObject","ref":"SouthRestAPIItemSettingsDateTimeFields"}},{"dataType":"enum","enums":[null]}]},
-            "serialization": {"ref":"SouthRestAPIItemSettingsSerialization"},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthItemSettings": {
         "dataType": "refAlias",
         "type": {"dataType":"union","subSchemas":[{"ref":"SouthADSItemSettings"},{"ref":"SouthFolderScannerItemSettings"},{"ref":"SouthFTPItemSettings"},{"ref":"SouthModbusItemSettings"},{"ref":"SouthMQTTItemSettings"},{"ref":"SouthMSSQLItemSettings"},{"ref":"SouthMySQLItemSettings"},{"ref":"SouthODBCItemSettings"},{"ref":"SouthOIAnalyticsItemSettings"},{"ref":"SouthOLEDBItemSettings"},{"ref":"SouthOPCItemSettings"},{"ref":"SouthOPCUAItemSettings"},{"ref":"SouthOracleItemSettings"},{"ref":"SouthPIItemSettings"},{"ref":"SouthPostgreSQLItemSettings"},{"ref":"SouthRestAPIItemSettings"},{"ref":"SouthSFTPItemSettings"},{"ref":"SouthSQLiteItemSettings"}],"validators":{}},
@@ -2784,7 +2847,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthConnectorItemDTO": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"ref":"SouthConnectorItemTypedDTO_SouthADSItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthFolderScannerItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthFTPItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthModbusItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthMQTTItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthMSSQLItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthMySQLItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthODBCItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthOIAnalyticsItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthOLEDBItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthOPCItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthOPCUAItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthOracleItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthPIItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthPostgreSQLItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthSFTPItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthSQLiteItemSettings_"}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"ref":"SouthConnectorItemTypedDTO_SouthADSItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthFolderScannerItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthFTPItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthModbusItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthMQTTItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthMSSQLItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthMySQLItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthODBCItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthOIAnalyticsItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthOLEDBItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthOPCItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthOPCUAItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthOracleItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthPIItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthPostgreSQLItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthRestAPIItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthSFTPItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthSQLiteItemSettings_"}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "Page_SouthConnectorItemDTO_": {
@@ -2801,7 +2864,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthConnectorItemCommandDTO": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"ref":"SouthConnectorItemCommandTypedDTO_SouthADSItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthFolderScannerItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthFTPItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthModbusItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthMQTTItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthMSSQLItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthMySQLItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthODBCItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthOIAnalyticsItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthOLEDBItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthOPCItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthOPCUAItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthOracleItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthPIItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthPostgreSQLItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthSFTPItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthSQLiteItemSettings_"}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"ref":"SouthConnectorItemCommandTypedDTO_SouthADSItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthFolderScannerItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthFTPItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthModbusItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthMQTTItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthMSSQLItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthMySQLItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthODBCItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthOIAnalyticsItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthOLEDBItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthOPCItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthOPCUAItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthOracleItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthPIItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthPostgreSQLItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthRestAPIItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthSFTPItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthSQLiteItemSettings_"}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthCsvDelimiterRequest": {
@@ -4099,6 +4162,27 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "HistoryQueryItemCommandTypedDTO_SouthRestAPIItemSettings_": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "name": {"dataType":"string","required":true},
+            "enabled": {"dataType":"boolean","required":true},
+            "settings": {"ref":"SouthRestAPIItemSettings","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "HistoryQuerySouthCommandTypedDTO_rest-api.SouthRestAPISettings.SouthRestAPIItemSettings_": {
+        "dataType": "refObject",
+        "properties": {
+            "southType": {"dataType":"enum","enums":["rest-api"],"required":true},
+            "southSettings": {"ref":"SouthRestAPISettings","required":true},
+            "items": {"dataType":"array","array":{"dataType":"refObject","ref":"HistoryQueryItemCommandTypedDTO_SouthRestAPIItemSettings_"},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "HistoryQueryItemCommandTypedDTO_SouthSFTPItemSettings_": {
         "dataType": "refObject",
         "properties": {
@@ -4233,7 +4317,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "HistoryQueryCommandDTO": {
         "dataType": "refAlias",
-        "type": {"dataType":"intersection","subSchemas":[{"ref":"HistoryQueryCommandCommonDTO"},{"dataType":"union","subSchemas":[{"ref":"HistoryQuerySouthCommandTypedDTO_ads.SouthADSSettings.SouthADSItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_folder-scanner.SouthFolderScannerSettings.SouthFolderScannerItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_ftp.SouthFTPSettings.SouthFTPItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_modbus.SouthModbusSettings.SouthModbusItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_mqtt.SouthMQTTSettings.SouthMQTTItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_mssql.SouthMSSQLSettings.SouthMSSQLItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_mysql.SouthMySQLSettings.SouthMySQLItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_odbc.SouthODBCSettings.SouthODBCItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_oianalytics.SouthOIAnalyticsSettings.SouthOIAnalyticsItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_oledb.SouthOLEDBSettings.SouthOLEDBItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_opc.SouthOPCSettings.SouthOPCItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_opcua.SouthOPCUASettings.SouthOPCUAItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_oracle.SouthOracleSettings.SouthOracleItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_osisoft-pi.SouthPISettings.SouthPIItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_postgresql.SouthPostgreSQLSettings.SouthPostgreSQLItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_sftp.SouthSFTPSettings.SouthSFTPItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_sqlite.SouthSQLiteSettings.SouthSQLiteItemSettings_"}]},{"dataType":"union","subSchemas":[{"ref":"HistoryQueryNorthCommandTypedDTO_aws-s3.NorthAmazonS3Settings_"},{"ref":"HistoryQueryNorthCommandTypedDTO_azure-blob.NorthAzureBlobSettings_"},{"ref":"HistoryQueryNorthCommandTypedDTO_console.NorthConsoleSettings_"},{"ref":"HistoryQueryNorthCommandTypedDTO_file-writer.NorthFileWriterSettings_"},{"ref":"HistoryQueryNorthCommandTypedDTO_modbus.NorthModbusSettings_"},{"ref":"HistoryQueryNorthCommandTypedDTO_mqtt.NorthMQTTSettings_"},{"ref":"HistoryQueryNorthCommandTypedDTO_oianalytics.NorthOIAnalyticsSettings_"},{"ref":"HistoryQueryNorthCommandTypedDTO_opcua.NorthOPCUASettings_"},{"ref":"HistoryQueryNorthCommandTypedDTO_rest.NorthRESTSettings_"},{"ref":"HistoryQueryNorthCommandTypedDTO_sftp.NorthSFTPSettings_"}]}],"validators":{}},
+        "type": {"dataType":"intersection","subSchemas":[{"ref":"HistoryQueryCommandCommonDTO"},{"dataType":"union","subSchemas":[{"ref":"HistoryQuerySouthCommandTypedDTO_ads.SouthADSSettings.SouthADSItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_folder-scanner.SouthFolderScannerSettings.SouthFolderScannerItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_ftp.SouthFTPSettings.SouthFTPItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_modbus.SouthModbusSettings.SouthModbusItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_mqtt.SouthMQTTSettings.SouthMQTTItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_mssql.SouthMSSQLSettings.SouthMSSQLItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_mysql.SouthMySQLSettings.SouthMySQLItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_odbc.SouthODBCSettings.SouthODBCItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_oianalytics.SouthOIAnalyticsSettings.SouthOIAnalyticsItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_oledb.SouthOLEDBSettings.SouthOLEDBItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_opc.SouthOPCSettings.SouthOPCItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_opcua.SouthOPCUASettings.SouthOPCUAItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_oracle.SouthOracleSettings.SouthOracleItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_osisoft-pi.SouthPISettings.SouthPIItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_postgresql.SouthPostgreSQLSettings.SouthPostgreSQLItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_rest-api.SouthRestAPISettings.SouthRestAPIItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_sftp.SouthSFTPSettings.SouthSFTPItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_sqlite.SouthSQLiteSettings.SouthSQLiteItemSettings_"}]},{"dataType":"union","subSchemas":[{"ref":"HistoryQueryNorthCommandTypedDTO_aws-s3.NorthAmazonS3Settings_"},{"ref":"HistoryQueryNorthCommandTypedDTO_azure-blob.NorthAzureBlobSettings_"},{"ref":"HistoryQueryNorthCommandTypedDTO_console.NorthConsoleSettings_"},{"ref":"HistoryQueryNorthCommandTypedDTO_file-writer.NorthFileWriterSettings_"},{"ref":"HistoryQueryNorthCommandTypedDTO_modbus.NorthModbusSettings_"},{"ref":"HistoryQueryNorthCommandTypedDTO_mqtt.NorthMQTTSettings_"},{"ref":"HistoryQueryNorthCommandTypedDTO_oianalytics.NorthOIAnalyticsSettings_"},{"ref":"HistoryQueryNorthCommandTypedDTO_opcua.NorthOPCUASettings_"},{"ref":"HistoryQueryNorthCommandTypedDTO_rest.NorthRESTSettings_"},{"ref":"HistoryQueryNorthCommandTypedDTO_sftp.NorthSFTPSettings_"}]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusCreateHistoryQueryCommandDTO": {
@@ -4323,7 +4407,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "HistoryQueryItemCommandDTO": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"ref":"HistoryQueryItemCommandTypedDTO_SouthADSItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthFolderScannerItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthFTPItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthModbusItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthMQTTItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthMSSQLItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthMySQLItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthODBCItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthOIAnalyticsItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthOLEDBItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthOPCItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthOPCUAItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthOracleItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthPIItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthPostgreSQLItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthSFTPItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthSQLiteItemSettings_"}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"ref":"HistoryQueryItemCommandTypedDTO_SouthADSItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthFolderScannerItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthFTPItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthModbusItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthMQTTItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthMSSQLItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthMySQLItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthODBCItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthOIAnalyticsItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthOLEDBItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthOPCItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthOPCUAItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthOracleItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthPIItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthPostgreSQLItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthRestAPIItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthSFTPItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthSQLiteItemSettings_"}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusTestHistoryQuerySouthItemCommandDTO": {
@@ -5128,6 +5212,29 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "HistoryQueryItemTypedDTO_SouthRestAPIItemSettings_": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"string","required":true},
+            "creationDate": {"ref":"Instant"},
+            "lastEditInstant": {"ref":"Instant"},
+            "name": {"dataType":"string","required":true},
+            "enabled": {"dataType":"boolean","required":true},
+            "settings": {"ref":"SouthRestAPIItemSettings","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "HistoryQuerySouthTypedDTO_rest-api.SouthRestAPISettings.SouthRestAPIItemSettings_": {
+        "dataType": "refObject",
+        "properties": {
+            "southType": {"dataType":"enum","enums":["rest-api"],"required":true},
+            "southSettings": {"ref":"SouthRestAPISettings","required":true},
+            "items": {"dataType":"array","array":{"dataType":"refObject","ref":"HistoryQueryItemTypedDTO_SouthRestAPIItemSettings_"},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "HistoryQueryItemTypedDTO_SouthSFTPItemSettings_": {
         "dataType": "refObject",
         "properties": {
@@ -5266,7 +5373,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "HistoryQueryDTO": {
         "dataType": "refAlias",
-        "type": {"dataType":"intersection","subSchemas":[{"ref":"BaseEntity"},{"ref":"HistoryQueryCommonDTO"},{"dataType":"union","subSchemas":[{"ref":"HistoryQuerySouthTypedDTO_ads.SouthADSSettings.SouthADSItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_folder-scanner.SouthFolderScannerSettings.SouthFolderScannerItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_ftp.SouthFTPSettings.SouthFTPItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_modbus.SouthModbusSettings.SouthModbusItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_mqtt.SouthMQTTSettings.SouthMQTTItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_mssql.SouthMSSQLSettings.SouthMSSQLItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_mysql.SouthMySQLSettings.SouthMySQLItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_odbc.SouthODBCSettings.SouthODBCItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_oianalytics.SouthOIAnalyticsSettings.SouthOIAnalyticsItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_oledb.SouthOLEDBSettings.SouthOLEDBItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_opc.SouthOPCSettings.SouthOPCItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_opcua.SouthOPCUASettings.SouthOPCUAItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_oracle.SouthOracleSettings.SouthOracleItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_osisoft-pi.SouthPISettings.SouthPIItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_postgresql.SouthPostgreSQLSettings.SouthPostgreSQLItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_sftp.SouthSFTPSettings.SouthSFTPItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_sqlite.SouthSQLiteSettings.SouthSQLiteItemSettings_"}]},{"dataType":"union","subSchemas":[{"ref":"HistoryQueryNorthTypedDTO_aws-s3.NorthAmazonS3Settings_"},{"ref":"HistoryQueryNorthTypedDTO_azure-blob.NorthAzureBlobSettings_"},{"ref":"HistoryQueryNorthTypedDTO_console.NorthConsoleSettings_"},{"ref":"HistoryQueryNorthTypedDTO_file-writer.NorthFileWriterSettings_"},{"ref":"HistoryQueryNorthTypedDTO_modbus.NorthModbusSettings_"},{"ref":"HistoryQueryNorthTypedDTO_mqtt.NorthMQTTSettings_"},{"ref":"HistoryQueryNorthTypedDTO_oianalytics.NorthOIAnalyticsSettings_"},{"ref":"HistoryQueryNorthTypedDTO_opcua.NorthOPCUASettings_"},{"ref":"HistoryQueryNorthTypedDTO_rest.NorthRESTSettings_"},{"ref":"HistoryQueryNorthTypedDTO_sftp.NorthSFTPSettings_"}]}],"validators":{}},
+        "type": {"dataType":"intersection","subSchemas":[{"ref":"BaseEntity"},{"ref":"HistoryQueryCommonDTO"},{"dataType":"union","subSchemas":[{"ref":"HistoryQuerySouthTypedDTO_ads.SouthADSSettings.SouthADSItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_folder-scanner.SouthFolderScannerSettings.SouthFolderScannerItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_ftp.SouthFTPSettings.SouthFTPItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_modbus.SouthModbusSettings.SouthModbusItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_mqtt.SouthMQTTSettings.SouthMQTTItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_mssql.SouthMSSQLSettings.SouthMSSQLItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_mysql.SouthMySQLSettings.SouthMySQLItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_odbc.SouthODBCSettings.SouthODBCItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_oianalytics.SouthOIAnalyticsSettings.SouthOIAnalyticsItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_oledb.SouthOLEDBSettings.SouthOLEDBItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_opc.SouthOPCSettings.SouthOPCItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_opcua.SouthOPCUASettings.SouthOPCUAItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_oracle.SouthOracleSettings.SouthOracleItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_osisoft-pi.SouthPISettings.SouthPIItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_postgresql.SouthPostgreSQLSettings.SouthPostgreSQLItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_rest-api.SouthRestAPISettings.SouthRestAPIItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_sftp.SouthSFTPSettings.SouthSFTPItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_sqlite.SouthSQLiteSettings.SouthSQLiteItemSettings_"}]},{"dataType":"union","subSchemas":[{"ref":"HistoryQueryNorthTypedDTO_aws-s3.NorthAmazonS3Settings_"},{"ref":"HistoryQueryNorthTypedDTO_azure-blob.NorthAzureBlobSettings_"},{"ref":"HistoryQueryNorthTypedDTO_console.NorthConsoleSettings_"},{"ref":"HistoryQueryNorthTypedDTO_file-writer.NorthFileWriterSettings_"},{"ref":"HistoryQueryNorthTypedDTO_modbus.NorthModbusSettings_"},{"ref":"HistoryQueryNorthTypedDTO_mqtt.NorthMQTTSettings_"},{"ref":"HistoryQueryNorthTypedDTO_oianalytics.NorthOIAnalyticsSettings_"},{"ref":"HistoryQueryNorthTypedDTO_opcua.NorthOPCUASettings_"},{"ref":"HistoryQueryNorthTypedDTO_rest.NorthRESTSettings_"},{"ref":"HistoryQueryNorthTypedDTO_sftp.NorthSFTPSettings_"}]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "HistorySouthItemTestRequest": {
@@ -5281,7 +5388,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "HistoryQueryItemDTO": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"ref":"HistoryQueryItemTypedDTO_SouthADSItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthFolderScannerItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthFTPItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthModbusItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthMQTTItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthMSSQLItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthMySQLItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthODBCItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthOIAnalyticsItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthOLEDBItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthOPCItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthOPCUAItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthOracleItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthPIItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthPostgreSQLItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthSFTPItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthSQLiteItemSettings_"}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"ref":"HistoryQueryItemTypedDTO_SouthADSItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthFolderScannerItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthFTPItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthModbusItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthMQTTItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthMSSQLItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthMySQLItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthODBCItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthOIAnalyticsItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthOLEDBItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthOPCItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthOPCUAItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthOracleItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthPIItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthPostgreSQLItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthRestAPIItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthSFTPItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthSQLiteItemSettings_"}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "Page_HistoryQueryItemDTO_": {

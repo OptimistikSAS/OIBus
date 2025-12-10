@@ -13,7 +13,7 @@ export function createMockResponse(
     headers,
     body: {
       json: jest.fn().mockResolvedValue(body),
-      text: jest.fn().mockResolvedValue(JSON.stringify(body)),
+      text: jest.fn().mockResolvedValue(typeof body === 'string' ? body : JSON.stringify(body)),
       arrayBuffer: jest.fn().mockReturnValue(body)
     },
     ok: statusCode >= 200 && statusCode <= 299
