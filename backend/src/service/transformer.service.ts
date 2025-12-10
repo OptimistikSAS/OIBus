@@ -34,6 +34,8 @@ import OIBusCustomTransformer from './transformers/oibus-custom-transformer';
 import { Readable } from 'node:stream';
 import { DateTime } from 'luxon';
 import { OIBusSetpoint, OIBusTimeValue } from '../../shared/model/engine.model';
+import JSONToTimeValuesTransformer from './transformers/time-values/json-to-time-values-transformer';
+import JSONToCSVTransformer from './transformers/time-values/json-to-csv-transformer';
 
 export default class TransformerService {
   constructor(
@@ -380,6 +382,12 @@ export const createTransformer = (
           transformerWithOptions.options
         );
       }
+      case JSONToTimeValuesTransformer.transformerName: {
+        return new JSONToTimeValuesTransformer(logger, transformerWithOptions.transformer, northConnector, transformerWithOptions.options);
+      }
+      case JSONToCSVTransformer.transformerName: {
+        return new JSONToCSVTransformer(logger, transformerWithOptions.transformer, northConnector, transformerWithOptions.options);
+      }
 
       default:
         throw new Error(
@@ -425,6 +433,12 @@ export const getStandardManifest = (functionName: string): OIBusObjectAttribute 
     }
     case OIBusSetpointToOPCUATransformer.transformerName: {
       return OIBusSetpointToOPCUATransformer.manifestSettings;
+    }
+    case JSONToTimeValuesTransformer.transformerName: {
+      return JSONToTimeValuesTransformer.manifestSettings;
+    }
+    case JSONToCSVTransformer.transformerName: {
+      return JSONToCSVTransformer.manifestSettings;
     }
     default:
       throw new Error(`Could not find manifest for ${functionName} transformer`);
