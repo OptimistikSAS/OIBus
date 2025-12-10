@@ -733,3 +733,24 @@ export const testIPOnFilter = (ipFilters: Array<string>, ipToCheck: string): boo
     }
   });
 };
+
+export const sanitizeFilename = (originalName: string): string => {
+  return originalName.replace(/['"]/g, '').replace(/[^a-zA-Z0-9-_.]/g, '-');
+};
+
+/**
+ * Helper: Replaces '*' in a JSONPath with actual indices sequentially.
+ * Example: path="$.vals[*].sub[*]", indices=[0, 5] -> "$.vals[0].sub[5]"
+ * It is used to retrieve line by line each field and populate csv rows
+ */
+export const injectIndices = (pathDefinition: string, indices: Array<number>): string => {
+  let indexPointer = 0;
+  // Regex matches '[*]' literals
+  return pathDefinition.replace(/\[\*\]/g, () => {
+    // If we run out of indices (parent accessing global), we assume 0 or keep wildcard
+    // But usually, we just take the next available index.
+    const val = indices[indexPointer] !== undefined ? indices[indexPointer] : '*';
+    indexPointer++;
+    return `[${val}]`;
+  });
+};

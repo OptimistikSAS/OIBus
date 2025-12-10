@@ -883,6 +883,8 @@
           "standard": {
             "ignore": "Ignore",
             "iso": "No transform",
+            "json-to-csv": "JSON into CSV",
+            "json-to-time-values": "JSON into OIBus time values",
             "time-values-to-csv": "OIBus time values into CSV",
             "time-values-to-json": "OIBus time values into raw JSON",
             "time-values-to-modbus": "OIBus time values into Modbus values",
@@ -986,6 +988,80 @@
             "edit-transformer-modal": {
               "create-title": "Create Attribute",
               "edit-title": "Edit Attribute"
+            }
+          },
+          "json-to-csv": {
+            "json-to-parse": {
+              "title": "JSON to parse",
+              "item": {
+                "title": "Configuration item"
+              },
+              "regex": "File regex",
+              "filename": "Filename",
+              "delimiter": {
+                "title": "Delimiter",
+                "DOT": "Dot (.)",
+                "SEMI_COLON": "Semi-colon (;)",
+                "COLON": "Colon (:)",
+                "COMMA": "Comma (,)",
+                "NON_BREAKING_SPACE": "Non-breaking space",
+                "SLASH": "Slash (/)",
+                "TAB": "Tab",
+                "PIPE": "Pipe (|)"
+              },
+              "row-iterator-path": "Row iterator JSON path",
+              "fields": {
+                "title": "Fields",
+                "item": {
+                  "title": "Field"
+                },
+                "column-name": "Column name",
+                "json-path": "JSON path",
+                "data-type": {
+                  "title": "Data type",
+                  "string": "String",
+                  "number": "Number",
+                  "datetime": "Datetime",
+                  "array": "Array",
+                  "boolean": "Boolean",
+                  "object": "Object"
+                },
+                "datetime-settings": {
+                  "title": "Datetime settings",
+                  "type": {
+                    "title": "Type",
+                    "iso-string": "ISO string",
+                    "unix-epoch": "Unix epoch (s)",
+                    "unix-epoch-ms": "Unix epoch (ms)",
+                    "string": "String"
+                  },
+                  "timezone": "Timezone",
+                  "format": "Format",
+                  "locale": "Locale"
+                }
+              }
+            }
+          },
+          "json-to-time-values": {
+            "json-to-parse": {
+              "title": "JSON to parse",
+              "regex": "File regex",
+              "references": "Reference JSON path",
+              "timestamps": "Timestamps JSON path",
+              "timestamp-settings": {
+                "title": "Timestamp settings",
+                "type": {
+                  "title": "Type",
+                  "iso-string": "ISO string",
+                  "unix-epoch": "Unix epoch (s)",
+                  "unix-epoch-ms": "Unix epoch (ms)",
+                  "string": "String"
+                },
+                "timezone": "Timezone",
+                "format": "Format",
+                "locale": "Locale"
+              },
+              "values": "Values JSON path"
             }
           },
           "time-values-to-csv": {
@@ -1957,12 +2033,10 @@
                 "body": "Body (JSON / XML)",
                 "file": "File (Content-Disposition)"
               },
+              "date-time-input": "Date time input format",
               "date-time-fields": {
-                "title": "Date time fields",
-                "date-time-field": "Date time field",
+                "date-time-field": "Track max instant",
                 "json-path": "JSONPath",
-                "field-name": "Field name",
-                "use-as-reference": "Reference timestamp",
                 "type": {
                   "title": "Type",
                   "iso-string": "ISO string",
@@ -1973,28 +2047,6 @@
                 "timezone": "Timezone",
                 "format": "Format",
                 "locale": "Locale"
-              },
-              "serialization": {
-                "title": "Serialization",
-                "type": {
-                  "title": "Type",
-                  "csv": "CSV"
-                },
-                "filename": "Filename",
-                "delimiter": {
-                  "title": "Delimiter",
-                  "DOT": "Dot .",
-                  "SEMI_COLON": "Semi colon ;",
-                  "COLON": "Colon :",
-                  "COMMA": "Comma ,",
-                  "NON_BREAKING_SPACE": "Space",
-                  "SLASH": "Slash /",
-                  "TAB": "Tab",
-                  "PIPE": "Pipe |"
-                },
-                "compression": "Compression",
-                "output-timestamp-format": "Output date time format",
-                "output-timezone": "Output timezone"
               }
             },
             "sftp": {

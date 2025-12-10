@@ -27,7 +27,6 @@ describe('OIBusTimeValuesToCsvTransformer', () => {
     const options = {
       filename: '@CurrentDate.csv',
       delimiter: 'SEMI_COLON',
-      compression: false,
       pointIdColumnTitle: 'Reference',
       valueColumnTitle: 'Value',
       timestampColumnTitle: 'Timestamp',
@@ -128,23 +127,6 @@ describe('OIBusTimeValuesToCsvTransformer', () => {
             row: 0,
             columns: 4,
             displayInViewMode: false
-          }
-        },
-        {
-          type: 'boolean',
-          key: 'compression',
-          translationKey: 'configuration.oibus.manifest.transformers.time-values-to-csv.compression',
-          defaultValue: false,
-          validators: [
-            {
-              type: 'REQUIRED',
-              arguments: []
-            }
-          ],
-          displayProperties: {
-            row: 0,
-            columns: 4,
-            displayInViewMode: true
           }
         },
         {
