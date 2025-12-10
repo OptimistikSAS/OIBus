@@ -15,6 +15,8 @@ import OIBusSetpointToModbusTransformer from '../../service/transformers/setpoin
 import OIBusSetpointToOPCUATransformer from '../../service/transformers/setpoint/oibus-setpoint-to-opcua-transformer';
 import OIBusSetpointToMQTTTransformer from '../../service/transformers/setpoint/oibus-setpoint-to-mqtt-transformer';
 import OIBusTimeValuesToOIAnalyticsTransformer from '../../service/transformers/time-values/oibus-time-values-to-oianalytics-transformer';
+import JSONToTimeValuesTransformer from '../../service/transformers/time-values/json-to-time-values-transformer';
+import JSONToCSVTransformer from '../../service/transformers/time-values/json-to-csv-transformer';
 
 const TRANSFORMERS_TABLE = 'transformers';
 const PAGE_SIZE = 10;
@@ -238,6 +240,26 @@ export default class TransformerRepository {
         functionName: OIBusTimeValuesToOIAnalyticsTransformer.transformerName,
         inputType: 'time-values',
         outputType: 'oianalytics'
+      };
+      this.createStandardTransformer(standardTransformer);
+    }
+    if (!this.findByFunctionName(JSONToTimeValuesTransformer.transformerName)) {
+      const standardTransformer: StandardTransformer = {
+        id: generateRandomId(6),
+        type: 'standard',
+        functionName: JSONToTimeValuesTransformer.transformerName,
+        inputType: 'any',
+        outputType: 'time-values'
+      };
+      this.createStandardTransformer(standardTransformer);
+    }
+    if (!this.findByFunctionName(JSONToCSVTransformer.transformerName)) {
+      const standardTransformer: StandardTransformer = {
+        id: generateRandomId(6),
+        type: 'standard',
+        functionName: JSONToCSVTransformer.transformerName,
+        inputType: 'any',
+        outputType: 'any'
       };
       this.createStandardTransformer(standardTransformer);
     }
