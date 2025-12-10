@@ -733,3 +733,23 @@ export const testIPOnFilter = (ipFilters: Array<string>, ipToCheck: string): boo
     }
   });
 };
+
+export const sanitizeFilename = (originalName: string) => {
+  // 1. Remove surrounding quotes if the regex captured them (e.g. "file.csv")
+  const cleanName = originalName.replace(/['"]/g, '');
+
+  // 2. Find the extension
+  const lastDotIndex = cleanName.lastIndexOf('.');
+
+  // If no extension, just sanitize the whole thing
+  if (lastDotIndex === -1) {
+    return cleanName.replace(/[^a-zA-Z0-9-_]/g, '-');
+  }
+
+  // 3. Split, sanitize name part only, and rejoin
+  const namePart = cleanName.substring(0, lastDotIndex);
+  const extPart = cleanName.substring(lastDotIndex); // includes the dot
+
+  // Sanitize name, leave extension as is (or strict check extension too if needed)
+  return namePart.replace(/[^a-zA-Z0-9-_]/g, '-') + extPart;
+};
