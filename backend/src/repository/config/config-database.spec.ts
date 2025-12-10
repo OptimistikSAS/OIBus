@@ -78,6 +78,8 @@ import OIBusSetpointToMQTTTransformer from '../../service/transformers/setpoint/
 import OIBusSetpointToOPCUATransformer from '../../service/transformers/setpoint/oibus-setpoint-to-opcua-transformer';
 import { TransformerDTO } from '../../../shared/model/transformer.model';
 import OIBusTimeValuesToOIAnalyticsTransformer from '../../service/transformers/time-values/oibus-time-values-to-oianalytics-transformer';
+import JSONToTimeValuesTransformer from '../../service/transformers/time-values/json-to-time-values-transformer';
+import JSONToCSVTransformer from '../../service/transformers/time-values/json-to-csv-transformer';
 
 jest.mock('../../service/utils');
 jest.mock('argon2');
@@ -197,6 +199,20 @@ describe('Repository with populated database', () => {
         inputType: 'time-values',
         functionName: OIBusTimeValuesToOIAnalyticsTransformer.transformerName,
         outputType: 'oianalytics',
+        type: 'standard'
+      },
+      {
+        id: 'standardTransformer11',
+        inputType: 'any',
+        functionName: JSONToTimeValuesTransformer.transformerName,
+        outputType: 'time-values',
+        type: 'standard'
+      },
+      {
+        id: 'standardTransformer12',
+        inputType: 'any',
+        functionName: JSONToCSVTransformer.transformerName,
+        outputType: 'any',
         type: 'standard'
       }
     ];
