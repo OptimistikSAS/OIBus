@@ -987,51 +987,124 @@
               "edit-title": "Edit Attribute"
             }
           },
+          "csv-to-mqtt": {
+            "csv-to-parse": {
+              "title": "CSV to Parse",
+              "item": {
+                "title": "Parser Configuration"
+              },
+              "regex": "File Name Regex",
+              "filename": "Output Filename",
+              "delimiter": "CSV Delimiter",
+              "has-header": "Has Header",
+              "topic-column": "Topic Column",
+              "payload-type": "Payload Type",
+              "value-column": "Value Column",
+              "datetime-settings": {
+                "title": "Datetime Settings",
+                "type": "Type",
+                "timezone": "Timezone",
+                "format": "Format",
+                "locale": "Locale"
+              },
+              "object-fields": {
+                "title": "Object Fields",
+                "item": {
+                  "title": "Field Configuration"
+                },
+                "key": "Key",
+                "column": "Column",
+                "data-type": "Data Type",
+                "datetime-settings": {
+                  "title": "Field Datetime Settings",
+                  "type": "Type",
+                  "timezone": "Timezone",
+                  "format": "Format",
+                  "locale": "Locale"
+                }
+              }
+            }
+          },
+          "csv-to-time-values": {
+            "csv-to-parse": {
+              "title": "CSV to Parse",
+              "item": {
+                "title": "Parser Configuration"
+              },
+              "regex": "File Name Regex",
+              "filename": "Output Filename",
+              "delimiter": "CSV Delimiter",
+              "has-header": "Has Header",
+              "point-id-column": "Point ID Column",
+              "timestamp-column": "Timestamp Column",
+              "value-column": "Value Column",
+              "timestamp-settings": {
+                "title": "Timestamp Settings",
+                "type": "Type",
+                "timezone": "Timezone",
+                "format": "Format",
+                "locale": "Locale"
+              }
+            }
+          },
           "json-to-csv": {
             "json-to-parse": {
-              "title": "JSON to parse",
+              "title": "JSON to Parse",
               "item": {
-                "title": "Configuration item"
+                "title": "Parser Configuration"
               },
-              "regex": "File regex",
-              "filename": "Filename",
-              "delimiter": {
-                "title": "Delimiter",
-                "DOT": "Dot (.)",
-                "SEMI_COLON": "Semi-colon (;)",
-                "COLON": "Colon (:)",
-                "COMMA": "Comma (,)",
-                "NON_BREAKING_SPACE": "Non-breaking space",
-                "SLASH": "Slash (/)",
-                "TAB": "Tab",
-                "PIPE": "Pipe (|)"
-              },
-              "row-iterator-path": "Row iterator JSON path",
+              "regex": "File Name Regex",
+              "filename": "Output Filename",
+              "delimiter": "CSV Delimiter",
+              "row-iterator-path": "Row Iterator JSONPath",
               "fields": {
-                "title": "Fields",
+                "title": "Fields Mapping",
                 "item": {
-                  "title": "Field"
+                  "title": "Field Configuration"
                 },
-                "column-name": "Column name",
-                "json-path": "JSON path",
-                "data-type": {
-                  "title": "Data type",
-                  "string": "String",
-                  "number": "Number",
-                  "datetime": "Datetime",
-                  "array": "Array",
-                  "boolean": "Boolean",
-                  "object": "Object"
-                },
+                "column-name": "Column Name",
+                "json-path": "JSONPath",
+                "data-type": "Data Type",
                 "datetime-settings": {
-                  "title": "Datetime settings",
-                  "type": {
-                    "title": "Type",
-                    "iso-string": "ISO string",
-                    "unix-epoch": "Unix epoch (s)",
-                    "unix-epoch-ms": "Unix epoch (ms)",
-                    "string": "String"
-                  },
+                  "title": "Datetime Settings",
+                  "type": "Type",
+                  "timezone": "Timezone",
+                  "format": "Format",
+                  "locale": "Locale"
+                }
+              }
+            }
+          },
+          "json-to-mqtt": {
+            "json-to-parse": {
+              "title": "JSON to Parse",
+              "item": {
+                "title": "Parser Configuration"
+              },
+              "regex": "File Name Regex",
+              "filename": "Output Filename",
+              "row-iterator-path": "Row Iterator JSONPath",
+              "topic-path": "Topic JSONPath",
+              "payload-type": "Payload Type",
+              "value-path": "Value JSONPath",
+              "datetime-settings": {
+                "title": "Datetime Settings",
+                "type": "Type",
+                "timezone": "Timezone",
+                "format": "Format",
+                "locale": "Locale"
+              },
+              "object-fields": {
+                "title": "Object Fields",
+                "item": {
+                  "title": "Field Configuration"
+                },
+                "key": "Key",
+                "path": "JSONPath",
+                "data-type": "Data Type",
+                "datetime-settings": {
+                  "title": "Field Datetime Settings",
+                  "type": "Type",
                   "timezone": "Timezone",
                   "format": "Format",
                   "locale": "Locale"
@@ -1041,24 +1114,23 @@
           },
           "json-to-time-values": {
             "json-to-parse": {
-              "title": "JSON to parse",
-              "regex": "File regex",
-              "references": "Reference JSON path",
-              "timestamps": "Timestamps JSON path",
+              "title": "JSON to Parse",
+              "item": {
+                "title": "Parser Configuration"
+              },
+              "regex": "File Name Regex",
+              "filename": "Output Filename",
+              "row-iterator-path": "Row Iterator JSONPath",
+              "point-id-path": "Point ID JSONPath",
+              "timestamp-path": "Timestamp JSONPath",
+              "value-path": "Value JSONPath",
               "timestamp-settings": {
-                "title": "Timestamp settings",
-                "type": {
-                  "title": "Type",
-                  "iso-string": "ISO string",
-                  "unix-epoch": "Unix epoch (s)",
-                  "unix-epoch-ms": "Unix epoch (ms)",
-                  "string": "String"
-                },
+                "title": "Timestamp Settings",
+                "type": "Type",
                 "timezone": "Timezone",
                 "format": "Format",
                 "locale": "Locale"
-              },
-              "values": "Values JSON path"
+              }
             }
           },
           "time-values-to-csv": {
@@ -2018,12 +2090,15 @@
                 "key": "Key",
                 "value": "Value"
               },
-              "body": "Request body (JSON)",
+              "body": {
+                "title": "Request body (JSON)",
+                "content": "Content"
+              },
               "headers": {
                 "title": "Headers",
                 "header": "Header",
-                "key": "Header name",
-                "value": "Header value"
+                "key": "HTTP header key name",
+                "value": "HTTP header value"
               },
               "return-type": {
                 "title": "Return type",
@@ -2031,9 +2106,9 @@
                 "file": "File (Content-Disposition)"
               },
               "date-time-input": "Date time input format",
-              "date-time-fields": {
-                "date-time-field": "Track max instant",
-                "json-path": "JSONPath",
+              "track-max-instant": "Track max instant",
+              "date-time": {
+                "json-path": "JSON path",
                 "type": {
                   "title": "Type",
                   "iso-string": "ISO string",
