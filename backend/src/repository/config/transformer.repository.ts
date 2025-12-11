@@ -15,8 +15,11 @@ import OIBusSetpointToModbusTransformer from '../../service/transformers/setpoin
 import OIBusSetpointToOPCUATransformer from '../../service/transformers/setpoint/oibus-setpoint-to-opcua-transformer';
 import OIBusSetpointToMQTTTransformer from '../../service/transformers/setpoint/oibus-setpoint-to-mqtt-transformer';
 import OIBusTimeValuesToOIAnalyticsTransformer from '../../service/transformers/time-values/oibus-time-values-to-oianalytics-transformer';
-import JSONToTimeValuesTransformer from '../../service/transformers/time-values/json-to-time-values-transformer';
-import JSONToCSVTransformer from '../../service/transformers/time-values/json-to-csv-transformer';
+import JSONToTimeValuesTransformer from '../../service/transformers/any/json-to-time-values-transformer';
+import JSONToCSVTransformer from '../../service/transformers/any/json-to-csv-transformer';
+import CSVToMQTTTransformer from '../../service/transformers/any/csv-to-mqtt-transformer';
+import CSVToTimeValuesTransformer from '../../service/transformers/any/csv-to-time-values-transformer';
+import JSONToMQTTTransformer from '../../service/transformers/any/json-to-mqtt-transformer';
 
 const TRANSFORMERS_TABLE = 'transformers';
 const PAGE_SIZE = 10;
@@ -133,6 +136,26 @@ export default class TransformerRepository {
   }
 
   private createStandardTransformers() {
+    if (!this.findByFunctionName(CSVToMQTTTransformer.transformerName)) {
+      const standardTransformer: StandardTransformer = {
+        id: generateRandomId(6),
+        type: 'standard',
+        functionName: CSVToMQTTTransformer.transformerName,
+        inputType: 'any',
+        outputType: 'mqtt'
+      };
+      this.createStandardTransformer(standardTransformer);
+    }
+    if (!this.findByFunctionName(CSVToTimeValuesTransformer.transformerName)) {
+      const standardTransformer: StandardTransformer = {
+        id: generateRandomId(6),
+        type: 'standard',
+        functionName: CSVToTimeValuesTransformer.transformerName,
+        inputType: 'any',
+        outputType: 'time-values'
+      };
+      this.createStandardTransformer(standardTransformer);
+    }
     if (!this.findByFunctionName(IgnoreTransformer.transformerName)) {
       const standardTransformer: StandardTransformer = {
         id: generateRandomId(6),
@@ -150,6 +173,36 @@ export default class TransformerRepository {
         functionName: IsoTransformer.transformerName,
         inputType: 'any',
         outputType: 'any'
+      };
+      this.createStandardTransformer(standardTransformer);
+    }
+    if (!this.findByFunctionName(JSONToCSVTransformer.transformerName)) {
+      const standardTransformer: StandardTransformer = {
+        id: generateRandomId(6),
+        type: 'standard',
+        functionName: JSONToCSVTransformer.transformerName,
+        inputType: 'any',
+        outputType: 'any'
+      };
+      this.createStandardTransformer(standardTransformer);
+    }
+    if (!this.findByFunctionName(JSONToMQTTTransformer.transformerName)) {
+      const standardTransformer: StandardTransformer = {
+        id: generateRandomId(6),
+        type: 'standard',
+        functionName: JSONToMQTTTransformer.transformerName,
+        inputType: 'any',
+        outputType: 'mqtt'
+      };
+      this.createStandardTransformer(standardTransformer);
+    }
+    if (!this.findByFunctionName(JSONToTimeValuesTransformer.transformerName)) {
+      const standardTransformer: StandardTransformer = {
+        id: generateRandomId(6),
+        type: 'standard',
+        functionName: JSONToTimeValuesTransformer.transformerName,
+        inputType: 'any',
+        outputType: 'time-values'
       };
       this.createStandardTransformer(standardTransformer);
     }
@@ -173,26 +226,6 @@ export default class TransformerRepository {
       };
       this.createStandardTransformer(standardTransformer);
     }
-    if (!this.findByFunctionName(OIBusTimeValuesToMQTTTransformer.transformerName)) {
-      const standardTransformer: StandardTransformer = {
-        id: generateRandomId(6),
-        type: 'standard',
-        functionName: OIBusTimeValuesToMQTTTransformer.transformerName,
-        inputType: 'time-values',
-        outputType: 'mqtt'
-      };
-      this.createStandardTransformer(standardTransformer);
-    }
-    if (!this.findByFunctionName(OIBusTimeValuesToOPCUATransformer.transformerName)) {
-      const standardTransformer: StandardTransformer = {
-        id: generateRandomId(6),
-        type: 'standard',
-        functionName: OIBusTimeValuesToOPCUATransformer.transformerName,
-        inputType: 'time-values',
-        outputType: 'opcua'
-      };
-      this.createStandardTransformer(standardTransformer);
-    }
     if (!this.findByFunctionName(OIBusTimeValuesToModbusTransformer.transformerName)) {
       const standardTransformer: StandardTransformer = {
         id: generateRandomId(6),
@@ -203,32 +236,12 @@ export default class TransformerRepository {
       };
       this.createStandardTransformer(standardTransformer);
     }
-    if (!this.findByFunctionName(OIBusSetpointToModbusTransformer.transformerName)) {
+    if (!this.findByFunctionName(OIBusTimeValuesToMQTTTransformer.transformerName)) {
       const standardTransformer: StandardTransformer = {
         id: generateRandomId(6),
         type: 'standard',
-        functionName: OIBusSetpointToModbusTransformer.transformerName,
-        inputType: 'setpoint',
-        outputType: 'modbus'
-      };
-      this.createStandardTransformer(standardTransformer);
-    }
-    if (!this.findByFunctionName(OIBusSetpointToOPCUATransformer.transformerName)) {
-      const standardTransformer: StandardTransformer = {
-        id: generateRandomId(6),
-        type: 'standard',
-        functionName: OIBusSetpointToOPCUATransformer.transformerName,
-        inputType: 'setpoint',
-        outputType: 'opcua'
-      };
-      this.createStandardTransformer(standardTransformer);
-    }
-    if (!this.findByFunctionName(OIBusSetpointToMQTTTransformer.transformerName)) {
-      const standardTransformer: StandardTransformer = {
-        id: generateRandomId(6),
-        type: 'standard',
-        functionName: OIBusSetpointToMQTTTransformer.transformerName,
-        inputType: 'setpoint',
+        functionName: OIBusTimeValuesToMQTTTransformer.transformerName,
+        inputType: 'time-values',
         outputType: 'mqtt'
       };
       this.createStandardTransformer(standardTransformer);
@@ -243,23 +256,43 @@ export default class TransformerRepository {
       };
       this.createStandardTransformer(standardTransformer);
     }
-    if (!this.findByFunctionName(JSONToTimeValuesTransformer.transformerName)) {
+    if (!this.findByFunctionName(OIBusTimeValuesToOPCUATransformer.transformerName)) {
       const standardTransformer: StandardTransformer = {
         id: generateRandomId(6),
         type: 'standard',
-        functionName: JSONToTimeValuesTransformer.transformerName,
-        inputType: 'any',
-        outputType: 'time-values'
+        functionName: OIBusTimeValuesToOPCUATransformer.transformerName,
+        inputType: 'time-values',
+        outputType: 'opcua'
       };
       this.createStandardTransformer(standardTransformer);
     }
-    if (!this.findByFunctionName(JSONToCSVTransformer.transformerName)) {
+    if (!this.findByFunctionName(OIBusSetpointToModbusTransformer.transformerName)) {
       const standardTransformer: StandardTransformer = {
         id: generateRandomId(6),
         type: 'standard',
-        functionName: JSONToCSVTransformer.transformerName,
-        inputType: 'any',
-        outputType: 'any'
+        functionName: OIBusSetpointToModbusTransformer.transformerName,
+        inputType: 'setpoint',
+        outputType: 'modbus'
+      };
+      this.createStandardTransformer(standardTransformer);
+    }
+    if (!this.findByFunctionName(OIBusSetpointToMQTTTransformer.transformerName)) {
+      const standardTransformer: StandardTransformer = {
+        id: generateRandomId(6),
+        type: 'standard',
+        functionName: OIBusSetpointToMQTTTransformer.transformerName,
+        inputType: 'setpoint',
+        outputType: 'mqtt'
+      };
+      this.createStandardTransformer(standardTransformer);
+    }
+    if (!this.findByFunctionName(OIBusSetpointToOPCUATransformer.transformerName)) {
+      const standardTransformer: StandardTransformer = {
+        id: generateRandomId(6),
+        type: 'standard',
+        functionName: OIBusSetpointToOPCUATransformer.transformerName,
+        inputType: 'setpoint',
+        outputType: 'opcua'
       };
       this.createStandardTransformer(standardTransformer);
     }
