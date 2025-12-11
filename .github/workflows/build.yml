@@ -89,7 +89,7 @@ jobs:
       - name: Cache Inno Setup
         if: ${{ matrix.config['platform'] == 'win-x64' }}
         id: cache-inno
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: C:\is.exe
           key: inno-setup-6

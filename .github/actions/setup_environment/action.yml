@@ -23,7 +23,7 @@ runs:
 
     - name: Load cached node_modules
       id: cache-deps
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: |
           backend/node_modules
