@@ -5,7 +5,7 @@ import { pipeline, Readable, Transform } from 'node:stream';
 import { CacheMetadata } from '../../../../shared/model/engine.model';
 import { promisify } from 'node:util';
 import { OIBusObjectAttribute } from '../../../../shared/model/form.model';
-import { convertDateTimeToInstant, convertDelimiter, sanitizeFilename, stringToBoolean } from '../../utils';
+import { convertDateTimeToInstant, convertDelimiter, injectIndices, sanitizeFilename, stringToBoolean } from '../../utils';
 import csv from 'papaparse';
 
 const pipelineAsync = promisify(pipeline);
@@ -36,10 +36,11 @@ export default class JSONToCSVTransformer extends OIBusTransformer {
   async transform(data: ReadStream | Readable, source: string, filename: string): Promise<{ metadata: CacheMetadata; output: string }> {
     const jsonParser = this.options.jsonToParse.find(parser => filename.match(parser.regex));
     if (!jsonParser) {
+      this.logger.error(`Could not find json parser from "${filename}"`);
       return this.returnEmpty(filename, source);
     }
 
-    // Collect the data from the stream
+    // 1. Read stream into buffer
     const chunks: Array<Buffer> = [];
     await pipelineAsync(
       data,
@@ -51,45 +52,37 @@ export default class JSONToCSVTransformer extends OIBusTransformer {
       })
     );
     const stringContent = Buffer.concat(chunks).toString('utf-8');
-    // Combine the chunks into a single buffer
     const content: object = JSON.parse(stringContent);
 
-    // 2. Identify Rows using JSONPath
-    // resultType: 'all' returns objects containing both 'path' (string) and 'value'
+    // 2. Identify Rows using the iterator path
     const rowNodes = JSONPath({
       path: jsonParser.rowIteratorPath,
       json: content,
       resultType: 'all'
-    }) as Array<{ path: string }>;
+    }) as Array<{ value: string; path: string; pointer: string; parent: string; parentProperty: string }>;
 
+    // 3. Iterate over rows and extract fields
     const csvRows = rowNodes.map(rowNode => {
-      // jsonpath-plus returns path as a string (e.g., "$['rows'][0]")
-      // We must regex match the numbers inside brackets to get the indices.
+      // Extract indices from the current row path (e.g. "$['items'][5]" -> [5])
       const pathIndices: Array<number> = [];
       const indexRegex = /\[(\d+)\]/g;
       let match;
-
-      // Extract all integers inside brackets from the path string
       while ((match = indexRegex.exec(rowNode.path)) !== null) {
         pathIndices.push(Number(match[1]));
       }
 
       const csvRow: Record<string, string | number> = {};
-
       jsonParser.fields.forEach(field => {
-        // 3. Resolve the specific path for this column
-        // (This logic remains valid as long as injectIndices accepts number[])
-        const specificPath = this.injectIndices(field.jsonPath, pathIndices);
+        // Resolve the specific path for this column
+        const specificPath = injectIndices(field.jsonPath, pathIndices);
 
-        // Query the single specific value
-        // wrap: false is equivalent to jp.value() (returns the item directly, not an array)
+        // Query the single specific value (returns the item directly, not an array)
         const result = JSONPath({
           path: specificPath,
           json: content,
           wrap: false
         });
 
-        // 4. Format Data (Unchanged)
         if (result === undefined || result === null) {
           csvRow[field.columnName] = '';
         } else {
@@ -118,7 +111,6 @@ export default class JSONToCSVTransformer extends OIBusTransformer {
       return csvRow;
     });
 
-    // 5. Unparse the array of objects
     const outputCSV = csv.unparse(csvRows, {
       header: true,
       delimiter: convertDelimiter(jsonParser.delimiter)
@@ -137,22 +129,6 @@ export default class JSONToCSVTransformer extends OIBusTransformer {
       output: outputCSV,
       metadata
     };
-  }
-
-  /**
-   * Helper: Replaces '*' in a JSONPath with actual indices sequentially.
-   * Example: path="$.vals[*].sub[*]", indices=[0, 5] -> "$.vals[0].sub[5]"
-   */
-  private injectIndices(pathDefinition: string, indices: Array<number>): string {
-    let indexPointer = 0;
-    // Regex matches '[*]' literals
-    return pathDefinition.replace(/\[\*\]/g, () => {
-      // If we run out of indices (parent accessing global), we assume 0 or keep wildcard
-      // But usually, we just take the next available index.
-      const val = indices[indexPointer] !== undefined ? indices[indexPointer] : '*';
-      indexPointer++;
-      return `[${val}]`;
-    });
   }
 
   returnEmpty(filename: string, source: string) {

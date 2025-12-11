@@ -700,7 +700,7 @@ const manifest: SouthConnectorManifest = {
                       {
                         type: 'string-select',
                         key: 'type',
-                        translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time-fields.type',
+                        translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time.type',
                         defaultValue: 'string',
                         selectableValues: ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'],
                         validators: [],
@@ -713,7 +713,7 @@ const manifest: SouthConnectorManifest = {
                       {
                         type: 'timezone',
                         key: 'timezone',
-                        translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time-fields.timezone',
+                        translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time.timezone',
                         defaultValue: 'UTC',
                         validators: [],
                         displayProperties: {
@@ -725,7 +725,7 @@ const manifest: SouthConnectorManifest = {
                       {
                         type: 'string',
                         key: 'format',
-                        translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time-fields.format',
+                        translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time.format',
                         defaultValue: 'yyyy-MM-dd HH:mm:ss',
                         validators: [],
                         displayProperties: {
@@ -828,7 +828,7 @@ const manifest: SouthConnectorManifest = {
                   {
                     type: 'string-select',
                     key: 'dateTimeType',
-                    translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time-fields.type',
+                    translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time.type',
                     defaultValue: 'string',
                     selectableValues: ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'],
                     validators: [
@@ -846,7 +846,7 @@ const manifest: SouthConnectorManifest = {
                   {
                     type: 'timezone',
                     key: 'dateTimeTimezone',
-                    translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time-fields.timezone',
+                    translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time.timezone',
                     defaultValue: 'UTC',
                     validators: [],
                     displayProperties: {
@@ -858,7 +858,7 @@ const manifest: SouthConnectorManifest = {
                   {
                     type: 'string',
                     key: 'dateTimeFormat',
-                    translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time-fields.format',
+                    translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time.format',
                     defaultValue: 'yyyy-MM-dd HH:mm:ss',
                     validators: [],
                     displayProperties: {
@@ -926,7 +926,7 @@ const manifest: SouthConnectorManifest = {
                     {
                       type: 'string-select',
                       key: 'type',
-                      translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time-fields.type',
+                      translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time.type',
                       defaultValue: 'string',
                       selectableValues: ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'],
                       validators: [],
@@ -939,7 +939,7 @@ const manifest: SouthConnectorManifest = {
                     {
                       type: 'timezone',
                       key: 'timezone',
-                      translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time-fields.timezone',
+                      translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time.timezone',
                       defaultValue: 'UTC',
                       validators: [],
                       displayProperties: {
@@ -951,7 +951,7 @@ const manifest: SouthConnectorManifest = {
                     {
                       type: 'string',
                       key: 'format',
-                      translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time-fields.format',
+                      translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time.format',
                       defaultValue: 'yyyy-MM-dd HH:mm:ss',
                       validators: [],
                       displayProperties: {
@@ -967,7 +967,7 @@ const manifest: SouthConnectorManifest = {
             {
               type: 'object',
               key: 'trackingInstant',
-              translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time-fields.date-time-field',
+              translationKey: 'configuration.oibus.manifest.south.items.rest-api.track-max-instant',
               displayProperties: {
                 visible: true,
                 wrapInBox: true
@@ -989,7 +989,7 @@ const manifest: SouthConnectorManifest = {
                 {
                   type: 'boolean',
                   key: 'trackInstant',
-                  translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time-fields.json-path',
+                  translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time.json-path',
                   defaultValue: true,
                   validators: [
                     {
@@ -1006,7 +1006,7 @@ const manifest: SouthConnectorManifest = {
                 {
                   type: 'string',
                   key: 'jsonPath',
-                  translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time-fields.json-path',
+                  translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time.json-path',
                   defaultValue: null,
                   validators: [
                     {
@@ -1050,7 +1050,7 @@ const manifest: SouthConnectorManifest = {
                     {
                       type: 'string-select',
                       key: 'type',
-                      translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time-fields.type',
+                      translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time.type',
                       defaultValue: 'string',
                       selectableValues: ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'],
                       validators: [
@@ -1068,7 +1068,7 @@ const manifest: SouthConnectorManifest = {
                     {
                       type: 'timezone',
                       key: 'timezone',
-                      translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time-fields.timezone',
+                      translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time.timezone',
                       defaultValue: 'UTC',
                       validators: [
                         {
@@ -1085,7 +1085,7 @@ const manifest: SouthConnectorManifest = {
                     {
                       type: 'string',
                       key: 'format',
-                      translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time-fields.format',
+                      translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time.format',
                       defaultValue: 'yyyy-MM-dd HH:mm:ss',
                       validators: [
                         {
@@ -1102,7 +1102,7 @@ const manifest: SouthConnectorManifest = {
                     {
                       type: 'string',
                       key: 'locale',
-                      translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time-fields.locale',
+                      translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time.locale',
                       defaultValue: 'en-En',
                       validators: [
                         {
