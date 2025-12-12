@@ -32,8 +32,8 @@ import {
   SouthPISettings,
   SouthPostgreSQLItemSettings,
   SouthPostgreSQLSettings,
-  SouthRestAPIItemSettings,
-  SouthRestAPISettings,
+  SouthRestItemSettings,
+  SouthRestSettings,
   SouthSFTPItemSettings,
   SouthSFTPSettings,
   SouthSQLiteItemSettings,
@@ -305,7 +305,7 @@ export type HistoryQueryDTO = BaseEntity &
     | HistoryQuerySouthTypedDTO<'oracle', SouthOracleSettings, SouthOracleItemSettings>
     | HistoryQuerySouthTypedDTO<'osisoft-pi', SouthPISettings, SouthPIItemSettings>
     | HistoryQuerySouthTypedDTO<'postgresql', SouthPostgreSQLSettings, SouthPostgreSQLItemSettings>
-    | HistoryQuerySouthTypedDTO<'rest-api', SouthRestAPISettings, SouthRestAPIItemSettings>
+    | HistoryQuerySouthTypedDTO<'rest', SouthRestSettings, SouthRestItemSettings>
     | HistoryQuerySouthTypedDTO<'sftp', SouthSFTPSettings, SouthSFTPItemSettings>
     | HistoryQuerySouthTypedDTO<'sqlite', SouthSQLiteSettings, SouthSQLiteItemSettings>
   ) &
@@ -391,7 +391,7 @@ export type HistoryQueryCommandDTO = HistoryQueryCommandCommonDTO &
     | HistoryQuerySouthCommandTypedDTO<'oracle', SouthOracleSettings, SouthOracleItemSettings>
     | HistoryQuerySouthCommandTypedDTO<'osisoft-pi', SouthPISettings, SouthPIItemSettings>
     | HistoryQuerySouthCommandTypedDTO<'postgresql', SouthPostgreSQLSettings, SouthPostgreSQLItemSettings>
-    | HistoryQuerySouthCommandTypedDTO<'rest-api', SouthRestAPISettings, SouthRestAPIItemSettings>
+    | HistoryQuerySouthCommandTypedDTO<'rest', SouthRestSettings, SouthRestItemSettings>
     | HistoryQuerySouthCommandTypedDTO<'sftp', SouthSFTPSettings, SouthSFTPItemSettings>
     | HistoryQuerySouthCommandTypedDTO<'sqlite', SouthSQLiteSettings, SouthSQLiteItemSettings>
   ) &
@@ -428,7 +428,7 @@ export type HistoryQueryItemDTO =
   | HistoryQueryItemTypedDTO<SouthOracleItemSettings>
   | HistoryQueryItemTypedDTO<SouthPIItemSettings>
   | HistoryQueryItemTypedDTO<SouthPostgreSQLItemSettings>
-  | HistoryQueryItemTypedDTO<SouthRestAPIItemSettings>
+  | HistoryQueryItemTypedDTO<SouthRestItemSettings>
   | HistoryQueryItemTypedDTO<SouthSFTPItemSettings>
   | HistoryQueryItemTypedDTO<SouthSQLiteItemSettings>;
 
@@ -452,7 +452,7 @@ export type HistoryQueryItemCommandDTO =
   | HistoryQueryItemCommandTypedDTO<SouthOracleItemSettings>
   | HistoryQueryItemCommandTypedDTO<SouthPIItemSettings>
   | HistoryQueryItemCommandTypedDTO<SouthPostgreSQLItemSettings>
-  | HistoryQueryItemCommandTypedDTO<SouthRestAPIItemSettings>
+  | HistoryQueryItemCommandTypedDTO<SouthRestItemSettings>
   | HistoryQueryItemCommandTypedDTO<SouthSFTPItemSettings>
   | HistoryQueryItemCommandTypedDTO<SouthSQLiteItemSettings>;
 

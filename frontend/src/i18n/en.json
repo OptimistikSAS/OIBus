@@ -252,7 +252,7 @@
       "mqtt": "MQTT",
       "oianalytics": "OIAnalytics®",
       "opcua": "OPC UA™",
-      "rest": "REST",
+      "rest": "REST API",
       "sftp": "SFTP"
     },
     "oibus-north-type-description": {
@@ -264,7 +264,7 @@
       "mqtt": "Publish to MQTT broker topics",
       "oianalytics": "Send files and values to OIAnalytics®",
       "opcua": "Write data into OPC UA™ server",
-      "rest": "Upload files to a REST endpoint",
+      "rest": "Upload files to a REST API endpoint",
       "sftp": "Upload files and data to an SFTP server"
     },
     "oibus-south-category": {
@@ -289,7 +289,7 @@
       "oracle": "Oracle Database™",
       "osisoft-pi": "OSIsoft PI System™",
       "postgresql": "PostgreSQL",
-      "rest-api": "REST API",
+      "rest": "REST API",
       "sftp": "SFTP",
       "sqlite": "SQLite™"
     },
@@ -309,7 +309,7 @@
       "oracle": "Query data from an Oracle Database™",
       "osisoft-pi": "Establish a connection with an OIBus Agent to access data from a PI System™",
       "postgresql": "Query PostgreSQL databases",
-      "rest-api": "Collect data from REST API endpoints",
+      "rest": "Collect data from REST API endpoints",
       "sftp": "Read files from a remote SFTP server",
       "sqlite": "Query  SQLite™ databases"
     }
@@ -823,32 +823,75 @@
             "key-file-path": "Key file path"
           },
           "rest": {
-            "endpoint": "Endpoint",
-            "test-path": "Test path",
-            "timeout": "Timeout",
-            "auth-type": {
-              "title": "Authentication type",
-              "bearer": "Bearer Auth"
+            "host": "Host",
+            "accept-unauthorized": "Accept unauthorized certificate",
+            "authentication": {
+              "title": "Authentication",
+              "type": {
+                "title": "Type",
+                "none": "None",
+                "basic": "Basic (username/password)",
+                "bearer": "Bearer token",
+                "api-key": "API key"
+              },
+              "username": "Username",
+              "password": "Password",
+              "token": "Bearer token",
+              "api-key": "API key",
+              "api-value": "API value",
+              "add-to": {
+                "title": "Add to",
+                "header": "Header",
+                "query-params": "Query parameters"
+              }
             },
-            "auth": {
-              "title": "Authentication type",
-              "basic": "Basic Auth",
-              "bearer": "Bearer Auth",
-              "bearer-token": "Bearer token",
-              "basic-username": "Username",
-              "basic-password": "Password"
+            "send-as": {
+              "title": "Send payload as",
+              "file": "File (FormData)",
+              "body": "Body (raw)"
             },
-            "query-params": {
-              "query-param": "Query params",
-              "key": "Key",
-              "value": "Value"
+            "test": {
+              "title": "Test configuration",
+              "endpoint": "Test endpoint",
+              "method": {
+                "title": "Test method",
+                "GET": "GET",
+                "POST": "POST",
+                "PUT": "PUT"
+              },
+              "body": "Body (JSON)",
+              "success-code": "Expected success code"
             },
             "proxy": {
-              "title": "Use proxy",
+              "title": "Proxy",
+              "use-proxy": "Use proxy",
               "url": "Proxy URL",
               "username": "Proxy username",
               "password": "Proxy password"
-            }
+            },
+            "timeout": "Request timeout",
+            "method": {
+              "title": "HTTP method",
+              "GET": "GET",
+              "POST": "POST",
+              "PUT": "PUT",
+              "PATCH": "PATCH",
+              "DELETE": "DELETE"
+            },
+            "endpoint": "Endpoint",
+            "query-params": {
+              "title": "Query parameters",
+              "query-param": "Query parameter",
+              "key": "Key",
+              "value": "Value"
+            },
+            "headers": {
+              "title": "Headers",
+              "header": "Header",
+              "key": "HTTP header key name",
+              "value": "HTTP header value"
+            },
+            "success-code": "Expected success code"
           },
           "sftp": {
             "host": "Host",
@@ -1542,7 +1585,7 @@
             "username": "Username",
             "password": "Password"
           },
-          "rest-api": {
+          "rest": {
             "throttling": {
               "title": "Throttling",
               "max-read-interval": "Max read interval",
@@ -1553,21 +1596,25 @@
             "accept-unauthorized": "Accept unauthorized certificate",
             "authentication": {
               "title": "Authentication",
-              "none": "None",
-              "basic": "Basic (username/password)",
-              "bearer": "Bearer token",
-              "api-key": "API key"
+              "type": {
+                "title": "Type",
+                "none": "None",
+                "basic": "Basic (username/password)",
+                "bearer": "Bearer token",
+                "api-key": "API key"
+              },
+              "username": "Username",
+              "password": "Password",
+              "token": "Bearer token",
+              "api-key": "API key",
+              "api-value": "API value",
+              "add-to": {
+                "title": "Add to",
+                "header": "Header",
+                "query-params": "Query parameters"
+              }
             },
-            "username": "Username",
-            "password": "Password",
-            "token": "Bearer token",
-            "api-key": "API key",
-            "api-value": "API value",
-            "add-to": {
-              "title": "Add to",
-              "header": "Header",
-              "query-params": "Query parameters"
-            },
+
             "test": {
               "title": "Test configuration",
               "endpoint": "Test endpoint",
@@ -1580,11 +1627,20 @@
               "body": "Body (JSON)",
               "success-code": "Expected success code"
             },
-            "timeout": "Request timeout",
-            "use-proxy": "Use proxy",
-            "proxy-url": "Proxy URL",
-            "proxy-username": "Proxy username",
-            "proxy-password": "Proxy password"
+            "proxy": {
+              "title": "Proxy",
+              "use-proxy": "Use proxy",
+              "url": "Proxy URL",
+              "username": "Proxy username",
+              "password": "Proxy password"
+            },
+            "success-code": "Expected success code",
+            "send-as": {
+              "title": "Send data as",
+              "body": "HTTP body",
+              "file": "File (form data)"
+            },
+            "timeout": "Request timeout"
           },
           "sftp": {
             "host": "Host",
@@ -2077,7 +2133,7 @@
                 "output-timezone": "Output timezone"
               }
             },
-            "rest-api": {
+            "rest": {
               "method": {
                 "title": "HTTP method",
                 "GET": "GET",

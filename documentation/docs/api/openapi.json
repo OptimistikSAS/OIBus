@@ -1351,7 +1351,7 @@
 					"oracle",
 					"osisoft-pi",
 					"postgresql",
-					"rest-api",
+					"rest",
 					"sftp",
 					"sqlite"
 				],
@@ -5556,7 +5556,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthRestAPISettingsThrottling": {
+			"SouthRestSettingsThrottling": {
 				"properties": {
 					"maxReadInterval": {
 						"type": "number",
@@ -5579,7 +5579,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthRestAPISettingsAuthentication": {
+			"SouthRestSettingsAuthenticationType": {
 				"type": "string",
 				"enum": [
 					"none",
@@ -5588,14 +5588,70 @@
 					"api-key"
 				]
 			},
-			"SouthRestAPISettingsAddTo": {
+			"SouthRestSettingsAuthenticationAddTo": {
 				"type": "string",
 				"enum": [
 					"header",
 					"query-params"
 				]
 			},
-			"SouthRestAPISettingsTestMethod": {
+			"SouthRestSettingsAuthentication": {
+				"properties": {
+					"type": {
+						"$ref": "#/components/schemas/SouthRestSettingsAuthenticationType"
+					},
+					"username": {
+						"type": "string"
+					},
+					"password": {
+						"type": "string",
+						"nullable": true
+					},
+					"token": {
+						"type": "string",
+						"nullable": true
+					},
+					"apiKey": {
+						"type": "string"
+					},
+					"apiValue": {
+						"type": "string",
+						"nullable": true
+					},
+					"addTo": {
+						"$ref": "#/components/schemas/SouthRestSettingsAuthenticationAddTo"
+					}
+				},
+				"required": [
+					"type"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthRestSettingsProxy": {
+				"properties": {
+					"useProxy": {
+						"type": "boolean"
+					},
+					"proxyUrl": {
+						"type": "string"
+					},
+					"proxyUsername": {
+						"type": "string",
+						"nullable": true
+					},
+					"proxyPassword": {
+						"type": "string",
+						"nullable": true
+					}
+				},
+				"required": [
+					"useProxy"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthRestSettingsTestMethod": {
 				"type": "string",
 				"enum": [
 					"GET",
@@ -5603,10 +5659,10 @@
 					"PUT"
 				]
 			},
-			"SouthRestAPISettingsTest": {
+			"SouthRestSettingsTest": {
 				"properties": {
 					"method": {
-						"$ref": "#/components/schemas/SouthRestAPISettingsTestMethod"
+						"$ref": "#/components/schemas/SouthRestSettingsTestMethod"
 					},
 					"endpoint": {
 						"type": "string"
@@ -5628,10 +5684,10 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthRestAPISettings": {
+			"SouthRestSettings": {
 				"properties": {
 					"throttling": {
-						"$ref": "#/components/schemas/SouthRestAPISettingsThrottling"
+						"$ref": "#/components/schemas/SouthRestSettingsThrottling"
 					},
 					"host": {
 						"type": "string"
@@ -5644,44 +5700,13 @@
 						"format": "double"
 					},
 					"authentication": {
-						"$ref": "#/components/schemas/SouthRestAPISettingsAuthentication"
+						"$ref": "#/components/schemas/SouthRestSettingsAuthentication"
 					},
-					"username": {
-						"type": "string"
-					},
-					"password": {
-						"type": "string",
-						"nullable": true
-					},
-					"token": {
-						"type": "string",
-						"nullable": true
-					},
-					"addTo": {
-						"$ref": "#/components/schemas/SouthRestAPISettingsAddTo"
-					},
-					"apiKey": {
-						"type": "string"
-					},
-					"apiValue": {
-						"type": "string",
-						"nullable": true
-					},
-					"useProxy": {
-						"type": "boolean"
-					},
-					"proxyUrl": {
-						"type": "string"
-					},
-					"proxyUsername": {
-						"type": "string"
-					},
-					"proxyPassword": {
-						"type": "string",
-						"nullable": true
+					"proxy": {
+						"$ref": "#/components/schemas/SouthRestSettingsProxy"
 					},
 					"test": {
-						"$ref": "#/components/schemas/SouthRestAPISettingsTest"
+						"$ref": "#/components/schemas/SouthRestSettingsTest"
 					}
 				},
 				"required": [
@@ -5690,13 +5715,13 @@
 					"acceptUnauthorized",
 					"timeout",
 					"authentication",
-					"useProxy",
+					"proxy",
 					"test"
 				],
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthRestAPIItemSettingsMethod": {
+			"SouthRestItemSettingsMethod": {
 				"type": "string",
 				"enum": [
 					"GET",
@@ -5706,14 +5731,14 @@
 					"DELETE"
 				]
 			},
-			"SouthRestAPIItemSettingsReturnType": {
+			"SouthRestItemSettingsReturnType": {
 				"type": "string",
 				"enum": [
 					"file",
 					"body"
 				]
 			},
-			"SouthRestAPIItemSettingsQueryParamsDateTimeInputType": {
+			"SouthRestItemSettingsQueryParamsDateTimeInputType": {
 				"type": "string",
 				"enum": [
 					"string",
@@ -5722,12 +5747,12 @@
 					"unix-epoch-ms"
 				]
 			},
-			"SouthRestAPIItemSettingsQueryParamsDateTimeInput": {
+			"SouthRestItemSettingsQueryParamsDateTimeInput": {
 				"properties": {
 					"type": {
 						"allOf": [
 							{
-								"$ref": "#/components/schemas/SouthRestAPIItemSettingsQueryParamsDateTimeInputType"
+								"$ref": "#/components/schemas/SouthRestItemSettingsQueryParamsDateTimeInputType"
 							}
 						],
 						"nullable": true
@@ -5751,7 +5776,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthRestAPIItemSettingsQueryParams": {
+			"SouthRestItemSettingsQueryParams": {
 				"properties": {
 					"key": {
 						"type": "string"
@@ -5762,7 +5787,7 @@
 					"dateTimeInput": {
 						"allOf": [
 							{
-								"$ref": "#/components/schemas/SouthRestAPIItemSettingsQueryParamsDateTimeInput"
+								"$ref": "#/components/schemas/SouthRestItemSettingsQueryParamsDateTimeInput"
 							}
 						],
 						"nullable": true
@@ -5775,7 +5800,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthRestAPIItemSettingsHeadersDateTimeType": {
+			"SouthRestItemSettingsHeadersDateTimeType": {
 				"type": "string",
 				"enum": [
 					"string",
@@ -5784,7 +5809,7 @@
 					"unix-epoch-ms"
 				]
 			},
-			"SouthRestAPIItemSettingsHeaders": {
+			"SouthRestItemSettingsHeaders": {
 				"properties": {
 					"key": {
 						"type": "string"
@@ -5793,7 +5818,7 @@
 						"type": "string"
 					},
 					"dateTimeType": {
-						"$ref": "#/components/schemas/SouthRestAPIItemSettingsHeadersDateTimeType"
+						"$ref": "#/components/schemas/SouthRestItemSettingsHeadersDateTimeType"
 					},
 					"dateTimeTimezone": {
 						"allOf": [
@@ -5815,7 +5840,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthRestAPIItemSettingsBodyDateTimeInputType": {
+			"SouthRestItemSettingsBodyDateTimeInputType": {
 				"type": "string",
 				"enum": [
 					"string",
@@ -5824,12 +5849,12 @@
 					"unix-epoch-ms"
 				]
 			},
-			"SouthRestAPIItemSettingsBodyDateTimeInput": {
+			"SouthRestItemSettingsBodyDateTimeInput": {
 				"properties": {
 					"type": {
 						"allOf": [
 							{
-								"$ref": "#/components/schemas/SouthRestAPIItemSettingsBodyDateTimeInputType"
+								"$ref": "#/components/schemas/SouthRestItemSettingsBodyDateTimeInputType"
 							}
 						],
 						"nullable": true
@@ -5853,7 +5878,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthRestAPIItemSettingsBody": {
+			"SouthRestItemSettingsBody": {
 				"properties": {
 					"content": {
 						"type": "string",
@@ -5862,7 +5887,7 @@
 					"dateTimeInput": {
 						"allOf": [
 							{
-								"$ref": "#/components/schemas/SouthRestAPIItemSettingsBodyDateTimeInput"
+								"$ref": "#/components/schemas/SouthRestItemSettingsBodyDateTimeInput"
 							}
 						],
 						"nullable": true
@@ -5874,7 +5899,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthRestAPIItemSettingsTrackingInstantDateTimeInputType": {
+			"SouthRestItemSettingsTrackingInstantDateTimeInputType": {
 				"type": "string",
 				"enum": [
 					"string",
@@ -5883,10 +5908,10 @@
 					"unix-epoch-ms"
 				]
 			},
-			"SouthRestAPIItemSettingsTrackingInstantDateTimeInput": {
+			"SouthRestItemSettingsTrackingInstantDateTimeInput": {
 				"properties": {
 					"type": {
-						"$ref": "#/components/schemas/SouthRestAPIItemSettingsTrackingInstantDateTimeInputType"
+						"$ref": "#/components/schemas/SouthRestItemSettingsTrackingInstantDateTimeInputType"
 					},
 					"timezone": {
 						"$ref": "#/components/schemas/Timezone"
@@ -5904,7 +5929,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthRestAPIItemSettingsTrackingInstant": {
+			"SouthRestItemSettingsTrackingInstant": {
 				"properties": {
 					"trackInstant": {
 						"type": "boolean"
@@ -5915,7 +5940,7 @@
 					"dateTimeInput": {
 						"allOf": [
 							{
-								"$ref": "#/components/schemas/SouthRestAPIItemSettingsTrackingInstantDateTimeInput"
+								"$ref": "#/components/schemas/SouthRestItemSettingsTrackingInstantDateTimeInput"
 							}
 						],
 						"nullable": true
@@ -5927,33 +5952,33 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthRestAPIItemSettings": {
+			"SouthRestItemSettings": {
 				"properties": {
 					"method": {
-						"$ref": "#/components/schemas/SouthRestAPIItemSettingsMethod"
+						"$ref": "#/components/schemas/SouthRestItemSettingsMethod"
 					},
 					"endpoint": {
 						"type": "string"
 					},
 					"returnType": {
-						"$ref": "#/components/schemas/SouthRestAPIItemSettingsReturnType"
+						"$ref": "#/components/schemas/SouthRestItemSettingsReturnType"
 					},
 					"queryParams": {
 						"items": {
-							"$ref": "#/components/schemas/SouthRestAPIItemSettingsQueryParams"
+							"$ref": "#/components/schemas/SouthRestItemSettingsQueryParams"
 						},
 						"type": "array"
 					},
 					"headers": {
 						"items": {
-							"$ref": "#/components/schemas/SouthRestAPIItemSettingsHeaders"
+							"$ref": "#/components/schemas/SouthRestItemSettingsHeaders"
 						},
 						"type": "array"
 					},
 					"body": {
 						"allOf": [
 							{
-								"$ref": "#/components/schemas/SouthRestAPIItemSettingsBody"
+								"$ref": "#/components/schemas/SouthRestItemSettingsBody"
 							}
 						],
 						"nullable": true
@@ -5961,7 +5986,7 @@
 					"trackingInstant": {
 						"allOf": [
 							{
-								"$ref": "#/components/schemas/SouthRestAPIItemSettingsTrackingInstant"
+								"$ref": "#/components/schemas/SouthRestItemSettingsTrackingInstant"
 							}
 						],
 						"nullable": true
@@ -5977,7 +6002,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthConnectorItemTypedDTO_SouthRestAPIItemSettings_": {
+			"SouthConnectorItemTypedDTO_SouthRestItemSettings_": {
 				"properties": {
 					"id": {
 						"type": "string",
@@ -6005,7 +6030,7 @@
 						"example": true
 					},
 					"settings": {
-						"$ref": "#/components/schemas/SouthRestAPIItemSettings",
+						"$ref": "#/components/schemas/SouthRestItemSettings",
 						"description": "Item-specific settings for data collection."
 					},
 					"scanMode": {
@@ -6023,7 +6048,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthConnectorTypedDTO_rest-api.SouthRestAPISettings.SouthRestAPIItemSettings_": {
+			"SouthConnectorTypedDTO_rest.SouthRestSettings.SouthRestItemSettings_": {
 				"properties": {
 					"id": {
 						"type": "string",
@@ -6048,7 +6073,7 @@
 					"type": {
 						"type": "string",
 						"enum": [
-							"rest-api"
+							"rest"
 						],
 						"nullable": false,
 						"description": "The type of the South connector.",
@@ -6065,12 +6090,12 @@
 						"example": true
 					},
 					"settings": {
-						"$ref": "#/components/schemas/SouthRestAPISettings",
+						"$ref": "#/components/schemas/SouthRestSettings",
 						"description": "Configuration settings specific to this South connector type."
 					},
 					"items": {
 						"items": {
-							"$ref": "#/components/schemas/SouthConnectorItemTypedDTO_SouthRestAPIItemSettings_"
+							"$ref": "#/components/schemas/SouthConnectorItemTypedDTO_SouthRestItemSettings_"
 						},
 						"type": "array",
 						"description": "List of items (data points) configured for this connector."
@@ -6586,7 +6611,7 @@
 						"$ref": "#/components/schemas/SouthConnectorTypedDTO_postgresql.SouthPostgreSQLSettings.SouthPostgreSQLItemSettings_"
 					},
 					{
-						"$ref": "#/components/schemas/SouthConnectorTypedDTO_rest-api.SouthRestAPISettings.SouthRestAPIItemSettings_"
+						"$ref": "#/components/schemas/SouthConnectorTypedDTO_rest.SouthRestSettings.SouthRestItemSettings_"
 					},
 					{
 						"$ref": "#/components/schemas/SouthConnectorTypedDTO_sftp.SouthSFTPSettings.SouthSFTPItemSettings_"
@@ -8022,7 +8047,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthConnectorItemCommandTypedDTO_SouthRestAPIItemSettings_": {
+			"SouthConnectorItemCommandTypedDTO_SouthRestItemSettings_": {
 				"properties": {
 					"id": {
 						"type": "string",
@@ -8041,7 +8066,7 @@
 						"example": "Temperature Logs"
 					},
 					"settings": {
-						"$ref": "#/components/schemas/SouthRestAPIItemSettings",
+						"$ref": "#/components/schemas/SouthRestItemSettings",
 						"description": "Item-specific settings for data collection."
 					},
 					"scanModeId": {
@@ -8068,7 +8093,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthConnectorCommandTypedDTO_rest-api.SouthRestAPISettings.SouthRestAPIItemSettings_": {
+			"SouthConnectorCommandTypedDTO_rest.SouthRestSettings.SouthRestItemSettings_": {
 				"properties": {
 					"name": {
 						"type": "string",
@@ -8078,7 +8103,7 @@
 					"type": {
 						"type": "string",
 						"enum": [
-							"rest-api"
+							"rest"
 						],
 						"nullable": false,
 						"description": "The type of the South connector.",
@@ -8095,12 +8120,12 @@
 						"example": true
 					},
 					"settings": {
-						"$ref": "#/components/schemas/SouthRestAPISettings",
+						"$ref": "#/components/schemas/SouthRestSettings",
 						"description": "Configuration settings specific to this South connector type."
 					},
 					"items": {
 						"items": {
-							"$ref": "#/components/schemas/SouthConnectorItemCommandTypedDTO_SouthRestAPIItemSettings_"
+							"$ref": "#/components/schemas/SouthConnectorItemCommandTypedDTO_SouthRestItemSettings_"
 						},
 						"type": "array",
 						"description": "List of items (data points) to configure for this connector."
@@ -8355,7 +8380,7 @@
 						"$ref": "#/components/schemas/SouthConnectorCommandTypedDTO_postgresql.SouthPostgreSQLSettings.SouthPostgreSQLItemSettings_"
 					},
 					{
-						"$ref": "#/components/schemas/SouthConnectorCommandTypedDTO_rest-api.SouthRestAPISettings.SouthRestAPIItemSettings_"
+						"$ref": "#/components/schemas/SouthConnectorCommandTypedDTO_rest.SouthRestSettings.SouthRestItemSettings_"
 					},
 					{
 						"$ref": "#/components/schemas/SouthConnectorCommandTypedDTO_sftp.SouthSFTPSettings.SouthSFTPItemSettings_"
@@ -8414,7 +8439,7 @@
 						"$ref": "#/components/schemas/SouthPostgreSQLSettings"
 					},
 					{
-						"$ref": "#/components/schemas/SouthRestAPISettings"
+						"$ref": "#/components/schemas/SouthRestSettings"
 					},
 					{
 						"$ref": "#/components/schemas/SouthSFTPSettings"
@@ -8656,7 +8681,7 @@
 						"$ref": "#/components/schemas/SouthPostgreSQLItemSettings"
 					},
 					{
-						"$ref": "#/components/schemas/SouthRestAPIItemSettings"
+						"$ref": "#/components/schemas/SouthRestItemSettings"
 					},
 					{
 						"$ref": "#/components/schemas/SouthSFTPItemSettings"
@@ -8762,7 +8787,7 @@
 						"$ref": "#/components/schemas/SouthConnectorItemTypedDTO_SouthPostgreSQLItemSettings_"
 					},
 					{
-						"$ref": "#/components/schemas/SouthConnectorItemTypedDTO_SouthRestAPIItemSettings_"
+						"$ref": "#/components/schemas/SouthConnectorItemTypedDTO_SouthRestItemSettings_"
 					},
 					{
 						"$ref": "#/components/schemas/SouthConnectorItemTypedDTO_SouthSFTPItemSettings_"
@@ -8866,7 +8891,7 @@
 						"$ref": "#/components/schemas/SouthConnectorItemCommandTypedDTO_SouthPostgreSQLItemSettings_"
 					},
 					{
-						"$ref": "#/components/schemas/SouthConnectorItemCommandTypedDTO_SouthRestAPIItemSettings_"
+						"$ref": "#/components/schemas/SouthConnectorItemCommandTypedDTO_SouthRestItemSettings_"
 					},
 					{
 						"$ref": "#/components/schemas/SouthConnectorItemCommandTypedDTO_SouthSFTPItemSettings_"
@@ -13460,12 +13485,92 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"NorthRESTSettingsAuthType": {
+			"NorthRESTSettingsMethod": {
 				"type": "string",
 				"enum": [
-					"basic",
-					"bearer"
+					"POST",
+					"PUT",
+					"PATCH"
 				]
+			},
+			"NorthRESTSettingsSendAs": {
+				"type": "string",
+				"enum": [
+					"file",
+					"body"
+				]
+			},
+			"NorthRESTSettingsAuthenticationType": {
+				"type": "string",
+				"enum": [
+					"none",
+					"basic",
+					"bearer",
+					"api-key"
+				]
+			},
+			"NorthRESTSettingsAuthenticationAddTo": {
+				"type": "string",
+				"enum": [
+					"header",
+					"query-params"
+				]
+			},
+			"NorthRESTSettingsAuthentication": {
+				"properties": {
+					"type": {
+						"$ref": "#/components/schemas/NorthRESTSettingsAuthenticationType"
+					},
+					"username": {
+						"type": "string"
+					},
+					"password": {
+						"type": "string",
+						"nullable": true
+					},
+					"token": {
+						"type": "string",
+						"nullable": true
+					},
+					"apiKey": {
+						"type": "string"
+					},
+					"apiValue": {
+						"type": "string",
+						"nullable": true
+					},
+					"addTo": {
+						"$ref": "#/components/schemas/NorthRESTSettingsAuthenticationAddTo"
+					}
+				},
+				"required": [
+					"type"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"NorthRESTSettingsProxy": {
+				"properties": {
+					"useProxy": {
+						"type": "boolean"
+					},
+					"proxyUrl": {
+						"type": "string"
+					},
+					"proxyUsername": {
+						"type": "string",
+						"nullable": true
+					},
+					"proxyPassword": {
+						"type": "string",
+						"nullable": true
+					}
+				},
+				"required": [
+					"useProxy"
+				],
+				"type": "object",
+				"additionalProperties": false
 			},
 			"NorthRESTSettingsQueryParams": {
 				"properties": {
@@ -13483,6 +13588,55 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"NorthRESTSettingsHeaders": {
+				"properties": {
+					"key": {
+						"type": "string"
+					},
+					"value": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"key",
+					"value"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"NorthRESTSettingsTestTestMethod": {
+				"type": "string",
+				"enum": [
+					"GET",
+					"POST",
+					"PUT"
+				]
+			},
+			"NorthRESTSettingsTest": {
+				"properties": {
+					"testMethod": {
+						"$ref": "#/components/schemas/NorthRESTSettingsTestTestMethod"
+					},
+					"testEndpoint": {
+						"type": "string"
+					},
+					"body": {
+						"type": "string",
+						"nullable": true
+					},
+					"testSuccessCode": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"testMethod",
+					"testEndpoint",
+					"testSuccessCode"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"NorthRESTSettings": {
 				"properties": {
 					"host": {
@@ -13491,61 +13645,58 @@
 					"acceptUnauthorized": {
 						"type": "boolean"
 					},
-					"endpoint": {
-						"type": "string"
+					"method": {
+						"$ref": "#/components/schemas/NorthRESTSettingsMethod"
 					},
-					"testPath": {
+					"endpoint": {
 						"type": "string"
 					},
 					"timeout": {
 						"type": "number",
 						"format": "double"
 					},
-					"authType": {
-						"$ref": "#/components/schemas/NorthRESTSettingsAuthType"
+					"sendAs": {
+						"$ref": "#/components/schemas/NorthRESTSettingsSendAs"
 					},
-					"bearerAuthToken": {
-						"type": "string",
-						"nullable": true
+					"successCode": {
+						"type": "number",
+						"format": "double"
 					},
-					"basicAuthUsername": {
-						"type": "string"
+					"authentication": {
+						"$ref": "#/components/schemas/NorthRESTSettingsAuthentication"
 					},
-					"basicAuthPassword": {
-						"type": "string",
-						"nullable": true
+					"proxy": {
+						"$ref": "#/components/schemas/NorthRESTSettingsProxy"
 					},
 					"queryParams": {
 						"items": {
 							"$ref": "#/components/schemas/NorthRESTSettingsQueryParams"
 						},
-						"type": "array",
-						"nullable": true
+						"type": "array"
 					},
-					"useProxy": {
-						"type": "boolean"
+					"headers": {
+						"items": {
+							"$ref": "#/components/schemas/NorthRESTSettingsHeaders"
+						},
+						"type": "array"
 					},
-					"proxyUrl": {
-						"type": "string"
-					},
-					"proxyUsername": {
-						"type": "string",
-						"nullable": true
-					},
-					"proxyPassword": {
-						"type": "string",
-						"nullable": true
+					"test": {
+						"$ref": "#/components/schemas/NorthRESTSettingsTest"
 					}
 				},
 				"required": [
 					"host",
 					"acceptUnauthorized",
+					"method",
 					"endpoint",
-					"testPath",
 					"timeout",
-					"authType",
+					"sendAs",
+					"successCode",
+					"authentication",
+					"proxy",
 					"queryParams",
-					"useProxy"
+					"headers",
+					"test"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -15338,7 +15489,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"HistoryQueryItemCommandTypedDTO_SouthRestAPIItemSettings_": {
+			"HistoryQueryItemCommandTypedDTO_SouthRestItemSettings_": {
 				"properties": {
 					"id": {
 						"type": "string",
@@ -15351,7 +15502,7 @@
 						"type": "boolean"
 					},
 					"settings": {
-						"$ref": "#/components/schemas/SouthRestAPIItemSettings"
+						"$ref": "#/components/schemas/SouthRestItemSettings"
 					}
 				},
 				"required": [
@@ -15363,21 +15514,21 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"HistoryQuerySouthCommandTypedDTO_rest-api.SouthRestAPISettings.SouthRestAPIItemSettings_": {
+			"HistoryQuerySouthCommandTypedDTO_rest.SouthRestSettings.SouthRestItemSettings_": {
 				"properties": {
 					"southType": {
 						"type": "string",
 						"enum": [
-							"rest-api"
+							"rest"
 						],
 						"nullable": false
 					},
 					"southSettings": {
-						"$ref": "#/components/schemas/SouthRestAPISettings"
+						"$ref": "#/components/schemas/SouthRestSettings"
 					},
 					"items": {
 						"items": {
-							"$ref": "#/components/schemas/HistoryQueryItemCommandTypedDTO_SouthRestAPIItemSettings_"
+							"$ref": "#/components/schemas/HistoryQueryItemCommandTypedDTO_SouthRestItemSettings_"
 						},
 						"type": "array"
 					}
@@ -15747,7 +15898,7 @@
 								"$ref": "#/components/schemas/HistoryQuerySouthCommandTypedDTO_postgresql.SouthPostgreSQLSettings.SouthPostgreSQLItemSettings_"
 							},
 							{
-								"$ref": "#/components/schemas/HistoryQuerySouthCommandTypedDTO_rest-api.SouthRestAPISettings.SouthRestAPIItemSettings_"
+								"$ref": "#/components/schemas/HistoryQuerySouthCommandTypedDTO_rest.SouthRestSettings.SouthRestItemSettings_"
 							},
 							{
 								"$ref": "#/components/schemas/HistoryQuerySouthCommandTypedDTO_sftp.SouthSFTPSettings.SouthSFTPItemSettings_"
@@ -16261,7 +16412,7 @@
 						"$ref": "#/components/schemas/HistoryQueryItemCommandTypedDTO_SouthPostgreSQLItemSettings_"
 					},
 					{
-						"$ref": "#/components/schemas/HistoryQueryItemCommandTypedDTO_SouthRestAPIItemSettings_"
+						"$ref": "#/components/schemas/HistoryQueryItemCommandTypedDTO_SouthRestItemSettings_"
 					},
 					{
 						"$ref": "#/components/schemas/HistoryQueryItemCommandTypedDTO_SouthSFTPItemSettings_"
@@ -16844,12 +16995,12 @@
 					"mqtt",
 					"modbus",
 					"oianalytics",
+					"rest",
 					"sftp",
 					"aws-s3",
 					"azure-blob",
 					"console",
-					"file-writer",
-					"rest"
+					"file-writer"
 				],
 				"description": "Type representing the possible types for a North connector."
 			},
@@ -20444,7 +20595,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"HistoryQueryItemTypedDTO_SouthRestAPIItemSettings_": {
+			"HistoryQueryItemTypedDTO_SouthRestItemSettings_": {
 				"properties": {
 					"id": {
 						"type": "string",
@@ -20468,7 +20619,7 @@
 						"type": "boolean"
 					},
 					"settings": {
-						"$ref": "#/components/schemas/SouthRestAPIItemSettings"
+						"$ref": "#/components/schemas/SouthRestItemSettings"
 					}
 				},
 				"required": [
@@ -20480,21 +20631,21 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"HistoryQuerySouthTypedDTO_rest-api.SouthRestAPISettings.SouthRestAPIItemSettings_": {
+			"HistoryQuerySouthTypedDTO_rest.SouthRestSettings.SouthRestItemSettings_": {
 				"properties": {
 					"southType": {
 						"type": "string",
 						"enum": [
-							"rest-api"
+							"rest"
 						],
 						"nullable": false
 					},
 					"southSettings": {
-						"$ref": "#/components/schemas/SouthRestAPISettings"
+						"$ref": "#/components/schemas/SouthRestSettings"
 					},
 					"items": {
 						"items": {
-							"$ref": "#/components/schemas/HistoryQueryItemTypedDTO_SouthRestAPIItemSettings_"
+							"$ref": "#/components/schemas/HistoryQueryItemTypedDTO_SouthRestItemSettings_"
 						},
 						"type": "array"
 					}
@@ -20889,7 +21040,7 @@
 								"$ref": "#/components/schemas/HistoryQuerySouthTypedDTO_postgresql.SouthPostgreSQLSettings.SouthPostgreSQLItemSettings_"
 							},
 							{
-								"$ref": "#/components/schemas/HistoryQuerySouthTypedDTO_rest-api.SouthRestAPISettings.SouthRestAPIItemSettings_"
+								"$ref": "#/components/schemas/HistoryQuerySouthTypedDTO_rest.SouthRestSettings.SouthRestItemSettings_"
 							},
 							{
 								"$ref": "#/components/schemas/HistoryQuerySouthTypedDTO_sftp.SouthSFTPSettings.SouthSFTPItemSettings_"
@@ -21028,7 +21179,7 @@
 						"$ref": "#/components/schemas/HistoryQueryItemTypedDTO_SouthPostgreSQLItemSettings_"
 					},
 					{
-						"$ref": "#/components/schemas/HistoryQueryItemTypedDTO_SouthRestAPIItemSettings_"
+						"$ref": "#/components/schemas/HistoryQueryItemTypedDTO_SouthRestItemSettings_"
 					},
 					{
 						"$ref": "#/components/schemas/HistoryQueryItemTypedDTO_SouthSFTPItemSettings_"
