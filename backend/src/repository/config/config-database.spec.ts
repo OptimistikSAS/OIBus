@@ -78,6 +78,11 @@ import OIBusSetpointToMQTTTransformer from '../../service/transformers/setpoint/
 import OIBusSetpointToOPCUATransformer from '../../service/transformers/setpoint/oibus-setpoint-to-opcua-transformer';
 import { TransformerDTO } from '../../../shared/model/transformer.model';
 import OIBusTimeValuesToOIAnalyticsTransformer from '../../service/transformers/time-values/oibus-time-values-to-oianalytics-transformer';
+import JSONToTimeValuesTransformer from '../../service/transformers/any/json-to-time-values-transformer';
+import JSONToCSVTransformer from '../../service/transformers/any/json-to-csv-transformer';
+import JSONToMQTTTransformer from '../../service/transformers/any/json-to-mqtt-transformer';
+import CSVToMQTTTransformer from '../../service/transformers/any/csv-to-mqtt-transformer';
+import CSVToTimeValuesTransformer from '../../service/transformers/any/csv-to-time-values-transformer';
 
 jest.mock('../../service/utils');
 jest.mock('argon2');
@@ -123,88 +128,123 @@ describe('Repository with populated database', () => {
   describe('Transformer', () => {
     const standardTransformers: Array<StandardTransformer> = [
       {
-        id: 'standardTransformer0',
+        id: 'csvToMqtt',
+        inputType: 'any',
+        functionName: CSVToMQTTTransformer.transformerName,
+        outputType: 'mqtt',
+        type: 'standard'
+      },
+      {
+        id: 'csvToTimeValues',
+        inputType: 'any',
+        functionName: CSVToTimeValuesTransformer.transformerName,
+        outputType: 'time-values',
+        type: 'standard'
+      },
+      {
+        id: 'ignore',
         type: 'standard',
         functionName: IgnoreTransformer.transformerName,
         inputType: 'any',
         outputType: 'any'
       },
       {
-        id: 'standardTransformer1',
+        id: 'iso',
         type: 'standard',
         functionName: IsoTransformer.transformerName,
         inputType: 'any',
         outputType: 'any'
       },
       {
-        id: 'standardTransformer2',
+        id: 'jsonToCsv',
+        inputType: 'any',
+        functionName: JSONToCSVTransformer.transformerName,
+        outputType: 'any',
+        type: 'standard'
+      },
+      {
+        id: 'jsonToMqtt',
+        inputType: 'any',
+        functionName: JSONToMQTTTransformer.transformerName,
+        outputType: 'mqtt',
+        type: 'standard'
+      },
+      {
+        id: 'jsonTimeValues',
+        inputType: 'any',
+        functionName: JSONToTimeValuesTransformer.transformerName,
+        outputType: 'time-values',
+        type: 'standard'
+      },
+      {
+        id: 'oibusTimeValuesToCsv',
         type: 'standard',
         functionName: OIBusTimeValuesToCsvTransformer.transformerName,
         inputType: 'time-values',
         outputType: 'any'
       },
       {
-        id: 'standardTransformer3',
+        id: 'oibusTimeValuesToJson',
         type: 'standard',
         functionName: OIBusTimeValuesToJSONTransformer.transformerName,
         inputType: 'time-values',
         outputType: 'any'
       },
       {
-        id: 'standardTransformer4',
-        inputType: 'time-values',
-        functionName: OIBusTimeValuesToMQTTTransformer.transformerName,
-        outputType: 'mqtt',
-        type: 'standard'
-      },
-      {
-        id: 'standardTransformer5',
-        inputType: 'time-values',
-        functionName: OIBusTimeValuesToOPCUATransformer.transformerName,
-        outputType: 'opcua',
-        type: 'standard'
-      },
-      {
-        id: 'standardTransformer6',
+        id: 'oibusTimeValuesToModbus',
         inputType: 'time-values',
         functionName: OIBusTimeValuesToModbusTransformer.transformerName,
         outputType: 'modbus',
         type: 'standard'
       },
       {
-        id: 'standardTransformer7',
+        id: 'oibusTimeValuesToMqtt',
+        inputType: 'time-values',
+        functionName: OIBusTimeValuesToMQTTTransformer.transformerName,
+        outputType: 'mqtt',
+        type: 'standard'
+      },
+      {
+        id: 'oibusTimeValuesToOia',
+        inputType: 'time-values',
+        functionName: OIBusTimeValuesToOIAnalyticsTransformer.transformerName,
+        outputType: 'oianalytics',
+        type: 'standard'
+      },
+      {
+        id: 'oibusTimeValuesToOpcua',
+        inputType: 'time-values',
+        functionName: OIBusTimeValuesToOPCUATransformer.transformerName,
+        outputType: 'opcua',
+        type: 'standard'
+      },
+      {
+        id: 'oibusSetpointToModbus',
         inputType: 'setpoint',
         functionName: OIBusSetpointToModbusTransformer.transformerName,
         outputType: 'modbus',
         type: 'standard'
       },
       {
-        id: 'standardTransformer8',
-        inputType: 'setpoint',
-        functionName: OIBusSetpointToOPCUATransformer.transformerName,
-        outputType: 'opcua',
-        type: 'standard'
-      },
-      {
-        id: 'standardTransformer9',
+        id: 'oibusSetpointToMqtt',
         inputType: 'setpoint',
         functionName: OIBusSetpointToMQTTTransformer.transformerName,
         outputType: 'mqtt',
         type: 'standard'
       },
       {
-        id: 'standardTransformer10',
-        inputType: 'time-values',
-        functionName: OIBusTimeValuesToOIAnalyticsTransformer.transformerName,
-        outputType: 'oianalytics',
+        id: 'oibusSetpointToOpcua',
+        inputType: 'setpoint',
+        functionName: OIBusSetpointToOPCUATransformer.transformerName,
+        outputType: 'opcua',
         type: 'standard'
       }
     ];
     let repository: TransformerRepository;
 
     beforeAll(() => {
-      for (let i = 0; i < standardTransformers.length; i++) {
-        (generateRandomId as jest.Mock).mockReturnValueOnce('standardTransformer' + i);
+      for (const element of standardTransformers) {
+        (generateRandomId as jest.Mock).mockReturnValueOnce(element.id);
       }
     });
 

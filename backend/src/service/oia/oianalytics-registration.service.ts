@@ -12,6 +12,7 @@ import crypto from 'node:crypto';
 import OIAnalyticsClient from './oianalytics-client.service';
 import { EventEmitter } from 'node:events';
 import { NotFoundError } from '../../model/types';
+import { testOIAnalyticsConnection } from './oianalytics.utils';
 
 const CHECK_REGISTRATION_INTERVAL = 10_000;
 export default class OIAnalyticsRegistrationService {
@@ -136,6 +137,46 @@ export default class OIAnalyticsRegistrationService {
 
   async updateKeys(privateKey: string, publicKey: string): Promise<void> {
     this.oIAnalyticsRegistrationRepository.updateKeys(await encryptionService.encryptText(privateKey), publicKey);
+  }
+
+  async testConnection(command: RegistrationSettingsCommandDTO): Promise<void> {
+    await this.validator.validate(registrationSchema, command);
+
+    const currentRegistration = this.oIAnalyticsRegistrationRepository.get()!;
+
+    // Prepare proxy password - use existing if not provided
+    let proxyPassword = command.proxyPassword;
+    if (!proxyPassword) {
+      proxyPassword = currentRegistration.proxyPassword;
+    } else {
+      proxyPassword = await encryptionService.encryptText(command.proxyPassword);
+    }
+
+    // Determine auth settings based on registration status
+    let auth: { type: 'bearer'; token: string } | undefined;
+    let accept401AsSuccess = false;
+
+    if (currentRegistration.status === 'REGISTERED' && currentRegistration.token) {
+      // When already registered, use the token for authentication
+      auth = { type: 'bearer', token: currentRegistration.token };
+    } else {
+      // When registering for the first time (PENDING status), accept 401 as success
+      // because the token hasn't been retrieved yet
+      accept401AsSuccess = true;
+    }
+
+    // Test the connection with the provided settings
+    await testOIAnalyticsConnection({
+      host: command.host,
+      timeout: 30, // Default timeout for test
+      acceptUnauthorized: command.acceptUnauthorized,
+      useProxy: command.useProxy,
+      proxyUrl: command.proxyUrl,
+      proxyUsername: command.proxyUsername,
+      proxyPassword: proxyPassword,
+      auth,
+      accept401AsSuccess
+    });
   }
 
   unregister(): void {

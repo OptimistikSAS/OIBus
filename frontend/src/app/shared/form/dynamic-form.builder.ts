@@ -67,13 +67,13 @@ export function addEnablingConditions(form: FormGroup, enablingConditions: Array
       throw new Error('wrong configuration in manifest');
     }
 
-    if (condition.values.includes(referenceControl.value)) {
+    if (checkCondition(referenceControl.value, condition)) {
       targetControl.enable();
     } else {
       targetControl.disable();
     }
     referenceControl.valueChanges.subscribe(newValue => {
-      if (condition.values.includes(newValue)) {
+      if (checkCondition(newValue, condition)) {
         targetControl.enable();
       } else {
         targetControl.disable();
@@ -81,6 +81,20 @@ export function addEnablingConditions(form: FormGroup, enablingConditions: Array
     });
   });
 }
+
+const checkCondition = (value: any, condition: OIBusEnablingCondition): boolean => {
+  const operator = condition.operator || 'EQUALS';
+  if (operator === 'CONTAINS') {
+    // For CONTAINS, check if the reference value (string) contains any of the condition values
+    if (typeof value === 'string') {
+      return condition.values.some(conditionValue => value.includes(String(conditionValue)));
+    }
+    return false;
+  } else {
+    // Default EQUALS behavior
+    return condition.values.includes(value);
+  }
+};
 
 function buildValidators(validators: Array<OIBusAttributeValidator>): Array<ValidatorFn> {
   return validators.map(validator => {
