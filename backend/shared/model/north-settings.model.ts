@@ -40,8 +40,20 @@ export const NORTH_O_P_C_U_A_SETTINGS_SECURITY_POLICYS = [
 ] as const;
 export type NorthOPCUASettingsSecurityPolicy = (typeof NORTH_O_P_C_U_A_SETTINGS_SECURITY_POLICYS)[number];
 
-export const NORTH_R_E_S_T_SETTINGS_AUTH_TYPES = ['basic', 'bearer'] as const;
-export type NorthRESTSettingsAuthType = (typeof NORTH_R_E_S_T_SETTINGS_AUTH_TYPES)[number];
+export const NORTH_R_E_S_T_SETTINGS_AUTHENTICATION_TYPES = ['none', 'basic', 'bearer', 'api-key'] as const;
+export type NorthRESTSettingsAuthenticationType = (typeof NORTH_R_E_S_T_SETTINGS_AUTHENTICATION_TYPES)[number];
+
+export const NORTH_R_E_S_T_SETTINGS_AUTHENTICATION_ADD_TOS = ['header', 'query-params'] as const;
+export type NorthRESTSettingsAuthenticationAddTo = (typeof NORTH_R_E_S_T_SETTINGS_AUTHENTICATION_ADD_TOS)[number];
+
+export const NORTH_R_E_S_T_SETTINGS_TEST_TEST_METHODS = ['GET', 'POST', 'PUT'] as const;
+export type NorthRESTSettingsTestTestMethod = (typeof NORTH_R_E_S_T_SETTINGS_TEST_TEST_METHODS)[number];
+
+export const NORTH_R_E_S_T_SETTINGS_METHODS = ['POST', 'PUT', 'PATCH'] as const;
+export type NorthRESTSettingsMethod = (typeof NORTH_R_E_S_T_SETTINGS_METHODS)[number];
+
+export const NORTH_R_E_S_T_SETTINGS_SEND_ASS = ['body', 'file'] as const;
+export type NorthRESTSettingsSendAs = (typeof NORTH_R_E_S_T_SETTINGS_SEND_ASS)[number];
 
 export const NORTH_S_F_T_P_SETTINGS_AUTHENTICATIONS = ['password', 'private-key'] as const;
 export type NorthSFTPSettingsAuthentication = (typeof NORTH_S_F_T_P_SETTINGS_AUTHENTICATIONS)[number];
@@ -80,9 +92,38 @@ export interface NorthOPCUASettingsAuthentication {
   keyFilePath?: string;
 }
 
+export interface NorthRESTSettingsAuthentication {
+  type: NorthRESTSettingsAuthenticationType;
+  username?: string;
+  password?: string | null;
+  token?: string | null;
+  apiKey?: string;
+  apiValue?: string | null;
+  addTo?: NorthRESTSettingsAuthenticationAddTo;
+}
+
+export interface NorthRESTSettingsProxy {
+  useProxy: boolean;
+  proxyUrl?: string;
+  proxyUsername?: string | null;
+  proxyPassword?: string | null;
+}
+
 export interface NorthRESTSettingsQueryParams {
   key: string;
   value: string;
+}
+
+export interface NorthRESTSettingsHeaders {
+  key: string;
+  value: string;
+}
+
+export interface NorthRESTSettingsTest {
+  testMethod: NorthRESTSettingsTestTestMethod;
+  testEndpoint: string;
+  body?: string | null;
+  testSuccessCode: number;
 }
 
 export interface NorthAmazonS3Settings {
@@ -167,18 +208,16 @@ export interface NorthOPCUASettings {
 export interface NorthRESTSettings {
   host: string;
   acceptUnauthorized: boolean;
+  method: NorthRESTSettingsMethod;
   endpoint: string;
-  testPath: string;
   timeout: number;
-  authType: NorthRESTSettingsAuthType;
-  bearerAuthToken?: string | null;
-  basicAuthUsername?: string;
-  basicAuthPassword?: string | null;
-  queryParams: Array<NorthRESTSettingsQueryParams> | null;
-  useProxy: boolean;
-  proxyUrl?: string;
-  proxyUsername?: string | null;
-  proxyPassword?: string | null;
+  sendAs: NorthRESTSettingsSendAs;
+  successCode: number;
+  authentication: NorthRESTSettingsAuthentication;
+  proxy: NorthRESTSettingsProxy;
+  queryParams: Array<NorthRESTSettingsQueryParams>;
+  headers: Array<NorthRESTSettingsHeaders>;
+  test: NorthRESTSettingsTest;
 }
 
 export interface NorthSFTPSettings {

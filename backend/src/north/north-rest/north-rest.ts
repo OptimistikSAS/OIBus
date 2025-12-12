@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { createReadStream } from 'node:fs';
+import { createReadStream, ReadStream } from 'node:fs';
 
 import NorthConnector from '../north-connector';
 import pino from 'pino';
@@ -10,8 +10,17 @@ import { filesExists } from '../../service/utils';
 import FormData from 'form-data';
 import { URL } from 'node:url';
 import { OIBusError } from '../../model/engine.model';
-import { HTTPRequest, ReqAuthOptions, ReqProxyOptions, ReqResponse, retryableHttpStatusCodes } from '../../service/http-request.utils';
+import {
+  HTTPRequest,
+  ReqAuthOptions,
+  ReqOptions,
+  ReqProxyOptions,
+  ReqResponse,
+  retryableHttpStatusCodes
+} from '../../service/http-request.utils';
 import CacheService from '../../service/cache/cache.service';
+import { encryptionService } from '../../service/encryption.service';
+import { UndiciHeaders } from 'undici/types/dispatcher';
 
 /**
  * Class Console - display values and file path into the console
@@ -41,6 +50,8 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
    * Handle the file by sending it over to the specified endpoint
    */
   async handleFile(filePath: string): Promise<void> {
+    const host = this.connector.settings.host;
+    const requestUrl = new URL(this.connector.settings.endpoint, host);
     filePath = path.resolve(filePath);
 
     if (!(await filesExists(filePath))) {
@@ -49,26 +60,61 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
 
     const endpoint = new URL(this.connector.settings.endpoint, this.connector.settings.host);
 
-    // Get query params
-    const queryParams = this.getQueryParams();
+    const query: Record<string, string | number> = {};
+    for (const queryParam of this.connector.settings.queryParams) {
+      query[queryParam.key] = queryParam.value;
+    }
 
-    // Create FormData with file
-    const { base } = path.parse(filePath);
-    const form = new FormData();
+    let headers: UndiciHeaders = {};
+    let body: FormData | ReadStream;
     const fileStream = createReadStream(filePath);
-    form.append('file', fileStream, { filename: base });
+
+    if (this.connector.settings.sendAs === 'file') {
+      // Create FormData with file
+      const form = new FormData();
+      form.append('file', fileStream, { filename: path.parse(filePath).base });
+      headers = form.getHeaders();
+      body = form;
+    } else {
+      body = fileStream;
+      const ext = path.extname(filePath).toLowerCase();
+      switch (ext) {
+        case '.json':
+          headers['content-type'] = 'application/json';
+          break;
+        case '.xml':
+          headers['content-type'] = 'application/xml';
+          break;
+        case '.txt':
+          headers['content-type'] = 'text/plain';
+          break;
+        case '.csv':
+          headers['content-type'] = 'text/csv';
+          break;
+      }
+    }
+
+    for (const header of this.connector.settings.headers) {
+      headers[header.key] = header.value;
+    }
+
+    const { proxy, acceptUnauthorized } = this.getProxyOptions();
+    const fetchOptions: ReqOptions = {
+      method: this.connector.settings.method,
+      query,
+      body,
+      headers: headers,
+      auth: await this.getAuthorizationOptions(),
+      proxy,
+      timeout: this.connector.settings.timeout * 1000,
+      acceptUnauthorized
+    };
+
+    await this.handleApiKeyAuth(fetchOptions, requestUrl);
 
     let response: ReqResponse;
     try {
-      response = await HTTPRequest(endpoint, {
-        method: 'POST',
-        headers: form.getHeaders(),
-        query: queryParams,
-        body: form,
-        auth: this.getAuthorizationOptions(),
-        proxy: this.getProxyOptions(),
-        timeout: this.connector.settings.timeout * 1000
-      });
+      response = await HTTPRequest(requestUrl, fetchOptions);
       if (!fileStream.closed) {
         fileStream.close();
       }
@@ -89,89 +135,110 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
   }
 
   override async testConnection(): Promise<void> {
-    // the URL class handles the correct use of slashes
-    const testEndpoint = new URL(this.connector.settings.testPath, this.connector.settings.host);
+    const host = this.connector.settings.host;
+    const testEndpoint = this.connector.settings.test.testEndpoint;
+    const testMethod = this.connector.settings.test.testMethod;
+    const successCode = this.connector.settings.test.testSuccessCode;
+
+    const requestUrl = new URL(testEndpoint, host);
+
     let response: ReqResponse;
     try {
-      response = await HTTPRequest(testEndpoint, {
-        method: 'GET',
-        auth: this.getAuthorizationOptions(),
-        proxy: this.getProxyOptions(),
-        timeout: this.connector.settings.timeout * 1000
-      });
-    } catch (error) {
-      const message = this.getMessageFromError(error);
-      throw new OIBusError(`Failed to reach file endpoint ${testEndpoint}; ${message}`, false);
+      const { proxy, acceptUnauthorized } = this.getProxyOptions();
+      const fetchOptions: ReqOptions = {
+        method: testMethod,
+        auth: await this.getAuthorizationOptions(),
+        proxy,
+        timeout: this.connector.settings.timeout * 1000,
+        acceptUnauthorized,
+        body: this.connector.settings.test.body && ['POST', 'PUT'].includes(testMethod) ? this.connector.settings.test.body : undefined
+      };
+
+      await this.handleApiKeyAuth(fetchOptions, requestUrl);
+
+      response = await HTTPRequest(requestUrl, fetchOptions);
+    } catch (error: unknown) {
+      throw new Error(`Fetch error: ${(error as Error).message}`);
     }
 
-    if (!response.ok) {
-      throw new OIBusError(`HTTP request failed with status code ${response.statusCode} and message: ${await response.body.text()}`, false);
+    if (response.statusCode !== successCode) {
+      throw new Error(
+        `HTTP request failed with status code ${response.statusCode}, expected ${successCode}. Message: ${await response.body.text()}`
+      );
     }
   }
 
-  /**
-   * Get query parameters as an object
-   */
-  private getQueryParams(): Record<string, string> {
-    if (!this.connector.settings.queryParams) return {};
+  private getProxyOptions(): { proxy: ReqProxyOptions | undefined; acceptUnauthorized: boolean } {
+    const settings = this.connector.settings;
 
-    const queryParams: Record<string, string> = {};
-
-    for (const param of this.connector.settings.queryParams) {
-      queryParams[param.key] = param.value;
+    if (!settings.proxy.useProxy) {
+      return { proxy: undefined, acceptUnauthorized: settings.acceptUnauthorized };
     }
-
-    return queryParams;
-  }
-
-  /**
-   * Get proxy options if proxy is enabled
-   * @throws Error if no proxy url is specified in settings
-   */
-  private getProxyOptions(): ReqProxyOptions | undefined {
-    if (!this.connector.settings.useProxy) {
-      return;
-    }
-    if (!this.connector.settings.proxyUrl) {
+    if (!settings.proxy.proxyUrl) {
       throw new Error('Proxy URL not specified');
     }
 
     const options: ReqProxyOptions = {
-      url: this.connector.settings.proxyUrl
+      url: settings.proxy.proxyUrl
     };
 
-    if (this.connector.settings.proxyUsername) {
+    if (settings.proxy.proxyUsername) {
       options.auth = {
-        type: 'basic',
-        username: this.connector.settings.proxyUsername,
-        password: this.connector.settings.proxyPassword
+        type: 'url',
+        username: settings.proxy.proxyUsername,
+        password: settings.proxy.proxyPassword
       };
     }
 
-    return options;
+    return { proxy: options, acceptUnauthorized: settings.acceptUnauthorized };
   }
 
-  /**
-   * Get authorization options from settings
-   */
-  private getAuthorizationOptions(): ReqAuthOptions | undefined {
-    switch (this.connector.settings.authType) {
-      case 'basic':
-        if (!this.connector.settings.basicAuthUsername) return;
+  private async getAuthorizationOptions(): Promise<ReqAuthOptions | undefined> {
+    const settings = this.connector.settings;
+
+    switch (settings.authentication.type) {
+      case 'basic': {
+        if (!settings.authentication.username) return;
 
         return {
           type: 'basic',
-          username: this.connector.settings.basicAuthUsername,
-          password: this.connector.settings.basicAuthPassword
+          username: settings.authentication.username,
+          password: settings.authentication.password
         };
+      }
 
-      case 'bearer':
-        if (!this.connector.settings.bearerAuthToken) return;
+      case 'bearer': {
+        if (!settings.authentication.token) return;
 
         return {
           type: 'bearer',
-          token: this.connector.settings.bearerAuthToken
+          token: settings.authentication.token
         };
+      }
+
+      case 'api-key': {
+        // API Key auth is handled separately in handleApiKeyAuth()
+        return undefined;
+      }
+
+      case 'none':
+      default:
+        return undefined;
+    }
+  }
+
+  private async handleApiKeyAuth(options: ReqOptions, url: URL): Promise<void> {
+    const settings = this.connector.settings;
+
+    if (settings.authentication.type === 'api-key' && settings.authentication.apiKey && settings.authentication.apiValue) {
+      const apiValue = await encryptionService.decryptText(settings.authentication.apiValue);
+
+      if (settings.authentication.addTo === 'header') {
+        if (!options.headers) options.headers = {};
+        (options.headers as Record<string, string>)[settings.authentication.apiKey] = apiValue;
+      } else {
+        url.searchParams.append(settings.authentication.apiKey, apiValue);
+      }
     }
   }
 
