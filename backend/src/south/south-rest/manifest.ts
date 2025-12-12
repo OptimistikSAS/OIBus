@@ -1,7 +1,7 @@
 import { SouthConnectorManifest } from '../../../shared/model/south-connector.model';
 
 const manifest: SouthConnectorManifest = {
-  id: 'rest-api',
+  id: 'rest',
   category: 'api',
   modes: {
     subscription: false,
@@ -17,59 +17,13 @@ const manifest: SouthConnectorManifest = {
       visible: true,
       wrapInBox: false
     },
-    enablingConditions: [
-      {
-        referralPathFromRoot: 'authentication',
-        targetPathFromRoot: 'username',
-        values: ['basic']
-      },
-      {
-        referralPathFromRoot: 'authentication',
-        targetPathFromRoot: 'password',
-        values: ['basic']
-      },
-      {
-        referralPathFromRoot: 'authentication',
-        targetPathFromRoot: 'token',
-        values: ['bearer']
-      },
-      {
-        referralPathFromRoot: 'authentication',
-        targetPathFromRoot: 'apiKey',
-        values: ['api-key']
-      },
-      {
-        referralPathFromRoot: 'authentication',
-        targetPathFromRoot: 'apiValue',
-        values: ['api-key']
-      },
-      {
-        referralPathFromRoot: 'authentication',
-        targetPathFromRoot: 'addTo',
-        values: ['api-key']
-      },
-      {
-        referralPathFromRoot: 'useProxy',
-        targetPathFromRoot: 'proxyUrl',
-        values: [true]
-      },
-      {
-        referralPathFromRoot: 'useProxy',
-        targetPathFromRoot: 'proxyUsername',
-        values: [true]
-      },
-      {
-        referralPathFromRoot: 'useProxy',
-        targetPathFromRoot: 'proxyPassword',
-        values: [true]
-      }
-    ],
+    enablingConditions: [],
     validators: [],
     attributes: [
       {
         type: 'object',
         key: 'throttling',
-        translationKey: 'configuration.oibus.manifest.south.rest-api.throttling.title',
+        translationKey: 'configuration.oibus.manifest.south.rest.throttling.title',
         displayProperties: {
           visible: true,
           wrapInBox: false
@@ -85,7 +39,7 @@ const manifest: SouthConnectorManifest = {
           {
             type: 'number',
             key: 'maxReadInterval',
-            translationKey: 'configuration.oibus.manifest.south.rest-api.throttling.max-read-interval',
+            translationKey: 'configuration.oibus.manifest.south.rest.throttling.max-read-interval',
             unit: 's',
             defaultValue: 3600,
             validators: [
@@ -107,7 +61,7 @@ const manifest: SouthConnectorManifest = {
           {
             type: 'number',
             key: 'readDelay',
-            translationKey: 'configuration.oibus.manifest.south.rest-api.throttling.read-delay',
+            translationKey: 'configuration.oibus.manifest.south.rest.throttling.read-delay',
             unit: 'ms',
             defaultValue: 200,
             validators: [
@@ -129,7 +83,7 @@ const manifest: SouthConnectorManifest = {
           {
             type: 'number',
             key: 'overlap',
-            translationKey: 'configuration.oibus.manifest.south.rest-api.throttling.overlap',
+            translationKey: 'configuration.oibus.manifest.south.rest.throttling.overlap',
             unit: 'ms',
             defaultValue: 0,
             validators: [
@@ -153,7 +107,7 @@ const manifest: SouthConnectorManifest = {
       {
         type: 'string',
         key: 'host',
-        translationKey: 'configuration.oibus.manifest.south.rest-api.host',
+        translationKey: 'configuration.oibus.manifest.south.rest.host',
         defaultValue: 'http://server.com:8080',
         validators: [
           {
@@ -174,7 +128,7 @@ const manifest: SouthConnectorManifest = {
       {
         type: 'boolean',
         key: 'acceptUnauthorized',
-        translationKey: 'configuration.oibus.manifest.south.rest-api.accept-unauthorized',
+        translationKey: 'configuration.oibus.manifest.south.rest.accept-unauthorized',
         defaultValue: false,
         validators: [
           {
@@ -191,7 +145,7 @@ const manifest: SouthConnectorManifest = {
       {
         type: 'number',
         key: 'timeout',
-        translationKey: 'configuration.oibus.manifest.south.rest-api.timeout',
+        translationKey: 'configuration.oibus.manifest.south.rest.timeout',
         unit: 's',
         defaultValue: 30,
         validators: [
@@ -207,174 +161,252 @@ const manifest: SouthConnectorManifest = {
         }
       },
       {
-        type: 'string-select',
+        type: 'object',
         key: 'authentication',
-        translationKey: 'configuration.oibus.manifest.south.rest-api.authentication',
-        defaultValue: 'none',
-        selectableValues: ['none', 'basic', 'bearer', 'api-key'],
+        translationKey: 'configuration.oibus.manifest.south.rest.authentication.title',
+        displayProperties: {
+          visible: true,
+          wrapInBox: true
+        },
+        enablingConditions: [
+          {
+            referralPathFromRoot: 'type',
+            targetPathFromRoot: 'username',
+            values: ['basic']
+          },
+          {
+            referralPathFromRoot: 'type',
+            targetPathFromRoot: 'password',
+            values: ['basic']
+          },
+          {
+            referralPathFromRoot: 'type',
+            targetPathFromRoot: 'token',
+            values: ['bearer']
+          },
+          {
+            referralPathFromRoot: 'type',
+            targetPathFromRoot: 'apiKey',
+            values: ['api-key']
+          },
+          {
+            referralPathFromRoot: 'type',
+            targetPathFromRoot: 'apiValue',
+            values: ['api-key']
+          },
+          {
+            referralPathFromRoot: 'type',
+            targetPathFromRoot: 'addTo',
+            values: ['api-key']
+          }
+        ],
         validators: [
           {
             type: 'REQUIRED',
             arguments: []
           }
         ],
-        displayProperties: {
-          row: 3,
-          columns: 4,
-          displayInViewMode: true
-        }
+        attributes: [
+          {
+            type: 'string-select',
+            key: 'type',
+            translationKey: 'configuration.oibus.manifest.south.rest.authentication.type',
+            defaultValue: 'none',
+            selectableValues: ['none', 'basic', 'bearer', 'api-key'],
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              }
+            ],
+            displayProperties: {
+              row: 0,
+              columns: 4,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'string',
+            key: 'username',
+            translationKey: 'configuration.oibus.manifest.south.rest.authentication.username',
+            defaultValue: null,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              }
+            ],
+            displayProperties: {
+              row: 0,
+              columns: 4,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'secret',
+            key: 'password',
+            translationKey: 'configuration.oibus.manifest.south.rest.authentication.password',
+            validators: [],
+            displayProperties: {
+              row: 0,
+              columns: 4,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'secret',
+            key: 'token',
+            translationKey: 'configuration.oibus.manifest.south.rest.authentication.token',
+            validators: [],
+            displayProperties: {
+              row: 0,
+              columns: 4,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'string',
+            key: 'apiKey',
+            translationKey: 'configuration.oibus.manifest.south.rest.authentication.api-key',
+            defaultValue: null,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              }
+            ],
+            displayProperties: {
+              row: 0,
+              columns: 4,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'secret',
+            key: 'apiValue',
+            translationKey: 'configuration.oibus.manifest.south.rest.authentication.api-value',
+            validators: [],
+            displayProperties: {
+              row: 0,
+              columns: 4,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'string-select',
+            key: 'addTo',
+            translationKey: 'configuration.oibus.manifest.south.rest.authentication.add-to',
+            defaultValue: 'header',
+            selectableValues: ['header', 'query-params'],
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              }
+            ],
+            displayProperties: {
+              row: 1,
+              columns: 4,
+              displayInViewMode: true
+            }
+          }
+        ]
       },
       {
-        type: 'string',
-        key: 'username',
-        translationKey: 'configuration.oibus.manifest.south.rest-api.username',
-        defaultValue: null,
+        type: 'object',
+        key: 'proxy',
+        translationKey: 'configuration.oibus.manifest.south.rest.proxy.title',
+        displayProperties: {
+          visible: true,
+          wrapInBox: true
+        },
+        enablingConditions: [
+          {
+            referralPathFromRoot: 'useProxy',
+            targetPathFromRoot: 'proxyUrl',
+            values: [true]
+          },
+          {
+            referralPathFromRoot: 'useProxy',
+            targetPathFromRoot: 'proxyUsername',
+            values: [true]
+          },
+          {
+            referralPathFromRoot: 'useProxy',
+            targetPathFromRoot: 'proxyPassword',
+            values: [true]
+          }
+        ],
         validators: [
           {
             type: 'REQUIRED',
             arguments: []
           }
         ],
-        displayProperties: {
-          row: 3,
-          columns: 4,
-          displayInViewMode: true
-        }
-      },
-      {
-        type: 'secret',
-        key: 'password',
-        translationKey: 'configuration.oibus.manifest.south.rest-api.password',
-        validators: [],
-        displayProperties: {
-          row: 3,
-          columns: 4,
-          displayInViewMode: true
-        }
-      },
-      {
-        type: 'secret',
-        key: 'token',
-        translationKey: 'configuration.oibus.manifest.south.rest-api.token',
-        validators: [],
-        displayProperties: {
-          row: 3,
-          columns: 4,
-          displayInViewMode: true
-        }
-      },
-      {
-        type: 'string-select',
-        key: 'addTo',
-        translationKey: 'configuration.oibus.manifest.south.rest-api.add-to',
-        defaultValue: 'header',
-        selectableValues: ['header', 'query-params'],
-        validators: [
+        attributes: [
           {
-            type: 'REQUIRED',
-            arguments: []
-          }
-        ],
-        displayProperties: {
-          row: 3,
-          columns: 4,
-          displayInViewMode: true
-        }
-      },
-      {
-        type: 'string',
-        key: 'apiKey',
-        translationKey: 'configuration.oibus.manifest.south.rest-api.api-key',
-        defaultValue: null,
-        validators: [
+            type: 'boolean',
+            key: 'useProxy',
+            translationKey: 'configuration.oibus.manifest.south.rest.proxy.use-proxy',
+            defaultValue: false,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              }
+            ],
+            displayProperties: {
+              row: 0,
+              columns: 3,
+              displayInViewMode: true
+            }
+          },
           {
-            type: 'REQUIRED',
-            arguments: []
-          }
-        ],
-        displayProperties: {
-          row: 4,
-          columns: 4,
-          displayInViewMode: true
-        }
-      },
-      {
-        type: 'secret',
-        key: 'apiValue',
-        translationKey: 'configuration.oibus.manifest.south.rest-api.api-value',
-        validators: [],
-        displayProperties: {
-          row: 4,
-          columns: 4,
-          displayInViewMode: true
-        }
-      },
-      {
-        type: 'boolean',
-        key: 'useProxy',
-        translationKey: 'configuration.oibus.manifest.south.rest-api.use-proxy',
-        defaultValue: false,
-        validators: [
+            type: 'string',
+            key: 'proxyUrl',
+            translationKey: 'configuration.oibus.manifest.south.rest.proxy.url',
+            defaultValue: null,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              }
+            ],
+            displayProperties: {
+              row: 0,
+              columns: 3,
+              displayInViewMode: true
+            }
+          },
           {
-            type: 'REQUIRED',
-            arguments: []
-          }
-        ],
-        displayProperties: {
-          row: 5,
-          columns: 3,
-          displayInViewMode: true
-        }
-      },
-      {
-        type: 'string',
-        key: 'proxyUrl',
-        translationKey: 'configuration.oibus.manifest.south.rest-api.proxy-url',
-        defaultValue: null,
-        validators: [
+            type: 'string',
+            key: 'proxyUsername',
+            translationKey: 'configuration.oibus.manifest.south.rest.proxy.username',
+            defaultValue: null,
+            validators: [],
+            displayProperties: {
+              row: 0,
+              columns: 3,
+              displayInViewMode: true
+            }
+          },
           {
-            type: 'REQUIRED',
-            arguments: []
+            type: 'secret',
+            key: 'proxyPassword',
+            translationKey: 'configuration.oibus.manifest.south.rest.proxy.password',
+            validators: [],
+            displayProperties: {
+              row: 0,
+              columns: 3,
+              displayInViewMode: true
+            }
           }
-        ],
-        displayProperties: {
-          row: 5,
-          columns: 3,
-          displayInViewMode: true
-        }
-      },
-      {
-        type: 'string',
-        key: 'proxyUsername',
-        translationKey: 'configuration.oibus.manifest.south.rest-api.proxy-username',
-        defaultValue: null,
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
-          }
-        ],
-        displayProperties: {
-          row: 5,
-          columns: 3,
-          displayInViewMode: true
-        }
-      },
-      {
-        type: 'secret',
-        key: 'proxyPassword',
-        translationKey: 'configuration.oibus.manifest.south.rest-api.proxy-password',
-        validators: [],
-        displayProperties: {
-          row: 5,
-          columns: 3,
-          displayInViewMode: true
-        }
+        ]
       },
       {
         type: 'object',
         key: 'test',
-        translationKey: 'configuration.oibus.manifest.south.rest-api.test.title',
+        translationKey: 'configuration.oibus.manifest.south.rest.test.title',
         displayProperties: {
           visible: true,
           wrapInBox: true
@@ -396,7 +428,7 @@ const manifest: SouthConnectorManifest = {
           {
             type: 'string-select',
             key: 'method',
-            translationKey: 'configuration.oibus.manifest.south.rest-api.test.method',
+            translationKey: 'configuration.oibus.manifest.south.rest.test.method',
             defaultValue: 'GET',
             selectableValues: ['GET', 'POST', 'PUT'],
             validators: [
@@ -414,7 +446,7 @@ const manifest: SouthConnectorManifest = {
           {
             type: 'string',
             key: 'endpoint',
-            translationKey: 'configuration.oibus.manifest.south.rest-api.test.endpoint',
+            translationKey: 'configuration.oibus.manifest.south.rest.test.endpoint',
             defaultValue: '/',
             validators: [
               {
@@ -432,7 +464,7 @@ const manifest: SouthConnectorManifest = {
             type: 'code',
             key: 'body',
             contentType: 'json',
-            translationKey: 'configuration.oibus.manifest.south.rest-api.test.body',
+            translationKey: 'configuration.oibus.manifest.south.rest.test.body',
             defaultValue: null,
             validators: [],
             displayProperties: {
@@ -444,7 +476,7 @@ const manifest: SouthConnectorManifest = {
           {
             type: 'number',
             key: 'successCode',
-            translationKey: 'configuration.oibus.manifest.south.rest-api.test.success-code',
+            translationKey: 'configuration.oibus.manifest.south.rest.test.success-code',
             unit: '',
             defaultValue: 200,
             validators: [
@@ -561,7 +593,7 @@ const manifest: SouthConnectorManifest = {
             {
               type: 'string-select',
               key: 'method',
-              translationKey: 'configuration.oibus.manifest.south.items.rest-api.method',
+              translationKey: 'configuration.oibus.manifest.south.items.rest.method',
               defaultValue: 'GET',
               selectableValues: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
               validators: [
@@ -579,7 +611,7 @@ const manifest: SouthConnectorManifest = {
             {
               type: 'string',
               key: 'endpoint',
-              translationKey: 'configuration.oibus.manifest.south.items.rest-api.endpoint',
+              translationKey: 'configuration.oibus.manifest.south.items.rest.endpoint',
               defaultValue: '/api/data',
               validators: [
                 {
@@ -596,7 +628,7 @@ const manifest: SouthConnectorManifest = {
             {
               type: 'string-select',
               key: 'returnType',
-              translationKey: 'configuration.oibus.manifest.south.items.rest-api.return-type',
+              translationKey: 'configuration.oibus.manifest.south.items.rest.return-type',
               defaultValue: 'body',
               selectableValues: ['body', 'file'],
               validators: [
@@ -614,7 +646,7 @@ const manifest: SouthConnectorManifest = {
             {
               type: 'array',
               key: 'queryParams',
-              translationKey: 'configuration.oibus.manifest.south.items.rest-api.query-params',
+              translationKey: 'configuration.oibus.manifest.south.items.rest.query-params',
               paginate: false,
               numberOfElementPerPage: 0,
               validators: [
@@ -626,7 +658,7 @@ const manifest: SouthConnectorManifest = {
               rootAttribute: {
                 type: 'object',
                 key: 'queryParam',
-                translationKey: 'configuration.oibus.manifest.south.items.rest-api.query-params.query-param',
+                translationKey: 'configuration.oibus.manifest.south.items.rest.query-params.query-param',
                 displayProperties: {
                   visible: true,
                   wrapInBox: false
@@ -644,7 +676,7 @@ const manifest: SouthConnectorManifest = {
                   {
                     type: 'string',
                     key: 'key',
-                    translationKey: 'configuration.oibus.manifest.south.items.rest-api.query-params.key',
+                    translationKey: 'configuration.oibus.manifest.south.items.rest.query-params.key',
                     defaultValue: null,
                     validators: [
                       {
@@ -661,7 +693,7 @@ const manifest: SouthConnectorManifest = {
                   {
                     type: 'string',
                     key: 'value',
-                    translationKey: 'configuration.oibus.manifest.south.items.rest-api.query-params.value',
+                    translationKey: 'configuration.oibus.manifest.south.items.rest.query-params.value',
                     defaultValue: null,
                     validators: [
                       {
@@ -678,7 +710,7 @@ const manifest: SouthConnectorManifest = {
                   {
                     type: 'object',
                     key: 'dateTimeInput',
-                    translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time-input',
+                    translationKey: 'configuration.oibus.manifest.south.items.rest.date-time-input',
                     displayProperties: {
                       visible: true,
                       wrapInBox: true
@@ -700,7 +732,7 @@ const manifest: SouthConnectorManifest = {
                       {
                         type: 'string-select',
                         key: 'type',
-                        translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time.type',
+                        translationKey: 'configuration.oibus.manifest.south.items.rest.date-time.type',
                         defaultValue: 'string',
                         selectableValues: ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'],
                         validators: [],
@@ -713,7 +745,7 @@ const manifest: SouthConnectorManifest = {
                       {
                         type: 'timezone',
                         key: 'timezone',
-                        translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time.timezone',
+                        translationKey: 'configuration.oibus.manifest.south.items.rest.date-time.timezone',
                         defaultValue: 'UTC',
                         validators: [],
                         displayProperties: {
@@ -725,7 +757,7 @@ const manifest: SouthConnectorManifest = {
                       {
                         type: 'string',
                         key: 'format',
-                        translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time.format',
+                        translationKey: 'configuration.oibus.manifest.south.items.rest.date-time.format',
                         defaultValue: 'yyyy-MM-dd HH:mm:ss',
                         validators: [],
                         displayProperties: {
@@ -742,7 +774,7 @@ const manifest: SouthConnectorManifest = {
             {
               type: 'array',
               key: 'headers',
-              translationKey: 'configuration.oibus.manifest.south.items.rest-api.headers',
+              translationKey: 'configuration.oibus.manifest.south.items.rest.headers',
               paginate: false,
               numberOfElementPerPage: 0,
               validators: [
@@ -754,7 +786,7 @@ const manifest: SouthConnectorManifest = {
               rootAttribute: {
                 type: 'object',
                 key: 'header',
-                translationKey: 'configuration.oibus.manifest.south.items.rest-api.headers.title',
+                translationKey: 'configuration.oibus.manifest.south.items.rest.headers.title',
                 displayProperties: {
                   visible: true,
                   wrapInBox: false
@@ -794,7 +826,7 @@ const manifest: SouthConnectorManifest = {
                   {
                     type: 'string',
                     key: 'key',
-                    translationKey: 'configuration.oibus.manifest.south.items.rest-api.headers.key',
+                    translationKey: 'configuration.oibus.manifest.south.items.rest.headers.key',
                     defaultValue: null,
                     validators: [
                       {
@@ -811,7 +843,7 @@ const manifest: SouthConnectorManifest = {
                   {
                     type: 'string',
                     key: 'value',
-                    translationKey: 'configuration.oibus.manifest.south.items.rest-api.headers.value',
+                    translationKey: 'configuration.oibus.manifest.south.items.rest.headers.value',
                     defaultValue: null,
                     validators: [
                       {
@@ -828,7 +860,7 @@ const manifest: SouthConnectorManifest = {
                   {
                     type: 'string-select',
                     key: 'dateTimeType',
-                    translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time.type',
+                    translationKey: 'configuration.oibus.manifest.south.items.rest.date-time.type',
                     defaultValue: 'string',
                     selectableValues: ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'],
                     validators: [
@@ -846,7 +878,7 @@ const manifest: SouthConnectorManifest = {
                   {
                     type: 'timezone',
                     key: 'dateTimeTimezone',
-                    translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time.timezone',
+                    translationKey: 'configuration.oibus.manifest.south.items.rest.date-time.timezone',
                     defaultValue: 'UTC',
                     validators: [],
                     displayProperties: {
@@ -858,7 +890,7 @@ const manifest: SouthConnectorManifest = {
                   {
                     type: 'string',
                     key: 'dateTimeFormat',
-                    translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time.format',
+                    translationKey: 'configuration.oibus.manifest.south.items.rest.date-time.format',
                     defaultValue: 'yyyy-MM-dd HH:mm:ss',
                     validators: [],
                     displayProperties: {
@@ -873,7 +905,7 @@ const manifest: SouthConnectorManifest = {
             {
               type: 'object',
               key: 'body',
-              translationKey: 'configuration.oibus.manifest.south.items.rest-api.body.title',
+              translationKey: 'configuration.oibus.manifest.south.items.rest.body.title',
               displayProperties: {
                 visible: true,
                 wrapInBox: true
@@ -892,7 +924,7 @@ const manifest: SouthConnectorManifest = {
                   type: 'code',
                   key: 'content',
                   contentType: 'json',
-                  translationKey: 'configuration.oibus.manifest.south.items.rest-api.body.content',
+                  translationKey: 'configuration.oibus.manifest.south.items.rest.body.content',
                   defaultValue: null,
                   validators: [],
                   displayProperties: {
@@ -904,7 +936,7 @@ const manifest: SouthConnectorManifest = {
                 {
                   type: 'object',
                   key: 'dateTimeInput',
-                  translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time-input',
+                  translationKey: 'configuration.oibus.manifest.south.items.rest.date-time-input',
                   displayProperties: {
                     visible: true,
                     wrapInBox: true
@@ -926,7 +958,7 @@ const manifest: SouthConnectorManifest = {
                     {
                       type: 'string-select',
                       key: 'type',
-                      translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time.type',
+                      translationKey: 'configuration.oibus.manifest.south.items.rest.date-time.type',
                       defaultValue: 'string',
                       selectableValues: ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'],
                       validators: [],
@@ -939,7 +971,7 @@ const manifest: SouthConnectorManifest = {
                     {
                       type: 'timezone',
                       key: 'timezone',
-                      translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time.timezone',
+                      translationKey: 'configuration.oibus.manifest.south.items.rest.date-time.timezone',
                       defaultValue: 'UTC',
                       validators: [],
                       displayProperties: {
@@ -951,7 +983,7 @@ const manifest: SouthConnectorManifest = {
                     {
                       type: 'string',
                       key: 'format',
-                      translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time.format',
+                      translationKey: 'configuration.oibus.manifest.south.items.rest.date-time.format',
                       defaultValue: 'yyyy-MM-dd HH:mm:ss',
                       validators: [],
                       displayProperties: {
@@ -967,7 +999,7 @@ const manifest: SouthConnectorManifest = {
             {
               type: 'object',
               key: 'trackingInstant',
-              translationKey: 'configuration.oibus.manifest.south.items.rest-api.track-max-instant',
+              translationKey: 'configuration.oibus.manifest.south.items.rest.track-max-instant',
               displayProperties: {
                 visible: true,
                 wrapInBox: true
@@ -989,7 +1021,7 @@ const manifest: SouthConnectorManifest = {
                 {
                   type: 'boolean',
                   key: 'trackInstant',
-                  translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time.json-path',
+                  translationKey: 'configuration.oibus.manifest.south.items.rest.date-time.json-path',
                   defaultValue: true,
                   validators: [
                     {
@@ -1006,7 +1038,7 @@ const manifest: SouthConnectorManifest = {
                 {
                   type: 'string',
                   key: 'jsonPath',
-                  translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time.json-path',
+                  translationKey: 'configuration.oibus.manifest.south.items.rest.date-time.json-path',
                   defaultValue: null,
                   validators: [
                     {
@@ -1023,7 +1055,7 @@ const manifest: SouthConnectorManifest = {
                 {
                   type: 'object',
                   key: 'dateTimeInput',
-                  translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time-input',
+                  translationKey: 'configuration.oibus.manifest.south.items.rest.date-time-input',
                   displayProperties: {
                     visible: true,
                     wrapInBox: false
@@ -1050,7 +1082,7 @@ const manifest: SouthConnectorManifest = {
                     {
                       type: 'string-select',
                       key: 'type',
-                      translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time.type',
+                      translationKey: 'configuration.oibus.manifest.south.items.rest.date-time.type',
                       defaultValue: 'string',
                       selectableValues: ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'],
                       validators: [
@@ -1068,7 +1100,7 @@ const manifest: SouthConnectorManifest = {
                     {
                       type: 'timezone',
                       key: 'timezone',
-                      translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time.timezone',
+                      translationKey: 'configuration.oibus.manifest.south.items.rest.date-time.timezone',
                       defaultValue: 'UTC',
                       validators: [
                         {
@@ -1085,7 +1117,7 @@ const manifest: SouthConnectorManifest = {
                     {
                       type: 'string',
                       key: 'format',
-                      translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time.format',
+                      translationKey: 'configuration.oibus.manifest.south.items.rest.date-time.format',
                       defaultValue: 'yyyy-MM-dd HH:mm:ss',
                       validators: [
                         {
@@ -1102,7 +1134,7 @@ const manifest: SouthConnectorManifest = {
                     {
                       type: 'string',
                       key: 'locale',
-                      translationKey: 'configuration.oibus.manifest.south.items.rest-api.date-time.locale',
+                      translationKey: 'configuration.oibus.manifest.south.items.rest.date-time.locale',
                       defaultValue: 'en-En',
                       validators: [
                         {
