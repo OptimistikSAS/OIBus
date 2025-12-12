@@ -1,6 +1,6 @@
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
-import SouthRestAPI from './south-rest-api';
-import { SouthRestAPIItemSettings, SouthRestAPISettings } from '../../../shared/model/south-settings.model';
+import SouthRest from './south-rest';
+import { SouthRestItemSettings, SouthRestSettings } from '../../../shared/model/south-settings.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import pino from 'pino';
@@ -56,29 +56,33 @@ const httpRequestMock = HTTPRequest as jest.MockedFunction<typeof HTTPRequest>;
 const formatInstantMock = utils.formatInstant as jest.Mock;
 
 // --- Test Data Helpers ---
-const baseConfiguration: SouthConnectorEntity<SouthRestAPISettings, SouthRestAPIItemSettings> = {
+const baseConfiguration: SouthConnectorEntity<SouthRestSettings, SouthRestItemSettings> = {
   id: 'south-rest',
   name: 'REST',
-  type: 'rest-api',
+  type: 'rest',
   description: 'Rest connector',
   enabled: true,
   settings: {
     throttling: { maxReadInterval: 900, readDelay: 5, overlap: 10 },
     host: 'https://api.example.com/',
     acceptUnauthorized: true,
-    authentication: 'basic',
-    username: 'rest-user',
-    password: 'rest-password',
-    token: 'bearer-token',
+    authentication: {
+      type: 'basic',
+      username: 'rest-user',
+      password: 'rest-password',
+      token: 'bearer-token'
+    },
     test: { endpoint: '/health', method: 'GET', successCode: 200 },
     timeout: 15,
-    useProxy: false
+    proxy: {
+      useProxy: false
+    }
   },
   items: []
 };
 
 const createConfiguration = () => structuredClone(baseConfiguration);
-const createItem = (overrides?: Partial<SouthRestAPIItemSettings>): SouthConnectorItemEntity<SouthRestAPIItemSettings> => ({
+const createItem = (overrides?: Partial<SouthRestItemSettings>): SouthConnectorItemEntity<SouthRestItemSettings> => ({
   id: 'item-1',
   name: 'Test Item',
   enabled: true,
@@ -97,7 +101,7 @@ const createItem = (overrides?: Partial<SouthRestAPIItemSettings>): SouthConnect
 const getRequestOptions = (index = 0): ReqOptions => httpRequestMock.mock.calls[index][1] as ReqOptions;
 
 describe('SouthRestAPI connector', () => {
-  let south: SouthRestAPI;
+  let south: SouthRest;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -109,7 +113,7 @@ describe('SouthRestAPI connector', () => {
     southCacheService.getSouthCache.mockReturnValue({ southId: 'south-rest', scanModeId: 'mode-1', maxInstant: null });
 
     const config = createConfiguration();
-    south = new SouthRestAPI(config, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+    south = new SouthRest(config, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
   afterEach(() => {
@@ -137,14 +141,14 @@ describe('SouthRestAPI connector', () => {
 
   it('should handle API Key authentication in query params', async () => {
     const config = createConfiguration();
-    config.settings.authentication = 'api-key';
-    config.settings.apiKey = 'api_key';
-    config.settings.apiValue = 'secret';
-    config.settings.addTo = 'query-params';
+    config.settings.authentication.type = 'api-key';
+    config.settings.authentication.apiKey = 'api_key';
+    config.settings.authentication.apiValue = 'secret';
+    config.settings.authentication.addTo = 'query-params';
     config.settings.test.method = 'POST';
     config.settings.test.body = 'body';
 
-    south = new SouthRestAPI(config, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+    south = new SouthRest(config, addContentCallback, southCacheRepository, logger, 'cacheFolder');
     httpRequestMock.mockResolvedValueOnce(createMockResponse(200, 'OK'));
 
     await south.testConnection();
@@ -546,15 +550,15 @@ describe('SouthRestAPI connector', () => {
 
   it('should not get proxy if proxy url is not specified', async () => {
     const config = createConfiguration();
-    config.settings.useProxy = true;
+    config.settings.proxy.useProxy = true;
     south['connector'] = config;
     expect(() => south['getProxyOptions']()).toThrow(new Error('Proxy URL not specified'));
   });
 
   it('should get proxy', async () => {
     const config = createConfiguration();
-    config.settings.useProxy = true;
-    config.settings.proxyUrl = 'http://localhost:8080/';
+    config.settings.proxy.useProxy = true;
+    config.settings.proxy.proxyUrl = 'http://localhost:8080/';
     south['connector'] = config;
     expect(south['getProxyOptions']()).toEqual({
       proxy: { url: 'http://localhost:8080/' },
@@ -564,10 +568,10 @@ describe('SouthRestAPI connector', () => {
 
   it('should get proxy with auth', async () => {
     const config = createConfiguration();
-    config.settings.useProxy = true;
-    config.settings.proxyUrl = 'http://localhost:8080/';
-    config.settings.proxyUsername = 'username';
-    config.settings.proxyPassword = 'password';
+    config.settings.proxy.useProxy = true;
+    config.settings.proxy.proxyUrl = 'http://localhost:8080/';
+    config.settings.proxy.proxyUsername = 'username';
+    config.settings.proxy.proxyPassword = 'password';
     south['connector'] = config;
     expect(south['getProxyOptions']()).toEqual({
       proxy: { url: 'http://localhost:8080/', auth: { type: 'url', username: 'username', password: 'password' } },
@@ -577,9 +581,9 @@ describe('SouthRestAPI connector', () => {
 
   it('should get basic auth', async () => {
     const config = createConfiguration();
-    config.settings.authentication = 'basic';
-    config.settings.username = 'username';
-    config.settings.password = 'password';
+    config.settings.authentication.type = 'basic';
+    config.settings.authentication.username = 'username';
+    config.settings.authentication.password = 'password';
     south['connector'] = config;
     expect(await south['getAuthorizationOptions']()).toEqual({
       type: 'basic',
@@ -590,16 +594,16 @@ describe('SouthRestAPI connector', () => {
 
   it('should not get basic auth if no username', async () => {
     const config = createConfiguration();
-    config.settings.authentication = 'basic';
-    config.settings.username = '';
+    config.settings.authentication.type = 'basic';
+    config.settings.authentication.username = '';
     south['connector'] = config;
     expect(await south['getAuthorizationOptions']()).toEqual(undefined);
   });
 
   it('should get bearer auth', async () => {
     const config = createConfiguration();
-    config.settings.authentication = 'bearer';
-    config.settings.token = 'token';
+    config.settings.authentication.type = 'bearer';
+    config.settings.authentication.token = 'token';
     south['connector'] = config;
     expect(await south['getAuthorizationOptions']()).toEqual({
       type: 'bearer',
@@ -609,22 +613,22 @@ describe('SouthRestAPI connector', () => {
 
   it('should not get bearer auth if no token', async () => {
     const config = createConfiguration();
-    config.settings.authentication = 'bearer';
-    config.settings.token = '';
+    config.settings.authentication.type = 'bearer';
+    config.settings.authentication.token = '';
     south['connector'] = config;
     expect(await south['getAuthorizationOptions']()).toEqual(undefined);
   });
 
   it('should not get auth if api-key', async () => {
     const config = createConfiguration();
-    config.settings.authentication = 'api-key';
+    config.settings.authentication.type = 'api-key';
     south['connector'] = config;
     expect(await south['getAuthorizationOptions']()).toEqual(undefined);
   });
 
   it('should not get auth if none', async () => {
     const config = createConfiguration();
-    config.settings.authentication = 'none';
+    config.settings.authentication.type = 'none';
     south['connector'] = config;
     expect(await south['getAuthorizationOptions']()).toEqual(undefined);
   });
@@ -632,10 +636,10 @@ describe('SouthRestAPI connector', () => {
   it('should add API key to HEADERS when configured', async () => {
     // 1. Setup Configuration
     const config = createConfiguration();
-    config.settings.authentication = 'api-key';
-    config.settings.apiKey = 'X-Custom-Auth';
-    config.settings.apiValue = 'secret-value';
-    config.settings.addTo = 'header';
+    config.settings.authentication.type = 'api-key';
+    config.settings.authentication.apiKey = 'X-Custom-Auth';
+    config.settings.authentication.apiValue = 'secret-value';
+    config.settings.authentication.addTo = 'header';
     south['connector'] = config;
 
     // 2. Prepare Inputs
@@ -654,10 +658,10 @@ describe('SouthRestAPI connector', () => {
   it('should add API key to QUERY PARAMS when configured', async () => {
     // 1. Setup Configuration
     const config = createConfiguration();
-    config.settings.authentication = 'api-key';
-    config.settings.apiKey = 'api_key';
-    config.settings.apiValue = 'secret-value';
-    config.settings.addTo = 'query-params';
+    config.settings.authentication.type = 'api-key';
+    config.settings.authentication.apiKey = 'api_key';
+    config.settings.authentication.apiValue = 'secret-value';
+    config.settings.authentication.addTo = 'query-params';
     south['connector'] = config;
 
     // 2. Prepare Inputs with existing params to ensure append works
@@ -676,9 +680,9 @@ describe('SouthRestAPI connector', () => {
   it('should NOT modify options or url if authentication is NOT api-key', async () => {
     // 1. Setup Configuration (Basic Auth)
     const config = createConfiguration();
-    config.settings.authentication = 'basic';
-    config.settings.apiKey = 'should-ignore'; // Even if these are present
-    config.settings.apiValue = 'should-ignore';
+    config.settings.authentication.type = 'basic';
+    config.settings.authentication.apiKey = 'should-ignore'; // Even if these are present
+    config.settings.authentication.apiValue = 'should-ignore';
     south['connector'] = config;
 
     const options: ReqOptions = { method: 'GET' };
@@ -693,32 +697,32 @@ describe('SouthRestAPI connector', () => {
 
   it('should NOT modify options or url if apiKey or apiValue are missing', async () => {
     const config = createConfiguration();
-    config.settings.authentication = 'api-key';
-    config.settings.addTo = 'header';
+    config.settings.authentication.type = 'api-key';
+    config.settings.authentication.addTo = 'header';
     south['connector'] = config;
 
     const options: ReqOptions = { method: 'GET' };
     const url = new URL('https://api.example.com/data');
 
     // Case 1: Missing Key
-    config.settings.apiKey = '';
-    config.settings.apiValue = 'some-value';
+    config.settings.authentication.apiKey = '';
+    config.settings.authentication.apiValue = 'some-value';
     await south['handleApiKeyAuth'](options, url);
     expect(options.headers).toBeUndefined();
 
     // Case 2: Missing Value
-    config.settings.apiKey = 'some-key';
-    config.settings.apiValue = '';
+    config.settings.authentication.apiKey = 'some-key';
+    config.settings.authentication.apiValue = '';
     await south['handleApiKeyAuth'](options, url);
     expect(options.headers).toBeUndefined();
   });
 
   it('should append to existing headers object if it already exists', async () => {
     const config = createConfiguration();
-    config.settings.authentication = 'api-key';
-    config.settings.apiKey = 'X-Auth';
-    config.settings.apiValue = 'secret-value';
-    config.settings.addTo = 'header';
+    config.settings.authentication.type = 'api-key';
+    config.settings.authentication.apiKey = 'X-Auth';
+    config.settings.authentication.apiValue = 'secret-value';
+    config.settings.authentication.addTo = 'header';
     south['connector'] = config;
 
     // Pre-fill headers (e.g. Content-Type)
