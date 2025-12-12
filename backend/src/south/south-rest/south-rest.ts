@@ -6,9 +6,9 @@ import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { QueriesHistory } from '../south-interface';
 import {
-  SouthRestAPIItemSettings,
-  SouthRestAPIItemSettingsTrackingInstantDateTimeInput,
-  SouthRestAPISettings
+  SouthRestItemSettings,
+  SouthRestItemSettingsTrackingInstantDateTimeInput,
+  SouthRestSettings
 } from '../../../shared/model/south-settings.model';
 import { OIBusContent } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
@@ -19,9 +19,9 @@ import path from 'node:path';
 import fs from 'node:fs/promises';
 import { encryptionService } from '../../service/encryption.service';
 
-export default class SouthRestAPI extends SouthConnector<SouthRestAPISettings, SouthRestAPIItemSettings> implements QueriesHistory {
+export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRestItemSettings> implements QueriesHistory {
   constructor(
-    connector: SouthConnectorEntity<SouthRestAPISettings, SouthRestAPIItemSettings>,
+    connector: SouthConnectorEntity<SouthRestSettings, SouthRestItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
     logger: pino.Logger,
@@ -65,7 +65,7 @@ export default class SouthRestAPI extends SouthConnector<SouthRestAPISettings, S
   }
 
   override async testItem(
-    item: SouthConnectorItemEntity<SouthRestAPIItemSettings>,
+    item: SouthConnectorItemEntity<SouthRestItemSettings>,
     testingSettings: SouthConnectorItemTestingSettings
   ): Promise<OIBusContent> {
     const startTime = testingSettings.history!.startTime;
@@ -75,7 +75,7 @@ export default class SouthRestAPI extends SouthConnector<SouthRestAPISettings, S
   }
 
   async historyQuery(
-    items: Array<SouthConnectorItemEntity<SouthRestAPIItemSettings>>,
+    items: Array<SouthConnectorItemEntity<SouthRestItemSettings>>,
     startTime: Instant,
     endTime: Instant
   ): Promise<Instant | null> {
@@ -102,23 +102,23 @@ export default class SouthRestAPI extends SouthConnector<SouthRestAPISettings, S
     return updatedStartTime;
   }
 
-  getThrottlingSettings(settings: SouthRestAPISettings): SouthThrottlingSettings {
+  getThrottlingSettings(settings: SouthRestSettings): SouthThrottlingSettings {
     return {
       maxReadInterval: settings.throttling.maxReadInterval,
       readDelay: settings.throttling.readDelay
     };
   }
 
-  getMaxInstantPerItem(_settings: SouthRestAPISettings): boolean {
+  getMaxInstantPerItem(_settings: SouthRestSettings): boolean {
     return true;
   }
 
-  getOverlap(settings: SouthRestAPISettings): number {
+  getOverlap(settings: SouthRestSettings): number {
     return settings.throttling.overlap;
   }
 
   async queryData(
-    item: SouthConnectorItemEntity<SouthRestAPIItemSettings>,
+    item: SouthConnectorItemEntity<SouthRestItemSettings>,
     startTime: Instant,
     endTime: Instant
   ): Promise<{ filename: string; content: string; maxInstant: Instant | null }> {
@@ -272,7 +272,7 @@ export default class SouthRestAPI extends SouthConnector<SouthRestAPISettings, S
   }
 
   trackMaxInstant(
-    dateTimeInput: SouthRestAPIItemSettingsTrackingInstantDateTimeInput,
+    dateTimeInput: SouthRestItemSettingsTrackingInstantDateTimeInput,
     jsonPath: string,
     httpResult: Record<string, unknown> | Array<Record<string, unknown>>
   ): Instant | null {
@@ -310,22 +310,22 @@ export default class SouthRestAPI extends SouthConnector<SouthRestAPISettings, S
   private getProxyOptions(): { proxy: ReqProxyOptions | undefined; acceptUnauthorized: boolean } {
     const settings = this.connector.settings;
 
-    if (!settings.useProxy) {
+    if (!settings.proxy.useProxy) {
       return { proxy: undefined, acceptUnauthorized: settings.acceptUnauthorized };
     }
-    if (!settings.proxyUrl) {
+    if (!settings.proxy.proxyUrl) {
       throw new Error('Proxy URL not specified');
     }
 
     const options: ReqProxyOptions = {
-      url: settings.proxyUrl
+      url: settings.proxy.proxyUrl
     };
 
-    if (settings.proxyUsername) {
+    if (settings.proxy.proxyUsername) {
       options.auth = {
         type: 'url',
-        username: settings.proxyUsername,
-        password: settings.proxyPassword
+        username: settings.proxy.proxyUsername,
+        password: settings.proxy.proxyPassword
       };
     }
 
@@ -335,23 +335,23 @@ export default class SouthRestAPI extends SouthConnector<SouthRestAPISettings, S
   private async getAuthorizationOptions(): Promise<ReqAuthOptions | undefined> {
     const settings = this.connector.settings;
 
-    switch (settings.authentication) {
+    switch (settings.authentication.type) {
       case 'basic': {
-        if (!settings.username) return;
+        if (!settings.authentication.username) return;
 
         return {
           type: 'basic',
-          username: settings.username,
-          password: settings.password
+          username: settings.authentication.username,
+          password: settings.authentication.password
         };
       }
 
       case 'bearer': {
-        if (!settings.token) return;
+        if (!settings.authentication.token) return;
 
         return {
           type: 'bearer',
-          token: settings.token
+          token: settings.authentication.token
         };
       }
 
@@ -369,14 +369,14 @@ export default class SouthRestAPI extends SouthConnector<SouthRestAPISettings, S
   private async handleApiKeyAuth(options: ReqOptions, url: URL): Promise<void> {
     const settings = this.connector.settings;
 
-    if (settings.authentication === 'api-key' && settings.apiKey && settings.apiValue) {
-      const apiValue = await encryptionService.decryptText(settings.apiValue);
+    if (settings.authentication.type === 'api-key' && settings.authentication.apiKey && settings.authentication.apiValue) {
+      const apiValue = await encryptionService.decryptText(settings.authentication.apiValue);
 
-      if (settings.addTo === 'header') {
+      if (settings.authentication.addTo === 'header') {
         if (!options.headers) options.headers = {};
-        (options.headers as Record<string, string>)[settings.apiKey] = apiValue;
+        (options.headers as Record<string, string>)[settings.authentication.apiKey] = apiValue;
       } else {
-        url.searchParams.append(settings.apiKey, apiValue);
+        url.searchParams.append(settings.authentication.apiKey, apiValue);
       }
     }
   }
