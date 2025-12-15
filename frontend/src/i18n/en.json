@@ -88,7 +88,10 @@
     "export-success": "Export completed successfully",
     "export-error": "Export failed",
     "import-success": "Import completed successfully",
-    "import-error": "Import failed"
+    "import-error": "Import failed",
+    "create": "Create",
+    "edit": "Edit",
+    "cache": "Cache"
   },
   "datepicker": {
     "parse-pattern": "d/M/yyyy",

@@ -2,7 +2,6 @@ import { Component, inject, OnInit, viewChild } from '@angular/core';
 import { TranslateDirective } from '@ngx-translate/core';
 import { of, switchMap } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import { BackNavigationDirective } from '../../shared/back-navigation.directives';
 import { HistoryCacheContentComponent } from './cache-content/history-cache-content.component';
 import { HistoryQueryService } from '../../services/history-query.service';
 import { HistoryQueryDTO } from '../../../../../backend/shared/model/history-query.model';
@@ -11,7 +10,7 @@ import { HistoryQueryDTO } from '../../../../../backend/shared/model/history-que
   selector: 'oib-explore-history-cache',
   templateUrl: './explore-history-cache.component.html',
   styleUrl: './explore-history-cache.component.scss',
-  imports: [TranslateDirective, BackNavigationDirective, HistoryCacheContentComponent]
+  imports: [TranslateDirective, HistoryCacheContentComponent]
 })
 export class ExploreHistoryCacheComponent implements OnInit {
   private route = inject(ActivatedRoute);
