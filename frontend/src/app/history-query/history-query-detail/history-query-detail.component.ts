@@ -186,7 +186,7 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
       });
   }
 
-  updateInMemoryTransformers(_transformers: Array<TransformerDTOWithOptions> | null) {
+  updateInMemoryTransformers(_transformers: Array<Omit<TransformerDTOWithOptions, 'south'>> | null) {
     this.historyQueryService.findById(this.historyQuery!.id).subscribe(historyQuery => {
       this.historyQuery = JSON.parse(JSON.stringify(historyQuery)); // Used to force a refresh in history query item list
     });

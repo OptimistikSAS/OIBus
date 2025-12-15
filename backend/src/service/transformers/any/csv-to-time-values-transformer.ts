@@ -35,7 +35,11 @@ interface TransformerOptions {
 export default class CSVToTimeValuesTransformer extends OIBusTransformer {
   public static transformerName = 'csv-to-time-values';
 
-  async transform(data: ReadStream | Readable, source: string, filename: string): Promise<{ metadata: CacheMetadata; output: string }> {
+  async transform(
+    data: ReadStream | Readable,
+    source: string | null,
+    filename: string
+  ): Promise<{ metadata: CacheMetadata; output: string }> {
     const csvParser = this.options.csvToParse.find(parser => filename.match(parser.regex));
     if (!csvParser) {
       this.logger.error(`Could not find csv parser configuration for file "${filename}"`);
@@ -121,7 +125,7 @@ export default class CSVToTimeValuesTransformer extends OIBusTransformer {
     }
   }
 
-  returnEmpty(source: string) {
+  returnEmpty(source: string | null) {
     return {
       output: '[]',
       metadata: {

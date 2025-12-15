@@ -1,7 +1,7 @@
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import { transformerSchema } from '../web-server/controllers/validators/oibus-validation-schema';
 import TransformerRepository from '../repository/config/transformer.repository';
-import { CustomTransformer, Transformer, TransformerWithOptions } from '../model/transformer.model';
+import { CustomTransformer, Transformer, NorthTransformerWithOptions } from '../model/transformer.model';
 import {
   CustomTransformerCommandDTO,
   InputTemplate,
@@ -307,7 +307,7 @@ export const toTransformerDTO = (transformer: Transformer): TransformerDTO => {
 };
 
 export const createTransformer = (
-  transformerWithOptions: TransformerWithOptions,
+  transformerWithOptions: NorthTransformerWithOptions,
   northConnector: NorthConnectorEntity<NorthSettings>,
   logger: pino.Logger
 ): OibusTransformer => {

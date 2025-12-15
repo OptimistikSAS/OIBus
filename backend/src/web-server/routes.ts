@@ -3368,8 +3368,10 @@ const models: TsoaRoute.Models = {
     "TransformerIdWithOptions": {
         "dataType": "refObject",
         "properties": {
+            "id": {"dataType":"string","required":true},
             "inputType": {"dataType":"string","required":true},
             "transformerId": {"dataType":"string","required":true},
+            "southId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}],"required":true},
             "options": {"ref":"Record_string.unknown_","required":true},
         },
         "additionalProperties": false,
@@ -3384,7 +3386,6 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"NorthAmazonS3Settings","required":true},
             "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanModeName":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"scanModeId":{"dataType":"string","required":true}},"required":true}},"required":true},
-            "subscriptions": {"dataType":"array","array":{"dataType":"string"},"required":true},
             "transformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerIdWithOptions"},"required":true},
         },
         "additionalProperties": false,
@@ -3427,7 +3428,6 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"NorthAzureBlobSettings","required":true},
             "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanModeName":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"scanModeId":{"dataType":"string","required":true}},"required":true}},"required":true},
-            "subscriptions": {"dataType":"array","array":{"dataType":"string"},"required":true},
             "transformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerIdWithOptions"},"required":true},
         },
         "additionalProperties": false,
@@ -3450,7 +3450,6 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"NorthConsoleSettings","required":true},
             "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanModeName":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"scanModeId":{"dataType":"string","required":true}},"required":true}},"required":true},
-            "subscriptions": {"dataType":"array","array":{"dataType":"string"},"required":true},
             "transformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerIdWithOptions"},"required":true},
         },
         "additionalProperties": false,
@@ -3475,7 +3474,6 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"NorthFileWriterSettings","required":true},
             "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanModeName":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"scanModeId":{"dataType":"string","required":true}},"required":true}},"required":true},
-            "subscriptions": {"dataType":"array","array":{"dataType":"string"},"required":true},
             "transformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerIdWithOptions"},"required":true},
         },
         "additionalProperties": false,
@@ -3516,7 +3514,6 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"NorthModbusSettings","required":true},
             "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanModeName":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"scanModeId":{"dataType":"string","required":true}},"required":true}},"required":true},
-            "subscriptions": {"dataType":"array","array":{"dataType":"string"},"required":true},
             "transformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerIdWithOptions"},"required":true},
         },
         "additionalProperties": false,
@@ -3568,7 +3565,6 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"NorthMQTTSettings","required":true},
             "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanModeName":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"scanModeId":{"dataType":"string","required":true}},"required":true}},"required":true},
-            "subscriptions": {"dataType":"array","array":{"dataType":"string"},"required":true},
             "transformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerIdWithOptions"},"required":true},
         },
         "additionalProperties": false,
@@ -3620,7 +3616,6 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"NorthOIAnalyticsSettings","required":true},
             "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanModeName":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"scanModeId":{"dataType":"string","required":true}},"required":true}},"required":true},
-            "subscriptions": {"dataType":"array","array":{"dataType":"string"},"required":true},
             "transformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerIdWithOptions"},"required":true},
         },
         "additionalProperties": false,
@@ -3675,7 +3670,6 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"NorthOPCUASettings","required":true},
             "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanModeName":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"scanModeId":{"dataType":"string","required":true}},"required":true}},"required":true},
-            "subscriptions": {"dataType":"array","array":{"dataType":"string"},"required":true},
             "transformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerIdWithOptions"},"required":true},
         },
         "additionalProperties": false,
@@ -3788,7 +3782,6 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"NorthRESTSettings","required":true},
             "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanModeName":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"scanModeId":{"dataType":"string","required":true}},"required":true}},"required":true},
-            "subscriptions": {"dataType":"array","array":{"dataType":"string"},"required":true},
             "transformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerIdWithOptions"},"required":true},
         },
         "additionalProperties": false,
@@ -3825,7 +3818,6 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"NorthSFTPSettings","required":true},
             "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanModeName":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"scanModeId":{"dataType":"string","required":true}},"required":true}},"required":true},
-            "subscriptions": {"dataType":"array","array":{"dataType":"string"},"required":true},
             "transformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerIdWithOptions"},"required":true},
         },
         "additionalProperties": false,
@@ -3918,6 +3910,16 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "Pick_TransformerIdWithOptions.Exclude_keyofTransformerIdWithOptions.southId__": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"id":{"dataType":"string","required":true},"inputType":{"dataType":"string","required":true},"transformerId":{"dataType":"string","required":true},"options":{"ref":"Record_string.unknown_","required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "Omit_TransformerIdWithOptions.southId_": {
+        "dataType": "refAlias",
+        "type": {"ref":"Pick_TransformerIdWithOptions.Exclude_keyofTransformerIdWithOptions.southId__","validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "HistoryQueryCommandCommonDTO": {
         "dataType": "refObject",
         "properties": {
@@ -3926,7 +3928,7 @@ const models: TsoaRoute.Models = {
             "startTime": {"dataType":"string","required":true},
             "endTime": {"dataType":"string","required":true},
             "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanModeName":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"scanModeId":{"dataType":"string","required":true}},"required":true}},"required":true},
-            "northTransformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerIdWithOptions"},"required":true},
+            "northTransformers": {"dataType":"array","array":{"dataType":"refAlias","ref":"Omit_TransformerIdWithOptions.southId_"},"required":true},
         },
         "additionalProperties": false,
     },
@@ -4634,9 +4636,11 @@ const models: TsoaRoute.Models = {
     "TransformerDTOWithOptions": {
         "dataType": "refObject",
         "properties": {
+            "id": {"dataType":"string","required":true},
             "inputType": {"ref":"InputType","required":true},
             "transformer": {"ref":"TransformerDTO","required":true},
             "options": {"ref":"Record_string.unknown_","required":true},
+            "south": {"dataType":"union","subSchemas":[{"ref":"SouthConnectorLightDTO"},{"dataType":"undefined"}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -4653,7 +4657,6 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"NorthAmazonS3Settings","required":true},
             "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanMode":{"ref":"ScanModeDTO","required":true}},"required":true}},"required":true},
-            "subscriptions": {"dataType":"array","array":{"dataType":"refObject","ref":"SouthConnectorLightDTO"},"required":true},
             "transformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerDTOWithOptions"},"required":true},
         },
         "additionalProperties": false,
@@ -4671,7 +4674,6 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"NorthAzureBlobSettings","required":true},
             "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanMode":{"ref":"ScanModeDTO","required":true}},"required":true}},"required":true},
-            "subscriptions": {"dataType":"array","array":{"dataType":"refObject","ref":"SouthConnectorLightDTO"},"required":true},
             "transformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerDTOWithOptions"},"required":true},
         },
         "additionalProperties": false,
@@ -4689,7 +4691,6 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"NorthConsoleSettings","required":true},
             "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanMode":{"ref":"ScanModeDTO","required":true}},"required":true}},"required":true},
-            "subscriptions": {"dataType":"array","array":{"dataType":"refObject","ref":"SouthConnectorLightDTO"},"required":true},
             "transformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerDTOWithOptions"},"required":true},
         },
         "additionalProperties": false,
@@ -4707,7 +4708,6 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"NorthFileWriterSettings","required":true},
             "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanMode":{"ref":"ScanModeDTO","required":true}},"required":true}},"required":true},
-            "subscriptions": {"dataType":"array","array":{"dataType":"refObject","ref":"SouthConnectorLightDTO"},"required":true},
             "transformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerDTOWithOptions"},"required":true},
         },
         "additionalProperties": false,
@@ -4725,7 +4725,6 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"NorthModbusSettings","required":true},
             "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanMode":{"ref":"ScanModeDTO","required":true}},"required":true}},"required":true},
-            "subscriptions": {"dataType":"array","array":{"dataType":"refObject","ref":"SouthConnectorLightDTO"},"required":true},
             "transformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerDTOWithOptions"},"required":true},
         },
         "additionalProperties": false,
@@ -4743,7 +4742,6 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"NorthMQTTSettings","required":true},
             "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanMode":{"ref":"ScanModeDTO","required":true}},"required":true}},"required":true},
-            "subscriptions": {"dataType":"array","array":{"dataType":"refObject","ref":"SouthConnectorLightDTO"},"required":true},
             "transformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerDTOWithOptions"},"required":true},
         },
         "additionalProperties": false,
@@ -4761,7 +4759,6 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"NorthOIAnalyticsSettings","required":true},
             "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanMode":{"ref":"ScanModeDTO","required":true}},"required":true}},"required":true},
-            "subscriptions": {"dataType":"array","array":{"dataType":"refObject","ref":"SouthConnectorLightDTO"},"required":true},
             "transformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerDTOWithOptions"},"required":true},
         },
         "additionalProperties": false,
@@ -4779,7 +4776,6 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"NorthOPCUASettings","required":true},
             "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanMode":{"ref":"ScanModeDTO","required":true}},"required":true}},"required":true},
-            "subscriptions": {"dataType":"array","array":{"dataType":"refObject","ref":"SouthConnectorLightDTO"},"required":true},
             "transformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerDTOWithOptions"},"required":true},
         },
         "additionalProperties": false,
@@ -4797,7 +4793,6 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"NorthRESTSettings","required":true},
             "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanMode":{"ref":"ScanModeDTO","required":true}},"required":true}},"required":true},
-            "subscriptions": {"dataType":"array","array":{"dataType":"refObject","ref":"SouthConnectorLightDTO"},"required":true},
             "transformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerDTOWithOptions"},"required":true},
         },
         "additionalProperties": false,
@@ -4815,7 +4810,6 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"NorthSFTPSettings","required":true},
             "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanMode":{"ref":"ScanModeDTO","required":true}},"required":true}},"required":true},
-            "subscriptions": {"dataType":"array","array":{"dataType":"refObject","ref":"SouthConnectorLightDTO"},"required":true},
             "transformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerDTOWithOptions"},"required":true},
         },
         "additionalProperties": false,
@@ -4844,7 +4838,7 @@ const models: TsoaRoute.Models = {
             "numberOfElement": {"dataType":"double","required":true},
             "createdAt": {"ref":"Instant","required":true},
             "contentType": {"dataType":"string","required":true},
-            "source": {"dataType":"string","required":true},
+            "source": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "options": {"ref":"Record_string.string-or-number_","required":true},
         },
         "additionalProperties": false,
@@ -4937,6 +4931,16 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "Pick_TransformerDTOWithOptions.Exclude_keyofTransformerDTOWithOptions.south__": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"id":{"dataType":"string","required":true},"inputType":{"dataType":"string","required":true},"options":{"ref":"Record_string.unknown_","required":true},"transformer":{"ref":"TransformerDTO","required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "Omit_TransformerDTOWithOptions.south_": {
+        "dataType": "refAlias",
+        "type": {"ref":"Pick_TransformerDTOWithOptions.Exclude_keyofTransformerDTOWithOptions.south__","validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "HistoryQueryCommonDTO": {
         "dataType": "refObject",
         "properties": {
@@ -4946,7 +4950,7 @@ const models: TsoaRoute.Models = {
             "startTime": {"dataType":"string","required":true},
             "endTime": {"dataType":"string","required":true},
             "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanMode":{"ref":"ScanModeDTO","required":true}},"required":true}},"required":true},
-            "northTransformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerDTOWithOptions"},"required":true},
+            "northTransformers": {"dataType":"array","array":{"dataType":"refAlias","ref":"Omit_TransformerDTOWithOptions.south_"},"required":true},
         },
         "additionalProperties": false,
     },
@@ -7751,70 +7755,6 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
             }
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-        const argsNorthConnectorController_subscribeToSouth: Record<string, TsoaRoute.ParameterSchema> = {
-                northId: {"in":"path","name":"northId","required":true,"dataType":"string"},
-                southId: {"in":"path","name":"southId","required":true,"dataType":"string"},
-                request: {"in":"request","name":"request","required":true,"dataType":"object"},
-        };
-        app.post('/api/north/:northId/subscriptions/:southId',
-            ...(fetchMiddlewares<RequestHandler>(NorthConnectorController)),
-            ...(fetchMiddlewares<RequestHandler>(NorthConnectorController.prototype.subscribeToSouth)),
-
-            async function NorthConnectorController_subscribeToSouth(request: ExRequest, response: ExResponse, next: any) {
-
-            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-
-            let validatedArgs: any[] = [];
-            try {
-                validatedArgs = templateService.getValidatedArgs({ args: argsNorthConnectorController_subscribeToSouth, request, response });
-
-                const controller = new NorthConnectorController();
-
-              await templateService.apiHandler({
-                methodName: 'subscribeToSouth',
-                controller,
-                response,
-                next,
-                validatedArgs,
-                successStatus: 204,
-              });
-            } catch (err) {
-                return next(err);
-            }
-        });
-        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-        const argsNorthConnectorController_unsubscribeFromSouth: Record<string, TsoaRoute.ParameterSchema> = {
-                northId: {"in":"path","name":"northId","required":true,"dataType":"string"},
-                southId: {"in":"path","name":"southId","required":true,"dataType":"string"},
-                request: {"in":"request","name":"request","required":true,"dataType":"object"},
-        };
-        app.delete('/api/north/:northId/subscriptions/:southId',
-            ...(fetchMiddlewares<RequestHandler>(NorthConnectorController)),
-            ...(fetchMiddlewares<RequestHandler>(NorthConnectorController.prototype.unsubscribeFromSouth)),
-
-            async function NorthConnectorController_unsubscribeFromSouth(request: ExRequest, response: ExResponse, next: any) {
-
-            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-
-            let validatedArgs: any[] = [];
-            try {
-                validatedArgs = templateService.getValidatedArgs({ args: argsNorthConnectorController_unsubscribeFromSouth, request, response });
-
-                const controller = new NorthConnectorController();
-
-              await templateService.apiHandler({
-                methodName: 'unsubscribeFromSouth',
-                controller,
-                response,
-                next,
-                validatedArgs,
-                successStatus: 204,
-              });
-            } catch (err) {
-                return next(err);
-            }
-        });
-        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsNorthConnectorController_searchCacheContent: Record<string, TsoaRoute.ParameterSchema> = {
                 northId: {"in":"path","name":"northId","required":true,"dataType":"string"},
                 nameContains: {"in":"query","name":"nameContains","required":true,"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},
@@ -9133,7 +9073,7 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsHistoryQueryController_addOrEditTransformer: Record<string, TsoaRoute.ParameterSchema> = {
                 historyId: {"in":"path","name":"historyId","required":true,"dataType":"string"},
-                command: {"in":"body","name":"command","required":true,"ref":"TransformerDTOWithOptions"},
+                command: {"in":"body","name":"command","required":true,"ref":"Omit_TransformerDTOWithOptions.south_"},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
         };
         app.post('/api/history/:historyId/transformers',

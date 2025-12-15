@@ -306,8 +306,11 @@ export class HistoryQueryService {
   /**
    * Add or edit a History query transformer
    */
-  addOrEditTransformer(historyId: string, transformerWithOptions: TransformerDTOWithOptions): Observable<TransformerDTOWithOptions> {
-    return this.http.post<TransformerDTOWithOptions>(`/api/history/${historyId}/transformers`, transformerWithOptions);
+  addOrEditTransformer(
+    historyId: string,
+    transformerWithOptions: Omit<TransformerDTOWithOptions, 'south'>
+  ): Observable<Omit<TransformerDTOWithOptions, 'south'>> {
+    return this.http.post<Omit<TransformerDTOWithOptions, 'south'>>(`/api/history/${historyId}/transformers`, transformerWithOptions);
   }
 
   /**

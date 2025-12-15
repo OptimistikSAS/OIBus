@@ -1,8 +1,13 @@
 import { Knex } from 'knex';
+import { generateRandomId } from '../../service/utils';
 
 const TRANSFORMERS_TABLE = 'transformers';
 const NORTH_CONNECTORS_TABLE = 'north_connectors';
 const HISTORY_QUERIES_TABLE = 'history_queries';
+const NORTH_TRANSFORMERS_TABLE = 'north_transformers';
+const HISTORY_QUERY_TRANSFORMERS_TABLE = 'history_query_transformers';
+const SOUTH_CONNECTORS_TABLE = 'south_connectors';
+const SUBSCRIPTION_TABLE = 'subscription';
 
 interface OldNorthRESTSettings {
   host: string;
@@ -65,6 +70,8 @@ interface NewNorthRESTSettings {
 export async function up(knex: Knex): Promise<void> {
   await updateTransformersTable(knex);
   await updateNorthRestConnectors(knex);
+  await createDefaultTransformers(knex);
+  await migrateSubscriptionsToTransformers(knex);
 }
 
 async function updateTransformersTable(knex: Knex): Promise<void> {
@@ -165,6 +172,245 @@ async function updateNorthRestConnectors(knex: Knex): Promise<void> {
       .update({ north_settings: JSON.stringify(newSettings) })
       .where('id', history.id);
   }
+}
+
+async function createDefaultTransformers(knex: Knex): Promise<void> {
+  if (!knex.select('id').where({ function_name: 'csv-to-mqtt' })) {
+    knex.insert({ id: generateRandomId(6), type: 'standard', input_type: 'any', output_type: 'mqtt', function_name: 'csv-to-mqtt' });
+  }
+  if (!knex.select('id').where({ function_name: 'csv-to-time-values' })) {
+    knex.insert({
+      id: generateRandomId(6),
+      type: 'standard',
+      input_type: 'any',
+      output_type: 'time-values',
+      function_name: 'csv-to-time-values'
+    });
+  }
+  if (!knex.select('id').where({ function_name: 'ignore' })) {
+    knex.insert({
+      id: generateRandomId(6),
+      type: 'standard',
+      input_type: 'any',
+      output_type: 'any',
+      function_name: 'ignore'
+    });
+  }
+  if (!knex.select('id').where({ function_name: 'iso' })) {
+    knex.insert({
+      id: generateRandomId(6),
+      type: 'standard',
+      input_type: 'any',
+      output_type: 'any',
+      function_name: 'iso'
+    });
+  }
+  if (!knex.select('id').where({ function_name: 'json-to-csv' })) {
+    knex.insert({
+      id: generateRandomId(6),
+      type: 'standard',
+      input_type: 'any',
+      output_type: 'any',
+      function_name: 'json-to-csv'
+    });
+  }
+  if (!knex.select('id').where({ function_name: 'json-to-mqtt' })) {
+    knex.insert({
+      id: generateRandomId(6),
+      type: 'standard',
+      input_type: 'any',
+      output_type: 'mqtt',
+      function_name: 'json-to-mqtt'
+    });
+  }
+  if (!knex.select('id').where({ function_name: 'json-to-time-values' })) {
+    knex.insert({
+      id: generateRandomId(6),
+      type: 'standard',
+      input_type: 'any',
+      output_type: 'time-values',
+      function_name: 'json-to-time-values'
+    });
+  }
+  if (!knex.select('id').where({ function_name: 'time-values-to-csv' })) {
+    knex.insert({
+      id: generateRandomId(6),
+      type: 'standard',
+      input_type: 'time-values',
+      output_type: 'any',
+      function_name: 'time-values-to-csv'
+    });
+  }
+  if (!knex.select('id').where({ function_name: 'time-values-to-json' })) {
+    knex.insert({
+      id: generateRandomId(6),
+      type: 'standard',
+      input_type: 'time-values',
+      output_type: 'any',
+      function_name: 'time-values-to-json'
+    });
+  }
+  if (!knex.select('id').where({ function_name: 'time-values-to-modbus' })) {
+    knex.insert({
+      id: generateRandomId(6),
+      type: 'standard',
+      input_type: 'time-values',
+      output_type: 'modbus',
+      function_name: 'time-values-to-modbus'
+    });
+  }
+  if (!knex.select('id').where({ function_name: 'time-values-to-mqtt' })) {
+    knex.insert({
+      id: generateRandomId(6),
+      type: 'standard',
+      input_type: 'time-values',
+      output_type: 'mqtt',
+      function_name: 'time-values-to-mqtt'
+    });
+  }
+  if (!knex.select('id').where({ function_name: 'time-values-to-oianalytics' })) {
+    knex.insert({
+      id: generateRandomId(6),
+      type: 'standard',
+      input_type: 'time-values',
+      output_type: 'oianalytics',
+      function_name: 'time-values-to-oianalytics'
+    });
+  }
+  if (!knex.select('id').where({ function_name: 'time-values-to-opcua' })) {
+    knex.insert({
+      id: generateRandomId(6),
+      type: 'standard',
+      input_type: 'time-values',
+      output_type: 'opcua',
+      function_name: 'time-values-to-opcua'
+    });
+  }
+  if (!knex.select('id').where({ function_name: 'setpoint-to-modbus' })) {
+    knex.insert({
+      id: generateRandomId(6),
+      type: 'standard',
+      input_type: 'setpoint',
+      output_type: 'modbus',
+      function_name: 'setpoint-to-modbus'
+    });
+  }
+  if (!knex.select('id').where({ function_name: 'setpoint-to-mqtt' })) {
+    knex.insert({
+      id: generateRandomId(6),
+      type: 'standard',
+      input_type: 'setpoint',
+      output_type: 'mqtt',
+      function_name: 'setpoint-to-mqtt'
+    });
+  }
+  if (!knex.select('id').where({ function_name: 'setpoint-to-opcua' })) {
+    knex.insert({
+      id: generateRandomId(6),
+      type: 'standard',
+      input_type: 'setpoint',
+      output_type: 'opcua',
+      function_name: 'setpoint-to-opcua'
+    });
+  }
+}
+
+async function migrateSubscriptionsToTransformers(knex: Knex): Promise<void> {
+  const subscriptions: Array<{
+    north_connector_id: string;
+    south_connector_id: string;
+  }> = await knex(SUBSCRIPTION_TABLE).select('north_connector_id', 'south_connector_id');
+
+  const northConnectors: Array<{
+    id: string;
+    type: string;
+  }> = await knex(NORTH_CONNECTORS_TABLE).select('id', 'type');
+
+  const transformers: Array<{
+    id: string;
+    type: string;
+    input_type: string;
+    output_type: string;
+    function_name: string;
+  }> = await knex(TRANSFORMERS_TABLE).select('id', 'type', 'input_type', 'output_type', 'function_name');
+
+  const northTransformers: Array<{
+    north_id: string;
+    transformer_id: string;
+    options: string;
+    input_type: string;
+  }> = await knex(NORTH_TRANSFORMERS_TABLE).select('north_id', 'transformer_id', 'options', 'input_type');
+
+  const southConnectors: Array<{
+    id: string;
+    type: string;
+  }> = await knex(SOUTH_CONNECTORS_TABLE).select('id', 'type');
+
+  await knex.schema.alterTable(NORTH_TRANSFORMERS_TABLE, table => {
+    table.uuid('id');
+    table.string('south_id').nullable().references('id').inTable(SOUTH_CONNECTORS_TABLE).onDelete('SET NULL');
+    table.dropUnique(['north_id', 'transformer_id', 'input_type']);
+    table.unique(['north_id', 'transformer_id', 'input_type', 'south_id']);
+  });
+  const northRows = await knex(NORTH_TRANSFORMERS_TABLE).select(knex.raw('rowid as rid'));
+  // Update rows one by one (or use Promise.all for parallel batches)
+  for (const row of northRows) {
+    await knex(NORTH_TRANSFORMERS_TABLE)
+      .where('rowid', row.rid)
+      .update({ id: generateRandomId(6) });
+  }
+  await knex.schema.alterTable(NORTH_TRANSFORMERS_TABLE, table => {
+    table.uuid('id').notNullable().primary().alter();
+  });
+
+  await knex.schema.alterTable(HISTORY_QUERY_TRANSFORMERS_TABLE, table => {
+    table.uuid('id');
+  });
+  const historyRows = await knex(HISTORY_QUERY_TRANSFORMERS_TABLE).select(knex.raw('rowid as rid'));
+  // Update rows one by one (or use Promise.all for parallel batches)
+  for (const row of historyRows) {
+    await knex(HISTORY_QUERY_TRANSFORMERS_TABLE)
+      .where('rowid', row.rid)
+      .update({ id: generateRandomId(6) });
+  }
+  await knex.schema.alterTable(HISTORY_QUERY_TRANSFORMERS_TABLE, table => {
+    table.uuid('id').notNullable().primary().alter();
+  });
+
+  // const ignoreTransformer = transformers.find(transformer => transformer.function_name === 'ignore')!;
+  const isoTransformer = transformers.find(transformer => transformer.function_name === 'iso')!;
+  for (const subscription of subscriptions) {
+    const north = northConnectors.find(connector => connector.id === subscription.north_connector_id);
+    const south = southConnectors.find(connector => connector.id === subscription.south_connector_id);
+    if (south && north) {
+      const inputType = ['ads', 'modbus', 'mqtt', 'oianalytics', 'opc', 'opcua', 'osisoft-pi'].includes(south.type) ? 'time-values' : 'any';
+      const transformer = northTransformers.find(transformer => transformer.north_id === north.id && transformer.input_type === inputType);
+      // In this case, the north is subscribed to the south. We need to check if there is already transformers depending on the connector type
+      if (!transformer) {
+        // The north is subscribed so we need to create a transformer for this specific case ("iso" standard transformer)
+        await knex(NORTH_TRANSFORMERS_TABLE).insert({
+          id: generateRandomId(6),
+          north_id: north.id,
+          south_id: south.id,
+          transformer_id: isoTransformer.id
+        });
+      } else {
+        await knex(NORTH_TRANSFORMERS_TABLE)
+          .delete()
+          .where({ north_id: north.id, south_id: '', transformer_id: isoTransformer.id, input_type: inputType });
+        await knex(NORTH_TRANSFORMERS_TABLE).insert({
+          id: generateRandomId(6),
+          north_id: north.id,
+          south_id: south.id,
+          transformer_id: transformer.transformer_id,
+          options: transformer.options,
+          input_type: inputType
+        });
+      }
+    }
+  }
+
+  await knex.schema.dropTableIfExists(SUBSCRIPTION_TABLE);
 }
 
 export async function down(_knex: Knex): Promise<void> {
