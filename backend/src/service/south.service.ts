@@ -144,7 +144,7 @@ export default class SouthService {
       this.scanModeRepository.findAll(),
       !!retrieveSecretsFromSouth
     );
-    this.southConnectorRepository.saveSouthConnector(southEntity);
+    this.southConnectorRepository.saveSouth(southEntity);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     await this.engine.createSouth(southEntity.id);
     if (southEntity.enabled) {
@@ -176,7 +176,7 @@ export default class SouthService {
 
     const southEntity = { id: previousSettings.id } as SouthConnectorEntity<SouthSettings, SouthItemSettings>;
     await copySouthConnectorCommandToSouthEntity(southEntity, command, previousSettings, this.scanModeRepository.findAll());
-    this.southConnectorRepository.saveSouthConnector(southEntity);
+    this.southConnectorRepository.saveSouth(southEntity);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     await this.engine.reloadSouth(southEntity);
   }
@@ -188,7 +188,7 @@ export default class SouthService {
     this.logRepository.deleteLogsByScopeId('south', southConnector.id);
     this.southMetricsRepository.removeMetrics(southConnector.id);
     this.southCacheRepository.deleteAllBySouthConnector(southConnector.id);
-    this.engine.updateNorthSubscriptions(southConnector.id); // Do this once it has been removed from the database to properly reload the subscription list
+    this.engine.updateNorthTransformerBySouth(southConnector.id); // Do this once it has been removed from the database to properly reload the subscription list
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
 
     this.engine.logger.info(`Deleted South connector "${southConnector.name}" (${southConnector.id})`);
@@ -396,7 +396,7 @@ export default class SouthService {
   async deleteItem(southId: string, itemId: string): Promise<void> {
     const southConnector = this.findById(southId)!;
     const southItem = this.findItemById(southId, itemId);
-    this.southConnectorRepository.deleteItem(southItem.id);
+    this.southConnectorRepository.deleteItem(southConnector.id, southItem.id);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     await this.engine.reloadSouthItems(southConnector);
   }
@@ -416,7 +416,7 @@ export default class SouthService {
     const southConnector = this.findById(southId);
     for (const itemId of itemIds) {
       const southItem = this.findItemById(southId, itemId);
-      this.southConnectorRepository.deleteItem(southItem.id);
+      this.southConnectorRepository.deleteItem(southConnector.id, southItem.id);
     }
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     await this.engine.reloadSouthItems(southConnector);

@@ -243,6 +243,15 @@ export interface SouthConnectorItemTypedDTO<IS> extends BaseEntity {
   scanMode: ScanModeDTO;
 }
 
+export interface ItemLightDTO extends BaseEntity {
+  /**
+   * The name of the item.
+   *
+   * @example "Temperature Logs"
+   */
+  name: string;
+}
+
 /**
  * Data Transfer Object for a South connector.
  * Contains all configuration details and current state of a South connector.
