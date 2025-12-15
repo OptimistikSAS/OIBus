@@ -120,7 +120,7 @@ describe('South Service', () => {
 
     await service.create(testData.south.command, testData.south.list[0].id);
 
-    expect(southConnectorRepository.saveSouthConnector).toHaveBeenCalledTimes(1);
+    expect(southConnectorRepository.saveSouth).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
     expect(service.retrieveSecretsFromSouth).toHaveBeenCalledTimes(1);
     expect(engine.createSouth).toHaveBeenCalledTimes(1);
@@ -133,7 +133,7 @@ describe('South Service', () => {
     const command = JSON.parse(JSON.stringify(testData.south.command));
     command.enabled = false;
     await service.create(command, null);
-    expect(southConnectorRepository.saveSouthConnector).toHaveBeenCalledTimes(1);
+    expect(southConnectorRepository.saveSouth).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
     expect(engine.createSouth).toHaveBeenCalledTimes(1);
     expect(engine.startSouth).not.toHaveBeenCalled();
@@ -152,7 +152,7 @@ describe('South Service', () => {
     (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValue(testData.south.list);
     await service.update(testData.south.list[0].id, testData.south.command);
 
-    expect(southConnectorRepository.saveSouthConnector).toHaveBeenCalledTimes(1);
+    expect(southConnectorRepository.saveSouth).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
     expect(engine.reloadSouth).toHaveBeenCalledTimes(1);
   });
@@ -164,7 +164,7 @@ describe('South Service', () => {
 
     await service.update(testData.south.list[0].id, command);
 
-    expect(southConnectorRepository.saveSouthConnector).toHaveBeenCalledTimes(1);
+    expect(southConnectorRepository.saveSouth).toHaveBeenCalledTimes(1);
     expect(engine.reloadSouth).toHaveBeenCalledTimes(1);
   });
 
@@ -353,7 +353,7 @@ describe('South Service', () => {
     await service.deleteItem(testData.south.list[0].id, testData.south.list[0].items[0].id);
 
     expect(southConnectorRepository.findItemById).toHaveBeenCalledWith(testData.south.list[0].id, testData.south.list[0].items[0].id);
-    expect(southConnectorRepository.deleteItem).toHaveBeenCalledWith(testData.south.list[0].items[0].id);
+    expect(southConnectorRepository.deleteItem).toHaveBeenCalledWith(testData.south.list[0].id, testData.south.list[0].items[0].id);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
     expect(engine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0]);
   });
@@ -368,8 +368,8 @@ describe('South Service', () => {
 
     await service.deleteItems(southConnectorId, itemIds);
 
-    expect(southConnectorRepository.deleteItem).toHaveBeenCalledWith(testData.south.list[0].items[0].id);
-    expect(southConnectorRepository.deleteItem).toHaveBeenCalledWith(testData.south.list[0].items[1].id);
+    expect(southConnectorRepository.deleteItem).toHaveBeenCalledWith(testData.south.list[0].id, testData.south.list[0].items[0].id);
+    expect(southConnectorRepository.deleteItem).toHaveBeenCalledWith(testData.south.list[0].id, testData.south.list[0].items[1].id);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
     expect(engine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0]);
   });

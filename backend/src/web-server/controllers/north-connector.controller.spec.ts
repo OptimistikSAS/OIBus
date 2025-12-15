@@ -168,9 +168,11 @@ describe('NorthConnectorController', () => {
   it('should add or edit a transformer', async () => {
     const northId = testData.north.list[0].id;
     const transformer: TransformerDTOWithOptions = {
+      id: 'northTransformerId1',
       inputType: 'any',
       transformer: testData.transformers.list[0] as StandardTransformerDTO,
-      options: {}
+      options: {},
+      south: undefined
     };
 
     (mockRequest.services!.northService.addOrEditTransformer as jest.Mock).mockResolvedValue(undefined);
@@ -189,28 +191,6 @@ describe('NorthConnectorController', () => {
     await controller.removeTransformer(northId, transformerId, mockRequest as CustomExpressRequest);
 
     expect(mockRequest.services!.northService.removeTransformer).toHaveBeenCalledWith(northId, transformerId);
-  });
-
-  it('should add a subscription', async () => {
-    const northId = testData.north.list[0].id;
-    const southId = testData.south.list[0].id;
-
-    (mockRequest.services!.northService.subscribeToSouth as jest.Mock).mockResolvedValue(undefined);
-
-    await controller.subscribeToSouth(northId, southId, mockRequest as CustomExpressRequest);
-
-    expect(mockRequest.services!.northService.subscribeToSouth).toHaveBeenCalledWith(northId, southId);
-  });
-
-  it('should remove a subscription', async () => {
-    const northId = testData.north.list[0].id;
-    const southId = testData.south.list[0].id;
-
-    (mockRequest.services!.northService.unsubscribeFromSouth as jest.Mock).mockResolvedValue(undefined);
-
-    await controller.unsubscribeFromSouth(northId, southId, mockRequest as CustomExpressRequest);
-
-    expect(mockRequest.services!.northService.unsubscribeFromSouth).toHaveBeenCalledWith(northId, southId);
   });
 
   it('should search cache content with default params', async () => {

@@ -199,7 +199,7 @@ describe('CacheService', () => {
       .mockReturnValueOnce(testData.north.list[0])
       .mockReturnValueOnce(null)
       .mockReturnValueOnce(null);
-    (historyQueryRepository.findHistoryQueryById as jest.Mock)
+    (historyQueryRepository.findHistoryById as jest.Mock)
       .mockReturnValueOnce(testData.historyQueries.list[0])
       .mockReturnValueOnce(null)
       .mockReturnValueOnce(null);
@@ -244,10 +244,10 @@ describe('CacheService', () => {
       `Could not remove "${path.resolve('baseFolder', 'cache', 'north-bad-north')}": north rm error`
     );
 
-    expect(historyQueryRepository.findHistoryQueryById).toHaveBeenCalledTimes(3);
-    expect(historyQueryRepository.findHistoryQueryById).toHaveBeenCalledWith('id5');
-    expect(historyQueryRepository.findHistoryQueryById).toHaveBeenCalledWith('id6');
-    expect(historyQueryRepository.findHistoryQueryById).toHaveBeenCalledWith('bad-history');
+    expect(historyQueryRepository.findHistoryById).toHaveBeenCalledTimes(3);
+    expect(historyQueryRepository.findHistoryById).toHaveBeenCalledWith('id5');
+    expect(historyQueryRepository.findHistoryById).toHaveBeenCalledWith('id6');
+    expect(historyQueryRepository.findHistoryById).toHaveBeenCalledWith('bad-history');
     expect(logger.debug).toHaveBeenCalledWith(`Folder "history-id6" not associated to a History query. Removing it.`);
     expect(logger.debug).toHaveBeenCalledWith(`Folder "history-bad-history" not associated to a History query. Removing it.`);
     expect(fs.rm).toHaveBeenCalledWith(path.resolve('baseFolder', 'cache', 'history-id6'), { force: true, recursive: true });
@@ -266,7 +266,7 @@ describe('CacheService', () => {
       .mockReturnValueOnce({ id: 'id1', caching: { archive: { enabled: false } } })
       .mockReturnValueOnce({ id: 'id2', caching: { archive: { enabled: true, retentionDuration: 1 } } })
       .mockReturnValueOnce({ id: 'id3', caching: { archive: { enabled: true, retentionDuration: 0 } } });
-    (historyQueryRepository.findHistoryQueryById as jest.Mock)
+    (historyQueryRepository.findHistoryById as jest.Mock)
       .mockReturnValueOnce({ id: 'id4', caching: { archive: { enabled: false } } })
       .mockReturnValueOnce({ id: 'id5', caching: { archive: { enabled: true, retentionDuration: 1 } } })
       .mockReturnValueOnce({ id: 'id6', caching: { archive: { enabled: true, retentionDuration: 0 } } });
@@ -287,7 +287,7 @@ describe('CacheService', () => {
       'archive',
       fileList.map(file => file.metadataFilename)
     );
-    expect(historyQueryRepository.findHistoryQueryById).toHaveBeenCalledTimes(3);
+    expect(historyQueryRepository.findHistoryById).toHaveBeenCalledTimes(3);
   });
 
   it('clean up should do nothing if folder does not contain any files', async () => {
@@ -299,7 +299,7 @@ describe('CacheService', () => {
       id: 'id1',
       caching: { archive: { enabled: true, retentionDuration: 1 } }
     });
-    (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce({
+    (historyQueryRepository.findHistoryById as jest.Mock).mockReturnValueOnce({
       id: 'id2',
       caching: { archive: { enabled: true, retentionDuration: 1 } }
     });
@@ -309,7 +309,7 @@ describe('CacheService', () => {
     expect(northConnectorRepository.findNorthById).toHaveBeenCalledTimes(1);
     expect(engine.removeCacheContent).not.toHaveBeenCalled();
 
-    expect(historyQueryRepository.findHistoryQueryById).toHaveBeenCalledTimes(1);
+    expect(historyQueryRepository.findHistoryById).toHaveBeenCalledTimes(1);
   });
 
   it('should clean up error folder', async () => {
@@ -320,7 +320,7 @@ describe('CacheService', () => {
     (northConnectorRepository.findNorthById as jest.Mock)
       .mockReturnValueOnce({ id: 'id1', caching: { error: { retentionDuration: 1 } } })
       .mockReturnValueOnce({ id: 'id2', caching: { error: { retentionDuration: 0 } } });
-    (historyQueryRepository.findHistoryQueryById as jest.Mock)
+    (historyQueryRepository.findHistoryById as jest.Mock)
 
       .mockReturnValueOnce({ id: 'id3', caching: { error: { retentionDuration: 1 } } })
       .mockReturnValueOnce({ id: 'id4', caching: { error: { retentionDuration: 0 } } });
@@ -338,7 +338,7 @@ describe('CacheService', () => {
       'error',
       fileList.map(file => file.metadataFilename)
     );
-    expect(historyQueryRepository.findHistoryQueryById).toHaveBeenCalledTimes(2);
+    expect(historyQueryRepository.findHistoryById).toHaveBeenCalledTimes(2);
     expect(service['readCacheMetadataFiles']).toHaveBeenCalledWith(path.resolve('baseFolder', 'error', 'history-id3', 'north'));
     expect(service['readCacheMetadataFiles']).toHaveBeenCalledWith(path.resolve('baseFolder', 'error', 'history-id4', 'north'));
   });
