@@ -20,6 +20,9 @@ import { LegendComponent } from '../shared/legend/legend.component';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../shared/form/form-validation-directives';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
+type HistorySortField = 'name' | 'interval' | null;
+type SortDirection = 'asc' | 'desc';
+
 const PAGE_SIZE = 15;
 
 @Component({
@@ -53,6 +56,8 @@ export class HistoryQueryListComponent implements OnInit {
   filteredHistoryQueries: Array<HistoryQueryLightDTO> = [];
   displayedHistoryQueries: Page<HistoryQueryLightDTO> = emptyPage();
   states = new Map<string, ObservableState>();
+  sortField: HistorySortField = null;
+  sortDirection: SortDirection = 'asc';
 
   searchForm = inject(NonNullableFormBuilder).group({
     name: [null as string | null]
@@ -73,14 +78,12 @@ export class HistoryQueryListComponent implements OnInit {
       this.allHistoryQueries.forEach(historyQuery => {
         this.states.set(historyQuery.id, new ObservableState());
       });
-      this.filteredHistoryQueries = this.filter(queries);
-      this.changePage(0);
+      this.updateList(0);
     });
 
     this.searchForm.valueChanges.pipe(debounceTime(200), distinctUntilChanged()).subscribe(() => {
       if (this.allHistoryQueries) {
-        this.filteredHistoryQueries = this.filter(this.allHistoryQueries);
-        this.changePage(0);
+        this.updateList(0);
       }
     });
   }
@@ -106,8 +109,7 @@ export class HistoryQueryListComponent implements OnInit {
             this.allHistoryQueries.forEach(historyQuery => {
               this.states.set(historyQuery.id, new ObservableState());
             });
-            this.filteredHistoryQueries = this.filter(queries);
-            this.changePage(0);
+            this.updateList(0);
           });
         this.notificationService.success('history-query.deleted', {
           name: historyQuery.name
@@ -122,12 +124,38 @@ export class HistoryQueryListComponent implements OnInit {
     });
   }
 
+  toggleSort(field: HistorySortField) {
+    if (!field) return;
+
+    if (this.sortField === field) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortField = field;
+      this.sortDirection = 'asc';
+    }
+
+    this.updateList(0);
+  }
+
+  getSortIcon(field: HistorySortField): string {
+    if (this.sortField !== field) {
+      return 'fa-sort';
+    }
+    return this.sortDirection === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc';
+  }
+
   changePage(pageNumber: number) {
     this.displayedHistoryQueries = this.createPage(pageNumber);
   }
 
   private createPage(pageNumber: number): Page<HistoryQueryLightDTO> {
     return createPageFromArray(this.filteredHistoryQueries, PAGE_SIZE, pageNumber);
+  }
+
+  private updateList(pageNumber: number) {
+    this.filteredHistoryQueries = this.filter(this.allHistoryQueries ?? []);
+    this.sortHistoryQueries();
+    this.changePage(pageNumber);
   }
 
   filter(souths: Array<HistoryQueryLightDTO>): Array<HistoryQueryLightDTO> {
@@ -139,6 +167,21 @@ export class HistoryQueryListComponent implements OnInit {
     }
 
     return filteredItems;
+  }
+
+  private sortHistoryQueries() {
+    if (!this.sortField) return;
+
+    const direction = this.sortDirection === 'asc' ? 1 : -1;
+    this.filteredHistoryQueries = [...this.filteredHistoryQueries].sort((a, b) => {
+      if (this.sortField === 'name') {
+        return a.name.localeCompare(b.name) * direction;
+      }
+
+      const aStart = a.startTime ?? '';
+      const bStart = b.startTime ?? '';
+      return aStart.localeCompare(bStart) * direction;
+    });
   }
 
   toggleHistoryQuery(query: HistoryQueryLightDTO, newStatus: HistoryQueryStatus) {
@@ -153,9 +196,7 @@ export class HistoryQueryListComponent implements OnInit {
         )
         .subscribe(queries => {
           this.allHistoryQueries = queries;
-          this.filteredHistoryQueries = this.filter(queries);
-
-          this.changePage(this.displayedHistoryQueries.number);
+          this.updateList(this.displayedHistoryQueries.number);
           this.notificationService.success('history-query.started', { name: query.name });
         });
     } else {
@@ -169,8 +210,7 @@ export class HistoryQueryListComponent implements OnInit {
         )
         .subscribe(queries => {
           this.allHistoryQueries = queries;
-          this.filteredHistoryQueries = this.filter(queries);
-          this.changePage(this.displayedHistoryQueries.number);
+          this.updateList(this.displayedHistoryQueries.number);
           this.notificationService.success('history-query.paused', { name: query.name });
         });
     }

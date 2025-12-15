@@ -19,6 +19,9 @@ import { LegendComponent } from '../shared/legend/legend.component';
 import { OIBusNorthTypeEnumPipe } from '../shared/oibus-north-type-enum.pipe';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
+type NorthSortField = 'name' | 'type' | null;
+type SortDirection = 'asc' | 'desc';
+
 const PAGE_SIZE = 15;
 
 @Component({
@@ -48,6 +51,8 @@ export class NorthListComponent implements OnInit {
   private filteredNorths: Array<NorthConnectorLightDTO> = [];
   displayedNorths: Page<NorthConnectorLightDTO> = emptyPage();
   states = new Map<string, ObservableState>();
+  sortField: NorthSortField = null;
+  sortDirection: SortDirection = 'asc';
 
   searchForm = inject(NonNullableFormBuilder).group({
     name: [null as string | null]
@@ -65,14 +70,12 @@ export class NorthListComponent implements OnInit {
       this.allNorths.forEach(north => {
         this.states.set(north.id, new ObservableState());
       });
-      this.filteredNorths = this.filter(norths);
-      this.changePage(0);
+      this.updateList(0);
     });
 
     this.searchForm.valueChanges.pipe(debounceTime(200), distinctUntilChanged()).subscribe(() => {
       if (this.allNorths) {
-        this.filteredNorths = this.filter(this.allNorths);
-        this.changePage(0);
+        this.updateList(0);
       }
     });
   }
@@ -101,8 +104,7 @@ export class NorthListComponent implements OnInit {
             this.allNorths.forEach(north => {
               this.states.set(north.id, new ObservableState());
             });
-            this.filteredNorths = this.filter(this.allNorths);
-            this.changePage(0);
+            this.updateList(0);
           });
         this.notificationService.success('north.deleted', {
           name: north.name
@@ -118,12 +120,38 @@ export class NorthListComponent implements OnInit {
     modalRef.result.subscribe();
   }
 
+  toggleSort(field: NorthSortField) {
+    if (!field) return;
+
+    if (this.sortField === field) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortField = field;
+      this.sortDirection = 'asc';
+    }
+
+    this.updateList(0);
+  }
+
+  getSortIcon(field: NorthSortField): string {
+    if (this.sortField !== field) {
+      return 'fa-sort';
+    }
+    return this.sortDirection === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc';
+  }
+
   changePage(pageNumber: number) {
     this.displayedNorths = this.createPage(pageNumber);
   }
 
   private createPage(pageNumber: number): Page<NorthConnectorLightDTO> {
     return createPageFromArray(this.filteredNorths, PAGE_SIZE, pageNumber);
+  }
+
+  private updateList(pageNumber: number) {
+    this.filteredNorths = this.filter(this.allNorths ?? []);
+    this.sortNorths();
+    this.changePage(pageNumber);
   }
 
   filter(norths: Array<NorthConnectorLightDTO>): Array<NorthConnectorLightDTO> {
@@ -135,6 +163,17 @@ export class NorthListComponent implements OnInit {
     }
 
     return filteredItems;
+  }
+
+  private sortNorths() {
+    if (!this.sortField) return;
+
+    const direction = this.sortDirection === 'asc' ? 1 : -1;
+    this.filteredNorths = [...this.filteredNorths].sort((a, b) => {
+      const aValue = this.sortField === 'name' ? a.name : a.type;
+      const bValue = this.sortField === 'name' ? b.name : b.type;
+      return aValue.localeCompare(bValue) * direction;
+    });
   }
 
   toggleConnector(northId: string, northName: string, value: boolean) {
@@ -152,8 +191,7 @@ export class NorthListComponent implements OnInit {
         )
         .subscribe(norths => {
           this.allNorths = norths;
-          this.filteredNorths = this.filter(this.allNorths);
-          this.displayedNorths = this.createPage(this.displayedNorths.number);
+          this.updateList(this.displayedNorths.number);
         });
     } else {
       this.northConnectorService
@@ -169,8 +207,7 @@ export class NorthListComponent implements OnInit {
         )
         .subscribe(norths => {
           this.allNorths = norths;
-          this.filteredNorths = this.filter(this.allNorths);
-          this.displayedNorths = this.createPage(this.displayedNorths.number);
+          this.updateList(this.displayedNorths.number);
         });
     }
   }
