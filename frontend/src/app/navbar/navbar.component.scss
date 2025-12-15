@@ -2,6 +2,7 @@
   height: var(--menu-height);
   min-height: var(--menu-height);
   background-color: var(--menu-background-color);
+  position: relative;
 
   .nav-link {
     color: white;
