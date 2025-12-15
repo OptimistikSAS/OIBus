@@ -1,8 +1,7 @@
 import { BaseEntity } from './types';
 import { NorthSettings } from '../../shared/model/north-settings.model';
-import { SouthConnectorEntityLight } from './south-connector.model';
 import { OIBusNorthType } from '../../shared/model/north-connector.model';
-import { TransformerWithOptions } from './transformer.model';
+import { NorthTransformerWithOptions } from './transformer.model';
 import { ScanMode } from './scan-mode.model';
 
 export interface NorthConnectorEntityLight extends BaseEntity {
@@ -39,6 +38,5 @@ export interface NorthConnectorEntity<T extends NorthSettings> extends BaseEntit
       retentionDuration: number;
     };
   };
-  subscriptions: Array<SouthConnectorEntityLight>;
-  transformers: Array<TransformerWithOptions>;
+  transformers: Array<NorthTransformerWithOptions>;
 }

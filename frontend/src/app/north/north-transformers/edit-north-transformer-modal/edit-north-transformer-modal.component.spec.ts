@@ -158,7 +158,7 @@ describe('EditNorthTransformerModalComponent', () => {
   });
 
   it('should display title and form, and validate without transformers', async () => {
-    tester.componentInstance.prepareForCreation([], [], [], [transformer], []);
+    tester.componentInstance.prepareForCreation([], [], [], [], [transformer], []);
     await tester.change();
     expect(tester.title).toContainText('Choose how to handle payloads');
     expect(tester.options).toBeNull();
@@ -171,7 +171,9 @@ describe('EditNorthTransformerModalComponent', () => {
     tester.componentInstance.prepareForEdition(
       [],
       [],
+      [],
       {
+        id: 'northTransformerId1',
         transformer,
         options: {
           mapping: [
@@ -179,7 +181,8 @@ describe('EditNorthTransformerModalComponent', () => {
             { pointId: 'pointId2', nodeId: 'nodeId2', dataType: 'Int32' }
           ]
         },
-        inputType: transformer.inputType
+        inputType: transformer.inputType,
+        south: undefined
       },
       [transformer],
       ['mqtt']
@@ -197,6 +200,7 @@ describe('EditNorthTransformerModalComponent', () => {
           { pointId: 'pointId2', nodeId: 'nodeId2', dataType: 'Int32' }
         ]
       },
+      south: undefined,
       inputType: transformer.inputType
     });
   });

@@ -213,12 +213,6 @@
             [transformers]="transformers"
             (inMemoryTransformersWithOptions)="updateInMemoryTransformers($event)"
           />
-          <!-- subscription -->
-          <oib-north-subscriptions
-            [northConnector]="northConnector"
-            [saveChangesDirectly]="false"
-            (inMemorySubscriptions)="updateInMemorySubscriptions($event)"
-          />
         </form>
         <div id="actions" class="mt-2 mb-3 d-flex justify-content-end">
           <div class="btn-group">
