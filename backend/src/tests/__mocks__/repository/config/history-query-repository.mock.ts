@@ -3,24 +3,23 @@
  */
 export default jest.fn().mockImplementation(() => {
   return {
-    findAllHistoryQueriesLight: jest.fn(),
-    findAllHistoryQueriesFull: jest.fn(),
-    findHistoryQueryById: jest.fn(),
-    saveHistoryQuery: jest.fn(),
-    updateHistoryQueryStatus: jest.fn(),
-    deleteHistoryQuery: jest.fn(),
+    findAllHistoriesLight: jest.fn(),
+    findAllHistoriesFull: jest.fn(),
+    findHistoryById: jest.fn(),
+    saveHistory: jest.fn(),
+    updateHistoryStatus: jest.fn(),
+    deleteHistory: jest.fn(),
     addOrEditTransformer: jest.fn(),
     removeTransformer: jest.fn(),
-    searchHistoryQueryItems: jest.fn(),
-    listHistoryQueryItems: jest.fn(),
-    findAllItemsForHistoryQuery: jest.fn(),
-    findHistoryQueryItemById: jest.fn(),
-    saveHistoryQueryItem: jest.fn(),
+    searchItems: jest.fn(),
+    listItems: jest.fn(),
+    findAllItemsForHistory: jest.fn(),
+    findItemById: jest.fn(),
+    saveItem: jest.fn(),
     saveAllItems: jest.fn(),
-    deleteHistoryQueryItem: jest.fn(),
-    deleteAllHistoryQueryItemsByHistoryQuery: jest.fn(),
-    enableHistoryQueryItem: jest.fn(),
-    disableHistoryQueryItem: jest.fn(),
-    findAllTransformersForHistory: jest.fn()
+    deleteItem: jest.fn(),
+    deleteAllItemsByHistory: jest.fn(),
+    enableItem: jest.fn(),
+    disableItem: jest.fn()
   };
 });
