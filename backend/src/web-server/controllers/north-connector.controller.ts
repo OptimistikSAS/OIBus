@@ -14,6 +14,7 @@ import { CacheMetadata } from '../../../shared/model/engine.model';
 import { TransformerDTOWithOptions } from '../../../shared/model/transformer.model';
 import OIBusService from '../../service/oibus.service';
 import { OIBusTestingError } from '../../model/types';
+import { NorthTransformerWithOptions } from '../../model/transformer.model';
 
 /**
  * @interface NorthConnectorType
@@ -202,7 +203,7 @@ export class NorthConnectorController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<void> {
     const northService = request.services.northService as NorthService;
-    await northService.addOrEditTransformer(northId, command);
+    await northService.addOrEditTransformer(northId, command as NorthTransformerWithOptions);
   }
 
   /**
@@ -214,28 +215,6 @@ export class NorthConnectorController extends Controller {
   async removeTransformer(@Path() northId: string, @Path() transformerId: string, @Request() request: CustomExpressRequest): Promise<void> {
     const northService = request.services.northService as NorthService;
     await northService.removeTransformer(northId, transformerId);
-  }
-
-  /**
-   * Subscribe to a south connector from a north connector
-   * @summary Subscribe to a south connector
-   */
-  @Post('/{northId}/subscriptions/{southId}')
-  @SuccessResponse(204, 'No Content')
-  async subscribeToSouth(@Path() northId: string, @Path() southId: string, @Request() request: CustomExpressRequest): Promise<void> {
-    const northService = request.services.northService as NorthService;
-    await northService.subscribeToSouth(northId, southId);
-  }
-
-  /**
-   * Remove a subscription to a south connector from a north connector
-   * @summary Unsubscribe from a south connector
-   */
-  @Delete('/{northId}/subscriptions/{southId}')
-  @SuccessResponse(204, 'No Content')
-  async unsubscribeFromSouth(@Path() northId: string, @Path() southId: string, @Request() request: CustomExpressRequest): Promise<void> {
-    const northService = request.services.northService as NorthService;
-    await northService.unsubscribeFromSouth(northId, southId);
   }
 
   /**

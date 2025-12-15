@@ -14,10 +14,21 @@ import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
 import { firstValueFrom, of, switchMap } from 'rxjs';
 import { NorthConnectorService } from '../../services/north-connector.service';
+import { SouthConnectorLightDTO } from '../../../../../backend/shared/model/south-connector.model';
+import { SouthConnectorService } from '../../services/south-connector.service';
+import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
 
 @Component({
   selector: 'oib-north-transformers',
-  imports: [TranslateDirective, BoxComponent, ReactiveFormsModule, TranslatePipe, BoxTitleDirective, OibHelpComponent],
+  imports: [
+    TranslateDirective,
+    BoxComponent,
+    ReactiveFormsModule,
+    TranslatePipe,
+    BoxTitleDirective,
+    OibHelpComponent,
+    OIBusSouthTypeEnumPipe
+  ],
   templateUrl: './north-transformers.component.html',
   styleUrl: './north-transformers.component.scss'
 })
@@ -26,6 +37,7 @@ export class NorthTransformersComponent {
   private notificationService = inject(NotificationService);
   private modalService = inject(ModalService);
   private northConnectorService = inject(NorthConnectorService);
+  private southConnectorService = inject(SouthConnectorService);
 
   readonly northConnector = input<NorthConnectorDTO | null>(null);
 
@@ -38,6 +50,7 @@ export class NorthTransformersComponent {
   readonly transformers = input.required<Array<TransformerDTO>>();
 
   transformersWithOptions: Array<TransformerDTOWithOptions> = []; // Array used to store subscription on north connector creation
+  southConnectors: Array<SouthConnectorLightDTO> = [];
 
   constructor() {
     // Initialize local transformers when editing, and keep them in sync with input
@@ -46,6 +59,9 @@ export class NorthTransformersComponent {
       if (connector) {
         this.transformersWithOptions = [...connector.transformers];
       }
+    });
+    this.southConnectorService.list().subscribe(southConnectors => {
+      this.southConnectors = southConnectors;
     });
   }
 
@@ -62,9 +78,10 @@ export class NorthTransformersComponent {
     const component: EditNorthTransformerModalComponent = modalRef.componentInstance;
 
     component.prepareForCreation(
+      this.southConnectors,
       this.scanModes(),
       this.certificates(),
-      OIBUS_DATA_TYPES.filter(dataType => !this.transformersWithOptions.map(element => element.inputType).includes(dataType)),
+      [...OIBUS_DATA_TYPES],
       this.transformers(),
       this.northManifest().types
     );
@@ -102,7 +119,14 @@ export class NorthTransformersComponent {
     });
     const component: EditNorthTransformerModalComponent = modalRef.componentInstance;
 
-    component.prepareForEdition(this.scanModes(), this.certificates(), transformer, this.transformers(), this.northManifest().types);
+    component.prepareForEdition(
+      this.southConnectors,
+      this.scanModes(),
+      this.certificates(),
+      transformer,
+      this.transformers(),
+      this.northManifest().types
+    );
     this.refreshAfterEditModalClosed(modalRef, transformer);
   }
 

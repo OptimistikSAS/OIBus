@@ -151,7 +151,7 @@ describe('DataStreamEngine', () => {
 
     (northConnectorRepository.findNorthById as jest.Mock).mockImplementation(id => testData.north.list.find(element => element.id === id));
     (southConnectorRepository.findSouthById as jest.Mock).mockImplementation(id => testData.south.list.find(element => element.id === id));
-    (historyQueryRepository.findHistoryQueryById as jest.Mock).mockImplementation(id =>
+    (historyQueryRepository.findHistoryById as jest.Mock).mockImplementation(id =>
       testData.historyQueries.list.find(element => element.id === id)
     );
     (buildNorth as jest.Mock).mockImplementation(conf => {
@@ -255,7 +255,7 @@ describe('DataStreamEngine', () => {
   });
 
   it('should create OPCUA history query', async () => {
-    (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce({
+    (historyQueryRepository.findHistoryById as jest.Mock).mockReturnValueOnce({
       ...testData.historyQueries.list[0],
       southType: 'opcua',
       northType: 'opcua'
@@ -279,7 +279,7 @@ describe('DataStreamEngine', () => {
     await callback(testData.historyQueries.list[0].id, mockData);
 
     // Verify north.cacheContent is called with the correct arguments
-    expect(mockedNorth1.cacheContent).toHaveBeenCalledWith(mockData, testData.historyQueries.list[0].id);
+    expect(mockedNorth1.cacheContent).toHaveBeenCalledWith(mockData, null);
   });
 
   it('it should start and stop without south 2 and north 2', async () => {
@@ -303,7 +303,7 @@ describe('DataStreamEngine', () => {
 
   it('should not stop history if not set', async () => {
     await engine.stopHistoryQuery('bad id');
-    expect(historyQueryRepository.findHistoryQueryById).not.toHaveBeenCalled();
+    expect(historyQueryRepository.findHistoryById).not.toHaveBeenCalled();
   });
 
   it('should register the finished event listener and update status', async () => {
@@ -329,7 +329,7 @@ describe('DataStreamEngine', () => {
     await finishedCallback();
 
     // Verify updateHistoryQueryStatus is called
-    expect(historyQueryRepository.updateHistoryQueryStatus).toHaveBeenCalledWith(testData.historyQueries.list[0].id, 'FINISHED');
+    expect(historyQueryRepository.updateHistoryStatus).toHaveBeenCalledWith(testData.historyQueries.list[0].id, 'FINISHED');
 
     // Verify createFullHistoryQueriesMessageIfNotPending is called
     expect(oianalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).toHaveBeenCalled();
@@ -431,7 +431,6 @@ describe('DataStreamEngine', () => {
   it('should add content', async () => {
     await engine.start(northList, southList, historyList);
 
-    (mockedNorth1.isSubscribed as jest.Mock).mockReturnValue(true);
     (mockedNorth1.isEnabled as jest.Mock).mockReturnValueOnce(false).mockReturnValueOnce(true);
     // Add time values
     await engine.addContent(testData.south.list[0].id, testData.oibusContent[0]);
@@ -448,7 +447,7 @@ describe('DataStreamEngine', () => {
     await engine.addExternalContent(testData.north.list[0].id, testData.oibusContent[0], 'api');
     expect(mockedNorth1.cacheContent).not.toHaveBeenCalled();
     await engine.addExternalContent(testData.north.list[0].id, testData.oibusContent[0], 'api');
-    expect(mockedNorth1.cacheContent).toHaveBeenCalledWith(testData.oibusContent[0], 'api');
+    expect(mockedNorth1.cacheContent).toHaveBeenCalledWith(testData.oibusContent[0], null);
   });
 
   it('should do nothing if connector not set', async () => {
@@ -625,14 +624,14 @@ describe('DataStreamEngine', () => {
     expect(mockedHistoryQuery1.moveAllCacheContent).toHaveBeenCalledWith('cache', 'error');
   });
 
-  it('should update north subscriptions', async () => {
+  it('should update north transformers associated with south', async () => {
     await engine.start(northList, [southList[0]], []);
 
-    engine.updateNorthSubscriptions('badId');
+    engine.updateNorthTransformerBySouth('badId');
     expect(northConnectorRepository.findNorthById).toHaveBeenCalledTimes(3); // 3 from startup
 
-    engine.updateNorthSubscriptions('southId1');
-    expect(northConnectorRepository.findNorthById).toHaveBeenCalledTimes(5); // 3 when creating North and 2 because of the update
+    engine.updateNorthTransformerBySouth('southId1');
+    expect(northConnectorRepository.findNorthById).toHaveBeenCalledTimes(4); // 3 when creating North and 1 because of the update
     expect(northConnectorRepository.findNorthById).toHaveBeenCalledWith(mockedNorth1.connectorConfiguration.id);
     expect(northConnectorRepository.findNorthById).toHaveBeenCalledWith(mockedNorth2.connectorConfiguration.id);
   });

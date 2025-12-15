@@ -17,6 +17,7 @@ import fsAsync from 'node:fs/promises';
 import { createTransformer } from '../service/transformer.service';
 import IgnoreTransformer from '../service/transformers/ignore-transformer';
 import IsoTransformer from '../service/transformers/iso-transformer';
+import { NorthTransformerWithOptions } from '../model/transformer.model';
 
 /**
  * Class NorthConnector: provides general attributes and methods for north connectors.
@@ -274,87 +275,131 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     }
   }
 
-  async cacheContent(data: OIBusContent, source: string): Promise<void> {
-    const cacheSize = this.cacheSize.cacheSize + this.cacheSize.errorSize + this.cacheSize.archiveSize;
-    if (this.connector.caching.throttling.maxSize !== 0 && cacheSize >= this.connector.caching.throttling.maxSize * 1024 * 1024) {
-      if (!this.cacheSizeWarningHasBeenTriggered) {
-        this.logger.warn(
-          `North cache is exceeding the maximum allowed size (${Math.floor((cacheSize / 1024 / 1024) * 100) / 100} MB >= ${this.connector.caching.throttling.maxSize} MB). Values will be discarded until the cache is emptied (by sending files/values or manual removal)`
-        );
-        this.cacheSizeWarningHasBeenTriggered = true;
-      }
+  async cacheContent(data: OIBusContent, source: string | null): Promise<void> {
+    if (this.isCacheFull()) {
       return;
     }
 
-    const transformerWithOptions = this.connector.transformers.find(element => element.inputType === data.type);
-    if (!transformerWithOptions) {
-      if (!this.supportedTypes().includes(data.type)) {
-        this.logger.trace(`Data type "${data.type}" not supported by the connector. Data will be ignored.`);
-      } else {
-        await this.cacheWithoutTransform(data, source);
-        // No delay needed here, we check for trigger right now, once the cache is updated
-        await this.triggerRunIfNecessary(0);
-      }
-      return;
+    const transformerConfig = this.findTransformer(data, source);
+
+    if (!transformerConfig) {
+      return this.handleNoTransformer(data, source);
     }
+
     if (
-      transformerWithOptions &&
-      transformerWithOptions.transformer.type === 'standard' &&
-      transformerWithOptions.transformer.functionName === IgnoreTransformer.transformerName
+      transformerConfig.transformer.type === 'standard' &&
+      transformerConfig.transformer.functionName === IgnoreTransformer.transformerName
     ) {
       this.logger.trace(`Ignoring data of type ${data.type}`);
       return;
     }
 
-    // Iso data
     if (
-      transformerWithOptions.transformer.type === 'standard' &&
-      transformerWithOptions.transformer.functionName === IsoTransformer.transformerName
+      transformerConfig.transformer.type === 'standard' &&
+      transformerConfig.transformer.functionName === IsoTransformer.transformerName
     ) {
-      await this.cacheWithoutTransform(data, source);
-      // No delay needed here, we check for trigger right now, once the cache is updated
-      await this.triggerRunIfNecessary(0);
-      return;
+      return this.cacheWithoutTransformAndTrigger(data, source);
     }
 
-    // Transform data
     this.logger.trace(
-      `Transforming data of type ${data.type} into ${transformerWithOptions.transformer.outputType} type with transformer ${transformerWithOptions.transformer.id}`
+      `Transforming data of type ${data.type} into ${transformerConfig.transformer.outputType} using transformer ${transformerConfig.transformer.id}`
     );
-    const transformer = createTransformer(transformerWithOptions, this.connector, this.logger);
+    await this.executeTransformation(data, transformerConfig, source);
+
+    // No delay needed here, we check for trigger right now, once the cache is updated
+    await this.triggerRunIfNecessary(0);
+  }
+
+  private findTransformer(data: OIBusContent, source: string | null): NorthTransformerWithOptions | undefined {
+    // First check with south id (most specific)
+    let transformerWithOptions: NorthTransformerWithOptions | undefined = undefined;
+    if (source) {
+      transformerWithOptions = this.connector.transformers.find(element => element.inputType === data.type && element.south?.id === source);
+    }
+
+    // Then check without south id (least specific)
+    if (!transformerWithOptions) {
+      transformerWithOptions = this.connector.transformers.find(element => element.inputType === data.type && !element.south);
+    }
+
+    return transformerWithOptions;
+  }
+
+  private isCacheFull(): boolean {
+    const cacheSize = this.cacheSize.cacheSize + this.cacheSize.errorSize + this.cacheSize.archiveSize;
+    const maxSize = this.connector.caching.throttling.maxSize;
+
+    if (maxSize !== 0 && cacheSize >= maxSize * 1024 * 1024) {
+      if (!this.cacheSizeWarningHasBeenTriggered) {
+        const sizeMB = Math.floor((cacheSize / 1024 / 1024) * 100) / 100;
+        this.logger.warn(
+          `North cache is exceeding the maximum allowed size (${sizeMB} MB >= ${maxSize} MB). Values will be discarded until cache is emptied.`
+        );
+        this.cacheSizeWarningHasBeenTriggered = true;
+      }
+      return true;
+    }
+    return false;
+  }
+
+  private async handleNoTransformer(data: OIBusContent, source: string | null): Promise<void> {
+    if (!this.supportedTypes().includes(data.type)) {
+      this.logger.trace(`Data type "${data.type}" not supported by the connector. Data will be ignored.`);
+      return;
+    }
+    await this.cacheWithoutTransformAndTrigger(data, source);
+  }
+
+  private async cacheWithoutTransformAndTrigger(data: OIBusContent, source: string | null): Promise<void> {
+    await this.cacheWithoutTransform(data, source);
+    await this.triggerRunIfNecessary(0);
+  }
+
+  private async executeTransformation(data: OIBusContent, config: NorthTransformerWithOptions, source: string | null): Promise<void> {
+    const transformer = createTransformer(config, this.connector, this.logger);
+
     switch (data.type) {
       case 'time-values':
-        if (this.connector.caching.throttling.maxNumberOfElements > 0) {
-          for (let i = 0; i < data.content.length; i += this.connector.caching.throttling.maxNumberOfElements) {
-            const chunks: Array<object> = data.content.slice(i, i + this.connector.caching.throttling.maxNumberOfElements);
-            const { metadata, output } = await transformer.transform(Readable.from(JSON.stringify(chunks)), source, null);
+        {
+          const maxElements = this.connector.caching.throttling.maxNumberOfElements;
+          const content = data.content;
+
+          if (maxElements > 0 && content.length > maxElements) {
+            // Chunk processing
+            for (let i = 0; i < content.length; i += maxElements) {
+              const chunk = content.slice(i, i + maxElements);
+              const { metadata, output } = await transformer.transform(Readable.from(JSON.stringify(chunk)), source, null);
+              await this.persistDataInCache(metadata, output);
+            }
+          } else {
+            // Single batch
+            const { metadata, output } = await transformer.transform(Readable.from(JSON.stringify(content)), source, null);
             await this.persistDataInCache(metadata, output);
           }
-        } else {
-          const { metadata, output } = await transformer.transform(Readable.from(JSON.stringify(data.content)), source, null);
-          await this.persistDataInCache(metadata, output);
         }
         break;
+
       case 'setpoint':
         {
           const { metadata, output } = await transformer.transform(Readable.from(JSON.stringify(data.content)), source, null);
           await this.persistDataInCache(metadata, output);
         }
         break;
+
       case 'any':
-        // Use a random ID to be sure to have a unique filename
-        const randomId = generateRandomId(10);
-        const cacheFilename = `${path.parse(data.filePath).name}-${randomId}${path.parse(data.filePath).ext}`;
-        const { metadata, output } = await transformer.transform(createReadStream(data.filePath), source, cacheFilename);
-        await this.persistDataInCache(metadata, output);
+        {
+          const randomId = generateRandomId(10);
+          const { name, ext } = path.parse(data.filePath);
+          const cacheFilename = `${name}-${randomId}${ext}`;
+
+          const { metadata, output } = await transformer.transform(createReadStream(data.filePath), source, cacheFilename);
+          await this.persistDataInCache(metadata, output);
+        }
         break;
     }
-
-    // No delay needed here, we check for trigger right now, once the cache is updated
-    await this.triggerRunIfNecessary(0);
   }
 
-  private async cacheWithoutTransform(data: OIBusContent, source: string) {
+  private async cacheWithoutTransform(data: OIBusContent, source: string | null) {
     if (data.type === 'any') {
       const randomId = generateRandomId(10);
       const cacheFilename = `${path.parse(data.filePath).name}-${randomId}${path.parse(data.filePath).ext}`;
@@ -472,14 +517,6 @@ export default abstract class NorthConnector<T extends NorthSettings> {
 
   async moveAllCacheContent(originFolder: 'cache' | 'archive' | 'error', destinationFolder: 'cache' | 'archive' | 'error'): Promise<void> {
     await this.cacheService.moveAllCacheContent(originFolder, destinationFolder);
-  }
-
-  /**
-   * Check whether the North is subscribed to a South.
-   * If subscribedTo is not defined or an empty array, the subscription is true.
-   */
-  isSubscribed(southId: string): boolean {
-    return this.connector.subscriptions.length === 0 || this.connector.subscriptions.some(south => south.id === southId);
   }
 
   /**

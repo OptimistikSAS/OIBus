@@ -1109,7 +1109,9 @@
 						"example": "function transform(input) { return parseFloat(input); }"
 					},
 					"language": {
-						"$ref": "#/components/schemas/TransformerLanguage"
+						"$ref": "#/components/schemas/TransformerLanguage",
+						"description": "The language used",
+						"example": "javascript"
 					}
 				},
 				"required": [
@@ -11478,6 +11480,11 @@
 			"TransformerIdWithOptions": {
 				"description": "Data Transfer Object for referencing a transformer by ID with its options.\nUsed when only the transformer ID is needed along with configuration options.",
 				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The id used to match a transformer with options",
+						"example": "id"
+					},
 					"inputType": {
 						"type": "string",
 						"description": "The input data type that the transformer accepts.",
@@ -11487,6 +11494,11 @@
 						"type": "string",
 						"description": "The unique identifier of the transformer to be applied.",
 						"example": "customTransformer123"
+					},
+					"southId": {
+						"type": "string",
+						"description": "The south associated to the transformer",
+						"example": "southId123"
 					},
 					"options": {
 						"$ref": "#/components/schemas/Record_string.unknown_",
@@ -11498,6 +11510,7 @@
 					}
 				},
 				"required": [
+					"id",
 					"inputType",
 					"transformerId",
 					"options"
@@ -11661,16 +11674,6 @@
 						"type": "object",
 						"description": "The caching configuration for the North connector."
 					},
-					"subscriptions": {
-						"items": {
-							"type": "string"
-						},
-						"type": "array",
-						"description": "The list of subscribed South connector IDs.",
-						"example": [
-							"south-test-1"
-						]
-					},
 					"transformers": {
 						"items": {
 							"$ref": "#/components/schemas/TransformerIdWithOptions"
@@ -11687,7 +11690,6 @@
 					"enabled",
 					"settings",
 					"caching",
-					"subscriptions",
 					"transformers"
 				],
 				"type": "object",
@@ -11927,16 +11929,6 @@
 						"type": "object",
 						"description": "The caching configuration for the North connector."
 					},
-					"subscriptions": {
-						"items": {
-							"type": "string"
-						},
-						"type": "array",
-						"description": "The list of subscribed South connector IDs.",
-						"example": [
-							"south-test-1"
-						]
-					},
 					"transformers": {
 						"items": {
 							"$ref": "#/components/schemas/TransformerIdWithOptions"
@@ -11953,7 +11945,6 @@
 					"enabled",
 					"settings",
 					"caching",
-					"subscriptions",
 					"transformers"
 				],
 				"type": "object",
@@ -12127,16 +12118,6 @@
 						"type": "object",
 						"description": "The caching configuration for the North connector."
 					},
-					"subscriptions": {
-						"items": {
-							"type": "string"
-						},
-						"type": "array",
-						"description": "The list of subscribed South connector IDs.",
-						"example": [
-							"south-test-1"
-						]
-					},
 					"transformers": {
 						"items": {
 							"$ref": "#/components/schemas/TransformerIdWithOptions"
@@ -12153,7 +12134,6 @@
 					"enabled",
 					"settings",
 					"caching",
-					"subscriptions",
 					"transformers"
 				],
 				"type": "object",
@@ -12337,16 +12317,6 @@
 						"type": "object",
 						"description": "The caching configuration for the North connector."
 					},
-					"subscriptions": {
-						"items": {
-							"type": "string"
-						},
-						"type": "array",
-						"description": "The list of subscribed South connector IDs.",
-						"example": [
-							"south-test-1"
-						]
-					},
 					"transformers": {
 						"items": {
 							"$ref": "#/components/schemas/TransformerIdWithOptions"
@@ -12363,7 +12333,6 @@
 					"enabled",
 					"settings",
 					"caching",
-					"subscriptions",
 					"transformers"
 				],
 				"type": "object",
@@ -12587,16 +12556,6 @@
 						"type": "object",
 						"description": "The caching configuration for the North connector."
 					},
-					"subscriptions": {
-						"items": {
-							"type": "string"
-						},
-						"type": "array",
-						"description": "The list of subscribed South connector IDs.",
-						"example": [
-							"south-test-1"
-						]
-					},
 					"transformers": {
 						"items": {
 							"$ref": "#/components/schemas/TransformerIdWithOptions"
@@ -12613,7 +12572,6 @@
 					"enabled",
 					"settings",
 					"caching",
-					"subscriptions",
 					"transformers"
 				],
 				"type": "object",
@@ -12856,16 +12814,6 @@
 						"type": "object",
 						"description": "The caching configuration for the North connector."
 					},
-					"subscriptions": {
-						"items": {
-							"type": "string"
-						},
-						"type": "array",
-						"description": "The list of subscribed South connector IDs.",
-						"example": [
-							"south-test-1"
-						]
-					},
 					"transformers": {
 						"items": {
 							"$ref": "#/components/schemas/TransformerIdWithOptions"
@@ -12882,7 +12830,6 @@
 					"enabled",
 					"settings",
 					"caching",
-					"subscriptions",
 					"transformers"
 				],
 				"type": "object",
@@ -13142,16 +13089,6 @@
 						"type": "object",
 						"description": "The caching configuration for the North connector."
 					},
-					"subscriptions": {
-						"items": {
-							"type": "string"
-						},
-						"type": "array",
-						"description": "The list of subscribed South connector IDs.",
-						"example": [
-							"south-test-1"
-						]
-					},
 					"transformers": {
 						"items": {
 							"$ref": "#/components/schemas/TransformerIdWithOptions"
@@ -13168,7 +13105,6 @@
 					"enabled",
 					"settings",
 					"caching",
-					"subscriptions",
 					"transformers"
 				],
 				"type": "object",
@@ -13417,16 +13353,6 @@
 						"type": "object",
 						"description": "The caching configuration for the North connector."
 					},
-					"subscriptions": {
-						"items": {
-							"type": "string"
-						},
-						"type": "array",
-						"description": "The list of subscribed South connector IDs.",
-						"example": [
-							"south-test-1"
-						]
-					},
 					"transformers": {
 						"items": {
 							"$ref": "#/components/schemas/TransformerIdWithOptions"
@@ -13443,7 +13369,6 @@
 					"enabled",
 					"settings",
 					"caching",
-					"subscriptions",
 					"transformers"
 				],
 				"type": "object",
@@ -13821,16 +13746,6 @@
 						"type": "object",
 						"description": "The caching configuration for the North connector."
 					},
-					"subscriptions": {
-						"items": {
-							"type": "string"
-						},
-						"type": "array",
-						"description": "The list of subscribed South connector IDs.",
-						"example": [
-							"south-test-1"
-						]
-					},
 					"transformers": {
 						"items": {
 							"$ref": "#/components/schemas/TransformerIdWithOptions"
@@ -13847,7 +13762,6 @@
 					"enabled",
 					"settings",
 					"caching",
-					"subscriptions",
 					"transformers"
 				],
 				"type": "object",
@@ -14066,16 +13980,6 @@
 						"type": "object",
 						"description": "The caching configuration for the North connector."
 					},
-					"subscriptions": {
-						"items": {
-							"type": "string"
-						},
-						"type": "array",
-						"description": "The list of subscribed South connector IDs.",
-						"example": [
-							"south-test-1"
-						]
-					},
 					"transformers": {
 						"items": {
 							"$ref": "#/components/schemas/TransformerIdWithOptions"
@@ -14092,7 +13996,6 @@
 					"enabled",
 					"settings",
 					"caching",
-					"subscriptions",
 					"transformers"
 				],
 				"type": "object",
@@ -14544,6 +14447,45 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"Pick_TransformerIdWithOptions.Exclude_keyofTransformerIdWithOptions.southId__": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The id used to match a transformer with options",
+						"example": "id"
+					},
+					"inputType": {
+						"type": "string",
+						"description": "The input data type that the transformer accepts.",
+						"example": "time-values"
+					},
+					"transformerId": {
+						"type": "string",
+						"description": "The unique identifier of the transformer to be applied.",
+						"example": "customTransformer123"
+					},
+					"options": {
+						"$ref": "#/components/schemas/Record_string.unknown_",
+						"description": "Configuration options for the transformer.",
+						"example": {
+							"precision": 2,
+							"defaultValue": 0
+						}
+					}
+				},
+				"required": [
+					"id",
+					"inputType",
+					"transformerId",
+					"options"
+				],
+				"type": "object",
+				"description": "From T, pick a set of properties whose keys are in the union K"
+			},
+			"Omit_TransformerIdWithOptions.southId_": {
+				"$ref": "#/components/schemas/Pick_TransformerIdWithOptions.Exclude_keyofTransformerIdWithOptions.southId__",
+				"description": "Construct a type with the properties of T except for those in type K."
+			},
 			"HistoryQueryCommandCommonDTO": {
 				"properties": {
 					"name": {
@@ -14657,7 +14599,7 @@
 					},
 					"northTransformers": {
 						"items": {
-							"$ref": "#/components/schemas/TransformerIdWithOptions"
+							"$ref": "#/components/schemas/Omit_TransformerIdWithOptions.southId_"
 						},
 						"type": "array"
 					}
@@ -17095,6 +17037,11 @@
 			"TransformerDTOWithOptions": {
 				"description": "Data Transfer Object for a transformer with its options.\nUsed when a transformer needs to be applied with specific configuration options.",
 				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The id used to match a transformer with options",
+						"example": "id"
+					},
 					"inputType": {
 						"$ref": "#/components/schemas/InputType",
 						"description": "The input data type that the transformer accepts.",
@@ -17111,9 +17058,13 @@
 							"precision": 2,
 							"defaultValue": 0
 						}
+					},
+					"south": {
+						"$ref": "#/components/schemas/SouthConnectorLightDTO"
 					}
 				},
 				"required": [
+					"id",
 					"inputType",
 					"transformer",
 					"options"
@@ -17284,13 +17235,6 @@
 						"type": "object",
 						"description": "The caching configuration for the North connector."
 					},
-					"subscriptions": {
-						"items": {
-							"$ref": "#/components/schemas/SouthConnectorLightDTO"
-						},
-						"type": "array",
-						"description": "The list of subscribed South connectors."
-					},
 					"transformers": {
 						"items": {
 							"$ref": "#/components/schemas/TransformerDTOWithOptions"
@@ -17307,7 +17251,6 @@
 					"enabled",
 					"settings",
 					"caching",
-					"subscriptions",
 					"transformers"
 				],
 				"type": "object",
@@ -17476,13 +17419,6 @@
 						"type": "object",
 						"description": "The caching configuration for the North connector."
 					},
-					"subscriptions": {
-						"items": {
-							"$ref": "#/components/schemas/SouthConnectorLightDTO"
-						},
-						"type": "array",
-						"description": "The list of subscribed South connectors."
-					},
 					"transformers": {
 						"items": {
 							"$ref": "#/components/schemas/TransformerDTOWithOptions"
@@ -17499,7 +17435,6 @@
 					"enabled",
 					"settings",
 					"caching",
-					"subscriptions",
 					"transformers"
 				],
 				"type": "object",
@@ -17668,13 +17603,6 @@
 						"type": "object",
 						"description": "The caching configuration for the North connector."
 					},
-					"subscriptions": {
-						"items": {
-							"$ref": "#/components/schemas/SouthConnectorLightDTO"
-						},
-						"type": "array",
-						"description": "The list of subscribed South connectors."
-					},
 					"transformers": {
 						"items": {
 							"$ref": "#/components/schemas/TransformerDTOWithOptions"
@@ -17691,7 +17619,6 @@
 					"enabled",
 					"settings",
 					"caching",
-					"subscriptions",
 					"transformers"
 				],
 				"type": "object",
@@ -17860,13 +17787,6 @@
 						"type": "object",
 						"description": "The caching configuration for the North connector."
 					},
-					"subscriptions": {
-						"items": {
-							"$ref": "#/components/schemas/SouthConnectorLightDTO"
-						},
-						"type": "array",
-						"description": "The list of subscribed South connectors."
-					},
 					"transformers": {
 						"items": {
 							"$ref": "#/components/schemas/TransformerDTOWithOptions"
@@ -17883,7 +17803,6 @@
 					"enabled",
 					"settings",
 					"caching",
-					"subscriptions",
 					"transformers"
 				],
 				"type": "object",
@@ -18052,13 +17971,6 @@
 						"type": "object",
 						"description": "The caching configuration for the North connector."
 					},
-					"subscriptions": {
-						"items": {
-							"$ref": "#/components/schemas/SouthConnectorLightDTO"
-						},
-						"type": "array",
-						"description": "The list of subscribed South connectors."
-					},
 					"transformers": {
 						"items": {
 							"$ref": "#/components/schemas/TransformerDTOWithOptions"
@@ -18075,7 +17987,6 @@
 					"enabled",
 					"settings",
 					"caching",
-					"subscriptions",
 					"transformers"
 				],
 				"type": "object",
@@ -18244,13 +18155,6 @@
 						"type": "object",
 						"description": "The caching configuration for the North connector."
 					},
-					"subscriptions": {
-						"items": {
-							"$ref": "#/components/schemas/SouthConnectorLightDTO"
-						},
-						"type": "array",
-						"description": "The list of subscribed South connectors."
-					},
 					"transformers": {
 						"items": {
 							"$ref": "#/components/schemas/TransformerDTOWithOptions"
@@ -18267,7 +18171,6 @@
 					"enabled",
 					"settings",
 					"caching",
-					"subscriptions",
 					"transformers"
 				],
 				"type": "object",
@@ -18436,13 +18339,6 @@
 						"type": "object",
 						"description": "The caching configuration for the North connector."
 					},
-					"subscriptions": {
-						"items": {
-							"$ref": "#/components/schemas/SouthConnectorLightDTO"
-						},
-						"type": "array",
-						"description": "The list of subscribed South connectors."
-					},
 					"transformers": {
 						"items": {
 							"$ref": "#/components/schemas/TransformerDTOWithOptions"
@@ -18459,7 +18355,6 @@
 					"enabled",
 					"settings",
 					"caching",
-					"subscriptions",
 					"transformers"
 				],
 				"type": "object",
@@ -18628,13 +18523,6 @@
 						"type": "object",
 						"description": "The caching configuration for the North connector."
 					},
-					"subscriptions": {
-						"items": {
-							"$ref": "#/components/schemas/SouthConnectorLightDTO"
-						},
-						"type": "array",
-						"description": "The list of subscribed South connectors."
-					},
 					"transformers": {
 						"items": {
 							"$ref": "#/components/schemas/TransformerDTOWithOptions"
@@ -18651,7 +18539,6 @@
 					"enabled",
 					"settings",
 					"caching",
-					"subscriptions",
 					"transformers"
 				],
 				"type": "object",
@@ -18820,13 +18707,6 @@
 						"type": "object",
 						"description": "The caching configuration for the North connector."
 					},
-					"subscriptions": {
-						"items": {
-							"$ref": "#/components/schemas/SouthConnectorLightDTO"
-						},
-						"type": "array",
-						"description": "The list of subscribed South connectors."
-					},
 					"transformers": {
 						"items": {
 							"$ref": "#/components/schemas/TransformerDTOWithOptions"
@@ -18843,7 +18723,6 @@
 					"enabled",
 					"settings",
 					"caching",
-					"subscriptions",
 					"transformers"
 				],
 				"type": "object",
@@ -19012,13 +18891,6 @@
 						"type": "object",
 						"description": "The caching configuration for the North connector."
 					},
-					"subscriptions": {
-						"items": {
-							"$ref": "#/components/schemas/SouthConnectorLightDTO"
-						},
-						"type": "array",
-						"description": "The list of subscribed South connectors."
-					},
 					"transformers": {
 						"items": {
 							"$ref": "#/components/schemas/TransformerDTOWithOptions"
@@ -19035,7 +18907,6 @@
 					"enabled",
 					"settings",
 					"caching",
-					"subscriptions",
 					"transformers"
 				],
 				"type": "object",
@@ -19158,7 +19029,8 @@
 					},
 					"source": {
 						"type": "string",
-						"description": "The source of the content.",
+						"nullable": true,
+						"description": "The source of the content (southId or null).",
 						"example": "south1"
 					},
 					"options": {
@@ -19449,6 +19321,44 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"Pick_TransformerDTOWithOptions.Exclude_keyofTransformerDTOWithOptions.south__": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The id used to match a transformer with options",
+						"example": "id"
+					},
+					"inputType": {
+						"type": "string",
+						"description": "The input data type that the transformer accepts.",
+						"example": "string"
+					},
+					"options": {
+						"$ref": "#/components/schemas/Record_string.unknown_",
+						"description": "Configuration options for the transformer.",
+						"example": {
+							"precision": 2,
+							"defaultValue": 0
+						}
+					},
+					"transformer": {
+						"$ref": "#/components/schemas/TransformerDTO",
+						"description": "The transformer to be applied."
+					}
+				},
+				"required": [
+					"id",
+					"inputType",
+					"options",
+					"transformer"
+				],
+				"type": "object",
+				"description": "From T, pick a set of properties whose keys are in the union K"
+			},
+			"Omit_TransformerDTOWithOptions.south_": {
+				"$ref": "#/components/schemas/Pick_TransformerDTOWithOptions.Exclude_keyofTransformerDTOWithOptions.south__",
+				"description": "Construct a type with the properties of T except for those in type K."
+			},
 			"HistoryQueryCommonDTO": {
 				"properties": {
 					"name": {
@@ -19596,7 +19506,7 @@
 					},
 					"northTransformers": {
 						"items": {
-							"$ref": "#/components/schemas/TransformerDTOWithOptions"
+							"$ref": "#/components/schemas/Omit_TransformerDTOWithOptions.south_"
 						},
 						"type": "array",
 						"description": "List of transformers to apply to data before sending to North connector."
@@ -23998,72 +23908,6 @@
 				]
 			}
 		},
-		"/api/north/{northId}/subscriptions/{southId}": {
-			"post": {
-				"operationId": "SubscribeToSouth",
-				"responses": {
-					"204": {
-						"description": "No Content"
-					}
-				},
-				"description": "Subscribe to a south connector from a north connector",
-				"summary": "Subscribe to a south connector",
-				"tags": [
-					"North Connectors"
-				],
-				"security": [],
-				"parameters": [
-					{
-						"in": "path",
-						"name": "northId",
-						"required": true,
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
-						"in": "path",
-						"name": "southId",
-						"required": true,
-						"schema": {
-							"type": "string"
-						}
-					}
-				]
-			},
-			"delete": {
-				"operationId": "UnsubscribeFromSouth",
-				"responses": {
-					"204": {
-						"description": "No Content"
-					}
-				},
-				"description": "Remove a subscription to a south connector from a north connector",
-				"summary": "Unsubscribe from a south connector",
-				"tags": [
-					"North Connectors"
-				],
-				"security": [],
-				"parameters": [
-					{
-						"in": "path",
-						"name": "northId",
-						"required": true,
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
-						"in": "path",
-						"name": "southId",
-						"required": true,
-						"schema": {
-							"type": "string"
-						}
-					}
-				]
-			}
-		},
 		"/api/north/{northId}/cache/search": {
 			"get": {
 				"operationId": "SearchCacheContent",
@@ -25807,7 +25651,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/TransformerDTOWithOptions"
+								"$ref": "#/components/schemas/Omit_TransformerDTOWithOptions.south_"
 							}
 						}
 					}

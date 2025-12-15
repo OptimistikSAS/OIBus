@@ -8,7 +8,6 @@ import { NorthConnectorDTO, NorthConnectorManifest } from '../../../../../backen
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
-import { NorthSubscriptionsComponent } from '../north-subscriptions/north-subscriptions.component';
 import { NorthMetricsComponent } from '../north-metrics/north-metrics.component';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { EnabledEnumPipe } from '../../shared/enabled-enum.pipe';
@@ -20,7 +19,6 @@ import { ModalService } from '../../shared/modal.service';
 import { BooleanEnumPipe } from '../../shared/boolean-enum.pipe';
 import { EngineService } from '../../services/engine.service';
 import { LogsComponent } from '../../logs/logs.component';
-import { SouthConnectorLightDTO } from '../../../../../backend/shared/model/south-connector.model';
 import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
 import { isDisplayableAttribute } from '../../shared/form/dynamic-form.builder';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -35,7 +33,6 @@ import { CertificateDTO } from '../../../../../backend/shared/model/certificate.
   imports: [
     TranslateDirective,
     RouterLink,
-    NorthSubscriptionsComponent,
     NorthMetricsComponent,
     BoxComponent,
     BoxTitleDirective,
@@ -138,12 +135,6 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
   }
 
   updateInMemoryTransformers(_transformers: Array<TransformerDTOWithOptions> | null) {
-    this.northConnectorService.findById(this.northConnector!.id).subscribe(northConnector => {
-      this.northConnector = northConnector;
-    });
-  }
-
-  updateInMemorySubscriptions(_subscriptions: Array<SouthConnectorLightDTO> | null) {
     this.northConnectorService.findById(this.northConnector!.id).subscribe(northConnector => {
       this.northConnector = northConnector;
     });

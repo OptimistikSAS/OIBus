@@ -13,7 +13,7 @@ export default class OIBusTimeValuesToJSONTransformer extends OIBusTransformer {
 
   async transform(
     data: ReadStream | Readable,
-    source: string,
+    source: string | null,
     _filename: string | null
   ): Promise<{ metadata: CacheMetadata; output: string }> {
     // Collect the data from the stream

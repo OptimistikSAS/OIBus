@@ -30,16 +30,16 @@ export class HistoryQueryTransformersComponent {
 
   readonly historyQuery = input<HistoryQueryDTO | null>(null);
 
-  readonly inMemoryTransformersWithOptions = output<Array<TransformerDTOWithOptions> | null>();
+  readonly inMemoryTransformersWithOptions = output<Array<Omit<TransformerDTOWithOptions, 'south'>> | null>();
   readonly saveChangesDirectly = input<boolean>(false);
 
   readonly northManifest = input.required<NorthConnectorManifest>();
   readonly certificates = input.required<Array<CertificateDTO>>();
   readonly scanModes = input.required<Array<ScanModeDTO>>();
   readonly transformers = input.required<Array<TransformerDTO>>();
-  readonly transformersFromNorth = input<Array<TransformerDTOWithOptions>>([]);
+  readonly transformersFromNorth = input<Array<Omit<TransformerDTOWithOptions, 'south'>>>([]);
 
-  transformersWithOptions: Array<TransformerDTOWithOptions> = []; // Array used to store subscription on north connector creation
+  transformersWithOptions: Array<Omit<TransformerDTOWithOptions, 'south'>> = []; // Array used to store subscription on north connector creation
 
   constructor() {
     // Initialize local transformers when editing, and keep them in sync with input
@@ -68,7 +68,7 @@ export class HistoryQueryTransformersComponent {
     component.prepareForCreation(
       this.scanModes(),
       this.certificates(),
-      OIBUS_DATA_TYPES.filter(dataType => !this.transformersWithOptions.map(element => element.inputType).includes(dataType)),
+      [...OIBUS_DATA_TYPES],
       this.transformers(),
       this.northManifest().types
     );
@@ -95,7 +95,7 @@ export class HistoryQueryTransformersComponent {
       });
   }
 
-  editTransformer(transformer: TransformerDTOWithOptions) {
+  editTransformer(transformer: Omit<TransformerDTOWithOptions, 'south'>) {
     const modalRef = this.modalService.open(EditHistoryQueryTransformerModalComponent, {
       size: 'xl',
       beforeDismiss: () => {
@@ -112,11 +112,11 @@ export class HistoryQueryTransformersComponent {
 
   private refreshAfterEditModalClosed(
     modalRef: Modal<EditHistoryQueryTransformerModalComponent>,
-    oldTransformer: TransformerDTOWithOptions
+    oldTransformer: Omit<TransformerDTOWithOptions, 'south'>
   ) {
     modalRef.result
       .pipe(
-        switchMap((transformer: TransformerDTOWithOptions) => {
+        switchMap((transformer: Omit<TransformerDTOWithOptions, 'south'>) => {
           const northConnector = this.historyQuery();
           if (northConnector && this.saveChangesDirectly()) {
             return this.historyQueryService.addOrEditTransformer(northConnector.id, transformer).pipe(switchMap(() => of(transformer)));
@@ -136,7 +136,7 @@ export class HistoryQueryTransformersComponent {
       });
   }
 
-  deleteTransformer(transformer: TransformerDTOWithOptions) {
+  deleteTransformer(transformer: Omit<TransformerDTOWithOptions, 'south'>) {
     this.confirmationService
       .confirm({
         messageKey: `history-query.transformers.confirm-deletion`
