@@ -51,8 +51,26 @@
           <thead>
             <tr>
               <th style="width: 3rem"></th>
-              <th translate="history-query.name"></th>
-              <th translate="history-query.interval" style="width: 22rem"></th>
+              <th>
+                <button
+                  type="button"
+                  style="background: none; border: none; font-weight: bold; color: inherit"
+                  (click)="toggleSort('name')"
+                >
+                  <span translate="history-query.name" class="me-2"></span>
+                  <span class="fa {{ getSortIcon('name') }}"></span>
+                </button>
+              </th>
+              <th style="width: 22rem">
+                <button
+                  type="button"
+                  style="background: none; border: none; font-weight: bold; color: inherit"
+                  (click)="toggleSort('interval')"
+                >
+                  <span translate="history-query.interval" class="me-2"></span>
+                  <span class="fa {{ getSortIcon('interval') }}"></span>
+                </button>
+              </th>
               <th translate="history-query.description"></th>
               <th></th>
             </tr>
