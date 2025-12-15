@@ -564,7 +564,8 @@ describe('HistoryQueryController', () => {
 
   it('should add or edit a transformer', async () => {
     const historyId = testData.historyQueries.list[0].id;
-    const command: TransformerDTOWithOptions = {
+    const command: Omit<TransformerDTOWithOptions, 'south'> = {
+      id: 'historyTransformerId1',
       transformer: testData.transformers.list[0] as TransformerDTO,
       inputType: 'any',
       options: {}
