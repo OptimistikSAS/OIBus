@@ -15,7 +15,7 @@ export default class SandboxService {
 
   public async execute<TOutput>(
     stringContent: string,
-    source: string,
+    source: string | null,
     filename: string,
     transformer: CustomTransformer,
     options: object
@@ -29,7 +29,7 @@ export default class SandboxService {
 
   private async executeJavaScript<TOutput>(
     stringContent: string,
-    source: string,
+    source: string | null,
     filename: string,
     transformer: CustomTransformer,
     options: object
@@ -83,7 +83,7 @@ export default class SandboxService {
 
   private async executeTypeScript<TOutput>(
     stringContent: string,
-    source: string,
+    source: string | null,
     filename: string,
     transformer: CustomTransformer,
     options: object

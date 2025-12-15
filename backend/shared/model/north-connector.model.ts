@@ -13,7 +13,6 @@ import {
   NorthSFTPSettings
 } from './north-settings.model';
 import { ScanModeDTO } from './scan-mode.model';
-import { SouthConnectorLightDTO } from './south-connector.model';
 import { TransformerDTOWithOptions, TransformerIdWithOptions } from './transformer.model';
 import { OIBusObjectAttribute } from './form.model';
 
@@ -227,10 +226,6 @@ export interface NorthConnectorTypedDTO<T extends OIBusNorthType, S> extends Bas
     };
   };
   /**
-   * The list of subscribed South connectors.
-   */
-  subscriptions: Array<SouthConnectorLightDTO>;
-  /**
    * The list of transformers applied to the data.
    */
   transformers: Array<TransformerDTOWithOptions>;
@@ -378,12 +373,6 @@ export interface NorthConnectorCommandTypedDTO<T extends OIBusNorthType, S> {
       retentionDuration: number;
     };
   };
-  /**
-   * The list of subscribed South connector IDs.
-   *
-   * @example ["south-test-1"]
-   */
-  subscriptions: Array<string>;
   /**
    * The list of transformers to apply to the data.
    *

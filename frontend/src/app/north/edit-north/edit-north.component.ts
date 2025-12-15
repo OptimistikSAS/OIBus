@@ -23,7 +23,6 @@ import { ModalService } from '../../shared/modal.service';
 import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
 import { CertificateService } from '../../services/certificate.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
-import { SouthConnectorLightDTO } from '../../../../../backend/shared/model/south-connector.model';
 import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
 import { TransformerDTO, TransformerDTOWithOptions } from '../../../../../backend/shared/model/transformer.model';
 import { TransformerService } from '../../services/transformer.service';
@@ -33,7 +32,6 @@ import { OI_FORM_VALIDATION_DIRECTIVES } from '../../shared/form/form-validation
 import { OIBusObjectFormControlComponent } from '../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
 import { OIBusScanModeAttribute } from '../../../../../backend/shared/model/form.model';
 import { OIBusScanModeFormControlComponent } from '../../shared/form/oibus-scan-mode-form-control/oibus-scan-mode-form-control.component';
-import { NorthSubscriptionsComponent } from '../north-subscriptions/north-subscriptions.component';
 import { CanComponentDeactivate } from '../../shared/unsaved-changes.guard';
 import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
 import { AbstractControl, ValidationErrors } from '@angular/forms';
@@ -53,8 +51,7 @@ import { OIBUS_FORM_MODE } from '../../shared/form/oibus-form-mode.token';
     ReactiveFormsModule,
     OI_FORM_VALIDATION_DIRECTIVES,
     OIBusObjectFormControlComponent,
-    OIBusScanModeFormControlComponent,
-    NorthSubscriptionsComponent
+    OIBusScanModeFormControlComponent
   ],
   templateUrl: './edit-north.component.html',
   styleUrl: './edit-north.component.scss',
@@ -120,7 +117,6 @@ export class EditNorthComponent implements OnInit, CanComponentDeactivate {
   }> | null = null;
 
   inMemoryTransformersWithOptions: Array<TransformerDTOWithOptions> = [];
-  inMemorySubscriptions: Array<SouthConnectorLightDTO> = [];
   scanModeAttribute: OIBusScanModeAttribute = {
     type: 'scan-mode',
     key: 'scanMode',
@@ -252,7 +248,6 @@ export class EditNorthComponent implements OnInit, CanComponentDeactivate {
       )!;
       this.form.patchValue(this.northConnector);
       // Initialize in-memory subscriptions for edit mode to allow deferring persistence
-      this.inMemorySubscriptions = [...this.northConnector.subscriptions];
       this.inMemoryTransformersWithOptions = [...this.northConnector.transformers];
     } else {
       // we should provoke all value changes to make sure fields are properly hidden and disabled
@@ -311,18 +306,6 @@ export class EditNorthComponent implements OnInit, CanComponentDeactivate {
     component.runTest('north', this.northConnector?.id || null, this.formNorthConnectorCommand.settings, this.northType as OIBusNorthType);
   }
 
-  updateInMemorySubscriptions(subscriptions: Array<SouthConnectorLightDTO> | null) {
-    if (subscriptions) {
-      this.inMemorySubscriptions = subscriptions;
-    } else {
-      // When child signals backend update, refresh current connector view and in-memory cache
-      this.northConnectorService.findById(this.northConnector!.id).subscribe(northConnector => {
-        this.northConnector = JSON.parse(JSON.stringify(northConnector));
-        this.inMemorySubscriptions = [...northConnector.subscriptions];
-      });
-    }
-  }
-
   updateInMemoryTransformers(transformersWithOptions: Array<TransformerDTOWithOptions> | null) {
     if (transformersWithOptions) {
       this.inMemoryTransformersWithOptions = transformersWithOptions;
@@ -365,12 +348,12 @@ export class EditNorthComponent implements OnInit, CanComponentDeactivate {
           retentionDuration: formValue.caching!.archive!.retentionDuration!
         }
       },
-      // Always use in-memory subscriptions, filled either from existing connector or local edits
-      subscriptions: this.inMemorySubscriptions.map(subscription => subscription.id),
       transformers: this.inMemoryTransformersWithOptions.map(element => ({
+        id: element.id,
         transformerId: element.transformer.id,
         options: element.options,
-        inputType: element.inputType
+        inputType: element.inputType,
+        southId: element.south?.id
       }))
     };
   }
