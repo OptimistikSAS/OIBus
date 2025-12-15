@@ -5,17 +5,21 @@ import { pipeline, Readable, Transform } from 'node:stream';
 import { CacheMetadata } from '../../../../shared/model/engine.model';
 import { promisify } from 'node:util';
 import { OIBusObjectAttribute } from '../../../../shared/model/form.model';
-import { convertDateTimeToInstant, generateRandomId, injectIndices, stringToBoolean } from '../../utils';
+import { convertDateTime, generateRandomId, injectIndices, stringToBoolean } from '../../utils';
 import { OIBusMQTTValue } from '../connector-types.model';
 
 const pipelineAsync = promisify(pipeline);
 
 // Reusable interface for Datetime Settings
 interface DatetimeSettings {
-  type: 'iso-string' | 'unix-epoch' | 'unix-epoch-ms' | 'string';
-  timezone: string;
-  format: string;
-  locale: string;
+  inputType: 'iso-string' | 'unix-epoch' | 'unix-epoch-ms' | 'string';
+  inputTimezone?: string;
+  inputFormat?: string;
+  inputLocale?: string;
+  outputType: 'iso-string' | 'unix-epoch' | 'unix-epoch-ms' | 'string';
+  outputTimezone?: string;
+  outputFormat?: string;
+  outputLocale?: string;
 }
 
 // Definition of a field within a custom Object payload
@@ -48,7 +52,11 @@ interface TransformerOptions {
 export default class JSONToMQTTTransformer extends OIBusTransformer {
   public static transformerName = 'json-to-mqtt';
 
-  async transform(data: ReadStream | Readable, source: string, filename: string): Promise<{ metadata: CacheMetadata; output: string }> {
+  async transform(
+    data: ReadStream | Readable,
+    source: string | null,
+    filename: string
+  ): Promise<{ metadata: CacheMetadata; output: string }> {
     const jsonParser = this.options.jsonToParse.find(parser => filename.match(parser.regex));
     if (!jsonParser) {
       this.logger.error(`[JSONToMQTT] Could not find json parser configuration for file "${filename}"`);
@@ -174,15 +182,29 @@ export default class JSONToMQTTTransformer extends OIBusTransformer {
       case 'number':
         return Number(raw);
       case 'boolean':
-        return stringToBoolean(raw as string); // Assumes utility handles 'true', '1', 'yes', etc.
+        return stringToBoolean(raw as string);
       case 'datetime':
-        return convertDateTimeToInstant(raw as string | number, dtSettings!);
+        return convertDateTime(
+          raw as string | number,
+          {
+            type: dtSettings!.inputType,
+            timezone: dtSettings!.inputTimezone,
+            format: dtSettings!.inputFormat,
+            locale: dtSettings!.inputLocale
+          },
+          {
+            type: dtSettings!.outputType,
+            timezone: dtSettings!.outputTimezone,
+            format: dtSettings!.outputFormat,
+            locale: dtSettings!.outputLocale
+          }
+        );
       default:
         return raw;
     }
   }
 
-  returnEmpty(source: string) {
+  returnEmpty(source: string | null) {
     return {
       output: '[]',
       metadata: {
@@ -331,7 +353,7 @@ export default class JSONToMQTTTransformer extends OIBusTransformer {
                   key: 'field',
                   translationKey: 'configuration.oibus.manifest.transformers.json-to-mqtt.json-to-parse.object-fields.item.title',
                   displayProperties: { visible: true, wrapInBox: true },
-                  enablingConditions: [],
+                  enablingConditions: [{ referralPathFromRoot: 'dataType', targetPathFromRoot: 'datetimeSettings', values: ['datetime'] }],
                   validators: [],
                   attributes: [
                     {
@@ -363,50 +385,83 @@ export default class JSONToMQTTTransformer extends OIBusTransformer {
                     {
                       type: 'object',
                       key: 'datetimeSettings',
-                      translationKey:
-                        'configuration.oibus.manifest.transformers.json-to-mqtt.json-to-parse.object-fields.datetime-settings.title',
+                      translationKey: 'configuration.oibus.manifest.transformers.json-to-mqtt.json-to-parse.datetime-settings.title',
                       displayProperties: { visible: true, wrapInBox: false },
                       enablingConditions: [
-                        { referralPathFromRoot: 'dataType', targetPathFromRoot: 'datetimeSettings', values: ['datetime'] }
+                        { referralPathFromRoot: 'inputType', targetPathFromRoot: 'inputTimezone', values: ['string'] },
+                        { referralPathFromRoot: 'inputType', targetPathFromRoot: 'inputFormat', values: ['string'] },
+                        { referralPathFromRoot: 'inputType', targetPathFromRoot: 'inputLocale', values: ['string'] },
+                        { referralPathFromRoot: 'outputType', targetPathFromRoot: 'outputTimezone', values: ['string'] },
+                        { referralPathFromRoot: 'outputType', targetPathFromRoot: 'outputFormat', values: ['string'] },
+                        { referralPathFromRoot: 'outputType', targetPathFromRoot: 'outputLocale', values: ['string'] }
                       ],
                       validators: [],
                       attributes: [
                         {
                           type: 'string-select',
-                          key: 'type',
-                          translationKey:
-                            'configuration.oibus.manifest.transformers.json-to-mqtt.json-to-parse.object-fields.datetime-settings.type',
+                          key: 'inputType',
+                          translationKey: 'configuration.oibus.manifest.transformers.json-to-mqtt.json-to-parse.datetime-settings.type',
                           defaultValue: 'iso-string',
                           selectableValues: ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'],
                           validators: [{ type: 'REQUIRED', arguments: [] }],
-                          displayProperties: { row: 0, columns: 6, displayInViewMode: true }
+                          displayProperties: { row: 0, columns: 3, displayInViewMode: true }
                         },
                         {
                           type: 'timezone',
-                          key: 'timezone',
-                          translationKey:
-                            'configuration.oibus.manifest.transformers.json-to-mqtt.json-to-parse.object-fields.datetime-settings.timezone',
+                          key: 'inputTimezone',
+                          translationKey: 'configuration.oibus.manifest.transformers.json-to-mqtt.json-to-parse.datetime-settings.timezone',
                           defaultValue: 'UTC',
                           validators: [{ type: 'REQUIRED', arguments: [] }],
-                          displayProperties: { row: 0, columns: 6, displayInViewMode: true }
+                          displayProperties: { row: 0, columns: 3, displayInViewMode: true }
                         },
                         {
                           type: 'string',
-                          key: 'format',
-                          translationKey:
-                            'configuration.oibus.manifest.transformers.json-to-mqtt.json-to-parse.object-fields.datetime-settings.format',
+                          key: 'inputFormat',
+                          translationKey: 'configuration.oibus.manifest.transformers.json-to-mqtt.json-to-parse.datetime-settings.format',
                           defaultValue: 'yyyy-MM-dd HH:mm:ss',
                           validators: [{ type: 'REQUIRED', arguments: [] }],
-                          displayProperties: { row: 1, columns: 6, displayInViewMode: false }
+                          displayProperties: { row: 0, columns: 3, displayInViewMode: false }
                         },
                         {
                           type: 'string',
-                          key: 'locale',
-                          translationKey:
-                            'configuration.oibus.manifest.transformers.json-to-mqtt.json-to-parse.object-fields.datetime-settings.locale',
+                          key: 'inputLocale',
+                          translationKey: 'configuration.oibus.manifest.transformers.json-to-mqtt.json-to-parse.datetime-settings.locale',
                           defaultValue: 'en-En',
                           validators: [{ type: 'REQUIRED', arguments: [] }],
-                          displayProperties: { row: 1, columns: 6, displayInViewMode: false }
+                          displayProperties: { row: 0, columns: 3, displayInViewMode: false }
+                        },
+                        {
+                          type: 'string-select',
+                          key: 'outputType',
+                          translationKey: 'configuration.oibus.manifest.transformers.json-to-mqtt.json-to-parse.datetime-settings.type',
+                          defaultValue: 'iso-string',
+                          selectableValues: ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'],
+                          validators: [{ type: 'REQUIRED', arguments: [] }],
+                          displayProperties: { row: 1, columns: 3, displayInViewMode: true }
+                        },
+                        {
+                          type: 'timezone',
+                          key: 'outputTimezone',
+                          translationKey: 'configuration.oibus.manifest.transformers.json-to-mqtt.json-to-parse.datetime-settings.timezone',
+                          defaultValue: 'UTC',
+                          validators: [{ type: 'REQUIRED', arguments: [] }],
+                          displayProperties: { row: 1, columns: 3, displayInViewMode: true }
+                        },
+                        {
+                          type: 'string',
+                          key: 'outputFormat',
+                          translationKey: 'configuration.oibus.manifest.transformers.json-to-mqtt.json-to-parse.datetime-settings.format',
+                          defaultValue: 'yyyy-MM-dd HH:mm:ss',
+                          validators: [{ type: 'REQUIRED', arguments: [] }],
+                          displayProperties: { row: 1, columns: 3, displayInViewMode: false }
+                        },
+                        {
+                          type: 'string',
+                          key: 'outputLocale',
+                          translationKey: 'configuration.oibus.manifest.transformers.json-to-mqtt.json-to-parse.datetime-settings.locale',
+                          defaultValue: 'en-En',
+                          validators: [{ type: 'REQUIRED', arguments: [] }],
+                          displayProperties: { row: 1, columns: 3, displayInViewMode: false }
                         }
                       ]
                     }

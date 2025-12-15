@@ -230,88 +230,152 @@ describe('Transformer Service', () => {
     transformer.type = 'standard';
 
     transformer.functionName = 'csv-to-mqtt';
-    expect(createTransformer({ transformer, options: {}, inputType: 'any' }, testData.north.list[0], logger)).toBeInstanceOf(
-      CSVToMQTTTransformer
-    );
+    expect(
+      createTransformer(
+        { id: 'northTransformerId1', transformer, options: {}, inputType: 'any', south: undefined },
+        testData.north.list[0],
+        logger
+      )
+    ).toBeInstanceOf(CSVToMQTTTransformer);
 
     transformer.functionName = 'csv-to-time-values';
-    expect(createTransformer({ transformer, options: {}, inputType: 'any' }, testData.north.list[0], logger)).toBeInstanceOf(
-      CSVToTimeValuesTransformer
-    );
+    expect(
+      createTransformer(
+        { id: 'northTransformerId1', transformer, options: {}, inputType: 'any', south: undefined },
+        testData.north.list[0],
+        logger
+      )
+    ).toBeInstanceOf(CSVToTimeValuesTransformer);
 
     transformer.functionName = 'json-to-csv';
-    expect(createTransformer({ transformer, options: {}, inputType: 'any' }, testData.north.list[0], logger)).toBeInstanceOf(
-      JSONToCSVTransformer
-    );
+    expect(
+      createTransformer(
+        { id: 'northTransformerId1', transformer, options: {}, inputType: 'any', south: undefined },
+        testData.north.list[0],
+        logger
+      )
+    ).toBeInstanceOf(JSONToCSVTransformer);
 
     transformer.functionName = 'json-to-mqtt';
-    expect(createTransformer({ transformer, options: {}, inputType: 'any' }, testData.north.list[0], logger)).toBeInstanceOf(
-      JSONToMQTTTransformer
-    );
+    expect(
+      createTransformer(
+        { id: 'northTransformerId1', transformer, options: {}, inputType: 'any', south: undefined },
+        testData.north.list[0],
+        logger
+      )
+    ).toBeInstanceOf(JSONToMQTTTransformer);
 
     transformer.functionName = 'json-to-time-values';
-    expect(createTransformer({ transformer, options: {}, inputType: 'any' }, testData.north.list[0], logger)).toBeInstanceOf(
-      JSONToTimeValuesTransformer
-    );
+    expect(
+      createTransformer(
+        { id: 'northTransformerId1', transformer, options: {}, inputType: 'any', south: undefined },
+        testData.north.list[0],
+        logger
+      )
+    ).toBeInstanceOf(JSONToTimeValuesTransformer);
 
     transformer.functionName = 'time-values-to-csv';
-    expect(createTransformer({ transformer, options: {}, inputType: 'time-values' }, testData.north.list[0], logger)).toBeInstanceOf(
-      OIBusTimeValuesToCsvTransformer
-    );
+    expect(
+      createTransformer(
+        { id: 'northTransformerId1', transformer, options: {}, inputType: 'time-values', south: undefined },
+        testData.north.list[0],
+        logger
+      )
+    ).toBeInstanceOf(OIBusTimeValuesToCsvTransformer);
 
     transformer.functionName = 'time-values-to-json';
-    expect(createTransformer({ transformer, options: {}, inputType: 'time-values' }, testData.north.list[0], logger)).toBeInstanceOf(
-      OIBusTimeValuesToJSONTransformer
-    );
+    expect(
+      createTransformer(
+        { id: 'northTransformerId1', transformer, options: {}, inputType: 'time-values', south: undefined },
+        testData.north.list[0],
+        logger
+      )
+    ).toBeInstanceOf(OIBusTimeValuesToJSONTransformer);
 
     transformer.functionName = 'time-values-to-modbus';
-    expect(createTransformer({ transformer, options: {}, inputType: 'time-values' }, testData.north.list[0], logger)).toBeInstanceOf(
-      OIBusTimeValuesToModbusTransformer
-    );
+    expect(
+      createTransformer(
+        { id: 'northTransformerId1', transformer, options: {}, inputType: 'time-values', south: undefined },
+        testData.north.list[0],
+        logger
+      )
+    ).toBeInstanceOf(OIBusTimeValuesToModbusTransformer);
 
     transformer.functionName = 'time-values-to-mqtt';
-    expect(createTransformer({ transformer, options: {}, inputType: 'time-values' }, testData.north.list[0], logger)).toBeInstanceOf(
-      OIBusTimeValuesToMQTTTransformer
-    );
+    expect(
+      createTransformer(
+        { id: 'northTransformerId1', transformer, options: {}, inputType: 'time-values', south: undefined },
+        testData.north.list[0],
+        logger
+      )
+    ).toBeInstanceOf(OIBusTimeValuesToMQTTTransformer);
 
     transformer.functionName = 'time-values-to-oianalytics';
-    expect(createTransformer({ transformer, options: {}, inputType: 'time-values' }, testData.north.list[0], logger)).toBeInstanceOf(
-      OIBusTimeValuesToOIAnalyticsTransformer
-    );
+    expect(
+      createTransformer(
+        { id: 'northTransformerId1', transformer, options: {}, inputType: 'time-values', south: undefined },
+        testData.north.list[0],
+        logger
+      )
+    ).toBeInstanceOf(OIBusTimeValuesToOIAnalyticsTransformer);
 
     transformer.functionName = 'time-values-to-opcua';
-    expect(createTransformer({ transformer, options: {}, inputType: 'time-values' }, testData.north.list[0], logger)).toBeInstanceOf(
-      OIBusTimeValuesToOPCUATransformer
-    );
+    expect(
+      createTransformer(
+        { id: 'northTransformerId1', transformer, options: {}, inputType: 'time-values', south: undefined },
+        testData.north.list[0],
+        logger
+      )
+    ).toBeInstanceOf(OIBusTimeValuesToOPCUATransformer);
 
     transformer.functionName = 'setpoint-to-modbus';
-    expect(createTransformer({ transformer, options: {}, inputType: 'setpoint' }, testData.north.list[0], logger)).toBeInstanceOf(
-      OIBusSetpointToModbusTransformer
-    );
+    expect(
+      createTransformer(
+        { id: 'northTransformerId1', transformer, options: {}, inputType: 'setpoint', south: undefined },
+        testData.north.list[0],
+        logger
+      )
+    ).toBeInstanceOf(OIBusSetpointToModbusTransformer);
 
     transformer.functionName = 'setpoint-to-mqtt';
-    expect(createTransformer({ transformer, options: {}, inputType: 'setpoint' }, testData.north.list[0], logger)).toBeInstanceOf(
-      OIBusSetpointToMQTTTransformer
-    );
+    expect(
+      createTransformer(
+        { id: 'northTransformerId1', transformer, options: {}, inputType: 'setpoint', south: undefined },
+        testData.north.list[0],
+        logger
+      )
+    ).toBeInstanceOf(OIBusSetpointToMQTTTransformer);
 
     transformer.functionName = 'setpoint-to-opcua';
-    expect(createTransformer({ transformer, options: {}, inputType: 'setpoint' }, testData.north.list[0], logger)).toBeInstanceOf(
-      OIBusSetpointToOPCUATransformer
-    );
+    expect(
+      createTransformer(
+        { id: 'northTransformerId1', transformer, options: {}, inputType: 'setpoint', south: undefined },
+        testData.north.list[0],
+        logger
+      )
+    ).toBeInstanceOf(OIBusSetpointToOPCUATransformer);
 
     transformer.functionName = 'bad-id';
-    expect(() => createTransformer({ transformer, options: {}, inputType: 'any' }, testData.north.list[0], logger)).toThrow(
-      'Transformer transformerId1 (standard) not implemented'
-    );
+    expect(() =>
+      createTransformer(
+        { id: 'northTransformerId1', transformer, options: {}, inputType: 'any', south: undefined },
+        testData.north.list[0],
+        logger
+      )
+    ).toThrow('Transformer transformerId1 (standard) not implemented');
   });
 
   it('createTransformer() should create a custom transformer', async () => {
     const logger: pino.Logger = new PinoLogger();
 
     const transformer: CustomTransformer = JSON.parse(JSON.stringify(testData.transformers.list[0]));
-    expect(createTransformer({ transformer, options: {}, inputType: 'time-values' }, testData.north.list[0], logger)).toBeInstanceOf(
-      OIBusCustomTransformer
-    );
+    expect(
+      createTransformer(
+        { id: 'northTransformerId1', transformer, options: {}, inputType: 'time-values', south: undefined },
+        testData.north.list[0],
+        logger
+      )
+    ).toBeInstanceOf(OIBusCustomTransformer);
   });
 
   describe('test a custom transformer', () => {

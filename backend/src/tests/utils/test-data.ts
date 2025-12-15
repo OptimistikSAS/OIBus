@@ -522,6 +522,13 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         enabled: true,
         settings: {} as SouthItemSettings,
         scanMode: scanModes[0]
+      },
+      {
+        id: 'southItemId4',
+        name: 'item4',
+        enabled: true,
+        settings: {} as SouthItemSettings,
+        scanMode: scanModes[0]
       }
     ]
   },
@@ -553,7 +560,7 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
     },
     items: [
       {
-        id: 'southItemId4',
+        id: 'southItemId5',
         name: 'opcua ha',
         enabled: true,
         settings: {
@@ -562,7 +569,7 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         scanMode: scanModes[0]
       },
       {
-        id: 'southItemId5',
+        id: 'southItemId6',
         name: 'opcua sub',
         enabled: true,
         settings: {
@@ -571,7 +578,7 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
       },
       {
-        id: 'southItemId6',
+        id: 'southItemId7',
         name: 'opcua da',
         enabled: true,
         settings: {
@@ -580,7 +587,7 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         scanMode: scanModes[1]
       },
       {
-        id: 'southItemId7',
+        id: 'southItemId8',
         name: 'opcua ha 2',
         enabled: true,
         settings: {
@@ -686,26 +693,40 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
         retentionDuration: 72
       }
     },
-    subscriptions: [
+    transformers: [
       {
-        id: southConnectors[0].id,
-        name: southConnectors[0].name,
-        type: southConnectors[0].type,
-        description: southConnectors[0].description,
-        enabled: southConnectors[0].enabled
+        id: 'northTransformerId1',
+        transformer: transformers[0],
+        options: {},
+        inputType: transformers[0].inputType,
+        south: {
+          id: southConnectors[0].id,
+          name: southConnectors[0].name,
+          type: southConnectors[0].type,
+          description: southConnectors[0].description,
+          enabled: southConnectors[0].enabled
+        }
       },
       {
-        id: southConnectors[1].id,
-        name: southConnectors[1].name,
-        type: southConnectors[1].type,
-        description: southConnectors[1].description,
-        enabled: southConnectors[1].enabled
+        id: 'northTransformerId2',
+        transformer: transformers[1],
+        options: {},
+        inputType: transformers[1].inputType,
+        south: undefined
+      },
+      {
+        id: 'northTransformerId3',
+        transformer: transformers[2],
+        options: {},
+        inputType: transformers[2].inputType,
+        south: {
+          id: southConnectors[1].id,
+          name: southConnectors[1].name,
+          type: southConnectors[1].type,
+          description: southConnectors[1].description,
+          enabled: southConnectors[1].enabled
+        }
       }
-    ],
-    transformers: [
-      { transformer: transformers[0], options: {}, inputType: transformers[0].inputType },
-      { transformer: transformers[1], options: {}, inputType: transformers[1].inputType },
-      { transformer: transformers[2], options: {}, inputType: transformers[2].inputType }
     ]
   },
   {
@@ -740,15 +761,6 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
         retentionDuration: 72
       }
     },
-    subscriptions: [
-      {
-        id: southConnectors[0].id,
-        name: southConnectors[0].name,
-        type: southConnectors[0].type,
-        description: southConnectors[0].description,
-        enabled: southConnectors[0].enabled
-      }
-    ],
     transformers: []
   }
 ];
@@ -784,10 +796,15 @@ const northConnectorCommand: NorthConnectorCommandDTO = {
       retentionDuration: 0
     }
   },
-  subscriptions: [southConnectors[0].id],
   transformers: [
-    { transformerId: transformers[0].id, options: {}, inputType: transformers[0].inputType },
-    { transformerId: transformers[1].id, options: {}, inputType: transformers[1].inputType }
+    {
+      id: 'northTransformerId4',
+      transformerId: transformers[0].id,
+      options: {},
+      inputType: transformers[0].inputType,
+      southId: southConnectors[0].id
+    },
+    { id: 'northTransformerId5', transformerId: transformers[1].id, options: {}, inputType: transformers[1].inputType, southId: undefined }
   ]
 };
 
@@ -881,8 +898,13 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
       }
     ],
     northTransformers: [
-      { transformer: transformers[0], options: {}, inputType: transformers[0].inputType },
-      { transformer: transformers[1], options: {}, inputType: transformers[1].inputType }
+      {
+        id: 'historyTransformerId1',
+        transformer: transformers[0],
+        options: {},
+        inputType: transformers[0].inputType
+      },
+      { id: 'historyTransformerId2', transformer: transformers[1], options: {}, inputType: transformers[1].inputType }
     ]
   },
   {
@@ -1030,8 +1052,13 @@ const historyQueryCommand: HistoryQueryCommandDTO = {
     }
   ],
   northTransformers: [
-    { transformerId: transformers[0].id, options: {}, inputType: transformers[0].inputType },
-    { transformerId: transformers[1].id, options: {}, inputType: transformers[1].inputType }
+    {
+      id: 'historyTransformerId3',
+      transformerId: transformers[0].id,
+      options: {},
+      inputType: transformers[0].inputType
+    },
+    { id: 'historyTransformerId4', transformerId: transformers[1].id, options: {}, inputType: transformers[1].inputType }
   ]
 };
 const historyQueryItemCommand: HistoryQueryItemCommandDTO = {

@@ -9,7 +9,7 @@ import { OIBusMQTTValue } from '../connector-types.model';
 
 // 1. Mock External Utilities
 jest.mock('../../utils', () => ({
-  convertDateTimeToInstant: jest.fn().mockImplementation(_val => {
+  convertDateTime: jest.fn().mockImplementation(_val => {
     // Return a mock timestamp for testing.
     return 1698400000000;
   }),
