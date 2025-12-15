@@ -3,6 +3,7 @@ import { RouterOutlet } from '@angular/router';
 import { NavbarComponent } from './navbar/navbar.component';
 import { NotificationComponent } from './shared/notification/notification.component';
 import { DefaultValidationErrorsComponent } from './shared/default-validation-errors/default-validation-errors.component';
+import { BreadcrumbComponent } from './shared/breadcrumb/breadcrumb.component';
 import { WindowService } from './shared/window.service';
 import { CurrentUserService } from './shared/current-user.service';
 import { UserDTO } from '../../../backend/shared/model/user.model';
@@ -12,7 +13,7 @@ import { NavigationService } from './shared/navigation.service';
   selector: 'oib-root',
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
-  imports: [RouterOutlet, NavbarComponent, NotificationComponent, DefaultValidationErrorsComponent]
+  imports: [RouterOutlet, NavbarComponent, NotificationComponent, DefaultValidationErrorsComponent, BreadcrumbComponent]
 })
 export class AppComponent implements OnInit {
   private currentUserService = inject(CurrentUserService);
