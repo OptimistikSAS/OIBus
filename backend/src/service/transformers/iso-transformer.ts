@@ -9,7 +9,7 @@ export default class IsoTransformer extends OIBusTransformer {
 
   async transform(
     _data: ReadStream | Readable,
-    _source: string,
+    _source: string | null,
     _filename: string | null
   ): Promise<{ metadata: CacheMetadata; output: string }> {
     return {

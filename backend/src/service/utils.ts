@@ -436,7 +436,7 @@ export const formatInstant = (
 export const convertDateTimeToInstant = (
   dateTime: string | number | Date,
   options: { type?: DateTimeType; timezone?: string; format?: string; locale?: string }
-): string => {
+): Instant => {
   // Early return if no conversion is needed (assume input is already an ISO string)
   if (!options.type) {
     if (typeof dateTime === 'string' && DateTime.fromISO(dateTime).isValid) {
@@ -500,6 +500,15 @@ export const convertDateTimeToInstant = (
   } catch (error) {
     throw new Error(`Failed to convert "${dateTime}" to Instant for type "${type}": ${(error as Error).message}`);
   }
+};
+
+export const convertDateTime = (
+  dateTime: string | number | Date,
+  input: { type: DateTimeType; timezone?: string; format?: string; locale?: string },
+  output: { type: DateTimeType; timezone?: string; format?: string; locale?: string }
+) => {
+  const instant: Instant = convertDateTimeToInstant(dateTime, input);
+  return formatInstant(instant, output);
 };
 
 export const formatQueryParams = (

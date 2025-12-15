@@ -353,7 +353,7 @@ describe('OIAnalytics message service without completed registration', () => {
       .mockReturnValueOnce(testData.oIAnalytics.registration.completed)
       .mockReturnValueOnce(testData.oIAnalytics.registration.completed);
     (oIAnalyticsMessageRepository.list as jest.Mock).mockReturnValueOnce([]);
-    (historyQueryRepository.findAllHistoryQueriesFull as jest.Mock).mockReturnValueOnce(testData.historyQueries.list);
+    (historyQueryRepository.findAllHistoriesFull as jest.Mock).mockReturnValueOnce(testData.historyQueries.list);
     (oIAnalyticsMessageRepository.create as jest.Mock).mockReturnValueOnce(saveHistoryQueryMessage);
     service.createFullHistoryQueriesMessageIfNotPending();
     expect(oIAnalyticsMessageRepository.create).toHaveBeenCalledWith({

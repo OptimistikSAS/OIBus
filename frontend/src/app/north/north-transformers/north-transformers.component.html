@@ -16,15 +16,23 @@
         <thead class="light">
           <tr>
             <th translate="north.transformers.input-type"></th>
+            <th translate="north.transformers.south"></th>
             <th translate="north.transformers.transformer"></th>
             <th></th>
           </tr>
         </thead>
         <tbody>
-          @for (transformerWithOptions of transformersWithOptions; track transformerWithOptions.transformer.id) {
+          @for (transformerWithOptions of transformersWithOptions; track transformerWithOptions.id) {
             <tr>
               <td>
                 <span>{{ 'enums.oibus-input-data-type.' + transformerWithOptions.inputType | translate }}</span>
+              </td>
+              <td>
+                @if (transformerWithOptions.south) {
+                  <span>{{ transformerWithOptions.south.name }} ({{ transformerWithOptions.south.type | oIBusSouthTypeEnum }})</span>
+                } @else {
+                  {{ 'north.transformers.all-south' | translate }}
+                }
               </td>
               <td>
                 @if (transformerWithOptions.transformer.type === 'standard') {

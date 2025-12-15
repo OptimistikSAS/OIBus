@@ -5,7 +5,7 @@ export default jest.fn().mockImplementation(() => {
   return {
     findAllSouth: jest.fn(),
     findSouthById: jest.fn(),
-    saveSouthConnector: jest.fn(),
+    saveSouth: jest.fn(),
     start: jest.fn(),
     stop: jest.fn(),
     deleteSouth: jest.fn(),

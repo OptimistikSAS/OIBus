@@ -8,11 +8,10 @@ import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { Instant } from '../../model/types';
 import { OIBusNorthType } from '../../../shared/model/north-connector.model';
 import { OIBusSouthType } from '../../../shared/model/south-connector.model';
-import { TransformerWithOptions } from '../../model/transformer.model';
+import { HistoryTransformerWithOptions } from '../../model/transformer.model';
 import { toTransformer } from './transformer.repository';
 import { ScanMode } from '../../model/scan-mode.model';
 import { toScanMode } from './scan-mode.repository';
-import { TransformerDTOWithOptions } from '../../../shared/model/transformer.model';
 
 const HISTORY_QUERIES_TABLE = 'history_queries';
 const HISTORY_ITEMS_TABLE = 'history_items';
@@ -24,7 +23,7 @@ const PAGE_SIZE = 50;
 export default class HistoryQueryRepository {
   constructor(private readonly database: Database) {}
 
-  findAllHistoryQueriesLight(): Array<HistoryQueryEntityLight> {
+  findAllHistoriesLight(): Array<HistoryQueryEntityLight> {
     const query = `SELECT id, name, description, status, start_time, end_time, south_type, north_type FROM ${HISTORY_QUERIES_TABLE};`;
     return this.database
       .prepare(query)
@@ -32,7 +31,7 @@ export default class HistoryQueryRepository {
       .map(result => toHistoryQueryLight(result as Record<string, string>));
   }
 
-  findAllHistoryQueriesFull(): Array<HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>> {
+  findAllHistoriesFull(): Array<HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>> {
     const query =
       `SELECT id, name, description, status, start_time, end_time, ` +
       `south_type, north_type, south_settings, north_settings, ` +
@@ -46,7 +45,7 @@ export default class HistoryQueryRepository {
     return result.map(element => this.toHistoryQueryEntity(element as Record<string, string | number>));
   }
 
-  findHistoryQueryById(id: string): HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> | null {
+  findHistoryById(id: string): HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> | null {
     const query =
       `SELECT id, name, description, status, start_time, end_time, ` +
       `south_type, north_type, south_settings, north_settings, ` +
@@ -62,10 +61,10 @@ export default class HistoryQueryRepository {
     return this.toHistoryQueryEntity(result as Record<string, string | number>);
   }
 
-  saveHistoryQuery(historyQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>): void {
+  saveHistory(history: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>): void {
     const transaction = this.database.transaction(() => {
-      if (!historyQuery.id) {
-        historyQuery.id = generateRandomId(6);
+      if (!history.id) {
+        history.id = generateRandomId(6);
         const insertQuery =
           `INSERT INTO ${HISTORY_QUERIES_TABLE} (id, name, description, status, ` +
           `start_time, end_time, south_type, north_type, south_settings, north_settings, ` +
@@ -75,27 +74,27 @@ export default class HistoryQueryRepository {
           `caching_archive_enabled, caching_archive_retention_duration) ` +
           `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
         this.database.prepare(insertQuery).run(
-          historyQuery.id,
-          historyQuery.name,
-          historyQuery.description,
+          history.id,
+          history.name,
+          history.description,
           'PENDING', // disabled by default at creation
-          historyQuery.startTime,
-          historyQuery.endTime,
-          historyQuery.southType,
-          historyQuery.northType,
-          JSON.stringify(historyQuery.southSettings),
-          JSON.stringify(historyQuery.northSettings),
-          historyQuery.caching.trigger.scanMode.id,
-          historyQuery.caching.trigger.numberOfElements,
-          historyQuery.caching.trigger.numberOfFiles,
-          historyQuery.caching.throttling.runMinDelay,
-          historyQuery.caching.throttling.maxSize,
-          historyQuery.caching.throttling.maxNumberOfElements,
-          historyQuery.caching.error.retryInterval,
-          historyQuery.caching.error.retryCount,
-          historyQuery.caching.error.retentionDuration,
-          +historyQuery.caching.archive.enabled,
-          historyQuery.caching.archive.retentionDuration
+          history.startTime,
+          history.endTime,
+          history.southType,
+          history.northType,
+          JSON.stringify(history.southSettings),
+          JSON.stringify(history.northSettings),
+          history.caching.trigger.scanMode.id,
+          history.caching.trigger.numberOfElements,
+          history.caching.trigger.numberOfFiles,
+          history.caching.throttling.runMinDelay,
+          history.caching.throttling.maxSize,
+          history.caching.throttling.maxNumberOfElements,
+          history.caching.error.retryInterval,
+          history.caching.error.retryCount,
+          history.caching.error.retentionDuration,
+          +history.caching.archive.enabled,
+          history.caching.archive.retentionDuration
         );
       } else {
         const query =
@@ -109,77 +108,79 @@ export default class HistoryQueryRepository {
         this.database
           .prepare(query)
           .run(
-            historyQuery.name,
-            historyQuery.description,
-            historyQuery.startTime,
-            historyQuery.endTime,
-            historyQuery.southType,
-            historyQuery.northType,
-            JSON.stringify(historyQuery.southSettings),
-            JSON.stringify(historyQuery.northSettings),
-            historyQuery.caching.trigger.scanMode.id,
-            historyQuery.caching.trigger.numberOfElements,
-            historyQuery.caching.trigger.numberOfFiles,
-            historyQuery.caching.throttling.runMinDelay,
-            historyQuery.caching.throttling.maxSize,
-            historyQuery.caching.throttling.maxNumberOfElements,
-            historyQuery.caching.error.retryInterval,
-            historyQuery.caching.error.retryCount,
-            historyQuery.caching.error.retentionDuration,
-            +historyQuery.caching.archive.enabled,
-            historyQuery.caching.archive.retentionDuration,
-            historyQuery.id
+            history.name,
+            history.description,
+            history.startTime,
+            history.endTime,
+            history.southType,
+            history.northType,
+            JSON.stringify(history.southSettings),
+            JSON.stringify(history.northSettings),
+            history.caching.trigger.scanMode.id,
+            history.caching.trigger.numberOfElements,
+            history.caching.trigger.numberOfFiles,
+            history.caching.throttling.runMinDelay,
+            history.caching.throttling.maxSize,
+            history.caching.throttling.maxNumberOfElements,
+            history.caching.error.retryInterval,
+            history.caching.error.retryCount,
+            history.caching.error.retentionDuration,
+            +history.caching.archive.enabled,
+            history.caching.archive.retentionDuration,
+            history.id
           );
       }
 
-      if (historyQuery.items.length > 0) {
+      if (history.items.length > 0) {
         this.database
-          .prepare(
-            `DELETE FROM ${HISTORY_ITEMS_TABLE} WHERE history_id = ? AND id NOT IN (${historyQuery.items.map(() => '?').join(', ')});`
-          )
+          .prepare(`DELETE FROM ${HISTORY_ITEMS_TABLE} WHERE history_id = ? AND id NOT IN (${history.items.map(() => '?').join(', ')});`)
           .run(
-            historyQuery.id,
-            historyQuery.items.map(item => item.id)
+            history.id,
+            history.items.map(item => item.id)
           );
 
         const insert = this.database.prepare(
           `INSERT INTO ${HISTORY_ITEMS_TABLE} (id, name, enabled, history_id, settings) VALUES (?, ?, ?, ?, ?);`
         );
         const update = this.database.prepare(`UPDATE ${HISTORY_ITEMS_TABLE} SET name = ?, enabled = ?, settings = ? WHERE id = ?;`);
-        for (const item of historyQuery.items) {
+        for (const item of history.items) {
           if (!item.id) {
             item.id = generateRandomId(6);
-            insert.run(item.id, item.name, +item.enabled, historyQuery.id, JSON.stringify(item.settings));
+            insert.run(item.id, item.name, +item.enabled, history.id, JSON.stringify(item.settings));
           } else {
             update.run(item.name, +item.enabled, JSON.stringify(item.settings), item.id);
           }
         }
       } else {
-        this.database.prepare(`DELETE FROM ${HISTORY_ITEMS_TABLE} WHERE history_id = ?;`).run(historyQuery.id);
+        this.database.prepare(`DELETE FROM ${HISTORY_ITEMS_TABLE} WHERE history_id = ?;`).run(history.id);
       }
 
-      this.database.prepare(`DELETE FROM ${HISTORY_TRANSFORMERS_TABLE} WHERE history_id = ?;`).run(historyQuery.id);
-      const insert = this.database.prepare(
-        `INSERT INTO ${HISTORY_TRANSFORMERS_TABLE} (history_id, transformer_id, options, input_type) VALUES (?, ?, ?, ?);`
-      );
-      for (const transformerWithOptions of historyQuery.northTransformers) {
-        insert.run(
-          historyQuery.id,
-          transformerWithOptions.transformer.id,
-          JSON.stringify(transformerWithOptions.options),
-          transformerWithOptions.inputType
-        );
+      const keepIds = history.northTransformers.map(t => t.id);
+      if (keepIds.length === 0) {
+        // The list is empty, so we delete EVERYTHING for this history_id
+        this.database.prepare(`DELETE FROM ${HISTORY_TRANSFORMERS_TABLE} WHERE history_id = ?`).run(history.id);
+      } else {
+        // The list has items, so we delete only those NOT in the list
+        const placeholders = keepIds.map(() => '?').join(',');
+
+        const sql = `DELETE FROM ${HISTORY_TRANSFORMERS_TABLE} WHERE history_id = ? AND id NOT IN (${placeholders})`;
+        // We spread (...keepIds) so they fill the placeholders after history.id
+        this.database.prepare(sql).run(history.id, ...keepIds);
+      }
+
+      for (const transformerWithOptions of history.northTransformers) {
+        this.addOrEditTransformer(history.id, transformerWithOptions);
       }
     });
     transaction();
   }
 
-  updateHistoryQueryStatus(id: string, status: HistoryQueryStatus) {
+  updateHistoryStatus(id: string, status: HistoryQueryStatus) {
     const query = `UPDATE ${HISTORY_QUERIES_TABLE} SET status = ? WHERE id = ?;`;
     this.database.prepare(query).run(status, id);
   }
 
-  deleteHistoryQuery(id: string): void {
+  deleteHistory(id: string): void {
     const transaction = this.database.transaction(() => {
       this.database.prepare(`DELETE FROM ${HISTORY_ITEMS_TABLE} WHERE history_id = ?;`).run(id);
       this.database.prepare(`DELETE FROM ${HISTORY_TRANSFORMERS_TABLE} WHERE history_id = ?;`).run(id);
@@ -188,30 +189,38 @@ export default class HistoryQueryRepository {
     transaction();
   }
 
-  addOrEditTransformer(historyId: string, transformerWithOptions: TransformerDTOWithOptions): void {
-    const transaction = this.database.transaction(() => {
-      this.database
-        .prepare(`DELETE FROM ${HISTORY_TRANSFORMERS_TABLE} WHERE history_id = ? AND transformer_id = ?;`)
-        .run(historyId, transformerWithOptions.transformer.id);
-      const query = `INSERT INTO ${HISTORY_TRANSFORMERS_TABLE} (history_id, transformer_id, options, input_type) VALUES (?, ?, ?, ?);`;
+  addOrEditTransformer(historyId: string, transformerWithOptions: HistoryTransformerWithOptions): void {
+    if (!transformerWithOptions.id) {
+      transformerWithOptions.id = generateRandomId(6);
+      const query = `INSERT INTO ${HISTORY_TRANSFORMERS_TABLE} (id, history_id, transformer_id, options, input_type) VALUES (?, ?, ?, ?, ?);`;
       this.database
         .prepare(query)
         .run(
+          transformerWithOptions.id,
           historyId,
           transformerWithOptions.transformer.id,
           JSON.stringify(transformerWithOptions.options),
           transformerWithOptions.inputType
         );
-    });
-    transaction();
+    } else {
+      const query = `UPDATE ${HISTORY_TRANSFORMERS_TABLE} SET transformer_id = ?, options = ?, input_type = ? WHERE id = ?;`;
+      this.database
+        .prepare(query)
+        .run(
+          transformerWithOptions.transformer.id,
+          JSON.stringify(transformerWithOptions.options),
+          transformerWithOptions.inputType,
+          transformerWithOptions.id
+        );
+    }
   }
 
-  removeTransformer(historyId: string, transformerId: string): void {
-    const query = `DELETE FROM ${HISTORY_TRANSFORMERS_TABLE} WHERE history_id = ? AND transformer_id = ?;`;
-    this.database.prepare(query).run(historyId, transformerId);
+  removeTransformer(id: string): void {
+    const query = `DELETE FROM ${HISTORY_TRANSFORMERS_TABLE} WHERE id = ?;`;
+    this.database.prepare(query).run(id);
   }
 
-  searchHistoryQueryItems(historyId: string, searchParams: HistoryQueryItemSearchParam): Page<HistoryQueryItemEntity<SouthItemSettings>> {
+  searchItems(historyId: string, searchParams: HistoryQueryItemSearchParam): Page<HistoryQueryItemEntity<SouthItemSettings>> {
     let whereClause = `WHERE history_id = ?`;
     const queryParams = [historyId];
 
@@ -244,10 +253,7 @@ export default class HistoryQueryRepository {
     };
   }
 
-  listHistoryQueryItems(
-    historyId: string,
-    searchParams: Omit<HistoryQueryItemSearchParam, 'page'>
-  ): Array<HistoryQueryItemEntity<SouthItemSettings>> {
+  listItems(historyId: string, searchParams: Omit<HistoryQueryItemSearchParam, 'page'>): Array<HistoryQueryItemEntity<SouthItemSettings>> {
     let whereClause = `WHERE history_id = ?`;
     const queryParams = [historyId];
     if (searchParams.name) {
@@ -267,83 +273,76 @@ export default class HistoryQueryRepository {
       .map(result => this.toHistoryQueryItemEntity(result as Record<string, string>));
   }
 
-  findAllItemsForHistoryQuery(historyQueryId: string): Array<HistoryQueryItemEntity<SouthItemSettings>> {
+  findAllItemsForHistory(historyId: string): Array<HistoryQueryItemEntity<SouthItemSettings>> {
     const query = `SELECT id, name, enabled, settings FROM ${HISTORY_ITEMS_TABLE} WHERE history_id = ?;`;
     return this.database
       .prepare(query)
-      .all(historyQueryId)
+      .all(historyId)
       .map(result => this.toHistoryQueryItemEntity(result as Record<string, string>));
   }
 
-  findHistoryQueryItemById(historyQueryId: string, historyQueryItemId: string): HistoryQueryItemEntity<SouthItemSettings> | null {
+  findItemById(historyId: string, itemId: string): HistoryQueryItemEntity<SouthItemSettings> | null {
     const query = `SELECT id, name, enabled, settings FROM ${HISTORY_ITEMS_TABLE} WHERE id = ? AND history_id = ?;`;
-    const result = this.database.prepare(query).get(historyQueryItemId, historyQueryId);
+    const result = this.database.prepare(query).get(itemId, historyId);
     if (!result) return null;
     return this.toHistoryQueryItemEntity(result as Record<string, string>);
   }
 
-  saveHistoryQueryItem<I extends SouthItemSettings>(historyId: string, historyQueryItem: HistoryQueryItemEntity<I>): void {
-    if (!historyQueryItem.id) {
-      historyQueryItem.id = generateRandomId(6);
+  saveItem<I extends SouthItemSettings>(historyId: string, item: HistoryQueryItemEntity<I>): void {
+    if (!item.id) {
+      item.id = generateRandomId(6);
       const insertQuery = `INSERT INTO ${HISTORY_ITEMS_TABLE} (id, name, enabled, history_id, settings) ` + `VALUES (?, ?, ?, ?, ?);`;
-      this.database
-        .prepare(insertQuery)
-        .run(historyQueryItem.id, historyQueryItem.name, +historyQueryItem.enabled, historyId, JSON.stringify(historyQueryItem.settings));
+      this.database.prepare(insertQuery).run(item.id, item.name, +item.enabled, historyId, JSON.stringify(item.settings));
     } else {
       const query = `UPDATE ${HISTORY_ITEMS_TABLE} SET name = ?, enabled = ?, settings = ? WHERE id = ?;`;
-      this.database
-        .prepare(query)
-        .run(historyQueryItem.name, +historyQueryItem.enabled, JSON.stringify(historyQueryItem.settings), historyQueryItem.id);
+      this.database.prepare(query).run(item.name, +item.enabled, JSON.stringify(item.settings), item.id);
     }
   }
 
-  saveAllItems(
-    historyQueryId: string,
-    historyQueryItems: Array<HistoryQueryItemEntity<SouthItemSettings>>,
-    deleteItemsNotPresent: boolean
-  ): void {
+  saveAllItems(historyId: string, items: Array<HistoryQueryItemEntity<SouthItemSettings>>, deleteItemsNotPresent: boolean): void {
     const transaction = this.database.transaction(() => {
       if (deleteItemsNotPresent) {
-        this.deleteAllHistoryQueryItemsByHistoryQuery(historyQueryId);
+        this.deleteAllItemsByHistory(historyId);
       }
-      for (const item of historyQueryItems) {
-        this.saveHistoryQueryItem(historyQueryId, item);
+      for (const item of items) {
+        this.saveItem(historyId, item);
       }
     });
     transaction();
   }
 
-  deleteHistoryQueryItem(historyQueryId: string): void {
-    const query = `DELETE FROM ${HISTORY_ITEMS_TABLE} WHERE id = ?;`;
-    this.database.prepare(query).run(historyQueryId);
+  deleteItem(historyId: string, itemId: string): void {
+    const query = `DELETE FROM ${HISTORY_ITEMS_TABLE} WHERE history_id = ? AND id = ?;`;
+    this.database.prepare(query).run(historyId, itemId);
   }
 
-  deleteAllHistoryQueryItemsByHistoryQuery(historyQueryId: string): void {
+  deleteAllItemsByHistory(historyId: string): void {
     const query = `DELETE FROM ${HISTORY_ITEMS_TABLE} WHERE history_id = ?;`;
-    this.database.prepare(query).run(historyQueryId);
+    this.database.prepare(query).run(historyId);
   }
 
-  enableHistoryQueryItem(id: string): void {
+  enableItem(id: string): void {
     const query = `UPDATE ${HISTORY_ITEMS_TABLE} SET enabled = 1 WHERE id = ?;`;
     this.database.prepare(query).run(id);
   }
 
-  disableHistoryQueryItem(id: string): void {
+  disableItem(id: string): void {
     const query = `UPDATE ${HISTORY_ITEMS_TABLE} SET enabled = 0 WHERE id = ?;`;
     this.database.prepare(query).run(id);
   }
 
-  findTransformersForHistory(historyId: string): Array<TransformerWithOptions> {
-    const query = `SELECT t.id,  t.type,  ht.input_type, t.output_type, t.function_name, t.name, t.description, t.custom_manifest, t.custom_code, t.language, ht.options FROM ${HISTORY_TRANSFORMERS_TABLE} ht JOIN ${TRANSFORMERS_TABLE} t ON ht.transformer_id = t.id WHERE ht.history_id = ?;`;
+  private findTransformersForHistory(historyId: string): Array<HistoryTransformerWithOptions> {
+    const query = `SELECT t.id, t.type, ht.input_type, t.output_type, t.function_name, t.name, t.description, t.custom_manifest, t.custom_code, t.language, ht.options, ht.id as htId FROM ${HISTORY_TRANSFORMERS_TABLE} ht JOIN ${TRANSFORMERS_TABLE} t ON ht.transformer_id = t.id WHERE ht.history_id = ?;`;
     const result = this.database.prepare(query).all(historyId) as Array<Record<string, string>>;
     return result.map(element => ({
+      id: element.htId,
       transformer: toTransformer(element),
       options: JSON.parse(element.options),
       inputType: element.input_type
     }));
   }
 
-  findScanModeForHistoryQuery(scanModeId: string): ScanMode {
+  private findScanModeForHistory(scanModeId: string): ScanMode {
     const query = `SELECT id, name, description, cron FROM ${SCAN_MODE} WHERE id = ?;`;
     const result = this.database.prepare(query).get(scanModeId) as Record<string, string>;
     return toScanMode(result);
@@ -374,7 +373,7 @@ export default class HistoryQueryRepository {
       northSettings: JSON.parse(result.north_settings as string) as NorthSettings,
       caching: {
         trigger: {
-          scanMode: this.findScanModeForHistoryQuery(result.caching_trigger_schedule as string),
+          scanMode: this.findScanModeForHistory(result.caching_trigger_schedule as string),
           numberOfElements: result.caching_trigger_number_of_elements as number,
           numberOfFiles: result.caching_trigger_number_of_files as number
         },
@@ -393,7 +392,7 @@ export default class HistoryQueryRepository {
           retentionDuration: result.caching_archive_retention_duration as number
         }
       },
-      items: this.findAllItemsForHistoryQuery(result.id as string),
+      items: this.findAllItemsForHistory(result.id as string),
       northTransformers: this.findTransformersForHistory(result.id as string)
     };
   }

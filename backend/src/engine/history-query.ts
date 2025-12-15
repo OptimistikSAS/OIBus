@@ -187,8 +187,13 @@ export default class HistoryQuery {
       type: historyQueryConfiguration.northType,
       settings: historyQueryConfiguration.northSettings,
       caching: historyQueryConfiguration.caching,
-      subscriptions: [],
-      transformers: historyQueryConfiguration.northTransformers
+      transformers: historyQueryConfiguration.northTransformers.map(element => ({
+        id: element.id,
+        transformer: element.transformer,
+        options: element.options,
+        inputType: element.inputType,
+        south: undefined
+      }))
     };
   }
 

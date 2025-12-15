@@ -172,6 +172,7 @@ describe('EditHistoryQueryTransformerModalComponent', () => {
       [],
       [],
       {
+        id: 'historyTransformerId1',
         transformer,
         options: {
           mapping: [

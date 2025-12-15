@@ -127,7 +127,6 @@ describe('EditNorthComponent', () => {
           retentionDuration: 0
         }
       },
-      subscriptions: [],
       transformers: []
     };
 

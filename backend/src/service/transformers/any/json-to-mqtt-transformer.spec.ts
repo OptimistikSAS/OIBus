@@ -8,7 +8,7 @@ import { OIBusArrayAttribute, OIBusStringSelectAttribute } from '../../../../sha
 
 // 1. Mock External Utilities
 jest.mock('../../utils', () => ({
-  convertDateTimeToInstant: jest.fn().mockImplementation(_val => {
+  convertDateTime: jest.fn().mockImplementation(_val => {
     // Return a mock timestamp for testing.
     // If it's a string date, return fixed epoch. If number, return as is.
     return 1698400000000;

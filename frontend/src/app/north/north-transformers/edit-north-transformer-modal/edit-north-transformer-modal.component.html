@@ -6,7 +6,7 @@
     <form [formGroup]="form" (ngSubmit)="save()" id="choose-transformer-form">
       <div class="row">
         @if (inputTypeControl) {
-          <div class="col-6">
+          <div class="col-4">
             <div class="form-group">
               <label class="form-label" for="input-type" translate="north.transformers.input-type"></label>
               <select [formControl]="inputTypeControl" class="form-select mb-2 mr-sm-2" id="input-type">
@@ -19,7 +19,18 @@
             </div>
           </div>
         }
-        <div [class]="inputTypeControl ? 'col-6' : 'col-12'">
+        <div [class]="inputTypeControl ? 'col-4' : 'col-6'">
+          <div class="form-group">
+            <label class="form-label" for="south" translate="north.transformers.south"></label>
+            <select formControlName="southId" id="south" class="form-select mb-2 mr-sm-2">
+              <option [ngValue]="undefined">{{ 'north.transformers.all-south' | translate }}</option>
+              @for (southConnector of southConnectors; track southConnector.id) {
+                <option [ngValue]="southConnector.id">{{ southConnector.name }} ({{ southConnector.type | oIBusSouthTypeEnum }})</option>
+              }
+            </select>
+          </div>
+        </div>
+        <div [class]="inputTypeControl ? 'col-4' : 'col-6'">
           <div class="form-group">
             <label class="form-label" for="transformer-id" translate="north.transformers.transformer"></label>
             <select class="form-select" id="transformer-id" formControlName="transformerId">
