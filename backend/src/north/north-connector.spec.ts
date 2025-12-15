@@ -216,7 +216,9 @@ describe('NorthConnector', () => {
   });
 
   it('should properly disconnect and clear debounce timeout', async () => {
-    north['cacheLogDebounceTimeout'] = setTimeout(() => {}, 10000);
+    north['cacheLogDebounceTimeout'] = setTimeout(() => {
+      /* empty */
+    }, 10000);
     const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
 
     await north.disconnect();
@@ -272,11 +274,6 @@ describe('NorthConnector', () => {
   it('should check if North caches are empty', async () => {
     (cacheService.cacheIsEmpty as jest.Mock).mockReturnValueOnce(true);
     expect(north.isCacheEmpty()).toBeTruthy();
-  });
-
-  it('should check if North is subscribed to all South', async () => {
-    expect(north.isSubscribed('southId1')).toBeTruthy();
-    expect(north.isSubscribed('badId')).toBeFalsy();
   });
 
   it('should search cache content', async () => {
@@ -474,16 +471,28 @@ describe('NorthConnector', () => {
       numberOfElement: (testData.oibusContent[0].content as Array<object>).length,
       createdAt: DateTime.fromMillis(123).toUTC().toISO()!,
       contentType: 'time-values',
-      source: 'south',
+      source: testData.south.list[0].id,
       options: {}
     };
     (oiBusTransformer.transform as jest.Mock).mockReturnValueOnce({ metadata, output: 'output' });
-    await north.cacheContent(testData.oibusContent[0], 'south');
+    await north.cacheContent(testData.oibusContent[0], testData.south.list[0].id);
 
-    expect(oiBusTransformer.transform).toHaveBeenCalledWith('readStream', 'south', null);
+    expect(oiBusTransformer.transform).toHaveBeenCalledWith('readStream', testData.south.list[0].id, null);
     expect(Readable.from).toHaveBeenCalledWith(JSON.stringify(testData.oibusContent[0].content));
     expect(createTransformer).toHaveBeenCalledWith(
-      { transformer: testData.transformers.list[0], options: {}, inputType: 'time-values' },
+      {
+        id: testData.north.list[0].transformers[0].id,
+        transformer: testData.transformers.list[0],
+        options: {},
+        inputType: 'time-values',
+        south: {
+          id: testData.south.list[0].id,
+          name: testData.south.list[0].name,
+          type: testData.south.list[0].type,
+          description: testData.south.list[0].description,
+          enabled: testData.south.list[0].enabled
+        }
+      },
       testData.north.list[0],
       logger
     );
@@ -598,7 +607,7 @@ describe('NorthConnector', () => {
       numberOfElement: (testData.oibusContent[0].content as Array<object>).length - 1,
       createdAt: DateTime.fromMillis(123).toUTC().toISO()!,
       contentType: 'time-values',
-      source: 'south',
+      source: testData.south.list[0].id,
       options: {}
     };
     const metadata2: CacheMetadata = {
@@ -607,14 +616,14 @@ describe('NorthConnector', () => {
       numberOfElement: 1,
       createdAt: DateTime.fromMillis(123).toUTC().toISO()!,
       contentType: 'time-values',
-      source: 'south',
+      source: testData.south.list[0].id,
       options: {}
     };
     (oiBusTransformer.transform as jest.Mock)
       .mockReturnValueOnce({ metadata: metadata1, output: 'output1' })
       .mockReturnValueOnce({ metadata: metadata2, output: 'output2' });
 
-    await north.cacheContent(testData.oibusContent[0], 'south');
+    await north.cacheContent(testData.oibusContent[0], testData.south.list[0].id);
 
     expect(fsAsync.writeFile).toHaveBeenCalledWith(
       path.join(cacheService.cacheFolder, cacheService.CONTENT_FOLDER, '1234567890.json'),
@@ -672,12 +681,12 @@ describe('NorthConnector', () => {
       numberOfElement: 1,
       createdAt: DateTime.fromMillis(123).toUTC().toISO()!,
       contentType: 'setpoint',
-      source: 'south',
+      source: testData.south.list[0].id,
       options: {}
     };
     (oiBusTransformer.transform as jest.Mock).mockReturnValueOnce({ metadata, output: 'output' });
     north.persistDataInCache = jest.fn();
-    await north.cacheContent(testData.oibusContent[3], 'south');
+    await north.cacheContent(testData.oibusContent[3], testData.south.list[1].id);
 
     expect(north.persistDataInCache).toHaveBeenCalledWith(metadata, 'output');
   });
@@ -696,7 +705,7 @@ describe('NorthConnector', () => {
       options: {}
     };
     (oiBusTransformer.transform as jest.Mock).mockReturnValueOnce({ metadata, output: 'output' });
-    await north.cacheContent(testData.oibusContent[1], 'south');
+    await north.cacheContent(testData.oibusContent[1], null);
 
     expect(fsAsync.writeFile).toHaveBeenCalledWith(
       path.join(
@@ -712,7 +721,13 @@ describe('NorthConnector', () => {
     );
     expect(createReadStream).toHaveBeenCalledWith((testData.oibusContent[1] as OIBusRawContent).filePath);
     expect(createTransformer).toHaveBeenCalledWith(
-      { transformer: testData.transformers.list[1], options: {}, inputType: 'any' },
+      {
+        id: 'northTransformerId2',
+        transformer: testData.transformers.list[1],
+        options: {},
+        inputType: 'any',
+        south: undefined
+      },
       testData.north.list[0],
       logger
     );
@@ -741,7 +756,7 @@ describe('NorthConnector', () => {
     await north.cacheContent(testData.oibusContent[0], 'south');
 
     expect(logger.warn).toHaveBeenCalledWith(
-      `North cache is exceeding the maximum allowed size (2 MB >= ${north['connector'].caching.throttling.maxSize} MB). Values will be discarded until the cache is emptied (by sending files/values or manual removal)`
+      `North cache is exceeding the maximum allowed size (2 MB >= ${north['connector'].caching.throttling.maxSize} MB). Values will be discarded until cache is emptied.`
     );
     await north.cacheContent(testData.oibusContent[0], 'south');
     expect(logger.warn).toHaveBeenCalledTimes(1);
@@ -780,6 +795,7 @@ describe('NorthConnector', () => {
   it('should ignore content if ignore transformer is selected', async () => {
     north['connector'].transformers = [
       {
+        id: 'northTransformerId1',
         transformer: {
           id: 'transformerId3',
           type: 'standard',
@@ -787,6 +803,7 @@ describe('NorthConnector', () => {
           inputType: 'any',
           outputType: 'any'
         },
+        south: undefined,
         options: {},
         inputType: 'any'
       }
@@ -805,6 +822,7 @@ describe('NorthConnector', () => {
   it('should not transformer content if iso transformer is selected', async () => {
     north['connector'].transformers = [
       {
+        id: 'northTransformerId1',
         transformer: {
           id: 'transformerId4',
           type: 'standard',
@@ -812,6 +830,7 @@ describe('NorthConnector', () => {
           inputType: 'any',
           outputType: 'any'
         },
+        south: undefined,
         options: {},
         inputType: 'any'
       }

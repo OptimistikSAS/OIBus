@@ -1,4 +1,5 @@
 import { OIBusObjectAttribute } from './form.model';
+import { SouthConnectorLightDTO } from './south-connector.model';
 
 export const INPUT_TYPES = ['any', 'time-values', 'setpoint'];
 export type InputType = (typeof INPUT_TYPES)[number];
@@ -77,6 +78,11 @@ export interface CustomTransformerDTO extends BaseTransformerDTO {
    * @example "function transform(input) { return parseFloat(input); }"
    */
   customCode: string;
+
+  /**
+   * The language used
+   * @example "javascript"
+   */
   language: TransformerLanguage;
 }
 
@@ -108,6 +114,12 @@ export type TransformerDTO = CustomTransformerDTO | StandardTransformerDTO;
  */
 export interface TransformerDTOWithOptions {
   /**
+   * The id used to match a transformer with options
+   * @example "id"
+   */
+  id: string;
+
+  /**
    * The input data type that the transformer accepts.
    * @example "string"
    */
@@ -123,6 +135,8 @@ export interface TransformerDTOWithOptions {
    * @example { "precision": 2, "defaultValue": 0 }
    */
   options: Record<string, unknown>;
+
+  south: SouthConnectorLightDTO | undefined;
 }
 
 /**
@@ -130,6 +144,12 @@ export interface TransformerDTOWithOptions {
  * Used when only the transformer ID is needed along with configuration options.
  */
 export interface TransformerIdWithOptions {
+  /**
+   * The id used to match a transformer with options
+   * @example "id"
+   */
+  id: string;
+
   /**
    * The input data type that the transformer accepts.
    * @example "time-values"
@@ -141,6 +161,12 @@ export interface TransformerIdWithOptions {
    * @example "customTransformer123"
    */
   transformerId: string;
+
+  /**
+   * The south associated to the transformer
+   * @example "southId123"
+   */
+  southId: string | undefined;
 
   /**
    * Configuration options for the transformer.
