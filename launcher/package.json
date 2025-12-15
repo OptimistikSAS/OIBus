@@ -41,9 +41,9 @@
     "@types/better-sqlite3": "7.6.13",
     "@types/minimist": "1.2.5",
     "@types/jest": "30.0.0",
-    "@types/node": "24.10.2",
-    "@yao-pkg/pkg": "6.10.1",
-    "eslint": "9.39.1",
+    "@types/node": "24.10.4",
+    "@yao-pkg/pkg": "6.11.0",
+    "eslint": "9.39.2",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-prettier": "5.5.4",
     "prettier": "3.7.4",
@@ -52,7 +52,7 @@
     "jest": "30.2.0",
     "ts-jest": "29.4.6",
     "typescript": "5.4.5",
-    "typescript-eslint": "8.49.0"
+    "typescript-eslint": "8.50.0"
   },
   "pkg": {
     "assets": [
