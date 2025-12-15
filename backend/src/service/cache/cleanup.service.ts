@@ -146,7 +146,7 @@ export default class CleanupService {
       const folderPath = path.join(this.getFolder(mainFolder), folder);
       const folderId = this.getFolderId(folder)!;
 
-      const historyQuery = this.historyQueryRepository.findHistoryQueryById(folderId);
+      const historyQuery = this.historyQueryRepository.findHistoryById(folderId);
       if (!historyQuery) {
         this.logger.debug(`Folder "${folder}" not associated to a History query. Removing it.`);
         try {
