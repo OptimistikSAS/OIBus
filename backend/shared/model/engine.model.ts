@@ -1486,10 +1486,10 @@ export interface CacheMetadata {
   contentType: string;
 
   /**
-   * The source of the content.
+   * The source of the content (southId or null).
    * @example "south1"
    */
-  source: string;
+  source: string | null;
 
   /**
    * Additional options associated with the content.

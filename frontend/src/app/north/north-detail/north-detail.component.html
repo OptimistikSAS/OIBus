@@ -137,12 +137,6 @@
           [saveChangesDirectly]="true"
           (inMemoryTransformersWithOptions)="updateInMemoryTransformers($event)"
         />
-        <!-- subscription -->
-        <oib-north-subscriptions
-          [northConnector]="northConnector"
-          [saveChangesDirectly]="true"
-          (inMemorySubscriptions)="updateInMemorySubscriptions($event)"
-        />
         <!-- Logs -->
         <oib-box>
           <ng-template oibBoxTitle>

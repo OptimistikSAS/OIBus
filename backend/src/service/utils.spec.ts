@@ -9,6 +9,7 @@ import { DateTime } from 'luxon';
 import {
   checkScanMode,
   compress,
+  convertDateTime,
   convertDateTimeToInstant,
   convertDelimiter,
   createBaseFolders,
@@ -992,6 +993,17 @@ describe('Service utils', () => {
           ).toThrow('Unsupported DateTimeType: "unsupported-type"');
         });
       });
+    });
+  });
+
+  describe('convertDateTime', () => {
+    afterAll(() => {
+      jest.restoreAllMocks();
+    });
+
+    it('should convert a valid ISO string to ISO string', () => {
+      const result = convertDateTime('2023-01-01T12:00:00+02:00', { type: 'iso-string' }, { type: 'iso-string' });
+      expect(result).toBe('2023-01-01T10:00:00.000Z');
     });
   });
 

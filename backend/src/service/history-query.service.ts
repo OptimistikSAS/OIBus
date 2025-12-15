@@ -30,11 +30,10 @@ import NorthConnectorRepository from '../repository/config/north-connector.repos
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
 import { ReadStream } from 'node:fs';
 import TransformerService, { toTransformerDTO } from './transformer.service';
-import { Transformer } from '../model/transformer.model';
 import { OIBusObjectAttribute } from '../../shared/model/form.model';
 import DataStreamEngine from '../engine/data-stream-engine';
-import { TransformerDTOWithOptions } from '../../shared/model/transformer.model';
 import { NotFoundError, OIBusValidationError } from '../model/types';
+import { HistoryTransformerWithOptions } from '../model/transformer.model';
 
 export default class HistoryQueryService {
   constructor(
@@ -53,11 +52,11 @@ export default class HistoryQueryService {
   ) {}
 
   list(): Array<HistoryQueryEntityLight> {
-    return this.historyQueryRepository.findAllHistoryQueriesLight();
+    return this.historyQueryRepository.findAllHistoriesLight();
   }
 
   findById(historyId: string): HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> {
-    const historyQuery = this.historyQueryRepository.findHistoryQueryById(historyId);
+    const historyQuery = this.historyQueryRepository.findHistoryById(historyId);
     if (!historyQuery) {
       throw new NotFoundError(`History query "${historyId}" not found`);
     }
@@ -76,7 +75,7 @@ export default class HistoryQueryService {
     await this.validator.validateSettings(southManifest.settings, command.southSettings);
 
     // Check for unique name
-    const existingHistoryQueries = this.historyQueryRepository.findAllHistoryQueriesLight();
+    const existingHistoryQueries = this.historyQueryRepository.findAllHistoriesLight();
     if (existingHistoryQueries.some(hq => hq.name === command.name)) {
       throw new OIBusValidationError(`History query name "${command.name}" already exists`);
     }
@@ -101,10 +100,24 @@ export default class HistoryQueryService {
         northManifest
       ),
       this.scanModeRepository.findAll(),
-      this.transformerService.findAll(),
       !!retrieveSecretsFromHistoryQuery || !!retrieveSecretsFromSouth
     );
-    this.historyQueryRepository.saveHistoryQuery(historyQuery);
+    const transformers = this.transformerService.findAll();
+    historyQuery.northTransformers = command.northTransformers.map(transformerIdWithOptions => {
+      const foundTransformer = transformers.find(transformer => transformer.id === transformerIdWithOptions.transformerId);
+      if (!foundTransformer) {
+        throw new Error(`Could not find OIBus transformer "${transformerIdWithOptions.transformerId}"`);
+      }
+
+      return {
+        id: '',
+        transformer: foundTransformer,
+        options: transformerIdWithOptions.options,
+        inputType: transformerIdWithOptions.inputType
+      };
+    });
+
+    this.historyQueryRepository.saveHistory(historyQuery);
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
 
     await this.engine.createHistoryQuery(historyQuery.id);
@@ -120,7 +133,7 @@ export default class HistoryQueryService {
 
     // Check for unique name (excluding current entity)
     if (command.name !== previousSettings.name) {
-      const existingHistoryQueries = this.historyQueryRepository.findAllHistoryQueriesLight();
+      const existingHistoryQueries = this.historyQueryRepository.findAllHistoriesLight();
       if (existingHistoryQueries.some(hq => hq.id !== historyId && hq.name === command.name)) {
         throw new OIBusValidationError(`History query name "${command.name}" already exists`);
       }
@@ -134,14 +147,23 @@ export default class HistoryQueryService {
     }
 
     const historyQuery = { id: previousSettings.id } as HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>;
-    await copyHistoryQueryCommandToHistoryQueryEntity(
-      historyQuery,
-      command,
-      previousSettings,
-      this.scanModeRepository.findAll(),
-      this.transformerService.findAll()
-    );
-    this.historyQueryRepository.saveHistoryQuery(historyQuery);
+    await copyHistoryQueryCommandToHistoryQueryEntity(historyQuery, command, previousSettings, this.scanModeRepository.findAll());
+    const transformers = this.transformerService.findAll();
+    historyQuery.northTransformers = command.northTransformers.map(transformerIdWithOptions => {
+      const foundTransformer = transformers.find(transformer => transformer.id === transformerIdWithOptions.transformerId);
+      if (!foundTransformer) {
+        throw new NotFoundError(`Could not find OIBus transformer "${transformerIdWithOptions.transformerId}"`);
+      }
+
+      return {
+        id: transformerIdWithOptions.id,
+        transformer: foundTransformer,
+        options: transformerIdWithOptions.options,
+        inputType: transformerIdWithOptions.inputType
+      };
+    });
+
+    this.historyQueryRepository.saveHistory(historyQuery);
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
     await this.engine.reloadHistoryQuery(historyQuery, resetCache);
   }
@@ -149,7 +171,7 @@ export default class HistoryQueryService {
   async delete(historyId: string): Promise<void> {
     const historyQuery = this.findById(historyId);
     await this.engine.deleteHistoryQuery(historyQuery);
-    this.historyQueryRepository.deleteHistoryQuery(historyQuery.id);
+    this.historyQueryRepository.deleteHistory(historyQuery.id);
     this.logRepository.deleteLogsByScopeId('history-query', historyQuery.id);
     this.historyQueryMetricsRepository.removeMetrics(historyQuery.id);
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
@@ -159,14 +181,14 @@ export default class HistoryQueryService {
 
   async start(historyId: string): Promise<void> {
     const historyQuery = this.findById(historyId);
-    this.historyQueryRepository.updateHistoryQueryStatus(historyId, 'RUNNING');
+    this.historyQueryRepository.updateHistoryStatus(historyId, 'RUNNING');
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
     await this.engine.reloadHistoryQuery(historyQuery, historyQuery.status === 'FINISHED' || historyQuery.status === 'ERRORED');
   }
 
   async pause(historyId: string): Promise<void> {
     const historyQuery = this.findById(historyId);
-    this.historyQueryRepository.updateHistoryQueryStatus(historyId, 'PAUSED');
+    this.historyQueryRepository.updateHistoryStatus(historyId, 'PAUSED');
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
     await this.engine.stopHistoryQuery(historyQuery.id);
   }
@@ -264,15 +286,15 @@ export default class HistoryQueryService {
   }
 
   listItems(historyId: string): Array<HistoryQueryItemEntity<SouthItemSettings>> {
-    return this.historyQueryRepository.findAllItemsForHistoryQuery(historyId);
+    return this.historyQueryRepository.findAllItemsForHistory(historyId);
   }
 
   searchItems(historyId: string, searchParams: HistoryQueryItemSearchParam): Page<HistoryQueryItemEntity<SouthItemSettings>> {
-    return this.historyQueryRepository.searchHistoryQueryItems(historyId, searchParams);
+    return this.historyQueryRepository.searchItems(historyId, searchParams);
   }
 
   findItemById(historyId: string, itemId: string): HistoryQueryItemEntity<SouthItemSettings> {
-    const item = this.historyQueryRepository.findHistoryQueryItemById(historyId, itemId);
+    const item = this.historyQueryRepository.findItemById(historyId, itemId);
     if (!item) {
       throw new NotFoundError(`Item "${itemId}" not found`);
     }
@@ -289,7 +311,7 @@ export default class HistoryQueryService {
 
     const historyQueryItemEntity = {} as HistoryQueryItemEntity<SouthItemSettings>;
     await copyHistoryQueryItemCommandToHistoryQueryItemEntity(historyQueryItemEntity, command, null, historyQuery.southType);
-    this.historyQueryRepository.saveHistoryQueryItem(historyQuery.id, historyQueryItemEntity);
+    this.historyQueryRepository.saveItem(historyQuery.id, historyQueryItemEntity);
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
     await this.engine.reloadHistoryQuery(historyQuery, false);
     return historyQueryItemEntity;
@@ -306,7 +328,7 @@ export default class HistoryQueryService {
 
     const historyQueryItemEntity = { id: existingItem.id } as HistoryQueryItemEntity<SouthItemSettings>;
     await copyHistoryQueryItemCommandToHistoryQueryItemEntity(historyQueryItemEntity, command, existingItem, historyQuery.southType);
-    this.historyQueryRepository.saveHistoryQueryItem(historyQuery.id, historyQueryItemEntity);
+    this.historyQueryRepository.saveItem(historyQuery.id, historyQueryItemEntity);
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
     await this.engine.reloadHistoryQuery(historyQuery, false);
   }
@@ -314,7 +336,7 @@ export default class HistoryQueryService {
   async enableItem(historyId: string, itemId: string): Promise<void> {
     const historyQuery = this.findById(historyId);
     const item = this.findItemById(historyId, itemId);
-    this.historyQueryRepository.enableHistoryQueryItem(item.id);
+    this.historyQueryRepository.enableItem(item.id);
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
     await this.engine.reloadHistoryQuery(historyQuery, false);
   }
@@ -322,7 +344,7 @@ export default class HistoryQueryService {
   async disableItem(historyId: string, itemId: string): Promise<void> {
     const historyQuery = this.findById(historyId);
     const item = this.findItemById(historyId, itemId);
-    this.historyQueryRepository.disableHistoryQueryItem(item.id);
+    this.historyQueryRepository.disableItem(item.id);
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
     await this.engine.reloadHistoryQuery(historyQuery, false);
   }
@@ -332,7 +354,7 @@ export default class HistoryQueryService {
 
     for (const itemId of itemIds) {
       const item = this.findItemById(historyId, itemId);
-      this.historyQueryRepository.enableHistoryQueryItem(item.id);
+      this.historyQueryRepository.enableItem(item.id);
     }
 
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
@@ -342,7 +364,7 @@ export default class HistoryQueryService {
   async deleteItem(historyId: string, itemId: string): Promise<void> {
     const historyQuery = this.findById(historyId);
     const item = this.findItemById(historyId, itemId);
-    this.historyQueryRepository.deleteHistoryQueryItem(item.id);
+    this.historyQueryRepository.deleteItem(historyQuery.id, item.id);
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
     await this.engine.reloadHistoryQuery(historyQuery, false);
   }
@@ -351,7 +373,7 @@ export default class HistoryQueryService {
     const historyQuery = this.findById(historyId);
     for (const itemId of itemIds) {
       const item = this.findItemById(historyId, itemId);
-      this.historyQueryRepository.disableHistoryQueryItem(item.id);
+      this.historyQueryRepository.disableItem(item.id);
     }
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
     await this.engine.reloadHistoryQuery(historyQuery, false);
@@ -361,7 +383,7 @@ export default class HistoryQueryService {
     const historyQuery = this.findById(historyId);
     for (const itemId of itemIds) {
       const item = this.findItemById(historyId, itemId);
-      this.historyQueryRepository.deleteHistoryQueryItem(item.id);
+      this.historyQueryRepository.deleteItem(historyQuery.id, item.id);
     }
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
     await this.engine.reloadHistoryQuery(historyQuery, false);
@@ -369,7 +391,7 @@ export default class HistoryQueryService {
 
   async deleteAllItems(historyId: string): Promise<void> {
     const historyQuery = this.findById(historyId);
-    this.historyQueryRepository.deleteAllHistoryQueryItemsByHistoryQuery(historyId);
+    this.historyQueryRepository.deleteAllItemsByHistory(historyId);
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
     await this.engine.reloadHistoryQuery(historyQuery, true);
   }
@@ -466,16 +488,16 @@ export default class HistoryQueryService {
     await this.engine.reloadHistoryQuery(historyQuery, false);
   }
 
-  async addOrEditTransformer(historyId: string, transformerWithOptions: TransformerDTOWithOptions): Promise<void> {
+  async addOrEditTransformer(historyId: string, transformerWithOptions: HistoryTransformerWithOptions): Promise<void> {
     const historyQuery = this.findById(historyId);
     this.historyQueryRepository.addOrEditTransformer(historyQuery.id, transformerWithOptions);
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
     await this.engine.stopHistoryQuery(historyQuery.id);
   }
 
-  async removeTransformer(historyId: string, transformerId: string): Promise<void> {
+  async removeTransformer(historyId: string, historyTransformerId: string): Promise<void> {
     const historyQuery = this.findById(historyId);
-    this.historyQueryRepository.removeTransformer(historyQuery.id, transformerId);
+    this.historyQueryRepository.removeTransformer(historyTransformerId);
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
     await this.engine.stopHistoryQuery(historyQuery.id);
   }
@@ -580,7 +602,6 @@ const copyHistoryQueryCommandToHistoryQueryEntity = async (
   command: HistoryQueryCommandDTO,
   currentSettings: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> | null,
   scanModes: Array<ScanMode>,
-  transformers: Array<Transformer>,
   retrieveSecrets = false
 ): Promise<void> => {
   const southManifest = southManifestList.find(element => element.id === command.southType)!;
@@ -623,13 +644,6 @@ const copyHistoryQueryCommandToHistoryQueryEntity = async (
       retentionDuration: command.caching.archive.retentionDuration
     }
   };
-  historyQueryEntity.northTransformers = command.northTransformers.map(transformerIdWithOptions => {
-    const foundTransformer = transformers.find(transformer => transformer.id === transformerIdWithOptions.transformerId);
-    if (!foundTransformer) {
-      throw new Error(`Could not find OIBus Transformer "${transformerIdWithOptions.transformerId}"`);
-    }
-    return { transformer: foundTransformer, options: transformerIdWithOptions.options, inputType: transformerIdWithOptions.inputType };
-  });
   historyQueryEntity.items = await Promise.all(
     command.items.map(async itemCommand => {
       const itemEntity = { id: itemCommand.id } as HistoryQueryItemEntity<SouthItemSettings>;
@@ -717,6 +731,7 @@ export const toHistoryQueryDTO = (historyQuery: HistoryQueryEntity<SouthSettings
     },
     items,
     northTransformers: historyQuery.northTransformers.map(transformerWithOptions => ({
+      id: transformerWithOptions.id,
       transformer: toTransformerDTO(transformerWithOptions.transformer),
       options: transformerWithOptions.options,
       inputType: transformerWithOptions.inputType

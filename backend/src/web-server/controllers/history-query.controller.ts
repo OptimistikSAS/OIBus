@@ -33,6 +33,7 @@ import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata, OIBusContent } from '../../../shared/model/engine.model';
 import { TransformerDTOWithOptions } from '../../../shared/model/transformer.model';
 import { OIBusTestingError, OIBusValidationError } from '../../model/types';
+import { HistoryTransformerWithOptions } from '../../model/transformer.model';
 
 /**
  * @interface HistorySouthItemTestRequest
@@ -532,11 +533,11 @@ export class HistoryQueryController extends Controller {
   @SuccessResponse(204, 'No Content')
   async addOrEditTransformer(
     @Path() historyId: string,
-    @Body() command: TransformerDTOWithOptions,
+    @Body() command: Omit<TransformerDTOWithOptions, 'south'>,
     @Request() request: CustomExpressRequest
   ): Promise<void> {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
-    await historyQueryService.addOrEditTransformer(historyId, command);
+    await historyQueryService.addOrEditTransformer(historyId, command as HistoryTransformerWithOptions);
   }
 
   /**

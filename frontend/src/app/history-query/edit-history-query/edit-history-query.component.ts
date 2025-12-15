@@ -143,7 +143,7 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
     southSettings: FormGroup;
   }> | null = null;
 
-  inMemoryTransformersWithOptions: Array<TransformerDTOWithOptions> = [];
+  inMemoryTransformersWithOptions: Array<Omit<TransformerDTOWithOptions, 'south'>> = [];
   inMemoryItems: Array<HistoryQueryItemCommandDTO> = [];
   scanModeAttribute: OIBusScanModeAttribute = {
     type: 'scan-mode',
@@ -322,7 +322,12 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
       this.historyQuery.caching.trigger.scanMode = this.scanModes.find(
         element => element.id === this.historyQuery!.caching.trigger.scanMode.id
       )!;
-      this.inMemoryTransformersWithOptions = [...this.historyQuery.northTransformers];
+      this.inMemoryTransformersWithOptions = this.historyQuery.northTransformers.map(element => ({
+        id: element.id,
+        transformer: element.transformer,
+        options: element.options,
+        inputType: element.inputType
+      }));
       this.form.patchValue({
         ...this.historyQuery,
         dateRange
@@ -453,7 +458,7 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
     });
   }
 
-  updateInMemoryTransformers(transformersWithOptions: Array<TransformerDTOWithOptions> | null) {
+  updateInMemoryTransformers(transformersWithOptions: Array<Omit<TransformerDTOWithOptions, 'south'>> | null) {
     if (transformersWithOptions) {
       this.inMemoryTransformersWithOptions = transformersWithOptions;
     } else {

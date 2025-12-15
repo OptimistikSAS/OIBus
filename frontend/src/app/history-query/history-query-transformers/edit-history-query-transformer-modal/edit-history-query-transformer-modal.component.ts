@@ -81,7 +81,7 @@ export class EditHistoryQueryTransformerModalComponent {
   prepareForEdition(
     scanModes: Array<ScanModeDTO>,
     certificates: Array<CertificateDTO>,
-    transformerWithOptionsToEdit: TransformerDTOWithOptions,
+    transformerWithOptionsToEdit: Omit<TransformerDTOWithOptions, 'south'>,
     transformers: Array<TransformerDTO>,
     supportedOutputTypes: Array<string>
   ) {

@@ -25,7 +25,7 @@
           </tr>
         </thead>
         <tbody>
-          @for (transformerWithOptions of transformersWithOptions; track transformerWithOptions.transformer.id) {
+          @for (transformerWithOptions of transformersWithOptions; track transformerWithOptions.id) {
             <tr>
               <td>
                 <span>{{ 'enums.oibus-input-data-type.' + transformerWithOptions.inputType | translate }}</span>

@@ -4,7 +4,7 @@ import { HistoryQueryStatus } from '../../shared/model/history-query.model';
 import { NorthSettings } from '../../shared/model/north-settings.model';
 import { OIBusNorthType } from '../../shared/model/north-connector.model';
 import { OIBusSouthType } from '../../shared/model/south-connector.model';
-import { TransformerWithOptions } from './transformer.model';
+import { HistoryTransformerWithOptions } from './transformer.model';
 import { ScanMode } from './scan-mode.model';
 
 export interface HistoryQueryEntityLight extends BaseEntity {
@@ -49,7 +49,7 @@ export interface HistoryQueryEntity<S extends SouthSettings, N extends NorthSett
     };
   };
   items: Array<HistoryQueryItemEntity<I>>;
-  northTransformers: Array<TransformerWithOptions>;
+  northTransformers: Array<HistoryTransformerWithOptions>;
 }
 
 export interface HistoryQueryItemEntity<T extends SouthItemSettings> extends BaseEntity {
