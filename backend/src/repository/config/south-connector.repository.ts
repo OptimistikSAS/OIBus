@@ -9,7 +9,7 @@ import { toScanMode } from './scan-mode.repository';
 
 const SOUTH_CONNECTORS_TABLE = 'south_connectors';
 const SOUTH_ITEMS_TABLE = 'south_items';
-const SUBSCRIPTION_TABLE = 'subscription';
+const NORTH_TRANSFORMERS_TABLE = 'north_transformers';
 const SCAN_MODE = 'scan_modes';
 const PAGE_SIZE = 50;
 
@@ -37,7 +37,7 @@ export default class SouthConnectorRepository {
     return this.toSouthConnector(result as Record<string, string | number>);
   }
 
-  saveSouthConnector(south: SouthConnectorEntity<SouthSettings, SouthItemSettings>): void {
+  saveSouth(south: SouthConnectorEntity<SouthSettings, SouthItemSettings>): void {
     const transaction = this.database.transaction(() => {
       if (!south.id) {
         south.id = generateRandomId(6);
@@ -91,7 +91,7 @@ export default class SouthConnectorRepository {
   deleteSouth(id: string): void {
     const transaction = this.database.transaction(() => {
       this.database.prepare(`DELETE FROM ${SOUTH_ITEMS_TABLE} WHERE connector_id = ?;`).run(id);
-      this.database.prepare(`DELETE FROM ${SUBSCRIPTION_TABLE} WHERE south_connector_id = ?;`).run(id);
+      this.database.prepare(`DELETE FROM ${NORTH_TRANSFORMERS_TABLE} WHERE south_id = ?;`).run(id);
       this.database.prepare(`DELETE FROM ${SOUTH_CONNECTORS_TABLE} WHERE id = ?;`).run(id);
     });
     transaction();
@@ -210,14 +210,14 @@ export default class SouthConnectorRepository {
     transaction();
   }
 
-  deleteItem(id: string): void {
-    const query = `DELETE FROM ${SOUTH_ITEMS_TABLE} WHERE id = ?;`;
-    this.database.prepare(query).run(id);
+  deleteItem(southId: string, id: string): void {
+    const query = `DELETE FROM ${SOUTH_ITEMS_TABLE} WHERE connector_id = ? AND id = ?;`;
+    this.database.prepare(query).run(southId, id);
   }
 
-  deleteAllItemsBySouth(southConnectorId: string): void {
+  deleteAllItemsBySouth(southId: string): void {
     const query = `DELETE FROM ${SOUTH_ITEMS_TABLE} WHERE connector_id = ?;`;
-    this.database.prepare(query).run(southConnectorId);
+    this.database.prepare(query).run(southId);
   }
 
   enableItem(id: string): void {
