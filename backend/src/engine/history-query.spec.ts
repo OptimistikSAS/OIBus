@@ -32,7 +32,7 @@ describe('HistoryQuery enabled', () => {
     jest.clearAllMocks();
     jest.useFakeTimers({ doNotFake: ['performance'] }).setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
-    (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValue(testData.historyQueries.list[0]);
+    (historyQueryRepository.findHistoryById as jest.Mock).mockReturnValue(testData.historyQueries.list[0]);
 
     historyQuery = new HistoryQuery(testData.historyQueries.list[0], mockedNorth1, mockedSouth1, logger);
   });

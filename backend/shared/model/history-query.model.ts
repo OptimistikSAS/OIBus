@@ -267,7 +267,7 @@ export interface HistoryQueryCommonDTO {
   /**
    * List of transformers to apply to data before sending to North connector.
    */
-  northTransformers: Array<TransformerDTOWithOptions>;
+  northTransformers: Array<Omit<TransformerDTOWithOptions, 'south'>>;
 }
 
 export interface HistoryQuerySouthTypedDTO<T extends OIBusSouthType, S, IS> {
@@ -349,7 +349,7 @@ export interface HistoryQueryCommandCommonDTO {
       retentionDuration: number;
     };
   };
-  northTransformers: Array<TransformerIdWithOptions>;
+  northTransformers: Array<Omit<TransformerIdWithOptions, 'southId'>>;
 }
 
 export interface HistoryQuerySouthCommandTypedDTO<T extends OIBusSouthType, S, IS> {

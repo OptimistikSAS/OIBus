@@ -33,7 +33,11 @@ interface TransformerOptions {
 export default class JSONToCSVTransformer extends OIBusTransformer {
   public static transformerName = 'json-to-csv';
 
-  async transform(data: ReadStream | Readable, source: string, filename: string): Promise<{ metadata: CacheMetadata; output: string }> {
+  async transform(
+    data: ReadStream | Readable,
+    source: string | null,
+    filename: string
+  ): Promise<{ metadata: CacheMetadata; output: string }> {
     const jsonParser = this.options.jsonToParse.find(parser => filename.match(parser.regex));
     if (!jsonParser) {
       this.logger.error(`Could not find json parser from "${filename}"`);
@@ -131,7 +135,7 @@ export default class JSONToCSVTransformer extends OIBusTransformer {
     };
   }
 
-  returnEmpty(filename: string, source: string) {
+  returnEmpty(filename: string, source: string | null) {
     return {
       output: '',
       metadata: {

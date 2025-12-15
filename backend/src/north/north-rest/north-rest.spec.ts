@@ -100,7 +100,6 @@ const baseConfiguration: NorthConnectorEntity<NorthRESTSettings> = {
       retentionDuration: 72
     }
   },
-  subscriptions: [],
   transformers: []
 };
 
