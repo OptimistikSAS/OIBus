@@ -49,8 +49,26 @@
           <thead>
             <tr>
               <th style="width: 3rem"></th>
-              <th translate="south.name"></th>
-              <th translate="south.type" style="width: 9rem"></th>
+              <th>
+                <button
+                  type="button"
+                  style="background: none; border: none; font-weight: bold; color: inherit"
+                  (click)="toggleSort('name')"
+                >
+                  <span translate="south.name" class="me-2"></span>
+                  <span class="fa {{ getSortIcon('name') }}"></span>
+                </button>
+              </th>
+              <th style="width: 9rem">
+                <button
+                  type="button"
+                  style="background: none; border: none; font-weight: bold; color: inherit"
+                  (click)="toggleSort('type')"
+                >
+                  <span translate="south.type" class="me-2"></span>
+                  <span class="fa {{ getSortIcon('type') }}"></span>
+                </button>
+              </th>
               <th translate="south.description"></th>
               <th></th>
             </tr>

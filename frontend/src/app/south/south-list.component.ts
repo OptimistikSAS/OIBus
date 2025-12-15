@@ -19,6 +19,9 @@ import { LegendComponent } from '../shared/legend/legend.component';
 import { OIBusSouthTypeEnumPipe } from '../shared/oibus-south-type-enum.pipe';
 import { FormControlValidationDirective } from '../shared/form/form-control-validation.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+
+type SouthSortField = 'name' | 'type' | null;
+type SortDirection = 'asc' | 'desc';
 const PAGE_SIZE = 15;
 
 @Component({
@@ -50,6 +53,8 @@ export class SouthListComponent implements OnInit {
   private filteredSouths: Array<SouthConnectorLightDTO> = [];
   displayedSouths: Page<SouthConnectorLightDTO> = emptyPage();
   states = new Map<string, ObservableState>();
+  sortField: SouthSortField = null;
+  sortDirection: SortDirection = 'asc';
 
   searchForm = inject(NonNullableFormBuilder).group({
     name: [null as string | null]
@@ -67,14 +72,12 @@ export class SouthListComponent implements OnInit {
       this.allSouths.forEach(south => {
         this.states.set(south.id, new ObservableState());
       });
-      this.filteredSouths = this.filter(souths);
-      this.changePage(0);
+      this.updateList(0);
     });
 
     this.searchForm.valueChanges.pipe(debounceTime(200), distinctUntilChanged()).subscribe(() => {
       if (this.allSouths) {
-        this.filteredSouths = this.filter(this.allSouths);
-        this.changePage(0);
+        this.updateList(0);
       }
     });
   }
@@ -103,8 +106,8 @@ export class SouthListComponent implements OnInit {
             this.allSouths.forEach(south => {
               this.states.set(south.id, new ObservableState());
             });
-            this.filteredSouths = this.filter(this.allSouths);
-            this.changePage(0);
+            this.updateList(0);
+            this.updateList(0);
           });
         this.notificationService.success('south.deleted', {
           name: south.name
@@ -120,12 +123,38 @@ export class SouthListComponent implements OnInit {
     modalRef.result.subscribe();
   }
 
+  toggleSort(field: SouthSortField) {
+    if (!field) return;
+
+    if (this.sortField === field) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortField = field;
+      this.sortDirection = 'asc';
+    }
+
+    this.updateList(0);
+  }
+
+  getSortIcon(field: SouthSortField): string {
+    if (this.sortField !== field) {
+      return 'fa-sort';
+    }
+    return this.sortDirection === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc';
+  }
+
   changePage(pageNumber: number) {
     this.displayedSouths = this.createPage(pageNumber);
   }
 
   private createPage(pageNumber: number): Page<SouthConnectorLightDTO> {
     return createPageFromArray(this.filteredSouths, PAGE_SIZE, pageNumber);
+  }
+
+  private updateList(pageNumber: number) {
+    this.filteredSouths = this.filter(this.allSouths ?? []);
+    this.sortSouths();
+    this.changePage(pageNumber);
   }
 
   filter(souths: Array<SouthConnectorLightDTO>): Array<SouthConnectorLightDTO> {
@@ -137,6 +166,17 @@ export class SouthListComponent implements OnInit {
     }
 
     return filteredItems;
+  }
+
+  private sortSouths() {
+    if (!this.sortField) return;
+
+    const direction = this.sortDirection === 'asc' ? 1 : -1;
+    this.filteredSouths = [...this.filteredSouths].sort((a, b) => {
+      const aValue = this.sortField === 'name' ? a.name : a.type;
+      const bValue = this.sortField === 'name' ? b.name : b.type;
+      return aValue.localeCompare(bValue) * direction;
+    });
   }
 
   toggleConnector(southId: string, northName: string, value: boolean) {
@@ -154,8 +194,7 @@ export class SouthListComponent implements OnInit {
         )
         .subscribe(souths => {
           this.allSouths = souths;
-          this.filteredSouths = this.filter(this.allSouths);
-          this.displayedSouths = this.createPage(this.displayedSouths.number);
+          this.updateList(this.displayedSouths.number);
         });
     } else {
       this.southConnectorService
@@ -171,8 +210,7 @@ export class SouthListComponent implements OnInit {
         )
         .subscribe(souths => {
           this.allSouths = souths;
-          this.filteredSouths = this.filter(this.allSouths);
-          this.displayedSouths = this.createPage(this.displayedSouths.number);
+          this.updateList(this.displayedSouths.number);
         });
     }
   }
