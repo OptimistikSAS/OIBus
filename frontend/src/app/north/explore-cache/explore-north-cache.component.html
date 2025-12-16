@@ -4,10 +4,16 @@
       <div class="col-md-10 col-lg-8">
         <div class="oib-header-container">
           <h1 class="d-flex justify-content-between">
-            <div>
-              <span translate="north.cache.title" [translateParams]="{ name: northConnector.name }" id="title"></span>
+            <div class="title-container me-2">
+              <span
+                [ngbTooltip]="getFullTitle()"
+                placement="bottom-end"
+                translate="north.cache.title"
+                [translateParams]="{ name: northConnector.name }"
+                id="title"
+              ></span>
             </div>
-            <button class="ms-2 btn btn-primary" id="refresh-cache-button" (click)="refreshCache()">
+            <button class="btn btn-primary" id="refresh-cache-button" (click)="refreshCache()">
               <span class="fa fa-refresh me-1"></span>
               <span translate="north.caching.refresh-cache"></span>
             </button>
