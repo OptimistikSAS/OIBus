@@ -1,7 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { TranslateDirective } from '@ngx-translate/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { Observable } from 'rxjs';
 
 import { EngineService } from '../../services/engine.service';
@@ -9,7 +9,6 @@ import { EngineSettingsCommandDTO } from '../../../../../backend/shared/model/en
 import { NotificationService } from '../../shared/notification.service';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { BoxComponent } from '../../shared/box/box.component';
-import { BackNavigationDirective } from '../../shared/back-navigation.directives';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../shared/form/form-validation-directives';
 import { CanComponentDeactivate } from '../../shared/unsaved-changes.guard';
 import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
@@ -17,14 +16,7 @@ import { LOG_LEVELS, LogLevel } from '../../../../../backend/shared/model/logs.m
 
 @Component({
   selector: 'oib-edit-engine',
-  imports: [
-    ReactiveFormsModule,
-    TranslateDirective,
-    BoxComponent,
-    BackNavigationDirective,
-    OI_FORM_VALIDATION_DIRECTIVES,
-    SaveButtonComponent
-  ],
+  imports: [ReactiveFormsModule, TranslateDirective, BoxComponent, OI_FORM_VALIDATION_DIRECTIVES, SaveButtonComponent, RouterLink],
   templateUrl: './edit-engine.component.html',
   styleUrl: './edit-engine.component.scss'
 })
