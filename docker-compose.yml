@@ -2,12 +2,24 @@ services:
   opcua-server:
     image: mcr.microsoft.com/iotedge/opc-plc:latest
     container_name: oibus_opcua-plc
+    hostname: opcua-server
     ports:
       - "50000:50000"
     volumes:
       - ./docker/opcua/nodes_config.json:/app/nodes_config.json
       - ./docker/opcua/pki:/app/pki
-    command: --nodesfile=/app/nodes_config.json --autoaccept
+    command:
+      - --nodesfile=/app/nodes_config.json
+      - --autoaccept
+      - --disableanonymousauth
+      - --adminuser=admin
+      - --adminpassword=${OPCUA_ADMIN_PASSWORD:-pass}
+      - --defaultuser=oibus
+      - --defaultpassword=${OPCUA_DEFAULT_PASSWORD:-pass}
+    environment:
+      - OPCUA_SERVER_PORT=50000
+    networks:
+      - oibus-network
     restart: unless-stopped
 
   modbus-server:
@@ -18,6 +30,8 @@ services:
     volumes:
       - ./docker/modbus/server_config.json:/server_config.json
     command: -f /server_config.json
+    networks:
+      - oibus-network
     restart: unless-stopped
 
   mqtt-broker:
@@ -36,6 +50,8 @@ services:
       MQTT_PASSWORD: ${MQTT_PASSWORD:-pass}
     entrypoint: /entrypoint.sh
     command: mosquitto -c /mosquitto/config/mosquitto.conf
+    networks:
+      - oibus-network
     restart: unless-stopped
 
   mqtt-simulator:
@@ -52,6 +68,8 @@ services:
     command: sh -c "pip install paho-mqtt && python mqtt_simulator.py"
     depends_on:
       - mqtt-broker
+    networks:
+      - oibus-network
 
   postgres:
     image: postgres:latest
@@ -62,6 +80,8 @@ services:
       POSTGRES_USER: oibus
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pass}
       POSTGRES_DB: oibus-db
+    networks:
+      - oibus-network
     restart: unless-stopped
 
   oibus:
@@ -71,6 +91,10 @@ services:
       - "2223:2223"
     volumes:
       - ./data-folder:/app/OIBus/OIBusData
+    networks:
+      - oibus-network
+    depends_on:
+      - opcua-server
     restart: unless-stopped
     profiles: [ "oibus" ]
 
@@ -87,6 +111,12 @@ services:
       - DOMAIN=${DOMAIN}
     depends_on:
       - oibus
+    networks:
+      - oibus-network
     restart: unless-stopped
     profiles: [ "oibus" ]
     entrypoint: /bin/sh -c "envsubst < /etc/nginx/oibus.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
+
+networks:
+  oibus-network:
+    driver: bridge
