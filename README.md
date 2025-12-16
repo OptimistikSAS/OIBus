@@ -49,9 +49,9 @@ OIBus follows a modular 3-layer architecture:
     - Follow the [installation guide](https://oibus.optimistik.com/docs/guide/installation)
 
 2**Example Workflow**:
-    - Create a Folder Scanner South connector
-    - Create a Console North connector
-    - Configure data flow between them
+- Create a Folder Scanner South connector
+- Create a Console North connector
+- Configure data flow between them
 
 ## 🛠 Development Setup
 
@@ -87,6 +87,162 @@ OIBus follows a modular 3-layer architecture:
     - Open [http://localhost:2223](http://localhost:2223)
     - Default credentials: `admin/pass`
 
+### Docker Compose Development Environment
+
+OIBus includes a Docker Compose setup with simulated industrial services for development and testing.
+
+#### Starting Services
+
+Start all development services:
+
+```bash
+docker-compose up -d
+```
+
+Start only specific services (e.g., OPC UA server):
+
+```bash
+docker-compose up -d opcua-server
+```
+
+View running services:
+
+```bash
+docker-compose ps
+```
+
+#### OPC UA Server with Simulated Data
+
+The OPC UA server provides simulated industrial data for testing OIBus OPC UA connectors.
+
+**Access Information:**
+
+- **Endpoint URL**: `opc.tcp://localhost:50000`
+- **Security Mode**: `Sign`
+- **Security Policy**: `Basic256Sha256`
+- **Authentication**: `Anonymous (None)`
+- **Container Name**: `oibus_opcua-plc`
+
+**Available Simulated Nodes:**
+
+The server includes the following simulated nodes in the `OpcPlc > OIBus` folder:
+
+| Node ID       | Description        | Data Type | Simulation Type | Range/Details       |
+|---------------|--------------------|-----------|-----------------|---------------------|
+| `ns=3;i=1023` | Temperature Sensor | Double    | RandomWalk      | 18.0 - 28.0 °C      |
+| `ns=3;i=1024` | Pressure Sensor    | Double    | SineWave        | ~1013.25 hPa ± 10   |
+| `ns=3;i=1025` | Flow Rate Sensor   | Double    | RandomWalk      | 40.0 - 60.0 L/min   |
+| `ns=3;i=1026` | Humidity Sensor    | Double    | SineWave        | 65% ± 15%           |
+| `ns=3;i=1027` | RPM Sensor         | Int32     | RandomWalk      | 1200 - 1800 RPM     |
+| `ns=3;i=1028` | Pump Status        | Boolean   | SquareWave      | On/Off (20s period) |
+| `ns=3;i=1029` | Voltage Sensor     | Double    | RandomWalk      | 210.0 - 230.0 V     | 
+| `ns=3;i=1030` | Current Sensor     | Double    | SineWave        | 15.2 A ± 2.0        |
+
+**Connecting OIBus to the OPC UA Server:**
+
+The server is configured with **username/password authentication** (anonymous access is disabled for security).
+
+**Default User Credentials:**
+
+- **Admin user**: `admin` / `SecurePassword123!`
+- **Default user**: `opcuser` / `UserPassword123!`
+
+**Custom Credentials:**
+You can set custom credentials using environment variables:
+
+```bash
+OPCUA_ADMIN_USER=myadmin
+OPCUA_ADMIN_PASSWORD=MySecurePassword
+OPCUA_DEFAULT_USER=myuser
+OPCUA_DEFAULT_PASSWORD=MyUserPassword
+docker compose up -d opcua-server
+```
+
+**Connection Settings:**
+
+1. **From Host Machine** (when OIBus runs outside Docker):
+    - Endpoint URL: `opc.tcp://localhost:50000`
+    - Security Mode: `Sign`
+    - Security Policy: `Basic256Sha256`
+    - Authentication: `Username/Password`
+    - Username: `opcuser` (or `admin` for admin access)
+    - Password: `UserPassword123!` (or `SecurePassword123!` for admin)
+
+2. **From Docker Container** (when OIBus runs in Docker):
+    - Endpoint URL: `opc.tcp://opcua-server:50000`
+    - Security Mode: `Sign`
+    - Security Policy: `Basic256Sha256`
+    - Authentication: `Username/Password`
+    - Username: `opcuser`
+    - Password: `UserPassword123!`
+
+**Example OIBus OPC UA South Connector Configuration (Authenticated):**
+
+```json
+{
+  "name": "OPC UA Test Server",
+  "url": "opc.tcp://localhost:50000",
+  "securityMode": "Sign",
+  "securityPolicy": "Basic256Sha256",
+  "authentication": {
+    "type": "basic",
+    "username": "opcuser",
+    "password": "UserPassword123!"
+  },
+  "keepSessionAlive": true,
+  "retryInterval": 10000
+}
+```
+
+**Security Note:**
+
+- Anonymous authentication is **disabled** by default for security
+- Change default passwords in production environments
+- Use strong passwords and consider using environment variables for sensitive credentials
+
+**Example Node Items:**
+
+- Temperature: Node ID `ns=3;i=1023`, Mode `DA`
+- Pressure: Node ID `ns=3;i=1024`, Mode `DA`
+- Flow Rate: Node ID `ns=3;i=1025`, Mode `DA`
+- Humidity: Node ID `ns=3;i=1026`, Mode `DA`
+
+**Note:** The nodes are located in the `OpcPlc > OIBus` folder in the address space. For HA (Historical Access) mode,
+use the same node IDs with aggregate `Raw` and resampling `None` or a specific interval.
+
+**Alternative OPC UA Simulation Server:**
+
+For more advanced simulation needs, you can also use
+the [Prosys OPC UA Simulation Server](https://prosysopc.com/products/opc-ua-simulation-server/).
+
+**Testing with OPC UA Client Tools:**
+
+You can test the server using OPC UA client tools:
+
+- [UaExpert](https://www.unified-automation.com/products/development-tools/uaexpert.html) (Windows/Linux)
+- [Prosys OPC UA Client](https://prosysopc.com/products/opc-client/) (Cross-platform)
+- [node-opcua](https://github.com/node-opcua/node-opcua) command-line tools
+
+**Verifying Server Status:**
+
+Check if the OPC UA server is running:
+
+```bash
+docker-compose ps opcua-server
+```
+
+View server logs:
+
+```bash
+docker-compose logs -f opcua-server
+```
+
+#### Other Development Services
+
+- **Modbus Server**: Port `5020` - Simulated Modbus TCP server
+- **MQTT Broker**: Port `1883` (TCP), `9001` (WebSocket) - Eclipse Mosquitto with simulator
+- **PostgreSQL**: Port `5432` - Database for testing
+
 ## 🤝 Community and Support
 
 - **Issues**: Report bugs on [GitHub Issues](https://github.com/OptimistikSAS/OIBus/issues)
@@ -99,8 +255,6 @@ Developers can extend OIBus by:
 
 - Creating custom South connectors for new protocols
 - Developing custom North connectors for new destinations
-
-
 
 ## 🎯 Why Choose OIBus?
 
