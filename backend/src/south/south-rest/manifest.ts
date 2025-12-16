@@ -1022,7 +1022,7 @@ const manifest: SouthConnectorManifest = {
                   type: 'boolean',
                   key: 'trackInstant',
                   translationKey: 'configuration.oibus.manifest.south.items.rest.date-time.json-path',
-                  defaultValue: true,
+                  defaultValue: false,
                   validators: [
                     {
                       type: 'REQUIRED',
