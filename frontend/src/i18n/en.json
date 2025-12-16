@@ -1097,7 +1097,15 @@
                 },
                 "key": "Key",
                 "column": "Column",
-                "data-type": "Data Type"
+                "data-type": {
+                  "title": "Data Type",
+                  "string": "String",
+                  "number": "Number",
+                  "boolean": "Boolean",
+                  "datetime": "Datetime",
+                  "array": "Array",
+                  "object": "Object"
+                }
               }
             }
           },
@@ -1177,8 +1185,15 @@
                 },
                 "datetime-settings": {
                   "title": "Datetime Settings",
-                  "type": {
+                  "input-type": {
                     "title": "Timestamp input type",
+                    "string": "String",
+                    "iso-string": "ISO string",
+                    "unix-epoch": "Unix epoch (s)",
+                    "unix-epoch-ms": "Unix epoch (ms)"
+                  },
+                  "output-type": {
+                    "title": "Timestamp output type",
                     "string": "String",
                     "iso-string": "ISO string",
                     "unix-epoch": "Unix epoch (s)",
@@ -1202,7 +1217,7 @@
               "row-iterator-path": "Row Iterator JSONPath",
               "topic-path": "Topic JSONPath",
               "payload-type": {
-                "title": "Payload Type",
+                "title": "MQTT payload Type",
                 "string": "String",
                 "number": "Number",
                 "boolean": "Boolean",
