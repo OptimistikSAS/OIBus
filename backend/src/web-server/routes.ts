@@ -1494,7 +1494,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthOPCUASettingsSecurityPolicy": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["none"]},{"dataType":"enum","enums":["basic128"]},{"dataType":"enum","enums":["basic192"]},{"dataType":"enum","enums":["basic192-rsa15"]},{"dataType":"enum","enums":["basic256-rsa15"]},{"dataType":"enum","enums":["basic256-sha256"]},{"dataType":"enum","enums":["aes128-sha256-rsa-oaep"]},{"dataType":"enum","enums":["pub-sub-aes-128-ctr"]},{"dataType":"enum","enums":["pub-sub-aes-256-ctr"]}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["none"]},{"dataType":"enum","enums":["basic128"]},{"dataType":"enum","enums":["basic192"]},{"dataType":"enum","enums":["basic256"]},{"dataType":"enum","enums":["basic128-rsa15"]},{"dataType":"enum","enums":["basic192-rsa15"]},{"dataType":"enum","enums":["basic256-rsa15"]},{"dataType":"enum","enums":["basic256-sha256"]},{"dataType":"enum","enums":["aes128-sha256-rsa-oaep"]},{"dataType":"enum","enums":["pub-sub-aes-128-ctr"]},{"dataType":"enum","enums":["pub-sub-aes-256-ctr"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthOPCUASettingsAuthenticationType": {
@@ -3344,7 +3344,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "NorthOPCUASettingsSecurityPolicy": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["none"]},{"dataType":"enum","enums":["basic128"]},{"dataType":"enum","enums":["basic192"]},{"dataType":"enum","enums":["basic192-rsa15"]},{"dataType":"enum","enums":["basic256-rsa15"]},{"dataType":"enum","enums":["basic256-sha256"]},{"dataType":"enum","enums":["aes128-sha256-rsa-oaep"]},{"dataType":"enum","enums":["pub-sub-aes-128-ctr"]},{"dataType":"enum","enums":["pub-sub-aes-256-ctr"]}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["none"]},{"dataType":"enum","enums":["basic128"]},{"dataType":"enum","enums":["basic192"]},{"dataType":"enum","enums":["basic256"]},{"dataType":"enum","enums":["basic128-rsa15"]},{"dataType":"enum","enums":["basic192-rsa15"]},{"dataType":"enum","enums":["basic256-rsa15"]},{"dataType":"enum","enums":["basic256-sha256"]},{"dataType":"enum","enums":["aes128-sha256-rsa-oaep"]},{"dataType":"enum","enums":["pub-sub-aes-128-ctr"]},{"dataType":"enum","enums":["pub-sub-aes-256-ctr"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "NorthOPCUASettingsAuthenticationType": {

@@ -81,6 +81,8 @@ describe('Service utils OPCUA', () => {
       expect(toOPCUASecurityPolicy('none')).toEqual('none');
       expect(toOPCUASecurityPolicy('basic128')).toEqual('Basic128');
       expect(toOPCUASecurityPolicy('basic192')).toEqual('Basic192');
+      expect(toOPCUASecurityPolicy('basic256')).toEqual('Basic256');
+      expect(toOPCUASecurityPolicy('basic128-rsa15')).toEqual('Basic128Rsa15');
       expect(toOPCUASecurityPolicy('basic192-rsa15')).toEqual('Basic192Rsa15');
       expect(toOPCUASecurityPolicy('basic256-rsa15')).toEqual('Basic256Rsa15');
       expect(toOPCUASecurityPolicy('basic256-sha256')).toEqual('Basic256Sha256');
