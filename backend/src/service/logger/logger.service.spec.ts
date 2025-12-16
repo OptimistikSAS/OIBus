@@ -65,8 +65,10 @@ describe('Logger', () => {
       {
         target: 'pino-loki',
         options: {
-          batching: true,
-          interval: engineSettings.logParameters.loki.interval,
+          batching: {
+            interval: engineSettings.logParameters.loki.interval,
+            maxBufferSize: 50000
+          },
           host: engineSettings.logParameters.loki.address,
           basicAuth: {
             username: engineSettings.logParameters.loki.username,
@@ -144,8 +146,10 @@ describe('Logger', () => {
       {
         target: 'pino-loki',
         options: {
-          batching: true,
-          interval: specificSettings.logParameters.loki.interval,
+          batching: {
+            interval: specificSettings.logParameters.loki.interval,
+            maxBufferSize: 50000
+          },
           host: specificSettings.logParameters.loki.address,
           basicAuth: {
             username: specificSettings.logParameters.loki.username,
