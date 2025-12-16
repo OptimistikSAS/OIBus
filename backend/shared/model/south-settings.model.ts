@@ -212,6 +212,8 @@ export const SOUTH_O_P_C_U_A_SETTINGS_SECURITY_POLICYS = [
   'none',
   'basic128',
   'basic192',
+  'basic256',
+  'basic128-rsa15',
   'basic192-rsa15',
   'basic256-rsa15',
   'basic256-sha256',

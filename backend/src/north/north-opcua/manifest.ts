@@ -112,6 +112,8 @@ const manifest: NorthConnectorManifest = {
           'none',
           'basic128',
           'basic192',
+          'basic256',
+          'basic128-rsa15',
           'basic192-rsa15',
           'basic256-rsa15',
           'basic256-sha256',
