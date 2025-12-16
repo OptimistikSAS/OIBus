@@ -426,4 +426,28 @@ describe('HistoryMetricsService', () => {
 
     expect(stream.write).toHaveBeenCalledTimes(2);
   });
+
+  it('should properly clean up listeners on destroy', () => {
+    const metricsEventOffSpy = jest.spyOn(historyQueryMock.metricsEvent, 'off');
+    const stream = service.stream;
+    const streamDestroySpy = jest.spyOn(stream, 'destroy');
+
+    service.destroy();
+
+    expect(metricsEventOffSpy).toHaveBeenCalledWith('north-connect', expect.any(Function));
+    expect(metricsEventOffSpy).toHaveBeenCalledWith('north-run-start', expect.any(Function));
+    expect(metricsEventOffSpy).toHaveBeenCalledWith('north-run-end', expect.any(Function));
+    expect(metricsEventOffSpy).toHaveBeenCalledWith('north-cache-size', expect.any(Function));
+    expect(metricsEventOffSpy).toHaveBeenCalledWith('north-cache-content-size', expect.any(Function));
+    expect(metricsEventOffSpy).toHaveBeenCalledWith('south-connect', expect.any(Function));
+    expect(metricsEventOffSpy).toHaveBeenCalledWith('south-run-start', expect.any(Function));
+    expect(metricsEventOffSpy).toHaveBeenCalledWith('south-run-end', expect.any(Function));
+    expect(metricsEventOffSpy).toHaveBeenCalledWith('south-history-query-start', expect.any(Function));
+    expect(metricsEventOffSpy).toHaveBeenCalledWith('south-history-query-interval', expect.any(Function));
+    expect(metricsEventOffSpy).toHaveBeenCalledWith('south-history-query-stop', expect.any(Function));
+    expect(metricsEventOffSpy).toHaveBeenCalledWith('south-add-values', expect.any(Function));
+    expect(metricsEventOffSpy).toHaveBeenCalledWith('south-add-file', expect.any(Function));
+    expect(streamDestroySpy).toHaveBeenCalled();
+    expect(service['_stream']).toBeNull();
+  });
 });

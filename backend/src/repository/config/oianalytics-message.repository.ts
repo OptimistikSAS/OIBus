@@ -37,7 +37,7 @@ export default class OIAnalyticsMessageRepository {
       queryParams.push(searchParams.end);
     }
 
-    const query = `SELECT * FROM ${OIANALYTICS_MESSAGE_TABLE} ${whereClause} ORDER BY created_at DESC LIMIT ${PAGE_SIZE} OFFSET ?;`;
+    const query = `SELECT * FROM ${OIANALYTICS_MESSAGE_TABLE} ${whereClause} ORDER BY created_at DESC, id ASC LIMIT ${PAGE_SIZE} OFFSET ?;`;
     const results: Array<OIAnalyticsMessage> = this.database
       .prepare(query)
       .all(...queryParams, PAGE_SIZE * page)
@@ -78,7 +78,7 @@ export default class OIAnalyticsMessageRepository {
       queryParams.push(searchParams.end);
     }
 
-    const query = `SELECT * FROM ${OIANALYTICS_MESSAGE_TABLE} ${whereClause} ORDER BY created_at DESC;`;
+    const query = `SELECT * FROM ${OIANALYTICS_MESSAGE_TABLE} ${whereClause} ORDER BY created_at DESC, id ASC;`;
     return this.database
       .prepare(query)
       .all(...queryParams)

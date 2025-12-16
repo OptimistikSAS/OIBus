@@ -77,6 +77,11 @@ describe('OIBus Service', () => {
     );
   });
 
+  afterEach(() => {
+    oIAnalyticsRegistrationService.registrationEvent.removeAllListeners();
+    ipFilterService.whiteListEvent.removeAllListeners();
+  });
+
   it('should start OIBus and stop it', async () => {
     (northService.list as jest.Mock).mockReturnValue(testData.north.list);
     (southService.list as jest.Mock).mockReturnValue(testData.south.list);
