@@ -96,6 +96,10 @@ describe('NorthOPCUA', () => {
     north.createCronJob = jest.fn();
   });
 
+  afterEach(async () => {
+    cacheService.cacheSizeEventEmitter.removeAllListeners();
+  });
+
   it('should be properly initialized', async () => {
     north.connect = jest.fn();
     north.createSession = jest.fn();

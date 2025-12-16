@@ -104,6 +104,7 @@ describe('OIAnalytics Message Service', () => {
 
   afterEach(async () => {
     await flushPromises();
+    oIAnalyticsRegistrationService.registrationEvent.removeAllListeners();
   });
 
   it('should properly start and stop', async () => {

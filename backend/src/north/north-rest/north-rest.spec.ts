@@ -200,6 +200,10 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
     await north.start();
   });
 
+  afterEach(async () => {
+    cacheService.cacheSizeEventEmitter.removeAllListeners();
+  });
+
   it('should be able to test the connection', async () => {
     const expectedReqOptions: ReqOptions = {
       method: 'GET',

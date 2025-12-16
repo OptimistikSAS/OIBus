@@ -150,6 +150,9 @@ export default class DataStreamEngine {
     );
 
     this.northConnectors.set(configuration.id, north);
+    if (this.northConnectorMetrics.has(configuration.id)) {
+      this.northConnectorMetrics.get(configuration.id)?.destroy();
+    }
     this.northConnectorMetrics.set(configuration.id, new NorthConnectorMetricsService(north, this.northConnectorMetricsRepository));
     return north;
   }
@@ -214,6 +217,8 @@ export default class DataStreamEngine {
     await this.stopNorth(north.id);
     await this.deleteCacheFolder('north', north.id, north.name);
     this.northConnectors.delete(north.id);
+    this.northConnectorMetrics.get(north.id)?.destroy();
+    this.northConnectorMetrics.delete(north.id);
   }
 
   async createSouth(southId: string): Promise<SouthConnector<SouthSettings, SouthItemSettings>> {
@@ -233,6 +238,9 @@ export default class DataStreamEngine {
       this.oIAnalyticsRegistrationRepository
     );
     this.southConnectors.set(configuration.id, south);
+    if (this.southConnectorMetrics.has(configuration.id)) {
+      this.southConnectorMetrics.get(configuration.id)?.destroy();
+    }
     this.southConnectorMetrics.set(configuration.id, new SouthConnectorMetricsService(south, this.southConnectorMetricsRepository));
     return south;
   }
@@ -334,6 +342,8 @@ export default class DataStreamEngine {
     await this.deleteCacheFolder('south', south.id, south.name);
     this.updateNorthSubscriptions(south.id);
     this.southConnectors.delete(south.id);
+    this.southConnectorMetrics.get(south.id)?.destroy();
+    this.southConnectorMetrics.delete(south.id);
   }
 
   async createHistoryQuery(historyId: string): Promise<HistoryQuery> {
@@ -387,6 +397,9 @@ export default class DataStreamEngine {
 
     const historyQuery = new HistoryQuery(configuration, north, south, logger);
     this.historyQueries.set(configuration.id, historyQuery);
+    if (this.historyQueryMetrics.has(configuration.id)) {
+      this.historyQueryMetrics.get(configuration.id)?.destroy();
+    }
     const metricsService = new HistoryQueryMetricsService(historyQuery, this.historyQueryMetricsRepository);
     this.historyQueryMetrics.set(configuration.id, metricsService);
     return historyQuery;
@@ -428,7 +441,6 @@ export default class DataStreamEngine {
     }
     await this.startHistoryQuery(historyQuery.id);
   }
-
   async stopHistoryQuery(historyId: string): Promise<void> {
     const historyQuery = this.historyQueries.get(historyId);
     if (historyQuery) {
@@ -438,15 +450,17 @@ export default class DataStreamEngine {
     }
   }
 
-  async resetHistoryQueryCache(historyId: string) {
-    await this.historyQueries.get(historyId)?.resetCache();
-    this.historyQueryMetrics.get(historyId)?.resetMetrics();
-  }
-
   async deleteHistoryQuery(history: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>): Promise<void> {
     await this.stopHistoryQuery(history.id);
     await this.deleteCacheFolder('history', history.id, history.name);
     this.historyQueries.delete(history.id);
+    this.historyQueryMetrics.get(history.id)?.destroy();
+    this.historyQueryMetrics.delete(history.id);
+  }
+
+  async resetHistoryQueryCache(historyId: string) {
+    await this.historyQueries.get(historyId)?.resetCache();
+    this.historyQueryMetrics.get(historyId)?.resetMetrics();
   }
 
   get logger() {
