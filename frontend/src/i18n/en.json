@@ -272,7 +272,7 @@
       "mqtt": "Publish to MQTT broker topics",
       "oianalytics": "Send files and values to OIAnalytics®",
       "opcua": "Write data into OPC UA™ server",
-      "rest": "Upload files to a REST API endpoint",
+      "rest": "Upload data to a REST endpoint",
       "sftp": "Upload files and data to an SFTP server"
     },
     "oibus-south-category": {
@@ -855,7 +855,7 @@
             "send-as": {
               "title": "Send payload as",
               "file": "File (FormData)",
-              "body": "Body (raw)"
+              "body": "Body"
             },
             "test": {
               "title": "Test configuration",
@@ -866,7 +866,7 @@
                 "POST": "POST",
                 "PUT": "PUT"
               },
-              "body": "Body (JSON)",
+              "body": "Body",
               "success-code": "Expected success code"
             },
             "proxy": {
@@ -1100,7 +1100,15 @@
                 },
                 "key": "Key",
                 "column": "Column",
-                "data-type": "Data Type"
+                "data-type": {
+                  "title": "Data Type",
+                  "string": "String",
+                  "number": "Number",
+                  "boolean": "Boolean",
+                  "datetime": "Datetime",
+                  "array": "Array",
+                  "object": "Object"
+                }
               }
             }
           },
@@ -1180,8 +1188,15 @@
                 },
                 "datetime-settings": {
                   "title": "Datetime Settings",
-                  "type": {
+                  "input-type": {
                     "title": "Timestamp input type",
+                    "string": "String",
+                    "iso-string": "ISO string",
+                    "unix-epoch": "Unix epoch (s)",
+                    "unix-epoch-ms": "Unix epoch (ms)"
+                  },
+                  "output-type": {
+                    "title": "Timestamp output type",
                     "string": "String",
                     "iso-string": "ISO string",
                     "unix-epoch": "Unix epoch (s)",
@@ -1205,7 +1220,7 @@
               "row-iterator-path": "Row Iterator JSONPath",
               "topic-path": "Topic JSONPath",
               "payload-type": {
-                "title": "Payload Type",
+                "title": "MQTT payload Type",
                 "string": "String",
                 "number": "Number",
                 "boolean": "Boolean",
@@ -1714,17 +1729,16 @@
                 "query-params": "Query parameters"
               }
             },
-
             "test": {
               "title": "Test configuration",
               "endpoint": "Test endpoint",
               "method": {
-                "title": "Test method",
+                "title": "HTTP method",
                 "GET": "GET",
                 "POST": "POST",
                 "PUT": "PUT"
               },
-              "body": "Body (JSON)",
+              "body": "Body",
               "success-code": "Expected success code"
             },
             "proxy": {

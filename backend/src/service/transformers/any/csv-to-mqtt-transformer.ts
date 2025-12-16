@@ -242,7 +242,15 @@ export default class CSVToMQTTTransformer extends OIBusTransformer {
             key: 'item',
             translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.csv-to-parse.item.title',
             displayProperties: { visible: true, wrapInBox: false },
-            enablingConditions: [{ referralPathFromRoot: 'payloadType', targetPathFromRoot: 'payloadType', values: ['object'] }],
+            enablingConditions: [
+              { referralPathFromRoot: 'payloadType', targetPathFromRoot: 'datetimeSettings', values: ['datetime'] },
+              { referralPathFromRoot: 'payloadType', targetPathFromRoot: 'objectFields', values: ['object'] },
+              {
+                referralPathFromRoot: 'payloadType',
+                targetPathFromRoot: 'valueColumn',
+                values: ['string', 'number', 'boolean']
+              }
+            ],
             validators: [],
             attributes: [
               // --- GENERAL SETTINGS ---
@@ -405,7 +413,7 @@ export default class CSVToMQTTTransformer extends OIBusTransformer {
                   key: 'field',
                   translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.csv-to-parse.object-fields.item.title',
                   displayProperties: { visible: true, wrapInBox: true },
-                  enablingConditions: [],
+                  enablingConditions: [{ referralPathFromRoot: 'dataType', targetPathFromRoot: 'datetimeSettings', values: ['datetime'] }],
                   validators: [],
                   attributes: [
                     {
@@ -452,7 +460,7 @@ export default class CSVToMQTTTransformer extends OIBusTransformer {
                         {
                           type: 'string-select',
                           key: 'inputType',
-                          translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.csv-to-parse.datetime-settings.type',
+                          translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.csv-to-parse.datetime-settings.input-type',
                           defaultValue: 'iso-string',
                           selectableValues: ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'],
                           validators: [{ type: 'REQUIRED', arguments: [] }],
@@ -485,7 +493,8 @@ export default class CSVToMQTTTransformer extends OIBusTransformer {
                         {
                           type: 'string-select',
                           key: 'outputType',
-                          translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.csv-to-parse.datetime-settings.type',
+                          translationKey:
+                            'configuration.oibus.manifest.transformers.csv-to-mqtt.csv-to-parse.datetime-settings.output-type',
                           defaultValue: 'iso-string',
                           selectableValues: ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'],
                           validators: [{ type: 'REQUIRED', arguments: [] }],

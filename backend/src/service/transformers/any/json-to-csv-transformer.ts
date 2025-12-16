@@ -5,7 +5,7 @@ import { pipeline, Readable, Transform } from 'node:stream';
 import { CacheMetadata } from '../../../../shared/model/engine.model';
 import { promisify } from 'node:util';
 import { OIBusObjectAttribute } from '../../../../shared/model/form.model';
-import { convertDateTimeToInstant, convertDelimiter, injectIndices, sanitizeFilename, stringToBoolean } from '../../utils';
+import { convertDateTime, convertDelimiter, injectIndices, sanitizeFilename, stringToBoolean } from '../../utils';
 import csv from 'papaparse';
 
 const pipelineAsync = promisify(pipeline);
@@ -20,11 +20,15 @@ interface TransformerOptions {
       jsonPath: string;
       columnName: string;
       dataType: 'string' | 'number' | 'datetime' | 'array' | 'boolean' | 'object';
-      datetimeSettings: {
-        type: 'iso-string' | 'unix-epoch' | 'unix-epoch-ms' | 'string';
-        timezone: string;
-        format: string;
-        locale: string;
+      datetimeSettings?: {
+        inputType: 'iso-string' | 'unix-epoch' | 'unix-epoch-ms' | 'string';
+        inputTimezone?: string;
+        inputFormat?: string;
+        inputLocale?: string;
+        outputType: 'iso-string' | 'unix-epoch' | 'unix-epoch-ms' | 'string';
+        outputTimezone?: string;
+        outputFormat?: string;
+        outputLocale?: string;
       };
     }>;
   }>;
@@ -92,7 +96,21 @@ export default class JSONToCSVTransformer extends OIBusTransformer {
         } else {
           switch (field.dataType) {
             case 'datetime':
-              csvRow[field.columnName] = convertDateTimeToInstant(result, field.datetimeSettings);
+              csvRow[field.columnName] = convertDateTime(
+                result,
+                {
+                  type: field.datetimeSettings!.inputType,
+                  timezone: field.datetimeSettings!.inputTimezone,
+                  format: field.datetimeSettings!.inputFormat,
+                  locale: field.datetimeSettings!.inputLocale
+                },
+                {
+                  type: field.datetimeSettings!.outputType,
+                  timezone: field.datetimeSettings!.outputTimezone,
+                  format: field.datetimeSettings!.outputFormat,
+                  locale: field.datetimeSettings!.outputLocale
+                }
+              );
               break;
             case 'number':
               csvRow[field.columnName] = Number(result);
@@ -175,7 +193,15 @@ export default class JSONToCSVTransformer extends OIBusTransformer {
               visible: true,
               wrapInBox: false
             },
-            enablingConditions: [],
+            enablingConditions: [
+              { referralPathFromRoot: 'payloadType', targetPathFromRoot: 'datetimeSettings', values: ['datetime'] },
+              { referralPathFromRoot: 'payloadType', targetPathFromRoot: 'objectFields', values: ['object'] },
+              {
+                referralPathFromRoot: 'payloadType',
+                targetPathFromRoot: 'valuePath',
+                values: ['string', 'number', 'boolean']
+              }
+            ],
             validators: [],
             attributes: [
               {
@@ -250,14 +276,14 @@ export default class JSONToCSVTransformer extends OIBusTransformer {
               {
                 type: 'array',
                 key: 'fields',
-                translationKey: 'configuration.oibus.manifest.transformers.json-to-csv.json-to-parse.fields.title',
+                translationKey: 'configuration.oibus.manifest.transformers.json-to-csv.json-to-parse.object-fields.title',
                 paginate: false,
                 numberOfElementPerPage: 20,
                 validators: [],
                 rootAttribute: {
                   type: 'object',
                   key: 'fieldItem',
-                  translationKey: 'configuration.oibus.manifest.transformers.json-to-csv.json-to-parse.fields.item.title',
+                  translationKey: 'configuration.oibus.manifest.transformers.json-to-csv.json-to-parse.object-fields.item.title',
                   displayProperties: {
                     visible: true,
                     wrapInBox: true
@@ -274,7 +300,7 @@ export default class JSONToCSVTransformer extends OIBusTransformer {
                     {
                       type: 'string',
                       key: 'columnName',
-                      translationKey: 'configuration.oibus.manifest.transformers.json-to-csv.json-to-parse.fields.column-name',
+                      translationKey: 'configuration.oibus.manifest.transformers.json-to-csv.json-to-parse.object-fields.column-name',
                       defaultValue: null,
                       validators: [
                         {
@@ -291,7 +317,7 @@ export default class JSONToCSVTransformer extends OIBusTransformer {
                     {
                       type: 'string',
                       key: 'jsonPath',
-                      translationKey: 'configuration.oibus.manifest.transformers.json-to-csv.json-to-parse.fields.json-path',
+                      translationKey: 'configuration.oibus.manifest.transformers.json-to-csv.json-to-parse.object-fields.json-path',
                       defaultValue: null,
                       validators: [
                         {
@@ -308,7 +334,7 @@ export default class JSONToCSVTransformer extends OIBusTransformer {
                     {
                       type: 'string-select',
                       key: 'dataType',
-                      translationKey: 'configuration.oibus.manifest.transformers.json-to-csv.json-to-parse.fields.data-type',
+                      translationKey: 'configuration.oibus.manifest.transformers.json-to-csv.json-to-parse.object-fields.data-type',
                       defaultValue: 'string',
                       selectableValues: ['string', 'number', 'datetime', 'array', 'boolean', 'object'],
                       validators: [
@@ -326,102 +352,88 @@ export default class JSONToCSVTransformer extends OIBusTransformer {
                     {
                       type: 'object',
                       key: 'datetimeSettings',
-                      translationKey: 'configuration.oibus.manifest.transformers.json-to-csv.json-to-parse.fields.datetime-settings.title',
+                      translationKey: 'configuration.oibus.manifest.transformers.json-to-csv.json-to-parse.datetime-settings.title',
                       displayProperties: {
                         visible: true,
                         wrapInBox: false
                       },
                       enablingConditions: [
-                        {
-                          referralPathFromRoot: 'type',
-                          targetPathFromRoot: 'timezone',
-                          values: ['string']
-                        },
-                        {
-                          referralPathFromRoot: 'type',
-                          targetPathFromRoot: 'format',
-                          values: ['string']
-                        },
-                        {
-                          referralPathFromRoot: 'type',
-                          targetPathFromRoot: 'locale',
-                          values: ['string']
-                        }
+                        { referralPathFromRoot: 'inputType', targetPathFromRoot: 'inputTimezone', values: ['string'] },
+                        { referralPathFromRoot: 'inputType', targetPathFromRoot: 'inputFormat', values: ['string'] },
+                        { referralPathFromRoot: 'inputType', targetPathFromRoot: 'inputLocale', values: ['string'] },
+                        { referralPathFromRoot: 'outputType', targetPathFromRoot: 'outputTimezone', values: ['string'] },
+                        { referralPathFromRoot: 'outputType', targetPathFromRoot: 'outputFormat', values: ['string'] },
+                        { referralPathFromRoot: 'outputType', targetPathFromRoot: 'outputLocale', values: ['string'] }
                       ],
                       validators: [],
                       attributes: [
                         {
                           type: 'string-select',
-                          key: 'type',
+                          key: 'inputType',
                           translationKey:
-                            'configuration.oibus.manifest.transformers.json-to-csv.json-to-parse.fields.datetime-settings.type',
-                          defaultValue: 'string',
+                            'configuration.oibus.manifest.transformers.json-to-csv.json-to-parse.datetime-settings.input-type',
+                          defaultValue: 'iso-string',
                           selectableValues: ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'],
-                          validators: [
-                            {
-                              type: 'REQUIRED',
-                              arguments: []
-                            }
-                          ],
-                          displayProperties: {
-                            row: 0,
-                            columns: 3,
-                            displayInViewMode: true
-                          }
+                          validators: [{ type: 'REQUIRED', arguments: [] }],
+                          displayProperties: { row: 0, columns: 3, displayInViewMode: true }
                         },
                         {
                           type: 'timezone',
-                          key: 'timezone',
-                          translationKey:
-                            'configuration.oibus.manifest.transformers.json-to-csv.json-to-parse.fields.datetime-settings.timezone',
+                          key: 'inputTimezone',
+                          translationKey: 'configuration.oibus.manifest.transformers.json-to-csv.json-to-parse.datetime-settings.timezone',
                           defaultValue: 'UTC',
-                          validators: [
-                            {
-                              type: 'REQUIRED',
-                              arguments: []
-                            }
-                          ],
-                          displayProperties: {
-                            row: 0,
-                            columns: 3,
-                            displayInViewMode: true
-                          }
+                          validators: [{ type: 'REQUIRED', arguments: [] }],
+                          displayProperties: { row: 0, columns: 3, displayInViewMode: true }
                         },
                         {
                           type: 'string',
-                          key: 'format',
-                          translationKey:
-                            'configuration.oibus.manifest.transformers.json-to-csv.json-to-parse.fields.datetime-settings.format',
+                          key: 'inputFormat',
+                          translationKey: 'configuration.oibus.manifest.transformers.json-to-csv.json-to-parse.datetime-settings.format',
                           defaultValue: 'yyyy-MM-dd HH:mm:ss',
-                          validators: [
-                            {
-                              type: 'REQUIRED',
-                              arguments: []
-                            }
-                          ],
-                          displayProperties: {
-                            row: 0,
-                            columns: 3,
-                            displayInViewMode: false
-                          }
+                          validators: [{ type: 'REQUIRED', arguments: [] }],
+                          displayProperties: { row: 0, columns: 3, displayInViewMode: false }
                         },
                         {
                           type: 'string',
-                          key: 'locale',
-                          translationKey:
-                            'configuration.oibus.manifest.transformers.json-to-csv.json-to-parse.fields.datetime-settings.locale',
+                          key: 'inputLocale',
+                          translationKey: 'configuration.oibus.manifest.transformers.json-to-csv.json-to-parse.datetime-settings.locale',
                           defaultValue: 'en-En',
-                          validators: [
-                            {
-                              type: 'REQUIRED',
-                              arguments: []
-                            }
-                          ],
-                          displayProperties: {
-                            row: 0,
-                            columns: 3,
-                            displayInViewMode: false
-                          }
+                          validators: [{ type: 'REQUIRED', arguments: [] }],
+                          displayProperties: { row: 0, columns: 3, displayInViewMode: false }
+                        },
+                        {
+                          type: 'string-select',
+                          key: 'outputType',
+                          translationKey:
+                            'configuration.oibus.manifest.transformers.json-to-csv.json-to-parse.datetime-settings.output-type',
+                          defaultValue: 'iso-string',
+                          selectableValues: ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'],
+                          validators: [{ type: 'REQUIRED', arguments: [] }],
+                          displayProperties: { row: 1, columns: 3, displayInViewMode: true }
+                        },
+                        {
+                          type: 'timezone',
+                          key: 'outputTimezone',
+                          translationKey: 'configuration.oibus.manifest.transformers.json-to-csv.json-to-parse.datetime-settings.timezone',
+                          defaultValue: 'UTC',
+                          validators: [{ type: 'REQUIRED', arguments: [] }],
+                          displayProperties: { row: 1, columns: 3, displayInViewMode: true }
+                        },
+                        {
+                          type: 'string',
+                          key: 'outputFormat',
+                          translationKey: 'configuration.oibus.manifest.transformers.json-to-csv.json-to-parse.datetime-settings.format',
+                          defaultValue: 'yyyy-MM-dd HH:mm:ss',
+                          validators: [{ type: 'REQUIRED', arguments: [] }],
+                          displayProperties: { row: 1, columns: 3, displayInViewMode: false }
+                        },
+                        {
+                          type: 'string',
+                          key: 'outputLocale',
+                          translationKey: 'configuration.oibus.manifest.transformers.json-to-csv.json-to-parse.datetime-settings.locale',
+                          defaultValue: 'en-En',
+                          validators: [{ type: 'REQUIRED', arguments: [] }],
+                          displayProperties: { row: 1, columns: 3, displayInViewMode: false }
                         }
                       ]
                     }
