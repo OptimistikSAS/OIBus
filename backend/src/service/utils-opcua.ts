@@ -56,6 +56,10 @@ export const toOPCUASecurityPolicy = (
       return 'Basic128';
     case 'basic192':
       return 'Basic192';
+    case 'basic256':
+      return 'Basic256';
+    case 'basic128-rsa15':
+      return 'Basic128Rsa15';
     case 'basic192-rsa15':
       return 'Basic192Rsa15';
     case 'basic256-rsa15':
