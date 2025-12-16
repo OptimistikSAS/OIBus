@@ -84,7 +84,8 @@ describe('NorthMQTT', () => {
     north = new NorthMQTT(configuration, logger, 'cacheFolder', cacheService);
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    cacheService.cacheSizeEventEmitter.removeAllListeners();
     mqttStream.removeAllListeners();
   });
 

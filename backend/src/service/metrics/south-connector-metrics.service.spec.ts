@@ -96,4 +96,20 @@ describe('SouthConnectorMetricsService', () => {
 
     expect(stream.write).toHaveBeenCalledTimes(2);
   });
+
+  it('should properly clean up listeners on destroy', () => {
+    const metricsEventOffSpy = jest.spyOn(southMock.metricsEvent, 'off');
+    const stream = service.stream;
+    const streamDestroySpy = jest.spyOn(stream, 'destroy');
+
+    service.destroy();
+
+    expect(metricsEventOffSpy).toHaveBeenCalledWith('connect', expect.any(Function));
+    expect(metricsEventOffSpy).toHaveBeenCalledWith('run-start', expect.any(Function));
+    expect(metricsEventOffSpy).toHaveBeenCalledWith('run-end', expect.any(Function));
+    expect(metricsEventOffSpy).toHaveBeenCalledWith('add-values', expect.any(Function));
+    expect(metricsEventOffSpy).toHaveBeenCalledWith('add-file', expect.any(Function));
+    expect(streamDestroySpy).toHaveBeenCalled();
+    expect(service['_stream']).toBeNull();
+  });
 });

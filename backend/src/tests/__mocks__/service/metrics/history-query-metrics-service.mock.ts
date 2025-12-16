@@ -5,6 +5,7 @@ export default jest.fn().mockImplementation(() => ({
   initMetrics: jest.fn(),
   updateMetrics: jest.fn(),
   resetMetrics: jest.fn(),
+  destroy: jest.fn(),
   metrics: jest.fn(),
   stream: jest.fn()
 }));

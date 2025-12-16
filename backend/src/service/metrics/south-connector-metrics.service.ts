@@ -25,29 +25,39 @@ export default class SouthConnectorMetricsService {
     private readonly southConnectorMetricsRepository: SouthConnectorMetricsRepository
   ) {
     this.initMetrics();
-    this.southConnector.metricsEvent.on('connect', (data: { lastConnection: Instant }) => {
-      this._metrics.lastConnection = data.lastConnection;
-      this.updateMetrics();
-    });
-    this.southConnector.metricsEvent.on('run-start', (data: { lastRunStart: Instant }) => {
-      this._metrics.lastRunStart = data.lastRunStart;
-      this.updateMetrics();
-    });
-    this.southConnector.metricsEvent.on('run-end', (data: { lastRunDuration: number }) => {
-      this._metrics.lastRunDuration = data.lastRunDuration;
-      this.updateMetrics();
-    });
-    this.southConnector.metricsEvent.on('add-values', (data: { numberOfValuesRetrieved: number; lastValueRetrieved: OIBusTimeValue }) => {
-      this._metrics.numberOfValuesRetrieved += data.numberOfValuesRetrieved;
-      this._metrics.lastValueRetrieved = data.lastValueRetrieved;
-      this.updateMetrics();
-    });
-    this.southConnector.metricsEvent.on('add-file', (data: { lastFileRetrieved: string }) => {
-      this._metrics.numberOfFilesRetrieved += 1;
-      this._metrics.lastFileRetrieved = data.lastFileRetrieved;
-      this.updateMetrics();
-    });
+    this.southConnector.metricsEvent.on('connect', this.onConnect);
+    this.southConnector.metricsEvent.on('run-start', this.onRunStart);
+    this.southConnector.metricsEvent.on('run-end', this.onRunEnd);
+    this.southConnector.metricsEvent.on('add-values', this.onAddValues);
+    this.southConnector.metricsEvent.on('add-file', this.onAddFile);
   }
+
+  private onConnect = (data: { lastConnection: Instant }) => {
+    this._metrics.lastConnection = data.lastConnection;
+    this.updateMetrics();
+  };
+
+  private onRunStart = (data: { lastRunStart: Instant }) => {
+    this._metrics.lastRunStart = data.lastRunStart;
+    this.updateMetrics();
+  };
+
+  private onRunEnd = (data: { lastRunDuration: number }) => {
+    this._metrics.lastRunDuration = data.lastRunDuration;
+    this.updateMetrics();
+  };
+
+  private onAddValues = (data: { numberOfValuesRetrieved: number; lastValueRetrieved: OIBusTimeValue }) => {
+    this._metrics.numberOfValuesRetrieved += data.numberOfValuesRetrieved;
+    this._metrics.lastValueRetrieved = data.lastValueRetrieved;
+    this.updateMetrics();
+  };
+
+  private onAddFile = (data: { lastFileRetrieved: string }) => {
+    this._metrics.numberOfFilesRetrieved += 1;
+    this._metrics.lastFileRetrieved = data.lastFileRetrieved;
+    this.updateMetrics();
+  };
 
   initMetrics(): void {
     this.southConnectorMetricsRepository.initMetrics(this.southConnector.connectorConfiguration.id);
@@ -63,6 +73,16 @@ export default class SouthConnectorMetricsService {
   resetMetrics(): void {
     this.southConnectorMetricsRepository.removeMetrics(this.southConnector.connectorConfiguration.id);
     this.initMetrics();
+  }
+
+  destroy(): void {
+    this.southConnector.metricsEvent.off('connect', this.onConnect);
+    this.southConnector.metricsEvent.off('run-start', this.onRunStart);
+    this.southConnector.metricsEvent.off('run-end', this.onRunEnd);
+    this.southConnector.metricsEvent.off('add-values', this.onAddValues);
+    this.southConnector.metricsEvent.off('add-file', this.onAddFile);
+    this._stream?.destroy();
+    this._stream = null;
   }
 
   get metrics(): SouthConnectorMetrics {

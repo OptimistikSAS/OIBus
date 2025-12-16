@@ -113,6 +113,10 @@ describe('NorthModbus', () => {
     north = new NorthModbus(configuration, logger, 'cacheFolder', cacheService);
   });
 
+  afterEach(async () => {
+    cacheService.cacheSizeEventEmitter.removeAllListeners();
+  });
+
   it('should properly connect', async () => {
     const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
 

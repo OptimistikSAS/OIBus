@@ -265,6 +265,39 @@ describe('DataStreamEngine', () => {
     expect(createBaseFolders).toHaveBeenCalledTimes(1);
   });
 
+  it('should destroy existing metrics service when recreating north connector', async () => {
+    // Create north connector first time
+    await engine.createNorth(testData.north.list[0].id);
+    expect(northConnectorMetricsService.destroy).not.toHaveBeenCalled();
+
+    // Recreate the same north connector - should call destroy on existing metrics
+    await engine.createNorth(testData.north.list[0].id);
+    expect(northConnectorMetricsService.destroy).toHaveBeenCalledTimes(1);
+  });
+
+  it('should destroy existing metrics service when recreating south connector', async () => {
+    // Create south connector first time
+    await engine.createSouth(testData.south.list[0].id);
+    expect(southConnectorMetricsService.destroy).not.toHaveBeenCalled();
+
+    // Recreate the same south connector - should call destroy on existing metrics
+    await engine.createSouth(testData.south.list[0].id);
+    expect(southConnectorMetricsService.destroy).toHaveBeenCalledTimes(1);
+  });
+
+  it('should destroy existing metrics service when recreating history query', async () => {
+    (buildNorth as jest.Mock).mockReturnValue(mockedNorth1);
+    (buildSouth as jest.Mock).mockReturnValue(mockedSouth1);
+
+    // Create history query first time
+    await engine.createHistoryQuery(testData.historyQueries.list[0].id);
+    expect(historyQueryMetricsService.destroy).not.toHaveBeenCalled();
+
+    // Recreate the same history query - should call destroy on existing metrics
+    await engine.createHistoryQuery(testData.historyQueries.list[0].id);
+    expect(historyQueryMetricsService.destroy).toHaveBeenCalledTimes(1);
+  });
+
   it('should pass a callback to buildSouth that calls north.cacheContent', async () => {
     (buildNorth as jest.Mock).mockReturnValueOnce(mockedNorth1);
     (buildSouth as jest.Mock).mockReturnValueOnce(mockedSouth1);

@@ -29,42 +29,49 @@ export default class NorthConnectorMetricsService {
     private readonly northConnectorMetricsRepository: NorthConnectorMetricsRepository
   ) {
     this.initMetrics();
-    this.northConnector.metricsEvent.on('cache-size', (data: { cacheSize: number; errorSize: number; archiveSize: number }) => {
-      this._metrics.currentCacheSize = data.cacheSize;
-      this._metrics.currentErrorSize = data.errorSize;
-      this._metrics.currentArchiveSize = data.archiveSize;
-      this.updateMetrics();
-    });
-    this.northConnector.metricsEvent.on('cache-content-size', (cachedSize: number) => {
-      this._metrics.contentCachedSize += cachedSize;
-      this.updateMetrics();
-    });
-    this.northConnector.metricsEvent.on('connect', (data: { lastConnection: Instant }) => {
-      this._metrics.lastConnection = data.lastConnection;
-      this.updateMetrics();
-    });
-    this.northConnector.metricsEvent.on('run-start', (data: { lastRunStart: Instant }) => {
-      this._metrics.lastRunStart = data.lastRunStart;
-      this.updateMetrics();
-    });
-    this.northConnector.metricsEvent.on(
-      'run-end',
-      (data: { lastRunDuration: number; metadata: CacheMetadata; action: 'sent' | 'errored' | 'archived' }) => {
-        this._metrics.lastRunDuration = data.lastRunDuration;
-        if (data.action === 'sent') {
-          this._metrics.lastContentSent = data.metadata.contentFile;
-          this._metrics.contentSentSize += data.metadata.contentSize;
-        } else if (data.action === 'archived') {
-          this._metrics.lastContentSent = data.metadata.contentFile;
-          this._metrics.contentArchivedSize += data.metadata.contentSize;
-          this._metrics.contentSentSize += data.metadata.contentSize;
-        } else {
-          this._metrics.contentErroredSize += data.metadata.contentSize;
-        }
-        this.updateMetrics();
-      }
-    );
+    this.northConnector.metricsEvent.on('cache-size', this.onCacheSize);
+    this.northConnector.metricsEvent.on('cache-content-size', this.onCacheContentSize);
+    this.northConnector.metricsEvent.on('connect', this.onConnect);
+    this.northConnector.metricsEvent.on('run-start', this.onRunStart);
+    this.northConnector.metricsEvent.on('run-end', this.onRunEnd);
   }
+
+  private onCacheSize = (data: { cacheSize: number; errorSize: number; archiveSize: number }) => {
+    this._metrics.currentCacheSize = data.cacheSize;
+    this._metrics.currentErrorSize = data.errorSize;
+    this._metrics.currentArchiveSize = data.archiveSize;
+    this.updateMetrics();
+  };
+
+  private onCacheContentSize = (cachedSize: number) => {
+    this._metrics.contentCachedSize += cachedSize;
+    this.updateMetrics();
+  };
+
+  private onConnect = (data: { lastConnection: Instant }) => {
+    this._metrics.lastConnection = data.lastConnection;
+    this.updateMetrics();
+  };
+
+  private onRunStart = (data: { lastRunStart: Instant }) => {
+    this._metrics.lastRunStart = data.lastRunStart;
+    this.updateMetrics();
+  };
+
+  private onRunEnd = (data: { lastRunDuration: number; metadata: CacheMetadata; action: 'sent' | 'errored' | 'archived' }) => {
+    this._metrics.lastRunDuration = data.lastRunDuration;
+    if (data.action === 'sent') {
+      this._metrics.lastContentSent = data.metadata.contentFile;
+      this._metrics.contentSentSize += data.metadata.contentSize;
+    } else if (data.action === 'archived') {
+      this._metrics.lastContentSent = data.metadata.contentFile;
+      this._metrics.contentArchivedSize += data.metadata.contentSize;
+      this._metrics.contentSentSize += data.metadata.contentSize;
+    } else {
+      this._metrics.contentErroredSize += data.metadata.contentSize;
+    }
+    this.updateMetrics();
+  };
 
   initMetrics(): void {
     this.northConnectorMetricsRepository.initMetrics(this.northConnector.connectorConfiguration.id);
@@ -80,6 +87,16 @@ export default class NorthConnectorMetricsService {
   resetMetrics(): void {
     this.northConnectorMetricsRepository.removeMetrics(this.northConnector.connectorConfiguration.id);
     this.initMetrics();
+  }
+
+  destroy(): void {
+    this.northConnector.metricsEvent.off('cache-size', this.onCacheSize);
+    this.northConnector.metricsEvent.off('cache-content-size', this.onCacheContentSize);
+    this.northConnector.metricsEvent.off('connect', this.onConnect);
+    this.northConnector.metricsEvent.off('run-start', this.onRunStart);
+    this.northConnector.metricsEvent.off('run-end', this.onRunEnd);
+    this._stream?.destroy();
+    this._stream = null;
   }
 
   get metrics(): NorthConnectorMetrics {

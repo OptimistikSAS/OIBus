@@ -69,27 +69,24 @@ export default abstract class NorthConnector<T extends NorthSettings> {
       return;
     }
 
-    this.cacheService.cacheSizeEventEmitter.on(
-      'cache-size',
-      (sizeToAdd: { cacheSizeToAdd: number; errorSizeToAdd: number; archiveSizeToAdd: number }) => {
-        this.cacheSize.cacheSize += sizeToAdd.cacheSizeToAdd;
-        this.cacheSize.errorSize += sizeToAdd.errorSizeToAdd;
-        this.cacheSize.archiveSize += sizeToAdd.archiveSizeToAdd;
-        this.cacheSizeWarningHasBeenTriggered = false; // If the cache size is updated, allow the warning to trigger again
-        this.metricsEvent.emit('cache-size', this.cacheSize);
-      }
-    );
-
-    this.cacheService.cacheSizeEventEmitter.on(
-      'init-cache-size',
-      (initialCacheSize: { cacheSizeToAdd: number; errorSizeToAdd: number; archiveSizeToAdd: number }) => {
-        this.cacheSize.cacheSize = initialCacheSize.cacheSizeToAdd;
-        this.cacheSize.errorSize = initialCacheSize.errorSizeToAdd;
-        this.cacheSize.archiveSize = initialCacheSize.archiveSizeToAdd;
-        this.metricsEvent.emit('cache-size', this.cacheSize);
-      }
-    );
+    this.cacheService.cacheSizeEventEmitter.on('cache-size', this.onCacheSize);
+    this.cacheService.cacheSizeEventEmitter.on('init-cache-size', this.onInitCacheSize);
   }
+
+  private onCacheSize = (sizeToAdd: { cacheSizeToAdd: number; errorSizeToAdd: number; archiveSizeToAdd: number }) => {
+    this.cacheSize.cacheSize += sizeToAdd.cacheSizeToAdd;
+    this.cacheSize.errorSize += sizeToAdd.errorSizeToAdd;
+    this.cacheSize.archiveSize += sizeToAdd.archiveSizeToAdd;
+    this.cacheSizeWarningHasBeenTriggered = false; // If the cache size is updated, allow the warning to trigger again
+    this.metricsEvent.emit('cache-size', this.cacheSize);
+  };
+
+  private onInitCacheSize = (initialCacheSize: { cacheSizeToAdd: number; errorSizeToAdd: number; archiveSizeToAdd: number }) => {
+    this.cacheSize.cacheSize = initialCacheSize.cacheSizeToAdd;
+    this.cacheSize.errorSize = initialCacheSize.errorSizeToAdd;
+    this.cacheSize.archiveSize = initialCacheSize.archiveSizeToAdd;
+    this.metricsEvent.emit('cache-size', this.cacheSize);
+  };
 
   set connectorConfiguration(connectorConfiguration: NorthConnectorEntity<T>) {
     this.connector = connectorConfiguration;
@@ -492,6 +489,8 @@ export default abstract class NorthConnector<T extends NorthSettings> {
       this.cacheLogDebounceTimeout = null;
     }
     this.cacheLogDebounceFlag = false;
+    this.cacheService.cacheSizeEventEmitter.off('cache-size', this.onCacheSize);
+    this.cacheService.cacheSizeEventEmitter.off('init-cache-size', this.onInitCacheSize);
     this.logger.info(`"${this.connector.name}" (${this.connector.id}) disconnected`);
   }
 
