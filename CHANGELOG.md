@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.7.6](https://github.com/OptimistikSAS/OIBus/compare/v3.7.5...v3.7.6) (2025-12-17)
+
+
+### Bug Fixes
+
+* **docker:** enhanced Docker Compose setup with new services and improved OPC UA configuration ([71a36e5](https://github.com/OptimistikSAS/OIBus/commit/71a36e559db0626e02a1afb239aede3601ec7bfc))
+* **engine:** fix engine cancel button ([6edd340](https://github.com/OptimistikSAS/OIBus/commit/6edd340cbc43979d6f1007f6c6c80fe39d200371))
+* **frontend:** added breadcrumb component with dynamic routing and styling ([7b1ed6b](https://github.com/OptimistikSAS/OIBus/commit/7b1ed6bd1d4de3cee9af57166fb65297ce39ed63))
+* **frontend:** added sorting functionality to history, north, and south lists ([2362ae4](https://github.com/OptimistikSAS/OIBus/commit/2362ae46f3b717ca836abc6d136e3f70a77b0a76))
+* **frontend:** enhanced cache component titles with tooltips and responsive styling ([6d955aa](https://github.com/OptimistikSAS/OIBus/commit/6d955aae545040408b7bdb746bd4642d2eb8d1c9))
+* **logger:** migrate loki options to pino-loki v3 ([f6f5903](https://github.com/OptimistikSAS/OIBus/commit/f6f59032ff37e1531c7acdd6c81c290bf1f705e1))
+* **opcua:** add deprecated security modes ([6e1c587](https://github.com/OptimistikSAS/OIBus/commit/6e1c5870f6b683d0347915d827467ad7b4b0eb1d))
+
 ## [3.7.5](https://github.com/OptimistikSAS/OIBus/compare/v3.7.4...v3.7.5) (2025-12-10)
 
 
