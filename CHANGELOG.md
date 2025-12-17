@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.7.7](https://github.com/OptimistikSAS/OIBus/compare/v3.7.6...v3.7.7) (2025-12-17)
+
+
+### Bug Fixes
+
+* **encryption:** remover selfsigned package and use node-forge instead ([f71376e](https://github.com/OptimistikSAS/OIBus/commit/f71376ed09439f9871be27d8f0254abf85a8ea74))
+
 ## [3.7.6](https://github.com/OptimistikSAS/OIBus/compare/v3.7.5...v3.7.6) (2025-12-17)
 
 
