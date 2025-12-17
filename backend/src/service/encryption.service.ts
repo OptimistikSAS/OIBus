@@ -2,8 +2,7 @@ import os from 'node:os';
 import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-
-import selfSigned, { GenerateResult } from 'selfsigned';
+import * as forge from 'node-forge';
 
 import { createFolder, filesExists } from './utils';
 import { CryptoSettings } from '../../shared/model/engine.model';
@@ -119,51 +118,79 @@ export default class EncryptionService<TInitialized extends boolean = false> {
     this.initialized = true;
   }
 
-  async generateSelfSignedCertificate(options: CertificateOptions): Promise<GenerateResult> {
-    return await selfSigned.generate(
-      [
-        { name: 'commonName', value: options.commonName },
-        { name: 'countryName', value: options.countryName },
-        { shortName: 'ST', value: options.stateOrProvinceName },
-        { name: 'localityName', value: options.localityName },
-        { name: 'organizationName', value: options.organizationName }
-      ].filter(attr => attr.value && attr.value.trim() !== ''), // ignore empty fields
+  async generateSelfSignedCertificate(options: CertificateOptions): Promise<{ private: string; public: string; cert: string }> {
+    // 1. Generate Key Pair (RSA)
+    const keys = forge.pki.rsa.generateKeyPair(options.keySize);
+
+    // 2. Create Certificate
+    const cert = forge.pki.createCertificate();
+    cert.publicKey = keys.publicKey;
+
+    // 3. Set Serial Number (random hex)
+    cert.serialNumber = '01' + forge.util.bytesToHex(forge.random.getBytesSync(19));
+
+    // 4. Set Validity
+    const now = new Date();
+    cert.validity.notBefore = now;
+    cert.validity.notAfter = DateTime.now().plus({ days: options.daysBeforeExpiry }).toJSDate();
+
+    // 5. Set Attributes (Subject & Issuer are the same for self-signed)
+    const attrs = [
+      { shortName: 'CN', value: options.commonName },
+      { shortName: 'C', value: options.countryName },
+      { shortName: 'ST', value: options.stateOrProvinceName },
+      { shortName: 'L', value: options.localityName },
+      { shortName: 'O', value: options.organizationName }
+    ].filter(attr => attr.value && attr.value.trim() !== '');
+
+    cert.setSubject(attrs);
+    cert.setIssuer(attrs);
+
+    // 6. Set Extensions
+    cert.setExtensions([
       {
-        keySize: options.keySize,
-        notAfterDate: DateTime.now().plus({ days: options.daysBeforeExpiry }).toJSDate(),
-        algorithm: 'sha256',
-        pkcs7: true,
-        extensions: [
+        name: 'basicConstraints',
+        cA: false,
+        critical: true
+      },
+      {
+        name: 'keyUsage',
+        keyCertSign: true,
+        digitalSignature: true,
+        nonRepudiation: true,
+        keyEncipherment: true,
+        dataEncipherment: true
+      },
+      {
+        name: 'extKeyUsage',
+        serverAuth: true,
+        clientAuth: true
+      },
+      {
+        name: 'subjectAltName',
+        altNames: [
           {
-            name: 'basicConstraints',
-            cA: false,
-            critical: true
+            type: 6, // 6 = URI (Uniform Resource Identifier)
+            value: `urn:${os.hostname()}:OIBus`
           },
           {
-            name: 'keyUsage',
-            usages: ['digitalSignature', 'keyEncipherment', 'dataEncipherment', 'nonRepudiation', 'keyCertSign']
-          },
-          {
-            name: 'extKeyUsage',
-            usages: ['clientAuth', 'serverAuth']
-          },
-          {
-            name: 'subjectAltName',
-            altNames: [
-              {
-                type: 'uri',
-                value: `urn:${os.hostname()}:OIBus`
-              },
-              {
-                // v5 uses string types, not numeric IDs (type: 2 is now "dns")
-                type: 'dns',
-                value: os.hostname()
-              }
-            ]
+            type: 2, // 2 = DNS
+            value: os.hostname()
           }
         ]
       }
-    );
+    ]);
+
+    // 7. Self-Sign the Certificate
+    // SHA-256 is standard for OPC UA
+    cert.sign(keys.privateKey, forge.md.sha256.create());
+
+    // 8. Export to PEM format
+    return {
+      private: forge.pki.privateKeyToPem(keys.privateKey),
+      public: forge.pki.publicKeyToPem(keys.publicKey),
+      cert: forge.pki.certificateToPem(cert)
+    };
   }
 
   async encryptConnectorSecrets<T>(newSettings: T, oldSettings: T | null, formSettings: OIBusObjectAttribute): Promise<T> {

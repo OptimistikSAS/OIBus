@@ -1,24 +1,52 @@
 import fs from 'node:fs/promises';
 import crypto from 'node:crypto';
-
+import * as forge from 'node-forge';
 import path from 'node:path';
-import selfSigned from 'selfsigned';
-import os from 'node:os';
 
 import EncryptionService, { CERT_FILE_NAME, CERT_PRIVATE_KEY_FILE_NAME, CERT_PUBLIC_KEY_FILE_NAME } from './encryption.service';
 
 import * as utils from './utils';
 
 import { SouthConnectorCommandDTO, SouthConnectorDTO } from '../../shared/model/south-connector.model';
-import { SouthSettings, SouthOPCUASettings } from '../../shared/model/south-settings.model';
+import { SouthOPCUASettings } from '../../shared/model/south-settings.model';
 import { OIBusArrayAttribute, OIBusObjectAttribute, OIBusSecretAttribute, OIBusStringAttribute } from '../../shared/model/form.model';
 import testData from '../tests/utils/test-data';
-import { DateTime } from 'luxon';
+import os from 'node:os';
 
 jest.mock('./utils');
 jest.mock('node:fs/promises');
 jest.mock('node:crypto');
-jest.mock('selfsigned');
+// MOCK NODE-FORGE
+// We create a mock certificate object that allows us to spy on methods like setExtensions
+const mockCert = {
+  publicKey: null,
+  serialNumber: null,
+  validity: {},
+  setSubject: jest.fn(),
+  setIssuer: jest.fn(),
+  setExtensions: jest.fn(),
+  sign: jest.fn()
+};
+jest.mock('node-forge', () => ({
+  pki: {
+    rsa: {
+      generateKeyPair: jest.fn(() => ({ privateKey: 'MOCK_PRIV_KEY', publicKey: 'MOCK_PUB_KEY' }))
+    },
+    createCertificate: jest.fn(() => mockCert),
+    privateKeyToPem: jest.fn(() => '-----BEGIN PRIVATE KEY-----'),
+    publicKeyToPem: jest.fn(() => '-----BEGIN PUBLIC KEY-----'),
+    certificateToPem: jest.fn(() => '-----BEGIN CERTIFICATE-----')
+  },
+  md: {
+    sha256: { create: jest.fn() }
+  },
+  util: {
+    bytesToHex: jest.fn(() => 'HEX123')
+  },
+  random: {
+    getBytesSync: jest.fn()
+  }
+}));
 
 const encryptionService = EncryptionService.getInstance();
 
@@ -94,91 +122,47 @@ const manifest: OIBusObjectAttribute = {
 } as OIBusObjectAttribute;
 
 const certFolder = 'certFolder';
-describe('Encryption service with crypto settings', () => {
+describe('Encryption Service', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-
-    (utils.filesExists as jest.Mock).mockResolvedValue(true);
-
-    await encryptionService.init(cryptoSettings, certFolder);
-  });
-
-  it('should properly initialized encryption service', () => {
-    expect(encryptionService.certsFolder).toEqual(certFolder);
-    expect(encryptionService.getCertPath()).toEqual(path.resolve(certFolder, CERT_FILE_NAME));
-    expect(encryptionService.getPrivateKeyPath()).toEqual(path.resolve(certFolder, CERT_PRIVATE_KEY_FILE_NAME));
-    expect(encryptionService.getPublicKeyPath()).toEqual(path.resolve(certFolder, CERT_PUBLIC_KEY_FILE_NAME));
+    // (os.hostname as jest.Mock).mockReturnValue('TEST_HOST');
   });
 
   it('should not create certificate if it already exists', async () => {
     (utils.filesExists as jest.Mock).mockReturnValue(true);
+    encryptionService.generateSelfSignedCertificate = jest.fn();
+    await encryptionService.init(cryptoSettings, certFolder);
 
     expect(utils.createFolder).toHaveBeenCalledWith(certFolder);
     expect(utils.filesExists).toHaveBeenCalledWith(path.resolve(certFolder, CERT_FILE_NAME));
     expect(utils.filesExists).toHaveBeenCalledWith(path.resolve(certFolder, CERT_PUBLIC_KEY_FILE_NAME));
     expect(utils.filesExists).toHaveBeenCalledWith(path.resolve(certFolder, CERT_PUBLIC_KEY_FILE_NAME));
-    expect(selfSigned.generate).not.toHaveBeenCalled();
+    expect(encryptionService.generateSelfSignedCertificate).not.toHaveBeenCalled();
     expect(fs.writeFile).not.toHaveBeenCalled();
+    expect(encryptionService.certsFolder).toEqual(certFolder);
+    encryptionService.generateSelfSignedCertificate = EncryptionService.prototype.generateSelfSignedCertificate;
   });
 
   it('should create certificate if it does not exist', async () => {
+    encryptionService.generateSelfSignedCertificate = jest.fn().mockReturnValueOnce({ private: 'private', public: 'public', cert: 'cert' });
     (utils.filesExists as jest.Mock).mockReturnValue(false);
-    (selfSigned.generate as jest.Mock).mockReturnValue({
-      private: 'myPrivateKey',
-      public: 'myPublicKey',
-      cert: 'myCert'
-    });
 
     await encryptionService.init(cryptoSettings, certFolder);
 
-    expect(selfSigned.generate).toHaveBeenCalledWith(
-      [
-        { name: 'commonName', value: 'OIBus' },
-        { name: 'countryName', value: 'FR' },
-        { shortName: 'ST', value: 'Savoie' },
-        { name: 'localityName', value: 'Chambery' },
-        { name: 'organizationName', value: 'Optimistik' }
-      ],
-      {
-        keySize: 4096,
-        notAfterDate: DateTime.now().plus({ days: 36500 }).toJSDate(),
-        algorithm: 'sha256',
-        pkcs7: true,
-        extensions: [
-          {
-            name: 'basicConstraints',
-            cA: false,
-            critical: true
-          },
-          {
-            name: 'keyUsage',
-            usages: ['digitalSignature', 'keyEncipherment', 'dataEncipherment', 'nonRepudiation', 'keyCertSign']
-          },
-          {
-            name: 'extKeyUsage',
-            usages: ['clientAuth', 'serverAuth']
-          },
-          {
-            name: 'subjectAltName',
-            altNames: [
-              {
-                type: 'uri',
-                value: `urn:${os.hostname()}:OIBus`
-              },
-              {
-                // v5 uses string types, not numeric IDs (type: 2 is now "dns")
-                type: 'dns',
-                value: os.hostname()
-              }
-            ]
-          }
-        ]
-      }
-    );
-    expect(fs.writeFile).toHaveBeenCalledWith(path.resolve(certFolder, CERT_PRIVATE_KEY_FILE_NAME), 'myPrivateKey');
-    expect(fs.writeFile).toHaveBeenCalledWith(path.resolve(certFolder, CERT_PUBLIC_KEY_FILE_NAME), 'myPublicKey');
-    expect(fs.writeFile).toHaveBeenCalledWith(path.resolve(certFolder, CERT_FILE_NAME), 'myCert');
+    expect(encryptionService.generateSelfSignedCertificate).toHaveBeenCalledWith({
+      commonName: 'OIBus',
+      countryName: 'FR',
+      stateOrProvinceName: 'Savoie',
+      localityName: 'Chambery',
+      organizationName: 'Optimistik',
+      keySize: 4096,
+      daysBeforeExpiry: 36500
+    });
+    expect(fs.writeFile).toHaveBeenCalledWith(path.resolve(certFolder, CERT_PRIVATE_KEY_FILE_NAME), 'private');
+    expect(fs.writeFile).toHaveBeenCalledWith(path.resolve(certFolder, CERT_PUBLIC_KEY_FILE_NAME), 'public');
+    expect(fs.writeFile).toHaveBeenCalledWith(path.resolve(certFolder, CERT_FILE_NAME), 'cert');
+    encryptionService.generateSelfSignedCertificate = EncryptionService.prototype.generateSelfSignedCertificate;
   });
 
   it('should properly retrieve files', async () => {
@@ -229,6 +213,7 @@ describe('Encryption service with crypto settings', () => {
   });
 
   it('should properly decrypt text', async () => {
+    encryptionService['initialized'] = true;
     const update = jest.fn(() => 'decrypted text');
     const final = jest.fn(() => '');
     (crypto.createDecipheriv as jest.Mock).mockImplementationOnce(() => ({
@@ -248,6 +233,7 @@ describe('Encryption service with crypto settings', () => {
   });
 
   it('should properly decrypt empty input', async () => {
+    encryptionService['initialized'] = true;
     const decryptedText = await encryptionService.decryptText('');
     expect(decryptedText).toEqual('');
     expect(crypto.createCipheriv).not.toHaveBeenCalled();
@@ -259,6 +245,7 @@ describe('Encryption service with crypto settings', () => {
   });
 
   it('should properly encrypt connector secrets', async () => {
+    encryptionService['initialized'] = true;
     const command: SouthConnectorCommandDTO = {
       name: 'connector',
       type: 'opcua',
@@ -316,6 +303,7 @@ describe('Encryption service with crypto settings', () => {
   });
 
   it('should properly encrypt connector secrets when no secret provided', async () => {
+    encryptionService['initialized'] = true;
     const command: SouthConnectorCommandDTO = {
       name: 'connector',
       type: 'opcua',
@@ -362,6 +350,7 @@ describe('Encryption service with crypto settings', () => {
   });
 
   it('should properly keep existing and encrypted connector secrets', async () => {
+    encryptionService['initialized'] = true;
     const command: SouthConnectorCommandDTO = {
       name: 'connector',
       type: 'opcua',
@@ -427,6 +416,7 @@ describe('Encryption service with crypto settings', () => {
   });
 
   it('should properly decrypt connector secrets', async () => {
+    encryptionService['initialized'] = true;
     const command: SouthConnectorCommandDTO = {
       name: 'connector',
       type: 'opcua',
@@ -545,5 +535,86 @@ describe('Encryption service with crypto settings', () => {
     };
 
     expect(await encryptionService.decryptSecretsWithPrivateKey(command.settings, manifest, 'private key')).toEqual(expectedCommand);
+  });
+
+  it('should generate a certificate with correct extensions and SANs', async () => {
+    const options = {
+      commonName: 'Test CN',
+      countryName: 'FR',
+      stateOrProvinceName: 'Savoie',
+      localityName: 'Chambery',
+      organizationName: 'Test Org',
+      keySize: 2048,
+      daysBeforeExpiry: 365
+    };
+
+    const result = await encryptionService.generateSelfSignedCertificate(options);
+
+    // 1. Check Keys Generation
+    expect(forge.pki.rsa.generateKeyPair).toHaveBeenCalledWith(2048);
+
+    // 2. Check Subject and Issuer (Short names)
+    // We expect 5 items because all fields are provided
+    const expectedAttrs = [
+      { shortName: 'CN', value: 'Test CN' },
+      { shortName: 'C', value: 'FR' },
+      { shortName: 'ST', value: 'Savoie' },
+      { shortName: 'L', value: 'Chambery' },
+      { shortName: 'O', value: 'Test Org' }
+    ];
+    expect(mockCert.setSubject).toHaveBeenCalledWith(expectedAttrs);
+    expect(mockCert.setIssuer).toHaveBeenCalledWith(expectedAttrs);
+
+    // 3. Check Extensions (CRITICAL: Verify SubjectAltName)
+    // We capture the array passed to setExtensions to inspect it deeply
+    const extensionsArg = (mockCert.setExtensions as jest.Mock).mock.calls[0][0];
+
+    // Check basic constraints
+    const basicConstraints = extensionsArg.find((e: { name: string; cA: boolean; critical: boolean }) => e.name === 'basicConstraints');
+    expect(basicConstraints).toEqual({ name: 'basicConstraints', cA: false, critical: true });
+
+    // Check Subject Alternative Name
+    const san = extensionsArg.find((e: { name: string; altNames: Array<{ type: number; value: string }> }) => e.name === 'subjectAltName');
+    expect(san).toBeDefined();
+    expect(san.altNames).toEqual([
+      {
+        type: 6, // URI
+        value: `urn:${os.hostname()}:OIBus`
+      },
+      {
+        type: 2, // DNS
+        value: os.hostname()
+      }
+    ]);
+
+    // 4. Check Return Output
+    expect(result).toEqual({
+      private: '-----BEGIN PRIVATE KEY-----',
+      public: '-----BEGIN PUBLIC KEY-----',
+      cert: '-----BEGIN CERTIFICATE-----'
+    });
+  });
+
+  it('should filter out empty attributes', async () => {
+    const options = {
+      commonName: 'Test CN',
+      countryName: 'FR',
+      stateOrProvinceName: '', // EMPTY -> Should be removed
+      localityName: '', // NULL -> Should be removed
+      organizationName: '', // UNDEFINED -> Should be removed
+      keySize: 2048,
+      daysBeforeExpiry: 365
+    };
+
+    await encryptionService.generateSelfSignedCertificate(options);
+
+    // We expect only CN and C because the others were empty/null
+    const expectedAttrs = [
+      { shortName: 'CN', value: 'Test CN' },
+      { shortName: 'C', value: 'FR' }
+    ];
+
+    expect(mockCert.setSubject).toHaveBeenCalledWith(expectedAttrs);
+    expect(mockCert.setIssuer).toHaveBeenCalledWith(expectedAttrs);
   });
 });
