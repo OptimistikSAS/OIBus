@@ -21,19 +21,50 @@ runs:
       with:
         node-version-file: backend/package.json
 
-    - name: Load cached node_modules
-      id: cache-deps
-      uses: actions/cache@v5
+      # 1. Backend Cache
+    - name: Cache Backend
+      id: cache-backend
+      uses: actions/cache@v4
       with:
-        path: |
-          backend/node_modules
-          frontend/node_modules
-          launcher/node_modules
-          backend/package-lock.json
-          frontend/package-lock.json
-          launcher/package-lock.json
-        # Key includes hashes of ALL lockfiles + cache_version input
-        key: oibus-deps-${{ runner.os }}-${{ runner.arch }}-${{ inputs.cache_version }}-${{ hashFiles('backend/package-lock.json', 'frontend/package-lock.json', 'launcher/package-lock.json') }}
+       path: backend/node_modules
+       key: backend-deps-${{ runner.os }}-${{ inputs.cache_version }}-${{ hashFiles('backend/package-lock.json') }}
+
+      # 2. Frontend Cache
+    - name: Cache Frontend
+      id: cache-frontend
+      uses: actions/cache@v4
+      with:
+       path: frontend/node_modules
+       key: frontend-deps-${{ runner.os }}-${{ inputs.cache_version }}-${{ hashFiles('frontend/package-lock.json') }}
+
+      # 3. Launcher Cache
+    - name: Cache Launcher
+      id: cache-launcher
+      uses: actions/cache@v4
+      with:
+        path: launcher/node_modules
+        key: launcher-deps-${{ runner.os }}-${{ inputs.cache_version }}-${{ hashFiles('launcher/package-lock.json') }}
+
+    # --- INSTALL DEPENDENCIES ---
+    - name: Install Backend Dependencies
+      if: ${{ steps.cache-backend.outputs.cache-hit != 'true' }}
+      working-directory: backend
+      shell: bash
+      run: npm ci
+
+    - name: Install Frontend Dependencies
+      if: ${{ steps.cache-frontend.outputs.cache-hit != 'true' }}
+      working-directory: frontend
+      shell: bash
+      run: npm ci
+
+    - name: Install Launcher Dependencies
+      if: ${{ steps.cache-launcher.outputs.cache-hit != 'true' }}
+      working-directory: launcher
+      shell: bash
+      run: npm ci
+
+    # --- BUMP VERSIONS (After Install) ---
 
     - name: Bump versions if pre-release
       if: ${{ inputs.prerelease == 'true' }}
@@ -42,7 +73,6 @@ runs:
         TAG_NAME=${{ inputs.tag_name }}
         echo "Bumping versions to $TAG_NAME"
         
-        # Function to bump version in a directory
         bump_version() {
           if [ -d "$1" ]; then
             echo "Bumping $1..."
@@ -56,23 +86,3 @@ runs:
         bump_version "frontend"
         bump_version "launcher"
         bump_version "documentation"
-
-    # 5. Install Dependencies (All Projects)
-    # We install dependencies only if the combined cache was NOT hit
-    - name: Install Backend Dependencies
-      if: ${{ steps.cache-deps.outputs.cache-hit != 'true' }}
-      working-directory: backend
-      shell: bash
-      run: npm ci
-
-    - name: Install Frontend Dependencies
-      if: ${{ steps.cache-deps.outputs.cache-hit != 'true' }}
-      working-directory: frontend
-      shell: bash
-      run: npm ci
-
-    - name: Install Launcher Dependencies
-      if: ${{ steps.cache-deps.outputs.cache-hit != 'true' }}
-      working-directory: launcher
-      shell: bash
-      run: npm ci
