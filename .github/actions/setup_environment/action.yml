@@ -24,7 +24,7 @@ runs:
       # 1. Backend Cache
     - name: Cache Backend
       id: cache-backend
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
        path: backend/node_modules
        key: backend-deps-${{ runner.os }}-${{ inputs.cache_version }}-${{ hashFiles('backend/package-lock.json') }}
@@ -32,7 +32,7 @@ runs:
       # 2. Frontend Cache
     - name: Cache Frontend
       id: cache-frontend
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
        path: frontend/node_modules
        key: frontend-deps-${{ runner.os }}-${{ inputs.cache_version }}-${{ hashFiles('frontend/package-lock.json') }}
@@ -40,7 +40,7 @@ runs:
       # 3. Launcher Cache
     - name: Cache Launcher
       id: cache-launcher
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: launcher/node_modules
         key: launcher-deps-${{ runner.os }}-${{ inputs.cache_version }}-${{ hashFiles('launcher/package-lock.json') }}
