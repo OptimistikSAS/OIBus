@@ -69,6 +69,84 @@ jobs:
         working-directory: ./backend
         run: npm run build:${{ matrix.config['platform'] }}
 
+      - name: Cache Google Cloud KMS Provider
+        if: ${{ matrix.config['platform'] == 'win-x64' }}
+        id: cache-kms
+        uses: actions/cache@v4
+        with:
+          path: kmscng.zip
+          # key includes version; if you change the version later, the cache invalidates automatically
+          key: google-cloud-kms-provider-v1.3
+
+      - name: Install Google Cloud KMS Provider
+        if: ${{ matrix.config['platform'] == 'win-x64' }}
+        shell: pwsh
+        run: |
+          $zipFile = "kmscng.zip"
+          $extractPath = "kmscng_extracted"
+          $url = "https://github.com/GoogleCloudPlatform/kms-integrations/releases/download/cng-v1.3/kmscng-1.3-windows-amd64.zip"
+          
+          # Check if we have the file from cache
+          if (Test-Path $zipFile) {
+              Write-Host "Cache Hit: Using existing installer."
+          } else {
+              Write-Host "Cache Miss: Downloading from $url..."
+              Invoke-WebRequest $url -OutFile $zipFile
+          }
+          
+          # Extract
+          Write-Host "Extracting..."
+          Expand-Archive -Path $zipFile -DestinationPath $extractPath -Force
+          
+          # Find MSI
+          $msi = Get-ChildItem -Path $extractPath -Filter "*.msi" -Recurse | Select-Object -First 1 -ExpandProperty FullName
+          
+          if (-not $msi) { throw "Error: Could not find MSI file in the package." }
+          
+          # Install
+          Write-Host "Installing MSI: $msi"
+          Start-Process msiexec.exe -ArgumentList "/i `"$msi`" /quiet /norestart" -Wait
+          Write-Host "Installation Complete."
+      
+      - name: Authenticate to Google Cloud
+        if: ${{ matrix.config['platform'] == 'win-x64' }}
+        id: auth
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
+
+      - name: Sign OIBus binaries
+        if: ${{ matrix.config['platform'] == 'win-x64' }}
+        shell: pwsh
+        env:
+          CERT_BASE64_CONTENT: ${{ secrets.CERT }}
+          CERT_PATH: "C:\\oibus.crt"
+        run: |
+          try {
+              # 1. Decode Certificate
+              $encodedBytes = [System.Convert]::FromBase64String("$env:CERT_BASE64_CONTENT")
+              Set-Content -Path "$env:CERT_PATH" -AsByteStream -Value $encodedBytes
+              
+              # 2. Find the System x64 Signtool (Fixes "term not recognized")
+              $signtool = Get-ChildItem -Path "C:\Program Files (x86)\Windows Kits" -Filter "signtool.exe" -Recurse | Where-Object { $_.FullName -like "*x64*" } | Select-Object -First 1 -ExpandProperty FullName
+              
+              if (-not $signtool) { throw "Could not find x64 signtool.exe on this runner." }
+              Write-Host "Found Signtool at: $signtool"
+        
+              # 3. Sign OIBus binary
+              & $signtool sign /debug /fd SHA256 /tr http://timestamp.comodoca.com /td SHA256 /f "$env:CERT_PATH" /csp "Google Cloud KMS Provider" /kc projects/oibus-dev/locations/global/keyRings/sectigo/cryptoKeys/202512-code-signing/cryptoKeyVersions/1 ./build/bin/${{ matrix.config['platform'] }}/binaries/oibus.exe
+              
+              # 4. Sign OIBus launcher
+              & $signtool sign /debug /fd SHA256 /tr http://timestamp.comodoca.com /td SHA256 /f "$env:CERT_PATH" /csp "Google Cloud KMS Provider" /kc projects/oibus-dev/locations/global/keyRings/sectigo/cryptoKeys/202512-code-signing/cryptoKeyVersions/1 ./build/bin/${{ matrix.config['platform'] }}/oibus-launcher.exe
+          }
+            catch {
+            Write-Error $_
+            exit 1
+          }
+            finally {
+            if (Test-Path "$env:CERT_PATH") { Remove-Item -Path "$env:CERT_PATH" -Force }
+          }
+
       - name: Test OIBus runtime for ${{ matrix.config['friendlyName'] }}
         run: |
           cd build/bin/${{ matrix.config['platform'] }}
@@ -109,20 +187,20 @@ jobs:
         if: ${{ matrix.config['platform'] == 'win-x64' }}
         shell: pwsh
         env:
-          PFX_BASE64_CONTENT: ${{ secrets.PFX_BASE64_CONTENT }}
-          PFX_PASSWORD: ${{ secrets.PFX_PASSWORD }}
-          PFX_PATH: "C:\\oibus.pfx"
+          SIGN_TOOL_PATH: "${{ github.workspace }}\\build\\deps\\win-x64\\sign-kms.bat"
+          CERT_BASE64_CONTENT: ${{ secrets.CERT }}
+          CERT_PATH: "C:\\oibus.crt"
         working-directory: ./backend
         run: |
           try {
-            $encodedBytes = [System.Convert]::FromBase64String("$env:PFX_BASE64_CONTENT")
-            Set-Content -Path "$env:PFX_PATH" -AsByteStream -Value $encodedBytes
-            $env:PFX_PATH = "$env:PFX_PATH"
+            $encodedBytes = [System.Convert]::FromBase64String("$env:CERT_BASE64_CONTENT")
+            Set-Content -Path "$env:CERT_PATH" -AsByteStream -Value $encodedBytes
+            $env:CERT_PATH = "$env:CERT_PATH"
             npm run build:win-setup-x64
           }
           finally {
-            if (Test-Path "$env:PFX_PATH") {
-              Remove-Item -Path "$env:PFX_PATH" -Force
+            if (Test-Path "$env:CERT_PATH") {
+              Remove-Item -Path "$env:CERT_PATH" -Force
             }
           }
 

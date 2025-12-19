@@ -5,11 +5,6 @@
   #define MyAppVersion "0.0.0-LOCAL"
 #endif
 
-; 2. Handle Code Signing
-#ifdef MyCertFile
-  #define EnableSigning
-#endif
-
 ; --- Standard Definitions ---
 #define MyAppName "OIBus"
 #define MyAppPublisher "Optimistik SAS"
@@ -22,7 +17,9 @@
 ; --- Signing Configuration ---
 #ifdef EnableSigning
   SignedUninstaller=yes
-  SignTool=signtool /fd SHA256 /tr http://timestamp.comodoca.com /td SHA256 /n $q{#MyAppPublisher}$q /d $q{#MyAppName}$q /f $q{#MyCertFile}$q /p $q{#MyCertPassword}$q $f
+  ; Use the "KMSSign" tool.
+    ; The definition of this tool is passed via the command line (/SKMSSign=...)
+    SignTool=KMSSign $f
 #else
   SignedUninstaller=no
 #endif
@@ -37,8 +34,8 @@ AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 
 ; Architecture & Paths
-ArchitecturesAllowed=x64
-ArchitecturesInstallIn64BitMode=x64
+ArchitecturesAllowed=x64compatible
+ArchitecturesInstallIn64BitMode=x64compatible
 DefaultDirName={autopf}\{#MyAppName}
 OutputDir=..\..\bin\win-setup-release
 OutputBaseFilename=oibus-setup
@@ -60,7 +57,6 @@ WizardImageFile=installer_oibus.bmp
 WizardSmallImageFile=installer_small.bmp
 WizardStyle=modern
 WizardSizePercent=100
-WizardResizable=no
 LicenseFile=..\..\..\LICENSE
 
 [Languages]
