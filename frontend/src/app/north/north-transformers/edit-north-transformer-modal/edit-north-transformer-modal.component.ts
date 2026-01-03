@@ -13,12 +13,23 @@ import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.mo
 import { CertificateDTO } from '../../../../../../backend/shared/model/certificate.model';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { OIBUS_FORM_MODE } from '../../../shared/form/oibus-form-mode.token';
+import { OibusInputDataTypeEnumPipe } from '../../../shared/oibus-input-data-type-enum.pipe';
+import { SouthConnectorLightDTO } from '../../../../../../backend/shared/model/south-connector.model';
+import { OIBusSouthTypeEnumPipe } from '../../../shared/oibus-south-type-enum.pipe';
 
 @Component({
   selector: 'oib-edit-north-transformer-modal',
   templateUrl: './edit-north-transformer-modal.component.html',
   styleUrl: './edit-north-transformer-modal.component.scss',
-  imports: [ReactiveFormsModule, TranslateDirective, SaveButtonComponent, TranslatePipe, OIBusObjectFormControlComponent],
+  imports: [
+    ReactiveFormsModule,
+    TranslateDirective,
+    SaveButtonComponent,
+    TranslatePipe,
+    OIBusObjectFormControlComponent,
+    OibusInputDataTypeEnumPipe,
+    OIBusSouthTypeEnumPipe
+  ],
   viewProviders: [
     {
       provide: OIBUS_FORM_MODE,
@@ -38,6 +49,7 @@ export class EditNorthTransformerModalComponent {
   form: FormGroup<{
     transformerId: FormControl<string | null>;
     options: FormGroup;
+    southId: FormControl<string | null>;
   }> | null = null;
   inputTypeControl: FormControl<string | null> | null = null;
   allTransformers: Array<TransformerDTO> = [];
@@ -47,8 +59,10 @@ export class EditNorthTransformerModalComponent {
   manifest: OIBusObjectAttribute | null = null;
   scanModes: Array<ScanModeDTO> = [];
   certificates: Array<CertificateDTO> = [];
+  southConnectors: Array<SouthConnectorLightDTO> = [];
 
   prepareForCreation(
+    southConnectors: Array<SouthConnectorLightDTO>,
     scanModes: Array<ScanModeDTO>,
     certificates: Array<CertificateDTO>,
     selectableInputs: Array<string>,
@@ -56,6 +70,7 @@ export class EditNorthTransformerModalComponent {
     supportedOutputTypes: Array<string>
   ) {
     this.mode = 'create';
+    this.southConnectors = southConnectors;
     this.scanModes = scanModes;
     this.certificates = certificates;
     this.selectableInputs = selectableInputs;
@@ -65,7 +80,8 @@ export class EditNorthTransformerModalComponent {
     this.inputTypeControl.valueChanges.subscribe(inputType => {
       this.form!.setValue({
         transformerId: null,
-        options: {}
+        options: {},
+        southId: null
       });
       this.selectableTransformers = this.allTransformers.filter(
         element =>
@@ -79,6 +95,7 @@ export class EditNorthTransformerModalComponent {
   }
 
   prepareForEdition(
+    southConnectors: Array<SouthConnectorLightDTO>,
     scanModes: Array<ScanModeDTO>,
     certificates: Array<CertificateDTO>,
     transformerWithOptionsToEdit: TransformerDTOWithOptions,
@@ -86,6 +103,7 @@ export class EditNorthTransformerModalComponent {
     supportedOutputTypes: Array<string>
   ) {
     this.mode = 'edit';
+    this.southConnectors = southConnectors;
     this.scanModes = scanModes;
     this.certificates = certificates;
     this.supportedOutputTypes = supportedOutputTypes;
@@ -99,7 +117,11 @@ export class EditNorthTransformerModalComponent {
     this.createOptionsForm(transformerWithOptionsToEdit.transformer);
     // trigger rebuild of options form
     this.form!.patchValue(
-      { transformerId: transformerWithOptionsToEdit.transformer.id, options: transformerWithOptionsToEdit.options },
+      {
+        transformerId: transformerWithOptionsToEdit.transformer.id,
+        options: transformerWithOptionsToEdit.options,
+        southId: transformerWithOptionsToEdit.south?.id || null
+      },
       { emitEvent: false }
     );
   }
@@ -107,7 +129,8 @@ export class EditNorthTransformerModalComponent {
   buildForm() {
     this.form = this.fb.group({
       transformerId: this.fb.control<string | null>(null),
-      options: this.fb.group({})
+      options: this.fb.group({}),
+      southId: this.fb.control<string | null>(null)
     });
     this.form!.controls.transformerId.valueChanges.pipe(
       switchMap(transformerId => (transformerId ? this.transformerService.findById(transformerId) : of(null)))
@@ -146,15 +169,17 @@ export class EditNorthTransformerModalComponent {
     }
 
     const transformer = this.selectableTransformers.find(transformer => transformer.id === this.form!.value.transformerId)!;
+    const south = this.form!.value.southId ? this.southConnectors.find(south => south.id === this.form!.value.southId)! : undefined;
     const inputType = this.inputTypeControl ? this.inputTypeControl.getRawValue()! : transformer.inputType;
 
-    if (!transformer || !inputType) {
+    if (!transformer || !inputType || (!south && this.form!.value.southId)) {
       return;
     }
 
     this.modal.close({
       transformer,
       options: this.form!.value.options,
+      south,
       inputType
     });
   }

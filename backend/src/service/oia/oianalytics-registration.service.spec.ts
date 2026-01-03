@@ -14,6 +14,7 @@ import testData from '../../tests/utils/test-data';
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
 import { flushPromises } from '../../tests/utils/test-utils';
 import JoiValidator from '../../web-server/controllers/validators/joi.validator';
+import * as OIAnalyticsTestConnectionUtils from './oianalytics.utils';
 import OIAnalyticsClient from './oianalytics-client.service';
 import OianalyticsClientMock from '../../tests/__mocks__/service/oia/oianalytics-client.mock';
 import { NotFoundError } from '../../model/types';
@@ -164,7 +165,15 @@ describe('OIAnalytics Registration Service', () => {
         updateNorth: true,
         deleteNorth: true,
         testNorthConnection: true,
-        setpoint: true
+        setpoint: true,
+        searchNorthCacheContent: true,
+        getNorthCacheFileContent: true,
+        removeNorthCacheContent: true,
+        moveNorthCacheContent: true,
+        searchHistoryCacheContent: true,
+        getHistoryCacheFileContent: true,
+        removeHistoryCacheContent: true,
+        moveHistoryCacheContent: true
       }
     };
     const result = {
@@ -202,6 +211,84 @@ describe('OIAnalytics Registration Service', () => {
     expect(encryptionService.encryptText).toHaveBeenCalledTimes(1);
     expect(encryptionService.encryptText).toHaveBeenCalledWith('private key');
     expect(oIAnalyticsRegistrationRepository.updateKeys).toHaveBeenCalledWith('private key', 'public key');
+  });
+
+  it('should test connection with provided password', async () => {
+    const command: RegistrationSettingsCommandDTO = {
+      ...testData.oIAnalytics.registration.command,
+      proxyPassword: 'provided-password'
+    };
+    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(testData.oIAnalytics.registration.completed);
+
+    const testConnectionSpy = jest.spyOn(OIAnalyticsTestConnectionUtils, 'testOIAnalyticsConnection').mockResolvedValue(undefined);
+
+    await service.testConnection(command);
+
+    expect(encryptionService.encryptText).toHaveBeenCalledWith('provided-password');
+    expect(testConnectionSpy).toHaveBeenCalled();
+    testConnectionSpy.mockRestore();
+  });
+
+  it('should test connection with existing password if not provided', async () => {
+    const command: RegistrationSettingsCommandDTO = {
+      ...testData.oIAnalytics.registration.command,
+      proxyPassword: ''
+    };
+    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(testData.oIAnalytics.registration.completed);
+
+    const testConnectionSpy = jest.spyOn(OIAnalyticsTestConnectionUtils, 'testOIAnalyticsConnection').mockResolvedValue(undefined);
+
+    await service.testConnection(command);
+
+    expect(encryptionService.encryptText).not.toHaveBeenCalled();
+    expect(testConnectionSpy).toHaveBeenCalled();
+    testConnectionSpy.mockRestore();
+  });
+
+  it('should test connection when already registered (using token)', async () => {
+    const command: RegistrationSettingsCommandDTO = {
+      ...testData.oIAnalytics.registration.command
+    };
+    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValue({
+      ...testData.oIAnalytics.registration.completed,
+      status: 'REGISTERED',
+      token: 'encrypted-token'
+    });
+
+    const testConnectionSpy = jest.spyOn(OIAnalyticsTestConnectionUtils, 'testOIAnalyticsConnection').mockResolvedValue(undefined);
+
+    await service.testConnection(command);
+
+    expect(testConnectionSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        auth: { type: 'bearer', token: 'encrypted-token' },
+        accept401AsSuccess: false
+      })
+    );
+    testConnectionSpy.mockRestore();
+  });
+
+  it('should test connection when not registered (accept 401)', async () => {
+    const command: RegistrationSettingsCommandDTO = {
+      ...testData.oIAnalytics.registration.command
+    };
+    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValue({
+      ...testData.oIAnalytics.registration.completed,
+      status: 'PENDING',
+      token: null
+    });
+
+    const testConnectionSpy = jest.spyOn(OIAnalyticsTestConnectionUtils, 'testOIAnalyticsConnection').mockResolvedValue(undefined);
+
+    await service.testConnection(command);
+
+    expect(testConnectionSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        auth: undefined,
+        accept401AsSuccess: true
+      })
+    );
+    testConnectionSpy.mockRestore();
   });
 
   it('should edit registration with proxy', async () => {
@@ -247,7 +334,15 @@ describe('OIAnalytics Registration Service', () => {
         updateNorth: true,
         deleteNorth: true,
         testNorthConnection: true,
-        setpoint: true
+        setpoint: true,
+        searchNorthCacheContent: true,
+        getNorthCacheFileContent: true,
+        removeNorthCacheContent: true,
+        moveNorthCacheContent: true,
+        searchHistoryCacheContent: true,
+        getHistoryCacheFileContent: true,
+        removeHistoryCacheContent: true,
+        moveHistoryCacheContent: true
       }
     };
     (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.registration.completed);
