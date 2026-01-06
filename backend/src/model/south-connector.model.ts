@@ -10,6 +10,10 @@ export interface SouthConnectorEntityLight extends BaseEntity {
   enabled: boolean;
 }
 
+export interface SouthConnectorItemEntityLight extends BaseEntity {
+  name: string;
+}
+
 export interface SouthConnectorEntity<S extends SouthSettings, I extends SouthItemSettings> extends BaseEntity {
   name: string;
   type: OIBusSouthType;

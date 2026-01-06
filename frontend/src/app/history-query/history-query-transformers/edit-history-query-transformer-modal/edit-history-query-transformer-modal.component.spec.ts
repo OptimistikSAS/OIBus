@@ -180,7 +180,8 @@ describe('EditHistoryQueryTransformerModalComponent', () => {
             { pointId: 'pointId2', nodeId: 'nodeId2', dataType: 'Int32' }
           ]
         },
-        inputType: transformer.inputType
+        inputType: transformer.inputType,
+        items: []
       },
       [transformer],
       ['mqtt']
@@ -198,7 +199,8 @@ describe('EditHistoryQueryTransformerModalComponent', () => {
           { pointId: 'pointId2', nodeId: 'nodeId2', dataType: 'Int32' }
         ]
       },
-      inputType: transformer.inputType
+      inputType: transformer.inputType,
+      items: []
     });
   });
 });
