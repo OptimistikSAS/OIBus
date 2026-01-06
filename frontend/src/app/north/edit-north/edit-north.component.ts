@@ -353,7 +353,8 @@ export class EditNorthComponent implements OnInit, CanComponentDeactivate {
         transformerId: element.transformer.id,
         options: element.options,
         inputType: element.inputType,
-        southId: element.south?.id
+        southId: element.south?.id,
+        items: [] // TODO
       }))
     };
   }
