@@ -122,6 +122,9 @@ export default class NorthService {
         throw new NotFoundError(`Could not find South connector "${transformerIdWithOptions.southId}"`);
       }
 
+      const items = transformerIdWithOptions.southId
+        ? this.southConnectorRepository.findAllItemsForSouth(transformerIdWithOptions.southId)
+        : [];
       return {
         id: '',
         transformer: foundTransformer,
@@ -129,7 +132,8 @@ export default class NorthService {
         inputType: transformerIdWithOptions.inputType,
         south: south
           ? { id: south.id, type: south.type, name: south.name, description: south.description, enabled: south.enabled }
-          : undefined
+          : undefined,
+        items: transformerIdWithOptions.items
       };
     });
     this.northConnectorRepository.saveNorth(northEntity);
@@ -171,6 +175,9 @@ export default class NorthService {
         throw new NotFoundError(`Could not find South connector "${transformerIdWithOptions.southId}"`);
       }
 
+      const items = transformerIdWithOptions.southId
+        ? this.southConnectorRepository.findAllItemsForSouth(transformerIdWithOptions.southId)
+        : [];
       return {
         id: transformerIdWithOptions.id,
         transformer: foundTransformer,
@@ -178,7 +185,8 @@ export default class NorthService {
         inputType: transformerIdWithOptions.inputType,
         south: south
           ? { id: south.id, type: south.type, name: south.name, description: south.description, enabled: south.enabled }
-          : undefined
+          : undefined,
+        items: transformerIdWithOptions.items
       };
     });
 
@@ -421,7 +429,8 @@ export const toNorthConnectorDTO = (northEntity: NorthConnectorEntity<NorthSetti
       transformer: toTransformerDTO(transformerWithOptions.transformer),
       options: transformerWithOptions.options,
       inputType: transformerWithOptions.inputType,
-      south: transformerWithOptions.south
+      south: transformerWithOptions.south,
+      items: transformerWithOptions.items
     }))
   } as NorthConnectorDTO;
 };

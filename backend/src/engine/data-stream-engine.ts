@@ -372,7 +372,8 @@ export default class DataStreamEngine {
           transformer: element.transformer,
           options: element.options,
           inputType: element.inputType,
-          south: undefined
+          south: undefined,
+          items: element.items
         }))
       },
       logger,

@@ -232,7 +232,7 @@ describe('Transformer Service', () => {
     transformer.functionName = 'csv-to-mqtt';
     expect(
       createTransformer(
-        { id: 'northTransformerId1', transformer, options: {}, inputType: 'any', south: undefined },
+        { id: 'northTransformerId1', transformer, options: {}, inputType: 'any', south: undefined, items: [] },
         testData.north.list[0],
         logger
       )
@@ -241,7 +241,7 @@ describe('Transformer Service', () => {
     transformer.functionName = 'csv-to-time-values';
     expect(
       createTransformer(
-        { id: 'northTransformerId1', transformer, options: {}, inputType: 'any', south: undefined },
+        { id: 'northTransformerId1', transformer, options: {}, inputType: 'any', south: undefined, items: [] },
         testData.north.list[0],
         logger
       )
@@ -250,7 +250,7 @@ describe('Transformer Service', () => {
     transformer.functionName = 'json-to-csv';
     expect(
       createTransformer(
-        { id: 'northTransformerId1', transformer, options: {}, inputType: 'any', south: undefined },
+        { id: 'northTransformerId1', transformer, options: {}, inputType: 'any', south: undefined, items: [] },
         testData.north.list[0],
         logger
       )
@@ -259,7 +259,7 @@ describe('Transformer Service', () => {
     transformer.functionName = 'json-to-mqtt';
     expect(
       createTransformer(
-        { id: 'northTransformerId1', transformer, options: {}, inputType: 'any', south: undefined },
+        { id: 'northTransformerId1', transformer, options: {}, inputType: 'any', south: undefined, items: [] },
         testData.north.list[0],
         logger
       )
@@ -268,7 +268,7 @@ describe('Transformer Service', () => {
     transformer.functionName = 'json-to-time-values';
     expect(
       createTransformer(
-        { id: 'northTransformerId1', transformer, options: {}, inputType: 'any', south: undefined },
+        { id: 'northTransformerId1', transformer, options: {}, inputType: 'any', south: undefined, items: [] },
         testData.north.list[0],
         logger
       )
@@ -277,7 +277,7 @@ describe('Transformer Service', () => {
     transformer.functionName = 'time-values-to-csv';
     expect(
       createTransformer(
-        { id: 'northTransformerId1', transformer, options: {}, inputType: 'time-values', south: undefined },
+        { id: 'northTransformerId1', transformer, options: {}, inputType: 'time-values', south: undefined, items: [] },
         testData.north.list[0],
         logger
       )
@@ -286,7 +286,7 @@ describe('Transformer Service', () => {
     transformer.functionName = 'time-values-to-json';
     expect(
       createTransformer(
-        { id: 'northTransformerId1', transformer, options: {}, inputType: 'time-values', south: undefined },
+        { id: 'northTransformerId1', transformer, options: {}, inputType: 'time-values', south: undefined, items: [] },
         testData.north.list[0],
         logger
       )
@@ -295,7 +295,7 @@ describe('Transformer Service', () => {
     transformer.functionName = 'time-values-to-modbus';
     expect(
       createTransformer(
-        { id: 'northTransformerId1', transformer, options: {}, inputType: 'time-values', south: undefined },
+        { id: 'northTransformerId1', transformer, options: {}, inputType: 'time-values', south: undefined, items: [] },
         testData.north.list[0],
         logger
       )
@@ -304,7 +304,7 @@ describe('Transformer Service', () => {
     transformer.functionName = 'time-values-to-mqtt';
     expect(
       createTransformer(
-        { id: 'northTransformerId1', transformer, options: {}, inputType: 'time-values', south: undefined },
+        { id: 'northTransformerId1', transformer, options: {}, inputType: 'time-values', south: undefined, items: [] },
         testData.north.list[0],
         logger
       )
@@ -313,7 +313,7 @@ describe('Transformer Service', () => {
     transformer.functionName = 'time-values-to-oianalytics';
     expect(
       createTransformer(
-        { id: 'northTransformerId1', transformer, options: {}, inputType: 'time-values', south: undefined },
+        { id: 'northTransformerId1', transformer, options: {}, inputType: 'time-values', south: undefined, items: [] },
         testData.north.list[0],
         logger
       )
@@ -322,7 +322,7 @@ describe('Transformer Service', () => {
     transformer.functionName = 'time-values-to-opcua';
     expect(
       createTransformer(
-        { id: 'northTransformerId1', transformer, options: {}, inputType: 'time-values', south: undefined },
+        { id: 'northTransformerId1', transformer, options: {}, inputType: 'time-values', south: undefined, items: [] },
         testData.north.list[0],
         logger
       )
@@ -331,7 +331,7 @@ describe('Transformer Service', () => {
     transformer.functionName = 'setpoint-to-modbus';
     expect(
       createTransformer(
-        { id: 'northTransformerId1', transformer, options: {}, inputType: 'setpoint', south: undefined },
+        { id: 'northTransformerId1', transformer, options: {}, inputType: 'setpoint', south: undefined, items: [] },
         testData.north.list[0],
         logger
       )
@@ -340,7 +340,7 @@ describe('Transformer Service', () => {
     transformer.functionName = 'setpoint-to-mqtt';
     expect(
       createTransformer(
-        { id: 'northTransformerId1', transformer, options: {}, inputType: 'setpoint', south: undefined },
+        { id: 'northTransformerId1', transformer, options: {}, inputType: 'setpoint', south: undefined, items: [] },
         testData.north.list[0],
         logger
       )
@@ -349,7 +349,7 @@ describe('Transformer Service', () => {
     transformer.functionName = 'setpoint-to-opcua';
     expect(
       createTransformer(
-        { id: 'northTransformerId1', transformer, options: {}, inputType: 'setpoint', south: undefined },
+        { id: 'northTransformerId1', transformer, options: {}, inputType: 'setpoint', south: undefined, items: [] },
         testData.north.list[0],
         logger
       )
@@ -358,7 +358,7 @@ describe('Transformer Service', () => {
     transformer.functionName = 'bad-id';
     expect(() =>
       createTransformer(
-        { id: 'northTransformerId1', transformer, options: {}, inputType: 'any', south: undefined },
+        { id: 'northTransformerId1', transformer, options: {}, inputType: 'any', south: undefined, items: [] },
         testData.north.list[0],
         logger
       )
@@ -371,7 +371,7 @@ describe('Transformer Service', () => {
     const transformer: CustomTransformer = JSON.parse(JSON.stringify(testData.transformers.list[0]));
     expect(
       createTransformer(
-        { id: 'northTransformerId1', transformer, options: {}, inputType: 'time-values', south: undefined },
+        { id: 'northTransformerId1', transformer, options: {}, inputType: 'time-values', south: undefined, items: [] },
         testData.north.list[0],
         logger
       )

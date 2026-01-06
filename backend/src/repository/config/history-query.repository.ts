@@ -12,10 +12,12 @@ import { HistoryTransformerWithOptions } from '../../model/transformer.model';
 import { toTransformer } from './transformer.repository';
 import { ScanMode } from '../../model/scan-mode.model';
 import { toScanMode } from './scan-mode.repository';
+import { SouthConnectorItemEntityLight } from '../../model/south-connector.model';
 
 const HISTORY_QUERIES_TABLE = 'history_queries';
 const HISTORY_ITEMS_TABLE = 'history_items';
 const HISTORY_TRANSFORMERS_TABLE = 'history_query_transformers';
+const HISTORY_QUERY_TRANSFORMERS_ITEMS_TABLE = 'history_query_transformers_items';
 const TRANSFORMERS_TABLE = 'transformers';
 const SCAN_MODE = 'scan_modes';
 const PAGE_SIZE = 50;
@@ -133,10 +135,29 @@ export default class HistoryQueryRepository {
 
       if (history.items.length > 0) {
         this.database
-          .prepare(`DELETE FROM ${HISTORY_ITEMS_TABLE} WHERE history_id = ? AND id NOT IN (${history.items.map(() => '?').join(', ')});`)
+          .prepare(
+            `DELETE FROM ${HISTORY_QUERY_TRANSFORMERS_ITEMS_TABLE}
+                     WHERE id IN (
+                       SELECT id FROM ${HISTORY_TRANSFORMERS_TABLE} WHERE history_id = ?
+                     ) AND item_id NOT IN (${history.items
+                       .filter(item => item.id)
+                       .map(() => '?')
+                       .join(', ')});`
+          )
           .run(
             history.id,
-            history.items.map(item => item.id)
+            history.items.filter(item => item.id).map(item => item.id)
+          );
+        this.database
+          .prepare(
+            `DELETE FROM ${HISTORY_ITEMS_TABLE} WHERE history_id = ? AND id NOT IN (${history.items
+              .filter(item => item.id)
+              .map(() => '?')
+              .join(', ')});`
+          )
+          .run(
+            history.id,
+            history.items.filter(item => item.id).map(item => item.id)
           );
 
         const insert = this.database.prepare(
@@ -146,20 +167,53 @@ export default class HistoryQueryRepository {
         for (const item of history.items) {
           if (!item.id) {
             item.id = generateRandomId(6);
+            for (const transformer of history.northTransformers) {
+              const transformerItemIndex = transformer.items.findIndex(element => element.name === item.name);
+              if (transformerItemIndex > -1) {
+                transformer.items[transformerItemIndex].id = item.id;
+              }
+            }
             insert.run(item.id, item.name, +item.enabled, history.id, JSON.stringify(item.settings));
           } else {
             update.run(item.name, +item.enabled, JSON.stringify(item.settings), item.id);
           }
         }
       } else {
+        this.database
+          .prepare(
+            `DELETE FROM ${HISTORY_QUERY_TRANSFORMERS_ITEMS_TABLE}
+                     WHERE id IN (
+                       SELECT id FROM ${HISTORY_TRANSFORMERS_TABLE} WHERE history_id = ?
+                     );`
+          )
+          .run(history.id);
+
         this.database.prepare(`DELETE FROM ${HISTORY_ITEMS_TABLE} WHERE history_id = ?;`).run(history.id);
       }
 
-      const keepIds = history.northTransformers.map(t => t.id);
+      const keepIds = history.northTransformers.filter(t => t.id).map(t => t.id);
       if (keepIds.length === 0) {
+        this.database
+          .prepare(
+            `DELETE FROM ${HISTORY_QUERY_TRANSFORMERS_ITEMS_TABLE}
+             WHERE id IN (
+               SELECT id FROM ${HISTORY_TRANSFORMERS_TABLE} WHERE history_id = ?
+             );`
+          )
+          .run(history.id);
+
         // The list is empty, so we delete EVERYTHING for this history_id
         this.database.prepare(`DELETE FROM ${HISTORY_TRANSFORMERS_TABLE} WHERE history_id = ?`).run(history.id);
       } else {
+        this.database
+          .prepare(
+            `DELETE FROM ${HISTORY_QUERY_TRANSFORMERS_ITEMS_TABLE}
+             WHERE id IN (
+               SELECT id FROM ${HISTORY_TRANSFORMERS_TABLE} WHERE history_id = ?
+             ) AND id NOT IN (${keepIds.map(() => '?').join(', ')});`
+          )
+          .run(history.id, ...keepIds);
+
         // The list has items, so we delete only those NOT in the list
         const placeholders = keepIds.map(() => '?').join(',');
 
@@ -182,8 +236,23 @@ export default class HistoryQueryRepository {
 
   deleteHistory(id: string): void {
     const transaction = this.database.transaction(() => {
-      this.database.prepare(`DELETE FROM ${HISTORY_ITEMS_TABLE} WHERE history_id = ?;`).run(id);
+      // 1. Delete items
+      this.database
+        .prepare(
+          `DELETE FROM ${HISTORY_QUERY_TRANSFORMERS_ITEMS_TABLE}
+         WHERE id IN (
+           SELECT id FROM ${HISTORY_TRANSFORMERS_TABLE} WHERE history_id = ?
+         );`
+        )
+        .run(id);
+
+      // 2. Delete transformers
       this.database.prepare(`DELETE FROM ${HISTORY_TRANSFORMERS_TABLE} WHERE history_id = ?;`).run(id);
+
+      // 3. Delete history items
+      this.database.prepare(`DELETE FROM ${HISTORY_ITEMS_TABLE} WHERE history_id = ?;`).run(id);
+
+      // 4. Delete the history itself
       this.database.prepare(`DELETE FROM ${HISTORY_QUERIES_TABLE} WHERE id = ?;`).run(id);
     });
     transaction();
@@ -212,6 +281,13 @@ export default class HistoryQueryRepository {
           transformerWithOptions.inputType,
           transformerWithOptions.id
         );
+    }
+    this.database.prepare(`DELETE FROM ${HISTORY_QUERY_TRANSFORMERS_ITEMS_TABLE} WHERE id = ?;`).run(transformerWithOptions.id);
+    const items = transformerWithOptions.items.filter(item => item.id);
+    for (const item of items) {
+      this.database
+        .prepare(`INSERT INTO ${HISTORY_QUERY_TRANSFORMERS_ITEMS_TABLE} (id, item_id) VALUES (?, ?);`)
+        .run(transformerWithOptions.id, item.id);
     }
   }
 
@@ -312,13 +388,33 @@ export default class HistoryQueryRepository {
   }
 
   deleteItem(historyId: string, itemId: string): void {
-    const query = `DELETE FROM ${HISTORY_ITEMS_TABLE} WHERE history_id = ? AND id = ?;`;
-    this.database.prepare(query).run(historyId, itemId);
+    const transaction = this.database.transaction(() => {
+      this.database
+        .prepare(
+          `DELETE FROM ${HISTORY_QUERY_TRANSFORMERS_ITEMS_TABLE}
+                     WHERE id IN (
+                       SELECT id FROM ${HISTORY_TRANSFORMERS_TABLE} WHERE history_id = ?
+                     ) AND item_id = ?;`
+        )
+        .run(historyId, itemId);
+      this.database.prepare(`DELETE FROM ${HISTORY_ITEMS_TABLE} WHERE history_id = ? AND id = ?;`).run(historyId, itemId);
+    });
+    transaction();
   }
 
   deleteAllItemsByHistory(historyId: string): void {
-    const query = `DELETE FROM ${HISTORY_ITEMS_TABLE} WHERE history_id = ?;`;
-    this.database.prepare(query).run(historyId);
+    const transaction = this.database.transaction(() => {
+      this.database
+        .prepare(
+          `DELETE FROM ${HISTORY_QUERY_TRANSFORMERS_ITEMS_TABLE}
+         WHERE id IN (
+           SELECT id FROM ${HISTORY_TRANSFORMERS_TABLE} WHERE history_id = ?
+         );`
+        )
+        .run(historyId);
+      this.database.prepare(`DELETE FROM ${HISTORY_ITEMS_TABLE} WHERE history_id = ?;`).run(historyId);
+    });
+    transaction();
   }
 
   enableItem(id: string): void {
@@ -338,7 +434,17 @@ export default class HistoryQueryRepository {
       id: element.htId,
       transformer: toTransformer(element),
       options: JSON.parse(element.options),
-      inputType: element.input_type
+      inputType: element.input_type,
+      items: this.findHistoryItems(element.htId)
+    }));
+  }
+
+  private findHistoryItems(historyTransformerId: string): Array<SouthConnectorItemEntityLight> {
+    const query = `SELECT ht.id, ht.item_id, hi.name FROM ${HISTORY_QUERY_TRANSFORMERS_ITEMS_TABLE} ht JOIN ${HISTORY_ITEMS_TABLE} hi ON ht.item_id = hi.id WHERE ht.id = ?;`;
+    const results = this.database.prepare(query).all(historyTransformerId) as Array<Record<string, string>>;
+    return results.map(result => ({
+      id: result.item_id as string,
+      name: result.name as string
     }));
   }
 

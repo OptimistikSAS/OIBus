@@ -11609,6 +11609,36 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"ItemLightDTO": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the entity.",
+						"example": "entity123"
+					},
+					"creationDate": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was created.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"lastEditInstant": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was last edited.",
+						"example": "2023-10-31T13:45:00.123Z"
+					},
+					"name": {
+						"type": "string",
+						"description": "The name of the item.",
+						"example": "Temperature Logs"
+					}
+				},
+				"required": [
+					"id",
+					"name"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"Record_string.unknown_": {
 				"properties": {},
 				"additionalProperties": {},
@@ -11638,6 +11668,13 @@
 						"description": "The south associated to the transformer",
 						"example": "southId123"
 					},
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/ItemLightDTO"
+						},
+						"type": "array",
+						"description": "The list of items associated to the transformer"
+					},
 					"options": {
 						"$ref": "#/components/schemas/Record_string.unknown_",
 						"description": "Configuration options for the transformer.",
@@ -11651,6 +11688,7 @@
 					"id",
 					"inputType",
 					"transformerId",
+					"items",
 					"options"
 				],
 				"type": "object",
@@ -14604,6 +14642,13 @@
 						"description": "The unique identifier of the transformer to be applied.",
 						"example": "customTransformer123"
 					},
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/ItemLightDTO"
+						},
+						"type": "array",
+						"description": "The list of items associated to the transformer"
+					},
 					"options": {
 						"$ref": "#/components/schemas/Record_string.unknown_",
 						"description": "Configuration options for the transformer.",
@@ -14617,6 +14662,7 @@
 					"id",
 					"inputType",
 					"transformerId",
+					"items",
 					"options"
 				],
 				"type": "object",
@@ -17980,14 +18026,23 @@
 						}
 					},
 					"south": {
-						"$ref": "#/components/schemas/SouthConnectorLightDTO"
+						"$ref": "#/components/schemas/SouthConnectorLightDTO",
+						"description": "The south associated to the transformer"
+					},
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/ItemLightDTO"
+						},
+						"type": "array",
+						"description": "The list of items associated to the transformer"
 					}
 				},
 				"required": [
 					"id",
 					"inputType",
 					"transformer",
-					"options"
+					"options",
+					"items"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -20253,6 +20308,13 @@
 						"description": "The input data type that the transformer accepts.",
 						"example": "string"
 					},
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/ItemLightDTO"
+						},
+						"type": "array",
+						"description": "The list of items associated to the transformer"
+					},
 					"options": {
 						"$ref": "#/components/schemas/Record_string.unknown_",
 						"description": "Configuration options for the transformer.",
@@ -20269,6 +20331,7 @@
 				"required": [
 					"id",
 					"inputType",
+					"items",
 					"options",
 					"transformer"
 				],

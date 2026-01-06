@@ -155,7 +155,8 @@ export class EditHistoryQueryTransformerModalComponent {
     this.modal.close({
       transformer,
       options: this.form!.value.options,
-      inputType
+      inputType,
+      items: [] // TODO
     });
   }
 }

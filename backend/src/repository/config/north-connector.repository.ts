@@ -2,7 +2,7 @@ import { generateRandomId } from '../../service/utils';
 import { Database } from 'better-sqlite3';
 import { NorthConnectorEntity, NorthConnectorEntityLight } from '../../model/north-connector.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
-import { SouthConnectorEntityLight } from '../../model/south-connector.model';
+import { SouthConnectorEntityLight, SouthConnectorItemEntityLight } from '../../model/south-connector.model';
 import { OIBusNorthType } from '../../../shared/model/north-connector.model';
 import { toTransformer } from './transformer.repository';
 import { NorthTransformerWithOptions } from '../../model/transformer.model';
@@ -12,8 +12,10 @@ import { OIBusSouthType } from '../../../shared/model/south-connector.model';
 
 const NORTH_CONNECTORS_TABLE = 'north_connectors';
 const SOUTH_CONNECTORS_TABLE = 'south_connectors';
+const SOUTH_ITEMS_TABLE = 'south_items';
 const TRANSFORMERS_TABLE = 'transformers';
 const NORTH_TRANSFORMERS_TABLE = 'north_transformers';
+const NORTH_TRANSFORMERS_ITEMS_TABLE = 'north_transformers_items';
 const SCAN_MODE = 'scan_modes';
 
 export default class NorthConnectorRepository {
@@ -102,11 +104,28 @@ export default class NorthConnectorRepository {
           );
       }
 
-      const keepIds = north.transformers.map(t => t.id);
+      const keepIds = north.transformers.filter(t => t.id).map(t => t.id);
       if (keepIds.length === 0) {
+        this.database
+          .prepare(
+            `DELETE FROM ${NORTH_TRANSFORMERS_ITEMS_TABLE}
+             WHERE id IN (
+               SELECT id FROM ${NORTH_TRANSFORMERS_TABLE} WHERE north_id = ?
+             );`
+          )
+          .run(north.id);
         // The list is empty, so we delete EVERYTHING for this north_id
         this.database.prepare(`DELETE FROM ${NORTH_TRANSFORMERS_TABLE} WHERE north_id = ?`).run(north.id);
       } else {
+        this.database
+          .prepare(
+            `DELETE FROM ${NORTH_TRANSFORMERS_ITEMS_TABLE}
+             WHERE id IN (
+               SELECT id FROM ${NORTH_TRANSFORMERS_TABLE} WHERE north_id = ?
+             ) AND id NOT IN (${keepIds.map(() => '?').join(', ')});`
+          )
+          .run(north.id, ...keepIds);
+
         // The list has items, so we delete only those NOT in the list
         const placeholders = keepIds.map(() => '?').join(',');
 
@@ -134,9 +153,23 @@ export default class NorthConnectorRepository {
 
   deleteNorth(id: string): void {
     const transaction = this.database.transaction(() => {
+      // 1. Delete items
+      this.database
+        .prepare(
+          `DELETE FROM ${NORTH_TRANSFORMERS_ITEMS_TABLE}
+         WHERE id IN (
+           SELECT id FROM ${NORTH_TRANSFORMERS_TABLE} WHERE north_id = ?
+         );`
+        )
+        .run(id);
+
+      // 2. Delete transformers
       this.database.prepare(`DELETE FROM ${NORTH_TRANSFORMERS_TABLE} WHERE north_id = ?;`).run(id);
+
+      // 3. Delete the connector itself
       this.database.prepare(`DELETE FROM ${NORTH_CONNECTORS_TABLE} WHERE id = ?;`).run(id);
     });
+
     transaction();
   }
 
@@ -166,6 +199,13 @@ export default class NorthConnectorRepository {
           transformerWithOptions.id
         );
     }
+    this.database.prepare(`DELETE FROM ${NORTH_TRANSFORMERS_ITEMS_TABLE} WHERE id = ?;`).run(transformerWithOptions.id);
+    const items = transformerWithOptions.items.filter(item => item.id);
+    for (const item of items) {
+      this.database
+        .prepare(`INSERT INTO ${NORTH_TRANSFORMERS_ITEMS_TABLE} (id, item_id) VALUES (?, ?);`)
+        .run(transformerWithOptions.id, item.id);
+    }
   }
 
   removeTransformer(id: string): void {
@@ -181,7 +221,8 @@ export default class NorthConnectorRepository {
       transformer: toTransformer(element),
       options: JSON.parse(element.options),
       inputType: element.input_type,
-      south: element.south_id ? this.findSouth(element.south_id) : undefined
+      south: element.south_id ? this.findSouth(element.south_id) : undefined,
+      items: element.south_id ? this.findSouthItems(element.ntId) : []
     }));
   }
 
@@ -201,6 +242,15 @@ export default class NorthConnectorRepository {
       description: result.description,
       enabled: Boolean(result.enabled)
     };
+  }
+
+  private findSouthItems(northTransformerId: string): Array<SouthConnectorItemEntityLight> {
+    const query = `SELECT nt.id, nt.item_id, si.name FROM ${NORTH_TRANSFORMERS_ITEMS_TABLE} nt JOIN ${SOUTH_ITEMS_TABLE} si ON nt.item_id = si.id WHERE nt.id = ?;`;
+    const results = this.database.prepare(query).all(northTransformerId) as Array<Record<string, string>>;
+    return results.map(result => ({
+      id: result.item_id as string,
+      name: result.name as string
+    }));
   }
 
   private toNorthConnectorLight(result: Record<string, string>): NorthConnectorEntityLight {

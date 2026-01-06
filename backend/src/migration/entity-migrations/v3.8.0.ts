@@ -5,10 +5,14 @@ const TRANSFORMERS_TABLE = 'transformers';
 const NORTH_CONNECTORS_TABLE = 'north_connectors';
 const HISTORY_QUERIES_TABLE = 'history_queries';
 const NORTH_TRANSFORMERS_TABLE = 'north_transformers';
+const NORTH_TRANSFORMERS_ITEMS_TABLE = 'north_transformers_items';
 const HISTORY_QUERY_TRANSFORMERS_TABLE = 'history_query_transformers';
+const HISTORY_QUERY_TRANSFORMERS_ITEMS_TABLE = 'history_query_transformers_items';
 const SOUTH_CONNECTORS_TABLE = 'south_connectors';
 const SUBSCRIPTION_TABLE = 'subscription';
 const REGISTRATIONS_TABLE = 'registrations';
+const SOUTH_ITEMS_TABLE = 'south_items';
+const HISTORY_ITEMS_TABLE = 'history_items';
 
 interface OldNorthRESTSettings {
   host: string;
@@ -74,6 +78,7 @@ export async function up(knex: Knex): Promise<void> {
   await updateNorthRestConnectors(knex);
   await createDefaultTransformers(knex);
   await migrateSubscriptionsToTransformers(knex);
+  await addTransformersItems(knex);
 }
 
 async function updateRegistrationSettings(knex: Knex): Promise<void> {
@@ -435,6 +440,20 @@ async function migrateSubscriptionsToTransformers(knex: Knex): Promise<void> {
   }
 
   await knex.schema.dropTableIfExists(SUBSCRIPTION_TABLE);
+}
+
+async function addTransformersItems(knex: Knex): Promise<void> {
+  await knex.schema.createTable(NORTH_TRANSFORMERS_ITEMS_TABLE, table => {
+    table.uuid('id').references('id').inTable(NORTH_TRANSFORMERS_TABLE);
+    table.string('item_id').references('id').inTable(SOUTH_ITEMS_TABLE);
+    table.unique(['id', 'item_id']);
+  });
+
+  await knex.schema.createTable(HISTORY_QUERY_TRANSFORMERS_ITEMS_TABLE, table => {
+    table.uuid('id').references('id').inTable(HISTORY_QUERY_TRANSFORMERS_TABLE);
+    table.string('item_id').references('id').inTable(HISTORY_ITEMS_TABLE);
+    table.unique(['id', 'item_id']);
+  });
 }
 
 export async function down(_knex: Knex): Promise<void> {

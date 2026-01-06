@@ -180,7 +180,8 @@ export class EditNorthTransformerModalComponent {
       transformer,
       options: this.form!.value.options,
       south,
-      inputType
+      inputType,
+      items: [] // TODO
     });
   }
 }

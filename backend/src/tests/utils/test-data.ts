@@ -705,14 +705,21 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
           type: southConnectors[0].type,
           description: southConnectors[0].description,
           enabled: southConnectors[0].enabled
-        }
+        },
+        items: [
+          {
+            id: southConnectors[0].items[0].id,
+            name: southConnectors[0].items[0].name
+          }
+        ]
       },
       {
         id: 'northTransformerId2',
         transformer: transformers[1],
         options: {},
         inputType: transformers[1].inputType,
-        south: undefined
+        south: undefined,
+        items: []
       },
       {
         id: 'northTransformerId3',
@@ -725,7 +732,8 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
           type: southConnectors[1].type,
           description: southConnectors[1].description,
           enabled: southConnectors[1].enabled
-        }
+        },
+        items: []
       }
     ]
   },
@@ -802,9 +810,17 @@ const northConnectorCommand: NorthConnectorCommandDTO = {
       transformerId: transformers[0].id,
       options: {},
       inputType: transformers[0].inputType,
-      southId: southConnectors[0].id
+      southId: southConnectors[0].id,
+      items: [{ id: southConnectors[0].items[0].id, name: southConnectors[0].items[0].name }]
     },
-    { id: 'northTransformerId5', transformerId: transformers[1].id, options: {}, inputType: transformers[1].inputType, southId: undefined }
+    {
+      id: 'northTransformerId5',
+      transformerId: transformers[1].id,
+      options: {},
+      inputType: transformers[1].inputType,
+      southId: undefined,
+      items: []
+    }
   ]
 };
 
@@ -902,9 +918,15 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
         id: 'historyTransformerId1',
         transformer: transformers[0],
         options: {},
-        inputType: transformers[0].inputType
+        inputType: transformers[0].inputType,
+        items: [
+          {
+            id: 'historyQueryItem2',
+            name: 'item2'
+          }
+        ]
       },
-      { id: 'historyTransformerId2', transformer: transformers[1], options: {}, inputType: transformers[1].inputType }
+      { id: 'historyTransformerId2', transformer: transformers[1], options: {}, inputType: transformers[1].inputType, items: [] }
     ]
   },
   {
@@ -1034,7 +1056,7 @@ const historyQueryCommand: HistoryQueryCommandDTO = {
   },
   items: [
     {
-      id: 'historyQueryItem4',
+      id: '',
       name: 'item4',
       enabled: true,
       settings: {
@@ -1056,9 +1078,10 @@ const historyQueryCommand: HistoryQueryCommandDTO = {
       id: 'historyTransformerId3',
       transformerId: transformers[0].id,
       options: {},
-      inputType: transformers[0].inputType
+      inputType: transformers[0].inputType,
+      items: [{ id: '', name: 'item4' }]
     },
-    { id: 'historyTransformerId4', transformerId: transformers[1].id, options: {}, inputType: transformers[1].inputType }
+    { id: 'historyTransformerId4', transformerId: transformers[1].id, options: {}, inputType: transformers[1].inputType, items: [] }
   ]
 };
 const historyQueryItemCommand: HistoryQueryItemCommandDTO = {
