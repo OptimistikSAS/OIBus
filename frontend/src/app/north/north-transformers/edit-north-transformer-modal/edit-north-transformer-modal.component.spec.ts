@@ -182,7 +182,8 @@ describe('EditNorthTransformerModalComponent', () => {
           ]
         },
         inputType: transformer.inputType,
-        south: undefined
+        south: undefined,
+        items: []
       },
       [transformer],
       ['mqtt']
@@ -201,7 +202,8 @@ describe('EditNorthTransformerModalComponent', () => {
         ]
       },
       south: undefined,
-      inputType: transformer.inputType
+      inputType: transformer.inputType,
+      items: []
     });
   });
 });

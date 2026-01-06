@@ -326,7 +326,8 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
         id: element.id,
         transformer: element.transformer,
         options: element.options,
-        inputType: element.inputType
+        inputType: element.inputType,
+        items: []
       }));
       this.form.patchValue({
         ...this.historyQuery,
