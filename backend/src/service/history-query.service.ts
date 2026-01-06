@@ -113,7 +113,8 @@ export default class HistoryQueryService {
         id: '',
         transformer: foundTransformer,
         options: transformerIdWithOptions.options,
-        inputType: transformerIdWithOptions.inputType
+        inputType: transformerIdWithOptions.inputType,
+        items: transformerIdWithOptions.items
       };
     });
 
@@ -159,7 +160,8 @@ export default class HistoryQueryService {
         id: transformerIdWithOptions.id,
         transformer: foundTransformer,
         options: transformerIdWithOptions.options,
-        inputType: transformerIdWithOptions.inputType
+        inputType: transformerIdWithOptions.inputType,
+        items: transformerIdWithOptions.items
       };
     });
 
@@ -734,7 +736,8 @@ export const toHistoryQueryDTO = (historyQuery: HistoryQueryEntity<SouthSettings
       id: transformerWithOptions.id,
       transformer: toTransformerDTO(transformerWithOptions.transformer),
       options: transformerWithOptions.options,
-      inputType: transformerWithOptions.inputType
+      inputType: transformerWithOptions.inputType,
+      items: transformerWithOptions.items
     }))
   };
   // Type assertion is safe because we know the southType and northType fields match the settings and items at runtime

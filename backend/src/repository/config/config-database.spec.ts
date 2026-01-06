@@ -2011,7 +2011,8 @@ describe('Repository with populated database', () => {
         inputType: 'input',
         transformer: testData.transformers.list[0] as Transformer,
         options: {},
-        south: undefined
+        south: undefined,
+        items: []
       });
       const createdConnectorWithTransformer = repository.findNorthById('newIdWithoutTransformer')!;
       expect(createdConnectorWithTransformer.transformers.length).toEqual(1);
@@ -2275,7 +2276,6 @@ describe('Repository with populated database', () => {
       );
       newHistoryQuery.id = '';
       newHistoryQuery.name = 'new history query';
-      newHistoryQuery.items = [];
       repository.saveHistory(newHistoryQuery);
 
       expect(newHistoryQuery.id).toEqual('newId');
@@ -2290,6 +2290,7 @@ describe('Repository with populated database', () => {
       newHistoryWithoutTransformer.id = '';
       newHistoryWithoutTransformer.name = 'new history query without transformer';
       newHistoryWithoutTransformer.northTransformers = [];
+      newHistoryQuery.items = [];
       repository.saveHistory(newHistoryWithoutTransformer);
 
       expect(newHistoryWithoutTransformer.id).toEqual('newIdWithoutTransformer');
@@ -2302,7 +2303,8 @@ describe('Repository with populated database', () => {
         id: '',
         inputType: 'input',
         transformer: testData.transformers.list[0] as Transformer,
-        options: {}
+        options: {},
+        items: []
       });
       const createdHistoryWithTransformer = repository.findHistoryById('newIdWithoutTransformer')!;
       expect(createdHistoryWithTransformer.northTransformers.length).toEqual(1);
@@ -2314,7 +2316,10 @@ describe('Repository with populated database', () => {
     });
 
     it('should update a history query', () => {
-      (generateRandomId as jest.Mock).mockReturnValueOnce('newItemId');
+      (generateRandomId as jest.Mock)
+        .mockReturnValueOnce('newItemId')
+        .mockReturnValueOnce('anotherItemId')
+        .mockReturnValueOnce('newHistoryTransformerId');
 
       const newHistoryQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> = JSON.parse(
         JSON.stringify(testData.historyQueries.list[1])
@@ -2326,13 +2331,55 @@ describe('Repository with populated database', () => {
           name: 'new item',
           enabled: true,
           settings: {} as SouthItemSettings
+        },
+        {
+          id: '',
+          name: 'another item',
+          enabled: true,
+          settings: {} as SouthItemSettings
+        }
+      ];
+      newHistoryQuery.northTransformers = [
+        {
+          id: '',
+          transformer: testData.transformers.list[0],
+          options: {},
+          inputType: testData.transformers.list[0].inputType,
+          items: [
+            {
+              id: '',
+              name: 'new item'
+            },
+            {
+              id: '',
+              name: 'bad item'
+            }
+          ]
         }
       ];
       repository.saveHistory(newHistoryQuery);
 
       const updatedHistoryQuery = repository.findHistoryById(newHistoryQuery.id)!;
 
-      expect(updatedHistoryQuery.items.length).toEqual(2);
+      expect(updatedHistoryQuery.items.length).toEqual(3);
+      expect(updatedHistoryQuery.northTransformers.length).toEqual(1);
+      expect(updatedHistoryQuery.northTransformers[0].items.length).toEqual(1);
+    });
+
+    it('should update a history query by removing items and transformers', () => {
+      const newHistoryQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> = JSON.parse(
+        JSON.stringify(testData.historyQueries.list[1])
+      );
+      newHistoryQuery.id = 'newId';
+      newHistoryQuery.name = 'new history query';
+      newHistoryQuery.items = [];
+      newHistoryQuery.northTransformers = [];
+      repository.saveHistory(newHistoryQuery);
+
+      const updatedHistoryQuery = repository.findHistoryById(newHistoryQuery.id)!;
+
+      expect(updatedHistoryQuery.items.length).toEqual(0);
+      expect(updatedHistoryQuery.northTransformers.length).toEqual(0);
     });
 
     it('should delete a history query', () => {
@@ -2351,9 +2398,9 @@ describe('Repository with populated database', () => {
           enabled: true,
           name: 'item'
         }).length
-      ).toEqual(2);
+      ).toEqual(3);
 
-      expect(repository.listItems(testData.historyQueries.list[1].id, { enabled: undefined, name: undefined }).length).toEqual(2);
+      expect(repository.listItems(testData.historyQueries.list[1].id, { enabled: undefined, name: undefined }).length).toEqual(3);
     });
 
     it('should search items', () => {
@@ -2363,16 +2410,16 @@ describe('Repository with populated database', () => {
           name: 'item',
           page: 0
         }).totalElements
-      ).toEqual(2);
+      ).toEqual(3);
 
       expect(
         repository.searchItems(testData.historyQueries.list[1].id, { enabled: undefined, name: undefined, page: 0 }).totalElements
-      ).toEqual(2);
+      ).toEqual(3);
     });
 
     it('should find items', () => {
       const results = repository.findAllItemsForHistory(testData.historyQueries.list[1].id);
-      expect(results.length).toEqual(2);
+      expect(results.length).toEqual(3);
     });
 
     it('should find item', () => {
@@ -2419,7 +2466,7 @@ describe('Repository with populated database', () => {
       repository.saveAllItems(testData.historyQueries.list[1].id, itemsToSave, false);
 
       const results = repository.findAllItemsForHistory(testData.historyQueries.list[1].id);
-      expect(results.length).toEqual(3);
+      expect(results.length).toEqual(4);
 
       expect(repository.findItemById(testData.historyQueries.list[1].id, testData.historyQueries.list[1].items[0].id)!.name).toEqual(
         itemsToSave[0].name

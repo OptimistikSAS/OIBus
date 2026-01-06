@@ -491,7 +491,13 @@ describe('NorthConnector', () => {
           type: testData.south.list[0].type,
           description: testData.south.list[0].description,
           enabled: testData.south.list[0].enabled
-        }
+        },
+        items: [
+          {
+            id: testData.south.list[0].items[0].id,
+            name: testData.south.list[0].items[0].name
+          }
+        ]
       },
       testData.north.list[0],
       logger
@@ -726,7 +732,8 @@ describe('NorthConnector', () => {
         transformer: testData.transformers.list[1],
         options: {},
         inputType: 'any',
-        south: undefined
+        south: undefined,
+        items: []
       },
       testData.north.list[0],
       logger
@@ -804,6 +811,7 @@ describe('NorthConnector', () => {
           outputType: 'any'
         },
         south: undefined,
+        items: [],
         options: {},
         inputType: 'any'
       }
@@ -831,6 +839,7 @@ describe('NorthConnector', () => {
           outputType: 'any'
         },
         south: undefined,
+        items: [],
         options: {},
         inputType: 'any'
       }

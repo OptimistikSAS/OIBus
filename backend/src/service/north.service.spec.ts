@@ -276,7 +276,8 @@ describe('North Service', () => {
       inputType: 'input',
       transformer: testData.transformers.list[0] as TransformerDTO,
       options: {},
-      south: undefined
+      south: undefined,
+      items: []
     } as NorthTransformerWithOptions;
     service.addOrEditTransformer(testData.north.list[0].id, transformerWithOptions);
 
@@ -437,7 +438,8 @@ describe('North Service', () => {
         transformer: toTransformerDTO(transformerWithOptions.transformer),
         options: transformerWithOptions.options,
         inputType: transformerWithOptions.inputType,
-        south: transformerWithOptions.south
+        south: transformerWithOptions.south,
+        items: transformerWithOptions.items
       }))
     });
     expect(toNorthConnectorLightDTO(northEntity)).toEqual({

@@ -662,7 +662,8 @@ describe('History Query service', () => {
       id: 'historyTransformerId1',
       inputType: 'input',
       transformer: testData.transformers.list[0] as TransformerDTO,
-      options: {}
+      options: {},
+      items: []
     } as HistoryTransformerWithOptions;
 
     await service.addOrEditTransformer(testData.historyQueries.list[0].id, transformerWithOptions);
@@ -881,7 +882,8 @@ describe('History Query service', () => {
         id: transformerWithOptions.id,
         transformer: transformerWithOptions.transformer,
         options: transformerWithOptions.options,
-        inputType: transformerWithOptions.inputType
+        inputType: transformerWithOptions.inputType,
+        items: transformerWithOptions.items
       }))
     });
     const historyQueryLight: HistoryQueryEntityLight = {
