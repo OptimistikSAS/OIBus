@@ -172,7 +172,8 @@ describe('NorthConnectorController', () => {
       inputType: 'any',
       transformer: testData.transformers.list[0] as StandardTransformerDTO,
       options: {},
-      south: undefined
+      south: undefined,
+      items: []
     };
 
     (mockRequest.services!.northService.addOrEditTransformer as jest.Mock).mockResolvedValue(undefined);
