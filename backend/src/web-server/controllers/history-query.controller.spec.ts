@@ -612,7 +612,8 @@ describe('HistoryQueryController', () => {
       id: 'historyTransformerId1',
       transformer: testData.transformers.list[0] as TransformerDTO,
       inputType: 'any',
-      options: {}
+      options: {},
+      items: []
     };
 
     (mockRequest.services!.historyQueryService.addOrEditTransformer as jest.Mock).mockResolvedValue(undefined);
