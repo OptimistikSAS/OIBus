@@ -925,6 +925,7 @@
           "title": "Transform payloads",
           "source": "Source",
           "output": "Output",
+          "items": "Items",
           "transformer": "Transformer",
           "add": "Add a transformer",
           "list": "Custom Transformers",

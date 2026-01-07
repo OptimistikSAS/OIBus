@@ -1,7 +1,7 @@
 import { Component, forwardRef, inject } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbTypeahead, NgbTypeaheadSelectItemEvent } from '@ng-bootstrap/ng-bootstrap';
 import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Observable } from 'rxjs';
+import { debounceTime, distinctUntilChanged, Observable, of, switchMap } from 'rxjs';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { TransformerDTO, TransformerDTOWithOptions } from '../../../../../../backend/shared/model/transformer.model';
@@ -12,14 +12,26 @@ import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.mo
 import { CertificateDTO } from '../../../../../../backend/shared/model/certificate.model';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { OIBUS_FORM_MODE } from '../../../shared/form/oibus-form-mode.token';
-import { OIBusSouthType } from '../../../../../../backend/shared/model/south-connector.model';
+import { ItemLightDTO, OIBusSouthType } from '../../../../../../backend/shared/model/south-connector.model';
 import { getAssociatedInputType } from '../../../shared/utils/utils';
+import { FormControlValidationDirective } from '../../../shared/form/form-control-validation.directive';
+import { PillComponent } from '../../../shared/pill/pill.component';
+import { TYPEAHEAD_DEBOUNCE_TIME } from '../../../shared/form/typeahead';
 
 @Component({
   selector: 'oib-edit-history-query-transformer-modal',
   templateUrl: './edit-history-query-transformer-modal.component.html',
   styleUrl: './edit-history-query-transformer-modal.component.scss',
-  imports: [ReactiveFormsModule, TranslateDirective, SaveButtonComponent, TranslatePipe, OIBusObjectFormControlComponent],
+  imports: [
+    ReactiveFormsModule,
+    TranslateDirective,
+    SaveButtonComponent,
+    TranslatePipe,
+    OIBusObjectFormControlComponent,
+    FormControlValidationDirective,
+    NgbTypeahead,
+    PillComponent
+  ],
   viewProviders: [
     {
       provide: OIBUS_FORM_MODE,
@@ -38,9 +50,11 @@ export class EditHistoryQueryTransformerModalComponent {
   form: FormGroup<{
     transformer: FormControl<TransformerDTO | null>;
     options: FormGroup;
+    itemSearch: FormControl<null | string>;
   }> = this.fb.group({
     transformer: this.fb.control<TransformerDTO | null>(null, Validators.required),
-    options: this.fb.group({})
+    options: this.fb.group({}),
+    itemSearch: this.fb.control(null as null | string)
   });
   allTransformers: Array<TransformerDTO> = [];
   selectableOutputs: Array<TransformerDTO> = [];
@@ -50,13 +64,26 @@ export class EditHistoryQueryTransformerModalComponent {
   certificates: Array<CertificateDTO> = [];
   existingTransformerWithOptions: TransformerDTOWithOptions | null = null;
   southType: OIBusSouthType | null = null;
+  selectedItems: Array<ItemLightDTO> = [];
+  selectableItems: Array<ItemLightDTO> = [];
+
+  itemTypeahead = (text$: Observable<string>) =>
+    text$.pipe(
+      debounceTime(TYPEAHEAD_DEBOUNCE_TIME),
+      distinctUntilChanged(),
+      switchMap(text => {
+        return of(this.selectableItems.filter(item => item.name.toLowerCase().includes(text.toLowerCase())));
+      })
+    );
+  itemFormatter = (item: ItemLightDTO) => item.name;
 
   prepareForCreation(
     southType: OIBusSouthType,
     scanModes: Array<ScanModeDTO>,
     certificates: Array<CertificateDTO>,
     transformers: Array<TransformerDTO>,
-    supportedOutputTypes: Array<string>
+    supportedOutputTypes: Array<string>,
+    selectableItems: Array<ItemLightDTO>
   ) {
     this.mode = 'create';
     this.southType = southType;
@@ -64,6 +91,7 @@ export class EditHistoryQueryTransformerModalComponent {
     this.certificates = certificates;
     this.allTransformers = transformers;
     this.supportedOutputTypes = supportedOutputTypes;
+    this.selectableItems = selectableItems;
     this.buildForm();
   }
 
@@ -73,7 +101,8 @@ export class EditHistoryQueryTransformerModalComponent {
     certificates: Array<CertificateDTO>,
     transformerWithOptionsToEdit: Omit<TransformerDTOWithOptions, 'south'>,
     transformers: Array<TransformerDTO>,
-    supportedOutputTypes: Array<string>
+    supportedOutputTypes: Array<string>,
+    selectableItems: Array<ItemLightDTO>
   ) {
     this.mode = 'edit';
     this.southType = southType;
@@ -83,6 +112,8 @@ export class EditHistoryQueryTransformerModalComponent {
     this.existingTransformerWithOptions = transformerWithOptionsToEdit;
     this.allTransformers = transformers;
     this.supportedOutputTypes = supportedOutputTypes;
+    this.selectedItems = transformerWithOptionsToEdit.items;
+    this.selectableItems = selectableItems;
 
     this.buildForm();
     this.createOptionsForm(transformerWithOptionsToEdit.transformer);
@@ -134,7 +165,7 @@ export class EditHistoryQueryTransformerModalComponent {
       transformer: this.form.value.transformer,
       options: this.form!.value.options,
       inputType: getAssociatedInputType(this.southType!),
-      items: [] // TODO
+      items: this.selectedItems
     });
   }
 
@@ -155,5 +186,14 @@ export class EditHistoryQueryTransformerModalComponent {
 
       return element.inputType === inputType;
     });
+  }
+
+  selectItem(event: NgbTypeaheadSelectItemEvent<ItemLightDTO>) {
+    this.selectedItems.push(event.item);
+    event.preventDefault();
+  }
+
+  removeItem(itemToRemove: ItemLightDTO) {
+    this.selectedItems = this.selectedItems.filter(item => item.id !== itemToRemove.id);
   }
 }

@@ -572,7 +572,7 @@ export interface SouthConnectorItemSearchParam {
    *
    * @example "temperature"
    */
-  name: string | undefined;
+  name?: string;
 
   /**
    * Filter by scan mode ID.
@@ -580,7 +580,7 @@ export interface SouthConnectorItemSearchParam {
    *
    * @example "periodic-5min"
    */
-  scanModeId: string | undefined;
+  scanModeId?: string;
 
   /**
    * Filter by enabled status.
@@ -588,7 +588,7 @@ export interface SouthConnectorItemSearchParam {
    *
    * @example true
    */
-  enabled: boolean | undefined;
+  enabled?: boolean;
 
   /**
    * Page number for pagination (0-based index).

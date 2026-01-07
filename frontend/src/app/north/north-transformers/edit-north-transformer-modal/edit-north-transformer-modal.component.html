@@ -57,6 +57,28 @@
           </div>
         </div>
       </div>
+      @if (form.controls.source.value.south) {
+        <div class="row">
+          <div class="col">
+            <label for="items" class="col-auto col-form-label" translate="configuration.oibus.manifest.transformers.items"></label>
+            <input
+              id="items"
+              class="form-control"
+              formControlName="itemSearch"
+              [ngbTypeahead]="itemTypeahead"
+              [resultFormatter]="itemFormatter"
+              [inputFormatter]="itemFormatter"
+              [editable]="false"
+              (selectItem)="selectItem($event)"
+            />
+            <div [style.margin-top.rem]="selectedItems.length ? -0.75 : 0">
+              @for (item of selectedItems; track item.id) {
+                <oib-pill type="secondary" [removable]="true" (removed)="removeItem(item)"> {{ item.name }} </oib-pill>
+              }
+            </div>
+          </div>
+        </div>
+      }
       @if (manifest) {
         <ng-container formGroupName="options">
           <oib-oibus-object-form-control
