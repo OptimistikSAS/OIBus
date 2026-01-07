@@ -4,8 +4,6 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TestBed } from '@angular/core/testing';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
-import { TransformerService } from '../../../services/transformer.service';
-import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
 import { TransformerDTO } from '../../../../../../backend/shared/model/transformer.model';
@@ -20,7 +18,7 @@ class EditNorthTransformerModalComponentTester extends ComponentTester<EditNorth
   }
 
   get transformerSelect() {
-    return this.select('#transformer-id');
+    return this.select('#output')!;
   }
 
   get options() {
@@ -133,18 +131,12 @@ const transformer: TransformerDTO = {
 describe('EditNorthTransformerModalComponent', () => {
   let tester: EditNorthTransformerModalComponentTester;
   let fakeActiveModal: NgbActiveModal;
-  let transformerService: jasmine.SpyObj<TransformerService>;
 
   beforeEach(() => {
     fakeActiveModal = createMock(NgbActiveModal);
-    transformerService = createMock(TransformerService);
 
     TestBed.configureTestingModule({
-      providers: [
-        provideI18nTesting(),
-        { provide: NgbActiveModal, useValue: fakeActiveModal },
-        { provide: TransformerService, useValue: transformerService }
-      ]
+      providers: [provideI18nTesting(), { provide: NgbActiveModal, useValue: fakeActiveModal }]
     });
 
     TestBed.createComponent(DefaultValidationErrorsComponent).detectChanges();
@@ -167,7 +159,6 @@ describe('EditNorthTransformerModalComponent', () => {
   });
 
   it('should validate with transformers', async () => {
-    transformerService.findById.and.returnValue(of(transformer));
     tester.componentInstance.prepareForEdition(
       [],
       [],
@@ -189,11 +180,11 @@ describe('EditNorthTransformerModalComponent', () => {
       ['mqtt']
     );
     await tester.change();
-    expect(tester.transformerSelect).toBeDefined();
     expect(tester.options).toBeDefined();
     expect(tester.title).toContainText('Choose how to handle payloads');
-    tester.save.click();
+    await tester.save.click();
     expect(fakeActiveModal.close).toHaveBeenCalledWith({
+      id: 'northTransformerId1',
       transformer: transformer,
       options: {
         mapping: [
@@ -201,7 +192,7 @@ describe('EditNorthTransformerModalComponent', () => {
           { pointId: 'pointId2', nodeId: 'nodeId2', dataType: 'Int32' }
         ]
       },
-      south: undefined,
+      south: null,
       inputType: transformer.inputType,
       items: []
     });
