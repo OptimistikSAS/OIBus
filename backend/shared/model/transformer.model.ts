@@ -139,7 +139,7 @@ export interface TransformerDTOWithOptions {
   /**
    * The south associated to the transformer
    */
-  south: SouthConnectorLightDTO | undefined;
+  south?: SouthConnectorLightDTO;
 
   /**
    * The list of items associated to the transformer
@@ -174,7 +174,7 @@ export interface TransformerIdWithOptions {
    * The south associated to the transformer
    * @example "southId123"
    */
-  southId: string | undefined;
+  southId?: string;
 
   /**
    * The list of items associated to the transformer
