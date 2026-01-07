@@ -66,7 +66,14 @@ export class HistoryQueryTransformersComponent {
     });
     const component: EditHistoryQueryTransformerModalComponent = modalRef.componentInstance;
 
-    component.prepareForCreation(this.southType(), this.scanModes(), this.certificates(), this.transformers(), this.northManifest().types);
+    component.prepareForCreation(
+      this.southType(),
+      this.scanModes(),
+      this.certificates(),
+      this.transformers(),
+      this.northManifest().types,
+      this.historyQuery()?.items || []
+    );
     this.refreshAfterAddModalClosed(modalRef);
   }
 
@@ -107,7 +114,8 @@ export class HistoryQueryTransformersComponent {
       this.certificates(),
       transformer,
       this.transformers(),
-      this.northManifest().types
+      this.northManifest().types,
+      this.historyQuery()?.items || []
     );
     this.refreshAfterEditModalClosed(modalRef, transformer);
   }

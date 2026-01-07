@@ -1,7 +1,7 @@
 import { Component, forwardRef, inject } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbTypeahead, NgbTypeaheadSelectItemEvent } from '@ng-bootstrap/ng-bootstrap';
 import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Observable } from 'rxjs';
+import { debounceTime, distinctUntilChanged, map, Observable, switchMap } from 'rxjs';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import {
@@ -17,9 +17,13 @@ import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.mo
 import { CertificateDTO } from '../../../../../../backend/shared/model/certificate.model';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { OIBUS_FORM_MODE } from '../../../shared/form/oibus-form-mode.token';
-import { SouthConnectorLightDTO } from '../../../../../../backend/shared/model/south-connector.model';
+import { ItemLightDTO, SouthConnectorLightDTO } from '../../../../../../backend/shared/model/south-connector.model';
 import { OIBusSouthTypeEnumPipe } from '../../../shared/oibus-south-type-enum.pipe';
 import { getAssociatedInputType } from '../../../shared/utils/utils';
+import { SouthConnectorService } from '../../../services/south-connector.service';
+import { FormControlValidationDirective } from '../../../shared/form/form-control-validation.directive';
+import { PillComponent } from '../../../shared/pill/pill.component';
+import { TYPEAHEAD_DEBOUNCE_TIME } from '../../../shared/form/typeahead';
 
 @Component({
   selector: 'oib-edit-north-transformer-modal',
@@ -31,7 +35,10 @@ import { getAssociatedInputType } from '../../../shared/utils/utils';
     SaveButtonComponent,
     TranslatePipe,
     OIBusObjectFormControlComponent,
-    OIBusSouthTypeEnumPipe
+    OIBusSouthTypeEnumPipe,
+    FormControlValidationDirective,
+    NgbTypeahead,
+    PillComponent
   ],
   viewProviders: [
     {
@@ -45,6 +52,7 @@ export class EditNorthTransformerModalComponent {
   private modal = inject(NgbActiveModal);
   private fb = inject(NonNullableFormBuilder);
   private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
+  private southConnectorService = inject(SouthConnectorService);
 
   state = new ObservableState();
   mode: 'create' | 'edit' = 'create';
@@ -52,13 +60,15 @@ export class EditNorthTransformerModalComponent {
     source: FormControl<{ inputType: InputType | null; south: SouthConnectorLightDTO | null }>;
     transformer: FormControl<TransformerDTO | null>;
     options: FormGroup;
+    itemSearch: FormControl<null | string>;
   }> = this.fb.group({
     source: this.fb.control<{
       inputType: InputType | null;
       south: SouthConnectorLightDTO | null;
     }>({ inputType: null, south: null }, Validators.required),
     transformer: this.fb.control<TransformerDTO | null>(null, Validators.required),
-    options: this.fb.group({})
+    options: this.fb.group({}),
+    itemSearch: this.fb.control(null as null | string)
   });
   allTransformers: Array<TransformerDTO> = [];
   selectableOutputs: Array<TransformerDTO> = [];
@@ -70,6 +80,23 @@ export class EditNorthTransformerModalComponent {
   southConnectors: Array<SouthConnectorLightDTO> = [];
   existingTransformerWithOptions: TransformerDTOWithOptions | null = null;
   inputTypes = INPUT_TYPES;
+  selectedItems: Array<ItemLightDTO> = [];
+
+  itemTypeahead = (text$: Observable<string>) =>
+    text$.pipe(
+      debounceTime(TYPEAHEAD_DEBOUNCE_TIME),
+      distinctUntilChanged(),
+      switchMap(text => {
+        const southId = this.form.controls.source.value.south!.id;
+        return this.southConnectorService.searchItems(southId, { name: text, page: 0 });
+      }),
+      map(items => {
+        return items.content
+          .filter(item => !this.selectedItems.some(element => element.id === item.id))
+          .map(item => ({ id: item.id, name: item.name }));
+      })
+    );
+  itemFormatter = (item: ItemLightDTO) => item.name;
 
   prepareForCreation(
     southConnectors: Array<SouthConnectorLightDTO>,
@@ -104,6 +131,7 @@ export class EditNorthTransformerModalComponent {
     this.existingTransformerWithOptions = transformerWithOptionsToEdit;
     this.allTransformers = transformers;
     this.supportedOutputTypes = supportedOutputTypes;
+    this.selectedItems = transformerWithOptionsToEdit.items;
 
     const sourceValue = {
       inputType: transformerWithOptionsToEdit.inputType,
@@ -169,18 +197,24 @@ export class EditNorthTransformerModalComponent {
     }
 
     let south: SouthConnectorLightDTO | null;
+    let inputType: InputType;
     if (this.existingTransformerWithOptions) {
       south = this.existingTransformerWithOptions.south || null;
+      inputType = this.existingTransformerWithOptions.inputType;
+    } else if (this.form.value.source?.south) {
+      south = this.form.value.source!.south!;
+      inputType = getAssociatedInputType(south.type);
     } else {
-      south = this.form.value.source?.south || null;
+      south = null;
+      inputType = this.form.value.source!.inputType!;
     }
     this.modal.close({
       id: this.existingTransformerWithOptions ? this.existingTransformerWithOptions.id : '',
       transformer: this.form.value.transformer,
       options: this.form.value.options,
       south: south,
-      inputType: this.existingTransformerWithOptions ? this.existingTransformerWithOptions.inputType : this.form.value.source!.inputType,
-      items: [] // TODO
+      inputType: inputType,
+      items: this.selectedItems
     });
   }
 
@@ -224,5 +258,14 @@ export class EditNorthTransformerModalComponent {
 
       return true;
     });
+  }
+
+  selectItem(event: NgbTypeaheadSelectItemEvent<ItemLightDTO>) {
+    this.selectedItems.push(event.item);
+    event.preventDefault();
+  }
+
+  removeItem(itemToRemove: ItemLightDTO) {
+    this.selectedItems = this.selectedItems.filter(item => item.id !== itemToRemove.id);
   }
 }
