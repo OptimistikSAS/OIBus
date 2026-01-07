@@ -20,7 +20,7 @@ class EditHistoryQueryTransformerModalComponentTester extends ComponentTester<Ed
   }
 
   get transformerSelect() {
-    return this.select('#transformer-id');
+    return this.select('#output');
   }
 
   get options() {
@@ -158,7 +158,7 @@ describe('EditHistoryQueryTransformerModalComponent', () => {
   });
 
   it('should display title and form, and validate without transformers', async () => {
-    tester.componentInstance.prepareForCreation([], [], [], [transformer], []);
+    tester.componentInstance.prepareForCreation('opcua', [], [], [transformer], []);
     await tester.change();
     expect(tester.title).toContainText('Choose how to handle payloads');
     expect(tester.options).toBeNull();
@@ -169,6 +169,7 @@ describe('EditHistoryQueryTransformerModalComponent', () => {
   it('should validate with transformers', async () => {
     transformerService.findById.and.returnValue(of(transformer));
     tester.componentInstance.prepareForEdition(
+      'opcua',
       [],
       [],
       {
@@ -192,6 +193,7 @@ describe('EditHistoryQueryTransformerModalComponent', () => {
     expect(tester.title).toContainText('Choose how to handle payloads');
     tester.save.click();
     expect(fakeActiveModal.close).toHaveBeenCalledWith({
+      id: 'historyTransformerId1',
       transformer: transformer,
       options: {
         mapping: [

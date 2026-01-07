@@ -113,8 +113,8 @@ export class NorthConnectorService {
   /**
    * Remove the selected North connector transformer
    */
-  removeTransformer(northId: string, transformerId: string): Observable<void> {
-    return this.http.delete<void>(`/api/north/${northId}/transformers/${transformerId}`);
+  removeTransformer(northId: string, northTransformerId: string): Observable<void> {
+    return this.http.delete<void>(`/api/north/${northId}/transformers/${northTransformerId}`);
   }
 
   /**
