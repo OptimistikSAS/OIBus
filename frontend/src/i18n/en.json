@@ -229,9 +229,9 @@
       "move-history-cache-content": "Move cache files"
     },
     "oibus-input-data-type": {
-      "any": "Any",
-      "setpoint": "Setpoints",
-      "time-values": "OIBus time values"
+      "any": "Files (for all sources)",
+      "setpoint": "Setpoints (for all sources)",
+      "time-values": "OIBus Time Values (for all sources)"
     },
     "oibus-output-data-type": {
       "any": "Any",
@@ -923,8 +923,8 @@
         },
         "transformers": {
           "title": "Transform payloads",
-          "input-type": "Source type",
-          "output-type": "Destination type",
+          "source": "Source",
+          "output": "Output",
           "transformer": "Transformer",
           "add": "Add a transformer",
           "list": "Custom Transformers",
@@ -934,22 +934,22 @@
           "confirm-deletion": "Are you sure you want to delete the custom transformer {{ name }}?",
           "deleted": "Transformer {{ name }} deleted",
           "standard": {
-            "csv-to-mqtt": "CSV into MQTT payloads",
-            "csv-to-time-values": "CSV into OIBus time values",
+            "csv-to-mqtt": "MQTT payloads",
+            "csv-to-time-values": "Time Values (from CSV)",
             "ignore": "Ignore",
             "iso": "No transform",
-            "json-to-csv": "JSON into CSV",
-            "json-to-mqtt": "JSON into MQTT payloads",
-            "json-to-time-values": "JSON into OIBus time values",
-            "time-values-to-csv": "OIBus time values into CSV",
-            "time-values-to-json": "OIBus time values into raw JSON",
-            "time-values-to-modbus": "OIBus time values into Modbus values",
-            "time-values-to-mqtt": "OIBus time values into MQTT payloads",
-            "time-values-to-oianalytics": "OIAnalytics - Select timestamp precision and remove optional fields from OIBus time values",
-            "time-values-to-opcua": "OIBus time values into OPCUA values",
-            "setpoint-to-modbus": "Setpoints into Modbus values",
-            "setpoint-to-mqtt": "Setpoints into MQTT payloads",
-            "setpoint-to-opcua": "Setpoints into OPCUA values"
+            "json-to-csv": "CSV",
+            "json-to-mqtt": "MQTT payloads",
+            "json-to-time-values": "Time Values (from JSON)",
+            "time-values-to-csv": "CSV",
+            "time-values-to-json": "JSON",
+            "time-values-to-modbus": "Modbus values",
+            "time-values-to-mqtt": "MQTT payloads",
+            "time-values-to-oianalytics": "OIAnalytics (select time precision)",
+            "time-values-to-opcua": "OPCUA values",
+            "setpoint-to-modbus": "Modbus values",
+            "setpoint-to-mqtt": "MQTT payloads",
+            "setpoint-to-opcua": "OPCUA values"
           },
           "choose-transformer-modal": {
             "title": "Choose how to handle payloads",
@@ -2613,11 +2613,8 @@
     },
     "transformers": {
       "title": "Transform payloads",
-      "input-type": "Source type",
-      "output-type": "Destination type",
-      "south": "South",
-      "all-south": "All south",
-      "transformer": "Transformer",
+      "source": "Source",
+      "output": "Output",
       "add": "Add a transformer",
       "none": "No transformer",
       "choose-transformer-modal": {

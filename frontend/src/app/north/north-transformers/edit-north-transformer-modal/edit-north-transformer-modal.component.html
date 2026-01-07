@@ -5,43 +5,52 @@
   @if (form) {
     <form [formGroup]="form" (ngSubmit)="save()" id="choose-transformer-form">
       <div class="row">
-        @if (inputTypeControl) {
-          <div class="col-4">
-            <div class="form-group">
-              <label class="form-label" for="input-type" translate="north.transformers.input-type"></label>
-              <select [formControl]="inputTypeControl" class="form-select mb-2 mr-sm-2" id="input-type">
-                @for (inputType of selectableInputs; track inputType) {
-                  <option [ngValue]="inputType">
-                    {{ inputType | oIBusInputDataTypeEnum }}
-                  </option>
+        <div class="col-6">
+          <div class="form-group">
+            @if (form.controls.source.enabled) {
+              <label class="form-label" for="source" translate="configuration.oibus.manifest.transformers.source"></label>
+              <select formControlName="source" class="form-select mb-2 mr-sm-2" id="source" [compareWith]="compareSource">
+                @for (inputType of inputTypes; track inputType) {
+                  @if (!inputTypeIsSelected(inputType)) {
+                    <option [ngValue]="{ inputType, south: null }">
+                      {{ 'enums.oibus-input-data-type.' + inputType | translate }}
+                    </option>
+                  }
+                }
+                @for (southConnector of southConnectors; track southConnector.id) {
+                  @if (!southIsSelected(southConnector.id)) {
+                    <option [ngValue]="{ inputType: null, south: southConnector }">
+                      {{ southConnector.name }} ({{ southConnector.type | oIBusSouthTypeEnum }})
+                    </option>
+                  }
                 }
               </select>
-            </div>
-          </div>
-        }
-        <div [class]="inputTypeControl ? 'col-4' : 'col-6'">
-          <div class="form-group">
-            <label class="form-label" for="south" translate="north.transformers.south"></label>
-            <select formControlName="southId" id="south" class="form-select mb-2 mr-sm-2">
-              <option [ngValue]="undefined">{{ 'north.transformers.all-south' | translate }}</option>
-              @for (southConnector of southConnectors; track southConnector.id) {
-                <option [ngValue]="southConnector.id">{{ southConnector.name }} ({{ southConnector.type | oIBusSouthTypeEnum }})</option>
-              }
-            </select>
+            } @else {
+              <b><span class="form-label" translate="configuration.oibus.manifest.transformers.source"></span></b>
+              <div>
+                @if (form.controls.source.value.south) {
+                  <span
+                    >{{ form.controls.source.value.south.name }} ({{ form.controls.source.value.south.type | oIBusSouthTypeEnum }})</span
+                  >
+                } @else {
+                  <span>{{ 'enums.oibus-input-data-type.' + form.controls.source.value.inputType | translate }}</span>
+                }
+              </div>
+            }
           </div>
         </div>
-        <div [class]="inputTypeControl ? 'col-4' : 'col-6'">
+        <div class="col-6">
           <div class="form-group">
-            <label class="form-label" for="transformer-id" translate="north.transformers.transformer"></label>
-            <select class="form-select" id="transformer-id" formControlName="transformerId">
+            <label class="form-label" for="output" translate="configuration.oibus.manifest.transformers.output"></label>
+            <select class="form-select" id="output" formControlName="transformer" [compareWith]="compareTransformers">
               <option [ngValue]="null"></option>
-              @for (transformer of selectableTransformers; track transformer.id) {
+              @for (transformer of selectableOutputs; track transformer.id) {
                 @if (transformer.type === 'standard') {
-                  <option [ngValue]="transformer.id">
+                  <option [ngValue]="transformer">
                     {{ 'configuration.oibus.manifest.transformers.standard.' + transformer.functionName | translate }}
                   </option>
                 } @else {
-                  <option [ngValue]="transformer.id">{{ transformer.name }}</option>
+                  <option [ngValue]="transformer">{{ transformer.name }}</option>
                 }
               }
             </select>
