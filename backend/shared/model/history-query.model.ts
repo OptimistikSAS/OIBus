@@ -467,7 +467,7 @@ export interface HistoryQueryItemSearchParam {
    *
    * @example "temperature"
    */
-  name: string | undefined;
+  name?: string | undefined;
 
   /**
    * Filter by enabled status.
@@ -475,7 +475,7 @@ export interface HistoryQueryItemSearchParam {
    *
    * @example true
    */
-  enabled: boolean | undefined;
+  enabled?: boolean | undefined;
 
   /**
    * Page number for pagination (0-based index).
