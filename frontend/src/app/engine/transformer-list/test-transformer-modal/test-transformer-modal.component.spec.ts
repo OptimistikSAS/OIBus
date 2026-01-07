@@ -210,7 +210,7 @@ describe('TestTransformerModalComponent', () => {
     });
 
     it('should display input type', () => {
-      expect(tester.inputTypeDisplay.textContent?.trim()).toBe('OIBus time values');
+      expect(tester.inputTypeDisplay.textContent?.trim()).toBe('OIBus Time Values (for all sources)');
     });
 
     it('should show loading spinner when loading', () => {
