@@ -7,7 +7,6 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { Modal, ModalService } from '../../shared/modal.service';
 import { EditNorthTransformerModalComponent } from './edit-north-transformer-modal/edit-north-transformer-modal.component';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
-import { OIBUS_DATA_TYPES } from '../../../../../backend/shared/model/engine.model';
 import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
 import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { ConfirmationService } from '../../shared/confirmation.service';
@@ -81,7 +80,7 @@ export class NorthTransformersComponent {
       this.southConnectors,
       this.scanModes(),
       this.certificates(),
-      [...OIBUS_DATA_TYPES],
+      this.transformersWithOptions.map(t => ({ inputType: t.inputType, south: t.south?.id || null })),
       this.transformers(),
       this.northManifest().types
     );
@@ -138,9 +137,7 @@ export class NorthTransformersComponent {
           if (northConnector && this.saveChangesDirectly()) {
             return this.northConnectorService.addOrEditTransformer(northConnector.id, transformer).pipe(switchMap(() => of(transformer)));
           }
-          this.transformersWithOptions = this.transformersWithOptions.filter(
-            element => element.transformer.id !== oldTransformer.transformer.id
-          );
+          this.transformersWithOptions = this.transformersWithOptions.filter(element => element.id !== oldTransformer.id);
           this.transformersWithOptions.push(transformer);
           return of(transformer);
         })
@@ -160,13 +157,10 @@ export class NorthTransformersComponent {
       })
       .pipe(
         switchMap(() => {
-          const northConnector = this.northConnector();
           if (this.saveChangesDirectly()) {
-            return this.northConnectorService.removeTransformer(northConnector!.id, transformer.transformer.id);
+            return this.northConnectorService.removeTransformer(this.northConnector()!.id, transformer.id);
           }
-          this.transformersWithOptions = this.transformersWithOptions.filter(
-            element => element.transformer.id !== transformer.transformer.id
-          );
+          this.transformersWithOptions = this.transformersWithOptions.filter(element => element.id !== transformer.id);
           return of(null);
         })
       )

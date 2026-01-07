@@ -203,7 +203,7 @@ export class NorthConnectorController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<void> {
     const northService = request.services.northService as NorthService;
-    await northService.addOrEditTransformer(northId, command as NorthTransformerWithOptions);
+    northService.addOrEditTransformer(northId, command as NorthTransformerWithOptions);
   }
 
   /**
@@ -214,7 +214,7 @@ export class NorthConnectorController extends Controller {
   @SuccessResponse(204, 'No Content')
   async removeTransformer(@Path() northId: string, @Path() transformerId: string, @Request() request: CustomExpressRequest): Promise<void> {
     const northService = request.services.northService as NorthService;
-    await northService.removeTransformer(northId, transformerId);
+    northService.removeTransformer(northId, transformerId);
   }
 
   /**
