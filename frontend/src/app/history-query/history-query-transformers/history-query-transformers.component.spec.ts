@@ -12,6 +12,7 @@ import { HistoryQueryService } from '../../services/history-query.service';
 @Component({
   selector: 'oib-test-history-query-transformers-component',
   template: ` <oib-history-query-transformers
+    southType="ads"
     [northManifest]="northManifest"
     [transformers]="transformers"
     [certificates]="[]"
