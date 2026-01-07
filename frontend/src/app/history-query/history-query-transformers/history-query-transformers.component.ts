@@ -7,7 +7,6 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { Modal, ModalService } from '../../shared/modal.service';
 import { EditHistoryQueryTransformerModalComponent } from './edit-history-query-transformer-modal/edit-history-query-transformer-modal.component';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
-import { OIBUS_DATA_TYPES } from '../../../../../backend/shared/model/engine.model';
 import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
 import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { ConfirmationService } from '../../shared/confirmation.service';
@@ -15,6 +14,7 @@ import { NotificationService } from '../../shared/notification.service';
 import { firstValueFrom, of, switchMap } from 'rxjs';
 import { HistoryQueryDTO } from '../../../../../backend/shared/model/history-query.model';
 import { HistoryQueryService } from '../../services/history-query.service';
+import { OIBusSouthType } from '../../../../../backend/shared/model/south-connector.model';
 
 @Component({
   selector: 'oib-history-query-transformers',
@@ -38,6 +38,7 @@ export class HistoryQueryTransformersComponent {
   readonly scanModes = input.required<Array<ScanModeDTO>>();
   readonly transformers = input.required<Array<TransformerDTO>>();
   readonly transformersFromNorth = input<Array<Omit<TransformerDTOWithOptions, 'south'>>>([]);
+  readonly southType = input.required<OIBusSouthType>();
 
   transformersWithOptions: Array<Omit<TransformerDTOWithOptions, 'south'>> = []; // Array used to store subscription on north connector creation
 
@@ -65,13 +66,7 @@ export class HistoryQueryTransformersComponent {
     });
     const component: EditHistoryQueryTransformerModalComponent = modalRef.componentInstance;
 
-    component.prepareForCreation(
-      this.scanModes(),
-      this.certificates(),
-      [...OIBUS_DATA_TYPES],
-      this.transformers(),
-      this.northManifest().types
-    );
+    component.prepareForCreation(this.southType(), this.scanModes(), this.certificates(), this.transformers(), this.northManifest().types);
     this.refreshAfterAddModalClosed(modalRef);
   }
 
@@ -79,9 +74,9 @@ export class HistoryQueryTransformersComponent {
     modalRef.result
       .pipe(
         switchMap((transformer: TransformerDTOWithOptions) => {
-          const northConnector = this.historyQuery();
-          if (northConnector && this.saveChangesDirectly()) {
-            return this.historyQueryService.addOrEditTransformer(northConnector.id, transformer).pipe(switchMap(() => of(transformer)));
+          const historyQuery = this.historyQuery();
+          if (historyQuery && this.saveChangesDirectly()) {
+            return this.historyQueryService.addOrEditTransformer(historyQuery.id, transformer).pipe(switchMap(() => of(transformer)));
           }
           this.transformersWithOptions = [...this.transformersWithOptions, transformer];
           return of(transformer);
@@ -106,7 +101,14 @@ export class HistoryQueryTransformersComponent {
     });
     const component: EditHistoryQueryTransformerModalComponent = modalRef.componentInstance;
 
-    component.prepareForEdition(this.scanModes(), this.certificates(), transformer, this.transformers(), this.northManifest().types);
+    component.prepareForEdition(
+      this.southType(),
+      this.scanModes(),
+      this.certificates(),
+      transformer,
+      this.transformers(),
+      this.northManifest().types
+    );
     this.refreshAfterEditModalClosed(modalRef, transformer);
   }
 
@@ -117,13 +119,12 @@ export class HistoryQueryTransformersComponent {
     modalRef.result
       .pipe(
         switchMap((transformer: Omit<TransformerDTOWithOptions, 'south'>) => {
-          const northConnector = this.historyQuery();
-          if (northConnector && this.saveChangesDirectly()) {
-            return this.historyQueryService.addOrEditTransformer(northConnector.id, transformer).pipe(switchMap(() => of(transformer)));
+          const historyQuery = this.historyQuery();
+
+          if (historyQuery && this.saveChangesDirectly()) {
+            return this.historyQueryService.addOrEditTransformer(historyQuery.id, transformer).pipe(switchMap(() => of(transformer)));
           }
-          this.transformersWithOptions = this.transformersWithOptions.filter(
-            element => element.transformer.id !== oldTransformer.transformer.id
-          );
+          this.transformersWithOptions = this.transformersWithOptions.filter(element => element.id !== oldTransformer.id);
           this.transformersWithOptions.push(transformer);
           return of(transformer);
         })
@@ -143,13 +144,10 @@ export class HistoryQueryTransformersComponent {
       })
       .pipe(
         switchMap(() => {
-          const northConnector = this.historyQuery();
           if (this.saveChangesDirectly()) {
-            return this.historyQueryService.removeTransformer(northConnector!.id, transformer.transformer.id);
+            return this.historyQueryService.removeTransformer(this.historyQuery()!.id, transformer.id);
           }
-          this.transformersWithOptions = this.transformersWithOptions.filter(
-            element => element.transformer.id !== transformer.transformer.id
-          );
+          this.transformersWithOptions = this.transformersWithOptions.filter(element => element.id !== transformer.id);
           return of(null);
         })
       )

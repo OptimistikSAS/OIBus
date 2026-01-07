@@ -19,7 +19,6 @@
       <table class="table table-sm table-hover oib-table">
         <thead class="light">
           <tr>
-            <th translate="history-query.transformers.input-type"></th>
             <th translate="history-query.transformers.transformer"></th>
             <th></th>
           </tr>
@@ -27,9 +26,6 @@
         <tbody>
           @for (transformerWithOptions of transformersWithOptions; track transformerWithOptions.id) {
             <tr>
-              <td>
-                <span>{{ 'enums.oibus-input-data-type.' + transformerWithOptions.inputType | translate }}</span>
-              </td>
               <td>
                 @if (transformerWithOptions.transformer.type === 'standard') {
                   <span>{{
