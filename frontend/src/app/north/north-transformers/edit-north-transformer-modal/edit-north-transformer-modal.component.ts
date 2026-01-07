@@ -168,11 +168,11 @@ export class EditNorthTransformerModalComponent {
       return;
     }
 
-    let south: string | null = null;
+    let south: SouthConnectorLightDTO | null;
     if (this.existingTransformerWithOptions) {
-      south = this.existingTransformerWithOptions.south?.id || null;
+      south = this.existingTransformerWithOptions.south || null;
     } else {
-      south = this.form.value.source?.south?.id || null;
+      south = this.form.value.source?.south || null;
     }
     this.modal.close({
       id: this.existingTransformerWithOptions ? this.existingTransformerWithOptions.id : '',
