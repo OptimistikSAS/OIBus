@@ -158,7 +158,7 @@ describe('EditHistoryQueryTransformerModalComponent', () => {
   });
 
   it('should display title and form, and validate without transformers', async () => {
-    tester.componentInstance.prepareForCreation('opcua', [], [], [transformer], []);
+    tester.componentInstance.prepareForCreation('opcua', [], [], [transformer], [], []);
     await tester.change();
     expect(tester.title).toContainText('Choose how to handle payloads');
     expect(tester.options).toBeNull();
@@ -185,7 +185,8 @@ describe('EditHistoryQueryTransformerModalComponent', () => {
         items: []
       },
       [transformer],
-      ['mqtt']
+      ['mqtt'],
+      []
     );
     await tester.change();
     expect(tester.transformerSelect).toBeDefined();
