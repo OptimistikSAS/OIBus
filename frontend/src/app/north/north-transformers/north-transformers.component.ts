@@ -158,9 +158,21 @@ export class NorthTransformersComponent {
       .pipe(
         switchMap(() => {
           if (this.saveChangesDirectly()) {
+            this.transformersWithOptions = this.transformersWithOptions.filter(element => element.id !== transformer.id);
             return this.northConnectorService.removeTransformer(this.northConnector()!.id, transformer.id);
+          } else {
+            this.transformersWithOptions = this.transformersWithOptions.filter(element => {
+              if (transformer.id) {
+                return element.id !== transformer.id;
+              } else {
+                return !(
+                  element.inputType === transformer.inputType &&
+                  element.south === transformer.south &&
+                  element.transformer.id === transformer.transformer.id
+                );
+              }
+            });
           }
-          this.transformersWithOptions = this.transformersWithOptions.filter(element => element.id !== transformer.id);
           return of(null);
         })
       )

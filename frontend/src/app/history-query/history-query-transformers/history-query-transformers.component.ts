@@ -145,9 +145,17 @@ export class HistoryQueryTransformersComponent {
       .pipe(
         switchMap(() => {
           if (this.saveChangesDirectly()) {
+            this.transformersWithOptions = this.transformersWithOptions.filter(element => element.id !== transformer.id);
             return this.historyQueryService.removeTransformer(this.historyQuery()!.id, transformer.id);
+          } else {
+            this.transformersWithOptions = this.transformersWithOptions.filter(element => {
+              if (transformer.id) {
+                return element.id !== transformer.id;
+              } else {
+                return !(element.inputType === transformer.inputType && element.transformer.id === transformer.transformer.id);
+              }
+            });
           }
-          this.transformersWithOptions = this.transformersWithOptions.filter(element => element.id !== transformer.id);
           return of(null);
         })
       )
