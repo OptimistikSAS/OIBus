@@ -5,30 +5,18 @@
   @if (form) {
     <form [formGroup]="form" (ngSubmit)="save()" id="choose-transformer-form">
       <div class="row">
-        @if (inputTypeControl) {
-          <div class="col-6">
-            <div class="form-group">
-              <label class="form-label" for="input-type" translate="history-query.transformers.input-type"></label>
-              <select [formControl]="inputTypeControl" class="form-select mb-2 mr-sm-2" id="input-type">
-                @for (inputType of selectableInputs; track inputType) {
-                  <option [ngValue]="inputType" [translate]="'enums.oibus-input-data-type.' + inputType"></option>
-                }
-              </select>
-            </div>
-          </div>
-        }
-        <div [class]="inputTypeControl ? 'col-6' : 'col-12'">
+        <div class="col">
           <div class="form-group">
-            <label class="form-label" for="transformer-id" translate="history-query.transformers.transformer"></label>
-            <select class="form-select" id="transformer-id" formControlName="transformerId">
+            <label class="form-label" for="output" translate="configuration.oibus.manifest.transformers.output"></label>
+            <select class="form-select" id="output" formControlName="transformer" [compareWith]="compareTransformers">
               <option [ngValue]="null"></option>
-              @for (transformer of selectableTransformers; track transformer.id) {
+              @for (transformer of selectableOutputs; track transformer.id) {
                 @if (transformer.type === 'standard') {
-                  <option [ngValue]="transformer.id">
+                  <option [ngValue]="transformer">
                     {{ 'configuration.oibus.manifest.transformers.standard.' + transformer.functionName | translate }}
                   </option>
                 } @else {
-                  <option [ngValue]="transformer.id">{{ transformer.name }}</option>
+                  <option [ngValue]="transformer">{{ transformer.name }}</option>
                 }
               }
             </select>
