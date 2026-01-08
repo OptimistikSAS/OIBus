@@ -64,9 +64,7 @@ describe('Sandbox for Javascript', () => {
       contentSize: 0,
       contentType: 'output',
       createdAt: '',
-      numberOfElement: 0,
-      options: {},
-      source: 'source'
+      numberOfElement: 0
     },
     output: '"data"'
   };
@@ -107,25 +105,25 @@ describe('Sandbox for Javascript', () => {
           filename: expectedData.metadata.contentFile
         })
         .mockReturnValueOnce(undefined);
-      await expect(sandboxService.execute('data', 'source', 'my-file.txt', testTransformer, {})).rejects.toThrow(
+      await expect(sandboxService.execute('data', { source: 'test' }, 'my-file.txt', testTransformer, {})).rejects.toThrow(
         `Transform function did not return a valid result: ${JSON.stringify({
           data: undefined,
           filename: expectedData.metadata.contentFile
         })}`
       );
-      await expect(sandboxService.execute('data', 'source', 'my-file.txt', testTransformer, {})).rejects.toThrow(
+      await expect(sandboxService.execute('data', { source: 'test' }, 'my-file.txt', testTransformer, {})).rejects.toThrow(
         `Transform function did not return a valid result: ${JSON.stringify(undefined)}`
       );
     });
 
     it('should execute the transformer code and throw error if no valid the result', async () => {
-      const result = await sandboxService.execute('data', 'source', 'my-file.txt', testTransformer, {});
+      const result = await sandboxService.execute('data', { source: 'test' }, 'my-file.txt', testTransformer, {});
 
       expect(compileScript).toHaveBeenCalled();
       expect(context.global.set).toHaveBeenCalledWith('global', globalDeref);
       expect(script.run).toHaveBeenCalledWith(context);
       expect(context.global.get).toHaveBeenCalledWith('transform', { reference: true });
-      expect(transformFnRef.apply).toHaveBeenCalledWith(undefined, ['data', 'source', 'my-file.txt', {}], {
+      expect(transformFnRef.apply).toHaveBeenCalledWith(undefined, ['data', { source: 'test' }, 'my-file.txt', {}], {
         arguments: { copy: true },
         result: { copy: true, promise: true },
         timeout: 5000
@@ -148,7 +146,7 @@ describe('Sandbox for Javascript', () => {
     });
 
     it('should execute the transformer code and return the result', async () => {
-      const result = await sandboxService.execute('data', 'source', 'my-file.txt', testTransformer, {});
+      const result = await sandboxService.execute('data', { source: 'test' }, 'my-file.txt', testTransformer, {});
 
       expect(logger.error).not.toHaveBeenCalled();
       expect(result).toEqual(expectedData);
@@ -157,7 +155,7 @@ describe('Sandbox for Javascript', () => {
     it('should return null when the code is not syntactically valid', async () => {
       const transformer = { ...testTransformer };
       transformer.customCode += '1234xyz';
-      await expect(sandboxService.execute('data', 'source', 'my-file.txt', transformer, {})).rejects.toThrow(
+      await expect(sandboxService.execute('data', { source: 'test' }, 'my-file.txt', transformer, {})).rejects.toThrow(
         'Invalid or unexpected token [<isolated-vm>:8:3]'
       );
     });
@@ -165,7 +163,9 @@ describe('Sandbox for Javascript', () => {
     it('should return null when there is no transform function', async () => {
       const transformer = { ...testTransformer };
       transformer.customCode = `const foo = 'bar';`;
-      await expect(sandboxService.execute('data', 'source', 'my-file.txt', transformer, {})).rejects.toThrow('Reference is not a function');
+      await expect(sandboxService.execute('data', { source: 'test' }, 'my-file.txt', transformer, {})).rejects.toThrow(
+        'Reference is not a function'
+      );
     });
 
     it('should throw error when the transformer does not return transferable data', async () => {
@@ -178,7 +178,7 @@ describe('Sandbox for Javascript', () => {
         };
       }
     `;
-      await expect(sandboxService.execute('data', 'source', 'my-file.txt', transformer, {})).rejects.toThrow(
+      await expect(sandboxService.execute('data', { source: 'test' }, 'my-file.txt', transformer, {})).rejects.toThrow(
         '() => {} could not be cloned.'
       );
     });
@@ -207,9 +207,7 @@ describe('Sandbox for TypeScript', () => {
       contentSize: 0,
       contentType: 'output',
       createdAt: '',
-      numberOfElement: 1,
-      options: {},
-      source: 'source'
+      numberOfElement: 1
     },
     output: '"data"'
   };
@@ -314,7 +312,7 @@ describe('Sandbox for TypeScript', () => {
         numberOfElement: 2
       });
 
-      const result = await sandboxService.execute(JSON.stringify(inputData), 'source', 'my-file.txt', complexTransformer, {});
+      const result = await sandboxService.execute(JSON.stringify(inputData), { source: 'test' }, 'my-file.txt', complexTransformer, {});
 
       expect(result).toBeDefined();
       const outputData = JSON.parse(result.output);
@@ -369,7 +367,7 @@ describe('Sandbox for TypeScript', () => {
 
       const result = await sandboxService.execute(
         JSON.stringify({ value: 42, name: 'test' }),
-        'source',
+        { source: 'test' },
         'my-file.txt',
         typedTransformer,
         {}
@@ -398,7 +396,7 @@ describe('Sandbox for TypeScript', () => {
     });
 
     it('should execute TypeScript transformer code and return the result', async () => {
-      const result = await sandboxService.execute('data', 'source', 'my-file.txt', testTransformer, {});
+      const result = await sandboxService.execute('data', { source: 'test' }, 'my-file.txt', testTransformer, {});
 
       expect(logger.error).not.toHaveBeenCalled();
       expect(result).toEqual(expectedData);
@@ -421,7 +419,7 @@ describe('Sandbox for TypeScript', () => {
         `
       };
 
-      await expect(sandboxService.execute('data', 'source', 'my-file.txt', brokenTransformer, {})).rejects.toThrow();
+      await expect(sandboxService.execute('data', { source: 'test' }, 'my-file.txt', brokenTransformer, {})).rejects.toThrow();
     });
 
     it('should handle TypeScript transform function returning invalid data', async () => {
@@ -439,7 +437,7 @@ describe('Sandbox for TypeScript', () => {
         `
       };
 
-      await expect(sandboxService.execute('data', 'source', 'my-file.txt', transformerWithInvalidReturn, {})).rejects.toThrow(
+      await expect(sandboxService.execute('data', { source: 'test' }, 'my-file.txt', transformerWithInvalidReturn, {})).rejects.toThrow(
         'Transform function did not return a valid result'
       );
     });
@@ -460,7 +458,7 @@ describe('Sandbox for TypeScript', () => {
         `
       };
 
-      await expect(sandboxService.execute('data', 'source', 'my-file.txt', brokenTransformer, {})).rejects.toThrow();
+      await expect(sandboxService.execute('data', { source: 'test' }, 'my-file.txt', brokenTransformer, {})).rejects.toThrow();
     });
 
     it('should handle TypeScript compilation errors with invalid code', async () => {
@@ -469,7 +467,7 @@ describe('Sandbox for TypeScript', () => {
         customCode: `invalid typescript syntax that will definitely fail compilation`
       };
 
-      await expect(sandboxService.execute('data', 'source', 'my-file.txt', brokenTransformer, {})).rejects.toThrow();
+      await expect(sandboxService.execute('data', { source: 'test' }, 'my-file.txt', brokenTransformer, {})).rejects.toThrow();
     });
 
     it('should handle TypeScript compilation errors with module syntax', async () => {
@@ -483,7 +481,7 @@ describe('Sandbox for TypeScript', () => {
         `
       };
 
-      await expect(sandboxService.execute('data', 'source', 'my-file.txt', brokenTransformer, {})).rejects.toThrow();
+      await expect(sandboxService.execute('data', { source: 'test' }, 'my-file.txt', brokenTransformer, {})).rejects.toThrow();
     });
   });
 
@@ -519,7 +517,7 @@ describe('Sandbox for TypeScript', () => {
           throw 'String error instead of Error object';
         });
 
-        await expect(sandboxService.execute('data', 'source', 'my-file.txt', brokenTransformer, {})).rejects.toThrow(
+        await expect(sandboxService.execute('data', { source: 'test' }, 'my-file.txt', brokenTransformer, {})).rejects.toThrow(
           'TypeScript compilation failed: String error instead of Error object'
         );
       });
@@ -546,7 +544,7 @@ describe('Sandbox for TypeScript', () => {
           throw new Error('Compilation error message');
         });
 
-        await expect(sandboxService.execute('data', 'source', 'my-file.txt', brokenTransformer, {})).rejects.toThrow(
+        await expect(sandboxService.execute('data', { source: 'test' }, 'my-file.txt', brokenTransformer, {})).rejects.toThrow(
           'TypeScript compilation failed: Compilation error message'
         );
       });
@@ -577,7 +575,7 @@ describe('Sandbox for TypeScript', () => {
           `;
         });
 
-        const result = await sandboxService.execute('test data', 'source', 'my-file.txt', validTransformer, {});
+        const result = await sandboxService.execute('test data', { source: 'test' }, 'my-file.txt', validTransformer, {});
         expect(result.output).toBe('"test data"');
         expect(result.metadata.numberOfElement).toBe(1);
       });
@@ -604,7 +602,7 @@ describe('Sandbox for TypeScript', () => {
           customManifest: {} as OIBusObjectAttribute
         };
 
-        const result = await sandboxService.execute('test data', 'source', 'my-file.txt', jsTransformer, {});
+        const result = await sandboxService.execute('test data', { source: 'test' }, 'my-file.txt', jsTransformer, {});
         expect(result.metadata.numberOfElement).toBe(0);
       });
     });
@@ -622,7 +620,7 @@ describe('Sandbox for TypeScript', () => {
         `
       };
 
-      const result = await sandboxService.execute('test data', 'source', 'my-file.txt', tsTransformer, {});
+      const result = await sandboxService.execute('test data', { source: 'test' }, 'my-file.txt', tsTransformer, {});
       expect(result.metadata.numberOfElement).toBe(0);
     });
   });
