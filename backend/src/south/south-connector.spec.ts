@@ -579,19 +579,29 @@ describe('SouthConnector with history and subscription', () => {
   });
 
   it('should add values', async () => {
-    await south.addContent({ type: 'time-values', content: [] });
+    await south.addContent({ type: 'time-values', content: [] }, testData.constants.dates.DATE_1, []);
     expect(logger.debug).toHaveBeenCalledTimes(1);
     expect(addContentCallback).not.toHaveBeenCalled();
 
-    await south.addContent({ type: 'time-values', content: [{}, {}] as Array<OIBusTimeValue> });
+    await south.addContent({ type: 'time-values', content: [{}, {}] as Array<OIBusTimeValue> }, testData.constants.dates.DATE_1, []);
     expect(logger.debug).toHaveBeenCalledWith(`Add 2 values to cache from South "${testData.south.list[2].name}"`);
-    expect(addContentCallback).toHaveBeenCalledWith(testData.south.list[2].id, { type: 'time-values', content: [{}, {}] });
+    expect(addContentCallback).toHaveBeenCalledWith(
+      testData.south.list[2].id,
+      { type: 'time-values', content: [{}, {}] },
+      testData.constants.dates.DATE_1,
+      []
+    );
   });
 
   it('should add file', async () => {
-    await south.addContent({ type: 'any', filePath: 'file.csv' });
+    await south.addContent({ type: 'any', filePath: 'file.csv' }, testData.constants.dates.DATE_1, []);
     expect(logger.debug).toHaveBeenCalledWith(`Add file "file.csv" to cache from South "${testData.south.list[2].name}"`);
-    expect(addContentCallback).toHaveBeenCalledWith(testData.south.list[2].id, { type: 'any', filePath: 'file.csv' });
+    expect(addContentCallback).toHaveBeenCalledWith(
+      testData.south.list[2].id,
+      { type: 'any', filePath: 'file.csv' },
+      testData.constants.dates.DATE_1,
+      []
+    );
   });
 
   it('should manage history query with several intervals', async () => {

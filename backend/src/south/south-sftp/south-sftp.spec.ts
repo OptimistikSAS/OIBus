@@ -186,10 +186,14 @@ describe('SouthSFTP', () => {
     expect(mockSftpClient.fastGet as jest.Mock).toHaveBeenCalledTimes(1);
     expect(mockSftpClient.delete as jest.Mock).toHaveBeenCalledTimes(1);
     expect(mockSftpClient.end as jest.Mock).toHaveBeenCalledTimes(1);
-    expect(south.addContent).toHaveBeenCalledWith({
-      type: 'any',
-      filePath: path.resolve('cacheFolder', 'tmp', fileInfo.name)
-    });
+    expect(south.addContent).toHaveBeenCalledWith(
+      {
+        type: 'any',
+        filePath: path.resolve('cacheFolder', 'tmp', fileInfo.name)
+      },
+      testData.constants.dates.FAKE_NOW,
+      [configuration.items[0].id]
+    );
     expect(fs.unlink).not.toHaveBeenCalled();
     expect(logger.error).not.toHaveBeenCalled();
     expect(south.updateModifiedTime).not.toHaveBeenCalled();
@@ -371,10 +375,14 @@ describe('SouthFTP with preserve file and compression', () => {
       path.resolve('cacheFolder', 'tmp', fileInfo.name),
       `${path.resolve('cacheFolder', 'tmp', 'myFile1')}.gz`
     );
-    expect(south.addContent).toHaveBeenCalledWith({
-      type: 'any',
-      filePath: path.resolve('cacheFolder', 'tmp', `${fileInfo.name}.gz`)
-    });
+    expect(south.addContent).toHaveBeenCalledWith(
+      {
+        type: 'any',
+        filePath: path.resolve('cacheFolder', 'tmp', `${fileInfo.name}.gz`)
+      },
+      testData.constants.dates.FAKE_NOW,
+      [configuration.items[1].id]
+    );
     expect(logger.error).not.toHaveBeenCalled();
     expect(fs.unlink).toHaveBeenCalledWith(`${path.resolve('cacheFolder', 'tmp', 'myFile1')}.gz`);
     expect(fs.unlink).toHaveBeenCalledWith(path.resolve('cacheFolder', 'tmp', fileInfo.name));
@@ -382,10 +390,14 @@ describe('SouthFTP with preserve file and compression', () => {
 
     fileInfo.name = 'myFile2';
     await south.getFile(fileInfo, configuration.items[1]);
-    expect(south.addContent).toHaveBeenCalledWith({
-      type: 'any',
-      filePath: `${path.resolve('cacheFolder', 'tmp', 'myFile2')}.gz`
-    });
+    expect(south.addContent).toHaveBeenCalledWith(
+      {
+        type: 'any',
+        filePath: `${path.resolve('cacheFolder', 'tmp', 'myFile2')}.gz`
+      },
+      testData.constants.dates.FAKE_NOW,
+      [configuration.items[1].id]
+    );
     expect(logger.error).toHaveBeenCalledWith(
       `Error while removing compressed file "${path.resolve('cacheFolder', 'tmp', 'myFile2')}.gz": ${new Error('error')}`
     );
@@ -394,10 +406,14 @@ describe('SouthFTP with preserve file and compression', () => {
       throw new Error('compression error');
     });
     await south.getFile(fileInfo, configuration.items[1]);
-    expect(south.addContent).toHaveBeenCalledWith({
-      type: 'any',
-      filePath: path.resolve('cacheFolder', 'tmp', 'myFile2')
-    });
+    expect(south.addContent).toHaveBeenCalledWith(
+      {
+        type: 'any',
+        filePath: path.resolve('cacheFolder', 'tmp', 'myFile2')
+      },
+      testData.constants.dates.FAKE_NOW,
+      [configuration.items[1].id]
+    );
 
     expect(logger.error).toHaveBeenCalledWith(
       `Error compressing file "${path.resolve('cacheFolder', 'tmp', fileInfo.name)}". Sending it raw instead`

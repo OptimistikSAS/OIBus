@@ -209,8 +209,11 @@ export default class NorthConnectorRepository {
   }
 
   removeTransformer(id: string): void {
-    const query = `DELETE FROM ${NORTH_TRANSFORMERS_TABLE} WHERE id = ?;`;
-    this.database.prepare(query).run(id);
+    const transaction = this.database.transaction(() => {
+      this.database.prepare(`DELETE FROM ${NORTH_TRANSFORMERS_ITEMS_TABLE} WHERE id = ?;`).run(id);
+      this.database.prepare(`DELETE FROM ${NORTH_TRANSFORMERS_TABLE} WHERE id = ?;`).run(id);
+    });
+    transaction();
   }
 
   private findTransformersForNorth(northId: string): Array<NorthTransformerWithOptions> {
