@@ -2,7 +2,7 @@ import pino from 'pino';
 import NorthConnector from '../north/north-connector';
 import SouthConnector from '../south/south-connector';
 import path from 'node:path';
-import { BaseFolders } from '../model/types';
+import { BaseFolders, Instant } from '../model/types';
 import {
   CacheMetadata,
   CacheSearchParam,
@@ -393,7 +393,8 @@ export default class DataStreamEngine {
         settings: configuration.southSettings,
         items: []
       },
-      async (historyId: string, data: OIBusContent) => await north.cacheContent(data, null),
+      async (historyId: string, data: OIBusContent, queryTime: Instant, itemIds: Array<string>) =>
+        await north.cacheContent(data, { source: 'south', southId: configuration.id, queryTime, itemIds }),
       logger,
       path.resolve(this.cacheFolders.cache, `history-${configuration.id}`, 'south'),
       this.southCacheRepository,
@@ -502,10 +503,10 @@ export default class DataStreamEngine {
   /**
    * Method called by South connectors to add content to the appropriate Norths
    */
-  async addContent(southId: string, data: OIBusContent) {
+  async addContent(southId: string, data: OIBusContent, queryTime: Instant, itemIds: Array<string>) {
     for (const north of this.northConnectors.values()) {
       if (north.isEnabled()) {
-        await north.cacheContent(data, southId);
+        await north.cacheContent(data, { source: 'south', southId, queryTime, itemIds });
       }
     }
   }
@@ -513,10 +514,10 @@ export default class DataStreamEngine {
   /**
    * Add content to a north connector from the OIBus API endpoints
    */
-  async addExternalContent(northId: string, data: OIBusContent, _source: string): Promise<void> {
+  async addExternalContent(northId: string, data: OIBusContent): Promise<void> {
     const north = this.northConnectors.get(northId);
     if (north && north.isEnabled()) {
-      await north.cacheContent(data, null);
+      await north.cacheContent(data, { source: 'api' });
     }
   }
 

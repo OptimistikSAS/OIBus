@@ -247,7 +247,7 @@ export class EditNorthComponent implements OnInit, CanComponentDeactivate {
         element => element.id === this.northConnector!.caching.trigger.scanMode.id
       )!;
       this.form.patchValue(this.northConnector);
-      // Initialize in-memory subscriptions for edit mode to allow deferring persistence
+      // Initialize in-memory transformers for edit mode to allow deferring persistence
       this.inMemoryTransformersWithOptions = [...this.northConnector.transformers];
     } else {
       // we should provoke all value changes to make sure fields are properly hidden and disabled

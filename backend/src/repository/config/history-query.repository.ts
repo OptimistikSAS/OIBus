@@ -292,8 +292,11 @@ export default class HistoryQueryRepository {
   }
 
   removeTransformer(id: string): void {
-    const query = `DELETE FROM ${HISTORY_TRANSFORMERS_TABLE} WHERE id = ?;`;
-    this.database.prepare(query).run(id);
+    const transaction = this.database.transaction(() => {
+      this.database.prepare(`DELETE FROM ${HISTORY_QUERY_TRANSFORMERS_ITEMS_TABLE} WHERE id = ?;`).run(id);
+      this.database.prepare(`DELETE FROM ${HISTORY_TRANSFORMERS_TABLE} WHERE id = ?;`).run(id);
+    });
+    transaction();
   }
 
   searchItems(historyId: string, searchParams: HistoryQueryItemSearchParam): Page<HistoryQueryItemEntity<SouthItemSettings>> {

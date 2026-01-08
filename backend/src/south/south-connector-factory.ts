@@ -63,10 +63,11 @@ import SouthSFTP from '../south/south-sftp/south-sftp';
 import SouthFTP from '../south/south-ftp/south-ftp';
 import SouthSQLite from '../south/south-sqlite/south-sqlite';
 import SouthConnector from './south-connector';
+import { Instant } from '../model/types';
 
 export const buildSouth = (
   settings: SouthConnectorEntity<SouthSettings, SouthItemSettings>,
-  addContent: (southId: string, data: OIBusContent) => Promise<void>,
+  addContent: (southId: string, data: OIBusContent, queryTime: Instant, itemIds: Array<string>) => Promise<void>,
   logger: pino.Logger,
   southCacheFolder: string,
   southCacheRepository: SouthCacheRepository,

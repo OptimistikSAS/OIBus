@@ -1,7 +1,7 @@
 import OIBusTransformer from '../oibus-transformer';
 import { ReadStream } from 'node:fs';
 import { pipeline, Readable, Transform } from 'node:stream';
-import { CacheMetadata, OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { CacheMetadata, CacheMetadataSource, OIBusTimeValue } from '../../../../shared/model/engine.model';
 import { promisify } from 'node:util';
 import { OIBusObjectAttribute } from '../../../../shared/model/form.model';
 import { convertDateTimeToInstant, convertDelimiter, generateRandomId } from '../../utils';
@@ -37,7 +37,7 @@ export default class CSVToTimeValuesTransformer extends OIBusTransformer {
 
   async transform(
     data: ReadStream | Readable,
-    source: string | null,
+    source: CacheMetadataSource,
     filename: string
   ): Promise<{ metadata: CacheMetadata; output: string }> {
     const csvParser = this.options.csvToParse.find(parser => filename.match(parser.regex));
@@ -98,9 +98,7 @@ export default class CSVToTimeValuesTransformer extends OIBusTransformer {
       contentSize: 0,
       createdAt: '',
       numberOfElement: timeValues.length,
-      contentType: 'time-values',
-      source,
-      options: {}
+      contentType: 'time-values'
     };
 
     return {
@@ -125,7 +123,7 @@ export default class CSVToTimeValuesTransformer extends OIBusTransformer {
     }
   }
 
-  returnEmpty(source: string | null) {
+  returnEmpty(source: CacheMetadataSource) {
     return {
       output: '[]',
       metadata: {
@@ -134,8 +132,7 @@ export default class CSVToTimeValuesTransformer extends OIBusTransformer {
         createdAt: '',
         numberOfElement: 0,
         contentType: 'time-values',
-        source,
-        options: {}
+        source
       }
     };
   }
