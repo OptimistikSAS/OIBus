@@ -31,7 +31,6 @@ describe('OIBusTimeValuesToMQTTTransformer', () => {
     };
     // Arrange
     const transformer = new OIBusTimeValuesToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
-    const source = 'test-source';
     const dataChunks: Array<OIBusTimeValue> = [
       {
         pointId: 'reference1',
@@ -61,7 +60,7 @@ describe('OIBusTimeValuesToMQTTTransformer', () => {
     const mockStream = new Readable();
 
     // Act
-    const promise = transformer.transform(mockStream, source, null);
+    const promise = transformer.transform(mockStream, { source: 'test' }, null);
     mockStream.push(JSON.stringify(dataChunks));
     mockStream.push(null); // End the stream
 
@@ -78,9 +77,7 @@ describe('OIBusTimeValuesToMQTTTransformer', () => {
         contentSize: 0,
         createdAt: '',
         numberOfElement: 2,
-        contentType: 'mqtt',
-        source,
-        options: {}
+        contentType: 'mqtt'
       }
     });
   });

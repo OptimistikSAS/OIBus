@@ -34,8 +34,7 @@ describe('OIBusCustomTransformer', () => {
       createdAt: '',
       numberOfElement: 0,
       contentType: '',
-      source: '',
-      options: {}
+      source: { source: 'test' }
     }
   };
   beforeEach(async () => {
@@ -47,7 +46,6 @@ describe('OIBusCustomTransformer', () => {
   it('should transform data from a stream and return sandbox result', async () => {
     // Arrange
     const transformer = new OIBusCustomTransformer(logger, testData.transformers.list[0] as CustomTransformer, testData.north.list[0], {});
-    const source = 'test-source';
     const dataChunks: Array<OIBusTimeValue> = [
       {
         pointId: 'reference1',
@@ -77,7 +75,7 @@ describe('OIBusCustomTransformer', () => {
     const mockStream = new Readable();
 
     // Act
-    const promise = transformer.transform(mockStream, source, null);
+    const promise = transformer.transform(mockStream, { source: 'test' }, null);
     mockStream.push(JSON.stringify(dataChunks));
     mockStream.push(null); // End the stream
 
@@ -86,7 +84,7 @@ describe('OIBusCustomTransformer', () => {
     expect(result).toEqual(sandboxOutput);
     expect(sandboxService.execute).toHaveBeenCalledWith(
       JSON.stringify(dataChunks),
-      source,
+      { source: 'test' },
       'randomId.json',
       testData.transformers.list[0],
       {}

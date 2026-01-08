@@ -393,7 +393,10 @@ describe('South ADS', () => {
     south.addContent = jest.fn();
     south.readAdsSymbol = jest.fn().mockReturnValue([1]);
     await south.lastPointQuery(configuration.items);
-    expect(south.addContent).toHaveBeenCalledWith({ type: 'time-values', content: [1, 1] });
+    expect(south.addContent).toHaveBeenCalledWith({ type: 'time-values', content: [1, 1] }, testData.constants.dates.FAKE_NOW, [
+      configuration.items[0].id,
+      configuration.items[1].id
+    ]);
   });
 
   it('should manage query last point disconnect errors', async () => {

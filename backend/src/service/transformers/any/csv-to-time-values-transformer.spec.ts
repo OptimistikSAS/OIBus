@@ -79,7 +79,7 @@ describe('CSVToTimeValuesTransformer', () => {
     });
 
     // Act
-    const promise = transformer.transform(mockStream, 'src', 'data.csv');
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
     mockStream.push('raw-csv-content');
     mockStream.push(null);
     await flushPromises();
@@ -112,7 +112,7 @@ describe('CSVToTimeValuesTransformer', () => {
     });
 
     // Act
-    const promise = transformer.transform(mockStream, 'src', 'data.csv');
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
     mockStream.push('content');
     mockStream.push(null);
     await flushPromises();
@@ -146,7 +146,7 @@ describe('CSVToTimeValuesTransformer', () => {
     });
 
     // Act
-    const promise = transformer.transform(mockStream, 'src', 'data.csv');
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
     mockStream.push('content');
     mockStream.push(null);
     await flushPromises();
@@ -174,7 +174,7 @@ describe('CSVToTimeValuesTransformer', () => {
     });
 
     // Act
-    const promise = transformer.transform(mockStream, 'src', 'data.csv');
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
     mockStream.push('content');
     mockStream.push(null);
     await flushPromises();
@@ -197,7 +197,7 @@ describe('CSVToTimeValuesTransformer', () => {
     });
 
     // Act
-    const promise = transformer.transform(mockStream, 'src', 'data.csv');
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
     mockStream.push('bad-csv');
     mockStream.push(null);
     await flushPromises();
@@ -212,7 +212,7 @@ describe('CSVToTimeValuesTransformer', () => {
     transformer = new CSVToTimeValuesTransformer(logger, testData.transformers.list[0], testData.north.list[0], headerOptions);
 
     // Act
-    const promise = transformer.transform(mockStream, 'src', 'nomatch.txt'); // Wrong extension
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'nomatch.txt'); // Wrong extension
     mockStream.push('content');
     mockStream.push(null);
     await flushPromises();

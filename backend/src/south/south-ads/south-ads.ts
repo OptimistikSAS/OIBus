@@ -31,7 +31,7 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
 
   constructor(
     connector: SouthConnectorEntity<SouthADSSettings, SouthADSItemSettings>,
-    engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
+    engineAddContentCallback: (southId: string, data: OIBusContent, queryTime: Instant, itemIds: Array<string>) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
     logger: pino.Logger,
     cacheFolderPath: string
@@ -161,15 +161,19 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
   async lastPointQuery(items: Array<SouthConnectorItemEntity<SouthADSItemSettings>>): Promise<void> {
     const timestamp = DateTime.now().toUTC().toISO()!;
     try {
-      const startRequest = DateTime.now().toMillis();
+      const startRequest = DateTime.now();
       const results = await Promise.all(items.map(item => this.readAdsSymbol(item, timestamp)));
-      const requestDuration = DateTime.now().toMillis() - startRequest;
+      const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
       this.logger.debug(`Requested ${items.length} items in ${requestDuration} ms`);
 
-      await this.addContent({
-        type: 'time-values',
-        content: results.reduce((concatenatedResults, result) => [...concatenatedResults, ...result], [])
-      });
+      await this.addContent(
+        {
+          type: 'time-values',
+          content: results.reduce((concatenatedResults, result) => [...concatenatedResults, ...result], [])
+        },
+        startRequest.toUTC().toISO(),
+        [...new Set(items.map(item => item.id))]
+      );
     } catch (error: unknown) {
       if ((error as Error).message.includes('Client is not connected')) {
         this.logger.error('ADS client disconnected. Reconnecting');

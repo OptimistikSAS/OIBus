@@ -51,7 +51,7 @@ describe('OIBusSetpointToMQTTTransformer', () => {
     const mockStream = new Readable();
 
     // Act
-    const promise = transformer.transform(mockStream, source, null);
+    const promise = transformer.transform(mockStream, { source: 'test' }, null);
     mockStream.push(JSON.stringify(dataChunks));
     mockStream.push(null); // End the stream
 
@@ -68,9 +68,7 @@ describe('OIBusSetpointToMQTTTransformer', () => {
         contentSize: 0,
         createdAt: '',
         numberOfElement: 2,
-        contentType: 'mqtt',
-        source,
-        options: {}
+        contentType: 'mqtt'
       }
     });
   });

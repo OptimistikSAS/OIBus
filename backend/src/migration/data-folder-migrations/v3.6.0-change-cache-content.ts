@@ -2,8 +2,9 @@ import { Knex } from 'knex';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { createFolder, generateRandomId, getCommandLineArguments } from '../../service/utils';
-import { CacheMetadata, OIBusTimeValue } from '../../../shared/model/engine.model';
+import { OIBusTimeValue } from '../../../shared/model/engine.model';
 import { DateTime } from 'luxon';
+import { Instant } from '../../../shared/model/types';
 
 const { configFile } = getCommandLineArguments();
 
@@ -14,6 +15,16 @@ const DATA_FOLDER_PATH = path.resolve(configFile);
 const CACHE_FOLDER_PATH = path.resolve(DATA_FOLDER_PATH, 'cache');
 const ARCHIVE_FOLDER_PATH = path.resolve(DATA_FOLDER_PATH, 'archive');
 const ERROR_FOLDER_PATH = path.resolve(DATA_FOLDER_PATH, 'error');
+
+interface CacheMetadata {
+  contentFile: string;
+  contentSize: number;
+  numberOfElement: number;
+  createdAt: Instant;
+  contentType: string;
+  source: string | null;
+  options: Record<string, string | number>;
+}
 
 export async function up(_knex: Knex): Promise<void> {
   console.info(`[FolderStructureMigration] - Refactoring ${CACHE_FOLDER_PATH}`);

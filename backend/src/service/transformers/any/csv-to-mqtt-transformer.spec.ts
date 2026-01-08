@@ -70,7 +70,7 @@ describe('CSVToMQTTTransformer', () => {
 
     const csvContent = `topic,temperature,isEnabled,timestamp\ndevice/1,25.5,true,2023-01-01`;
 
-    const promise = transformer.transform(mockStream, 'src', 'data.csv');
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
     mockStream.push(csvContent);
     mockStream.push(null);
     await flushPromises();
@@ -104,7 +104,7 @@ describe('CSVToMQTTTransformer', () => {
 
     const csvContent = `topic,val\ndevice/1,100`;
 
-    const promise = transformer.transform(mockStream, 'src', 'data.csv');
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
     mockStream.push(csvContent);
     mockStream.push(null);
     await flushPromises();
@@ -125,7 +125,7 @@ describe('CSVToMQTTTransformer', () => {
 
     const csvContent = `topic,val\ndevice/s,123`;
 
-    const promise = transformer.transform(mockStream, 'src', 'data.csv');
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
     mockStream.push(csvContent);
     mockStream.push(null);
     await flushPromises();
@@ -143,7 +143,7 @@ describe('CSVToMQTTTransformer', () => {
 
     const csvContent = `topic,val\ndevice/n,45.6`;
 
-    const promise = transformer.transform(mockStream, 'src', 'data.csv');
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
     mockStream.push(csvContent);
     mockStream.push(null);
     await flushPromises();
@@ -161,7 +161,7 @@ describe('CSVToMQTTTransformer', () => {
 
     const csvContent = `topic,val\ndevice/b,true`;
 
-    const promise = transformer.transform(mockStream, 'src', 'data.csv');
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
     mockStream.push(csvContent);
     mockStream.push(null);
     await flushPromises();
@@ -186,7 +186,7 @@ describe('CSVToMQTTTransformer', () => {
 
     const csvContent = `topic,val\ndevice/d,2023-01-01`;
 
-    const promise = transformer.transform(mockStream, 'src', 'data.csv');
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
     mockStream.push(csvContent);
     mockStream.push(null);
     await flushPromises();
@@ -217,7 +217,7 @@ describe('CSVToMQTTTransformer', () => {
 
     const csvContent = `device/1,100\ndevice/2,200`;
 
-    const promise = transformer.transform(mockStream, 'src', 'data.csv');
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
     mockStream.push(csvContent);
     mockStream.push(null);
     await flushPromises();
@@ -247,7 +247,7 @@ describe('CSVToMQTTTransformer', () => {
 
     const csvContent = `device/1,{}\ndevice/2,{}`;
 
-    const promise = transformer.transform(mockStream, 'src', 'data.csv');
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
     mockStream.push(csvContent);
     mockStream.push(null);
     await flushPromises();
@@ -276,7 +276,7 @@ describe('CSVToMQTTTransformer', () => {
 
     const csvContent = `device/1,100\ndevice/2,200`;
 
-    const promise = transformer.transform(mockStream, 'src', 'data.csv');
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
     mockStream.push(csvContent);
     mockStream.push(null);
     await flushPromises();
@@ -302,7 +302,7 @@ describe('CSVToMQTTTransformer', () => {
 
     const csvContent = `device/1,100`;
 
-    const promise = transformer.transform(mockStream, 'src', 'data.csv');
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
     mockStream.push(csvContent);
     mockStream.push(null);
     await flushPromises();
@@ -325,7 +325,7 @@ describe('CSVToMQTTTransformer', () => {
     // Row 2 has empty topic
     const csvContent = `topic,val\ndevice/1,10\n,20`;
 
-    const promise = transformer.transform(mockStream, 'src', 'data.csv');
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
     mockStream.push(csvContent);
     mockStream.push(null);
     await flushPromises();
@@ -345,7 +345,7 @@ describe('CSVToMQTTTransformer', () => {
     // Row 2 has empty value
     const csvContent = `topic,val\ndevice/1,10\ndevice/2,`;
 
-    const promise = transformer.transform(mockStream, 'src', 'data.csv');
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
     mockStream.push(csvContent);
     mockStream.push(null);
     await flushPromises();
@@ -361,7 +361,7 @@ describe('CSVToMQTTTransformer', () => {
       csvToParse: [baseOptions]
     });
 
-    const promise = transformer.transform(mockStream, 'src', 'wrong-name.txt');
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'wrong-name.txt');
     mockStream.push('topic,val');
     mockStream.push(null);
     await flushPromises();
@@ -381,7 +381,7 @@ describe('CSVToMQTTTransformer', () => {
     // Malformed CSV (unclosed quote)
     const csvContent = `topic,val\n"device/1,10`;
 
-    const promise = transformer.transform(mockStream, 'src', 'data.csv');
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
     mockStream.push(csvContent);
     mockStream.push(null);
     await flushPromises();
@@ -400,7 +400,7 @@ describe('CSVToMQTTTransformer', () => {
 
     const csvContent = `topic,val\ndevice/1,raw-content`;
 
-    const promise = transformer.transform(mockStream, 'src', 'data.csv');
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
     mockStream.push(csvContent);
     mockStream.push(null);
     await flushPromises();

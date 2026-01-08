@@ -288,9 +288,7 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'time-values',
-      source: 'south',
-      options: {}
+      contentType: 'time-values'
     });
 
     expect(HTTPRequest).toHaveBeenCalledWith(
@@ -307,9 +305,7 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'bad',
-        source: 'south',
-        options: {}
+        contentType: 'bad'
       })
     ).rejects.toThrow(`Unsupported data type: bad (file path/to/file/example-123456789.file)`);
   });
@@ -326,9 +322,7 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'time-values',
-        source: 'south',
-        options: {}
+        contentType: 'time-values'
       })
     ).rejects.toThrow(new OIBusError(`Fail to reach values endpoint ${hostname}/api/oianalytics/oibus/time-values. ${error}`, true));
   });
@@ -357,9 +351,7 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'time-values',
-        source: 'south',
-        options: {}
+        contentType: 'time-values'
       })
     ).rejects.toThrow(new OIBusError(`Error 400: statusText`, false));
 
@@ -388,9 +380,7 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'any',
-      source: 'south',
-      options: {}
+      contentType: 'any'
     });
 
     expect(HTTPRequest).toHaveBeenCalledWith(
@@ -423,9 +413,7 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'any',
-      source: 'south',
-      options: {}
+      contentType: 'any'
     });
 
     expect(HTTPRequest).toHaveBeenCalledWith(
@@ -465,9 +453,7 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'any',
-      source: 'south',
-      options: {}
+      contentType: 'any'
     });
 
     expect(HTTPRequest).toHaveBeenCalledWith(
@@ -547,9 +533,7 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'any',
-      source: 'south',
-      options: {}
+      contentType: 'any'
     });
 
     expect(HTTPRequest).toHaveBeenCalledWith(
@@ -581,9 +565,7 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'any',
-      source: 'south',
-      options: {}
+      contentType: 'any'
     });
 
     expect(HTTPRequest).toHaveBeenCalledWith(
@@ -604,9 +586,7 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
           contentSize: 1234,
           numberOfElement: 1,
           createdAt: '2020-02-02T02:02:02.222Z',
-          contentType: 'any',
-          source: 'south',
-          options: {}
+          contentType: 'any'
         })
       ).rejects.toThrow(
         `Fail to reach file endpoint ${hostname}/api/oianalytics/file-uploads. ${new Error('Proxy URL not specified using specific settings')}`
@@ -688,9 +668,7 @@ describe('NorthOIAnalytics with Azure Active Directory', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'any',
-        source: 'south',
-        options: {}
+        contentType: 'any'
       });
 
       const { tenantId, clientId } = configuration.settings.specificSettings!;
@@ -724,9 +702,7 @@ describe('NorthOIAnalytics with Azure Active Directory', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'any',
-        source: 'south',
-        options: {}
+        contentType: 'any'
       });
 
       (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
@@ -780,9 +756,7 @@ describe('NorthOIAnalytics with Azure Active Directory', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'any',
-        source: 'south',
-        options: {}
+        contentType: 'any'
       });
 
       const { tenantId, clientId, clientSecret } = configuration.settings.specificSettings!;
@@ -866,9 +840,7 @@ describe('NorthOIAnalytics with OIA module', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'any',
-      source: 'south',
-      options: {}
+      contentType: 'any'
     });
 
     expect(HTTPRequest).toHaveBeenCalledWith(
@@ -913,9 +885,7 @@ describe('NorthOIAnalytics with OIA module', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'any',
-      source: 'south',
-      options: {}
+      contentType: 'any'
     });
 
     expect(HTTPRequest).toHaveBeenCalledWith(
@@ -953,9 +923,7 @@ describe('NorthOIAnalytics with OIA module', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'any',
-      source: 'south',
-      options: {}
+      contentType: 'any'
     });
 
     expect(HTTPRequest).toHaveBeenCalledWith(
@@ -973,9 +941,7 @@ describe('NorthOIAnalytics with OIA module', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'any',
-        source: 'south',
-        options: {}
+        contentType: 'any'
       })
     ).rejects.toThrow(new Error('OIBus not registered in OIAnalytics'));
   });
@@ -995,9 +961,7 @@ describe('NorthOIAnalytics with OIA module', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'any',
-        source: 'south',
-        options: {}
+        contentType: 'any'
       })
     ).rejects.toThrow(
       `Fail to reach file endpoint ${hostname}/api/oianalytics/file-uploads. ${new Error('OIBus not registered in OIAnalytics')}`
@@ -1019,9 +983,7 @@ describe('NorthOIAnalytics with OIA module', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'any',
-        source: 'south',
-        options: {}
+        contentType: 'any'
       })
     ).rejects.toThrow(
       `Fail to reach file endpoint ${hostname}/api/oianalytics/file-uploads. ${new Error('OIBus not registered in OIAnalytics')}`
@@ -1043,9 +1005,7 @@ describe('NorthOIAnalytics with OIA module', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'any',
-        source: 'south',
-        options: {}
+        contentType: 'any'
       })
     ).rejects.toThrow(new Error('OIBus not registered in OIAnalytics'));
   });

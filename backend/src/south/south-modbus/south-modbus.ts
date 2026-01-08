@@ -13,6 +13,7 @@ import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/sout
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { connectSocket, readCoil, readDiscreteInputRegister, readHoldingRegister, readInputRegister } from '../../service/utils-modbus';
+import { Instant } from '../../model/types';
 
 /**
  * Class SouthModbus - Provides instruction for Modbus client connection
@@ -25,7 +26,7 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
 
   constructor(
     connector: SouthConnectorEntity<SouthModbusSettings, SouthModbusItemSettings>,
-    engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
+    engineAddContentCallback: (southId: string, data: OIBusContent, queryTime: Instant, itemIds: Array<string>) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
     logger: pino.Logger,
     cacheFolderPath: string
@@ -117,16 +118,20 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
       if (!this.modbusClient) {
         throw new Error('Could not read address: Modbus client not set');
       }
-      const startRequest = DateTime.now().toMillis();
+      const startRequest = DateTime.now();
       for (const item of items) {
         dataValues.push(...(await this.modbusFunction(this.modbusClient, item)));
       }
-      const requestDuration = DateTime.now().toMillis() - startRequest;
+      const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
       this.logger.debug(`Requested ${items.length} items in ${requestDuration} ms`);
-      await this.addContent({
-        type: 'time-values',
-        content: dataValues
-      });
+      await this.addContent(
+        {
+          type: 'time-values',
+          content: dataValues
+        },
+        startRequest.toUTC().toISO(),
+        [...new Set(items.map(item => item.id))]
+      );
     } catch (error: unknown) {
       await this.disconnect();
       if (!this.disconnecting && this.connector.enabled) {
@@ -185,7 +190,7 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
     return [
       {
         pointId: item.name,
-        timestamp: DateTime.now().toUTC().toISO()!,
+        timestamp: DateTime.now().toUTC().toISO(),
         data: { value }
       }
     ];

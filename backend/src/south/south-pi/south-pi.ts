@@ -21,7 +21,7 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
 
   constructor(
     connector: SouthConnectorEntity<SouthPISettings, SouthPIItemSettings>,
-    engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
+    engineAddContentCallback: (southId: string, data: OIBusContent, queryTime: Instant, itemIds: Array<string>) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
     logger: pino.Logger,
     cacheFolderPath: string
@@ -131,7 +131,7 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
   ): Promise<Instant | null> {
     let updatedStartTime: Instant | null = null;
     this.logger.debug(`Requesting ${items.length} items between ${startTime} and ${endTime}`);
-    const startRequest = DateTime.now().toMillis();
+    const startRequest = DateTime.now();
 
     const fetchOptions = {
       method: 'PUT',
@@ -161,7 +161,7 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
         logs: Array<string>;
         maxInstantRetrieved: string;
       };
-      const requestDuration = DateTime.now().toMillis() - startRequest;
+      const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
 
       if (result.logs.length > 0) {
         for (const log of result.logs) {
@@ -170,7 +170,9 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
       }
       if (result.recordCount > 0) {
         this.logger.debug(`Found ${result.recordCount} results for ${items.length} items in ${requestDuration} ms`);
-        await this.addContent({ type: 'time-values', content: result.content });
+        await this.addContent({ type: 'time-values', content: result.content }, startRequest.toUTC().toISO(), [
+          ...new Set(items.map(item => item.id))
+        ]);
         if (result.maxInstantRetrieved > startTime) {
           updatedStartTime = result.maxInstantRetrieved;
         }

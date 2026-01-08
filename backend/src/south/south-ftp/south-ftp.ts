@@ -14,6 +14,7 @@ import { AccessOptions, Client as FTPClient, FileInfo } from 'basic-ftp';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import { Instant } from '../../model/types';
 
 /**
  * Class SouthFTP - Retrieve files from remote FTP instance
@@ -21,7 +22,7 @@ import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-c
 export default class SouthFTP extends SouthConnector<SouthFTPSettings, SouthFTPItemSettings> implements QueriesFile {
   constructor(
     connector: SouthConnectorEntity<SouthFTPSettings, SouthFTPItemSettings>,
-    engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
+    engineAddContentCallback: (southId: string, data: OIBusContent, queryTime: Instant, itemIds: Array<string>) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
     logger: pino.Logger,
     cacheFolderPath: string
@@ -153,7 +154,10 @@ export default class SouthFTP extends SouthConnector<SouthFTPSettings, SouthFTPI
     const fileToRetrieve = `${item.settings.remoteFolder}/${file.name}`;
     const resultingFile = path.resolve(this.tmpFolder, file.name);
 
+    const startRequest = DateTime.now();
     await client.downloadTo(resultingFile, fileToRetrieve);
+    const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
+    this.logger.debug(`File "${fileToRetrieve}" downloaded in ${requestDuration} ms`);
 
     if (!item.settings.preserveFiles) {
       try {
@@ -172,7 +176,7 @@ export default class SouthFTP extends SouthConnector<SouthFTPSettings, SouthFTPI
         // Compress and send the compressed file
         const gzipPath = path.resolve(this.tmpFolder, `${file.name}.gz`);
         await compress(resultingFile, gzipPath);
-        await this.addContent({ type: 'any', filePath: gzipPath });
+        await this.addContent({ type: 'any', filePath: gzipPath }, startRequest.toUTC().toISO(), [item.id]);
         try {
           await fs.unlink(resultingFile);
           await fs.unlink(gzipPath);
@@ -181,7 +185,7 @@ export default class SouthFTP extends SouthConnector<SouthFTPSettings, SouthFTPI
         }
       } catch {
         this.logger.error(`Error compressing file "${resultingFile}". Sending it raw instead`);
-        await this.addContent({ type: 'any', filePath: resultingFile });
+        await this.addContent({ type: 'any', filePath: resultingFile }, startRequest.toUTC().toISO(), [item.id]);
         try {
           await fs.unlink(resultingFile);
         } catch (unlinkError) {
@@ -189,7 +193,7 @@ export default class SouthFTP extends SouthConnector<SouthFTPSettings, SouthFTPI
         }
       }
     } else {
-      await this.addContent({ type: 'any', filePath: resultingFile });
+      await this.addContent({ type: 'any', filePath: resultingFile }, startRequest.toUTC().toISO(), [item.id]);
       try {
         await fs.unlink(resultingFile);
       } catch (unlinkError) {
