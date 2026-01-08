@@ -54,12 +54,11 @@ export const createConnectionOptions = async (
 export const parseMessage = (
   topic: string,
   message: string,
-  items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>>,
+  associatedItem: SouthConnectorItemEntity<SouthMQTTItemSettings>,
   logger: pino.Logger
 ): Array<OIBusTimeValue> => {
   const messageTimestamp: Instant = DateTime.now().toUTC().toISO()!;
   try {
-    const associatedItem = getItem(topic, items);
     return createContent(associatedItem, message, messageTimestamp, logger);
   } catch (error: unknown) {
     logger.error(`Could not handle message "${message.toString()}" for topic "${topic}": ${(error as Error).message}`);
