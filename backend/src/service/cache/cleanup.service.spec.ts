@@ -41,9 +41,7 @@ const fileList: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [
       contentSize: 100,
       numberOfElement: 3,
       createdAt: testData.constants.dates.DATE_1,
-      contentType: 'time-values',
-      source: 'south',
-      options: {}
+      contentType: 'time-values'
     }
   },
   {
@@ -53,9 +51,7 @@ const fileList: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [
       contentSize: 100,
       numberOfElement: 4,
       createdAt: testData.constants.dates.DATE_2,
-      contentType: 'time-values',
-      source: 'south',
-      options: {}
+      contentType: 'time-values'
     }
   },
   {
@@ -65,9 +61,7 @@ const fileList: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [
       contentSize: 100,
       numberOfElement: 0,
       createdAt: testData.constants.dates.DATE_3,
-      contentType: 'any',
-      source: 'south',
-      options: {}
+      contentType: 'any'
     }
   },
   {
@@ -77,9 +71,7 @@ const fileList: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [
       contentSize: 100,
       numberOfElement: 6,
       createdAt: testData.constants.dates.FAKE_NOW,
-      contentType: 'time-values',
-      source: 'south',
-      options: {}
+      contentType: 'time-values'
     }
   },
   {
@@ -89,9 +81,7 @@ const fileList: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [
       contentSize: 100,
       numberOfElement: 0,
       createdAt: testData.constants.dates.FAKE_NOW,
-      contentType: 'any',
-      source: 'south',
-      options: {}
+      contentType: 'any'
     }
   },
   {
@@ -101,9 +91,7 @@ const fileList: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [
       contentSize: 100,
       numberOfElement: 9,
       createdAt: testData.constants.dates.FAKE_NOW,
-      contentType: 'time-values',
-      source: 'south',
-      options: {}
+      contentType: 'time-values'
     }
   }
 ];

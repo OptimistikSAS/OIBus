@@ -22,7 +22,7 @@ import { encryptionService } from '../../service/encryption.service';
 export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRestItemSettings> implements QueriesHistory {
   constructor(
     connector: SouthConnectorEntity<SouthRestSettings, SouthRestItemSettings>,
-    engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
+    engineAddContentCallback: (southId: string, data: OIBusContent, queryTime: Instant, itemIds: Array<string>) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
     logger: pino.Logger,
     cacheFolderPath: string
@@ -82,16 +82,16 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
     let updatedStartTime: Instant | null = null;
 
     for (const item of items) {
-      const startRequest = DateTime.now().toMillis();
+      const startRequest = DateTime.now();
       const { filename, content, maxInstant } = await this.queryData(item, startTime, endTime);
-      const requestDuration = DateTime.now().toMillis() - startRequest;
+      const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
 
       const filePath = path.resolve(this.tmpFolder, filename);
       await fs.writeFile(filePath, content);
       const stats = await fs.stat(filePath);
       if (stats.size > 0) {
         this.logger.info(`Downloaded file for item ${item.name} (${stats.size} bytes) in ${requestDuration} ms`);
-        await this.addContent({ type: 'any', filePath });
+        await this.addContent({ type: 'any', filePath }, startRequest.toUTC().toISO(), [item.id]);
       } else {
         this.logger.debug(`Empty file downloaded for item ${item.name}. Request done in ${requestDuration} ms`);
       }
