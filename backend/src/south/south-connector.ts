@@ -54,7 +54,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
 
   protected constructor(
     protected connector: SouthConnectorEntity<T, I>,
-    private engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
+    private engineAddContentCallback: (southId: string, data: OIBusContent, queryTime: Instant, itemIds: Array<string>) => Promise<void>,
     private readonly southCacheRepository: SouthCacheRepository,
     protected logger: pino.Logger,
     protected cacheFolderPath: string
@@ -454,19 +454,19 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     return Math.round((currentIntervalIndex / numberOfIntervals + Number.EPSILON) * 100) / 100;
   }
 
-  async addContent(data: OIBusContent) {
+  async addContent(data: OIBusContent, queryTime: Instant, itemIds: Array<string>) {
     switch (data.type) {
       case 'time-values':
-        return this.addValues(data);
+        return this.addValues(data, queryTime, itemIds);
       case 'any':
-        return this.addFile(data);
+        return this.addFile(data, queryTime, itemIds);
     }
   }
 
-  private async addValues(data: OIBusTimeValueContent): Promise<void> {
+  private async addValues(data: OIBusTimeValueContent, queryTime: Instant, itemIds: Array<string>): Promise<void> {
     if (data.content.length > 0 && this.connector.id !== 'test') {
       this.logger.debug(`Add ${data.content.length} values to cache from South "${this.connector.name}"`);
-      await this.engineAddContentCallback(this.connector.id, data);
+      await this.engineAddContentCallback(this.connector.id, data, queryTime, itemIds);
       this.metricsEvent.emit('add-values', {
         numberOfValuesRetrieved: data.content.length,
         lastValueRetrieved: data.content[data.content.length - 1]
@@ -474,9 +474,9 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     }
   }
 
-  private async addFile(data: OIBusRawContent): Promise<void> {
+  private async addFile(data: OIBusRawContent, queryTime: Instant, itemIds: Array<string>): Promise<void> {
     this.logger.debug(`Add file "${data.filePath}" to cache from South "${this.connector.name}"`);
-    await this.engineAddContentCallback(this.connector.id, data);
+    await this.engineAddContentCallback(this.connector.id, data, queryTime, itemIds);
     this.metricsEvent.emit('add-file', {
       lastFileRetrieved: path.parse(data.filePath).base
     });

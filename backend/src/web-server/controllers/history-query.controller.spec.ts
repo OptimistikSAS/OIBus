@@ -602,12 +602,7 @@ describe('HistoryQueryController', () => {
       contentSize: 1024,
       numberOfElement: 10,
       createdAt: '2023-01-01T00:00:00Z',
-      contentType: 'time-values',
-      source: 'south1',
-      options: {
-        key1: 'value1',
-        key2: 100
-      }
+      contentType: 'time-values'
     };
     const mockResult = [
       {

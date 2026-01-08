@@ -121,8 +121,8 @@ describe('SouthFolderScanner', () => {
     expect(logger.trace).toHaveBeenCalledWith(`Filtering with regex "${configuration.items[2].settings.regex}"`);
     expect(logger.trace).toHaveBeenCalledWith(`Sending 2 files`);
     expect(south.sendFile).toHaveBeenCalledTimes(2);
-    expect(south.sendFile).toHaveBeenCalledWith(configuration.items[2], 'file2.txt');
-    expect(south.sendFile).toHaveBeenCalledWith(configuration.items[2], 'file3.txt');
+    expect(south.sendFile).toHaveBeenCalledWith(configuration.items[2], 'file2.txt', testData.constants.dates.FAKE_NOW);
+    expect(south.sendFile).toHaveBeenCalledWith(configuration.items[2], 'file3.txt', testData.constants.dates.FAKE_NOW);
   });
 
   it('should properly check age', async () => {
@@ -173,7 +173,7 @@ describe('SouthFolderScanner', () => {
       .mockImplementationOnce(() => {
         throw new Error('error');
       });
-    await south.sendFile(configuration.items[0], 'myFile1');
+    await south.sendFile(configuration.items[0], 'myFile1', testData.constants.dates.DATE_1);
 
     expect(south.addContent).toHaveBeenCalledTimes(1);
     expect(logger.info).toHaveBeenCalledWith(`Sending file "${path.resolve(configuration.settings.inputFolder, 'myFile1')}" to the engine`);
@@ -181,7 +181,7 @@ describe('SouthFolderScanner', () => {
     expect(logger.error).not.toHaveBeenCalled();
     expect(south.updateModifiedTime).not.toHaveBeenCalled();
 
-    await south.sendFile(configuration.items[0], 'myFile2');
+    await south.sendFile(configuration.items[0], 'myFile2', testData.constants.dates.DATE_1);
     expect(logger.info).toHaveBeenCalledWith(`Sending file "${path.resolve(configuration.settings.inputFolder, 'myFile2')}" to the engine`);
     expect(fs.unlink).toHaveBeenCalledTimes(2);
     expect(logger.error).toHaveBeenCalledWith(
@@ -278,22 +278,26 @@ describe('SouthFolderScanner with compression', () => {
         throw new Error('error');
       });
     (fs.stat as jest.Mock).mockImplementation(() => ({ mtimeMs }));
-    await south.sendFile(configuration.items[1], 'myFile1');
+    await south.sendFile(configuration.items[1], 'myFile1', testData.constants.dates.FAKE_NOW);
 
     expect(logger.info).toHaveBeenCalledWith(`Sending file "${path.resolve(configuration.settings.inputFolder, 'myFile1')}" to the engine`);
     expect(compress).toHaveBeenCalledWith(
       path.resolve(configuration.settings.inputFolder, 'myFile1'),
       `${path.resolve('cacheFolder', 'tmp', 'myFile1')}.gz`
     );
-    expect(south.addContent).toHaveBeenCalledWith({
-      type: 'any',
-      filePath: `${path.resolve('cacheFolder', 'tmp', 'myFile1')}.gz`
-    });
+    expect(south.addContent).toHaveBeenCalledWith(
+      {
+        type: 'any',
+        filePath: `${path.resolve('cacheFolder', 'tmp', 'myFile1')}.gz`
+      },
+      testData.constants.dates.FAKE_NOW,
+      [configuration.items[1].id]
+    );
     expect(fs.unlink).toHaveBeenCalledWith(`${path.resolve('cacheFolder', 'tmp', 'myFile1')}.gz`);
     expect(logger.error).not.toHaveBeenCalled();
     expect(south.updateModifiedTime).toHaveBeenCalledWith('myFile1', mtimeMs);
 
-    await south.sendFile(configuration.items[1], 'myFile2');
+    await south.sendFile(configuration.items[1], 'myFile2', testData.constants.dates.FAKE_NOW);
     expect(logger.error).toHaveBeenCalledWith(
       `Error while removing compressed file "${path.resolve('cacheFolder', 'tmp', 'myFile2')}.gz": ${new Error('error')}`
     );
@@ -301,7 +305,7 @@ describe('SouthFolderScanner with compression', () => {
     (compress as jest.Mock).mockImplementationOnce(() => {
       throw new Error('compression error');
     });
-    await south.sendFile(configuration.items[1], 'myFile2');
+    await south.sendFile(configuration.items[1], 'myFile2', testData.constants.dates.FAKE_NOW);
     expect(logger.error).toHaveBeenCalledWith(
       `Error compressing file "${path.resolve(configuration.settings.inputFolder, 'myFile2')}": compression error. Sending it raw instead.`
     );

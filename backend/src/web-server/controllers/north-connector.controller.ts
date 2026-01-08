@@ -44,7 +44,7 @@ interface NorthCacheMetadata {
 @Tags('North Connectors')
 /**
  * @class NorthConnectorController
- * @description Endpoints for managing north connectors, subscriptions, and cache operations
+ * @description Endpoints for managing north connectors, transformers, and cache operations
  */
 export class NorthConnectorController extends Controller {
   /**

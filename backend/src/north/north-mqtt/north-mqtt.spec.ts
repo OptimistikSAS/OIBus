@@ -202,9 +202,7 @@ describe('NorthMQTT', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'mqtt',
-      source: 'south',
-      options: {}
+      contentType: 'mqtt'
     });
 
     expect(publishAsyncFn).toHaveBeenCalledTimes(2);
@@ -253,9 +251,7 @@ describe('NorthMQTT', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'mqtt',
-        source: 'south',
-        options: {}
+        contentType: 'mqtt'
       })
     ).rejects.toThrow(new Error('error1'));
 
@@ -272,9 +268,7 @@ describe('NorthMQTT', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'mqtt',
-        source: 'south',
-        options: {}
+        contentType: 'mqtt'
       })
     ).rejects.toThrow(new Error('error2'));
     expect(logger.error).toHaveBeenCalledWith(`Unexpected error: error2`);
@@ -291,9 +285,7 @@ describe('NorthMQTT', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'mqtt',
-        source: 'south',
-        options: {}
+        contentType: 'mqtt'
       })
     ).rejects.toThrow('Connector is reconnecting...');
   });
@@ -320,9 +312,7 @@ describe('NorthMQTT', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'mqtt',
-        source: 'south',
-        options: {}
+        contentType: 'mqtt'
       })
     ).rejects.toThrow('MQTT client not set');
   });
@@ -334,9 +324,7 @@ describe('NorthMQTT', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'any',
-        source: 'south',
-        options: {}
+        contentType: 'any'
       })
     ).rejects.toThrow(`Unsupported data type: any (file path/to/file/example-123456789.file)`);
   });
