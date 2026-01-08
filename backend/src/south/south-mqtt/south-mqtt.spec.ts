@@ -9,7 +9,7 @@ import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/sou
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import { flushPromises } from '../../tests/utils/test-utils';
 import { SouthConnectorEntity } from '../../model/south-connector.model';
-import { createConnectionOptions, createContent, parseMessage } from '../../service/utils-mqtt';
+import { createConnectionOptions, createContent, getItem, parseMessage } from '../../service/utils-mqtt';
 import testData from '../../tests/utils/test-data';
 
 jest.mock('mqtt');
@@ -204,8 +204,9 @@ describe('SouthMQTT', () => {
     const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
     south.subscribe = jest.fn();
     south.disconnect = jest.fn();
-    (parseMessage as jest.Mock).mockReturnValueOnce({});
+    (parseMessage as jest.Mock).mockReturnValue({});
     (createConnectionOptions as jest.Mock).mockReturnValueOnce({});
+    (getItem as jest.Mock).mockReturnValueOnce(configuration.items[0]);
     await south.connect();
     expect(createConnectionOptions).toHaveBeenCalledWith(configuration.id, configuration.settings, logger);
     expect(mqtt.connectAsync).toHaveBeenCalledWith(configuration.settings.url, {});
@@ -216,19 +217,28 @@ describe('SouthMQTT', () => {
 
     expect(parseMessage).not.toHaveBeenCalled();
     south['connector'].settings.maxNumberOfMessages = 1;
+    (getItem as jest.Mock).mockReturnValueOnce(configuration.items[0]);
     mqttStream.emit('message', 'myTopic', 'myMessage', { dup: false, qos: 1, retain: false });
 
     await flushPromises(); // Flush message promise
     expect(logger.trace).toHaveBeenCalledWith('MQTT message for topic myTopic: myMessage, dup:false, qos:1, retain:false');
     expect(parseMessage).toHaveBeenCalledTimes(2); // two messages stored
-    expect(parseMessage).toHaveBeenCalledWith('myTopic', 'myMessage', configuration.items, logger);
+    expect(parseMessage).toHaveBeenCalledWith('myTopic', 'myMessage', configuration.items[0], logger);
 
     (parseMessage as jest.Mock).mockImplementationOnce(() => {
       throw new Error('handle message error');
     });
+    (getItem as jest.Mock).mockReturnValueOnce(configuration.items[0]);
     mqttStream.emit('message', 'myTopic', 'myMessage', { dup: false });
     await flushPromises(); // Flush message error promise
     expect(logger.error).toHaveBeenCalledWith('Error when flushing messages: Error: handle message error');
+
+    (getItem as jest.Mock).mockImplementationOnce(() => {
+      throw new Error('getItem error');
+    });
+    mqttStream.emit('message', 'myTopic', 'myMessage', { dup: false });
+    await flushPromises(); // Flush message error promise
+    expect(logger.error).toHaveBeenCalledWith('Error for topic myTopic: getItem error');
 
     mqttStream.emit('error', new Error('error'));
     await flushPromises(); // Flush disconnect promise
