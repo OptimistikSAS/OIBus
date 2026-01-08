@@ -37,7 +37,6 @@ describe('OIBusTimeValuesToCsvTransformer', () => {
 
     // Arrange
     const transformer = new OIBusTimeValuesToCsvTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
-    const source = 'test-source';
     const dataChunks: Array<OIBusTimeValue> = [
       {
         pointId: 'reference1',
@@ -67,7 +66,7 @@ describe('OIBusTimeValuesToCsvTransformer', () => {
     const mockStream = new Readable();
 
     // Act
-    const promise = transformer.transform(mockStream, source, null);
+    const promise = transformer.transform(mockStream, { source: 'test' }, null);
     mockStream.push(JSON.stringify(dataChunks));
     mockStream.push(null); // End the stream
 
@@ -81,9 +80,7 @@ describe('OIBusTimeValuesToCsvTransformer', () => {
         contentSize: 0,
         createdAt: '',
         numberOfElement: 0,
-        contentType: 'any',
-        source,
-        options: {}
+        contentType: 'any'
       }
     });
   });

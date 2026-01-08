@@ -384,6 +384,8 @@ describe('SouthOLEDB', () => {
       },
       configuration.name,
       configuration.items[0].name,
+      configuration.items[0].id,
+      testData.constants.dates.FAKE_NOW,
       path.resolve('cacheFolder', 'tmp'),
       expect.any(Function),
       logger

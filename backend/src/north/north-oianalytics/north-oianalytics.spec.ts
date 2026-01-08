@@ -135,10 +135,8 @@ describe('NorthOIAnalytics', () => {
       contentFile: 'file.json',
       contentSize: 100,
       numberOfElement: 1,
-      createdAt: 'date',
-      contentType: 'time-values',
-      source: 'south',
-      options: {}
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'time-values'
     };
 
     beforeEach(() => {
@@ -199,9 +197,7 @@ describe('NorthOIAnalytics', () => {
       contentSize: 100,
       numberOfElement: 1,
       createdAt: 'date',
-      contentType: 'any',
-      source: 'south',
-      options: {}
+      contentType: 'any'
     };
 
     it('should upload file using FormData', async () => {

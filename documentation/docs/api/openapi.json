@@ -19956,21 +19956,104 @@
 					}
 				]
 			},
-			"Record_string.string-or-number_": {
-				"properties": {},
-				"additionalProperties": {
-					"anyOf": [
-						{
+			"CacheMetadataSourceOriginSouth": {
+				"properties": {
+					"source": {
+						"type": "string",
+						"enum": [
+							"south"
+						],
+						"nullable": false
+					},
+					"queryTime": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "Datetime in iso format when the query has been triggered",
+						"example": "2023-01-01T00:00:00Z"
+					},
+					"southId": {
+						"type": "string",
+						"description": "ID of the south connector at the source of the data"
+					},
+					"itemIds": {
+						"items": {
 							"type": "string"
 						},
-						{
-							"type": "number",
-							"format": "double"
-						}
-					]
+						"type": "array",
+						"description": "IDs of the items at the source of the data"
+					}
 				},
+				"required": [
+					"source",
+					"queryTime",
+					"southId",
+					"itemIds"
+				],
 				"type": "object",
-				"description": "Construct a type with a set of properties K of type T"
+				"additionalProperties": false
+			},
+			"CacheMetadataSourceOriginOIAnalytics": {
+				"properties": {
+					"source": {
+						"type": "string",
+						"enum": [
+							"oianalytics"
+						],
+						"nullable": false
+					}
+				},
+				"required": [
+					"source"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"CacheMetadataSourceOriginAPI": {
+				"properties": {
+					"source": {
+						"type": "string",
+						"enum": [
+							"api"
+						],
+						"nullable": false
+					}
+				},
+				"required": [
+					"source"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"CacheMetadataSourceOriginTest": {
+				"properties": {
+					"source": {
+						"type": "string",
+						"enum": [
+							"test"
+						],
+						"nullable": false
+					}
+				},
+				"required": [
+					"source"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"CacheMetadataSource": {
+				"anyOf": [
+					{
+						"$ref": "#/components/schemas/CacheMetadataSourceOriginSouth"
+					},
+					{
+						"$ref": "#/components/schemas/CacheMetadataSourceOriginOIAnalytics"
+					},
+					{
+						"$ref": "#/components/schemas/CacheMetadataSourceOriginAPI"
+					},
+					{
+						"$ref": "#/components/schemas/CacheMetadataSourceOriginTest"
+					}
+				]
 			},
 			"CacheMetadata": {
 				"description": "Metadata for cached content.",
@@ -20003,14 +20086,8 @@
 						"example": "time-values"
 					},
 					"source": {
-						"type": "string",
-						"nullable": true,
-						"description": "The source of the content (southId or null).",
-						"example": "south1"
-					},
-					"options": {
-						"$ref": "#/components/schemas/Record_string.string-or-number_",
-						"description": "Additional options associated with the content."
+						"$ref": "#/components/schemas/CacheMetadataSource",
+						"description": "Source of the data"
 					}
 				},
 				"required": [
@@ -20019,8 +20096,7 @@
 					"numberOfElement",
 					"createdAt",
 					"contentType",
-					"source",
-					"options"
+					"source"
 				],
 				"type": "object",
 				"additionalProperties": false

@@ -73,6 +73,8 @@ describe('SouthOIAnalytics', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+
     logger = new PinoLogger();
     addContentCallback = jest.fn();
 
@@ -192,6 +194,8 @@ describe('SouthOIAnalytics', () => {
         item.settings.serialization,
         baseConfiguration.name,
         item.name,
+        item.id,
+        testData.constants.dates.FAKE_NOW,
         path.resolve('cacheFolder', 'tmp'),
         expect.any(Function), // addContent callback
         expect.anything() // logger

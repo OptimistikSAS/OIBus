@@ -26,7 +26,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
 
   constructor(
     connector: SouthConnectorEntity<SouthMQTTSettings, SouthMQTTItemSettings>,
-    engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
+    engineAddContentCallback: (southId: string, data: OIBusContent, queryTime: Instant, itemIds: Array<string>) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
     logger: pino.Logger,
     cacheFolderPath: string
@@ -89,14 +89,18 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
     if (messageToParse.length) {
       this.logger.debug(`Flushing ${messageToParse.length} messages`);
       try {
-        await this.addContent({
-          type: 'time-values',
-          content: messageToParse
-            .map(element => {
-              return parseMessage(element.topic, element.message, this.connector.items, this.logger);
-            })
-            .reduce((previousValue, element) => previousValue.concat(...element), [])
-        });
+        await this.addContent(
+          {
+            type: 'time-values',
+            content: messageToParse
+              .map(element => {
+                return parseMessage(element.topic, element.message, this.connector.items, this.logger);
+              })
+              .reduce((previousValue, element) => previousValue.concat(...element), [])
+          },
+          DateTime.now().toUTC().toISO(),
+          [] // TODO
+        );
       } catch (error: unknown) {
         this.logger.error(`Error when flushing messages: ${error}`);
       }

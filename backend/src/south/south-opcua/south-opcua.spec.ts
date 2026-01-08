@@ -34,6 +34,7 @@ import path from 'node:path';
 import fs from 'node:fs/promises';
 import { randomUUID } from 'crypto';
 import { OIBusTimeValue } from '../../../shared/model/engine.model';
+import * as constants from 'node:constants';
 
 class CustomStream extends Stream {
   constructor() {
@@ -618,21 +619,25 @@ describe('SouthOPCUA', () => {
     (parseOPCUAValue as jest.Mock).mockReturnValueOnce('123').mockReturnValueOnce('456');
     await south.getHAValues([configuration.items[0]], testData.constants.dates.FAKE_NOW, testData.constants.dates.FAKE_NOW, client, false);
     expect(historyRead).toHaveBeenCalled();
-    expect(south.addContent).toHaveBeenCalledWith({
-      content: [
-        {
-          data: { quality: 'Good', value: '123' },
-          pointId: 'item1',
-          timestamp: testData.constants.dates.DATE_2
-        },
-        {
-          data: { quality: 'Good', value: '456' },
-          pointId: 'item1',
-          timestamp: testData.constants.dates.DATE_1
-        }
-      ],
-      type: 'time-values'
-    });
+    expect(south.addContent).toHaveBeenCalledWith(
+      {
+        content: [
+          {
+            data: { quality: 'Good', value: '123' },
+            pointId: 'item1',
+            timestamp: testData.constants.dates.DATE_2
+          },
+          {
+            data: { quality: 'Good', value: '456' },
+            pointId: 'item1',
+            timestamp: testData.constants.dates.DATE_1
+          }
+        ],
+        type: 'time-values'
+      },
+      testData.constants.dates.FAKE_NOW,
+      [configuration.items[0].id]
+    );
   });
 
   it('getHAValues() in case of a bad result status code', async () => {
@@ -731,7 +736,7 @@ describe('SouthOPCUA', () => {
       [{ nodeId: configuration.items[3].settings.nodeId, name: configuration.items[3].name, settings: configuration.items[3].settings }],
       mockedClient
     );
-    expect(south.addContent).toHaveBeenCalledWith(testData.oibusContent[0]);
+    expect(south.addContent).toHaveBeenCalledWith(testData.oibusContent[0], testData.constants.dates.FAKE_NOW, [configuration.items[0].id]);
   });
 
   it('should query last point (several) and fail and reconnect', async () => {
@@ -995,7 +1000,7 @@ describe('SouthOPCUA', () => {
 
     south.addContent = jest.fn();
     await south.flushMessages();
-    expect(south.addContent).toHaveBeenCalledWith({ type: 'time-values', content: [value] });
+    expect(south.addContent).toHaveBeenCalledWith({ type: 'time-values', content: [value] }, testData.constants.dates.FAKE_NOW, []);
     expect(clearTimeoutSpy).toHaveBeenCalled();
     expect(setTimeoutSpy).toHaveBeenCalled();
   });

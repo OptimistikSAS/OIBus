@@ -32,7 +32,7 @@ import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-
 import DataStreamEngine from '../engine/data-stream-engine';
 import { PassThrough } from 'node:stream';
 import { ReadStream } from 'node:fs';
-import { CacheMetadata, CacheSearchParam, OIBusSetpointContent } from '../../shared/model/engine.model';
+import { CacheMetadata, CacheMetadataSource, CacheSearchParam, OIBusSetpointContent } from '../../shared/model/engine.model';
 import TransformerService, { toTransformerDTO } from './transformer.service';
 import { toScanModeDTO } from './scan-mode.service';
 import { buildNorth } from '../north/north-connector-factory';
@@ -122,9 +122,6 @@ export default class NorthService {
         throw new NotFoundError(`Could not find South connector "${transformerIdWithOptions.southId}"`);
       }
 
-      const items = transformerIdWithOptions.southId
-        ? this.southConnectorRepository.findAllItemsForSouth(transformerIdWithOptions.southId)
-        : [];
       return {
         id: '',
         transformer: foundTransformer,
@@ -175,9 +172,6 @@ export default class NorthService {
         throw new NotFoundError(`Could not find South connector "${transformerIdWithOptions.southId}"`);
       }
 
-      const items = transformerIdWithOptions.southId
-        ? this.southConnectorRepository.findAllItemsForSouth(transformerIdWithOptions.southId)
-        : [];
       return {
         id: transformerIdWithOptions.id,
         transformer: foundTransformer,
@@ -364,7 +358,10 @@ export default class NorthService {
       content: commandContent
     };
 
-    await northConnector.cacheContent(setpointContent, 'oianalytics');
+    const source: CacheMetadataSource = {
+      source: 'oianalytics'
+    };
+    await northConnector.cacheContent(setpointContent, source);
 
     callback(`Setpoint ${JSON.stringify(commandContent)} properly sent into the cache of ${northConnectorId}`);
   }

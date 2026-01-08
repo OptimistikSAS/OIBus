@@ -1610,18 +1610,45 @@ export interface CacheMetadata {
    * @example "time-values"
    */
   contentType: string;
-
-  /**
-   * The source of the content (southId or null).
-   * @example "south1"
-   */
-  source: string | null;
-
-  /**
-   * Additional options associated with the content.
-   */
-  options: Record<string, string | number>;
 }
+
+export interface CacheMetadataSourceOriginSouth {
+  source: 'south';
+
+  /**
+   * Datetime in iso format when the query has been triggered
+   * @example "2023-01-01T00:00:00Z"
+   */
+  queryTime: Instant;
+
+  /**
+   * ID of the south connector at the source of the data
+   */
+  southId: string;
+
+  /**
+   * IDs of the items at the source of the data
+   */
+  itemIds: Array<string>;
+}
+
+export interface CacheMetadataSourceOriginOIAnalytics {
+  source: 'oianalytics';
+}
+
+export interface CacheMetadataSourceOriginAPI {
+  source: 'api';
+}
+
+export interface CacheMetadataSourceOriginTest {
+  source: 'test';
+}
+
+export type CacheMetadataSource =
+  | CacheMetadataSourceOriginSouth
+  | CacheMetadataSourceOriginOIAnalytics
+  | CacheMetadataSourceOriginAPI
+  | CacheMetadataSourceOriginTest;
 
 /**
  * Parameters for searching the cache.

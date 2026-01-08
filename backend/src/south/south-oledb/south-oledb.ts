@@ -22,7 +22,7 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
 
   constructor(
     connector: SouthConnectorEntity<SouthOLEDBSettings, SouthOLEDBItemSettings>,
-    engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
+    engineAddContentCallback: (southId: string, data: OIBusContent, queryTime: Instant, itemIds: Array<string>) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
     logger: pino.Logger,
     cacheFolderPath: string
@@ -167,7 +167,7 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
     test?: boolean
   ): Promise<Instant | string | null> {
     let updatedStartTime: Instant | null = null;
-    const startRequest = DateTime.now().toMillis();
+    const startRequest = DateTime.now();
 
     const referenceTimestampField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.useAsReference);
     const oleStartTime = referenceTimestampField ? formatInstant(startTime, referenceTimestampField) : startTime;
@@ -200,7 +200,7 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
         content: string;
         maxInstant: Instant;
       };
-      const requestDuration = DateTime.now().toMillis() - startRequest;
+      const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
       this.logger.info(`Found ${result.recordCount} results for item ${item.name} in ${requestDuration} ms`);
 
       if (test) {
@@ -212,6 +212,8 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
             { type: 'file', filename: item.settings.serialization.filename, compression: item.settings.serialization.compression },
             this.connector.name,
             item.name,
+            item.id,
+            startRequest.toUTC().toISO(),
             this.tmpFolder,
             this.addContent.bind(this),
             this.logger

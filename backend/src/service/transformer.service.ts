@@ -33,7 +33,7 @@ import { NotFoundError, OIBusValidationError } from '../model/types';
 import OIBusCustomTransformer from './transformers/oibus-custom-transformer';
 import { Readable } from 'node:stream';
 import { DateTime } from 'luxon';
-import { OIBusSetpoint, OIBusTimeValue } from '../../shared/model/engine.model';
+import { CacheMetadataSource, OIBusSetpoint, OIBusTimeValue } from '../../shared/model/engine.model';
 import JSONToTimeValuesTransformer from './transformers/any/json-to-time-values-transformer';
 import JSONToCSVTransformer from './transformers/any/json-to-csv-transformer';
 import CSVToMQTTTransformer from './transformers/any/csv-to-mqtt-transformer';
@@ -145,7 +145,10 @@ export default class TransformerService {
 
     // Execute the transformer
     const inputStream = Readable.from([Buffer.from(testRequest.inputData, 'utf-8')]);
-    const { metadata, output } = await transformerInstance.transform(inputStream, 'test-source', 'test-input.json');
+    const source: CacheMetadataSource = {
+      source: 'test'
+    };
+    const { metadata, output } = await transformerInstance.transform(inputStream, source, 'test-input.json');
 
     return {
       output,

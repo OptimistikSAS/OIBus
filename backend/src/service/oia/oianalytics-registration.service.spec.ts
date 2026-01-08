@@ -17,6 +17,7 @@ import OIAnalyticsClient from './oianalytics-client.service';
 import OianalyticsClientMock from '../../tests/__mocks__/service/oia/oianalytics-client.mock';
 import { NotFoundError } from '../../model/types';
 import OIAnalyticsRegistrationService, { toOIAnalyticsRegistrationDTO } from './oianalytics-registration.service';
+import { testOIAnalyticsConnection } from '../utils-oianalytics';
 
 jest.mock('node:fs/promises');
 jest.mock('../../web-server/controllers/validators/joi.validator');
@@ -361,6 +362,14 @@ describe('OIAnalytics Registration Service', () => {
 
     expect(oIAnalyticsClient.checkRegistration).toHaveBeenCalledTimes(1);
     expect(logger.error).toHaveBeenCalledWith(`Error while checking registration: error`);
+  });
+
+  it('should test connection', async () => {
+    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(testData.oIAnalytics.registration.completed);
+
+    await service.testConnection(testData.oIAnalytics.registration.command);
+
+    expect(testOIAnalyticsConnection).toHaveBeenCalledWith(true, testData.oIAnalytics.registration.command, null, 30000, null, false);
   });
 
   it('should properly convert to DTO', () => {
