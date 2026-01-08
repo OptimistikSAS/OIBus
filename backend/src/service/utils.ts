@@ -282,8 +282,10 @@ export const persistResults = async (
   serializationSettings: SerializationSettings,
   connectorName: string,
   itemName: string,
+  itemId: string,
+  queryTime: Instant,
   baseFolder: string,
-  addContentFn: (data: OIBusContent) => Promise<void>,
+  addContentFn: (data: OIBusContent, queryTime: Instant, itemIds: Array<string>) => Promise<void>,
   logger: pino.Logger
 ): Promise<void> => {
   switch (serializationSettings.type) {
@@ -305,7 +307,7 @@ export const persistResults = async (
         }
 
         logger.debug(`Sending compressed file "${gzipPath}" to Engine`);
-        await addContentFn({ type: 'any', filePath: gzipPath });
+        await addContentFn({ type: 'any', filePath: gzipPath }, queryTime, [itemId]);
         try {
           await fs.unlink(gzipPath);
           logger.trace(`File "${gzipPath}" deleted`);
@@ -314,7 +316,7 @@ export const persistResults = async (
         }
       } else {
         logger.debug(`Sending file "${filePath}" to Engine`);
-        await addContentFn({ type: 'any', filePath });
+        await addContentFn({ type: 'any', filePath }, queryTime, [itemId]);
         try {
           await fs.unlink(filePath);
           logger.trace(`File ${filePath} deleted`);
@@ -343,7 +345,7 @@ export const persistResults = async (
         }
 
         logger.debug(`Sending compressed CSV file "${gzipPath}" to Engine`);
-        await addContentFn({ type: 'any', filePath: gzipPath });
+        await addContentFn({ type: 'any', filePath: gzipPath }, queryTime, [itemId]);
 
         try {
           await fs.unlink(gzipPath);
@@ -353,7 +355,7 @@ export const persistResults = async (
         }
       } else {
         logger.debug(`Sending CSV file "${csvPath}" to Engine`);
-        await addContentFn({ type: 'any', filePath: csvPath });
+        await addContentFn({ type: 'any', filePath: csvPath }, queryTime, [itemId]);
 
         try {
           await fs.unlink(csvPath);
