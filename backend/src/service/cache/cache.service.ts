@@ -210,9 +210,7 @@ export default class CacheService {
             contentSize: fileStat.size,
             numberOfElement: newListOfContent.length,
             createdAt: firstElement.metadata.createdAt,
-            contentType: firstElement.metadata.contentType,
-            source: firstElement.metadata.source,
-            options: firstElement.metadata.options
+            contentType: firstElement.metadata.contentType
           }),
           {
             encoding: 'utf-8',
@@ -240,9 +238,7 @@ export default class CacheService {
           contentSize: fileStat.size,
           numberOfElement: remainder.length,
           createdAt: lastElement.metadata.createdAt,
-          contentType: lastElement.metadata.contentType,
-          source: lastElement.metadata.source,
-          options: lastElement.metadata.options
+          contentType: lastElement.metadata.contentType
         };
         await fs.writeFile(path.join(this.cacheFolder, this.METADATA_FOLDER, lastElement.metadataFilename), JSON.stringify(metadata), {
           encoding: 'utf-8',
