@@ -56,11 +56,10 @@ describe('JSONToTimeValuesTransformer', () => {
       { id: 'point-A', ts: '2023-01-01', val: 100 },
       { id: 'point-B', ts: '2023-01-02', val: 200 }
     ];
-    const source = 'test-source';
     const filename = 'data.json';
 
     // Act
-    const promise = transformer.transform(mockStream, source, filename);
+    const promise = transformer.transform(mockStream, { source: 'test' }, filename);
     mockStream.push(JSON.stringify(inputData));
     mockStream.push(null); // End stream
 
@@ -76,9 +75,7 @@ describe('JSONToTimeValuesTransformer', () => {
       contentSize: 0,
       createdAt: '',
       numberOfElement: 2,
-      contentType: 'time-values',
-      source,
-      options: {}
+      contentType: 'time-values'
     });
   });
 
@@ -92,7 +89,7 @@ describe('JSONToTimeValuesTransformer', () => {
       { id: 'valid-2', ts: '2023-01-01', val: 0 } // Keep (0 is a valid value)
     ];
 
-    const promise = transformer.transform(mockStream, 'src', 'data.json');
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.json');
     mockStream.push(JSON.stringify(inputData));
     mockStream.push(null);
 
@@ -108,7 +105,7 @@ describe('JSONToTimeValuesTransformer', () => {
 
   it('should return empty result if input JSON is malformed (Parse Error)', async () => {
     // Arrange
-    const promise = transformer.transform(mockStream, 'src', 'data.json');
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.json');
 
     // Act: Push invalid JSON string
     mockStream.push('{ "incomplete": ');
@@ -126,7 +123,7 @@ describe('JSONToTimeValuesTransformer', () => {
   it('should return empty result if no regex matches the filename', async () => {
     // Arrange
     const filename = 'image.png'; // Does not match .*\.json config
-    const promise = transformer.transform(mockStream, 'src', filename);
+    const promise = transformer.transform(mockStream, { source: 'test' }, filename);
 
     // Act
     mockStream.push('{}');
@@ -179,7 +176,7 @@ describe('JSONToTimeValuesTransformer', () => {
       ]
     };
 
-    const promise = transformer.transform(mockStream, 'src', 'nested.json');
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'nested.json');
     mockStream.push(JSON.stringify(inputData));
     mockStream.push(null);
 

@@ -4,7 +4,7 @@ import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import pino from 'pino';
 import CacheServiceMock from '../tests/__mocks__/service/cache/cache-service.mock';
 import { createBaseFolders, delay, dirSize, generateRandomId, validateCronExpression } from '../service/utils';
-import { CacheMetadata, OIBusRawContent, OIBusTimeValueContent } from '../../shared/model/engine.model';
+import { CacheMetadata, CacheMetadataSource, OIBusContent, OIBusRawContent, OIBusTimeValueContent } from '../../shared/model/engine.model';
 import testData from '../tests/utils/test-data';
 import { NorthFileWriterSettings, NorthSettings } from '../../shared/model/north-settings.model';
 import NorthFileWriter from './north-file-writer/north-file-writer';
@@ -22,6 +22,7 @@ import OIBusTransformerMock from '../tests/__mocks__/service/transformers/oibus-
 import OIBusTransformer from '../service/transformers/oibus-transformer';
 import IgnoreTransformer from '../service/transformers/ignore-transformer';
 import IsoTransformer from '../service/transformers/iso-transformer';
+import { SouthConnectorEntityLight } from '../model/south-connector.model';
 
 // Mock fs
 jest.mock('node:stream');
@@ -53,9 +54,7 @@ const contentToHandle: { metadataFilename: string; metadata: CacheMetadata } = {
     contentSize: 100,
     numberOfElement: 3,
     createdAt: testData.constants.dates.DATE_1,
-    contentType: 'time-values',
-    source: 'south',
-    options: {}
+    contentType: 'time-values'
   }
 };
 
@@ -460,6 +459,7 @@ describe('NorthConnector', () => {
 
   it('should cache json content without maxSendCount', async () => {
     north['connector'].caching.throttling.maxNumberOfElements = 0;
+    north['connector'].transformers[1].inputType = 'time-values';
     (fsAsync.stat as jest.Mock).mockReturnValueOnce({ size: 100, ctimeMs: 123 });
     (generateRandomId as jest.Mock).mockReturnValueOnce('1234567890');
     (Readable.from as jest.Mock).mockReturnValueOnce('readStream');
@@ -470,34 +470,22 @@ describe('NorthConnector', () => {
       contentSize: 100,
       numberOfElement: (testData.oibusContent[0].content as Array<object>).length,
       createdAt: DateTime.fromMillis(123).toUTC().toISO()!,
-      contentType: 'time-values',
-      source: testData.south.list[0].id,
-      options: {}
+      contentType: 'time-values'
     };
     (oiBusTransformer.transform as jest.Mock).mockReturnValueOnce({ metadata, output: 'output' });
-    await north.cacheContent(testData.oibusContent[0], testData.south.list[0].id);
 
-    expect(oiBusTransformer.transform).toHaveBeenCalledWith('readStream', testData.south.list[0].id, null);
+    await north.cacheContent(testData.oibusContent[0], { source: 'test' });
+
+    expect(oiBusTransformer.transform).toHaveBeenCalledWith('readStream', { source: 'test' }, null);
     expect(Readable.from).toHaveBeenCalledWith(JSON.stringify(testData.oibusContent[0].content));
     expect(createTransformer).toHaveBeenCalledWith(
       {
-        id: testData.north.list[0].transformers[0].id,
-        transformer: testData.transformers.list[0],
-        options: {},
+        id: testData.north.list[0].transformers[1].id,
+        transformer: testData.transformers.list[1],
         inputType: 'time-values',
-        south: {
-          id: testData.south.list[0].id,
-          name: testData.south.list[0].name,
-          type: testData.south.list[0].type,
-          description: testData.south.list[0].description,
-          enabled: testData.south.list[0].enabled
-        },
-        items: [
-          {
-            id: testData.south.list[0].items[0].id,
-            name: testData.south.list[0].items[0].name
-          }
-        ]
+        south: undefined,
+        items: [],
+        options: {}
       },
       testData.north.list[0],
       logger
@@ -522,8 +510,7 @@ describe('NorthConnector', () => {
         lastAddedContent: expect.objectContaining({
           contentType: metadata.contentType,
           numberOfElement: metadata.numberOfElement,
-          contentSize: metadata.contentSize,
-          source: metadata.source
+          contentSize: metadata.contentSize
         })
       }),
       expect.stringContaining('Cache updated')
@@ -543,13 +530,11 @@ describe('NorthConnector', () => {
       contentSize: 100,
       numberOfElement: 3,
       createdAt: DateTime.fromMillis(123).toUTC().toISO()!,
-      contentType: 'time-values',
-      source: 'south',
-      options: {}
+      contentType: 'time-values'
     };
     (oiBusTransformer.transform as jest.Mock).mockReturnValue({ metadata, output: 'output' });
 
-    await north.cacheContent(testData.oibusContent[0], 'south');
+    await north.cacheContent(testData.oibusContent[0], { source: 'test' });
     const cacheLogCalls = (logger.debug as jest.Mock).mock.calls.filter(
       call => typeof call[1] === 'string' && call[1].includes('Cache updated')
     );
@@ -558,7 +543,7 @@ describe('NorthConnector', () => {
     expect(north['cacheLogDebounceTimeout']).not.toBeNull();
 
     const previousCallCount = (logger.debug as jest.Mock).mock.calls.length;
-    await north.cacheContent(testData.oibusContent[0], 'south');
+    await north.cacheContent(testData.oibusContent[0], { source: 'test' });
     const newCacheLogCalls = (logger.debug as jest.Mock).mock.calls
       .slice(previousCallCount)
       .filter(call => typeof call[1] === 'string' && call[1].includes('Cache updated'));
@@ -581,20 +566,18 @@ describe('NorthConnector', () => {
       contentSize: 100,
       numberOfElement: 3,
       createdAt: DateTime.fromMillis(123).toUTC().toISO()!,
-      contentType: 'time-values',
-      source: 'south',
-      options: {}
+      contentType: 'time-values'
     };
     (oiBusTransformer.transform as jest.Mock).mockReturnValue({ metadata, output: 'output' });
     const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
 
-    await north.cacheContent(testData.oibusContent[0], 'south');
+    await north.cacheContent(testData.oibusContent[0], { source: 'test' });
     const firstTimeout = north['cacheLogDebounceTimeout'];
 
     jest.advanceTimersByTime(9000);
     north['cacheLogDebounceFlag'] = false;
 
-    await north.cacheContent(testData.oibusContent[0], 'south');
+    await north.cacheContent(testData.oibusContent[0], { source: 'test' });
     expect(clearTimeoutSpy).toHaveBeenCalledWith(firstTimeout);
     expect(north['cacheLogDebounceTimeout']).not.toBe(firstTimeout);
 
@@ -612,24 +595,20 @@ describe('NorthConnector', () => {
       contentSize: 100,
       numberOfElement: (testData.oibusContent[0].content as Array<object>).length - 1,
       createdAt: DateTime.fromMillis(123).toUTC().toISO()!,
-      contentType: 'time-values',
-      source: testData.south.list[0].id,
-      options: {}
+      contentType: 'time-values'
     };
     const metadata2: CacheMetadata = {
       contentFile: '0987654321.json',
       contentSize: 100,
       numberOfElement: 1,
       createdAt: DateTime.fromMillis(123).toUTC().toISO()!,
-      contentType: 'time-values',
-      source: testData.south.list[0].id,
-      options: {}
+      contentType: 'time-values'
     };
     (oiBusTransformer.transform as jest.Mock)
       .mockReturnValueOnce({ metadata: metadata1, output: 'output1' })
       .mockReturnValueOnce({ metadata: metadata2, output: 'output2' });
 
-    await north.cacheContent(testData.oibusContent[0], testData.south.list[0].id);
+    await north.cacheContent(testData.oibusContent[0], { source: 'test' });
 
     expect(fsAsync.writeFile).toHaveBeenCalledWith(
       path.join(cacheService.cacheFolder, cacheService.CONTENT_FOLDER, '1234567890.json'),
@@ -678,6 +657,7 @@ describe('NorthConnector', () => {
   });
 
   it('should cache setpoint content', async () => {
+    north['connector'].transformers[1].inputType = 'setpoint';
     (fsAsync.stat as jest.Mock).mockReturnValueOnce({ size: 100, ctimeMs: 123 });
     (generateRandomId as jest.Mock).mockReturnValueOnce('1234567890');
     (createReadStream as jest.Mock).mockReturnValueOnce('readStream');
@@ -686,18 +666,17 @@ describe('NorthConnector', () => {
       contentSize: 0,
       numberOfElement: 1,
       createdAt: DateTime.fromMillis(123).toUTC().toISO()!,
-      contentType: 'setpoint',
-      source: testData.south.list[0].id,
-      options: {}
+      contentType: 'setpoint'
     };
     (oiBusTransformer.transform as jest.Mock).mockReturnValueOnce({ metadata, output: 'output' });
     north.persistDataInCache = jest.fn();
-    await north.cacheContent(testData.oibusContent[3], testData.south.list[1].id);
+    await north.cacheContent(testData.oibusContent[3], { source: 'test' });
 
     expect(north.persistDataInCache).toHaveBeenCalledWith(metadata, 'output');
   });
 
   it('should cache file content', async () => {
+    north['connector'].transformers[1].inputType = 'any';
     (fsAsync.stat as jest.Mock).mockReturnValueOnce({ size: 100, ctimeMs: 123 });
     (generateRandomId as jest.Mock).mockReturnValueOnce('1234567890');
     (createReadStream as jest.Mock).mockReturnValueOnce('readStream');
@@ -706,12 +685,10 @@ describe('NorthConnector', () => {
       contentSize: 100,
       numberOfElement: 0,
       createdAt: DateTime.fromMillis(123).toUTC().toISO()!,
-      contentType: 'any',
-      source: 'south',
-      options: {}
+      contentType: 'any'
     };
     (oiBusTransformer.transform as jest.Mock).mockReturnValueOnce({ metadata, output: 'output' });
-    await north.cacheContent(testData.oibusContent[1], null);
+    await north.cacheContent(testData.oibusContent[1], { source: 'test' });
 
     expect(fsAsync.writeFile).toHaveBeenCalledWith(
       path.join(
@@ -760,12 +737,12 @@ describe('NorthConnector', () => {
   it('should not cache content if max size reach', async () => {
     north['connector'].caching.throttling.maxSize = 1;
     north['cacheSize'].cacheSize = (north['connector'].caching.throttling.maxSize + 1) * 1024 * 1024;
-    await north.cacheContent(testData.oibusContent[0], 'south');
+    await north.cacheContent(testData.oibusContent[0], { source: 'test' });
 
     expect(logger.warn).toHaveBeenCalledWith(
       `North cache is exceeding the maximum allowed size (2 MB >= ${north['connector'].caching.throttling.maxSize} MB). Values will be discarded until cache is emptied.`
     );
-    await north.cacheContent(testData.oibusContent[0], 'south');
+    await north.cacheContent(testData.oibusContent[0], { source: 'test' });
     expect(logger.warn).toHaveBeenCalledTimes(1);
     expect(createTransformer).not.toHaveBeenCalled();
   });
@@ -778,7 +755,7 @@ describe('NorthConnector', () => {
         type: 'any',
         filePath: 'path/file.csv'
       },
-      'south'
+      { source: 'test' }
     );
 
     expect(logger.trace).toHaveBeenCalledWith(`Data type "any" not supported by the connector. Data will be ignored.`);
@@ -793,7 +770,7 @@ describe('NorthConnector', () => {
         type: 'any',
         filePath: 'path/file.csv'
       },
-      'south'
+      { source: 'test' }
     );
 
     expect(north['cacheWithoutTransform']).toHaveBeenCalledTimes(1);
@@ -821,7 +798,7 @@ describe('NorthConnector', () => {
         type: 'any',
         filePath: 'path/file.csv'
       },
-      'south'
+      { source: 'test' }
     );
 
     expect(logger.trace).toHaveBeenCalledWith(`Ignoring data of type any`);
@@ -850,7 +827,7 @@ describe('NorthConnector', () => {
         type: 'any',
         filePath: 'path/file.csv'
       },
-      'south'
+      { source: 'test' }
     );
 
     expect(north['cacheWithoutTransform']).toHaveBeenCalledTimes(1);
@@ -860,13 +837,10 @@ describe('NorthConnector', () => {
     (createReadStream as jest.Mock).mockReturnValueOnce('readStream');
     (generateRandomId as jest.Mock).mockReturnValueOnce('123456');
     north.persistDataInCache = jest.fn();
-    await north['cacheWithoutTransform'](
-      {
-        type: 'any',
-        filePath: 'path/file.csv'
-      },
-      'south'
-    );
+    await north['cacheWithoutTransform']({
+      type: 'any',
+      filePath: 'path/file.csv'
+    });
 
     expect(north.persistDataInCache).toHaveBeenCalledWith(
       {
@@ -874,9 +848,7 @@ describe('NorthConnector', () => {
         contentSize: 0,
         createdAt: '',
         numberOfElement: 0,
-        contentType: 'any',
-        source: 'south',
-        options: {}
+        contentType: 'any'
       },
       'readStream'
     );
@@ -886,7 +858,7 @@ describe('NorthConnector', () => {
     (generateRandomId as jest.Mock).mockReturnValueOnce('1234567890');
     north.persistDataInCache = jest.fn();
     north['connector'].caching.throttling.maxNumberOfElements = 0;
-    await north['cacheWithoutTransform'](testData.oibusContent[0], 'south');
+    await north['cacheWithoutTransform'](testData.oibusContent[0]);
 
     expect(north.persistDataInCache).toHaveBeenCalledWith(
       {
@@ -894,9 +866,7 @@ describe('NorthConnector', () => {
         contentSize: 0,
         createdAt: '',
         numberOfElement: (testData.oibusContent[0] as OIBusTimeValueContent).content.length,
-        contentType: 'time-values',
-        source: 'south',
-        options: {}
+        contentType: 'time-values'
       },
       Readable.from(JSON.stringify((testData.oibusContent[0] as OIBusTimeValueContent).content))
     );
@@ -906,7 +876,7 @@ describe('NorthConnector', () => {
     (generateRandomId as jest.Mock).mockReturnValueOnce('1234567890').mockReturnValueOnce('1234567890').mockReturnValueOnce('1234567890');
     north.persistDataInCache = jest.fn();
     north['connector'].caching.throttling.maxNumberOfElements = 1;
-    await north['cacheWithoutTransform'](testData.oibusContent[0], 'south');
+    await north['cacheWithoutTransform'](testData.oibusContent[0]);
 
     expect(north.persistDataInCache).toHaveBeenCalledWith(
       {
@@ -914,9 +884,7 @@ describe('NorthConnector', () => {
         contentSize: 0,
         createdAt: '',
         numberOfElement: 1,
-        contentType: 'time-values',
-        source: 'south',
-        options: {}
+        contentType: 'time-values'
       },
       Readable.from(JSON.stringify([(testData.oibusContent[0] as OIBusTimeValueContent).content[0]]))
     );
@@ -955,5 +923,152 @@ describe('NorthConnector test id', () => {
   it('should properly connect with test it', async () => {
     await north.connect();
     expect(logger.info).toHaveBeenCalledWith(`North connector "${northTest.name}" of type ${northTest.type} started`);
+  });
+
+  it('should find south source from type, south and item', () => {
+    const content: OIBusContent = {
+      type: 'time-values',
+      content: []
+    };
+    const metadataSource1: CacheMetadataSource = {
+      source: 'south',
+      queryTime: testData.constants.dates.FAKE_NOW,
+      southId: testData.south.list[0].id,
+      itemIds: [testData.south.list[0].items[0].id, testData.south.list[0].items[1].id]
+    };
+    north['connector'].transformers = [
+      {
+        id: 'northTransformerId1',
+        transformer: testData.transformers.list[0],
+        south: { id: testData.south.list[0].id } as SouthConnectorEntityLight,
+        items: [{ id: testData.south.list[0].items[0].id, name: testData.south.list[0].items[0].name }],
+        options: {},
+        inputType: 'time-values'
+      },
+      {
+        id: 'northTransformerId2',
+        transformer: testData.transformers.list[0],
+        south: { id: testData.south.list[0].id } as SouthConnectorEntityLight,
+        items: [{ id: testData.south.list[0].items[1].id, name: testData.south.list[0].items[1].name }],
+        options: {},
+        inputType: 'time-values'
+      },
+      {
+        id: 'northTransformerId3',
+        transformer: testData.transformers.list[0],
+        south: { id: testData.south.list[0].id } as SouthConnectorEntityLight,
+        items: [{ id: testData.south.list[0].items[0].id, name: testData.south.list[0].items[0].name }],
+        options: {},
+        inputType: 'any'
+      },
+      {
+        id: 'northTransformerId4',
+        transformer: testData.transformers.list[0],
+        south: { id: testData.south.list[1].id } as SouthConnectorEntityLight,
+        items: [],
+        options: {},
+        inputType: 'time-values'
+      },
+      {
+        id: 'northTransformerId5',
+        transformer: testData.transformers.list[0],
+        south: undefined,
+        items: [],
+        options: {},
+        inputType: 'time-values'
+      },
+      {
+        id: 'northTransformerId6',
+        transformer: testData.transformers.list[0],
+        south: undefined,
+        items: [],
+        options: {},
+        inputType: 'any'
+      }
+    ];
+    const result1 = north['findTransformer'](content, metadataSource1);
+
+    expect(result1).toEqual(north['connector'].transformers[0]);
+
+    const metadataSource2: CacheMetadataSource = {
+      source: 'south',
+      queryTime: testData.constants.dates.FAKE_NOW,
+      southId: testData.south.list[1].id,
+      itemIds: [testData.south.list[0].items[0].id, testData.south.list[0].items[1].id]
+    };
+    const result2 = north['findTransformer'](content, metadataSource2);
+    expect(result2).toEqual(north['connector'].transformers[3]);
+
+    const metadataSource3: CacheMetadataSource = {
+      source: 'south',
+      queryTime: testData.constants.dates.FAKE_NOW,
+      southId: testData.south.list[2].id,
+      itemIds: [testData.south.list[0].items[0].id, testData.south.list[0].items[1].id]
+    };
+    const result3 = north['findTransformer'](content, metadataSource3);
+    expect(result3).toEqual(north['connector'].transformers[4]);
+  });
+
+  it('should find oianalytics source from type, south and item', () => {
+    const content: OIBusContent = {
+      type: 'any',
+      filePath: 'file'
+    };
+    const metadataSource1: CacheMetadataSource = {
+      source: 'oianalytics'
+    };
+    north['connector'].transformers = [
+      {
+        id: 'northTransformerId1',
+        transformer: testData.transformers.list[0],
+        south: { id: testData.south.list[0].id } as SouthConnectorEntityLight,
+        items: [{ id: testData.south.list[0].items[0].id, name: testData.south.list[0].items[0].name }],
+        options: {},
+        inputType: 'time-values'
+      },
+      {
+        id: 'northTransformerId2',
+        transformer: testData.transformers.list[0],
+        south: { id: testData.south.list[0].id } as SouthConnectorEntityLight,
+        items: [{ id: testData.south.list[0].items[1].id, name: testData.south.list[0].items[1].name }],
+        options: {},
+        inputType: 'time-values'
+      },
+      {
+        id: 'northTransformerId3',
+        transformer: testData.transformers.list[0],
+        south: { id: testData.south.list[0].id } as SouthConnectorEntityLight,
+        items: [{ id: testData.south.list[0].items[0].id, name: testData.south.list[0].items[0].name }],
+        options: {},
+        inputType: 'any'
+      },
+      {
+        id: 'northTransformerId4',
+        transformer: testData.transformers.list[0],
+        south: { id: testData.south.list[1].id } as SouthConnectorEntityLight,
+        items: [],
+        options: {},
+        inputType: 'time-values'
+      },
+      {
+        id: 'northTransformerId5',
+        transformer: testData.transformers.list[0],
+        south: undefined,
+        items: [],
+        options: {},
+        inputType: 'time-values'
+      },
+      {
+        id: 'northTransformerId6',
+        transformer: testData.transformers.list[0],
+        south: undefined,
+        items: [],
+        options: {},
+        inputType: 'any'
+      }
+    ];
+    const result1 = north['findTransformer'](content, metadataSource1);
+
+    expect(result1).toEqual(north['connector'].transformers[5]);
   });
 });

@@ -2,7 +2,7 @@ import OIBusTransformer from '../oibus-transformer';
 import { JSONPath } from 'jsonpath-plus';
 import { ReadStream } from 'node:fs';
 import { pipeline, Readable, Transform } from 'node:stream';
-import { CacheMetadata } from '../../../../shared/model/engine.model';
+import { CacheMetadata, CacheMetadataSource } from '../../../../shared/model/engine.model';
 import { promisify } from 'node:util';
 import { OIBusObjectAttribute } from '../../../../shared/model/form.model';
 import { convertDateTime, convertDelimiter, injectIndices, sanitizeFilename, stringToBoolean } from '../../utils';
@@ -39,13 +39,13 @@ export default class JSONToCSVTransformer extends OIBusTransformer {
 
   async transform(
     data: ReadStream | Readable,
-    source: string | null,
+    _source: CacheMetadataSource,
     filename: string
   ): Promise<{ metadata: CacheMetadata; output: string }> {
     const jsonParser = this.options.jsonToParse.find(parser => filename.match(parser.regex));
     if (!jsonParser) {
       this.logger.error(`Could not find json parser from "${filename}"`);
-      return this.returnEmpty(filename, source);
+      return this.returnEmpty(filename);
     }
 
     // 1. Read stream into buffer
@@ -143,9 +143,7 @@ export default class JSONToCSVTransformer extends OIBusTransformer {
       contentSize: 0, // It will be set outside the transformer, once the file is written
       createdAt: '', // It will be set outside the transformer, once the file is written
       numberOfElement: 0,
-      contentType: 'any',
-      source,
-      options: {}
+      contentType: 'any'
     };
     return {
       output: outputCSV,
@@ -153,7 +151,7 @@ export default class JSONToCSVTransformer extends OIBusTransformer {
     };
   }
 
-  returnEmpty(filename: string, source: string | null) {
+  returnEmpty(filename: string): { metadata: CacheMetadata; output: string } {
     return {
       output: '',
       metadata: {
@@ -161,9 +159,7 @@ export default class JSONToCSVTransformer extends OIBusTransformer {
         contentSize: 0, // It will be set outside the transformer, once the file is written
         createdAt: '', // It will be set outside the transformer, once the file is written
         numberOfElement: 0,
-        contentType: 'any',
-        source,
-        options: {}
+        contentType: 'any'
       }
     };
   }

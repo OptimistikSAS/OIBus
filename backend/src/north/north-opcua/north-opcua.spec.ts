@@ -222,9 +222,7 @@ describe('NorthOPCUA', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'opcua',
-      source: 'south',
-      options: {}
+      contentType: 'opcua'
     });
 
     expect(resolveNodeId).toHaveBeenCalledTimes(4);
@@ -308,9 +306,7 @@ describe('NorthOPCUA', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'opcua',
-        source: 'south',
-        options: {}
+        contentType: 'opcua'
       })
     ).rejects.toThrow(new Error('another error1'));
 
@@ -329,9 +325,7 @@ describe('NorthOPCUA', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'opcua',
-        source: 'south',
-        options: {}
+        contentType: 'opcua'
       })
     ).rejects.toThrow(new Error('another error2'));
     expect(logger.error).toHaveBeenCalledWith(`Unexpected error: another error2`);
@@ -348,9 +342,7 @@ describe('NorthOPCUA', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'opcua',
-        source: 'south',
-        options: {}
+        contentType: 'opcua'
       })
     ).rejects.toThrow('Connector is reconnecting...');
   });
@@ -363,9 +355,7 @@ describe('NorthOPCUA', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'opcua',
-        source: 'south',
-        options: {}
+        contentType: 'opcua'
       })
     ).rejects.toThrow('OPCUA client not set');
   });
@@ -377,9 +367,7 @@ describe('NorthOPCUA', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'any',
-        source: 'south',
-        options: {}
+        contentType: 'any'
       })
     ).rejects.toThrow(`Unsupported data type: any (file path/to/file/example-123456789.file)`);
   });

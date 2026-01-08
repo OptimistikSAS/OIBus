@@ -1,7 +1,7 @@
 import OIBusTransformer from './oibus-transformer';
 import { ReadStream } from 'node:fs';
 import { pipeline, Readable, Transform } from 'node:stream';
-import { CacheMetadata } from '../../../shared/model/engine.model';
+import { CacheMetadata, CacheMetadataSource } from '../../../shared/model/engine.model';
 import pino from 'pino';
 import { CustomTransformer } from '../../model/transformer.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
@@ -27,7 +27,7 @@ export default class OIBusCustomTransformer extends OIBusTransformer {
 
   async transform(
     data: ReadStream | Readable,
-    source: string | null,
+    source: CacheMetadataSource,
     filename: string | null
   ): Promise<{ metadata: CacheMetadata; output: string }> {
     // Collect the data from the stream

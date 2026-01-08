@@ -20,14 +20,13 @@ describe('IsoTransformer', () => {
   it('should transform data from a stream and return metadata without filename', async () => {
     // Arrange
     const transformer = new IsoTransformer(logger, testData.transformers.list[0], testData.north.list[0], {});
-    const source = 'test-source';
     const dataChunks = ['chunk1', 'chunk2', 'chunk3'];
 
     // Mock Readable stream
     const mockStream = new Readable();
 
     // Act
-    const promise = transformer.transform(mockStream, source, null);
+    const promise = transformer.transform(mockStream, { source: 'test' }, null);
     mockStream.push(dataChunks[0]);
     mockStream.push(dataChunks[1]);
     mockStream.push(dataChunks[2]);
@@ -43,9 +42,7 @@ describe('IsoTransformer', () => {
         contentSize: 0,
         createdAt: '',
         numberOfElement: 0,
-        contentType: '',
-        source: '',
-        options: {}
+        contentType: ''
       }
     });
   });
@@ -53,7 +50,6 @@ describe('IsoTransformer', () => {
   it('should transform data from a stream and return metadata', async () => {
     // Arrange
     const transformer = new IsoTransformer(logger, testData.transformers.list[0], testData.north.list[0], {});
-    const source = 'test-source';
     const filename = 'test-file.csv';
     const dataChunks = ['chunk1', 'chunk2', 'chunk3'];
 
@@ -61,7 +57,7 @@ describe('IsoTransformer', () => {
     const mockStream = new Readable();
 
     // Act
-    const promise = transformer.transform(mockStream, source, filename);
+    const promise = transformer.transform(mockStream, { source: 'test' }, filename);
     mockStream.push(dataChunks[0]);
     mockStream.push(dataChunks[1]);
     mockStream.push(dataChunks[2]);
@@ -77,9 +73,7 @@ describe('IsoTransformer', () => {
         contentSize: 0,
         createdAt: '',
         numberOfElement: 0,
-        contentType: '',
-        source: '',
-        options: {}
+        contentType: ''
       }
     });
   });

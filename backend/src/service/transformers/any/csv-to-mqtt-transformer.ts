@@ -1,7 +1,7 @@
 import OIBusTransformer from '../oibus-transformer';
 import { ReadStream } from 'node:fs';
 import { pipeline, Readable, Transform } from 'node:stream';
-import { CacheMetadata } from '../../../../shared/model/engine.model';
+import { CacheMetadata, CacheMetadataSource } from '../../../../shared/model/engine.model';
 import { promisify } from 'node:util';
 import { OIBusObjectAttribute } from '../../../../shared/model/form.model';
 import { convertDateTime, convertDelimiter, generateRandomId, stringToBoolean } from '../../utils';
@@ -59,13 +59,13 @@ export default class CSVToMQTTTransformer extends OIBusTransformer {
 
   async transform(
     data: ReadStream | Readable,
-    source: string | null,
+    _source: CacheMetadataSource,
     filename: string
   ): Promise<{ metadata: CacheMetadata; output: string }> {
     const csvParser = this.options.csvToParse.find(parser => filename.match(parser.regex));
     if (!csvParser) {
       this.logger.error(`[CSVToMQTT] Could not find csv parser configuration for file "${filename}"`);
-      return this.returnEmpty(source);
+      return this.returnEmpty();
     }
 
     // 1. Read Stream
@@ -145,9 +145,7 @@ export default class CSVToMQTTTransformer extends OIBusTransformer {
       contentSize: 0,
       createdAt: '',
       numberOfElement: mqttMessages.length,
-      contentType: 'mqtt',
-      source,
-      options: {}
+      contentType: 'mqtt'
     };
 
     return {
@@ -205,7 +203,7 @@ export default class CSVToMQTTTransformer extends OIBusTransformer {
     }
   }
 
-  returnEmpty(source: string | null) {
+  returnEmpty(): { metadata: CacheMetadata; output: string } {
     return {
       output: '[]',
       metadata: {
@@ -213,9 +211,7 @@ export default class CSVToMQTTTransformer extends OIBusTransformer {
         contentSize: 0,
         createdAt: '',
         numberOfElement: 0,
-        contentType: 'mqtt',
-        source,
-        options: {}
+        contentType: 'mqtt'
       }
     };
   }

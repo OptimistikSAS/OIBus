@@ -1,5 +1,5 @@
 import OIBusTransformer from '../oibus-transformer';
-import { CacheMetadata, OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { CacheMetadata, CacheMetadataSource, OIBusTimeValue } from '../../../../shared/model/engine.model';
 import { ReadStream } from 'node:fs';
 import { pipeline, Readable, Transform } from 'node:stream';
 import { promisify } from 'node:util';
@@ -19,7 +19,7 @@ export default class OIBusTimeValuesToOIAnalyticsTransformer extends OIBusTransf
 
   async transform(
     data: ReadStream | Readable,
-    source: string | null,
+    _source: CacheMetadataSource,
     _filename: string | null
   ): Promise<{ metadata: CacheMetadata; output: string }> {
     // Collect the data from the stream
@@ -44,9 +44,7 @@ export default class OIBusTimeValuesToOIAnalyticsTransformer extends OIBusTransf
       contentSize: 0, // It will be set outside the transformer, once the file is written
       createdAt: '', // It will be set outside the transformer, once the file is written
       numberOfElement: content.length,
-      contentType: 'oianalytics',
-      source,
-      options: {}
+      contentType: 'oianalytics'
     };
     return {
       output: JSON.stringify(content),

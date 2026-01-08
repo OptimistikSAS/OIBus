@@ -360,7 +360,7 @@ describe('North Service', () => {
           }
         ]
       },
-      'oianalytics'
+      { source: 'oianalytics' }
     );
     expect(callback).toHaveBeenCalledWith(
       `Setpoint ${JSON.stringify([{ reference: 'reference', value: '123456' }])} properly sent into the cache of northId`

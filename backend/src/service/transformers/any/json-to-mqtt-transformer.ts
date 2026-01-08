@@ -2,7 +2,7 @@ import OIBusTransformer from '../oibus-transformer';
 import { JSONPath } from 'jsonpath-plus';
 import { ReadStream } from 'node:fs';
 import { pipeline, Readable, Transform } from 'node:stream';
-import { CacheMetadata } from '../../../../shared/model/engine.model';
+import { CacheMetadata, CacheMetadataSource } from '../../../../shared/model/engine.model';
 import { promisify } from 'node:util';
 import { OIBusObjectAttribute } from '../../../../shared/model/form.model';
 import { convertDateTime, generateRandomId, injectIndices, stringToBoolean } from '../../utils';
@@ -54,13 +54,13 @@ export default class JSONToMQTTTransformer extends OIBusTransformer {
 
   async transform(
     data: ReadStream | Readable,
-    source: string | null,
+    _source: CacheMetadataSource,
     filename: string
   ): Promise<{ metadata: CacheMetadata; output: string }> {
     const jsonParser = this.options.jsonToParse.find(parser => filename.match(parser.regex));
     if (!jsonParser) {
       this.logger.error(`[JSONToMQTT] Could not find json parser configuration for file "${filename}"`);
-      return this.returnEmpty(source);
+      return this.returnEmpty();
     }
 
     // 1. Read Stream
@@ -81,7 +81,7 @@ export default class JSONToMQTTTransformer extends OIBusTransformer {
       content = JSON.parse(stringContent);
     } catch (error: unknown) {
       this.logger.error(`[JSONToMQTT] Failed to parse JSON content from "${filename}": ${(error as Error).message}`);
-      return this.returnEmpty(source);
+      return this.returnEmpty();
     }
 
     // 2. Identify Rows
@@ -152,9 +152,7 @@ export default class JSONToMQTTTransformer extends OIBusTransformer {
       contentSize: 0,
       createdAt: '',
       numberOfElement: mqttMessages.length,
-      contentType: 'mqtt',
-      source,
-      options: {}
+      contentType: 'mqtt'
     };
 
     return {
@@ -204,7 +202,7 @@ export default class JSONToMQTTTransformer extends OIBusTransformer {
     }
   }
 
-  returnEmpty(source: string | null) {
+  returnEmpty(): { metadata: CacheMetadata; output: string } {
     return {
       output: '[]',
       metadata: {
@@ -212,9 +210,7 @@ export default class JSONToMQTTTransformer extends OIBusTransformer {
         contentSize: 0,
         createdAt: '',
         numberOfElement: 0,
-        contentType: 'mqtt',
-        source,
-        options: {}
+        contentType: 'mqtt'
       }
     };
   }

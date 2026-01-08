@@ -180,9 +180,7 @@ describe('NorthModbus', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'any',
-        source: 'south',
-        options: {}
+        contentType: 'any'
       })
     ).rejects.toThrow(`Unsupported data type: any (file path/to/file/example-123456789.file)`);
   });
@@ -202,9 +200,7 @@ describe('NorthModbus', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'modbus',
-      source: 'south',
-      options: {}
+      contentType: 'modbus'
     });
     expect(north['handleValues']).toHaveBeenCalledWith(values);
   });
@@ -282,9 +278,7 @@ describe('NorthModbus', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'modbus',
-        source: 'south',
-        options: {}
+        contentType: 'modbus'
       })
     ).rejects.toThrow('Connector is reconnecting...');
   });

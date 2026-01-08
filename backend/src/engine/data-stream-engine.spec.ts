@@ -309,10 +309,15 @@ describe('DataStreamEngine', () => {
 
     // Get the callback passed to buildSouth
     const callback = (buildSouth as jest.Mock).mock.calls[0][1];
-    await callback(testData.historyQueries.list[0].id, mockData);
+    await callback(testData.historyQueries.list[0].id, mockData, testData.constants.dates.DATE_1, []);
 
     // Verify north.cacheContent is called with the correct arguments
-    expect(mockedNorth1.cacheContent).toHaveBeenCalledWith(mockData, null);
+    expect(mockedNorth1.cacheContent).toHaveBeenCalledWith(mockData, {
+      source: 'south',
+      southId: testData.historyQueries.list[0].id,
+      queryTime: testData.constants.dates.DATE_1,
+      itemIds: []
+    });
   });
 
   it('it should start and stop without south 2 and north 2', async () => {
@@ -466,10 +471,15 @@ describe('DataStreamEngine', () => {
 
     (mockedNorth1.isEnabled as jest.Mock).mockReturnValueOnce(false).mockReturnValueOnce(true);
     // Add time values
-    await engine.addContent(testData.south.list[0].id, testData.oibusContent[0]);
+    await engine.addContent(testData.south.list[0].id, testData.oibusContent[0], testData.constants.dates.DATE_1, []);
     expect(mockedNorth1.cacheContent).not.toHaveBeenCalled();
-    await engine.addContent(testData.south.list[0].id, testData.oibusContent[0]);
-    expect(mockedNorth1.cacheContent).toHaveBeenCalledWith(testData.oibusContent[0], testData.south.list[0].id);
+    await engine.addContent(testData.south.list[0].id, testData.oibusContent[0], testData.constants.dates.DATE_1, []);
+    expect(mockedNorth1.cacheContent).toHaveBeenCalledWith(testData.oibusContent[0], {
+      itemIds: [],
+      queryTime: testData.constants.dates.DATE_1,
+      source: 'south',
+      southId: testData.south.list[0].id
+    });
   });
 
   it('should add external content', async () => {
@@ -477,10 +487,10 @@ describe('DataStreamEngine', () => {
 
     (mockedNorth1.isEnabled as jest.Mock).mockReturnValueOnce(false).mockReturnValueOnce(true);
     // Add time values
-    await engine.addExternalContent(testData.north.list[0].id, testData.oibusContent[0], 'api');
+    await engine.addExternalContent(testData.north.list[0].id, testData.oibusContent[0]);
     expect(mockedNorth1.cacheContent).not.toHaveBeenCalled();
-    await engine.addExternalContent(testData.north.list[0].id, testData.oibusContent[0], 'api');
-    expect(mockedNorth1.cacheContent).toHaveBeenCalledWith(testData.oibusContent[0], null);
+    await engine.addExternalContent(testData.north.list[0].id, testData.oibusContent[0]);
+    expect(mockedNorth1.cacheContent).toHaveBeenCalledWith(testData.oibusContent[0], { source: 'api' });
   });
 
   it('should do nothing if connector not set', async () => {

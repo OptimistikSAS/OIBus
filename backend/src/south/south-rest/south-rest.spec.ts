@@ -105,7 +105,7 @@ describe('SouthRestAPI connector', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date('2024-01-01T00:00:00.000Z'));
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
     // Default mocks
     fsMock.writeFile.mockResolvedValue();
@@ -475,7 +475,9 @@ describe('SouthRestAPI connector', () => {
     // Verify first call arguments for addContent
     expect(addContentCallback).toHaveBeenCalledWith(
       'south-rest',
-      expect.objectContaining({ type: 'any', filePath: expect.stringContaining('REST-Test Item-random-id.json') })
+      expect.objectContaining({ type: 'any', filePath: expect.stringContaining('REST-Test Item-random-id.json') }),
+      testData.constants.dates.FAKE_NOW,
+      [item1.id]
     );
   });
 

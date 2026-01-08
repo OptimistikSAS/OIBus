@@ -77,7 +77,6 @@ describe('buildNorth', () => {
         retentionDuration: 604800
       }
     },
-    subscriptions: [],
     transformers: []
   };
 
