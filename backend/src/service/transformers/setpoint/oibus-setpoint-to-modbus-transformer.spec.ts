@@ -31,7 +31,6 @@ describe('OIBusSetpointToModbusTransformer', () => {
     };
     // Arrange
     const transformer = new OIBusSetpointToModbusTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
-    const source = 'test-source';
     const dataChunks: Array<OIBusSetpoint> = [
       {
         reference: 'reference1',
@@ -51,7 +50,7 @@ describe('OIBusSetpointToModbusTransformer', () => {
     const mockStream = new Readable();
 
     // Act
-    const promise = transformer.transform(mockStream, source, null);
+    const promise = transformer.transform(mockStream, { source: 'test' }, null);
     mockStream.push(JSON.stringify(dataChunks));
     mockStream.push(null); // End the stream
 
@@ -68,9 +67,7 @@ describe('OIBusSetpointToModbusTransformer', () => {
         contentSize: 0,
         createdAt: '',
         numberOfElement: 2,
-        contentType: 'modbus',
-        source,
-        options: {}
+        contentType: 'modbus'
       }
     });
   });
