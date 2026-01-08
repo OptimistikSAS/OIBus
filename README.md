@@ -49,6 +49,7 @@ OIBus follows a modular 3-layer architecture:
     - Follow the [installation guide](https://oibus.optimistik.com/docs/guide/installation)
 
 2**Example Workflow**:
+
 - Create a Folder Scanner South connector
 - Create a Console North connector
 - Configure data flow between them
@@ -144,8 +145,8 @@ The server is configured with **username/password authentication** (anonymous ac
 
 **Default User Credentials:**
 
-- **Admin user**: `admin` / `SecurePassword123!`
-- **Default user**: `opcuser` / `UserPassword123!`
+- **Admin user**: `admin` / `pass`
+- **Default user**: `opcuser` / `pass`
 
 **Custom Credentials:**
 You can set custom credentials using environment variables:
@@ -237,10 +238,37 @@ View server logs:
 docker-compose logs -f opcua-server
 ```
 
+#### MQTT Broker with Simulated Data
+
+The environment includes an Eclipse Mosquitto MQTT broker and a Python-based simulator that continuously publishes
+simulated sensor data.
+
+**Access Information:**
+
+- **Broker Host**: `localhost` (when accessing from host) or `mqtt-broker` (when accessing from inside Docker)
+- **TCP Port**: `1883`
+- **WebSocket Port**: `9001`
+- **Container Name**: `oibus_mqtt-broker`
+- **Authentication:** The broker is configured with username/password authentication enabled.
+  - **Username**: `oibus`
+  - **Password**: `pass` (default, configurable via `MQTT_PASSWORD` environment variable)
+
+**Available Simulated Topics:**
+
+The simulator publishes data for two workshops (`workshop1`, `workshop2`), each containing four sensors. Data is
+published continuously at specific intervals.
+
+| Topic Path                      | Data Type | Interval (ws1 / ws2) | Range / Details    |
+|---------------------------------|-----------|----------------------|--------------------|
+| `workshopX/sensor1/temperature` | Double    | 2s / 4s              | 20.0 - 40.0 °C     |
+| `workshopX/sensor2/humidity`    | Double    | 3s / 6s              | 30.0 - 80.0 %      |
+| `workshopX/sensor3/pressure`    | Double    | 5s / 8s              | 950.0 - 1050.0 hPa |
+| `workshopX/sensor4/vibration`   | Double    | 7s / 10s             | 0.0 - 10.0 mm/s    |
+
+
 #### Other Development Services
 
 - **Modbus Server**: Port `5020` - Simulated Modbus TCP server
-- **MQTT Broker**: Port `1883` (TCP), `9001` (WebSocket) - Eclipse Mosquitto with simulator
 - **PostgreSQL**: Port `5432` - Database for testing
 
 ## 🤝 Community and Support
