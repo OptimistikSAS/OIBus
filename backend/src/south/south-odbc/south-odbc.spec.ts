@@ -243,6 +243,8 @@ describe('SouthODBC odbc driver with authentication', () => {
       configuration.items[0].settings.serialization,
       configuration.name,
       configuration.items[0].name,
+      configuration.items[0].id,
+      testData.constants.dates.FAKE_NOW,
       path.resolve('cacheFolder', 'tmp'),
       expect.any(Function),
       logger
@@ -546,6 +548,8 @@ describe('SouthODBC odbc driver without authentication', () => {
       configuration.items[0].settings.serialization,
       configuration.name,
       configuration.items[0].name,
+      configuration.items[0].id,
+      testData.constants.dates.FAKE_NOW,
       path.resolve('cacheFolder', 'tmp'),
       expect.any(Function),
       logger
@@ -1120,6 +1124,8 @@ describe('SouthODBC odbc remote with authentication', () => {
       },
       configuration.name,
       configuration.items[0].name,
+      configuration.items[0].id,
+      testData.constants.dates.FAKE_NOW,
       path.resolve('cacheFolder', 'tmp'),
       expect.any(Function),
       logger

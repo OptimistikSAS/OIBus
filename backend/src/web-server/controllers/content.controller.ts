@@ -26,7 +26,7 @@ export class ContentController extends Controller {
     try {
       const normalizedNorthIds = northId.split(',').filter(id => id.trim() !== '');
       for (const id of normalizedNorthIds) {
-        await oIBusService.addExternalContent(id, { type: 'any', filePath: file.path }, 'api');
+        await oIBusService.addExternalContent(id, { type: 'any', filePath: file.path });
       }
     } finally {
       // Cleanup: This block runs NO MATTER WHAT (success or failure)
@@ -55,7 +55,7 @@ export class ContentController extends Controller {
     const oIBusService = request.services.oIBusService;
     const normalizedNorthIds = northId.split(',').filter(id => id.trim() !== '');
     for (const id of normalizedNorthIds) {
-      await oIBusService.addExternalContent(id, content, 'api');
+      await oIBusService.addExternalContent(id, content);
     }
   }
 }

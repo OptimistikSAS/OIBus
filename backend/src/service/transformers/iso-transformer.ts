@@ -1,7 +1,7 @@
 import OIBusTransformer from './oibus-transformer';
 import { ReadStream } from 'node:fs';
 import { Readable } from 'node:stream';
-import { CacheMetadata } from '../../../shared/model/engine.model';
+import { CacheMetadata, CacheMetadataSource } from '../../../shared/model/engine.model';
 import { OIBusObjectAttribute } from '../../../shared/model/form.model';
 
 export default class IsoTransformer extends OIBusTransformer {
@@ -9,7 +9,7 @@ export default class IsoTransformer extends OIBusTransformer {
 
   async transform(
     _data: ReadStream | Readable,
-    _source: string | null,
+    _source: CacheMetadataSource,
     _filename: string | null
   ): Promise<{ metadata: CacheMetadata; output: string }> {
     return {
@@ -19,9 +19,7 @@ export default class IsoTransformer extends OIBusTransformer {
         contentSize: 0,
         createdAt: '',
         numberOfElement: 0,
-        contentType: '',
-        source: '',
-        options: {}
+        contentType: ''
       }
     };
   }
