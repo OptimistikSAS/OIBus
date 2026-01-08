@@ -65,7 +65,9 @@ services:
       MQTT_BROKER: mqtt-broker
       MQTT_PORT: 1883
     working_dir: /app
-    command: sh -c "pip install paho-mqtt && python mqtt_simulator.py"
+    command: >
+      sh -c "pip show paho-mqtt > /dev/null 2>&1 || pip install paho-mqtt
+      && python -u mqtt_simulator.py"
     depends_on:
       - mqtt-broker
     networks:
