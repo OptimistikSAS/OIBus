@@ -47,7 +47,12 @@ export default class SouthOPCUA
   private monitoredItems = new Map<string, ClientMonitoredItem>();
   private subscription: ClientSubscription | null = null;
   private flushTimeout: NodeJS.Timeout | null = null;
-  private bufferedValues: Array<OIBusTimeValue> = [];
+  private bufferedValues: Array<{
+    item: SouthConnectorItemEntity<SouthOPCUAItemSettings>;
+    timestamp: Instant;
+    value: number | string;
+    quality: string;
+  }> = [];
   private client: ClientSession | null = null;
   private reconnectTimeout: NodeJS.Timeout | null = null;
 
@@ -519,12 +524,10 @@ export default class SouthOPCUA
         const parsedValue = parseOPCUAValue(item.name, dataValue.value, this.logger);
         if (parsedValue) {
           this.bufferedValues.push({
-            pointId: item.name,
+            item: item,
             timestamp: DateTime.now().toUTC().toISO(),
-            data: {
-              value: parsedValue,
-              quality: dataValue.statusCode.name
-            }
+            value: parsedValue,
+            quality: dataValue.statusCode.name
           });
           if (this.bufferedValues.length >= this.connector.settings.maxNumberOfMessages) {
             await this.flushMessages();
@@ -548,10 +551,14 @@ export default class SouthOPCUA
         await this.addContent(
           {
             type: 'time-values',
-            content: valuesToSend
+            content: valuesToSend.map(element => ({
+              pointId: element.item.name,
+              timestamp: element.timestamp,
+              data: { value: element.value, quality: element.quality }
+            }))
           },
           DateTime.now().toUTC().toISO(),
-          [] // TODO
+          [...new Set(valuesToSend.map(element => element.item.id))]
         );
       } catch (error: unknown) {
         this.logger.error(`Error when flushing messages: ${(error as Error).message}`);
