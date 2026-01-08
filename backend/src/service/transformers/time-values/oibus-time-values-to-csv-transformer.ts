@@ -1,6 +1,6 @@
 import OIBusTransformer from '../oibus-transformer';
 import csv from 'papaparse';
-import { CacheMetadata, OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { CacheMetadata, CacheMetadataSource, OIBusTimeValue } from '../../../../shared/model/engine.model';
 import { ReadStream } from 'node:fs';
 import { pipeline, Readable, Transform } from 'node:stream';
 import { promisify } from 'node:util';
@@ -26,7 +26,7 @@ export default class OIBusTimeValuesToCsvTransformer extends OIBusTransformer {
 
   async transform(
     data: ReadStream | Readable,
-    source: string | null,
+    _source: CacheMetadataSource,
     _filename: string | null
   ): Promise<{ metadata: CacheMetadata; output: string }> {
     // Collect the data from the stream
@@ -47,9 +47,7 @@ export default class OIBusTimeValuesToCsvTransformer extends OIBusTransformer {
       contentSize: 0, // It will be set outside the transformer, once the file is written
       createdAt: '', // It will be set outside the transformer, once the file is written
       numberOfElement: 0,
-      contentType: 'any',
-      source,
-      options: {}
+      contentType: 'any'
     };
     return {
       output: csv.unparse(

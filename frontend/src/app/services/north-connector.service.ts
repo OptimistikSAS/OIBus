@@ -117,20 +117,6 @@ export class NorthConnectorService {
     return this.http.delete<void>(`/api/north/${northId}/transformers/${northTransformerId}`);
   }
 
-  /**
-   * Add a new North connector subscription
-   */
-  addSubscription(northId: string, southId: string): Observable<void> {
-    return this.http.post<void>(`/api/north/${northId}/subscriptions/${southId}`, null);
-  }
-
-  /**
-   * Remove the selected North connector subscription
-   */
-  removeSubscription(northId: string, southId: string): Observable<void> {
-    return this.http.delete<void>(`/api/north/${northId}/subscriptions/${southId}`);
-  }
-
   searchCacheContent(
     northId: string,
     searchParams: CacheSearchParam,

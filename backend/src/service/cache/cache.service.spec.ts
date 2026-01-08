@@ -25,9 +25,7 @@ const fileList: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [
       contentSize: 100,
       numberOfElement: 3,
       createdAt: testData.constants.dates.DATE_1,
-      contentType: 'time-values',
-      source: 'south',
-      options: {}
+      contentType: 'time-values'
     }
   },
   {
@@ -37,9 +35,7 @@ const fileList: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [
       contentSize: 100,
       numberOfElement: 4,
       createdAt: testData.constants.dates.DATE_2,
-      contentType: 'time-values',
-      source: 'south',
-      options: {}
+      contentType: 'time-values'
     }
   },
   {
@@ -49,9 +45,7 @@ const fileList: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [
       contentSize: 100,
       numberOfElement: 0,
       createdAt: testData.constants.dates.DATE_3,
-      contentType: 'any',
-      source: 'south',
-      options: {}
+      contentType: 'any'
     }
   },
   {
@@ -61,9 +55,7 @@ const fileList: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [
       contentSize: 100,
       numberOfElement: 6,
       createdAt: testData.constants.dates.FAKE_NOW,
-      contentType: 'time-values',
-      source: 'south',
-      options: {}
+      contentType: 'time-values'
     }
   },
   {
@@ -73,9 +65,7 @@ const fileList: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [
       contentSize: 100,
       numberOfElement: 0,
       createdAt: testData.constants.dates.FAKE_NOW,
-      contentType: 'any',
-      source: 'south',
-      options: {}
+      contentType: 'any'
     }
   },
   {
@@ -85,9 +75,7 @@ const fileList: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [
       contentSize: 100,
       numberOfElement: 9,
       createdAt: testData.constants.dates.FAKE_NOW,
-      contentType: 'time-values',
-      source: 'south',
-      options: {}
+      contentType: 'time-values'
     }
   }
 ];
@@ -168,7 +156,10 @@ describe('CacheService', () => {
   });
 
   it('should add, get and remove element in queue', async () => {
-    const element = { metadataFilename: 'file.json', metadata: { contentType: 'any', source: 'south', options: {} } as CacheMetadata };
+    const element = {
+      metadataFilename: 'file.json',
+      metadata: { contentType: 'any' } as CacheMetadata
+    };
     expect(service.cacheIsEmpty()).toBeTruthy();
     service.addCacheContentToQueue(element);
     expect(service.cacheIsEmpty()).toBeFalsy();
@@ -427,9 +418,7 @@ describe('CacheService', () => {
         contentSize: 100,
         numberOfElement: 10,
         createdAt: fileList[0].metadata.createdAt,
-        contentType: fileList[0].metadata.contentType,
-        source: 'south',
-        options: {}
+        contentType: fileList[0].metadata.contentType
       }),
       {
         encoding: 'utf-8',
@@ -458,9 +447,7 @@ describe('CacheService', () => {
         contentSize: 100,
         numberOfElement: 10,
         createdAt: testData.constants.dates.DATE_1,
-        contentType: 'time-values',
-        source: 'south',
-        options: {}
+        contentType: 'time-values'
       }
     });
     expect(result[1]).toEqual({
@@ -470,9 +457,7 @@ describe('CacheService', () => {
         contentSize: 100,
         numberOfElement: 0,
         createdAt: testData.constants.dates.DATE_3,
-        contentType: 'any',
-        source: 'south',
-        options: {}
+        contentType: 'any'
       }
     });
     expect(result[2]).toEqual({
@@ -482,9 +467,7 @@ describe('CacheService', () => {
         contentSize: 100,
         numberOfElement: 3,
         createdAt: testData.constants.dates.FAKE_NOW,
-        contentType: 'time-values',
-        source: 'south',
-        options: {}
+        contentType: 'time-values'
       }
     });
     expect(result[3]).toEqual({
@@ -494,9 +477,7 @@ describe('CacheService', () => {
         contentSize: 100,
         numberOfElement: 0,
         createdAt: testData.constants.dates.FAKE_NOW,
-        contentType: 'any',
-        source: 'south',
-        options: {}
+        contentType: 'any'
       }
     });
     expect(result[4]).toEqual({
@@ -506,9 +487,7 @@ describe('CacheService', () => {
         contentSize: 100,
         numberOfElement: 9,
         createdAt: testData.constants.dates.FAKE_NOW,
-        contentType: 'time-values',
-        source: 'south',
-        options: {}
+        contentType: 'time-values'
       }
     });
     expect(result.length).toEqual(5);
@@ -561,9 +540,7 @@ describe('CacheService', () => {
         contentSize: 100,
         numberOfElement: 22,
         createdAt: fileList[0].metadata.createdAt,
-        contentType: fileList[0].metadata.contentType,
-        source: 'south',
-        options: {}
+        contentType: fileList[0].metadata.contentType
       }),
       {
         encoding: 'utf-8',
@@ -587,9 +564,7 @@ describe('CacheService', () => {
         contentSize: 100,
         numberOfElement: 22,
         createdAt: testData.constants.dates.DATE_1,
-        contentType: 'time-values',
-        source: 'south',
-        options: {}
+        contentType: 'time-values'
       }
     });
     expect(result[1]).toEqual({
@@ -599,9 +574,7 @@ describe('CacheService', () => {
         contentSize: 100,
         numberOfElement: 0,
         createdAt: testData.constants.dates.DATE_3,
-        contentType: 'any',
-        source: 'south',
-        options: {}
+        contentType: 'any'
       }
     });
     expect(result[2]).toEqual({
@@ -611,9 +584,7 @@ describe('CacheService', () => {
         contentSize: 100,
         numberOfElement: 0,
         createdAt: testData.constants.dates.FAKE_NOW,
-        contentType: 'any',
-        source: 'south',
-        options: {}
+        contentType: 'any'
       }
     });
     expect(result.length).toEqual(3);
