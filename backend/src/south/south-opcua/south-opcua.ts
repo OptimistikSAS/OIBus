@@ -53,7 +53,7 @@ export default class SouthOPCUA
 
   constructor(
     connector: SouthConnectorEntity<SouthOPCUASettings, SouthOPCUAItemSettings>,
-    engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
+    engineAddContentCallback: (southId: string, data: OIBusContent, queryTime: Instant, itemIds: Array<string>) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
     logger: pino.Logger,
     cacheFolderPath: string
@@ -239,7 +239,7 @@ export default class SouthOPCUA
     let maxTimestamp: number | null = null;
     const itemsByAggregates = new Map<
       Aggregate,
-      Map<Resampling | undefined, Array<{ nodeId: NodeId; name: string; settings: SouthOPCUAItemSettings }>>
+      Map<Resampling | undefined, Array<{ nodeId: NodeId; name: string; settings: SouthOPCUAItemSettings; id: string }>>
     >();
 
     for (const item of items) {
@@ -260,6 +260,7 @@ export default class SouthOPCUA
               nodeId: NodeId;
               name: string;
               settings: SouthOPCUAItemSettings;
+              id: string;
             }>
           >()
         );
@@ -267,15 +268,14 @@ export default class SouthOPCUA
       if (!itemsByAggregates.get(item.settings.haMode!.aggregate!)!.has(item.settings.haMode!.resampling)) {
         itemsByAggregates
           .get(item.settings.haMode!.aggregate)!
-          .set(item.settings.haMode!.resampling, [{ name: item.name, nodeId, settings: item.settings }]);
+          .set(item.settings.haMode!.resampling, [{ name: item.name, nodeId, settings: item.settings, id: item.id }]);
       } else {
         const currentList = itemsByAggregates.get(item.settings.haMode!.aggregate)!.get(item.settings.haMode!.resampling)!;
-        currentList.push({ name: item.name, nodeId, settings: item.settings });
+        currentList.push({ name: item.name, nodeId, settings: item.settings, id: item.id });
         itemsByAggregates.get(item.settings.haMode!.aggregate)!.set(item.settings.haMode!.resampling, currentList);
       }
     }
 
-    const startRequest = DateTime.now().toMillis();
     let dataByItems: Array<OIBusTimeValue> = [];
     for (const [aggregate, aggregatedItems] of itemsByAggregates.entries()) {
       for (const [resampling, resampledItems] of aggregatedItems.entries()) {
@@ -289,7 +289,10 @@ export default class SouthOPCUA
         }));
         this.logger.trace(`Reading ${resampledItems.length} items with aggregate ${aggregate} and resampling ${resampling}`);
         do {
+          const startRequest = DateTime.now();
           const request = getHistoryReadRequest(startTime, endTime, aggregate, resampling, nodesToRead);
+          const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
+          this.logger.debug(`HA request done in ${requestDuration} ms`);
           request.requestHeader.timeoutHint = this.connector.settings.readTimeout;
 
           const response = await session.historyRead(request);
@@ -364,7 +367,9 @@ export default class SouthOPCUA
 
             this.logger.debug(`Adding ${dataByItems.length} values between ${startTime} and ${endTime}`);
             if (!testingItem) {
-              await this.addContent({ type: 'time-values', content: dataByItems });
+              await this.addContent({ type: 'time-values', content: dataByItems }, startRequest.toUTC().toISO(), [
+                ...new Set(resampledItems.map(item => item.id))
+              ]);
               dataByItems = [];
               this.logger.trace(`Continue read for ${nodesToRead.length} points`);
             }
@@ -393,8 +398,6 @@ export default class SouthOPCUA
       }
     }
 
-    const requestDuration = DateTime.now().toMillis() - startRequest;
-    this.logger.debug(`HA request done in ${requestDuration} ms`);
     if (testingItem) {
       return { type: 'time-values', content: dataByItems };
     }
@@ -426,8 +429,9 @@ export default class SouthOPCUA
         throw new Error('OPCUA client not set');
       }
 
+      const queryTime = DateTime.now().toUTC().toISO();
       const content = await this.getDAValues(nodesToRead, this.client);
-      await this.addContent(content);
+      await this.addContent(content, queryTime, [...new Set(items.map(item => item.id))]);
     } catch (error) {
       await this.disconnect();
       if (!this.disconnecting && this.connector.enabled) {
@@ -516,7 +520,7 @@ export default class SouthOPCUA
         if (parsedValue) {
           this.bufferedValues.push({
             pointId: item.name,
-            timestamp: DateTime.now().toUTC().toISO()!,
+            timestamp: DateTime.now().toUTC().toISO(),
             data: {
               value: parsedValue,
               quality: dataValue.statusCode.name
@@ -541,10 +545,14 @@ export default class SouthOPCUA
     if (valuesToSend.length) {
       this.logger.debug(`Flushing ${valuesToSend.length} messages`);
       try {
-        await this.addContent({
-          type: 'time-values',
-          content: valuesToSend
-        });
+        await this.addContent(
+          {
+            type: 'time-values',
+            content: valuesToSend
+          },
+          DateTime.now().toUTC().toISO(),
+          [] // TODO
+        );
       } catch (error: unknown) {
         this.logger.error(`Error when flushing messages: ${(error as Error).message}`);
       }

@@ -68,7 +68,7 @@ describe('JSONToMQTTTransformer', () => {
 
     const inputData = [{ topic: 'device/1', t: 25.5, a: 'true', ts: '2023-01-01' }];
 
-    const promise = transformer.transform(mockStream, 'src', 'data.json');
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.json');
     mockStream.push(JSON.stringify(inputData));
     mockStream.push(null);
     await flushPromises();
@@ -102,7 +102,7 @@ describe('JSONToMQTTTransformer', () => {
 
     const inputData = [{ topic: 'device/1', t: 25.5, a: 'true', ts: '2023-01-01' }];
 
-    const promise = transformer.transform(mockStream, 'src', 'data.json');
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.json');
     mockStream.push(JSON.stringify(inputData));
     mockStream.push(null);
     await flushPromises();
@@ -123,7 +123,7 @@ describe('JSONToMQTTTransformer', () => {
 
     const inputData = [{ topic: 'topic/s', val: 123 }]; // Number in JSON, but force string
 
-    const promise = transformer.transform(mockStream, 'src', 'data.json');
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.json');
     mockStream.push(JSON.stringify(inputData));
     mockStream.push(null);
     await flushPromises();
@@ -141,7 +141,7 @@ describe('JSONToMQTTTransformer', () => {
 
     const inputData = [{ topic: 'topic/n', val: '45.6' }]; // String in JSON, cast to number
 
-    const promise = transformer.transform(mockStream, 'src', 'data.json');
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.json');
     mockStream.push(JSON.stringify(inputData));
     mockStream.push(null);
     await flushPromises();
@@ -159,7 +159,7 @@ describe('JSONToMQTTTransformer', () => {
 
     const inputData = [{ topic: 'topic/b', val: 'true' }];
 
-    const promise = transformer.transform(mockStream, 'src', 'data.json');
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.json');
     mockStream.push(JSON.stringify(inputData));
     mockStream.push(null);
     await flushPromises();
@@ -184,7 +184,7 @@ describe('JSONToMQTTTransformer', () => {
 
     const inputData = [{ topic: 'topic/d', val: '2023-01-01' }];
 
-    const promise = transformer.transform(mockStream, 'src', 'data.json');
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.json');
     mockStream.push(JSON.stringify(inputData));
     mockStream.push(null);
     await flushPromises();
@@ -210,7 +210,7 @@ describe('JSONToMQTTTransformer', () => {
       { topic: undefined, val: 'C' } // Missing topic -> Skip
     ];
 
-    const promise = transformer.transform(mockStream, 'src', 'data.json');
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.json');
     mockStream.push(JSON.stringify(inputData));
     mockStream.push(null);
     await flushPromises();
@@ -231,7 +231,7 @@ describe('JSONToMQTTTransformer', () => {
     // The value is an object, so the transformer should JSON.stringify it
     const inputData = [{ topic: 'nested', val: { sub: 1 } }];
 
-    const promise = transformer.transform(mockStream, 'src', 'data.json');
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.json');
     mockStream.push(JSON.stringify(inputData));
     mockStream.push(null);
     await flushPromises();
@@ -259,7 +259,7 @@ describe('JSONToMQTTTransformer', () => {
     // Input is an object
     const inputData = [{ topic: 'topic/obj', val: { a: 1, b: 2 } }];
 
-    const promise = transformer.transform(mockStream, 'src', 'data.json');
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.json');
     mockStream.push(JSON.stringify(inputData));
     mockStream.push(null);
     await flushPromises();
@@ -289,7 +289,7 @@ describe('JSONToMQTTTransformer', () => {
     const readStream = Readable.from([JSON.stringify(inputData)]);
 
     // 2. Execute
-    const result = await transformer.transform(readStream, 'test-source', 'missing-config.json');
+    const result = await transformer.transform(readStream, { source: 'test' }, 'missing-config.json');
 
     // 3. Assert: Payload remains null, so it is filtered out at the end
     const output = JSON.parse(result.output);
@@ -305,7 +305,7 @@ describe('JSONToMQTTTransformer', () => {
 
     const inputData = [{ topic: 'topic', val: null }]; // Val is null
 
-    const promise = transformer.transform(mockStream, 'src', 'data.json');
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.json');
     mockStream.push(JSON.stringify(inputData));
     mockStream.push(null);
     await flushPromises();
@@ -323,7 +323,7 @@ describe('JSONToMQTTTransformer', () => {
     transformer = new JSONToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
     const inputData = [{ topic: 'topic', val: 'raw-data' }];
 
-    const promise = transformer.transform(mockStream, 'src', 'data.json');
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.json');
     mockStream.push(JSON.stringify(inputData));
     mockStream.push(null);
     await flushPromises();
@@ -341,7 +341,7 @@ describe('JSONToMQTTTransformer', () => {
       jsonToParse: [baseOptions]
     });
 
-    const promise = transformer.transform(mockStream, 'src', 'mqtt-output.json'); // Match regex
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'mqtt-output.json'); // Match regex
     mockStream.push('{ invalid-json ');
     mockStream.push(null);
     await flushPromises();
@@ -356,7 +356,7 @@ describe('JSONToMQTTTransformer', () => {
       jsonToParse: [baseOptions]
     });
 
-    const promise = transformer.transform(mockStream, 'src', 'nomatch.txt');
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'nomatch.txt');
     mockStream.push('{}');
     mockStream.push(null);
     await flushPromises();

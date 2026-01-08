@@ -2,7 +2,7 @@ import OIBusTransformer from '../oibus-transformer';
 import { JSONPath } from 'jsonpath-plus';
 import { ReadStream } from 'node:fs';
 import { pipeline, Readable, Transform } from 'node:stream';
-import { CacheMetadata, OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { CacheMetadata, CacheMetadataSource, OIBusTimeValue } from '../../../../shared/model/engine.model';
 import { promisify } from 'node:util';
 import { OIBusObjectAttribute } from '../../../../shared/model/form.model';
 import { convertDateTimeToInstant, generateRandomId, injectIndices } from '../../utils';
@@ -36,13 +36,13 @@ export default class JSONToTimeValuesTransformer extends OIBusTransformer {
 
   async transform(
     data: ReadStream | Readable,
-    source: string | null,
+    source: CacheMetadataSource,
     filename: string
   ): Promise<{ metadata: CacheMetadata; output: string }> {
     const jsonParser = this.options.jsonToParse.find(parser => filename.match(parser.regex));
     if (!jsonParser) {
       this.logger.error(`Could not find json parser from "${filename}"`);
-      return this.returnEmpty(source);
+      return this.returnEmpty();
     }
 
     // 1. Read stream into buffer
@@ -63,7 +63,7 @@ export default class JSONToTimeValuesTransformer extends OIBusTransformer {
       content = JSON.parse(stringContent);
     } catch (error: unknown) {
       this.logger.error(`[JSONToTimeValues] Failed to parse JSON content from "${filename}": ${(error as Error).message}`);
-      return this.returnEmpty(source);
+      return this.returnEmpty();
     }
 
     // 2. Identify Rows using the iterator path
@@ -110,9 +110,7 @@ export default class JSONToTimeValuesTransformer extends OIBusTransformer {
       contentSize: 0,
       createdAt: '',
       numberOfElement: timeValues.length,
-      contentType: 'time-values',
-      source,
-      options: {}
+      contentType: 'time-values'
     };
 
     return {
@@ -129,7 +127,7 @@ export default class JSONToTimeValuesTransformer extends OIBusTransformer {
     return JSONPath({ path, json, wrap: false });
   }
 
-  returnEmpty(source: string | null) {
+  returnEmpty(): { metadata: CacheMetadata; output: string } {
     return {
       output: '[]',
       metadata: {
@@ -137,9 +135,7 @@ export default class JSONToTimeValuesTransformer extends OIBusTransformer {
         contentSize: 0,
         createdAt: '',
         numberOfElement: 0,
-        contentType: 'time-values',
-        source,
-        options: {}
+        contentType: 'time-values'
       }
     };
   }

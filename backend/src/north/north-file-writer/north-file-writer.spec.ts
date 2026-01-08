@@ -62,9 +62,7 @@ describe('NorthFileWriter', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'any',
-      source: 'south',
-      options: {}
+      contentType: 'any'
     });
     expect(fs.copyFile).toHaveBeenCalledWith('path/to/file/example-123456789.file', path.join(expectedOutputFolder, expectedFileName));
   });
@@ -80,9 +78,7 @@ describe('NorthFileWriter', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'any',
-        source: 'south',
-        options: {}
+        contentType: 'any'
       })
     ).rejects.toThrow('Error handling files');
   });
@@ -112,9 +108,7 @@ describe('NorthFileWriter without suffix or prefix', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'any',
-      source: 'south',
-      options: {}
+      contentType: 'any'
     });
     expect(fs.copyFile).toHaveBeenCalledWith('path/to/file/example-123456789.file', path.join(expectedOutputFolder, 'example.file'));
   });
@@ -156,9 +150,7 @@ describe('NorthFileWriter without suffix or prefix', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'bad',
-        source: 'south',
-        options: {}
+        contentType: 'bad'
       })
     ).rejects.toThrow(`Unsupported data type: bad (file path/to/file/example-123456789.file)`);
   });

@@ -2,7 +2,7 @@ import pino from 'pino';
 import { Transformer } from '../../model/transformer.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
-import { CacheMetadata } from '../../../shared/model/engine.model';
+import { CacheMetadata, CacheMetadataSource } from '../../../shared/model/engine.model';
 import { ReadStream } from 'node:fs';
 import { Readable } from 'node:stream';
 
@@ -15,7 +15,7 @@ export default abstract class OIBusTransformer {
   ) {}
   abstract transform(
     data: ReadStream | Readable,
-    source: string | null,
+    source: CacheMetadataSource,
     filename: string | null
   ): Promise<{ metadata: CacheMetadata; output: string }>;
 }

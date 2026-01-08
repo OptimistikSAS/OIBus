@@ -2,7 +2,7 @@ import pino from 'pino';
 import { CronJob } from 'cron';
 import { EventEmitter } from 'node:events';
 import DeferredPromise from '../service/deferred-promise';
-import { CacheMetadata, CacheSearchParam, OIBusContent } from '../../shared/model/engine.model';
+import { CacheMetadata, CacheMetadataSource, CacheSearchParam, OIBusContent } from '../../shared/model/engine.model';
 import { DateTime } from 'luxon';
 import { createReadStream, ReadStream } from 'node:fs';
 import path from 'node:path';
@@ -272,7 +272,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     }
   }
 
-  async cacheContent(data: OIBusContent, source: string | null): Promise<void> {
+  async cacheContent(data: OIBusContent, source: CacheMetadataSource): Promise<void> {
     if (this.isCacheFull()) {
       return;
     }
@@ -280,7 +280,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     const transformerConfig = this.findTransformer(data, source);
 
     if (!transformerConfig) {
-      return this.handleNoTransformer(data, source);
+      return this.handleNoTransformer(data);
     }
 
     if (
@@ -295,7 +295,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
       transformerConfig.transformer.type === 'standard' &&
       transformerConfig.transformer.functionName === IsoTransformer.transformerName
     ) {
-      return this.cacheWithoutTransformAndTrigger(data, source);
+      return this.cacheWithoutTransformAndTrigger(data);
     }
 
     this.logger.trace(
@@ -307,16 +307,46 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     await this.triggerRunIfNecessary(0);
   }
 
-  private findTransformer(data: OIBusContent, source: string | null): NorthTransformerWithOptions | undefined {
+  private findTransformer(data: OIBusContent, metadataSource: CacheMetadataSource): NorthTransformerWithOptions | undefined {
     // First check with south id (most specific)
-    let transformerWithOptions: NorthTransformerWithOptions | undefined = undefined;
-    if (source) {
-      transformerWithOptions = this.connector.transformers.find(element => element.inputType === data.type && element.south?.id === source);
-    }
+    let transformerWithOptions: NorthTransformerWithOptions | undefined;
+    if (metadataSource.source === 'south') {
+      transformerWithOptions = this.connector.transformers.find(element => {
+        // first check input type, south and items
+        return (
+          element.inputType &&
+          element.south &&
+          element.items.length &&
+          element.inputType === data.type &&
+          element.south.id === metadataSource.southId &&
+          metadataSource.itemIds.some(itemId => element.items.find(item => item.id === itemId))
+        );
+      });
 
-    // Then check without south id (least specific)
-    if (!transformerWithOptions) {
-      transformerWithOptions = this.connector.transformers.find(element => element.inputType === data.type && !element.south);
+      // then check input type and south
+      if (!transformerWithOptions) {
+        transformerWithOptions = this.connector.transformers.find(element => {
+          return (
+            element.inputType &&
+            element.south &&
+            !element.items.length &&
+            element.inputType === data.type &&
+            element.south.id === metadataSource.southId
+          );
+        });
+      }
+
+      // last check input type
+      if (!transformerWithOptions) {
+        transformerWithOptions = this.connector.transformers.find(element => {
+          return element.inputType && !element.south && !element.items.length && element.inputType === data.type;
+        });
+      }
+    } else {
+      // case oianalytics, api or test
+      transformerWithOptions = this.connector.transformers.find(element => {
+        return element.inputType === data.type && !element.south && !element.items.length;
+      });
     }
 
     return transformerWithOptions;
@@ -339,20 +369,20 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     return false;
   }
 
-  private async handleNoTransformer(data: OIBusContent, source: string | null): Promise<void> {
+  private async handleNoTransformer(data: OIBusContent): Promise<void> {
     if (!this.supportedTypes().includes(data.type)) {
       this.logger.trace(`Data type "${data.type}" not supported by the connector. Data will be ignored.`);
       return;
     }
-    await this.cacheWithoutTransformAndTrigger(data, source);
+    await this.cacheWithoutTransformAndTrigger(data);
   }
 
-  private async cacheWithoutTransformAndTrigger(data: OIBusContent, source: string | null): Promise<void> {
-    await this.cacheWithoutTransform(data, source);
+  private async cacheWithoutTransformAndTrigger(data: OIBusContent): Promise<void> {
+    await this.cacheWithoutTransform(data);
     await this.triggerRunIfNecessary(0);
   }
 
-  private async executeTransformation(data: OIBusContent, config: NorthTransformerWithOptions, source: string | null): Promise<void> {
+  private async executeTransformation(data: OIBusContent, config: NorthTransformerWithOptions, source: CacheMetadataSource): Promise<void> {
     const transformer = createTransformer(config, this.connector, this.logger);
 
     switch (data.type) {
@@ -396,7 +426,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     }
   }
 
-  private async cacheWithoutTransform(data: OIBusContent, source: string | null) {
+  private async cacheWithoutTransform(data: OIBusContent) {
     if (data.type === 'any') {
       const randomId = generateRandomId(10);
       const cacheFilename = `${path.parse(data.filePath).name}-${randomId}${path.parse(data.filePath).ext}`;
@@ -406,9 +436,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
           contentSize: 0,
           createdAt: '',
           numberOfElement: 0,
-          contentType: data.type,
-          source,
-          options: {}
+          contentType: data.type
         },
         createReadStream(data.filePath)
       );
@@ -423,9 +451,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
               contentSize: 0,
               createdAt: '',
               numberOfElement: chunks.length,
-              contentType: data.type,
-              source,
-              options: {}
+              contentType: data.type
             },
             Readable.from(JSON.stringify(chunks))
           );
@@ -438,9 +464,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
             contentSize: 0,
             createdAt: '',
             numberOfElement: data.content.length,
-            contentType: data.type,
-            source,
-            options: {}
+            contentType: data.type
           },
           Readable.from(JSON.stringify(data.content))
         );
@@ -636,8 +660,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
         lastAddedContent: {
           contentType: metadata.contentType,
           numberOfElement: metadata.numberOfElement,
-          contentSize: metadata.contentSize,
-          source: metadata.source
+          contentSize: metadata.contentSize
         }
       },
       `Cache updated: ${cacheSnapshot.queuedElements} time-values and ${cacheSnapshot.queuedRawFiles} raw file(s) in queue. ` +
