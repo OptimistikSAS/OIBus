@@ -47,6 +47,7 @@ def on_connect(client, userdata, flags, rc):
     print(f"Connected to MQTT broker with result code {rc}")
 
 # Create MQTT client
+print(f"Connecting client to {MQTT_BROKER} ont port {MQTT_PORT}")
 client = mqtt.Client(client_id="mqtt_simulator", callback_api_version=mqtt.CallbackAPIVersion.VERSION2)
 client.username_pw_set(MQTT_USER, MQTT_PASSWORD)
 client.on_connect = on_connect
@@ -62,6 +63,8 @@ for workshop, sensors in WORKSHOPS.items():
             args=(client, workshop, sensor, sensor_type, interval),
             daemon=True
         ).start()
+        print(f"Thread created for topic {sensor} at interval {interval}")
+
 
 # Keep the script running
 try:
