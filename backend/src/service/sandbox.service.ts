@@ -1,7 +1,7 @@
 import ivm from 'isolated-vm';
 import { Logger } from 'pino';
 import { CustomTransformer } from '../model/transformer.model';
-import { CacheMetadata } from '../../shared/model/engine.model';
+import { CacheMetadata, CacheMetadataSource } from '../../shared/model/engine.model';
 import ts from 'typescript';
 
 interface ResultOutput<TOutput> {
@@ -15,7 +15,7 @@ export default class SandboxService {
 
   public async execute<TOutput>(
     stringContent: string,
-    source: string | null,
+    source: CacheMetadataSource,
     filename: string,
     transformer: CustomTransformer,
     options: object
@@ -29,7 +29,7 @@ export default class SandboxService {
 
   private async executeJavaScript<TOutput>(
     stringContent: string,
-    source: string | null,
+    source: CacheMetadataSource,
     filename: string,
     transformer: CustomTransformer,
     options: object
@@ -69,9 +69,7 @@ export default class SandboxService {
           contentSize: 0,
           createdAt: '',
           numberOfElement: result.numberOfElement || 0,
-          contentType: transformer.outputType,
-          source,
-          options: {}
+          contentType: transformer.outputType
         }
       };
     } finally {
@@ -83,7 +81,7 @@ export default class SandboxService {
 
   private async executeTypeScript<TOutput>(
     stringContent: string,
-    source: string | null,
+    source: CacheMetadataSource,
     filename: string,
     transformer: CustomTransformer,
     options: object
@@ -140,9 +138,7 @@ export default class SandboxService {
           contentSize: 0,
           createdAt: '',
           numberOfElement: result.numberOfElement || 0,
-          contentType: transformer.outputType,
-          source,
-          options: {}
+          contentType: transformer.outputType
         }
       };
     } finally {

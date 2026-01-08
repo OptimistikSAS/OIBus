@@ -289,10 +289,15 @@ describe('SouthFTP', () => {
 
       expect(mockFtpClient.downloadTo).toHaveBeenCalledWith(path.resolve('cacheFolder', 'tmp', 'test.csv'), 'input/test.csv');
       expect(mockFtpClient.remove).toHaveBeenCalledWith('input/test.csv');
-      expect(addContentCallback).toHaveBeenCalledWith('southId', {
-        type: 'any',
-        filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
-      });
+      expect(addContentCallback).toHaveBeenCalledWith(
+        'southId',
+        {
+          type: 'any',
+          filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
+        },
+        testData.constants.dates.FAKE_NOW,
+        [item.id]
+      );
     });
 
     it('should get file with compression', async () => {
@@ -323,10 +328,15 @@ describe('SouthFTP', () => {
         path.resolve('cacheFolder', 'tmp', 'test.csv'),
         path.resolve('cacheFolder', 'tmp', 'test.csv.gz')
       );
-      expect(addContentCallback).toHaveBeenCalledWith('southId', {
-        type: 'any',
-        filePath: path.resolve('cacheFolder', 'tmp', 'test.csv.gz')
-      });
+      expect(addContentCallback).toHaveBeenCalledWith(
+        'southId',
+        {
+          type: 'any',
+          filePath: path.resolve('cacheFolder', 'tmp', 'test.csv.gz')
+        },
+        testData.constants.dates.FAKE_NOW,
+        [item.id]
+      );
     });
 
     it('should preserve files when configured', async () => {
@@ -355,10 +365,15 @@ describe('SouthFTP', () => {
       await south.getFile(fileInfo, item);
 
       expect(mockFtpClient.remove).toHaveBeenCalledWith('input/test.csv');
-      expect(addContentCallback).toHaveBeenCalledWith('southId', {
-        type: 'any',
-        filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
-      });
+      expect(addContentCallback).toHaveBeenCalledWith(
+        'southId',
+        {
+          type: 'any',
+          filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
+        },
+        testData.constants.dates.FAKE_NOW,
+        [item.id]
+      );
     });
 
     it('should handle compression error', async () => {
@@ -384,10 +399,15 @@ describe('SouthFTP', () => {
       const item = configuration.items[0];
       await southWithCompression.getFile(fileInfo, item);
 
-      expect(addContentCallback).toHaveBeenCalledWith('southId', {
-        type: 'any',
-        filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
-      });
+      expect(addContentCallback).toHaveBeenCalledWith(
+        'southId',
+        {
+          type: 'any',
+          filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
+        },
+        testData.constants.dates.FAKE_NOW,
+        [item.id]
+      );
     });
 
     it('should query files', async () => {
@@ -401,10 +421,15 @@ describe('SouthFTP', () => {
 
       expect(mockFtpClient.list).toHaveBeenCalledWith('input');
       expect(mockFtpClient.downloadTo).toHaveBeenCalledWith(path.resolve('cacheFolder', 'tmp', 'test.csv'), 'input/test.csv');
-      expect(addContentCallback).toHaveBeenCalledWith('southId', {
-        type: 'any',
-        filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
-      });
+      expect(addContentCallback).toHaveBeenCalledWith(
+        'southId',
+        {
+          type: 'any',
+          filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
+        },
+        testData.constants.dates.FAKE_NOW,
+        [configuration.items[0].id]
+      );
     });
 
     it('should handle start error when createFolder fails', async () => {
@@ -512,10 +537,15 @@ describe('SouthFTP', () => {
       await southWithCompression.getFile(fileInfo, item);
 
       // Should send the compressed file even if unlink fails
-      expect(addContentCallback).toHaveBeenCalledWith('southId', {
-        type: 'any',
-        filePath: path.resolve('cacheFolder', 'tmp', 'test.csv.gz')
-      });
+      expect(addContentCallback).toHaveBeenCalledWith(
+        'southId',
+        {
+          type: 'any',
+          filePath: path.resolve('cacheFolder', 'tmp', 'test.csv.gz')
+        },
+        testData.constants.dates.FAKE_NOW,
+        [item.id]
+      );
     });
 
     it('should check condition with ignoreModifiedDate false and existing file', async () => {
@@ -717,10 +747,15 @@ describe('SouthFTP', () => {
       await southWithCompression.getFile(fileInfo, item);
 
       // Should send the original file when compression fails
-      expect(addContentCallback).toHaveBeenCalledWith('southId', {
-        type: 'any',
-        filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
-      });
+      expect(addContentCallback).toHaveBeenCalledWith(
+        'southId',
+        {
+          type: 'any',
+          filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
+        },
+        testData.constants.dates.FAKE_NOW,
+        [item.id]
+      );
     });
 
     it('should handle password decryption', async () => {
@@ -837,10 +872,15 @@ describe('SouthFTP', () => {
       await south.getFile(fileInfo, item);
 
       // Should still send the file even if unlink fails
-      expect(addContentCallback).toHaveBeenCalledWith('southId', {
-        type: 'any',
-        filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
-      });
+      expect(addContentCallback).toHaveBeenCalledWith(
+        'southId',
+        {
+          type: 'any',
+          filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
+        },
+        testData.constants.dates.FAKE_NOW,
+        [item.id]
+      );
     });
 
     it('should update modified time', () => {
@@ -886,10 +926,15 @@ describe('SouthFTP', () => {
       await southWithCompression.getFile(fileInfo, item);
 
       // Should send the original file when compression fails
-      expect(addContentCallback).toHaveBeenCalledWith('southId', {
-        type: 'any',
-        filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
-      });
+      expect(addContentCallback).toHaveBeenCalledWith(
+        'southId',
+        {
+          type: 'any',
+          filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
+        },
+        testData.constants.dates.FAKE_NOW,
+        [item.id]
+      );
     });
   });
 });

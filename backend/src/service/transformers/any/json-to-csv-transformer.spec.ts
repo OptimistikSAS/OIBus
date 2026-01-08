@@ -58,7 +58,6 @@ describe('JSONToCSVTransformer', () => {
 
     // Arrange
     const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
-    const source = 'test-source';
     const filename = 'input.json';
 
     // Mock input data matching the structure expected by jsonpath
@@ -71,7 +70,7 @@ describe('JSONToCSVTransformer', () => {
     const mockStream = new Readable();
 
     // Act
-    const promise = transformer.transform(mockStream, source, filename);
+    const promise = transformer.transform(mockStream, { source: 'test' }, filename);
     mockStream.push(JSON.stringify(inputData));
     mockStream.push(null); // End the stream
 
@@ -96,9 +95,7 @@ describe('JSONToCSVTransformer', () => {
         contentSize: 0,
         createdAt: '',
         numberOfElement: 0,
-        contentType: 'any',
-        source,
-        options: {}
+        contentType: 'any'
       }
     });
   });
@@ -118,12 +115,11 @@ describe('JSONToCSVTransformer', () => {
 
     // Arrange
     const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
-    const source = 'test-source';
     const filename = 'dont-match.json';
     const mockStream = new Readable();
 
     // Act
-    const result = await transformer.transform(mockStream, source, filename);
+    const result = await transformer.transform(mockStream, { source: 'test' }, filename);
 
     // Assert
     expect(result).toEqual({
@@ -133,9 +129,7 @@ describe('JSONToCSVTransformer', () => {
         contentSize: 0,
         createdAt: '',
         numberOfElement: 0,
-        contentType: 'any',
-        source,
-        options: {}
+        contentType: 'any'
       }
     });
   });
@@ -198,7 +192,7 @@ describe('JSONToCSVTransformer', () => {
     (csv.unparse as jest.Mock).mockReturnValue('csv result');
 
     // 4. Execute
-    const promise = transformer.transform(mockStream, 'test-source', 'data.json');
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.json');
     mockStream.push(JSON.stringify(inputData));
     mockStream.push(null);
 

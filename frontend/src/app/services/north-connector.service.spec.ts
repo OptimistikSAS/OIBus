@@ -98,22 +98,6 @@ describe('NorthConnectorService', () => {
     expect(done).toBe(true);
   });
 
-  it('should create a North connector subscription', () => {
-    let done = false;
-    service.addSubscription('id1', 'southId').subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'POST', url: '/api/north/id1/subscriptions/southId' });
-    testRequest.flush(null);
-    expect(done).toBe(true);
-  });
-
-  it('should delete a North connector subscription', () => {
-    let done = false;
-    service.removeSubscription('id1', 'southId').subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'DELETE', url: '/api/north/id1/subscriptions/southId' });
-    testRequest.flush(null);
-    expect(done).toBe(true);
-  });
-
   it('should add or edit a North connector transformer with options', () => {
     let done = false;
     service.addOrEditTransformer('id1', {} as TransformerDTOWithOptions).subscribe(() => (done = true));
