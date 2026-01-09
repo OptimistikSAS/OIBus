@@ -4,7 +4,6 @@ import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock'; //
 import testData from '../../../tests/utils/test-data'; // Adjust path
 import { flushPromises } from '../../../tests/utils/test-utils'; // Adjust path
 import JSONToMQTTTransformer from './json-to-mqtt-transformer';
-import { OIBusArrayAttribute, OIBusStringSelectAttribute } from '../../../../shared/model/form.model';
 
 // 1. Mock External Utilities
 jest.mock('../../utils', () => ({
@@ -46,20 +45,16 @@ describe('JSONToMQTTTransformer', () => {
   // --------------------------------------------------------------------------
   it('should transform data into a custom OBJECT payload', async () => {
     const options = {
-      jsonToParse: [
+      ...baseOptions,
+      payloadType: 'object',
+      objectFields: [
+        { key: 'temp', path: '$[*].t', dataType: 'number' },
+        { key: 'active', path: '$[*].a', dataType: 'boolean' },
         {
-          ...baseOptions,
-          payloadType: 'object',
-          objectFields: [
-            { key: 'temp', path: '$[*].t', dataType: 'number' },
-            { key: 'active', path: '$[*].a', dataType: 'boolean' },
-            {
-              key: 'time',
-              path: '$[*].ts',
-              dataType: 'datetime',
-              datetimeSettings: { type: 'iso-string', timezone: 'UTC', format: 'yyyy', locale: 'en' }
-            }
-          ]
+          key: 'time',
+          path: '$[*].ts',
+          dataType: 'datetime',
+          datetimeSettings: { type: 'iso-string', timezone: 'UTC', format: 'yyyy', locale: 'en' }
         }
       ]
     };
@@ -89,13 +84,9 @@ describe('JSONToMQTTTransformer', () => {
 
   it('should not transform data into a custom OBJECT payload if payload is empty', async () => {
     const options = {
-      jsonToParse: [
-        {
-          ...baseOptions,
-          payloadType: 'object',
-          objectFields: []
-        }
-      ]
+      ...baseOptions,
+      payloadType: 'object',
+      objectFields: []
     };
 
     transformer = new JSONToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
@@ -116,9 +107,7 @@ describe('JSONToMQTTTransformer', () => {
   // 2. Simple Payload Tests (String, Number, Boolean, Datetime)
   // --------------------------------------------------------------------------
   it('should transform data into a STRING payload', async () => {
-    const options = {
-      jsonToParse: [{ ...baseOptions, payloadType: 'string', valuePath: '$[*].val' }]
-    };
+    const options = { ...baseOptions, payloadType: 'string', valuePath: '$[*].val' };
     transformer = new JSONToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
 
     const inputData = [{ topic: 'topic/s', val: 123 }]; // Number in JSON, but force string
@@ -134,9 +123,7 @@ describe('JSONToMQTTTransformer', () => {
   });
 
   it('should transform data into a NUMBER payload', async () => {
-    const options = {
-      jsonToParse: [{ ...baseOptions, payloadType: 'number', valuePath: '$[*].val' }]
-    };
+    const options = { ...baseOptions, payloadType: 'number', valuePath: '$[*].val' };
     transformer = new JSONToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
 
     const inputData = [{ topic: 'topic/n', val: '45.6' }]; // String in JSON, cast to number
@@ -152,9 +139,7 @@ describe('JSONToMQTTTransformer', () => {
   });
 
   it('should transform data into a BOOLEAN payload', async () => {
-    const options = {
-      jsonToParse: [{ ...baseOptions, payloadType: 'boolean', valuePath: '$[*].val' }]
-    };
+    const options = { ...baseOptions, payloadType: 'boolean', valuePath: '$[*].val' };
     transformer = new JSONToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
 
     const inputData = [{ topic: 'topic/b', val: 'true' }];
@@ -171,14 +156,10 @@ describe('JSONToMQTTTransformer', () => {
 
   it('should transform data into a DATETIME payload', async () => {
     const options = {
-      jsonToParse: [
-        {
-          ...baseOptions,
-          payloadType: 'datetime',
-          valuePath: '$[*].val',
-          datetimeSettings: { type: 'iso-string', timezone: 'UTC', format: 'yyyy', locale: 'en' }
-        }
-      ]
+      ...baseOptions,
+      payloadType: 'datetime',
+      valuePath: '$[*].val',
+      datetimeSettings: { type: 'iso-string', timezone: 'UTC', format: 'yyyy', locale: 'en' }
     };
     transformer = new JSONToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
 
@@ -199,9 +180,7 @@ describe('JSONToMQTTTransformer', () => {
   // 3. Validation & Edge Cases
   // --------------------------------------------------------------------------
   it('should skip rows where TOPIC is missing', async () => {
-    const options = {
-      jsonToParse: [{ ...baseOptions, payloadType: 'string', valuePath: '$[*].val' }]
-    };
+    const options = { ...baseOptions, payloadType: 'string', valuePath: '$[*].val' };
     transformer = new JSONToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
 
     const inputData = [
@@ -223,9 +202,7 @@ describe('JSONToMQTTTransformer', () => {
 
   it('should handle complex nested objects when payload is an object', async () => {
     // This hits the `typeof formatted === 'object'` branch in `formatValue` -> defaults
-    const options = {
-      jsonToParse: [{ ...baseOptions, payloadType: 'string', valuePath: '$[*].val' }]
-    };
+    const options = { ...baseOptions, payloadType: 'string', valuePath: '$[*].val' };
     transformer = new JSONToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
 
     // The value is an object, so the transformer should JSON.stringify it
@@ -243,16 +220,12 @@ describe('JSONToMQTTTransformer', () => {
 
   it('should JSON stringify the payload if the formatted value is an object (e.g. unknown type)', async () => {
     const options = {
-      jsonToParse: [
-        {
-          regex: '.*\\.json',
-          filename: 'mqtt-output',
-          rowIteratorPath: '$[*]',
-          topicPath: '$[*].topic',
-          payloadType: 'unknown-type', // Bypasses specific formatting, returns raw value
-          valuePath: '$[*].val'
-        }
-      ]
+      regex: '.*\\.json',
+      filename: 'mqtt-output',
+      rowIteratorPath: '$[*]',
+      topicPath: '$[*].topic',
+      payloadType: 'unknown-type', // Bypasses specific formatting, returns raw value
+      valuePath: '$[*].val'
     };
     const transformer = new JSONToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
 
@@ -272,16 +245,12 @@ describe('JSONToMQTTTransformer', () => {
 
   it('should skip the row (implicit else) if payloadType is simple but valuePath is missing', async () => {
     const options = {
-      jsonToParse: [
-        {
-          regex: '.*',
-          filename: 'missing-config.json',
-          rowIteratorPath: '$[*]',
-          topicPath: '$[*].topic',
-          payloadType: 'string'
-          // valuePath is deliberately undefined here
-        }
-      ]
+      regex: '.*',
+      filename: 'missing-config.json',
+      rowIteratorPath: '$[*]',
+      topicPath: '$[*].topic',
+      payloadType: 'string'
+      // valuePath is deliberately undefined here
     };
     const transformer = new JSONToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
 
@@ -298,9 +267,7 @@ describe('JSONToMQTTTransformer', () => {
 
   it('should return null for undefined/null values in formatValue', async () => {
     // Tests the explicit `if (raw === undefined)` check at start of formatValue
-    const options = {
-      jsonToParse: [{ ...baseOptions, payloadType: 'string', valuePath: '$[*].val' }]
-    };
+    const options = { ...baseOptions, payloadType: 'string', valuePath: '$[*].val' };
     transformer = new JSONToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
 
     const inputData = [{ topic: 'topic', val: null }]; // Val is null
@@ -317,9 +284,7 @@ describe('JSONToMQTTTransformer', () => {
   });
 
   it('should default to raw value if type is unknown in switch', async () => {
-    const options = {
-      jsonToParse: [{ ...baseOptions, payloadType: 'unknown-type', valuePath: '$[*].val' }]
-    };
+    const options = { ...baseOptions, payloadType: 'unknown-type', valuePath: '$[*].val' };
     transformer = new JSONToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
     const inputData = [{ topic: 'topic', val: 'raw-data' }];
 
@@ -337,9 +302,7 @@ describe('JSONToMQTTTransformer', () => {
   // 4. Error Handling
   // --------------------------------------------------------------------------
   it('should log error and return empty if JSON parsing fails', async () => {
-    transformer = new JSONToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], {
-      jsonToParse: [baseOptions]
-    });
+    transformer = new JSONToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], baseOptions);
 
     const promise = transformer.transform(mockStream, { source: 'test' }, 'mqtt-output.json'); // Match regex
     mockStream.push('{ invalid-json ');
@@ -351,33 +314,12 @@ describe('JSONToMQTTTransformer', () => {
     expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Failed to parse JSON content'));
   });
 
-  it('should return empty if no configuration matches filename', async () => {
-    transformer = new JSONToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], {
-      jsonToParse: [baseOptions]
-    });
-
-    const promise = transformer.transform(mockStream, { source: 'test' }, 'nomatch.txt');
-    mockStream.push('{}');
-    mockStream.push(null);
-    await flushPromises();
-    const result = await promise;
-
-    expect(result.output).toBe('[]');
-    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Could not find json parser'));
-  });
-
   // --------------------------------------------------------------------------
   // 5. Manifest
   // --------------------------------------------------------------------------
   it('should return correct manifest settings', () => {
     const manifest = JSONToMQTTTransformer.manifestSettings;
     expect(manifest.key).toBe('options');
-    expect(manifest.attributes[0].key).toBe('jsonToParse');
-
-    // Verify nested attributes exist
-    const jsonToParse = (manifest.attributes[0] as OIBusArrayAttribute).rootAttribute;
-    const payloadType = jsonToParse.attributes.find(a => a.key === 'payloadType');
-    expect(payloadType).toBeDefined();
-    expect((payloadType as OIBusStringSelectAttribute).selectableValues).toContain('object');
+    expect(manifest.attributes[0].key).toBe('rowIteratorPath');
   });
 });
