@@ -31,27 +31,24 @@ interface CSVObjectField {
 }
 
 interface TransformerOptions {
-  csvToParse: Array<{
-    regex: string;
-    filename: string;
+  filename: string;
 
-    // CSV Specific Settings
-    delimiter: 'DOT' | 'SEMI_COLON' | 'COLON' | 'COMMA' | 'NON_BREAKING_SPACE' | 'SLASH' | 'TAB' | 'PIPE';
-    hasHeader: boolean;
+  // CSV Specific Settings
+  delimiter: 'DOT' | 'SEMI_COLON' | 'COLON' | 'COMMA' | 'NON_BREAKING_SPACE' | 'SLASH' | 'TAB' | 'PIPE';
+  hasHeader: boolean;
 
-    // MQTT Configuration
-    topicColumn: string;
+  // MQTT Configuration
+  topicColumn: string;
 
-    // Payload Configuration
-    payloadType: 'string' | 'number' | 'boolean' | 'datetime' | 'object';
+  // Payload Configuration
+  payloadType: 'string' | 'number' | 'boolean' | 'datetime' | 'object';
 
-    // 1. If payloadType is simple (string/number/boolean/datetime)
-    valueColumn?: string;
-    datetimeSettings?: DatetimeSettings;
+  // 1. If payloadType is simple (string/number/boolean/datetime)
+  valueColumn?: string;
+  datetimeSettings?: DatetimeSettings;
 
-    // 2. If payloadType is 'object'
-    objectFields?: Array<CSVObjectField>;
-  }>;
+  // 2. If payloadType is 'object'
+  objectFields?: Array<CSVObjectField>;
 }
 
 export default class CSVToMQTTTransformer extends OIBusTransformer {
@@ -59,15 +56,9 @@ export default class CSVToMQTTTransformer extends OIBusTransformer {
 
   async transform(
     data: ReadStream | Readable,
-    _source: CacheMetadataSource,
-    filename: string
+    source: CacheMetadataSource,
+    _filename: string
   ): Promise<{ metadata: CacheMetadata; output: string }> {
-    const csvParser = this.options.csvToParse.find(parser => filename.match(parser.regex));
-    if (!csvParser) {
-      this.logger.error(`[CSVToMQTT] Could not find csv parser configuration for file "${filename}"`);
-      return this.returnEmpty();
-    }
-
     // 1. Read Stream
     const chunks: Array<Buffer> = [];
     await pipelineAsync(
@@ -83,15 +74,15 @@ export default class CSVToMQTTTransformer extends OIBusTransformer {
 
     // 2. Parse CSV Content
     const parseResult = Papa.parse(stringContent, {
-      header: csvParser.hasHeader,
-      delimiter: convertDelimiter(csvParser.delimiter),
+      header: this.options.hasHeader,
+      delimiter: convertDelimiter(this.options.delimiter),
       skipEmptyLines: true,
       dynamicTyping: true
     });
 
     if (parseResult.errors.length > 0) {
       this.logger.warn(
-        `[CSVToMQTT] Encountered ${parseResult.errors.length} errors while parsing "${filename}". First error: ${parseResult.errors[0].message}`
+        `[CSVToMQTT] Encountered ${parseResult.errors.length} errors while parsing data from "${JSON.stringify(source)}". First error: ${parseResult.errors[0].message}`
       );
     }
 
@@ -101,30 +92,30 @@ export default class CSVToMQTTTransformer extends OIBusTransformer {
     // 3. Iterate Rows & Extract Data
     for (const row of rows) {
       // Extract Topic
-      const topic = this.extractValue(row, csvParser.topicColumn, csvParser.hasHeader);
+      const topic = this.extractValue(row, this.options.topicColumn, this.options.hasHeader);
 
       if (!topic) continue; // Topic is mandatory
 
       let payload: string | null = null;
 
       // 4. Construct Payload based on Type
-      if (csvParser.payloadType === 'object' && csvParser.objectFields) {
+      if (this.options.payloadType === 'object' && this.options.objectFields) {
         // --- CASE A: OBJECT ---
         const payloadObj: Record<string, unknown> = {};
-        for (const field of csvParser.objectFields) {
-          const rawVal = this.extractValue(row, field.column, csvParser.hasHeader);
+        for (const field of this.options.objectFields) {
+          const rawVal = this.extractValue(row, field.column, this.options.hasHeader);
           payloadObj[field.key] = this.formatValue(rawVal, field.dataType, field.datetimeSettings);
         }
         // Validate object is not empty
         if (Object.keys(payloadObj).length > 0) {
           payload = JSON.stringify(payloadObj);
         }
-      } else if (csvParser.valueColumn) {
+      } else if (this.options.valueColumn) {
         // --- CASE B: SIMPLE TYPE ---
-        const rawVal = this.extractValue(row, csvParser.valueColumn, csvParser.hasHeader);
+        const rawVal = this.extractValue(row, this.options.valueColumn, this.options.hasHeader);
 
         // Format and cast
-        const formatted = this.formatValue(rawVal, csvParser.payloadType, csvParser.datetimeSettings);
+        const formatted = this.formatValue(rawVal, this.options.payloadType, this.options.datetimeSettings);
 
         if (formatted !== null && formatted !== undefined) {
           payload = String(formatted);
@@ -203,19 +194,6 @@ export default class CSVToMQTTTransformer extends OIBusTransformer {
     }
   }
 
-  returnEmpty(): { metadata: CacheMetadata; output: string } {
-    return {
-      output: '[]',
-      metadata: {
-        contentFile: `${generateRandomId(10)}.json`,
-        contentSize: 0,
-        createdAt: '',
-        numberOfElement: 0,
-        contentType: 'mqtt'
-      }
-    };
-  }
-
   get options(): TransformerOptions {
     return this._options as TransformerOptions;
   }
@@ -226,98 +204,182 @@ export default class CSVToMQTTTransformer extends OIBusTransformer {
       key: 'options',
       translationKey: 'configuration.oibus.manifest.transformers.options',
       attributes: [
+        // --- CSV FORMAT SETTINGS ---
+        {
+          type: 'string-select',
+          key: 'delimiter',
+          translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.delimiter',
+          defaultValue: 'SEMI_COLON',
+          selectableValues: ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'],
+          validators: [{ type: 'REQUIRED', arguments: [] }],
+          displayProperties: { row: 0, columns: 6, displayInViewMode: true }
+        },
+        {
+          type: 'boolean',
+          key: 'hasHeader',
+          translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.has-header',
+          defaultValue: true,
+          validators: [{ type: 'REQUIRED', arguments: [] }],
+          displayProperties: { row: 0, columns: 6, displayInViewMode: true }
+        },
+        // --- MQTT TOPIC ---
+        {
+          type: 'string',
+          key: 'topicColumn',
+          translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.topic-column',
+          defaultValue: 'topic',
+          validators: [{ type: 'REQUIRED', arguments: [] }],
+          displayProperties: { row: 1, columns: 6, displayInViewMode: true }
+        },
+        // --- PAYLOAD TYPE SELECTION ---
+        {
+          type: 'string-select',
+          key: 'payloadType',
+          translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.payload-type',
+          defaultValue: 'object',
+          selectableValues: ['string', 'number', 'boolean', 'datetime', 'object'],
+          validators: [{ type: 'REQUIRED', arguments: [] }],
+          displayProperties: { row: 1, columns: 6, displayInViewMode: true }
+        },
+        // --- SIMPLE VALUE CONFIG (Hidden if type is object) ---
+        {
+          type: 'string',
+          key: 'valueColumn',
+          translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.value-column',
+          defaultValue: 'value',
+          validators: [],
+          displayProperties: { row: 2, columns: 4, displayInViewMode: true }
+        },
+        // --- DATETIME SETTINGS (Hidden if type is not datetime) ---
+        {
+          type: 'object',
+          key: 'datetimeSettings',
+          translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.datetime-settings.title',
+          displayProperties: { visible: true, wrapInBox: true },
+          enablingConditions: [
+            { referralPathFromRoot: 'inputType', targetPathFromRoot: 'inputTimezone', values: ['string'] },
+            { referralPathFromRoot: 'inputType', targetPathFromRoot: 'inputFormat', values: ['string'] },
+            { referralPathFromRoot: 'inputType', targetPathFromRoot: 'inputLocale', values: ['string'] },
+            { referralPathFromRoot: 'outputType', targetPathFromRoot: 'outputTimezone', values: ['string'] },
+            { referralPathFromRoot: 'outputType', targetPathFromRoot: 'outputFormat', values: ['string'] },
+            { referralPathFromRoot: 'outputType', targetPathFromRoot: 'outputLocale', values: ['string'] }
+          ],
+          validators: [],
+          attributes: [
+            {
+              type: 'string-select',
+              key: 'inputType',
+              translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.datetime-settings.input-type',
+              defaultValue: 'iso-string',
+              selectableValues: ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'],
+              validators: [{ type: 'REQUIRED', arguments: [] }],
+              displayProperties: { row: 0, columns: 3, displayInViewMode: true }
+            },
+            {
+              type: 'timezone',
+              key: 'inputTimezone',
+              translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.datetime-settings.timezone',
+              defaultValue: 'UTC',
+              validators: [{ type: 'REQUIRED', arguments: [] }],
+              displayProperties: { row: 0, columns: 3, displayInViewMode: true }
+            },
+            {
+              type: 'string',
+              key: 'inputFormat',
+              translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.datetime-settings.format',
+              defaultValue: 'yyyy-MM-dd HH:mm:ss',
+              validators: [{ type: 'REQUIRED', arguments: [] }],
+              displayProperties: { row: 0, columns: 3, displayInViewMode: false }
+            },
+            {
+              type: 'string',
+              key: 'inputLocale',
+              translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.datetime-settings.locale',
+              defaultValue: 'en-En',
+              validators: [{ type: 'REQUIRED', arguments: [] }],
+              displayProperties: { row: 0, columns: 3, displayInViewMode: false }
+            },
+            {
+              type: 'string-select',
+              key: 'outputType',
+              translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.datetime-settings.output-type',
+              defaultValue: 'iso-string',
+              selectableValues: ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'],
+              validators: [{ type: 'REQUIRED', arguments: [] }],
+              displayProperties: { row: 1, columns: 3, displayInViewMode: true }
+            },
+            {
+              type: 'timezone',
+              key: 'outputTimezone',
+              translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.datetime-settings.timezone',
+              defaultValue: 'UTC',
+              validators: [{ type: 'REQUIRED', arguments: [] }],
+              displayProperties: { row: 1, columns: 3, displayInViewMode: true }
+            },
+            {
+              type: 'string',
+              key: 'outputFormat',
+              translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.datetime-settings.format',
+              defaultValue: 'yyyy-MM-dd HH:mm:ss',
+              validators: [{ type: 'REQUIRED', arguments: [] }],
+              displayProperties: { row: 1, columns: 3, displayInViewMode: false }
+            },
+            {
+              type: 'string',
+              key: 'outputLocale',
+              translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.datetime-settings.locale',
+              defaultValue: 'en-En',
+              validators: [{ type: 'REQUIRED', arguments: [] }],
+              displayProperties: { row: 1, columns: 3, displayInViewMode: false }
+            }
+          ]
+        },
+        // --- OBJECT FIELDS CONFIG (Hidden if type is not object) ---
         {
           type: 'array',
-          key: 'csvToParse',
-          translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.csv-to-parse.title',
-          paginate: true,
+          key: 'objectFields',
+          translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.object-fields.title',
+          paginate: false,
           numberOfElementPerPage: 20,
           validators: [],
           rootAttribute: {
             type: 'object',
-            key: 'item',
-            translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.csv-to-parse.item.title',
-            displayProperties: { visible: true, wrapInBox: false },
-            enablingConditions: [
-              { referralPathFromRoot: 'payloadType', targetPathFromRoot: 'datetimeSettings', values: ['datetime'] },
-              { referralPathFromRoot: 'payloadType', targetPathFromRoot: 'objectFields', values: ['object'] },
-              {
-                referralPathFromRoot: 'payloadType',
-                targetPathFromRoot: 'valueColumn',
-                values: ['string', 'number', 'boolean']
-              }
-            ],
+            key: 'field',
+            translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.object-fields.item.title',
+            displayProperties: { visible: true, wrapInBox: true },
+            enablingConditions: [{ referralPathFromRoot: 'dataType', targetPathFromRoot: 'datetimeSettings', values: ['datetime'] }],
             validators: [],
             attributes: [
-              // --- GENERAL SETTINGS ---
               {
                 type: 'string',
-                key: 'regex',
-                translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.csv-to-parse.regex',
-                defaultValue: null,
+                key: 'key',
+                translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.object-fields.key',
+                defaultValue: 'key',
                 validators: [{ type: 'REQUIRED', arguments: [] }],
-                displayProperties: { row: 0, columns: 6, displayInViewMode: true }
+                displayProperties: { row: 0, columns: 4, displayInViewMode: true }
               },
               {
                 type: 'string',
-                key: 'filename',
-                translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.csv-to-parse.filename',
-                defaultValue: 'mqtt-output',
+                key: 'column',
+                translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.object-fields.column',
+                defaultValue: 'val',
                 validators: [{ type: 'REQUIRED', arguments: [] }],
-                displayProperties: { row: 0, columns: 6, displayInViewMode: true }
+                displayProperties: { row: 0, columns: 4, displayInViewMode: true }
               },
-              // --- CSV FORMAT SETTINGS ---
               {
                 type: 'string-select',
-                key: 'delimiter',
-                translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.csv-to-parse.delimiter',
-                defaultValue: 'SEMI_COLON',
-                selectableValues: ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'],
+                key: 'dataType',
+                translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.object-fields.data-type',
+                defaultValue: 'string',
+                selectableValues: ['string', 'number', 'boolean', 'datetime'],
                 validators: [{ type: 'REQUIRED', arguments: [] }],
-                displayProperties: { row: 1, columns: 6, displayInViewMode: true }
+                displayProperties: { row: 0, columns: 4, displayInViewMode: true }
               },
-              {
-                type: 'boolean',
-                key: 'hasHeader',
-                translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.csv-to-parse.has-header',
-                defaultValue: true,
-                validators: [{ type: 'REQUIRED', arguments: [] }],
-                displayProperties: { row: 1, columns: 6, displayInViewMode: true }
-              },
-              // --- MQTT TOPIC ---
-              {
-                type: 'string',
-                key: 'topicColumn',
-                translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.csv-to-parse.topic-column',
-                defaultValue: 'topic',
-                validators: [{ type: 'REQUIRED', arguments: [] }],
-                displayProperties: { row: 2, columns: 6, displayInViewMode: true }
-              },
-              // --- PAYLOAD TYPE SELECTION ---
-              {
-                type: 'string-select',
-                key: 'payloadType',
-                translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.csv-to-parse.payload-type',
-                defaultValue: 'object',
-                selectableValues: ['string', 'number', 'boolean', 'datetime', 'object'],
-                validators: [{ type: 'REQUIRED', arguments: [] }],
-                displayProperties: { row: 2, columns: 6, displayInViewMode: true }
-              },
-              // --- SIMPLE VALUE CONFIG (Hidden if type is object) ---
-              {
-                type: 'string',
-                key: 'valueColumn',
-                translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.csv-to-parse.value-column',
-                defaultValue: 'value',
-                validators: [],
-                displayProperties: { row: 3, columns: 4, displayInViewMode: true }
-              },
-              // --- DATETIME SETTINGS (Hidden if type is not datetime) ---
               {
                 type: 'object',
                 key: 'datetimeSettings',
-                translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.csv-to-parse.datetime-settings.title',
-                displayProperties: { visible: true, wrapInBox: true },
+                translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.object-fields.datetime-settings.title',
+                displayProperties: { visible: true, wrapInBox: false },
                 enablingConditions: [
                   { referralPathFromRoot: 'inputType', targetPathFromRoot: 'inputTimezone', values: ['string'] },
                   { referralPathFromRoot: 'inputType', targetPathFromRoot: 'inputFormat', values: ['string'] },
@@ -331,7 +393,7 @@ export default class CSVToMQTTTransformer extends OIBusTransformer {
                   {
                     type: 'string-select',
                     key: 'inputType',
-                    translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.csv-to-parse.datetime-settings.input-type',
+                    translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.datetime-settings.input-type',
                     defaultValue: 'iso-string',
                     selectableValues: ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'],
                     validators: [{ type: 'REQUIRED', arguments: [] }],
@@ -340,7 +402,7 @@ export default class CSVToMQTTTransformer extends OIBusTransformer {
                   {
                     type: 'timezone',
                     key: 'inputTimezone',
-                    translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.csv-to-parse.datetime-settings.timezone',
+                    translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.datetime-settings.timezone',
                     defaultValue: 'UTC',
                     validators: [{ type: 'REQUIRED', arguments: [] }],
                     displayProperties: { row: 0, columns: 3, displayInViewMode: true }
@@ -348,7 +410,7 @@ export default class CSVToMQTTTransformer extends OIBusTransformer {
                   {
                     type: 'string',
                     key: 'inputFormat',
-                    translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.csv-to-parse.datetime-settings.format',
+                    translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.datetime-settings.format',
                     defaultValue: 'yyyy-MM-dd HH:mm:ss',
                     validators: [{ type: 'REQUIRED', arguments: [] }],
                     displayProperties: { row: 0, columns: 3, displayInViewMode: false }
@@ -356,7 +418,7 @@ export default class CSVToMQTTTransformer extends OIBusTransformer {
                   {
                     type: 'string',
                     key: 'inputLocale',
-                    translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.csv-to-parse.datetime-settings.locale',
+                    translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.datetime-settings.locale',
                     defaultValue: 'en-En',
                     validators: [{ type: 'REQUIRED', arguments: [] }],
                     displayProperties: { row: 0, columns: 3, displayInViewMode: false }
@@ -364,7 +426,7 @@ export default class CSVToMQTTTransformer extends OIBusTransformer {
                   {
                     type: 'string-select',
                     key: 'outputType',
-                    translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.csv-to-parse.datetime-settings.output-type',
+                    translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.datetime-settings.output-type',
                     defaultValue: 'iso-string',
                     selectableValues: ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'],
                     validators: [{ type: 'REQUIRED', arguments: [] }],
@@ -373,7 +435,7 @@ export default class CSVToMQTTTransformer extends OIBusTransformer {
                   {
                     type: 'timezone',
                     key: 'outputTimezone',
-                    translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.csv-to-parse.datetime-settings.timezone',
+                    translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.datetime-settings.timezone',
                     defaultValue: 'UTC',
                     validators: [{ type: 'REQUIRED', arguments: [] }],
                     displayProperties: { row: 1, columns: 3, displayInViewMode: true }
@@ -381,7 +443,7 @@ export default class CSVToMQTTTransformer extends OIBusTransformer {
                   {
                     type: 'string',
                     key: 'outputFormat',
-                    translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.csv-to-parse.datetime-settings.format',
+                    translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.datetime-settings.format',
                     defaultValue: 'yyyy-MM-dd HH:mm:ss',
                     validators: [{ type: 'REQUIRED', arguments: [] }],
                     displayProperties: { row: 1, columns: 3, displayInViewMode: false }
@@ -389,149 +451,28 @@ export default class CSVToMQTTTransformer extends OIBusTransformer {
                   {
                     type: 'string',
                     key: 'outputLocale',
-                    translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.csv-to-parse.datetime-settings.locale',
+                    translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.datetime-settings.locale',
                     defaultValue: 'en-En',
                     validators: [{ type: 'REQUIRED', arguments: [] }],
                     displayProperties: { row: 1, columns: 3, displayInViewMode: false }
                   }
                 ]
-              },
-              // --- OBJECT FIELDS CONFIG (Hidden if type is not object) ---
-              {
-                type: 'array',
-                key: 'objectFields',
-                translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.csv-to-parse.object-fields.title',
-                paginate: false,
-                numberOfElementPerPage: 20,
-                validators: [],
-                rootAttribute: {
-                  type: 'object',
-                  key: 'field',
-                  translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.csv-to-parse.object-fields.item.title',
-                  displayProperties: { visible: true, wrapInBox: true },
-                  enablingConditions: [{ referralPathFromRoot: 'dataType', targetPathFromRoot: 'datetimeSettings', values: ['datetime'] }],
-                  validators: [],
-                  attributes: [
-                    {
-                      type: 'string',
-                      key: 'key',
-                      translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.csv-to-parse.object-fields.key',
-                      defaultValue: 'key',
-                      validators: [{ type: 'REQUIRED', arguments: [] }],
-                      displayProperties: { row: 0, columns: 4, displayInViewMode: true }
-                    },
-                    {
-                      type: 'string',
-                      key: 'column',
-                      translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.csv-to-parse.object-fields.column',
-                      defaultValue: 'val',
-                      validators: [{ type: 'REQUIRED', arguments: [] }],
-                      displayProperties: { row: 0, columns: 4, displayInViewMode: true }
-                    },
-                    {
-                      type: 'string-select',
-                      key: 'dataType',
-                      translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.csv-to-parse.object-fields.data-type',
-                      defaultValue: 'string',
-                      selectableValues: ['string', 'number', 'boolean', 'datetime'],
-                      validators: [{ type: 'REQUIRED', arguments: [] }],
-                      displayProperties: { row: 0, columns: 4, displayInViewMode: true }
-                    },
-                    {
-                      type: 'object',
-                      key: 'datetimeSettings',
-                      translationKey:
-                        'configuration.oibus.manifest.transformers.csv-to-mqtt.csv-to-parse.object-fields.datetime-settings.title',
-                      displayProperties: { visible: true, wrapInBox: false },
-                      enablingConditions: [
-                        { referralPathFromRoot: 'inputType', targetPathFromRoot: 'inputTimezone', values: ['string'] },
-                        { referralPathFromRoot: 'inputType', targetPathFromRoot: 'inputFormat', values: ['string'] },
-                        { referralPathFromRoot: 'inputType', targetPathFromRoot: 'inputLocale', values: ['string'] },
-                        { referralPathFromRoot: 'outputType', targetPathFromRoot: 'outputTimezone', values: ['string'] },
-                        { referralPathFromRoot: 'outputType', targetPathFromRoot: 'outputFormat', values: ['string'] },
-                        { referralPathFromRoot: 'outputType', targetPathFromRoot: 'outputLocale', values: ['string'] }
-                      ],
-                      validators: [],
-                      attributes: [
-                        {
-                          type: 'string-select',
-                          key: 'inputType',
-                          translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.csv-to-parse.datetime-settings.input-type',
-                          defaultValue: 'iso-string',
-                          selectableValues: ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'],
-                          validators: [{ type: 'REQUIRED', arguments: [] }],
-                          displayProperties: { row: 0, columns: 3, displayInViewMode: true }
-                        },
-                        {
-                          type: 'timezone',
-                          key: 'inputTimezone',
-                          translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.csv-to-parse.datetime-settings.timezone',
-                          defaultValue: 'UTC',
-                          validators: [{ type: 'REQUIRED', arguments: [] }],
-                          displayProperties: { row: 0, columns: 3, displayInViewMode: true }
-                        },
-                        {
-                          type: 'string',
-                          key: 'inputFormat',
-                          translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.csv-to-parse.datetime-settings.format',
-                          defaultValue: 'yyyy-MM-dd HH:mm:ss',
-                          validators: [{ type: 'REQUIRED', arguments: [] }],
-                          displayProperties: { row: 0, columns: 3, displayInViewMode: false }
-                        },
-                        {
-                          type: 'string',
-                          key: 'inputLocale',
-                          translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.csv-to-parse.datetime-settings.locale',
-                          defaultValue: 'en-En',
-                          validators: [{ type: 'REQUIRED', arguments: [] }],
-                          displayProperties: { row: 0, columns: 3, displayInViewMode: false }
-                        },
-                        {
-                          type: 'string-select',
-                          key: 'outputType',
-                          translationKey:
-                            'configuration.oibus.manifest.transformers.csv-to-mqtt.csv-to-parse.datetime-settings.output-type',
-                          defaultValue: 'iso-string',
-                          selectableValues: ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'],
-                          validators: [{ type: 'REQUIRED', arguments: [] }],
-                          displayProperties: { row: 1, columns: 3, displayInViewMode: true }
-                        },
-                        {
-                          type: 'timezone',
-                          key: 'outputTimezone',
-                          translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.csv-to-parse.datetime-settings.timezone',
-                          defaultValue: 'UTC',
-                          validators: [{ type: 'REQUIRED', arguments: [] }],
-                          displayProperties: { row: 1, columns: 3, displayInViewMode: true }
-                        },
-                        {
-                          type: 'string',
-                          key: 'outputFormat',
-                          translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.csv-to-parse.datetime-settings.format',
-                          defaultValue: 'yyyy-MM-dd HH:mm:ss',
-                          validators: [{ type: 'REQUIRED', arguments: [] }],
-                          displayProperties: { row: 1, columns: 3, displayInViewMode: false }
-                        },
-                        {
-                          type: 'string',
-                          key: 'outputLocale',
-                          translationKey: 'configuration.oibus.manifest.transformers.csv-to-mqtt.csv-to-parse.datetime-settings.locale',
-                          defaultValue: 'en-En',
-                          validators: [{ type: 'REQUIRED', arguments: [] }],
-                          displayProperties: { row: 1, columns: 3, displayInViewMode: false }
-                        }
-                      ]
-                    }
-                  ]
-                }
               }
             ]
           }
         }
       ],
-      enablingConditions: [],
+      enablingConditions: [
+        { referralPathFromRoot: 'payloadType', targetPathFromRoot: 'datetimeSettings', values: ['datetime'] },
+        { referralPathFromRoot: 'payloadType', targetPathFromRoot: 'objectFields', values: ['object'] },
+        {
+          referralPathFromRoot: 'payloadType',
+          targetPathFromRoot: 'valueColumn',
+          values: ['string', 'number', 'boolean']
+        }
+      ],
       validators: [],
-      displayProperties: { visible: true, wrapInBox: false }
+      displayProperties: { visible: true, wrapInBox: true }
     };
   }
 }

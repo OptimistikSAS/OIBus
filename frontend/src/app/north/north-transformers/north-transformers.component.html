@@ -25,7 +25,7 @@
             <tr>
               <td>
                 @if (transformerWithOptions.south) {
-                  <span>{{ transformerWithOptions.south.name }} ({{ transformerWithOptions.south.type | oIBusSouthTypeEnum }})</span>
+                  <span>{{ this.formatTransformerWithSouth(transformerWithOptions) }}</span>
                 } @else {
                   <span>{{ 'enums.oibus-input-data-type.' + transformerWithOptions.inputType | translate }}</span>
                 }

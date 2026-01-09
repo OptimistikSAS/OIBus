@@ -25,22 +25,18 @@ describe('JSONToTimeValuesTransformer', () => {
   let mockStream: Readable;
 
   const defaultOptions = {
-    jsonToParse: [
-      {
-        regex: '.*\\.json',
-        filename: 'output-file',
-        rowIteratorPath: '$[*]', // Iterates over root array
-        pointIdPath: '$[*].id',
-        timestampPath: '$[*].ts',
-        valuePath: '$[*].val',
-        timestampSettings: {
-          type: 'iso-string',
-          timezone: 'UTC',
-          format: 'yyyy-MM-dd',
-          locale: 'en'
-        }
-      }
-    ]
+    regex: '.*\\.json',
+    filename: 'output-file',
+    rowIteratorPath: '$[*]', // Iterates over root array
+    pointIdPath: '$[*].id',
+    timestampPath: '$[*].ts',
+    valuePath: '$[*].val',
+    timestampSettings: {
+      type: 'iso-string',
+      timezone: 'UTC',
+      format: 'yyyy-MM-dd',
+      locale: 'en'
+    }
   };
 
   beforeEach(() => {
@@ -120,23 +116,6 @@ describe('JSONToTimeValuesTransformer', () => {
     expect(result.metadata.numberOfElement).toBe(0);
   });
 
-  it('should return empty result if no regex matches the filename', async () => {
-    // Arrange
-    const filename = 'image.png'; // Does not match .*\.json config
-    const promise = transformer.transform(mockStream, { source: 'test' }, filename);
-
-    // Act
-    mockStream.push('{}');
-    mockStream.push(null);
-
-    await flushPromises();
-    const result = await promise;
-
-    // Assert
-    expect(result.output).toBe('[]');
-    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Could not find json parser'));
-  });
-
   it('should correctly expose the manifest settings', () => {
     // Act
     const manifest = JSONToTimeValuesTransformer.manifestSettings;
@@ -146,24 +125,20 @@ describe('JSONToTimeValuesTransformer', () => {
     expect(manifest.type).toBe('object');
     expect(manifest.key).toBe('options');
     // Sanity check on deep property
-    expect(manifest.attributes[0].key).toBe('jsonToParse');
+    expect(manifest.attributes[0].key).toBe('rowIteratorPath');
   });
 
   it('should handle nested arrays by correctly injecting indices', async () => {
     // This specifically tests the indexRegex loop and injection logic
     // We simulate a structure like: { groups: [ { items: [ { id: ... } ] } ] }
     const nestedOptions = {
-      jsonToParse: [
-        {
-          regex: '.*',
-          filename: 'nested',
-          rowIteratorPath: '$.groups[*].items[*]', // Two levels of nesting
-          pointIdPath: '$.groups[*].items[*].id',
-          timestampPath: '$.groups[*].items[*].ts',
-          valuePath: '$.groups[*].items[*].val',
-          timestampSettings: defaultOptions.jsonToParse[0].timestampSettings
-        }
-      ]
+      regex: '.*',
+      filename: 'nested',
+      rowIteratorPath: '$.groups[*].items[*]', // Two levels of nesting
+      pointIdPath: '$.groups[*].items[*].id',
+      timestampPath: '$.groups[*].items[*].ts',
+      valuePath: '$.groups[*].items[*].val',
+      timestampSettings: defaultOptions.timestampSettings
     };
 
     transformer = new JSONToTimeValuesTransformer(logger, testData.transformers.list[0], testData.north.list[0], nestedOptions);

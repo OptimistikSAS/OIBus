@@ -10,25 +10,22 @@ import { convertDateTimeToInstant, generateRandomId, injectIndices } from '../..
 const pipelineAsync = promisify(pipeline);
 
 interface TransformerOptions {
-  jsonToParse: Array<{
-    regex: string;
-    filename: string;
+  filename: string;
 
-    // The path that defines what constitutes a "record" or "row"
-    rowIteratorPath: string;
+  // The path that defines what constitutes a "record" or "row"
+  rowIteratorPath: string;
 
-    // Paths to specific properties (can contain [*] which will be replaced by current row index)
-    pointIdPath: string;
-    timestampPath: string;
-    valuePath: string;
+  // Paths to specific properties (can contain [*] which will be replaced by current row index)
+  pointIdPath: string;
+  timestampPath: string;
+  valuePath: string;
 
-    timestampSettings: {
-      type: 'iso-string' | 'unix-epoch' | 'unix-epoch-ms' | 'string';
-      timezone: string;
-      format: string;
-      locale: string;
-    };
-  }>;
+  timestampSettings: {
+    type: 'iso-string' | 'unix-epoch' | 'unix-epoch-ms' | 'string';
+    timezone: string;
+    format: string;
+    locale: string;
+  };
 }
 
 export default class JSONToTimeValuesTransformer extends OIBusTransformer {
@@ -37,14 +34,8 @@ export default class JSONToTimeValuesTransformer extends OIBusTransformer {
   async transform(
     data: ReadStream | Readable,
     source: CacheMetadataSource,
-    filename: string
+    _filename: string
   ): Promise<{ metadata: CacheMetadata; output: string }> {
-    const jsonParser = this.options.jsonToParse.find(parser => filename.match(parser.regex));
-    if (!jsonParser) {
-      this.logger.error(`Could not find json parser from "${filename}"`);
-      return this.returnEmpty();
-    }
-
     // 1. Read stream into buffer
     const chunks: Array<Buffer> = [];
     await pipelineAsync(
@@ -62,13 +53,13 @@ export default class JSONToTimeValuesTransformer extends OIBusTransformer {
     try {
       content = JSON.parse(stringContent);
     } catch (error: unknown) {
-      this.logger.error(`[JSONToTimeValues] Failed to parse JSON content from "${filename}": ${(error as Error).message}`);
+      this.logger.error(`[JSONToTimeValues] Failed to parse JSON content from "${JSON.stringify(source)}": ${(error as Error).message}`);
       return this.returnEmpty();
     }
 
     // 2. Identify Rows using the iterator path
     const rowNodes = JSONPath({
-      path: jsonParser.rowIteratorPath,
+      path: this.options.rowIteratorPath,
       json: content,
       resultType: 'all'
     }) as Array<{ value: string; path: string; pointer: string; parent: string; parentProperty: string }>;
@@ -86,9 +77,9 @@ export default class JSONToTimeValuesTransformer extends OIBusTransformer {
       }
 
       // Resolve specific paths for this row
-      const specificIdPath = injectIndices(jsonParser.pointIdPath, pathIndices);
-      const specificTimePath = injectIndices(jsonParser.timestampPath, pathIndices);
-      const specificValuePath = injectIndices(jsonParser.valuePath, pathIndices);
+      const specificIdPath = injectIndices(this.options.pointIdPath, pathIndices);
+      const specificTimePath = injectIndices(this.options.timestampPath, pathIndices);
+      const specificValuePath = injectIndices(this.options.valuePath, pathIndices);
 
       // Extract Data
       const pointId = this.extractSingleValue(content, specificIdPath);
@@ -100,7 +91,7 @@ export default class JSONToTimeValuesTransformer extends OIBusTransformer {
         timeValues.push({
           pointId: String(pointId),
           data: { value: rawValue },
-          timestamp: convertDateTimeToInstant(rawTimestamp, jsonParser.timestampSettings)
+          timestamp: convertDateTimeToInstant(rawTimestamp, this.options.timestampSettings)
         });
       }
     }
@@ -151,233 +142,177 @@ export default class JSONToTimeValuesTransformer extends OIBusTransformer {
       translationKey: 'configuration.oibus.manifest.transformers.options',
       attributes: [
         {
-          type: 'array',
-          key: 'jsonToParse',
-          translationKey: 'configuration.oibus.manifest.transformers.json-to-time-values.json-to-parse.title',
-          paginate: true,
-          numberOfElementPerPage: 20,
-          validators: [],
-          rootAttribute: {
-            type: 'object',
-            key: 'item',
-            translationKey: 'configuration.oibus.manifest.transformers.json-to-time-values.json-to-parse.item.title',
-            displayProperties: {
-              visible: true,
-              wrapInBox: false
-            },
-            enablingConditions: [],
-            validators: [],
-            attributes: [
-              {
-                type: 'string',
-                key: 'regex',
-                translationKey: 'configuration.oibus.manifest.transformers.json-to-time-values.json-to-parse.regex',
-                defaultValue: null,
-                validators: [
-                  {
-                    type: 'REQUIRED',
-                    arguments: []
-                  }
-                ],
-                displayProperties: {
-                  row: 0,
-                  columns: 6,
-                  displayInViewMode: true
-                }
-              },
-              {
-                type: 'string',
-                key: 'filename',
-                translationKey: 'configuration.oibus.manifest.transformers.json-to-time-values.json-to-parse.filename',
-                defaultValue: 'time-values-output',
-                validators: [
-                  {
-                    type: 'REQUIRED',
-                    arguments: []
-                  }
-                ],
-                displayProperties: {
-                  row: 0,
-                  columns: 6,
-                  displayInViewMode: true
-                }
-              },
-              {
-                type: 'string',
-                key: 'rowIteratorPath',
-                translationKey: 'configuration.oibus.manifest.transformers.json-to-time-values.json-to-parse.row-iterator-path',
-                defaultValue: '$[*]',
-                validators: [
-                  {
-                    type: 'REQUIRED',
-                    arguments: []
-                  }
-                ],
-                displayProperties: {
-                  row: 1,
-                  columns: 12, // Full width for the iterator
-                  displayInViewMode: true
-                }
-              },
-              {
-                type: 'string',
-                key: 'pointIdPath',
-                translationKey: 'configuration.oibus.manifest.transformers.json-to-time-values.json-to-parse.point-id-path',
-                defaultValue: '$[*].id',
-                validators: [
-                  {
-                    type: 'REQUIRED',
-                    arguments: []
-                  }
-                ],
-                displayProperties: {
-                  row: 2,
-                  columns: 4,
-                  displayInViewMode: true
-                }
-              },
-              {
-                type: 'string',
-                key: 'timestampPath',
-                translationKey: 'configuration.oibus.manifest.transformers.json-to-time-values.json-to-parse.timestamp-path',
-                defaultValue: '$[*].timestamp',
-                validators: [
-                  {
-                    type: 'REQUIRED',
-                    arguments: []
-                  }
-                ],
-                displayProperties: {
-                  row: 2,
-                  columns: 4,
-                  displayInViewMode: true
-                }
-              },
-              {
-                type: 'string',
-                key: 'valuePath',
-                translationKey: 'configuration.oibus.manifest.transformers.json-to-time-values.json-to-parse.value-path',
-                defaultValue: '$[*].value',
-                validators: [
-                  {
-                    type: 'REQUIRED',
-                    arguments: []
-                  }
-                ],
-                displayProperties: {
-                  row: 2,
-                  columns: 4,
-                  displayInViewMode: true
-                }
-              },
-              {
-                type: 'object',
-                key: 'timestampSettings',
-                translationKey: 'configuration.oibus.manifest.transformers.json-to-time-values.json-to-parse.timestamp-settings.title',
-                displayProperties: {
-                  visible: true,
-                  wrapInBox: true
-                },
-                enablingConditions: [
-                  {
-                    referralPathFromRoot: 'type',
-                    targetPathFromRoot: 'timezone',
-                    values: ['string']
-                  },
-                  {
-                    referralPathFromRoot: 'type',
-                    targetPathFromRoot: 'format',
-                    values: ['string']
-                  },
-                  {
-                    referralPathFromRoot: 'type',
-                    targetPathFromRoot: 'locale',
-                    values: ['string']
-                  }
-                ],
-                validators: [],
-                attributes: [
-                  {
-                    type: 'string-select',
-                    key: 'type',
-                    translationKey: 'configuration.oibus.manifest.transformers.json-to-time-values.json-to-parse.timestamp-settings.type',
-                    defaultValue: 'iso-string',
-                    selectableValues: ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'],
-                    validators: [
-                      {
-                        type: 'REQUIRED',
-                        arguments: []
-                      }
-                    ],
-                    displayProperties: {
-                      row: 0,
-                      columns: 3,
-                      displayInViewMode: true
-                    }
-                  },
-                  {
-                    type: 'timezone',
-                    key: 'timezone',
-                    translationKey:
-                      'configuration.oibus.manifest.transformers.json-to-time-values.json-to-parse.timestamp-settings.timezone',
-                    defaultValue: 'UTC',
-                    validators: [
-                      {
-                        type: 'REQUIRED',
-                        arguments: []
-                      }
-                    ],
-                    displayProperties: {
-                      row: 0,
-                      columns: 3,
-                      displayInViewMode: true
-                    }
-                  },
-                  {
-                    type: 'string',
-                    key: 'format',
-                    translationKey: 'configuration.oibus.manifest.transformers.json-to-time-values.json-to-parse.timestamp-settings.format',
-                    defaultValue: 'yyyy-MM-dd HH:mm:ss',
-                    validators: [
-                      {
-                        type: 'REQUIRED',
-                        arguments: []
-                      }
-                    ],
-                    displayProperties: {
-                      row: 0,
-                      columns: 3,
-                      displayInViewMode: false
-                    }
-                  },
-                  {
-                    type: 'string',
-                    key: 'locale',
-                    translationKey: 'configuration.oibus.manifest.transformers.json-to-time-values.json-to-parse.timestamp-settings.locale',
-                    defaultValue: 'en-En',
-                    validators: [
-                      {
-                        type: 'REQUIRED',
-                        arguments: []
-                      }
-                    ],
-                    displayProperties: {
-                      row: 0,
-                      columns: 3,
-                      displayInViewMode: false
-                    }
-                  }
-                ]
-              }
-            ]
+          type: 'string',
+          key: 'rowIteratorPath',
+          translationKey: 'configuration.oibus.manifest.transformers.json-to-time-values.row-iterator-path',
+          defaultValue: '$[*]',
+          validators: [
+            {
+              type: 'REQUIRED',
+              arguments: []
+            }
+          ],
+          displayProperties: {
+            row: 0,
+            columns: 12, // Full width for the iterator
+            displayInViewMode: true
           }
+        },
+        {
+          type: 'string',
+          key: 'pointIdPath',
+          translationKey: 'configuration.oibus.manifest.transformers.json-to-time-values.point-id-path',
+          defaultValue: '$[*].id',
+          validators: [
+            {
+              type: 'REQUIRED',
+              arguments: []
+            }
+          ],
+          displayProperties: {
+            row: 1,
+            columns: 4,
+            displayInViewMode: true
+          }
+        },
+        {
+          type: 'string',
+          key: 'timestampPath',
+          translationKey: 'configuration.oibus.manifest.transformers.json-to-time-values.timestamp-path',
+          defaultValue: '$[*].timestamp',
+          validators: [
+            {
+              type: 'REQUIRED',
+              arguments: []
+            }
+          ],
+          displayProperties: {
+            row: 1,
+            columns: 4,
+            displayInViewMode: true
+          }
+        },
+        {
+          type: 'string',
+          key: 'valuePath',
+          translationKey: 'configuration.oibus.manifest.transformers.json-to-time-values.value-path',
+          defaultValue: '$[*].value',
+          validators: [
+            {
+              type: 'REQUIRED',
+              arguments: []
+            }
+          ],
+          displayProperties: {
+            row: 1,
+            columns: 4,
+            displayInViewMode: true
+          }
+        },
+        {
+          type: 'object',
+          key: 'timestampSettings',
+          translationKey: 'configuration.oibus.manifest.transformers.json-to-time-values.timestamp-settings.title',
+          displayProperties: {
+            visible: true,
+            wrapInBox: true
+          },
+          enablingConditions: [
+            {
+              referralPathFromRoot: 'type',
+              targetPathFromRoot: 'timezone',
+              values: ['string']
+            },
+            {
+              referralPathFromRoot: 'type',
+              targetPathFromRoot: 'format',
+              values: ['string']
+            },
+            {
+              referralPathFromRoot: 'type',
+              targetPathFromRoot: 'locale',
+              values: ['string']
+            }
+          ],
+          validators: [],
+          attributes: [
+            {
+              type: 'string-select',
+              key: 'type',
+              translationKey: 'configuration.oibus.manifest.transformers.json-to-time-values.timestamp-settings.type',
+              defaultValue: 'iso-string',
+              selectableValues: ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'],
+              validators: [
+                {
+                  type: 'REQUIRED',
+                  arguments: []
+                }
+              ],
+              displayProperties: {
+                row: 0,
+                columns: 3,
+                displayInViewMode: true
+              }
+            },
+            {
+              type: 'timezone',
+              key: 'timezone',
+              translationKey: 'configuration.oibus.manifest.transformers.json-to-time-values.timestamp-settings.timezone',
+              defaultValue: 'UTC',
+              validators: [
+                {
+                  type: 'REQUIRED',
+                  arguments: []
+                }
+              ],
+              displayProperties: {
+                row: 0,
+                columns: 3,
+                displayInViewMode: true
+              }
+            },
+            {
+              type: 'string',
+              key: 'format',
+              translationKey: 'configuration.oibus.manifest.transformers.json-to-time-values.timestamp-settings.format',
+              defaultValue: 'yyyy-MM-dd HH:mm:ss',
+              validators: [
+                {
+                  type: 'REQUIRED',
+                  arguments: []
+                }
+              ],
+              displayProperties: {
+                row: 0,
+                columns: 3,
+                displayInViewMode: false
+              }
+            },
+            {
+              type: 'string',
+              key: 'locale',
+              translationKey: 'configuration.oibus.manifest.transformers.json-to-time-values.timestamp-settings.locale',
+              defaultValue: 'en-En',
+              validators: [
+                {
+                  type: 'REQUIRED',
+                  arguments: []
+                }
+              ],
+              displayProperties: {
+                row: 0,
+                columns: 3,
+                displayInViewMode: false
+              }
+            }
+          ]
         }
       ],
       enablingConditions: [],
       validators: [],
       displayProperties: {
         visible: true,
-        wrapInBox: false
+        wrapInBox: true
       }
     };
   }
