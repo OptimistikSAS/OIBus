@@ -26,34 +26,26 @@ describe('CSVToTimeValuesTransformer', () => {
 
   // Default options for "Header Mode"
   const headerOptions = {
-    csvToParse: [
-      {
-        regex: '.*\\.csv',
-        filename: 'header-output',
-        delimiter: 'SEMI_COLON',
-        hasHeader: true,
-        pointIdColumn: 'SensorID',
-        timestampColumn: 'Time',
-        valueColumn: 'Reading',
-        timestampSettings: { type: 'iso-string', timezone: 'UTC', format: 'yyyy', locale: 'en' }
-      }
-    ]
+    regex: '.*\\.csv',
+    filename: 'header-output',
+    delimiter: 'SEMI_COLON',
+    hasHeader: true,
+    pointIdColumn: 'SensorID',
+    timestampColumn: 'Time',
+    valueColumn: 'Reading',
+    timestampSettings: { type: 'iso-string', timezone: 'UTC', format: 'yyyy', locale: 'en' }
   };
 
   // Default options for "Index Mode"
   const indexOptions = {
-    csvToParse: [
-      {
-        regex: '.*\\.csv',
-        filename: 'index-output',
-        delimiter: 'COMMA',
-        hasHeader: false,
-        pointIdColumn: '0',
-        timestampColumn: '1',
-        valueColumn: '2',
-        timestampSettings: { type: 'iso-string', timezone: 'UTC', format: 'yyyy', locale: 'en' }
-      }
-    ]
+    regex: '.*\\.csv',
+    filename: 'index-output',
+    delimiter: 'COMMA',
+    hasHeader: false,
+    pointIdColumn: '0',
+    timestampColumn: '1',
+    valueColumn: '2',
+    timestampSettings: { type: 'iso-string', timezone: 'UTC', format: 'yyyy', locale: 'en' }
   };
 
   beforeEach(() => {
@@ -165,7 +157,7 @@ describe('CSVToTimeValuesTransformer', () => {
 
   it('should handle configuration errors for Index Mode (NaN indices)', async () => {
     // Arrange: Config says no header, but columns are strings like "A", "B" (invalid for parseInt)
-    const badConfig = { ...indexOptions, csvToParse: [{ ...indexOptions.csvToParse[0], pointIdColumn: 'NotANumber' }] };
+    const badConfig = { ...indexOptions, pointIdColumn: 'NotANumber' };
     transformer = new CSVToTimeValuesTransformer(logger, testData.transformers.list[0], testData.north.list[0], badConfig);
 
     (Papa.parse as jest.Mock).mockReturnValue({
@@ -207,22 +199,6 @@ describe('CSVToTimeValuesTransformer', () => {
     expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('Encountered 1 errors while parsing'));
   });
 
-  it('should return empty result if no configuration matches filename', async () => {
-    // Arrange
-    transformer = new CSVToTimeValuesTransformer(logger, testData.transformers.list[0], testData.north.list[0], headerOptions);
-
-    // Act
-    const promise = transformer.transform(mockStream, { source: 'test' }, 'nomatch.txt'); // Wrong extension
-    mockStream.push('content');
-    mockStream.push(null);
-    await flushPromises();
-    const result = await promise;
-
-    // Assert
-    expect(result.output).toBe('[]');
-    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Could not find csv parser configuration'));
-  });
-
   // --------------------------------------------------------------------------
   // 5. Manifest
   // --------------------------------------------------------------------------
@@ -231,6 +207,6 @@ describe('CSVToTimeValuesTransformer', () => {
     const manifest = CSVToTimeValuesTransformer.manifestSettings;
     expect(manifest).toBeDefined();
     expect(manifest.key).toBe('options');
-    expect(manifest.attributes[0].key).toBe('csvToParse');
+    expect(manifest.attributes[0].key).toBe('delimiter');
   });
 });

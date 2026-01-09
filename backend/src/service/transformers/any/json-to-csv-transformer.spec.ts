@@ -6,7 +6,6 @@ import { flushPromises } from '../../../tests/utils/test-utils';
 import JSONToCSVTransformer from './json-to-csv-transformer';
 import csv from 'papaparse';
 import JSONToMQTTTransformer from './json-to-mqtt-transformer';
-import { OIBusArrayAttribute, OIBusStringSelectAttribute } from '../../../../shared/model/form.model';
 
 // Mock external modules
 jest.mock('papaparse');
@@ -34,24 +33,20 @@ describe('JSONToCSVTransformer', () => {
     (csv.unparse as jest.Mock).mockReturnValue('csv content');
 
     const options = {
-      jsonToParse: [
+      regex: '.*\\.json',
+      filename: 'test-output.csv',
+      delimiter: 'SEMI_COLON',
+      rowIteratorPath: '$[*]',
+      fields: [
         {
-          regex: '.*\\.json',
-          filename: 'test-output',
-          delimiter: 'SEMI_COLON',
-          rowIteratorPath: '$[*]',
-          fields: [
-            {
-              jsonPath: '$[*].name',
-              columnName: 'Name',
-              dataType: 'string'
-            },
-            {
-              jsonPath: '$[*].id',
-              columnName: 'ID',
-              dataType: 'number'
-            }
-          ]
+          jsonPath: '$[*].name',
+          columnName: 'Name',
+          dataType: 'string'
+        },
+        {
+          jsonPath: '$[*].id',
+          columnName: 'ID',
+          dataType: 'number'
         }
       ]
     };
@@ -100,77 +95,39 @@ describe('JSONToCSVTransformer', () => {
     });
   });
 
-  it('should return empty result if filename does not match any regex', async () => {
-    const options = {
-      jsonToParse: [
-        {
-          regex: '^match-me\\.json$',
-          filename: 'output',
-          delimiter: 'SEMI_COLON',
-          rowIteratorPath: '$[*]',
-          fields: []
-        }
-      ]
-    };
-
-    // Arrange
-    const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
-    const filename = 'dont-match.json';
-    const mockStream = new Readable();
-
-    // Act
-    const result = await transformer.transform(mockStream, { source: 'test' }, filename);
-
-    // Assert
-    expect(result).toEqual({
-      output: '',
-      metadata: {
-        contentFile: 'dont-match.json.csv',
-        contentSize: 0,
-        createdAt: '',
-        numberOfElement: 0,
-        contentType: 'any'
-      }
-    });
-  });
-
   it('should handle complex data types (datetime, boolean, object, array) and missing values', async () => {
     // 1. Setup specific options with ALL data types found in the switch statement
     const options = {
-      jsonToParse: [
+      regex: '.*\\.json',
+      filename: 'complex-test',
+      delimiter: 'SEMI_COLON',
+      rowIteratorPath: '$[*]',
+      fields: [
         {
-          regex: '.*\\.json',
-          filename: 'complex-test',
-          delimiter: 'SEMI_COLON',
-          rowIteratorPath: '$[*]',
-          fields: [
-            {
-              jsonPath: '$[*].createdAt',
-              columnName: 'Created At',
-              dataType: 'datetime',
-              datetimeSettings: { type: 'iso-string', timezone: 'UTC', format: 'yyyy', locale: 'en' }
-            },
-            {
-              jsonPath: '$[*].isActive',
-              columnName: 'Active',
-              dataType: 'boolean'
-            },
-            {
-              jsonPath: '$[*].details',
-              columnName: 'Details',
-              dataType: 'object' // Hits the default/object case
-            },
-            {
-              jsonPath: '$[*].tags',
-              columnName: 'Tags',
-              dataType: 'array' // Hits the default/array case
-            },
-            {
-              jsonPath: '$[*].ghostField',
-              columnName: 'Ghost',
-              dataType: 'string' // Intentionally missing in data to hit the null check
-            }
-          ]
+          jsonPath: '$[*].createdAt',
+          columnName: 'Created At',
+          dataType: 'datetime',
+          datetimeSettings: { type: 'iso-string', timezone: 'UTC', format: 'yyyy', locale: 'en' }
+        },
+        {
+          jsonPath: '$[*].isActive',
+          columnName: 'Active',
+          dataType: 'boolean'
+        },
+        {
+          jsonPath: '$[*].details',
+          columnName: 'Details',
+          dataType: 'object' // Hits the default/object case
+        },
+        {
+          jsonPath: '$[*].tags',
+          columnName: 'Tags',
+          dataType: 'array' // Hits the default/array case
+        },
+        {
+          jsonPath: '$[*].ghostField',
+          columnName: 'Ghost',
+          dataType: 'string' // Intentionally missing in data to hit the null check
         }
       ]
     };
@@ -218,12 +175,6 @@ describe('JSONToCSVTransformer', () => {
   it('should return correct manifest settings', () => {
     const manifest = JSONToMQTTTransformer.manifestSettings;
     expect(manifest.key).toBe('options');
-    expect(manifest.attributes[0].key).toBe('jsonToParse');
-
-    // Verify nested attributes exist
-    const jsonToParse = (manifest.attributes[0] as OIBusArrayAttribute).rootAttribute;
-    const payloadType = jsonToParse.attributes.find(a => a.key === 'payloadType');
-    expect(payloadType).toBeDefined();
-    expect((payloadType as OIBusStringSelectAttribute).selectableValues).toContain('object');
+    expect(manifest.attributes[0].key).toBe('rowIteratorPath');
   });
 });
