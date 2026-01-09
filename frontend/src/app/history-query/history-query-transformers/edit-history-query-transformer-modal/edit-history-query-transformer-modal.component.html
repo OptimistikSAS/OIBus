@@ -44,14 +44,14 @@
         </div>
       </div>
       @if (manifest) {
-        <ng-container formGroupName="options">
+        <div class="row" formGroupName="options">
           <oib-oibus-object-form-control
             [scanModes]="scanModes"
             [certificates]="certificates"
             [group]="form.controls.options"
             [objectAttribute]="manifest"
           />
-        </ng-container>
+        </div>
       }
     </form>
   }

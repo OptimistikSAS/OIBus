@@ -99,7 +99,7 @@ export default class OIBusTimeValuesToOIAnalyticsTransformer extends OIBusTransf
       validators: [],
       displayProperties: {
         visible: true,
-        wrapInBox: false
+        wrapInBox: true
       }
     };
   }

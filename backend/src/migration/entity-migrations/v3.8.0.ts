@@ -380,7 +380,6 @@ async function migrateSubscriptionsToTransformers(knex: Knex): Promise<void> {
     table.uuid('id');
     table.string('south_id').nullable().references('id').inTable(SOUTH_CONNECTORS_TABLE).onDelete('SET NULL');
     table.dropUnique(['north_id', 'transformer_id', 'input_type']);
-    table.unique(['north_id', 'transformer_id', 'input_type', 'south_id']);
   });
   const northRows = await knex(NORTH_TRANSFORMERS_TABLE).select(knex.raw('rowid as rid'));
   // Update rows one by one (or use Promise.all for parallel batches)

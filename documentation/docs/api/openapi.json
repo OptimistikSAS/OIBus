@@ -19924,105 +19924,6 @@
 					}
 				]
 			},
-			"CacheMetadataSourceOriginSouth": {
-				"properties": {
-					"source": {
-						"type": "string",
-						"enum": [
-							"south"
-						],
-						"nullable": false
-					},
-					"queryTime": {
-						"$ref": "#/components/schemas/Instant",
-						"description": "Datetime in iso format when the query has been triggered",
-						"example": "2023-01-01T00:00:00Z"
-					},
-					"southId": {
-						"type": "string",
-						"description": "ID of the south connector at the source of the data"
-					},
-					"itemIds": {
-						"items": {
-							"type": "string"
-						},
-						"type": "array",
-						"description": "IDs of the items at the source of the data"
-					}
-				},
-				"required": [
-					"source",
-					"queryTime",
-					"southId",
-					"itemIds"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"CacheMetadataSourceOriginOIAnalytics": {
-				"properties": {
-					"source": {
-						"type": "string",
-						"enum": [
-							"oianalytics"
-						],
-						"nullable": false
-					}
-				},
-				"required": [
-					"source"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"CacheMetadataSourceOriginAPI": {
-				"properties": {
-					"source": {
-						"type": "string",
-						"enum": [
-							"api"
-						],
-						"nullable": false
-					}
-				},
-				"required": [
-					"source"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"CacheMetadataSourceOriginTest": {
-				"properties": {
-					"source": {
-						"type": "string",
-						"enum": [
-							"test"
-						],
-						"nullable": false
-					}
-				},
-				"required": [
-					"source"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"CacheMetadataSource": {
-				"anyOf": [
-					{
-						"$ref": "#/components/schemas/CacheMetadataSourceOriginSouth"
-					},
-					{
-						"$ref": "#/components/schemas/CacheMetadataSourceOriginOIAnalytics"
-					},
-					{
-						"$ref": "#/components/schemas/CacheMetadataSourceOriginAPI"
-					},
-					{
-						"$ref": "#/components/schemas/CacheMetadataSourceOriginTest"
-					}
-				]
-			},
 			"CacheMetadata": {
 				"description": "Metadata for cached content.",
 				"properties": {
@@ -20052,10 +19953,6 @@
 						"type": "string",
 						"description": "The type of the content.",
 						"example": "time-values"
-					},
-					"source": {
-						"$ref": "#/components/schemas/CacheMetadataSource",
-						"description": "Source of the data"
 					}
 				},
 				"required": [
@@ -20063,8 +19960,7 @@
 					"contentSize",
 					"numberOfElement",
 					"createdAt",
-					"contentType",
-					"source"
+					"contentType"
 				],
 				"type": "object",
 				"additionalProperties": false
