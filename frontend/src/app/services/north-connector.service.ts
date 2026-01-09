@@ -32,7 +32,7 @@ export class NorthConnectorService {
   /**
    * Get a North connectors manifest
    */
-  getNorthManifest(type: string): Observable<NorthConnectorManifest> {
+  getNorthManifest(type: OIBusNorthType): Observable<NorthConnectorManifest> {
     return this.http.get<NorthConnectorManifest>(`/api/north/manifests/${type}`);
   }
 
@@ -113,22 +113,8 @@ export class NorthConnectorService {
   /**
    * Remove the selected North connector transformer
    */
-  removeTransformer(northId: string, transformerId: string): Observable<void> {
-    return this.http.delete<void>(`/api/north/${northId}/transformers/${transformerId}`);
-  }
-
-  /**
-   * Add a new North connector subscription
-   */
-  addSubscription(northId: string, southId: string): Observable<void> {
-    return this.http.post<void>(`/api/north/${northId}/subscriptions/${southId}`, null);
-  }
-
-  /**
-   * Remove the selected North connector subscription
-   */
-  removeSubscription(northId: string, southId: string): Observable<void> {
-    return this.http.delete<void>(`/api/north/${northId}/subscriptions/${southId}`);
+  removeTransformer(northId: string, northTransformerId: string): Observable<void> {
+    return this.http.delete<void>(`/api/north/${northId}/transformers/${northTransformerId}`);
   }
 
   searchCacheContent(

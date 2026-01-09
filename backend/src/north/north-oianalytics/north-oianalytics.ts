@@ -24,6 +24,7 @@ import CertificateRepository from '../../repository/config/certificate.repositor
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import { OIBusError } from '../../model/engine.model';
 import CacheService from '../../service/cache/cache.service';
+import { testOIAnalyticsConnection } from '../../service/oia/oianalytics.utils';
 
 /**
  * Class NorthOIAnalytics - Send files to a POST Multipart HTTP request and values as JSON payload
@@ -43,25 +44,18 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
 
   override async testConnection(): Promise<void> {
     const host = this.getHost();
-    const requestUrl = new URL('/api/optimistik/oibus/status', host);
+    const { proxy, acceptUnauthorized } = this.getProxyOptions();
 
-    let response: ReqResponse;
-    try {
-      const { proxy, acceptUnauthorized } = this.getProxyOptions();
-      const fetchOptions: ReqOptions = {
-        method: 'GET',
-        auth: await this.getAuthorizationOptions(),
-        proxy,
-        timeout: this.connector.settings.timeout * 1000,
-        acceptUnauthorized
-      };
-      response = await HTTPRequest(requestUrl, fetchOptions);
-    } catch (error) {
-      throw new Error(`Fetch error ${error}`);
-    }
-    if (!response.ok) {
-      throw new Error(`HTTP request failed with status code ${response.statusCode} and message: ${await response.body.text()}`);
-    }
+    await testOIAnalyticsConnection({
+      host,
+      timeout: this.connector.settings.timeout,
+      acceptUnauthorized,
+      useProxy: proxy !== undefined,
+      proxyUrl: proxy?.url,
+      proxyUsername: proxy?.auth?.type === 'url' ? proxy.auth.username : undefined,
+      proxyPassword: proxy?.auth?.type === 'url' ? proxy.auth.password : undefined,
+      auth: await this.getAuthorizationOptions()
+    });
   }
 
   async handleContent(cacheMetadata: CacheMetadata): Promise<void> {

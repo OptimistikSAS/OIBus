@@ -1,11 +1,15 @@
 import { Component, forwardRef, inject } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbTypeahead, NgbTypeaheadSelectItemEvent } from '@ng-bootstrap/ng-bootstrap';
 import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Observable, of, switchMap } from 'rxjs';
+import { debounceTime, distinctUntilChanged, map, Observable, switchMap } from 'rxjs';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
-import { TransformerDTO, TransformerDTOWithOptions } from '../../../../../../backend/shared/model/transformer.model';
-import { TransformerService } from '../../../services/transformer.service';
+import {
+  INPUT_TYPES,
+  InputType,
+  TransformerDTO,
+  TransformerDTOWithOptions
+} from '../../../../../../backend/shared/model/transformer.model';
 import { addAttributeToForm, addEnablingConditions } from '../../../shared/form/dynamic-form.builder';
 import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
 import { OIBusObjectAttribute } from '../../../../../../backend/shared/model/form.model';
@@ -13,12 +17,29 @@ import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.mo
 import { CertificateDTO } from '../../../../../../backend/shared/model/certificate.model';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { OIBUS_FORM_MODE } from '../../../shared/form/oibus-form-mode.token';
+import { ItemLightDTO, SouthConnectorLightDTO } from '../../../../../../backend/shared/model/south-connector.model';
+import { OIBusSouthTypeEnumPipe } from '../../../shared/oibus-south-type-enum.pipe';
+import { getAssociatedInputType } from '../../../shared/utils/utils';
+import { SouthConnectorService } from '../../../services/south-connector.service';
+import { FormControlValidationDirective } from '../../../shared/form/form-control-validation.directive';
+import { PillComponent } from '../../../shared/pill/pill.component';
+import { TYPEAHEAD_DEBOUNCE_TIME } from '../../../shared/form/typeahead';
 
 @Component({
   selector: 'oib-edit-north-transformer-modal',
   templateUrl: './edit-north-transformer-modal.component.html',
   styleUrl: './edit-north-transformer-modal.component.scss',
-  imports: [ReactiveFormsModule, TranslateDirective, SaveButtonComponent, TranslatePipe, OIBusObjectFormControlComponent],
+  imports: [
+    ReactiveFormsModule,
+    TranslateDirective,
+    SaveButtonComponent,
+    TranslatePipe,
+    OIBusObjectFormControlComponent,
+    OIBusSouthTypeEnumPipe,
+    FormControlValidationDirective,
+    NgbTypeahead,
+    PillComponent
+  ],
   viewProviders: [
     {
       provide: OIBUS_FORM_MODE,
@@ -31,54 +52,72 @@ export class EditNorthTransformerModalComponent {
   private modal = inject(NgbActiveModal);
   private fb = inject(NonNullableFormBuilder);
   private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
-  private transformerService = inject(TransformerService);
+  private southConnectorService = inject(SouthConnectorService);
 
   state = new ObservableState();
   mode: 'create' | 'edit' = 'create';
   form: FormGroup<{
-    transformerId: FormControl<string | null>;
+    source: FormControl<{ inputType: InputType | null; south: SouthConnectorLightDTO | null }>;
+    transformer: FormControl<TransformerDTO | null>;
     options: FormGroup;
-  }> | null = null;
-  inputTypeControl: FormControl<string | null> | null = null;
+    itemSearch: FormControl<null | string>;
+  }> = this.fb.group({
+    source: this.fb.control<{
+      inputType: InputType | null;
+      south: SouthConnectorLightDTO | null;
+    }>({ inputType: null, south: null }, Validators.required),
+    transformer: this.fb.control<TransformerDTO | null>(null, Validators.required),
+    options: this.fb.group({}),
+    itemSearch: this.fb.control(null as null | string)
+  });
   allTransformers: Array<TransformerDTO> = [];
-  selectableTransformers: Array<TransformerDTO> = [];
-  selectableInputs: Array<string> = [];
+  selectableOutputs: Array<TransformerDTO> = [];
+  selectedInputs: Array<{ inputType: InputType | null; south: string | null }> = [];
   supportedOutputTypes: Array<string> = [];
   manifest: OIBusObjectAttribute | null = null;
   scanModes: Array<ScanModeDTO> = [];
   certificates: Array<CertificateDTO> = [];
+  southConnectors: Array<SouthConnectorLightDTO> = [];
+  existingTransformerWithOptions: TransformerDTOWithOptions | null = null;
+  inputTypes = INPUT_TYPES;
+  selectedItems: Array<ItemLightDTO> = [];
+
+  itemTypeahead = (text$: Observable<string>) =>
+    text$.pipe(
+      debounceTime(TYPEAHEAD_DEBOUNCE_TIME),
+      distinctUntilChanged(),
+      switchMap(text => {
+        const southId = this.form.controls.source.value.south!.id;
+        return this.southConnectorService.searchItems(southId, { name: text, page: 0 });
+      }),
+      map(items => {
+        return items.content
+          .filter(item => !this.selectedItems.some(element => element.id === item.id))
+          .map(item => ({ id: item.id, name: item.name }));
+      })
+    );
+  itemFormatter = (item: ItemLightDTO) => item.name;
 
   prepareForCreation(
+    southConnectors: Array<SouthConnectorLightDTO>,
     scanModes: Array<ScanModeDTO>,
     certificates: Array<CertificateDTO>,
-    selectableInputs: Array<string>,
+    selectedInputs: Array<{ inputType: InputType; south: string | null }>,
     transformers: Array<TransformerDTO>,
     supportedOutputTypes: Array<string>
   ) {
     this.mode = 'create';
+    this.southConnectors = southConnectors;
     this.scanModes = scanModes;
     this.certificates = certificates;
-    this.selectableInputs = selectableInputs;
+    this.selectedInputs = selectedInputs;
     this.allTransformers = transformers;
     this.supportedOutputTypes = supportedOutputTypes;
-    this.inputTypeControl = this.fb.control<string | null>(null as string | null, Validators.required);
-    this.inputTypeControl.valueChanges.subscribe(inputType => {
-      this.form!.setValue({
-        transformerId: null,
-        options: {}
-      });
-      this.selectableTransformers = this.allTransformers.filter(
-        element =>
-          ((element.type === 'standard' && element.functionName === 'ignore') ||
-            (element.type === 'standard' && element.functionName === 'iso' && this.supportedOutputTypes.includes(element.inputType)) ||
-            element.inputType === inputType) &&
-          this.supportedOutputTypes.includes(element.outputType)
-      );
-    });
     this.buildForm();
   }
 
   prepareForEdition(
+    southConnectors: Array<SouthConnectorLightDTO>,
     scanModes: Array<ScanModeDTO>,
     certificates: Array<CertificateDTO>,
     transformerWithOptionsToEdit: TransformerDTOWithOptions,
@@ -86,47 +125,59 @@ export class EditNorthTransformerModalComponent {
     supportedOutputTypes: Array<string>
   ) {
     this.mode = 'edit';
+    this.southConnectors = southConnectors;
     this.scanModes = scanModes;
     this.certificates = certificates;
+    this.existingTransformerWithOptions = transformerWithOptionsToEdit;
+    this.allTransformers = transformers;
     this.supportedOutputTypes = supportedOutputTypes;
-    this.selectableTransformers = transformers.filter(
-      element =>
-        (element.inputType === transformerWithOptionsToEdit.inputType ||
-          (element.type === 'standard' && ['ignore', 'iso'].includes(element.functionName))) &&
-        this.supportedOutputTypes.includes(element.outputType)
-    );
+    this.selectedItems = transformerWithOptionsToEdit.items;
+
+    const sourceValue = {
+      inputType: transformerWithOptionsToEdit.inputType,
+      south: transformerWithOptionsToEdit.south || null
+    };
     this.buildForm();
+    this.updateSelectableOutput(sourceValue);
     this.createOptionsForm(transformerWithOptionsToEdit.transformer);
+
     // trigger rebuild of options form
-    this.form!.patchValue(
-      { transformerId: transformerWithOptionsToEdit.transformer.id, options: transformerWithOptionsToEdit.options },
+    this.form.patchValue(
+      {
+        source: sourceValue,
+        transformer: transformerWithOptionsToEdit.transformer,
+        options: transformerWithOptionsToEdit.options
+      },
       { emitEvent: false }
     );
+    this.form.controls.source.disable({ emitEvent: false });
   }
 
   buildForm() {
-    this.form = this.fb.group({
-      transformerId: this.fb.control<string | null>(null),
-      options: this.fb.group({})
+    this.form.controls.source.valueChanges.subscribe(source => {
+      this.form.patchValue({
+        transformer: null,
+        options: {}
+      });
+      this.updateSelectableOutput(source);
     });
-    this.form!.controls.transformerId.valueChanges.pipe(
-      switchMap(transformerId => (transformerId ? this.transformerService.findById(transformerId) : of(null)))
-    ).subscribe(newTransformer => {
+
+    this.form.controls.transformer.valueChanges.subscribe(newTransformer => {
       if (newTransformer) {
         this.createOptionsForm(newTransformer);
       } else {
-        this.form!.setControl('options', this.fb.group({}));
+        this.form.setControl('options', this.fb.group({}));
       }
     });
   }
 
   createOptionsForm(newTransformer: TransformerDTO) {
     this.manifest = newTransformer.manifest;
-    this.form!.setControl('options', this.fb.group({}));
+    this.form.setControl('options', this.fb.group({}));
     for (const attribute of this.manifest.attributes) {
-      addAttributeToForm(this.fb, this.form!.controls.options, attribute);
+      addAttributeToForm(this.fb, this.form.controls.options, attribute);
     }
-    addEnablingConditions(this.form!.controls.options, this.manifest.enablingConditions);
+    addEnablingConditions(this.form.controls.options, this.manifest.enablingConditions);
   }
 
   canDismiss(): Observable<boolean> | boolean {
@@ -141,21 +192,76 @@ export class EditNorthTransformerModalComponent {
   }
 
   save() {
-    if (!this.form!.valid) {
+    if (!this.form.valid) {
       return;
     }
 
-    const transformer = this.selectableTransformers.find(transformer => transformer.id === this.form!.value.transformerId)!;
-    const inputType = this.inputTypeControl ? this.inputTypeControl.getRawValue()! : transformer.inputType;
-
-    if (!transformer || !inputType) {
-      return;
+    let south: SouthConnectorLightDTO | undefined;
+    let inputType: InputType;
+    if (this.existingTransformerWithOptions) {
+      south = this.existingTransformerWithOptions.south || undefined;
+      inputType = this.existingTransformerWithOptions.inputType;
+    } else if (this.form.value.source?.south) {
+      south = this.form.value.source!.south!;
+      inputType = getAssociatedInputType(south.type);
+    } else {
+      south = undefined;
+      inputType = this.form.value.source!.inputType!;
     }
-
     this.modal.close({
-      transformer,
-      options: this.form!.value.options,
-      inputType
+      id: this.existingTransformerWithOptions ? this.existingTransformerWithOptions.id : '',
+      transformer: this.form.value.transformer,
+      options: this.form.value.options,
+      south: south,
+      inputType: inputType,
+      items: this.selectedItems
     });
+  }
+
+  inputTypeIsSelected(inputType: string) {
+    return this.selectedInputs.map(input => input.inputType).includes(inputType);
+  }
+
+  compareSource(o1: any, o2: any): boolean {
+    if (!o1 || !o2) return o1 === o2;
+    // Compare Input Types
+    if (o1.inputType !== o2.inputType) return false;
+    // Compare South Connectors (handle objects or nulls)
+    const southId1 = o1.south?.id || o1.south; // handle if south is just ID or full object
+    const southId2 = o2.south?.id || o2.south;
+    return southId1 === southId2;
+  }
+
+  compareTransformers(t1: TransformerDTO | null, t2: TransformerDTO | null): boolean {
+    return t1 && t2 ? t1.id === t2.id : t1 === t2;
+  }
+
+  private updateSelectableOutput(source: { inputType: InputType | null; south: SouthConnectorLightDTO | null }) {
+    this.selectableOutputs = this.allTransformers.filter(element => {
+      if (!this.supportedOutputTypes.includes(element.outputType)) {
+        return false;
+      }
+
+      if (element.type === 'standard' && element.functionName === 'ignore') return true;
+      if (element.type === 'standard' && element.functionName === 'iso' && this.supportedOutputTypes.includes(element.inputType))
+        return true;
+
+      if (source.inputType) {
+        return element.inputType === source.inputType;
+      } else if (source.south) {
+        return element.inputType === getAssociatedInputType(source.south.type);
+      }
+
+      return true;
+    });
+  }
+
+  selectItem(event: NgbTypeaheadSelectItemEvent<ItemLightDTO>) {
+    this.selectedItems.push(event.item);
+    event.preventDefault();
+  }
+
+  removeItem(itemToRemove: ItemLightDTO) {
+    this.selectedItems = this.selectedItems.filter(item => item.id !== itemToRemove.id);
   }
 }

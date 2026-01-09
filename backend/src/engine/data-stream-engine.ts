@@ -2,7 +2,7 @@ import pino from 'pino';
 import NorthConnector from '../north/north-connector';
 import SouthConnector from '../south/south-connector';
 import path from 'node:path';
-import { BaseFolders } from '../model/types';
+import { BaseFolders, Instant } from '../model/types';
 import {
   CacheMetadata,
   CacheSearchParam,
@@ -340,14 +340,14 @@ export default class DataStreamEngine {
   async deleteSouth(south: SouthConnectorEntity<SouthSettings, SouthItemSettings>): Promise<void> {
     await this.stopSouth(south.id);
     await this.deleteCacheFolder('south', south.id, south.name);
-    this.updateNorthSubscriptions(south.id);
+    this.updateNorthTransformerBySouth(south.id);
     this.southConnectors.delete(south.id);
     this.southConnectorMetrics.get(south.id)?.destroy();
     this.southConnectorMetrics.delete(south.id);
   }
 
   async createHistoryQuery(historyId: string): Promise<HistoryQuery> {
-    const configuration = this.historyQueryRepository.findHistoryQueryById(historyId)!;
+    const configuration = this.historyQueryRepository.findHistoryById(historyId)!;
     await createBaseFolders(this.getBaseFolderStructure('history', configuration.id), 'history');
     await createFolder(path.resolve(this.cacheFolders.cache, `history-${configuration.id}`, 'south', 'tmp'));
     if (configuration.northType === 'opcua') {
@@ -367,8 +367,14 @@ export default class DataStreamEngine {
         type: configuration.northType,
         settings: configuration.northSettings,
         caching: configuration.caching,
-        subscriptions: [],
-        transformers: configuration.northTransformers
+        transformers: configuration.northTransformers.map(element => ({
+          id: element.id,
+          transformer: element.transformer,
+          options: element.options,
+          inputType: element.inputType,
+          south: undefined,
+          items: element.items
+        }))
       },
       logger,
       path.resolve(this.cacheFolders.cache, `history-${configuration.id}`, 'north'),
@@ -387,7 +393,8 @@ export default class DataStreamEngine {
         settings: configuration.southSettings,
         items: []
       },
-      async (historyId: string, data: OIBusContent) => await north.cacheContent(data, historyId),
+      async (historyId: string, data: OIBusContent, queryTime: Instant, itemIds: Array<string>) =>
+        await north.cacheContent(data, { source: 'south', southId: configuration.id, queryTime, itemIds }),
       logger,
       path.resolve(this.cacheFolders.cache, `history-${configuration.id}`, 'south'),
       this.southCacheRepository,
@@ -412,11 +419,11 @@ export default class DataStreamEngine {
       return;
     }
 
-    historyQuery.historyQueryConfiguration = this.historyQueryRepository.findHistoryQueryById(historyId)!;
+    historyQuery.historyQueryConfiguration = this.historyQueryRepository.findHistoryById(historyId)!;
     historyQuery.finishEvent.removeAllListeners();
     historyQuery.finishEvent.on('finished', async () => {
-      this.historyQueryRepository.updateHistoryQueryStatus(historyId, 'FINISHED');
-      historyQuery.historyQueryConfiguration = this.historyQueryRepository.findHistoryQueryById(historyId)!;
+      this.historyQueryRepository.updateHistoryStatus(historyId, 'FINISHED');
+      historyQuery.historyQueryConfiguration = this.historyQueryRepository.findHistoryById(historyId)!;
       this.oianalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
     });
     // Do not await here, so it can start all connectors without blocking the thread
@@ -444,7 +451,7 @@ export default class DataStreamEngine {
   async stopHistoryQuery(historyId: string): Promise<void> {
     const historyQuery = this.historyQueries.get(historyId);
     if (historyQuery) {
-      historyQuery.historyQueryConfiguration = this.historyQueryRepository.findHistoryQueryById(historyId)!;
+      historyQuery.historyQueryConfiguration = this.historyQueryRepository.findHistoryById(historyId)!;
       await historyQuery.stop();
       historyQuery.finishEvent.removeAllListeners();
     }
@@ -496,10 +503,10 @@ export default class DataStreamEngine {
   /**
    * Method called by South connectors to add content to the appropriate Norths
    */
-  async addContent(southId: string, data: OIBusContent) {
+  async addContent(southId: string, data: OIBusContent, queryTime: Instant, itemIds: Array<string>) {
     for (const north of this.northConnectors.values()) {
-      if (north.isEnabled() && north.isSubscribed(southId)) {
-        await north.cacheContent(data, southId);
+      if (north.isEnabled()) {
+        await north.cacheContent(data, { source: 'south', southId, queryTime, itemIds });
       }
     }
   }
@@ -507,10 +514,10 @@ export default class DataStreamEngine {
   /**
    * Add content to a north connector from the OIBus API endpoints
    */
-  async addExternalContent(northId: string, data: OIBusContent, source: string): Promise<void> {
+  async addExternalContent(northId: string, data: OIBusContent): Promise<void> {
     const north = this.northConnectors.get(northId);
     if (north && north.isEnabled()) {
-      await north.cacheContent(data, source);
+      await north.cacheContent(data, { source: 'api' });
     }
   }
 
@@ -608,9 +615,9 @@ export default class DataStreamEngine {
    * When a South connector is removed, it has also been removed from the subscription list.
    * The North configuration must thus be reloaded
    */
-  updateNorthSubscriptions(southId: string) {
+  updateNorthTransformerBySouth(southId: string) {
     for (const north of this.northConnectors.values()) {
-      if (north.connectorConfiguration.subscriptions.find(element => element.id === southId)) {
+      if (north.connectorConfiguration.transformers.find(element => element.south?.id === southId)) {
         north.connectorConfiguration = this.northConnectorRepository.findNorthById(north.connectorConfiguration.id)!;
       }
     }

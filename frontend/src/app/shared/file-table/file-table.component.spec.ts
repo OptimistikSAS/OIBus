@@ -27,9 +27,7 @@ const unsortedFiles: Array<{ metadataFilename: string; metadata: CacheMetadata }
       contentSize: 4,
       numberOfElement: 0,
       createdAt: testData.constants.dates.DATE_3,
-      contentType: 'any',
-      source: 'south',
-      options: {}
+      contentType: 'any'
     }
   },
   {
@@ -39,9 +37,7 @@ const unsortedFiles: Array<{ metadataFilename: string; metadata: CacheMetadata }
       contentSize: 0,
       numberOfElement: 0,
       createdAt: testData.constants.dates.DATE_2,
-      contentType: 'any',
-      source: 'south',
-      options: {}
+      contentType: 'any'
     }
   },
   {
@@ -51,9 +47,7 @@ const unsortedFiles: Array<{ metadataFilename: string; metadata: CacheMetadata }
       contentSize: 5,
       numberOfElement: 0,
       createdAt: testData.constants.dates.DATE_1,
-      contentType: 'any',
-      source: 'south',
-      options: {}
+      contentType: 'any'
     }
   },
   {
@@ -63,9 +57,7 @@ const unsortedFiles: Array<{ metadataFilename: string; metadata: CacheMetadata }
       contentSize: 3,
       numberOfElement: 0,
       createdAt: testData.constants.dates.DATE_1,
-      contentType: 'any',
-      source: 'south',
-      options: {}
+      contentType: 'any'
     }
   },
   {
@@ -75,9 +67,7 @@ const unsortedFiles: Array<{ metadataFilename: string; metadata: CacheMetadata }
       contentSize: 0,
       numberOfElement: 0,
       createdAt: testData.constants.dates.DATE_2,
-      contentType: 'any',
-      source: 'south',
-      options: {}
+      contentType: 'any'
     }
   },
   {
@@ -87,9 +77,7 @@ const unsortedFiles: Array<{ metadataFilename: string; metadata: CacheMetadata }
       contentSize: 0,
       numberOfElement: 0,
       createdAt: testData.constants.dates.DATE_2,
-      contentType: 'any',
-      source: 'south',
-      options: {}
+      contentType: 'any'
     }
   }
 ];

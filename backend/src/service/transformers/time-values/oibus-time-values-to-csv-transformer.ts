@@ -1,19 +1,18 @@
 import OIBusTransformer from '../oibus-transformer';
 import csv from 'papaparse';
-import { CacheMetadata, OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { CacheMetadata, CacheMetadataSource, OIBusTimeValue } from '../../../../shared/model/engine.model';
 import { ReadStream } from 'node:fs';
 import { pipeline, Readable, Transform } from 'node:stream';
 import { promisify } from 'node:util';
 import { OIBusObjectAttribute } from '../../../../shared/model/form.model';
 import { DateTime } from 'luxon';
-import { convertDelimiter, formatInstant } from '../../utils';
+import { convertDelimiter, formatInstant, sanitizeFilename } from '../../utils';
 
 const pipelineAsync = promisify(pipeline);
 
 interface TransformerOptions {
   filename: string;
   delimiter: 'DOT' | 'SEMI_COLON' | 'COLON' | 'COMMA' | 'NON_BREAKING_SPACE' | 'SLASH' | 'TAB' | 'PIPE';
-  compression: boolean;
   pointIdColumnTitle: string;
   valueColumnTitle: string;
   timestampColumnTitle: string;
@@ -27,7 +26,7 @@ export default class OIBusTimeValuesToCsvTransformer extends OIBusTransformer {
 
   async transform(
     data: ReadStream | Readable,
-    source: string,
+    _source: CacheMetadataSource,
     _filename: string | null
   ): Promise<{ metadata: CacheMetadata; output: string }> {
     // Collect the data from the stream
@@ -44,13 +43,13 @@ export default class OIBusTimeValuesToCsvTransformer extends OIBusTransformer {
     const jsonData: Array<OIBusTimeValue> = JSON.parse(Buffer.concat(chunks).toString('utf-8'));
 
     const metadata: CacheMetadata = {
-      contentFile: `${this.options.filename.replace('@CurrentDate', DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS'))}`,
+      contentFile: sanitizeFilename(
+        this.options.filename.replace('@CurrentDate', DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS'))
+      ),
       contentSize: 0, // It will be set outside the transformer, once the file is written
       createdAt: '', // It will be set outside the transformer, once the file is written
       numberOfElement: 0,
-      contentType: 'any',
-      source,
-      options: {}
+      contentType: 'any'
     };
     return {
       output: csv.unparse(
@@ -115,23 +114,6 @@ export default class OIBusTimeValuesToCsvTransformer extends OIBusTransformer {
             row: 0,
             columns: 4,
             displayInViewMode: false
-          }
-        },
-        {
-          type: 'boolean',
-          key: 'compression',
-          translationKey: 'configuration.oibus.manifest.transformers.time-values-to-csv.compression',
-          defaultValue: false,
-          validators: [
-            {
-              type: 'REQUIRED',
-              arguments: []
-            }
-          ],
-          displayProperties: {
-            row: 0,
-            columns: 4,
-            displayInViewMode: true
           }
         },
         {
@@ -253,7 +235,7 @@ export default class OIBusTimeValuesToCsvTransformer extends OIBusTransformer {
       validators: [],
       displayProperties: {
         visible: true,
-        wrapInBox: false
+        wrapInBox: true
       }
     };
   }

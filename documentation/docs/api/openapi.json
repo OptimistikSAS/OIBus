@@ -226,6 +226,15 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"TransformerLanguage": {
+				"type": "string"
+			},
+			"InputType": {
+				"type": "string"
+			},
+			"OutputType": {
+				"type": "string"
+			},
 			"OIBusObjectAttribute": {
 				"description": "Object-type attribute that groups related attributes.\nUsed to create nested form structures.",
 				"properties": {
@@ -1014,6 +1023,15 @@
 						"example": [
 							"MQTT"
 						]
+					},
+					"operator": {
+						"type": "string",
+						"enum": [
+							"EQUALS",
+							"CONTAINS"
+						],
+						"description": "Operator to use for the condition.\nEQUALS: The referral attribute value must be equal to one of the values.\nCONTAINS: The referral attribute value must contain one of the values (string only).",
+						"example": "EQUALS"
 					}
 				},
 				"required": [
@@ -1062,12 +1080,12 @@
 						"description": "The type of the transformer (always 'custom' for this interface)."
 					},
 					"inputType": {
-						"type": "string",
+						"$ref": "#/components/schemas/InputType",
 						"description": "The input data type that the transformer accepts.",
 						"example": "string"
 					},
 					"outputType": {
-						"type": "string",
+						"$ref": "#/components/schemas/OutputType",
 						"description": "The output data type that the transformer produces.",
 						"example": "number"
 					},
@@ -1089,6 +1107,11 @@
 						"type": "string",
 						"description": "The custom JavaScript code that implements the transformation logic.",
 						"example": "function transform(input) { return parseFloat(input); }"
+					},
+					"language": {
+						"$ref": "#/components/schemas/TransformerLanguage",
+						"description": "The language used",
+						"example": "javascript"
 					}
 				},
 				"required": [
@@ -1099,7 +1122,8 @@
 					"manifest",
 					"name",
 					"description",
-					"customCode"
+					"customCode",
+					"language"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -1121,12 +1145,12 @@
 						"description": "The type of the transformer (always 'standard' for this interface)."
 					},
 					"inputType": {
-						"type": "string",
+						"$ref": "#/components/schemas/InputType",
 						"description": "The input data type that the transformer accepts.",
 						"example": "string"
 					},
 					"outputType": {
-						"type": "string",
+						"$ref": "#/components/schemas/OutputType",
 						"description": "The output data type that the transformer produces.",
 						"example": "number"
 					},
@@ -1255,6 +1279,11 @@
 					"customManifest": {
 						"$ref": "#/components/schemas/OIBusObjectAttribute",
 						"description": "The manifest describing the transformer's input/output structure and attributes."
+					},
+					"language": {
+						"$ref": "#/components/schemas/TransformerLanguage",
+						"description": "The language of the custom code",
+						"example": "javascript"
 					}
 				},
 				"required": [
@@ -1264,7 +1293,44 @@
 					"name",
 					"description",
 					"customCode",
-					"customManifest"
+					"customManifest",
+					"language"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"TransformerTestRequest": {
+				"properties": {
+					"inputData": {
+						"type": "string"
+					},
+					"options": {
+						"additionalProperties": false,
+						"type": "object"
+					}
+				},
+				"required": [
+					"inputData"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"InputTemplate": {
+				"properties": {
+					"type": {
+						"$ref": "#/components/schemas/InputType"
+					},
+					"data": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"type",
+					"data",
+					"description"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -1272,21 +1338,22 @@
 			"OIBusSouthType": {
 				"type": "string",
 				"enum": [
+					"opcua",
+					"mqtt",
+					"modbus",
+					"oianalytics",
 					"ads",
 					"folder-scanner",
 					"ftp",
-					"modbus",
-					"mqtt",
 					"mssql",
 					"mysql",
 					"odbc",
-					"oianalytics",
 					"oledb",
 					"opc",
-					"opcua",
 					"oracle",
 					"osisoft-pi",
 					"postgresql",
+					"rest",
 					"sftp",
 					"sqlite"
 				],
@@ -5492,6 +5559,563 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"SouthRestSettingsThrottling": {
+				"properties": {
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double"
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double"
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"maxReadInterval",
+					"readDelay",
+					"overlap"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthRestSettingsAuthenticationType": {
+				"type": "string",
+				"enum": [
+					"none",
+					"basic",
+					"bearer",
+					"api-key"
+				]
+			},
+			"SouthRestSettingsAuthenticationAddTo": {
+				"type": "string",
+				"enum": [
+					"header",
+					"query-params"
+				]
+			},
+			"SouthRestSettingsAuthentication": {
+				"properties": {
+					"type": {
+						"$ref": "#/components/schemas/SouthRestSettingsAuthenticationType"
+					},
+					"username": {
+						"type": "string"
+					},
+					"password": {
+						"type": "string",
+						"nullable": true
+					},
+					"token": {
+						"type": "string",
+						"nullable": true
+					},
+					"apiKey": {
+						"type": "string"
+					},
+					"apiValue": {
+						"type": "string",
+						"nullable": true
+					},
+					"addTo": {
+						"$ref": "#/components/schemas/SouthRestSettingsAuthenticationAddTo"
+					}
+				},
+				"required": [
+					"type"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthRestSettingsProxy": {
+				"properties": {
+					"useProxy": {
+						"type": "boolean"
+					},
+					"proxyUrl": {
+						"type": "string"
+					},
+					"proxyUsername": {
+						"type": "string",
+						"nullable": true
+					},
+					"proxyPassword": {
+						"type": "string",
+						"nullable": true
+					}
+				},
+				"required": [
+					"useProxy"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthRestSettingsTestMethod": {
+				"type": "string",
+				"enum": [
+					"GET",
+					"POST",
+					"PUT"
+				]
+			},
+			"SouthRestSettingsTest": {
+				"properties": {
+					"method": {
+						"$ref": "#/components/schemas/SouthRestSettingsTestMethod"
+					},
+					"endpoint": {
+						"type": "string"
+					},
+					"body": {
+						"type": "string",
+						"nullable": true
+					},
+					"successCode": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"method",
+					"endpoint",
+					"successCode"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthRestSettings": {
+				"properties": {
+					"throttling": {
+						"$ref": "#/components/schemas/SouthRestSettingsThrottling"
+					},
+					"host": {
+						"type": "string"
+					},
+					"acceptUnauthorized": {
+						"type": "boolean"
+					},
+					"timeout": {
+						"type": "number",
+						"format": "double"
+					},
+					"authentication": {
+						"$ref": "#/components/schemas/SouthRestSettingsAuthentication"
+					},
+					"proxy": {
+						"$ref": "#/components/schemas/SouthRestSettingsProxy"
+					},
+					"test": {
+						"$ref": "#/components/schemas/SouthRestSettingsTest"
+					}
+				},
+				"required": [
+					"throttling",
+					"host",
+					"acceptUnauthorized",
+					"timeout",
+					"authentication",
+					"proxy",
+					"test"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthRestItemSettingsMethod": {
+				"type": "string",
+				"enum": [
+					"GET",
+					"POST",
+					"PUT",
+					"PATCH",
+					"DELETE"
+				]
+			},
+			"SouthRestItemSettingsReturnType": {
+				"type": "string",
+				"enum": [
+					"file",
+					"body"
+				]
+			},
+			"SouthRestItemSettingsQueryParamsDateTimeInputType": {
+				"type": "string",
+				"enum": [
+					"string",
+					"iso-string",
+					"unix-epoch",
+					"unix-epoch-ms"
+				]
+			},
+			"SouthRestItemSettingsQueryParamsDateTimeInput": {
+				"properties": {
+					"type": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthRestItemSettingsQueryParamsDateTimeInputType"
+							}
+						],
+						"nullable": true
+					},
+					"timezone": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Timezone"
+							}
+						],
+						"nullable": true
+					},
+					"format": {
+						"type": "string",
+						"nullable": true
+					}
+				},
+				"required": [
+					"type"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthRestItemSettingsQueryParams": {
+				"properties": {
+					"key": {
+						"type": "string"
+					},
+					"value": {
+						"type": "string"
+					},
+					"dateTimeInput": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthRestItemSettingsQueryParamsDateTimeInput"
+							}
+						],
+						"nullable": true
+					}
+				},
+				"required": [
+					"key",
+					"value"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthRestItemSettingsHeadersDateTimeType": {
+				"type": "string",
+				"enum": [
+					"string",
+					"iso-string",
+					"unix-epoch",
+					"unix-epoch-ms"
+				]
+			},
+			"SouthRestItemSettingsHeaders": {
+				"properties": {
+					"key": {
+						"type": "string"
+					},
+					"value": {
+						"type": "string"
+					},
+					"dateTimeType": {
+						"$ref": "#/components/schemas/SouthRestItemSettingsHeadersDateTimeType"
+					},
+					"dateTimeTimezone": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Timezone"
+							}
+						],
+						"nullable": true
+					},
+					"dateTimeFormat": {
+						"type": "string",
+						"nullable": true
+					}
+				},
+				"required": [
+					"key",
+					"value"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthRestItemSettingsBodyDateTimeInputType": {
+				"type": "string",
+				"enum": [
+					"string",
+					"iso-string",
+					"unix-epoch",
+					"unix-epoch-ms"
+				]
+			},
+			"SouthRestItemSettingsBodyDateTimeInput": {
+				"properties": {
+					"type": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthRestItemSettingsBodyDateTimeInputType"
+							}
+						],
+						"nullable": true
+					},
+					"timezone": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Timezone"
+							}
+						],
+						"nullable": true
+					},
+					"format": {
+						"type": "string",
+						"nullable": true
+					}
+				},
+				"required": [
+					"type"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthRestItemSettingsBody": {
+				"properties": {
+					"content": {
+						"type": "string",
+						"nullable": true
+					},
+					"dateTimeInput": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthRestItemSettingsBodyDateTimeInput"
+							}
+						],
+						"nullable": true
+					}
+				},
+				"required": [
+					"content"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthRestItemSettingsTrackingInstantDateTimeInputType": {
+				"type": "string",
+				"enum": [
+					"string",
+					"iso-string",
+					"unix-epoch",
+					"unix-epoch-ms"
+				]
+			},
+			"SouthRestItemSettingsTrackingInstantDateTimeInput": {
+				"properties": {
+					"type": {
+						"$ref": "#/components/schemas/SouthRestItemSettingsTrackingInstantDateTimeInputType"
+					},
+					"timezone": {
+						"$ref": "#/components/schemas/Timezone"
+					},
+					"format": {
+						"type": "string"
+					},
+					"locale": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"type"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthRestItemSettingsTrackingInstant": {
+				"properties": {
+					"trackInstant": {
+						"type": "boolean"
+					},
+					"jsonPath": {
+						"type": "string"
+					},
+					"dateTimeInput": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthRestItemSettingsTrackingInstantDateTimeInput"
+							}
+						],
+						"nullable": true
+					}
+				},
+				"required": [
+					"trackInstant"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthRestItemSettings": {
+				"properties": {
+					"method": {
+						"$ref": "#/components/schemas/SouthRestItemSettingsMethod"
+					},
+					"endpoint": {
+						"type": "string"
+					},
+					"returnType": {
+						"$ref": "#/components/schemas/SouthRestItemSettingsReturnType"
+					},
+					"queryParams": {
+						"items": {
+							"$ref": "#/components/schemas/SouthRestItemSettingsQueryParams"
+						},
+						"type": "array"
+					},
+					"headers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthRestItemSettingsHeaders"
+						},
+						"type": "array"
+					},
+					"body": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthRestItemSettingsBody"
+							}
+						],
+						"nullable": true
+					},
+					"trackingInstant": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthRestItemSettingsTrackingInstant"
+							}
+						],
+						"nullable": true
+					}
+				},
+				"required": [
+					"method",
+					"endpoint",
+					"returnType",
+					"queryParams",
+					"headers"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthConnectorItemTypedDTO_SouthRestItemSettings_": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the entity.",
+						"example": "entity123"
+					},
+					"creationDate": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was created.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"lastEditInstant": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was last edited.",
+						"example": "2023-10-31T13:45:00.123Z"
+					},
+					"name": {
+						"type": "string",
+						"description": "The name of the item.",
+						"example": "Temperature Logs"
+					},
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether this item is enabled and should be collected.",
+						"example": true
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthRestItemSettings",
+						"description": "Item-specific settings for data collection."
+					},
+					"scanMode": {
+						"$ref": "#/components/schemas/ScanModeDTO",
+						"description": "The scan mode configuration for this item."
+					}
+				},
+				"required": [
+					"id",
+					"name",
+					"enabled",
+					"settings",
+					"scanMode"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthConnectorTypedDTO_rest.SouthRestSettings.SouthRestItemSettings_": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the entity.",
+						"example": "entity123"
+					},
+					"creationDate": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was created.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"lastEditInstant": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was last edited.",
+						"example": "2023-10-31T13:45:00.123Z"
+					},
+					"name": {
+						"type": "string",
+						"description": "The name of the South connector.",
+						"example": "Production Data Files"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"rest"
+						],
+						"nullable": false,
+						"description": "The type of the South connector.",
+						"example": "folder-scanner"
+					},
+					"description": {
+						"type": "string",
+						"description": "Description of the South connector's purpose.",
+						"example": "Scans production data CSV files"
+					},
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether the South connector is enabled and active.",
+						"example": true
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthRestSettings",
+						"description": "Configuration settings specific to this South connector type."
+					},
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/SouthConnectorItemTypedDTO_SouthRestItemSettings_"
+						},
+						"type": "array",
+						"description": "List of items (data points) configured for this connector."
+					}
+				},
+				"required": [
+					"id",
+					"name",
+					"type",
+					"description",
+					"enabled",
+					"settings",
+					"items"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"SouthSFTPSettingsAuthentication": {
 				"type": "string",
 				"enum": [
@@ -5988,6 +6612,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/SouthConnectorTypedDTO_postgresql.SouthPostgreSQLSettings.SouthPostgreSQLItemSettings_"
+					},
+					{
+						"$ref": "#/components/schemas/SouthConnectorTypedDTO_rest.SouthRestSettings.SouthRestItemSettings_"
 					},
 					{
 						"$ref": "#/components/schemas/SouthConnectorTypedDTO_sftp.SouthSFTPSettings.SouthSFTPItemSettings_"
@@ -7423,6 +8050,101 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"SouthConnectorItemCommandTypedDTO_SouthRestItemSettings_": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the item (null when creating a new item).",
+						"example": null
+					},
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether this item should be enabled.",
+						"example": true
+					},
+					"name": {
+						"type": "string",
+						"description": "The name of the item.",
+						"example": "Temperature Logs"
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthRestItemSettings",
+						"description": "Item-specific settings for data collection."
+					},
+					"scanModeId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the scan mode to use for this item.\nNull when the scan mode should be determined by the system.",
+						"example": "periodic-5min"
+					},
+					"scanModeName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the scan mode to use when ID is not available.\nNull when not specifying by name.",
+						"example": null
+					}
+				},
+				"required": [
+					"id",
+					"enabled",
+					"name",
+					"settings",
+					"scanModeId",
+					"scanModeName"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthConnectorCommandTypedDTO_rest.SouthRestSettings.SouthRestItemSettings_": {
+				"properties": {
+					"name": {
+						"type": "string",
+						"description": "The name of the South connector.",
+						"example": "Production Data Files"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"rest"
+						],
+						"nullable": false,
+						"description": "The type of the South connector.",
+						"example": "folder-scanner"
+					},
+					"description": {
+						"type": "string",
+						"description": "Description of the South connector's purpose.",
+						"example": "Scans production data CSV files"
+					},
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether the South connector should be enabled.",
+						"example": true
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthRestSettings",
+						"description": "Configuration settings specific to this South connector type."
+					},
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/SouthConnectorItemCommandTypedDTO_SouthRestItemSettings_"
+						},
+						"type": "array",
+						"description": "List of items (data points) to configure for this connector."
+					}
+				},
+				"required": [
+					"name",
+					"type",
+					"description",
+					"enabled",
+					"settings",
+					"items"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"SouthConnectorItemCommandTypedDTO_SouthSFTPItemSettings_": {
 				"properties": {
 					"id": {
@@ -7661,6 +8383,9 @@
 						"$ref": "#/components/schemas/SouthConnectorCommandTypedDTO_postgresql.SouthPostgreSQLSettings.SouthPostgreSQLItemSettings_"
 					},
 					{
+						"$ref": "#/components/schemas/SouthConnectorCommandTypedDTO_rest.SouthRestSettings.SouthRestItemSettings_"
+					},
+					{
 						"$ref": "#/components/schemas/SouthConnectorCommandTypedDTO_sftp.SouthSFTPSettings.SouthSFTPItemSettings_"
 					},
 					{
@@ -7715,6 +8440,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/SouthPostgreSQLSettings"
+					},
+					{
+						"$ref": "#/components/schemas/SouthRestSettings"
 					},
 					{
 						"$ref": "#/components/schemas/SouthSFTPSettings"
@@ -7956,6 +8684,9 @@
 						"$ref": "#/components/schemas/SouthPostgreSQLItemSettings"
 					},
 					{
+						"$ref": "#/components/schemas/SouthRestItemSettings"
+					},
+					{
 						"$ref": "#/components/schemas/SouthSFTPItemSettings"
 					},
 					{
@@ -8059,6 +8790,9 @@
 						"$ref": "#/components/schemas/SouthConnectorItemTypedDTO_SouthPostgreSQLItemSettings_"
 					},
 					{
+						"$ref": "#/components/schemas/SouthConnectorItemTypedDTO_SouthRestItemSettings_"
+					},
+					{
 						"$ref": "#/components/schemas/SouthConnectorItemTypedDTO_SouthSFTPItemSettings_"
 					},
 					{
@@ -8158,6 +8892,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/SouthConnectorItemCommandTypedDTO_SouthPostgreSQLItemSettings_"
+					},
+					{
+						"$ref": "#/components/schemas/SouthConnectorItemCommandTypedDTO_SouthRestItemSettings_"
 					},
 					{
 						"$ref": "#/components/schemas/SouthConnectorItemCommandTypedDTO_SouthSFTPItemSettings_"
@@ -8395,6 +9132,46 @@
 					},
 					"commandPermissions": {
 						"properties": {
+							"moveNorthCacheContent": {
+								"type": "boolean",
+								"description": "Permission to move cache content.",
+								"example": true
+							},
+							"removeNorthCacheContent": {
+								"type": "boolean",
+								"description": "Permission to remove cache content.",
+								"example": true
+							},
+							"getNorthCacheFileContent": {
+								"type": "boolean",
+								"description": "Permission to get cache file content.",
+								"example": true
+							},
+							"searchNorthCacheContent": {
+								"type": "boolean",
+								"description": "Permission to search cache content.",
+								"example": true
+							},
+							"moveHistoryCacheContent": {
+								"type": "boolean",
+								"description": "Permission to move cache content.",
+								"example": true
+							},
+							"removeHistoryCacheContent": {
+								"type": "boolean",
+								"description": "Permission to remove cache content.",
+								"example": true
+							},
+							"getHistoryCacheFileContent": {
+								"type": "boolean",
+								"description": "Permission to get cache file content.",
+								"example": true
+							},
+							"searchHistoryCacheContent": {
+								"type": "boolean",
+								"description": "Permission to search cache content.",
+								"example": true
+							},
 							"setpoint": {
 								"type": "boolean",
 								"description": "Permission to apply setpoints.",
@@ -8527,6 +9304,14 @@
 							}
 						},
 						"required": [
+							"moveNorthCacheContent",
+							"removeNorthCacheContent",
+							"getNorthCacheFileContent",
+							"searchNorthCacheContent",
+							"moveHistoryCacheContent",
+							"removeHistoryCacheContent",
+							"getHistoryCacheFileContent",
+							"searchHistoryCacheContent",
 							"setpoint",
 							"deleteNorth",
 							"updateNorth",
@@ -8633,6 +9418,46 @@
 					},
 					"commandPermissions": {
 						"properties": {
+							"moveNorthCacheContent": {
+								"type": "boolean",
+								"description": "Permission to move cache content.",
+								"example": true
+							},
+							"removeNorthCacheContent": {
+								"type": "boolean",
+								"description": "Permission to remove cache content.",
+								"example": true
+							},
+							"getNorthCacheFileContent": {
+								"type": "boolean",
+								"description": "Permission to get cache file content.",
+								"example": true
+							},
+							"searchNorthCacheContent": {
+								"type": "boolean",
+								"description": "Permission to search cache content.",
+								"example": true
+							},
+							"moveHistoryCacheContent": {
+								"type": "boolean",
+								"description": "Permission to move cache content.",
+								"example": true
+							},
+							"removeHistoryCacheContent": {
+								"type": "boolean",
+								"description": "Permission to remove cache content.",
+								"example": true
+							},
+							"getHistoryCacheFileContent": {
+								"type": "boolean",
+								"description": "Permission to get cache file content.",
+								"example": true
+							},
+							"searchHistoryCacheContent": {
+								"type": "boolean",
+								"description": "Permission to search cache content.",
+								"example": true
+							},
 							"setpoint": {
 								"type": "boolean",
 								"description": "Permission to apply setpoints.",
@@ -8795,6 +9620,14 @@
 							}
 						},
 						"required": [
+							"moveNorthCacheContent",
+							"removeNorthCacheContent",
+							"getNorthCacheFileContent",
+							"searchNorthCacheContent",
+							"moveHistoryCacheContent",
+							"removeHistoryCacheContent",
+							"getHistoryCacheFileContent",
+							"searchHistoryCacheContent",
 							"setpoint",
 							"testNorthConnection",
 							"deleteNorth",
@@ -8882,7 +9715,15 @@
 					"test-history-query-south-connection",
 					"test-history-query-south-item",
 					"create-or-update-history-query-south-items-from-csv",
-					"update-history-query-status"
+					"update-history-query-status",
+					"search-north-cache-content",
+					"search-history-cache-content",
+					"get-north-cache-file-content",
+					"get-history-cache-file-content",
+					"remove-north-cache-content",
+					"remove-history-cache-content",
+					"move-north-cache-content",
+					"move-history-cache-content"
 				],
 				"description": "Type representing an OIBus command type."
 			},
@@ -10736,6 +11577,36 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"ItemLightDTO": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the entity.",
+						"example": "entity123"
+					},
+					"creationDate": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was created.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"lastEditInstant": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was last edited.",
+						"example": "2023-10-31T13:45:00.123Z"
+					},
+					"name": {
+						"type": "string",
+						"description": "The name of the item.",
+						"example": "Temperature Logs"
+					}
+				},
+				"required": [
+					"id",
+					"name"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"Record_string.unknown_": {
 				"properties": {},
 				"additionalProperties": {},
@@ -10745,15 +11616,32 @@
 			"TransformerIdWithOptions": {
 				"description": "Data Transfer Object for referencing a transformer by ID with its options.\nUsed when only the transformer ID is needed along with configuration options.",
 				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The id used to match a transformer with options",
+						"example": "id"
+					},
 					"inputType": {
 						"type": "string",
 						"description": "The input data type that the transformer accepts.",
-						"example": "string"
+						"example": "time-values"
 					},
 					"transformerId": {
 						"type": "string",
 						"description": "The unique identifier of the transformer to be applied.",
 						"example": "customTransformer123"
+					},
+					"southId": {
+						"type": "string",
+						"description": "The south associated to the transformer",
+						"example": "southId123"
+					},
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/ItemLightDTO"
+						},
+						"type": "array",
+						"description": "The list of items associated to the transformer"
 					},
 					"options": {
 						"$ref": "#/components/schemas/Record_string.unknown_",
@@ -10765,8 +11653,10 @@
 					}
 				},
 				"required": [
+					"id",
 					"inputType",
 					"transformerId",
+					"items",
 					"options"
 				],
 				"type": "object",
@@ -10928,16 +11818,6 @@
 						"type": "object",
 						"description": "The caching configuration for the North connector."
 					},
-					"subscriptions": {
-						"items": {
-							"type": "string"
-						},
-						"type": "array",
-						"description": "The list of subscribed South connector IDs.",
-						"example": [
-							"south-test-1"
-						]
-					},
 					"transformers": {
 						"items": {
 							"$ref": "#/components/schemas/TransformerIdWithOptions"
@@ -10954,7 +11834,6 @@
 					"enabled",
 					"settings",
 					"caching",
-					"subscriptions",
 					"transformers"
 				],
 				"type": "object",
@@ -11194,16 +12073,6 @@
 						"type": "object",
 						"description": "The caching configuration for the North connector."
 					},
-					"subscriptions": {
-						"items": {
-							"type": "string"
-						},
-						"type": "array",
-						"description": "The list of subscribed South connector IDs.",
-						"example": [
-							"south-test-1"
-						]
-					},
 					"transformers": {
 						"items": {
 							"$ref": "#/components/schemas/TransformerIdWithOptions"
@@ -11220,7 +12089,6 @@
 					"enabled",
 					"settings",
 					"caching",
-					"subscriptions",
 					"transformers"
 				],
 				"type": "object",
@@ -11394,16 +12262,6 @@
 						"type": "object",
 						"description": "The caching configuration for the North connector."
 					},
-					"subscriptions": {
-						"items": {
-							"type": "string"
-						},
-						"type": "array",
-						"description": "The list of subscribed South connector IDs.",
-						"example": [
-							"south-test-1"
-						]
-					},
 					"transformers": {
 						"items": {
 							"$ref": "#/components/schemas/TransformerIdWithOptions"
@@ -11420,7 +12278,6 @@
 					"enabled",
 					"settings",
 					"caching",
-					"subscriptions",
 					"transformers"
 				],
 				"type": "object",
@@ -11604,16 +12461,6 @@
 						"type": "object",
 						"description": "The caching configuration for the North connector."
 					},
-					"subscriptions": {
-						"items": {
-							"type": "string"
-						},
-						"type": "array",
-						"description": "The list of subscribed South connector IDs.",
-						"example": [
-							"south-test-1"
-						]
-					},
 					"transformers": {
 						"items": {
 							"$ref": "#/components/schemas/TransformerIdWithOptions"
@@ -11630,7 +12477,6 @@
 					"enabled",
 					"settings",
 					"caching",
-					"subscriptions",
 					"transformers"
 				],
 				"type": "object",
@@ -11854,16 +12700,6 @@
 						"type": "object",
 						"description": "The caching configuration for the North connector."
 					},
-					"subscriptions": {
-						"items": {
-							"type": "string"
-						},
-						"type": "array",
-						"description": "The list of subscribed South connector IDs.",
-						"example": [
-							"south-test-1"
-						]
-					},
 					"transformers": {
 						"items": {
 							"$ref": "#/components/schemas/TransformerIdWithOptions"
@@ -11880,7 +12716,6 @@
 					"enabled",
 					"settings",
 					"caching",
-					"subscriptions",
 					"transformers"
 				],
 				"type": "object",
@@ -12123,16 +12958,6 @@
 						"type": "object",
 						"description": "The caching configuration for the North connector."
 					},
-					"subscriptions": {
-						"items": {
-							"type": "string"
-						},
-						"type": "array",
-						"description": "The list of subscribed South connector IDs.",
-						"example": [
-							"south-test-1"
-						]
-					},
 					"transformers": {
 						"items": {
 							"$ref": "#/components/schemas/TransformerIdWithOptions"
@@ -12149,7 +12974,6 @@
 					"enabled",
 					"settings",
 					"caching",
-					"subscriptions",
 					"transformers"
 				],
 				"type": "object",
@@ -12409,16 +13233,6 @@
 						"type": "object",
 						"description": "The caching configuration for the North connector."
 					},
-					"subscriptions": {
-						"items": {
-							"type": "string"
-						},
-						"type": "array",
-						"description": "The list of subscribed South connector IDs.",
-						"example": [
-							"south-test-1"
-						]
-					},
 					"transformers": {
 						"items": {
 							"$ref": "#/components/schemas/TransformerIdWithOptions"
@@ -12435,7 +13249,6 @@
 					"enabled",
 					"settings",
 					"caching",
-					"subscriptions",
 					"transformers"
 				],
 				"type": "object",
@@ -12686,16 +13499,6 @@
 						"type": "object",
 						"description": "The caching configuration for the North connector."
 					},
-					"subscriptions": {
-						"items": {
-							"type": "string"
-						},
-						"type": "array",
-						"description": "The list of subscribed South connector IDs.",
-						"example": [
-							"south-test-1"
-						]
-					},
 					"transformers": {
 						"items": {
 							"$ref": "#/components/schemas/TransformerIdWithOptions"
@@ -12712,18 +13515,97 @@
 					"enabled",
 					"settings",
 					"caching",
-					"subscriptions",
 					"transformers"
 				],
 				"type": "object",
 				"additionalProperties": false
 			},
-			"NorthRESTSettingsAuthType": {
+			"NorthRESTSettingsMethod": {
 				"type": "string",
 				"enum": [
-					"basic",
-					"bearer"
+					"POST",
+					"PUT",
+					"PATCH"
 				]
+			},
+			"NorthRESTSettingsSendAs": {
+				"type": "string",
+				"enum": [
+					"file",
+					"body"
+				]
+			},
+			"NorthRESTSettingsAuthenticationType": {
+				"type": "string",
+				"enum": [
+					"none",
+					"basic",
+					"bearer",
+					"api-key"
+				]
+			},
+			"NorthRESTSettingsAuthenticationAddTo": {
+				"type": "string",
+				"enum": [
+					"header",
+					"query-params"
+				]
+			},
+			"NorthRESTSettingsAuthentication": {
+				"properties": {
+					"type": {
+						"$ref": "#/components/schemas/NorthRESTSettingsAuthenticationType"
+					},
+					"username": {
+						"type": "string"
+					},
+					"password": {
+						"type": "string",
+						"nullable": true
+					},
+					"token": {
+						"type": "string",
+						"nullable": true
+					},
+					"apiKey": {
+						"type": "string"
+					},
+					"apiValue": {
+						"type": "string",
+						"nullable": true
+					},
+					"addTo": {
+						"$ref": "#/components/schemas/NorthRESTSettingsAuthenticationAddTo"
+					}
+				},
+				"required": [
+					"type"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"NorthRESTSettingsProxy": {
+				"properties": {
+					"useProxy": {
+						"type": "boolean"
+					},
+					"proxyUrl": {
+						"type": "string"
+					},
+					"proxyUsername": {
+						"type": "string",
+						"nullable": true
+					},
+					"proxyPassword": {
+						"type": "string",
+						"nullable": true
+					}
+				},
+				"required": [
+					"useProxy"
+				],
+				"type": "object",
+				"additionalProperties": false
 			},
 			"NorthRESTSettingsQueryParams": {
 				"properties": {
@@ -12741,6 +13623,55 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"NorthRESTSettingsHeaders": {
+				"properties": {
+					"key": {
+						"type": "string"
+					},
+					"value": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"key",
+					"value"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"NorthRESTSettingsTestTestMethod": {
+				"type": "string",
+				"enum": [
+					"GET",
+					"POST",
+					"PUT"
+				]
+			},
+			"NorthRESTSettingsTest": {
+				"properties": {
+					"testMethod": {
+						"$ref": "#/components/schemas/NorthRESTSettingsTestTestMethod"
+					},
+					"testEndpoint": {
+						"type": "string"
+					},
+					"body": {
+						"type": "string",
+						"nullable": true
+					},
+					"testSuccessCode": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"testMethod",
+					"testEndpoint",
+					"testSuccessCode"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"NorthRESTSettings": {
 				"properties": {
 					"host": {
@@ -12749,61 +13680,58 @@
 					"acceptUnauthorized": {
 						"type": "boolean"
 					},
-					"endpoint": {
-						"type": "string"
+					"method": {
+						"$ref": "#/components/schemas/NorthRESTSettingsMethod"
 					},
-					"testPath": {
+					"endpoint": {
 						"type": "string"
 					},
 					"timeout": {
 						"type": "number",
 						"format": "double"
 					},
-					"authType": {
-						"$ref": "#/components/schemas/NorthRESTSettingsAuthType"
+					"sendAs": {
+						"$ref": "#/components/schemas/NorthRESTSettingsSendAs"
 					},
-					"bearerAuthToken": {
-						"type": "string",
-						"nullable": true
+					"successCode": {
+						"type": "number",
+						"format": "double"
 					},
-					"basicAuthUsername": {
-						"type": "string"
+					"authentication": {
+						"$ref": "#/components/schemas/NorthRESTSettingsAuthentication"
 					},
-					"basicAuthPassword": {
-						"type": "string",
-						"nullable": true
+					"proxy": {
+						"$ref": "#/components/schemas/NorthRESTSettingsProxy"
 					},
 					"queryParams": {
 						"items": {
 							"$ref": "#/components/schemas/NorthRESTSettingsQueryParams"
 						},
-						"type": "array",
-						"nullable": true
+						"type": "array"
 					},
-					"useProxy": {
-						"type": "boolean"
+					"headers": {
+						"items": {
+							"$ref": "#/components/schemas/NorthRESTSettingsHeaders"
+						},
+						"type": "array"
 					},
-					"proxyUrl": {
-						"type": "string"
-					},
-					"proxyUsername": {
-						"type": "string",
-						"nullable": true
-					},
-					"proxyPassword": {
-						"type": "string",
-						"nullable": true
+					"test": {
+						"$ref": "#/components/schemas/NorthRESTSettingsTest"
 					}
 				},
 				"required": [
 					"host",
 					"acceptUnauthorized",
+					"method",
 					"endpoint",
-					"testPath",
 					"timeout",
-					"authType",
+					"sendAs",
+					"successCode",
+					"authentication",
+					"proxy",
 					"queryParams",
-					"useProxy"
+					"headers",
+					"test"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -12964,16 +13892,6 @@
 						"type": "object",
 						"description": "The caching configuration for the North connector."
 					},
-					"subscriptions": {
-						"items": {
-							"type": "string"
-						},
-						"type": "array",
-						"description": "The list of subscribed South connector IDs.",
-						"example": [
-							"south-test-1"
-						]
-					},
 					"transformers": {
 						"items": {
 							"$ref": "#/components/schemas/TransformerIdWithOptions"
@@ -12990,7 +13908,6 @@
 					"enabled",
 					"settings",
 					"caching",
-					"subscriptions",
 					"transformers"
 				],
 				"type": "object",
@@ -13209,16 +14126,6 @@
 						"type": "object",
 						"description": "The caching configuration for the North connector."
 					},
-					"subscriptions": {
-						"items": {
-							"type": "string"
-						},
-						"type": "array",
-						"description": "The list of subscribed South connector IDs.",
-						"example": [
-							"south-test-1"
-						]
-					},
 					"transformers": {
 						"items": {
 							"$ref": "#/components/schemas/TransformerIdWithOptions"
@@ -13235,7 +14142,6 @@
 					"enabled",
 					"settings",
 					"caching",
-					"subscriptions",
 					"transformers"
 				],
 				"type": "object",
@@ -13687,6 +14593,53 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"Pick_TransformerIdWithOptions.Exclude_keyofTransformerIdWithOptions.southId__": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The id used to match a transformer with options",
+						"example": "id"
+					},
+					"inputType": {
+						"type": "string",
+						"description": "The input data type that the transformer accepts.",
+						"example": "time-values"
+					},
+					"transformerId": {
+						"type": "string",
+						"description": "The unique identifier of the transformer to be applied.",
+						"example": "customTransformer123"
+					},
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/ItemLightDTO"
+						},
+						"type": "array",
+						"description": "The list of items associated to the transformer"
+					},
+					"options": {
+						"$ref": "#/components/schemas/Record_string.unknown_",
+						"description": "Configuration options for the transformer.",
+						"example": {
+							"precision": 2,
+							"defaultValue": 0
+						}
+					}
+				},
+				"required": [
+					"id",
+					"inputType",
+					"transformerId",
+					"items",
+					"options"
+				],
+				"type": "object",
+				"description": "From T, pick a set of properties whose keys are in the union K"
+			},
+			"Omit_TransformerIdWithOptions.southId_": {
+				"$ref": "#/components/schemas/Pick_TransformerIdWithOptions.Exclude_keyofTransformerIdWithOptions.southId__",
+				"description": "Construct a type with the properties of T except for those in type K."
+			},
 			"HistoryQueryCommandCommonDTO": {
 				"properties": {
 					"name": {
@@ -13800,7 +14753,7 @@
 					},
 					"northTransformers": {
 						"items": {
-							"$ref": "#/components/schemas/TransformerIdWithOptions"
+							"$ref": "#/components/schemas/Omit_TransformerIdWithOptions.southId_"
 						},
 						"type": "array"
 					}
@@ -14596,6 +15549,58 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"HistoryQueryItemCommandTypedDTO_SouthRestItemSettings_": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"nullable": true
+					},
+					"name": {
+						"type": "string"
+					},
+					"enabled": {
+						"type": "boolean"
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthRestItemSettings"
+					}
+				},
+				"required": [
+					"id",
+					"name",
+					"enabled",
+					"settings"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"HistoryQuerySouthCommandTypedDTO_rest.SouthRestSettings.SouthRestItemSettings_": {
+				"properties": {
+					"southType": {
+						"type": "string",
+						"enum": [
+							"rest"
+						],
+						"nullable": false
+					},
+					"southSettings": {
+						"$ref": "#/components/schemas/SouthRestSettings"
+					},
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/HistoryQueryItemCommandTypedDTO_SouthRestItemSettings_"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"southType",
+					"southSettings",
+					"items"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"HistoryQueryItemCommandTypedDTO_SouthSFTPItemSettings_": {
 				"properties": {
 					"id": {
@@ -14951,6 +15956,9 @@
 							},
 							{
 								"$ref": "#/components/schemas/HistoryQuerySouthCommandTypedDTO_postgresql.SouthPostgreSQLSettings.SouthPostgreSQLItemSettings_"
+							},
+							{
+								"$ref": "#/components/schemas/HistoryQuerySouthCommandTypedDTO_rest.SouthRestSettings.SouthRestItemSettings_"
 							},
 							{
 								"$ref": "#/components/schemas/HistoryQuerySouthCommandTypedDTO_sftp.SouthSFTPSettings.SouthSFTPItemSettings_"
@@ -15464,6 +16472,9 @@
 						"$ref": "#/components/schemas/HistoryQueryItemCommandTypedDTO_SouthPostgreSQLItemSettings_"
 					},
 					{
+						"$ref": "#/components/schemas/HistoryQueryItemCommandTypedDTO_SouthRestItemSettings_"
+					},
+					{
 						"$ref": "#/components/schemas/HistoryQueryItemCommandTypedDTO_SouthSFTPItemSettings_"
 					},
 					{
@@ -15888,6 +16899,762 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"CacheSearchParam": {
+				"description": "Parameters for searching the cache.",
+				"properties": {
+					"start": {
+						"type": "string",
+						"description": "The start time for the search.",
+						"example": "2023-01-01T00:00:00Z"
+					},
+					"end": {
+						"type": "string",
+						"description": "The end time for the search.",
+						"example": "2023-01-02T00:00:00Z"
+					},
+					"nameContains": {
+						"type": "string",
+						"description": "A string that the content name must contain.",
+						"example": "example"
+					}
+				},
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OIBusSearchNorthCacheContentCommandDTO": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the command.",
+						"example": "cmd123"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"search-north-cache-content"
+						],
+						"nullable": false,
+						"description": "The type of the command."
+					},
+					"status": {
+						"$ref": "#/components/schemas/OIBusCommandStatus",
+						"description": "The current status of the command."
+					},
+					"ack": {
+						"type": "boolean",
+						"description": "Whether the command has been acknowledged.",
+						"example": true
+					},
+					"retrievedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was retrieved.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"completedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was completed.",
+						"example": "2023-10-31T12:35:56.789Z"
+					},
+					"result": {
+						"type": "string",
+						"nullable": true,
+						"description": "The result of the command execution.",
+						"example": "Success"
+					},
+					"northConnectorId": {
+						"type": "string"
+					},
+					"commandContent": {
+						"properties": {
+							"folder": {
+								"type": "string",
+								"enum": [
+									"cache",
+									"archive",
+									"error"
+								]
+							},
+							"searchParams": {
+								"$ref": "#/components/schemas/CacheSearchParam"
+							}
+						},
+						"required": [
+							"folder",
+							"searchParams"
+						],
+						"type": "object"
+					}
+				},
+				"required": [
+					"id",
+					"type",
+					"status",
+					"ack",
+					"retrievedDate",
+					"completedDate",
+					"result",
+					"northConnectorId",
+					"commandContent"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OIBusSearchHistoryCacheContentCommandDTO": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the command.",
+						"example": "cmd123"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"search-history-cache-content"
+						],
+						"nullable": false,
+						"description": "The type of the command."
+					},
+					"status": {
+						"$ref": "#/components/schemas/OIBusCommandStatus",
+						"description": "The current status of the command."
+					},
+					"ack": {
+						"type": "boolean",
+						"description": "Whether the command has been acknowledged.",
+						"example": true
+					},
+					"retrievedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was retrieved.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"completedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was completed.",
+						"example": "2023-10-31T12:35:56.789Z"
+					},
+					"result": {
+						"type": "string",
+						"nullable": true,
+						"description": "The result of the command execution.",
+						"example": "Success"
+					},
+					"historyQueryId": {
+						"type": "string"
+					},
+					"commandContent": {
+						"properties": {
+							"folder": {
+								"type": "string",
+								"enum": [
+									"cache",
+									"archive",
+									"error"
+								]
+							},
+							"searchParams": {
+								"$ref": "#/components/schemas/CacheSearchParam"
+							}
+						},
+						"required": [
+							"folder",
+							"searchParams"
+						],
+						"type": "object"
+					}
+				},
+				"required": [
+					"id",
+					"type",
+					"status",
+					"ack",
+					"retrievedDate",
+					"completedDate",
+					"result",
+					"historyQueryId",
+					"commandContent"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OIBusGetNorthCacheFileContentCommandDTO": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the command.",
+						"example": "cmd123"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"get-north-cache-file-content"
+						],
+						"nullable": false,
+						"description": "The type of the command."
+					},
+					"status": {
+						"$ref": "#/components/schemas/OIBusCommandStatus",
+						"description": "The current status of the command."
+					},
+					"ack": {
+						"type": "boolean",
+						"description": "Whether the command has been acknowledged.",
+						"example": true
+					},
+					"retrievedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was retrieved.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"completedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was completed.",
+						"example": "2023-10-31T12:35:56.789Z"
+					},
+					"result": {
+						"type": "string",
+						"nullable": true,
+						"description": "The result of the command execution.",
+						"example": "Success"
+					},
+					"northConnectorId": {
+						"type": "string"
+					},
+					"commandContent": {
+						"properties": {
+							"filename": {
+								"type": "string"
+							},
+							"folder": {
+								"type": "string",
+								"enum": [
+									"cache",
+									"archive",
+									"error"
+								]
+							}
+						},
+						"required": [
+							"filename",
+							"folder"
+						],
+						"type": "object"
+					}
+				},
+				"required": [
+					"id",
+					"type",
+					"status",
+					"ack",
+					"retrievedDate",
+					"completedDate",
+					"result",
+					"northConnectorId",
+					"commandContent"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OIBusGetHistoryCacheFileContentCommandDTO": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the command.",
+						"example": "cmd123"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"get-history-cache-file-content"
+						],
+						"nullable": false,
+						"description": "The type of the command."
+					},
+					"status": {
+						"$ref": "#/components/schemas/OIBusCommandStatus",
+						"description": "The current status of the command."
+					},
+					"ack": {
+						"type": "boolean",
+						"description": "Whether the command has been acknowledged.",
+						"example": true
+					},
+					"retrievedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was retrieved.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"completedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was completed.",
+						"example": "2023-10-31T12:35:56.789Z"
+					},
+					"result": {
+						"type": "string",
+						"nullable": true,
+						"description": "The result of the command execution.",
+						"example": "Success"
+					},
+					"historyQueryId": {
+						"type": "string"
+					},
+					"commandContent": {
+						"properties": {
+							"filename": {
+								"type": "string"
+							},
+							"folder": {
+								"type": "string",
+								"enum": [
+									"cache",
+									"archive",
+									"error"
+								]
+							}
+						},
+						"required": [
+							"filename",
+							"folder"
+						],
+						"type": "object"
+					}
+				},
+				"required": [
+					"id",
+					"type",
+					"status",
+					"ack",
+					"retrievedDate",
+					"completedDate",
+					"result",
+					"historyQueryId",
+					"commandContent"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OIBusRemoveNorthCacheContentCommandDTO": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the command.",
+						"example": "cmd123"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"remove-north-cache-content"
+						],
+						"nullable": false,
+						"description": "The type of the command."
+					},
+					"status": {
+						"$ref": "#/components/schemas/OIBusCommandStatus",
+						"description": "The current status of the command."
+					},
+					"ack": {
+						"type": "boolean",
+						"description": "Whether the command has been acknowledged.",
+						"example": true
+					},
+					"retrievedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was retrieved.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"completedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was completed.",
+						"example": "2023-10-31T12:35:56.789Z"
+					},
+					"result": {
+						"type": "string",
+						"nullable": true,
+						"description": "The result of the command execution.",
+						"example": "Success"
+					},
+					"northConnectorId": {
+						"type": "string"
+					},
+					"commandContent": {
+						"properties": {
+							"metadataFilenameList": {
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							},
+							"folder": {
+								"type": "string",
+								"enum": [
+									"cache",
+									"archive",
+									"error"
+								]
+							}
+						},
+						"required": [
+							"metadataFilenameList",
+							"folder"
+						],
+						"type": "object"
+					}
+				},
+				"required": [
+					"id",
+					"type",
+					"status",
+					"ack",
+					"retrievedDate",
+					"completedDate",
+					"result",
+					"northConnectorId",
+					"commandContent"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OIBusRemoveHistoryCacheContentCommandDTO": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the command.",
+						"example": "cmd123"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"remove-history-cache-content"
+						],
+						"nullable": false,
+						"description": "The type of the command."
+					},
+					"status": {
+						"$ref": "#/components/schemas/OIBusCommandStatus",
+						"description": "The current status of the command."
+					},
+					"ack": {
+						"type": "boolean",
+						"description": "Whether the command has been acknowledged.",
+						"example": true
+					},
+					"retrievedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was retrieved.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"completedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was completed.",
+						"example": "2023-10-31T12:35:56.789Z"
+					},
+					"result": {
+						"type": "string",
+						"nullable": true,
+						"description": "The result of the command execution.",
+						"example": "Success"
+					},
+					"historyQueryId": {
+						"type": "string"
+					},
+					"commandContent": {
+						"properties": {
+							"metadataFilenameList": {
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							},
+							"folder": {
+								"type": "string",
+								"enum": [
+									"cache",
+									"archive",
+									"error"
+								]
+							}
+						},
+						"required": [
+							"metadataFilenameList",
+							"folder"
+						],
+						"type": "object"
+					}
+				},
+				"required": [
+					"id",
+					"type",
+					"status",
+					"ack",
+					"retrievedDate",
+					"completedDate",
+					"result",
+					"historyQueryId",
+					"commandContent"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OIBusMoveNorthCacheContentCommandDTO": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the command.",
+						"example": "cmd123"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"move-north-cache-content"
+						],
+						"nullable": false,
+						"description": "The type of the command."
+					},
+					"status": {
+						"$ref": "#/components/schemas/OIBusCommandStatus",
+						"description": "The current status of the command."
+					},
+					"ack": {
+						"type": "boolean",
+						"description": "Whether the command has been acknowledged.",
+						"example": true
+					},
+					"retrievedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was retrieved.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"completedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was completed.",
+						"example": "2023-10-31T12:35:56.789Z"
+					},
+					"result": {
+						"type": "string",
+						"nullable": true,
+						"description": "The result of the command execution.",
+						"example": "Success"
+					},
+					"northConnectorId": {
+						"type": "string"
+					},
+					"commandContent": {
+						"properties": {
+							"cacheContentList": {
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							},
+							"destinationFolder": {
+								"type": "string",
+								"enum": [
+									"cache",
+									"archive",
+									"error"
+								]
+							},
+							"originFolder": {
+								"type": "string",
+								"enum": [
+									"cache",
+									"archive",
+									"error"
+								]
+							}
+						},
+						"required": [
+							"cacheContentList",
+							"destinationFolder",
+							"originFolder"
+						],
+						"type": "object"
+					}
+				},
+				"required": [
+					"id",
+					"type",
+					"status",
+					"ack",
+					"retrievedDate",
+					"completedDate",
+					"result",
+					"northConnectorId",
+					"commandContent"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OIBusMoveHistoryCacheContentCommandDTO": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the command.",
+						"example": "cmd123"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"move-history-cache-content"
+						],
+						"nullable": false,
+						"description": "The type of the command."
+					},
+					"status": {
+						"$ref": "#/components/schemas/OIBusCommandStatus",
+						"description": "The current status of the command."
+					},
+					"ack": {
+						"type": "boolean",
+						"description": "Whether the command has been acknowledged.",
+						"example": true
+					},
+					"retrievedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was retrieved.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"completedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was completed.",
+						"example": "2023-10-31T12:35:56.789Z"
+					},
+					"result": {
+						"type": "string",
+						"nullable": true,
+						"description": "The result of the command execution.",
+						"example": "Success"
+					},
+					"historyQueryId": {
+						"type": "string"
+					},
+					"commandContent": {
+						"properties": {
+							"cacheContentList": {
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							},
+							"destinationFolder": {
+								"type": "string",
+								"enum": [
+									"cache",
+									"archive",
+									"error"
+								]
+							},
+							"originFolder": {
+								"type": "string",
+								"enum": [
+									"cache",
+									"archive",
+									"error"
+								]
+							}
+						},
+						"required": [
+							"cacheContentList",
+							"destinationFolder",
+							"originFolder"
+						],
+						"type": "object"
+					}
+				},
+				"required": [
+					"id",
+					"type",
+					"status",
+					"ack",
+					"retrievedDate",
+					"completedDate",
+					"result",
+					"historyQueryId",
+					"commandContent"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"OIBusCommandDTO": {
 				"anyOf": [
 					{
@@ -15988,6 +17755,30 @@
 					},
 					{
 						"$ref": "#/components/schemas/OIBusSetpointCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/OIBusSearchNorthCacheContentCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/OIBusSearchHistoryCacheContentCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/OIBusGetNorthCacheFileContentCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/OIBusGetHistoryCacheFileContentCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/OIBusRemoveNorthCacheContentCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/OIBusRemoveHistoryCacheContentCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/OIBusMoveNorthCacheContentCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/OIBusMoveHistoryCacheContentCommandDTO"
 					}
 				],
 				"description": "Union type representing all possible OIBus command DTOs."
@@ -16040,16 +17831,16 @@
 			"OIBusNorthType": {
 				"type": "string",
 				"enum": [
-					"modbus",
-					"mqtt",
-					"oianalytics",
 					"opcua",
+					"mqtt",
+					"modbus",
+					"oianalytics",
+					"rest",
 					"sftp",
 					"aws-s3",
 					"azure-blob",
 					"console",
-					"file-writer",
-					"rest"
+					"file-writer"
 				],
 				"description": "Type representing the possible types for a North connector."
 			},
@@ -16180,8 +17971,13 @@
 			"TransformerDTOWithOptions": {
 				"description": "Data Transfer Object for a transformer with its options.\nUsed when a transformer needs to be applied with specific configuration options.",
 				"properties": {
-					"inputType": {
+					"id": {
 						"type": "string",
+						"description": "The id used to match a transformer with options",
+						"example": "id"
+					},
+					"inputType": {
+						"$ref": "#/components/schemas/InputType",
 						"description": "The input data type that the transformer accepts.",
 						"example": "string"
 					},
@@ -16196,12 +17992,25 @@
 							"precision": 2,
 							"defaultValue": 0
 						}
+					},
+					"south": {
+						"$ref": "#/components/schemas/SouthConnectorLightDTO",
+						"description": "The south associated to the transformer"
+					},
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/ItemLightDTO"
+						},
+						"type": "array",
+						"description": "The list of items associated to the transformer"
 					}
 				},
 				"required": [
+					"id",
 					"inputType",
 					"transformer",
-					"options"
+					"options",
+					"items"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -16369,13 +18178,6 @@
 						"type": "object",
 						"description": "The caching configuration for the North connector."
 					},
-					"subscriptions": {
-						"items": {
-							"$ref": "#/components/schemas/SouthConnectorLightDTO"
-						},
-						"type": "array",
-						"description": "The list of subscribed South connectors."
-					},
 					"transformers": {
 						"items": {
 							"$ref": "#/components/schemas/TransformerDTOWithOptions"
@@ -16392,7 +18194,6 @@
 					"enabled",
 					"settings",
 					"caching",
-					"subscriptions",
 					"transformers"
 				],
 				"type": "object",
@@ -16561,13 +18362,6 @@
 						"type": "object",
 						"description": "The caching configuration for the North connector."
 					},
-					"subscriptions": {
-						"items": {
-							"$ref": "#/components/schemas/SouthConnectorLightDTO"
-						},
-						"type": "array",
-						"description": "The list of subscribed South connectors."
-					},
 					"transformers": {
 						"items": {
 							"$ref": "#/components/schemas/TransformerDTOWithOptions"
@@ -16584,7 +18378,6 @@
 					"enabled",
 					"settings",
 					"caching",
-					"subscriptions",
 					"transformers"
 				],
 				"type": "object",
@@ -16753,13 +18546,6 @@
 						"type": "object",
 						"description": "The caching configuration for the North connector."
 					},
-					"subscriptions": {
-						"items": {
-							"$ref": "#/components/schemas/SouthConnectorLightDTO"
-						},
-						"type": "array",
-						"description": "The list of subscribed South connectors."
-					},
 					"transformers": {
 						"items": {
 							"$ref": "#/components/schemas/TransformerDTOWithOptions"
@@ -16776,7 +18562,6 @@
 					"enabled",
 					"settings",
 					"caching",
-					"subscriptions",
 					"transformers"
 				],
 				"type": "object",
@@ -16945,13 +18730,6 @@
 						"type": "object",
 						"description": "The caching configuration for the North connector."
 					},
-					"subscriptions": {
-						"items": {
-							"$ref": "#/components/schemas/SouthConnectorLightDTO"
-						},
-						"type": "array",
-						"description": "The list of subscribed South connectors."
-					},
 					"transformers": {
 						"items": {
 							"$ref": "#/components/schemas/TransformerDTOWithOptions"
@@ -16968,7 +18746,6 @@
 					"enabled",
 					"settings",
 					"caching",
-					"subscriptions",
 					"transformers"
 				],
 				"type": "object",
@@ -17137,13 +18914,6 @@
 						"type": "object",
 						"description": "The caching configuration for the North connector."
 					},
-					"subscriptions": {
-						"items": {
-							"$ref": "#/components/schemas/SouthConnectorLightDTO"
-						},
-						"type": "array",
-						"description": "The list of subscribed South connectors."
-					},
 					"transformers": {
 						"items": {
 							"$ref": "#/components/schemas/TransformerDTOWithOptions"
@@ -17160,7 +18930,6 @@
 					"enabled",
 					"settings",
 					"caching",
-					"subscriptions",
 					"transformers"
 				],
 				"type": "object",
@@ -17329,13 +19098,6 @@
 						"type": "object",
 						"description": "The caching configuration for the North connector."
 					},
-					"subscriptions": {
-						"items": {
-							"$ref": "#/components/schemas/SouthConnectorLightDTO"
-						},
-						"type": "array",
-						"description": "The list of subscribed South connectors."
-					},
 					"transformers": {
 						"items": {
 							"$ref": "#/components/schemas/TransformerDTOWithOptions"
@@ -17352,7 +19114,6 @@
 					"enabled",
 					"settings",
 					"caching",
-					"subscriptions",
 					"transformers"
 				],
 				"type": "object",
@@ -17521,13 +19282,6 @@
 						"type": "object",
 						"description": "The caching configuration for the North connector."
 					},
-					"subscriptions": {
-						"items": {
-							"$ref": "#/components/schemas/SouthConnectorLightDTO"
-						},
-						"type": "array",
-						"description": "The list of subscribed South connectors."
-					},
 					"transformers": {
 						"items": {
 							"$ref": "#/components/schemas/TransformerDTOWithOptions"
@@ -17544,7 +19298,6 @@
 					"enabled",
 					"settings",
 					"caching",
-					"subscriptions",
 					"transformers"
 				],
 				"type": "object",
@@ -17713,13 +19466,6 @@
 						"type": "object",
 						"description": "The caching configuration for the North connector."
 					},
-					"subscriptions": {
-						"items": {
-							"$ref": "#/components/schemas/SouthConnectorLightDTO"
-						},
-						"type": "array",
-						"description": "The list of subscribed South connectors."
-					},
 					"transformers": {
 						"items": {
 							"$ref": "#/components/schemas/TransformerDTOWithOptions"
@@ -17736,7 +19482,6 @@
 					"enabled",
 					"settings",
 					"caching",
-					"subscriptions",
 					"transformers"
 				],
 				"type": "object",
@@ -17905,13 +19650,6 @@
 						"type": "object",
 						"description": "The caching configuration for the North connector."
 					},
-					"subscriptions": {
-						"items": {
-							"$ref": "#/components/schemas/SouthConnectorLightDTO"
-						},
-						"type": "array",
-						"description": "The list of subscribed South connectors."
-					},
 					"transformers": {
 						"items": {
 							"$ref": "#/components/schemas/TransformerDTOWithOptions"
@@ -17928,7 +19666,6 @@
 					"enabled",
 					"settings",
 					"caching",
-					"subscriptions",
 					"transformers"
 				],
 				"type": "object",
@@ -18097,13 +19834,6 @@
 						"type": "object",
 						"description": "The caching configuration for the North connector."
 					},
-					"subscriptions": {
-						"items": {
-							"$ref": "#/components/schemas/SouthConnectorLightDTO"
-						},
-						"type": "array",
-						"description": "The list of subscribed South connectors."
-					},
 					"transformers": {
 						"items": {
 							"$ref": "#/components/schemas/TransformerDTOWithOptions"
@@ -18120,7 +19850,6 @@
 					"enabled",
 					"settings",
 					"caching",
-					"subscriptions",
 					"transformers"
 				],
 				"type": "object",
@@ -18195,22 +19924,6 @@
 					}
 				]
 			},
-			"Record_string.string-or-number_": {
-				"properties": {},
-				"additionalProperties": {
-					"anyOf": [
-						{
-							"type": "string"
-						},
-						{
-							"type": "number",
-							"format": "double"
-						}
-					]
-				},
-				"type": "object",
-				"description": "Construct a type with a set of properties K of type T"
-			},
 			"CacheMetadata": {
 				"description": "Metadata for cached content.",
 				"properties": {
@@ -18240,15 +19953,6 @@
 						"type": "string",
 						"description": "The type of the content.",
 						"example": "time-values"
-					},
-					"source": {
-						"type": "string",
-						"description": "The source of the content.",
-						"example": "south1"
-					},
-					"options": {
-						"$ref": "#/components/schemas/Record_string.string-or-number_",
-						"description": "Additional options associated with the content."
 					}
 				},
 				"required": [
@@ -18256,9 +19960,7 @@
 					"contentSize",
 					"numberOfElement",
 					"createdAt",
-					"contentType",
-					"source",
-					"options"
+					"contentType"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -18534,6 +20236,52 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"Pick_TransformerDTOWithOptions.Exclude_keyofTransformerDTOWithOptions.south__": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The id used to match a transformer with options",
+						"example": "id"
+					},
+					"inputType": {
+						"type": "string",
+						"description": "The input data type that the transformer accepts.",
+						"example": "string"
+					},
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/ItemLightDTO"
+						},
+						"type": "array",
+						"description": "The list of items associated to the transformer"
+					},
+					"options": {
+						"$ref": "#/components/schemas/Record_string.unknown_",
+						"description": "Configuration options for the transformer.",
+						"example": {
+							"precision": 2,
+							"defaultValue": 0
+						}
+					},
+					"transformer": {
+						"$ref": "#/components/schemas/TransformerDTO",
+						"description": "The transformer to be applied."
+					}
+				},
+				"required": [
+					"id",
+					"inputType",
+					"items",
+					"options",
+					"transformer"
+				],
+				"type": "object",
+				"description": "From T, pick a set of properties whose keys are in the union K"
+			},
+			"Omit_TransformerDTOWithOptions.south_": {
+				"$ref": "#/components/schemas/Pick_TransformerDTOWithOptions.Exclude_keyofTransformerDTOWithOptions.south__",
+				"description": "Construct a type with the properties of T except for those in type K."
+			},
 			"HistoryQueryCommonDTO": {
 				"properties": {
 					"name": {
@@ -18681,7 +20429,7 @@
 					},
 					"northTransformers": {
 						"items": {
-							"$ref": "#/components/schemas/TransformerDTOWithOptions"
+							"$ref": "#/components/schemas/Omit_TransformerDTOWithOptions.south_"
 						},
 						"type": "array",
 						"description": "List of transformers to apply to data before sending to North connector."
@@ -19644,6 +21392,69 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"HistoryQueryItemTypedDTO_SouthRestItemSettings_": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the entity.",
+						"example": "entity123"
+					},
+					"creationDate": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was created.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"lastEditInstant": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was last edited.",
+						"example": "2023-10-31T13:45:00.123Z"
+					},
+					"name": {
+						"type": "string"
+					},
+					"enabled": {
+						"type": "boolean"
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthRestItemSettings"
+					}
+				},
+				"required": [
+					"id",
+					"name",
+					"enabled",
+					"settings"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"HistoryQuerySouthTypedDTO_rest.SouthRestSettings.SouthRestItemSettings_": {
+				"properties": {
+					"southType": {
+						"type": "string",
+						"enum": [
+							"rest"
+						],
+						"nullable": false
+					},
+					"southSettings": {
+						"$ref": "#/components/schemas/SouthRestSettings"
+					},
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/HistoryQueryItemTypedDTO_SouthRestItemSettings_"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"southType",
+					"southSettings",
+					"items"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"HistoryQueryItemTypedDTO_SouthSFTPItemSettings_": {
 				"properties": {
 					"id": {
@@ -20026,6 +21837,9 @@
 								"$ref": "#/components/schemas/HistoryQuerySouthTypedDTO_postgresql.SouthPostgreSQLSettings.SouthPostgreSQLItemSettings_"
 							},
 							{
+								"$ref": "#/components/schemas/HistoryQuerySouthTypedDTO_rest.SouthRestSettings.SouthRestItemSettings_"
+							},
+							{
 								"$ref": "#/components/schemas/HistoryQuerySouthTypedDTO_sftp.SouthSFTPSettings.SouthSFTPItemSettings_"
 							},
 							{
@@ -20160,6 +21974,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/HistoryQueryItemTypedDTO_SouthPostgreSQLItemSettings_"
+					},
+					{
+						"$ref": "#/components/schemas/HistoryQueryItemTypedDTO_SouthRestItemSettings_"
 					},
 					{
 						"$ref": "#/components/schemas/HistoryQueryItemTypedDTO_SouthSFTPItemSettings_"
@@ -21038,6 +22855,71 @@
 						}
 					}
 				}
+			}
+		},
+		"/api/transformers/{transformerId}/test": {
+			"post": {
+				"operationId": "Test",
+				"responses": {
+					"204": {
+						"description": "No Content"
+					}
+				},
+				"tags": [
+					"Transformers"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "transformerId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/TransformerTestRequest"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/transformers/template/{inputType}": {
+			"get": {
+				"operationId": "GetInputTemplate",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/InputTemplate"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Transformers"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "inputType",
+						"required": true,
+						"schema": {
+							"$ref": "#/components/schemas/InputType"
+						}
+					}
+				]
 			}
 		},
 		"/api/south/types": {
@@ -22393,6 +24275,33 @@
 				}
 			}
 		},
+		"/api/oianalytics/registration/test-connection": {
+			"post": {
+				"operationId": "TestConnection",
+				"responses": {
+					"204": {
+						"description": "Connection test successful"
+					}
+				},
+				"description": "Test connection to OIAnalytics service with the provided settings",
+				"summary": "Test connection",
+				"tags": [
+					"OIAnalytics Registration"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/RegistrationSettingsCommandDTO"
+							}
+						}
+					}
+				}
+			}
+		},
 		"/api/oianalytics/unregister": {
 			"post": {
 				"operationId": "Unregister",
@@ -22914,72 +24823,6 @@
 					{
 						"in": "path",
 						"name": "transformerId",
-						"required": true,
-						"schema": {
-							"type": "string"
-						}
-					}
-				]
-			}
-		},
-		"/api/north/{northId}/subscriptions/{southId}": {
-			"post": {
-				"operationId": "SubscribeToSouth",
-				"responses": {
-					"204": {
-						"description": "No Content"
-					}
-				},
-				"description": "Subscribe to a south connector from a north connector",
-				"summary": "Subscribe to a south connector",
-				"tags": [
-					"North Connectors"
-				],
-				"security": [],
-				"parameters": [
-					{
-						"in": "path",
-						"name": "northId",
-						"required": true,
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
-						"in": "path",
-						"name": "southId",
-						"required": true,
-						"schema": {
-							"type": "string"
-						}
-					}
-				]
-			},
-			"delete": {
-				"operationId": "UnsubscribeFromSouth",
-				"responses": {
-					"204": {
-						"description": "No Content"
-					}
-				},
-				"description": "Remove a subscription to a south connector from a north connector",
-				"summary": "Unsubscribe from a south connector",
-				"tags": [
-					"North Connectors"
-				],
-				"security": [],
-				"parameters": [
-					{
-						"in": "path",
-						"name": "northId",
-						"required": true,
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
-						"in": "path",
-						"name": "southId",
 						"required": true,
 						"schema": {
 							"type": "string"
@@ -24731,7 +26574,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/TransformerDTOWithOptions"
+								"$ref": "#/components/schemas/Omit_TransformerDTOWithOptions.south_"
 							}
 						}
 					}

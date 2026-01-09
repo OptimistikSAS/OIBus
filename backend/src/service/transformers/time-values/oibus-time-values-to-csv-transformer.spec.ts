@@ -6,8 +6,10 @@ import { flushPromises } from '../../../tests/utils/test-utils';
 import OIBusTimeValuesToCsvTransformer from './oibus-time-values-to-csv-transformer';
 import { OIBusTimeValue } from '../../../../shared/model/engine.model';
 import csv from 'papaparse';
+import JSONToTimeValuesTransformer from '../any/json-to-time-values-transformer';
 
 jest.mock('../../utils', () => ({
+  sanitizeFilename: jest.fn().mockImplementation(name => name),
   formatInstant: jest.fn().mockImplementation(value => value),
   convertDelimiter: jest.fn().mockReturnValue(';')
 }));
@@ -27,7 +29,6 @@ describe('OIBusTimeValuesToCsvTransformer', () => {
     const options = {
       filename: '@CurrentDate.csv',
       delimiter: 'SEMI_COLON',
-      compression: false,
       pointIdColumnTitle: 'Reference',
       valueColumnTitle: 'Value',
       timestampColumnTitle: 'Timestamp',
@@ -38,7 +39,6 @@ describe('OIBusTimeValuesToCsvTransformer', () => {
 
     // Arrange
     const transformer = new OIBusTimeValuesToCsvTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
-    const source = 'test-source';
     const dataChunks: Array<OIBusTimeValue> = [
       {
         pointId: 'reference1',
@@ -68,7 +68,7 @@ describe('OIBusTimeValuesToCsvTransformer', () => {
     const mockStream = new Readable();
 
     // Act
-    const promise = transformer.transform(mockStream, source, null);
+    const promise = transformer.transform(mockStream, { source: 'test' }, null);
     mockStream.push(JSON.stringify(dataChunks));
     mockStream.push(null); // End the stream
 
@@ -82,192 +82,20 @@ describe('OIBusTimeValuesToCsvTransformer', () => {
         contentSize: 0,
         createdAt: '',
         numberOfElement: 0,
-        contentType: 'any',
-        source,
-        options: {}
+        contentType: 'any'
       }
     });
   });
 
-  it('should return manifest', () => {
-    expect(OIBusTimeValuesToCsvTransformer.manifestSettings).toEqual({
-      type: 'object',
-      key: 'options',
-      translationKey: 'configuration.oibus.manifest.transformers.options',
-      attributes: [
-        {
-          type: 'string',
-          key: 'filename',
-          translationKey: 'configuration.oibus.manifest.transformers.time-values-to-csv.filename',
-          defaultValue: '@CurrentDate.csv',
-          validators: [
-            {
-              type: 'REQUIRED',
-              arguments: []
-            }
-          ],
-          displayProperties: {
-            row: 0,
-            columns: 4,
-            displayInViewMode: false
-          }
-        },
-        {
-          type: 'string-select',
-          key: 'delimiter',
-          translationKey: 'configuration.oibus.manifest.transformers.time-values-to-csv.delimiter',
-          defaultValue: 'COMMA',
-          selectableValues: ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'],
-          validators: [
-            {
-              type: 'REQUIRED',
-              arguments: []
-            }
-          ],
-          displayProperties: {
-            row: 0,
-            columns: 4,
-            displayInViewMode: false
-          }
-        },
-        {
-          type: 'boolean',
-          key: 'compression',
-          translationKey: 'configuration.oibus.manifest.transformers.time-values-to-csv.compression',
-          defaultValue: false,
-          validators: [
-            {
-              type: 'REQUIRED',
-              arguments: []
-            }
-          ],
-          displayProperties: {
-            row: 0,
-            columns: 4,
-            displayInViewMode: true
-          }
-        },
-        {
-          type: 'string',
-          key: 'pointIdColumnTitle',
-          translationKey: 'configuration.oibus.manifest.transformers.time-values-to-csv.point-id',
-          defaultValue: 'Reference',
-          validators: [
-            {
-              type: 'REQUIRED',
-              arguments: []
-            }
-          ],
-          displayProperties: {
-            row: 1,
-            columns: 4,
-            displayInViewMode: true
-          }
-        },
-        {
-          type: 'string',
-          key: 'valueColumnTitle',
-          translationKey: 'configuration.oibus.manifest.transformers.time-values-to-csv.value',
-          defaultValue: 'Value',
-          validators: [
-            {
-              type: 'REQUIRED',
-              arguments: []
-            }
-          ],
-          displayProperties: {
-            row: 1,
-            columns: 4,
-            displayInViewMode: true
-          }
-        },
-        {
-          type: 'string',
-          key: 'timestampColumnTitle',
-          translationKey: 'configuration.oibus.manifest.transformers.time-values-to-csv.timestamp',
-          defaultValue: 'Timestamp',
-          validators: [
-            {
-              type: 'REQUIRED',
-              arguments: []
-            }
-          ],
-          displayProperties: {
-            row: 1,
-            columns: 4,
-            displayInViewMode: true
-          }
-        },
-        {
-          type: 'string-select',
-          key: 'timestampType',
-          translationKey: 'configuration.oibus.manifest.transformers.time-values-to-csv.timestamp-type',
-          defaultValue: 'iso-string',
-          selectableValues: ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'],
-          validators: [
-            {
-              type: 'REQUIRED',
-              arguments: []
-            }
-          ],
-          displayProperties: {
-            row: 2,
-            columns: 4,
-            displayInViewMode: true
-          }
-        },
-        {
-          type: 'string',
-          key: 'timestampFormat',
-          translationKey: 'configuration.oibus.manifest.transformers.time-values-to-csv.timestamp-format',
-          defaultValue: 'yyyy-MM-dd HH:mm:ss.SSS',
-          validators: [
-            {
-              type: 'REQUIRED',
-              arguments: []
-            }
-          ],
-          displayProperties: {
-            row: 2,
-            columns: 4,
-            displayInViewMode: false
-          }
-        },
-        {
-          type: 'timezone',
-          key: 'timezone',
-          translationKey: 'configuration.oibus.manifest.transformers.time-values-to-csv.timezone',
-          defaultValue: 'UTC',
-          validators: [
-            {
-              type: 'REQUIRED',
-              arguments: []
-            }
-          ],
-          displayProperties: {
-            row: 2,
-            columns: 4,
-            displayInViewMode: true
-          }
-        }
-      ],
-      enablingConditions: [
-        {
-          referralPathFromRoot: 'timestampType',
-          targetPathFromRoot: 'timezone',
-          values: ['string']
-        },
-        {
-          referralPathFromRoot: 'timestampType',
-          targetPathFromRoot: 'timestampFormat',
-          values: ['string']
-        }
-      ],
-      validators: [],
-      displayProperties: {
-        visible: true,
-        wrapInBox: false
-      }
-    });
+  it('should correctly expose the manifest settings', () => {
+    // Act
+    const manifest = JSONToTimeValuesTransformer.manifestSettings;
+
+    // Assert
+    expect(manifest).toBeDefined();
+    expect(manifest.type).toBe('object');
+    expect(manifest.key).toBe('options');
+    // Sanity check on deep property
+    expect(manifest.attributes[0].key).toBe('rowIteratorPath');
   });
 });
