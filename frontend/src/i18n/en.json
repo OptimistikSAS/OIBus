@@ -923,6 +923,10 @@
           "source": "Source",
           "output": "Output",
           "items": "Items",
+          "one-item-selected": "1 item",
+          "several-items-selected": "{{ numberOfItems }} items",
+          "all-items-selected": "All items",
+          "options": "Options",
           "transformer": "Transformer",
           "add": "Add a transformer",
           "list": "Custom Transformers",
@@ -932,12 +936,12 @@
           "confirm-deletion": "Are you sure you want to delete the custom transformer {{ name }}?",
           "deleted": "Transformer {{ name }} deleted",
           "standard": {
-            "csv-to-mqtt": "MQTT payloads",
+            "csv-to-mqtt": "MQTT payloads (from CSV)",
             "csv-to-time-values": "Time Values (from CSV)",
             "ignore": "Ignore",
             "iso": "No transform",
-            "json-to-csv": "CSV",
-            "json-to-mqtt": "MQTT payloads",
+            "json-to-csv": "CSV (from JSON)",
+            "json-to-mqtt": "MQTT payloads (from JSON)",
             "json-to-time-values": "Time Values (from JSON)",
             "time-values-to-csv": "CSV",
             "time-values-to-json": "JSON",
@@ -1045,183 +1049,119 @@
             }
           },
           "csv-to-mqtt": {
-            "csv-to-parse": {
-              "title": "CSV to Parse",
+            "delimiter": {
+              "title": "CSV delimiter",
+              "DOT": "Dot .",
+              "SEMI_COLON": "Semi colon ;",
+              "COLON": "Colon :",
+              "COMMA": "Comma ,",
+              "SLASH": "Slash /",
+              "TAB": "Tab",
+              "NON_BREAKING_SPACE": "Space",
+              "PIPE": "Pipe |"
+            },
+            "has-header": "Has Header",
+            "topic-column": "Topic Column",
+            "payload-type": {
+              "title": "Payload Type",
+              "string": "String",
+              "number": "Number",
+              "boolean": "Boolean",
+              "datetime": "Datetime",
+              "object": "Object"
+            },
+            "value-column": "Value Column",
+            "datetime-settings": {
+              "title": "Datetime Settings",
+              "input-type": {
+                "title": "Timestamp input type",
+                "string": "String",
+                "iso-string": "ISO string",
+                "unix-epoch": "Unix epoch (s)",
+                "unix-epoch-ms": "Unix epoch (ms)"
+              },
+              "output-type": {
+                "title": "Timestamp output type",
+                "string": "String",
+                "iso-string": "ISO string",
+                "unix-epoch": "Unix epoch (s)",
+                "unix-epoch-ms": "Unix epoch (ms)"
+              },
+              "timezone": "Timezone",
+              "format": "Format",
+              "locale": "Locale"
+            },
+            "object-fields": {
+              "title": "Object Fields",
               "item": {
-                "title": "Parser Configuration"
+                "title": "Field Configuration"
               },
-              "regex": "File Name Regex",
-              "filename": "Output Filename",
-              "delimiter": {
-                "title": "CSV delimiter",
-                "DOT": "Dot .",
-                "SEMI_COLON": "Semi colon ;",
-                "COLON": "Colon :",
-                "COMMA": "Comma ,",
-                "SLASH": "Slash /",
-                "TAB": "Tab",
-                "NON_BREAKING_SPACE": "Space",
-                "PIPE": "Pipe |"
-              },
-              "has-header": "Has Header",
-              "topic-column": "Topic Column",
-              "payload-type": {
-                "title": "Payload Type",
+              "key": "Key",
+              "column": "Column",
+              "data-type": {
+                "title": "Data Type",
                 "string": "String",
                 "number": "Number",
                 "boolean": "Boolean",
                 "datetime": "Datetime",
+                "array": "Array",
                 "object": "Object"
-              },
-              "value-column": "Value Column",
-              "datetime-settings": {
-                "title": "Datetime Settings",
-                "input-type": {
-                  "title": "Timestamp input type",
-                  "string": "String",
-                  "iso-string": "ISO string",
-                  "unix-epoch": "Unix epoch (s)",
-                  "unix-epoch-ms": "Unix epoch (ms)"
-                },
-                "output-type": {
-                  "title": "Timestamp output type",
-                  "string": "String",
-                  "iso-string": "ISO string",
-                  "unix-epoch": "Unix epoch (s)",
-                  "unix-epoch-ms": "Unix epoch (ms)"
-                },
-                "timezone": "Timezone",
-                "format": "Format",
-                "locale": "Locale"
-              },
-              "object-fields": {
-                "title": "Object Fields",
-                "item": {
-                  "title": "Field Configuration"
-                },
-                "key": "Key",
-                "column": "Column",
-                "data-type": {
-                  "title": "Data Type",
-                  "string": "String",
-                  "number": "Number",
-                  "boolean": "Boolean",
-                  "datetime": "Datetime",
-                  "array": "Array",
-                  "object": "Object"
-                }
               }
             }
           },
           "csv-to-time-values": {
-            "csv-to-parse": {
-              "title": "CSV to Parse",
-              "item": {
-                "title": "Parser Configuration"
+            "delimiter": {
+              "title": "CSV delimiter",
+              "DOT": "Dot .",
+              "SEMI_COLON": "Semi colon ;",
+              "COLON": "Colon :",
+              "COMMA": "Comma ,",
+              "SLASH": "Slash /",
+              "TAB": "Tab",
+              "NON_BREAKING_SPACE": "Space",
+              "PIPE": "Pipe |"
+            },
+            "has-header": "Has Header",
+            "point-id-column": "Point ID Column",
+            "timestamp-column": "Timestamp Column",
+            "value-column": "Value Column",
+            "timestamp-settings": {
+              "title": "Timestamp Settings",
+              "type": {
+                "title": "Timestamp type",
+                "string": "String",
+                "iso-string": "ISO string",
+                "unix-epoch": "Unix epoch (s)",
+                "unix-epoch-ms": "Unix epoch (ms)"
               },
-              "regex": "File Name Regex",
-              "filename": "Output Filename",
-              "delimiter": {
-                "title": "CSV delimiter",
-                "DOT": "Dot .",
-                "SEMI_COLON": "Semi colon ;",
-                "COLON": "Colon :",
-                "COMMA": "Comma ,",
-                "SLASH": "Slash /",
-                "TAB": "Tab",
-                "NON_BREAKING_SPACE": "Space",
-                "PIPE": "Pipe |"
-              },
-              "has-header": "Has Header",
-              "point-id-column": "Point ID Column",
-              "timestamp-column": "Timestamp Column",
-              "value-column": "Value Column",
-              "timestamp-settings": {
-                "title": "Timestamp Settings",
-                "type": {
-                  "title": "Timestamp type",
-                  "string": "String",
-                  "iso-string": "ISO string",
-                  "unix-epoch": "Unix epoch (s)",
-                  "unix-epoch-ms": "Unix epoch (ms)"
-                },
-                "timezone": "Timezone",
-                "format": "Format",
-                "locale": "Locale"
-              }
+              "timezone": "Timezone",
+              "format": "Format",
+              "locale": "Locale"
             }
           },
           "json-to-csv": {
-            "json-to-parse": {
-              "title": "JSON to Parse",
+            "filename": "Output Filename",
+            "delimiter": {
+              "title": "CSV delimiter",
+              "DOT": "Dot .",
+              "SEMI_COLON": "Semi colon ;",
+              "COLON": "Colon :",
+              "COMMA": "Comma ,",
+              "SLASH": "Slash /",
+              "TAB": "Tab",
+              "NON_BREAKING_SPACE": "Space",
+              "PIPE": "Pipe |"
+            },
+            "row-iterator-path": "Row Iterator JSONPath",
+            "fields": {
+              "title": "Fields Mapping",
               "item": {
-                "title": "Parser Configuration"
+                "title": "Field Configuration"
               },
-              "regex": "File Name Regex",
-              "filename": "Output Filename",
-              "delimiter": {
-                "title": "CSV delimiter",
-                "DOT": "Dot .",
-                "SEMI_COLON": "Semi colon ;",
-                "COLON": "Colon :",
-                "COMMA": "Comma ,",
-                "SLASH": "Slash /",
-                "TAB": "Tab",
-                "NON_BREAKING_SPACE": "Space",
-                "PIPE": "Pipe |"
-              },
-              "row-iterator-path": "Row Iterator JSONPath",
-              "fields": {
-                "title": "Fields Mapping",
-                "item": {
-                  "title": "Field Configuration"
-                },
-                "column-name": "Column Name",
-                "json-path": "JSONPath",
-                "data-type": {
-                  "title": "Data Type",
-                  "string": "String",
-                  "number": "Number",
-                  "boolean": "Boolean",
-                  "datetime": "Datetime",
-                  "array": "Array",
-                  "object": "Object"
-                },
-                "datetime-settings": {
-                  "title": "Datetime Settings",
-                  "input-type": {
-                    "title": "Timestamp input type",
-                    "string": "String",
-                    "iso-string": "ISO string",
-                    "unix-epoch": "Unix epoch (s)",
-                    "unix-epoch-ms": "Unix epoch (ms)"
-                  },
-                  "output-type": {
-                    "title": "Timestamp output type",
-                    "string": "String",
-                    "iso-string": "ISO string",
-                    "unix-epoch": "Unix epoch (s)",
-                    "unix-epoch-ms": "Unix epoch (ms)"
-                  },
-                  "timezone": "Timezone",
-                  "format": "Format",
-                  "locale": "Locale"
-                }
-              }
-            }
-          },
-          "json-to-mqtt": {
-            "json-to-parse": {
-              "title": "JSON to Parse",
-              "item": {
-                "title": "Parser Configuration"
-              },
-              "regex": "File Name Regex",
-              "filename": "Output Filename",
-              "row-iterator-path": "Row Iterator JSONPath",
-              "topic-path": "Topic JSONPath",
-              "payload-type": {
-                "title": "MQTT payload Type",
+              "column-name": "Column Name",
+              "json-path": "JSONPath",
+              "data-type": {
+                "title": "Data Type",
                 "string": "String",
                 "number": "Number",
                 "boolean": "Boolean",
@@ -1229,7 +1169,6 @@
                 "array": "Array",
                 "object": "Object"
               },
-              "value-path": "Value JSONPath",
               "datetime-settings": {
                 "title": "Datetime Settings",
                 "input-type": {
@@ -1249,49 +1188,120 @@
                 "timezone": "Timezone",
                 "format": "Format",
                 "locale": "Locale"
+              }
+            }
+          },
+          "json-to-mqtt": {
+            "row-iterator-path": "Row Iterator JSONPath",
+            "topic-path": "Topic JSONPath",
+            "payload-type": {
+              "title": "MQTT payload Type",
+              "string": "String",
+              "number": "Number",
+              "boolean": "Boolean",
+              "datetime": "Datetime",
+              "array": "Array",
+              "object": "Object"
+            },
+            "value-path": "Value JSONPath",
+            "datetime-settings": {
+              "title": "Datetime Settings",
+              "input-type": {
+                "title": "Timestamp input type",
+                "string": "String",
+                "iso-string": "ISO string",
+                "unix-epoch": "Unix epoch (s)",
+                "unix-epoch-ms": "Unix epoch (ms)"
               },
-              "object-fields": {
-                "title": "Object Fields",
-                "item": {
-                  "title": "Field Configuration"
-                },
-                "key": "Key",
-                "path": "JSONPath",
-                "data-type": {
-                  "title": "Data Type",
-                  "string": "String",
-                  "number": "Number",
-                  "boolean": "Boolean",
-                  "datetime": "Datetime",
-                  "object": "Object"
-                }
+              "output-type": {
+                "title": "Timestamp output type",
+                "string": "String",
+                "iso-string": "ISO string",
+                "unix-epoch": "Unix epoch (s)",
+                "unix-epoch-ms": "Unix epoch (ms)"
+              },
+              "timezone": "Timezone",
+              "format": "Format",
+              "locale": "Locale"
+            },
+            "object-fields": {
+              "title": "Object Fields",
+              "item": {
+                "title": "Field Configuration"
+              },
+              "key": "Key",
+              "path": "JSONPath",
+              "data-type": {
+                "title": "Data Type",
+                "string": "String",
+                "number": "Number",
+                "boolean": "Boolean",
+                "datetime": "Datetime",
+                "object": "Object"
               }
             }
           },
           "json-to-time-values": {
-            "json-to-parse": {
-              "title": "JSON to Parse",
-              "item": {
-                "title": "Parser Configuration"
+            "row-iterator-path": "Row Iterator JSONPath",
+            "point-id-path": "Point ID JSONPath",
+            "timestamp-path": "Timestamp JSONPath",
+            "value-path": "Value JSONPath",
+            "timestamp-settings": {
+              "title": "Timestamp Settings",
+              "type": {
+                "title": "Timestamp type",
+                "string": "String",
+                "iso-string": "ISO string",
+                "unix-epoch": "Unix epoch (s)",
+                "unix-epoch-ms": "Unix epoch (ms)"
               },
-              "regex": "File Name Regex",
-              "filename": "Output Filename",
-              "row-iterator-path": "Row Iterator JSONPath",
-              "point-id-path": "Point ID JSONPath",
-              "timestamp-path": "Timestamp JSONPath",
-              "value-path": "Value JSONPath",
-              "timestamp-settings": {
-                "title": "Timestamp Settings",
-                "type": {
-                  "title": "Timestamp type",
-                  "string": "String",
-                  "iso-string": "ISO string",
-                  "unix-epoch": "Unix epoch (s)",
-                  "unix-epoch-ms": "Unix epoch (ms)"
-                },
-                "timezone": "Timezone",
-                "format": "Format",
-                "locale": "Locale"
+              "timezone": "Timezone",
+              "format": "Format",
+              "locale": "Locale"
+            }
+          },
+          "setpoint-to-modbus": {
+            "mapping": {
+              "title": "Mapping table",
+              "point-id": "Point ID (Reference)",
+              "reference": "Reference",
+              "address": "Modbus address",
+              "modbus-type": {
+                "title": "Modbus type",
+                "coil": "Coil",
+                "register": "Register"
+              }
+            }
+          },
+          "setpoint-to-mqtt": {
+            "mapping": {
+              "title": "Mapping table",
+              "point-id": "Point ID (Reference)",
+              "reference": "Reference",
+              "topic": "MQTT Topic"
+            }
+          },
+          "setpoint-to-opcua": {
+            "mapping": {
+              "title": "Mapping table",
+              "point-id": "Point ID (Reference)",
+              "reference": "Reference",
+              "node-id": "OPCUA Node ID",
+              "data-type": {
+                "title": "Data type",
+                "boolean": "Boolean",
+                "s-byte": "SByte",
+                "byte": "Byte",
+                "int16": "Int16",
+                "uint16": "UInt16",
+                "int32": "Int32",
+                "uint32": "UInt32",
+                "int64": "Int64",
+                "uint64": "UInt64",
+                "float": "Float",
+                "double": "Double",
+                "string": "String",
+                "date-time": "Date Time"
               }
             }
           },
@@ -1354,51 +1364,6 @@
             "mapping": {
               "title": "Mapping table",
               "point-id": "Point ID (Reference)",
-              "node-id": "OPCUA Node ID",
-              "data-type": {
-                "title": "Data type",
-                "boolean": "Boolean",
-                "s-byte": "SByte",
-                "byte": "Byte",
-                "int16": "Int16",
-                "uint16": "UInt16",
-                "int32": "Int32",
-                "uint32": "UInt32",
-                "int64": "Int64",
-                "uint64": "UInt64",
-                "float": "Float",
-                "double": "Double",
-                "string": "String",
-                "date-time": "Date Time"
-              }
-            }
-          },
-          "setpoint-to-modbus": {
-            "mapping": {
-              "title": "Mapping table",
-              "point-id": "Point ID (Reference)",
-              "reference": "Reference",
-              "address": "Modbus address",
-              "modbus-type": {
-                "title": "Modbus type",
-                "coil": "Coil",
-                "register": "Register"
-              }
-            }
-          },
-          "setpoint-to-mqtt": {
-            "mapping": {
-              "title": "Mapping table",
-              "point-id": "Point ID (Reference)",
-              "reference": "Reference",
-              "topic": "MQTT Topic"
-            }
-          },
-          "setpoint-to-opcua": {
-            "mapping": {
-              "title": "Mapping table",
-              "point-id": "Point ID (Reference)",
-              "reference": "Reference",
               "node-id": "OPCUA Node ID",
               "data-type": {
                 "title": "Data type",
