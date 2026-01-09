@@ -196,16 +196,16 @@ export class EditNorthTransformerModalComponent {
       return;
     }
 
-    let south: SouthConnectorLightDTO | null;
+    let south: SouthConnectorLightDTO | undefined;
     let inputType: InputType;
     if (this.existingTransformerWithOptions) {
-      south = this.existingTransformerWithOptions.south || null;
+      south = this.existingTransformerWithOptions.south || undefined;
       inputType = this.existingTransformerWithOptions.inputType;
     } else if (this.form.value.source?.south) {
       south = this.form.value.source!.south!;
       inputType = getAssociatedInputType(south.type);
     } else {
-      south = null;
+      south = undefined;
       inputType = this.form.value.source!.inputType!;
     }
     this.modal.close({
@@ -216,10 +216,6 @@ export class EditNorthTransformerModalComponent {
       inputType: inputType,
       items: this.selectedItems
     });
-  }
-
-  southIsSelected(southId: string) {
-    return this.selectedInputs.map(input => input.south).includes(southId);
   }
 
   inputTypeIsSelected(inputType: string) {

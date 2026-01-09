@@ -1,5 +1,5 @@
 import { Component, effect, inject, input, output } from '@angular/core';
-import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NorthConnectorDTO, NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { TransformerDTO, TransformerDTOWithOptions } from '../../../../../backend/shared/model/transformer.model';
@@ -15,19 +15,10 @@ import { firstValueFrom, of, switchMap } from 'rxjs';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { SouthConnectorLightDTO } from '../../../../../backend/shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
-import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
 
 @Component({
   selector: 'oib-north-transformers',
-  imports: [
-    TranslateDirective,
-    BoxComponent,
-    ReactiveFormsModule,
-    TranslatePipe,
-    BoxTitleDirective,
-    OibHelpComponent,
-    OIBusSouthTypeEnumPipe
-  ],
+  imports: [TranslateDirective, BoxComponent, ReactiveFormsModule, TranslatePipe, BoxTitleDirective, OibHelpComponent],
   templateUrl: './north-transformers.component.html',
   styleUrl: './north-transformers.component.scss'
 })
@@ -37,6 +28,7 @@ export class NorthTransformersComponent {
   private modalService = inject(ModalService);
   private northConnectorService = inject(NorthConnectorService);
   private southConnectorService = inject(SouthConnectorService);
+  private translateService = inject(TranslateService);
 
   readonly northConnector = input<NorthConnectorDTO | null>(null);
 
@@ -182,5 +174,17 @@ export class NorthTransformersComponent {
         }
         this.inMemoryTransformersWithOptions.emit(this.transformersWithOptions);
       });
+  }
+
+  formatTransformerWithSouth(transformer: TransformerDTOWithOptions) {
+    const numberOfItems = transformer.items.length;
+
+    if (numberOfItems === 1) {
+      return `${transformer.south!.name} (${this.translateService.instant('enums.oibus-south-type.' + transformer.south!.type)}) [${this.translateService.instant('configuration.oibus.manifest.transformers.one-item-selected')}]`;
+    } else if (numberOfItems > 1) {
+      return `${transformer.south!.name} (${this.translateService.instant('enums.oibus-south-type.' + transformer.south!.type)}) [${this.translateService.instant('configuration.oibus.manifest.transformers.several-items-selected', { numberOfItems })}]`;
+    } else {
+      return `${transformer.south!.name} (${this.translateService.instant('enums.oibus-south-type.' + transformer.south!.type)}) [${this.translateService.instant('configuration.oibus.manifest.transformers.all-items-selected')}]`;
+    }
   }
 }
