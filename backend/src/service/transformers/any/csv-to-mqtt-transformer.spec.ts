@@ -4,7 +4,6 @@ import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock'; //
 import testData from '../../../tests/utils/test-data'; // Adjust path as necessary
 import { flushPromises } from '../../../tests/utils/test-utils'; // Adjust path as necessary
 import CSVToMQTTTransformer from './csv-to-mqtt-transformer';
-import { OIBusArrayAttribute, OIBusStringSelectAttribute } from '../../../../shared/model/form.model';
 import { OIBusMQTTValue } from '../connector-types.model';
 
 // 1. Mock External Utilities
@@ -48,20 +47,16 @@ describe('CSVToMQTTTransformer', () => {
   // --------------------------------------------------------------------------
   it('should transform CSV data into a custom OBJECT payload', async () => {
     const options = {
-      csvToParse: [
+      ...baseOptions,
+      payloadType: 'object',
+      objectFields: [
+        { key: 'temp', column: 'temperature', dataType: 'number' },
+        { key: 'active', column: 'isEnabled', dataType: 'boolean' },
         {
-          ...baseOptions,
-          payloadType: 'object',
-          objectFields: [
-            { key: 'temp', column: 'temperature', dataType: 'number' },
-            { key: 'active', column: 'isEnabled', dataType: 'boolean' },
-            {
-              key: 'time',
-              column: 'timestamp',
-              dataType: 'datetime',
-              datetimeSettings: { type: 'iso-string', timezone: 'UTC', format: 'yyyy', locale: 'en' }
-            }
-          ]
+          key: 'time',
+          column: 'timestamp',
+          dataType: 'datetime',
+          datetimeSettings: { type: 'iso-string', timezone: 'UTC', format: 'yyyy', locale: 'en' }
         }
       ]
     };
@@ -91,13 +86,9 @@ describe('CSVToMQTTTransformer', () => {
 
   it('should skip object payload creation if the resulting object is empty', async () => {
     const options = {
-      csvToParse: [
-        {
-          ...baseOptions,
-          payloadType: 'object',
-          objectFields: [] // No fields defined
-        }
-      ]
+      ...baseOptions,
+      payloadType: 'object',
+      objectFields: [] // No fields defined
     };
 
     transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
@@ -118,9 +109,7 @@ describe('CSVToMQTTTransformer', () => {
   // 2. Simple Payload Tests
   // --------------------------------------------------------------------------
   it('should transform CSV data into a STRING payload', async () => {
-    const options = {
-      csvToParse: [{ ...baseOptions, payloadType: 'string', valueColumn: 'val' }]
-    };
+    const options = { ...baseOptions, payloadType: 'string', valueColumn: 'val' };
     transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
 
     const csvContent = `topic,val\ndevice/s,123`;
@@ -136,9 +125,7 @@ describe('CSVToMQTTTransformer', () => {
   });
 
   it('should transform CSV data into a NUMBER payload', async () => {
-    const options = {
-      csvToParse: [{ ...baseOptions, payloadType: 'number', valueColumn: 'val' }]
-    };
+    const options = { ...baseOptions, payloadType: 'number', valueColumn: 'val' };
     transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
 
     const csvContent = `topic,val\ndevice/n,45.6`;
@@ -154,9 +141,7 @@ describe('CSVToMQTTTransformer', () => {
   });
 
   it('should transform CSV data into a BOOLEAN payload', async () => {
-    const options = {
-      csvToParse: [{ ...baseOptions, payloadType: 'boolean', valueColumn: 'val' }]
-    };
+    const options = { ...baseOptions, payloadType: 'boolean', valueColumn: 'val' };
     transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
 
     const csvContent = `topic,val\ndevice/b,true`;
@@ -173,14 +158,10 @@ describe('CSVToMQTTTransformer', () => {
 
   it('should transform CSV data into a DATETIME payload', async () => {
     const options = {
-      csvToParse: [
-        {
-          ...baseOptions,
-          payloadType: 'datetime',
-          valueColumn: 'val',
-          datetimeSettings: { type: 'iso-string', timezone: 'UTC', format: 'yyyy', locale: 'en' }
-        }
-      ]
+      ...baseOptions,
+      payloadType: 'datetime',
+      valueColumn: 'val',
+      datetimeSettings: { type: 'iso-string', timezone: 'UTC', format: 'yyyy', locale: 'en' }
     };
     transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
 
@@ -201,17 +182,13 @@ describe('CSVToMQTTTransformer', () => {
   // --------------------------------------------------------------------------
   it('should extract values by INDEX when hasHeader is false', async () => {
     const options = {
-      csvToParse: [
-        {
-          regex: '.*\\.csv',
-          filename: 'no-header',
-          delimiter: 'COMMA',
-          hasHeader: false,
-          topicColumn: '0', // Column index 0
-          payloadType: 'string',
-          valueColumn: '1' // Column index 1
-        }
-      ]
+      regex: '.*\\.csv',
+      filename: 'no-header',
+      delimiter: 'COMMA',
+      hasHeader: false,
+      topicColumn: '0', // Column index 0
+      payloadType: 'string',
+      valueColumn: '1' // Column index 1
     };
     transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
 
@@ -231,17 +208,13 @@ describe('CSVToMQTTTransformer', () => {
 
   it('should extract values by INDEX when hasHeader is false and null formatted value', async () => {
     const options = {
-      csvToParse: [
-        {
-          regex: '.*\\.csv',
-          filename: 'no-header',
-          delimiter: 'COMMA',
-          hasHeader: false,
-          topicColumn: '0', // Column index 0
-          payloadType: 'string',
-          valueColumn: '1' // Column index 1
-        }
-      ]
+      regex: '.*\\.csv',
+      filename: 'no-header',
+      delimiter: 'COMMA',
+      hasHeader: false,
+      topicColumn: '0', // Column index 0
+      payloadType: 'string',
+      valueColumn: '1' // Column index 1
     };
     transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
 
@@ -261,16 +234,12 @@ describe('CSVToMQTTTransformer', () => {
 
   it('should extract values by INDEX without valueColumn', async () => {
     const options = {
-      csvToParse: [
-        {
-          regex: '.*\\.csv',
-          filename: 'no-header',
-          delimiter: 'COMMA',
-          hasHeader: false,
-          topicColumn: '0', // Column index 0
-          payloadType: 'string'
-        }
-      ]
+      regex: '.*\\.csv',
+      filename: 'no-header',
+      delimiter: 'COMMA',
+      hasHeader: false,
+      topicColumn: '0', // Column index 0
+      payloadType: 'string'
     };
     transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
 
@@ -288,15 +257,11 @@ describe('CSVToMQTTTransformer', () => {
   it('should return undefined if index is invalid (NaN)', async () => {
     // This covers the `isNaN(index)` check in extractValue
     const options = {
-      csvToParse: [
-        {
-          ...baseOptions,
-          hasHeader: false,
-          topicColumn: 'not-a-number', // Invalid index
-          payloadType: 'string',
-          valueColumn: '1'
-        }
-      ]
+      ...baseOptions,
+      hasHeader: false,
+      topicColumn: 'not-a-number', // Invalid index
+      payloadType: 'string',
+      valueColumn: '1'
     };
     transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
 
@@ -317,9 +282,7 @@ describe('CSVToMQTTTransformer', () => {
   // 4. Edge Cases & Validation
   // --------------------------------------------------------------------------
   it('should skip rows where TOPIC is missing', async () => {
-    const options = {
-      csvToParse: [{ ...baseOptions, payloadType: 'string', valueColumn: 'val' }]
-    };
+    const options = { ...baseOptions, payloadType: 'string', valueColumn: 'val' };
     transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
 
     // Row 2 has empty topic
@@ -337,9 +300,7 @@ describe('CSVToMQTTTransformer', () => {
   });
 
   it('should skip rows where VALUE is missing or null', async () => {
-    const options = {
-      csvToParse: [{ ...baseOptions, payloadType: 'string', valueColumn: 'val' }]
-    };
+    const options = { ...baseOptions, payloadType: 'string', valueColumn: 'val' };
     transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
 
     // Row 2 has empty value
@@ -356,26 +317,9 @@ describe('CSVToMQTTTransformer', () => {
     expect(output[0].topic).toBe('device/1');
   });
 
-  it('should return empty if no configuration matches filename', async () => {
-    transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], {
-      csvToParse: [baseOptions]
-    });
-
-    const promise = transformer.transform(mockStream, { source: 'test' }, 'wrong-name.txt');
-    mockStream.push('topic,val');
-    mockStream.push(null);
-    await flushPromises();
-    const result = await promise;
-
-    expect(result.output).toBe('[]');
-    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Could not find csv parser'));
-  });
-
   it('should log warning if CSV parsing has errors', async () => {
     // Tests parseResult.errors.length check
-    const options = {
-      csvToParse: [{ ...baseOptions, delimiter: 'COMMA', payloadType: 'string', valueColumn: 'val' }]
-    };
+    const options = { ...baseOptions, delimiter: 'COMMA', payloadType: 'string', valueColumn: 'val' };
     transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
 
     // Malformed CSV (unclosed quote)
@@ -393,9 +337,7 @@ describe('CSVToMQTTTransformer', () => {
 
   it('should default to raw value if type is unknown in formatValue', async () => {
     // Explicitly testing the default case of the switch statement
-    const options = {
-      csvToParse: [{ ...baseOptions, payloadType: 'unknown', valueColumn: 'val' }]
-    };
+    const options = { ...baseOptions, payloadType: 'unknown', valueColumn: 'val' };
     transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
 
     const csvContent = `topic,val\ndevice/1,raw-content`;
@@ -416,12 +358,6 @@ describe('CSVToMQTTTransformer', () => {
   it('should return correct manifest settings', () => {
     const manifest = CSVToMQTTTransformer.manifestSettings;
     expect(manifest.key).toBe('options');
-    expect(manifest.attributes[0].key).toBe('csvToParse');
-
-    // Verify nested attributes exist
-    const csvToParse = (manifest.attributes[0] as OIBusArrayAttribute).rootAttribute;
-    const payloadType = csvToParse.attributes.find(a => a.key === 'payloadType');
-    expect(payloadType).toBeDefined();
-    expect((payloadType as OIBusStringSelectAttribute).selectableValues).toContain('object');
+    expect(manifest.attributes[0].key).toBe('delimiter');
   });
 });
