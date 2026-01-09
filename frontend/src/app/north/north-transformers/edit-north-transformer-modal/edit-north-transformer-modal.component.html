@@ -18,11 +18,9 @@
                   }
                 }
                 @for (southConnector of southConnectors; track southConnector.id) {
-                  @if (!southIsSelected(southConnector.id)) {
-                    <option [ngValue]="{ inputType: null, south: southConnector }">
-                      {{ southConnector.name }} ({{ southConnector.type | oIBusSouthTypeEnum }})
-                    </option>
-                  }
+                  <option [ngValue]="{ inputType: null, south: southConnector }">
+                    {{ southConnector.name }} ({{ southConnector.type | oIBusSouthTypeEnum }})
+                  </option>
                 }
               </select>
             } @else {
@@ -80,14 +78,14 @@
         </div>
       }
       @if (manifest) {
-        <ng-container formGroupName="options">
+        <div class="row mt-2" formGroupName="options">
           <oib-oibus-object-form-control
             [scanModes]="scanModes"
             [certificates]="certificates"
             [group]="form.controls.options"
             [objectAttribute]="manifest"
           />
-        </ng-container>
+        </div>
       }
     </form>
   }

@@ -4976,46 +4976,6 @@ const models: TsoaRoute.Models = {
         "type": {"dataType":"union","subSchemas":[{"ref":"NorthAmazonS3Settings"},{"ref":"NorthAzureBlobSettings"},{"ref":"NorthConsoleSettings"},{"ref":"NorthFileWriterSettings"},{"ref":"NorthModbusSettings"},{"ref":"NorthMQTTSettings"},{"ref":"NorthOIAnalyticsSettings"},{"ref":"NorthOPCUASettings"},{"ref":"NorthRESTSettings"},{"ref":"NorthSFTPSettings"}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "CacheMetadataSourceOriginSouth": {
-        "dataType": "refObject",
-        "properties": {
-            "source": {"dataType":"enum","enums":["south"],"required":true},
-            "queryTime": {"ref":"Instant","required":true},
-            "southId": {"dataType":"string","required":true},
-            "itemIds": {"dataType":"array","array":{"dataType":"string"},"required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "CacheMetadataSourceOriginOIAnalytics": {
-        "dataType": "refObject",
-        "properties": {
-            "source": {"dataType":"enum","enums":["oianalytics"],"required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "CacheMetadataSourceOriginAPI": {
-        "dataType": "refObject",
-        "properties": {
-            "source": {"dataType":"enum","enums":["api"],"required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "CacheMetadataSourceOriginTest": {
-        "dataType": "refObject",
-        "properties": {
-            "source": {"dataType":"enum","enums":["test"],"required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "CacheMetadataSource": {
-        "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"ref":"CacheMetadataSourceOriginSouth"},{"ref":"CacheMetadataSourceOriginOIAnalytics"},{"ref":"CacheMetadataSourceOriginAPI"},{"ref":"CacheMetadataSourceOriginTest"}],"validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "CacheMetadata": {
         "dataType": "refObject",
         "properties": {
@@ -5024,7 +4984,6 @@ const models: TsoaRoute.Models = {
             "numberOfElement": {"dataType":"double","required":true},
             "createdAt": {"ref":"Instant","required":true},
             "contentType": {"dataType":"string","required":true},
-            "source": {"ref":"CacheMetadataSource","required":true},
         },
         "additionalProperties": false,
     },

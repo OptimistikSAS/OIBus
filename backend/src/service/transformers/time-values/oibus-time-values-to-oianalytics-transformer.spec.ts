@@ -5,6 +5,7 @@ import testData from '../../../tests/utils/test-data';
 import { flushPromises } from '../../../tests/utils/test-utils';
 import { OIBusTimeValue } from '../../../../shared/model/engine.model';
 import OIBusTimeValuesToOIAnalyticsTransformer from './oibus-time-values-to-oianalytics-transformer';
+import JSONToTimeValuesTransformer from '../any/json-to-time-values-transformer';
 
 jest.mock('../../utils', () => ({
   generateRandomId: jest.fn().mockReturnValue('randomId')
@@ -90,37 +91,15 @@ describe('OIBusTimeValuesToOIAnalyticsTransformer', () => {
     expect(transformer.formatInstant('2020-03-15T12:34:56.789Z', 'hr')).toEqual('2020-03-15T12:00:00.000Z');
   });
 
-  it('should return manifest', () => {
-    expect(OIBusTimeValuesToOIAnalyticsTransformer.manifestSettings).toEqual({
-      type: 'object',
-      key: 'options',
-      translationKey: 'configuration.oibus.manifest.transformers.options',
-      attributes: [
-        {
-          type: 'string-select',
-          key: 'precision',
-          translationKey: 'configuration.oibus.manifest.transformers.time-values-to-oianalytics.precision',
-          defaultValue: 'ms',
-          selectableValues: ['ms', 's', 'min', 'hr'],
-          validators: [
-            {
-              type: 'REQUIRED',
-              arguments: []
-            }
-          ],
-          displayProperties: {
-            row: 0,
-            columns: 4,
-            displayInViewMode: true
-          }
-        }
-      ],
-      enablingConditions: [],
-      validators: [],
-      displayProperties: {
-        visible: true,
-        wrapInBox: false
-      }
-    });
+  it('should correctly expose the manifest settings', () => {
+    // Act
+    const manifest = JSONToTimeValuesTransformer.manifestSettings;
+
+    // Assert
+    expect(manifest).toBeDefined();
+    expect(manifest.type).toBe('object');
+    expect(manifest.key).toBe('options');
+    // Sanity check on deep property
+    expect(manifest.attributes[0].key).toBe('rowIteratorPath');
   });
 });

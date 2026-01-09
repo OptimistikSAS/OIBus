@@ -192,7 +192,7 @@ describe('EditNorthTransformerModalComponent', () => {
           { pointId: 'pointId2', nodeId: 'nodeId2', dataType: 'Int32' }
         ]
       },
-      south: null,
+      south: undefined,
       inputType: transformer.inputType,
       items: []
     });
