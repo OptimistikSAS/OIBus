@@ -10,26 +10,23 @@ import Papa from 'papaparse';
 const pipelineAsync = promisify(pipeline);
 
 interface TransformerOptions {
-  csvToParse: Array<{
-    regex: string;
-    filename: string;
+  filename: string;
 
-    // CSV Specific Settings
-    delimiter: 'DOT' | 'SEMI_COLON' | 'COLON' | 'COMMA' | 'NON_BREAKING_SPACE' | 'SLASH' | 'TAB' | 'PIPE';
-    hasHeader: boolean;
+  // CSV Specific Settings
+  delimiter: 'DOT' | 'SEMI_COLON' | 'COLON' | 'COMMA' | 'NON_BREAKING_SPACE' | 'SLASH' | 'TAB' | 'PIPE';
+  hasHeader: boolean;
 
-    // Columns can be names (if header=true) or indices (if header=false, e.g. "0")
-    pointIdColumn: string;
-    timestampColumn: string;
-    valueColumn: string;
+  // Columns can be names (if header=true) or indices (if header=false, e.g. "0")
+  pointIdColumn: string;
+  timestampColumn: string;
+  valueColumn: string;
 
-    timestampSettings: {
-      type: 'iso-string' | 'unix-epoch' | 'unix-epoch-ms' | 'string';
-      timezone: string;
-      format: string;
-      locale: string;
-    };
-  }>;
+  timestampSettings: {
+    type: 'iso-string' | 'unix-epoch' | 'unix-epoch-ms' | 'string';
+    timezone: string;
+    format: string;
+    locale: string;
+  };
 }
 
 export default class CSVToTimeValuesTransformer extends OIBusTransformer {
@@ -40,12 +37,6 @@ export default class CSVToTimeValuesTransformer extends OIBusTransformer {
     source: CacheMetadataSource,
     filename: string
   ): Promise<{ metadata: CacheMetadata; output: string }> {
-    const csvParser = this.options.csvToParse.find(parser => filename.match(parser.regex));
-    if (!csvParser) {
-      this.logger.error(`Could not find csv parser configuration for file "${filename}"`);
-      return this.returnEmpty(source);
-    }
-
     // 1. Read stream into buffer
     const chunks: Array<Buffer> = [];
     await pipelineAsync(
@@ -61,8 +52,8 @@ export default class CSVToTimeValuesTransformer extends OIBusTransformer {
 
     // 2. Parse CSV Content
     const parseResult = Papa.parse(stringContent, {
-      header: csvParser.hasHeader,
-      delimiter: convertDelimiter(csvParser.delimiter),
+      header: this.options.hasHeader,
+      delimiter: convertDelimiter(this.options.delimiter),
       skipEmptyLines: true,
       dynamicTyping: true // Automatically converts numbers and booleans
     });
@@ -79,16 +70,16 @@ export default class CSVToTimeValuesTransformer extends OIBusTransformer {
     // 3. Iterate over rows and extract fields
     for (const row of rows) {
       // Extract Data based on configuration (Header name or Index)
-      const pointId = this.extractValue(row, csvParser.pointIdColumn, csvParser.hasHeader);
-      const rawTimestamp = this.extractValue(row, csvParser.timestampColumn, csvParser.hasHeader);
-      const rawValue = this.extractValue(row, csvParser.valueColumn, csvParser.hasHeader);
+      const pointId = this.extractValue(row, this.options.pointIdColumn, this.options.hasHeader);
+      const rawTimestamp = this.extractValue(row, this.options.timestampColumn, this.options.hasHeader);
+      const rawValue = this.extractValue(row, this.options.valueColumn, this.options.hasHeader);
 
       // Validation: Ensure we have the minimum required data
       if (pointId && rawTimestamp !== null && rawTimestamp !== undefined && rawValue !== null && rawValue !== undefined) {
         timeValues.push({
           pointId: String(pointId),
           data: { value: rawValue },
-          timestamp: convertDateTimeToInstant(rawTimestamp, csvParser.timestampSettings)
+          timestamp: convertDateTimeToInstant(rawTimestamp, this.options.timestampSettings)
         });
       }
     }
@@ -123,20 +114,6 @@ export default class CSVToTimeValuesTransformer extends OIBusTransformer {
     }
   }
 
-  returnEmpty(source: CacheMetadataSource) {
-    return {
-      output: '[]',
-      metadata: {
-        contentFile: `${generateRandomId(10)}.json`,
-        contentSize: 0,
-        createdAt: '',
-        numberOfElement: 0,
-        contentType: 'time-values',
-        source
-      }
-    };
-  }
-
   get options(): TransformerOptions {
     return this._options as TransformerOptions;
   }
@@ -148,134 +125,97 @@ export default class CSVToTimeValuesTransformer extends OIBusTransformer {
       translationKey: 'configuration.oibus.manifest.transformers.options',
       attributes: [
         {
-          type: 'array',
-          key: 'csvToParse',
-          translationKey: 'configuration.oibus.manifest.transformers.csv-to-time-values.csv-to-parse.title',
-          paginate: true,
-          numberOfElementPerPage: 20,
+          type: 'string-select',
+          key: 'delimiter',
+          translationKey: 'configuration.oibus.manifest.transformers.csv-to-time-values.delimiter',
+          defaultValue: 'SEMI_COLON',
+          selectableValues: ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'],
+          validators: [{ type: 'REQUIRED', arguments: [] }],
+          displayProperties: { row: 0, columns: 6, displayInViewMode: true }
+        },
+        {
+          type: 'boolean',
+          key: 'hasHeader',
+          translationKey: 'configuration.oibus.manifest.transformers.csv-to-time-values.has-header',
+          defaultValue: true,
+          validators: [{ type: 'REQUIRED', arguments: [] }],
+          displayProperties: { row: 0, columns: 6, displayInViewMode: true }
+        },
+        {
+          type: 'string',
+          key: 'pointIdColumn',
+          translationKey: 'configuration.oibus.manifest.transformers.csv-to-time-values.point-id-column',
+          defaultValue: 'id',
+          validators: [{ type: 'REQUIRED', arguments: [] }],
+          displayProperties: { row: 1, columns: 4, displayInViewMode: true }
+        },
+        {
+          type: 'string',
+          key: 'timestampColumn',
+          translationKey: 'configuration.oibus.manifest.transformers.csv-to-time-values.timestamp-column',
+          defaultValue: 'timestamp',
+          validators: [{ type: 'REQUIRED', arguments: [] }],
+          displayProperties: { row: 1, columns: 4, displayInViewMode: true }
+        },
+        {
+          type: 'string',
+          key: 'valueColumn',
+          translationKey: 'configuration.oibus.manifest.transformers.csv-to-time-values.value-column',
+          defaultValue: 'value',
+          validators: [{ type: 'REQUIRED', arguments: [] }],
+          displayProperties: { row: 1, columns: 4, displayInViewMode: true }
+        },
+        {
+          type: 'object',
+          key: 'timestampSettings',
+          translationKey: 'configuration.oibus.manifest.transformers.csv-to-time-values.timestamp-settings.title',
+          displayProperties: { visible: true, wrapInBox: true },
+          enablingConditions: [
+            { referralPathFromRoot: 'type', targetPathFromRoot: 'timezone', values: ['string'] },
+            { referralPathFromRoot: 'type', targetPathFromRoot: 'format', values: ['string'] },
+            { referralPathFromRoot: 'type', targetPathFromRoot: 'locale', values: ['string'] }
+          ],
           validators: [],
-          rootAttribute: {
-            type: 'object',
-            key: 'item',
-            translationKey: 'configuration.oibus.manifest.transformers.csv-to-time-values.csv-to-parse.item.title',
-            displayProperties: {
-              visible: true,
-              wrapInBox: false
+          attributes: [
+            {
+              type: 'string-select',
+              key: 'type',
+              translationKey: 'configuration.oibus.manifest.transformers.csv-to-time-values.timestamp-settings.type',
+              defaultValue: 'iso-string',
+              selectableValues: ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'],
+              validators: [{ type: 'REQUIRED', arguments: [] }],
+              displayProperties: { row: 0, columns: 3, displayInViewMode: true }
             },
-            enablingConditions: [],
-            validators: [],
-            attributes: [
-              {
-                type: 'string',
-                key: 'regex',
-                translationKey: 'configuration.oibus.manifest.transformers.csv-to-time-values.csv-to-parse.regex',
-                defaultValue: null,
-                validators: [{ type: 'REQUIRED', arguments: [] }],
-                displayProperties: { row: 0, columns: 6, displayInViewMode: true }
-              },
-              {
-                type: 'string',
-                key: 'filename',
-                translationKey: 'configuration.oibus.manifest.transformers.csv-to-time-values.csv-to-parse.filename',
-                defaultValue: 'time-values-output',
-                validators: [{ type: 'REQUIRED', arguments: [] }],
-                displayProperties: { row: 0, columns: 6, displayInViewMode: true }
-              },
-              {
-                type: 'string-select',
-                key: 'delimiter',
-                translationKey: 'configuration.oibus.manifest.transformers.csv-to-time-values.csv-to-parse.delimiter',
-                defaultValue: 'SEMI_COLON',
-                selectableValues: ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'],
-                validators: [{ type: 'REQUIRED', arguments: [] }],
-                displayProperties: { row: 1, columns: 6, displayInViewMode: true }
-              },
-              {
-                type: 'boolean',
-                key: 'hasHeader',
-                translationKey: 'configuration.oibus.manifest.transformers.csv-to-time-values.csv-to-parse.has-header',
-                defaultValue: true,
-                validators: [{ type: 'REQUIRED', arguments: [] }],
-                displayProperties: { row: 1, columns: 6, displayInViewMode: true }
-              },
-              {
-                type: 'string',
-                key: 'pointIdColumn',
-                translationKey: 'configuration.oibus.manifest.transformers.csv-to-time-values.csv-to-parse.point-id-column',
-                defaultValue: 'id',
-                validators: [{ type: 'REQUIRED', arguments: [] }],
-                displayProperties: { row: 2, columns: 4, displayInViewMode: true }
-              },
-              {
-                type: 'string',
-                key: 'timestampColumn',
-                translationKey: 'configuration.oibus.manifest.transformers.csv-to-time-values.csv-to-parse.timestamp-column',
-                defaultValue: 'timestamp',
-                validators: [{ type: 'REQUIRED', arguments: [] }],
-                displayProperties: { row: 2, columns: 4, displayInViewMode: true }
-              },
-              {
-                type: 'string',
-                key: 'valueColumn',
-                translationKey: 'configuration.oibus.manifest.transformers.csv-to-time-values.csv-to-parse.value-column',
-                defaultValue: 'value',
-                validators: [{ type: 'REQUIRED', arguments: [] }],
-                displayProperties: { row: 2, columns: 4, displayInViewMode: true }
-              },
-              {
-                type: 'object',
-                key: 'timestampSettings',
-                translationKey: 'configuration.oibus.manifest.transformers.csv-to-time-values.csv-to-parse.timestamp-settings.title',
-                displayProperties: { visible: true, wrapInBox: true },
-                enablingConditions: [
-                  { referralPathFromRoot: 'type', targetPathFromRoot: 'timezone', values: ['string'] },
-                  { referralPathFromRoot: 'type', targetPathFromRoot: 'format', values: ['string'] },
-                  { referralPathFromRoot: 'type', targetPathFromRoot: 'locale', values: ['string'] }
-                ],
-                validators: [],
-                attributes: [
-                  {
-                    type: 'string-select',
-                    key: 'type',
-                    translationKey: 'configuration.oibus.manifest.transformers.csv-to-time-values.csv-to-parse.timestamp-settings.type',
-                    defaultValue: 'iso-string',
-                    selectableValues: ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'],
-                    validators: [{ type: 'REQUIRED', arguments: [] }],
-                    displayProperties: { row: 0, columns: 3, displayInViewMode: true }
-                  },
-                  {
-                    type: 'timezone',
-                    key: 'timezone',
-                    translationKey: 'configuration.oibus.manifest.transformers.csv-to-time-values.csv-to-parse.timestamp-settings.timezone',
-                    defaultValue: 'UTC',
-                    validators: [{ type: 'REQUIRED', arguments: [] }],
-                    displayProperties: { row: 0, columns: 3, displayInViewMode: true }
-                  },
-                  {
-                    type: 'string',
-                    key: 'format',
-                    translationKey: 'configuration.oibus.manifest.transformers.csv-to-time-values.csv-to-parse.timestamp-settings.format',
-                    defaultValue: 'yyyy-MM-dd HH:mm:ss',
-                    validators: [{ type: 'REQUIRED', arguments: [] }],
-                    displayProperties: { row: 0, columns: 3, displayInViewMode: false }
-                  },
-                  {
-                    type: 'string',
-                    key: 'locale',
-                    translationKey: 'configuration.oibus.manifest.transformers.csv-to-time-values.csv-to-parse.timestamp-settings.locale',
-                    defaultValue: 'en-En',
-                    validators: [{ type: 'REQUIRED', arguments: [] }],
-                    displayProperties: { row: 0, columns: 3, displayInViewMode: false }
-                  }
-                ]
-              }
-            ]
-          }
+            {
+              type: 'timezone',
+              key: 'timezone',
+              translationKey: 'configuration.oibus.manifest.transformers.csv-to-time-values.timestamp-settings.timezone',
+              defaultValue: 'UTC',
+              validators: [{ type: 'REQUIRED', arguments: [] }],
+              displayProperties: { row: 0, columns: 3, displayInViewMode: true }
+            },
+            {
+              type: 'string',
+              key: 'format',
+              translationKey: 'configuration.oibus.manifest.transformers.csv-to-time-values.timestamp-settings.format',
+              defaultValue: 'yyyy-MM-dd HH:mm:ss',
+              validators: [{ type: 'REQUIRED', arguments: [] }],
+              displayProperties: { row: 0, columns: 3, displayInViewMode: false }
+            },
+            {
+              type: 'string',
+              key: 'locale',
+              translationKey: 'configuration.oibus.manifest.transformers.csv-to-time-values.timestamp-settings.locale',
+              defaultValue: 'en-En',
+              validators: [{ type: 'REQUIRED', arguments: [] }],
+              displayProperties: { row: 0, columns: 3, displayInViewMode: false }
+            }
+          ]
         }
       ],
       enablingConditions: [],
       validators: [],
-      displayProperties: { visible: true, wrapInBox: false }
+      displayProperties: { visible: true, wrapInBox: true }
     };
   }
 }
