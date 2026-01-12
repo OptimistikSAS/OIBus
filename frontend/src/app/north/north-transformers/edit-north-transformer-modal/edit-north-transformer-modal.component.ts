@@ -1,7 +1,7 @@
 import { Component, forwardRef, inject } from '@angular/core';
-import { NgbActiveModal, NgbTypeahead, NgbTypeaheadSelectItemEvent } from '@ng-bootstrap/ng-bootstrap';
-import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { debounceTime, distinctUntilChanged, map, Observable, switchMap } from 'rxjs';
+import { NgbActiveModal, NgbDropdown, NgbDropdownAnchor, NgbDropdownItem, NgbDropdownMenu } from '@ng-bootstrap/ng-bootstrap';
+import { FormControl, FormGroup, FormsModule, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Observable } from 'rxjs';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import {
@@ -23,7 +23,6 @@ import { getAssociatedInputType } from '../../../shared/utils/utils';
 import { SouthConnectorService } from '../../../services/south-connector.service';
 import { FormControlValidationDirective } from '../../../shared/form/form-control-validation.directive';
 import { PillComponent } from '../../../shared/pill/pill.component';
-import { TYPEAHEAD_DEBOUNCE_TIME } from '../../../shared/form/typeahead';
 
 @Component({
   selector: 'oib-edit-north-transformer-modal',
@@ -31,13 +30,17 @@ import { TYPEAHEAD_DEBOUNCE_TIME } from '../../../shared/form/typeahead';
   styleUrl: './edit-north-transformer-modal.component.scss',
   imports: [
     ReactiveFormsModule,
+    FormsModule,
     TranslateDirective,
     SaveButtonComponent,
     TranslatePipe,
     OIBusObjectFormControlComponent,
     OIBusSouthTypeEnumPipe,
     FormControlValidationDirective,
-    NgbTypeahead,
+    NgbDropdown,
+    NgbDropdownAnchor,
+    NgbDropdownMenu,
+    NgbDropdownItem,
     PillComponent
   ],
   viewProviders: [
@@ -60,15 +63,13 @@ export class EditNorthTransformerModalComponent {
     source: FormControl<{ inputType: InputType | null; south: SouthConnectorLightDTO | null }>;
     transformer: FormControl<TransformerDTO | null>;
     options: FormGroup;
-    itemSearch: FormControl<null | string>;
   }> = this.fb.group({
     source: this.fb.control<{
       inputType: InputType | null;
       south: SouthConnectorLightDTO | null;
     }>({ inputType: null, south: null }, Validators.required),
     transformer: this.fb.control<TransformerDTO | null>(null, Validators.required),
-    options: this.fb.group({}),
-    itemSearch: this.fb.control(null as null | string)
+    options: this.fb.group({})
   });
   allTransformers: Array<TransformerDTO> = [];
   selectableOutputs: Array<TransformerDTO> = [];
@@ -83,24 +84,44 @@ export class EditNorthTransformerModalComponent {
   selectedItems: Array<ItemLightDTO> = [];
   selectAllItems = true;
   searchResults: Array<ItemLightDTO> = [];
+  filteredItems: Array<ItemLightDTO> = [];
   totalSearchResults = 0;
+  itemSearchText = '';
+  searchInteracted = false;
 
-  itemTypeahead = (text$: Observable<string>) =>
-    text$.pipe(
-      debounceTime(TYPEAHEAD_DEBOUNCE_TIME),
-      distinctUntilChanged(),
-      switchMap(text => {
-        const southId = this.form.controls.source.value.south!.id;
-        return this.southConnectorService.searchItems(southId, { name: text, page: 0 });
-      }),
-      map(items => {
-        const filteredItems = items.content.filter(item => !this.selectedItems.some(element => element.id === item.id));
-        this.searchResults = filteredItems;
-        this.totalSearchResults = filteredItems.length;
-        return filteredItems.slice(0, 10).map(item => ({ id: item.id, name: item.name }));
-      })
-    );
-  itemFormatter = (item: ItemLightDTO) => item.name;
+  filterItems() {
+    const southId = this.form.controls.source.value.south?.id;
+    if (!southId || !this.southConnectorService) {
+      this.filteredItems = [];
+      this.searchResults = [];
+      this.totalSearchResults = 0;
+      return;
+    }
+
+    const result = this.southConnectorService.searchItems(southId, { name: this.itemSearchText, page: 0 });
+    if (!result) {
+      this.filteredItems = [];
+      this.searchResults = [];
+      this.totalSearchResults = 0;
+      return;
+    }
+
+    result.subscribe(items => {
+      const allItems = items.content;
+      this.searchResults = allItems.filter(item => !this.selectedItems.some(element => element.id === item.id));
+      this.totalSearchResults = this.searchResults.length;
+      this.filteredItems = allItems.slice(0, 10);
+    });
+  }
+
+  onDropdownOpenChange(isOpen: boolean) {
+    if (isOpen) {
+      // Items should already be pre-loaded, but just in case
+      if (this.filteredItems.length === 0) {
+        this.filterItems();
+      }
+    }
+  }
 
   prepareForCreation(
     southConnectors: Array<SouthConnectorLightDTO>,
@@ -156,6 +177,11 @@ export class EditNorthTransformerModalComponent {
       { emitEvent: false }
     );
     this.form.controls.source.disable({ emitEvent: false });
+
+    // Pre-load items if editing with a south connector
+    if (sourceValue.south) {
+      this.filterItems();
+    }
   }
 
   buildForm() {
@@ -165,6 +191,14 @@ export class EditNorthTransformerModalComponent {
         options: {}
       });
       this.updateSelectableOutput(source);
+      // Pre-load items when a south connector is selected
+      if (source.south) {
+        this.filterItems();
+      } else {
+        this.filteredItems = [];
+        this.searchResults = [];
+        this.totalSearchResults = 0;
+      }
     });
 
     this.form.controls.transformer.valueChanges.subscribe(newTransformer => {
@@ -261,9 +295,17 @@ export class EditNorthTransformerModalComponent {
     });
   }
 
-  selectItem(event: NgbTypeaheadSelectItemEvent<ItemLightDTO>) {
-    this.selectedItems.push(event.item);
-    event.preventDefault();
+  toggleItem(item: ItemLightDTO) {
+    const index = this.selectedItems.findIndex(i => i.id === item.id);
+    if (index >= 0) {
+      this.selectedItems.splice(index, 1);
+    } else {
+      this.selectedItems.push(item);
+    }
+  }
+
+  isItemSelected(item: ItemLightDTO): boolean {
+    return this.selectedItems.some(i => i.id === item.id);
   }
 
   removeItem(itemToRemove: ItemLightDTO) {
@@ -275,6 +317,8 @@ export class EditNorthTransformerModalComponent {
     if (selectAll) {
       this.selectedItems = [];
     }
+    // Reset search interaction flag when toggling
+    this.searchInteracted = false;
   }
 
   selectAllResults() {
@@ -283,6 +327,8 @@ export class EditNorthTransformerModalComponent {
         this.selectedItems.push(item);
       }
     }
+    this.searchResults = [];
+    this.totalSearchResults = 0;
   }
 
   removeAllItems() {
