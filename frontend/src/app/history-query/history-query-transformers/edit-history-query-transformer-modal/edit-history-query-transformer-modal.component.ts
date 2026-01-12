@@ -66,13 +66,21 @@ export class EditHistoryQueryTransformerModalComponent {
   southType: OIBusSouthType | null = null;
   selectedItems: Array<ItemLightDTO> = [];
   selectableItems: Array<ItemLightDTO> = [];
+  selectAllItems = true;
+  searchResults: Array<ItemLightDTO> = [];
+  totalSearchResults = 0;
 
   itemTypeahead = (text$: Observable<string>) =>
     text$.pipe(
       debounceTime(TYPEAHEAD_DEBOUNCE_TIME),
       distinctUntilChanged(),
       switchMap(text => {
-        return of(this.selectableItems.filter(item => item.name.toLowerCase().includes(text.toLowerCase())));
+        const filteredItems = this.selectableItems
+          .filter(item => item.name.toLowerCase().includes(text.toLowerCase()))
+          .filter(item => !this.selectedItems.some(element => element.id === item.id));
+        this.searchResults = filteredItems;
+        this.totalSearchResults = filteredItems.length;
+        return of(filteredItems.slice(0, 10));
       })
     );
   itemFormatter = (item: ItemLightDTO) => item.name;
@@ -114,6 +122,7 @@ export class EditHistoryQueryTransformerModalComponent {
     this.supportedOutputTypes = supportedOutputTypes;
     this.selectedItems = transformerWithOptionsToEdit.items;
     this.selectableItems = selectableItems;
+    this.selectAllItems = transformerWithOptionsToEdit.items.length === 0;
 
     this.buildForm();
     this.createOptionsForm(transformerWithOptionsToEdit.transformer);
@@ -165,7 +174,7 @@ export class EditHistoryQueryTransformerModalComponent {
       transformer: this.form.value.transformer,
       options: this.form!.value.options,
       inputType: getAssociatedInputType(this.southType!),
-      items: this.selectedItems
+      items: this.selectAllItems ? [] : this.selectedItems
     });
   }
 
@@ -195,5 +204,24 @@ export class EditHistoryQueryTransformerModalComponent {
 
   removeItem(itemToRemove: ItemLightDTO) {
     this.selectedItems = this.selectedItems.filter(item => item.id !== itemToRemove.id);
+  }
+
+  toggleItemSelection(selectAll: boolean) {
+    this.selectAllItems = selectAll;
+    if (selectAll) {
+      this.selectedItems = [];
+    }
+  }
+
+  selectAllResults() {
+    for (const item of this.searchResults) {
+      if (!this.selectedItems.some(selected => selected.id === item.id)) {
+        this.selectedItems.push(item);
+      }
+    }
+  }
+
+  removeAllItems() {
+    this.selectedItems = [];
   }
 }
