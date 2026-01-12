@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import authMiddleware from './middlewares/auth.middleware';
 import sseMiddleware from './middlewares/sse.middleware';
 import EncryptionService from '../service/encryption.service';
@@ -138,6 +139,24 @@ export default class WebServer {
     const isStaticFile = (path: string) => {
       return path.startsWith('/assets/') || path === '/favicon.ico';
     };
+
+    // Rate limiting for configuration API endpoints
+    const apiRateLimiter = rateLimit({
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      max: 100, // max 100 requests per windowMs per IP
+      message: { error: 'Too many requests, please try again later.' },
+      standardHeaders: true,
+      legacyHeaders: false,
+      skip: req => {
+        // Skip rate limiting for:
+        // - Content endpoints (unpredictable call frequency)
+        // - SSE endpoints (long-lived connections)
+        // - Non-API routes
+        return req.path.startsWith('/api/content') || req.path.startsWith('/sse') || !req.path.startsWith('/api/');
+      }
+    });
+
+    this.app.use(apiRateLimiter);
 
     // Authentication middleware for API routes only
     this.app.use((req, res, next) => {
