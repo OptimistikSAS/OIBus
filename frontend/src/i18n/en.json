@@ -931,6 +931,8 @@
           "all-items-selected": "All items",
           "all-items": "All items",
           "specific-items": "Specific items",
+          "search-items": "Search items...",
+          "no-items-found": "No items found",
           "search-results-count": "{{ count }} results",
           "showing-first-n": "(showing first {{ limit }})",
           "select-all-results": "Select all results",
