@@ -9,12 +9,12 @@ import { NorthOPCUASettings } from '../../../shared/model/north-settings.model';
 import testData from '../../tests/utils/test-data';
 import CacheService from '../../service/cache/cache.service';
 import { createTransformer } from '../../service/transformer.service';
-import OIBusTransformer from '../../service/transformers/oibus-transformer';
+import OIBusTransformer from '../../transformers/oibus-transformer';
 import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
 import { AttributeIds, ClientSession, DataType, OPCUAClient, resolveNodeId } from 'node-opcua';
 import { randomUUID } from 'crypto';
 import fs from 'node:fs/promises';
-import { OIBusOPCUAValue } from '../../service/transformers/connector-types.model';
+import { OIBusOPCUAValue } from '../../transformers/connector-types.model';
 import { createSessionConfigs, initOPCUACertificateFolders } from '../../service/utils-opcua';
 import path from 'node:path';
 
