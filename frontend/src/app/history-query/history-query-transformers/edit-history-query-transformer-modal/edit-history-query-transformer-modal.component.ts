@@ -1,7 +1,7 @@
 import { Component, forwardRef, inject } from '@angular/core';
-import { NgbActiveModal, NgbTypeahead, NgbTypeaheadSelectItemEvent } from '@ng-bootstrap/ng-bootstrap';
-import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { debounceTime, distinctUntilChanged, Observable, of, switchMap } from 'rxjs';
+import { NgbActiveModal, NgbDropdown, NgbDropdownAnchor, NgbDropdownItem, NgbDropdownMenu } from '@ng-bootstrap/ng-bootstrap';
+import { FormControl, FormGroup, FormsModule, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Observable } from 'rxjs';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { TransformerDTO, TransformerDTOWithOptions } from '../../../../../../backend/shared/model/transformer.model';
@@ -16,7 +16,6 @@ import { ItemLightDTO, OIBusSouthType } from '../../../../../../backend/shared/m
 import { getAssociatedInputType } from '../../../shared/utils/utils';
 import { FormControlValidationDirective } from '../../../shared/form/form-control-validation.directive';
 import { PillComponent } from '../../../shared/pill/pill.component';
-import { TYPEAHEAD_DEBOUNCE_TIME } from '../../../shared/form/typeahead';
 
 @Component({
   selector: 'oib-edit-history-query-transformer-modal',
@@ -24,12 +23,16 @@ import { TYPEAHEAD_DEBOUNCE_TIME } from '../../../shared/form/typeahead';
   styleUrl: './edit-history-query-transformer-modal.component.scss',
   imports: [
     ReactiveFormsModule,
+    FormsModule,
     TranslateDirective,
     SaveButtonComponent,
     TranslatePipe,
     OIBusObjectFormControlComponent,
     FormControlValidationDirective,
-    NgbTypeahead,
+    NgbDropdown,
+    NgbDropdownAnchor,
+    NgbDropdownMenu,
+    NgbDropdownItem,
     PillComponent
   ],
   viewProviders: [
@@ -50,11 +53,9 @@ export class EditHistoryQueryTransformerModalComponent {
   form: FormGroup<{
     transformer: FormControl<TransformerDTO | null>;
     options: FormGroup;
-    itemSearch: FormControl<null | string>;
   }> = this.fb.group({
     transformer: this.fb.control<TransformerDTO | null>(null, Validators.required),
-    options: this.fb.group({}),
-    itemSearch: this.fb.control(null as null | string)
+    options: this.fb.group({})
   });
   allTransformers: Array<TransformerDTO> = [];
   selectableOutputs: Array<TransformerDTO> = [];
@@ -68,22 +69,26 @@ export class EditHistoryQueryTransformerModalComponent {
   selectableItems: Array<ItemLightDTO> = [];
   selectAllItems = true;
   searchResults: Array<ItemLightDTO> = [];
+  filteredItems: Array<ItemLightDTO> = [];
   totalSearchResults = 0;
+  itemSearchText = '';
+  searchInteracted = false;
 
-  itemTypeahead = (text$: Observable<string>) =>
-    text$.pipe(
-      debounceTime(TYPEAHEAD_DEBOUNCE_TIME),
-      distinctUntilChanged(),
-      switchMap(text => {
-        const filteredItems = this.selectableItems
-          .filter(item => item.name.toLowerCase().includes(text.toLowerCase()))
-          .filter(item => !this.selectedItems.some(element => element.id === item.id));
-        this.searchResults = filteredItems;
-        this.totalSearchResults = filteredItems.length;
-        return of(filteredItems.slice(0, 10));
-      })
-    );
-  itemFormatter = (item: ItemLightDTO) => item.name;
+  filterItems() {
+    const matchingItems = this.selectableItems.filter(item => item.name.toLowerCase().includes(this.itemSearchText.toLowerCase()));
+    this.searchResults = matchingItems.filter(item => !this.selectedItems.some(element => element.id === item.id));
+    this.totalSearchResults = this.searchResults.length;
+    this.filteredItems = matchingItems.slice(0, 10);
+  }
+
+  onDropdownOpenChange(isOpen: boolean) {
+    if (isOpen) {
+      // Items should already be pre-loaded, but just in case
+      if (this.filteredItems.length === 0) {
+        this.filterItems();
+      }
+    }
+  }
 
   prepareForCreation(
     southType: OIBusSouthType,
@@ -101,6 +106,9 @@ export class EditHistoryQueryTransformerModalComponent {
     this.supportedOutputTypes = supportedOutputTypes;
     this.selectableItems = selectableItems;
     this.buildForm();
+
+    // Pre-load items
+    this.filterItems();
   }
 
   prepareForEdition(
@@ -131,6 +139,9 @@ export class EditHistoryQueryTransformerModalComponent {
       { transformer: transformerWithOptionsToEdit.transformer, options: transformerWithOptionsToEdit.options },
       { emitEvent: false }
     );
+
+    // Pre-load items
+    this.filterItems();
   }
 
   buildForm() {
@@ -197,9 +208,17 @@ export class EditHistoryQueryTransformerModalComponent {
     });
   }
 
-  selectItem(event: NgbTypeaheadSelectItemEvent<ItemLightDTO>) {
-    this.selectedItems.push(event.item);
-    event.preventDefault();
+  toggleItem(item: ItemLightDTO) {
+    const index = this.selectedItems.findIndex(i => i.id === item.id);
+    if (index >= 0) {
+      this.selectedItems.splice(index, 1);
+    } else {
+      this.selectedItems.push(item);
+    }
+  }
+
+  isItemSelected(item: ItemLightDTO): boolean {
+    return this.selectedItems.some(i => i.id === item.id);
   }
 
   removeItem(itemToRemove: ItemLightDTO) {
@@ -211,6 +230,8 @@ export class EditHistoryQueryTransformerModalComponent {
     if (selectAll) {
       this.selectedItems = [];
     }
+    // Reset search interaction flag when toggling
+    this.searchInteracted = false;
   }
 
   selectAllResults() {
@@ -219,6 +240,8 @@ export class EditHistoryQueryTransformerModalComponent {
         this.selectedItems.push(item);
       }
     }
+    this.searchResults = [];
+    this.totalSearchResults = 0;
   }
 
   removeAllItems() {

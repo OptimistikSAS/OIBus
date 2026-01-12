@@ -1,3 +1,5 @@
+@import '../../../../common';
+
 .btn-link.select-all-results {
   color: #fabb00;
   text-decoration: none;
@@ -5,4 +7,19 @@
   &:hover {
     color: #2c3c45;
   }
+}
+
+.item-search-dropdown {
+  position: relative;
+
+  .item-dropdown-menu {
+    max-height: 33vh;
+    overflow-y: auto;
+    min-width: 300px;
+  }
+}
+
+.selected {
+  color: $component-active-color;
+  background-color: $component-active-bg;
 }
