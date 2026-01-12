@@ -82,8 +82,22 @@ export default class WebServer {
   async init(): Promise<void> {
     this.app = express();
 
-    // Helmet for Express
-    this.app.use(helmet({ contentSecurityPolicy: false }));
+    // Helmet for Express with Content Security Policy
+    this.app.use(
+      helmet({
+        contentSecurityPolicy: {
+          directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-eval'"], // unsafe-eval required for Monaco Editor
+            styleSrc: ["'self'", "'unsafe-inline'"], // unsafe-inline required for Monaco Editor
+            imgSrc: ["'self'", 'data:'], // data: required for SVG in styles
+            fontSrc: ["'self'"],
+            connectSrc: ["'self'"],
+            workerSrc: ["'self'", 'blob:'] // blob: required for Monaco Editor workers
+          }
+        }
+      })
+    );
     this.app.disable('x-powered-by'); // Remove X-Powered-By header
 
     this.app.use(this.setupRequestLogging());
