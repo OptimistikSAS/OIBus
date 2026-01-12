@@ -19,9 +19,9 @@ import { createReadStream } from 'node:fs';
 import { Readable } from 'node:stream';
 import { createTransformer } from '../service/transformer.service';
 import OIBusTransformerMock from '../tests/__mocks__/service/transformers/oibus-transformer.mock';
-import OIBusTransformer from '../service/transformers/oibus-transformer';
-import IgnoreTransformer from '../service/transformers/ignore-transformer';
-import IsoTransformer from '../service/transformers/iso-transformer';
+import OIBusTransformer from '../transformers/oibus-transformer';
+import IgnoreTransformer from '../transformers/ignore-transformer';
+import IsoTransformer from '../transformers/iso-transformer';
 import { SouthConnectorEntityLight } from '../model/south-connector.model';
 
 // Mock fs
