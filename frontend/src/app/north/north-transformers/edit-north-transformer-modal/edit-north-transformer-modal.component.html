@@ -76,7 +76,7 @@
               </label>
             </div>
             @if (!selectAllItems) {
-              @if (totalSearchResults > 0) {
+              @if (searchInteracted && totalSearchResults > 0) {
                 <div class="mb-2 d-flex align-items-center gap-2">
                   <small class="text-muted">
                     <span
@@ -92,28 +92,53 @@
                       <span translate="configuration.oibus.manifest.transformers.select-all-results"></span>
                     </button>
                   }
+                  @if (selectedItems.length > 0) {
+                    <button type="button" class="btn btn-link btn-sm p-0 select-all-results" (click)="removeAllItems()">
+                      <span translate="configuration.oibus.manifest.transformers.remove-all"></span>
+                    </button>
+                  }
                 </div>
               }
-              <input
-                id="items"
-                class="form-control"
-                formControlName="itemSearch"
-                [ngbTypeahead]="itemTypeahead"
-                [resultFormatter]="itemFormatter"
-                [inputFormatter]="itemFormatter"
-                [editable]="false"
-                (selectItem)="selectItem($event)"
-              />
+              <div
+                ngbDropdown
+                autoClose="outside"
+                #itemDropdown="ngbDropdown"
+                class="item-search-dropdown"
+                (openChange)="onDropdownOpenChange($event)"
+              >
+                <input
+                  id="items"
+                  class="form-control"
+                  placeholder="{{ 'configuration.oibus.manifest.transformers.search-items' | translate }}"
+                  [(ngModel)]="itemSearchText"
+                  [ngModelOptions]="{ standalone: true }"
+                  (ngModelChange)="filterItems()"
+                  (focus)="searchInteracted = true; itemDropdown.open()"
+                  ngbDropdownAnchor
+                />
+                <div ngbDropdownMenu class="item-dropdown-menu">
+                  @for (item of filteredItems; track item.id) {
+                    <button type="button" ngbDropdownItem (click)="toggleItem(item)" [class.selected]="isItemSelected(item)">
+                      <div class="d-flex">
+                        <div class="flex-grow-1 me-3">{{ item.name }}</div>
+                        <div class="fa-fw">
+                          @if (isItemSelected(item)) {
+                            <span class="fa fa-check"></span>
+                          }
+                        </div>
+                      </div>
+                    </button>
+                  }
+                  @if (filteredItems.length === 0 && itemSearchText) {
+                    <div class="dropdown-item text-muted" translate="configuration.oibus.manifest.transformers.no-items-found"></div>
+                  }
+                </div>
+              </div>
               @if (selectedItems.length > 0) {
-                <div class="d-flex align-items-center justify-content-between mt-2">
-                  <div class="flex-grow-1" [style.margin-top.rem]="selectedItems.length ? -0.75 : 0">
-                    @for (item of selectedItems; track item.id) {
-                      <oib-pill type="secondary" [removable]="true" (removed)="removeItem(item)"> {{ item.name }} </oib-pill>
-                    }
-                  </div>
-                  <button type="button" class="btn btn-link btn-sm" (click)="removeAllItems()">
-                    <span translate="configuration.oibus.manifest.transformers.remove-all"></span>
-                  </button>
+                <div [style.margin-top.rem]="selectedItems.length ? 0.5 : 0">
+                  @for (item of selectedItems; track item.id) {
+                    <oib-pill type="secondary" [removable]="true" (removed)="removeItem(item)"> {{ item.name }} </oib-pill>
+                  }
                 </div>
               }
             }
