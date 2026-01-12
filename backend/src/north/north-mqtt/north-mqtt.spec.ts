@@ -8,13 +8,13 @@ import testData from '../../tests/utils/test-data';
 import { flushPromises } from '../../tests/utils/test-utils';
 import CacheService from '../../service/cache/cache.service';
 import { createTransformer } from '../../service/transformer.service';
-import OIBusTransformer from '../../service/transformers/oibus-transformer';
+import OIBusTransformer from '../../transformers/oibus-transformer';
 import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
 import { getFilenameWithoutRandomId } from '../../service/utils';
 import mqtt, { MqttClient } from 'mqtt';
 import Stream from 'node:stream';
 import fs from 'node:fs/promises';
-import { OIBusMQTTValue } from '../../service/transformers/connector-types.model';
+import { OIBusMQTTValue } from '../../transformers/connector-types.model';
 import { createConnectionOptions } from '../../service/utils-mqtt';
 
 jest.mock('node:fs/promises');

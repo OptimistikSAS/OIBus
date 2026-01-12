@@ -7,7 +7,7 @@ import path from 'node:path';
 import fs from 'node:fs/promises';
 import { AttributeIds, ClientSession, DataType, OPCUACertificateManager, OPCUAClient, resolveNodeId } from 'node-opcua';
 import { randomUUID } from 'crypto';
-import { OIBusOPCUAValue } from '../../service/transformers/connector-types.model';
+import { OIBusOPCUAValue } from '../../transformers/connector-types.model';
 import CacheService from '../../service/cache/cache.service';
 import { createSessionConfigs, initOPCUACertificateFolders } from '../../service/utils-opcua';
 import { OIBusError } from '../../model/engine.model';

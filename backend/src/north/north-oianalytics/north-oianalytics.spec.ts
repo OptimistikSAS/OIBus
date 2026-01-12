@@ -24,7 +24,7 @@ import { ClientCertificateCredential, ClientSecretCredential } from '@azure/iden
 import CacheService from '../../service/cache/cache.service';
 import { OIBusError } from '../../model/engine.model';
 import { createTransformer } from '../../service/transformer.service';
-import OIBusTransformer from '../../service/transformers/oibus-transformer';
+import OIBusTransformer from '../../transformers/oibus-transformer';
 import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
 
 jest.mock('node:fs/promises');

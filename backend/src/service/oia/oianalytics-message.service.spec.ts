@@ -32,7 +32,7 @@ import { OIAnalyticsMessageHistoryQueries } from '../../model/oianalytics-messag
 import TransformerRepository from '../../repository/config/transformer.repository';
 import TransformerRepositoryMock from '../../tests/__mocks__/repository/config/transformer-repository.mock';
 import { StandardTransformer } from '../../model/transformer.model';
-import IsoTransformer from '../transformers/iso-transformer';
+import IsoTransformer from '../../transformers/iso-transformer';
 import DeferredPromise from '../deferred-promise';
 
 jest.mock('node:fs/promises');

@@ -15,8 +15,8 @@ import CacheService from '../service/cache/cache.service';
 import { Readable } from 'node:stream';
 import fsAsync from 'node:fs/promises';
 import { createTransformer } from '../service/transformer.service';
-import IgnoreTransformer from '../service/transformers/ignore-transformer';
-import IsoTransformer from '../service/transformers/iso-transformer';
+import IgnoreTransformer from '../transformers/ignore-transformer';
+import IsoTransformer from '../transformers/iso-transformer';
 import { NorthTransformerWithOptions } from '../model/transformer.model';
 
 /**
