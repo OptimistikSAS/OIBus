@@ -299,8 +299,12 @@ export class EditNorthTransformerModalComponent {
     const index = this.selectedItems.findIndex(i => i.id === item.id);
     if (index >= 0) {
       this.selectedItems.splice(index, 1);
+      if (item.name.toLowerCase().includes(this.itemSearchText.toLowerCase())) {
+        this.searchResults.push(item);
+      }
     } else {
       this.selectedItems.push(item);
+      this.searchResults = this.searchResults.filter(i => i.id !== item.id);
     }
   }
 
@@ -327,11 +331,14 @@ export class EditNorthTransformerModalComponent {
         this.selectedItems.push(item);
       }
     }
+    // Clear search results since all items are now selected
     this.searchResults = [];
     this.totalSearchResults = 0;
   }
 
   removeAllItems() {
     this.selectedItems = [];
+    // Refresh search results to include previously selected items
+    this.filterItems();
   }
 }
