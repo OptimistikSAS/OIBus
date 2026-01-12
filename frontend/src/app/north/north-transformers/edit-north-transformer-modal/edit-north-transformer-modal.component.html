@@ -59,21 +59,64 @@
         <div class="row">
           <div class="col">
             <label for="items" class="col-auto col-form-label" translate="configuration.oibus.manifest.transformers.items"></label>
-            <input
-              id="items"
-              class="form-control"
-              formControlName="itemSearch"
-              [ngbTypeahead]="itemTypeahead"
-              [resultFormatter]="itemFormatter"
-              [inputFormatter]="itemFormatter"
-              [editable]="false"
-              (selectItem)="selectItem($event)"
-            />
-            <div [style.margin-top.rem]="selectedItems.length ? -0.75 : 0">
-              @for (item of selectedItems; track item.id) {
-                <oib-pill type="secondary" [removable]="true" (removed)="removeItem(item)"> {{ item.name }} </oib-pill>
-              }
+            <div class="form-check form-switch mb-2">
+              <input
+                type="checkbox"
+                class="form-check-input"
+                [checked]="selectAllItems"
+                (change)="toggleItemSelection($any($event.target).checked)"
+                id="selectAllToggle"
+              />
+              <label class="form-check-label" for="selectAllToggle">
+                @if (selectAllItems) {
+                  <span translate="configuration.oibus.manifest.transformers.all-items"></span>
+                } @else {
+                  <span translate="configuration.oibus.manifest.transformers.specific-items"></span>
+                }
+              </label>
             </div>
+            @if (!selectAllItems) {
+              @if (totalSearchResults > 0) {
+                <div class="mb-2 d-flex align-items-center gap-2">
+                  <small class="text-muted">
+                    <span
+                      translate="configuration.oibus.manifest.transformers.search-results-count"
+                      [translateParams]="{ count: totalSearchResults }"
+                    ></span>
+                    @if (totalSearchResults > 10) {
+                      <span translate="configuration.oibus.manifest.transformers.showing-first-n" [translateParams]="{ limit: 10 }"></span>
+                    }
+                  </small>
+                  @if (searchResults.length > 0) {
+                    <button type="button" class="btn btn-link btn-sm p-0 select-all-results" (click)="selectAllResults()">
+                      <span translate="configuration.oibus.manifest.transformers.select-all-results"></span>
+                    </button>
+                  }
+                </div>
+              }
+              <input
+                id="items"
+                class="form-control"
+                formControlName="itemSearch"
+                [ngbTypeahead]="itemTypeahead"
+                [resultFormatter]="itemFormatter"
+                [inputFormatter]="itemFormatter"
+                [editable]="false"
+                (selectItem)="selectItem($event)"
+              />
+              @if (selectedItems.length > 0) {
+                <div class="d-flex align-items-center justify-content-between mt-2">
+                  <div class="flex-grow-1" [style.margin-top.rem]="selectedItems.length ? -0.75 : 0">
+                    @for (item of selectedItems; track item.id) {
+                      <oib-pill type="secondary" [removable]="true" (removed)="removeItem(item)"> {{ item.name }} </oib-pill>
+                    }
+                  </div>
+                  <button type="button" class="btn btn-link btn-sm" (click)="removeAllItems()">
+                    <span translate="configuration.oibus.manifest.transformers.remove-all"></span>
+                  </button>
+                </div>
+              }
+            }
           </div>
         </div>
       }
