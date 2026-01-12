@@ -252,18 +252,33 @@ describe('EditNorthTransformerModalComponent', () => {
       expect(tester.componentInstance.selectedItems.length).toBe(2);
       expect(tester.componentInstance.selectedItems.find(item => item.id === 'item1')).toBeDefined();
       expect(tester.componentInstance.selectedItems.find(item => item.id === 'item2')).toBeDefined();
+      // Should clear search results after selecting all
+      expect(tester.componentInstance.searchResults).toEqual([]);
+      expect(tester.componentInstance.totalSearchResults).toBe(0);
     });
 
-    it('should remove all selected items', () => {
-      tester.componentInstance.prepareForCreation([], [], [], [], [transformer], []);
+    it('should remove all selected items and refresh search results', () => {
+      const southConnector = { id: 'south1', name: 'South 1', type: 'opcua' as const, description: '', enabled: false };
+      tester.componentInstance.prepareForCreation([southConnector], [], [], [], [transformer], []);
+      tester.componentInstance.form.controls.source.setValue({ inputType: null, south: southConnector });
       tester.componentInstance.selectedItems = [
         { id: 'item1', name: 'Item 1' },
         { id: 'item2', name: 'Item 2' }
       ];
 
+      const items: Array<any> = [
+        { id: 'item1', name: 'Item 1' },
+        { id: 'item2', name: 'Item 2' }
+      ];
+      fakeSouthConnectorService.searchItems.and.returnValue(
+        of({ content: items, size: 20, number: 0, totalElements: 2, totalPages: 1 } as any)
+      );
+
       tester.componentInstance.removeAllItems();
 
       expect(tester.componentInstance.selectedItems).toEqual([]);
+      // Should call filterItems to refresh search results
+      expect(fakeSouthConnectorService.searchItems).toHaveBeenCalled();
     });
 
     it('should remove a single item', () => {
@@ -280,14 +295,21 @@ describe('EditNorthTransformerModalComponent', () => {
     it('should toggle item selection', () => {
       tester.componentInstance.prepareForCreation([], [], [], [], [transformer], []);
       const item = { id: 'item1', name: 'Item 1' };
+      tester.componentInstance.itemSearchText = '';
+      tester.componentInstance.searchResults = [item];
+      tester.componentInstance.totalSearchResults = 1;
 
-      // Add item
+      // Add item (select)
       tester.componentInstance.toggleItem(item);
       expect(tester.componentInstance.selectedItems).toEqual([item]);
+      expect(tester.componentInstance.searchResults).toEqual([]);
+      expect(tester.componentInstance.totalSearchResults).toBe(1); // Should stay the same
 
-      // Remove item
+      // Remove item (deselect)
       tester.componentInstance.toggleItem(item);
       expect(tester.componentInstance.selectedItems).toEqual([]);
+      expect(tester.componentInstance.searchResults).toEqual([item]);
+      expect(tester.componentInstance.totalSearchResults).toBe(1); // Should stay the same
     });
 
     it('should check if item is selected', () => {

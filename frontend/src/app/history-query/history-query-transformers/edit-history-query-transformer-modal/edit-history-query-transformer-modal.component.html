@@ -43,17 +43,19 @@
             </label>
           </div>
           @if (!selectAllItems) {
-            @if (searchInteracted && totalSearchResults > 0) {
+            @if (searchInteracted && (totalSearchResults > 0 || selectedItems.length > 0)) {
               <div class="mb-2 d-flex align-items-center gap-2">
-                <small class="text-muted">
-                  <span
-                    translate="configuration.oibus.manifest.transformers.search-results-count"
-                    [translateParams]="{ count: totalSearchResults }"
-                  ></span>
-                  @if (totalSearchResults > 10) {
-                    <span translate="configuration.oibus.manifest.transformers.showing-first-n" [translateParams]="{ limit: 10 }"></span>
-                  }
-                </small>
+                @if (totalSearchResults > 0) {
+                  <small class="text-muted">
+                    <span
+                      translate="configuration.oibus.manifest.transformers.search-results-count"
+                      [translateParams]="{ count: totalSearchResults }"
+                    ></span>
+                    @if (totalSearchResults > 10) {
+                      <span translate="configuration.oibus.manifest.transformers.showing-first-n" [translateParams]="{ limit: 10 }"></span>
+                    }
+                  </small>
+                }
                 @if (searchResults.length > 0) {
                   <button type="button" class="btn btn-link btn-sm p-0 select-all-results" (click)="selectAllResults()">
                     <span translate="configuration.oibus.manifest.transformers.select-all-results"></span>
