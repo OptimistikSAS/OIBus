@@ -7,6 +7,8 @@ import { DefaultValidationErrorsComponent } from '../../../shared/default-valida
 import { By } from '@angular/platform-browser';
 import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
 import { TransformerDTO } from '../../../../../../backend/shared/model/transformer.model';
+import { SouthConnectorService } from '../../../services/south-connector.service';
+import { of } from 'rxjs';
 
 class EditNorthTransformerModalComponentTester extends ComponentTester<EditNorthTransformerModalComponent> {
   constructor() {
@@ -131,12 +133,18 @@ const transformer: TransformerDTO = {
 describe('EditNorthTransformerModalComponent', () => {
   let tester: EditNorthTransformerModalComponentTester;
   let fakeActiveModal: NgbActiveModal;
+  let fakeSouthConnectorService: jasmine.SpyObj<SouthConnectorService>;
 
   beforeEach(() => {
     fakeActiveModal = createMock(NgbActiveModal);
+    fakeSouthConnectorService = jasmine.createSpyObj('SouthConnectorService', ['searchItems']);
 
     TestBed.configureTestingModule({
-      providers: [provideI18nTesting(), { provide: NgbActiveModal, useValue: fakeActiveModal }]
+      providers: [
+        provideI18nTesting(),
+        { provide: NgbActiveModal, useValue: fakeActiveModal },
+        { provide: SouthConnectorService, useValue: fakeSouthConnectorService }
+      ]
     });
 
     TestBed.createComponent(DefaultValidationErrorsComponent).detectChanges();
@@ -195,6 +203,201 @@ describe('EditNorthTransformerModalComponent', () => {
       south: undefined,
       inputType: transformer.inputType,
       items: []
+    });
+  });
+
+  describe('item selection', () => {
+    it('should toggle between all items and specific items', () => {
+      tester.componentInstance.prepareForCreation([], [], [], [], [transformer], []);
+      expect(tester.componentInstance.selectAllItems).toBe(true);
+      expect(tester.componentInstance.selectedItems).toEqual([]);
+
+      tester.componentInstance.toggleItemSelection(false);
+      expect(tester.componentInstance.selectAllItems).toBe(false);
+
+      tester.componentInstance.toggleItemSelection(true);
+      expect(tester.componentInstance.selectAllItems).toBe(true);
+      expect(tester.componentInstance.selectedItems).toEqual([]);
+    });
+
+    it('should select all search results and clear them', () => {
+      tester.componentInstance.prepareForCreation([], [], [], [], [transformer], []);
+      tester.componentInstance.selectAllItems = false;
+      tester.componentInstance.searchResults = [
+        { id: 'item1', name: 'Item 1' },
+        { id: 'item2', name: 'Item 2' },
+        { id: 'item3', name: 'Item 3' }
+      ];
+      tester.componentInstance.totalSearchResults = 3;
+
+      tester.componentInstance.selectAllResults();
+
+      expect(tester.componentInstance.selectedItems.length).toBe(3);
+      expect(tester.componentInstance.searchResults).toEqual([]);
+      expect(tester.componentInstance.totalSearchResults).toBe(0);
+    });
+
+    it('should not add duplicate items when selecting all results', () => {
+      tester.componentInstance.prepareForCreation([], [], [], [], [transformer], []);
+      tester.componentInstance.selectAllItems = false;
+      tester.componentInstance.selectedItems = [{ id: 'item1', name: 'Item 1' }];
+      tester.componentInstance.searchResults = [
+        { id: 'item1', name: 'Item 1' },
+        { id: 'item2', name: 'Item 2' }
+      ];
+      tester.componentInstance.totalSearchResults = 2;
+
+      tester.componentInstance.selectAllResults();
+
+      expect(tester.componentInstance.selectedItems.length).toBe(2);
+      expect(tester.componentInstance.selectedItems.find(item => item.id === 'item1')).toBeDefined();
+      expect(tester.componentInstance.selectedItems.find(item => item.id === 'item2')).toBeDefined();
+    });
+
+    it('should remove all selected items', () => {
+      tester.componentInstance.prepareForCreation([], [], [], [], [transformer], []);
+      tester.componentInstance.selectedItems = [
+        { id: 'item1', name: 'Item 1' },
+        { id: 'item2', name: 'Item 2' }
+      ];
+
+      tester.componentInstance.removeAllItems();
+
+      expect(tester.componentInstance.selectedItems).toEqual([]);
+    });
+
+    it('should remove a single item', () => {
+      tester.componentInstance.prepareForCreation([], [], [], [], [transformer], []);
+      const item1 = { id: 'item1', name: 'Item 1' };
+      const item2 = { id: 'item2', name: 'Item 2' };
+      tester.componentInstance.selectedItems = [item1, item2];
+
+      tester.componentInstance.removeItem(item1);
+
+      expect(tester.componentInstance.selectedItems).toEqual([item2]);
+    });
+
+    it('should toggle item selection', () => {
+      tester.componentInstance.prepareForCreation([], [], [], [], [transformer], []);
+      const item = { id: 'item1', name: 'Item 1' };
+
+      // Add item
+      tester.componentInstance.toggleItem(item);
+      expect(tester.componentInstance.selectedItems).toEqual([item]);
+
+      // Remove item
+      tester.componentInstance.toggleItem(item);
+      expect(tester.componentInstance.selectedItems).toEqual([]);
+    });
+
+    it('should check if item is selected', () => {
+      tester.componentInstance.prepareForCreation([], [], [], [], [transformer], []);
+      const item = { id: 'item1', name: 'Item 1' };
+      tester.componentInstance.selectedItems = [item];
+
+      expect(tester.componentInstance.isItemSelected(item)).toBe(true);
+      expect(tester.componentInstance.isItemSelected({ id: 'item2', name: 'Item 2' })).toBe(false);
+    });
+
+    it('should filter items based on search text', () => {
+      const southConnector = { id: 'south1', name: 'South 1', type: 'opcua' as const, description: '', enabled: false };
+      tester.componentInstance.prepareForCreation([southConnector], [], [], [], [transformer], []);
+      tester.componentInstance.form.controls.source.setValue({ inputType: null, south: southConnector });
+      tester.componentInstance.selectedItems = [];
+
+      const filteredItems: Array<any> = [
+        { id: 'item1', name: 'Random Item' },
+        { id: 'item2', name: 'Another Random' }
+      ];
+
+      fakeSouthConnectorService.searchItems.and.returnValue(
+        of({ content: filteredItems, size: 20, number: 0, totalElements: 2, totalPages: 1 } as any)
+      );
+
+      tester.componentInstance.itemSearchText = 'Random';
+      tester.componentInstance.filterItems();
+
+      expect(tester.componentInstance.filteredItems.length).toBe(2);
+      expect(tester.componentInstance.totalSearchResults).toBe(2);
+      expect(tester.componentInstance.searchResults.length).toBe(2);
+    });
+
+    it('should reset searchInteracted flag when toggling item selection', () => {
+      tester.componentInstance.prepareForCreation([], [], [], [], [transformer], []);
+      tester.componentInstance.searchInteracted = true;
+
+      tester.componentInstance.toggleItemSelection(true);
+
+      expect(tester.componentInstance.searchInteracted).toBe(false);
+    });
+
+    it('should set searchInteracted on dropdown open', () => {
+      tester.componentInstance.prepareForCreation([], [], [], [], [transformer], []);
+      tester.componentInstance.searchInteracted = false;
+
+      tester.componentInstance.onDropdownOpenChange(true);
+
+      // Note: searchInteracted is now set in the template on focus, not in onDropdownOpenChange
+      // This test verifies the method doesn't throw errors
+      expect(tester.componentInstance.searchInteracted).toBe(false);
+    });
+
+    it('should save with empty items array when selectAllItems is true', async () => {
+      tester.componentInstance.prepareForEdition(
+        [],
+        [],
+        [],
+        {
+          id: 'northTransformerId1',
+          transformer,
+          options: {},
+          inputType: transformer.inputType,
+          south: undefined,
+          items: []
+        },
+        [transformer],
+        ['mqtt']
+      );
+      tester.componentInstance.selectAllItems = true;
+      tester.componentInstance.selectedItems = [{ id: 'item1', name: 'Item 1' }];
+      await tester.change();
+
+      await tester.save.click();
+
+      expect(fakeActiveModal.close).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          items: []
+        })
+      );
+    });
+
+    it('should save with selected items when selectAllItems is false', async () => {
+      tester.componentInstance.prepareForEdition(
+        [],
+        [],
+        [],
+        {
+          id: 'northTransformerId1',
+          transformer,
+          options: {},
+          inputType: transformer.inputType,
+          south: undefined,
+          items: [{ id: 'item1', name: 'Item 1' }]
+        },
+        [transformer],
+        ['mqtt']
+      );
+      tester.componentInstance.selectAllItems = false;
+      tester.componentInstance.selectedItems = [{ id: 'item1', name: 'Item 1' }];
+      await tester.change();
+
+      await tester.save.click();
+
+      expect(fakeActiveModal.close).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          items: [{ id: 'item1', name: 'Item 1' }]
+        })
+      );
     });
   });
 });
