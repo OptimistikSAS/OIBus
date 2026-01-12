@@ -253,10 +253,17 @@ describe('EditHistoryQueryTransformerModalComponent', () => {
       expect(tester.componentInstance.selectedItems.length).toBe(2);
       expect(tester.componentInstance.selectedItems.find(item => item.id === 'item1')).toBeDefined();
       expect(tester.componentInstance.selectedItems.find(item => item.id === 'item2')).toBeDefined();
+      // Should clear search results after selecting all
+      expect(tester.componentInstance.searchResults).toEqual([]);
+      expect(tester.componentInstance.totalSearchResults).toBe(0);
     });
 
-    it('should remove all selected items', () => {
-      tester.componentInstance.prepareForCreation('opcua', [], [], [transformer], [], []);
+    it('should remove all selected items and refresh search results', () => {
+      const items = [
+        { id: 'item1', name: 'Item 1' },
+        { id: 'item2', name: 'Item 2' }
+      ];
+      tester.componentInstance.prepareForCreation('opcua', [], [], [transformer], [], items);
       tester.componentInstance.selectedItems = [
         { id: 'item1', name: 'Item 1' },
         { id: 'item2', name: 'Item 2' }
@@ -265,6 +272,8 @@ describe('EditHistoryQueryTransformerModalComponent', () => {
       tester.componentInstance.removeAllItems();
 
       expect(tester.componentInstance.selectedItems).toEqual([]);
+      // Should refresh filteredItems to include previously selected items
+      expect(tester.componentInstance.filteredItems.length).toBeGreaterThan(0);
     });
 
     it('should remove a single item', () => {
@@ -281,14 +290,21 @@ describe('EditHistoryQueryTransformerModalComponent', () => {
     it('should toggle item selection', () => {
       tester.componentInstance.prepareForCreation('opcua', [], [], [transformer], [], []);
       const item = { id: 'item1', name: 'Item 1' };
+      tester.componentInstance.itemSearchText = '';
+      tester.componentInstance.searchResults = [item];
+      tester.componentInstance.totalSearchResults = 1;
 
-      // Add item
+      // Add item (select)
       tester.componentInstance.toggleItem(item);
       expect(tester.componentInstance.selectedItems).toEqual([item]);
+      expect(tester.componentInstance.searchResults).toEqual([]);
+      expect(tester.componentInstance.totalSearchResults).toBe(1); // Should stay the same
 
-      // Remove item
+      // Remove item (deselect)
       tester.componentInstance.toggleItem(item);
       expect(tester.componentInstance.selectedItems).toEqual([]);
+      expect(tester.componentInstance.searchResults).toEqual([item]);
+      expect(tester.componentInstance.totalSearchResults).toBe(1); // Should stay the same
     });
 
     it('should check if item is selected', () => {
