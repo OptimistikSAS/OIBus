@@ -34,14 +34,14 @@
   ],
   "dependencies": {
     "argon2": "0.44.0",
-    "better-sqlite3": "12.5.0",
+    "better-sqlite3": "12.6.0",
     "minimist": "1.2.8"
   },
   "devDependencies": {
     "@types/better-sqlite3": "7.6.13",
     "@types/minimist": "1.2.5",
     "@types/jest": "30.0.0",
-    "@types/node": "24.10.4",
+    "@types/node": "24.10.7",
     "@yao-pkg/pkg": "6.11.0",
     "eslint": "9.39.2",
     "eslint-config-prettier": "10.1.8",
@@ -52,7 +52,7 @@
     "jest": "30.2.0",
     "ts-jest": "29.4.6",
     "typescript": "5.4.5",
-    "typescript-eslint": "8.50.0"
+    "typescript-eslint": "8.52.0"
   },
   "pkg": {
     "assets": [
