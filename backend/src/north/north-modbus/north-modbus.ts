@@ -7,7 +7,7 @@ import net from 'node:net';
 import ModbusTCPClient from 'jsmodbus/dist/modbus-tcp-client';
 import { client, UserRequestError } from 'jsmodbus';
 import fs from 'node:fs/promises';
-import { OIBusModbusValue } from '../../service/transformers/connector-types.model';
+import { OIBusModbusValue } from '../../transformers/connector-types.model';
 import CacheService from '../../service/cache/cache.service';
 import { connectSocket } from '../../service/utils-modbus';
 import { OIBusError } from '../../model/engine.model';

@@ -11,7 +11,7 @@ import { NorthConnectorEntity } from '../../model/north-connector.model';
 import testData from '../../tests/utils/test-data';
 import CacheService from '../../service/cache/cache.service';
 import { createTransformer } from '../../service/transformer.service';
-import OIBusTransformer from '../../service/transformers/oibus-transformer';
+import OIBusTransformer from '../../transformers/oibus-transformer';
 import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
 import { getFilenameWithoutRandomId } from '../../service/utils';
 
