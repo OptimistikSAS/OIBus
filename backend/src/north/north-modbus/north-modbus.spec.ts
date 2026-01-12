@@ -8,14 +8,14 @@ import { NorthModbusSettings } from '../../../shared/model/north-settings.model'
 import testData from '../../tests/utils/test-data';
 import CacheService from '../../service/cache/cache.service';
 import { createTransformer } from '../../service/transformer.service';
-import OIBusTransformer from '../../service/transformers/oibus-transformer';
+import OIBusTransformer from '../../transformers/oibus-transformer';
 import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
 import { getFilenameWithoutRandomId } from '../../service/utils';
 import Stream from 'node:stream';
 import net from 'node:net';
 import fs from 'node:fs/promises';
 import ModbusTCPClient from 'jsmodbus/dist/modbus-tcp-client';
-import { OIBusModbusValue } from '../../service/transformers/connector-types.model';
+import { OIBusModbusValue } from '../../transformers/connector-types.model';
 import { connectSocket } from '../../service/utils-modbus';
 
 jest.mock('node:fs/promises');

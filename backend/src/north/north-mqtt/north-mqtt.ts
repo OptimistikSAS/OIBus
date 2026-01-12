@@ -6,7 +6,7 @@ import { NorthConnectorEntity } from '../../model/north-connector.model';
 import mqtt from 'mqtt';
 import fs from 'node:fs/promises';
 import { QoS } from 'mqtt-packet';
-import { OIBusMQTTValue } from '../../service/transformers/connector-types.model';
+import { OIBusMQTTValue } from '../../transformers/connector-types.model';
 import CacheService from '../../service/cache/cache.service';
 import { createConnectionOptions } from '../../service/utils-mqtt';
 import { OIBusError } from '../../model/engine.model';
