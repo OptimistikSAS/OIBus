@@ -956,6 +956,24 @@ export interface EngineSettingsCommandDTO {
 }
 
 /**
+ * Engine settings update result Data Transfer Object.
+ * Returned after updating engine settings to indicate if a redirect is needed.
+ */
+export interface EngineSettingsUpdateResultDTO {
+  /**
+   * Whether the client needs to redirect due to a port change.
+   * @example true
+   */
+  needsRedirect: boolean;
+
+  /**
+   * The new port to redirect to, if applicable.
+   * @example 3333
+   */
+  newPort: number | null;
+}
+
+/**
  * Information about the OIBus instance.
  */
 export interface OIBusInfo {

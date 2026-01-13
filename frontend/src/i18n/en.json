@@ -507,6 +507,11 @@
     "restart-complete": "OIBus restarted",
     "confirm-restart": "Are you sure you want to restart OIBus engine?",
     "updated": "Engine settings updated",
+    "port-changed": {
+      "title": "Port Changed",
+      "message": "The web server port has been changed to {{ port }}. You will be automatically redirected in {{ seconds }} seconds.",
+      "redirect-now": "Redirect Now"
+    },
     "general-settings": {
       "title": "General settings",
       "name": "Name",
