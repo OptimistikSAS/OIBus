@@ -9,6 +9,8 @@ import { EngineService } from '../../services/engine.service';
 import { of } from 'rxjs';
 import { NotificationService } from '../../shared/notification.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ModalService } from '../../shared/modal.service';
+import { PortRedirectModalComponent } from '../../shared/port-redirect-modal/port-redirect-modal.component';
 
 class EditEngineComponentTester extends ComponentTester<EditEngineComponent> {
   constructor() {
@@ -96,6 +98,7 @@ describe('EditEngineComponent', () => {
   let tester: EditEngineComponentTester;
   let engineService: jasmine.SpyObj<EngineService>;
   let notificationService: jasmine.SpyObj<NotificationService>;
+  let modalService: jasmine.SpyObj<ModalService>;
 
   const engineSettings: EngineSettingsDTO = {
     id: 'id',
@@ -135,6 +138,7 @@ describe('EditEngineComponent', () => {
   beforeEach(async () => {
     engineService = createMock(EngineService);
     notificationService = createMock(NotificationService);
+    modalService = createMock(ModalService);
 
     TestBed.configureTestingModule({
       providers: [
@@ -142,13 +146,19 @@ describe('EditEngineComponent', () => {
         provideRouter([]),
         provideI18nTesting(),
         { provide: EngineService, useValue: engineService },
-        { provide: NotificationService, useValue: notificationService }
+        { provide: NotificationService, useValue: notificationService },
+        { provide: ModalService, useValue: modalService }
       ]
     });
 
     engineService.getEngineSettings.and.returnValue(of(engineSettings));
 
-    engineService.updateEngineSettings.and.returnValue(of(undefined));
+    engineService.updateEngineSettings.and.returnValue(
+      of({
+        needsRedirect: false,
+        newPort: null
+      })
+    );
 
     tester = new EditEngineComponentTester();
     await tester.change();
@@ -226,5 +236,28 @@ describe('EditEngineComponent', () => {
       }
     });
     expect(notificationService.success).toHaveBeenCalledWith('engine.updated');
+    expect(modalService.open).not.toHaveBeenCalled();
+  });
+
+  it('should show redirect modal when port changes', () => {
+    const mockModal = {
+      componentInstance: jasmine.createSpyObj('PortRedirectModalComponent', ['initialize'])
+    };
+    modalService.open.and.returnValue(mockModal as any);
+
+    engineService.updateEngineSettings.and.returnValue(
+      of({
+        needsRedirect: true,
+        newPort: 3333
+      })
+    );
+
+    tester.port.fillWith('3333');
+    tester.submitButton.click();
+
+    expect(engineService.updateEngineSettings).toHaveBeenCalled();
+    expect(modalService.open).toHaveBeenCalledWith(PortRedirectModalComponent, { backdrop: 'static', keyboard: false });
+    expect(mockModal.componentInstance.initialize).toHaveBeenCalledWith(3333);
+    expect(notificationService.success).not.toHaveBeenCalled();
   });
 });

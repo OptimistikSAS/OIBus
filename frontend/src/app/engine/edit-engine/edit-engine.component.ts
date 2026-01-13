@@ -13,6 +13,8 @@ import { OI_FORM_VALIDATION_DIRECTIVES } from '../../shared/form/form-validation
 import { CanComponentDeactivate } from '../../shared/unsaved-changes.guard';
 import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
 import { LOG_LEVELS, LogLevel } from '../../../../../backend/shared/model/logs.model';
+import { ModalService } from '../../shared/modal.service';
+import { PortRedirectModalComponent } from '../../shared/port-redirect-modal/port-redirect-modal.component';
 
 @Component({
   selector: 'oib-edit-engine',
@@ -25,6 +27,7 @@ export class EditEngineComponent implements OnInit, CanComponentDeactivate {
   private engineService = inject(EngineService);
   private router = inject(Router);
   private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
+  private modalService = inject(ModalService);
 
   readonly logLevels = LOG_LEVELS;
 
@@ -261,10 +264,18 @@ export class EditEngineComponent implements OnInit, CanComponentDeactivate {
     this.engineService
       .updateEngineSettings(updatedSettings)
       .pipe(this.state.pendingUntilFinalization())
-      .subscribe(() => {
-        this.notificationService.success('engine.updated');
+      .subscribe(result => {
         this.engineForm.markAsPristine();
-        this.router.navigate(['/engine']);
+
+        if (result.needsRedirect && result.newPort) {
+          // Port changed - show redirect modal
+          const modal = this.modalService.open(PortRedirectModalComponent, { backdrop: 'static', keyboard: false });
+          modal.componentInstance.initialize(result.newPort);
+        } else {
+          // No port change - show success notification and navigate
+          this.notificationService.success('engine.updated');
+          this.router.navigate(['/engine']);
+        }
       });
   }
 }
