@@ -1,0 +1,16 @@
+<div class="modal-header">
+  <h4 class="modal-title" translate="version-update.title"></h4>
+</div>
+<div class="modal-body">
+  <p [translate]="'version-update.message'" [translateParams]="{ seconds: remainingSeconds() }"></p>
+  <p>{{ oldVersion }} <i class="fa fa-arrow-right"></i> {{ newVersion }}</p>
+  <div class="version-update-progress-container">
+    <ngb-progressbar [value]="progress()" [max]="1" [striped]="false" [animated]="false" type="secondary" />
+    <span class="progress-text">{{ remainingSeconds() }}s</span>
+  </div>
+</div>
+<div class="modal-footer">
+  <button type="button" class="btn btn-primary" (click)="reload()" id="reload-button">
+    <span translate="version-update.reload-now"></span>
+  </button>
+</div>

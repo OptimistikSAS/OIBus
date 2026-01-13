@@ -2808,5 +2808,10 @@
     "title": "Scan mode",
     "label": "Scan mode",
     "subscription": "Subscribe"
+  },
+  "version-update": {
+    "title": "Update Available",
+    "message": "A new version of OIBus has been detected. The page will automatically reload in {{ seconds }} seconds to apply the update.",
+    "reload-now": "Reload Now"
   }
 }
