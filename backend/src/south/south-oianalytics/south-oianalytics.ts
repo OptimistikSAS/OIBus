@@ -1,35 +1,18 @@
 import SouthConnector from '../south-connector';
 import { formatQueryParams, persistResults } from '../../service/utils';
-import { encryptionService } from '../../service/encryption.service';
 import pino from 'pino';
 import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { QueriesHistory } from '../south-interface';
 import { SouthOIAnalyticsItemSettings, SouthOIAnalyticsSettings } from '../../../shared/model/south-settings.model';
-import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
-import { ClientCertificateCredential, ClientSecretCredential } from '@azure/identity';
+import { OIBusContent } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import CertificateRepository from '../../repository/config/certificate.repository';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
-import { HTTPRequest, ReqAuthOptions, ReqOptions, ReqProxyOptions, ReqResponse } from '../../service/http-request.utils';
-
-interface OIATimeValues {
-  type: string;
-  data?: {
-    id: string;
-    dataType: string;
-    reference: string;
-    description: string;
-  };
-  unit?: {
-    id: string;
-    label: string;
-  };
-  values: Array<string | number>;
-  timestamps: Array<Instant>;
-}
+import { HTTPRequest, ReqResponse } from '../../service/http-request.utils';
+import { buildHttpOptions, getHost, OIATimeValues, parseData } from '../../service/utils-oianalytics';
 
 /**
  * Class SouthOIAnalytics - Retrieve data from OIAnalytics REST API
@@ -51,20 +34,21 @@ export default class SouthOIAnalytics
   }
 
   override async testConnection(): Promise<void> {
-    const host = this.getHost();
+    const registrationSettings = this.oIAnalyticsRegistrationRepository.get()!;
+    const httpOptions = await buildHttpOptions(
+      'GET',
+      this.connector.settings.useOiaModule,
+      registrationSettings,
+      this.connector.settings.specificSettings,
+      this.connector.settings.timeout * 1000,
+      this.certificateRepository
+    );
+    const host = getHost(this.connector.settings.useOiaModule, registrationSettings, this.connector.settings.specificSettings);
     const requestUrl = new URL('/api/optimistik/oibus/status', host);
 
     let response: ReqResponse;
     try {
-      const { proxy, acceptUnauthorized } = this.getProxyOptions();
-      const fetchOptions: ReqOptions = {
-        method: 'GET',
-        auth: await this.getAuthorizationOptions(),
-        proxy,
-        timeout: this.connector.settings.timeout * 1000,
-        acceptUnauthorized
-      };
-      response = await HTTPRequest(requestUrl, fetchOptions);
+      response = await HTTPRequest(requestUrl, httpOptions);
     } catch (error) {
       throw new Error(`Fetch error ${error}`);
     }
@@ -80,7 +64,7 @@ export default class SouthOIAnalytics
     const startTime = testingSettings.history!.startTime;
     const endTime = testingSettings.history!.endTime;
     const result: Array<OIATimeValues> = await this.queryData(item, startTime, endTime);
-    const { formattedResult } = this.parseData(result);
+    const { formattedResult } = parseData(result);
     return { type: 'time-values', content: formattedResult };
   }
 
@@ -99,7 +83,7 @@ export default class SouthOIAnalytics
       const result: Array<OIATimeValues> = await this.queryData(item, startTime, endTime);
       const requestDuration = DateTime.now().toMillis() - startRequest;
 
-      const { formattedResult, maxInstant } = this.parseData(result);
+      const { formattedResult, maxInstant } = parseData(result);
 
       if (!updatedStartTime || maxInstant > updatedStartTime) {
         updatedStartTime = maxInstant;
@@ -143,211 +127,23 @@ export default class SouthOIAnalytics
     startTime: Instant,
     endTime: Instant
   ): Promise<Array<OIATimeValues>> {
-    const host = this.getHost();
+    const registrationSettings = this.oIAnalyticsRegistrationRepository.get()!;
+    const httpOptions = await buildHttpOptions(
+      'GET',
+      this.connector.settings.useOiaModule,
+      registrationSettings,
+      this.connector.settings.specificSettings,
+      this.connector.settings.timeout * 1000,
+      this.certificateRepository
+    );
+    httpOptions.query = formatQueryParams(startTime, endTime, item.settings.queryParams);
+    const host = getHost(this.connector.settings.useOiaModule, registrationSettings, this.connector.settings.specificSettings);
     const requestUrl = new URL(item.settings.endpoint, host);
-    const query = formatQueryParams(startTime, endTime, item.settings.queryParams || []);
-    this.logger.info(`Requesting data from URL "${requestUrl}" and query params "${JSON.stringify(query)}"`);
-
-    const { proxy, acceptUnauthorized } = this.getProxyOptions();
-    const fetchOptions: ReqOptions = {
-      method: 'GET',
-      query,
-      auth: await this.getAuthorizationOptions(),
-      proxy,
-      timeout: this.connector.settings.timeout * 1000,
-      acceptUnauthorized
-    };
-    const response = await HTTPRequest(requestUrl, fetchOptions);
+    this.logger.info(`Requesting data from URL "${requestUrl}" and query params "${JSON.stringify(httpOptions.query)}"`);
+    const response = await HTTPRequest(requestUrl, httpOptions);
     if (!response.ok) {
       throw new Error(`HTTP request failed with status code ${response.statusCode} and message: ${await response.body.text()}`);
     }
     return response.body.json() as unknown as Array<OIATimeValues>;
-  }
-
-  /**
-   * Get proxy options if proxy is enabled
-   * @throws Error if no proxy url is specified in settings
-   */
-  private getProxyOptions(): { proxy: ReqProxyOptions | undefined; acceptUnauthorized: boolean } {
-    let settings: {
-      useProxy: boolean;
-      proxyUrl?: string | null;
-      proxyUsername?: string | null;
-      proxyPassword?: string | null;
-      acceptUnauthorized: boolean;
-    };
-    let scope: string;
-
-    // OIAnalytics module
-    if (this.connector.settings.useOiaModule) {
-      const registrationSettings = this.oIAnalyticsRegistrationRepository.get();
-      if (!registrationSettings || registrationSettings.status !== 'REGISTERED') {
-        throw new Error('OIBus not registered in OIAnalytics');
-      }
-
-      settings = registrationSettings;
-      scope = 'registered OIAnalytics module';
-    }
-    // Specific settings
-    else {
-      settings = this.connector.settings.specificSettings!;
-      scope = 'specific settings';
-    }
-
-    if (!settings.useProxy) {
-      return { proxy: undefined, acceptUnauthorized: settings.acceptUnauthorized };
-    }
-    if (!settings.proxyUrl) {
-      throw new Error(`Proxy URL not specified using ${scope}`);
-    }
-
-    const options: ReqProxyOptions = {
-      url: settings.proxyUrl
-    };
-
-    if (settings.proxyUsername) {
-      options.auth = {
-        type: 'url',
-        username: settings.proxyUsername,
-        password: settings.proxyPassword
-      };
-    }
-
-    return { proxy: options, acceptUnauthorized: settings.acceptUnauthorized };
-  }
-
-  /**
-   * Get authorization options from settings
-   */
-  private async getAuthorizationOptions(): Promise<ReqAuthOptions | undefined> {
-    // OIAnalytics module
-    if (this.connector.settings.useOiaModule) {
-      const registrationSettings = this.oIAnalyticsRegistrationRepository.get();
-      if (!registrationSettings || registrationSettings.status !== 'REGISTERED') {
-        throw new Error('OIBus not registered in OIAnalytics');
-      }
-
-      return {
-        type: 'bearer',
-        token: registrationSettings.token!
-      };
-    }
-
-    // Specific settings
-    const specificSettings = this.connector.settings.specificSettings!;
-
-    switch (specificSettings.authentication) {
-      case 'basic': {
-        if (!specificSettings.accessKey) return;
-
-        return {
-          type: 'basic',
-          username: specificSettings.accessKey,
-          password: specificSettings.secretKey
-        };
-      }
-
-      case 'aad-client-secret': {
-        const clientSecretCredential = new ClientSecretCredential(
-          specificSettings.tenantId!,
-          specificSettings.clientId!,
-          await encryptionService.decryptText(specificSettings.clientSecret!)
-        );
-        const result = await clientSecretCredential.getToken(specificSettings.scope!);
-        // Note: token needs to be encrypted when adding it to proxy options
-        const token = await encryptionService.encryptText(`Bearer ${Buffer.from(result.token)}`);
-        return {
-          type: 'bearer',
-          token
-        };
-      }
-
-      case 'aad-certificate': {
-        const certificate = this.certificateRepository.findById(specificSettings.certificateId!);
-        if (certificate === null) return;
-
-        const decryptedPrivateKey = await encryptionService.decryptText(certificate.privateKey);
-        const clientCertificateCredential = new ClientCertificateCredential(specificSettings.tenantId!, specificSettings.clientId!, {
-          certificate: `${certificate.certificate}\n${decryptedPrivateKey}`
-        });
-        const result = await clientCertificateCredential.getToken(specificSettings.scope!);
-        // Note: token needs to be encrypted when adding it to proxy options
-        const token = await encryptionService.encryptText(`Bearer ${Buffer.from(result.token)}`);
-        return {
-          type: 'bearer',
-          token
-        };
-      }
-    }
-  }
-
-  private getHost() {
-    let host: string;
-
-    if (this.connector.settings.useOiaModule) {
-      const registrationSettings = this.oIAnalyticsRegistrationRepository.get();
-      if (!registrationSettings || registrationSettings.status !== 'REGISTERED') {
-        throw new Error('OIBus not registered in OIAnalytics');
-      }
-      host = registrationSettings.host;
-    } else {
-      const specificSettings = this.connector.settings.specificSettings!;
-      host = specificSettings.host;
-    }
-
-    return host;
-  }
-
-  /**
-   * Parse data from OIAnalytics time values API
-   * check data from OIAnalytics API for result of
-   * For now, only 'time-values' type is accepted
-   * Expected data are : [
-   *   {
-   *     type: 'time-values',
-   *     unit: { id: '2', label: '%' },
-   *     data: {
-   *       dataType: 'RAW_TIME_DATA',
-   *       id: 'D4',
-   *       reference: 'DCS_CONC_O2_MCT',
-   *       description: 'Concentration O2 fermentation'
-   *     },
-   *     timestamps: ['2022-01-01T00:00:00Z', '2022-01-01T00:10:00Z'],
-   *     values: [63.6414804414747,  87.2277880675425]
-   *   },
-   *   {
-   *     type: 'time-values',
-   *     unit: { id: '180', label: 'pH' },
-   *     data: {
-   *       dataType: 'RAW_TIME_DATA',
-   *       id: 'D5',
-   *       reference: 'DCS_PH_MCT',
-   *       description: 'pH fermentation'
-   *     },
-   *     timestamps: ['2022-01-01T00:00:00Z', '2022-01-01T00:10:00Z'],
-   *     values: [7.51604342731906,  7.5292481205665]
-   *   }
-   * ]
-   * Return the formatted results flattened for easier access
-   * (into csv files for example) and the latestDateRetrieved in ISO String format
-   */
-  parseData(httpResult: Array<OIATimeValues>): { formattedResult: Array<OIBusTimeValue>; maxInstant: Instant } {
-    const formattedData: Array<OIBusTimeValue> = [];
-    let maxInstant = DateTime.fromMillis(0).toUTC().toISO()!;
-    for (const element of httpResult) {
-      element.values.forEach((currentValue: string | number, index: number) => {
-        const resultInstant = DateTime.fromISO(element.timestamps[index]).toUTC().toISO()!;
-
-        formattedData.push({
-          pointId: element.data!.reference,
-          timestamp: resultInstant,
-          data: { value: currentValue, unit: element.unit!.label }
-        });
-        if (resultInstant > maxInstant) {
-          maxInstant = resultInstant;
-        }
-      });
-    }
-    return { formattedResult: formattedData, maxInstant };
   }
 }

@@ -500,6 +500,9 @@ describe('OIAnalytics Command Service', () => {
       proxyUrl: testData.oIAnalytics.registration.completed.proxyUrl,
       proxyUsername: testData.oIAnalytics.registration.completed.proxyUsername,
       proxyPassword: '',
+      useApiGateway: testData.oIAnalytics.registration.completed.useApiGateway,
+      apiGatewayHeaderKey: testData.oIAnalytics.registration.completed.apiGatewayHeaderKey,
+      apiGatewayHeaderValue: '',
       acceptUnauthorized: testData.oIAnalytics.registration.completed.acceptUnauthorized,
       commandRefreshInterval: (testData.oIAnalytics.commands.oIBusList[15] as OIBusUpdateRegistrationSettingsCommand).commandContent
         .commandRefreshInterval,
@@ -567,6 +570,9 @@ describe('OIAnalytics Command Service', () => {
       proxyUrl: registration.proxyUrl,
       proxyUsername: registration.proxyUsername,
       proxyPassword: '',
+      useApiGateway: registration.useApiGateway,
+      apiGatewayHeaderKey: registration.apiGatewayHeaderKey,
+      apiGatewayHeaderValue: '',
       acceptUnauthorized: registration.acceptUnauthorized,
       commandRefreshInterval: (testData.oIAnalytics.commands.oIBusList[15] as OIBusUpdateRegistrationSettingsCommand).commandContent
         .commandRefreshInterval,

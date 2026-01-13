@@ -124,6 +124,9 @@ describe('OIAnalytics Registration Service', () => {
       proxyUrl: 'http://localhost:3128',
       proxyUsername: 'user',
       proxyPassword: 'pass',
+      useApiGateway: true,
+      apiGatewayHeaderKey: 'headerKey',
+      apiGatewayHeaderValue: 'headerValue',
       activationCode: null,
       token: null,
       publicCipherKey: null,
@@ -176,7 +179,7 @@ describe('OIAnalytics Registration Service', () => {
     (oIAnalyticsClient.register as jest.Mock).mockReturnValueOnce(result);
 
     await service.register(command);
-    expect(encryptionService.encryptText).toHaveBeenCalledTimes(2);
+    expect(encryptionService.encryptText).toHaveBeenCalledTimes(3);
     expect(oIAnalyticsClient.register).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsRegistrationRepository.register).toHaveBeenCalledWith(
       command,
@@ -212,6 +215,9 @@ describe('OIAnalytics Registration Service', () => {
       proxyUrl: 'http://localhost:3128',
       proxyUsername: 'user',
       proxyPassword: 'pass',
+      useApiGateway: true,
+      apiGatewayHeaderKey: 'headerKey',
+      apiGatewayHeaderValue: 'headerValue',
       commandRefreshInterval: 10,
       commandRetryInterval: 5,
       messageRetryInterval: 5,
@@ -364,6 +370,8 @@ describe('OIAnalytics Registration Service', () => {
       useProxy: registration.useProxy,
       proxyUrl: registration.proxyUrl,
       proxyUsername: registration.proxyUsername,
+      useApiGateway: registration.useApiGateway,
+      apiGatewayHeaderKey: registration.apiGatewayHeaderKey,
       acceptUnauthorized: registration.acceptUnauthorized,
       commandRefreshInterval: registration.commandRefreshInterval,
       commandRetryInterval: registration.commandRetryInterval,

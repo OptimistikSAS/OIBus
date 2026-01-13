@@ -1,7 +1,7 @@
 import { RegisterOibusModalComponent } from './register-oibus-modal.component';
 import { ComponentTester, createMock } from 'ngx-speculoos';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { fakeAsync, TestBed } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
@@ -36,6 +36,18 @@ class RegisterOibusModalComponentTester extends ComponentTester<RegisterOibusMod
 
   get proxyPassword() {
     return this.input('#proxy-password')!;
+  }
+
+  get useApiGateway() {
+    return this.input('#use-api-gateway')!;
+  }
+
+  get apiHeaderKey() {
+    return this.input('#api-gateway-header-key')!;
+  }
+
+  get apiHeaderValue() {
+    return this.input('#api-gateway-header-value')!;
   }
 
   get commandRefreshInterval() {
@@ -89,21 +101,6 @@ class RegisterOibusModalComponentTester extends ComponentTester<RegisterOibusMod
   get cancel() {
     return this.button('#cancel-button')!;
   }
-
-  get allPermissionCheckboxes() {
-    const checkboxes = Array.from((this.fixture.nativeElement as HTMLElement).querySelectorAll('input[type="checkbox"]'));
-    if (!checkboxes || checkboxes.length === 0) {
-      return [];
-    }
-    return checkboxes.filter(
-      (checkbox: Element) =>
-        (checkbox as HTMLInputElement).id.includes('update-version') ||
-        (checkbox as HTMLInputElement).id.includes('restart-engine') ||
-        (checkbox as HTMLInputElement).id.includes('create-scan-mode') ||
-        (checkbox as HTMLInputElement).id.includes('create-north') ||
-        (checkbox as HTMLInputElement).id.includes('test-south-connection')
-    );
-  }
 }
 
 describe('RegisterOibusModalComponent', () => {
@@ -141,27 +138,30 @@ describe('RegisterOibusModalComponent', () => {
   it('should not register if invalid', async () => {
     tester.componentInstance.prepare({ host: '' } as RegistrationSettingsDTO, 'register');
     await tester.change();
-    tester.save.click();
+    await tester.save.click();
 
     // host and the three intervals
     expect(tester.validationErrors.length).toBe(4);
     expect(fakeActiveModal.close).not.toHaveBeenCalled();
   });
 
-  it('should register if valid', fakeAsync(async () => {
+  it('should register if valid', async () => {
     tester.componentInstance.prepare({ host: '' } as RegistrationSettingsDTO, 'register');
     await tester.change();
-    tester.host.fillWith('http://localhost:4200');
-    tester.acceptUnauthorized.check();
-    tester.useProxy.check();
-    tester.proxyUrl.fillWith('http://localhost:8080');
-    tester.proxyUsername.fillWith('user');
-    tester.proxyPassword.fillWith('pass');
-    tester.commandRefreshInterval.fillWith('15');
-    tester.commandRetryInterval.fillWith('10');
-    tester.messageRetryInterval.fillWith('5');
+    await tester.host.fillWith('http://localhost:4200');
+    await tester.acceptUnauthorized.check();
+    await tester.useProxy.check();
+    await tester.proxyUrl.fillWith('http://localhost:8080');
+    await tester.proxyUsername.fillWith('user');
+    await tester.proxyPassword.fillWith('pass');
+    await tester.useApiGateway.check();
+    await tester.apiHeaderKey.fillWith('headerKey');
+    await tester.apiHeaderValue.fillWith('headerValue');
+    await tester.commandRefreshInterval.fillWith('15');
+    await tester.commandRetryInterval.fillWith('10');
+    await tester.messageRetryInterval.fillWith('5');
     await tester.change();
-    tester.save.click();
+    await tester.save.click();
 
     const expectedCommand: RegistrationSettingsCommandDTO = {
       host: 'http://localhost:4200',
@@ -170,6 +170,9 @@ describe('RegisterOibusModalComponent', () => {
       proxyUrl: 'http://localhost:8080',
       proxyUsername: 'user',
       proxyPassword: 'pass',
+      useApiGateway: true,
+      apiGatewayHeaderKey: 'headerKey',
+      apiGatewayHeaderValue: 'headerValue',
       commandRefreshInterval: 15,
       commandRetryInterval: 10,
       messageRetryInterval: 5,
@@ -210,12 +213,12 @@ describe('RegisterOibusModalComponent', () => {
     };
 
     expect(engineService.register).toHaveBeenCalledWith(expectedCommand);
-  }));
+  });
 
   it('should cancel in register mode', async () => {
     tester.componentInstance.prepare({ host: '' } as RegistrationSettingsDTO, 'register');
     await tester.change();
-    tester.cancel.click();
+    await tester.cancel.click();
     expect(fakeActiveModal.dismiss).toHaveBeenCalled();
   });
 
@@ -227,7 +230,7 @@ describe('RegisterOibusModalComponent', () => {
     expect(tester.useProxy).not.toBeChecked();
   });
 
-  it('should edit registration if valid', fakeAsync(async () => {
+  it('should edit registration if valid', async () => {
     tester.componentInstance.prepare(
       {
         id: 'id',
@@ -240,6 +243,9 @@ describe('RegisterOibusModalComponent', () => {
         proxyUrl: null,
         proxyUsername: null,
         acceptUnauthorized: false,
+        useApiGateway: false,
+        apiGatewayHeaderKey: null,
+        apiGatewayHeaderValue: null,
         commandRefreshInterval: 60,
         commandRetryInterval: 5,
         messageRetryInterval: 5,
@@ -275,13 +281,16 @@ describe('RegisterOibusModalComponent', () => {
       'edit'
     );
     await tester.change();
-    tester.acceptUnauthorized.check();
-    tester.useProxy.check();
-    tester.proxyUrl.fillWith('http://localhost:8080');
-    tester.proxyUsername.fillWith('user');
-    tester.proxyPassword.fillWith('pass');
+    await tester.acceptUnauthorized.check();
+    await tester.useProxy.check();
+    await tester.proxyUrl.fillWith('http://localhost:8080');
+    await tester.proxyUsername.fillWith('user');
+    await tester.proxyPassword.fillWith('pass');
+    await tester.useApiGateway.check();
+    await tester.apiHeaderKey.fillWith('headerKey');
+    await tester.apiHeaderValue.fillWith('headerValue');
     await tester.change();
-    tester.save.click();
+    await tester.save.click();
 
     const expectedCommand: RegistrationSettingsCommandDTO = {
       host: 'http://localhost:4200',
@@ -290,6 +299,9 @@ describe('RegisterOibusModalComponent', () => {
       proxyUrl: 'http://localhost:8080',
       proxyUsername: 'user',
       proxyPassword: 'pass',
+      useApiGateway: true,
+      apiGatewayHeaderKey: 'headerKey',
+      apiGatewayHeaderValue: 'headerValue',
       commandRefreshInterval: 60,
       commandRetryInterval: 5,
       messageRetryInterval: 5,
@@ -330,7 +342,7 @@ describe('RegisterOibusModalComponent', () => {
     };
 
     expect(engineService.editRegistrationSettings).toHaveBeenCalledWith(expectedCommand);
-  }));
+  });
 
   it('should cancel in edit mode', async () => {
     tester.componentInstance.prepare({ host: '' } as RegistrationSettingsDTO, 'edit');

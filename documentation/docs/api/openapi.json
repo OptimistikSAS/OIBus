@@ -3731,8 +3731,7 @@
 						"items": {
 							"$ref": "#/components/schemas/SouthOIAnalyticsItemSettingsQueryParams"
 						},
-						"type": "array",
-						"nullable": true
+						"type": "array"
 					},
 					"serialization": {
 						"$ref": "#/components/schemas/SouthOIAnalyticsItemSettingsSerialization"
@@ -8370,6 +8369,17 @@
 						"description": "The username for proxy authentication.",
 						"example": null
 					},
+					"useApiGateway": {
+						"type": "boolean",
+						"description": "Whether to use an API Gateway",
+						"example": false
+					},
+					"apiGatewayHeaderKey": {
+						"type": "string",
+						"nullable": true,
+						"description": "The header key for the API gateway",
+						"example": null
+					},
 					"acceptUnauthorized": {
 						"type": "boolean",
 						"description": "Whether to accept unauthorized certificates.",
@@ -8568,6 +8578,8 @@
 					"useProxy",
 					"proxyUrl",
 					"proxyUsername",
+					"useApiGateway",
+					"apiGatewayHeaderKey",
 					"acceptUnauthorized",
 					"commandRefreshInterval",
 					"commandRetryInterval",
@@ -8606,6 +8618,23 @@
 						"type": "string",
 						"nullable": true,
 						"description": "The password for proxy authentication.",
+						"example": null
+					},
+					"useApiGateway": {
+						"type": "boolean",
+						"description": "Whether to use an API Gateway",
+						"example": false
+					},
+					"apiGatewayHeaderKey": {
+						"type": "string",
+						"nullable": true,
+						"description": "The header key for the API gateway",
+						"example": null
+					},
+					"apiGatewayHeaderValue": {
+						"type": "string",
+						"nullable": true,
+						"description": "The header value (a secret) used for the API gateway",
 						"example": null
 					},
 					"acceptUnauthorized": {
@@ -8838,6 +8867,9 @@
 					"proxyUrl",
 					"proxyUsername",
 					"proxyPassword",
+					"useApiGateway",
+					"apiGatewayHeaderKey",
+					"apiGatewayHeaderValue",
 					"acceptUnauthorized",
 					"commandRefreshInterval",
 					"commandRetryInterval",
