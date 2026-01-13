@@ -22327,6 +22327,29 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"EngineSettingsUpdateResultDTO": {
+				"description": "Engine settings update result Data Transfer Object.\nReturned after updating engine settings to indicate if a redirect is needed.",
+				"properties": {
+					"needsRedirect": {
+						"type": "boolean",
+						"description": "Whether the client needs to redirect due to a port change.",
+						"example": true
+					},
+					"newPort": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "The new port to redirect to, if applicable.",
+						"example": 3333
+					}
+				},
+				"required": [
+					"needsRedirect",
+					"newPort"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"OIBusInfo": {
 				"description": "Information about the OIBus instance.",
 				"properties": {
@@ -27001,8 +27024,15 @@
 			"put": {
 				"operationId": "UpdateEngineSettings",
 				"responses": {
-					"204": {
-						"description": "Engine settings updated successfully"
+					"200": {
+						"description": "Engine settings updated successfully",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/EngineSettingsUpdateResultDTO"
+								}
+							}
+						}
 					}
 				},
 				"description": "Updates the configuration settings of the OIBus engine",
