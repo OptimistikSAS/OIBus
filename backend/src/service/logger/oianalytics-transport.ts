@@ -2,10 +2,12 @@ import build from 'pino-abstract-transport';
 
 import { ScopeType } from '../../../shared/model/logs.model';
 import { CryptoSettings } from '../../../shared/model/engine.model';
-import { HTTPRequest, ReqProxyOptions } from '../http-request.utils';
+import { HTTPRequest } from '../http-request.utils';
 import { encryptionService } from '../encryption.service';
 import { PinoLog } from '../../model/logs.model';
 import { Instant } from '../../model/types';
+import { buildHttpOptions } from '../utils-oianalytics';
+import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
 
 interface OIAnalyticsLog {
   message: string;
@@ -35,14 +37,8 @@ const SCOPE_TYPE_FORMAT: Record<ScopeType, 'SOUTH' | 'NORTH' | 'HISTORY_QUERY' |
 };
 
 interface OIAnalyticsOptions {
+  registrationSettings: OIAnalyticsRegistration;
   interval: number;
-  host: string;
-  token: string;
-  useProxy: boolean;
-  proxyUrl: string | null;
-  proxyUsername?: string | null;
-  proxyPassword?: string | null;
-  acceptUnauthorized: boolean;
   batchLimit?: number;
   cryptoSettings: CryptoSettings;
   certsFolder: string;
@@ -59,8 +55,11 @@ class OianalyticsTransport {
 
   constructor(options: OIAnalyticsOptions) {
     this.options = options;
-    if (this.options.host.endsWith('/')) {
-      this.options.host = this.options.host.slice(0, this.options.host.length - 1);
+    if (this.options.registrationSettings.host.endsWith('/')) {
+      this.options.registrationSettings.host = this.options.registrationSettings.host.slice(
+        0,
+        this.options.registrationSettings.host.length - 1
+      );
     }
 
     const batchInterval = this.options.interval > MAX_BATCH_INTERVAL_S ? MAX_BATCH_INTERVAL_S : this.options.interval;
@@ -76,22 +75,16 @@ class OianalyticsTransport {
    * Method used to send the log to OIAnalytics
    */
   sendOIALogs = async (): Promise<void> => {
-    const logUrl = new URL('/api/oianalytics/oibus/logs', this.options.host);
+    const logUrl = new URL('/api/oianalytics/oibus/logs', this.options.registrationSettings.host);
     const dataBuffer = JSON.stringify(this.batchLogs);
     this.batchLogs = [];
 
+    const httpOptions = await buildHttpOptions('POST', true, this.options.registrationSettings, null, 30000, null);
+    httpOptions.body = dataBuffer;
+    (httpOptions.headers! as Record<string, string>)['Content-Type'] = 'application/json';
+
     try {
-      const response = await HTTPRequest(logUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: dataBuffer,
-        acceptUnauthorized: this.options.acceptUnauthorized,
-        auth: {
-          type: 'bearer',
-          token: this.options.token
-        },
-        proxy: this.getProxyOptions()
-      });
+      const response = await HTTPRequest(logUrl, httpOptions);
       if (response.statusCode !== 200 && response.statusCode !== 201 && response.statusCode !== 204) {
         if (response.statusCode === 401) {
           console.error(`OIAnalytics authentication error on ${logUrl}: ${response.statusCode} - ${await response.body.text()}`);
@@ -103,29 +96,6 @@ class OianalyticsTransport {
       console.error(`Error when sending logs to ${logUrl}. ${error}`);
     }
   };
-
-  private getProxyOptions(): ReqProxyOptions | undefined {
-    if (!this.options.useProxy) {
-      return;
-    }
-    if (!this.options.proxyUrl) {
-      throw new Error('Proxy URL not specified');
-    }
-
-    const options: ReqProxyOptions = {
-      url: this.options.proxyUrl
-    };
-
-    if (this.options.proxyUsername) {
-      options.auth = {
-        type: 'url',
-        username: this.options.proxyUsername,
-        password: this.options.proxyPassword
-      };
-    }
-
-    return options;
-  }
 
   /**
    * Store the log in the batch log array and send them immediately if the array is full

@@ -3,355 +3,291 @@ import OIAnalyticsClient from './oianalytics-client.service';
 import { generateRandomId } from '../utils';
 import { HTTPRequest } from '../http-request.utils';
 import { createMockResponse } from '../../tests/__mocks__/undici.mock';
+import { buildHttpOptions, getHeaders, getProxyOptions } from '../utils-oianalytics';
+import fs from 'node:fs/promises';
 
+// Mock dependencies
 jest.mock('node:fs/promises');
 jest.mock('../http-request.utils');
 jest.mock('../utils');
+jest.mock('../utils-oianalytics');
 
-let service: OIAnalyticsClient;
 describe('OIAnalytics Client', () => {
+  let service: OIAnalyticsClient;
+
+  // Default mocked HTTP Options
+  const mockHttpOptions = {
+    headers: { 'Existing-Header': 'value' },
+    auth: { type: 'bearer', token: 'mock-token' },
+    timeout: 10000
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+
+    // Setup default mock returns
     (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(200));
+    (buildHttpOptions as jest.Mock).mockImplementation(method => ({ ...mockHttpOptions, method }));
+    (generateRandomId as jest.Mock).mockReturnValue('123ABC');
+
     service = new OIAnalyticsClient();
   });
 
-  it('should update command status', async () => {
-    (HTTPRequest as jest.Mock).mockResolvedValueOnce(createMockResponse(200)).mockResolvedValueOnce(createMockResponse(400, 'error'));
+  describe('updateCommandStatus', () => {
+    it('should call PUT endpoint with correct options', async () => {
+      await service.updateCommandStatus(testData.oIAnalytics.registration.completed, 'payload');
 
-    await service.updateCommandStatus(testData.oIAnalytics.registration.completed, 'payload');
-    expect(HTTPRequest).toHaveBeenCalledWith(
-      expect.objectContaining({ href: `${testData.oIAnalytics.registration.completed.host}/api/oianalytics/oibus/commands/status` }),
-      {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: 'payload',
-        acceptUnauthorized: false,
-        auth: { type: 'bearer', token: testData.oIAnalytics.registration.completed.token },
-        proxy: undefined,
-        timeout: 10_000
-      }
-    );
-    await expect(service.updateCommandStatus(testData.oIAnalytics.registration.completed, 'payload')).rejects.toThrow('400 - "error"');
-  });
+      expect(buildHttpOptions).toHaveBeenCalledWith('PUT', true, testData.oIAnalytics.registration.completed, null, 30_000, null);
 
-  it('should not update command status without registration token', async () => {
-    await expect(service.updateCommandStatus({ ...testData.oIAnalytics.registration.completed, token: null }, 'payload')).rejects.toThrow(
-      new Error('No registration token')
-    );
-  });
-
-  it('should retrieve cancelled commands', async () => {
-    (HTTPRequest as jest.Mock).mockResolvedValueOnce(createMockResponse(200, [])).mockResolvedValueOnce(createMockResponse(400, 'error'));
-
-    const result = await service.retrieveCancelledCommands(testData.oIAnalytics.registration.completed, [
-      testData.oIAnalytics.commands.oIBusList[0],
-      testData.oIAnalytics.commands.oIBusList[1]
-    ]);
-    expect(result).toEqual([]);
-    expect(HTTPRequest).toHaveBeenCalledWith(
-      expect.objectContaining({ href: `${testData.oIAnalytics.registration.completed.host}/api/oianalytics/oibus/commands/list-by-ids` }),
-      {
-        method: 'GET',
-        query: { ids: ['commandId1', 'commandId2'] },
-        acceptUnauthorized: false,
-        auth: { type: 'bearer', token: testData.oIAnalytics.registration.completed.token },
-        proxy: undefined,
-        timeout: 10_000
-      }
-    );
-    await expect(
-      service.retrieveCancelledCommands(testData.oIAnalytics.registration.completed, testData.oIAnalytics.commands.oIBusList)
-    ).rejects.toThrow('400 - "error"');
-  });
-
-  it('should not retrieve cancelled commands without registration token', async () => {
-    await expect(
-      service.retrieveCancelledCommands(
-        { ...testData.oIAnalytics.registration.completed, token: null },
-        testData.oIAnalytics.commands.oIBusList
-      )
-    ).rejects.toThrow(new Error('No registration token'));
-  });
-
-  it('should retrieve pending commands', async () => {
-    (HTTPRequest as jest.Mock).mockResolvedValueOnce(createMockResponse(200, [])).mockResolvedValueOnce(createMockResponse(400, 'error'));
-
-    const result = await service.retrievePendingCommands(testData.oIAnalytics.registration.completed);
-    expect(result).toEqual([]);
-    expect(HTTPRequest).toHaveBeenCalledWith(
-      expect.objectContaining({ href: `${testData.oIAnalytics.registration.completed.host}/api/oianalytics/oibus/commands/pending` }),
-      {
-        method: 'GET',
-        acceptUnauthorized: false,
-        auth: { type: 'bearer', token: testData.oIAnalytics.registration.completed.token },
-        proxy: undefined,
-        timeout: 10_000
-      }
-    );
-    await expect(service.retrievePendingCommands(testData.oIAnalytics.registration.completed)).rejects.toThrow('400 - "error"');
-  });
-
-  it('should not retrieve pending commands without registration token', async () => {
-    await expect(service.retrievePendingCommands({ ...testData.oIAnalytics.registration.completed, token: null })).rejects.toThrow(
-      new Error('No registration token')
-    );
-  });
-
-  it('should register', async () => {
-    (generateRandomId as jest.Mock).mockReturnValue('123ABC');
-
-    (HTTPRequest as jest.Mock)
-      .mockResolvedValueOnce(
-        createMockResponse(200, {
-          redirectUrl: 'redirect/url',
-          expirationDate: testData.constants.dates.FAKE_NOW,
-          activationCode: '123ABC'
-        })
-      )
-      .mockResolvedValueOnce(createMockResponse(400, 'error'));
-
-    const result = await service.register(testData.oIAnalytics.registration.completed, testData.engine.oIBusInfo, 'public key');
-    expect(result).toEqual({ redirectUrl: 'redirect/url', expirationDate: testData.constants.dates.FAKE_NOW, activationCode: '123ABC' });
-    expect(HTTPRequest).toHaveBeenCalledWith(
-      expect.objectContaining({ href: `${testData.oIAnalytics.registration.completed.host}/api/oianalytics/oibus/registration` }),
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        acceptUnauthorized: false,
-        body: JSON.stringify({
-          activationCode: '123ABC',
-          oibusId: testData.engine.oIBusInfo.oibusId,
-          oibusName: testData.engine.oIBusInfo.oibusName,
-          oibusVersion: testData.engine.oIBusInfo.version,
-          oibusOs: testData.engine.oIBusInfo.operatingSystem,
-          oibusArch: testData.engine.oIBusInfo.architecture,
-          publicKey: 'public key'
+      expect(HTTPRequest).toHaveBeenCalledWith(
+        expect.objectContaining({
+          href: `${testData.oIAnalytics.registration.completed.host}/api/oianalytics/oibus/commands/status`
         }),
-        proxy: undefined,
-        timeout: 10_000
-      }
-    );
-    await expect(service.register(testData.oIAnalytics.registration.completed, testData.engine.oIBusInfo, 'public key')).rejects.toThrow(
-      '400 - "error"'
-    );
+        expect.objectContaining({
+          body: 'payload',
+          headers: expect.objectContaining({
+            'Content-Type': 'application/json',
+            'Existing-Header': 'value'
+          })
+        })
+      );
+    });
+
+    it('should throw on error response', async () => {
+      (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(400, 'Bad Request'));
+      await expect(service.updateCommandStatus(testData.oIAnalytics.registration.completed, 'payload')).rejects.toThrow(
+        '400 - "Bad Request"'
+      );
+    });
   });
 
-  it('should check registration', async () => {
-    (generateRandomId as jest.Mock).mockReturnValue('123ABC');
+  describe('retrieveCancelledCommands', () => {
+    const commands = [testData.oIAnalytics.commands.oIBusList[0]];
 
-    (HTTPRequest as jest.Mock)
-      .mockResolvedValueOnce(createMockResponse(200, { status: 'REGISTERED', expired: true, accessToken: 'access token' }))
-      .mockResolvedValueOnce(createMockResponse(400, 'error'));
+    it('should call GET endpoint with query params', async () => {
+      (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(200, []));
 
-    const result = await service.checkRegistration(testData.oIAnalytics.registration.completed);
-    expect(result).toEqual({ status: 'REGISTERED', expired: true, accessToken: 'access token' });
-    expect(HTTPRequest).toHaveBeenCalledWith(
-      expect.objectContaining({
-        href: `${testData.oIAnalytics.registration.completed.host}${testData.oIAnalytics.registration.completed.checkUrl}/`
-      }),
-      {
-        method: 'GET',
-        acceptUnauthorized: false,
-        proxy: undefined,
-        timeout: 10_000
-      }
-    );
-    await expect(service.checkRegistration(testData.oIAnalytics.registration.completed)).rejects.toThrow('400 - "error"');
+      const result = await service.retrieveCancelledCommands(testData.oIAnalytics.registration.completed, commands);
+
+      expect(result).toEqual([]);
+      expect(HTTPRequest).toHaveBeenCalledWith(
+        expect.objectContaining({
+          href: `${testData.oIAnalytics.registration.completed.host}/api/oianalytics/oibus/commands/list-by-ids`
+        }),
+        expect.objectContaining({
+          query: { ids: ['commandId1'] }
+        })
+      );
+    });
+
+    it('should throw on error response', async () => {
+      (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(400, 'Bad Request'));
+      await expect(service.retrieveCancelledCommands(testData.oIAnalytics.registration.completed, commands)).rejects.toThrow(
+        '400 - "Bad Request"'
+      );
+    });
   });
 
-  it('should not check registration without check url', async () => {
-    await expect(service.checkRegistration({ ...testData.oIAnalytics.registration.completed, checkUrl: null })).rejects.toThrow(
-      new Error('No check url specified')
-    );
+  describe('retrievePendingCommands', () => {
+    it('should call GET endpoint', async () => {
+      (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(200, []));
+
+      const result = await service.retrievePendingCommands(testData.oIAnalytics.registration.completed);
+
+      expect(result).toEqual([]);
+      expect(HTTPRequest).toHaveBeenCalledWith(
+        expect.objectContaining({
+          href: `${testData.oIAnalytics.registration.completed.host}/api/oianalytics/oibus/commands/pending`
+        }),
+        { ...mockHttpOptions, method: 'GET' }
+      );
+    });
+
+    it('should throw on error response', async () => {
+      (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(400, 'Bad Request'));
+      await expect(service.retrievePendingCommands(testData.oIAnalytics.registration.completed)).rejects.toThrow('400 - "Bad Request"');
+    });
   });
 
-  it('should send configuration', async () => {
-    (HTTPRequest as jest.Mock)
-      .mockResolvedValueOnce(createMockResponse(200, { status: 'REGISTERED', expired: true, accessToken: 'access token' }))
-      .mockResolvedValueOnce(createMockResponse(400, 'error'));
+  describe('register', () => {
+    it('should post payload', async () => {
+      (getHeaders as jest.Mock).mockResolvedValue({});
+      (getProxyOptions as jest.Mock).mockResolvedValue({ acceptUnauthorized: false, proxy: undefined });
+      const mockResponse = { redirectUrl: 'url', expirationDate: 'date', activationCode: '123ABC' };
+      (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(200, mockResponse));
+      const result = await service.register(testData.oIAnalytics.registration.completed, testData.engine.oIBusInfo, 'public key');
 
-    await service.sendConfiguration(testData.oIAnalytics.registration.completed, 'payload');
-    expect(HTTPRequest).toHaveBeenCalledWith(
-      expect.objectContaining({ href: `${testData.oIAnalytics.registration.completed.host}/api/oianalytics/oibus/configuration` }),
-      {
-        method: 'PUT',
-        acceptUnauthorized: false,
-        auth: { type: 'bearer', token: testData.oIAnalytics.registration.completed.token },
-        headers: { 'Content-Type': 'application/json' },
-        body: 'payload',
-        proxy: undefined,
-        timeout: 10_000
-      }
-    );
-    await expect(service.sendConfiguration(testData.oIAnalytics.registration.completed, 'payload')).rejects.toThrow('400 - "error"');
+      // Verify HTTP Request body
+      expect(HTTPRequest).toHaveBeenCalledWith(
+        expect.objectContaining({
+          href: `${testData.oIAnalytics.registration.completed.host}/api/oianalytics/oibus/registration`
+        }),
+        expect.objectContaining({
+          body: JSON.stringify({
+            activationCode: '123ABC',
+            oibusId: testData.engine.oIBusInfo.oibusId,
+            oibusName: testData.engine.oIBusInfo.oibusName,
+            oibusVersion: testData.engine.oIBusInfo.version,
+            oibusOs: testData.engine.oIBusInfo.operatingSystem,
+            oibusArch: testData.engine.oIBusInfo.architecture,
+            publicKey: 'public key'
+          })
+        })
+      );
+
+      expect(result).toEqual(mockResponse);
+    });
+
+    it('should throw on error response', async () => {
+      (getHeaders as jest.Mock).mockResolvedValue({});
+      (getProxyOptions as jest.Mock).mockReturnValue({ acceptUnauthorized: false, proxy: undefined });
+      (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(400, 'Bad Request'));
+      await expect(service.register(testData.oIAnalytics.registration.completed, testData.engine.oIBusInfo, 'public key')).rejects.toThrow(
+        '400 - "Bad Request"'
+      );
+    });
   });
 
-  it('should not send configuration without registration token', async () => {
-    await expect(service.sendConfiguration({ ...testData.oIAnalytics.registration.completed, token: null }, 'payload')).rejects.toThrow(
-      new Error('No registration token')
-    );
+  describe('checkRegistration', () => {
+    it('should call checkUrl', async () => {
+      (getHeaders as jest.Mock).mockResolvedValue({});
+      (getProxyOptions as jest.Mock).mockReturnValue({ acceptUnauthorized: false, proxy: undefined });
+
+      const mockResponse = { status: 'REGISTERED', expired: false, accessToken: 'token' };
+      (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(200, mockResponse));
+
+      const result = await service.checkRegistration(testData.oIAnalytics.registration.completed);
+
+      expect(HTTPRequest).toHaveBeenCalledWith(
+        expect.objectContaining({
+          href: `${testData.oIAnalytics.registration.completed.host}${testData.oIAnalytics.registration.completed.checkUrl}/`
+        }),
+        { method: 'GET', headers: { 'Content-Type': 'application/json' }, acceptUnauthorized: false, proxy: undefined, timeout: 30000 }
+      );
+      expect(result).toEqual(mockResponse);
+    });
+
+    it('should throw if checkUrl is missing', async () => {
+      await expect(service.checkRegistration({ ...testData.oIAnalytics.registration.completed, checkUrl: null })).rejects.toThrow(
+        'No check url specified'
+      );
+    });
+
+    it('should throw on error response', async () => {
+      (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(400, 'Bad Request'));
+      await expect(service.checkRegistration(testData.oIAnalytics.registration.completed)).rejects.toThrow('400 - "Bad Request"');
+    });
   });
 
-  it('should send save history query', async () => {
-    (HTTPRequest as jest.Mock).mockResolvedValueOnce(createMockResponse(200)).mockResolvedValueOnce(createMockResponse(400, 'error'));
+  describe('sendConfiguration', () => {
+    it('should call PUT endpoint', async () => {
+      await service.sendConfiguration(testData.oIAnalytics.registration.completed, 'config-payload');
 
-    await service.sendHistoryQuery(testData.oIAnalytics.registration.completed, 'payload');
-    expect(HTTPRequest).toHaveBeenCalledWith(
-      expect.objectContaining({
-        href: `${testData.oIAnalytics.registration.completed.host}/api/oianalytics/oibus/configuration/history-query`
-      }),
-      {
-        method: 'PUT',
-        acceptUnauthorized: false,
-        auth: { type: 'bearer', token: testData.oIAnalytics.registration.completed.token },
-        headers: { 'Content-Type': 'application/json' },
-        body: 'payload',
-        proxy: undefined,
-        timeout: 10_000
-      }
-    );
-    await expect(service.sendHistoryQuery(testData.oIAnalytics.registration.completed, 'payload')).rejects.toThrow('400 - "error"');
+      expect(HTTPRequest).toHaveBeenCalledWith(
+        expect.objectContaining({
+          href: `${testData.oIAnalytics.registration.completed.host}/api/oianalytics/oibus/configuration`
+        }),
+        expect.objectContaining({
+          method: 'PUT',
+          body: 'config-payload'
+        })
+      );
+    });
+
+    it('should throw on error response', async () => {
+      (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(400, 'Bad Request'));
+      await expect(service.sendConfiguration(testData.oIAnalytics.registration.completed, 'config-payload')).rejects.toThrow(
+        '400 - "Bad Request"'
+      );
+    });
   });
 
-  it('should not send save history query without registration token', async () => {
-    await expect(service.sendHistoryQuery({ ...testData.oIAnalytics.registration.completed, token: null }, 'payload')).rejects.toThrow(
-      new Error('No registration token')
-    );
+  describe('sendHistoryQuery', () => {
+    it('should call PUT endpoint', async () => {
+      await service.sendHistoryQuery(testData.oIAnalytics.registration.completed, 'history-payload');
+
+      expect(HTTPRequest).toHaveBeenCalledWith(
+        expect.objectContaining({
+          href: `${testData.oIAnalytics.registration.completed.host}/api/oianalytics/oibus/configuration/history-query`
+        }),
+        expect.objectContaining({
+          method: 'PUT',
+          body: 'history-payload'
+        })
+      );
+    });
+
+    it('should throw on error response', async () => {
+      (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(400, 'Bad Request'));
+      await expect(service.sendHistoryQuery(testData.oIAnalytics.registration.completed, 'history-payload')).rejects.toThrow(
+        '400 - "Bad Request"'
+      );
+    });
   });
 
-  it('should send delete history query', async () => {
-    (HTTPRequest as jest.Mock).mockResolvedValueOnce(createMockResponse(200)).mockResolvedValueOnce(createMockResponse(400, 'error'));
+  describe('deleteHistoryQuery', () => {
+    it('should call DELETE endpoint with query param', async () => {
+      await service.deleteHistoryQuery(testData.oIAnalytics.registration.completed, 'hist-1');
 
-    await service.deleteHistoryQuery(testData.oIAnalytics.registration.completed, 'historyId');
-    expect(HTTPRequest).toHaveBeenCalledWith(
-      expect.objectContaining({
-        href: `${testData.oIAnalytics.registration.completed.host}/api/oianalytics/oibus/configuration/history-query`
-      }),
-      {
-        method: 'DELETE',
-        query: { historyId: 'historyId' },
-        acceptUnauthorized: false,
-        auth: { type: 'bearer', token: testData.oIAnalytics.registration.completed.token },
-        headers: { 'Content-Type': 'application/json' },
-        proxy: undefined,
-        timeout: 10_000
-      }
-    );
-    await expect(service.deleteHistoryQuery(testData.oIAnalytics.registration.completed, 'historyId')).rejects.toThrow('400 - "error"');
+      expect(buildHttpOptions).toHaveBeenCalledWith('DELETE', expect.anything(), expect.anything(), null, 30000, null);
+
+      expect(HTTPRequest).toHaveBeenCalledWith(
+        expect.objectContaining({
+          href: `${testData.oIAnalytics.registration.completed.host}/api/oianalytics/oibus/configuration/history-query`
+        }),
+        expect.objectContaining({
+          query: { historyId: 'hist-1' }
+        })
+      );
+    });
+
+    it('should throw on error response', async () => {
+      (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(400, 'Bad Request'));
+      await expect(service.deleteHistoryQuery(testData.oIAnalytics.registration.completed, 'hist-1')).rejects.toThrow(
+        '400 - "Bad Request"'
+      );
+    });
   });
 
-  it('should not send delete history query without registration token', async () => {
-    await expect(service.deleteHistoryQuery({ ...testData.oIAnalytics.registration.completed, token: null }, 'historyId')).rejects.toThrow(
-      new Error('No registration token')
-    );
-  });
+  describe('downloadFile', () => {
+    it('should download and write file to disk', async () => {
+      const mockBuffer = Buffer.from('file-content');
+      const mockResponse = createMockResponse(200, mockBuffer.buffer);
+      (HTTPRequest as jest.Mock).mockResolvedValue(mockResponse);
 
-  it('should download file', async () => {
-    (HTTPRequest as jest.Mock)
-      .mockResolvedValueOnce(createMockResponse(200, Buffer.from('buffer').buffer))
-      .mockResolvedValueOnce(createMockResponse(400, 'error'));
+      await service.downloadFile(testData.oIAnalytics.registration.completed, 'asset-1', 'target.zip');
 
-    await service.downloadFile(
-      {
-        ...testData.oIAnalytics.registration.completed,
-        host: `${testData.oIAnalytics.registration.completed.host}/`,
-        proxyUrl: 'http://localhost:3128',
-        proxyUsername: 'proxy user',
-        proxyPassword: 'proxy password',
-        useProxy: true
-      },
-      'assetId',
-      'filename.zip'
-    );
-    expect(HTTPRequest).toHaveBeenCalledWith(
-      expect.objectContaining({
-        href: `${testData.oIAnalytics.registration.completed.host}/api/oianalytics/oibus/upgrade/asset`
-      }),
-      {
-        method: 'GET',
-        query: { assetId: 'assetId' },
-        acceptUnauthorized: false,
-        auth: { type: 'bearer', token: testData.oIAnalytics.registration.completed.token },
-        proxy: {
-          url: 'http://localhost:3128',
-          auth: {
-            type: 'url',
-            username: 'proxy user',
-            password: 'proxy password'
-          }
-        },
-        timeout: 900_000
-      }
-    );
-    await expect(
-      service.downloadFile(
-        {
-          ...testData.oIAnalytics.registration.completed,
-          proxyUrl: 'http://localhost:3128',
-          proxyUsername: 'proxy user',
-          useProxy: true
-        },
-        'assetId',
-        'filename.zip'
-      )
-    ).rejects.toThrow('400 - "error"');
-  });
+      // Verify increased timeout
+      expect(buildHttpOptions).toHaveBeenCalledWith('GET', true, expect.anything(), null, 900_000, null);
 
-  it('should download file without proxy user', async () => {
-    (HTTPRequest as jest.Mock).mockResolvedValueOnce(createMockResponse(200, Buffer.from('buffer').buffer));
+      expect(HTTPRequest).toHaveBeenCalledWith(
+        expect.objectContaining({
+          href: `${testData.oIAnalytics.registration.completed.host}/api/oianalytics/oibus/upgrade/asset`
+        }),
+        expect.objectContaining({
+          query: { assetId: 'asset-1' }
+        })
+      );
 
-    await service.downloadFile(
-      {
-        ...testData.oIAnalytics.registration.completed,
-        host: `${testData.oIAnalytics.registration.completed.host}/`,
-        proxyUrl: 'http://localhost:3128',
-        proxyUsername: '',
-        proxyPassword: '',
-        useProxy: true
-      },
-      'assetId',
-      'filename.zip'
-    );
-    expect(HTTPRequest).toHaveBeenCalledWith(
-      expect.objectContaining({
-        href: `${testData.oIAnalytics.registration.completed.host}/api/oianalytics/oibus/upgrade/asset`
-      }),
-      {
-        method: 'GET',
-        query: { assetId: 'assetId' },
-        acceptUnauthorized: false,
-        auth: { type: 'bearer', token: testData.oIAnalytics.registration.completed.token },
-        proxy: {
-          url: 'http://localhost:3128'
-        },
-        timeout: 900_000
-      }
-    );
-  });
+      expect(fs.writeFile).toHaveBeenCalledWith('target.zip', Buffer.from(await mockResponse.body.arrayBuffer()));
+    });
 
-  it('should not dowload file without registration token', async () => {
-    await expect(
-      service.downloadFile(
-        {
-          ...testData.oIAnalytics.registration.completed,
-          token: null
-        },
-        'assetId',
-        'filename.zip'
-      )
-    ).rejects.toThrow(new Error('No registration token'));
-  });
+    it('should throw on error response', async () => {
+      (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(404, 'Not Found'));
 
-  it('should not get proxy options without proxy url', () => {
-    try {
-      service['getProxyOptions']({
-        ...testData.oIAnalytics.registration.completed,
-        useProxy: true
-      });
-    } catch (error) {
-      expect(error).toEqual(new Error('Proxy URL not specified'));
-    }
+      await expect(service.downloadFile(testData.oIAnalytics.registration.completed, 'asset-1', 'target.zip')).rejects.toThrow(
+        '404 - "Not Found"'
+      );
+
+      expect(fs.writeFile).not.toHaveBeenCalled();
+    });
+
+    it('should throw on error response', async () => {
+      (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(400, 'Bad Request'));
+      await expect(service.downloadFile(testData.oIAnalytics.registration.completed, 'asset-1', 'target.zip')).rejects.toThrow(
+        '400 - "Bad Request"'
+      );
+    });
   });
 });

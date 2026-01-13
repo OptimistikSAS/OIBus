@@ -82,13 +82,7 @@ describe('Logger', () => {
         target: path.join(__dirname, 'oianalytics-transport.js'),
         options: {
           interval: engineSettings.logParameters.oia.interval,
-          host: registration.host,
-          token: registration.token,
-          useProxy: registration.useProxy,
-          proxyUrl: registration.proxyUrl,
-          proxyUsername: registration.proxyUsername,
-          proxyPassword: registration.proxyPassword,
-          acceptUnauthorized: registration.acceptUnauthorized,
+          registrationSettings: registration,
           certsFolder: '',
           cryptoSettings: {}
         },
@@ -163,13 +157,7 @@ describe('Logger', () => {
         target: path.join(__dirname, 'oianalytics-transport.js'),
         options: {
           interval: specificSettings.logParameters.oia.interval,
-          host: specificRegistration.host,
-          token: specificRegistration.token,
-          useProxy: specificRegistration.useProxy,
-          proxyUrl: specificRegistration.proxyUrl,
-          proxyUsername: specificRegistration.proxyUsername,
-          proxyPassword: specificRegistration.proxyPassword,
-          acceptUnauthorized: specificRegistration.acceptUnauthorized,
+          registrationSettings: specificRegistration,
           certsFolder: '',
           cryptoSettings: {}
         },

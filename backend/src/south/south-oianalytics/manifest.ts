@@ -538,7 +538,12 @@ const manifest: SouthConnectorManifest = {
               translationKey: 'configuration.oibus.manifest.south.items.oianalytics.query-params',
               paginate: false,
               numberOfElementPerPage: 0,
-              validators: [],
+              validators: [
+                {
+                  type: 'REQUIRED',
+                  arguments: []
+                }
+              ],
               rootAttribute: {
                 type: 'object',
                 key: 'queryParam',

@@ -15,6 +15,9 @@ export default class OIAnalyticsRegistrationRepository {
       proxyUrl: null,
       proxyUsername: null,
       proxyPassword: null,
+      useApiGateway: false,
+      apiGatewayHeaderKey: null,
+      apiGatewayHeaderValue: null,
       commandRefreshInterval: 10,
       commandRetryInterval: 5,
       messageRetryInterval: 5,
@@ -58,7 +61,8 @@ export default class OIAnalyticsRegistrationRepository {
   get(): OIAnalyticsRegistration | null {
     const query =
       `SELECT id, host, token, public_key, private_key, activation_code, status, activation_date, check_url, ` +
-      `activation_expiration_date, use_proxy, proxy_url, proxy_username, proxy_password, accept_unauthorized, command_refresh_interval, command_retry_interval, message_retry_interval, ` +
+      `activation_expiration_date, use_proxy, proxy_url, proxy_username, proxy_password, accept_unauthorized, use_api_gateway, api_gateway_header_key, api_gateway_header_value, ` +
+      `command_refresh_interval, command_retry_interval, message_retry_interval, ` +
       `command_update_version, command_restart_engine, command_regenerate_cipher_keys, command_update_engine_settings, command_update_registration_settings, ` +
       `command_create_scan_mode, command_update_scan_mode, command_delete_scan_mode, ` +
       `command_create_ip_filter, command_update_ip_filter, command_delete_ip_filter, ` +
@@ -95,6 +99,7 @@ export default class OIAnalyticsRegistrationRepository {
     const query =
       `UPDATE ${REGISTRATIONS_TABLE} SET host = ?, status = 'PENDING', token = '', activation_code = ?, ` +
       `check_url = ?, activation_expiration_date = ?, use_proxy = ?, proxy_url = ?, proxy_username = ?, proxy_password = ?, ` +
+      `use_api_gateway = ?, api_gateway_header_key = ?, api_gateway_header_value = ?, ` +
       `accept_unauthorized = ?, public_key = ?, private_key = ?, command_refresh_interval = ?, command_retry_interval = ?, message_retry_interval = ?, command_update_version = ?, ` +
       `command_restart_engine = ?, command_regenerate_cipher_keys = ?, command_update_engine_settings = ?, command_update_registration_settings = ?, ` +
       `command_create_scan_mode = ?, command_update_scan_mode = ?, command_delete_scan_mode = ?, ` +
@@ -116,6 +121,9 @@ export default class OIAnalyticsRegistrationRepository {
         command.proxyUrl,
         command.proxyUsername,
         command.proxyPassword,
+        +command.useApiGateway,
+        command.apiGatewayHeaderKey,
+        command.apiGatewayHeaderValue,
         +command.acceptUnauthorized,
         publicKey,
         privateKey,
@@ -174,8 +182,9 @@ export default class OIAnalyticsRegistrationRepository {
   update(command: Omit<OIAnalyticsRegistrationEditCommand, 'host'>): void {
     const query =
       `UPDATE ${REGISTRATIONS_TABLE} SET ` +
-      `use_proxy = ?, proxy_url = ?, proxy_username = ?, proxy_password = ?, accept_unauthorized = ?, command_refresh_interval = ?, command_retry_interval = ?, message_retry_interval = ?,
-      command_update_version = ?, command_restart_engine = ?, command_regenerate_cipher_keys = ?, command_update_engine_settings = ?, command_update_registration_settings = ?, ` +
+      `use_proxy = ?, proxy_url = ?, proxy_username = ?, proxy_password = ?, use_api_gateway = ?, api_gateway_header_key = ?, api_gateway_header_value = ?, ` +
+      `accept_unauthorized = ?, command_refresh_interval = ?, command_retry_interval = ?, message_retry_interval = ?, ` +
+      `command_update_version = ?, command_restart_engine = ?, command_regenerate_cipher_keys = ?, command_update_engine_settings = ?, command_update_registration_settings = ?, ` +
       `command_create_scan_mode = ?, command_update_scan_mode = ?, command_delete_scan_mode = ?, ` +
       `command_create_ip_filter = ?, command_update_ip_filter = ?, command_delete_ip_filter = ?, ` +
       `command_create_certificate = ?, command_update_certificate = ?, command_delete_certificate = ?, ` +
@@ -191,6 +200,9 @@ export default class OIAnalyticsRegistrationRepository {
         command.proxyUrl,
         command.proxyUsername,
         command.proxyPassword,
+        +command.useApiGateway,
+        command.apiGatewayHeaderKey,
+        command.apiGatewayHeaderValue,
         +command.acceptUnauthorized,
         command.commandRefreshInterval,
         command.commandRetryInterval,
@@ -241,7 +253,8 @@ export default class OIAnalyticsRegistrationRepository {
     }
 
     const query =
-      `INSERT INTO ${REGISTRATIONS_TABLE} (id, host, status, command_refresh_interval, command_retry_interval, message_retry_interval, command_update_version, ` +
+      `INSERT INTO ${REGISTRATIONS_TABLE} (id, host, status, use_proxy, proxy_url, proxy_username, proxy_password, use_api_gateway, api_gateway_header_key, api_gateway_header_value, ` +
+      `accept_unauthorized, command_refresh_interval, command_retry_interval, message_retry_interval, command_update_version, ` +
       `command_restart_engine, command_regenerate_cipher_keys, command_update_engine_settings, command_update_registration_settings, ` +
       `command_create_scan_mode, command_update_scan_mode, command_delete_scan_mode, ` +
       `command_create_ip_filter, command_update_ip_filter, command_delete_ip_filter, ` +
@@ -251,13 +264,21 @@ export default class OIAnalyticsRegistrationRepository {
       `command_create_south, command_update_south, command_delete_south, command_create_or_update_south_items_from_csv, ` +
       `command_test_south_connection, command_test_south_item, ` +
       `command_create_north, command_update_north, command_delete_north, command_test_north_connection, command_setpoint ` +
-      `) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
+      `) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
     this.database
       .prepare(query)
       .run(
         generateRandomId(),
         command.host,
         'NOT_REGISTERED',
+        +command.useProxy,
+        command.proxyUrl,
+        command.proxyUsername,
+        command.proxyPassword,
+        +command.useApiGateway,
+        command.apiGatewayHeaderKey,
+        command.apiGatewayHeaderValue,
+        +command.acceptUnauthorized,
         command.commandRefreshInterval,
         command.commandRetryInterval,
         command.messageRetryInterval,
@@ -312,6 +333,9 @@ export default class OIAnalyticsRegistrationRepository {
       proxyUrl: result.proxy_url as string,
       proxyUsername: result.proxy_username as string,
       proxyPassword: result.proxy_password as string,
+      useApiGateway: Boolean(result.use_api_gateway),
+      apiGatewayHeaderKey: result.api_gateway_header_key as string,
+      apiGatewayHeaderValue: result.api_gateway_header_value as string,
       acceptUnauthorized: Boolean(result.accept_unauthorized),
       commandRefreshInterval: result.command_refresh_interval as number,
       commandRetryInterval: result.command_retry_interval as number,

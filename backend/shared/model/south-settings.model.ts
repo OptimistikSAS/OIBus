@@ -834,7 +834,7 @@ export interface SouthODBCItemSettings {
 
 export interface SouthOIAnalyticsItemSettings {
   endpoint: string;
-  queryParams: Array<SouthOIAnalyticsItemSettingsQueryParams> | null;
+  queryParams: Array<SouthOIAnalyticsItemSettingsQueryParams>;
   serialization: SouthOIAnalyticsItemSettingsSerialization;
 }
 

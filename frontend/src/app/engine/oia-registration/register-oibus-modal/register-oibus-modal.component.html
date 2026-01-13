@@ -66,6 +66,39 @@
     }
 
     <div class="row">
+      <!-- Use API Gateway -->
+      <div class="col">
+        <div class="form-group">
+          <div class="form-check form-switch padded">
+            <input formControlName="useApiGateway" id="use-api-gateway" type="checkbox" class="form-check-input" />
+            <label class="form-check-label" for="use-api-gateway" translate="oia-module.registration.use-api-gateway"></label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    @if (form.controls.useApiGateway.value) {
+      <div class="row">
+        <!-- API Gateway Header Key -->
+        <div class="col-6">
+          <div class="form-group">
+            <label class="form-label" for="api-gateway-header-key" translate="oia-module.registration.api-gateway-header-key"></label>
+            <input formControlName="apiGatewayHeaderKey" id="api-gateway-header-key" class="form-control" />
+            <val-errors controlName="apiGatewayHeaderKey" />
+          </div>
+        </div>
+        <!-- API Gateway Header Value -->
+        <div class="col-6">
+          <div class="form-group">
+            <label class="form-label" for="api-gateway-header-value" translate="oia-module.registration.api-gateway-header-value"></label>
+            <input type="password" formControlName="apiGatewayHeaderValue" id="api-gateway-header-value" class="form-control" />
+            <val-errors controlName="apiGatewayHeaderValue" />
+          </div>
+        </div>
+      </div>
+    }
+
+    <div class="row">
       <!-- Command refresh interval -->
       <div class="col-4">
         <div class="form-group">
