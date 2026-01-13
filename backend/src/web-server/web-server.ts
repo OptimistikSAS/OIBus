@@ -243,8 +243,10 @@ export default class WebServer {
   }
 
   private setupCors(): express.RequestHandler {
+    const isDevelopment = process.env.NODE_ENV === 'development';
+
     const corsOptions = {
-      origin: '*',
+      origin: isDevelopment ? ['http://localhost:4200', 'http://127.0.0.1:4200'] : false,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
       credentials: true,
