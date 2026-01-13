@@ -15,6 +15,9 @@ export interface OIAnalyticsRegistration extends BaseEntity {
   proxyUrl: string | null;
   proxyUsername: string | null;
   proxyPassword: string | null;
+  useApiGateway: boolean;
+  apiGatewayHeaderKey: string | null;
+  apiGatewayHeaderValue: string | null;
   acceptUnauthorized: boolean;
   commandRefreshInterval: number;
   commandRetryInterval: number;
@@ -61,6 +64,9 @@ export interface OIAnalyticsRegistrationEditCommand {
   proxyUrl: string | null;
   proxyUsername: string | null;
   proxyPassword: string | null;
+  useApiGateway: boolean;
+  apiGatewayHeaderKey: string | null;
+  apiGatewayHeaderValue: string | null;
   acceptUnauthorized: boolean;
   commandRefreshInterval: number;
   commandRetryInterval: number;

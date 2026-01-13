@@ -1,29 +1,20 @@
 import NorthConnector from '../north-connector';
-
-import { encryptionService } from '../../service/encryption.service';
 import pino from 'pino';
 import { createReadStream } from 'node:fs';
 import zlib from 'node:zlib';
 import FormData from 'form-data';
-import {
-  HTTPRequest,
-  ReqAuthOptions,
-  ReqOptions,
-  ReqProxyOptions,
-  ReqResponse,
-  retryableHttpStatusCodes
-} from '../../service/http-request.utils';
+import { HTTPRequest, ReqResponse, retryableHttpStatusCodes } from '../../service/http-request.utils';
 import path from 'node:path';
 import { compress, filesExists } from '../../service/utils';
 import { NorthOIAnalyticsSettings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata, OIBusTimeValue } from '../../../shared/model/engine.model';
-import { ClientCertificateCredential, ClientSecretCredential } from '@azure/identity';
 import fs from 'node:fs/promises';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import CertificateRepository from '../../repository/config/certificate.repository';
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import { OIBusError } from '../../model/engine.model';
 import CacheService from '../../service/cache/cache.service';
+import { buildHttpOptions, getHost } from '../../service/utils-oianalytics';
 
 /**
  * Class NorthOIAnalytics - Send files to a POST Multipart HTTP request and values as JSON payload
@@ -42,20 +33,21 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
   }
 
   override async testConnection(): Promise<void> {
-    const host = this.getHost();
+    const registrationSettings = this.oIAnalyticsRegistrationRepository.get()!;
+    const httpOptions = await buildHttpOptions(
+      'GET',
+      this.connector.settings.useOiaModule,
+      registrationSettings,
+      this.connector.settings.specificSettings,
+      this.connector.settings.timeout * 1000,
+      this.certificateRepository
+    );
+    const host = getHost(this.connector.settings.useOiaModule, registrationSettings, this.connector.settings.specificSettings);
     const requestUrl = new URL('/api/optimistik/oibus/status', host);
 
     let response: ReqResponse;
     try {
-      const { proxy, acceptUnauthorized } = this.getProxyOptions();
-      const fetchOptions: ReqOptions = {
-        method: 'GET',
-        auth: await this.getAuthorizationOptions(),
-        proxy,
-        timeout: this.connector.settings.timeout * 1000,
-        acceptUnauthorized
-      };
-      response = await HTTPRequest(requestUrl, fetchOptions);
+      response = await HTTPRequest(requestUrl, httpOptions);
     } catch (error) {
       throw new Error(`Fetch error ${error}`);
     }
@@ -83,26 +75,27 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
    * Handle values by sending them to OIAnalytics
    */
   async handleValues(values: Array<OIBusTimeValue>): Promise<void> {
-    const host = this.getHost();
+    const registrationSettings = this.oIAnalyticsRegistrationRepository.get()!;
+    const httpOptions = await buildHttpOptions(
+      'POST',
+      this.connector.settings.useOiaModule,
+      registrationSettings,
+      this.connector.settings.specificSettings,
+      this.connector.settings.timeout * 1000,
+      this.certificateRepository
+    );
+    (httpOptions.headers! as Record<string, string>)['Content-Type'] = 'application/json';
+    const host = getHost(this.connector.settings.useOiaModule, registrationSettings, this.connector.settings.specificSettings);
     const endpoint = this.connector.settings.compress
       ? '/api/oianalytics/oibus/time-values/compressed'
       : '/api/oianalytics/oibus/time-values';
+    const valuesUrl = new URL(endpoint, host);
+    httpOptions.body = this.connector.settings.compress ? zlib.gzipSync(JSON.stringify(values)) : JSON.stringify(values);
+    httpOptions.query = { dataSourceId: this.connector.name };
 
     let response: ReqResponse;
-    const valuesUrl = new URL(endpoint, host);
     try {
-      const { proxy, acceptUnauthorized } = this.getProxyOptions();
-      const fetchOptions: ReqOptions = {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        query: { dataSourceId: this.connector.name },
-        body: this.connector.settings.compress ? zlib.gzipSync(JSON.stringify(values)) : JSON.stringify(values),
-        auth: await this.getAuthorizationOptions(),
-        proxy,
-        timeout: this.connector.settings.timeout * 1000,
-        acceptUnauthorized
-      };
-      response = await HTTPRequest(valuesUrl, fetchOptions);
+      response = await HTTPRequest(valuesUrl, httpOptions);
     } catch (fetchError) {
       throw new OIBusError(`Fail to reach values endpoint ${valuesUrl}. ${fetchError}`, true);
     }
@@ -119,15 +112,9 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
    * Handle the file by sending it to OIAnalytics.
    */
   async handleFile(filePath: string): Promise<void> {
-    const host = this.getHost();
-    const endpoint = '/api/oianalytics/file-uploads';
-    const query = { dataSourceId: this.connector.name };
-    const fileUrl = new URL(endpoint, host);
-
     if (!(await filesExists(filePath))) {
       throw new Error(`File ${filePath} does not exist`);
     }
-
     const { name, ext, dir } = path.parse(filePath);
     const randomString = name.slice(name.lastIndexOf('-'));
 
@@ -135,12 +122,9 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
       this.connector.settings.compress && ext !== '.gz'
         ? path.resolve(dir, `${name.replace(randomString, '')}${ext}${randomString}.gz`)
         : path.resolve(dir, `${name}${ext}`);
-    if (this.connector.settings.compress && ext !== '.gz') {
-      // compress if enabled and file to send is not a compressed one
-      if (!(await filesExists(fileToSend))) {
-        // Compress only if the file has not been compressed by another try first
-        await compress(filePath, fileToSend);
-      }
+    if (this.connector.settings.compress && ext !== '.gz' && !(await filesExists(fileToSend))) {
+      // Compress only if the file has not been compressed by another try first
+      await compress(filePath, fileToSend);
     }
 
     const readStream = createReadStream(fileToSend);
@@ -150,31 +134,35 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
       filename
     });
 
+    const registrationSettings = this.oIAnalyticsRegistrationRepository.get()!;
+    const httpOptions = await buildHttpOptions(
+      'POST',
+      this.connector.settings.useOiaModule,
+      registrationSettings,
+      this.connector.settings.specificSettings,
+      this.connector.settings.timeout * 1000,
+      this.certificateRepository
+    );
+    const host = getHost(this.connector.settings.useOiaModule, registrationSettings, this.connector.settings.specificSettings);
+    const endpoint = '/api/oianalytics/file-uploads';
+    const fileUrl = new URL(endpoint, host);
+    httpOptions.body = body;
+    httpOptions.query = { dataSourceId: this.connector.name };
+    httpOptions.headers = { ...httpOptions.headers, ...body.getHeaders() };
     let response: ReqResponse;
     try {
-      const { proxy, acceptUnauthorized } = this.getProxyOptions();
-      response = await HTTPRequest(fileUrl, {
-        method: 'POST',
-        headers: body.getHeaders(),
-        query,
-        body,
-        auth: await this.getAuthorizationOptions(),
-        proxy,
-        timeout: this.connector.settings.timeout * 1000,
-        acceptUnauthorized
-      });
-      if (!readStream.closed) {
-        readStream.close();
-      }
+      response = await HTTPRequest(fileUrl, httpOptions);
+      readStream.close();
       if (this.connector.settings.compress && ext !== '.gz') {
         // Remove only the compressed file. The uncompressed file will be removed by north connector logic
         await fs.unlink(fileToSend);
       }
     } catch (fetchError) {
+      throw new OIBusError(`Fail to reach file endpoint ${fileUrl}. ${fetchError}`, true);
+    } finally {
       if (!readStream.closed) {
         readStream.close();
       }
-      throw new OIBusError(`Fail to reach file endpoint ${fileUrl}. ${fetchError}`, true);
     }
 
     if (!response.ok) {
@@ -183,140 +171,6 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
         retryableHttpStatusCodes.includes(response.statusCode)
       );
     }
-  }
-
-  /**
-   * Get proxy options if proxy is enabled
-   * @throws Error if no proxy url is specified in settings
-   */
-  private getProxyOptions(): { proxy: ReqProxyOptions | undefined; acceptUnauthorized: boolean } {
-    let settings: {
-      useProxy: boolean;
-      proxyUrl?: string | null;
-      proxyUsername?: string | null;
-      proxyPassword?: string | null;
-      acceptUnauthorized: boolean;
-    };
-
-    let scope: string;
-    // OIAnalytics module
-    if (this.connector.settings.useOiaModule) {
-      const registrationSettings = this.oIAnalyticsRegistrationRepository.get();
-      if (!registrationSettings || registrationSettings.status !== 'REGISTERED') {
-        throw new Error('OIBus not registered in OIAnalytics');
-      }
-
-      settings = registrationSettings;
-      scope = 'registered OIAnalytics module';
-    }
-    // Specific settings
-    else {
-      settings = this.connector.settings.specificSettings!;
-      scope = 'specific settings';
-    }
-
-    if (!settings.useProxy) {
-      return { proxy: undefined, acceptUnauthorized: settings.acceptUnauthorized };
-    }
-    if (!settings.proxyUrl) {
-      throw new Error(`Proxy URL not specified using ${scope}`);
-    }
-
-    const options: ReqProxyOptions = {
-      url: settings.proxyUrl
-    };
-
-    if (settings.proxyUsername) {
-      options.auth = {
-        type: 'url',
-        username: settings.proxyUsername,
-        password: settings.proxyPassword
-      };
-    }
-
-    return { proxy: options, acceptUnauthorized: settings.acceptUnauthorized };
-  }
-
-  /**
-   * Get authorization options from settings
-   */
-  private async getAuthorizationOptions(): Promise<ReqAuthOptions | undefined> {
-    // OIAnalytics module
-    if (this.connector.settings.useOiaModule) {
-      const registrationSettings = this.oIAnalyticsRegistrationRepository.get();
-      if (!registrationSettings || registrationSettings.status !== 'REGISTERED') {
-        throw new Error('OIBus not registered in OIAnalytics');
-      }
-
-      return {
-        type: 'bearer',
-        token: registrationSettings.token!
-      };
-    }
-
-    // Specific settings
-    const specificSettings = this.connector.settings.specificSettings!;
-
-    switch (specificSettings.authentication) {
-      case 'basic': {
-        if (!specificSettings.accessKey) return;
-
-        return {
-          type: 'basic',
-          username: specificSettings.accessKey,
-          password: specificSettings.secretKey
-        };
-      }
-
-      case 'aad-client-secret': {
-        const clientSecretCredential = new ClientSecretCredential(
-          specificSettings.tenantId!,
-          specificSettings.clientId!,
-          await encryptionService.decryptText(specificSettings.clientSecret!)
-        );
-        const result = await clientSecretCredential.getToken(specificSettings.scope!);
-        // Note: token needs to be encrypted when adding it to proxy options
-        const token = await encryptionService.encryptText(`Bearer ${Buffer.from(result.token)}`);
-        return {
-          type: 'bearer',
-          token
-        };
-      }
-
-      case 'aad-certificate': {
-        const certificate = this.certificateRepository.findById(specificSettings.certificateId!);
-        if (certificate === null) return;
-
-        const decryptedPrivateKey = await encryptionService.decryptText(certificate.privateKey);
-        const clientCertificateCredential = new ClientCertificateCredential(specificSettings.tenantId!, specificSettings.clientId!, {
-          certificate: `${certificate.certificate}\n${decryptedPrivateKey}`
-        });
-        const result = await clientCertificateCredential.getToken(specificSettings.scope!);
-        // Note: token needs to be encrypted when adding it to proxy options
-        const token = await encryptionService.encryptText(`Bearer ${Buffer.from(result.token)}`);
-        return {
-          type: 'bearer',
-          token
-        };
-      }
-    }
-  }
-
-  private getHost() {
-    let host: string;
-
-    if (this.connector.settings.useOiaModule) {
-      const registrationSettings = this.oIAnalyticsRegistrationRepository.get();
-      if (!registrationSettings || registrationSettings.status !== 'REGISTERED') {
-        throw new Error('OIBus not registered in OIAnalytics');
-      }
-      host = registrationSettings.host;
-    } else {
-      const specificSettings = this.connector.settings.specificSettings!;
-      host = specificSettings.host;
-    }
-
-    return host;
   }
 
   supportedTypes(): Array<string> {

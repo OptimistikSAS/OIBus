@@ -89,13 +89,7 @@ class LoggerService {
         target: path.join(__dirname, './oianalytics-transport.js'),
         options: {
           interval: engineSettings.logParameters.oia.interval,
-          host: registration.host,
-          token: registration.token!,
-          useProxy: registration.useProxy,
-          proxyUrl: registration.proxyUrl,
-          proxyUsername: registration.proxyUsername,
-          proxyPassword: registration.proxyPassword,
-          acceptUnauthorized: registration.acceptUnauthorized,
+          registrationSettings: registration,
           cryptoSettings: encryptionService.cryptoSettings,
           certsFolder: encryptionService.certsFolder
         },

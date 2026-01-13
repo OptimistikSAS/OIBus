@@ -226,6 +226,18 @@ export interface RegistrationSettingsDTO extends BaseEntity {
   proxyUsername: string | null;
 
   /**
+   * Whether to use an API Gateway
+   * @example false
+   */
+  useApiGateway: boolean;
+
+  /**
+   * The header key for the API gateway
+   * @example null
+   */
+  apiGatewayHeaderKey: string | null;
+
+  /**
    * Whether to accept unauthorized certificates.
    * @example false
    */
@@ -445,6 +457,24 @@ export interface RegistrationSettingsCommandDTO {
    * @example null
    */
   proxyPassword: string | null;
+
+  /**
+   * Whether to use an API Gateway
+   * @example false
+   */
+  useApiGateway: boolean;
+
+  /**
+   * The header key for the API gateway
+   * @example null
+   */
+  apiGatewayHeaderKey: string | null;
+
+  /**
+   * The header value (a secret) used for the API gateway
+   * @example null
+   */
+  apiGatewayHeaderValue: string | null;
 
   /**
    * Whether to accept unauthorized certificates.

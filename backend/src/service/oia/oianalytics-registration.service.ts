@@ -57,6 +57,12 @@ export default class OIAnalyticsRegistrationService {
       command.proxyPassword = await encryptionService.encryptText(command.proxyPassword);
     }
 
+    if (!command.apiGatewayHeaderValue) {
+      command.apiGatewayHeaderValue = registrationSettings.apiGatewayHeaderValue;
+    } else {
+      command.apiGatewayHeaderValue = await encryptionService.encryptText(command.apiGatewayHeaderValue);
+    }
+
     const oibusInfo = getOIBusInfo(engineSettings);
     // Generate an RSA key pair
     const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
@@ -130,6 +136,11 @@ export default class OIAnalyticsRegistrationService {
     } else {
       command.proxyPassword = await encryptionService.encryptText(command.proxyPassword);
     }
+    if (!command.apiGatewayHeaderValue) {
+      command.apiGatewayHeaderValue = currentRegistration.apiGatewayHeaderValue;
+    } else {
+      command.apiGatewayHeaderValue = await encryptionService.encryptText(command.apiGatewayHeaderValue);
+    }
     this.oIAnalyticsRegistrationRepository.update(command);
     this.registrationEvent.emit('updated');
   }
@@ -169,6 +180,8 @@ export const toOIAnalyticsRegistrationDTO = (registration: OIAnalyticsRegistrati
     useProxy: registration.useProxy,
     proxyUrl: registration.proxyUrl,
     proxyUsername: registration.proxyUsername,
+    useApiGateway: registration.useApiGateway,
+    apiGatewayHeaderKey: registration.apiGatewayHeaderKey,
     acceptUnauthorized: registration.acceptUnauthorized,
     commandRefreshInterval: registration.commandRefreshInterval,
     commandRetryInterval: registration.commandRetryInterval,

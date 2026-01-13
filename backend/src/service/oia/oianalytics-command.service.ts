@@ -561,6 +561,9 @@ export default class OIAnalyticsCommandService {
       proxyUrl: registration.proxyUrl,
       proxyUsername: registration.proxyUsername,
       proxyPassword: '', // Won't update password in editConnectionSettings method
+      useApiGateway: registration.useApiGateway,
+      apiGatewayHeaderKey: registration.apiGatewayHeaderKey,
+      apiGatewayHeaderValue: '', // Won't update secret in editConnectionSettings method
       acceptUnauthorized: registration.acceptUnauthorized,
       commandRefreshInterval: command.commandContent.commandRefreshInterval,
       commandRetryInterval: command.commandContent.commandRetryInterval,

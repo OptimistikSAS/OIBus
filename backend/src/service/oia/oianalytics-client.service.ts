@@ -5,9 +5,10 @@ import { OIAnalyticsFetchCommandDTO } from './oianalytics.model';
 import { OIBusInfo, RegistrationSettingsCommandDTO } from '../../../shared/model/engine.model';
 import { Instant } from '../../../shared/model/types';
 import fs from 'node:fs/promises';
-import { HTTPRequest, ReqProxyOptions } from '../http-request.utils';
+import { HTTPRequest, ReqOptions } from '../http-request.utils';
+import { buildHttpOptions, getHeaders, getProxyOptions } from '../utils-oianalytics';
 
-const OIANALYTICS_TIMEOUT = 10_000;
+const OIANALYTICS_TIMEOUT = 30_000;
 const OIANALYTICS_DOWNLOAD_TIMEOUT = 900_000; // 15 minutes
 const COMMAND_STATUS_OIANALYTICS_ENDPOINT = `/api/oianalytics/oibus/commands/status`;
 const RETRIEVE_CANCELLED_COMMANDS_OIANALYTICS_ENDPOINT = `/api/oianalytics/oibus/commands/list-by-ids`;
@@ -18,68 +19,38 @@ const HISTORY_QUERY_OIANALYTICS_ENDPOINT = `/api/oianalytics/oibus/configuration
 const DOWNLOAD_UPDATE_OIANALYTICS_ENDPOINT = `/api/oianalytics/oibus/upgrade/asset`;
 
 export default class OIAnalyticsClient {
-  async updateCommandStatus(registration: OIAnalyticsRegistration, payload: string): Promise<void> {
-    const url = new URL(COMMAND_STATUS_OIANALYTICS_ENDPOINT, registration.host);
+  async updateCommandStatus(registrationSettings: OIAnalyticsRegistration, payload: string): Promise<void> {
+    const url = new URL(COMMAND_STATUS_OIANALYTICS_ENDPOINT, registrationSettings.host);
+    const httpOptions = await buildHttpOptions('PUT', true, registrationSettings, null, OIANALYTICS_TIMEOUT, null);
+    (httpOptions.headers! as Record<string, string>)['Content-Type'] = 'application/json';
+    httpOptions.body = payload;
 
-    if (registration.token === null) {
-      throw new Error('No registration token');
-    }
-
-    const { proxy, acceptUnauthorized } = this.getProxyOptions(registration);
-    const response = await HTTPRequest(url, {
-      method: 'PUT',
-      body: payload,
-      headers: { 'Content-Type': 'application/json' },
-      auth: { type: 'bearer', token: registration.token },
-      proxy,
-      timeout: OIANALYTICS_TIMEOUT,
-      acceptUnauthorized
-    });
+    const response = await HTTPRequest(url, httpOptions);
     if (!response.ok) {
       throw new Error(`${response.statusCode} - ${await response.body.text()}`);
     }
   }
 
   async retrieveCancelledCommands(
-    registration: OIAnalyticsRegistration,
+    registrationSettings: OIAnalyticsRegistration,
     commands: Array<OIBusCommand>
   ): Promise<Array<OIAnalyticsFetchCommandDTO>> {
-    const url = new URL(RETRIEVE_CANCELLED_COMMANDS_OIANALYTICS_ENDPOINT, registration.host);
+    const url = new URL(RETRIEVE_CANCELLED_COMMANDS_OIANALYTICS_ENDPOINT, registrationSettings.host);
+    const httpOptions = await buildHttpOptions('GET', true, registrationSettings, null, OIANALYTICS_TIMEOUT, null);
+    httpOptions.query = { ids: commands.map(command => command.id) };
 
-    if (registration.token === null) {
-      throw new Error('No registration token');
-    }
-
-    const { proxy, acceptUnauthorized } = this.getProxyOptions(registration);
-    const response = await HTTPRequest(url, {
-      method: 'GET',
-      query: { ids: commands.map(command => command.id) },
-      auth: { type: 'bearer', token: registration.token },
-      proxy,
-      timeout: OIANALYTICS_TIMEOUT,
-      acceptUnauthorized
-    });
+    const response = await HTTPRequest(url, httpOptions);
     if (!response.ok) {
       throw new Error(`${response.statusCode} - ${await response.body.text()}`);
     }
     return (await response.body.json()) as Array<OIAnalyticsFetchCommandDTO>;
   }
 
-  async retrievePendingCommands(registration: OIAnalyticsRegistration): Promise<Array<OIAnalyticsFetchCommandDTO>> {
-    const url = new URL(RETRIEVE_PENDING_COMMANDS_OIANALYTICS_ENDPOINT, registration.host);
+  async retrievePendingCommands(registrationSettings: OIAnalyticsRegistration): Promise<Array<OIAnalyticsFetchCommandDTO>> {
+    const url = new URL(RETRIEVE_PENDING_COMMANDS_OIANALYTICS_ENDPOINT, registrationSettings.host);
+    const httpOptions = await buildHttpOptions('GET', true, registrationSettings, null, OIANALYTICS_TIMEOUT, null);
 
-    if (registration.token === null) {
-      throw new Error('No registration token');
-    }
-
-    const { proxy, acceptUnauthorized } = this.getProxyOptions(registration);
-    const response = await HTTPRequest(url, {
-      method: 'GET',
-      auth: { type: 'bearer', token: registration.token },
-      proxy,
-      timeout: OIANALYTICS_TIMEOUT,
-      acceptUnauthorized
-    });
+    const response = await HTTPRequest(url, httpOptions);
     if (!response.ok) {
       throw new Error(`${response.statusCode} - ${await response.body.text()}`);
     }
@@ -92,27 +63,28 @@ export default class OIAnalyticsClient {
     publicKey: string
   ): Promise<{ redirectUrl: string; expirationDate: Instant; activationCode: string }> {
     const activationCode = generateRandomId(6);
-    const body = {
-      activationCode,
-      oibusId: oibusInfo.oibusId,
-      oibusName: oibusInfo.oibusName,
-      oibusVersion: oibusInfo.version,
-      oibusOs: oibusInfo.operatingSystem,
-      oibusArch: oibusInfo.architecture,
-      publicKey
+    const url = new URL(REGISTRATION_OIANALYTICS_ENDPOINT, registration.host);
+    const headers = await getHeaders(true, registration as OIAnalyticsRegistration);
+    headers['Content-Type'] = 'application/json';
+    const { proxy, acceptUnauthorized } = getProxyOptions(true, registration as OIAnalyticsRegistration, null);
+    const httpOptions: ReqOptions = {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        activationCode: activationCode,
+        oibusId: oibusInfo.oibusId,
+        oibusName: oibusInfo.oibusName,
+        oibusVersion: oibusInfo.version,
+        oibusOs: oibusInfo.operatingSystem,
+        oibusArch: oibusInfo.architecture,
+        publicKey
+      }),
+      acceptUnauthorized,
+      proxy,
+      timeout: OIANALYTICS_TIMEOUT
     };
 
-    const url = new URL(REGISTRATION_OIANALYTICS_ENDPOINT, registration.host);
-
-    const { proxy, acceptUnauthorized } = this.getProxyOptions(registration);
-    const response = await HTTPRequest(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-      proxy,
-      timeout: OIANALYTICS_TIMEOUT,
-      acceptUnauthorized
-    });
+    const response = await HTTPRequest(url, httpOptions);
     if (!response.ok) {
       throw new Error(`${response.statusCode} - ${await response.body.text()}`);
     }
@@ -124,20 +96,25 @@ export default class OIAnalyticsClient {
     };
   }
 
-  async checkRegistration(registration: OIAnalyticsRegistration): Promise<{ status: string; expired: boolean; accessToken: string }> {
-    if (registration.checkUrl === null) {
+  async checkRegistration(
+    registrationSettings: OIAnalyticsRegistration
+  ): Promise<{ status: string; expired: boolean; accessToken: string }> {
+    if (registrationSettings.checkUrl === null) {
       throw new Error('No check url specified');
     }
-
-    const url = new URL(registration.checkUrl, registration.host);
-
-    const { proxy, acceptUnauthorized } = this.getProxyOptions(registration);
-    const response = await HTTPRequest(url, {
+    const url = new URL(registrationSettings.checkUrl, registrationSettings.host);
+    const headers = await getHeaders(true, registrationSettings);
+    headers['Content-Type'] = 'application/json';
+    const { proxy, acceptUnauthorized } = getProxyOptions(true, registrationSettings, null);
+    const httpOptions: ReqOptions = {
       method: 'GET',
+      headers,
+      acceptUnauthorized,
       proxy,
-      timeout: OIANALYTICS_TIMEOUT,
-      acceptUnauthorized
-    });
+      timeout: OIANALYTICS_TIMEOUT
+    };
+
+    const response = await HTTPRequest(url, httpOptions);
     if (!response.ok) {
       throw new Error(`${response.statusCode} - ${await response.body.text()}`);
     }
@@ -145,118 +122,51 @@ export default class OIAnalyticsClient {
     return (await response.body.json()) as { status: string; expired: boolean; accessToken: string };
   }
 
-  async sendConfiguration(registration: OIAnalyticsRegistration, payload: string): Promise<void> {
-    const url = new URL(SEND_CONFIGURATION_OIANALYTICS_ENDPOINT, registration.host);
+  async sendConfiguration(registrationSettings: OIAnalyticsRegistration, payload: string): Promise<void> {
+    const url = new URL(SEND_CONFIGURATION_OIANALYTICS_ENDPOINT, registrationSettings.host);
+    const httpOptions = await buildHttpOptions('PUT', true, registrationSettings, null, OIANALYTICS_TIMEOUT, null);
+    (httpOptions.headers! as Record<string, string>)['Content-Type'] = 'application/json';
+    httpOptions.body = payload;
 
-    if (registration.token === null) {
-      throw new Error('No registration token');
-    }
-
-    const { proxy, acceptUnauthorized } = this.getProxyOptions(registration);
-    const response = await HTTPRequest(url, {
-      method: 'PUT',
-      body: payload,
-      headers: { 'Content-Type': 'application/json' },
-      auth: { type: 'bearer', token: registration.token },
-      proxy,
-      timeout: OIANALYTICS_TIMEOUT,
-      acceptUnauthorized
-    });
+    const response = await HTTPRequest(url, httpOptions);
     if (!response.ok) {
       throw new Error(`${response.statusCode} - ${await response.body.text()}`);
     }
   }
 
-  async sendHistoryQuery(registration: OIAnalyticsRegistration, payload: string): Promise<void> {
-    const url = new URL(HISTORY_QUERY_OIANALYTICS_ENDPOINT, registration.host);
+  async sendHistoryQuery(registrationSettings: OIAnalyticsRegistration, payload: string): Promise<void> {
+    const url = new URL(HISTORY_QUERY_OIANALYTICS_ENDPOINT, registrationSettings.host);
+    const httpOptions = await buildHttpOptions('PUT', true, registrationSettings, null, OIANALYTICS_TIMEOUT, null);
+    (httpOptions.headers! as Record<string, string>)['Content-Type'] = 'application/json';
+    httpOptions.body = payload;
 
-    if (registration.token === null) {
-      throw new Error('No registration token');
-    }
-
-    const { proxy, acceptUnauthorized } = this.getProxyOptions(registration);
-    const response = await HTTPRequest(url, {
-      method: 'PUT',
-      body: payload,
-      headers: { 'Content-Type': 'application/json' },
-      auth: { type: 'bearer', token: registration.token },
-      proxy,
-      timeout: OIANALYTICS_TIMEOUT,
-      acceptUnauthorized
-    });
+    const response = await HTTPRequest(url, httpOptions);
     if (!response.ok) {
       throw new Error(`${response.statusCode} - ${await response.body.text()}`);
     }
   }
 
-  async deleteHistoryQuery(registration: OIAnalyticsRegistration, historyId: string): Promise<void> {
-    const url = new URL(HISTORY_QUERY_OIANALYTICS_ENDPOINT, registration.host);
+  async deleteHistoryQuery(registrationSettings: OIAnalyticsRegistration, historyId: string): Promise<void> {
+    const url = new URL(HISTORY_QUERY_OIANALYTICS_ENDPOINT, registrationSettings.host);
+    const httpOptions = await buildHttpOptions('DELETE', true, registrationSettings, null, OIANALYTICS_TIMEOUT, null);
+    httpOptions.query = { historyId };
 
-    if (registration.token === null) {
-      throw new Error('No registration token');
-    }
-
-    const { proxy, acceptUnauthorized } = this.getProxyOptions(registration);
-    const response = await HTTPRequest(url, {
-      method: 'DELETE',
-      query: { historyId },
-      headers: { 'Content-Type': 'application/json' },
-      auth: { type: 'bearer', token: registration.token },
-      proxy,
-      timeout: OIANALYTICS_TIMEOUT,
-      acceptUnauthorized
-    });
+    const response = await HTTPRequest(url, httpOptions);
     if (!response.ok) {
       throw new Error(`${response.statusCode} - ${await response.body.text()}`);
     }
   }
 
-  async downloadFile(registration: OIAnalyticsRegistration, assetId: string, filename: string): Promise<void> {
-    const url = new URL(DOWNLOAD_UPDATE_OIANALYTICS_ENDPOINT, registration.host);
+  async downloadFile(registrationSettings: OIAnalyticsRegistration, assetId: string, filename: string): Promise<void> {
+    const url = new URL(DOWNLOAD_UPDATE_OIANALYTICS_ENDPOINT, registrationSettings.host);
+    const httpOptions = await buildHttpOptions('GET', true, registrationSettings, null, OIANALYTICS_DOWNLOAD_TIMEOUT, null);
+    httpOptions.query = { assetId };
 
-    if (registration.token === null) {
-      throw new Error('No registration token');
-    }
-
-    const { proxy, acceptUnauthorized } = this.getProxyOptions(registration);
-    const response = await HTTPRequest(url, {
-      method: 'GET',
-      query: { assetId },
-      auth: { type: 'bearer', token: registration.token },
-      proxy,
-      timeout: OIANALYTICS_DOWNLOAD_TIMEOUT,
-      acceptUnauthorized
-    });
+    const response = await HTTPRequest(url, httpOptions);
     if (!response.ok) {
       throw new Error(`${response.statusCode} - ${await response.body.text()}`);
     }
     const buffer = Buffer.from(await response.body.arrayBuffer());
     await fs.writeFile(filename, buffer);
-  }
-
-  private getProxyOptions(registrationSettings: RegistrationSettingsCommandDTO): {
-    proxy: ReqProxyOptions | undefined;
-    acceptUnauthorized: boolean;
-  } {
-    if (!registrationSettings.useProxy) {
-      return { proxy: undefined, acceptUnauthorized: registrationSettings.acceptUnauthorized };
-    }
-    if (!registrationSettings.proxyUrl) {
-      throw new Error('Proxy URL not specified');
-    }
-
-    const options: ReqProxyOptions = {
-      url: registrationSettings.proxyUrl
-    };
-
-    if (registrationSettings.proxyUsername) {
-      options.auth = {
-        type: 'url',
-        username: registrationSettings.proxyUsername,
-        password: registrationSettings.proxyPassword
-      };
-    }
-
-    return { proxy: options, acceptUnauthorized: registrationSettings.acceptUnauthorized };
   }
 }

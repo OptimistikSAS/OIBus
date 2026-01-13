@@ -79,6 +79,9 @@ const registrationSchema: Joi.ObjectSchema = Joi.object({
   proxyUrl: Joi.string().optional().allow(''),
   proxyUsername: Joi.string().optional().allow(''),
   proxyPassword: Joi.string().optional().allow(''),
+  useApiGateway: Joi.boolean().required(),
+  apiGatewayHeaderKey: Joi.string().optional().allow(''),
+  apiGatewayHeaderValue: Joi.string().optional().allow(''),
   commandRefreshInterval: Joi.number().integer().required().min(1),
   commandRetryInterval: Joi.number().integer().required().min(1),
   messageRetryInterval: Joi.number().integer().required().min(1),
@@ -123,20 +126,6 @@ const ipFilterSchema: Joi.ObjectSchema = Joi.object({
   description: Joi.string().required().allow(null, '')
 });
 
-const historyQuerySchema: Joi.ObjectSchema = Joi.object({
-  name: Joi.string().required(),
-  description: Joi.string().required().allow(null, ''),
-  enabled: Joi.boolean(),
-  startTime: Joi.date().required(),
-  endTime: Joi.date().required(),
-  southType: Joi.string().required().allow(null, ''),
-  northType: Joi.string().required().allow(null, ''),
-  southSettings: Joi.object().required(),
-  northSettings: Joi.object().required(),
-  caching: Joi.object().required(),
-  archive: Joi.object().required()
-});
-
 const userSchema: Joi.ObjectSchema = Joi.object({
   login: Joi.string().required().min(4),
   firstName: Joi.optional(),
@@ -145,8 +134,6 @@ const userSchema: Joi.ObjectSchema = Joi.object({
   language: Joi.string().required(),
   timezone: Joi.string().required()
 });
-
-const logSchema: Joi.ObjectSchema = Joi.object({});
 
 const transformerSchema: Joi.ObjectSchema = Joi.object({
   name: Joi.string().required(),
@@ -168,8 +155,6 @@ export {
   registrationSchema,
   ipFilterSchema,
   userSchema,
-  historyQuerySchema,
-  logSchema,
   contentSchema,
   transformerSchema
 };
