@@ -5680,6 +5680,15 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "EngineSettingsUpdateResultDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "needsRedirect": {"dataType":"boolean","required":true},
+            "newPort": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusInfo": {
         "dataType": "refObject",
         "properties": {
@@ -9535,7 +9544,7 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 response,
                 next,
                 validatedArgs,
-                successStatus: 204,
+                successStatus: 200,
               });
             } catch (err) {
                 return next(err);
