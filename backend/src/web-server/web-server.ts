@@ -156,8 +156,8 @@ export default class WebServer {
 
     // Rate limiting for configuration API endpoints
     const apiRateLimiter = rateLimit({
-      windowMs: 15 * 60 * 1000, // 15 minutes
-      max: 100, // max 100 requests per windowMs per IP
+      windowMs: 60 * 1000, // 1 minute
+      limit: 5_000, // max 100 requests per windowMs per IP
       message: { error: 'Too many requests, please try again later.' },
       standardHeaders: true,
       legacyHeaders: false,
