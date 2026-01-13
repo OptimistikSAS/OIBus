@@ -428,7 +428,9 @@ const createOIAnalyticsMessage = async (database: knex.Knex, command: OIAnalytic
       type: command.type,
       status: command.status,
       completed_date: command.completedDate,
-      error: command.error
+      error: command.error,
+      created_at: testData.constants.dates.FAKE_NOW,
+      updated_at: testData.constants.dates.FAKE_NOW
     })
     .into('oianalytics_messages');
 };
