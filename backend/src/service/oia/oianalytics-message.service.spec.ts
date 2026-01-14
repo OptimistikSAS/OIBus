@@ -32,7 +32,7 @@ import { OIAnalyticsMessageHistoryQueries } from '../../model/oianalytics-messag
 import TransformerRepository from '../../repository/config/transformer.repository';
 import TransformerRepositoryMock from '../../tests/__mocks__/repository/config/transformer-repository.mock';
 import { StandardTransformer } from '../../model/transformer.model';
-import IsoTransformer from '../transformers/iso-transformer';
+import IsoTransformer from '../../transformers/iso-transformer';
 import DeferredPromise from '../deferred-promise';
 
 jest.mock('node:fs/promises');
@@ -353,7 +353,7 @@ describe('OIAnalytics message service without completed registration', () => {
       .mockReturnValueOnce(testData.oIAnalytics.registration.completed)
       .mockReturnValueOnce(testData.oIAnalytics.registration.completed);
     (oIAnalyticsMessageRepository.list as jest.Mock).mockReturnValueOnce([]);
-    (historyQueryRepository.findAllHistoryQueriesFull as jest.Mock).mockReturnValueOnce(testData.historyQueries.list);
+    (historyQueryRepository.findAllHistoriesFull as jest.Mock).mockReturnValueOnce(testData.historyQueries.list);
     (oIAnalyticsMessageRepository.create as jest.Mock).mockReturnValueOnce(saveHistoryQueryMessage);
     service.createFullHistoryQueriesMessageIfNotPending();
     expect(oIAnalyticsMessageRepository.create).toHaveBeenCalledWith({

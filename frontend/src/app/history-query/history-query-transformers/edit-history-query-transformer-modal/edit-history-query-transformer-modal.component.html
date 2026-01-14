@@ -5,45 +5,123 @@
   @if (form) {
     <form [formGroup]="form" (ngSubmit)="save()" id="choose-transformer-form">
       <div class="row">
-        @if (inputTypeControl) {
-          <div class="col-6">
-            <div class="form-group">
-              <label class="form-label" for="input-type" translate="history-query.transformers.input-type"></label>
-              <select [formControl]="inputTypeControl" class="form-select mb-2 mr-sm-2" id="input-type">
-                @for (inputType of selectableInputs; track inputType) {
-                  <option [ngValue]="inputType" [translate]="'enums.oibus-data-type.' + inputType"></option>
-                }
-              </select>
-            </div>
-          </div>
-        }
-        <div [class]="inputTypeControl ? 'col-6' : 'col-12'">
+        <div class="col">
           <div class="form-group">
-            <label class="form-label" for="transformer-id" translate="history-query.transformers.transformer"></label>
-            <select class="form-select" id="transformer-id" formControlName="transformerId">
+            <label class="form-label" for="output" translate="configuration.oibus.manifest.transformers.output"></label>
+            <select class="form-select" id="output" formControlName="transformer" [compareWith]="compareTransformers">
               <option [ngValue]="null"></option>
-              @for (transformer of selectableTransformers; track transformer.id) {
+              @for (transformer of selectableOutputs; track transformer.id) {
                 @if (transformer.type === 'standard') {
-                  <option [ngValue]="transformer.id">
+                  <option [ngValue]="transformer">
                     {{ 'configuration.oibus.manifest.transformers.standard.' + transformer.functionName | translate }}
                   </option>
                 } @else {
-                  <option [ngValue]="transformer.id">{{ transformer.name }}</option>
+                  <option [ngValue]="transformer">{{ transformer.name }}</option>
                 }
               }
             </select>
           </div>
         </div>
       </div>
+      <div class="row">
+        <div class="col">
+          <label for="items" class="col-auto col-form-label" translate="configuration.oibus.manifest.transformers.items"></label>
+          <div class="form-check form-switch mb-2">
+            <input
+              type="checkbox"
+              class="form-check-input"
+              [checked]="selectAllItems"
+              (change)="toggleItemSelection($any($event.target).checked)"
+              id="selectAllToggle"
+            />
+            <label class="form-check-label" for="selectAllToggle">
+              @if (selectAllItems) {
+                <span translate="configuration.oibus.manifest.transformers.all-items"></span>
+              } @else {
+                <span translate="configuration.oibus.manifest.transformers.specific-items"></span>
+              }
+            </label>
+          </div>
+          @if (!selectAllItems) {
+            @if (searchInteracted && (totalSearchResults > 0 || selectedItems.length > 0)) {
+              <div class="mb-2 d-flex align-items-center gap-2">
+                @if (totalSearchResults > 0) {
+                  <small class="text-muted">
+                    <span
+                      translate="configuration.oibus.manifest.transformers.search-results-count"
+                      [translateParams]="{ count: totalSearchResults }"
+                    ></span>
+                    @if (totalSearchResults > 10) {
+                      <span translate="configuration.oibus.manifest.transformers.showing-first-n" [translateParams]="{ limit: 10 }"></span>
+                    }
+                  </small>
+                }
+                @if (searchResults.length > 0) {
+                  <button type="button" class="btn btn-link btn-sm p-0 select-all-results" (click)="selectAllResults()">
+                    <span translate="configuration.oibus.manifest.transformers.select-all-results"></span>
+                  </button>
+                }
+                @if (selectedItems.length > 0) {
+                  <button type="button" class="btn btn-link btn-sm p-0 select-all-results" (click)="removeAllItems()">
+                    <span translate="configuration.oibus.manifest.transformers.remove-all"></span>
+                  </button>
+                }
+              </div>
+            }
+            <div
+              ngbDropdown
+              autoClose="outside"
+              #itemDropdown="ngbDropdown"
+              class="item-search-dropdown"
+              (openChange)="onDropdownOpenChange($event)"
+            >
+              <input
+                id="items"
+                class="form-control"
+                placeholder="{{ 'configuration.oibus.manifest.transformers.search-items' | translate }}"
+                [(ngModel)]="itemSearchText"
+                [ngModelOptions]="{ standalone: true }"
+                (ngModelChange)="filterItems()"
+                (focus)="searchInteracted = true; itemDropdown.open()"
+                ngbDropdownAnchor
+              />
+              <div ngbDropdownMenu class="item-dropdown-menu">
+                @for (item of filteredItems; track item.id) {
+                  <button type="button" ngbDropdownItem (click)="toggleItem(item)" [class.selected]="isItemSelected(item)">
+                    <div class="d-flex">
+                      <div class="flex-grow-1 me-3">{{ item.name }}</div>
+                      <div class="fa-fw">
+                        @if (isItemSelected(item)) {
+                          <span class="fa fa-check"></span>
+                        }
+                      </div>
+                    </div>
+                  </button>
+                }
+                @if (filteredItems.length === 0 && itemSearchText) {
+                  <div class="dropdown-item text-muted" translate="configuration.oibus.manifest.transformers.no-items-found"></div>
+                }
+              </div>
+            </div>
+            @if (selectedItems.length > 0) {
+              <div [style.margin-top.rem]="selectedItems.length ? 0.5 : 0">
+                @for (item of selectedItems; track item.id) {
+                  <oib-pill type="secondary" [removable]="true" (removed)="removeItem(item)"> {{ item.name }} </oib-pill>
+                }
+              </div>
+            }
+          }
+        </div>
+      </div>
       @if (manifest) {
-        <ng-container formGroupName="options">
+        <div class="row" formGroupName="options">
           <oib-oibus-object-form-control
             [scanModes]="scanModes"
             [certificates]="certificates"
             [group]="form.controls.options"
             [objectAttribute]="manifest"
           />
-        </ng-container>
+        </div>
       }
     </form>
   }

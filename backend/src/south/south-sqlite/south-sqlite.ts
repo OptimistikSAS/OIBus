@@ -27,7 +27,7 @@ import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-c
 export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, SouthSQLiteItemSettings> implements QueriesHistory {
   constructor(
     connector: SouthConnectorEntity<SouthSQLiteSettings, SouthSQLiteItemSettings>,
-    engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
+    engineAddContentCallback: (southId: string, data: OIBusContent, queryTime: Instant, itemIds: Array<string>) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
     logger: pino.Logger,
     cacheFolderPath: string
@@ -121,9 +121,9 @@ export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, Sou
     let updatedStartTime: Instant | null = null;
 
     for (const item of items) {
-      const startRequest = DateTime.now().toMillis();
+      const startRequest = DateTime.now();
       const result: Array<Record<string, string | number>> = await this.queryData(item, startTime, endTime);
-      const requestDuration = DateTime.now().toMillis() - startRequest;
+      const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
 
       if (result.length > 0) {
         this.logger.info(`Found ${result.length} results for item ${item.name} in ${requestDuration} ms`);
@@ -156,6 +156,8 @@ export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, Sou
           item.settings.serialization,
           this.connector.name,
           item.name,
+          item.id,
+          startRequest.toUTC().toISO(),
           this.tmpFolder,
           this.addContent.bind(this),
           this.logger

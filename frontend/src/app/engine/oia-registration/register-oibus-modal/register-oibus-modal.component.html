@@ -134,23 +134,28 @@
       </div>
     </div>
     <!-- Command permissions -->
-    <oib-box boxTitle="oia-module.commands.permissions">
-      <div slot="title-actions" class="ms-auto py-2">
-        <button
-          type="button"
-          class="btn btn-primary btn-sm me-2"
-          (click)="enableAllPermissions()"
-          [disabled]="allPermissionsEnabled"
-          translate="oia-module.registration.enable-all"
-        ></button>
-        <button
-          type="button"
-          class="btn btn-secondary btn-sm"
-          (click)="disableAllPermissions()"
-          [disabled]="allPermissionsDisabled"
-          translate="oia-module.registration.disable-all"
-        ></button>
-      </div>
+    <oib-box>
+      <ng-template oibBoxTitle>
+        <div class="d-flex justify-content-between align-items-center">
+          <span translate="oia-module.commands.permissions"></span>
+          <div class="ms-auto py-2">
+            <button
+              type="button"
+              class="btn btn-primary btn-sm me-2"
+              (click)="enableAllPermissions()"
+              [disabled]="allPermissionsEnabled"
+              translate="oia-module.registration.enable-all"
+            ></button>
+            <button
+              type="button"
+              class="btn btn-secondary btn-sm"
+              (click)="disableAllPermissions()"
+              [disabled]="allPermissionsDisabled"
+              translate="oia-module.registration.disable-all"
+            ></button>
+          </div>
+        </div>
+      </ng-template>
 
       <div formGroupName="commandPermissions">
         <div class="row mb-2">
@@ -315,6 +320,54 @@
           </div>
         </div>
         <div class="row mb-2">
+          <label class="form-label" translate="oia-module.commands.north-cache"></label>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input formControlName="searchNorthCacheContent" id="search-north-cache-content" type="checkbox" class="form-check-input" />
+                <label class="form-check-label" for="search-north-cache-content">{{
+                  'search-north-cache-content' | oibusCommandTypeEnum
+                }}</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input
+                  formControlName="getNorthCacheFileContent"
+                  id="get-north-cache-file-content"
+                  type="checkbox"
+                  class="form-check-input"
+                />
+                <label class="form-check-label" for="get-north-cache-file-content">{{
+                  'get-north-cache-file-content' | oibusCommandTypeEnum
+                }}</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input formControlName="removeNorthCacheContent" id="remove-north-cache-content" type="checkbox" class="form-check-input" />
+                <label class="form-check-label" for="remove-north-cache-content">{{
+                  'remove-north-cache-content' | oibusCommandTypeEnum
+                }}</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input formControlName="moveNorthCacheContent" id="move-north-cache-content" type="checkbox" class="form-check-input" />
+                <label class="form-check-label" for="move-north-cache-content">{{
+                  'move-north-cache-content' | oibusCommandTypeEnum
+                }}</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row mb-2">
           <label class="form-label" translate="oia-module.commands.south-connector"></label>
           <div class="col-3">
             <div class="form-group">
@@ -469,6 +522,64 @@
           </div>
         </div>
         <div class="row mb-2">
+          <label class="form-label" translate="oia-module.commands.history-cache"></label>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input
+                  formControlName="searchHistoryCacheContent"
+                  id="search-history-cache-content"
+                  type="checkbox"
+                  class="form-check-input"
+                />
+                <label class="form-check-label" for="search-history-cache-content">{{
+                  'search-history-cache-content' | oibusCommandTypeEnum
+                }}</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input
+                  formControlName="getHistoryCacheFileContent"
+                  id="get-history-cache-file-content"
+                  type="checkbox"
+                  class="form-check-input"
+                />
+                <label class="form-check-label" for="get-history-cache-file-content">{{
+                  'get-history-cache-file-content' | oibusCommandTypeEnum
+                }}</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input
+                  formControlName="removeHistoryCacheContent"
+                  id="remove-history-cache-content"
+                  type="checkbox"
+                  class="form-check-input"
+                />
+                <label class="form-check-label" for="remove-history-cache-content">{{
+                  'remove-history-cache-content' | oibusCommandTypeEnum
+                }}</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input formControlName="moveHistoryCacheContent" id="move-history-cache-content" type="checkbox" class="form-check-input" />
+                <label class="form-check-label" for="move-history-cache-content">{{
+                  'move-history-cache-content' | oibusCommandTypeEnum
+                }}</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row mb-2">
           <label class="form-label" translate="oia-module.commands.setpoint"></label>
           <div class="col-3">
             <div class="form-group">
@@ -481,10 +592,41 @@
         </div>
       </div>
     </oib-box>
+
+    <!-- Test Connection Feedback -->
+    <div class="row mt-3">
+      <div class="col-12">
+        @if (testLoading) {
+          <div class="text-center">
+            <div class="spinner-border" id="test-spinner" role="status"></div>
+          </div>
+        }
+        @if (testError) {
+          <div class="alert alert-danger" id="test-error">
+            <div translate="oia-module.registration.test-connection-error"></div>
+            <hr />
+            <div style="overflow-wrap: break-word">{{ testError }}</div>
+          </div>
+        }
+        @if (testSuccess) {
+          <div class="alert alert-info" id="test-success" translate="oia-module.registration.test-connection-success"></div>
+        }
+      </div>
+    </div>
   </form>
 </div>
 <div class="modal-footer">
   <div class="btn-group">
+    <button
+      [oib-save-button]="testState"
+      type="button"
+      class="btn btn-secondary"
+      (click)="testConnection()"
+      [disabled]="testLoading"
+      translationKey="oia-module.registration.test-connection"
+      iconClass=""
+      id="test-connection-button"
+    ></button>
     <button [oib-save-button]="state" form="form">
       <span translate="oia-module.registration.register"></span>
     </button>

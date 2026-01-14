@@ -384,6 +384,8 @@ describe('SouthOLEDB', () => {
       },
       configuration.name,
       configuration.items[0].name,
+      configuration.items[0].id,
+      testData.constants.dates.FAKE_NOW,
       path.resolve('cacheFolder', 'tmp'),
       expect.any(Function),
       logger
@@ -437,9 +439,9 @@ describe('SouthOLEDB', () => {
     (HTTPRequest as jest.Mock).mockResolvedValueOnce(createMockResponse(400, 'bad request')).mockResolvedValueOnce(createMockResponse(500));
 
     await expect(south.queryRemoteAgentData(configuration.items[0], startTime, endTime)).rejects.toThrow(
-      `Error occurred when querying remote agent with status 400: "bad request"`
+      `Error occurred when querying remote agent with status 400: bad request`
     );
-    expect(logger.error).toHaveBeenCalledWith(`Error occurred when querying remote agent with status 400: "bad request"`);
+    expect(logger.error).toHaveBeenCalledWith(`Error occurred when querying remote agent with status 400: bad request`);
 
     await expect(south.queryRemoteAgentData(configuration.items[0], startTime, endTime)).rejects.toThrow(
       `Error occurred when querying remote agent with status 500`
@@ -535,7 +537,7 @@ describe('SouthOLEDB', () => {
       .mockResolvedValueOnce(createMockResponse(500, 'another error'));
 
     await expect(south.testConnection()).rejects.toThrow(
-      new Error(`Error occurred when sending connect command to remote agent with status 400: "bad request"`)
+      new Error(`Error occurred when sending connect command to remote agent with status 400: bad request`)
     );
     await expect(south.testConnection()).rejects.toThrow(
       new Error(`Error occurred when sending connect command to remote agent with status 500`)

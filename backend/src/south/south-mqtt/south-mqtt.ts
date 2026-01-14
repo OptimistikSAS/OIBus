@@ -11,7 +11,7 @@ import { OIBusContent } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
-import { createConnectionOptions, createContent, parseMessage } from '../../service/utils-mqtt';
+import { createConnectionOptions, createContent, getItem, parseMessage } from '../../service/utils-mqtt';
 
 /**
  * Class SouthMQTT - Subscribe to a data topic from a MQTT broker
@@ -21,12 +21,12 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
   private reconnectTimeout: NodeJS.Timeout | null = null;
 
   private flushTimeout: NodeJS.Timeout | null = null;
-  private bufferedMessages: Array<{ topic: string; message: string }> = [];
+  private bufferedMessages: Array<{ topic: string; message: string; item: SouthConnectorItemEntity<SouthMQTTItemSettings> }> = [];
   private disconnecting = false;
 
   constructor(
     connector: SouthConnectorEntity<SouthMQTTSettings, SouthMQTTItemSettings>,
-    engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
+    engineAddContentCallback: (southId: string, data: OIBusContent, queryTime: Instant, itemIds: Array<string>) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
     logger: pino.Logger,
     cacheFolderPath: string
@@ -62,7 +62,14 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
       });
       this.client.on('message', async (topic, message, packet) => {
         this.logger.trace(`MQTT message for topic ${topic}: ${message}, dup:${packet.dup}, qos:${packet.qos}, retain:${packet.retain}`);
-        this.bufferedMessages.push({ topic, message: message.toString() });
+        let item;
+        try {
+          item = getItem(topic, this.connector.items);
+        } catch (error: unknown) {
+          this.logger.error(`Error for topic ${topic}: ${(error as Error).message}`);
+          return;
+        }
+        this.bufferedMessages.push({ topic, message: message.toString(), item });
         if (this.bufferedMessages.length >= this.connector.settings.maxNumberOfMessages) {
           await this.flushMessages();
         }
@@ -89,14 +96,14 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
     if (messageToParse.length) {
       this.logger.debug(`Flushing ${messageToParse.length} messages`);
       try {
-        await this.addContent({
-          type: 'time-values',
-          content: messageToParse
-            .map(element => {
-              return parseMessage(element.topic, element.message, this.connector.items, this.logger);
-            })
-            .reduce((previousValue, element) => previousValue.concat(...element), [])
-        });
+        await this.addContent(
+          {
+            type: 'time-values',
+            content: messageToParse.flatMap(element => parseMessage(element.topic, element.message, element.item, this.logger))
+          },
+          DateTime.now().toUTC().toISO(),
+          [...new Set(messageToParse.map(element => element.item.id))]
+        );
       } catch (error: unknown) {
         this.logger.error(`Error when flushing messages: ${error}`);
       }

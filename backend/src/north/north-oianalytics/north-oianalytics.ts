@@ -14,7 +14,7 @@ import CertificateRepository from '../../repository/config/certificate.repositor
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import { OIBusError } from '../../model/engine.model';
 import CacheService from '../../service/cache/cache.service';
-import { buildHttpOptions, getHost } from '../../service/utils-oianalytics';
+import { buildHttpOptions, getHost, testOIAnalyticsConnection } from '../../service/utils-oianalytics';
 
 /**
  * Class NorthOIAnalytics - Send files to a POST Multipart HTTP request and values as JSON payload
@@ -34,26 +34,14 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
 
   override async testConnection(): Promise<void> {
     const registrationSettings = this.oIAnalyticsRegistrationRepository.get()!;
-    const httpOptions = await buildHttpOptions(
-      'GET',
+    await testOIAnalyticsConnection(
       this.connector.settings.useOiaModule,
       registrationSettings,
       this.connector.settings.specificSettings,
       this.connector.settings.timeout * 1000,
-      this.certificateRepository
+      this.certificateRepository,
+      false
     );
-    const host = getHost(this.connector.settings.useOiaModule, registrationSettings, this.connector.settings.specificSettings);
-    const requestUrl = new URL('/api/optimistik/oibus/status', host);
-
-    let response: ReqResponse;
-    try {
-      response = await HTTPRequest(requestUrl, httpOptions);
-    } catch (error) {
-      throw new Error(`Fetch error ${error}`);
-    }
-    if (!response.ok) {
-      throw new Error(`HTTP request failed with status code ${response.statusCode} and message: ${await response.body.text()}`);
-    }
   }
 
   async handleContent(cacheMetadata: CacheMetadata): Promise<void> {

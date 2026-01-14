@@ -29,7 +29,7 @@ import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-c
 export default class SouthOracle extends SouthConnector<SouthOracleSettings, SouthOracleItemSettings> implements QueriesHistory {
   constructor(
     connector: SouthConnectorEntity<SouthOracleSettings, SouthOracleItemSettings>,
-    engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
+    engineAddContentCallback: (southId: string, data: OIBusContent, queryTime: Instant, itemIds: Array<string>) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
     logger: pino.Logger,
     cacheFolderPath: string
@@ -154,9 +154,9 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
     let updatedStartTime: Instant | null = null;
 
     for (const item of items) {
-      const startRequest = DateTime.now().toMillis();
+      const startRequest = DateTime.now();
       const result: Array<Record<string, string | number>> = await this.queryData(item, startTime, endTime);
-      const requestDuration = DateTime.now().toMillis() - startRequest;
+      const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
 
       if (result.length > 0) {
         this.logger.info(`Found ${result.length} results for item ${item.name} in ${requestDuration} ms`);
@@ -189,6 +189,8 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
           item.settings.serialization,
           this.connector.name,
           item.name,
+          item.id,
+          startRequest.toUTC().toISO(),
           this.tmpFolder,
           this.addContent.bind(this),
           this.logger
