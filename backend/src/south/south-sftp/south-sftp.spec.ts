@@ -75,7 +75,12 @@ describe('SouthSFTP', () => {
           maxSize: 0,
           recursive: false
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       },
       {
         id: 'id2',
@@ -91,7 +96,12 @@ describe('SouthSFTP', () => {
           maxSize: 0,
           recursive: false
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       },
       {
         id: 'id3',
@@ -107,7 +117,12 @@ describe('SouthSFTP', () => {
           maxSize: 0,
           recursive: false
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       }
     ]
   };
@@ -488,7 +503,12 @@ describe('SouthFTP with preserve file and compression', () => {
           maxSize: 0,
           recursive: false
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       },
       {
         id: 'id2',
@@ -504,7 +524,12 @@ describe('SouthFTP with preserve file and compression', () => {
           maxSize: 0,
           recursive: false
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       },
       {
         id: 'id3',
@@ -520,7 +545,12 @@ describe('SouthFTP with preserve file and compression', () => {
           maxSize: 0,
           recursive: false
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       }
     ]
   };
@@ -660,7 +690,12 @@ describe('SouthSFTP test connection with private key', () => {
           maxSize: 0,
           recursive: false
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       },
       {
         id: 'id2',
@@ -676,7 +711,12 @@ describe('SouthSFTP test connection with private key', () => {
           maxSize: 0,
           recursive: false
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       },
       {
         id: 'id3',
@@ -692,7 +732,12 @@ describe('SouthSFTP test connection with private key', () => {
           maxSize: 0,
           recursive: false
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       }
     ]
   };

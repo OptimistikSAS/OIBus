@@ -745,11 +745,12 @@ describe('SouthConnector with history and subscription', () => {
     south.getMaxInstantPerItem = jest.fn().mockReturnValue(true);
     await south.updateSouthCacheOnScanModeAndMaxInstantChanges(testData.south.list[2], config, false);
 
+    const tableName = `south_item_cache_${config.id}`;
     expect(southCacheRepository.getLatestMaxInstants).toHaveBeenCalledTimes(1);
-    expect(southCacheRepository.deleteAllBySouthConnector).toHaveBeenCalledWith(config.id);
+    expect(southCacheRepository.deleteAllBySouthConnector).toHaveBeenCalledWith(tableName);
 
     expect(southCacheRepository.save).toHaveBeenCalledTimes(2);
-    expect(southCacheRepository.save).toHaveBeenCalledWith({
+    expect(southCacheRepository.save).toHaveBeenCalledWith(tableName, {
       southId: config.id,
       itemId: config.items[0].id,
       scanModeId: config.items[0].scanMode.id,
@@ -765,11 +766,12 @@ describe('SouthConnector with history and subscription', () => {
     south.getMaxInstantPerItem = jest.fn().mockReturnValue(false);
     await south.updateSouthCacheOnScanModeAndMaxInstantChanges(testData.south.list[2], config, true);
 
+    const tableName = `south_item_cache_${config.id}`;
     expect(southCacheRepository.getLatestMaxInstants).toHaveBeenCalledTimes(1);
-    expect(southCacheRepository.deleteAllBySouthConnector).toHaveBeenCalledWith(config.id);
+    expect(southCacheRepository.deleteAllBySouthConnector).toHaveBeenCalledWith(tableName);
 
     expect(southCacheRepository.save).toHaveBeenCalledTimes(1);
-    expect(southCacheRepository.save).toHaveBeenCalledWith({
+    expect(southCacheRepository.save).toHaveBeenCalledWith(tableName, {
       southId: config.id,
       itemId: 'all',
       scanModeId: config.items[0].scanMode.id,
@@ -826,7 +828,8 @@ describe('SouthConnector with history and subscription', () => {
       .mockReturnValueOnce(null);
     south.getMaxInstantPerItem = jest.fn().mockReturnValue(false);
     await south.updateSouthCacheOnScanModeAndMaxInstantChanges(testData.south.list[2], config, false);
-    expect(southCacheRepository.save).toHaveBeenCalledWith({
+    const tableName = `south_item_cache_${testData.south.list[2].id}`;
+    expect(southCacheRepository.save).toHaveBeenCalledWith(tableName, {
       southId: testData.south.list[2].id,
       itemId: 'all',
       scanModeId: testData.scanMode.list[1].id,
@@ -863,7 +866,8 @@ describe('SouthConnector with history and subscription', () => {
     });
     south.getMaxInstantPerItem = jest.fn().mockReturnValue(true);
     await south.updateSouthCacheOnScanModeAndMaxInstantChanges(testData.south.list[2], config, true);
-    expect(southCacheRepository.save).toHaveBeenCalledWith({
+    const tableName = `south_item_cache_${testData.south.list[2].id}`;
+    expect(southCacheRepository.save).toHaveBeenCalledWith(tableName, {
       southId: testData.south.list[2].id,
       itemId: config.items[0].id,
       scanModeId: testData.scanMode.list[1].id,
@@ -896,7 +900,12 @@ describe('SouthConnector with history and subscription', () => {
         settings: {
           mode: 'da'
         } as SouthOPCUAItemSettings,
-        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
+        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       },
       {
         id: 'southItemId5',
@@ -905,7 +914,12 @@ describe('SouthConnector with history and subscription', () => {
         settings: {
           mode: 'da'
         } as SouthOPCUAItemSettings,
-        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
+        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       }
     ];
     south.unsubscribe = jest.fn().mockImplementationOnce(() => {
