@@ -89,6 +89,10 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   async connect(): Promise<void> {
     this.logger.info(`South connector "${this.connector.name}" of type ${this.connector.type} started`);
 
+    // Initialize the cache table for this connector
+    const cacheTableFields = 'south_id TEXT, scan_mode_id TEXT, item_id TEXT, max_instant TEXT, PRIMARY KEY(scan_mode_id, item_id)';
+    this.cacheService!.createCustomTable(`south_item_cache_${this.connector.id}`, cacheTableFields);
+
     for (const cronJob of this.cronByScanModeIds.values()) {
       cronJob.stop();
     }
@@ -575,12 +579,13 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     scanModeId: string,
     maxInstantPerItem: boolean
   ) {
+    const tableName = `south_item_cache_${southConnector.id}`;
     if (maxInstantPerItem) {
-      this.southCacheRepository.deleteAllBySouthItem(southItemId);
+      this.southCacheRepository.deleteAllBySouthItem(tableName, southItemId);
     } else {
       const isOldScanModeUnused = !southConnector.items.some(item => item.scanMode.id === scanModeId);
       if (isOldScanModeUnused) {
-        this.southCacheRepository.delete(southItemId, scanModeId, 'all');
+        this.southCacheRepository.delete(tableName, scanModeId, 'all');
       }
     }
   }
@@ -595,7 +600,8 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     newScanModeId: string,
     maxInstantPerItem: boolean
   ) {
-    const previousCacheEntry = this.southCacheRepository.getSouthCache(southConnector.id, previousScanModeId, southItemId);
+    const tableName = `south_item_cache_${southConnector.id}`;
+    const previousCacheEntry = this.southCacheRepository.getSouthCache(tableName, previousScanModeId, southItemId);
 
     // If the south hasn't been started yet, the previous cache entry won't exist
     if (!previousCacheEntry) {
@@ -608,7 +614,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     // Max instant per item is enabled
     if (maxInstantPerItem) {
       // 2. Create the new cache entry, with the previous max instant
-      this.southCacheRepository.save({
+      this.southCacheRepository.save(tableName, {
         southId: southConnector.id,
         itemId: southItemId,
         scanModeId: newScanModeId,
@@ -618,10 +624,10 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
 
     // Max instant per item is disabled
     if (!maxInstantPerItem) {
-      const newCacheEntry = this.southCacheRepository.getSouthCache(southConnector.id, newScanModeId, southItemId);
+      const newCacheEntry = this.southCacheRepository.getSouthCache(tableName, newScanModeId, southItemId);
       // 2. Create the new cache entry, with the previous max instant, if it's not already created
       if (!newCacheEntry) {
-        this.southCacheRepository.save({
+        this.southCacheRepository.save(tableName, {
           southId: southConnector.id,
           itemId: 'all',
           scanModeId: newScanModeId,
@@ -639,14 +645,15 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     previousItems: Array<SouthConnectorItemEntity<SouthItemSettings>>,
     maxInstantPerItem: boolean
   ) {
-    const maxInstantsByScanMode = this.southCacheRepository.getLatestMaxInstants(southConnectorId);
+    const tableName = `south_item_cache_${southConnectorId}`;
+    const maxInstantsByScanMode = this.southCacheRepository.getLatestMaxInstants(tableName);
     // If the south hasn't been started yet, the cache entries won't exist
     if (!maxInstantsByScanMode) {
       return;
     }
 
     // 1. Remove all previous cache entries
-    this.southCacheRepository.deleteAllBySouthConnector(southConnectorId);
+    this.southCacheRepository.deleteAllBySouthConnector(tableName);
 
     // Max instant per item is being enabled
     if (maxInstantPerItem) {
@@ -655,7 +662,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       for (const item of previousItems) {
         const maxInstant = maxInstantsByScanMode.get(item.scanMode.id);
         if (maxInstant) {
-          this.southCacheRepository.save({
+          this.southCacheRepository.save(tableName, {
             southId: southConnectorId,
             itemId: item.id,
             scanModeId: item.scanMode.id,
@@ -670,7 +677,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       // 2. Create a single cache entry for all scan modes
       // The max instant of these new entries, will be the *latest* max instant of the previously removed ones
       for (const [scanModeId, maxInstant] of maxInstantsByScanMode) {
-        this.southCacheRepository.save({ southId: southConnectorId, itemId: 'all', scanModeId, maxInstant });
+        this.southCacheRepository.save(tableName, { southId: southConnectorId, itemId: 'all', scanModeId, maxInstant });
       }
     }
   }

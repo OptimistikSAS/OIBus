@@ -484,6 +484,9 @@ export default class HistoryQueryRepository {
       name: result.name,
       enabled: Boolean(result.enabled),
       settings: JSON.parse(result.settings) as SouthItemSettings,
+      maxReadInterval: null,
+      readDelay: null,
+      overlap: null,
       createdBy: result.created_by ?? undefined,
       updatedBy: result.updated_by ?? undefined
     };
