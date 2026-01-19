@@ -28,5 +28,11 @@ export default jest.fn().mockImplementation(() => ({
   deleteAllItems: jest.fn(),
   checkImportItems: jest.fn(),
   importItems: jest.fn(),
-  retrieveSecretsFromSouth: jest.fn()
+  retrieveSecretsFromSouth: jest.fn(),
+  getGroups: jest.fn(),
+  getGroup: jest.fn(),
+  createGroup: jest.fn(),
+  updateGroup: jest.fn(),
+  deleteGroup: jest.fn(),
+  moveItemsToGroup: jest.fn()
 }));

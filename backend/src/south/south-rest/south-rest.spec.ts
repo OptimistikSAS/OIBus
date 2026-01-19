@@ -87,6 +87,11 @@ const createItem = (overrides?: Partial<SouthRestItemSettings>): SouthConnectorI
   name: 'Test Item',
   enabled: true,
   scanMode: testData.scanMode.list[0],
+  groups: [],
+  syncWithGroup: false,
+  maxReadInterval: null,
+  readDelay: null,
+  overlap: null,
   settings: {
     endpoint: '/data',
     method: 'GET',
