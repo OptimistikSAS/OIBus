@@ -24,7 +24,10 @@ class ImportSouthItemsModalComponentTester extends ComponentTester<ImportSouthIt
 describe('ImportSouthItemsModalComponent', () => {
   let tester: ImportSouthItemsModalComponentTester;
   let fakeActiveModal: NgbActiveModal;
-  const southConnector = testData.south.list[0] as SouthConnectorDTO;
+  const southConnector: SouthConnectorDTO = {
+    ...testData.south.list[0],
+    items: testData.south.list[0].items.map(item => ({ ...item, group: null }))
+  } as SouthConnectorDTO;
 
   beforeEach(async () => {
     fakeActiveModal = createMock(NgbActiveModal);
@@ -43,7 +46,12 @@ describe('ImportSouthItemsModalComponent', () => {
           name: 'item999',
           enabled: true,
           settings: { regex: '*', minAge: 100, preserveFiles: true } as SouthFolderScannerItemSettings,
-          scanMode: testData.scanMode.list[0]
+          scanMode: testData.scanMode.list[0],
+          group: null,
+          syncWithGroup: false,
+          maxReadInterval: null,
+          readDelay: null,
+          overlap: null
         }
       ],
       [{ item: { name: 'item2' }, error: '' }],
@@ -60,7 +68,12 @@ describe('ImportSouthItemsModalComponent', () => {
         name: 'item999',
         enabled: true,
         settings: { regex: '*', minAge: 100, preserveFiles: true } as SouthFolderScannerItemSettings,
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        group: null,
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       }
     ]);
   }));

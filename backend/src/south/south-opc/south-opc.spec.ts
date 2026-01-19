@@ -59,7 +59,12 @@ describe('South OPC', () => {
           aggregate: 'raw',
           resampling: 'none'
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       },
       {
         id: 'id2',
@@ -69,7 +74,12 @@ describe('South OPC', () => {
           nodeId: 'ns=3;s=Counter',
           aggregate: 'raw'
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       },
       {
         id: 'id3',
@@ -80,7 +90,12 @@ describe('South OPC', () => {
           aggregate: 'average',
           resampling: '10s'
         },
-        scanMode: testData.scanMode.list[1]
+        scanMode: testData.scanMode.list[1],
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       }
     ]
   };

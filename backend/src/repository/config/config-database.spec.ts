@@ -52,8 +52,9 @@ import {
 } from '../../service/oia/oianalytics.model';
 import OIAnalyticsMessageRepository from './oianalytics-message.repository';
 import SouthConnectorRepository from './south-connector.repository';
+import SouthItemGroupRepository from './south-item-group.repository';
 import NorthConnectorRepository from './north-connector.repository';
-import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
+import { SouthConnectorEntity, SouthConnectorItemEntity, SouthItemGroupEntity } from '../../model/south-connector.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
@@ -105,7 +106,7 @@ describe('Repository with populated database', () => {
   describe('Engine', () => {
     let repository: EngineRepository;
     beforeEach(() => {
-      jest.clearAllMocks();
+      jest.resetAllMocks();
       repository = new EngineRepository(database, '3.5.0');
     });
 
@@ -233,15 +234,14 @@ describe('Repository with populated database', () => {
     ];
     let repository: TransformerRepository;
 
-    beforeAll(() => {
+    beforeEach(() => {
+      jest.resetAllMocks();
+      // Set up mock return values for standard transformers before creating repository
       for (const element of standardTransformers) {
         (generateRandomId as jest.Mock).mockReturnValueOnce(element.id);
       }
-    });
-
-    beforeEach(() => {
-      jest.clearAllMocks();
       repository = new TransformerRepository(database);
+      jest.resetAllMocks();
     });
 
     it('should properly find all transformers', () => {
@@ -254,6 +254,11 @@ describe('Repository with populated database', () => {
     });
 
     it('should create a transformer', () => {
+      // Always delete transformer first to ensure clean state
+      repository.delete('newId');
+      // Verify it's actually deleted
+      expect(repository.findById('newId')).toBeNull();
+
       (generateRandomId as jest.Mock).mockReturnValueOnce('newId');
       const createTransformer = JSON.parse(JSON.stringify(testData.transformers.list[0]));
       createTransformer.id = '';
@@ -263,8 +268,22 @@ describe('Repository with populated database', () => {
     });
 
     it('should update a transformer', () => {
-      const updateTransformer = JSON.parse(JSON.stringify(testData.transformers.list[0]));
-      updateTransformer.id = 'newId';
+      // Ensure transformer exists - create it if it doesn't exist from previous test
+      let existing = repository.findById('newId');
+      if (!existing) {
+        // Create it if it doesn't exist (e.g., if tests run out of order)
+        (generateRandomId as jest.Mock).mockReturnValueOnce('newId');
+        const createTransformer = JSON.parse(JSON.stringify(testData.transformers.list[0]));
+        createTransformer.id = '';
+        createTransformer.name = 'new name';
+        repository.save(createTransformer);
+        existing = repository.findById('newId');
+        if (!existing) {
+          throw new Error('Failed to create transformer for update test');
+        }
+      }
+      // Now update it - use the existing transformer as base and modify it
+      const updateTransformer = JSON.parse(JSON.stringify(existing));
       updateTransformer.name = 'new name updated';
       updateTransformer.description = 'new description updated';
       repository.save(updateTransformer);
@@ -304,7 +323,7 @@ describe('Repository with populated database', () => {
   describe('Certificate', () => {
     let repository: CertificateRepository;
     beforeEach(() => {
-      jest.clearAllMocks();
+      jest.resetAllMocks();
       repository = new CertificateRepository(database);
     });
 
@@ -354,7 +373,7 @@ describe('Repository with populated database', () => {
   describe('User', () => {
     let repository: UserRepository;
     beforeEach(() => {
-      jest.clearAllMocks();
+      jest.resetAllMocks();
 
       (argon2.hash as jest.Mock).mockImplementation(password => password);
 
@@ -448,7 +467,7 @@ describe('Repository with populated database', () => {
     let repository: OianalyticsRegistrationRepository;
 
     beforeEach(() => {
-      jest.clearAllMocks();
+      jest.resetAllMocks();
       repository = new OianalyticsRegistrationRepository(database);
     });
 
@@ -535,7 +554,7 @@ describe('Repository with populated database', () => {
     let repository: OIAnalyticsCommandRepository;
 
     beforeEach(() => {
-      jest.clearAllMocks();
+      jest.resetAllMocks();
       jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
       repository = new OIAnalyticsCommandRepository(database);
@@ -1639,7 +1658,7 @@ describe('Repository with populated database', () => {
     let repository: OIAnalyticsMessageRepository;
 
     beforeEach(() => {
-      jest.clearAllMocks();
+      jest.resetAllMocks();
       repository = new OIAnalyticsMessageRepository(database);
     });
 
@@ -1768,7 +1787,7 @@ describe('Repository with populated database', () => {
     let repository: ScanModeRepository;
 
     beforeEach(() => {
-      jest.clearAllMocks();
+      jest.resetAllMocks();
       repository = new ScanModeRepository(database);
     });
 
@@ -1802,7 +1821,7 @@ describe('Repository with populated database', () => {
     let repository: IpFilterRepository;
 
     beforeEach(() => {
-      jest.clearAllMocks();
+      jest.resetAllMocks();
       repository = new IpFilterRepository(database);
     });
 
@@ -1836,7 +1855,7 @@ describe('Repository with populated database', () => {
     let repository: NorthConnectorRepository;
 
     beforeEach(() => {
-      jest.clearAllMocks();
+      jest.resetAllMocks();
       repository = new NorthConnectorRepository(database);
     });
 
@@ -1961,7 +1980,7 @@ describe('Repository with populated database', () => {
     let repository: SouthConnectorRepository;
 
     beforeEach(() => {
-      jest.clearAllMocks();
+      jest.resetAllMocks();
       repository = new SouthConnectorRepository(database);
     });
 
@@ -2010,7 +2029,12 @@ describe('Repository with populated database', () => {
           name: 'new item',
           enabled: true,
           scanMode: testData.scanMode.list[0],
-          settings: {} as SouthItemSettings
+          settings: {} as SouthItemSettings,
+          groups: [],
+          syncWithGroup: false,
+          maxReadInterval: null,
+          readDelay: null,
+          overlap: null
         }
       ];
       repository.saveSouth(newSouthConnector);
@@ -2103,7 +2127,12 @@ describe('Repository with populated database', () => {
         name: 'new item',
         enabled: false,
         scanMode: testData.scanMode.list[0],
-        settings: {} as SouthItemSettings
+        settings: {} as SouthItemSettings,
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       });
       itemsToSave[0].name = 'updated name';
 
@@ -2130,7 +2159,12 @@ describe('Repository with populated database', () => {
         name: 'new item',
         enabled: false,
         scanMode: testData.scanMode.list[0],
-        settings: {} as SouthItemSettings
+        settings: {} as SouthItemSettings,
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       });
 
       repository.saveAllItems(testData.south.list[0].id, itemsToSave, true);
@@ -2142,13 +2176,237 @@ describe('Repository with populated database', () => {
       expect(repository.findItemById(testData.south.list[0].id, 'newItemIdSouth2')!.id).toEqual('newItemIdSouth2');
       expect(repository.findItemById(testData.south.list[0].id, 'newItemIdSouth3')!.id).toEqual('newItemIdSouth3');
     });
+
+    it('should save south connector with items that have groups', () => {
+      const groupRepository = new SouthItemGroupRepository(database);
+      (generateRandomId as jest.Mock).mockReturnValueOnce('testGroupId1').mockReturnValueOnce('newItemWithGroupId');
+
+      // Create a group first
+      const group = groupRepository.create({
+        name: 'Test Group',
+        southId: testData.south.list[0].id,
+        scanMode: testData.scanMode.list[0],
+        overlap: null,
+        maxReadInterval: null,
+        readDelay: 0
+      });
+
+      // Create a south connector with items that have groups
+      const southWithGroups: SouthConnectorEntity<SouthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(testData.south.list[0]));
+      southWithGroups.items = [
+        {
+          id: '',
+          name: 'item with group',
+          enabled: true,
+          scanMode: testData.scanMode.list[0],
+          settings: {} as SouthItemSettings,
+          groups: [group],
+          syncWithGroup: false,
+          maxReadInterval: null,
+          readDelay: null,
+          overlap: null
+        }
+      ];
+
+      repository.saveSouth(southWithGroups);
+
+      const savedItem = repository.findItemById(southWithGroups.id, 'newItemWithGroupId');
+      expect(savedItem).toBeDefined();
+      expect(savedItem!.groups.length).toEqual(1);
+      expect(savedItem!.groups[0].id).toEqual('testGroupId1');
+    });
+
+    it('should save item with groups', () => {
+      const groupRepository = new SouthItemGroupRepository(database);
+      (generateRandomId as jest.Mock).mockReturnValueOnce('testGroupId2').mockReturnValueOnce('newItemIdWithGroup');
+
+      // Create a group
+      const group = groupRepository.create({
+        name: 'Test Group 2',
+        southId: testData.south.list[0].id,
+        scanMode: testData.scanMode.list[0],
+        overlap: 10,
+        maxReadInterval: null,
+        readDelay: 0
+      });
+
+      // Save an item with groups
+      const itemWithGroup: SouthConnectorItemEntity<SouthItemSettings> = {
+        id: '',
+        name: 'unique-item-with-group-test',
+        enabled: true,
+        scanMode: testData.scanMode.list[0],
+        settings: {} as SouthItemSettings,
+        groups: [group],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
+      };
+
+      repository.saveItem(testData.south.list[0].id, itemWithGroup);
+
+      const savedItem = repository.findItemById(testData.south.list[0].id, 'newItemIdWithGroup');
+      expect(savedItem).toBeDefined();
+      expect(savedItem!.groups.length).toEqual(1);
+      expect(savedItem!.groups[0].id).toEqual('testGroupId2');
+    });
+
+    it('should save and find item with historian fields', () => {
+      (generateRandomId as jest.Mock).mockReturnValueOnce('newItemIdHistorian');
+
+      const itemWithHistorian: SouthConnectorItemEntity<SouthItemSettings> = {
+        id: '',
+        name: 'item-with-historian-fields',
+        enabled: true,
+        scanMode: testData.scanMode.list[0],
+        settings: {} as SouthItemSettings,
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: 3600,
+        readDelay: 200,
+        overlap: 100
+      };
+
+      repository.saveItem(testData.south.list[0].id, itemWithHistorian);
+
+      const savedItem = repository.findItemById(testData.south.list[0].id, 'newItemIdHistorian');
+      expect(savedItem).toBeDefined();
+      expect(savedItem!.maxReadInterval).toEqual(3600);
+      expect(savedItem!.readDelay).toEqual(200);
+      expect(savedItem!.overlap).toEqual(100);
+    });
+
+    it('should save item with empty groups array', () => {
+      (generateRandomId as jest.Mock).mockReturnValueOnce('newItemIdEmptyGroups');
+
+      const itemWithEmptyGroups: SouthConnectorItemEntity<SouthItemSettings> = {
+        id: '',
+        name: 'item-with-empty-groups',
+        enabled: true,
+        scanMode: testData.scanMode.list[0],
+        settings: {} as SouthItemSettings,
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
+      };
+
+      repository.saveItem(testData.south.list[0].id, itemWithEmptyGroups);
+
+      const savedItem = repository.findItemById(testData.south.list[0].id, 'newItemIdEmptyGroups');
+      expect(savedItem).toBeDefined();
+      expect(savedItem!.groups.length).toEqual(0);
+    });
+
+    it('should save item with undefined groups', () => {
+      (generateRandomId as jest.Mock).mockReturnValueOnce('newItemIdUndefinedGroups');
+
+      const itemWithUndefinedGroups: SouthConnectorItemEntity<SouthItemSettings> = {
+        id: '',
+        name: 'item-with-undefined-groups',
+        enabled: true,
+        scanMode: testData.scanMode.list[0],
+        settings: {} as SouthItemSettings,
+        groups: undefined as unknown as Array<SouthItemGroupEntity>,
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
+      };
+
+      repository.saveItem(testData.south.list[0].id, itemWithUndefinedGroups);
+
+      const savedItem = repository.findItemById(testData.south.list[0].id, 'newItemIdUndefinedGroups');
+      expect(savedItem).toBeDefined();
+      expect(savedItem!.groups.length).toEqual(0);
+    });
+
+    it('should move items to a group', () => {
+      const groupRepository = new SouthItemGroupRepository(database);
+      (generateRandomId as jest.Mock).mockReturnValueOnce('testGroupId3');
+
+      // Create a group
+      groupRepository.create({
+        name: 'Move Group',
+        southId: testData.south.list[0].id,
+        scanMode: testData.scanMode.list[0],
+        overlap: null,
+        maxReadInterval: null,
+        readDelay: 0
+      });
+
+      // Get existing items
+      const existingItems = repository.findAllItemsForSouth(testData.south.list[0].id);
+      expect(existingItems.length).toBeGreaterThan(0);
+
+      const itemIds = existingItems.slice(0, 2).map(item => item.id);
+
+      // Move items to group
+      repository.moveItemsToGroup(itemIds, 'testGroupId3');
+
+      // Verify items are in the group
+      const itemsAfterMove = repository.findAllItemsForSouth(testData.south.list[0].id);
+      const movedItems = itemsAfterMove.filter(item => itemIds.includes(item.id));
+      movedItems.forEach(item => {
+        expect(item.groups.length).toEqual(1);
+        expect(item.groups[0].id).toEqual('testGroupId3');
+      });
+    });
+
+    it('should remove items from groups when groupId is null', () => {
+      const groupRepository = new SouthItemGroupRepository(database);
+      (generateRandomId as jest.Mock).mockReturnValueOnce('testGroupId4');
+
+      // Create a group
+      groupRepository.create({
+        name: 'Remove Group',
+        southId: testData.south.list[0].id,
+        scanMode: testData.scanMode.list[0],
+        overlap: null,
+        maxReadInterval: null,
+        readDelay: 0
+      });
+
+      // Get existing items and assign them to the group first
+      const existingItems = repository.findAllItemsForSouth(testData.south.list[0].id);
+      expect(existingItems.length).toBeGreaterThan(0);
+
+      const itemIds = existingItems.slice(0, 1).map(item => item.id);
+      repository.moveItemsToGroup(itemIds, 'testGroupId4');
+
+      // Verify items are in the group
+      let itemsInGroup = repository.findAllItemsForSouth(testData.south.list[0].id);
+      let itemInGroup = itemsInGroup.find(item => itemIds.includes(item.id));
+      expect(itemInGroup!.groups.length).toEqual(1);
+
+      // Remove items from groups
+      repository.moveItemsToGroup(itemIds, null);
+
+      // Verify items are no longer in any group
+      itemsInGroup = repository.findAllItemsForSouth(testData.south.list[0].id);
+      itemInGroup = itemsInGroup.find(item => itemIds.includes(item.id));
+      expect(itemInGroup!.groups.length).toEqual(0);
+    });
+
+    it('should handle empty itemIds array in moveItemsToGroup', () => {
+      // This should not throw an error
+      expect(() => {
+        repository.moveItemsToGroup([], 'someGroupId');
+      }).not.toThrow();
+
+      expect(() => {
+        repository.moveItemsToGroup([], null);
+      }).not.toThrow();
+    });
   });
 
   describe('History query', () => {
     let repository: HistoryQueryRepository;
 
     beforeEach(() => {
-      jest.clearAllMocks();
+      jest.resetAllMocks();
       repository = new HistoryQueryRepository(database);
     });
 
@@ -2267,13 +2525,19 @@ describe('Repository with populated database', () => {
           id: '',
           name: 'new item',
           enabled: true,
-          settings: {} as SouthItemSettings
+          settings: {} as SouthItemSettings,
+          maxReadInterval: null,
+          readDelay: null,
+          overlap: null
         },
         {
           id: '',
           name: 'another item',
           enabled: true,
-          settings: {} as SouthItemSettings
+          settings: {} as SouthItemSettings,
+          maxReadInterval: null,
+          readDelay: null,
+          overlap: null
         }
       ];
       newHistoryQuery.northTransformers = [
@@ -2396,7 +2660,10 @@ describe('Repository with populated database', () => {
         id: '',
         name: 'new history item',
         enabled: false,
-        settings: {} as SouthItemSettings
+        settings: {} as SouthItemSettings,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       });
       itemsToSave[0].name = 'updated name';
 
@@ -2421,7 +2688,10 @@ describe('Repository with populated database', () => {
         id: '',
         name: 'new history item',
         enabled: false,
-        settings: {} as SouthItemSettings
+        settings: {} as SouthItemSettings,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       });
       itemsToSave[0].name = 'updated name';
 
@@ -2447,7 +2717,7 @@ describe('Repository with empty database', () => {
   describe('Engine', () => {
     let repository: EngineRepository;
     beforeEach(() => {
-      jest.clearAllMocks();
+      jest.resetAllMocks();
     });
 
     it('should properly init engine settings table', () => {
@@ -2496,7 +2766,7 @@ describe('Repository with empty database', () => {
     let repository: OianalyticsRegistrationRepository;
 
     beforeEach(() => {
-      jest.clearAllMocks();
+      jest.resetAllMocks();
     });
 
     it('should properly init registration settings table', () => {
@@ -2573,7 +2843,7 @@ describe('Repository with empty database', () => {
   describe('Scan Mode', () => {
     let repository: ScanModeRepository;
     beforeEach(() => {
-      jest.clearAllMocks();
+      jest.resetAllMocks();
     });
 
     it('should properly init scan mode table', () => {
@@ -2594,7 +2864,7 @@ describe('Repository with empty database', () => {
   describe('User', () => {
     let repository: UserRepository;
     beforeEach(() => {
-      jest.clearAllMocks();
+      jest.resetAllMocks();
     });
 
     it('should not create a default admin user on hash error', async () => {

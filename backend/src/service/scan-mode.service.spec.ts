@@ -3,6 +3,8 @@ import ScanModeService, { toScanModeDTO } from './scan-mode.service';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
 import ScanModeRepositoryMock from '../tests/__mocks__/repository/config/scan-mode-repository.mock';
+import SouthConnectorRepository from '../repository/config/south-connector.repository';
+import SouthConnectorRepositoryMock from '../tests/__mocks__/repository/config/south-connector-repository.mock';
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
 import SouthCacheRepositoryMock from '../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import OianalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
@@ -19,6 +21,7 @@ jest.mock('../web-server/controllers/validators/joi.validator');
 
 const validator = new JoiValidator();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
+const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
 const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
 const dataStreamEngine: DataStreamEngine = new DataStreamEngineMock();
 const oIAnalyticsMessageService: OIAnalyticsMessageService = new OianalyticsMessageServiceMock();
@@ -28,8 +31,16 @@ describe('Scan Mode Service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (scanModeRepository.findAll as jest.Mock).mockReturnValue([]);
+    (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValue([]);
 
-    service = new ScanModeService(validator, scanModeRepository, southCacheRepository, oIAnalyticsMessageService, dataStreamEngine);
+    service = new ScanModeService(
+      validator,
+      scanModeRepository,
+      southConnectorRepository,
+      southCacheRepository,
+      oIAnalyticsMessageService,
+      dataStreamEngine
+    );
   });
 
   it('findAll() should find all scan modes', () => {
@@ -168,12 +179,15 @@ describe('Scan Mode Service', () => {
 
   it('delete() should delete a scan mode', async () => {
     (scanModeRepository.findById as jest.Mock).mockReturnValueOnce(testData.scanMode.list[0]);
+    (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValueOnce([{ id: 'south1' }, { id: 'south2' }]);
 
     await service.delete(testData.scanMode.list[0].id);
 
     expect(scanModeRepository.findById).toHaveBeenCalledWith(testData.scanMode.list[0].id);
     expect(scanModeRepository.delete).toHaveBeenCalledWith(testData.scanMode.list[0].id);
-    expect(southCacheRepository.deleteAllByScanMode).toHaveBeenCalledWith(testData.scanMode.list[0].id);
+    expect(southConnectorRepository.findAllSouth).toHaveBeenCalled();
+    expect(southCacheRepository.deleteAllByScanMode).toHaveBeenCalledWith('south_item_cache_south1', testData.scanMode.list[0].id);
+    expect(southCacheRepository.deleteAllByScanMode).toHaveBeenCalledWith('south_item_cache_south2', testData.scanMode.list[0].id);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
   });
 

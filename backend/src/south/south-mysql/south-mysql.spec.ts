@@ -92,7 +92,12 @@ describe('SouthMySQL with authentication', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       },
       {
         id: 'id2',
@@ -111,7 +116,12 @@ describe('SouthMySQL with authentication', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       },
       {
         id: 'id3',
@@ -147,7 +157,12 @@ describe('SouthMySQL with authentication', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanMode: testData.scanMode.list[1]
+        scanMode: testData.scanMode.list[1],
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       }
     ]
   };
@@ -402,7 +417,12 @@ describe('SouthMySQL without authentication', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       },
       {
         id: 'id2',
@@ -421,7 +441,12 @@ describe('SouthMySQL without authentication', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       },
       {
         id: 'id3',
@@ -457,7 +482,12 @@ describe('SouthMySQL without authentication', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanMode: testData.scanMode.list[1]
+        scanMode: testData.scanMode.list[1],
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       }
     ]
   };
@@ -557,7 +587,12 @@ describe('SouthMySQL test connection', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       },
       {
         id: 'id2',
@@ -576,7 +611,12 @@ describe('SouthMySQL test connection', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       },
       {
         id: 'id3',
@@ -612,7 +652,12 @@ describe('SouthMySQL test connection', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanMode: testData.scanMode.list[1]
+        scanMode: testData.scanMode.list[1],
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       }
     ]
   };

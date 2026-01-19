@@ -542,6 +542,21 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthItemGroupDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"string","required":true},
+            "creationDate": {"ref":"Instant"},
+            "lastEditInstant": {"ref":"Instant"},
+            "name": {"dataType":"string","required":true},
+            "scanMode": {"ref":"ScanModeDTO","required":true},
+            "overlap": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "maxReadInterval": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "readDelay": {"dataType":"double","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthConnectorItemTypedDTO_SouthADSItemSettings_": {
         "dataType": "refObject",
         "properties": {
@@ -552,6 +567,11 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"SouthADSItemSettings","required":true},
             "scanMode": {"ref":"ScanModeDTO","required":true},
+            "group": {"dataType":"union","subSchemas":[{"ref":"SouthItemGroupDTO"},{"dataType":"enum","enums":[null]}],"required":true},
+            "syncWithGroup": {"dataType":"boolean","required":true},
+            "maxReadInterval": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "readDelay": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "overlap": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -605,6 +625,11 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"SouthFolderScannerItemSettings","required":true},
             "scanMode": {"ref":"ScanModeDTO","required":true},
+            "group": {"dataType":"union","subSchemas":[{"ref":"SouthItemGroupDTO"},{"dataType":"enum","enums":[null]}],"required":true},
+            "syncWithGroup": {"dataType":"boolean","required":true},
+            "maxReadInterval": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "readDelay": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "overlap": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -668,6 +693,11 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"SouthFTPItemSettings","required":true},
             "scanMode": {"ref":"ScanModeDTO","required":true},
+            "group": {"dataType":"union","subSchemas":[{"ref":"SouthItemGroupDTO"},{"dataType":"enum","enums":[null]}],"required":true},
+            "syncWithGroup": {"dataType":"boolean","required":true},
+            "maxReadInterval": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "readDelay": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "overlap": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -754,6 +784,11 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"SouthModbusItemSettings","required":true},
             "scanMode": {"ref":"ScanModeDTO","required":true},
+            "group": {"dataType":"union","subSchemas":[{"ref":"SouthItemGroupDTO"},{"dataType":"enum","enums":[null]}],"required":true},
+            "syncWithGroup": {"dataType":"boolean","required":true},
+            "maxReadInterval": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "readDelay": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "overlap": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -831,6 +866,11 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"SouthMQTTItemSettings","required":true},
             "scanMode": {"ref":"ScanModeDTO","required":true},
+            "group": {"dataType":"union","subSchemas":[{"ref":"SouthItemGroupDTO"},{"dataType":"enum","enums":[null]}],"required":true},
+            "syncWithGroup": {"dataType":"boolean","required":true},
+            "maxReadInterval": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "readDelay": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "overlap": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -940,6 +980,11 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"SouthMSSQLItemSettings","required":true},
             "scanMode": {"ref":"ScanModeDTO","required":true},
+            "group": {"dataType":"union","subSchemas":[{"ref":"SouthItemGroupDTO"},{"dataType":"enum","enums":[null]}],"required":true},
+            "syncWithGroup": {"dataType":"boolean","required":true},
+            "maxReadInterval": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "readDelay": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "overlap": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -1046,6 +1091,11 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"SouthMySQLItemSettings","required":true},
             "scanMode": {"ref":"ScanModeDTO","required":true},
+            "group": {"dataType":"union","subSchemas":[{"ref":"SouthItemGroupDTO"},{"dataType":"enum","enums":[null]}],"required":true},
+            "syncWithGroup": {"dataType":"boolean","required":true},
+            "maxReadInterval": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "readDelay": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "overlap": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -1152,6 +1202,11 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"SouthODBCItemSettings","required":true},
             "scanMode": {"ref":"ScanModeDTO","required":true},
+            "group": {"dataType":"union","subSchemas":[{"ref":"SouthItemGroupDTO"},{"dataType":"enum","enums":[null]}],"required":true},
+            "syncWithGroup": {"dataType":"boolean","required":true},
+            "maxReadInterval": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "readDelay": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "overlap": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -1271,6 +1326,11 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"SouthOIAnalyticsItemSettings","required":true},
             "scanMode": {"ref":"ScanModeDTO","required":true},
+            "group": {"dataType":"union","subSchemas":[{"ref":"SouthItemGroupDTO"},{"dataType":"enum","enums":[null]}],"required":true},
+            "syncWithGroup": {"dataType":"boolean","required":true},
+            "maxReadInterval": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "readDelay": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "overlap": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -1376,6 +1436,11 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"SouthOLEDBItemSettings","required":true},
             "scanMode": {"ref":"ScanModeDTO","required":true},
+            "group": {"dataType":"union","subSchemas":[{"ref":"SouthItemGroupDTO"},{"dataType":"enum","enums":[null]}],"required":true},
+            "syncWithGroup": {"dataType":"boolean","required":true},
+            "maxReadInterval": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "readDelay": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "overlap": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -1455,6 +1520,11 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"SouthOPCItemSettings","required":true},
             "scanMode": {"ref":"ScanModeDTO","required":true},
+            "group": {"dataType":"union","subSchemas":[{"ref":"SouthItemGroupDTO"},{"dataType":"enum","enums":[null]}],"required":true},
+            "syncWithGroup": {"dataType":"boolean","required":true},
+            "maxReadInterval": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "readDelay": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "overlap": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -1581,6 +1651,11 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"SouthOPCUAItemSettings","required":true},
             "scanMode": {"ref":"ScanModeDTO","required":true},
+            "group": {"dataType":"union","subSchemas":[{"ref":"SouthItemGroupDTO"},{"dataType":"enum","enums":[null]}],"required":true},
+            "syncWithGroup": {"dataType":"boolean","required":true},
+            "maxReadInterval": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "readDelay": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "overlap": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -1689,6 +1764,11 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"SouthOracleItemSettings","required":true},
             "scanMode": {"ref":"ScanModeDTO","required":true},
+            "group": {"dataType":"union","subSchemas":[{"ref":"SouthItemGroupDTO"},{"dataType":"enum","enums":[null]}],"required":true},
+            "syncWithGroup": {"dataType":"boolean","required":true},
+            "maxReadInterval": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "readDelay": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "overlap": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -1755,6 +1835,11 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"SouthPIItemSettings","required":true},
             "scanMode": {"ref":"ScanModeDTO","required":true},
+            "group": {"dataType":"union","subSchemas":[{"ref":"SouthItemGroupDTO"},{"dataType":"enum","enums":[null]}],"required":true},
+            "syncWithGroup": {"dataType":"boolean","required":true},
+            "maxReadInterval": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "readDelay": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "overlap": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -1862,6 +1947,11 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"SouthPostgreSQLItemSettings","required":true},
             "scanMode": {"ref":"ScanModeDTO","required":true},
+            "group": {"dataType":"union","subSchemas":[{"ref":"SouthItemGroupDTO"},{"dataType":"enum","enums":[null]}],"required":true},
+            "syncWithGroup": {"dataType":"boolean","required":true},
+            "maxReadInterval": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "readDelay": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "overlap": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -2083,6 +2173,11 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"SouthRestItemSettings","required":true},
             "scanMode": {"ref":"ScanModeDTO","required":true},
+            "group": {"dataType":"union","subSchemas":[{"ref":"SouthItemGroupDTO"},{"dataType":"enum","enums":[null]}],"required":true},
+            "syncWithGroup": {"dataType":"boolean","required":true},
+            "maxReadInterval": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "readDelay": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "overlap": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -2148,6 +2243,11 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"SouthSFTPItemSettings","required":true},
             "scanMode": {"ref":"ScanModeDTO","required":true},
+            "group": {"dataType":"union","subSchemas":[{"ref":"SouthItemGroupDTO"},{"dataType":"enum","enums":[null]}],"required":true},
+            "syncWithGroup": {"dataType":"boolean","required":true},
+            "maxReadInterval": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "readDelay": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "overlap": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -2248,6 +2348,11 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"SouthSQLiteItemSettings","required":true},
             "scanMode": {"ref":"ScanModeDTO","required":true},
+            "group": {"dataType":"union","subSchemas":[{"ref":"SouthItemGroupDTO"},{"dataType":"enum","enums":[null]}],"required":true},
+            "syncWithGroup": {"dataType":"boolean","required":true},
+            "maxReadInterval": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "readDelay": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "overlap": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -2282,6 +2387,12 @@ const models: TsoaRoute.Models = {
             "settings": {"ref":"SouthADSItemSettings","required":true},
             "scanModeId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "scanModeName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "groupId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "groupName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "syncWithGroup": {"dataType":"boolean","required":true},
+            "maxReadInterval": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "readDelay": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "overlap": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -2308,6 +2419,12 @@ const models: TsoaRoute.Models = {
             "settings": {"ref":"SouthFolderScannerItemSettings","required":true},
             "scanModeId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "scanModeName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "groupId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "groupName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "syncWithGroup": {"dataType":"boolean","required":true},
+            "maxReadInterval": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "readDelay": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "overlap": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -2334,6 +2451,12 @@ const models: TsoaRoute.Models = {
             "settings": {"ref":"SouthFTPItemSettings","required":true},
             "scanModeId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "scanModeName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "groupId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "groupName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "syncWithGroup": {"dataType":"boolean","required":true},
+            "maxReadInterval": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "readDelay": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "overlap": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -2360,6 +2483,12 @@ const models: TsoaRoute.Models = {
             "settings": {"ref":"SouthModbusItemSettings","required":true},
             "scanModeId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "scanModeName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "groupId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "groupName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "syncWithGroup": {"dataType":"boolean","required":true},
+            "maxReadInterval": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "readDelay": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "overlap": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -2386,6 +2515,12 @@ const models: TsoaRoute.Models = {
             "settings": {"ref":"SouthMQTTItemSettings","required":true},
             "scanModeId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "scanModeName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "groupId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "groupName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "syncWithGroup": {"dataType":"boolean","required":true},
+            "maxReadInterval": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "readDelay": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "overlap": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -2412,6 +2547,12 @@ const models: TsoaRoute.Models = {
             "settings": {"ref":"SouthMSSQLItemSettings","required":true},
             "scanModeId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "scanModeName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "groupId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "groupName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "syncWithGroup": {"dataType":"boolean","required":true},
+            "maxReadInterval": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "readDelay": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "overlap": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -2438,6 +2579,12 @@ const models: TsoaRoute.Models = {
             "settings": {"ref":"SouthMySQLItemSettings","required":true},
             "scanModeId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "scanModeName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "groupId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "groupName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "syncWithGroup": {"dataType":"boolean","required":true},
+            "maxReadInterval": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "readDelay": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "overlap": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -2464,6 +2611,12 @@ const models: TsoaRoute.Models = {
             "settings": {"ref":"SouthODBCItemSettings","required":true},
             "scanModeId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "scanModeName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "groupId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "groupName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "syncWithGroup": {"dataType":"boolean","required":true},
+            "maxReadInterval": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "readDelay": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "overlap": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -2490,6 +2643,12 @@ const models: TsoaRoute.Models = {
             "settings": {"ref":"SouthOIAnalyticsItemSettings","required":true},
             "scanModeId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "scanModeName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "groupId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "groupName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "syncWithGroup": {"dataType":"boolean","required":true},
+            "maxReadInterval": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "readDelay": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "overlap": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -2516,6 +2675,12 @@ const models: TsoaRoute.Models = {
             "settings": {"ref":"SouthOLEDBItemSettings","required":true},
             "scanModeId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "scanModeName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "groupId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "groupName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "syncWithGroup": {"dataType":"boolean","required":true},
+            "maxReadInterval": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "readDelay": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "overlap": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -2542,6 +2707,12 @@ const models: TsoaRoute.Models = {
             "settings": {"ref":"SouthOPCItemSettings","required":true},
             "scanModeId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "scanModeName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "groupId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "groupName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "syncWithGroup": {"dataType":"boolean","required":true},
+            "maxReadInterval": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "readDelay": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "overlap": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -2568,6 +2739,12 @@ const models: TsoaRoute.Models = {
             "settings": {"ref":"SouthOPCUAItemSettings","required":true},
             "scanModeId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "scanModeName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "groupId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "groupName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "syncWithGroup": {"dataType":"boolean","required":true},
+            "maxReadInterval": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "readDelay": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "overlap": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -2594,6 +2771,12 @@ const models: TsoaRoute.Models = {
             "settings": {"ref":"SouthOracleItemSettings","required":true},
             "scanModeId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "scanModeName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "groupId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "groupName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "syncWithGroup": {"dataType":"boolean","required":true},
+            "maxReadInterval": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "readDelay": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "overlap": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -2620,6 +2803,12 @@ const models: TsoaRoute.Models = {
             "settings": {"ref":"SouthPIItemSettings","required":true},
             "scanModeId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "scanModeName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "groupId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "groupName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "syncWithGroup": {"dataType":"boolean","required":true},
+            "maxReadInterval": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "readDelay": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "overlap": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -2646,6 +2835,12 @@ const models: TsoaRoute.Models = {
             "settings": {"ref":"SouthPostgreSQLItemSettings","required":true},
             "scanModeId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "scanModeName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "groupId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "groupName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "syncWithGroup": {"dataType":"boolean","required":true},
+            "maxReadInterval": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "readDelay": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "overlap": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -2672,6 +2867,12 @@ const models: TsoaRoute.Models = {
             "settings": {"ref":"SouthRestItemSettings","required":true},
             "scanModeId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "scanModeName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "groupId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "groupName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "syncWithGroup": {"dataType":"boolean","required":true},
+            "maxReadInterval": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "readDelay": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "overlap": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -2698,6 +2899,12 @@ const models: TsoaRoute.Models = {
             "settings": {"ref":"SouthSFTPItemSettings","required":true},
             "scanModeId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "scanModeName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "groupId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "groupName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "syncWithGroup": {"dataType":"boolean","required":true},
+            "maxReadInterval": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "readDelay": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "overlap": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -2724,6 +2931,12 @@ const models: TsoaRoute.Models = {
             "settings": {"ref":"SouthSQLiteItemSettings","required":true},
             "scanModeId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "scanModeName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "groupId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "groupName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "syncWithGroup": {"dataType":"boolean","required":true},
+            "maxReadInterval": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "readDelay": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "overlap": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -2875,6 +3088,18 @@ const models: TsoaRoute.Models = {
         "properties": {
             "items": {"dataType":"array","array":{"dataType":"refAlias","ref":"SouthConnectorItemDTO"},"required":true},
             "errors": {"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"error":{"dataType":"string","required":true},"item":{"ref":"Record_string.string_","required":true}}},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthItemGroupCommandDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "name": {"dataType":"string","required":true},
+            "scanModeId": {"dataType":"string","required":true},
+            "overlap": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "maxReadInterval": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "readDelay": {"dataType":"double","required":true},
         },
         "additionalProperties": false,
     },
@@ -7111,6 +7336,198 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
 
               await templateService.apiHandler({
                 methodName: 'importItems',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 204,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsSouthConnectorController_listGroups: Record<string, TsoaRoute.ParameterSchema> = {
+                southId: {"in":"path","name":"southId","required":true,"dataType":"string"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.get('/api/south/:southId/groups',
+            ...(fetchMiddlewares<RequestHandler>(SouthConnectorController)),
+            ...(fetchMiddlewares<RequestHandler>(SouthConnectorController.prototype.listGroups)),
+
+            async function SouthConnectorController_listGroups(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsSouthConnectorController_listGroups, request, response });
+
+                const controller = new SouthConnectorController();
+
+              await templateService.apiHandler({
+                methodName: 'listGroups',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsSouthConnectorController_getGroup: Record<string, TsoaRoute.ParameterSchema> = {
+                southId: {"in":"path","name":"southId","required":true,"dataType":"string"},
+                groupId: {"in":"path","name":"groupId","required":true,"dataType":"string"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.get('/api/south/:southId/groups/:groupId',
+            ...(fetchMiddlewares<RequestHandler>(SouthConnectorController)),
+            ...(fetchMiddlewares<RequestHandler>(SouthConnectorController.prototype.getGroup)),
+
+            async function SouthConnectorController_getGroup(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsSouthConnectorController_getGroup, request, response });
+
+                const controller = new SouthConnectorController();
+
+              await templateService.apiHandler({
+                methodName: 'getGroup',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsSouthConnectorController_createGroup: Record<string, TsoaRoute.ParameterSchema> = {
+                southId: {"in":"path","name":"southId","required":true,"dataType":"string"},
+                command: {"in":"body","name":"command","required":true,"ref":"SouthItemGroupCommandDTO"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.post('/api/south/:southId/groups',
+            ...(fetchMiddlewares<RequestHandler>(SouthConnectorController)),
+            ...(fetchMiddlewares<RequestHandler>(SouthConnectorController.prototype.createGroup)),
+
+            async function SouthConnectorController_createGroup(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsSouthConnectorController_createGroup, request, response });
+
+                const controller = new SouthConnectorController();
+
+              await templateService.apiHandler({
+                methodName: 'createGroup',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 201,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsSouthConnectorController_updateGroup: Record<string, TsoaRoute.ParameterSchema> = {
+                southId: {"in":"path","name":"southId","required":true,"dataType":"string"},
+                groupId: {"in":"path","name":"groupId","required":true,"dataType":"string"},
+                command: {"in":"body","name":"command","required":true,"ref":"SouthItemGroupCommandDTO"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.put('/api/south/:southId/groups/:groupId',
+            ...(fetchMiddlewares<RequestHandler>(SouthConnectorController)),
+            ...(fetchMiddlewares<RequestHandler>(SouthConnectorController.prototype.updateGroup)),
+
+            async function SouthConnectorController_updateGroup(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsSouthConnectorController_updateGroup, request, response });
+
+                const controller = new SouthConnectorController();
+
+              await templateService.apiHandler({
+                methodName: 'updateGroup',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 204,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsSouthConnectorController_deleteGroup: Record<string, TsoaRoute.ParameterSchema> = {
+                southId: {"in":"path","name":"southId","required":true,"dataType":"string"},
+                groupId: {"in":"path","name":"groupId","required":true,"dataType":"string"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.delete('/api/south/:southId/groups/:groupId',
+            ...(fetchMiddlewares<RequestHandler>(SouthConnectorController)),
+            ...(fetchMiddlewares<RequestHandler>(SouthConnectorController.prototype.deleteGroup)),
+
+            async function SouthConnectorController_deleteGroup(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsSouthConnectorController_deleteGroup, request, response });
+
+                const controller = new SouthConnectorController();
+
+              await templateService.apiHandler({
+                methodName: 'deleteGroup',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 204,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsSouthConnectorController_moveItemsToGroup: Record<string, TsoaRoute.ParameterSchema> = {
+                southId: {"in":"path","name":"southId","required":true,"dataType":"string"},
+                body: {"in":"body","name":"body","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"groupId":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"itemIds":{"dataType":"array","array":{"dataType":"string"},"required":true}}},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.post('/api/south/:southId/items/move-to-group',
+            ...(fetchMiddlewares<RequestHandler>(SouthConnectorController)),
+            ...(fetchMiddlewares<RequestHandler>(SouthConnectorController.prototype.moveItemsToGroup)),
+
+            async function SouthConnectorController_moveItemsToGroup(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsSouthConnectorController_moveItemsToGroup, request, response });
+
+                const controller = new SouthConnectorController();
+
+              await templateService.apiHandler({
+                methodName: 'moveItemsToGroup',
                 controller,
                 response,
                 next,

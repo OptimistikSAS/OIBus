@@ -9,6 +9,8 @@ import { SouthFolderScannerItemSettings } from '../../../../../../backend/shared
 import testData from '../../../../../../backend/src/tests/utils/test-data';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { of } from 'rxjs';
+import { SouthConnectorService } from '../../../services/south-connector.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 class EditSouthItemModalComponentTester extends ComponentTester<EditSouthItemModalComponent> {
   constructor() {
@@ -44,6 +46,7 @@ describe('EditSouthItemModalComponent', () => {
   let tester: EditSouthItemModalComponentTester;
   let fakeActiveModal: NgbActiveModal;
   let unsavedChangesConfirmationService: jasmine.SpyObj<UnsavedChangesConfirmationService>;
+  let southConnectorService: jasmine.SpyObj<SouthConnectorService>;
 
   const southId = 'southId';
   const southConnectorCommand = testData.south.command;
@@ -54,14 +57,24 @@ describe('EditSouthItemModalComponent', () => {
       enabled: true,
       name: 'item',
       scanMode: testData.scanMode.list[0],
-      settings: { regex: '*', minAge: 100, preserveFiles: true } as SouthFolderScannerItemSettings
+      settings: { regex: '*', minAge: 100, preserveFiles: true } as SouthFolderScannerItemSettings,
+      group: null,
+      syncWithGroup: false,
+      maxReadInterval: null,
+      readDelay: null,
+      overlap: null
     },
     {
       id: 'id2',
       enabled: true,
       name: 'item2',
       scanMode: testData.scanMode.list[0],
-      settings: { regex: '*', minAge: 100, preserveFiles: true } as SouthFolderScannerItemSettings
+      settings: { regex: '*', minAge: 100, preserveFiles: true } as SouthFolderScannerItemSettings,
+      group: null,
+      syncWithGroup: false,
+      maxReadInterval: null,
+      readDelay: null,
+      overlap: null
     }
   ];
   const scanModes = testData.scanMode.list;
@@ -69,14 +82,19 @@ describe('EditSouthItemModalComponent', () => {
   beforeEach(() => {
     fakeActiveModal = createMock(NgbActiveModal);
     unsavedChangesConfirmationService = createMock(UnsavedChangesConfirmationService);
+    southConnectorService = createMock(SouthConnectorService);
 
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
+        provideHttpClientTesting(),
         { provide: NgbActiveModal, useValue: fakeActiveModal },
-        { provide: UnsavedChangesConfirmationService, useValue: unsavedChangesConfirmationService }
+        { provide: UnsavedChangesConfirmationService, useValue: unsavedChangesConfirmationService },
+        { provide: SouthConnectorService, useValue: southConnectorService }
       ]
     });
+
+    southConnectorService.getGroups.and.returnValue(of([]));
 
     TestBed.createComponent(DefaultValidationErrorsComponent).detectChanges();
 
@@ -85,7 +103,7 @@ describe('EditSouthItemModalComponent', () => {
 
   describe('create mode', () => {
     beforeEach(async () => {
-      tester.componentInstance.prepareForCreation(allItems, scanModes, [], southId, southConnectorCommand, manifest);
+      tester.componentInstance.prepareForCreation(allItems, scanModes, [], southId, southConnectorCommand, manifest, [], false);
       await tester.change();
     });
 
@@ -118,7 +136,12 @@ describe('EditSouthItemModalComponent', () => {
           objectArray: [],
           objectSettings: {},
           objectValue: 1
-        }
+        },
+        group: null,
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       });
     }));
 
@@ -199,11 +222,16 @@ describe('EditSouthItemModalComponent', () => {
       name: 'myName',
       enabled: true,
       scanMode: testData.scanMode.list[0],
-      settings: { regex: '*', minAge: 100, preserveFiles: true } as SouthFolderScannerItemSettings
+      settings: { regex: '*', minAge: 100, preserveFiles: true } as SouthFolderScannerItemSettings,
+      group: null,
+      syncWithGroup: false,
+      maxReadInterval: null,
+      readDelay: null,
+      overlap: null
     };
 
     it('should duplicate item', async () => {
-      tester.componentInstance.prepareForCopy(allItems, scanModes, [], southItem, southId, southConnectorCommand, manifest);
+      tester.componentInstance.prepareForCopy(allItems, scanModes, [], southItem, southId, southConnectorCommand, manifest, [], false);
       await tester.change();
       expect(tester.name).toHaveValue('myName-copy');
 
@@ -222,7 +250,12 @@ describe('EditSouthItemModalComponent', () => {
           objectArray: [],
           objectSettings: {},
           objectValue: 1
-        }
+        },
+        group: null,
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       });
     });
   });
@@ -233,11 +266,27 @@ describe('EditSouthItemModalComponent', () => {
       name: 'myName',
       enabled: true,
       scanMode: testData.scanMode.list[0],
-      settings: { regex: '*', minAge: 100, preserveFiles: true } as SouthFolderScannerItemSettings
+      settings: { regex: '*', minAge: 100, preserveFiles: true } as SouthFolderScannerItemSettings,
+      group: null,
+      syncWithGroup: false,
+      maxReadInterval: null,
+      readDelay: null,
+      overlap: null
     };
 
     beforeEach(async () => {
-      tester.componentInstance.prepareForEdition(allItems, scanModes, [], southItem, southId, southConnectorCommand, manifest, 0);
+      tester.componentInstance.prepareForEdition(
+        allItems,
+        scanModes,
+        [],
+        southItem,
+        southId,
+        southConnectorCommand,
+        manifest,
+        0,
+        [],
+        false
+      );
       await tester.change();
     });
 
@@ -285,7 +334,12 @@ describe('EditSouthItemModalComponent', () => {
           objectArray: [],
           objectSettings: {},
           objectValue: 1
-        }
+        },
+        group: null,
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       });
     }));
 

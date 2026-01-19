@@ -13,8 +13,51 @@
             <val-errors controlName="name" />
           </div>
         </div>
-        <!-- Scan mode -->
-        @if (form.controls.scanMode.enabled) {
+        <!-- Group -->
+        <div class="col-3">
+          <div class="form-group">
+            <label for="group" class="form-label" translate="south.items.group"></label>
+            <div ngbDropdown class="d-inline-block w-100">
+              <button
+                type="button"
+                class="form-select w-100 d-flex justify-content-between align-items-center text-start"
+                id="group"
+                ngbDropdownToggle
+              >
+                <span class="text-truncate">{{ getSelectedGroupName() }}</span>
+              </button>
+              <div ngbDropdownMenu aria-labelledby="group" class="w-100">
+                <button type="button" ngbDropdownItem (click)="selectGroup(null)" translate="south.items.group-none"></button>
+                @for (group of groups; track group.id) {
+                  <div class="d-flex align-items-center justify-content-between px-2 group-row">
+                    <button type="button" ngbDropdownItem (click)="selectGroup(group.id)" class="flex-grow-1 text-start ps-2">
+                      {{ group.name }}
+                    </button>
+                    <div class="d-flex gap-1 pe-2">
+                      <button type="button" class="btn btn-sm btn-link p-0 text-primary" (click)="onEditGroup(group, $event)">
+                        <i class="fa fa-pencil"></i>
+                      </button>
+                      <button type="button" class="btn btn-sm btn-link p-0 text-danger" (click)="onDeleteGroup(group, $event)">
+                        <i class="fa fa-trash"></i>
+                      </button>
+                    </div>
+                  </div>
+                }
+                <div class="dropdown-divider"></div>
+                <button
+                  type="button"
+                  ngbDropdownItem
+                  (click)="selectGroup('__create_new__')"
+                  translate="south.items.create-new-group"
+                ></button>
+              </div>
+            </div>
+            <input type="hidden" formControlName="groupId" />
+            <val-errors controlName="groupId" />
+          </div>
+        </div>
+        <!-- Scan mode (only shown when item has no group) -->
+        @if (form.controls.scanMode.enabled && form.controls.groupId.value === null) {
           <div class="col-3">
             <div class="form-group">
               <label for="scan-mode" class="form-label" translate="configuration.oibus.manifest.south.items.scan-mode"></label>
@@ -33,11 +76,68 @@
           <div class="form-group">
             <div class="form-check form-switch padded">
               <input formControlName="enabled" id="item-enabled" type="checkbox" class="form-check-input" />
-              <label class="form-check-label" for="item-enabled" translate="south.items.enable"></label>
+              <label class="form-check-label" for="item-enabled" translate="south.items.enabled-label"></label>
             </div>
           </div>
         </div>
       </div>
+
+      <!-- Historian fields (for historian connectors) -->
+      @if (hasHistorianCapabilities) {
+        <div class="row">
+          <!-- Sync with group toggle (only when item is in a group) -->
+          @if (form.controls.groupId.value !== null) {
+            <div class="col-3">
+              <div class="form-group">
+                <div class="form-check form-switch padded">
+                  <input
+                    formControlName="syncWithGroup"
+                    id="sync-with-group"
+                    type="checkbox"
+                    class="form-check-input"
+                    (change)="onSyncWithGroupChange()"
+                  />
+                  <label class="form-check-label" for="sync-with-group" translate="south.items.sync-with-group"></label>
+                </div>
+              </div>
+            </div>
+          }
+          <!-- Max Read Interval -->
+          <div [class]="form.controls.groupId.value !== null ? 'col-3' : 'col-4'">
+            <div class="form-group">
+              <label class="form-label" for="max-read-interval" translate="south.items.max-read-interval"></label>
+              <div class="input-group">
+                <input formControlName="maxReadInterval" id="max-read-interval" type="number" class="form-control" min="0" />
+                <span class="input-group-text" translate="common.unit.s"></span>
+              </div>
+              <val-errors controlName="maxReadInterval" />
+            </div>
+          </div>
+          <!-- Read Delay -->
+          <div [class]="form.controls.groupId.value !== null ? 'col-3' : 'col-4'">
+            <div class="form-group">
+              <label class="form-label" for="read-delay" translate="south.items.read-delay"></label>
+              <div class="input-group">
+                <input formControlName="readDelay" id="read-delay" type="number" class="form-control" min="0" />
+                <span class="input-group-text" translate="common.unit.ms"></span>
+              </div>
+              <val-errors controlName="readDelay" />
+            </div>
+          </div>
+          <!-- Overlap -->
+          <div [class]="form.controls.groupId.value !== null ? 'col-3' : 'col-4'">
+            <div class="form-group">
+              <label class="form-label" for="overlap" translate="south.items.overlap"></label>
+              <div class="input-group">
+                <input formControlName="overlap" id="overlap" type="number" class="form-control" min="0" />
+                <span class="input-group-text" translate="common.unit.ms"></span>
+              </div>
+              <val-errors controlName="overlap" />
+            </div>
+          </div>
+        </div>
+      }
+
       <ng-container formGroupName="settings">
         <oib-oibus-object-form-control
           [scanModes]="scanModes"

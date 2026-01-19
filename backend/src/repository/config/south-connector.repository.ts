@@ -1,11 +1,17 @@
 import { generateRandomId } from '../../service/utils';
 import { Database } from 'better-sqlite3';
-import { SouthConnectorEntity, SouthConnectorEntityLight, SouthConnectorItemEntity } from '../../model/south-connector.model';
+import {
+  SouthConnectorEntity,
+  SouthConnectorEntityLight,
+  SouthConnectorItemEntity,
+  SouthItemGroupEntity
+} from '../../model/south-connector.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import { OIBusSouthType, SouthConnectorItemSearchParam } from '../../../shared/model/south-connector.model';
 import { Page } from '../../../shared/model/types';
 import { ScanMode } from '../../model/scan-mode.model';
 import { toScanMode } from './scan-mode.repository';
+import SouthItemGroupRepository from './south-item-group.repository';
 
 const SOUTH_CONNECTORS_TABLE = 'south_connectors';
 const SOUTH_ITEMS_TABLE = 'south_items';
@@ -15,7 +21,11 @@ const SCAN_MODE = 'scan_modes';
 const PAGE_SIZE = 50;
 
 export default class SouthConnectorRepository {
-  constructor(private readonly database: Database) {}
+  private groupRepository: SouthItemGroupRepository;
+
+  constructor(private readonly database: Database) {
+    this.groupRepository = new SouthItemGroupRepository(database);
+  }
 
   findAllSouth(): Array<SouthConnectorEntityLight> {
     const query = `SELECT id, name, type, description, enabled FROM ${SOUTH_CONNECTORS_TABLE};`;
@@ -90,11 +100,14 @@ export default class SouthConnectorRepository {
             south.items.filter(item => item.id).map(item => item.id)
           );
         const insert = this.database.prepare(
-          `INSERT INTO ${SOUTH_ITEMS_TABLE} (id, name, enabled, connector_id, scan_mode_id, settings, created_by, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`
+          `INSERT INTO ${SOUTH_ITEMS_TABLE} (id, name, enabled, connector_id, scan_mode_id, settings, sync_with_group, max_read_interval, read_delay, overlap, created_by, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`
         );
         const update = this.database.prepare(
-          `UPDATE ${SOUTH_ITEMS_TABLE} SET name = ?, enabled = ?, scan_mode_id = ?, settings = ?, updated_by = ? WHERE id = ?;`
+          `UPDATE ${SOUTH_ITEMS_TABLE} SET name = ?, enabled = ?, scan_mode_id = ?, settings = ?, sync_with_group = ?, max_read_interval = ?, read_delay = ?, overlap = ?, updated_by = ? WHERE id = ?;`
         );
+        const insertGroup = this.database.prepare(`INSERT INTO group_items (group_id, item_id) VALUES (?, ?);`);
+        const deleteGroups = this.database.prepare(`DELETE FROM group_items WHERE item_id = ?;`);
+
         for (const item of south.items) {
           if (!item.id) {
             item.id = generateRandomId(6);
@@ -105,11 +118,33 @@ export default class SouthConnectorRepository {
               south.id,
               item.scanMode.id,
               JSON.stringify(item.settings),
+              +item.syncWithGroup,
+              item.maxReadInterval ?? null,
+              item.readDelay ?? null,
+              item.overlap ?? null,
               item.createdBy,
               item.updatedBy
             );
           } else {
-            update.run(item.name, +item.enabled, item.scanMode.id, JSON.stringify(item.settings), item.updatedBy, item.id);
+            update.run(
+              item.name,
+              +item.enabled,
+              item.scanMode.id,
+              JSON.stringify(item.settings),
+              +item.syncWithGroup,
+              item.maxReadInterval ?? null,
+              item.readDelay ?? null,
+              item.overlap ?? null,
+              item.updatedBy,
+              item.id
+            );
+          }
+          // Update groups
+          deleteGroups.run(item.id);
+          if (item.groups && item.groups.length > 0) {
+            for (const group of item.groups) {
+              insertGroup.run(group.id, item.id);
+            }
           }
         }
       } else {
@@ -173,7 +208,7 @@ export default class SouthConnectorRepository {
       queryParams.push(searchParams.name);
       whereClause += ` AND name like '%' || ? || '%'`;
     }
-    const query = `SELECT id, name, enabled, scan_mode_id, settings, created_by, updated_by FROM ${SOUTH_ITEMS_TABLE} ${whereClause};`;
+    const query = `SELECT id, name, enabled, scan_mode_id, settings, sync_with_group, max_read_interval, read_delay, overlap, created_by, updated_by FROM ${SOUTH_ITEMS_TABLE} ${whereClause};`;
 
     return this.database
       .prepare(query)
@@ -200,7 +235,7 @@ export default class SouthConnectorRepository {
       whereClause += ` AND name like '%' || ? || '%'`;
     }
     const query =
-      `SELECT id, name, enabled, scan_mode_id, settings, created_by, updated_by FROM ${SOUTH_ITEMS_TABLE} ${whereClause}` +
+      `SELECT id, name, enabled, scan_mode_id, settings, sync_with_group, max_read_interval, read_delay, overlap, created_by, updated_by FROM ${SOUTH_ITEMS_TABLE} ${whereClause}` +
       ` LIMIT ${PAGE_SIZE} OFFSET ${PAGE_SIZE * page};`;
     const results = this.database
       .prepare(query)
@@ -221,7 +256,7 @@ export default class SouthConnectorRepository {
   }
 
   findAllItemsForSouth(southId: string): Array<SouthConnectorItemEntity<SouthItemSettings>> {
-    const query = `SELECT id, name, enabled, scan_mode_id, settings, created_by, updated_by FROM ${SOUTH_ITEMS_TABLE} WHERE connector_id = ?;`;
+    const query = `SELECT id, name, enabled, scan_mode_id, settings, sync_with_group, max_read_interval, read_delay, overlap, created_by, updated_by FROM ${SOUTH_ITEMS_TABLE} WHERE connector_id = ?;`;
     return this.database
       .prepare(query)
       .all(southId)
@@ -229,7 +264,7 @@ export default class SouthConnectorRepository {
   }
 
   findItemById(southConnectorId: string, itemId: string): SouthConnectorItemEntity<SouthItemSettings> | null {
-    const query = `SELECT id, name, enabled, scan_mode_id, settings, created_by, updated_by FROM ${SOUTH_ITEMS_TABLE} WHERE id = ? AND connector_id = ?;`;
+    const query = `SELECT id, name, enabled, scan_mode_id, settings, sync_with_group, max_read_interval, read_delay, overlap, created_by, updated_by FROM ${SOUTH_ITEMS_TABLE} WHERE id = ? AND connector_id = ?;`;
     const result = this.database.prepare(query).get(itemId, southConnectorId);
     if (!result) return null;
     return this.toSouthConnectorItemEntity(result as Record<string, string>);
@@ -239,8 +274,8 @@ export default class SouthConnectorRepository {
     if (!southItem.id) {
       southItem.id = generateRandomId(6);
       const insertQuery =
-        `INSERT INTO ${SOUTH_ITEMS_TABLE} (id, name, enabled, connector_id, scan_mode_id, settings, created_by, updated_by) ` +
-        `VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
+        `INSERT INTO ${SOUTH_ITEMS_TABLE} (id, name, enabled, connector_id, scan_mode_id, settings, sync_with_group, max_read_interval, read_delay, overlap, created_by, updated_by) ` +
+        `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
       this.database
         .prepare(insertQuery)
         .run(
@@ -250,11 +285,15 @@ export default class SouthConnectorRepository {
           southConnectorId,
           southItem.scanMode.id,
           JSON.stringify(southItem.settings),
+          +southItem.syncWithGroup,
+          southItem.maxReadInterval ?? null,
+          southItem.readDelay ?? null,
+          southItem.overlap ?? null,
           southItem.createdBy,
           southItem.updatedBy
         );
     } else {
-      const query = `UPDATE ${SOUTH_ITEMS_TABLE} SET name = ?, enabled = ?, scan_mode_id = ?, settings = ?, updated_by = ? WHERE id = ?;`;
+      const query = `UPDATE ${SOUTH_ITEMS_TABLE} SET name = ?, enabled = ?, scan_mode_id = ?, settings = ?, sync_with_group = ?, max_read_interval = ?, read_delay = ?, overlap = ?, updated_by = ? WHERE id = ?;`;
       this.database
         .prepare(query)
         .run(
@@ -262,9 +301,21 @@ export default class SouthConnectorRepository {
           +southItem.enabled,
           southItem.scanMode.id,
           JSON.stringify(southItem.settings),
+          +southItem.syncWithGroup,
+          southItem.maxReadInterval ?? null,
+          southItem.readDelay ?? null,
+          southItem.overlap ?? null,
           southItem.updatedBy,
           southItem.id
         );
+    }
+
+    this.database.prepare(`DELETE FROM group_items WHERE item_id = ?;`).run(southItem.id);
+    if (southItem.groups && southItem.groups.length > 0) {
+      const insertGroup = this.database.prepare(`INSERT INTO group_items (group_id, item_id) VALUES (?, ?);`);
+      for (const group of southItem.groups) {
+        insertGroup.run(group.id, southItem.id);
+      }
     }
   }
 
@@ -324,10 +375,37 @@ export default class SouthConnectorRepository {
     this.database.prepare(query).run(id);
   }
 
+  moveItemsToGroup(itemIds: Array<string>, groupId: string | null): void {
+    const placeholders = itemIds.map(() => '?').join(', ');
+    const transaction = this.database.transaction(() => {
+      // Remove items from all groups (enforcing single-group behavior for "Move to")
+      this.database.prepare(`DELETE FROM group_items WHERE item_id IN (${placeholders});`).run(...itemIds);
+
+      if (groupId) {
+        const insertGroup = this.database.prepare(`INSERT INTO group_items (group_id, item_id) VALUES (?, ?);`);
+        const setSyncWithGroup = this.database.prepare(`UPDATE ${SOUTH_ITEMS_TABLE} SET sync_with_group = 1 WHERE id = ?;`);
+        for (const itemId of itemIds) {
+          insertGroup.run(groupId, itemId);
+          setSyncWithGroup.run(itemId);
+        }
+      } else {
+        // When removing from group, reset sync_with_group to false
+        this.database.prepare(`UPDATE ${SOUTH_ITEMS_TABLE} SET sync_with_group = 0 WHERE id IN (${placeholders});`).run(...itemIds);
+      }
+    });
+    transaction();
+  }
+
   findScanModeForSouth(scanModeId: string): ScanMode {
     const query = `SELECT id, name, description, cron FROM ${SCAN_MODE} WHERE id = ?;`;
     const result = this.database.prepare(query).get(scanModeId) as Record<string, string>;
     return toScanMode(result);
+  }
+
+  private findGroupsForItem(itemId: string) {
+    const query = `SELECT group_id FROM group_items WHERE item_id = ?;`;
+    const results = this.database.prepare(query).all(itemId) as Array<{ group_id: string }>;
+    return results.map(r => this.groupRepository.findById(r.group_id)).filter((item): item is SouthItemGroupEntity => item !== null);
   }
 
   private toSouthConnectorItemEntity(result: Record<string, string>): SouthConnectorItemEntity<SouthItemSettings> {
@@ -337,6 +415,12 @@ export default class SouthConnectorRepository {
       enabled: Boolean(result.enabled),
       scanMode: this.findScanModeForSouth(result.scan_mode_id as string),
       settings: JSON.parse(result.settings) as SouthItemSettings,
+      groups: this.findGroupsForItem(result.id),
+      syncWithGroup: Boolean(result.sync_with_group),
+      maxReadInterval:
+        result.max_read_interval !== null && result.max_read_interval !== undefined ? Number(result.max_read_interval) : null,
+      readDelay: result.read_delay !== null && result.read_delay !== undefined ? Number(result.read_delay) : null,
+      overlap: result.overlap !== null && result.overlap !== undefined ? Number(result.overlap) : null,
       createdBy: result.created_by ?? undefined,
       updatedBy: result.updated_by ?? undefined
     };
