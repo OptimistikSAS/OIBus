@@ -23,7 +23,12 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
     settings: {
       topic: 'my/first/topic'
     },
-    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
+    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+    groups: [],
+    syncWithGroup: false,
+    maxReadInterval: null,
+    readDelay: null,
+    overlap: null
   },
   {
     id: 'id2',
@@ -32,7 +37,12 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
     settings: {
       topic: 'my/+/+/topic/with/wildcard/#'
     },
-    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
+    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+    groups: [],
+    syncWithGroup: false,
+    maxReadInterval: null,
+    readDelay: null,
+    overlap: null
   },
   {
     id: 'id3',
@@ -41,7 +51,12 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
     settings: {
       topic: 'my/wrong/topic////'
     },
-    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
+    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+    groups: [],
+    syncWithGroup: false,
+    maxReadInterval: null,
+    readDelay: null,
+    overlap: null
   },
   {
     id: 'id4',
@@ -50,7 +65,12 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
     settings: {
       topic: 'json/topic'
     },
-    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
+    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+    groups: [],
+    syncWithGroup: false,
+    maxReadInterval: null,
+    readDelay: null,
+    overlap: null
   },
   {
     id: 'id5',
@@ -59,7 +79,12 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
     settings: {
       topic: 'json/topic'
     },
-    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
+    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+    groups: [],
+    syncWithGroup: false,
+    maxReadInterval: null,
+    readDelay: null,
+    overlap: null
   },
   {
     id: 'id6',
@@ -68,7 +93,12 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
     settings: {
       topic: 'json/topic'
     },
-    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
+    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+    groups: [],
+    syncWithGroup: false,
+    maxReadInterval: null,
+    readDelay: null,
+    overlap: null
   },
   // Additional test items for edge cases
   {
@@ -78,7 +108,12 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
     settings: {
       topic: 'disabled/topic'
     },
-    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
+    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+    groups: [],
+    syncWithGroup: false,
+    maxReadInterval: null,
+    readDelay: null,
+    overlap: null
   },
   {
     id: 'id8',
@@ -87,7 +122,12 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
     settings: {
       topic: 'my/second/topic' // Duplicate topic with id1
     },
-    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
+    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+    groups: [],
+    syncWithGroup: false,
+    maxReadInterval: null,
+    readDelay: null,
+    overlap: null
   },
   {
     id: 'id9',
@@ -96,7 +136,12 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
     settings: {
       topic: 'my/second/topic' // Duplicate topic with id1
     },
-    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
+    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+    groups: [],
+    syncWithGroup: false,
+    maxReadInterval: null,
+    readDelay: null,
+    overlap: null
   },
   {
     id: 'id10',
@@ -105,7 +150,12 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
     settings: {
       topic: 'simple/+' // Simple wildcard
     },
-    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
+    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+    groups: [],
+    syncWithGroup: false,
+    maxReadInterval: null,
+    readDelay: null,
+    overlap: null
   }
 ];
 describe('Service utils MQTT', () => {

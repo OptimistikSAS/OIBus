@@ -83,7 +83,12 @@ describe('SouthMQTT', () => {
         settings: {
           topic: 'my/first/topic'
         },
-        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
+        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       },
       {
         id: 'id2',
@@ -92,7 +97,12 @@ describe('SouthMQTT', () => {
         settings: {
           topic: 'my/+/+/topic/with/wildcard/#'
         },
-        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
+        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       },
       {
         id: 'id3',
@@ -101,7 +111,12 @@ describe('SouthMQTT', () => {
         settings: {
           topic: 'my/wrong/topic////'
         },
-        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
+        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       },
       {
         id: 'id4',
@@ -110,7 +125,12 @@ describe('SouthMQTT', () => {
         settings: {
           topic: 'json/topic'
         },
-        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
+        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       },
       {
         id: 'id5',
@@ -119,7 +139,12 @@ describe('SouthMQTT', () => {
         settings: {
           topic: 'json/topic'
         },
-        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
+        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       },
       {
         id: 'id6',
@@ -128,7 +153,12 @@ describe('SouthMQTT', () => {
         settings: {
           topic: 'json/topic'
         },
-        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
+        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       }
     ]
   };
