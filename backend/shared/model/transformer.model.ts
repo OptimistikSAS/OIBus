@@ -17,6 +17,35 @@ export interface InputTemplate {
 }
 
 /**
+ * Manifest for a transformer type.
+ * Describes the configuration schema and capabilities of a transformer type.
+ */
+export interface TransformerManifest {
+  /**
+   * The unique identifier of the transformer type.
+   * @example "csv-to-mqtt"
+   */
+  id: string;
+
+  /**
+   * The input data type that the transformer accepts.
+   * @example "any"
+   */
+  inputType: InputType;
+
+  /**
+   * The output data type that the transformer produces.
+   * @example "mqtt"
+   */
+  outputType: OutputType;
+
+  /**
+   * The configuration schema for the transformer settings.
+   */
+  settings: OIBusObjectAttribute;
+}
+
+/**
  * Base Data Transfer Object for a transformer.
  * Represents the common properties of both custom and standard transformers.
  */
