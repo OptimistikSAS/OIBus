@@ -486,14 +486,24 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         name: 'item1',
         enabled: true,
         settings: {} as SouthItemSettings,
-        scanMode: scanModes[0]
+        scanMode: scanModes[0],
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       },
       {
         id: 'southItemId2',
         name: 'item2',
         enabled: true,
         settings: {} as SouthItemSettings,
-        scanMode: scanModes[1]
+        scanMode: scanModes[1],
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       }
     ]
   },
@@ -527,14 +537,24 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         name: 'item3',
         enabled: true,
         settings: {} as SouthItemSettings,
-        scanMode: scanModes[0]
+        scanMode: scanModes[0],
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       },
       {
         id: 'southItemId4',
         name: 'item4',
         enabled: true,
         settings: {} as SouthItemSettings,
-        scanMode: scanModes[0]
+        scanMode: scanModes[0],
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       }
     ]
   },
@@ -572,7 +592,12 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         settings: {
           mode: 'ha'
         } as SouthItemSettings,
-        scanMode: scanModes[0]
+        scanMode: scanModes[0],
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       },
       {
         id: 'southItemId6',
@@ -581,7 +606,12 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         settings: {
           mode: 'da'
         } as SouthItemSettings,
-        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
+        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       },
       {
         id: 'southItemId7',
@@ -590,7 +620,12 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         settings: {
           mode: 'da'
         } as SouthItemSettings,
-        scanMode: scanModes[1]
+        scanMode: scanModes[1],
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       },
       {
         id: 'southItemId8',
@@ -599,7 +634,12 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         settings: {
           mode: 'ha'
         } as SouthItemSettings,
-        scanMode: scanModes[0]
+        scanMode: scanModes[0],
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       }
     ]
   }
@@ -628,7 +668,13 @@ const southConnectorCommand: SouthConnectorCommandDTO = {
         recursive: false
       },
       scanModeId: scanModes[1].id,
-      scanModeName: null
+      scanModeName: null,
+      groupId: null,
+      groupName: null,
+      syncWithGroup: false,
+      maxReadInterval: null,
+      readDelay: null,
+      overlap: null
     }
   ]
 };
@@ -646,7 +692,13 @@ const southConnectorItemCommand: SouthConnectorItemCommandDTO = {
     maxFiles: 0,
     maxSize: 0,
     recursive: false
-  }
+  },
+  groupId: null,
+  groupName: null,
+  syncWithGroup: false,
+  maxReadInterval: null,
+  readDelay: null,
+  overlap: null
 };
 const itemTestingSettings: SouthConnectorItemTestingSettings = {
   history: {
@@ -905,7 +957,10 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
             outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
             outputTimezone: 'UTC'
           }
-        } as SouthMSSQLItemSettings
+        } as SouthMSSQLItemSettings,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       },
       {
         id: 'historyQueryItem2',
@@ -922,7 +977,10 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
             outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
             outputTimezone: 'UTC'
           }
-        } as SouthMSSQLItemSettings
+        } as SouthMSSQLItemSettings,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       }
     ],
     northTransformers: [
@@ -1009,7 +1067,10 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
             outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
             outputTimezone: 'UTC'
           }
-        } as SouthMSSQLItemSettings
+        } as SouthMSSQLItemSettings,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       }
     ],
     northTransformers: []

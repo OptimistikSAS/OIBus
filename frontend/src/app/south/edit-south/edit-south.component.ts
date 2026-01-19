@@ -258,7 +258,13 @@ export class EditSouthComponent implements OnInit, CanComponentDeactivate {
         name: item.name,
         settings: item.settings,
         scanModeId: item.scanMode.id,
-        scanModeName: null
+        scanModeName: null,
+        groupId: item.group?.id?.startsWith('temp_') ? null : item.group?.id || null,
+        groupName: item.group?.id?.startsWith('temp_') ? item.group.name : null,
+        syncWithGroup: item.syncWithGroup ?? false,
+        maxReadInterval: item.maxReadInterval ?? null,
+        readDelay: item.readDelay ?? 0,
+        overlap: item.overlap ?? null
       })) as any
     };
   }

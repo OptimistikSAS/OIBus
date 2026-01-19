@@ -10,7 +10,8 @@ export default class SouthCacheService {
    * Retrieve south cache or return a new one with startTime
    */
   getSouthCache(southId: string, scanModeId: string, itemId: string, startTime: Instant): SouthCache {
-    const southCache = this.cacheRepository.getSouthCache(southId, scanModeId, itemId);
+    const tableName = `south_item_cache_${southId}`;
+    const southCache = this.cacheRepository.getSouthCache(tableName, scanModeId, itemId);
     if (!southCache) {
       return {
         southId,
@@ -23,11 +24,13 @@ export default class SouthCacheService {
   }
 
   saveSouthCache(command: SouthCache): void {
-    this.cacheRepository.save(command);
+    const tableName = `south_item_cache_${command.southId}`;
+    this.cacheRepository.save(tableName, command);
   }
 
   resetSouthCache(id: string): void {
-    this.cacheRepository.deleteAllBySouthConnector(id);
+    const tableName = `south_item_cache_${id}`;
+    this.cacheRepository.deleteAllBySouthConnector(tableName);
   }
 
   createCustomTable(tableName: string, fields: string): void {

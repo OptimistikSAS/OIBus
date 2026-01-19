@@ -14,6 +14,15 @@ export interface SouthConnectorItemEntityLight extends BaseEntity {
   name: string;
 }
 
+export interface SouthItemGroupEntity extends BaseEntity {
+  name: string;
+  southId: string;
+  scanMode: ScanMode;
+  overlap: number | null;
+  maxReadInterval: number | null;
+  readDelay: number;
+}
+
 export interface SouthConnectorEntity<S extends SouthSettings, I extends SouthItemSettings> extends BaseEntity {
   name: string;
   type: OIBusSouthType;
@@ -28,6 +37,11 @@ export interface SouthConnectorItemEntity<I extends SouthItemSettings> extends B
   enabled: boolean;
   scanMode: ScanMode;
   settings: I;
+  groups: Array<SouthItemGroupEntity>;
+  syncWithGroup: boolean;
+  maxReadInterval: number | null;
+  readDelay: number | null;
+  overlap: number | null;
 }
 
 export interface SouthThrottlingSettings {
