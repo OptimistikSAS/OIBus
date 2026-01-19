@@ -4,6 +4,7 @@ import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock'; //
 import testData from '../../../tests/utils/test-data'; // Adjust path as necessary
 import { flushPromises } from '../../../tests/utils/test-utils'; // Adjust path as necessary
 import CSVToMQTTTransformer from './csv-to-mqtt-transformer';
+import csvToMqttManifest from './manifest';
 import { OIBusMQTTValue } from '../../connector-types.model';
 
 // 1. Mock External Utilities
@@ -356,8 +357,7 @@ describe('CSVToMQTTTransformer', () => {
   // 5. Manifest
   // --------------------------------------------------------------------------
   it('should return correct manifest settings', () => {
-    const manifest = CSVToMQTTTransformer.manifestSettings;
-    expect(manifest.key).toBe('options');
-    expect(manifest.attributes[0].key).toBe('delimiter');
+    expect(csvToMqttManifest.settings.key).toBe('options');
+    expect(csvToMqttManifest.settings.attributes[0].key).toBe('delimiter');
   });
 });
