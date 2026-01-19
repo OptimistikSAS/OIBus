@@ -63,12 +63,17 @@ export default class HistoryQuery {
           .filter(item => item.enabled)
           .map(item => ({
             ...item,
+            groups: [],
+            syncWithGroup: false,
             scanMode: {
               id: 'history',
               name: 'history',
               description: '',
               cron: ''
-            }
+            },
+            maxReadInterval: item.maxReadInterval ?? null,
+            readDelay: item.readDelay ?? 0,
+            overlap: item.overlap ?? null
           })),
         this.historyConfiguration.startTime,
         this.historyConfiguration.endTime,

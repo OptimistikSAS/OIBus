@@ -241,6 +241,46 @@ export interface SouthConnectorItemTypedDTO<IS> extends BaseEntity {
    * The scan mode configuration for this item.
    */
   scanMode: ScanModeDTO;
+
+  /**
+   * The group this item belongs to, if any.
+   */
+  group: SouthItemGroupDTO | null;
+
+  /**
+   * Whether this item syncs its historian settings with its group.
+   * When true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.
+   *
+   * @example true
+   */
+  syncWithGroup: boolean;
+
+  /**
+   * Maximum read interval in seconds for historical queries.
+   * Only applicable for connectors with historian capabilities.
+   * When null and item is in a group, inherits from group settings.
+   *
+   * @example 3600
+   */
+  maxReadInterval: number | null;
+
+  /**
+   * Read delay in milliseconds before querying historical data.
+   * Only applicable for connectors with historian capabilities.
+   * When null and item is in a group, inherits from group settings.
+   *
+   * @example 200
+   */
+  readDelay: number | null;
+
+  /**
+   * Default overlap in milliseconds for historical queries.
+   * Only applicable for connectors with historian capabilities.
+   * When null and item is in a group, inherits from group settings.
+   *
+   * @example 1000
+   */
+  overlap: number | null;
 }
 
 export interface ItemLightDTO extends BaseEntity {
@@ -250,6 +290,88 @@ export interface ItemLightDTO extends BaseEntity {
    * @example "Temperature Logs"
    */
   name: string;
+}
+
+/**
+ * Data Transfer Object for a South item group.
+ * Represents a group of items that can share common settings.
+ */
+export interface SouthItemGroupDTO extends BaseEntity {
+  /**
+   * The name of the group.
+   *
+   * @example "Production Line A"
+   */
+  name: string;
+
+  /**
+   * The scan mode configuration for this group (default schedule).
+   */
+  scanMode: ScanModeDTO;
+
+  /**
+   * Default overlap in milliseconds for historical queries.
+   * Only applicable for connectors with historian capabilities.
+   *
+   * @example 1000
+   */
+  overlap: number | null;
+
+  /**
+   * Maximum read interval in seconds for historical queries.
+   * Only applicable for connectors with historian capabilities.
+   *
+   * @example 3600
+   */
+  maxReadInterval: number | null;
+
+  /**
+   * Read delay in milliseconds before querying historical data.
+   * Only applicable for connectors with historian capabilities.
+   *
+   * @example 200
+   */
+  readDelay: number;
+}
+
+/**
+ * Command Data Transfer Object for creating or updating a South item group.
+ */
+export interface SouthItemGroupCommandDTO {
+  /**
+   * The name of the group.
+   *
+   * @example "Production Line A"
+   */
+  name: string;
+
+  /**
+   * The ID of the scan mode to use for this group.
+   *
+   * @example "periodic-5min"
+   */
+  scanModeId: string;
+
+  /**
+   * Default overlap in milliseconds for historical queries.
+   *
+   * @example 1000
+   */
+  overlap: number | null;
+
+  /**
+   * Maximum read interval in seconds for historical queries.
+   *
+   * @example 3600
+   */
+  maxReadInterval: number | null;
+
+  /**
+   * Read delay in milliseconds before querying historical data.
+   *
+   * @example 200
+   */
+  readDelay: number;
 }
 
 /**
@@ -358,6 +480,58 @@ export interface SouthConnectorItemCommandTypedDTO<IS> {
    * @example null
    */
   scanModeName: string | null;
+
+  /**
+   * The ID of the group this item belongs to.
+   * Null when the item is not in any group.
+   *
+   * @example "group-123"
+   */
+  groupId: string | null;
+
+  /**
+   * The name of the group this item belongs to.
+   * Used when importing from CSV where group IDs are not available.
+   * Null when the item is not in any group.
+   *
+   * @example "Production Line A"
+   */
+  groupName: string | null;
+
+  /**
+   * Whether this item syncs its historian settings with its group.
+   * When true, historian fields are inherited from the group.
+   *
+   * @example true
+   */
+  syncWithGroup: boolean;
+
+  /**
+   * Maximum read interval in seconds for historical queries.
+   * Only applicable for connectors with historian capabilities.
+   * When null and item is in a group, inherits from group settings.
+   *
+   * @example 3600
+   */
+  maxReadInterval: number | null;
+
+  /**
+   * Read delay in milliseconds before querying historical data.
+   * Only applicable for connectors with historian capabilities.
+   * When null and item is in a group, inherits from group settings.
+   *
+   * @example 200
+   */
+  readDelay: number | null;
+
+  /**
+   * Default overlap in milliseconds for historical queries.
+   * Only applicable for connectors with historian capabilities.
+   * When null and item is in a group, inherits from group settings.
+   *
+   * @example 1000
+   */
+  overlap: number | null;
 }
 
 /**

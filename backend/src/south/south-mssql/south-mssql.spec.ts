@@ -103,7 +103,12 @@ describe('SouthMSSQL with authentication', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       },
       {
         id: 'id2',
@@ -121,7 +126,12 @@ describe('SouthMSSQL with authentication', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       },
       {
         id: 'id3',
@@ -156,7 +166,12 @@ describe('SouthMSSQL with authentication', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanMode: testData.scanMode.list[1]
+        scanMode: testData.scanMode.list[1],
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       }
     ]
   };
@@ -359,7 +374,12 @@ describe('SouthMSSQL without authentication', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       },
       {
         id: 'id2',
@@ -377,7 +397,12 @@ describe('SouthMSSQL without authentication', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       },
       {
         id: 'id3',
@@ -412,7 +437,12 @@ describe('SouthMSSQL without authentication', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanMode: testData.scanMode.list[1]
+        scanMode: testData.scanMode.list[1],
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       }
     ]
   };
@@ -518,7 +548,12 @@ describe('SouthMSSQL test connection', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       },
       {
         id: 'id2',
@@ -536,7 +571,12 @@ describe('SouthMSSQL test connection', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       },
       {
         id: 'id3',
@@ -571,7 +611,12 @@ describe('SouthMSSQL test connection', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanMode: testData.scanMode.list[1]
+        scanMode: testData.scanMode.list[1],
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       }
     ]
   };
