@@ -9,7 +9,8 @@ import {
   SouthConnectorCommandDTO,
   SouthConnectorDTO,
   SouthConnectorItemDTO,
-  SouthConnectorManifest
+  SouthConnectorManifest,
+  SouthItemGroupDTO
 } from '../../../../../backend/shared/model/south-connector.model';
 import { EditSouthItemModalComponent } from './edit-south-item-modal/edit-south-item-modal.component';
 import { debounceTime, distinctUntilChanged, firstValueFrom, of, switchMap } from 'rxjs';
@@ -25,7 +26,8 @@ import { ImportItemModalComponent } from '../../shared/import-item-modal/import-
 import { OIBusAttribute, OIBusObjectAttribute, OIBusScanModeAttribute } from '../../../../../backend/shared/model/form.model';
 import { isDisplayableAttribute } from '../../shared/form/dynamic-form.builder';
 import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { SelectGroupModalComponent } from './select-group-modal/select-group-modal.component';
 
 const PAGE_SIZE = 20;
 
@@ -52,7 +54,10 @@ export interface TableData {
     OibHelpComponent,
     TranslatePipe,
     TranslateModule,
-    NgbTooltip
+    NgbTooltip,
+    NgbDropdown,
+    NgbDropdownToggle,
+    NgbDropdownMenu
   ],
   templateUrl: './south-items.component.html',
   styleUrl: './south-items.component.scss'
@@ -89,6 +94,7 @@ export class SouthItemsComponent implements OnInit {
 
   displayedItems: Page<SouthConnectorItemDTO> = emptyPage();
   displaySettings: Array<OIBusAttribute> = [];
+  groups: Array<SouthItemGroupDTO> = [];
 
   searchControl = inject(NonNullableFormBuilder).control(null as string | null);
 
@@ -136,6 +142,13 @@ export class SouthItemsComponent implements OnInit {
       attribute => attribute.key === 'settings'
     )! as OIBusObjectAttribute;
     this.displaySettings = settingsAttribute.attributes.filter(setting => isDisplayableAttribute(setting));
+
+    // Load groups if not in create mode
+    if (this.southId() !== 'create') {
+      this.southConnectorService.getGroups(this.southId()).subscribe(groups => {
+        this.groups = groups;
+      });
+    }
 
     // subscribe to changes to search control
     this.searchControl.valueChanges.pipe(debounceTime(200), distinctUntilChanged()).subscribe(() => {
@@ -223,15 +236,21 @@ export class SouthItemsComponent implements OnInit {
               enabled: command.enabled,
               scanModeId: command.scanMode.id,
               scanModeName: null,
-              settings: command.settings
+              settings: command.settings,
+              groupId: command.group?.id || null
             } as any);
           } else {
+            // In create/edit mode, add the group to local groups if it's new
+            if (command.group && !this.groups.find(g => g.id === command.group!.id)) {
+              this.groups.push(command.group);
+            }
             this.allItems.push({
               id: command.id,
               name: command.name,
               enabled: command.enabled,
               scanMode: command.scanMode,
-              settings: command.settings
+              settings: command.settings,
+              group: command.group
             } as any);
             return of(null);
           }
@@ -240,6 +259,12 @@ export class SouthItemsComponent implements OnInit {
       .subscribe(() => {
         if (this.saveChangesDirectly()) {
           this.notificationService.success(`south.items.created`);
+          // Reload groups in case a new group was created
+          if (this.southId() !== 'create') {
+            this.southConnectorService.getGroups(this.southId()).subscribe(groups => {
+              this.groups = groups;
+            });
+          }
           this.inMemoryItems.emit(null);
         } else {
           this.inMemoryItems.emit(this.allItems);
@@ -262,12 +287,22 @@ export class SouthItemsComponent implements OnInit {
               name: command.name,
               settings: command.settings,
               scanModeName: null,
-              scanModeId: command.scanMode.id
+              scanModeId: command.scanMode.id,
+              groupId: command.group?.id || null
             } as any);
           } else {
+            // In create/edit mode, add the group to local groups if it's new
+            if (command.group && !this.groups.find(g => g.id === command.group!.id)) {
+              this.groups.push(command.group);
+            }
             this.allItems = this.allItems.filter(item => item.name !== oldItem.name);
             // Preserve id when present, merge changes otherwise
-            this.allItems.push({ ...oldItem, ...command, id: (oldItem as any).id ?? command.id ?? null } as any);
+            this.allItems.push({
+              ...oldItem,
+              ...command,
+              id: (oldItem as any).id ?? command.id ?? null,
+              group: command.group
+            } as any);
             return of(null);
           }
         })
@@ -275,6 +310,12 @@ export class SouthItemsComponent implements OnInit {
       .subscribe(() => {
         if (this.saveChangesDirectly()) {
           this.notificationService.success(`south.items.updated`);
+          // Reload groups in case a new group was created or group was changed
+          if (this.southId() !== 'create') {
+            this.southConnectorService.getGroups(this.southId()).subscribe(groups => {
+              this.groups = groups;
+            });
+          }
           this.inMemoryItems.emit(null);
         } else {
           this.inMemoryItems.emit(this.allItems);
@@ -447,7 +488,8 @@ export class SouthItemsComponent implements OnInit {
                 name: item.name,
                 settings: item.settings,
                 scanModeId: item.scanMode.id,
-                scanModeName: null
+                scanModeName: null,
+                groupId: item.group?.id || null
               })) as any
             );
           } else {
@@ -634,5 +676,62 @@ export class SouthItemsComponent implements OnInit {
           this.refreshCurrentPage();
         }
       });
+  }
+
+  moveSelectedItemsToGroup() {
+    if (this.selectedItems.size === 0) return;
+
+    const modalRef = this.modalService.open(SelectGroupModalComponent, { backdrop: 'static' });
+    const component: SelectGroupModalComponent = modalRef.componentInstance;
+    component.prepare(this.groups, this.southId(), this.scanModes(), this.southManifest());
+
+    modalRef.result.subscribe({
+      next: (groupId: string | null) => {
+        if (groupId === undefined) return; // dismissed
+
+        if (this.saveChangesDirectly()) {
+          const itemIds = Array.from(this.selectedItems.values(), item => item.id!);
+          if (itemIds.length === 0) return;
+          this.southConnectorService.moveItemsToGroup(this.southId(), itemIds, groupId).subscribe({
+            next: () => {
+              this.notificationService.success('south.items.moved-to-group', { count: itemIds.length.toString() });
+              this.selectedItems.clear();
+              this.updateSelectionState();
+              this.inMemoryItems.emit(null);
+              // Reload groups in case a new group was created
+              if (this.southId() !== 'create') {
+                this.southConnectorService.getGroups(this.southId()).subscribe(groups => {
+                  this.groups = groups;
+                });
+              }
+            },
+            error: error => {
+              this.notificationService.error('south.items.move-to-group-error', { error: error.message });
+            }
+          });
+        } else {
+          // Update groups list from the modal in case a new one was created
+          this.groups = component.groups;
+          this.allItems = this.allItems.map(item => {
+            if (this.selectedItems.has(item.name)) {
+              const group = groupId ? this.groups.find(g => g.id === groupId) : null;
+              return { ...item, group } as SouthConnectorItemDTO;
+            }
+            return item;
+          });
+          this.selectedItems.clear();
+          this.updateSelectionState();
+          this.inMemoryItems.emit(this.allItems);
+          this.refreshCurrentPage();
+        }
+      },
+      error: () => {
+        // Modal was dismissed
+      }
+    });
+  }
+
+  getGroupName(item: SouthConnectorItemDTO): string {
+    return item.group?.name || this.translateService.instant('south.items.group-none');
   }
 }

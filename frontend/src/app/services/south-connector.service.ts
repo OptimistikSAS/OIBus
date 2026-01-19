@@ -11,6 +11,8 @@ import {
   SouthConnectorItemTestingSettings,
   SouthConnectorLightDTO,
   SouthConnectorManifest,
+  SouthItemGroupCommandDTO,
+  SouthItemGroupDTO,
   SouthType
 } from '../../../../backend/shared/model/south-connector.model';
 import { Page } from '../../../../backend/shared/model/types';
@@ -286,5 +288,60 @@ export class SouthConnectorService {
     formData.set('items', new Blob([JSON.stringify(items)], { type: 'application/json' }), 'items.json');
 
     return this.http.post<void>(`/api/south/${southId}/items/import`, formData);
+  }
+
+  /**
+   * Get all groups for a south connector
+   * @param southId - the ID of the South connector
+   */
+  getGroups(southId: string): Observable<Array<SouthItemGroupDTO>> {
+    return this.http.get<Array<SouthItemGroupDTO>>(`/api/south/${southId}/groups`);
+  }
+
+  /**
+   * Get a specific group by ID
+   * @param southId - the ID of the South connector
+   * @param groupId - the ID of the group
+   */
+  getGroup(southId: string, groupId: string): Observable<SouthItemGroupDTO> {
+    return this.http.get<SouthItemGroupDTO>(`/api/south/${southId}/groups/${groupId}`);
+  }
+
+  /**
+   * Create a new group
+   * @param southId - the ID of the South connector
+   * @param command - the group to create
+   */
+  createGroup(southId: string, command: SouthItemGroupCommandDTO): Observable<SouthItemGroupDTO> {
+    return this.http.post<SouthItemGroupDTO>(`/api/south/${southId}/groups`, command);
+  }
+
+  /**
+   * Update an existing group
+   * @param southId - the ID of the South connector
+   * @param groupId - the ID of the group
+   * @param command - the updated group values
+   */
+  updateGroup(southId: string, groupId: string, command: SouthItemGroupCommandDTO): Observable<void> {
+    return this.http.put<void>(`/api/south/${southId}/groups/${groupId}`, command);
+  }
+
+  /**
+   * Delete a group
+   * @param southId - the ID of the South connector
+   * @param groupId - the ID of the group to delete
+   */
+  deleteGroup(southId: string, groupId: string): Observable<void> {
+    return this.http.delete<void>(`/api/south/${southId}/groups/${groupId}`);
+  }
+
+  /**
+   * Move items to a group (or remove from group if groupId is null)
+   * @param southId - the ID of the South connector
+   * @param itemIds - array of item IDs to move
+   * @param groupId - the ID of the group (or null to remove from group)
+   */
+  moveItemsToGroup(southId: string, itemIds: Array<string>, groupId: string | null): Observable<void> {
+    return this.http.post<void>(`/api/south/${southId}/items/move-to-group`, { itemIds, groupId });
   }
 }

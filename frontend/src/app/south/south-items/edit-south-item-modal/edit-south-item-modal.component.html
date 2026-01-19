@@ -13,6 +13,22 @@
             <val-errors controlName="name" />
           </div>
         </div>
+        <!-- Group -->
+        @if (southId !== 'create') {
+          <div class="col-3">
+            <div class="form-group">
+              <label for="group" class="form-label" translate="south.items.group"></label>
+              <select class="form-select" id="group" formControlName="groupId" (change)="onGroupChange($event)">
+                <option [ngValue]="null" translate="south.items.group-none"></option>
+                @for (group of groups; track group.id) {
+                  <option [ngValue]="group.id">{{ group.name }}</option>
+                }
+                <option [ngValue]="'__create_new__'" translate="south.items.create-new-group"></option>
+              </select>
+              <val-errors controlName="groupId" />
+            </div>
+          </div>
+        }
         <!-- Scan mode -->
         @if (form.controls.scanMode.enabled) {
           <div class="col-3">
@@ -33,7 +49,7 @@
           <div class="form-group">
             <div class="form-check form-switch padded">
               <input formControlName="enabled" id="item-enabled" type="checkbox" class="form-check-input" />
-              <label class="form-check-label" for="item-enabled" translate="south.items.enable"></label>
+              <label class="form-check-label" for="item-enabled" translate="south.items.enabled-label"></label>
             </div>
           </div>
         </div>

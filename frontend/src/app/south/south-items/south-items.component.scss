@@ -72,3 +72,70 @@ td:first-child {
   justify-content: center;
   min-width: fit-content;
 }
+
+// Modern dropdown styling
+:host ::ng-deep {
+  #mass-actions-dropdown {
+    min-width: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+
+    &::after {
+      margin-left: auto;
+      margin-right: 0;
+    }
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  .dropdown-menu {
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    padding: 0.5rem 0;
+    min-width: 200px;
+
+    .dropdown-item {
+      padding: 0.625rem 1rem;
+      display: flex;
+      align-items: center;
+      transition: all 0.15s ease;
+      font-size: 0.875rem;
+
+      &:hover {
+        background-color: #f8f9fa;
+        transform: translateX(2px);
+      }
+
+      &:active {
+        background-color: #e9ecef;
+      }
+
+      .fa {
+        width: 16px;
+        text-align: center;
+      }
+
+      &.text-danger {
+        color: #dc3545 !important;
+
+        &:hover {
+          background-color: #fee;
+          color: #c82333 !important;
+        }
+      }
+    }
+
+    .dropdown-divider {
+      margin: 0.5rem 0;
+      border-top: 1px solid #e9ecef;
+    }
+  }
+}

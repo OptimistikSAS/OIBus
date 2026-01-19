@@ -6,6 +6,7 @@ import { OIBusSouthType, SouthConnectorItemSearchParam } from '../../../shared/m
 import { Page } from '../../../shared/model/types';
 import { ScanMode } from '../../model/scan-mode.model';
 import { toScanMode } from './scan-mode.repository';
+import SouthItemGroupRepository, { toSouthItemGroup } from './south-item-group.repository';
 
 const SOUTH_CONNECTORS_TABLE = 'south_connectors';
 const SOUTH_ITEMS_TABLE = 'south_items';
@@ -15,7 +16,11 @@ const SCAN_MODE = 'scan_modes';
 const PAGE_SIZE = 50;
 
 export default class SouthConnectorRepository {
-  constructor(private readonly database: Database) {}
+  private groupRepository: SouthItemGroupRepository;
+
+  constructor(private readonly database: Database) {
+    this.groupRepository = new SouthItemGroupRepository(database);
+  }
 
   findAllSouth(): Array<SouthConnectorEntityLight> {
     const query = `SELECT id, name, type, description, enabled FROM ${SOUTH_CONNECTORS_TABLE};`;
@@ -79,17 +84,32 @@ export default class SouthConnectorRepository {
             south.items.filter(item => item.id).map(item => item.id)
           );
         const insert = this.database.prepare(
-          `INSERT INTO ${SOUTH_ITEMS_TABLE} (id, name, enabled, connector_id, scan_mode_id, settings) VALUES (?, ?, ?, ?, ?, ?);`
+          `INSERT INTO ${SOUTH_ITEMS_TABLE} (id, name, enabled, connector_id, scan_mode_id, settings, group_id) VALUES (?, ?, ?, ?, ?, ?, ?);`
         );
         const update = this.database.prepare(
-          `UPDATE ${SOUTH_ITEMS_TABLE} SET name = ?, enabled = ?, scan_mode_id = ?, settings = ? WHERE id = ?;`
+          `UPDATE ${SOUTH_ITEMS_TABLE} SET name = ?, enabled = ?, scan_mode_id = ?, settings = ?, group_id = ? WHERE id = ?;`
         );
         for (const item of south.items) {
           if (!item.id) {
             item.id = generateRandomId(6);
-            insert.run(item.id, item.name, +item.enabled, south.id, item.scanMode.id, JSON.stringify(item.settings));
+            insert.run(
+              item.id,
+              item.name,
+              +item.enabled,
+              south.id,
+              item.scanMode.id,
+              JSON.stringify(item.settings),
+              item.group?.id ?? null
+            );
           } else {
-            update.run(item.name, +item.enabled, item.scanMode.id, JSON.stringify(item.settings), item.id);
+            update.run(
+              item.name,
+              +item.enabled,
+              item.scanMode.id,
+              JSON.stringify(item.settings),
+              item.group?.id ?? null,
+              item.id
+            );
           }
         }
       } else {
@@ -153,7 +173,7 @@ export default class SouthConnectorRepository {
       queryParams.push(searchParams.name);
       whereClause += ` AND name like '%' || ? || '%'`;
     }
-    const query = `SELECT id, name, enabled, scan_mode_id, settings FROM ${SOUTH_ITEMS_TABLE} ${whereClause};`;
+    const query = `SELECT id, name, enabled, scan_mode_id, settings, group_id FROM ${SOUTH_ITEMS_TABLE} ${whereClause};`;
 
     return this.database
       .prepare(query)
@@ -180,7 +200,7 @@ export default class SouthConnectorRepository {
       whereClause += ` AND name like '%' || ? || '%'`;
     }
     const query =
-      `SELECT id, name, enabled, scan_mode_id, settings FROM ${SOUTH_ITEMS_TABLE} ${whereClause}` +
+      `SELECT id, name, enabled, scan_mode_id, settings, group_id FROM ${SOUTH_ITEMS_TABLE} ${whereClause}` +
       ` LIMIT ${PAGE_SIZE} OFFSET ${PAGE_SIZE * page};`;
     const results = this.database
       .prepare(query)
@@ -201,7 +221,7 @@ export default class SouthConnectorRepository {
   }
 
   findAllItemsForSouth(southId: string): Array<SouthConnectorItemEntity<SouthItemSettings>> {
-    const query = `SELECT id, name, enabled, scan_mode_id, settings FROM ${SOUTH_ITEMS_TABLE} WHERE connector_id = ?;`;
+    const query = `SELECT id, name, enabled, scan_mode_id, settings, group_id FROM ${SOUTH_ITEMS_TABLE} WHERE connector_id = ?;`;
     return this.database
       .prepare(query)
       .all(southId)
@@ -209,7 +229,7 @@ export default class SouthConnectorRepository {
   }
 
   findItemById(southConnectorId: string, itemId: string): SouthConnectorItemEntity<SouthItemSettings> | null {
-    const query = `SELECT id, name, enabled, scan_mode_id, settings FROM ${SOUTH_ITEMS_TABLE} WHERE id = ? AND connector_id = ?;`;
+    const query = `SELECT id, name, enabled, scan_mode_id, settings, group_id FROM ${SOUTH_ITEMS_TABLE} WHERE id = ? AND connector_id = ?;`;
     const result = this.database.prepare(query).get(itemId, southConnectorId);
     if (!result) return null;
     return this.toSouthConnectorItemEntity(result as Record<string, string>);
@@ -219,15 +239,30 @@ export default class SouthConnectorRepository {
     if (!southItem.id) {
       southItem.id = generateRandomId(6);
       const insertQuery =
-        `INSERT INTO ${SOUTH_ITEMS_TABLE} (id, name, enabled, connector_id, scan_mode_id, settings) ` + `VALUES (?, ?, ?, ?, ?, ?);`;
+        `INSERT INTO ${SOUTH_ITEMS_TABLE} (id, name, enabled, connector_id, scan_mode_id, settings, group_id) ` + `VALUES (?, ?, ?, ?, ?, ?, ?);`;
       this.database
         .prepare(insertQuery)
-        .run(southItem.id, southItem.name, +southItem.enabled, southConnectorId, southItem.scanMode.id, JSON.stringify(southItem.settings));
+        .run(
+          southItem.id,
+          southItem.name,
+          +southItem.enabled,
+          southConnectorId,
+          southItem.scanMode.id,
+          JSON.stringify(southItem.settings),
+          southItem.group?.id ?? null
+        );
     } else {
-      const query = `UPDATE ${SOUTH_ITEMS_TABLE} SET name = ?, enabled = ?, scan_mode_id = ?, settings = ? WHERE id = ?;`;
+      const query = `UPDATE ${SOUTH_ITEMS_TABLE} SET name = ?, enabled = ?, scan_mode_id = ?, settings = ?, group_id = ? WHERE id = ?;`;
       this.database
         .prepare(query)
-        .run(southItem.name, +southItem.enabled, southItem.scanMode.id, JSON.stringify(southItem.settings), southItem.id);
+        .run(
+          southItem.name,
+          +southItem.enabled,
+          southItem.scanMode.id,
+          JSON.stringify(southItem.settings),
+          southItem.group?.id ?? null,
+          southItem.id
+        );
     }
   }
 
@@ -287,6 +322,12 @@ export default class SouthConnectorRepository {
     this.database.prepare(query).run(id);
   }
 
+  moveItemsToGroup(itemIds: Array<string>, groupId: string | null): void {
+    const placeholders = itemIds.map(() => '?').join(', ');
+    const query = `UPDATE ${SOUTH_ITEMS_TABLE} SET group_id = ? WHERE id IN (${placeholders});`;
+    this.database.prepare(query).run(groupId, ...itemIds);
+  }
+
   findScanModeForSouth(scanModeId: string): ScanMode {
     const query = `SELECT id, name, description, cron FROM ${SCAN_MODE} WHERE id = ?;`;
     const result = this.database.prepare(query).get(scanModeId) as Record<string, string>;
@@ -294,12 +335,15 @@ export default class SouthConnectorRepository {
   }
 
   private toSouthConnectorItemEntity(result: Record<string, string>): SouthConnectorItemEntity<SouthItemSettings> {
+    const groupId = result.group_id as string | undefined;
+    const group = groupId ? this.groupRepository.findById(groupId) : null;
     return {
       id: result.id,
       name: result.name,
       enabled: Boolean(result.enabled),
       scanMode: this.findScanModeForSouth(result.scan_mode_id as string),
-      settings: JSON.parse(result.settings) as SouthItemSettings
+      settings: JSON.parse(result.settings) as SouthItemSettings,
+      group
     };
   }
 

@@ -241,6 +241,11 @@ export interface SouthConnectorItemTypedDTO<IS> extends BaseEntity {
    * The scan mode configuration for this item.
    */
   scanMode: ScanModeDTO;
+
+  /**
+   * The group this item belongs to, if any.
+   */
+  group: SouthItemGroupDTO | null;
 }
 
 export interface ItemLightDTO extends BaseEntity {
@@ -250,6 +255,73 @@ export interface ItemLightDTO extends BaseEntity {
    * @example "Temperature Logs"
    */
   name: string;
+}
+
+/**
+ * Data Transfer Object for a South item group.
+ * Represents a group of items that can share common settings.
+ */
+export interface SouthItemGroupDTO extends BaseEntity {
+  /**
+   * The name of the group.
+   *
+   * @example "Production Line A"
+   */
+  name: string;
+
+  /**
+   * The scan mode configuration for this group (default schedule).
+   */
+  scanMode: ScanModeDTO;
+
+  /**
+   * Whether items in this group share tracked instant.
+   * Only applicable for connectors with historian capabilities.
+   *
+   * @example false
+   */
+  shareTrackedInstant: boolean;
+
+  /**
+   * Default overlap in milliseconds for historical queries.
+   * Only applicable for connectors with historian capabilities.
+   *
+   * @example 1000
+   */
+  overlap: number | null;
+}
+
+/**
+ * Command Data Transfer Object for creating or updating a South item group.
+ */
+export interface SouthItemGroupCommandDTO {
+  /**
+   * The name of the group.
+   *
+   * @example "Production Line A"
+   */
+  name: string;
+
+  /**
+   * The ID of the scan mode to use for this group.
+   *
+   * @example "periodic-5min"
+   */
+  scanModeId: string;
+
+  /**
+   * Whether items in this group share tracked instant.
+   *
+   * @example false
+   */
+  shareTrackedInstant: boolean;
+
+  /**
+   * Default overlap in milliseconds for historical queries.
+   *
+   * @example 1000
+   */
+  overlap: number | null;
 }
 
 /**
@@ -358,6 +430,14 @@ export interface SouthConnectorItemCommandTypedDTO<IS> {
    * @example null
    */
   scanModeName: string | null;
+
+  /**
+   * The ID of the group this item belongs to.
+   * Null when the item is not in any group.
+   *
+   * @example "group-123"
+   */
+  groupId: string | null;
 }
 
 /**

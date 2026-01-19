@@ -24,6 +24,8 @@ import {
   SouthConnectorItemTestingSettings,
   SouthConnectorLightDTO,
   SouthConnectorManifest,
+  SouthItemGroupCommandDTO,
+  SouthItemGroupDTO,
   SouthType
 } from '../../../shared/model/south-connector.model';
 import { Page } from '../../../shared/model/types';
@@ -523,5 +525,93 @@ export class SouthConnectorController extends Controller {
     }
     const items: Array<SouthConnectorItemCommandDTO> = JSON.parse(itemsFile.buffer.toString('utf8'));
     await southService.importItems(southId, items);
+  }
+
+  /**
+   * Lists all groups for a south connector
+   * @summary List south item groups
+   * @returns {Promise<Array<SouthItemGroupDTO>>} Array of group objects
+   */
+  @Get('/{southId}/groups')
+  async listGroups(@Path() southId: string, @Request() request: CustomExpressRequest): Promise<Array<SouthItemGroupDTO>> {
+    const southService = request.services.southService as SouthService;
+    return southService.getGroups(southId);
+  }
+
+  /**
+   * Gets a specific group by ID
+   * @summary Get south item group
+   * @returns {Promise<SouthItemGroupDTO>} The group object
+   */
+  @Get('/{southId}/groups/{groupId}')
+  async getGroup(
+    @Path() southId: string,
+    @Path() groupId: string,
+    @Request() request: CustomExpressRequest
+  ): Promise<SouthItemGroupDTO> {
+    const southService = request.services.southService as SouthService;
+    return southService.getGroup(southId, groupId);
+  }
+
+  /**
+   * Creates a new group for a south connector
+   * @summary Create south item group
+   * @returns {Promise<SouthItemGroupDTO>} The created group
+   */
+  @Post('/{southId}/groups')
+  @SuccessResponse(201, 'Created')
+  async createGroup(
+    @Path() southId: string,
+    @Body() command: SouthItemGroupCommandDTO,
+    @Request() request: CustomExpressRequest
+  ): Promise<SouthItemGroupDTO> {
+    const southService = request.services.southService as SouthService;
+    return southService.createGroup(southId, command);
+  }
+
+  /**
+   * Updates an existing group
+   * @summary Update south item group
+   */
+  @Put('/{southId}/groups/{groupId}')
+  @SuccessResponse(204, 'No Content')
+  async updateGroup(
+    @Path() southId: string,
+    @Path() groupId: string,
+    @Body() command: SouthItemGroupCommandDTO,
+    @Request() request: CustomExpressRequest
+  ): Promise<void> {
+    const southService = request.services.southService as SouthService;
+    await southService.updateGroup(southId, groupId, command);
+  }
+
+  /**
+   * Deletes a group
+   * @summary Delete south item group
+   */
+  @Delete('/{southId}/groups/{groupId}')
+  @SuccessResponse(204, 'No Content')
+  async deleteGroup(
+    @Path() southId: string,
+    @Path() groupId: string,
+    @Request() request: CustomExpressRequest
+  ): Promise<void> {
+    const southService = request.services.southService as SouthService;
+    await southService.deleteGroup(southId, groupId);
+  }
+
+  /**
+   * Moves items to a group (or removes them from a group if groupId is null)
+   * @summary Move items to group
+   */
+  @Post('/{southId}/items/move-to-group')
+  @SuccessResponse(204, 'No Content')
+  async moveItemsToGroup(
+    @Path() southId: string,
+    @Body() body: { itemIds: Array<string>; groupId: string | null },
+    @Request() request: CustomExpressRequest
+  ): Promise<void> {
+    const southService = request.services.southService as SouthService;
+    await southService.moveItemsToGroup(southId, body.itemIds, body.groupId);
   }
 }

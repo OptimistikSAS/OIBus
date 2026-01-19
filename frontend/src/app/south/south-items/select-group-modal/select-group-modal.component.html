@@ -1,0 +1,35 @@
+<div class="modal-header">
+  <h4 class="modal-title" translate="south.items.move-to-group-title"></h4>
+</div>
+<div class="modal-body">
+  <form [formGroup]="form" (ngSubmit)="confirm()" id="form">
+    <div class="form-group">
+      <label class="form-label" translate="south.items.select-group"></label>
+      <div>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" formControlName="groupId" [value]="null" id="group-none" />
+          <label class="form-check-label" for="group-none" translate="south.items.group-none"></label>
+        </div>
+        @for (group of groups; track group.id) {
+          <div class="form-check">
+            <input class="form-check-input" type="radio" formControlName="groupId" [value]="group.id" [id]="'group-' + group.id" />
+            <label class="form-check-label" [for]="'group-' + group.id">{{ group.name }}</label>
+          </div>
+        }
+        <div class="mt-3">
+          <button type="button" class="btn btn-sm btn-outline-primary" (click)="onCreateNewGroup()">
+            <span class="fa fa-plus me-1"></span>
+            <span translate="south.items.create-new-group"></span>
+          </button>
+        </div>
+      </div>
+      <val-errors controlName="groupId" />
+    </div>
+  </form>
+</div>
+<div class="modal-footer">
+  <div class="btn-group">
+    <button type="button" class="btn btn-primary" (click)="confirm()" [disabled]="!form.valid" translate="common.confirm"></button>
+    <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel"></button>
+  </div>
+</div>

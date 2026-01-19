@@ -678,8 +678,9 @@ export const itemToFlattenedCSV = (
 
   return csv.unparse(
     items.map(item => {
+      const { group, ...itemWithoutGroup } = item as SouthConnectorItemDTO;
       const flattenedItem: Record<string, string | object | boolean> = {
-        ...item
+        ...itemWithoutGroup
       };
       if (scanModes) {
         flattenedItem.scanMode = (item as SouthConnectorItemDTO).scanMode.name;

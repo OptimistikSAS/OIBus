@@ -10,7 +10,9 @@ import {
   SouthConnectorItemSearchParam,
   SouthConnectorItemTestingSettings,
   SouthConnectorLightDTO,
-  SouthConnectorManifest
+  SouthConnectorManifest,
+  SouthItemGroupCommandDTO,
+  SouthItemGroupDTO
 } from '../../shared/model/south-connector.model';
 
 import oianalyticsManifest from '../south/south-oianalytics/manifest';
@@ -32,7 +34,12 @@ import sftpManifest from '../south/south-sftp/manifest';
 import ftpManifest from '../south/south-ftp/manifest';
 import restManifest from '../south/south-rest/manifest';
 import { OIBusContent } from '../../shared/model/engine.model';
-import { SouthConnectorEntity, SouthConnectorEntityLight, SouthConnectorItemEntity } from '../model/south-connector.model';
+import {
+  SouthConnectorEntity,
+  SouthConnectorEntityLight,
+  SouthConnectorItemEntity,
+  SouthItemGroupEntity
+} from '../model/south-connector.model';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
 import LogRepository from '../repository/logs/log.repository';
@@ -40,6 +47,7 @@ import SouthConnectorMetricsRepository from '../repository/metrics/south-connect
 import { Page } from '../../shared/model/types';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
+import SouthItemGroupRepository from '../repository/config/south-item-group.repository';
 import { checkScanMode, stringToBoolean } from './utils';
 import { ScanMode } from '../model/scan-mode.model';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
@@ -87,7 +95,8 @@ export default class SouthService {
     private readonly oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
     private readonly certificateRepository: CertificateRepository,
     private readonly oIAnalyticsMessageService: OIAnalyticsMessageService,
-    private readonly engine: DataStreamEngine
+    private readonly engine: DataStreamEngine,
+    private readonly southItemGroupRepository: SouthItemGroupRepository
   ) {}
 
   listManifest(): Array<SouthConnectorManifest> {
@@ -227,7 +236,7 @@ export default class SouthService {
       enabled: false,
       settings: await encryptionService.encryptConnectorSecrets(settingsToTest, southConnector?.settings || null, manifest.settings),
       name: southConnector ? southConnector.name : `${southType}:test-connection`,
-      items: []
+      items: [] as Array<SouthConnectorItemEntity<SouthItemSettings>>
     };
 
     /* istanbul ignore next */
@@ -274,6 +283,7 @@ export default class SouthService {
       id: 'test',
       enabled: false,
       name: itemName,
+      group: null,
       scanMode: {
         id: '',
         name: '',
@@ -338,7 +348,15 @@ export default class SouthService {
     await this.validator.validateSettings(itemSettingsManifest, command.settings);
 
     const southItemEntity = {} as SouthConnectorItemEntity<SouthItemSettings>;
-    await copySouthItemCommandToSouthItemEntity(southItemEntity, command, null, southConnector.type, this.scanModeRepository.findAll());
+    await copySouthItemCommandToSouthItemEntity(
+      southItemEntity,
+      command,
+      null,
+      southConnector.type,
+      this.scanModeRepository.findAll(),
+      false,
+      this.southItemGroupRepository
+    );
     this.southConnectorRepository.saveItem(southConnector.id, southItemEntity);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     await this.engine.reloadSouthItems(southConnector);
@@ -360,7 +378,9 @@ export default class SouthService {
       command,
       existingItem,
       southConnector.type,
-      this.scanModeRepository.findAll()
+      this.scanModeRepository.findAll(),
+      false,
+      this.southItemGroupRepository
     );
     this.southConnectorRepository.saveItem(southId, southItemEntity);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
@@ -524,11 +544,132 @@ export default class SouthService {
     for (const itemCommand of items) {
       await this.validator.validateSettings(itemSettingsManifest, itemCommand.settings);
       const southItemEntity = {} as SouthConnectorItemEntity<SouthItemSettings>;
-      await copySouthItemCommandToSouthItemEntity(southItemEntity, itemCommand, null, southConnector.type, scanModes);
+      await copySouthItemCommandToSouthItemEntity(
+        southItemEntity,
+        itemCommand,
+        null,
+        southConnector.type,
+        scanModes,
+        false,
+        this.southItemGroupRepository
+      );
       itemsToAdd.push(southItemEntity);
     }
 
     this.southConnectorRepository.saveAllItems(southConnector.id, itemsToAdd, deleteItemsNotPresent);
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    await this.engine.reloadSouthItems(southConnector);
+  }
+
+  getGroups(southId: string): Array<SouthItemGroupDTO> {
+    this.findById(southId); // Verify south connector exists
+    return this.southItemGroupRepository.findBySouthId(southId).map(group => toSouthItemGroupDTO(group));
+  }
+
+  getGroup(southId: string, groupId: string): SouthItemGroupDTO {
+    this.findById(southId); // Verify south connector exists
+    const group = this.southItemGroupRepository.findById(groupId);
+    if (!group) {
+      throw new NotFoundError(`South item group "${groupId}" not found`);
+    }
+    if (group.southId !== southId) {
+      throw new NotFoundError(`South item group "${groupId}" does not belong to south connector "${southId}"`);
+    }
+    return toSouthItemGroupDTO(group);
+  }
+
+  createGroup(southId: string, command: SouthItemGroupCommandDTO): SouthItemGroupDTO {
+    this.findById(southId); // Verify south connector exists
+    const scanModes = this.scanModeRepository.findAll();
+    const scanMode = checkScanMode(scanModes, command.scanModeId, null);
+
+    // Check for duplicate name
+    const existingGroups = this.southItemGroupRepository.findBySouthId(southId);
+    if (existingGroups.some(g => g.name === command.name)) {
+      throw new OIBusValidationError(`A group with name "${command.name}" already exists for this south connector`);
+    }
+
+    const southConnector = this.findById(southId);
+    const groupEntity: Omit<SouthItemGroupEntity, 'id'> = {
+      name: command.name,
+      southId: southConnector.id,
+      scanMode,
+      shareTrackedInstant: command.shareTrackedInstant,
+      overlap: command.overlap
+    };
+    const created = this.southItemGroupRepository.create(groupEntity);
+    return toSouthItemGroupDTO(created);
+  }
+
+  updateGroup(southId: string, groupId: string, command: SouthItemGroupCommandDTO): SouthItemGroupDTO {
+    this.findById(southId); // Verify south connector exists
+    const existingGroup = this.southItemGroupRepository.findById(groupId);
+    if (!existingGroup) {
+      throw new NotFoundError(`South item group "${groupId}" not found`);
+    }
+    if (existingGroup.southId !== southId) {
+      throw new NotFoundError(`South item group "${groupId}" does not belong to south connector "${southId}"`);
+    }
+
+    const scanModes = this.scanModeRepository.findAll();
+    const scanMode = checkScanMode(scanModes, command.scanModeId, null);
+
+    // Check for duplicate name (excluding current group)
+    const existingGroups = this.southItemGroupRepository.findBySouthId(southId);
+    if (existingGroups.some(g => g.name === command.name && g.id !== groupId)) {
+      throw new OIBusValidationError(`A group with name "${command.name}" already exists for this south connector`);
+    }
+
+    const groupEntity: Omit<SouthItemGroupEntity, 'id' | 'southId'> = {
+      name: command.name,
+      scanMode,
+      shareTrackedInstant: command.shareTrackedInstant,
+      overlap: command.overlap
+    };
+    this.southItemGroupRepository.update(groupId, groupEntity);
+    const updated = this.southItemGroupRepository.findById(groupId);
+    if (!updated) {
+      throw new NotFoundError(`Failed to update south item group "${groupId}"`);
+    }
+    return toSouthItemGroupDTO(updated);
+  }
+
+  async deleteGroup(southId: string, groupId: string): Promise<void> {
+    const southConnector = this.findById(southId);
+    const group = this.southItemGroupRepository.findById(groupId);
+    if (!group) {
+      throw new NotFoundError(`South item group "${groupId}" not found`);
+    }
+    if (group.southId !== southId) {
+      throw new NotFoundError(`South item group "${groupId}" does not belong to south connector "${southId}"`);
+    }
+    this.southItemGroupRepository.delete(groupId);
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    await this.engine.reloadSouthItems(southConnector);
+  }
+
+  async moveItemsToGroup(southId: string, itemIds: Array<string>, groupId: string | null): Promise<void> {
+    const southConnector = this.findById(southId);
+
+    if (groupId !== null) {
+      const group = this.southItemGroupRepository.findById(groupId);
+      if (!group) {
+        throw new NotFoundError(`South item group "${groupId}" not found`);
+      }
+      if (group.southId !== southId) {
+        throw new NotFoundError(`South item group "${groupId}" does not belong to south connector "${southId}"`);
+      }
+    }
+
+    // Verify all items belong to this south connector
+    for (const itemId of itemIds) {
+      const item = this.southConnectorRepository.findItemById(southId, itemId);
+      if (!item) {
+        throw new NotFoundError(`South item "${itemId}" not found`);
+      }
+    }
+
+    this.southConnectorRepository.moveItemsToGroup(itemIds, groupId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     await this.engine.reloadSouthItems(southConnector);
   }
@@ -589,7 +730,8 @@ const copySouthItemCommandToSouthItemEntity = async (
   currentSettings: SouthConnectorItemEntity<SouthItemSettings> | null,
   southType: string,
   scanModes: Array<ScanMode>,
-  retrieveSecretsFromSouth = false
+  retrieveSecretsFromSouth = false,
+  southItemGroupRepository?: SouthItemGroupRepository
 ): Promise<void> => {
   const manifest = southManifestList.find(element => element.id === southType)!;
   const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
@@ -604,6 +746,15 @@ const copySouthItemCommandToSouthItemEntity = async (
     currentSettings?.settings || null,
     itemSettingsManifest
   );
+  // Handle group assignment
+  if (southItemGroupRepository) {
+    if (command.groupId) {
+      const group = southItemGroupRepository.findById(command.groupId);
+      southItemEntity.group = group;
+    } else {
+      southItemEntity.group = null;
+    }
+  }
 };
 
 export const toSouthConnectorLightDTO = (entity: SouthConnectorEntityLight): SouthConnectorLightDTO => {
@@ -642,6 +793,17 @@ export const toSouthConnectorItemDTO = (entity: SouthConnectorItemEntity<SouthIt
     name: entity.name,
     enabled: entity.enabled,
     scanMode: toScanModeDTO(entity.scanMode),
-    settings: encryptionService.filterSecrets(entity.settings, itemSettingsManifest)
+    settings: encryptionService.filterSecrets(entity.settings, itemSettingsManifest),
+    group: entity.group ? toSouthItemGroupDTO(entity.group) : null
   } as SouthConnectorItemDTO;
+};
+
+export const toSouthItemGroupDTO = (entity: SouthItemGroupEntity): SouthItemGroupDTO => {
+  return {
+    id: entity.id,
+    name: entity.name,
+    scanMode: toScanModeDTO(entity.scanMode),
+    shareTrackedInstant: entity.shareTrackedInstant,
+    overlap: entity.overlap
+  };
 };

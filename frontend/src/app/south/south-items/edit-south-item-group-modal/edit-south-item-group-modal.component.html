@@ -1,0 +1,52 @@
+<div class="modal-header">
+  <h4 class="modal-title" [translate]="'south.groups.' + mode + '-title'"></h4>
+</div>
+@if (form) {
+  <div class="modal-body">
+    <form [formGroup]="form" (ngSubmit)="save()" id="group-form">
+      <!-- Name -->
+      <div class="form-group">
+        <label class="form-label" for="name" translate="south.groups.name"></label>
+        <input formControlName="name" id="name" class="form-control" />
+        <val-errors controlName="name" />
+      </div>
+
+      <!-- Scan Mode (Schedule) -->
+      <div class="form-group">
+        <label for="scan-mode" class="form-label" translate="south.groups.schedule"></label>
+        <select class="form-select" id="scan-mode" formControlName="scanMode">
+          <option [ngValue]="null" disabled>Select a schedule...</option>
+          @for (scanMode of scanModes; track scanMode.id) {
+            <option [value]="scanMode.id">{{ scanMode.name }}</option>
+          }
+        </select>
+        <val-errors controlName="scanMode" />
+      </div>
+
+      <!-- Share Tracked Instant (only for historian connectors) -->
+      @if (hasHistorianCapabilities) {
+        <div class="form-group">
+          <div class="form-check form-switch padded">
+            <input formControlName="shareTrackedInstant" id="share-tracked-instant" type="checkbox" class="form-check-input" />
+            <label class="form-check-label" for="share-tracked-instant" translate="south.groups.share-tracked-instant"></label>
+          </div>
+        </div>
+      }
+
+      <!-- Overlap (only for historian connectors) -->
+      @if (hasHistorianCapabilities) {
+        <div class="form-group">
+          <label class="form-label" for="overlap" translate="south.groups.overlap"></label>
+          <input formControlName="overlap" id="overlap" type="number" class="form-control" min="0" />
+          <val-errors controlName="overlap" />
+        </div>
+      }
+    </form>
+  </div>
+}
+<div class="modal-footer">
+  <div class="btn-group">
+    <button [oib-save-button]="state" form="group-form"></button>
+    <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
+  </div>
+</div>
