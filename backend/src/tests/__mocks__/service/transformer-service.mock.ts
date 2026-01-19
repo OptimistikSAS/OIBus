@@ -3,6 +3,8 @@
  */
 export default jest.fn().mockImplementation(() => {
   return {
+    listManifest: jest.fn(),
+    getManifest: jest.fn(),
     search: jest.fn(),
     findAll: jest.fn(),
     findById: jest.fn(),
