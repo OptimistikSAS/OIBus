@@ -19,6 +19,24 @@ const SCAN_MODES_TABLE = 'scan_modes';
 const IP_FILTERS_TABLE = 'ip_filters';
 const CERTIFICATES_TABLE = 'certificates';
 const USERS_TABLE = 'users';
+const GROUP_ITEMS_TABLE = 'group_items';
+const SOUTH_ITEM_GROUPS_TABLE = 'south_item_groups';
+
+// Connector types that support historian capabilities
+const HISTORIAN_CONNECTOR_TYPES = [
+  'mssql',
+  'mysql',
+  'postgresql',
+  'sqlite',
+  'oracle',
+  'odbc',
+  'oledb',
+  'opcua',
+  'opc',
+  'osisoft-pi',
+  'rest',
+  'oianalytics'
+];
 
 interface OldNorthRESTSettings {
   host: string;
@@ -139,6 +157,10 @@ export async function up(knex: Knex): Promise<void> {
   await updateFileConnectorItems(knex);
   await migrateSouthMQTTItems(knex, allOldSubscriptions);
   await addCreatedByAndUpdatedBy(knex);
+  await createSouthItemGroupsTable(knex);
+  await createGroupItemsTable(knex);
+  await addItemHistorianFields(knex);
+  await populateItemHistorianFields(knex);
 }
 
 async function addCreatedByAndUpdatedBy(knex: Knex): Promise<void> {
@@ -726,6 +748,104 @@ async function dropUniqueConstraints(knex: Knex): Promise<void> {
 
     // D. Drop Temp
     await knex.schema.dropTable(historyTempName);
+  }
+}
+
+async function createSouthItemGroupsTable(knex: Knex): Promise<void> {
+  await knex.schema.raw(`CREATE TABLE ${SOUTH_ITEM_GROUPS_TABLE} (
+    id char(36) PRIMARY KEY,
+    created_at datetime DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')) NOT NULL,
+    updated_at datetime DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')) NOT NULL,
+    name varchar(255) NOT NULL,
+    south_id char(36) NOT NULL,
+    scan_mode_id char(36) NOT NULL,
+    max_read_interval integer,
+    read_delay integer,
+    overlap integer,
+    UNIQUE (name, south_id),
+    FOREIGN KEY (south_id) REFERENCES ${SOUTH_CONNECTORS_TABLE}(id) ON DELETE CASCADE,
+    FOREIGN KEY (scan_mode_id) REFERENCES ${SCAN_MODES_TABLE}(id)
+  );`);
+}
+
+async function createGroupItemsTable(knex: Knex): Promise<void> {
+  await knex.schema.createTable(GROUP_ITEMS_TABLE, table => {
+    table.uuid('group_id').notNullable();
+    table.foreign('group_id').references('id').inTable(SOUTH_ITEM_GROUPS_TABLE).onDelete('CASCADE');
+    table.uuid('item_id').notNullable();
+    table.foreign('item_id').references('id').inTable(SOUTH_ITEMS_TABLE).onDelete('CASCADE');
+    table.primary(['group_id', 'item_id']);
+  });
+}
+
+async function addItemHistorianFields(knex: Knex): Promise<void> {
+  const hasMaxReadInterval = await knex.schema.hasColumn(SOUTH_ITEMS_TABLE, 'max_read_interval');
+  const hasReadDelay = await knex.schema.hasColumn(SOUTH_ITEMS_TABLE, 'read_delay');
+  const hasOverlap = await knex.schema.hasColumn(SOUTH_ITEMS_TABLE, 'overlap');
+  const hasSyncWithGroup = await knex.schema.hasColumn(SOUTH_ITEMS_TABLE, 'sync_with_group');
+
+  if (!hasMaxReadInterval) {
+    await knex.schema.alterTable(SOUTH_ITEMS_TABLE, table => {
+      table.integer('max_read_interval');
+    });
+  }
+
+  if (!hasReadDelay) {
+    await knex.schema.alterTable(SOUTH_ITEMS_TABLE, table => {
+      table.integer('read_delay');
+    });
+  }
+
+  if (!hasOverlap) {
+    await knex.schema.alterTable(SOUTH_ITEMS_TABLE, table => {
+      table.integer('overlap');
+    });
+  }
+
+  if (!hasSyncWithGroup) {
+    await knex.schema.alterTable(SOUTH_ITEMS_TABLE, table => {
+      table.integer('sync_with_group').notNullable().defaultTo(0);
+    });
+  }
+}
+
+async function populateItemHistorianFields(knex: Knex): Promise<void> {
+  // Get all items with their connector information
+  const items = await knex
+    .select('si.id as item_id', 'sc.type as connector_type', 'sc.settings as connector_settings')
+    .from(`${SOUTH_ITEMS_TABLE} as si`)
+    .join(`${SOUTH_CONNECTORS_TABLE} as sc`, 'si.connector_id', 'sc.id');
+
+  for (const item of items) {
+    const isHistorian = HISTORIAN_CONNECTOR_TYPES.includes(item.connector_type);
+
+    let maxReadInterval = null;
+    let readDelay = null;
+    let overlap = null;
+
+    // Only populate historian fields for items NOT in a group
+    if (isHistorian) {
+      try {
+        const settings = typeof item.connector_settings === 'string' ? JSON.parse(item.connector_settings) : item.connector_settings;
+
+        if (settings && settings.throttling) {
+          maxReadInterval = settings.throttling.maxReadInterval ?? null;
+          readDelay = settings.throttling.readDelay ?? null;
+          overlap = settings.throttling.overlap ?? null;
+        }
+      } catch (error) {
+        // If parsing fails, use default values
+        console.warn(`Failed to parse settings for item ${item.item_id}:`, error);
+      }
+    }
+
+    // Items in groups get NULL values to inherit from group and sync_with_group = 1
+    await knex(SOUTH_ITEMS_TABLE).where('id', item.item_id).update({
+      max_read_interval: maxReadInterval,
+      read_delay: readDelay,
+      overlap: overlap,
+      sync_with_group: 0
+    });
   }
 }
 

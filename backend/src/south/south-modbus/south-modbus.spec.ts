@@ -107,7 +107,12 @@ describe('South Modbus', () => {
             multiplierCoefficient: 1
           }
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       },
       {
         id: 'id2',
@@ -121,7 +126,12 @@ describe('South Modbus', () => {
             multiplierCoefficient: 1
           }
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       },
       {
         id: 'id3',
@@ -135,7 +145,12 @@ describe('South Modbus', () => {
             multiplierCoefficient: 1
           }
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       },
       {
         id: 'id4',
@@ -145,7 +160,12 @@ describe('South Modbus', () => {
           address: '0x1E82',
           modbusType: 'discrete-input'
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       },
       {
         id: 'id5',
@@ -155,7 +175,12 @@ describe('South Modbus', () => {
           address: '0x0E83',
           modbusType: 'coil'
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       },
       {
         id: 'id6',
@@ -170,7 +195,12 @@ describe('South Modbus', () => {
             multiplierCoefficient: 1
           }
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       }
     ]
   };
@@ -376,7 +406,12 @@ describe('South Modbus', () => {
       settings: {
         modbusType: 'bad type' as SouthModbusItemSettingsModbusType,
         address: '1010'
-      }
+      },
+      groups: [],
+      syncWithGroup: false,
+      maxReadInterval: null,
+      readDelay: null,
+      overlap: null
     };
     await expect(south.modbusFunction(mockedClient, item)).rejects.toThrow(
       `Wrong Modbus type "${item.settings.modbusType}" for point "${item.name}"`

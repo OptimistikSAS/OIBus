@@ -76,7 +76,11 @@ export class ImportSouthItemsModalComponent {
     if (foundFormControl && element[field] && foundFormControl.type === 'string-select') {
       return this.translateService.instant(foundFormControl.translationKey + '.' + element[field]);
     }
-    return element[field];
+    return element[field] || '';
+  }
+
+  getGroupNoneText(): string {
+    return this.translateService.instant('south.items.group-none');
   }
 
   changePageNew(pageNumber: number) {
