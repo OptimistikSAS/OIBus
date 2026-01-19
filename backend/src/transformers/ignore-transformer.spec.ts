@@ -3,6 +3,7 @@ import pino from 'pino';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import testData from '../tests/utils/test-data';
 import IgnoreTransformer from './ignore-transformer';
+import ignoreManifest from './ignore-transformer/manifest';
 
 jest.mock('../service/utils', () => ({
   generateRandomId: jest.fn().mockReturnValue('randomId')
@@ -39,7 +40,7 @@ describe('IgnoreTransformer', () => {
   });
 
   it('should return manifest', () => {
-    expect(IgnoreTransformer.manifestSettings).toEqual({
+    expect(ignoreManifest.settings).toEqual({
       type: 'object',
       key: 'options',
       translationKey: 'configuration.oibus.manifest.transformers.options',
