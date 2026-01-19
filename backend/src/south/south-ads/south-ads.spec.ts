@@ -81,7 +81,12 @@ describe('South ADS', () => {
         settings: {
           address: 'GVL_Test.TestINT1'
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       },
       {
         id: 'id2',
@@ -90,7 +95,12 @@ describe('South ADS', () => {
         settings: {
           address: 'GVL_Test.TestINT2'
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: [],
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       }
     ]
   };
