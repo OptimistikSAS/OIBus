@@ -113,11 +113,6 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "TransformerLanguage": {
-        "dataType": "refAlias",
-        "type": {"dataType":"string","validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "InputType": {
         "dataType": "refAlias",
         "type": {"dataType":"string","validators":{}},
@@ -338,6 +333,22 @@ const models: TsoaRoute.Models = {
             "wrapInBox": {"dataType":"boolean","required":true},
         },
         "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "TransformerManifest": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"string","required":true},
+            "inputType": {"ref":"InputType","required":true},
+            "outputType": {"ref":"OutputType","required":true},
+            "settings": {"ref":"OIBusObjectAttribute","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "TransformerLanguage": {
+        "dataType": "refAlias",
+        "type": {"dataType":"string","validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "CustomTransformerDTO": {
@@ -5921,6 +5932,67 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 next,
                 validatedArgs,
                 successStatus: 204,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsTransformerController_listManifest: Record<string, TsoaRoute.ParameterSchema> = {
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.get('/api/transformers/types',
+            ...(fetchMiddlewares<RequestHandler>(TransformerController)),
+            ...(fetchMiddlewares<RequestHandler>(TransformerController.prototype.listManifest)),
+
+            async function TransformerController_listManifest(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsTransformerController_listManifest, request, response });
+
+                const controller = new TransformerController();
+
+              await templateService.apiHandler({
+                methodName: 'listManifest',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsTransformerController_getManifest: Record<string, TsoaRoute.ParameterSchema> = {
+                type: {"in":"path","name":"type","required":true,"dataType":"string"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.get('/api/transformers/manifests/:type',
+            ...(fetchMiddlewares<RequestHandler>(TransformerController)),
+            ...(fetchMiddlewares<RequestHandler>(TransformerController.prototype.getManifest)),
+
+            async function TransformerController_getManifest(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsTransformerController_getManifest, request, response });
+
+                const controller = new TransformerController();
+
+              await templateService.apiHandler({
+                methodName: 'getManifest',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
               });
             } catch (err) {
                 return next(err);

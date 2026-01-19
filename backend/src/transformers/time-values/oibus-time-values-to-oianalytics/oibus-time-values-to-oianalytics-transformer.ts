@@ -3,7 +3,6 @@ import { CacheMetadata, CacheMetadataSource, OIBusTimeValue } from '../../../../
 import { ReadStream } from 'node:fs';
 import { pipeline, Readable, Transform } from 'node:stream';
 import { promisify } from 'node:util';
-import { OIBusObjectAttribute } from '../../../../shared/model/form.model';
 import { generateRandomId } from '../../../service/utils';
 import { Instant } from '../../../model/types';
 import { DateTime } from 'luxon';
@@ -68,39 +67,5 @@ export default class OIBusTimeValuesToOIAnalyticsTransformer extends OIBusTransf
       default:
         return timestamp;
     }
-  }
-
-  public static get manifestSettings(): OIBusObjectAttribute {
-    return {
-      type: 'object',
-      key: 'options',
-      translationKey: 'configuration.oibus.manifest.transformers.options',
-      attributes: [
-        {
-          type: 'string-select',
-          key: 'precision',
-          translationKey: 'configuration.oibus.manifest.transformers.time-values-to-oianalytics.precision',
-          defaultValue: 'ms',
-          selectableValues: ['ms', 's', 'min', 'hr'],
-          validators: [
-            {
-              type: 'REQUIRED',
-              arguments: []
-            }
-          ],
-          displayProperties: {
-            row: 0,
-            columns: 4,
-            displayInViewMode: true
-          }
-        }
-      ],
-      enablingConditions: [],
-      validators: [],
-      displayProperties: {
-        visible: true,
-        wrapInBox: true
-      }
-    };
   }
 }

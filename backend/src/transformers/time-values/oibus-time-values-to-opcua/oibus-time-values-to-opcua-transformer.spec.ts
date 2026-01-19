@@ -6,6 +6,7 @@ import { flushPromises } from '../../../tests/utils/test-utils';
 import { OIBusTimeValue } from '../../../../shared/model/engine.model';
 import csv from 'papaparse';
 import OIBusTimeValuesToOPCUATransformer from './oibus-time-values-to-opcua-transformer';
+import timeValuesToOpcuaManifest from './manifest';
 
 jest.mock('../../../service/utils', () => ({
   generateRandomId: jest.fn().mockReturnValue('randomId')
@@ -83,7 +84,7 @@ describe('OIBusTimeValuesToOPCUATransformer', () => {
   });
 
   it('should return manifest', () => {
-    expect(OIBusTimeValuesToOPCUATransformer.manifestSettings).toEqual({
+    expect(timeValuesToOpcuaManifest.settings).toEqual({
       type: 'object',
       key: 'options',
       translationKey: 'configuration.oibus.manifest.transformers.options',

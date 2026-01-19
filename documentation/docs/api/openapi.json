@@ -226,9 +226,6 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"TransformerLanguage": {
-				"type": "string"
-			},
 			"InputType": {
 				"type": "string"
 			},
@@ -1062,6 +1059,41 @@
 				],
 				"type": "object",
 				"additionalProperties": false
+			},
+			"TransformerManifest": {
+				"description": "Manifest for a transformer type.\nDescribes the configuration schema and capabilities of a transformer type.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the transformer type.",
+						"example": "csv-to-mqtt"
+					},
+					"inputType": {
+						"$ref": "#/components/schemas/InputType",
+						"description": "The input data type that the transformer accepts.",
+						"example": "any"
+					},
+					"outputType": {
+						"$ref": "#/components/schemas/OutputType",
+						"description": "The output data type that the transformer produces.",
+						"example": "mqtt"
+					},
+					"settings": {
+						"$ref": "#/components/schemas/OIBusObjectAttribute",
+						"description": "The configuration schema for the transformer settings."
+					}
+				},
+				"required": [
+					"id",
+					"inputType",
+					"outputType",
+					"settings"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"TransformerLanguage": {
+				"type": "string"
 			},
 			"CustomTransformerDTO": {
 				"description": "Data Transfer Object for a custom transformer.\nExtends the base transformer with custom-specific properties.",
@@ -22695,6 +22727,82 @@
 						}
 					}
 				}
+			}
+		},
+		"/api/transformers/types": {
+			"get": {
+				"operationId": "ListManifest",
+				"responses": {
+					"200": {
+						"description": "Array of transformer type objects",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"properties": {
+											"outputType": {
+												"type": "string"
+											},
+											"inputType": {
+												"type": "string"
+											},
+											"id": {
+												"type": "string"
+											}
+										},
+										"required": [
+											"outputType",
+											"inputType",
+											"id"
+										],
+										"type": "object"
+									},
+									"type": "array"
+								}
+							}
+						}
+					}
+				},
+				"description": "Retrieves a list of all available transformer types",
+				"summary": "List all transformer types",
+				"tags": [
+					"Transformers"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/api/transformers/manifests/{type}": {
+			"get": {
+				"operationId": "GetManifest",
+				"responses": {
+					"200": {
+						"description": "The transformer manifest",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/TransformerManifest"
+								}
+							}
+						}
+					}
+				},
+				"description": "Retrieves a specific transformer manifest by its type",
+				"summary": "Get transformer manifest",
+				"tags": [
+					"Transformers"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "type",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
 			}
 		},
 		"/api/transformers/search": {

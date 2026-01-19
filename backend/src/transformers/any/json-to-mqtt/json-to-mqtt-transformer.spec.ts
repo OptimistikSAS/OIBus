@@ -4,6 +4,7 @@ import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock'; //
 import testData from '../../../tests/utils/test-data'; // Adjust path
 import { flushPromises } from '../../../tests/utils/test-utils'; // Adjust path
 import JSONToMQTTTransformer from './json-to-mqtt-transformer';
+import jsonToMqttManifest from './manifest';
 
 // 1. Mock External Utilities
 jest.mock('../../../service/utils', () => ({
@@ -318,8 +319,7 @@ describe('JSONToMQTTTransformer', () => {
   // 5. Manifest
   // --------------------------------------------------------------------------
   it('should return correct manifest settings', () => {
-    const manifest = JSONToMQTTTransformer.manifestSettings;
-    expect(manifest.key).toBe('options');
-    expect(manifest.attributes[0].key).toBe('rowIteratorPath');
+    expect(jsonToMqttManifest.settings.key).toBe('options');
+    expect(jsonToMqttManifest.settings.attributes[0].key).toBe('rowIteratorPath');
   });
 });
