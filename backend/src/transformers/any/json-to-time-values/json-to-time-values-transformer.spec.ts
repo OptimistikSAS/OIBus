@@ -4,6 +4,7 @@ import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../../tests/utils/test-data';
 import { flushPromises } from '../../../tests/utils/test-utils';
 import JSONToTimeValuesTransformer from './json-to-time-values-transformer';
+import jsonToTimeValuesManifest from './manifest';
 
 // 1. Mock External Utilities
 // We mock the utils to ensure deterministic results (IDs, timestamps, path injection)
@@ -117,15 +118,12 @@ describe('JSONToTimeValuesTransformer', () => {
   });
 
   it('should correctly expose the manifest settings', () => {
-    // Act
-    const manifest = JSONToTimeValuesTransformer.manifestSettings;
-
-    // Assert
-    expect(manifest).toBeDefined();
-    expect(manifest.type).toBe('object');
-    expect(manifest.key).toBe('options');
+    // Act & Assert
+    expect(jsonToTimeValuesManifest.settings).toBeDefined();
+    expect(jsonToTimeValuesManifest.settings.type).toBe('object');
+    expect(jsonToTimeValuesManifest.settings.key).toBe('options');
     // Sanity check on deep property
-    expect(manifest.attributes[0].key).toBe('rowIteratorPath');
+    expect(jsonToTimeValuesManifest.settings.attributes[0].key).toBe('rowIteratorPath');
   });
 
   it('should handle nested arrays by correctly injecting indices', async () => {
