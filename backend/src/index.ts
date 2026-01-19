@@ -171,7 +171,8 @@ const CERT_FOLDER = 'certs';
     repositoryService.oianalyticsRegistrationRepository,
     repositoryService.certificateRepository,
     oIAnalyticsMessageService,
-    dataStreamEngine
+    dataStreamEngine,
+    repositoryService.southItemGroupRepository
   );
   const historyQueryService = new HistoryQueryService(
     new JoiValidator(),
@@ -210,6 +211,7 @@ const CERT_FOLDER = 'certs';
   const scanModeService = new ScanModeService(
     new JoiValidator(),
     repositoryService.scanModeRepository,
+    repositoryService.southConnectorRepository,
     repositoryService.southCacheRepository,
     oIAnalyticsMessageService,
     dataStreamEngine

@@ -56,4 +56,7 @@ export interface HistoryQueryItemEntity<T extends SouthItemSettings> extends Bas
   name: string;
   enabled: boolean;
   settings: T;
+  maxReadInterval: number | null;
+  readDelay: number | null;
+  overlap: number | null;
 }

@@ -1,5 +1,6 @@
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
+import SouthConnectorRepository from '../repository/config/south-connector.repository';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import { ScanModeCommandDTO, ScanModeDTO, ValidatedCronExpression } from '../../shared/model/scan-mode.model';
 import { scanModeSchema } from '../web-server/controllers/validators/oibus-validation-schema';
@@ -13,6 +14,7 @@ export default class ScanModeService {
   constructor(
     protected readonly validator: JoiValidator,
     private scanModeRepository: ScanModeRepository,
+    private southConnectorRepository: SouthConnectorRepository,
     private southCacheRepository: SouthCacheRepository,
     private oIAnalyticsMessageService: OIAnalyticsMessageService,
     private dataStreamEngine: DataStreamEngine
@@ -66,7 +68,14 @@ export default class ScanModeService {
 
   async delete(scanModeId: string): Promise<void> {
     const scanMode = this.findById(scanModeId);
-    this.southCacheRepository.deleteAllByScanMode(scanMode.id);
+
+    // Delete cache entries for this scan mode from all South connector cache tables
+    const southConnectors = this.southConnectorRepository.findAllSouth();
+    for (const southConnector of southConnectors) {
+      const tableName = `south_item_cache_${southConnector.id}`;
+      this.southCacheRepository.deleteAllByScanMode(tableName, scanMode.id);
+    }
+
     this.scanModeRepository.delete(scanMode.id);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
