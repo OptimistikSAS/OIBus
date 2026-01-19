@@ -71,71 +71,91 @@ td:first-child {
   align-items: center;
   justify-content: center;
   min-width: fit-content;
-}
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
 
-// Modern dropdown styling
-:host ::ng-deep {
-  #mass-actions-dropdown {
-    min-width: 180px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.5rem 1rem;
-    font-weight: 500;
-    transition: all 0.2s ease;
-
-    &::after {
-      margin-left: auto;
-      margin-right: 0;
-    }
-
-    &:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
+  &:hover {
+    background-color: #e8a800;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
   }
 
-  .dropdown-menu {
-    border-radius: 0.5rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    padding: 0.5rem 0;
-    min-width: 200px;
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(250, 187, 0, 0.5);
+  }
+}
 
-    .dropdown-item {
-      padding: 0.625rem 1rem;
-      display: flex;
-      align-items: center;
-      transition: all 0.15s ease;
-      font-size: 0.875rem;
+.mass-actions-dropdown-container {
+  display: inline-flex;
+  position: relative;
+}
 
-      &:hover {
+.mass-actions-button {
+  border: none;
+  background-color: #fabb00;
+  color: #2c3c45;
+  font-weight: 600;
+  font-size: 0.875rem;
+  padding: 0.375rem 0.75rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: fit-content;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  // Hide Bootstrap's default caret
+  &::after {
+    display: none !important;
+  }
+
+  .fa-caret-down {
+    font-size: 0.75rem;
+    margin-left: 0.375rem;
+    vertical-align: middle;
+  }
+
+  &:hover {
+    background-color: #e8a800;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  }
+
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(250, 187, 0, 0.5);
+  }
+
+  &[aria-expanded='true'] {
+    background-color: #e8a800;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+}
+
+// Remove button-specific styles from dropdown items to match navbar styling
+:host ::ng-deep {
+  [ngbDropdownMenu] {
+    button[ngbDropdownItem] {
+      border: none;
+      background: none;
+      padding: 0.25rem 1rem;
+      text-align: left;
+      width: 100%;
+      font-weight: normal;
+      box-shadow: none;
+
+      &:hover,
+      &:focus {
         background-color: #f8f9fa;
-        transform: translateX(2px);
+        box-shadow: none;
       }
 
       &:active {
         background-color: #e9ecef;
+        box-shadow: none;
       }
-
-      .fa {
-        width: 16px;
-        text-align: center;
-      }
-
-      &.text-danger {
-        color: #dc3545 !important;
-
-        &:hover {
-          background-color: #fee;
-          color: #c82333 !important;
-        }
-      }
-    }
-
-    .dropdown-divider {
-      margin: 0.5rem 0;
-      border-top: 1px solid #e9ecef;
     }
   }
 }

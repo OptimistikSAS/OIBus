@@ -73,18 +73,10 @@
             <span translate="south.items.unselect-all"></span>
           </button>
           @if (getSelectedItemsCount() > 0) {
-            <span class="badge counter-badge">
-              <span translate="south.items.selected-items" [translateParams]="{ count: getSelectedItemsCount() }"></span>
-            </span>
-          }
-        </div>
-
-        <!-- Mass Action Dropdown -->
-        @if (selectedItems.size > 0) {
-          <div class="d-flex align-items-center gap-2">
-            <div ngbDropdown>
-              <button type="button" class="btn btn-secondary btn-sm oib-box-btn" ngbDropdownToggle id="mass-actions-dropdown">
+            <div ngbDropdown class="mass-actions-dropdown-container" [autoClose]="'outside'" [placement]="['bottom-end']">
+              <button type="button" class="badge counter-badge mass-actions-button" ngbDropdownToggle id="mass-actions-dropdown">
                 <span translate="south.items.mass-actions" [translateParams]="{ count: selectedItems.size }"></span>
+                <span class="fa fa-caret-down ms-1"></span>
               </button>
               <div ngbDropdownMenu aria-labelledby="mass-actions-dropdown">
                 <button type="button" ngbDropdownItem (click)="enableSelectedItems()">
@@ -106,8 +98,8 @@
                 </button>
               </div>
             </div>
-          </div>
-        }
+          }
+        </div>
       </div>
 
       <table class="mb-2 table table-sm table-hover oib-table">
