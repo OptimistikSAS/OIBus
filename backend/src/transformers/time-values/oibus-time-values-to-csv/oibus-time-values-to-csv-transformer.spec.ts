@@ -4,6 +4,7 @@ import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../../tests/utils/test-data';
 import { flushPromises } from '../../../tests/utils/test-utils';
 import OIBusTimeValuesToCsvTransformer from './oibus-time-values-to-csv-transformer';
+import timeValuesToCsvManifest from './manifest';
 import { OIBusTimeValue } from '../../../../shared/model/engine.model';
 import csv from 'papaparse';
 import JSONToTimeValuesTransformer from '../../any/json-to-time-values/json-to-time-values-transformer';
@@ -88,14 +89,11 @@ describe('OIBusTimeValuesToCsvTransformer', () => {
   });
 
   it('should correctly expose the manifest settings', () => {
-    // Act
-    const manifest = JSONToTimeValuesTransformer.manifestSettings;
-
-    // Assert
-    expect(manifest).toBeDefined();
-    expect(manifest.type).toBe('object');
-    expect(manifest.key).toBe('options');
+    // Act & Assert
+    expect(timeValuesToCsvManifest.settings).toBeDefined();
+    expect(timeValuesToCsvManifest.settings.type).toBe('object');
+    expect(timeValuesToCsvManifest.settings.key).toBe('options');
     // Sanity check on deep property
-    expect(manifest.attributes[0].key).toBe('rowIteratorPath');
+    expect(timeValuesToCsvManifest.settings.attributes[0].key).toBe('filename');
   });
 });

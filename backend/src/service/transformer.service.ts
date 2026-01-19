@@ -17,13 +17,11 @@ import { NorthConnectorEntity } from '../model/north-connector.model';
 import { NorthSettings } from '../../shared/model/north-settings.model';
 import pino from 'pino';
 import OibusTransformer from '../transformers/oibus-transformer';
-import IsoTransformer from '../transformers/iso-transformer';
 import OIBusTimeValuesToCsvTransformer from '../transformers/time-values/oibus-time-values-to-csv/oibus-time-values-to-csv-transformer';
 import OIBusTimeValuesToJSONTransformer from '../transformers/time-values/oibus-time-values-to-json/oibus-time-values-to-json-transformer';
 import OIBusTimeValuesToMQTTTransformer from '../transformers/time-values/oibus-time-values-to-mqtt/oibus-time-values-to-mqtt-transformer';
 import OIBusTimeValuesToOPCUATransformer from '../transformers/time-values/oibus-time-values-to-opcua/oibus-time-values-to-opcua-transformer';
 import OIBusTimeValuesToModbusTransformer from '../transformers/time-values/oibus-time-values-to-modbus/oibus-time-values-to-modbus-transformer';
-import IgnoreTransformer from '../transformers/ignore-transformer';
 import { OIBusObjectAttribute } from '../../shared/model/form.model';
 import OIBusSetpointToModbusTransformer from '../transformers/setpoint/oibus-setpoint-to-modbus/oibus-setpoint-to-modbus-transformer';
 import OIBusSetpointToMQTTTransformer from '../transformers/setpoint/oibus-setpoint-to-mqtt/oibus-setpoint-to-mqtt-transformer';
@@ -39,6 +37,42 @@ import JSONToCSVTransformer from '../transformers/any/json-to-csv/json-to-csv-tr
 import CSVToMQTTTransformer from '../transformers/any/csv-to-mqtt/csv-to-mqtt-transformer';
 import CSVToTimeValuesTransformer from '../transformers/any/csv-to-time-values/csv-to-time-values-transformer';
 import JSONToMQTTTransformer from '../transformers/any/json-to-mqtt/json-to-mqtt-transformer';
+import isoManifest from '../transformers/iso-transformer/manifest';
+import ignoreManifest from '../transformers/ignore-transformer/manifest';
+import csvToMqttManifest from '../transformers/any/csv-to-mqtt/manifest';
+import csvToTimeValuesManifest from '../transformers/any/csv-to-time-values/manifest';
+import jsonToCsvManifest from '../transformers/any/json-to-csv/manifest';
+import jsonToMqttManifest from '../transformers/any/json-to-mqtt/manifest';
+import jsonToTimeValuesManifest from '../transformers/any/json-to-time-values/manifest';
+import timeValuesToCsvManifest from '../transformers/time-values/oibus-time-values-to-csv/manifest';
+import timeValuesToJsonManifest from '../transformers/time-values/oibus-time-values-to-json/manifest';
+import timeValuesToModbusManifest from '../transformers/time-values/oibus-time-values-to-modbus/manifest';
+import timeValuesToMqttManifest from '../transformers/time-values/oibus-time-values-to-mqtt/manifest';
+import timeValuesToOianalyticsManifest from '../transformers/time-values/oibus-time-values-to-oianalytics/manifest';
+import timeValuesToOpcuaManifest from '../transformers/time-values/oibus-time-values-to-opcua/manifest';
+import setpointToModbusManifest from '../transformers/setpoint/oibus-setpoint-to-modbus/manifest';
+import setpointToMqttManifest from '../transformers/setpoint/oibus-setpoint-to-mqtt/manifest';
+import setpointToOpcuaManifest from '../transformers/setpoint/oibus-setpoint-to-opcua/manifest';
+import { TransformerManifest } from '../../shared/model/transformer.model';
+
+export const transformerManifestList: Array<TransformerManifest> = [
+  isoManifest,
+  ignoreManifest,
+  csvToMqttManifest,
+  csvToTimeValuesManifest,
+  jsonToCsvManifest,
+  jsonToMqttManifest,
+  jsonToTimeValuesManifest,
+  timeValuesToCsvManifest,
+  timeValuesToJsonManifest,
+  timeValuesToModbusManifest,
+  timeValuesToMqttManifest,
+  timeValuesToOianalyticsManifest,
+  timeValuesToOpcuaManifest,
+  setpointToModbusManifest,
+  setpointToMqttManifest,
+  setpointToOpcuaManifest
+];
 
 export default class TransformerService {
   constructor(
@@ -46,6 +80,18 @@ export default class TransformerService {
     private transformerRepository: TransformerRepository,
     private oIAnalyticsMessageService: OIAnalyticsMessageService
   ) {}
+
+  listManifest(): Array<TransformerManifest> {
+    return transformerManifestList;
+  }
+
+  getManifest(type: string): TransformerManifest {
+    const manifest = transformerManifestList.find(element => element.id === type);
+    if (!manifest) {
+      throw new NotFoundError(`Transformer manifest "${type}" not found`);
+    }
+    return manifest;
+  }
 
   findAll(): Array<Transformer> {
     return this.transformerRepository.list();
@@ -66,7 +112,6 @@ export default class TransformerService {
   async create(command: CustomTransformerCommandDTO): Promise<CustomTransformer> {
     await this.validator.validate(transformerSchema, command);
 
-    // Check for unique name (only custom transformers have names)
     const existingTransformers = this.transformerRepository.list();
     if (existingTransformers.some(t => t.type === 'custom' && (t as CustomTransformer).name === command.name)) {
       throw new OIBusValidationError(`Transformer name "${command.name}" already exists`);
@@ -416,53 +461,53 @@ export const createTransformer = (
 
 export const getStandardManifest = (functionName: string): OIBusObjectAttribute => {
   switch (functionName) {
-    case CSVToMQTTTransformer.transformerName: {
-      return CSVToMQTTTransformer.manifestSettings;
+    case csvToMqttManifest.id: {
+      return csvToMqttManifest.settings;
     }
-    case CSVToTimeValuesTransformer.transformerName: {
-      return CSVToTimeValuesTransformer.manifestSettings;
+    case csvToTimeValuesManifest.id: {
+      return csvToTimeValuesManifest.settings;
     }
-    case IsoTransformer.transformerName: {
-      return IsoTransformer.manifestSettings;
+    case isoManifest.id: {
+      return isoManifest.settings;
     }
-    case IgnoreTransformer.transformerName: {
-      return IgnoreTransformer.manifestSettings;
+    case ignoreManifest.id: {
+      return ignoreManifest.settings;
     }
-    case JSONToCSVTransformer.transformerName: {
-      return JSONToCSVTransformer.manifestSettings;
+    case jsonToCsvManifest.id: {
+      return jsonToCsvManifest.settings;
     }
-    case JSONToMQTTTransformer.transformerName: {
-      return JSONToMQTTTransformer.manifestSettings;
+    case jsonToMqttManifest.id: {
+      return jsonToMqttManifest.settings;
     }
-    case JSONToTimeValuesTransformer.transformerName: {
-      return JSONToTimeValuesTransformer.manifestSettings;
+    case jsonToTimeValuesManifest.id: {
+      return jsonToTimeValuesManifest.settings;
     }
-    case OIBusTimeValuesToCsvTransformer.transformerName: {
-      return OIBusTimeValuesToCsvTransformer.manifestSettings;
+    case timeValuesToCsvManifest.id: {
+      return timeValuesToCsvManifest.settings;
     }
-    case OIBusTimeValuesToJSONTransformer.transformerName: {
-      return OIBusTimeValuesToJSONTransformer.manifestSettings;
+    case timeValuesToJsonManifest.id: {
+      return timeValuesToJsonManifest.settings;
     }
-    case OIBusTimeValuesToModbusTransformer.transformerName: {
-      return OIBusTimeValuesToModbusTransformer.manifestSettings;
+    case timeValuesToModbusManifest.id: {
+      return timeValuesToModbusManifest.settings;
     }
-    case OIBusTimeValuesToMQTTTransformer.transformerName: {
-      return OIBusTimeValuesToMQTTTransformer.manifestSettings;
+    case timeValuesToMqttManifest.id: {
+      return timeValuesToMqttManifest.settings;
     }
-    case OIBusTimeValuesToOIAnalyticsTransformer.transformerName: {
-      return OIBusTimeValuesToOIAnalyticsTransformer.manifestSettings;
+    case timeValuesToOianalyticsManifest.id: {
+      return timeValuesToOianalyticsManifest.settings;
     }
-    case OIBusTimeValuesToOPCUATransformer.transformerName: {
-      return OIBusTimeValuesToOPCUATransformer.manifestSettings;
+    case timeValuesToOpcuaManifest.id: {
+      return timeValuesToOpcuaManifest.settings;
     }
-    case OIBusSetpointToModbusTransformer.transformerName: {
-      return OIBusSetpointToModbusTransformer.manifestSettings;
+    case setpointToModbusManifest.id: {
+      return setpointToModbusManifest.settings;
     }
-    case OIBusSetpointToMQTTTransformer.transformerName: {
-      return OIBusSetpointToMQTTTransformer.manifestSettings;
+    case setpointToMqttManifest.id: {
+      return setpointToMqttManifest.settings;
     }
-    case OIBusSetpointToOPCUATransformer.transformerName: {
-      return OIBusSetpointToOPCUATransformer.manifestSettings;
+    case setpointToOpcuaManifest.id: {
+      return setpointToOpcuaManifest.settings;
     }
     default:
       throw new Error(`Could not find manifest for "${functionName}" transformer`);

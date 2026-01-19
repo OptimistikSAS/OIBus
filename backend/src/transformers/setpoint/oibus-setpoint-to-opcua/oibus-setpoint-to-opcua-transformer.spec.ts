@@ -6,6 +6,7 @@ import { flushPromises } from '../../../tests/utils/test-utils';
 import { OIBusSetpoint } from '../../../../shared/model/engine.model';
 import csv from 'papaparse';
 import OIBusSetpointToOPCUATransformer from './oibus-setpoint-to-opcua-transformer';
+import setpointToOpcuaManifest from './manifest';
 
 jest.mock('../../../service/utils', () => ({
   generateRandomId: jest.fn().mockReturnValue('randomId')
@@ -74,7 +75,7 @@ describe('OIBusSetpointToOPCUATransformer', () => {
   });
 
   it('should return manifest', () => {
-    expect(OIBusSetpointToOPCUATransformer.manifestSettings).toEqual({
+    expect(setpointToOpcuaManifest.settings).toEqual({
       type: 'object',
       key: 'options',
       translationKey: 'configuration.oibus.manifest.transformers.options',

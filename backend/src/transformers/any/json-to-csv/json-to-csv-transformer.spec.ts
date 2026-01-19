@@ -6,6 +6,7 @@ import { flushPromises } from '../../../tests/utils/test-utils';
 import JSONToCSVTransformer from './json-to-csv-transformer';
 import csv from 'papaparse';
 import JSONToMQTTTransformer from '../json-to-mqtt/json-to-mqtt-transformer';
+import jsonToCsvManifest from './manifest';
 
 // Mock external modules
 jest.mock('papaparse');
@@ -173,8 +174,7 @@ describe('JSONToCSVTransformer', () => {
   });
 
   it('should return correct manifest settings', () => {
-    const manifest = JSONToMQTTTransformer.manifestSettings;
-    expect(manifest.key).toBe('options');
-    expect(manifest.attributes[0].key).toBe('rowIteratorPath');
+    expect(jsonToCsvManifest.settings.key).toBe('options');
+    expect(jsonToCsvManifest.settings.attributes[0].key).toBe('filename');
   });
 });

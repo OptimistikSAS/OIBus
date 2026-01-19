@@ -3,7 +3,6 @@ import { ReadStream } from 'node:fs';
 import { pipeline, Readable, Transform } from 'node:stream';
 import { CacheMetadata, CacheMetadataSource } from '../../../../shared/model/engine.model';
 import { promisify } from 'node:util';
-import { OIBusObjectAttribute } from '../../../../shared/model/form.model';
 import { generateRandomId } from '../../../service/utils';
 
 const pipelineAsync = promisify(pipeline);
@@ -41,21 +40,6 @@ export default class OIBusTimeValuesToJSONTransformer extends OIBusTransformer {
     return {
       output: stringContent,
       metadata
-    };
-  }
-
-  public static get manifestSettings(): OIBusObjectAttribute {
-    return {
-      type: 'object',
-      key: 'options',
-      translationKey: 'configuration.oibus.manifest.transformers.options',
-      attributes: [],
-      enablingConditions: [],
-      validators: [],
-      displayProperties: {
-        visible: true,
-        wrapInBox: false
-      }
     };
   }
 }

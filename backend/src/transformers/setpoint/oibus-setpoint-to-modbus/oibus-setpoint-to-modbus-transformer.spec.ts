@@ -6,6 +6,7 @@ import { flushPromises } from '../../../tests/utils/test-utils';
 import { OIBusSetpoint } from '../../../../shared/model/engine.model';
 import csv from 'papaparse';
 import OIBusSetpointToModbusTransformer from './oibus-setpoint-to-modbus-transformer';
+import setpointToModbusManifest from './manifest';
 
 jest.mock('../../../service/utils', () => ({
   generateRandomId: jest.fn().mockReturnValue('randomId')
@@ -73,7 +74,7 @@ describe('OIBusSetpointToModbusTransformer', () => {
   });
 
   it('should return manifest', () => {
-    expect(OIBusSetpointToModbusTransformer.manifestSettings).toEqual({
+    expect(setpointToModbusManifest.settings).toEqual({
       type: 'object',
       key: 'options',
       translationKey: 'configuration.oibus.manifest.transformers.options',

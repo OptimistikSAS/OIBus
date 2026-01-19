@@ -4,6 +4,7 @@ import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock'; //
 import testData from '../../../tests/utils/test-data'; // Adjust path
 import { flushPromises } from '../../../tests/utils/test-utils'; // Adjust path
 import CSVToTimeValuesTransformer from './csv-to-time-values-transformer';
+import csvToTimeValuesManifest from './manifest';
 import Papa from 'papaparse';
 
 // 1. Mock External Dependencies
@@ -204,9 +205,8 @@ describe('CSVToTimeValuesTransformer', () => {
   // --------------------------------------------------------------------------
 
   it('should correctly expose the manifest settings', () => {
-    const manifest = CSVToTimeValuesTransformer.manifestSettings;
-    expect(manifest).toBeDefined();
-    expect(manifest.key).toBe('options');
-    expect(manifest.attributes[0].key).toBe('delimiter');
+    expect(csvToTimeValuesManifest.settings).toBeDefined();
+    expect(csvToTimeValuesManifest.settings.key).toBe('options');
+    expect(csvToTimeValuesManifest.settings.attributes[0].key).toBe('delimiter');
   });
 });

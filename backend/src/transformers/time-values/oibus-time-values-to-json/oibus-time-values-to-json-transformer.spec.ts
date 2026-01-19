@@ -6,6 +6,7 @@ import { flushPromises } from '../../../tests/utils/test-utils';
 import { OIBusTimeValue } from '../../../../shared/model/engine.model';
 import csv from 'papaparse';
 import OIBusTimeValuesToJSONTransformer from './oibus-time-values-to-json-transformer';
+import timeValuesToJsonManifest from './manifest';
 
 jest.mock('../../../service/utils', () => ({
   generateRandomId: jest.fn().mockReturnValue('randomId')
@@ -74,7 +75,7 @@ describe('OIBusTimeValuesToJSONTransformer', () => {
   });
 
   it('should return manifest', () => {
-    expect(OIBusTimeValuesToJSONTransformer.manifestSettings).toEqual({
+    expect(timeValuesToJsonManifest.settings).toEqual({
       type: 'object',
       key: 'options',
       translationKey: 'configuration.oibus.manifest.transformers.options',

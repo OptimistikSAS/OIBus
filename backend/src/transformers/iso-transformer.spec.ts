@@ -4,6 +4,7 @@ import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import testData from '../tests/utils/test-data';
 import { flushPromises } from '../tests/utils/test-utils';
 import IsoTransformer from './iso-transformer';
+import isoManifest from './iso-transformer/manifest';
 
 jest.mock('../service/utils', () => ({
   generateRandomId: jest.fn().mockReturnValue('randomId')
@@ -79,7 +80,7 @@ describe('IsoTransformer', () => {
   });
 
   it('should return manifest', () => {
-    expect(IsoTransformer.manifestSettings).toEqual({
+    expect(isoManifest.settings).toEqual({
       type: 'object',
       key: 'options',
       translationKey: 'configuration.oibus.manifest.transformers.options',
