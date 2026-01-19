@@ -5,7 +5,7 @@ import testData from '../../../tests/utils/test-data';
 import { flushPromises } from '../../../tests/utils/test-utils';
 import { OIBusTimeValue } from '../../../../shared/model/engine.model';
 import OIBusTimeValuesToOIAnalyticsTransformer from './oibus-time-values-to-oianalytics-transformer';
-import JSONToTimeValuesTransformer from '../../any/json-to-time-values/json-to-time-values-transformer';
+import timeValuesToOianalyticsManifest from './manifest';
 
 jest.mock('../../../service/utils', () => ({
   generateRandomId: jest.fn().mockReturnValue('randomId')
@@ -92,14 +92,11 @@ describe('OIBusTimeValuesToOIAnalyticsTransformer', () => {
   });
 
   it('should correctly expose the manifest settings', () => {
-    // Act
-    const manifest = JSONToTimeValuesTransformer.manifestSettings;
-
-    // Assert
-    expect(manifest).toBeDefined();
-    expect(manifest.type).toBe('object');
-    expect(manifest.key).toBe('options');
+    // Act & Assert
+    expect(timeValuesToOianalyticsManifest.settings).toBeDefined();
+    expect(timeValuesToOianalyticsManifest.settings.type).toBe('object');
+    expect(timeValuesToOianalyticsManifest.settings.key).toBe('options');
     // Sanity check on deep property
-    expect(manifest.attributes[0].key).toBe('rowIteratorPath');
+    expect(timeValuesToOianalyticsManifest.settings.attributes[0].key).toBe('precision');
   });
 });
