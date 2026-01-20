@@ -283,7 +283,7 @@ export default class SouthService {
       id: 'test',
       enabled: false,
       name: itemName,
-      group: null,
+      groups: [],
       scanMode: {
         id: '',
         name: '',
@@ -750,9 +750,9 @@ const copySouthItemCommandToSouthItemEntity = async (
   if (southItemGroupRepository) {
     if (command.groupId) {
       const group = southItemGroupRepository.findById(command.groupId);
-      southItemEntity.group = group;
+      southItemEntity.groups = group ? [group] : [];
     } else {
-      southItemEntity.group = null;
+      southItemEntity.groups = [];
     }
   }
 };
@@ -794,7 +794,7 @@ export const toSouthConnectorItemDTO = (entity: SouthConnectorItemEntity<SouthIt
     enabled: entity.enabled,
     scanMode: toScanModeDTO(entity.scanMode),
     settings: encryptionService.filterSecrets(entity.settings, itemSettingsManifest),
-    group: entity.group ? toSouthItemGroupDTO(entity.group) : null
+    group: entity.groups && entity.groups.length > 0 ? toSouthItemGroupDTO(entity.groups[0]) : null
   } as SouthConnectorItemDTO;
 };
 

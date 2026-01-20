@@ -1,5 +1,5 @@
 import { Component, forwardRef, inject } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import {
   AbstractControl,
   FormControl,
@@ -44,7 +44,8 @@ import { NotificationService } from '../../../shared/notification.service';
     SouthItemTestComponent,
     ReactiveFormsModule,
     OI_FORM_VALIDATION_DIRECTIVES,
-    OIBusObjectFormControlComponent
+    OIBusObjectFormControlComponent,
+    NgbDropdownModule
   ],
   viewProviders: [
     {
@@ -343,13 +344,8 @@ export class EditSouthItemModalComponent {
       });
   }
 
-  onGroupChange(_event: Event) {
-    const currentValue = this.form!.controls.groupId.value;
-    if (currentValue === '__create_new__') {
-      // Reset to previous value first
-      const previousValue = this.previousGroupId || null;
-      this.form!.controls.groupId.setValue(previousValue, { emitEvent: false });
-
+  selectGroup(groupId: string | null) {
+    if (groupId === '__create_new__') {
       // Open the create group modal
       const modalRef = this.modalService.open(EditSouthItemGroupModalComponent, { backdrop: 'static' });
       const component: EditSouthItemGroupModalComponent = modalRef.componentInstance;
@@ -364,13 +360,23 @@ export class EditSouthItemModalComponent {
           }
         },
         error: () => {
-          // Modal was dismissed, do nothing - value is already reset
+          // Modal was dismissed, keep previous value
+          if (this.previousGroupId) {
+            this.form!.controls.groupId.setValue(this.previousGroupId);
+          }
         }
       });
     } else {
-      // Store the current value as previous for next time
-      this.previousGroupId = currentValue;
+      this.form!.controls.groupId.setValue(groupId);
+      this.previousGroupId = groupId;
     }
+  }
+
+  getSelectedGroupName(): string {
+    const groupId = this.form?.controls.groupId.value;
+    if (!groupId) return 'None';
+    const group = this.groups.find(g => g.id === groupId);
+    return group ? group.name : 'select';
   }
 
   getScanModeAttribute(): OIBusScanModeAttribute {

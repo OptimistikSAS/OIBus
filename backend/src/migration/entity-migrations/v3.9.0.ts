@@ -5,9 +5,11 @@ const SOUTH_ITEMS_TABLE = 'south_items';
 const SOUTH_CONNECTORS_TABLE = 'south_connectors';
 const SCAN_MODES_TABLE = 'scan_modes';
 
+const GROUP_ITEMS_TABLE = 'group_items';
+
 export async function up(knex: Knex): Promise<void> {
   await createSouthItemGroupsTable(knex);
-  await addGroupIdToSouthItems(knex);
+  await createGroupItemsTable(knex);
 }
 
 async function createSouthItemGroupsTable(knex: Knex): Promise<void> {
@@ -26,10 +28,13 @@ async function createSouthItemGroupsTable(knex: Knex): Promise<void> {
   });
 }
 
-async function addGroupIdToSouthItems(knex: Knex): Promise<void> {
-  await knex.schema.alterTable(SOUTH_ITEMS_TABLE, table => {
-    table.uuid('group_id').nullable();
-    table.foreign('group_id').references('id').inTable(SOUTH_ITEM_GROUPS_TABLE).onDelete('SET NULL');
+async function createGroupItemsTable(knex: Knex): Promise<void> {
+  await knex.schema.createTable(GROUP_ITEMS_TABLE, table => {
+    table.uuid('group_id').notNullable();
+    table.foreign('group_id').references('id').inTable(SOUTH_ITEM_GROUPS_TABLE).onDelete('CASCADE');
+    table.uuid('item_id').notNullable();
+    table.foreign('item_id').references('id').inTable(SOUTH_ITEMS_TABLE).onDelete('CASCADE');
+    table.primary(['group_id', 'item_id']);
   });
 }
 

@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslateDirective } from '@ngx-translate/core';
 import { SouthItemGroupDTO } from '../../../../../../backend/shared/model/south-connector.model';
@@ -13,7 +13,7 @@ import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.mo
   selector: 'oib-select-group-modal',
   templateUrl: './select-group-modal.component.html',
   styleUrl: './select-group-modal.component.scss',
-  imports: [ReactiveFormsModule, TranslateDirective, OI_FORM_VALIDATION_DIRECTIVES]
+  imports: [ReactiveFormsModule, TranslateDirective, OI_FORM_VALIDATION_DIRECTIVES, NgbDropdownModule]
 })
 export class SelectGroupModalComponent {
   private modal = inject(NgbActiveModal);
@@ -30,6 +30,18 @@ export class SelectGroupModalComponent {
   }> = this.fb.group({
     groupId: [null as string | null, Validators.required]
   });
+
+  getSelectedGroupName(): string {
+    const groupId = this.form.controls.groupId.value;
+    if (!groupId) {
+      return 'south.items.group-none'; // Will be translated in template
+    }
+    return this.groups.find(g => g.id === groupId)?.name || '';
+  }
+
+  selectGroup(groupId: string | null) {
+    this.form.controls.groupId.setValue(groupId);
+  }
 
   prepare(groups: Array<SouthItemGroupDTO>, southId: string, scanModes: Array<ScanModeDTO>, manifest: SouthConnectorManifest) {
     this.groups = groups;

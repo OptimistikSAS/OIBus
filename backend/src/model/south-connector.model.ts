@@ -36,7 +36,7 @@ export interface SouthConnectorItemEntity<I extends SouthItemSettings> extends B
   enabled: boolean;
   scanMode: ScanMode;
   settings: I;
-  group: SouthItemGroupEntity | null;
+  groups: Array<SouthItemGroupEntity>;
 }
 
 export interface SouthThrottlingSettings {

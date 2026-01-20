@@ -4,7 +4,6 @@ import { SouthItemGroupEntity } from '../../model/south-connector.model';
 import { ScanMode } from '../../model/scan-mode.model';
 
 const SOUTH_ITEM_GROUPS_TABLE = 'south_item_groups';
-const SOUTH_ITEMS_TABLE = 'south_items';
 
 /**
  * Repository used for south item groups
@@ -77,9 +76,7 @@ export default class SouthItemGroupRepository {
   }
 
   delete(id: string): void {
-    // Set group_id to null for all items in this group
-    this.database.prepare(`UPDATE ${SOUTH_ITEMS_TABLE} SET group_id = NULL WHERE group_id = ?;`).run(id);
-    // Delete the group
+    // Delete the group (cascade in group_items is handled by foreign key)
     this.database.prepare(`DELETE FROM ${SOUTH_ITEM_GROUPS_TABLE} WHERE id = ?;`).run(id);
   }
 }

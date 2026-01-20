@@ -61,7 +61,7 @@ export default class HistoryQuery {
           .filter(item => item.enabled)
           .map(item => ({
             ...item,
-            group: null,
+            groups: [],
             scanMode: {
               id: 'history',
               name: 'history',
