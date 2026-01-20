@@ -68,8 +68,7 @@ export class SelectGroupModalComponent {
           this.form.controls.groupId.setValue(group.id);
         }
       },
-      error: () => {
-      }
+      error: () => {}
     });
   }
 

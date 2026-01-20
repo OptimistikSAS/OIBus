@@ -62,7 +62,7 @@ describe('EditSouthItemGroupModalComponent', () => {
     }
   ];
 
-  beforeEach(async () => {
+  beforeEach(() => {
     fakeActiveModal = createMock(NgbActiveModal);
     unsavedChangesConfirmationService = createMock(UnsavedChangesConfirmationService);
     southConnectorService = createMock(SouthConnectorService);
