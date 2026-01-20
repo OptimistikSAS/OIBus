@@ -250,7 +250,6 @@ export default class SouthConnectorRepository {
         .run(southItem.name, +southItem.enabled, southItem.scanMode.id, JSON.stringify(southItem.settings), southItem.id);
     }
 
-    // Update groups
     this.database.prepare(`DELETE FROM group_items WHERE item_id = ?;`).run(southItem.id);
     if (southItem.groups && southItem.groups.length > 0) {
       const insertGroup = this.database.prepare(`INSERT INTO group_items (group_id, item_id) VALUES (?, ?);`);

@@ -869,7 +869,8 @@ describe('SouthConnector with history and subscription', () => {
         settings: {
           mode: 'da'
         } as SouthOPCUAItemSettings,
-        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
+        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+        groups: []
       },
       {
         id: 'southItemId5',
@@ -878,7 +879,8 @@ describe('SouthConnector with history and subscription', () => {
         settings: {
           mode: 'da'
         } as SouthOPCUAItemSettings,
-        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
+        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+        groups: []
       }
     ];
     south.unsubscribe = jest.fn().mockImplementationOnce(() => {

@@ -75,7 +75,8 @@ describe('HistoryQuery enabled', () => {
           description: '',
           id: 'history',
           name: 'history'
-        }
+        },
+        groups: []
       })),
       testData.historyQueries.list[0].startTime,
       testData.historyQueries.list[0].endTime,
@@ -122,7 +123,8 @@ describe('HistoryQuery enabled', () => {
           description: '',
           id: 'history',
           name: 'history'
-        }
+        },
+        groups: []
       })),
       testData.historyQueries.list[0].startTime,
       testData.historyQueries.list[0].endTime,
@@ -202,6 +204,9 @@ describe('HistoryQuery enabled', () => {
     expect(mockedNorth1.resetCache).not.toHaveBeenCalled();
     expect(mockedSouth1.resetCache).not.toHaveBeenCalled();
 
+    // Reset the spy before the second stop() call to test idempotency
+    (mockedSouth1.stop as jest.Mock).mockClear();
+    (mockedNorth1.stop as jest.Mock).mockClear();
     await historyQuery.stop();
     expect(logger.debug).not.toHaveBeenCalled();
 

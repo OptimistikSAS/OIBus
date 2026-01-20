@@ -84,7 +84,8 @@ describe('SouthMQTT', () => {
           topic: 'my/first/topic',
           valueType: 'number'
         },
-        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
+        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+        groups: []
       },
       {
         id: 'id2',
@@ -94,7 +95,8 @@ describe('SouthMQTT', () => {
           topic: 'my/+/+/topic/with/wildcard/#',
           valueType: 'string'
         },
-        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
+        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+        groups: []
       },
       {
         id: 'id3',
@@ -104,7 +106,8 @@ describe('SouthMQTT', () => {
           topic: 'my/wrong/topic////',
           valueType: 'string'
         },
-        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
+        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+        groups: []
       },
       {
         id: 'id4',
@@ -131,7 +134,8 @@ describe('SouthMQTT', () => {
             }
           }
         },
-        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
+        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+        groups: []
       },
       {
         id: 'id5',
@@ -157,7 +161,8 @@ describe('SouthMQTT', () => {
             }
           }
         },
-        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
+        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+        groups: []
       },
       {
         id: 'id6',
@@ -179,7 +184,8 @@ describe('SouthMQTT', () => {
             timestampOrigin: 'oibus'
           }
         },
-        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
+        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+        groups: []
       }
     ]
   };

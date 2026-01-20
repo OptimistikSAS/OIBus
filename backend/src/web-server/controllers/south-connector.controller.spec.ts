@@ -3,7 +3,9 @@ import {
   SouthConnectorCommandDTO,
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
-  SouthConnectorItemSearchParam
+  SouthConnectorItemSearchParam,
+  SouthItemGroupDTO,
+  SouthItemGroupCommandDTO
 } from '../../../shared/model/south-connector.model';
 import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
@@ -516,5 +518,130 @@ describe('SouthConnectorController', () => {
     const southId = testData.south.list[0].id;
 
     await expect(controller.importItems(southId, undefined!, mockRequest as CustomExpressRequest)).rejects.toThrow('Missing file "items"');
+  });
+
+  it('should list groups for a south connector', async () => {
+    const southId = testData.south.list[0].id;
+    const mockGroups: Array<SouthItemGroupDTO> = [
+      {
+        id: 'group1',
+        name: 'Group 1',
+        scanMode: testData.scanMode.list[0],
+        shareTrackedInstant: false,
+        overlap: null,
+        creationDate: '2024-01-01T00:00:00.000Z',
+        lastEditInstant: '2024-01-01T00:00:00.000Z'
+      }
+    ];
+
+    (mockRequest.services!.southService.getGroups as jest.Mock).mockReturnValue(mockGroups);
+
+    const result = await controller.listGroups(southId, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.southService.getGroups).toHaveBeenCalledWith(southId);
+    expect(result).toEqual(mockGroups);
+  });
+
+  it('should get a specific group by id', async () => {
+    const southId = testData.south.list[0].id;
+    const groupId = 'group1';
+    const mockGroup: SouthItemGroupDTO = {
+      id: 'group1',
+      name: 'Group 1',
+      scanMode: testData.scanMode.list[0],
+      shareTrackedInstant: false,
+      overlap: null,
+      creationDate: '2024-01-01T00:00:00.000Z',
+      lastEditInstant: '2024-01-01T00:00:00.000Z'
+    };
+
+    (mockRequest.services!.southService.getGroup as jest.Mock).mockReturnValue(mockGroup);
+
+    const result = await controller.getGroup(southId, groupId, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.southService.getGroup).toHaveBeenCalledWith(southId, groupId);
+    expect(result).toEqual(mockGroup);
+  });
+
+  it('should create a group', async () => {
+    const southId = testData.south.list[0].id;
+    const command: SouthItemGroupCommandDTO = {
+      name: 'New Group',
+      scanModeId: testData.scanMode.list[0].id,
+      shareTrackedInstant: true,
+      overlap: 5
+    };
+    const mockCreatedGroup: SouthItemGroupDTO = {
+      id: 'newGroupId',
+      name: 'New Group',
+      scanMode: testData.scanMode.list[0],
+      shareTrackedInstant: true,
+      overlap: 5,
+      creationDate: '2024-01-01T00:00:00.000Z',
+      lastEditInstant: '2024-01-01T00:00:00.000Z'
+    };
+
+    (mockRequest.services!.southService.createGroup as jest.Mock).mockReturnValue(mockCreatedGroup);
+
+    const result = await controller.createGroup(southId, command, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.southService.createGroup).toHaveBeenCalledWith(southId, command);
+    expect(result).toEqual(mockCreatedGroup);
+  });
+
+  it('should update a group', async () => {
+    const southId = testData.south.list[0].id;
+    const groupId = 'group1';
+    const command: SouthItemGroupCommandDTO = {
+      name: 'Updated Group',
+      scanModeId: testData.scanMode.list[1].id,
+      shareTrackedInstant: true,
+      overlap: 10
+    };
+
+    (mockRequest.services!.southService.updateGroup as jest.Mock).mockResolvedValue(undefined);
+
+    await controller.updateGroup(southId, groupId, command, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.southService.updateGroup).toHaveBeenCalledWith(southId, groupId, command);
+  });
+
+  it('should delete a group', async () => {
+    const southId = testData.south.list[0].id;
+    const groupId = 'group1';
+
+    (mockRequest.services!.southService.deleteGroup as jest.Mock).mockResolvedValue(undefined);
+
+    await controller.deleteGroup(southId, groupId, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.southService.deleteGroup).toHaveBeenCalledWith(southId, groupId);
+  });
+
+  it('should move items to a group', async () => {
+    const southId = testData.south.list[0].id;
+    const body = {
+      itemIds: [testData.south.list[0].items[0].id, testData.south.list[0].items[1].id],
+      groupId: 'group1'
+    };
+
+    (mockRequest.services!.southService.moveItemsToGroup as jest.Mock).mockResolvedValue(undefined);
+
+    await controller.moveItemsToGroup(southId, body, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.southService.moveItemsToGroup).toHaveBeenCalledWith(southId, body.itemIds, body.groupId);
+  });
+
+  it('should remove items from groups when groupId is null', async () => {
+    const southId = testData.south.list[0].id;
+    const body = {
+      itemIds: [testData.south.list[0].items[0].id],
+      groupId: null
+    };
+
+    (mockRequest.services!.southService.moveItemsToGroup as jest.Mock).mockResolvedValue(undefined);
+
+    await controller.moveItemsToGroup(southId, body, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.southService.moveItemsToGroup).toHaveBeenCalledWith(southId, body.itemIds, null);
   });
 });

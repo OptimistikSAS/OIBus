@@ -95,7 +95,8 @@ describe('SouthPostgreSQL with authentication', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: []
       },
       {
         id: 'id2',
@@ -113,7 +114,8 @@ describe('SouthPostgreSQL with authentication', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: []
       },
       {
         id: 'id3',
@@ -148,7 +150,8 @@ describe('SouthPostgreSQL with authentication', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanMode: testData.scanMode.list[1]
+        scanMode: testData.scanMode.list[1],
+        groups: []
       }
     ]
   };
@@ -400,7 +403,8 @@ describe('SouthPostgreSQL without authentication', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: []
       },
       {
         id: 'id2',
@@ -418,7 +422,8 @@ describe('SouthPostgreSQL without authentication', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: []
       },
       {
         id: 'id3',
@@ -453,7 +458,8 @@ describe('SouthPostgreSQL without authentication', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanMode: testData.scanMode.list[1]
+        scanMode: testData.scanMode.list[1],
+        groups: []
       }
     ]
   };
@@ -544,7 +550,8 @@ describe('SouthPostgreSQL test connection', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: []
       },
       {
         id: 'id2',
@@ -562,7 +569,8 @@ describe('SouthPostgreSQL test connection', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: []
       },
       {
         id: 'id3',
@@ -597,7 +605,8 @@ describe('SouthPostgreSQL test connection', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanMode: testData.scanMode.list[1]
+        scanMode: testData.scanMode.list[1],
+        groups: []
       }
     ]
   };

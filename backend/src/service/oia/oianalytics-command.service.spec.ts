@@ -1,3 +1,47 @@
+jest.mock('undici', () => ({
+  request: jest.fn(),
+  ProxyAgent: jest.fn().mockImplementation(options => ({
+    // Mock the constructor
+    options, // Store options for potential assertion
+    isMockProxyAgent: true // Add a flag for easy identification in tests
+  })),
+  Agent: jest.fn().mockImplementation(options => ({
+    // Mock the constructor
+    options, // Store options for potential assertion
+    isMockAgent: true // Add a flag for easy identification in tests
+  }))
+}));
+
+jest.mock('node-opcua', () => ({
+  OPCUAClient: { createSession: jest.fn(() => Promise.resolve({})) },
+  ClientSubscription: { create: jest.fn() },
+  ClientMonitoredItem: { create: jest.fn() },
+  DataType: {},
+  StatusCodes: {},
+  SecurityPolicy: {},
+  AttributeIds: {},
+  UserTokenType: {},
+  TimestampsToReturn: {},
+  AggregateFunction: {},
+  HistoryReadRequest: {},
+  ReadRawModifiedDetails: {},
+  ReadProcessedDetails: {},
+  OPCUACertificateManager: jest.fn().mockImplementation(() => ({})),
+  resolveNodeId: jest.fn(nodeId => nodeId)
+}));
+
+jest.mock('ssh2-sftp-client', () => {
+  return jest.fn().mockImplementation(() => ({
+    connect: jest.fn(),
+    list: jest.fn(),
+    put: jest.fn(),
+    delete: jest.fn(),
+    end: jest.fn(),
+    exists: jest.fn(),
+    fastGet: jest.fn()
+  }));
+});
+
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import ScanModeServiceMock from '../../tests/__mocks__/service/scan-mode-service.mock';
 
@@ -56,7 +100,7 @@ import {
   OIBusUpdateVersionCommand
 } from '../../model/oianalytics-command.model';
 import { createPageFromArray } from '../../../shared/model/types';
-import SouthService from '../south.service';
+import SouthService, { toSouthConnectorItemDTO } from '../south.service';
 import NorthService from '../north.service';
 import SouthServiceMock from '../../tests/__mocks__/service/south-service.mock';
 import NorthServiceMock from '../../tests/__mocks__/service/north-service.mock';
@@ -802,7 +846,7 @@ describe('OIAnalytics Command Service', () => {
       testData.south.list[0].type,
       (testData.oIAnalytics.commands.oIBusList[14] as OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand).commandContent.csvContent,
       (testData.oIAnalytics.commands.oIBusList[14] as OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand).commandContent.delimiter,
-      testData.south.list[0].items
+      testData.south.list[0].items.map(item => toSouthConnectorItemDTO(item, testData.south.list[0].type))
     );
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       testData.oIAnalytics.commands.oIBusList[14].id,

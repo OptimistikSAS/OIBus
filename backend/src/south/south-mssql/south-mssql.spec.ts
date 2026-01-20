@@ -103,7 +103,8 @@ describe('SouthMSSQL with authentication', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: []
       },
       {
         id: 'id2',
@@ -121,7 +122,8 @@ describe('SouthMSSQL with authentication', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: []
       },
       {
         id: 'id3',
@@ -156,7 +158,8 @@ describe('SouthMSSQL with authentication', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanMode: testData.scanMode.list[1]
+        scanMode: testData.scanMode.list[1],
+        groups: []
       }
     ]
   };
@@ -355,7 +358,8 @@ describe('SouthMSSQL without authentication', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: []
       },
       {
         id: 'id2',
@@ -373,7 +377,8 @@ describe('SouthMSSQL without authentication', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: []
       },
       {
         id: 'id3',
@@ -408,7 +413,8 @@ describe('SouthMSSQL without authentication', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanMode: testData.scanMode.list[1]
+        scanMode: testData.scanMode.list[1],
+        groups: []
       }
     ]
   };
@@ -510,7 +516,8 @@ describe('SouthMSSQL test connection', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: []
       },
       {
         id: 'id2',
@@ -528,7 +535,8 @@ describe('SouthMSSQL test connection', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: []
       },
       {
         id: 'id3',
@@ -563,7 +571,8 @@ describe('SouthMSSQL test connection', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanMode: testData.scanMode.list[1]
+        scanMode: testData.scanMode.list[1],
+        groups: []
       }
     ]
   };

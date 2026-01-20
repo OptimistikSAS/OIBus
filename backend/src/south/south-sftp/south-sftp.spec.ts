@@ -72,7 +72,8 @@ describe('SouthSFTP', () => {
           ignoreModifiedDate: false,
           minAge: 1000
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: []
       },
       {
         id: 'id2',
@@ -85,7 +86,8 @@ describe('SouthSFTP', () => {
           ignoreModifiedDate: false,
           minAge: 1000
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: []
       },
       {
         id: 'id3',
@@ -98,7 +100,8 @@ describe('SouthSFTP', () => {
           ignoreModifiedDate: true,
           minAge: 1000
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: []
       }
     ]
   };
@@ -291,7 +294,8 @@ describe('SouthFTP with preserve file and compression', () => {
           ignoreModifiedDate: false,
           minAge: 1000
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: []
       },
       {
         id: 'id2',
@@ -304,7 +308,8 @@ describe('SouthFTP with preserve file and compression', () => {
           ignoreModifiedDate: false,
           minAge: 1000
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: []
       },
       {
         id: 'id3',
@@ -317,7 +322,8 @@ describe('SouthFTP with preserve file and compression', () => {
           ignoreModifiedDate: true,
           minAge: 1000
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: []
       }
     ]
   };
@@ -450,7 +456,8 @@ describe('SouthSFTP test connection with private key', () => {
           ignoreModifiedDate: false,
           minAge: 1000
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: []
       },
       {
         id: 'id2',
@@ -463,7 +470,8 @@ describe('SouthSFTP test connection with private key', () => {
           ignoreModifiedDate: false,
           minAge: 1000
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: []
       },
       {
         id: 'id3',
@@ -476,7 +484,8 @@ describe('SouthSFTP test connection with private key', () => {
           ignoreModifiedDate: true,
           minAge: 1000
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: []
       }
     ]
   };
