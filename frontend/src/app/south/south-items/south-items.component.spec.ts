@@ -129,7 +129,7 @@ class SouthItemsComponentTester extends ComponentTester<TestComponent> {
   }
 
   get tableScanModeNames() {
-    return this.elements<HTMLTableCellElement>('tbody tr.south-item td:nth-child(4)').map(e => e.nativeElement.innerText);
+    return this.elements<HTMLTableCellElement>('tbody tr.south-item td:nth-child(5)').map(e => e.nativeElement.innerText);
   }
 }
 
@@ -160,6 +160,7 @@ describe('SouthItemsComponent with saving changes directly', () => {
     southConnectorService.deleteAllItems.and.returnValue(of(undefined));
     southConnectorService.exportItems.and.returnValue(of(undefined));
     southConnectorService.findById.and.returnValue(of(testSouthConnector));
+    southConnectorService.getGroups.and.returnValue(of([]));
 
     confirmationService.confirm.and.returnValue(of(undefined));
 
@@ -172,7 +173,7 @@ describe('SouthItemsComponent with saving changes directly', () => {
     expect(tester.southItems.length).toBe(3);
     const item = tester.southItems[0];
     expect(item.elements('td')[2]).toContainText(testSouthConnector.items[0].name);
-    expect(item.elements('td')[3]).toContainText('scanMode1');
+    expect(item.elements('td')[4]).toContainText('scanMode1');
   });
 
   it('should display enabled status for enabled items', () => {
@@ -189,6 +190,7 @@ describe('SouthItemsComponent with saving changes directly', () => {
 
   it('should delete all', () => {
     southConnectorService.findById.and.returnValue(of({ ...testSouthConnector, items: [] } as any));
+    southConnectorService.getGroups.and.returnValue(of([]));
 
     tester.deleteAllButton.click();
 
@@ -250,6 +252,7 @@ describe('SouthItemsComponent with saving changes directly', () => {
         items: testSouthConnector.items.slice(1)
       } as any)
     );
+    southConnectorService.getGroups.and.returnValue(of([]));
 
     tester.southItems[0].button('.delete-south-item')!.click();
 
@@ -271,6 +274,7 @@ describe('SouthItemsComponent with saving changes directly', () => {
         items: testSouthConnector.items.slice(0, 2)
       } as any)
     );
+    southConnectorService.getGroups.and.returnValue(of([]));
 
     tester.southItems[2].button('.delete-south-item')!.click();
 
@@ -315,6 +319,7 @@ describe('SouthItemsComponent with saving changes directly', () => {
         items: testSouthConnector.items.slice(0, 2)
       } as any)
     );
+    southConnectorService.getGroups.and.returnValue(of([]));
     tester.southItems[0].button('.delete-south-item')!.click();
 
     expect(confirmationService.confirm).toHaveBeenCalledTimes(1);
@@ -359,6 +364,7 @@ describe('SouthItemsComponent without saving changes directly', () => {
     southConnectorService.deleteAllItems.and.returnValue(of(undefined));
     southConnectorService.exportItems.and.returnValue(of(undefined));
     southConnectorService.findById.and.returnValue(of(testSouthConnector));
+    southConnectorService.getGroups.and.returnValue(of([]));
 
     confirmationService.confirm.and.returnValue(of(undefined));
 
@@ -379,7 +385,7 @@ describe('SouthItemsComponent without saving changes directly', () => {
     expect(tester.southItems.length).toBe(3);
     const item = tester.southItems[0];
     expect(item.elements('td')[2]).toContainText(testSouthConnector.items[0].name);
-    expect(item.elements('td')[3]).toContainText('scanMode1');
+    expect(item.elements('td')[4]).toContainText('scanMode1');
   });
 
   it('should not have toggle buttons for enable/disable', () => {
@@ -529,6 +535,7 @@ describe('SouthItemsComponent CSV Import Tests', () => {
     });
 
     southConnectorService.findById.and.returnValue(of(testSouthConnector));
+    southConnectorService.getGroups.and.returnValue(of([]));
     southConnectorService.checkImportItems.and.returnValue(
       of({
         items: [] as Array<SouthConnectorItemDTO>,
@@ -617,7 +624,8 @@ describe('SouthItemsComponent CSV Import Tests', () => {
             query: 'SELECT 1',
             dateTimeFields: [],
             serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization
-          }
+          },
+          group: null
         }
       ];
       const mockErrors = [{ item: { id: 'new1', name: 'newItem1', enabled: 'true' }, error: 'Invalid query' }];
@@ -663,7 +671,8 @@ describe('SouthItemsComponent CSV Import Tests', () => {
             query: 'SELECT 1',
             dateTimeFields: [],
             serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization
-          }
+          },
+          group: null
         }
       ];
 
@@ -690,7 +699,8 @@ describe('SouthItemsComponent CSV Import Tests', () => {
           enabled: item.enabled,
           settings: item.settings,
           scanModeId: item.scanMode.id,
-          scanModeName: null
+          scanModeName: null,
+          groupId: null
         })) as any
       );
       expect(notificationService.success).toHaveBeenCalledWith('south.items.import.imported');
@@ -709,7 +719,8 @@ describe('SouthItemsComponent CSV Import Tests', () => {
             query: 'SELECT 1',
             dateTimeFields: [],
             serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization
-          }
+          },
+          group: null
         }
       ];
 
@@ -749,7 +760,8 @@ describe('SouthItemsComponent CSV Import Tests', () => {
             query: 'SELECT 1',
             dateTimeFields: [],
             serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization
-          }
+          },
+          group: null
         }
       ];
 
@@ -786,7 +798,8 @@ describe('SouthItemsComponent CSV Import Tests', () => {
             query: 'SELECT 1',
             dateTimeFields: [],
             serialization: undefined as unknown as SouthSQLiteItemSettingsSerialization
-          }
+          },
+          group: null
         }
       ];
 

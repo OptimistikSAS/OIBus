@@ -1,9 +1,8 @@
 import { Component, inject } from '@angular/core';
 import { NgbActiveModal, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
-import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { TranslateDirective } from '@ngx-translate/core';
 import { SouthItemGroupDTO } from '../../../../../../backend/shared/model/south-connector.model';
-import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
 import { ModalService } from '../../../shared/modal.service';
 import { EditSouthItemGroupModalComponent } from '../edit-south-item-group-modal/edit-south-item-group-modal.component';
 import { SouthConnectorManifest } from '../../../../../../backend/shared/model/south-connector.model';
@@ -13,7 +12,7 @@ import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.mo
   selector: 'oib-select-group-modal',
   templateUrl: './select-group-modal.component.html',
   styleUrl: './select-group-modal.component.scss',
-  imports: [ReactiveFormsModule, TranslateDirective, OI_FORM_VALIDATION_DIRECTIVES, NgbDropdownModule]
+  imports: [ReactiveFormsModule, TranslateDirective, NgbDropdownModule]
 })
 export class SelectGroupModalComponent {
   private modal = inject(NgbActiveModal);
@@ -28,8 +27,12 @@ export class SelectGroupModalComponent {
   form: FormGroup<{
     groupId: FormControl<string | null>;
   }> = this.fb.group({
-    groupId: [null as string | null, Validators.required]
+    groupId: [null as string | null]
   });
+
+  get selectedGroupId(): string | null {
+    return this.form.controls.groupId.value;
+  }
 
   getSelectedGroupName(): string {
     const groupId = this.form.controls.groupId.value;
@@ -58,12 +61,14 @@ export class SelectGroupModalComponent {
     modalRef.result.subscribe({
       next: (group: SouthItemGroupDTO) => {
         if (group) {
-          this.groups.push(group);
+          // Check if group already exists to avoid duplicates
+          if (!this.groups.find(g => g.id === group.id)) {
+            this.groups.push(group);
+          }
           this.form.controls.groupId.setValue(group.id);
         }
       },
       error: () => {
-        // Modal was dismissed, do nothing
       }
     });
   }
@@ -73,9 +78,6 @@ export class SelectGroupModalComponent {
   }
 
   confirm() {
-    if (!this.form.valid) {
-      return;
-    }
     this.modal.close(this.form.value.groupId);
   }
 }

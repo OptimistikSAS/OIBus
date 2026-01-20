@@ -240,7 +240,6 @@ export class SouthItemsComponent implements OnInit {
               groupId: command.group?.id || null
             } as any);
           } else {
-            // In create/edit mode, add the group to local groups if it's new
             if (command.group && !this.groups.find(g => g.id === command.group!.id)) {
               this.groups.push(command.group);
             }
@@ -259,7 +258,6 @@ export class SouthItemsComponent implements OnInit {
       .subscribe(() => {
         if (this.saveChangesDirectly()) {
           this.notificationService.success(`south.items.created`);
-          // Reload groups in case a new group was created
           if (this.southId() !== 'create') {
             this.southConnectorService.getGroups(this.southId()).subscribe(groups => {
               this.groups = groups;
@@ -291,12 +289,10 @@ export class SouthItemsComponent implements OnInit {
               groupId: command.group?.id || null
             } as any);
           } else {
-            // In create/edit mode, add the group to local groups if it's new
             if (command.group && !this.groups.find(g => g.id === command.group!.id)) {
               this.groups.push(command.group);
             }
             this.allItems = this.allItems.filter(item => item.name !== oldItem.name);
-            // Preserve id when present, merge changes otherwise
             this.allItems.push({
               ...oldItem,
               ...command,
@@ -310,7 +306,6 @@ export class SouthItemsComponent implements OnInit {
       .subscribe(() => {
         if (this.saveChangesDirectly()) {
           this.notificationService.success(`south.items.updated`);
-          // Reload groups in case a new group was created or group was changed
           if (this.southId() !== 'create') {
             this.southConnectorService.getGroups(this.southId()).subscribe(groups => {
               this.groups = groups;

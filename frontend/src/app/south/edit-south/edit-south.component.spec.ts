@@ -70,6 +70,7 @@ describe('EditSouthComponent', () => {
     scanModeService.list.and.returnValue(of([]));
     certificateService.list.and.returnValue(of([]));
     southConnectorService.list.and.returnValue(of([]));
+    southConnectorService.getGroups.and.returnValue(of([]));
 
     southConnectorService.getSouthManifest.and.returnValue(of(testData.south.manifest));
   });

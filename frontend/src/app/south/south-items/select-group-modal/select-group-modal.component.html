@@ -13,7 +13,13 @@
             id="group-select"
             ngbDropdownToggle
           >
-            <span class="text-truncate" [translate]="getSelectedGroupName()"></span>
+            <span class="text-truncate">
+              @if (selectedGroupId === null) {
+                <span translate="south.items.group-none"></span>
+              } @else {
+                {{ getSelectedGroupName() }}
+              }
+            </span>
           </button>
           <div ngbDropdownMenu aria-labelledby="group-select" class="w-100">
             <button type="button" ngbDropdownItem (click)="selectGroup(null)" translate="south.items.group-none"></button>
@@ -25,13 +31,12 @@
           </div>
         </div>
       </div>
-      <val-errors controlName="groupId" />
     </div>
   </form>
 </div>
 <div class="modal-footer">
   <div class="btn-group">
-    <button type="button" class="btn btn-primary" (click)="confirm()" [disabled]="!form.valid" translate="common.save"></button>
+    <button type="button" class="btn btn-primary" (click)="confirm()" translate="common.save"></button>
     <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel"></button>
   </div>
 </div>

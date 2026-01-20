@@ -187,7 +187,6 @@ export class EditSouthItemModalComponent {
     this.loadGroups();
     this.scanModes = this.setScanModes(scanModes, this.getScanModeAttribute());
     this.certificates = certificates;
-    // used to check uniqueness
     this.item = JSON.parse(JSON.stringify(item)) as SouthConnectorItemDTO;
     this.item.name = `${item.name}-copy`;
     this.item.id = '';
@@ -288,7 +287,6 @@ export class EditSouthItemModalComponent {
       this.form.controls.scanMode.enable();
     }
 
-    // if we have an item, we initialize the values
     if (this.item) {
       this.item.scanMode = this.scanModes.find(element => element.id === this.item!.scanMode.id)!; // used to have the same ref
       this.previousGroupId = this.item.group?.id || null;
@@ -314,7 +312,6 @@ export class EditSouthItemModalComponent {
           this.groups[index] = updatedGroup;
         }
         if (this.form!.controls.groupId.value === updatedGroup.id) {
-          // Refresh the form if the current group was updated
           this.form!.controls.groupId.setValue(updatedGroup.id);
         }
       }
@@ -360,7 +357,6 @@ export class EditSouthItemModalComponent {
           }
         },
         error: () => {
-          // Modal was dismissed, keep previous value
           if (this.previousGroupId) {
             this.form!.controls.groupId.setValue(this.previousGroupId);
           }
