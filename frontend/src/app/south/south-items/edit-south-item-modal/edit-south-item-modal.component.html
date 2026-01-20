@@ -30,11 +30,11 @@
                 <div ngbDropdownMenu aria-labelledby="group" class="w-100">
                   <button type="button" ngbDropdownItem (click)="selectGroup(null)" translate="south.items.group-none"></button>
                   @for (group of groups; track group.id) {
-                    <div class="d-flex align-items-center justify-content-between px-2">
-                      <button type="button" ngbDropdownItem (click)="selectGroup(group.id)" class="flex-grow-1 text-start">
+                    <div class="d-flex align-items-center justify-content-between px-2 group-row">
+                      <button type="button" ngbDropdownItem (click)="selectGroup(group.id)" class="flex-grow-1 text-start ps-2">
                         {{ group.name }}
                       </button>
-                      <div class="d-flex gap-1">
+                      <div class="d-flex gap-1 pe-2">
                         <button type="button" class="btn btn-sm btn-link p-0 text-primary" (click)="onEditGroup(group, $event)">
                           <i class="fa fa-pencil"></i>
                         </button>

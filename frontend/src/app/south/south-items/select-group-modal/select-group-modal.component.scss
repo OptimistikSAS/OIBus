@@ -1,1 +1,25 @@
 // Styles for select group modal
+.form-select {
+  // Hide the caret added by ngbDropdownToggle
+  &::after {
+    display: none !important;
+  }
+
+  &:hover {
+    background-color: #d2dce2 !important;
+    cursor: pointer;
+  }
+}
+
+// Standard ngbDropdown items
+:host ::ng-deep {
+  [ngbDropdownMenu] {
+    button[ngbDropdownItem] {
+      &:hover,
+      &:focus {
+        background-color: #d2dce2;
+        outline: none;
+      }
+    }
+  }
+}
