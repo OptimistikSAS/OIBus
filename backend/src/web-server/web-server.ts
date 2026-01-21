@@ -95,7 +95,10 @@ export default class WebServer {
             connectSrc: ["'self'"],
             workerSrc: ["'self'", 'blob:'] // blob: required for Monaco Editor workers
           }
-        }
+        },
+        hsts: false,
+        crossOriginOpenerPolicy: false,
+        crossOriginEmbedderPolicy: false
       })
     );
     this.app.disable('x-powered-by'); // Remove X-Powered-By header
