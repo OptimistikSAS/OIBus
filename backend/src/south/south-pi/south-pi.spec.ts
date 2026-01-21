@@ -72,7 +72,7 @@ describe('South PI', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    jest.useFakeTimers();
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
     south = new SouthPi(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
@@ -186,7 +186,7 @@ describe('South PI', () => {
       .mockResolvedValueOnce(createMockResponse(500, 'another error'));
 
     await expect(south.testConnection()).rejects.toThrow(
-      new Error(`Error occurred when sending connect command to remote agent with status 400. "bad request"`)
+      new Error(`Error occurred when sending connect command to remote agent with status 400. bad request`)
     );
 
     await expect(south.testConnection()).rejects.toThrow(
@@ -246,10 +246,14 @@ describe('South PI', () => {
     );
 
     expect(result).toEqual('2020-03-01T00:00:00.000Z');
-    expect(south.addContent).toHaveBeenCalledWith({
-      type: 'time-values',
-      content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]
-    });
+    expect(south.addContent).toHaveBeenCalledWith(
+      {
+        type: 'time-values',
+        content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]
+      },
+      testData.constants.dates.FAKE_NOW,
+      [configuration.items[0].id, configuration.items[1].id]
+    );
     expect(logger.warn).toHaveBeenCalledWith('log1');
     expect(logger.warn).toHaveBeenCalledWith('log2');
 
@@ -269,7 +273,7 @@ describe('South PI', () => {
     (HTTPRequest as jest.Mock).mockResolvedValueOnce(createMockResponse(400, 'bad request')).mockResolvedValueOnce(createMockResponse(500));
 
     await expect(south.historyQuery(configuration.items, startTime, endTime)).rejects.toThrow(
-      `Error occurred when querying remote agent with status 400: "bad request"`
+      `Error occurred when querying remote agent with status 400: bad request`
     );
     await expect(south.historyQuery(configuration.items, startTime, endTime)).rejects.toThrow(
       `Error occurred when querying remote agent with status 500`

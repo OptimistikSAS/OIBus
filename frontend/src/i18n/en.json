@@ -218,12 +218,32 @@
       "test-history-query-south-item": "Test south item",
       "create-or-update-history-query-south-items-from-csv": "Load south items from CSV",
       "update-history-query-status": "Update history query status",
-      "setpoint": "Setpoint"
+      "setpoint": "Setpoint",
+      "search-north-cache-content": "Search cache content",
+      "search-history-cache-content": "Search cache content",
+      "get-north-cache-file-content": "Get cache file",
+      "get-history-cache-file-content": "Get cache file",
+      "remove-north-cache-content": "Remove cache files",
+      "remove-history-cache-content": "Remove cache files",
+      "move-north-cache-content": "Move cache files",
+      "move-history-cache-content": "Move cache files"
     },
-    "oibus-data-type": {
+    "oibus-input-data-type": {
+      "any": "Files (for all sources)",
+      "setpoint": "Setpoints (for all sources)",
+      "time-values": "OIBus Time Values (for all sources)"
+    },
+    "oibus-output-data-type": {
       "any": "Any",
-      "time-values": "OIBus time values",
-      "setpoint": "Setpoints"
+      "mqtt": "MQTT",
+      "modbus": "Modbus",
+      "oianalytics": "OIAnalytics optimized time values",
+      "opcua": "OPCUA",
+      "time-values": "OIBus time values"
+    },
+    "oibus-transformer-language": {
+      "javascript": "JavaScript",
+      "typescript": "TypeScript"
     },
     "oibus-north-category": {
       "debug": "Debug",
@@ -240,7 +260,7 @@
       "mqtt": "MQTT",
       "oianalytics": "OIAnalytics®",
       "opcua": "OPC UA™",
-      "rest": "REST",
+      "rest": "REST API",
       "sftp": "SFTP"
     },
     "oibus-north-type-description": {
@@ -252,7 +272,7 @@
       "mqtt": "Publish to MQTT broker topics",
       "oianalytics": "Send files and values to OIAnalytics®",
       "opcua": "Write data into OPC UA™ server",
-      "rest": "Upload files to a REST endpoint",
+      "rest": "Upload data to a REST endpoint",
       "sftp": "Upload files and data to an SFTP server"
     },
     "oibus-south-category": {
@@ -277,6 +297,7 @@
       "oracle": "Oracle Database™",
       "osisoft-pi": "OSIsoft PI System™",
       "postgresql": "PostgreSQL",
+      "rest": "REST API",
       "sftp": "SFTP",
       "sqlite": "SQLite™"
     },
@@ -296,6 +317,7 @@
       "oracle": "Query data from an Oracle Database™",
       "osisoft-pi": "Establish a connection with an OIBus Agent to access data from a PI System™",
       "postgresql": "Query PostgreSQL databases",
+      "rest": "Collect data from REST API endpoints",
       "sftp": "Read files from a remote SFTP server",
       "sqlite": "Query  SQLite™ databases"
     }
@@ -388,7 +410,11 @@
       "expiration-date": "Expired on",
       "registered": "OIBus registered on {{ activationDate }}",
       "enable-all": "Enable All",
-      "disable-all": "Disable All"
+      "disable-all": "Disable All",
+      "test-connection": "Test connection",
+      "test-connection-section": "Test connection",
+      "test-connection-success": "Connection successful",
+      "test-connection-error": "Error when testing connection"
     },
     "commands": {
       "title": "Command list",
@@ -412,6 +438,8 @@
       "test-connector": "Test connectors",
       "history-query": "History query",
       "test-history-query": "Test history queries",
+      "north-cache": "North cache management",
+      "history-cache": "History cache management",
       "setpoint": "Setpoint",
       "details-modal": {
         "title": "Command {{ type }}",
@@ -479,6 +507,11 @@
     "restart-complete": "OIBus restarted",
     "confirm-restart": "Are you sure you want to restart OIBus engine?",
     "updated": "Engine settings updated",
+    "port-changed": {
+      "title": "Port Changed",
+      "message": "The web server port has been changed to {{ port }}. You will be automatically redirected in {{ seconds }} seconds.",
+      "redirect-now": "Redirect Now"
+    },
     "general-settings": {
       "title": "General settings",
       "name": "Name",
@@ -805,32 +838,75 @@
             "key-file-path": "Key file path"
           },
           "rest": {
-            "endpoint": "Endpoint",
-            "test-path": "Test path",
-            "timeout": "Timeout",
-            "auth-type": {
-              "title": "Authentication type",
-              "bearer": "Bearer Auth"
+            "host": "Host",
+            "accept-unauthorized": "Accept unauthorized certificate",
+            "authentication": {
+              "title": "Authentication",
+              "type": {
+                "title": "Type",
+                "none": "None",
+                "basic": "Basic (username/password)",
+                "bearer": "Bearer token",
+                "api-key": "API key"
+              },
+              "username": "Username",
+              "password": "Password",
+              "token": "Bearer token",
+              "api-key": "API key",
+              "api-value": "API value",
+              "add-to": {
+                "title": "Add to",
+                "header": "Header",
+                "query-params": "Query parameters"
+              }
             },
-            "auth": {
-              "title": "Authentication type",
-              "basic": "Basic Auth",
-              "bearer": "Bearer Auth",
-              "bearer-token": "Bearer token",
-              "basic-username": "Username",
-              "basic-password": "Password"
+            "send-as": {
+              "title": "Send payload as",
+              "file": "File (FormData)",
+              "body": "Body"
             },
-            "query-params": {
-              "query-param": "Query params",
-              "key": "Key",
-              "value": "Value"
+            "test": {
+              "title": "Test configuration",
+              "endpoint": "Test endpoint",
+              "method": {
+                "title": "Test method",
+                "GET": "GET",
+                "POST": "POST",
+                "PUT": "PUT"
+              },
+              "body": "Body",
+              "success-code": "Expected success code"
             },
             "proxy": {
-              "title": "Use proxy",
+              "title": "Proxy",
+              "use-proxy": "Use proxy",
               "url": "Proxy URL",
               "username": "Proxy username",
               "password": "Proxy password"
-            }
+            },
+            "timeout": "Request timeout",
+            "method": {
+              "title": "HTTP method",
+              "GET": "GET",
+              "POST": "POST",
+              "PUT": "PUT",
+              "PATCH": "PATCH",
+              "DELETE": "DELETE"
+            },
+            "endpoint": "Endpoint",
+            "query-params": {
+              "title": "Query parameters",
+              "query-param": "Query parameter",
+              "key": "Key",
+              "value": "Value"
+            },
+            "headers": {
+              "title": "Headers",
+              "header": "Header",
+              "key": "HTTP header key name",
+              "value": "HTTP header value"
+            },
+            "success-code": "Expected success code"
           },
           "sftp": {
             "host": "Host",
@@ -851,18 +927,399 @@
           }
         },
         "transformers": {
+          "title": "Transform payloads",
+          "source": "Source",
+          "output": "Output",
+          "items": "Items",
+          "one-item-selected": "1 item",
+          "several-items-selected": "{{ numberOfItems }} items",
+          "all-items-selected": "All items",
+          "all-items": "All items",
+          "specific-items": "Specific items",
+          "search-items": "Search items...",
+          "no-items-found": "No items found",
+          "search-results-count": "{{ count }} results",
+          "showing-first-n": "(showing first {{ limit }})",
+          "select-all-results": "Select all results",
+          "remove-all": "Remove all",
+          "options": "Options",
+          "transformer": "Transformer",
+          "add": "Add a transformer",
+          "list": "Custom Transformers",
+          "none": "No Custom Transformer",
+          "created": "Transformer {{ name }} created",
+          "edited": "Transformer {{ name }} edited",
+          "confirm-deletion": "Are you sure you want to delete the custom transformer {{ name }}?",
+          "deleted": "Transformer {{ name }} deleted",
           "standard": {
+            "csv-to-mqtt": "MQTT payloads (from CSV)",
+            "csv-to-time-values": "Time Values (from CSV)",
             "ignore": "Ignore",
             "iso": "No transform",
-            "time-values-to-csv": "OIBus time values into CSV",
-            "time-values-to-json": "OIBus time values into raw JSON",
-            "time-values-to-modbus": "OIBus time values into Modbus values",
-            "time-values-to-mqtt": "OIBus time values into MQTT payloads",
-            "time-values-to-oianalytics": "OIAnalytics - Select timestamp precision and remove optional fields from OIBus time values",
-            "time-values-to-opcua": "OIBus time values into OPCUA values",
-            "setpoint-to-modbus": "Setpoints into Modbus values",
-            "setpoint-to-mqtt": "Setpoints into MQTT payloads",
-            "setpoint-to-opcua": "Setpoints into OPCUA values"
+            "json-to-csv": "CSV (from JSON)",
+            "json-to-mqtt": "MQTT payloads (from JSON)",
+            "json-to-time-values": "Time Values (from JSON)",
+            "time-values-to-csv": "CSV",
+            "time-values-to-json": "JSON",
+            "time-values-to-modbus": "Modbus values",
+            "time-values-to-mqtt": "MQTT payloads",
+            "time-values-to-oianalytics": "OIAnalytics (select time precision)",
+            "time-values-to-opcua": "OPCUA values",
+            "setpoint-to-modbus": "Modbus values",
+            "setpoint-to-mqtt": "MQTT payloads",
+            "setpoint-to-opcua": "OPCUA values"
+          },
+          "choose-transformer-modal": {
+            "title": "Choose how to handle payloads",
+            "transformer": "Transformer to apply",
+            "options": "Options"
+          },
+          "edit-transformer-modal": {
+            "create-title": "Create a Custom Transformer",
+            "edit-title": "Edit a Custom Transformer",
+            "input-type": "Input",
+            "output-type": "Output",
+            "name": "Name",
+            "description": "Description",
+            "custom-code": "Code",
+            "language": "Language",
+            "custom-manifest": "Options",
+            "select-language": "Select a programming language first.",
+            "test": "Test",
+            "tooltips": {
+              "add": "Add a Custom Transformer",
+              "edit": "Edit this Custom Transformer",
+              "delete": "Delete this Custom Transformer"
+            }
+          },
+          "test-transformer-modal": {
+            "title": "Test Custom Transformer",
+            "transformer": "Transformer",
+            "input-type": "Input Type",
+            "input-data": "Input Data",
+            "options": "Options",
+            "output": "Output",
+            "results": "Results",
+            "success": "Test completed successfully",
+            "test": "Run Test"
+          },
+          "attributes": {
+            "attribute": "Attribute",
+            "sub-attribute": "Sub-attribute",
+            "root-attribute": "Root attribute",
+            "root-attribute-item": "Root attribute item",
+            "key": "Key",
+            "type": {
+              "title": "Type",
+              "string": "String",
+              "number": "Number",
+              "instant": "Instant",
+              "string-select": "String select",
+              "secret": "Secret",
+              "code": "Code",
+              "boolean": "Boolean",
+              "scan-mode": "Scan mode",
+              "certificate": "Certificate",
+              "timezone": "Timezone",
+              "array": "Array",
+              "object": "Object"
+            },
+            "translation-key": "Translation key",
+            "visible": "Visible",
+            "wrap-in-box": "Wrap in Box",
+            "attributes": "Attributes",
+            "add": "Add Attribute",
+            "none": "No attributes defined",
+            "default-value": "Default Value",
+            "unit": "Unit",
+            "selectable-values": "Selectable Values",
+            "selectable-values-help": "Comma-separated list of values",
+            "content-type": {
+              "title": "Content Type",
+              "json": "JSON",
+              "sql": "SQL"
+            },
+            "acceptable-type": {
+              "title": "Acceptable Type",
+              "POLL": "Poll",
+              "SUBSCRIPTION": "Subscription",
+              "SUBSCRIPTION_AND_POLL": "Subscription and Poll"
+            },
+            "paginate": "Paginate",
+            "number-of-elements-per-page": "Number of elements per page",
+            "display-properties": {
+              "visible": "Visible",
+              "wrap-in-box": "Wrap in box"
+            },
+            "row": "Row",
+            "columns": "Columns",
+            "display-in-view-mode": "Display in View Mode",
+            "nested-attributes": "Nested Attributes",
+            "nested-context": "Nested Attributes — {{ path }}",
+            "secret-info": "Secret fields are used for sensitive data",
+            "instant-info": "Instant fields are used for timestamp values",
+            "certificate-info": "Certificate fields are used for SSL certificates",
+            "edit-transformer-modal": {
+              "create-title": "Create Attribute",
+              "edit-title": "Edit Attribute"
+            }
+          },
+          "csv-to-mqtt": {
+            "delimiter": {
+              "title": "CSV delimiter",
+              "DOT": "Dot .",
+              "SEMI_COLON": "Semi colon ;",
+              "COLON": "Colon :",
+              "COMMA": "Comma ,",
+              "SLASH": "Slash /",
+              "TAB": "Tab",
+              "NON_BREAKING_SPACE": "Space",
+              "PIPE": "Pipe |"
+            },
+            "has-header": "Has Header",
+            "topic-column": "Topic Column",
+            "payload-type": {
+              "title": "Payload Type",
+              "string": "String",
+              "number": "Number",
+              "boolean": "Boolean",
+              "datetime": "Datetime",
+              "object": "Object"
+            },
+            "value-column": "Value Column",
+            "datetime-settings": {
+              "title": "Datetime Settings",
+              "input-type": {
+                "title": "Timestamp input type",
+                "string": "String",
+                "iso-string": "ISO string",
+                "unix-epoch": "Unix epoch (s)",
+                "unix-epoch-ms": "Unix epoch (ms)"
+              },
+              "output-type": {
+                "title": "Timestamp output type",
+                "string": "String",
+                "iso-string": "ISO string",
+                "unix-epoch": "Unix epoch (s)",
+                "unix-epoch-ms": "Unix epoch (ms)"
+              },
+              "timezone": "Timezone",
+              "format": "Format",
+              "locale": "Locale"
+            },
+            "object-fields": {
+              "title": "Object Fields",
+              "item": {
+                "title": "Field Configuration"
+              },
+              "key": "Key",
+              "column": "Column",
+              "data-type": {
+                "title": "Data Type",
+                "string": "String",
+                "number": "Number",
+                "boolean": "Boolean",
+                "datetime": "Datetime",
+                "array": "Array",
+                "object": "Object"
+              }
+            }
+          },
+          "csv-to-time-values": {
+            "delimiter": {
+              "title": "CSV delimiter",
+              "DOT": "Dot .",
+              "SEMI_COLON": "Semi colon ;",
+              "COLON": "Colon :",
+              "COMMA": "Comma ,",
+              "SLASH": "Slash /",
+              "TAB": "Tab",
+              "NON_BREAKING_SPACE": "Space",
+              "PIPE": "Pipe |"
+            },
+            "has-header": "Has Header",
+            "point-id-column": "Point ID Column",
+            "timestamp-column": "Timestamp Column",
+            "value-column": "Value Column",
+            "timestamp-settings": {
+              "title": "Timestamp Settings",
+              "type": {
+                "title": "Timestamp type",
+                "string": "String",
+                "iso-string": "ISO string",
+                "unix-epoch": "Unix epoch (s)",
+                "unix-epoch-ms": "Unix epoch (ms)"
+              },
+              "timezone": "Timezone",
+              "format": "Format",
+              "locale": "Locale"
+            }
+          },
+          "json-to-csv": {
+            "filename": "Output Filename",
+            "delimiter": {
+              "title": "CSV delimiter",
+              "DOT": "Dot .",
+              "SEMI_COLON": "Semi colon ;",
+              "COLON": "Colon :",
+              "COMMA": "Comma ,",
+              "SLASH": "Slash /",
+              "TAB": "Tab",
+              "NON_BREAKING_SPACE": "Space",
+              "PIPE": "Pipe |"
+            },
+            "row-iterator-path": "Row Iterator JSONPath",
+            "fields": {
+              "title": "Fields Mapping",
+              "item": {
+                "title": "Field Configuration"
+              },
+              "column-name": "Column Name",
+              "json-path": "JSONPath",
+              "data-type": {
+                "title": "Data Type",
+                "string": "String",
+                "number": "Number",
+                "boolean": "Boolean",
+                "datetime": "Datetime",
+                "array": "Array",
+                "object": "Object"
+              },
+              "datetime-settings": {
+                "title": "Datetime Settings",
+                "input-type": {
+                  "title": "Timestamp input type",
+                  "string": "String",
+                  "iso-string": "ISO string",
+                  "unix-epoch": "Unix epoch (s)",
+                  "unix-epoch-ms": "Unix epoch (ms)"
+                },
+                "output-type": {
+                  "title": "Timestamp output type",
+                  "string": "String",
+                  "iso-string": "ISO string",
+                  "unix-epoch": "Unix epoch (s)",
+                  "unix-epoch-ms": "Unix epoch (ms)"
+                },
+                "timezone": "Timezone",
+                "format": "Format",
+                "locale": "Locale"
+              }
+            }
+          },
+          "json-to-mqtt": {
+            "row-iterator-path": "Row Iterator JSONPath",
+            "topic-path": "Topic JSONPath",
+            "payload-type": {
+              "title": "MQTT payload Type",
+              "string": "String",
+              "number": "Number",
+              "boolean": "Boolean",
+              "datetime": "Datetime",
+              "array": "Array",
+              "object": "Object"
+            },
+            "value-path": "Value JSONPath",
+            "datetime-settings": {
+              "title": "Datetime Settings",
+              "input-type": {
+                "title": "Timestamp input type",
+                "string": "String",
+                "iso-string": "ISO string",
+                "unix-epoch": "Unix epoch (s)",
+                "unix-epoch-ms": "Unix epoch (ms)"
+              },
+              "output-type": {
+                "title": "Timestamp output type",
+                "string": "String",
+                "iso-string": "ISO string",
+                "unix-epoch": "Unix epoch (s)",
+                "unix-epoch-ms": "Unix epoch (ms)"
+              },
+              "timezone": "Timezone",
+              "format": "Format",
+              "locale": "Locale"
+            },
+            "object-fields": {
+              "title": "Object Fields",
+              "item": {
+                "title": "Field Configuration"
+              },
+              "key": "Key",
+              "path": "JSONPath",
+              "data-type": {
+                "title": "Data Type",
+                "string": "String",
+                "number": "Number",
+                "boolean": "Boolean",
+                "datetime": "Datetime",
+                "object": "Object"
+              }
+            }
+          },
+          "json-to-time-values": {
+            "row-iterator-path": "Row Iterator JSONPath",
+            "point-id-path": "Point ID JSONPath",
+            "timestamp-path": "Timestamp JSONPath",
+            "value-path": "Value JSONPath",
+            "timestamp-settings": {
+              "title": "Timestamp Settings",
+              "type": {
+                "title": "Timestamp type",
+                "string": "String",
+                "iso-string": "ISO string",
+                "unix-epoch": "Unix epoch (s)",
+                "unix-epoch-ms": "Unix epoch (ms)"
+              },
+              "timezone": "Timezone",
+              "format": "Format",
+              "locale": "Locale"
+            }
+          },
+          "setpoint-to-modbus": {
+            "mapping": {
+              "title": "Mapping table",
+              "point-id": "Point ID (Reference)",
+              "reference": "Reference",
+              "address": "Modbus address",
+              "modbus-type": {
+                "title": "Modbus type",
+                "coil": "Coil",
+                "register": "Register"
+              }
+            }
+          },
+          "setpoint-to-mqtt": {
+            "mapping": {
+              "title": "Mapping table",
+              "point-id": "Point ID (Reference)",
+              "reference": "Reference",
+              "topic": "MQTT Topic"
+            }
+          },
+          "setpoint-to-opcua": {
+            "mapping": {
+              "title": "Mapping table",
+              "point-id": "Point ID (Reference)",
+              "reference": "Reference",
+              "node-id": "OPCUA Node ID",
+              "data-type": {
+                "title": "Data type",
+                "boolean": "Boolean",
+                "s-byte": "SByte",
+                "byte": "Byte",
+                "int16": "Int16",
+                "uint16": "UInt16",
+                "int32": "Int32",
+                "uint32": "UInt32",
+                "int64": "Int64",
+                "uint64": "UInt64",
+                "float": "Float",
+                "double": "Double",
+                "string": "String",
+                "date-time": "Date Time"
+              }
+            }
           },
           "time-values-to-csv": {
             "filename": "Filename",
@@ -923,51 +1380,6 @@
             "mapping": {
               "title": "Mapping table",
               "point-id": "Point ID (Reference)",
-              "node-id": "OPCUA Node ID",
-              "data-type": {
-                "title": "Data type",
-                "boolean": "Boolean",
-                "s-byte": "SByte",
-                "byte": "Byte",
-                "int16": "Int16",
-                "uint16": "UInt16",
-                "int32": "Int32",
-                "uint32": "UInt32",
-                "int64": "Int64",
-                "uint64": "UInt64",
-                "float": "Float",
-                "double": "Double",
-                "string": "String",
-                "date-time": "Date Time"
-              }
-            }
-          },
-          "setpoint-to-modbus": {
-            "mapping": {
-              "title": "Mapping table",
-              "point-id": "Point ID (Reference)",
-              "reference": "Reference",
-              "address": "Modbus address",
-              "modbus-type": {
-                "title": "Modbus type",
-                "coil": "Coil",
-                "register": "Register"
-              }
-            }
-          },
-          "setpoint-to-mqtt": {
-            "mapping": {
-              "title": "Mapping table",
-              "point-id": "Point ID (Reference)",
-              "reference": "Reference",
-              "topic": "MQTT Topic"
-            }
-          },
-          "setpoint-to-opcua": {
-            "mapping": {
-              "title": "Mapping table",
-              "point-id": "Point ID (Reference)",
-              "reference": "Reference",
               "node-id": "OPCUA Node ID",
               "data-type": {
                 "title": "Data type",
@@ -1269,6 +1681,62 @@
             "database": "Database",
             "username": "Username",
             "password": "Password"
+          },
+          "rest": {
+            "throttling": {
+              "title": "Throttling",
+              "max-read-interval": "Max read interval",
+              "read-delay": "Read delay",
+              "overlap": "Overlap"
+            },
+            "host": "Host",
+            "accept-unauthorized": "Accept unauthorized certificate",
+            "authentication": {
+              "title": "Authentication",
+              "type": {
+                "title": "Type",
+                "none": "None",
+                "basic": "Basic (username/password)",
+                "bearer": "Bearer token",
+                "api-key": "API key"
+              },
+              "username": "Username",
+              "password": "Password",
+              "token": "Bearer token",
+              "api-key": "API key",
+              "api-value": "API value",
+              "add-to": {
+                "title": "Add to",
+                "header": "Header",
+                "query-params": "Query parameters"
+              }
+            },
+            "test": {
+              "title": "Test configuration",
+              "endpoint": "Test endpoint",
+              "method": {
+                "title": "HTTP method",
+                "GET": "GET",
+                "POST": "POST",
+                "PUT": "PUT"
+              },
+              "body": "Body",
+              "success-code": "Expected success code"
+            },
+            "proxy": {
+              "title": "Proxy",
+              "use-proxy": "Use proxy",
+              "url": "Proxy URL",
+              "username": "Proxy username",
+              "password": "Proxy password"
+            },
+            "success-code": "Expected success code",
+            "send-as": {
+              "title": "Send data as",
+              "body": "HTTP body",
+              "file": "File (form data)"
+            },
+            "timeout": "Request timeout"
           },
           "sftp": {
             "host": "Host",
@@ -1761,6 +2229,53 @@
                 "output-timezone": "Output timezone"
               }
             },
+            "rest": {
+              "method": {
+                "title": "HTTP method",
+                "GET": "GET",
+                "POST": "POST",
+                "PUT": "PUT",
+                "PATCH": "PATCH",
+                "DELETE": "DELETE"
+              },
+              "endpoint": "Endpoint",
+              "query-params": {
+                "title": "Query parameters",
+                "query-param": "Query parameter",
+                "key": "Key",
+                "value": "Value"
+              },
+              "body": {
+                "title": "Request body (JSON)",
+                "content": "Content"
+              },
+              "headers": {
+                "title": "Headers",
+                "header": "Header",
+                "key": "HTTP header key name",
+                "value": "HTTP header value"
+              },
+              "return-type": {
+                "title": "Return type",
+                "body": "Body (JSON / XML)",
+                "file": "File (Content-Disposition)"
+              },
+              "date-time-input": "Date time input format",
+              "track-max-instant": "Track max instant",
+              "date-time": {
+                "json-path": "JSON path",
+                "type": {
+                  "title": "Type",
+                  "iso-string": "ISO string",
+                  "unix-epoch": "Unix epoch (s)",
+                  "unix-epoch-ms": "Unix epoch (ms)",
+                  "string": "String"
+                },
+                "timezone": "Timezone",
+                "format": "Format",
+                "locale": "Locale"
+              }
+            },
             "sftp": {
               "remote-folder": "Remote folder",
               "regex": "Regex to pick up files",
@@ -2075,26 +2590,10 @@
       "retry-content-action": "Retry content",
       "replay-content-action": "Replay content"
     },
-    "subscriptions": {
-      "title": "Subscriptions",
-      "none": "No subscription set. The connector receives data from all data sources.",
-      "add": "Subscribe to a South connector",
-      "title-creation": "Subscribe to a South connector",
-      "type": "Type",
-      "name": "Name",
-      "south": "South connector",
-      "added": "The connector is now subscribed to {{ name }}",
-      "confirm-deletion": "Are you sure you want to unsubscribe from {{ name }}?",
-      "deleted": "The connector is not subscribed to {{ name }} anymore",
-      "tooltips": {
-        "delete": "Remove subscription"
-      }
-    },
     "transformers": {
       "title": "Transform payloads",
-      "input-type": "Source type",
-      "output-type": "Destination type",
-      "transformer": "Transformer",
+      "source": "Source",
+      "output": "Output",
       "add": "Add a transformer",
       "none": "No transformer",
       "choose-transformer-modal": {
@@ -2314,5 +2813,10 @@
     "title": "Scan mode",
     "label": "Scan mode",
     "subscription": "Subscribe"
+  },
+  "version-update": {
+    "title": "Update Available",
+    "message": "A new version of OIBus has been detected. The page will automatically reload in {{ seconds }} seconds to apply the update.",
+    "reload-now": "Reload Now"
   }
 }

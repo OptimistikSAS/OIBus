@@ -12,7 +12,7 @@ import testData from '../../tests/utils/test-data';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import CacheService from '../../service/cache/cache.service';
 import { createTransformer } from '../../service/transformer.service';
-import OIBusTransformer from '../../service/transformers/oibus-transformer';
+import OIBusTransformer from '../../transformers/oibus-transformer';
 import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
 import { getFilenameWithoutRandomId } from '../../service/utils';
 
@@ -97,9 +97,7 @@ describe('NorthAmazonS3', () => {
         contentSize: 1234,
         numberOfElement: 0,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'any',
-        source: 'south',
-        options: {}
+        contentType: 'any'
       });
 
       expect(createReadStream).toHaveBeenCalledWith('/csv/test/file-789.csv');
@@ -112,9 +110,7 @@ describe('NorthAmazonS3', () => {
           contentSize: 1234,
           numberOfElement: 1,
           createdAt: '2020-02-02T02:02:02.222Z',
-          contentType: 'time-values',
-          source: 'south',
-          options: {}
+          contentType: 'time-values'
         })
       ).rejects.toThrow(`Unsupported data type: time-values (file path/to/file/example-123456789.file)`);
     });

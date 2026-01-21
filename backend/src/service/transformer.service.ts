@@ -1,27 +1,78 @@
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import { transformerSchema } from '../web-server/controllers/validators/oibus-validation-schema';
 import TransformerRepository from '../repository/config/transformer.repository';
-import { CustomTransformer, Transformer, TransformerWithOptions } from '../model/transformer.model';
-import { CustomTransformerCommandDTO, TransformerDTO, TransformerSearchParam } from '../../shared/model/transformer.model';
+import { CustomTransformer, Transformer, NorthTransformerWithOptions } from '../model/transformer.model';
+import {
+  CustomTransformerCommandDTO,
+  InputTemplate,
+  InputType,
+  TransformerDTO,
+  TransformerSearchParam,
+  TransformerTestRequest,
+  TransformerTestResponse
+} from '../../shared/model/transformer.model';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import { Page } from '../../shared/model/types';
 import { NorthConnectorEntity } from '../model/north-connector.model';
 import { NorthSettings } from '../../shared/model/north-settings.model';
 import pino from 'pino';
-import OibusTransformer from './transformers/oibus-transformer';
-import IsoTransformer from './transformers/iso-transformer';
-import OIBusTimeValuesToCsvTransformer from './transformers/time-values/oibus-time-values-to-csv-transformer';
-import OIBusTimeValuesToJSONTransformer from './transformers/time-values/oibus-time-values-to-json-transformer';
-import OIBusTimeValuesToMQTTTransformer from './transformers/time-values/oibus-time-values-to-mqtt-transformer';
-import OIBusTimeValuesToOPCUATransformer from './transformers/time-values/oibus-time-values-to-opcua-transformer';
-import OIBusTimeValuesToModbusTransformer from './transformers/time-values/oibus-time-values-to-modbus-transformer';
-import IgnoreTransformer from './transformers/ignore-transformer';
+import OibusTransformer from '../transformers/oibus-transformer';
+import OIBusTimeValuesToCsvTransformer from '../transformers/time-values/oibus-time-values-to-csv/oibus-time-values-to-csv-transformer';
+import OIBusTimeValuesToJSONTransformer from '../transformers/time-values/oibus-time-values-to-json/oibus-time-values-to-json-transformer';
+import OIBusTimeValuesToMQTTTransformer from '../transformers/time-values/oibus-time-values-to-mqtt/oibus-time-values-to-mqtt-transformer';
+import OIBusTimeValuesToOPCUATransformer from '../transformers/time-values/oibus-time-values-to-opcua/oibus-time-values-to-opcua-transformer';
+import OIBusTimeValuesToModbusTransformer from '../transformers/time-values/oibus-time-values-to-modbus/oibus-time-values-to-modbus-transformer';
 import { OIBusObjectAttribute } from '../../shared/model/form.model';
-import OIBusSetpointToModbusTransformer from './transformers/setpoint/oibus-setpoint-to-modbus-transformer';
-import OIBusSetpointToMQTTTransformer from './transformers/setpoint/oibus-setpoint-to-mqtt-transformer';
-import OIBusSetpointToOPCUATransformer from './transformers/setpoint/oibus-setpoint-to-opcua-transformer';
+import OIBusSetpointToModbusTransformer from '../transformers/setpoint/oibus-setpoint-to-modbus/oibus-setpoint-to-modbus-transformer';
+import OIBusSetpointToMQTTTransformer from '../transformers/setpoint/oibus-setpoint-to-mqtt/oibus-setpoint-to-mqtt-transformer';
+import OIBusSetpointToOPCUATransformer from '../transformers/setpoint/oibus-setpoint-to-opcua/oibus-setpoint-to-opcua-transformer';
+import OIBusTimeValuesToOIAnalyticsTransformer from '../transformers/time-values/oibus-time-values-to-oianalytics/oibus-time-values-to-oianalytics-transformer';
 import { NotFoundError, OIBusValidationError } from '../model/types';
-import OIBusTimeValuesToOIAnalyticsTransformer from './transformers/time-values/oibus-time-values-to-oianalytics-transformer';
+import OIBusCustomTransformer from '../transformers/oibus-custom-transformer';
+import { Readable } from 'node:stream';
+import { DateTime } from 'luxon';
+import { CacheMetadataSource, OIBusSetpoint, OIBusTimeValue } from '../../shared/model/engine.model';
+import JSONToTimeValuesTransformer from '../transformers/any/json-to-time-values/json-to-time-values-transformer';
+import JSONToCSVTransformer from '../transformers/any/json-to-csv/json-to-csv-transformer';
+import CSVToMQTTTransformer from '../transformers/any/csv-to-mqtt/csv-to-mqtt-transformer';
+import CSVToTimeValuesTransformer from '../transformers/any/csv-to-time-values/csv-to-time-values-transformer';
+import JSONToMQTTTransformer from '../transformers/any/json-to-mqtt/json-to-mqtt-transformer';
+import isoManifest from '../transformers/iso-transformer/manifest';
+import ignoreManifest from '../transformers/ignore-transformer/manifest';
+import csvToMqttManifest from '../transformers/any/csv-to-mqtt/manifest';
+import csvToTimeValuesManifest from '../transformers/any/csv-to-time-values/manifest';
+import jsonToCsvManifest from '../transformers/any/json-to-csv/manifest';
+import jsonToMqttManifest from '../transformers/any/json-to-mqtt/manifest';
+import jsonToTimeValuesManifest from '../transformers/any/json-to-time-values/manifest';
+import timeValuesToCsvManifest from '../transformers/time-values/oibus-time-values-to-csv/manifest';
+import timeValuesToJsonManifest from '../transformers/time-values/oibus-time-values-to-json/manifest';
+import timeValuesToModbusManifest from '../transformers/time-values/oibus-time-values-to-modbus/manifest';
+import timeValuesToMqttManifest from '../transformers/time-values/oibus-time-values-to-mqtt/manifest';
+import timeValuesToOianalyticsManifest from '../transformers/time-values/oibus-time-values-to-oianalytics/manifest';
+import timeValuesToOpcuaManifest from '../transformers/time-values/oibus-time-values-to-opcua/manifest';
+import setpointToModbusManifest from '../transformers/setpoint/oibus-setpoint-to-modbus/manifest';
+import setpointToMqttManifest from '../transformers/setpoint/oibus-setpoint-to-mqtt/manifest';
+import setpointToOpcuaManifest from '../transformers/setpoint/oibus-setpoint-to-opcua/manifest';
+import { TransformerManifest } from '../../shared/model/transformer.model';
+
+export const transformerManifestList: Array<TransformerManifest> = [
+  isoManifest,
+  ignoreManifest,
+  csvToMqttManifest,
+  csvToTimeValuesManifest,
+  jsonToCsvManifest,
+  jsonToMqttManifest,
+  jsonToTimeValuesManifest,
+  timeValuesToCsvManifest,
+  timeValuesToJsonManifest,
+  timeValuesToModbusManifest,
+  timeValuesToMqttManifest,
+  timeValuesToOianalyticsManifest,
+  timeValuesToOpcuaManifest,
+  setpointToModbusManifest,
+  setpointToMqttManifest,
+  setpointToOpcuaManifest
+];
 
 export default class TransformerService {
   constructor(
@@ -29,6 +80,18 @@ export default class TransformerService {
     private transformerRepository: TransformerRepository,
     private oIAnalyticsMessageService: OIAnalyticsMessageService
   ) {}
+
+  listManifest(): Array<TransformerManifest> {
+    return transformerManifestList;
+  }
+
+  getManifest(type: string): TransformerManifest {
+    const manifest = transformerManifestList.find(element => element.id === type);
+    if (!manifest) {
+      throw new NotFoundError(`Transformer manifest "${type}" not found`);
+    }
+    return manifest;
+  }
 
   findAll(): Array<Transformer> {
     return this.transformerRepository.list();
@@ -49,7 +112,6 @@ export default class TransformerService {
   async create(command: CustomTransformerCommandDTO): Promise<CustomTransformer> {
     await this.validator.validate(transformerSchema, command);
 
-    // Check for unique name (only custom transformers have names)
     const existingTransformers = this.transformerRepository.list();
     if (existingTransformers.some(t => t.type === 'custom' && (t as CustomTransformer).name === command.name)) {
       throw new OIBusValidationError(`Transformer name "${command.name}" already exists`);
@@ -91,6 +153,166 @@ export default class TransformerService {
     this.transformerRepository.delete(transformerId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
+
+  async test(id: string, testRequest: TransformerTestRequest): Promise<TransformerTestResponse> {
+    const transformer = this.findById(id);
+    if (transformer.type === 'standard') {
+      throw new OIBusValidationError(`Cannot test standard transformer "${transformer.functionName}"`);
+    }
+
+    const customTransformer = transformer as CustomTransformer;
+
+    // Create a mock north connector for testing
+    const mockNorthConnector = {
+      id: 'test-connector',
+      name: 'Test Connector',
+      type: 'test',
+      description: 'Mock connector for testing',
+      enabled: true,
+      settings: {},
+      caching: {
+        enabled: false,
+        maxSize: 0,
+        maxCount: 0,
+        throttling: {
+          maxNumberOfElements: 0,
+          maxDuration: 0
+        }
+      },
+      transformers: []
+    } as unknown as NorthConnectorEntity<NorthSettings>;
+
+    // Create a mock logger
+    const mockLogger = pino({ level: 'silent' });
+
+    // Create the custom transformer instance
+    const transformerInstance = new OIBusCustomTransformer(mockLogger, customTransformer, mockNorthConnector, testRequest.options || {});
+
+    // Execute the transformer
+    const inputStream = Readable.from([Buffer.from(testRequest.inputData, 'utf-8')]);
+    const source: CacheMetadataSource = {
+      source: 'test'
+    };
+    const { metadata, output } = await transformerInstance.transform(inputStream, source, 'test-input.json');
+
+    return {
+      output,
+      metadata: {
+        contentType: metadata.contentType,
+        numberOfElement: metadata.numberOfElement
+      }
+    };
+  }
+
+  generateTemplate(inputType: InputType): InputTemplate {
+    switch (inputType) {
+      case 'time-values':
+        return this.generateTimeValuesTemplate();
+      case 'setpoint':
+        return this.generateSetpointTemplate();
+      case 'any':
+      default:
+        return this.generateFileTemplate();
+    }
+  }
+
+  /**
+   * Generate input template for time-values input type
+   */
+  private generateTimeValuesTemplate(): InputTemplate {
+    const now = DateTime.now().toUTC().toISO()!;
+    const timeValues: Array<OIBusTimeValue> = [
+      {
+        pointId: 'temperature_sensor_01',
+        timestamp: now,
+        data: {
+          value: 23.5,
+          unit: '°C',
+          quality: 'good'
+        }
+      },
+      {
+        pointId: 'pressure_sensor_01',
+        timestamp: now,
+        data: {
+          value: 1013.25,
+          unit: 'hPa',
+          quality: 'good'
+        }
+      },
+      {
+        pointId: 'humidity_sensor_01',
+        timestamp: now,
+        data: {
+          value: 65.2,
+          unit: '%',
+          quality: 'good'
+        }
+      }
+    ];
+
+    return {
+      type: 'time-values',
+      data: JSON.stringify(timeValues, null, 2),
+      description: 'Sample time-series data with multiple sensor readings'
+    };
+  }
+
+  /**
+   * Generate input template for setpoint input type
+   */
+  private generateSetpointTemplate(): InputTemplate {
+    const setpoints: Array<OIBusSetpoint> = [
+      {
+        reference: 'setpoint_temperature',
+        value: 22.0
+      },
+      {
+        reference: 'setpoint_pressure',
+        value: 1000.0
+      },
+      {
+        reference: 'setpoint_enabled',
+        value: true
+      },
+      {
+        reference: 'setpoint_mode',
+        value: 'auto'
+      }
+    ];
+
+    return {
+      type: 'setpoint',
+      data: JSON.stringify(setpoints, null, 2),
+      description: 'Sample setpoint commands for various parameters'
+    };
+  }
+
+  /**
+   * Generate input template for any (file) input type
+   */
+  private generateFileTemplate(): InputTemplate {
+    const fileContent = {
+      timestamp: DateTime.now().toUTC().toISO(),
+      source: 'test_device',
+      measurements: {
+        temperature: 23.5,
+        humidity: 65.2,
+        pressure: 1013.25
+      },
+      metadata: {
+        device_id: 'sensor_001',
+        location: 'building_a_floor_2',
+        firmware_version: '1.2.3'
+      }
+    };
+
+    return {
+      type: 'any',
+      data: JSON.stringify(fileContent, null, 2),
+      description: 'Sample file content with structured data'
+    };
+  }
 }
 
 export const copyTransformerCommandToTransformerEntity = async (
@@ -102,6 +324,7 @@ export const copyTransformerCommandToTransformerEntity = async (
   transformer.inputType = command.inputType;
   transformer.outputType = command.outputType;
   transformer.customCode = command.customCode;
+  transformer.language = command.language;
   transformer.customManifest = command.customManifest;
 };
 
@@ -125,18 +348,34 @@ export const toTransformerDTO = (transformer: Transformer): TransformerDTO => {
         inputType: transformer.inputType,
         outputType: transformer.outputType,
         customCode: transformer.customCode,
+        language: transformer.language,
         manifest: transformer.customManifest
       };
   }
 };
 
 export const createTransformer = (
-  transformerWithOptions: TransformerWithOptions,
+  transformerWithOptions: NorthTransformerWithOptions,
   northConnector: NorthConnectorEntity<NorthSettings>,
   logger: pino.Logger
 ): OibusTransformer => {
   if (transformerWithOptions.transformer.type === 'standard') {
     switch (transformerWithOptions.transformer.functionName) {
+      case CSVToMQTTTransformer.transformerName: {
+        return new CSVToMQTTTransformer(logger, transformerWithOptions.transformer, northConnector, transformerWithOptions.options);
+      }
+      case CSVToTimeValuesTransformer.transformerName: {
+        return new CSVToTimeValuesTransformer(logger, transformerWithOptions.transformer, northConnector, transformerWithOptions.options);
+      }
+      case JSONToCSVTransformer.transformerName: {
+        return new JSONToCSVTransformer(logger, transformerWithOptions.transformer, northConnector, transformerWithOptions.options);
+      }
+      case JSONToMQTTTransformer.transformerName: {
+        return new JSONToMQTTTransformer(logger, transformerWithOptions.transformer, northConnector, transformerWithOptions.options);
+      }
+      case JSONToTimeValuesTransformer.transformerName: {
+        return new JSONToTimeValuesTransformer(logger, transformerWithOptions.transformer, northConnector, transformerWithOptions.options);
+      }
       case OIBusTimeValuesToCsvTransformer.transformerName: {
         return new OIBusTimeValuesToCsvTransformer(
           logger,
@@ -153,22 +392,6 @@ export const createTransformer = (
           transformerWithOptions.options
         );
       }
-      case OIBusTimeValuesToMQTTTransformer.transformerName: {
-        return new OIBusTimeValuesToMQTTTransformer(
-          logger,
-          transformerWithOptions.transformer,
-          northConnector,
-          transformerWithOptions.options
-        );
-      }
-      case OIBusTimeValuesToOPCUATransformer.transformerName: {
-        return new OIBusTimeValuesToOPCUATransformer(
-          logger,
-          transformerWithOptions.transformer,
-          northConnector,
-          transformerWithOptions.options
-        );
-      }
       case OIBusTimeValuesToModbusTransformer.transformerName: {
         return new OIBusTimeValuesToModbusTransformer(
           logger,
@@ -177,8 +400,24 @@ export const createTransformer = (
           transformerWithOptions.options
         );
       }
+      case OIBusTimeValuesToMQTTTransformer.transformerName: {
+        return new OIBusTimeValuesToMQTTTransformer(
+          logger,
+          transformerWithOptions.transformer,
+          northConnector,
+          transformerWithOptions.options
+        );
+      }
       case OIBusTimeValuesToOIAnalyticsTransformer.transformerName: {
         return new OIBusTimeValuesToOIAnalyticsTransformer(
+          logger,
+          transformerWithOptions.transformer,
+          northConnector,
+          transformerWithOptions.options
+        );
+      }
+      case OIBusTimeValuesToOPCUATransformer.transformerName: {
+        return new OIBusTimeValuesToOPCUATransformer(
           logger,
           transformerWithOptions.transformer,
           northConnector,
@@ -209,47 +448,68 @@ export const createTransformer = (
           transformerWithOptions.options
         );
       }
+
+      default:
+        throw new Error(
+          `Transformer ${transformerWithOptions.transformer.id} (${transformerWithOptions.transformer.type}) not implemented`
+        );
     }
+  } else {
+    return new OIBusCustomTransformer(logger, transformerWithOptions.transformer, northConnector, transformerWithOptions.options);
   }
-  throw new Error(`Transformer ${transformerWithOptions.transformer.id} (${transformerWithOptions.transformer.type}) not implemented`);
 };
 
 export const getStandardManifest = (functionName: string): OIBusObjectAttribute => {
   switch (functionName) {
-    case IsoTransformer.transformerName: {
-      return IsoTransformer.manifestSettings;
+    case csvToMqttManifest.id: {
+      return csvToMqttManifest.settings;
     }
-    case IgnoreTransformer.transformerName: {
-      return IgnoreTransformer.manifestSettings;
+    case csvToTimeValuesManifest.id: {
+      return csvToTimeValuesManifest.settings;
     }
-    case OIBusTimeValuesToCsvTransformer.transformerName: {
-      return OIBusTimeValuesToCsvTransformer.manifestSettings;
+    case isoManifest.id: {
+      return isoManifest.settings;
     }
-    case OIBusTimeValuesToJSONTransformer.transformerName: {
-      return OIBusTimeValuesToJSONTransformer.manifestSettings;
+    case ignoreManifest.id: {
+      return ignoreManifest.settings;
     }
-    case OIBusTimeValuesToMQTTTransformer.transformerName: {
-      return OIBusTimeValuesToMQTTTransformer.manifestSettings;
+    case jsonToCsvManifest.id: {
+      return jsonToCsvManifest.settings;
     }
-    case OIBusTimeValuesToOPCUATransformer.transformerName: {
-      return OIBusTimeValuesToOPCUATransformer.manifestSettings;
+    case jsonToMqttManifest.id: {
+      return jsonToMqttManifest.settings;
     }
-    case OIBusTimeValuesToModbusTransformer.transformerName: {
-      return OIBusTimeValuesToModbusTransformer.manifestSettings;
+    case jsonToTimeValuesManifest.id: {
+      return jsonToTimeValuesManifest.settings;
     }
-    case OIBusTimeValuesToOIAnalyticsTransformer.transformerName: {
-      return OIBusTimeValuesToOIAnalyticsTransformer.manifestSettings;
+    case timeValuesToCsvManifest.id: {
+      return timeValuesToCsvManifest.settings;
     }
-    case OIBusSetpointToModbusTransformer.transformerName: {
-      return OIBusSetpointToModbusTransformer.manifestSettings;
+    case timeValuesToJsonManifest.id: {
+      return timeValuesToJsonManifest.settings;
     }
-    case OIBusSetpointToMQTTTransformer.transformerName: {
-      return OIBusSetpointToMQTTTransformer.manifestSettings;
+    case timeValuesToModbusManifest.id: {
+      return timeValuesToModbusManifest.settings;
     }
-    case OIBusSetpointToOPCUATransformer.transformerName: {
-      return OIBusSetpointToOPCUATransformer.manifestSettings;
+    case timeValuesToMqttManifest.id: {
+      return timeValuesToMqttManifest.settings;
+    }
+    case timeValuesToOianalyticsManifest.id: {
+      return timeValuesToOianalyticsManifest.settings;
+    }
+    case timeValuesToOpcuaManifest.id: {
+      return timeValuesToOpcuaManifest.settings;
+    }
+    case setpointToModbusManifest.id: {
+      return setpointToModbusManifest.settings;
+    }
+    case setpointToMqttManifest.id: {
+      return setpointToMqttManifest.settings;
+    }
+    case setpointToOpcuaManifest.id: {
+      return setpointToOpcuaManifest.settings;
     }
     default:
-      throw new Error(`Could not find manifest for ${functionName} transformer`);
+      throw new Error(`Could not find manifest for "${functionName}" transformer`);
   }
 };

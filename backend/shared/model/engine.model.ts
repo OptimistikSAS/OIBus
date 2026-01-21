@@ -420,6 +420,54 @@ export interface RegistrationSettingsDTO extends BaseEntity {
      * @example true
      */
     setpoint: boolean;
+
+    /**
+     * Permission to search cache content.
+     * @example true
+     */
+    searchHistoryCacheContent: boolean;
+
+    /**
+     * Permission to get cache file content.
+     * @example true
+     */
+    getHistoryCacheFileContent: boolean;
+
+    /**
+     * Permission to remove cache content.
+     * @example true
+     */
+    removeHistoryCacheContent: boolean;
+
+    /**
+     * Permission to move cache content.
+     * @example true
+     */
+    moveHistoryCacheContent: boolean;
+
+    /**
+     * Permission to search cache content.
+     * @example true
+     */
+    searchNorthCacheContent: boolean;
+
+    /**
+     * Permission to get cache file content.
+     * @example true
+     */
+    getNorthCacheFileContent: boolean;
+
+    /**
+     * Permission to remove cache content.
+     * @example true
+     */
+    removeNorthCacheContent: boolean;
+
+    /**
+     * Permission to move cache content.
+     * @example true
+     */
+    moveNorthCacheContent: boolean;
   };
 }
 
@@ -695,6 +743,54 @@ export interface RegistrationSettingsCommandDTO {
      * @example true
      */
     setpoint: boolean;
+
+    /**
+     * Permission to search cache content.
+     * @example true
+     */
+    searchHistoryCacheContent: boolean;
+
+    /**
+     * Permission to get cache file content.
+     * @example true
+     */
+    getHistoryCacheFileContent: boolean;
+
+    /**
+     * Permission to remove cache content.
+     * @example true
+     */
+    removeHistoryCacheContent: boolean;
+
+    /**
+     * Permission to move cache content.
+     * @example true
+     */
+    moveHistoryCacheContent: boolean;
+
+    /**
+     * Permission to search cache content.
+     * @example true
+     */
+    searchNorthCacheContent: boolean;
+
+    /**
+     * Permission to get cache file content.
+     * @example true
+     */
+    getNorthCacheFileContent: boolean;
+
+    /**
+     * Permission to remove cache content.
+     * @example true
+     */
+    removeNorthCacheContent: boolean;
+
+    /**
+     * Permission to move cache content.
+     * @example true
+     */
+    moveNorthCacheContent: boolean;
   };
 }
 
@@ -857,6 +953,24 @@ export interface EngineSettingsCommandDTO {
       interval: number;
     };
   };
+}
+
+/**
+ * Engine settings update result Data Transfer Object.
+ * Returned after updating engine settings to indicate if a redirect is needed.
+ */
+export interface EngineSettingsUpdateResultDTO {
+  /**
+   * Whether the client needs to redirect due to a port change.
+   * @example true
+   */
+  needsRedirect: boolean;
+
+  /**
+   * The new port to redirect to, if applicable.
+   * @example 3333
+   */
+  newPort: number | null;
 }
 
 /**
@@ -1514,18 +1628,45 @@ export interface CacheMetadata {
    * @example "time-values"
    */
   contentType: string;
-
-  /**
-   * The source of the content.
-   * @example "south1"
-   */
-  source: string;
-
-  /**
-   * Additional options associated with the content.
-   */
-  options: Record<string, string | number>;
 }
+
+export interface CacheMetadataSourceOriginSouth {
+  source: 'south';
+
+  /**
+   * Datetime in iso format when the query has been triggered
+   * @example "2023-01-01T00:00:00Z"
+   */
+  queryTime: Instant;
+
+  /**
+   * ID of the south connector at the source of the data
+   */
+  southId: string;
+
+  /**
+   * IDs of the items at the source of the data
+   */
+  itemIds: Array<string>;
+}
+
+export interface CacheMetadataSourceOriginOIAnalytics {
+  source: 'oianalytics';
+}
+
+export interface CacheMetadataSourceOriginAPI {
+  source: 'api';
+}
+
+export interface CacheMetadataSourceOriginTest {
+  source: 'test';
+}
+
+export type CacheMetadataSource =
+  | CacheMetadataSourceOriginSouth
+  | CacheMetadataSourceOriginOIAnalytics
+  | CacheMetadataSourceOriginAPI
+  | CacheMetadataSourceOriginTest;
 
 /**
  * Parameters for searching the cache.

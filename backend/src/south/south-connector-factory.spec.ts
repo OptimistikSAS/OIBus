@@ -20,6 +20,7 @@ import SouthOPCUA from '../south/south-opcua/south-opcua';
 import SouthOracle from '../south/south-oracle/south-oracle';
 import SouthPI from '../south/south-pi/south-pi';
 import SouthPostgreSQL from '../south/south-postgresql/south-postgresql';
+import SouthRestAPI from '../south/south-rest/south-rest';
 import SouthSFTP from '../south/south-sftp/south-sftp';
 import SouthFTP from '../south/south-ftp/south-ftp';
 import SouthSQLite from '../south/south-sqlite/south-sqlite';
@@ -55,6 +56,8 @@ import {
   SouthPISettings,
   SouthPostgreSQLItemSettings,
   SouthPostgreSQLSettings,
+  SouthRestItemSettings,
+  SouthRestSettings,
   SouthSettings,
   SouthSFTPItemSettings,
   SouthSFTPSettings,
@@ -81,6 +84,7 @@ jest.mock('../south/south-postgresql/south-postgresql');
 jest.mock('../south/south-sftp/south-sftp');
 jest.mock('../south/south-ftp/south-ftp');
 jest.mock('../south/south-sqlite/south-sqlite');
+jest.mock('../south/south-rest/south-rest');
 
 describe('buildSouth', () => {
   const mockLogger = {} as pino.Logger;
@@ -366,6 +370,25 @@ describe('buildSouth', () => {
     );
     expect(SouthPostgreSQL).toHaveBeenCalledTimes(1);
     expect(result).toBeInstanceOf(SouthPostgreSQL);
+  });
+
+  it('should create SouthRestAPI for type "rest-api"', () => {
+    const settings: SouthConnectorEntity<SouthRestSettings, SouthRestItemSettings> = {
+      ...baseSettings,
+      type: 'rest',
+      settings: {} as SouthRestSettings
+    };
+    const result = buildSouth(
+      settings,
+      mockAddContent,
+      mockLogger,
+      mockSouthCacheFolder,
+      mockSouthCacheRepository,
+      mockCertificateRepository,
+      mockOIAnalyticsRegistrationRepository
+    );
+    expect(SouthRestAPI).toHaveBeenCalledTimes(1);
+    expect(result).toBeInstanceOf(SouthRestAPI);
   });
 
   it('should create SouthSFTP for type "sftp"', () => {

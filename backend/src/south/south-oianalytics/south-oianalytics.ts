@@ -11,8 +11,8 @@ import SouthCacheRepository from '../../repository/cache/south-cache.repository'
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import CertificateRepository from '../../repository/config/certificate.repository';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
-import { HTTPRequest, ReqResponse } from '../../service/http-request.utils';
-import { buildHttpOptions, getHost, OIATimeValues, parseData } from '../../service/utils-oianalytics';
+import { HTTPRequest } from '../../service/http-request.utils';
+import { buildHttpOptions, getHost, OIATimeValues, parseData, testOIAnalyticsConnection } from '../../service/utils-oianalytics';
 
 /**
  * Class SouthOIAnalytics - Retrieve data from OIAnalytics REST API
@@ -23,7 +23,7 @@ export default class SouthOIAnalytics
 {
   constructor(
     connector: SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIAnalyticsItemSettings>,
-    engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
+    engineAddContentCallback: (southId: string, data: OIBusContent, queryTime: Instant, itemIds: Array<string>) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
     logger: pino.Logger,
     cacheFolderPath: string,
@@ -35,26 +35,14 @@ export default class SouthOIAnalytics
 
   override async testConnection(): Promise<void> {
     const registrationSettings = this.oIAnalyticsRegistrationRepository.get()!;
-    const httpOptions = await buildHttpOptions(
-      'GET',
+    await testOIAnalyticsConnection(
       this.connector.settings.useOiaModule,
       registrationSettings,
       this.connector.settings.specificSettings,
       this.connector.settings.timeout * 1000,
-      this.certificateRepository
+      this.certificateRepository,
+      false
     );
-    const host = getHost(this.connector.settings.useOiaModule, registrationSettings, this.connector.settings.specificSettings);
-    const requestUrl = new URL('/api/optimistik/oibus/status', host);
-
-    let response: ReqResponse;
-    try {
-      response = await HTTPRequest(requestUrl, httpOptions);
-    } catch (error) {
-      throw new Error(`Fetch error ${error}`);
-    }
-    if (!response.ok) {
-      throw new Error(`HTTP request failed with status code ${response.statusCode} and message: ${await response.body.text()}`);
-    }
   }
 
   override async testItem(
@@ -79,9 +67,9 @@ export default class SouthOIAnalytics
     let updatedStartTime: Instant | null = null;
 
     for (const item of items) {
-      const startRequest = DateTime.now().toMillis();
+      const startRequest = DateTime.now();
       const result: Array<OIATimeValues> = await this.queryData(item, startTime, endTime);
-      const requestDuration = DateTime.now().toMillis() - startRequest;
+      const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
 
       const { formattedResult, maxInstant } = parseData(result);
 
@@ -96,6 +84,8 @@ export default class SouthOIAnalytics
           item.settings.serialization,
           this.connector.name,
           item.name,
+          item.id,
+          startRequest.toUTC().toISO(),
           this.tmpFolder,
           this.addContent.bind(this),
           this.logger

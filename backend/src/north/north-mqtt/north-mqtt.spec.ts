@@ -8,13 +8,13 @@ import testData from '../../tests/utils/test-data';
 import { flushPromises } from '../../tests/utils/test-utils';
 import CacheService from '../../service/cache/cache.service';
 import { createTransformer } from '../../service/transformer.service';
-import OIBusTransformer from '../../service/transformers/oibus-transformer';
+import OIBusTransformer from '../../transformers/oibus-transformer';
 import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
 import { getFilenameWithoutRandomId } from '../../service/utils';
 import mqtt, { MqttClient } from 'mqtt';
 import Stream from 'node:stream';
 import fs from 'node:fs/promises';
-import { OIBusMQTTValue } from '../../service/transformers/connector-types.model';
+import { OIBusMQTTValue } from '../../transformers/connector-types.model';
 import { createConnectionOptions } from '../../service/utils-mqtt';
 
 jest.mock('node:fs/promises');
@@ -202,9 +202,7 @@ describe('NorthMQTT', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'mqtt',
-      source: 'south',
-      options: {}
+      contentType: 'mqtt'
     });
 
     expect(publishAsyncFn).toHaveBeenCalledTimes(2);
@@ -253,9 +251,7 @@ describe('NorthMQTT', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'mqtt',
-        source: 'south',
-        options: {}
+        contentType: 'mqtt'
       })
     ).rejects.toThrow(new Error('error1'));
 
@@ -272,9 +268,7 @@ describe('NorthMQTT', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'mqtt',
-        source: 'south',
-        options: {}
+        contentType: 'mqtt'
       })
     ).rejects.toThrow(new Error('error2'));
     expect(logger.error).toHaveBeenCalledWith(`Unexpected error: error2`);
@@ -291,9 +285,7 @@ describe('NorthMQTT', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'mqtt',
-        source: 'south',
-        options: {}
+        contentType: 'mqtt'
       })
     ).rejects.toThrow('Connector is reconnecting...');
   });
@@ -320,9 +312,7 @@ describe('NorthMQTT', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'mqtt',
-        source: 'south',
-        options: {}
+        contentType: 'mqtt'
       })
     ).rejects.toThrow('MQTT client not set');
   });
@@ -334,9 +324,7 @@ describe('NorthMQTT', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'any',
-        source: 'south',
-        options: {}
+        contentType: 'any'
       })
     ).rejects.toThrow(`Unsupported data type: any (file path/to/file/example-123456789.file)`);
   });

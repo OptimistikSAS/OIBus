@@ -1,5 +1,5 @@
 import { TransformerController } from './transformer.controller';
-import { CustomTransformerCommandDTO, TransformerSearchParam } from '../../../shared/model/transformer.model';
+import { CustomTransformerCommandDTO, TransformerManifest, TransformerSearchParam, TransformerTestRequest } from '../../../shared/model/transformer.model';
 import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
 import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';
@@ -22,6 +22,67 @@ describe('TransformerController', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     controller = new TransformerController();
+  });
+
+  it('should return transformer types', async () => {
+    const mockManifests: Array<TransformerManifest> = [
+      {
+        id: 'iso',
+        inputType: 'any',
+        outputType: 'any',
+        settings: {
+          type: 'object',
+          key: 'options',
+          translationKey: 'configuration.oibus.manifest.transformers.options',
+          attributes: [],
+          enablingConditions: [],
+          validators: [],
+          displayProperties: {
+            visible: true,
+            wrapInBox: false
+          }
+        }
+      }
+    ];
+    (mockRequest.services!.transformerService.listManifest as jest.Mock).mockReturnValue(mockManifests);
+
+    const result = await controller.listManifest(mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.transformerService.listManifest).toHaveBeenCalled();
+    expect(result).toEqual([
+      {
+        id: 'iso',
+        inputType: 'any',
+        outputType: 'any'
+      }
+    ]);
+  });
+
+  it('should return a transformer manifest', async () => {
+    const mockManifest: TransformerManifest = {
+      id: 'iso',
+      inputType: 'any',
+      outputType: 'any',
+      settings: {
+        type: 'object',
+        key: 'options',
+        translationKey: 'configuration.oibus.manifest.transformers.options',
+        attributes: [],
+        enablingConditions: [],
+        validators: [],
+        displayProperties: {
+          visible: true,
+          wrapInBox: false
+        }
+      }
+    };
+    const type = 'iso';
+    (mockRequest.services!.transformerService.getManifest as jest.Mock).mockReturnValue(mockManifest);
+
+    const result = await controller.getManifest(type, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.transformerService.getManifest).toHaveBeenCalledWith(type);
+    expect(result).toEqual(mockManifest);
   });
 
   it('should search for transformers with parameters', async () => {
@@ -118,5 +179,35 @@ describe('TransformerController', () => {
     await controller.delete(transformerId, mockRequest as CustomExpressRequest);
 
     expect(mockRequest.services!.transformerService.delete).toHaveBeenCalledWith(transformerId);
+  });
+
+  it('should test a transformer', async () => {
+    const transformerId = testData.transformers.list[0].id;
+    (mockRequest.services!.transformerService.test as jest.Mock).mockResolvedValue(undefined);
+
+    const command: TransformerTestRequest = {
+      inputData: 'time-values',
+      options: {}
+    };
+
+    await controller.test(
+      transformerId,
+      {
+        inputData: 'time-values',
+        options: {}
+      },
+      mockRequest as CustomExpressRequest
+    );
+
+    expect(mockRequest.services!.transformerService.test).toHaveBeenCalledWith(transformerId, command);
+  });
+
+  it('should get a template for transformer', async () => {
+    const inputType = 'time-values';
+    (mockRequest.services!.transformerService.generateTemplate as jest.Mock).mockResolvedValue(undefined);
+
+    await controller.getInputTemplate(inputType, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.transformerService.generateTemplate).toHaveBeenCalledWith(inputType);
   });
 });

@@ -3,7 +3,7 @@ import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/sout
 import { SouthOIAnalyticsItemSettings, SouthOIAnalyticsSettings } from '../../../shared/model/south-settings.model';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import { HTTPRequest } from '../../service/http-request.utils';
-import { buildHttpOptions, getHost, parseData } from '../../service/utils-oianalytics';
+import { buildHttpOptions, getHost, parseData, testOIAnalyticsConnection } from '../../service/utils-oianalytics';
 import { formatQueryParams, persistResults } from '../../service/utils';
 import { createMockResponse } from '../../tests/__mocks__/undici.mock';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
@@ -73,6 +73,8 @@ describe('SouthOIAnalytics', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+
     logger = new PinoLogger();
     addContentCallback = jest.fn();
 
@@ -112,33 +114,17 @@ describe('SouthOIAnalytics', () => {
   });
 
   describe('testConnection', () => {
-    it('should succeed when API returns 200', async () => {
-      (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(200, 'OK'));
-
+    it('should properly call test utils function', async () => {
       await expect(south.testConnection()).resolves.not.toThrow();
 
-      expect(buildHttpOptions).toHaveBeenCalledWith(
-        'GET',
-        false,
-        expect.anything(), // registration
-        expect.anything(), // specific settings
-        30000,
-        certificateRepository
+      expect(testOIAnalyticsConnection).toHaveBeenCalledWith(
+        baseConfiguration.settings.useOiaModule,
+        testData.oIAnalytics.registration.completed,
+        baseConfiguration.settings.specificSettings,
+        baseConfiguration.settings.timeout * 1000,
+        certificateRepository,
+        false
       );
-      expect(getHost).toHaveBeenCalled();
-      expect(HTTPRequest).toHaveBeenCalledWith(expect.objectContaining({ pathname: '/api/optimistik/oibus/status' }), expect.anything());
-    });
-
-    it('should throw error when API returns non-200', async () => {
-      (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(500, 'Internal Server Error'));
-
-      await expect(south.testConnection()).rejects.toThrow('HTTP request failed with status code 500');
-    });
-
-    it('should throw error when fetch fails', async () => {
-      (HTTPRequest as jest.Mock).mockRejectedValue(new Error('Network Error'));
-
-      await expect(south.testConnection()).rejects.toThrow('Fetch error Error: Network Error');
     });
   });
 
@@ -208,6 +194,8 @@ describe('SouthOIAnalytics', () => {
         item.settings.serialization,
         baseConfiguration.name,
         item.name,
+        item.id,
+        testData.constants.dates.FAKE_NOW,
         path.resolve('cacheFolder', 'tmp'),
         expect.any(Function), // addContent callback
         expect.anything() // logger

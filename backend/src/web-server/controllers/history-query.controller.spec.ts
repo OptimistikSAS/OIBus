@@ -564,10 +564,12 @@ describe('HistoryQueryController', () => {
 
   it('should add or edit a transformer', async () => {
     const historyId = testData.historyQueries.list[0].id;
-    const command: TransformerDTOWithOptions = {
+    const command: Omit<TransformerDTOWithOptions, 'south'> = {
+      id: 'historyTransformerId1',
       transformer: testData.transformers.list[0] as TransformerDTO,
       inputType: 'any',
-      options: {}
+      options: {},
+      items: []
     };
 
     (mockRequest.services!.historyQueryService.addOrEditTransformer as jest.Mock).mockResolvedValue(undefined);
@@ -600,12 +602,7 @@ describe('HistoryQueryController', () => {
       contentSize: 1024,
       numberOfElement: 10,
       createdAt: '2023-01-01T00:00:00Z',
-      contentType: 'time-values',
-      source: 'south1',
-      options: {
-        key1: 'value1',
-        key2: 100
-      }
+      contentType: 'time-values'
     };
     const mockResult = [
       {

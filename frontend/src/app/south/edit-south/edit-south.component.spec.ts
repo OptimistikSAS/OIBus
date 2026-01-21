@@ -905,7 +905,7 @@ describe('EditSouthComponent', () => {
       southConnectorService.list.and.returnValue(of([]));
 
       TestBed.overrideProvider(ActivatedRoute, {
-        useValue: stubRoute({ queryParams: { type: 'MQTT' } })
+        useValue: stubRoute({ queryParams: { type: 'mqtt' } })
       });
     });
 
@@ -914,7 +914,7 @@ describe('EditSouthComponent', () => {
       await tester.change();
 
       expect(tester.title).toContainText('Create MQTT south connector');
-      expect(southConnectorService.getSouthManifest).toHaveBeenCalledWith('MQTT');
+      expect(southConnectorService.getSouthManifest).toHaveBeenCalledWith('mqtt');
     });
 
     it('should display MQTT-specific settings form', async () => {

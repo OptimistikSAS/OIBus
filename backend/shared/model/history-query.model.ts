@@ -32,6 +32,8 @@ import {
   SouthPISettings,
   SouthPostgreSQLItemSettings,
   SouthPostgreSQLSettings,
+  SouthRestItemSettings,
+  SouthRestSettings,
   SouthSFTPItemSettings,
   SouthSFTPSettings,
   SouthSQLiteItemSettings,
@@ -265,7 +267,7 @@ export interface HistoryQueryCommonDTO {
   /**
    * List of transformers to apply to data before sending to North connector.
    */
-  northTransformers: Array<TransformerDTOWithOptions>;
+  northTransformers: Array<Omit<TransformerDTOWithOptions, 'south'>>;
 }
 
 export interface HistoryQuerySouthTypedDTO<T extends OIBusSouthType, S, IS> {
@@ -303,6 +305,7 @@ export type HistoryQueryDTO = BaseEntity &
     | HistoryQuerySouthTypedDTO<'oracle', SouthOracleSettings, SouthOracleItemSettings>
     | HistoryQuerySouthTypedDTO<'osisoft-pi', SouthPISettings, SouthPIItemSettings>
     | HistoryQuerySouthTypedDTO<'postgresql', SouthPostgreSQLSettings, SouthPostgreSQLItemSettings>
+    | HistoryQuerySouthTypedDTO<'rest', SouthRestSettings, SouthRestItemSettings>
     | HistoryQuerySouthTypedDTO<'sftp', SouthSFTPSettings, SouthSFTPItemSettings>
     | HistoryQuerySouthTypedDTO<'sqlite', SouthSQLiteSettings, SouthSQLiteItemSettings>
   ) &
@@ -346,7 +349,7 @@ export interface HistoryQueryCommandCommonDTO {
       retentionDuration: number;
     };
   };
-  northTransformers: Array<TransformerIdWithOptions>;
+  northTransformers: Array<Omit<TransformerIdWithOptions, 'southId'>>;
 }
 
 export interface HistoryQuerySouthCommandTypedDTO<T extends OIBusSouthType, S, IS> {
@@ -388,6 +391,7 @@ export type HistoryQueryCommandDTO = HistoryQueryCommandCommonDTO &
     | HistoryQuerySouthCommandTypedDTO<'oracle', SouthOracleSettings, SouthOracleItemSettings>
     | HistoryQuerySouthCommandTypedDTO<'osisoft-pi', SouthPISettings, SouthPIItemSettings>
     | HistoryQuerySouthCommandTypedDTO<'postgresql', SouthPostgreSQLSettings, SouthPostgreSQLItemSettings>
+    | HistoryQuerySouthCommandTypedDTO<'rest', SouthRestSettings, SouthRestItemSettings>
     | HistoryQuerySouthCommandTypedDTO<'sftp', SouthSFTPSettings, SouthSFTPItemSettings>
     | HistoryQuerySouthCommandTypedDTO<'sqlite', SouthSQLiteSettings, SouthSQLiteItemSettings>
   ) &
@@ -424,6 +428,7 @@ export type HistoryQueryItemDTO =
   | HistoryQueryItemTypedDTO<SouthOracleItemSettings>
   | HistoryQueryItemTypedDTO<SouthPIItemSettings>
   | HistoryQueryItemTypedDTO<SouthPostgreSQLItemSettings>
+  | HistoryQueryItemTypedDTO<SouthRestItemSettings>
   | HistoryQueryItemTypedDTO<SouthSFTPItemSettings>
   | HistoryQueryItemTypedDTO<SouthSQLiteItemSettings>;
 
@@ -447,6 +452,7 @@ export type HistoryQueryItemCommandDTO =
   | HistoryQueryItemCommandTypedDTO<SouthOracleItemSettings>
   | HistoryQueryItemCommandTypedDTO<SouthPIItemSettings>
   | HistoryQueryItemCommandTypedDTO<SouthPostgreSQLItemSettings>
+  | HistoryQueryItemCommandTypedDTO<SouthRestItemSettings>
   | HistoryQueryItemCommandTypedDTO<SouthSFTPItemSettings>
   | HistoryQueryItemCommandTypedDTO<SouthSQLiteItemSettings>;
 
@@ -461,7 +467,7 @@ export interface HistoryQueryItemSearchParam {
    *
    * @example "temperature"
    */
-  name: string | undefined;
+  name?: string | undefined;
 
   /**
    * Filter by enabled status.
@@ -469,7 +475,7 @@ export interface HistoryQueryItemSearchParam {
    *
    * @example true
    */
-  enabled: boolean | undefined;
+  enabled?: boolean | undefined;
 
   /**
    * Page number for pagination (0-based index).

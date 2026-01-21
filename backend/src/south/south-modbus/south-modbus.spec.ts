@@ -255,7 +255,11 @@ describe('South Modbus', () => {
     expect(south.modbusFunction).toHaveBeenCalledTimes(configuration.items.length);
     expect(south.modbusFunction).toHaveBeenCalledWith(mockedClient, configuration.items[0]);
     expect(south.disconnect).not.toHaveBeenCalled();
-    expect(south.addContent).toHaveBeenCalledWith({ content: [], type: 'time-values' });
+    expect(south.addContent).toHaveBeenCalledWith(
+      { content: [], type: 'time-values' },
+      testData.constants.dates.FAKE_NOW,
+      configuration.items.map(item => item.id)
+    );
   });
 
   it('should manage query last point error', async () => {

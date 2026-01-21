@@ -2,13 +2,18 @@ import { Body, Controller, Delete, Get, Path, Post, Put, Query, Request, Route, 
 import {
   CustomTransformerCommandDTO,
   CustomTransformerDTO,
+  InputTemplate,
+  InputType,
   TransformerDTO,
-  TransformerSearchParam
+  TransformerManifest,
+  TransformerSearchParam,
+  TransformerTestRequest
 } from '../../../shared/model/transformer.model';
 import { toTransformerDTO } from '../../service/transformer.service';
 import { Page } from '../../../shared/model/types';
 import { OIBusDataType } from '../../../shared/model/engine.model';
 import { CustomExpressRequest } from '../express';
+import TransformerService from '../../service/transformer.service';
 
 @Route('/api/transformers')
 @Tags('Transformers')
@@ -17,6 +22,32 @@ import { CustomExpressRequest } from '../express';
  * @description Endpoints for managing data transformers used to convert data between different formats
  */
 export class TransformerController extends Controller {
+  /**
+   * Retrieves a list of all available transformer types
+   * @summary List all transformer types
+   * @returns {Promise<Array<{ id: string; inputType: string; outputType: string }>>} Array of transformer type objects
+   */
+  @Get('/types')
+  async listManifest(@Request() request: CustomExpressRequest): Promise<Array<{ id: string; inputType: string; outputType: string }>> {
+    const transformerService = request.services.transformerService as TransformerService;
+    return transformerService.listManifest().map(manifest => ({
+      id: manifest.id,
+      inputType: manifest.inputType,
+      outputType: manifest.outputType
+    }));
+  }
+
+  /**
+   * Retrieves a specific transformer manifest by its type
+   * @summary Get transformer manifest
+   * @returns {Promise<TransformerManifest>} The transformer manifest
+   */
+  @Get('/manifests/{type}')
+  async getManifest(@Path() type: string, @Request() request: CustomExpressRequest): Promise<TransformerManifest> {
+    const transformerService = request.services.transformerService as TransformerService;
+    return transformerService.getManifest(type);
+  }
+
   /**
    * Searches for transformers with optional filtering by type, input type, and output type
    * @summary Search transformers
@@ -110,5 +141,22 @@ export class TransformerController extends Controller {
   async delete(@Path() transformerId: string, @Request() request: CustomExpressRequest): Promise<void> {
     const transformerService = request.services.transformerService;
     await transformerService.delete(transformerId);
+  }
+
+  @Post('/{transformerId}/test')
+  @SuccessResponse(204, 'No Content')
+  async test(
+    @Path() transformerId: string,
+    @Body() command: TransformerTestRequest,
+    @Request() request: CustomExpressRequest
+  ): Promise<void> {
+    const transformerService = request.services.transformerService;
+    await transformerService.test(transformerId, command);
+  }
+
+  @Get('/template/{inputType}')
+  async getInputTemplate(@Path() inputType: InputType, @Request() request: CustomExpressRequest): Promise<InputTemplate> {
+    const transformerService = request.services.transformerService;
+    return transformerService.generateTemplate(inputType);
   }
 }

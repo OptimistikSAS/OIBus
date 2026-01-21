@@ -25,8 +25,8 @@ describe('ContentController', () => {
     const northId = 'northId1,northId2';
     (mockRequest.services!.oIBusService.addExternalContent as jest.Mock).mockResolvedValue(undefined);
     await controller.addContent(northId, timeValuesContent, mockRequest as CustomExpressRequest);
-    expect(mockRequest.services!.oIBusService.addExternalContent).toHaveBeenCalledWith('northId1', timeValuesContent, 'api');
-    expect(mockRequest.services!.oIBusService.addExternalContent).toHaveBeenCalledWith('northId2', timeValuesContent, 'api');
+    expect(mockRequest.services!.oIBusService.addExternalContent).toHaveBeenCalledWith('northId1', timeValuesContent);
+    expect(mockRequest.services!.oIBusService.addExternalContent).toHaveBeenCalledWith('northId2', timeValuesContent);
   });
 
   it('should add file', async () => {
@@ -39,10 +39,6 @@ describe('ContentController', () => {
 
     await controller.addFile(northId, mockFile, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.oIBusService.addExternalContent).toHaveBeenCalledWith(
-      'northId1',
-      { type: 'any', filePath: 'filePath' },
-      'api'
-    );
+    expect(mockRequest.services!.oIBusService.addExternalContent).toHaveBeenCalledWith('northId1', { type: 'any', filePath: 'filePath' });
   });
 });

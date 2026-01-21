@@ -443,26 +443,21 @@ describe('Service utils MQTT', () => {
     });
 
     it('should properly parse message', () => {
-      // Mock getItem and createContent for parseMessage tests
-      jest.spyOn(utils, 'getItem').mockReturnValue(items[0]);
+      // Mock createContent for parseMessage tests
       jest.spyOn(utils, 'createContent').mockReturnValue([content]);
-      const result = utils.parseMessage('topic', 'message', items, logger);
+      const result = utils.parseMessage('topic', 'message', items[0], logger);
       expect(result).toEqual([content]);
-      expect(utils.getItem).toHaveBeenCalledWith('topic', items);
       expect(utils.createContent).toHaveBeenCalledWith(items[0], 'message', testData.constants.dates.FAKE_NOW, logger);
       expect(logger.error).not.toHaveBeenCalled();
     });
 
     it('should properly log error and return empty array', () => {
       // Mock getItem and createContent for parseMessage tests
-      jest.spyOn(utils, 'getItem').mockImplementationOnce(() => {
+      jest.spyOn(utils, 'createContent').mockImplementationOnce(() => {
         throw new Error('error');
       });
-      jest.spyOn(utils, 'createContent');
 
-      expect(utils.parseMessage('topic', 'message', items, logger)).toEqual([]);
-      expect(utils.getItem).toHaveBeenCalledWith('topic', items);
-      expect(utils.createContent).not.toHaveBeenCalled();
+      expect(utils.parseMessage('topic', 'message', items[0], logger)).toEqual([]);
       expect(logger.error).toHaveBeenCalledWith('Could not handle message "message" for topic "topic": error');
     });
   });

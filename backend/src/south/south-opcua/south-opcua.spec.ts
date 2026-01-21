@@ -18,7 +18,7 @@ import SouthCacheRepository from '../../repository/cache/south-cache.repository'
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import testData from '../../tests/utils/test-data';
-import { SouthConnectorEntity } from '../../model/south-connector.model';
+import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import { DateTime } from 'luxon';
 import {
   createSessionConfigs,
@@ -33,7 +33,6 @@ import {
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { randomUUID } from 'crypto';
-import { OIBusTimeValue } from '../../../shared/model/engine.model';
 
 class CustomStream extends Stream {
   constructor() {
@@ -618,21 +617,25 @@ describe('SouthOPCUA', () => {
     (parseOPCUAValue as jest.Mock).mockReturnValueOnce('123').mockReturnValueOnce('456');
     await south.getHAValues([configuration.items[0]], testData.constants.dates.FAKE_NOW, testData.constants.dates.FAKE_NOW, client, false);
     expect(historyRead).toHaveBeenCalled();
-    expect(south.addContent).toHaveBeenCalledWith({
-      content: [
-        {
-          data: { quality: 'Good', value: '123' },
-          pointId: 'item1',
-          timestamp: testData.constants.dates.DATE_2
-        },
-        {
-          data: { quality: 'Good', value: '456' },
-          pointId: 'item1',
-          timestamp: testData.constants.dates.DATE_1
-        }
-      ],
-      type: 'time-values'
-    });
+    expect(south.addContent).toHaveBeenCalledWith(
+      {
+        content: [
+          {
+            data: { quality: 'Good', value: '123' },
+            pointId: 'item1',
+            timestamp: testData.constants.dates.DATE_2
+          },
+          {
+            data: { quality: 'Good', value: '456' },
+            pointId: 'item1',
+            timestamp: testData.constants.dates.DATE_1
+          }
+        ],
+        type: 'time-values'
+      },
+      testData.constants.dates.FAKE_NOW,
+      [configuration.items[0].id]
+    );
   });
 
   it('getHAValues() in case of a bad result status code', async () => {
@@ -731,7 +734,7 @@ describe('SouthOPCUA', () => {
       [{ nodeId: configuration.items[3].settings.nodeId, name: configuration.items[3].name, settings: configuration.items[3].settings }],
       mockedClient
     );
-    expect(south.addContent).toHaveBeenCalledWith(testData.oibusContent[0]);
+    expect(south.addContent).toHaveBeenCalledWith(testData.oibusContent[0], testData.constants.dates.FAKE_NOW, [configuration.items[0].id]);
   });
 
   it('should query last point (several) and fail and reconnect', async () => {
@@ -929,20 +932,16 @@ describe('SouthOPCUA', () => {
     expect(south.flushMessages).toHaveBeenCalledTimes(1);
     expect(south['bufferedValues']).toEqual([
       {
-        pointId: 'item3',
+        item: configuration.items[2],
         timestamp: testData.constants.dates.FAKE_NOW,
-        data: {
-          value: 'parsedValue',
-          quality: 'Good'
-        }
+        value: 'parsedValue',
+        quality: 'Good'
       },
       {
-        pointId: 'item3',
+        item: configuration.items[2],
         timestamp: testData.constants.dates.FAKE_NOW,
-        data: {
-          value: 'parsedValue',
-          quality: 'Good'
-        }
+        value: 'parsedValue',
+        quality: 'Good'
       }
     ]);
   });
@@ -980,14 +979,20 @@ describe('SouthOPCUA', () => {
   });
 
   it('should flush messages', async () => {
-    const value: OIBusTimeValue = {
-      pointId: 'pointId',
-      timestamp: testData.constants.dates.FAKE_NOW,
-      data: {
-        value: 'value'
+    south['bufferedValues'] = [
+      {
+        item: { name: 'pointId', id: 'itemId' } as SouthConnectorItemEntity<SouthOPCUAItemSettings>,
+        timestamp: testData.constants.dates.FAKE_NOW,
+        value: 'value1',
+        quality: 'quality1'
+      },
+      {
+        item: { name: 'pointId', id: 'itemId' } as SouthConnectorItemEntity<SouthOPCUAItemSettings>,
+        timestamp: testData.constants.dates.FAKE_NOW,
+        value: 'value2',
+        quality: 'quality2'
       }
-    };
-    south['bufferedValues'] = [value];
+    ];
     south['flushTimeout'] = setTimeout(() => null);
 
     const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
@@ -995,20 +1000,44 @@ describe('SouthOPCUA', () => {
 
     south.addContent = jest.fn();
     await south.flushMessages();
-    expect(south.addContent).toHaveBeenCalledWith({ type: 'time-values', content: [value] });
+    expect(south.addContent).toHaveBeenCalledWith(
+      {
+        type: 'time-values',
+        content: [
+          {
+            pointId: 'pointId',
+            timestamp: testData.constants.dates.FAKE_NOW,
+            data: {
+              value: 'value1',
+              quality: 'quality1'
+            }
+          },
+          {
+            pointId: 'pointId',
+            timestamp: testData.constants.dates.FAKE_NOW,
+            data: {
+              value: 'value2',
+              quality: 'quality2'
+            }
+          }
+        ]
+      },
+      testData.constants.dates.FAKE_NOW,
+      ['itemId']
+    );
     expect(clearTimeoutSpy).toHaveBeenCalled();
     expect(setTimeoutSpy).toHaveBeenCalled();
   });
 
   it('should flush messages and manage addContent error', async () => {
-    const value: OIBusTimeValue = {
-      pointId: 'pointId',
-      timestamp: testData.constants.dates.FAKE_NOW,
-      data: {
-        value: 'value'
+    south['bufferedValues'] = [
+      {
+        item: { name: 'pointId', id: 'itemId' } as SouthConnectorItemEntity<SouthOPCUAItemSettings>,
+        timestamp: testData.constants.dates.FAKE_NOW,
+        value: 'value1',
+        quality: 'quality1'
       }
-    };
-    south['bufferedValues'] = [value];
+    ];
 
     south.addContent = jest.fn().mockImplementationOnce(() => {
       throw new Error('cache content error');

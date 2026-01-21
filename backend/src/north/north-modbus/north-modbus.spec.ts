@@ -8,14 +8,14 @@ import { NorthModbusSettings } from '../../../shared/model/north-settings.model'
 import testData from '../../tests/utils/test-data';
 import CacheService from '../../service/cache/cache.service';
 import { createTransformer } from '../../service/transformer.service';
-import OIBusTransformer from '../../service/transformers/oibus-transformer';
+import OIBusTransformer from '../../transformers/oibus-transformer';
 import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
 import { getFilenameWithoutRandomId } from '../../service/utils';
 import Stream from 'node:stream';
 import net from 'node:net';
 import fs from 'node:fs/promises';
 import ModbusTCPClient from 'jsmodbus/dist/modbus-tcp-client';
-import { OIBusModbusValue } from '../../service/transformers/connector-types.model';
+import { OIBusModbusValue } from '../../transformers/connector-types.model';
 import { connectSocket } from '../../service/utils-modbus';
 
 jest.mock('node:fs/promises');
@@ -180,9 +180,7 @@ describe('NorthModbus', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'any',
-        source: 'south',
-        options: {}
+        contentType: 'any'
       })
     ).rejects.toThrow(`Unsupported data type: any (file path/to/file/example-123456789.file)`);
   });
@@ -202,9 +200,7 @@ describe('NorthModbus', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'modbus',
-      source: 'south',
-      options: {}
+      contentType: 'modbus'
     });
     expect(north['handleValues']).toHaveBeenCalledWith(values);
   });
@@ -282,9 +278,7 @@ describe('NorthModbus', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'modbus',
-        source: 'south',
-        options: {}
+        contentType: 'modbus'
       })
     ).rejects.toThrow('Connector is reconnecting...');
   });

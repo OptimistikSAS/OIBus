@@ -1,0 +1,83 @@
+<div class="modal-header">
+  <h4 class="modal-title" translate="configuration.oibus.manifest.transformers.test-transformer-modal.title"></h4>
+</div>
+
+<div class="modal-body">
+  @if (transformer() || transformerCommand()) {
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <div class="form-group">
+          <label class="form-label" translate="configuration.oibus.manifest.transformers.test-transformer-modal.transformer"></label>
+          <div class="form-control-plaintext">{{ (transformer() || transformerCommand())!.name }}</div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="form-group">
+          <label class="form-label" translate="configuration.oibus.manifest.transformers.test-transformer-modal.input-type"></label>
+          <div class="form-control-plaintext">{{ (transformer() || transformerCommand())!.inputType | oIBusInputDataTypeEnum }}</div>
+        </div>
+      </div>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="test()" id="test-form">
+      <div class="row mb-3">
+        <div class="col-12">
+          <label class="form-label" translate="configuration.oibus.manifest.transformers.test-transformer-modal.input-data"></label>
+          <oib-code-block formControlName="inputData" [language]="'json'" [readOnly]="false" />
+          <val-errors controlName="inputData" />
+        </div>
+      </div>
+
+      <div class="row mb-3">
+        <div class="col-12">
+          <label class="form-label" translate="configuration.oibus.manifest.transformers.test-transformer-modal.options"></label>
+          <oib-manifest-attributes-array
+            [label]="'configuration.oibus.manifest.transformers.test-transformer-modal.options' | translate"
+            [control]="form.controls.options!"
+          />
+          <val-errors controlName="options" />
+        </div>
+      </div>
+    </form>
+
+    @if (output()) {
+      <div class="row mb-3">
+        <div class="col-12">
+          <div class="alert alert-info" role="alert">
+            <span translate="configuration.oibus.manifest.transformers.test-transformer-modal.success"></span>
+          </div>
+          <label class="form-label" translate="configuration.oibus.manifest.transformers.test-transformer-modal.results"></label>
+          <div class="output-container">
+            <oib-code-block [formControl]="outputControl" [language]="'json'" [readOnly]="true" [height]="'400px'" />
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (error()) {
+      <div class="alert alert-danger" role="alert">
+        {{ error() }}
+      </div>
+    }
+
+    @if (isLoading()) {
+      <div class="d-flex justify-content-center">
+        <div class="spinner-border" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    }
+  }
+</div>
+
+<div class="modal-footer">
+  <div class="btn-group">
+    <button type="button" class="btn btn-primary" (click)="test()" [disabled]="!form.valid || isLoading()" form="test-form">
+      @if (isLoading()) {
+        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+      }
+      <span translate="configuration.oibus.manifest.transformers.test-transformer-modal.test"></span>
+    </button>
+    <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel"></button>
+  </div>
+</div>

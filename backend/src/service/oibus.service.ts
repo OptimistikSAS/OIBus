@@ -1,6 +1,6 @@
 import DataStreamEngine from '../engine/data-stream-engine';
 import pino from 'pino';
-import { EngineMetrics, EngineSettingsDTO, OIBusContent, OIBusInfo } from '../../shared/model/engine.model';
+import { EngineMetrics, EngineSettingsDTO, EngineSettingsUpdateResultDTO, OIBusContent, OIBusInfo } from '../../shared/model/engine.model';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import EngineRepository from '../repository/config/engine.repository';
 import { EngineSettings } from '../model/engine.model';
@@ -116,7 +116,7 @@ export default class OIBusService {
     return this.proxyServer;
   }
 
-  async updateEngineSettings(command: Omit<EngineSettings, 'id' | 'version' | 'launcherVersion'>): Promise<void> {
+  async updateEngineSettings(command: Omit<EngineSettings, 'id' | 'version' | 'launcherVersion'>): Promise<EngineSettingsUpdateResultDTO> {
     await this.validator.validate(engineSchema, command);
 
     if (command.port === command.proxyPort) {
@@ -141,14 +141,23 @@ export default class OIBusService {
       await this.resetLogger(settings);
     }
 
-    if (command.port !== oldEngineSettings.port) {
-      this.portChangeEvent.emit('updated', settings.port);
+    const portChanged = command.port !== oldEngineSettings.port;
+    if (portChanged) {
+      // Emit the port change event asynchronously to ensure the HTTP response is sent first
+      setImmediate(() => {
+        this.portChangeEvent.emit('updated', settings.port);
+      });
     }
     await this.proxyServer.stop();
     if (settings.proxyEnabled) {
       await this.proxyServer.start(settings.proxyPort!);
     }
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+
+    return {
+      needsRedirect: portChanged,
+      newPort: portChanged ? settings.port : null
+    };
   }
 
   updateOIBusVersion(version: string, launcherVersion: string): void {
@@ -188,9 +197,9 @@ export default class OIBusService {
     this.logger.info(`OIBus stopped in ${startDuration} ms`);
   }
 
-  async addExternalContent(northId: string, content: OIBusContent, source: string): Promise<void> {
+  async addExternalContent(northId: string, content: OIBusContent): Promise<void> {
     await this.validator.validate(contentSchema, content);
-    await this.engine.addExternalContent(northId, content, source);
+    await this.engine.addExternalContent(northId, content);
   }
 
   setLogger(logger: pino.Logger) {

@@ -1,5 +1,5 @@
 import { Component, effect, inject, input, output } from '@angular/core';
-import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NorthConnectorDTO, NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { TransformerDTO, TransformerDTOWithOptions } from '../../../../../backend/shared/model/transformer.model';
@@ -7,13 +7,14 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { Modal, ModalService } from '../../shared/modal.service';
 import { EditNorthTransformerModalComponent } from './edit-north-transformer-modal/edit-north-transformer-modal.component';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
-import { OIBUS_DATA_TYPES } from '../../../../../backend/shared/model/engine.model';
 import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
 import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
 import { firstValueFrom, of, switchMap } from 'rxjs';
 import { NorthConnectorService } from '../../services/north-connector.service';
+import { SouthConnectorLightDTO } from '../../../../../backend/shared/model/south-connector.model';
+import { SouthConnectorService } from '../../services/south-connector.service';
 
 @Component({
   selector: 'oib-north-transformers',
@@ -26,6 +27,8 @@ export class NorthTransformersComponent {
   private notificationService = inject(NotificationService);
   private modalService = inject(ModalService);
   private northConnectorService = inject(NorthConnectorService);
+  private southConnectorService = inject(SouthConnectorService);
+  private translateService = inject(TranslateService);
 
   readonly northConnector = input<NorthConnectorDTO | null>(null);
 
@@ -38,6 +41,7 @@ export class NorthTransformersComponent {
   readonly transformers = input.required<Array<TransformerDTO>>();
 
   transformersWithOptions: Array<TransformerDTOWithOptions> = []; // Array used to store subscription on north connector creation
+  southConnectors: Array<SouthConnectorLightDTO> = [];
 
   constructor() {
     // Initialize local transformers when editing, and keep them in sync with input
@@ -46,6 +50,9 @@ export class NorthTransformersComponent {
       if (connector) {
         this.transformersWithOptions = [...connector.transformers];
       }
+    });
+    this.southConnectorService.list().subscribe(southConnectors => {
+      this.southConnectors = southConnectors;
     });
   }
 
@@ -62,9 +69,10 @@ export class NorthTransformersComponent {
     const component: EditNorthTransformerModalComponent = modalRef.componentInstance;
 
     component.prepareForCreation(
+      this.southConnectors,
       this.scanModes(),
       this.certificates(),
-      OIBUS_DATA_TYPES.filter(dataType => !this.transformersWithOptions.map(element => element.inputType).includes(dataType)),
+      this.transformersWithOptions.map(t => ({ inputType: t.inputType, south: t.south?.id || null })),
       this.transformers(),
       this.northManifest().types
     );
@@ -102,7 +110,14 @@ export class NorthTransformersComponent {
     });
     const component: EditNorthTransformerModalComponent = modalRef.componentInstance;
 
-    component.prepareForEdition(this.scanModes(), this.certificates(), transformer, this.transformers(), this.northManifest().types);
+    component.prepareForEdition(
+      this.southConnectors,
+      this.scanModes(),
+      this.certificates(),
+      transformer,
+      this.transformers(),
+      this.northManifest().types
+    );
     this.refreshAfterEditModalClosed(modalRef, transformer);
   }
 
@@ -114,9 +129,7 @@ export class NorthTransformersComponent {
           if (northConnector && this.saveChangesDirectly()) {
             return this.northConnectorService.addOrEditTransformer(northConnector.id, transformer).pipe(switchMap(() => of(transformer)));
           }
-          this.transformersWithOptions = this.transformersWithOptions.filter(
-            element => element.transformer.id !== oldTransformer.transformer.id
-          );
+          this.transformersWithOptions = this.transformersWithOptions.filter(element => element.id !== oldTransformer.id);
           this.transformersWithOptions.push(transformer);
           return of(transformer);
         })
@@ -136,13 +149,22 @@ export class NorthTransformersComponent {
       })
       .pipe(
         switchMap(() => {
-          const northConnector = this.northConnector();
           if (this.saveChangesDirectly()) {
-            return this.northConnectorService.removeTransformer(northConnector!.id, transformer.transformer.id);
+            this.transformersWithOptions = this.transformersWithOptions.filter(element => element.id !== transformer.id);
+            return this.northConnectorService.removeTransformer(this.northConnector()!.id, transformer.id);
+          } else {
+            this.transformersWithOptions = this.transformersWithOptions.filter(element => {
+              if (transformer.id) {
+                return element.id !== transformer.id;
+              } else {
+                return !(
+                  element.inputType === transformer.inputType &&
+                  element.south === transformer.south &&
+                  element.transformer.id === transformer.transformer.id
+                );
+              }
+            });
           }
-          this.transformersWithOptions = this.transformersWithOptions.filter(
-            element => element.transformer.id !== transformer.transformer.id
-          );
           return of(null);
         })
       )
@@ -152,5 +174,17 @@ export class NorthTransformersComponent {
         }
         this.inMemoryTransformersWithOptions.emit(this.transformersWithOptions);
       });
+  }
+
+  formatTransformerWithSouth(transformer: TransformerDTOWithOptions) {
+    const numberOfItems = transformer.items.length;
+
+    if (numberOfItems === 1) {
+      return `${transformer.south!.name} (${this.translateService.instant('enums.oibus-south-type.' + transformer.south!.type)}) [${this.translateService.instant('configuration.oibus.manifest.transformers.one-item-selected')}]`;
+    } else if (numberOfItems > 1) {
+      return `${transformer.south!.name} (${this.translateService.instant('enums.oibus-south-type.' + transformer.south!.type)}) [${this.translateService.instant('configuration.oibus.manifest.transformers.several-items-selected', { numberOfItems })}]`;
+    } else {
+      return `${transformer.south!.name} (${this.translateService.instant('enums.oibus-south-type.' + transformer.south!.type)}) [${this.translateService.instant('configuration.oibus.manifest.transformers.all-items-selected')}]`;
+    }
   }
 }

@@ -9,6 +9,7 @@ import { DateTime } from 'luxon';
 import {
   checkScanMode,
   compress,
+  convertDateTime,
   convertDateTimeToInstant,
   convertDelimiter,
   createBaseFolders,
@@ -25,9 +26,11 @@ import {
   getFilenameWithoutRandomId,
   getOIBusInfo,
   getPlatformFromOsType,
+  injectIndices,
   itemToFlattenedCSV,
   logQuery,
   persistResults,
+  sanitizeFilename,
   stringToBoolean,
   testIPOnFilter,
   unzip,
@@ -43,6 +46,8 @@ import { EngineSettingsDTO, OIBusInfo } from '../../shared/model/engine.model';
 import cronstrue from 'cronstrue';
 import testData from '../tests/utils/test-data';
 import { mockBaseFolders } from '../tests/utils/test-utils';
+import { SouthConnectorItemDTO } from '../../shared/model/south-connector.model';
+import { HistoryQueryItemDTO } from '../../shared/model/history-query.model';
 
 jest.mock('node:zlib');
 jest.mock('node:fs/promises');
@@ -443,12 +448,14 @@ describe('Service utils', () => {
           },
           'connectorName',
           'itemName',
+          'itemId',
+          testData.constants.dates.FAKE_NOW,
           'myTmpFolder',
           addContent,
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath });
+        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath }, testData.constants.dates.FAKE_NOW, ['itemId']);
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledTimes(1);
       });
@@ -466,12 +473,14 @@ describe('Service utils', () => {
           },
           'connectorName',
           'itemName',
+          'itemId',
+          testData.constants.dates.FAKE_NOW,
           'myTmpFolder',
           addContent,
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath });
+        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath }, testData.constants.dates.FAKE_NOW, ['itemId']);
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledTimes(1);
       });
@@ -492,12 +501,14 @@ describe('Service utils', () => {
           },
           'connectorName',
           'itemName',
+          'itemId',
+          testData.constants.dates.FAKE_NOW,
           'myTmpFolder',
           addContent,
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath });
+        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath }, testData.constants.dates.FAKE_NOW, ['itemId']);
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledTimes(1);
         expect(logger.error).toHaveBeenCalledWith(
@@ -518,12 +529,14 @@ describe('Service utils', () => {
           },
           'connectorName',
           'itemName',
+          'itemId',
+          testData.constants.dates.FAKE_NOW,
           'myTmpFolder',
           addContent,
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath });
+        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath }, testData.constants.dates.FAKE_NOW, ['itemId']);
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledTimes(1);
         expect(logger.error).toHaveBeenCalledWith(`Error when deleting file "${filePath}" after caching it. ${new Error('unlink error')}`);
@@ -569,12 +582,14 @@ describe('Service utils', () => {
           },
           'connectorName',
           'itemName',
+          'itemId',
+          testData.constants.dates.FAKE_NOW,
           'myTmpFolder',
           addContent,
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath: `${filePath}.gz` });
+        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath: `${filePath}.gz` }, testData.constants.dates.FAKE_NOW, ['itemId']);
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledWith(`${filePath}.gz`);
         expect(fs.unlink).toHaveBeenCalledTimes(2);
@@ -590,12 +605,14 @@ describe('Service utils', () => {
           },
           'connectorName',
           'itemName',
+          'itemId',
+          testData.constants.dates.FAKE_NOW,
           'myTmpFolder',
           addContent,
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath: `${filePath}.gz` });
+        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath: `${filePath}.gz` }, testData.constants.dates.FAKE_NOW, ['itemId']);
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledWith(`${filePath}.gz`);
         expect(fs.unlink).toHaveBeenCalledTimes(2);
@@ -617,6 +634,8 @@ describe('Service utils', () => {
           },
           'connectorName',
           'itemName',
+          'itemId',
+          testData.constants.dates.FAKE_NOW,
           'myTmpFolder',
           addContent,
           logger
@@ -627,7 +646,7 @@ describe('Service utils', () => {
         expect(logger.error).toHaveBeenCalledWith(
           `Error when deleting compressed CSV file "${filePath}.gz" after caching it. Error: unlink error`
         );
-        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath: `${filePath}.gz` });
+        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath: `${filePath}.gz` }, testData.constants.dates.FAKE_NOW, ['itemId']);
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledWith(`${filePath}.gz`);
         expect(fs.unlink).toHaveBeenCalledTimes(2);
@@ -646,6 +665,8 @@ describe('Service utils', () => {
           },
           'connectorName',
           'itemName',
+          'itemId',
+          testData.constants.dates.FAKE_NOW,
           'myTmpFolder',
           addContent,
           logger
@@ -656,7 +677,7 @@ describe('Service utils', () => {
         expect(logger.error).toHaveBeenCalledWith(
           `Error when deleting compressed file "${filePath}.gz" after caching it. Error: unlink error`
         );
-        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath: `${filePath}.gz` });
+        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath: `${filePath}.gz` }, testData.constants.dates.FAKE_NOW, ['itemId']);
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledWith(`${filePath}.gz`);
         expect(fs.unlink).toHaveBeenCalledTimes(2);
@@ -991,6 +1012,17 @@ describe('Service utils', () => {
     });
   });
 
+  describe('convertDateTime', () => {
+    afterAll(() => {
+      jest.restoreAllMocks();
+    });
+
+    it('should convert a valid ISO string to ISO string', () => {
+      const result = convertDateTime('2023-01-01T12:00:00+02:00', { type: 'iso-string' }, { type: 'iso-string' });
+      expect(result).toBe('2023-01-01T10:00:00.000Z');
+    });
+  });
+
   describe('formatQueryParams', () => {
     it('should correctly return void string when there is no query params', () => {
       const result = formatQueryParams('2020-01-01T00:00:00.000Z', '2021-01-01T00:00:00.000Z', []);
@@ -1189,7 +1221,7 @@ describe('Service utils', () => {
             {
               ...testData.south.list[2].items[0]
             }
-          ] as any,
+          ] as Array<SouthConnectorItemDTO | HistoryQueryItemDTO>,
           ',',
           testData.scanMode.list
         )
@@ -1206,7 +1238,7 @@ describe('Service utils', () => {
             {
               ...testData.south.list[2].items[0]
             }
-          ] as any,
+          ] as Array<SouthConnectorItemDTO | HistoryQueryItemDTO>,
           ','
         )
       ).toEqual('csv content');
@@ -1296,6 +1328,92 @@ describe('Service utils', () => {
       expect(testIPOnFilter(ipFilters, '192.168.1.1')).toEqual(true);
       expect(testIPOnFilter(ipFilters, '::ffff:192.168.1.1')).toEqual(true);
       expect(testIPOnFilter(ipFilters, '2001:0db8:85a3:0000:0000:8a2e:0370:7334')).toEqual(true);
+    });
+  });
+
+  describe('sanitizeFilename', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should remove surrounding quotes', () => {
+      expect(sanitizeFilename('"file.csv"')).toEqual('file.csv');
+      expect(sanitizeFilename("'file.csv'")).toEqual('file.csv');
+      expect(sanitizeFilename('"file.name.csv"')).toEqual('file.name.csv');
+    });
+
+    it('should replace special characters and spaces with hyphens in the name', () => {
+      expect(sanitizeFilename('my file.csv')).toEqual('my-file.csv');
+      expect(sanitizeFilename('file@name#1.json')).toEqual('file-name-1.json');
+      expect(sanitizeFilename('my/bad/path.txt')).toEqual('my-bad-path.txt');
+    });
+
+    it('should allow valid characters (alphanumeric, -, _) to remain', () => {
+      expect(sanitizeFilename('valid-file_name123.csv')).toEqual('valid-file_name123.csv');
+      expect(sanitizeFilename('UPPER_case.TXT')).toEqual('UPPER_case.TXT');
+    });
+
+    it('should handle files without extensions', () => {
+      expect(sanitizeFilename('makefile')).toEqual('makefile');
+      expect(sanitizeFilename('read me')).toEqual('read-me');
+      expect(sanitizeFilename('weird@file')).toEqual('weird-file');
+    });
+
+    it('should handle complex extensions correctly', () => {
+      expect(sanitizeFilename('archive.tar.gz')).toEqual('archive.tar.gz');
+      expect(sanitizeFilename('complex.name.structure.json')).toEqual('complex.name.structure.json');
+    });
+
+    it('should handle edge cases', () => {
+      // Dotfiles (e.g. .gitignore): name part is empty, extension is full string
+      expect(sanitizeFilename('.env')).toEqual('.env');
+
+      // File ending with dot
+      expect(sanitizeFilename('folder.')).toEqual('folder.');
+
+      // Empty string
+      expect(sanitizeFilename('')).toEqual('');
+    });
+  });
+
+  describe('injectIndices', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should replace single wildcard with corresponding index', () => {
+      expect(injectIndices('$.users[*].name', [0])).toBe('$.users[0].name');
+      expect(injectIndices('$[*]', [99])).toBe('$[99]');
+    });
+
+    it('should replace multiple wildcards sequentially', () => {
+      expect(injectIndices('$.users[*].items[*].id', [0, 5])).toBe('$.users[0].items[5].id');
+
+      expect(injectIndices('$[*].nested[*].deep[*]', [1, 2, 3])).toBe('$[1].nested[2].deep[3]');
+    });
+
+    it('should keep the wildcard if there are not enough indices provided', () => {
+      // The code logic: indices[indexPointer] !== undefined ? ... : '*'
+      // So if we provide 1 index for 2 wildcards, the second remains [*]
+      expect(injectIndices('$.users[*].items[*].id', [0])).toBe('$.users[0].items[*].id');
+
+      expect(injectIndices('$.users[*].items[*]', [])).toBe('$.users[*].items[*]');
+    });
+
+    it('should ignore extra indices if there are fewer wildcards', () => {
+      // Should use the first index and ignore the 5
+      expect(injectIndices('$.users[*].name', [0, 5])).toBe('$.users[0].name');
+    });
+
+    it('should return the path unchanged if there are no wildcards', () => {
+      expect(injectIndices('$.users.fixed.path', [0, 1])).toBe('$.users.fixed.path');
+    });
+
+    it('should correctly handle other bracket notation that is not [*]', () => {
+      // Ensure it doesn't accidentally replace [0] or ['key']
+      expect(injectIndices('$.users[0].items[*]', [2])).toBe('$.users[0].items[2]');
+
+      expect(injectIndices('$.users["key"].items[*]', [3])).toBe('$.users["key"].items[3]');
     });
   });
 });

@@ -22,7 +22,7 @@ export default class SouthFolderScanner
 {
   constructor(
     connector: SouthConnectorEntity<SouthFolderScannerSettings, SouthFolderScannerItemSettings>,
-    engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
+    engineAddContentCallback: (southId: string, data: OIBusContent, queryTime: Instant, itemIds: Array<string>) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
     logger: pino.Logger,
     cacheFolderPath: string
@@ -88,9 +88,9 @@ export default class SouthFolderScanner
     const inputFolder = path.resolve(this.connector.settings.inputFolder);
     this.logger.trace(`Reading "${inputFolder}" directory`);
     // List files in the inputFolder
-    const startRequest = DateTime.now().toMillis();
+    const startRequest = DateTime.now();
     const files = await fs.readdir(inputFolder);
-    const requestDuration = DateTime.now().toMillis() - startRequest;
+    const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
     this.logger.debug(`Folder ${inputFolder} read in ${requestDuration} ms`);
 
     if (files.length === 0) {
@@ -124,7 +124,7 @@ export default class SouthFolderScanner
       this.logger.trace(`Sending ${matchedFiles.length} files`);
 
       for (const file of matchedFiles) {
-        await this.sendFile(item, file);
+        await this.sendFile(item, file, startRequest.toUTC().toISO());
       }
     }
   }
@@ -175,7 +175,7 @@ export default class SouthFolderScanner
   /**
    * Send the file to the Engine.
    */
-  async sendFile(item: SouthConnectorItemEntity<SouthFolderScannerItemSettings>, filename: string): Promise<void> {
+  async sendFile(item: SouthConnectorItemEntity<SouthFolderScannerItemSettings>, filename: string, queryTime: Instant): Promise<void> {
     const filePath = path.resolve(this.connector.settings.inputFolder, filename);
     this.logger.info(`Sending file "${filePath}" to the engine`);
 
@@ -184,7 +184,7 @@ export default class SouthFolderScanner
         // Compress and send the compressed file
         const gzipPath = path.resolve(this.tmpFolder, `${filename}.gz`);
         await compress(filePath, gzipPath);
-        await this.addContent({ type: 'any', filePath: gzipPath });
+        await this.addContent({ type: 'any', filePath: gzipPath }, queryTime, [item.id]);
         try {
           await fs.unlink(gzipPath);
         } catch (unlinkError) {
@@ -192,10 +192,10 @@ export default class SouthFolderScanner
         }
       } catch (error: unknown) {
         this.logger.error(`Error compressing file "${filePath}": ${(error as Error).message}. Sending it raw instead.`);
-        await this.addContent({ type: 'any', filePath });
+        await this.addContent({ type: 'any', filePath }, queryTime, [item.id]);
       }
     } else {
-      await this.addContent({ type: 'any', filePath });
+      await this.addContent({ type: 'any', filePath }, queryTime, [item.id]);
     }
 
     // Delete original file if preserveFile is not set

@@ -1,7 +1,7 @@
 import { SouthOIAnalyticsSettingsSpecificSettings } from 'shared/model/south-settings.model';
 import { OIAnalyticsRegistration } from '../model/oianalytics-registration.model';
 import { NorthOIAnalyticsSettingsSpecificSettings } from '../../shared/model/north-settings.model';
-import { ReqAuthOptions, ReqOptions, ReqProxyOptions } from './http-request.utils';
+import { HTTPRequest, ReqAuthOptions, ReqOptions, ReqProxyOptions, ReqResponse } from './http-request.utils';
 import { ClientCertificateCredential, ClientSecretCredential } from '@azure/identity';
 import { encryptionService } from './encryption.service';
 import { OIBusTimeValue } from '../../shared/model/engine.model';
@@ -251,4 +251,41 @@ export const parseData = (httpResult: Array<OIATimeValues>): { formattedResult: 
     });
   }
   return { formattedResult: formattedData, maxInstant };
+};
+
+/**
+ * Test connection to OIAnalytics by calling the status endpoint
+ * This function is shared between North/South OIAnalytics connectors and the registration service
+ */
+export const testOIAnalyticsConnection = async (
+  useOIAnalyticsRegistration: boolean,
+  registrationSettings: OIAnalyticsRegistration,
+  specificSettings: SouthOIAnalyticsSettingsSpecificSettings | NorthOIAnalyticsSettingsSpecificSettings | undefined | null,
+  timeout: number,
+  certificateRepository: CertificateRepository | null,
+  accept401AsSuccess: boolean
+): Promise<void> => {
+  const httpOptions = await buildHttpOptions('GET', useOIAnalyticsRegistration, registrationSettings, specificSettings, 30000, null);
+
+  const requestUrl = new URL(
+    '/api/optimistik/oibus/status',
+    useOIAnalyticsRegistration ? registrationSettings.host : specificSettings!.host
+  );
+
+  let response: ReqResponse;
+  try {
+    response = await HTTPRequest(requestUrl, httpOptions);
+  } catch (error) {
+    throw new Error(`Fetch error ${error}`);
+  }
+
+  // During initial registration, a 401 response is expected and considered successful
+  // because the token hasn't been retrieved yet
+  if (accept401AsSuccess && response.statusCode === 401) {
+    return;
+  }
+
+  if (!response.ok) {
+    throw new Error(`HTTP request failed with status code ${response.statusCode} and message: ${await response.body.text()}`);
+  }
 };

@@ -20,7 +20,7 @@ import {
 import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.model';
 import SouthItemTestComponent from '../south-item-test/south-item-test.component';
 import { OIBusObjectAttribute, OIBusScanModeAttribute } from '../../../../../../backend/shared/model/form.model';
-import { addAttributeToForm, addEnablingConditions, createMqttValidator } from '../../../shared/form/dynamic-form.builder';
+import { addAttributeToForm, createMqttValidator } from '../../../shared/form/dynamic-form.builder';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
 import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
 import { CertificateDTO } from '../../../../../../backend/shared/model/certificate.model';
@@ -246,7 +246,6 @@ export class EditSouthItemModalComponent {
     for (const attribute of settingsAttribute.attributes) {
       addAttributeToForm(this.fb, this.form.controls.settings, attribute);
     }
-    addEnablingConditions(this.form.controls.settings, settingsAttribute.enablingConditions);
     if (this.manifest.id === 'mqtt') {
       createMqttValidator(this.form.controls.settings, this.getExistingMqttTopics());
     }

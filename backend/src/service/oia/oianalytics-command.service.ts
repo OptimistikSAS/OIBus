@@ -43,7 +43,15 @@ import {
   OIBusUpdateRegistrationSettingsCommand,
   OIBusUpdateScanModeCommand,
   OIBusUpdateSouthConnectorCommand,
-  OIBusUpdateVersionCommand
+  OIBusUpdateVersionCommand,
+  OIBusSearchNorthCacheContentCommand,
+  OIBusSearchHistoryCacheContentCommand,
+  OIBusGetNorthCacheFileContentCommand,
+  OIBusGetHistoryCacheFileContentCommand,
+  OIBusRemoveNorthCacheContentCommand,
+  OIBusRemoveHistoryCacheContentCommand,
+  OIBusMoveNorthCacheContentCommand,
+  OIBusMoveHistoryCacheContentCommand
 } from '../../model/oianalytics-command.model';
 import { CommandSearchParam, OIBusCommandDTO } from '../../../shared/model/command.model';
 import { Page } from '../../../shared/model/types';
@@ -447,6 +455,30 @@ export default class OIAnalyticsCommandService {
         case 'setpoint':
           await this.executeSetpointCommand(command);
           break;
+        case 'search-north-cache-content':
+          await this.executeSearchNorthCacheContentCommand(command);
+          break;
+        case 'search-history-cache-content':
+          await this.executeSearchHistoryCacheContentCommand(command);
+          break;
+        case 'get-north-cache-file-content':
+          await this.executeGetNorthCacheFileContentCommand(command);
+          break;
+        case 'get-history-cache-file-content':
+          await this.executeGetHistoryCacheFileContentCommand(command);
+          break;
+        case 'remove-north-cache-content':
+          await this.executeRemoveNorthCacheContentCommand(command);
+          break;
+        case 'remove-history-cache-content':
+          await this.executeRemoveHistoryCacheContentCommand(command);
+          break;
+        case 'move-north-cache-content':
+          await this.executeMoveNorthCacheContentCommand(command);
+          break;
+        case 'move-history-cache-content':
+          await this.executeMoveHistoryCacheContentCommand(command);
+          break;
       }
     } catch (error: unknown) {
       this.ongoingExecuteCommand = false;
@@ -665,7 +697,31 @@ export default class OIAnalyticsCommandService {
           : registration.commandPermissions.testNorthConnection,
         setpoint: registration.commandPermissions.setpoint
           ? command.commandContent.commandPermissions.setpoint
-          : registration.commandPermissions.setpoint
+          : registration.commandPermissions.setpoint,
+        searchNorthCacheContent: registration.commandPermissions.searchNorthCacheContent
+          ? command.commandContent.commandPermissions.searchNorthCacheContent
+          : registration.commandPermissions.searchNorthCacheContent,
+        getNorthCacheFileContent: registration.commandPermissions.getNorthCacheFileContent
+          ? command.commandContent.commandPermissions.getNorthCacheFileContent
+          : registration.commandPermissions.getNorthCacheFileContent,
+        removeNorthCacheContent: registration.commandPermissions.removeNorthCacheContent
+          ? command.commandContent.commandPermissions.removeNorthCacheContent
+          : registration.commandPermissions.removeNorthCacheContent,
+        moveNorthCacheContent: registration.commandPermissions.moveNorthCacheContent
+          ? command.commandContent.commandPermissions.moveNorthCacheContent
+          : registration.commandPermissions.moveNorthCacheContent,
+        searchHistoryCacheContent: registration.commandPermissions.searchHistoryCacheContent
+          ? command.commandContent.commandPermissions.searchHistoryCacheContent
+          : registration.commandPermissions.searchHistoryCacheContent,
+        getHistoryCacheFileContent: registration.commandPermissions.getHistoryCacheFileContent
+          ? command.commandContent.commandPermissions.getHistoryCacheFileContent
+          : registration.commandPermissions.getHistoryCacheFileContent,
+        removeHistoryCacheContent: registration.commandPermissions.removeHistoryCacheContent
+          ? command.commandContent.commandPermissions.removeHistoryCacheContent
+          : registration.commandPermissions.removeHistoryCacheContent,
+        moveHistoryCacheContent: registration.commandPermissions.moveHistoryCacheContent
+          ? command.commandContent.commandPermissions.moveHistoryCacheContent
+          : registration.commandPermissions.moveHistoryCacheContent
       }
     };
     await this.oIAnalyticsRegistrationService.editRegistrationSettings(registrationCommand);
@@ -1071,6 +1127,180 @@ export default class OIAnalyticsCommandService {
     );
   }
 
+  private validateCacheCommandContent(content: {
+    folder?: string;
+    originFolder?: string;
+    destinationFolder?: string;
+    filename?: string;
+    metadataFilenameList?: Array<string>;
+    cacheContentList?: Array<string>;
+  }): void {
+    const validFolders = ['cache', 'archive', 'error'];
+    if (content.folder && !validFolders.includes(content.folder)) {
+      throw new Error(`Invalid folder: ${content.folder}`);
+    }
+    if (content.originFolder && !validFolders.includes(content.originFolder)) {
+      throw new Error(`Invalid origin folder: ${content.originFolder}`);
+    }
+    if (content.destinationFolder && !validFolders.includes(content.destinationFolder)) {
+      throw new Error(`Invalid destination folder: ${content.destinationFolder}`);
+    }
+    if (content.filename !== undefined && content.filename.trim() === '') {
+      throw new Error('Filename cannot be empty');
+    }
+    if (content.metadataFilenameList && content.metadataFilenameList.length === 0) {
+      throw new Error('Metadata filename list cannot be empty');
+    }
+    if (content.cacheContentList && content.cacheContentList.length === 0) {
+      throw new Error('Cache content list cannot be empty');
+    }
+  }
+
+  async executeSearchNorthCacheContentCommand(command: OIBusSearchNorthCacheContentCommand): Promise<void> {
+    try {
+      this.validateCacheCommandContent(command.commandContent);
+      const result = await this.northService.searchCacheContent(
+        command.northConnectorId,
+        command.commandContent.searchParams,
+        command.commandContent.folder
+      );
+      this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), JSON.stringify({ files: result }));
+    } catch (error: unknown) {
+      this.oIAnalyticsCommandRepository.markAsErrored(command.id, (error as Error).message);
+    }
+  }
+
+  async executeSearchHistoryCacheContentCommand(command: OIBusSearchHistoryCacheContentCommand): Promise<void> {
+    try {
+      this.validateCacheCommandContent(command.commandContent);
+      const result = await this.historyQueryService.searchCacheContent(
+        command.historyQueryId,
+        command.commandContent.searchParams,
+        command.commandContent.folder
+      );
+      this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), JSON.stringify({ files: result }));
+    } catch (error: unknown) {
+      this.oIAnalyticsCommandRepository.markAsErrored(command.id, (error as Error).message);
+    }
+  }
+
+  async executeGetNorthCacheFileContentCommand(command: OIBusGetNorthCacheFileContentCommand): Promise<void> {
+    try {
+      this.validateCacheCommandContent(command.commandContent);
+      const stream = await this.northService.getCacheFileContent(
+        command.northConnectorId,
+        command.commandContent.folder,
+        command.commandContent.filename
+      );
+      await this.processCacheFileContent(command, stream);
+    } catch (error: unknown) {
+      this.oIAnalyticsCommandRepository.markAsErrored(command.id, (error as Error).message);
+    }
+  }
+
+  async executeGetHistoryCacheFileContentCommand(command: OIBusGetHistoryCacheFileContentCommand): Promise<void> {
+    try {
+      this.validateCacheCommandContent(command.commandContent);
+      const stream = await this.historyQueryService.getCacheFileContent(
+        command.historyQueryId,
+        command.commandContent.folder,
+        command.commandContent.filename
+      );
+      await this.processCacheFileContent(command, stream);
+    } catch (error: unknown) {
+      this.oIAnalyticsCommandRepository.markAsErrored(command.id, (error as Error).message);
+    }
+  }
+
+  private async processCacheFileContent(
+    command: OIBusGetNorthCacheFileContentCommand | OIBusGetHistoryCacheFileContentCommand,
+    stream: NodeJS.ReadableStream
+  ) {
+    const chunks: Array<Buffer> = [];
+    let totalSize = 0;
+    let truncated = false;
+    const MAX_SIZE = 1024 * 500; // 500KB limit
+
+    for await (const chunk of stream) {
+      const bufferChunk = Buffer.from(chunk);
+      if (totalSize + bufferChunk.length > MAX_SIZE) {
+        const remaining = MAX_SIZE - totalSize;
+        if (remaining > 0) {
+          chunks.push(bufferChunk.subarray(0, remaining));
+          totalSize += remaining;
+        }
+        truncated = true;
+        break;
+      }
+      chunks.push(bufferChunk);
+      totalSize += bufferChunk.length;
+    }
+    const content = Buffer.concat(chunks).toString('utf-8');
+    this.oIAnalyticsCommandRepository.markAsCompleted(
+      command.id,
+      DateTime.now().toUTC().toISO(),
+      JSON.stringify({ content, truncated, totalSize })
+    );
+  }
+
+  async executeRemoveNorthCacheContentCommand(command: OIBusRemoveNorthCacheContentCommand): Promise<void> {
+    try {
+      this.validateCacheCommandContent(command.commandContent);
+      await this.northService.removeCacheContent(
+        command.northConnectorId,
+        command.commandContent.folder,
+        command.commandContent.metadataFilenameList
+      );
+      this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'Content removed successfully');
+    } catch (error: unknown) {
+      this.oIAnalyticsCommandRepository.markAsErrored(command.id, (error as Error).message);
+    }
+  }
+
+  async executeRemoveHistoryCacheContentCommand(command: OIBusRemoveHistoryCacheContentCommand): Promise<void> {
+    try {
+      this.validateCacheCommandContent(command.commandContent);
+      await this.historyQueryService.removeCacheContent(
+        command.historyQueryId,
+        command.commandContent.folder,
+        command.commandContent.metadataFilenameList
+      );
+      this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'Content removed successfully');
+    } catch (error: unknown) {
+      this.oIAnalyticsCommandRepository.markAsErrored(command.id, (error as Error).message);
+    }
+  }
+
+  async executeMoveNorthCacheContentCommand(command: OIBusMoveNorthCacheContentCommand): Promise<void> {
+    try {
+      this.validateCacheCommandContent(command.commandContent);
+      await this.northService.moveCacheContent(
+        command.northConnectorId,
+        command.commandContent.originFolder,
+        command.commandContent.destinationFolder,
+        command.commandContent.cacheContentList
+      );
+      this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'Content moved successfully');
+    } catch (error: unknown) {
+      this.oIAnalyticsCommandRepository.markAsErrored(command.id, (error as Error).message);
+    }
+  }
+
+  async executeMoveHistoryCacheContentCommand(command: OIBusMoveHistoryCacheContentCommand): Promise<void> {
+    try {
+      this.validateCacheCommandContent(command.commandContent);
+      await this.historyQueryService.moveCacheContent(
+        command.historyQueryId,
+        command.commandContent.originFolder,
+        command.commandContent.destinationFolder,
+        command.commandContent.cacheContentList
+      );
+      this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'Content moved successfully');
+    } catch (error: unknown) {
+      this.oIAnalyticsCommandRepository.markAsErrored(command.id, (error as Error).message);
+    }
+  }
+
   private checkCommandPermission(command: OIBusCommand, registration: OIAnalyticsRegistration) {
     switch (command.type) {
       case 'update-version':
@@ -1139,6 +1369,22 @@ export default class OIAnalyticsCommandService {
         return registration.commandPermissions.updateHistoryQuery;
       case 'setpoint':
         return registration.commandPermissions.setpoint;
+      case 'search-north-cache-content':
+        return registration.commandPermissions.searchNorthCacheContent;
+      case 'search-history-cache-content':
+        return registration.commandPermissions.searchHistoryCacheContent;
+      case 'get-north-cache-file-content':
+        return registration.commandPermissions.getNorthCacheFileContent;
+      case 'get-history-cache-file-content':
+        return registration.commandPermissions.getHistoryCacheFileContent;
+      case 'remove-north-cache-content':
+        return registration.commandPermissions.removeNorthCacheContent;
+      case 'remove-history-cache-content':
+        return registration.commandPermissions.removeHistoryCacheContent;
+      case 'move-north-cache-content':
+        return registration.commandPermissions.moveNorthCacheContent;
+      case 'move-history-cache-content':
+        return registration.commandPermissions.moveHistoryCacheContent;
     }
   }
 }
@@ -1178,6 +1424,14 @@ export const toOIBusCommandDTO = (command: OIBusCommand): OIBusCommandDTO => {
     case 'create-or-update-history-query-south-items-from-csv':
     case 'update-history-query-status':
     case 'setpoint':
+    case 'search-north-cache-content':
+    case 'search-history-cache-content':
+    case 'get-north-cache-file-content':
+    case 'get-history-cache-file-content':
+    case 'remove-north-cache-content':
+    case 'remove-history-cache-content':
+    case 'move-north-cache-content':
+    case 'move-history-cache-content':
       return command;
   }
 };

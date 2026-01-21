@@ -282,8 +282,10 @@ export const persistResults = async (
   serializationSettings: SerializationSettings,
   connectorName: string,
   itemName: string,
+  itemId: string,
+  queryTime: Instant,
   baseFolder: string,
-  addContentFn: (data: OIBusContent) => Promise<void>,
+  addContentFn: (data: OIBusContent, queryTime: Instant, itemIds: Array<string>) => Promise<void>,
   logger: pino.Logger
 ): Promise<void> => {
   switch (serializationSettings.type) {
@@ -305,7 +307,7 @@ export const persistResults = async (
         }
 
         logger.debug(`Sending compressed file "${gzipPath}" to Engine`);
-        await addContentFn({ type: 'any', filePath: gzipPath });
+        await addContentFn({ type: 'any', filePath: gzipPath }, queryTime, [itemId]);
         try {
           await fs.unlink(gzipPath);
           logger.trace(`File "${gzipPath}" deleted`);
@@ -314,7 +316,7 @@ export const persistResults = async (
         }
       } else {
         logger.debug(`Sending file "${filePath}" to Engine`);
-        await addContentFn({ type: 'any', filePath });
+        await addContentFn({ type: 'any', filePath }, queryTime, [itemId]);
         try {
           await fs.unlink(filePath);
           logger.trace(`File ${filePath} deleted`);
@@ -343,7 +345,7 @@ export const persistResults = async (
         }
 
         logger.debug(`Sending compressed CSV file "${gzipPath}" to Engine`);
-        await addContentFn({ type: 'any', filePath: gzipPath });
+        await addContentFn({ type: 'any', filePath: gzipPath }, queryTime, [itemId]);
 
         try {
           await fs.unlink(gzipPath);
@@ -353,7 +355,7 @@ export const persistResults = async (
         }
       } else {
         logger.debug(`Sending CSV file "${csvPath}" to Engine`);
-        await addContentFn({ type: 'any', filePath: csvPath });
+        await addContentFn({ type: 'any', filePath: csvPath }, queryTime, [itemId]);
 
         try {
           await fs.unlink(csvPath);
@@ -436,7 +438,7 @@ export const formatInstant = (
 export const convertDateTimeToInstant = (
   dateTime: string | number | Date,
   options: { type?: DateTimeType; timezone?: string; format?: string; locale?: string }
-): string => {
+): Instant => {
   // Early return if no conversion is needed (assume input is already an ISO string)
   if (!options.type) {
     if (typeof dateTime === 'string' && DateTime.fromISO(dateTime).isValid) {
@@ -500,6 +502,15 @@ export const convertDateTimeToInstant = (
   } catch (error) {
     throw new Error(`Failed to convert "${dateTime}" to Instant for type "${type}": ${(error as Error).message}`);
   }
+};
+
+export const convertDateTime = (
+  dateTime: string | number | Date,
+  input: { type: DateTimeType; timezone?: string; format?: string; locale?: string },
+  output: { type: DateTimeType; timezone?: string; format?: string; locale?: string }
+) => {
+  const instant: Instant = convertDateTimeToInstant(dateTime, input);
+  return formatInstant(instant, output);
 };
 
 export const formatQueryParams = (
@@ -731,5 +742,26 @@ export const testIPOnFilter = (ipFilters: Array<string>, ipToCheck: string): boo
       }
       return regexIPv6.test(ipToCheck);
     }
+  });
+};
+
+export const sanitizeFilename = (originalName: string): string => {
+  return originalName.replace(/['"]/g, '').replace(/[^a-zA-Z0-9-_.]/g, '-');
+};
+
+/**
+ * Helper: Replaces '*' in a JSONPath with actual indices sequentially.
+ * Example: path="$.vals[*].sub[*]", indices=[0, 5] -> "$.vals[0].sub[5]"
+ * It is used to retrieve line by line each field and populate csv rows
+ */
+export const injectIndices = (pathDefinition: string, indices: Array<number>): string => {
+  let indexPointer = 0;
+  // Regex matches '[*]' literals
+  return pathDefinition.replace(/\[\*\]/g, () => {
+    // If we run out of indices (parent accessing global), we assume 0 or keep wildcard
+    // But usually, we just take the next available index.
+    const val = indices[indexPointer] !== undefined ? indices[indexPointer] : '*';
+    indexPointer++;
+    return `[${val}]`;
   });
 };

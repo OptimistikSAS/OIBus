@@ -1,4 +1,49 @@
 import { OIBusObjectAttribute } from './form.model';
+import { ItemLightDTO, SouthConnectorLightDTO } from './south-connector.model';
+
+export const INPUT_TYPES = ['any', 'time-values', 'setpoint'];
+export type InputType = (typeof INPUT_TYPES)[number];
+
+export const OUTPUT_TYPES = ['any', 'time-values', 'opcua', 'mqtt', 'modbus', 'oianalytics'];
+export type OutputType = (typeof OUTPUT_TYPES)[number];
+
+export const CUSTOM_TRANSFORMER_LANGUAGES = ['javascript', 'typescript'];
+export type TransformerLanguage = (typeof CUSTOM_TRANSFORMER_LANGUAGES)[number];
+
+export interface InputTemplate {
+  type: InputType;
+  data: string;
+  description: string;
+}
+
+/**
+ * Manifest for a transformer type.
+ * Describes the configuration schema and capabilities of a transformer type.
+ */
+export interface TransformerManifest {
+  /**
+   * The unique identifier of the transformer type.
+   * @example "csv-to-mqtt"
+   */
+  id: string;
+
+  /**
+   * The input data type that the transformer accepts.
+   * @example "any"
+   */
+  inputType: InputType;
+
+  /**
+   * The output data type that the transformer produces.
+   * @example "mqtt"
+   */
+  outputType: OutputType;
+
+  /**
+   * The configuration schema for the transformer settings.
+   */
+  settings: OIBusObjectAttribute;
+}
 
 /**
  * Base Data Transfer Object for a transformer.
@@ -21,13 +66,13 @@ export interface BaseTransformerDTO {
    * The input data type that the transformer accepts.
    * @example "string"
    */
-  inputType: string;
+  inputType: InputType;
 
   /**
    * The output data type that the transformer produces.
    * @example "number"
    */
-  outputType: string;
+  outputType: OutputType;
 
   /**
    * The manifest describing the transformer's input/output structure and attributes.
@@ -62,6 +107,12 @@ export interface CustomTransformerDTO extends BaseTransformerDTO {
    * @example "function transform(input) { return parseFloat(input); }"
    */
   customCode: string;
+
+  /**
+   * The language used
+   * @example "javascript"
+   */
+  language: TransformerLanguage;
 }
 
 /**
@@ -92,10 +143,16 @@ export type TransformerDTO = CustomTransformerDTO | StandardTransformerDTO;
  */
 export interface TransformerDTOWithOptions {
   /**
+   * The id used to match a transformer with options
+   * @example "id"
+   */
+  id: string;
+
+  /**
    * The input data type that the transformer accepts.
    * @example "string"
    */
-  inputType: string;
+  inputType: InputType;
 
   /**
    * The transformer to be applied.
@@ -107,6 +164,16 @@ export interface TransformerDTOWithOptions {
    * @example { "precision": 2, "defaultValue": 0 }
    */
   options: Record<string, unknown>;
+
+  /**
+   * The south associated to the transformer
+   */
+  south?: SouthConnectorLightDTO;
+
+  /**
+   * The list of items associated to the transformer
+   */
+  items: Array<ItemLightDTO>;
 }
 
 /**
@@ -115,8 +182,14 @@ export interface TransformerDTOWithOptions {
  */
 export interface TransformerIdWithOptions {
   /**
+   * The id used to match a transformer with options
+   * @example "id"
+   */
+  id: string;
+
+  /**
    * The input data type that the transformer accepts.
-   * @example "string"
+   * @example "time-values"
    */
   inputType: string;
 
@@ -125,6 +198,17 @@ export interface TransformerIdWithOptions {
    * @example "customTransformer123"
    */
   transformerId: string;
+
+  /**
+   * The south associated to the transformer
+   * @example "southId123"
+   */
+  southId?: string;
+
+  /**
+   * The list of items associated to the transformer
+   */
+  items: Array<ItemLightDTO>;
 
   /**
    * Configuration options for the transformer.
@@ -176,6 +260,12 @@ export interface CustomTransformerCommandDTO {
    * The manifest describing the transformer's input/output structure and attributes.
    */
   customManifest: OIBusObjectAttribute;
+
+  /**
+   * The language of the custom code
+   * @example "javascript"
+   */
+  language: TransformerLanguage;
 }
 
 /**
@@ -208,4 +298,17 @@ export interface TransformerSearchParam {
    * @example 1
    */
   page: number;
+}
+
+export interface TransformerTestRequest {
+  inputData: string;
+  options?: object;
+}
+
+export interface TransformerTestResponse {
+  output: string;
+  metadata: {
+    contentType: string;
+    numberOfElement: number;
+  };
 }

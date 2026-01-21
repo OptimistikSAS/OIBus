@@ -87,7 +87,7 @@ describe('South OPC', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    jest.useFakeTimers();
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
     south = new SouthOpc(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
@@ -215,7 +215,7 @@ describe('South OPC', () => {
       .mockResolvedValueOnce(createMockResponse(500, 'another error'));
 
     await expect(south.testConnection()).rejects.toThrow(
-      new Error(`Error occurred when sending connect command to remote agent with status 400. "bad request"`)
+      new Error(`Error occurred when sending connect command to remote agent with status 400. bad request`)
     );
 
     await expect(south.testConnection()).rejects.toThrow(
@@ -301,10 +301,14 @@ describe('South OPC', () => {
     );
 
     expect(result).toEqual('2020-03-01T00:00:00.001Z');
-    expect(south.addContent).toHaveBeenCalledWith({
-      type: 'time-values',
-      content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]
-    });
+    expect(south.addContent).toHaveBeenCalledWith(
+      {
+        type: 'time-values',
+        content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]
+      },
+      testData.constants.dates.FAKE_NOW,
+      [configuration.items[0].id, configuration.items[1].id]
+    );
 
     expect(logger.debug).toHaveBeenCalledWith(`No result found. Request done in 0 ms`);
 
@@ -321,9 +325,9 @@ describe('South OPC', () => {
     south.connect = jest.fn();
 
     await expect(south.historyQuery(configuration.items, startTime, endTime)).rejects.toThrow(
-      `Error occurred when querying remote agent with status 400: "bad request"`
+      `Error occurred when querying remote agent with status 400: bad request`
     );
-    expect(logger.error).toHaveBeenCalledWith(`Error occurred when querying remote agent with status 400: "bad request"`);
+    expect(logger.error).toHaveBeenCalledWith(`Error occurred when querying remote agent with status 400: bad request`);
     (south.connect as jest.Mock).mockClear();
     south['disconnecting'] = true;
     await expect(south.historyQuery(configuration.items, startTime, endTime)).rejects.toThrow(

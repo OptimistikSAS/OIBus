@@ -10,7 +10,7 @@ import { NorthConnectorEntity } from '../../model/north-connector.model';
 import testData from '../../tests/utils/test-data';
 import CacheService from '../../service/cache/cache.service';
 import { createTransformer } from '../../service/transformer.service';
-import OIBusTransformer from '../../service/transformers/oibus-transformer';
+import OIBusTransformer from '../../transformers/oibus-transformer';
 import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
 
 jest.mock('node:fs/promises');
@@ -66,9 +66,7 @@ describe('NorthConsole with verbose mode', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'time-values',
-      source: 'south',
-      options: {}
+      contentType: 'time-values'
     });
     expect(fs.readFile).toHaveBeenCalledWith('/path/to/file/example-123.json', { encoding: 'utf-8' });
 
@@ -84,9 +82,7 @@ describe('NorthConsole with verbose mode', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'setpoint',
-      source: 'south',
-      options: {}
+      contentType: 'setpoint'
     });
     expect(fs.readFile).toHaveBeenCalledWith('/path/to/file/example-123.json', { encoding: 'utf-8' });
 
@@ -101,9 +97,7 @@ describe('NorthConsole with verbose mode', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'any',
-      source: 'south',
-      options: {}
+      contentType: 'any'
     });
     expect(fs.stat).toHaveBeenCalledWith('path/to/file/example.file');
     expect(console.table).toHaveBeenCalledWith([{ filePath: 'path/to/file/example.file', fileSize: 666 }]);
@@ -136,9 +130,7 @@ describe('NorthConsole without verbose mode', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'time-values',
-      source: 'south',
-      options: {}
+      contentType: 'time-values'
     });
     expect(fs.readFile).toHaveBeenCalledWith('/path/to/file/example-123.json', { encoding: 'utf-8' });
 
@@ -154,9 +146,7 @@ describe('NorthConsole without verbose mode', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'setpoint',
-      source: 'south',
-      options: {}
+      contentType: 'setpoint'
     });
     expect(fs.readFile).toHaveBeenCalledWith('/path/to/file/example-123.json', { encoding: 'utf-8' });
 
@@ -171,9 +161,7 @@ describe('NorthConsole without verbose mode', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'any',
-      source: 'south',
-      options: {}
+      contentType: 'any'
     });
 
     expect(fs.stat).not.toHaveBeenCalled();
@@ -219,9 +207,7 @@ describe('NorthConsole without verbose mode', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'bad-type',
-        source: 'south',
-        options: {}
+        contentType: 'bad-type'
       })
     ).rejects.toThrow(`Unsupported data type: bad-type (file path/to/file/example-123456789.file)`);
   });

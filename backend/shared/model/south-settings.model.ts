@@ -287,6 +287,40 @@ export const SOUTH_POSTGRE_S_Q_L_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = [
 ] as const;
 export type SouthPostgreSQLItemSettingsSerializationDelimiter = (typeof SOUTH_POSTGRE_S_Q_L_ITEM_SETTINGS_SERIALIZATION_DELIMITERS)[number];
 
+export const SOUTH_REST_SETTINGS_AUTHENTICATION_TYPES = ['none', 'basic', 'bearer', 'api-key'] as const;
+export type SouthRestSettingsAuthenticationType = (typeof SOUTH_REST_SETTINGS_AUTHENTICATION_TYPES)[number];
+
+export const SOUTH_REST_SETTINGS_AUTHENTICATION_ADD_TOS = ['header', 'query-params'] as const;
+export type SouthRestSettingsAuthenticationAddTo = (typeof SOUTH_REST_SETTINGS_AUTHENTICATION_ADD_TOS)[number];
+
+export const SOUTH_REST_SETTINGS_TEST_METHODS = ['GET', 'POST', 'PUT'] as const;
+export type SouthRestSettingsTestMethod = (typeof SOUTH_REST_SETTINGS_TEST_METHODS)[number];
+
+export const SOUTH_REST_ITEM_SETTINGS_QUERY_PARAMS_DATE_TIME_INPUT_TYPES = ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'] as const;
+export type SouthRestItemSettingsQueryParamsDateTimeInputType =
+  (typeof SOUTH_REST_ITEM_SETTINGS_QUERY_PARAMS_DATE_TIME_INPUT_TYPES)[number];
+
+export const SOUTH_REST_ITEM_SETTINGS_HEADERS_DATE_TIME_TYPES = ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'] as const;
+export type SouthRestItemSettingsHeadersDateTimeType = (typeof SOUTH_REST_ITEM_SETTINGS_HEADERS_DATE_TIME_TYPES)[number];
+
+export const SOUTH_REST_ITEM_SETTINGS_BODY_DATE_TIME_INPUT_TYPES = ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'] as const;
+export type SouthRestItemSettingsBodyDateTimeInputType = (typeof SOUTH_REST_ITEM_SETTINGS_BODY_DATE_TIME_INPUT_TYPES)[number];
+
+export const SOUTH_REST_ITEM_SETTINGS_TRACKING_INSTANT_DATE_TIME_INPUT_TYPES = [
+  'iso-string',
+  'unix-epoch',
+  'unix-epoch-ms',
+  'string'
+] as const;
+export type SouthRestItemSettingsTrackingInstantDateTimeInputType =
+  (typeof SOUTH_REST_ITEM_SETTINGS_TRACKING_INSTANT_DATE_TIME_INPUT_TYPES)[number];
+
+export const SOUTH_REST_ITEM_SETTINGS_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as const;
+export type SouthRestItemSettingsMethod = (typeof SOUTH_REST_ITEM_SETTINGS_METHODS)[number];
+
+export const SOUTH_REST_ITEM_SETTINGS_RETURN_TYPES = ['body', 'file'] as const;
+export type SouthRestItemSettingsReturnType = (typeof SOUTH_REST_ITEM_SETTINGS_RETURN_TYPES)[number];
+
 export const SOUTH_S_F_T_P_SETTINGS_AUTHENTICATIONS = ['password', 'private-key'] as const;
 export type SouthSFTPSettingsAuthentication = (typeof SOUTH_S_F_T_P_SETTINGS_AUTHENTICATIONS)[number];
 
@@ -408,6 +442,36 @@ export interface SouthPostgreSQLSettingsThrottling {
   maxReadInterval: number;
   readDelay: number;
   overlap: number;
+}
+
+export interface SouthRestSettingsThrottling {
+  maxReadInterval: number;
+  readDelay: number;
+  overlap: number;
+}
+
+export interface SouthRestSettingsAuthentication {
+  type: SouthRestSettingsAuthenticationType;
+  username?: string;
+  password?: string | null;
+  token?: string | null;
+  apiKey?: string;
+  apiValue?: string | null;
+  addTo?: SouthRestSettingsAuthenticationAddTo;
+}
+
+export interface SouthRestSettingsProxy {
+  useProxy: boolean;
+  proxyUrl?: string;
+  proxyUsername?: string | null;
+  proxyPassword?: string | null;
+}
+
+export interface SouthRestSettingsTest {
+  method: SouthRestSettingsTestMethod;
+  endpoint: string;
+  body?: string | null;
+  successCode: number;
 }
 
 export interface SouthSQLiteSettingsThrottling {
@@ -573,6 +637,16 @@ export interface SouthPostgreSQLSettings {
   password: string | null;
 }
 
+export interface SouthRestSettings {
+  throttling: SouthRestSettingsThrottling;
+  host: string;
+  acceptUnauthorized: boolean;
+  timeout: number;
+  authentication: SouthRestSettingsAuthentication;
+  proxy: SouthRestSettingsProxy;
+  test: SouthRestSettingsTest;
+}
+
 export interface SouthSFTPSettings {
   host: string;
   port: number;
@@ -605,6 +679,7 @@ export type SouthSettings =
   | SouthOracleSettings
   | SouthPISettings
   | SouthPostgreSQLSettings
+  | SouthRestSettings
   | SouthSFTPSettings
   | SouthSQLiteSettings;
 
@@ -764,6 +839,50 @@ export interface SouthPostgreSQLItemSettingsSerialization {
   outputTimezone: Timezone;
 }
 
+export interface SouthRestItemSettingsQueryParamsDateTimeInput {
+  type: SouthRestItemSettingsQueryParamsDateTimeInputType | null;
+  timezone?: Timezone | null;
+  format?: string | null;
+}
+
+export interface SouthRestItemSettingsQueryParams {
+  key: string;
+  value: string;
+  dateTimeInput?: SouthRestItemSettingsQueryParamsDateTimeInput | null;
+}
+
+export interface SouthRestItemSettingsHeaders {
+  key: string;
+  value: string;
+  dateTimeType?: SouthRestItemSettingsHeadersDateTimeType;
+  dateTimeTimezone?: Timezone | null;
+  dateTimeFormat?: string | null;
+}
+
+export interface SouthRestItemSettingsBodyDateTimeInput {
+  type: SouthRestItemSettingsBodyDateTimeInputType | null;
+  timezone?: Timezone | null;
+  format?: string | null;
+}
+
+export interface SouthRestItemSettingsBody {
+  content: string | null;
+  dateTimeInput?: SouthRestItemSettingsBodyDateTimeInput | null;
+}
+
+export interface SouthRestItemSettingsTrackingInstantDateTimeInput {
+  type: SouthRestItemSettingsTrackingInstantDateTimeInputType;
+  timezone?: Timezone;
+  format?: string;
+  locale?: string;
+}
+
+export interface SouthRestItemSettingsTrackingInstant {
+  trackInstant: boolean;
+  jsonPath?: string;
+  dateTimeInput?: SouthRestItemSettingsTrackingInstantDateTimeInput | null;
+}
+
 export interface SouthSQLiteItemSettingsDateTimeFields {
   fieldName: string;
   useAsReference: boolean;
@@ -876,6 +995,16 @@ export interface SouthPostgreSQLItemSettings {
   serialization: SouthPostgreSQLItemSettingsSerialization;
 }
 
+export interface SouthRestItemSettings {
+  method: SouthRestItemSettingsMethod;
+  endpoint: string;
+  returnType: SouthRestItemSettingsReturnType;
+  queryParams: Array<SouthRestItemSettingsQueryParams>;
+  headers: Array<SouthRestItemSettingsHeaders>;
+  body?: SouthRestItemSettingsBody | null;
+  trackingInstant?: SouthRestItemSettingsTrackingInstant | null;
+}
+
 export interface SouthSFTPItemSettings {
   remoteFolder: string;
   regex: string;
@@ -906,5 +1035,6 @@ export type SouthItemSettings =
   | SouthOracleItemSettings
   | SouthPIItemSettings
   | SouthPostgreSQLItemSettings
+  | SouthRestItemSettings
   | SouthSFTPItemSettings
   | SouthSQLiteItemSettings;

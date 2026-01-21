@@ -1,0 +1,307 @@
+<div class="modal-header">
+  <h3
+    class="modal-title"
+    [translate]="'configuration.oibus.manifest.transformers.attributes.edit-transformer-modal.' + mode + '-title'"
+  ></h3>
+</div>
+<div class="modal-body">
+  <form [id]="uniqueFormId" [formGroup]="form" (ngSubmit)="submit()" (keydown.enter)="onGlobalKeydown($event)">
+    <!-- Basic Properties -->
+    <div class="row">
+      <div class="col-md-6">
+        <div class="form-group">
+          <label class="form-label" [translate]="'configuration.oibus.manifest.transformers.attributes.type.title'"></label>
+          <select class="form-select" formControlName="type" (change)="onTypeChange()">
+            @for (type of availableTypes; track type) {
+              <option [value]="type" [translate]="'configuration.oibus.manifest.transformers.attributes.type.' + type"></option>
+            }
+          </select>
+          <val-errors controlName="type" />
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="form-group">
+          <label class="form-label" [translate]="'configuration.oibus.manifest.transformers.attributes.key'"></label>
+          <input type="text" class="form-control" formControlName="key" />
+          <val-errors controlName="key" />
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-12">
+        <div class="form-group">
+          <label class="form-label" [translate]="'configuration.oibus.manifest.transformers.attributes.translation-key'"></label>
+          <input type="text" class="form-control" formControlName="translationKey" />
+          <val-errors controlName="translationKey" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Display Properties (for displayable types) -->
+    @if (isDisplayableType()) {
+      <div class="row">
+        <div class="col-md-4">
+          <div class="form-group">
+            <label class="form-label" [translate]="'configuration.oibus.manifest.transformers.attributes.row'"></label>
+            <input type="number" class="form-control" formControlName="row" min="0" />
+            <val-errors controlName="row" />
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="form-group">
+            <label class="form-label" [translate]="'configuration.oibus.manifest.transformers.attributes.columns'"></label>
+            <input type="number" class="form-control" formControlName="columns" min="1" max="12" />
+            <val-errors controlName="columns" />
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="form-group">
+            <div class="form-label">&nbsp;</div>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" formControlName="displayInViewMode" id="display-in-view-mode" />
+              <label
+                class="form-check-label"
+                for="display-in-view-mode"
+                [translate]="'configuration.oibus.manifest.transformers.attributes.display-in-view-mode'"
+              ></label>
+              <val-errors controlName="displayInViewMode" />
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Type-specific Properties -->
+    @if (isStringType()) {
+      <div class="row">
+        <div class="col-md-12">
+          <div class="form-group">
+            <label class="form-label" [translate]="'configuration.oibus.manifest.transformers.attributes.default-value'"></label>
+            <input type="text" class="form-control" formControlName="defaultValue_string" />
+            <val-errors controlName="defaultValue_string" />
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (isNumberType()) {
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label class="form-label" [translate]="'configuration.oibus.manifest.transformers.attributes.default-value'"></label>
+            <input type="number" class="form-control" formControlName="defaultValue_number" />
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-group">
+            <label class="form-label" [translate]="'configuration.oibus.manifest.transformers.attributes.unit'"></label>
+            <input type="text" class="form-control" formControlName="unit" />
+            <val-errors controlName="unit" />
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (isBooleanType()) {
+      <div class="row">
+        <div class="col-md-12">
+          <div class="form-group">
+            <label class="form-label" [translate]="'configuration.oibus.manifest.transformers.attributes.default-value'"></label>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" formControlName="defaultValue_boolean" id="default-value-boolean" />
+              <label class="form-check-label" for="default-value-boolean" [translate]="'enums.boolean.true'"></label>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (isCodeType()) {
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label class="form-label" [translate]="'configuration.oibus.manifest.transformers.attributes.content-type.title'"></label>
+            <select class="form-select" formControlName="contentType">
+              <option value="json" [translate]="'configuration.oibus.manifest.transformers.attributes.content-type.json'"></option>
+              <option value="sql" [translate]="'configuration.oibus.manifest.transformers.attributes.content-type.sql'"></option>
+            </select>
+            <val-errors controlName="contentType" />
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-group">
+            <label class="form-label" [translate]="'configuration.oibus.manifest.transformers.attributes.default-value'"></label>
+            <textarea class="form-control" formControlName="defaultValue_code" rows="3"></textarea>
+            <val-errors controlName="defaultValue_code" />
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (isStringSelectType()) {
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label class="form-label" [translate]="'configuration.oibus.manifest.transformers.attributes.selectable-values'"></label>
+            <input type="text" class="form-control" formControlName="selectableValuesCsv" placeholder="value1,value2,value3" />
+            <small
+              class="form-text text-muted"
+              [translate]="'configuration.oibus.manifest.transformers.attributes.selectable-values-help'"
+            ></small>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-group">
+            <label class="form-label" [translate]="'configuration.oibus.manifest.transformers.attributes.default-value'"></label>
+            <input type="text" class="form-control" formControlName="defaultValue_string" />
+            <val-errors controlName="defaultValue_string" />
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (isTimezoneType()) {
+      <div class="row">
+        <div class="col-md-12">
+          <div class="form-group">
+            <label class="form-label" [translate]="'configuration.oibus.manifest.transformers.attributes.default-value'"></label>
+            <input type="text" class="form-control" formControlName="defaultValue_timezone" placeholder="UTC" />
+            <val-errors controlName="defaultValue_timezone" />
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (isScanModeType()) {
+      <div class="row">
+        <div class="col-md-12">
+          <div class="form-group">
+            <label class="form-label" [translate]="'configuration.oibus.manifest.transformers.attributes.acceptable-type.title'"></label>
+            <select class="form-select" formControlName="acceptableType">
+              <option value="POLL" [translate]="'configuration.oibus.manifest.transformers.attributes.acceptable-type.POLL'"></option>
+              <option
+                value="SUBSCRIPTION"
+                [translate]="'configuration.oibus.manifest.transformers.attributes.acceptable-type.SUBSCRIPTION'"
+              ></option>
+              <option
+                value="SUBSCRIPTION_AND_POLL"
+                [translate]="'configuration.oibus.manifest.transformers.attributes.acceptable-type.SUBSCRIPTION_AND_POLL'"
+              ></option>
+            </select>
+            <val-errors controlName="acceptableType" />
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (isObjectType()) {
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <div class="form-label">&nbsp;</div>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" formControlName="visible" id="object-visible" />
+              <label
+                class="form-check-label"
+                for="object-visible"
+                [translate]="'configuration.oibus.manifest.transformers.attributes.visible'"
+              ></label>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-group">
+            <div class="form-label">&nbsp;</div>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" formControlName="wrapInBox" id="object-wrap-in-box" />
+              <label
+                class="form-check-label"
+                for="object-wrap-in-box"
+                [translate]="'configuration.oibus.manifest.transformers.attributes.wrap-in-box'"
+              ></label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Nested Attributes for Object -->
+      <div class="row">
+        <div class="col-md-12">
+          <div class="nested-attributes-header">
+            <h5 class="nested-attributes-title">{{ nestedAttributesTitle }}</h5>
+            @if (nestedAttributesPath) {
+              <div class="nested-attributes-path" [innerHTML]="nestedAttributesPath"></div>
+            }
+          </div>
+          <oib-manifest-attributes-array
+            [label]="attribute?.translationKey || '' | translate"
+            [control]="attributesControl"
+            [contextPath]="nestedAttributesContext"
+            (nestedChange)="onNestedAttributeChange()"
+            (keydown.enter)="onNestedEnter($event)"
+          />
+        </div>
+      </div>
+    }
+
+    @if (isArrayType()) {
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <div class="form-label">&nbsp;</div>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" formControlName="paginate" id="array-paginate" />
+              <label
+                class="form-check-label"
+                for="array-paginate"
+                [translate]="'configuration.oibus.manifest.transformers.attributes.paginate'"
+              ></label>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-group">
+            <label
+              class="form-label"
+              [translate]="'configuration.oibus.manifest.transformers.attributes.number-of-elements-per-page'"
+            ></label>
+            <input type="number" class="form-control" formControlName="numberOfElementPerPage" min="1" />
+            <val-errors controlName="numberOfElementPerPage" />
+          </div>
+        </div>
+      </div>
+      <!-- Nested Attributes for Array -->
+      <div class="row">
+        <div class="col-md-12">
+          <div class="nested-attributes-header">
+            <h5 class="nested-attributes-title">{{ nestedAttributesTitle }}</h5>
+            @if (nestedAttributesPath) {
+              <div class="nested-attributes-path" [innerHTML]="nestedAttributesPath"></div>
+            }
+          </div>
+          <oib-manifest-attributes-array
+            [control]="attributesControl"
+            [label]="attribute?.translationKey || '' | translate"
+            [contextPath]="nestedAttributesContext"
+            (nestedChange)="onNestedAttributeChange()"
+            (keydown.enter)="onNestedEnter($event)"
+          />
+        </div>
+      </div>
+    }
+
+    <!-- Info for non-displayable types -->
+    @if (!isDisplayableType() && !isObjectType() && !isArrayType()) {
+      <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>
+        <span [translate]="'configuration.oibus.manifest.transformers.attributes.' + form.get('type')?.value + '-info'"></span>
+      </div>
+    }
+  </form>
+</div>
+<div class="modal-footer d-flex justify-content-end">
+  <div class="btn-group">
+    <button [oib-save-button]="state" [form]="uniqueFormId"></button>
+    <button type="button" class="btn btn-cancel" (click)="dismiss()" translate="common.close" id="cancel-button"></button>
+  </div>
+</div>

@@ -36,6 +36,8 @@ import {
   SouthPISettings,
   SouthPostgreSQLItemSettings,
   SouthPostgreSQLSettings,
+  SouthRestItemSettings,
+  SouthRestSettings,
   SouthSettings,
   SouthSFTPItemSettings,
   SouthSFTPSettings,
@@ -56,14 +58,16 @@ import SouthOPCUA from '../south/south-opcua/south-opcua';
 import SouthOracle from '../south/south-oracle/south-oracle';
 import SouthPI from '../south/south-pi/south-pi';
 import SouthPostgreSQL from '../south/south-postgresql/south-postgresql';
+import SouthRest from '../south/south-rest/south-rest';
 import SouthSFTP from '../south/south-sftp/south-sftp';
 import SouthFTP from '../south/south-ftp/south-ftp';
 import SouthSQLite from '../south/south-sqlite/south-sqlite';
 import SouthConnector from './south-connector';
+import { Instant } from '../model/types';
 
 export const buildSouth = (
   settings: SouthConnectorEntity<SouthSettings, SouthItemSettings>,
-  addContent: (southId: string, data: OIBusContent) => Promise<void>,
+  addContent: (southId: string, data: OIBusContent, queryTime: Instant, itemIds: Array<string>) => Promise<void>,
   logger: pino.Logger,
   southCacheFolder: string,
   southCacheRepository: SouthCacheRepository,
@@ -180,6 +184,14 @@ export const buildSouth = (
     case 'postgresql':
       return new SouthPostgreSQL(
         settings as SouthConnectorEntity<SouthPostgreSQLSettings, SouthPostgreSQLItemSettings>,
+        addContent,
+        southCacheRepository,
+        logger,
+        southCacheFolder
+      );
+    case 'rest':
+      return new SouthRest(
+        settings as SouthConnectorEntity<SouthRestSettings, SouthRestItemSettings>,
         addContent,
         southCacheRepository,
         logger,

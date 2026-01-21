@@ -30,6 +30,8 @@ import {
   SouthPISettings,
   SouthPostgreSQLItemSettings,
   SouthPostgreSQLSettings,
+  SouthRestItemSettings,
+  SouthRestSettings,
   SouthSFTPItemSettings,
   SouthSFTPSettings,
   SouthSQLiteItemSettings,
@@ -76,6 +78,7 @@ export const OIBUS_SOUTH_TYPES = [
   'oracle', // Oracle database
   'osisoft-pi', // OSIsoft PI System
   'postgresql', // PostgreSQL database
+  'rest', // REST API connector
   'sftp', // SFTP file transfer protocol
   'sqlite' // SQLite database
 ] as const;
@@ -240,6 +243,15 @@ export interface SouthConnectorItemTypedDTO<IS> extends BaseEntity {
   scanMode: ScanModeDTO;
 }
 
+export interface ItemLightDTO extends BaseEntity {
+  /**
+   * The name of the item.
+   *
+   * @example "Temperature Logs"
+   */
+  name: string;
+}
+
 /**
  * Data Transfer Object for a South connector.
  * Contains all configuration details and current state of a South connector.
@@ -260,6 +272,7 @@ export type SouthConnectorDTO =
   | SouthConnectorTypedDTO<'oracle', SouthOracleSettings, SouthOracleItemSettings>
   | SouthConnectorTypedDTO<'osisoft-pi', SouthPISettings, SouthPIItemSettings>
   | SouthConnectorTypedDTO<'postgresql', SouthPostgreSQLSettings, SouthPostgreSQLItemSettings>
+  | SouthConnectorTypedDTO<'rest', SouthRestSettings, SouthRestItemSettings>
   | SouthConnectorTypedDTO<'sftp', SouthSFTPSettings, SouthSFTPItemSettings>
   | SouthConnectorTypedDTO<'sqlite', SouthSQLiteSettings, SouthSQLiteItemSettings>;
 
@@ -367,6 +380,7 @@ export type SouthConnectorCommandDTO =
   | SouthConnectorCommandTypedDTO<'oracle', SouthOracleSettings, SouthOracleItemSettings>
   | SouthConnectorCommandTypedDTO<'osisoft-pi', SouthPISettings, SouthPIItemSettings>
   | SouthConnectorCommandTypedDTO<'postgresql', SouthPostgreSQLSettings, SouthPostgreSQLItemSettings>
+  | SouthConnectorCommandTypedDTO<'rest', SouthRestSettings, SouthRestItemSettings>
   | SouthConnectorCommandTypedDTO<'sftp', SouthSFTPSettings, SouthSFTPItemSettings>
   | SouthConnectorCommandTypedDTO<'sqlite', SouthSQLiteSettings, SouthSQLiteItemSettings>;
 
@@ -390,6 +404,7 @@ export type SouthConnectorItemDTO =
   | SouthConnectorItemTypedDTO<SouthOracleItemSettings>
   | SouthConnectorItemTypedDTO<SouthPIItemSettings>
   | SouthConnectorItemTypedDTO<SouthPostgreSQLItemSettings>
+  | SouthConnectorItemTypedDTO<SouthRestItemSettings>
   | SouthConnectorItemTypedDTO<SouthSFTPItemSettings>
   | SouthConnectorItemTypedDTO<SouthSQLiteItemSettings>;
 
@@ -413,6 +428,7 @@ export type SouthConnectorItemCommandDTO =
   | SouthConnectorItemCommandTypedDTO<SouthOracleItemSettings>
   | SouthConnectorItemCommandTypedDTO<SouthPIItemSettings>
   | SouthConnectorItemCommandTypedDTO<SouthPostgreSQLItemSettings>
+  | SouthConnectorItemCommandTypedDTO<SouthRestItemSettings>
   | SouthConnectorItemCommandTypedDTO<SouthSFTPItemSettings>
   | SouthConnectorItemCommandTypedDTO<SouthSQLiteItemSettings>;
 
@@ -556,7 +572,7 @@ export interface SouthConnectorItemSearchParam {
    *
    * @example "temperature"
    */
-  name: string | undefined;
+  name?: string;
 
   /**
    * Filter by scan mode ID.
@@ -564,7 +580,7 @@ export interface SouthConnectorItemSearchParam {
    *
    * @example "periodic-5min"
    */
-  scanModeId: string | undefined;
+  scanModeId?: string;
 
   /**
    * Filter by enabled status.
@@ -572,7 +588,7 @@ export interface SouthConnectorItemSearchParam {
    *
    * @example true
    */
-  enabled: boolean | undefined;
+  enabled?: boolean;
 
   /**
    * Page number for pagination (0-based index).

@@ -113,6 +113,16 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "InputType": {
+        "dataType": "refAlias",
+        "type": {"dataType":"string","validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "OutputType": {
+        "dataType": "refAlias",
+        "type": {"dataType":"string","validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusObjectAttribute": {
         "dataType": "refObject",
         "properties": {
@@ -311,6 +321,7 @@ const models: TsoaRoute.Models = {
             "targetPathFromRoot": {"dataType":"string","required":true},
             "referralPathFromRoot": {"dataType":"string","required":true},
             "values": {"dataType":"array","array":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"double"},{"dataType":"boolean"}]},"required":true},
+            "operator": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["EQUALS"]},{"dataType":"enum","enums":["CONTAINS"]}]},
         },
         "additionalProperties": false,
     },
@@ -324,17 +335,34 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "TransformerManifest": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"string","required":true},
+            "inputType": {"ref":"InputType","required":true},
+            "outputType": {"ref":"OutputType","required":true},
+            "settings": {"ref":"OIBusObjectAttribute","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "TransformerLanguage": {
+        "dataType": "refAlias",
+        "type": {"dataType":"string","validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "CustomTransformerDTO": {
         "dataType": "refObject",
         "properties": {
             "id": {"dataType":"string","required":true},
             "type": {"dataType":"enum","enums":["custom"],"required":true},
-            "inputType": {"dataType":"string","required":true},
-            "outputType": {"dataType":"string","required":true},
+            "inputType": {"ref":"InputType","required":true},
+            "outputType": {"ref":"OutputType","required":true},
             "manifest": {"ref":"OIBusObjectAttribute","required":true},
             "name": {"dataType":"string","required":true},
             "description": {"dataType":"string","required":true},
             "customCode": {"dataType":"string","required":true},
+            "language": {"ref":"TransformerLanguage","required":true},
         },
         "additionalProperties": false,
     },
@@ -344,8 +372,8 @@ const models: TsoaRoute.Models = {
         "properties": {
             "id": {"dataType":"string","required":true},
             "type": {"dataType":"enum","enums":["standard"],"required":true},
-            "inputType": {"dataType":"string","required":true},
-            "outputType": {"dataType":"string","required":true},
+            "inputType": {"ref":"InputType","required":true},
+            "outputType": {"ref":"OutputType","required":true},
             "manifest": {"ref":"OIBusObjectAttribute","required":true},
             "functionName": {"dataType":"string","required":true},
         },
@@ -384,13 +412,33 @@ const models: TsoaRoute.Models = {
             "description": {"dataType":"string","required":true},
             "customCode": {"dataType":"string","required":true},
             "customManifest": {"ref":"OIBusObjectAttribute","required":true},
+            "language": {"ref":"TransformerLanguage","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "TransformerTestRequest": {
+        "dataType": "refObject",
+        "properties": {
+            "inputData": {"dataType":"string","required":true},
+            "options": {"dataType":"object"},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "InputTemplate": {
+        "dataType": "refObject",
+        "properties": {
+            "type": {"ref":"InputType","required":true},
+            "data": {"dataType":"string","required":true},
+            "description": {"dataType":"string","required":true},
         },
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusSouthType": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["ads"]},{"dataType":"enum","enums":["folder-scanner"]},{"dataType":"enum","enums":["ftp"]},{"dataType":"enum","enums":["modbus"]},{"dataType":"enum","enums":["mqtt"]},{"dataType":"enum","enums":["mssql"]},{"dataType":"enum","enums":["mysql"]},{"dataType":"enum","enums":["odbc"]},{"dataType":"enum","enums":["oianalytics"]},{"dataType":"enum","enums":["oledb"]},{"dataType":"enum","enums":["opc"]},{"dataType":"enum","enums":["opcua"]},{"dataType":"enum","enums":["oracle"]},{"dataType":"enum","enums":["osisoft-pi"]},{"dataType":"enum","enums":["postgresql"]},{"dataType":"enum","enums":["sftp"]},{"dataType":"enum","enums":["sqlite"]}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["opcua"]},{"dataType":"enum","enums":["mqtt"]},{"dataType":"enum","enums":["modbus"]},{"dataType":"enum","enums":["oianalytics"]},{"dataType":"enum","enums":["ads"]},{"dataType":"enum","enums":["folder-scanner"]},{"dataType":"enum","enums":["ftp"]},{"dataType":"enum","enums":["mssql"]},{"dataType":"enum","enums":["mysql"]},{"dataType":"enum","enums":["odbc"]},{"dataType":"enum","enums":["oledb"]},{"dataType":"enum","enums":["opc"]},{"dataType":"enum","enums":["oracle"]},{"dataType":"enum","enums":["osisoft-pi"]},{"dataType":"enum","enums":["postgresql"]},{"dataType":"enum","enums":["rest"]},{"dataType":"enum","enums":["sftp"]},{"dataType":"enum","enums":["sqlite"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusSouthCategory": {
@@ -1883,6 +1931,227 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestSettingsThrottling": {
+        "dataType": "refObject",
+        "properties": {
+            "maxReadInterval": {"dataType":"double","required":true},
+            "readDelay": {"dataType":"double","required":true},
+            "overlap": {"dataType":"double","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestSettingsAuthenticationType": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["none"]},{"dataType":"enum","enums":["basic"]},{"dataType":"enum","enums":["bearer"]},{"dataType":"enum","enums":["api-key"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestSettingsAuthenticationAddTo": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["header"]},{"dataType":"enum","enums":["query-params"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestSettingsAuthentication": {
+        "dataType": "refObject",
+        "properties": {
+            "type": {"ref":"SouthRestSettingsAuthenticationType","required":true},
+            "username": {"dataType":"string"},
+            "password": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+            "token": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+            "apiKey": {"dataType":"string"},
+            "apiValue": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+            "addTo": {"ref":"SouthRestSettingsAuthenticationAddTo"},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestSettingsProxy": {
+        "dataType": "refObject",
+        "properties": {
+            "useProxy": {"dataType":"boolean","required":true},
+            "proxyUrl": {"dataType":"string"},
+            "proxyUsername": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+            "proxyPassword": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestSettingsTestMethod": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["GET"]},{"dataType":"enum","enums":["POST"]},{"dataType":"enum","enums":["PUT"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestSettingsTest": {
+        "dataType": "refObject",
+        "properties": {
+            "method": {"ref":"SouthRestSettingsTestMethod","required":true},
+            "endpoint": {"dataType":"string","required":true},
+            "body": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+            "successCode": {"dataType":"double","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestSettings": {
+        "dataType": "refObject",
+        "properties": {
+            "throttling": {"ref":"SouthRestSettingsThrottling","required":true},
+            "host": {"dataType":"string","required":true},
+            "acceptUnauthorized": {"dataType":"boolean","required":true},
+            "timeout": {"dataType":"double","required":true},
+            "authentication": {"ref":"SouthRestSettingsAuthentication","required":true},
+            "proxy": {"ref":"SouthRestSettingsProxy","required":true},
+            "test": {"ref":"SouthRestSettingsTest","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestItemSettingsMethod": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["GET"]},{"dataType":"enum","enums":["POST"]},{"dataType":"enum","enums":["PUT"]},{"dataType":"enum","enums":["PATCH"]},{"dataType":"enum","enums":["DELETE"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestItemSettingsReturnType": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["file"]},{"dataType":"enum","enums":["body"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestItemSettingsQueryParamsDateTimeInputType": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["string"]},{"dataType":"enum","enums":["iso-string"]},{"dataType":"enum","enums":["unix-epoch"]},{"dataType":"enum","enums":["unix-epoch-ms"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestItemSettingsQueryParamsDateTimeInput": {
+        "dataType": "refObject",
+        "properties": {
+            "type": {"dataType":"union","subSchemas":[{"ref":"SouthRestItemSettingsQueryParamsDateTimeInputType"},{"dataType":"enum","enums":[null]}],"required":true},
+            "timezone": {"dataType":"union","subSchemas":[{"ref":"Timezone"},{"dataType":"enum","enums":[null]}]},
+            "format": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestItemSettingsQueryParams": {
+        "dataType": "refObject",
+        "properties": {
+            "key": {"dataType":"string","required":true},
+            "value": {"dataType":"string","required":true},
+            "dateTimeInput": {"dataType":"union","subSchemas":[{"ref":"SouthRestItemSettingsQueryParamsDateTimeInput"},{"dataType":"enum","enums":[null]}]},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestItemSettingsHeadersDateTimeType": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["string"]},{"dataType":"enum","enums":["iso-string"]},{"dataType":"enum","enums":["unix-epoch"]},{"dataType":"enum","enums":["unix-epoch-ms"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestItemSettingsHeaders": {
+        "dataType": "refObject",
+        "properties": {
+            "key": {"dataType":"string","required":true},
+            "value": {"dataType":"string","required":true},
+            "dateTimeType": {"ref":"SouthRestItemSettingsHeadersDateTimeType"},
+            "dateTimeTimezone": {"dataType":"union","subSchemas":[{"ref":"Timezone"},{"dataType":"enum","enums":[null]}]},
+            "dateTimeFormat": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestItemSettingsBodyDateTimeInputType": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["string"]},{"dataType":"enum","enums":["iso-string"]},{"dataType":"enum","enums":["unix-epoch"]},{"dataType":"enum","enums":["unix-epoch-ms"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestItemSettingsBodyDateTimeInput": {
+        "dataType": "refObject",
+        "properties": {
+            "type": {"dataType":"union","subSchemas":[{"ref":"SouthRestItemSettingsBodyDateTimeInputType"},{"dataType":"enum","enums":[null]}],"required":true},
+            "timezone": {"dataType":"union","subSchemas":[{"ref":"Timezone"},{"dataType":"enum","enums":[null]}]},
+            "format": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestItemSettingsBody": {
+        "dataType": "refObject",
+        "properties": {
+            "content": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "dateTimeInput": {"dataType":"union","subSchemas":[{"ref":"SouthRestItemSettingsBodyDateTimeInput"},{"dataType":"enum","enums":[null]}]},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestItemSettingsTrackingInstantDateTimeInputType": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["string"]},{"dataType":"enum","enums":["iso-string"]},{"dataType":"enum","enums":["unix-epoch"]},{"dataType":"enum","enums":["unix-epoch-ms"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestItemSettingsTrackingInstantDateTimeInput": {
+        "dataType": "refObject",
+        "properties": {
+            "type": {"ref":"SouthRestItemSettingsTrackingInstantDateTimeInputType","required":true},
+            "timezone": {"ref":"Timezone"},
+            "format": {"dataType":"string"},
+            "locale": {"dataType":"string"},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestItemSettingsTrackingInstant": {
+        "dataType": "refObject",
+        "properties": {
+            "trackInstant": {"dataType":"boolean","required":true},
+            "jsonPath": {"dataType":"string"},
+            "dateTimeInput": {"dataType":"union","subSchemas":[{"ref":"SouthRestItemSettingsTrackingInstantDateTimeInput"},{"dataType":"enum","enums":[null]}]},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestItemSettings": {
+        "dataType": "refObject",
+        "properties": {
+            "method": {"ref":"SouthRestItemSettingsMethod","required":true},
+            "endpoint": {"dataType":"string","required":true},
+            "returnType": {"ref":"SouthRestItemSettingsReturnType","required":true},
+            "queryParams": {"dataType":"array","array":{"dataType":"refObject","ref":"SouthRestItemSettingsQueryParams"},"required":true},
+            "headers": {"dataType":"array","array":{"dataType":"refObject","ref":"SouthRestItemSettingsHeaders"},"required":true},
+            "body": {"dataType":"union","subSchemas":[{"ref":"SouthRestItemSettingsBody"},{"dataType":"enum","enums":[null]}]},
+            "trackingInstant": {"dataType":"union","subSchemas":[{"ref":"SouthRestItemSettingsTrackingInstant"},{"dataType":"enum","enums":[null]}]},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthConnectorItemTypedDTO_SouthRestItemSettings_": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"string","required":true},
+            "creationDate": {"ref":"Instant"},
+            "lastEditInstant": {"ref":"Instant"},
+            "name": {"dataType":"string","required":true},
+            "enabled": {"dataType":"boolean","required":true},
+            "settings": {"ref":"SouthRestItemSettings","required":true},
+            "scanMode": {"ref":"ScanModeDTO","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthConnectorTypedDTO_rest.SouthRestSettings.SouthRestItemSettings_": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"string","required":true},
+            "creationDate": {"ref":"Instant"},
+            "lastEditInstant": {"ref":"Instant"},
+            "name": {"dataType":"string","required":true},
+            "type": {"dataType":"enum","enums":["rest"],"required":true},
+            "description": {"dataType":"string","required":true},
+            "enabled": {"dataType":"boolean","required":true},
+            "settings": {"ref":"SouthRestSettings","required":true},
+            "items": {"dataType":"array","array":{"dataType":"refObject","ref":"SouthConnectorItemTypedDTO_SouthRestItemSettings_"},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthSFTPSettingsAuthentication": {
         "dataType": "refAlias",
         "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["password"]},{"dataType":"enum","enums":["private-key"]}],"validators":{}},
@@ -2047,7 +2316,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthConnectorDTO": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"ref":"SouthConnectorTypedDTO_ads.SouthADSSettings.SouthADSItemSettings_"},{"ref":"SouthConnectorTypedDTO_folder-scanner.SouthFolderScannerSettings.SouthFolderScannerItemSettings_"},{"ref":"SouthConnectorTypedDTO_ftp.SouthFTPSettings.SouthFTPItemSettings_"},{"ref":"SouthConnectorTypedDTO_modbus.SouthModbusSettings.SouthModbusItemSettings_"},{"ref":"SouthConnectorTypedDTO_mqtt.SouthMQTTSettings.SouthMQTTItemSettings_"},{"ref":"SouthConnectorTypedDTO_mssql.SouthMSSQLSettings.SouthMSSQLItemSettings_"},{"ref":"SouthConnectorTypedDTO_mysql.SouthMySQLSettings.SouthMySQLItemSettings_"},{"ref":"SouthConnectorTypedDTO_odbc.SouthODBCSettings.SouthODBCItemSettings_"},{"ref":"SouthConnectorTypedDTO_oianalytics.SouthOIAnalyticsSettings.SouthOIAnalyticsItemSettings_"},{"ref":"SouthConnectorTypedDTO_oledb.SouthOLEDBSettings.SouthOLEDBItemSettings_"},{"ref":"SouthConnectorTypedDTO_opc.SouthOPCSettings.SouthOPCItemSettings_"},{"ref":"SouthConnectorTypedDTO_opcua.SouthOPCUASettings.SouthOPCUAItemSettings_"},{"ref":"SouthConnectorTypedDTO_oracle.SouthOracleSettings.SouthOracleItemSettings_"},{"ref":"SouthConnectorTypedDTO_osisoft-pi.SouthPISettings.SouthPIItemSettings_"},{"ref":"SouthConnectorTypedDTO_postgresql.SouthPostgreSQLSettings.SouthPostgreSQLItemSettings_"},{"ref":"SouthConnectorTypedDTO_sftp.SouthSFTPSettings.SouthSFTPItemSettings_"},{"ref":"SouthConnectorTypedDTO_sqlite.SouthSQLiteSettings.SouthSQLiteItemSettings_"}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"ref":"SouthConnectorTypedDTO_ads.SouthADSSettings.SouthADSItemSettings_"},{"ref":"SouthConnectorTypedDTO_folder-scanner.SouthFolderScannerSettings.SouthFolderScannerItemSettings_"},{"ref":"SouthConnectorTypedDTO_ftp.SouthFTPSettings.SouthFTPItemSettings_"},{"ref":"SouthConnectorTypedDTO_modbus.SouthModbusSettings.SouthModbusItemSettings_"},{"ref":"SouthConnectorTypedDTO_mqtt.SouthMQTTSettings.SouthMQTTItemSettings_"},{"ref":"SouthConnectorTypedDTO_mssql.SouthMSSQLSettings.SouthMSSQLItemSettings_"},{"ref":"SouthConnectorTypedDTO_mysql.SouthMySQLSettings.SouthMySQLItemSettings_"},{"ref":"SouthConnectorTypedDTO_odbc.SouthODBCSettings.SouthODBCItemSettings_"},{"ref":"SouthConnectorTypedDTO_oianalytics.SouthOIAnalyticsSettings.SouthOIAnalyticsItemSettings_"},{"ref":"SouthConnectorTypedDTO_oledb.SouthOLEDBSettings.SouthOLEDBItemSettings_"},{"ref":"SouthConnectorTypedDTO_opc.SouthOPCSettings.SouthOPCItemSettings_"},{"ref":"SouthConnectorTypedDTO_opcua.SouthOPCUASettings.SouthOPCUAItemSettings_"},{"ref":"SouthConnectorTypedDTO_oracle.SouthOracleSettings.SouthOracleItemSettings_"},{"ref":"SouthConnectorTypedDTO_osisoft-pi.SouthPISettings.SouthPIItemSettings_"},{"ref":"SouthConnectorTypedDTO_postgresql.SouthPostgreSQLSettings.SouthPostgreSQLItemSettings_"},{"ref":"SouthConnectorTypedDTO_rest.SouthRestSettings.SouthRestItemSettings_"},{"ref":"SouthConnectorTypedDTO_sftp.SouthSFTPSettings.SouthSFTPItemSettings_"},{"ref":"SouthConnectorTypedDTO_sqlite.SouthSQLiteSettings.SouthSQLiteItemSettings_"}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthConnectorItemCommandTypedDTO_SouthADSItemSettings_": {
@@ -2440,6 +2709,32 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthConnectorItemCommandTypedDTO_SouthRestItemSettings_": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "enabled": {"dataType":"boolean","required":true},
+            "name": {"dataType":"string","required":true},
+            "settings": {"ref":"SouthRestItemSettings","required":true},
+            "scanModeId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "scanModeName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthConnectorCommandTypedDTO_rest.SouthRestSettings.SouthRestItemSettings_": {
+        "dataType": "refObject",
+        "properties": {
+            "name": {"dataType":"string","required":true},
+            "type": {"dataType":"enum","enums":["rest"],"required":true},
+            "description": {"dataType":"string","required":true},
+            "enabled": {"dataType":"boolean","required":true},
+            "settings": {"ref":"SouthRestSettings","required":true},
+            "items": {"dataType":"array","array":{"dataType":"refObject","ref":"SouthConnectorItemCommandTypedDTO_SouthRestItemSettings_"},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthConnectorItemCommandTypedDTO_SouthSFTPItemSettings_": {
         "dataType": "refObject",
         "properties": {
@@ -2494,12 +2789,12 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthConnectorCommandDTO": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"ref":"SouthConnectorCommandTypedDTO_ads.SouthADSSettings.SouthADSItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_folder-scanner.SouthFolderScannerSettings.SouthFolderScannerItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_ftp.SouthFTPSettings.SouthFTPItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_modbus.SouthModbusSettings.SouthModbusItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_mqtt.SouthMQTTSettings.SouthMQTTItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_mssql.SouthMSSQLSettings.SouthMSSQLItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_mysql.SouthMySQLSettings.SouthMySQLItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_odbc.SouthODBCSettings.SouthODBCItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_oianalytics.SouthOIAnalyticsSettings.SouthOIAnalyticsItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_oledb.SouthOLEDBSettings.SouthOLEDBItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_opc.SouthOPCSettings.SouthOPCItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_opcua.SouthOPCUASettings.SouthOPCUAItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_oracle.SouthOracleSettings.SouthOracleItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_osisoft-pi.SouthPISettings.SouthPIItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_postgresql.SouthPostgreSQLSettings.SouthPostgreSQLItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_sftp.SouthSFTPSettings.SouthSFTPItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_sqlite.SouthSQLiteSettings.SouthSQLiteItemSettings_"}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"ref":"SouthConnectorCommandTypedDTO_ads.SouthADSSettings.SouthADSItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_folder-scanner.SouthFolderScannerSettings.SouthFolderScannerItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_ftp.SouthFTPSettings.SouthFTPItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_modbus.SouthModbusSettings.SouthModbusItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_mqtt.SouthMQTTSettings.SouthMQTTItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_mssql.SouthMSSQLSettings.SouthMSSQLItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_mysql.SouthMySQLSettings.SouthMySQLItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_odbc.SouthODBCSettings.SouthODBCItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_oianalytics.SouthOIAnalyticsSettings.SouthOIAnalyticsItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_oledb.SouthOLEDBSettings.SouthOLEDBItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_opc.SouthOPCSettings.SouthOPCItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_opcua.SouthOPCUASettings.SouthOPCUAItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_oracle.SouthOracleSettings.SouthOracleItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_osisoft-pi.SouthPISettings.SouthPIItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_postgresql.SouthPostgreSQLSettings.SouthPostgreSQLItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_rest.SouthRestSettings.SouthRestItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_sftp.SouthSFTPSettings.SouthSFTPItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_sqlite.SouthSQLiteSettings.SouthSQLiteItemSettings_"}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthSettings": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"ref":"SouthADSSettings"},{"ref":"SouthFolderScannerSettings"},{"ref":"SouthFTPSettings"},{"ref":"SouthModbusSettings"},{"ref":"SouthMQTTSettings"},{"ref":"SouthMSSQLSettings"},{"ref":"SouthMySQLSettings"},{"ref":"SouthODBCSettings"},{"ref":"SouthOIAnalyticsSettings"},{"ref":"SouthOLEDBSettings"},{"ref":"SouthOPCSettings"},{"ref":"SouthOPCUASettings"},{"ref":"SouthOracleSettings"},{"ref":"SouthPISettings"},{"ref":"SouthPostgreSQLSettings"},{"ref":"SouthSFTPSettings"},{"ref":"SouthSQLiteSettings"}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"ref":"SouthADSSettings"},{"ref":"SouthFolderScannerSettings"},{"ref":"SouthFTPSettings"},{"ref":"SouthModbusSettings"},{"ref":"SouthMQTTSettings"},{"ref":"SouthMSSQLSettings"},{"ref":"SouthMySQLSettings"},{"ref":"SouthODBCSettings"},{"ref":"SouthOIAnalyticsSettings"},{"ref":"SouthOLEDBSettings"},{"ref":"SouthOPCSettings"},{"ref":"SouthOPCUASettings"},{"ref":"SouthOracleSettings"},{"ref":"SouthPISettings"},{"ref":"SouthPostgreSQLSettings"},{"ref":"SouthRestSettings"},{"ref":"SouthSFTPSettings"},{"ref":"SouthSQLiteSettings"}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusTimeValue": {
@@ -2556,7 +2851,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthItemSettings": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"ref":"SouthADSItemSettings"},{"ref":"SouthFolderScannerItemSettings"},{"ref":"SouthFTPItemSettings"},{"ref":"SouthModbusItemSettings"},{"ref":"SouthMQTTItemSettings"},{"ref":"SouthMSSQLItemSettings"},{"ref":"SouthMySQLItemSettings"},{"ref":"SouthODBCItemSettings"},{"ref":"SouthOIAnalyticsItemSettings"},{"ref":"SouthOLEDBItemSettings"},{"ref":"SouthOPCItemSettings"},{"ref":"SouthOPCUAItemSettings"},{"ref":"SouthOracleItemSettings"},{"ref":"SouthPIItemSettings"},{"ref":"SouthPostgreSQLItemSettings"},{"ref":"SouthSFTPItemSettings"},{"ref":"SouthSQLiteItemSettings"}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"ref":"SouthADSItemSettings"},{"ref":"SouthFolderScannerItemSettings"},{"ref":"SouthFTPItemSettings"},{"ref":"SouthModbusItemSettings"},{"ref":"SouthMQTTItemSettings"},{"ref":"SouthMSSQLItemSettings"},{"ref":"SouthMySQLItemSettings"},{"ref":"SouthODBCItemSettings"},{"ref":"SouthOIAnalyticsItemSettings"},{"ref":"SouthOLEDBItemSettings"},{"ref":"SouthOPCItemSettings"},{"ref":"SouthOPCUAItemSettings"},{"ref":"SouthOracleItemSettings"},{"ref":"SouthPIItemSettings"},{"ref":"SouthPostgreSQLItemSettings"},{"ref":"SouthRestItemSettings"},{"ref":"SouthSFTPItemSettings"},{"ref":"SouthSQLiteItemSettings"}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthConnectorItemTestingSettings": {
@@ -2579,7 +2874,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthConnectorItemDTO": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"ref":"SouthConnectorItemTypedDTO_SouthADSItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthFolderScannerItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthFTPItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthModbusItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthMQTTItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthMSSQLItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthMySQLItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthODBCItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthOIAnalyticsItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthOLEDBItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthOPCItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthOPCUAItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthOracleItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthPIItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthPostgreSQLItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthSFTPItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthSQLiteItemSettings_"}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"ref":"SouthConnectorItemTypedDTO_SouthADSItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthFolderScannerItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthFTPItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthModbusItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthMQTTItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthMSSQLItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthMySQLItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthODBCItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthOIAnalyticsItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthOLEDBItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthOPCItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthOPCUAItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthOracleItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthPIItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthPostgreSQLItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthRestItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthSFTPItemSettings_"},{"ref":"SouthConnectorItemTypedDTO_SouthSQLiteItemSettings_"}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "Page_SouthConnectorItemDTO_": {
@@ -2596,7 +2891,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthConnectorItemCommandDTO": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"ref":"SouthConnectorItemCommandTypedDTO_SouthADSItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthFolderScannerItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthFTPItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthModbusItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthMQTTItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthMSSQLItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthMySQLItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthODBCItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthOIAnalyticsItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthOLEDBItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthOPCItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthOPCUAItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthOracleItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthPIItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthPostgreSQLItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthSFTPItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthSQLiteItemSettings_"}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"ref":"SouthConnectorItemCommandTypedDTO_SouthADSItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthFolderScannerItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthFTPItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthModbusItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthMQTTItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthMSSQLItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthMySQLItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthODBCItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthOIAnalyticsItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthOLEDBItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthOPCItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthOPCUAItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthOracleItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthPIItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthPostgreSQLItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthRestItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthSFTPItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthSQLiteItemSettings_"}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthCsvDelimiterRequest": {
@@ -2668,7 +2963,7 @@ const models: TsoaRoute.Models = {
             "commandRefreshInterval": {"dataType":"double","required":true},
             "commandRetryInterval": {"dataType":"double","required":true},
             "messageRetryInterval": {"dataType":"double","required":true},
-            "commandPermissions": {"dataType":"nestedObjectLiteral","nestedProperties":{"setpoint":{"dataType":"boolean","required":true},"deleteNorth":{"dataType":"boolean","required":true},"updateNorth":{"dataType":"boolean","required":true},"createNorth":{"dataType":"boolean","required":true},"createOrUpdateSouthItemsFromCsv":{"dataType":"boolean","required":true},"deleteSouth":{"dataType":"boolean","required":true},"updateSouth":{"dataType":"boolean","required":true},"createSouth":{"dataType":"boolean","required":true},"createOrUpdateHistoryItemsFromCsv":{"dataType":"boolean","required":true},"deleteHistoryQuery":{"dataType":"boolean","required":true},"updateHistoryQuery":{"dataType":"boolean","required":true},"createHistoryQuery":{"dataType":"boolean","required":true},"deleteCertificate":{"dataType":"boolean","required":true},"updateCertificate":{"dataType":"boolean","required":true},"createCertificate":{"dataType":"boolean","required":true},"deleteIpFilter":{"dataType":"boolean","required":true},"updateIpFilter":{"dataType":"boolean","required":true},"createIpFilter":{"dataType":"boolean","required":true},"deleteScanMode":{"dataType":"boolean","required":true},"updateScanMode":{"dataType":"boolean","required":true},"createScanMode":{"dataType":"boolean","required":true},"updateRegistrationSettings":{"dataType":"boolean","required":true},"updateEngineSettings":{"dataType":"boolean","required":true},"regenerateCipherKeys":{"dataType":"boolean","required":true},"restartEngine":{"dataType":"boolean","required":true},"updateVersion":{"dataType":"boolean","required":true}},"required":true},
+            "commandPermissions": {"dataType":"nestedObjectLiteral","nestedProperties":{"moveNorthCacheContent":{"dataType":"boolean","required":true},"removeNorthCacheContent":{"dataType":"boolean","required":true},"getNorthCacheFileContent":{"dataType":"boolean","required":true},"searchNorthCacheContent":{"dataType":"boolean","required":true},"moveHistoryCacheContent":{"dataType":"boolean","required":true},"removeHistoryCacheContent":{"dataType":"boolean","required":true},"getHistoryCacheFileContent":{"dataType":"boolean","required":true},"searchHistoryCacheContent":{"dataType":"boolean","required":true},"setpoint":{"dataType":"boolean","required":true},"deleteNorth":{"dataType":"boolean","required":true},"updateNorth":{"dataType":"boolean","required":true},"createNorth":{"dataType":"boolean","required":true},"createOrUpdateSouthItemsFromCsv":{"dataType":"boolean","required":true},"deleteSouth":{"dataType":"boolean","required":true},"updateSouth":{"dataType":"boolean","required":true},"createSouth":{"dataType":"boolean","required":true},"createOrUpdateHistoryItemsFromCsv":{"dataType":"boolean","required":true},"deleteHistoryQuery":{"dataType":"boolean","required":true},"updateHistoryQuery":{"dataType":"boolean","required":true},"createHistoryQuery":{"dataType":"boolean","required":true},"deleteCertificate":{"dataType":"boolean","required":true},"updateCertificate":{"dataType":"boolean","required":true},"createCertificate":{"dataType":"boolean","required":true},"deleteIpFilter":{"dataType":"boolean","required":true},"updateIpFilter":{"dataType":"boolean","required":true},"createIpFilter":{"dataType":"boolean","required":true},"deleteScanMode":{"dataType":"boolean","required":true},"updateScanMode":{"dataType":"boolean","required":true},"createScanMode":{"dataType":"boolean","required":true},"updateRegistrationSettings":{"dataType":"boolean","required":true},"updateEngineSettings":{"dataType":"boolean","required":true},"regenerateCipherKeys":{"dataType":"boolean","required":true},"restartEngine":{"dataType":"boolean","required":true},"updateVersion":{"dataType":"boolean","required":true}},"required":true},
         },
         "additionalProperties": false,
     },
@@ -2688,14 +2983,14 @@ const models: TsoaRoute.Models = {
             "commandRefreshInterval": {"dataType":"double","required":true},
             "commandRetryInterval": {"dataType":"double","required":true},
             "messageRetryInterval": {"dataType":"double","required":true},
-            "commandPermissions": {"dataType":"nestedObjectLiteral","nestedProperties":{"setpoint":{"dataType":"boolean","required":true},"testNorthConnection":{"dataType":"boolean","required":true},"deleteNorth":{"dataType":"boolean","required":true},"updateNorth":{"dataType":"boolean","required":true},"createNorth":{"dataType":"boolean","required":true},"testSouthItem":{"dataType":"boolean","required":true},"testSouthConnection":{"dataType":"boolean","required":true},"createOrUpdateSouthItemsFromCsv":{"dataType":"boolean","required":true},"deleteSouth":{"dataType":"boolean","required":true},"updateSouth":{"dataType":"boolean","required":true},"createSouth":{"dataType":"boolean","required":true},"testHistorySouthItem":{"dataType":"boolean","required":true},"testHistorySouthConnection":{"dataType":"boolean","required":true},"testHistoryNorthConnection":{"dataType":"boolean","required":true},"createOrUpdateHistoryItemsFromCsv":{"dataType":"boolean","required":true},"deleteHistoryQuery":{"dataType":"boolean","required":true},"updateHistoryQuery":{"dataType":"boolean","required":true},"createHistoryQuery":{"dataType":"boolean","required":true},"deleteCertificate":{"dataType":"boolean","required":true},"updateCertificate":{"dataType":"boolean","required":true},"createCertificate":{"dataType":"boolean","required":true},"deleteIpFilter":{"dataType":"boolean","required":true},"updateIpFilter":{"dataType":"boolean","required":true},"createIpFilter":{"dataType":"boolean","required":true},"deleteScanMode":{"dataType":"boolean","required":true},"updateScanMode":{"dataType":"boolean","required":true},"createScanMode":{"dataType":"boolean","required":true},"updateRegistrationSettings":{"dataType":"boolean","required":true},"updateEngineSettings":{"dataType":"boolean","required":true},"regenerateCipherKeys":{"dataType":"boolean","required":true},"restartEngine":{"dataType":"boolean","required":true},"updateVersion":{"dataType":"boolean","required":true}},"required":true},
+            "commandPermissions": {"dataType":"nestedObjectLiteral","nestedProperties":{"moveNorthCacheContent":{"dataType":"boolean","required":true},"removeNorthCacheContent":{"dataType":"boolean","required":true},"getNorthCacheFileContent":{"dataType":"boolean","required":true},"searchNorthCacheContent":{"dataType":"boolean","required":true},"moveHistoryCacheContent":{"dataType":"boolean","required":true},"removeHistoryCacheContent":{"dataType":"boolean","required":true},"getHistoryCacheFileContent":{"dataType":"boolean","required":true},"searchHistoryCacheContent":{"dataType":"boolean","required":true},"setpoint":{"dataType":"boolean","required":true},"testNorthConnection":{"dataType":"boolean","required":true},"deleteNorth":{"dataType":"boolean","required":true},"updateNorth":{"dataType":"boolean","required":true},"createNorth":{"dataType":"boolean","required":true},"testSouthItem":{"dataType":"boolean","required":true},"testSouthConnection":{"dataType":"boolean","required":true},"createOrUpdateSouthItemsFromCsv":{"dataType":"boolean","required":true},"deleteSouth":{"dataType":"boolean","required":true},"updateSouth":{"dataType":"boolean","required":true},"createSouth":{"dataType":"boolean","required":true},"testHistorySouthItem":{"dataType":"boolean","required":true},"testHistorySouthConnection":{"dataType":"boolean","required":true},"testHistoryNorthConnection":{"dataType":"boolean","required":true},"createOrUpdateHistoryItemsFromCsv":{"dataType":"boolean","required":true},"deleteHistoryQuery":{"dataType":"boolean","required":true},"updateHistoryQuery":{"dataType":"boolean","required":true},"createHistoryQuery":{"dataType":"boolean","required":true},"deleteCertificate":{"dataType":"boolean","required":true},"updateCertificate":{"dataType":"boolean","required":true},"createCertificate":{"dataType":"boolean","required":true},"deleteIpFilter":{"dataType":"boolean","required":true},"updateIpFilter":{"dataType":"boolean","required":true},"createIpFilter":{"dataType":"boolean","required":true},"deleteScanMode":{"dataType":"boolean","required":true},"updateScanMode":{"dataType":"boolean","required":true},"createScanMode":{"dataType":"boolean","required":true},"updateRegistrationSettings":{"dataType":"boolean","required":true},"updateEngineSettings":{"dataType":"boolean","required":true},"regenerateCipherKeys":{"dataType":"boolean","required":true},"restartEngine":{"dataType":"boolean","required":true},"updateVersion":{"dataType":"boolean","required":true}},"required":true},
         },
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusCommandType": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["setpoint"]},{"dataType":"enum","enums":["update-version"]},{"dataType":"enum","enums":["restart-engine"]},{"dataType":"enum","enums":["regenerate-cipher-keys"]},{"dataType":"enum","enums":["update-engine-settings"]},{"dataType":"enum","enums":["update-registration-settings"]},{"dataType":"enum","enums":["create-scan-mode"]},{"dataType":"enum","enums":["update-scan-mode"]},{"dataType":"enum","enums":["delete-scan-mode"]},{"dataType":"enum","enums":["create-ip-filter"]},{"dataType":"enum","enums":["update-ip-filter"]},{"dataType":"enum","enums":["delete-ip-filter"]},{"dataType":"enum","enums":["create-certificate"]},{"dataType":"enum","enums":["update-certificate"]},{"dataType":"enum","enums":["delete-certificate"]},{"dataType":"enum","enums":["create-south"]},{"dataType":"enum","enums":["update-south"]},{"dataType":"enum","enums":["delete-south"]},{"dataType":"enum","enums":["test-south-connection"]},{"dataType":"enum","enums":["test-south-item"]},{"dataType":"enum","enums":["create-north"]},{"dataType":"enum","enums":["update-north"]},{"dataType":"enum","enums":["delete-north"]},{"dataType":"enum","enums":["test-north-connection"]},{"dataType":"enum","enums":["create-or-update-south-items-from-csv"]},{"dataType":"enum","enums":["create-history-query"]},{"dataType":"enum","enums":["update-history-query"]},{"dataType":"enum","enums":["delete-history-query"]},{"dataType":"enum","enums":["test-history-query-north-connection"]},{"dataType":"enum","enums":["test-history-query-south-connection"]},{"dataType":"enum","enums":["test-history-query-south-item"]},{"dataType":"enum","enums":["create-or-update-history-query-south-items-from-csv"]},{"dataType":"enum","enums":["update-history-query-status"]}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["setpoint"]},{"dataType":"enum","enums":["update-version"]},{"dataType":"enum","enums":["restart-engine"]},{"dataType":"enum","enums":["regenerate-cipher-keys"]},{"dataType":"enum","enums":["update-engine-settings"]},{"dataType":"enum","enums":["update-registration-settings"]},{"dataType":"enum","enums":["create-scan-mode"]},{"dataType":"enum","enums":["update-scan-mode"]},{"dataType":"enum","enums":["delete-scan-mode"]},{"dataType":"enum","enums":["create-ip-filter"]},{"dataType":"enum","enums":["update-ip-filter"]},{"dataType":"enum","enums":["delete-ip-filter"]},{"dataType":"enum","enums":["create-certificate"]},{"dataType":"enum","enums":["update-certificate"]},{"dataType":"enum","enums":["delete-certificate"]},{"dataType":"enum","enums":["create-south"]},{"dataType":"enum","enums":["update-south"]},{"dataType":"enum","enums":["delete-south"]},{"dataType":"enum","enums":["test-south-connection"]},{"dataType":"enum","enums":["test-south-item"]},{"dataType":"enum","enums":["create-north"]},{"dataType":"enum","enums":["update-north"]},{"dataType":"enum","enums":["delete-north"]},{"dataType":"enum","enums":["test-north-connection"]},{"dataType":"enum","enums":["create-or-update-south-items-from-csv"]},{"dataType":"enum","enums":["create-history-query"]},{"dataType":"enum","enums":["update-history-query"]},{"dataType":"enum","enums":["delete-history-query"]},{"dataType":"enum","enums":["test-history-query-north-connection"]},{"dataType":"enum","enums":["test-history-query-south-connection"]},{"dataType":"enum","enums":["test-history-query-south-item"]},{"dataType":"enum","enums":["create-or-update-history-query-south-items-from-csv"]},{"dataType":"enum","enums":["update-history-query-status"]},{"dataType":"enum","enums":["search-north-cache-content"]},{"dataType":"enum","enums":["search-history-cache-content"]},{"dataType":"enum","enums":["get-north-cache-file-content"]},{"dataType":"enum","enums":["get-history-cache-file-content"]},{"dataType":"enum","enums":["remove-north-cache-content"]},{"dataType":"enum","enums":["remove-history-cache-content"]},{"dataType":"enum","enums":["move-north-cache-content"]},{"dataType":"enum","enums":["move-history-cache-content"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusCommandStatus": {
@@ -3076,6 +3371,17 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ItemLightDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"string","required":true},
+            "creationDate": {"ref":"Instant"},
+            "lastEditInstant": {"ref":"Instant"},
+            "name": {"dataType":"string","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "Record_string.unknown_": {
         "dataType": "refAlias",
         "type": {"dataType":"nestedObjectLiteral","nestedProperties":{},"additionalProperties":{"dataType":"any"},"validators":{}},
@@ -3084,8 +3390,11 @@ const models: TsoaRoute.Models = {
     "TransformerIdWithOptions": {
         "dataType": "refObject",
         "properties": {
+            "id": {"dataType":"string","required":true},
             "inputType": {"dataType":"string","required":true},
             "transformerId": {"dataType":"string","required":true},
+            "southId": {"dataType":"string"},
+            "items": {"dataType":"array","array":{"dataType":"refObject","ref":"ItemLightDTO"},"required":true},
             "options": {"ref":"Record_string.unknown_","required":true},
         },
         "additionalProperties": false,
@@ -3100,7 +3409,6 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"NorthAmazonS3Settings","required":true},
             "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanModeName":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"scanModeId":{"dataType":"string","required":true}},"required":true}},"required":true},
-            "subscriptions": {"dataType":"array","array":{"dataType":"string"},"required":true},
             "transformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerIdWithOptions"},"required":true},
         },
         "additionalProperties": false,
@@ -3143,7 +3451,6 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"NorthAzureBlobSettings","required":true},
             "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanModeName":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"scanModeId":{"dataType":"string","required":true}},"required":true}},"required":true},
-            "subscriptions": {"dataType":"array","array":{"dataType":"string"},"required":true},
             "transformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerIdWithOptions"},"required":true},
         },
         "additionalProperties": false,
@@ -3166,7 +3473,6 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"NorthConsoleSettings","required":true},
             "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanModeName":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"scanModeId":{"dataType":"string","required":true}},"required":true}},"required":true},
-            "subscriptions": {"dataType":"array","array":{"dataType":"string"},"required":true},
             "transformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerIdWithOptions"},"required":true},
         },
         "additionalProperties": false,
@@ -3191,7 +3497,6 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"NorthFileWriterSettings","required":true},
             "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanModeName":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"scanModeId":{"dataType":"string","required":true}},"required":true}},"required":true},
-            "subscriptions": {"dataType":"array","array":{"dataType":"string"},"required":true},
             "transformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerIdWithOptions"},"required":true},
         },
         "additionalProperties": false,
@@ -3232,7 +3537,6 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"NorthModbusSettings","required":true},
             "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanModeName":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"scanModeId":{"dataType":"string","required":true}},"required":true}},"required":true},
-            "subscriptions": {"dataType":"array","array":{"dataType":"string"},"required":true},
             "transformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerIdWithOptions"},"required":true},
         },
         "additionalProperties": false,
@@ -3284,7 +3588,6 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"NorthMQTTSettings","required":true},
             "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanModeName":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"scanModeId":{"dataType":"string","required":true}},"required":true}},"required":true},
-            "subscriptions": {"dataType":"array","array":{"dataType":"string"},"required":true},
             "transformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerIdWithOptions"},"required":true},
         },
         "additionalProperties": false,
@@ -3336,7 +3639,6 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"NorthOIAnalyticsSettings","required":true},
             "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanModeName":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"scanModeId":{"dataType":"string","required":true}},"required":true}},"required":true},
-            "subscriptions": {"dataType":"array","array":{"dataType":"string"},"required":true},
             "transformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerIdWithOptions"},"required":true},
         },
         "additionalProperties": false,
@@ -3391,15 +3693,54 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"NorthOPCUASettings","required":true},
             "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanModeName":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"scanModeId":{"dataType":"string","required":true}},"required":true}},"required":true},
-            "subscriptions": {"dataType":"array","array":{"dataType":"string"},"required":true},
             "transformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerIdWithOptions"},"required":true},
         },
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "NorthRESTSettingsAuthType": {
+    "NorthRESTSettingsMethod": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["basic"]},{"dataType":"enum","enums":["bearer"]}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["POST"]},{"dataType":"enum","enums":["PUT"]},{"dataType":"enum","enums":["PATCH"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "NorthRESTSettingsSendAs": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["file"]},{"dataType":"enum","enums":["body"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "NorthRESTSettingsAuthenticationType": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["none"]},{"dataType":"enum","enums":["basic"]},{"dataType":"enum","enums":["bearer"]},{"dataType":"enum","enums":["api-key"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "NorthRESTSettingsAuthenticationAddTo": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["header"]},{"dataType":"enum","enums":["query-params"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "NorthRESTSettingsAuthentication": {
+        "dataType": "refObject",
+        "properties": {
+            "type": {"ref":"NorthRESTSettingsAuthenticationType","required":true},
+            "username": {"dataType":"string"},
+            "password": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+            "token": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+            "apiKey": {"dataType":"string"},
+            "apiValue": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+            "addTo": {"ref":"NorthRESTSettingsAuthenticationAddTo"},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "NorthRESTSettingsProxy": {
+        "dataType": "refObject",
+        "properties": {
+            "useProxy": {"dataType":"boolean","required":true},
+            "proxyUrl": {"dataType":"string"},
+            "proxyUsername": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+            "proxyPassword": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+        },
+        "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "NorthRESTSettingsQueryParams": {
@@ -3411,23 +3752,46 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "NorthRESTSettingsHeaders": {
+        "dataType": "refObject",
+        "properties": {
+            "key": {"dataType":"string","required":true},
+            "value": {"dataType":"string","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "NorthRESTSettingsTestTestMethod": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["GET"]},{"dataType":"enum","enums":["POST"]},{"dataType":"enum","enums":["PUT"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "NorthRESTSettingsTest": {
+        "dataType": "refObject",
+        "properties": {
+            "testMethod": {"ref":"NorthRESTSettingsTestTestMethod","required":true},
+            "testEndpoint": {"dataType":"string","required":true},
+            "body": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+            "testSuccessCode": {"dataType":"double","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "NorthRESTSettings": {
         "dataType": "refObject",
         "properties": {
             "host": {"dataType":"string","required":true},
             "acceptUnauthorized": {"dataType":"boolean","required":true},
+            "method": {"ref":"NorthRESTSettingsMethod","required":true},
             "endpoint": {"dataType":"string","required":true},
-            "testPath": {"dataType":"string","required":true},
             "timeout": {"dataType":"double","required":true},
-            "authType": {"ref":"NorthRESTSettingsAuthType","required":true},
-            "bearerAuthToken": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
-            "basicAuthUsername": {"dataType":"string"},
-            "basicAuthPassword": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
-            "queryParams": {"dataType":"union","subSchemas":[{"dataType":"array","array":{"dataType":"refObject","ref":"NorthRESTSettingsQueryParams"}},{"dataType":"enum","enums":[null]}],"required":true},
-            "useProxy": {"dataType":"boolean","required":true},
-            "proxyUrl": {"dataType":"string"},
-            "proxyUsername": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
-            "proxyPassword": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+            "sendAs": {"ref":"NorthRESTSettingsSendAs","required":true},
+            "successCode": {"dataType":"double","required":true},
+            "authentication": {"ref":"NorthRESTSettingsAuthentication","required":true},
+            "proxy": {"ref":"NorthRESTSettingsProxy","required":true},
+            "queryParams": {"dataType":"array","array":{"dataType":"refObject","ref":"NorthRESTSettingsQueryParams"},"required":true},
+            "headers": {"dataType":"array","array":{"dataType":"refObject","ref":"NorthRESTSettingsHeaders"},"required":true},
+            "test": {"ref":"NorthRESTSettingsTest","required":true},
         },
         "additionalProperties": false,
     },
@@ -3441,7 +3805,6 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"NorthRESTSettings","required":true},
             "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanModeName":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"scanModeId":{"dataType":"string","required":true}},"required":true}},"required":true},
-            "subscriptions": {"dataType":"array","array":{"dataType":"string"},"required":true},
             "transformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerIdWithOptions"},"required":true},
         },
         "additionalProperties": false,
@@ -3478,7 +3841,6 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"NorthSFTPSettings","required":true},
             "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanModeName":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"scanModeId":{"dataType":"string","required":true}},"required":true}},"required":true},
-            "subscriptions": {"dataType":"array","array":{"dataType":"string"},"required":true},
             "transformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerIdWithOptions"},"required":true},
         },
         "additionalProperties": false,
@@ -3571,6 +3933,16 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "Pick_TransformerIdWithOptions.Exclude_keyofTransformerIdWithOptions.southId__": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"id":{"dataType":"string","required":true},"inputType":{"dataType":"string","required":true},"transformerId":{"dataType":"string","required":true},"items":{"dataType":"array","array":{"dataType":"refObject","ref":"ItemLightDTO"},"required":true},"options":{"ref":"Record_string.unknown_","required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "Omit_TransformerIdWithOptions.southId_": {
+        "dataType": "refAlias",
+        "type": {"ref":"Pick_TransformerIdWithOptions.Exclude_keyofTransformerIdWithOptions.southId__","validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "HistoryQueryCommandCommonDTO": {
         "dataType": "refObject",
         "properties": {
@@ -3579,7 +3951,7 @@ const models: TsoaRoute.Models = {
             "startTime": {"dataType":"string","required":true},
             "endTime": {"dataType":"string","required":true},
             "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanModeName":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"scanModeId":{"dataType":"string","required":true}},"required":true}},"required":true},
-            "northTransformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerIdWithOptions"},"required":true},
+            "northTransformers": {"dataType":"array","array":{"dataType":"refAlias","ref":"Omit_TransformerIdWithOptions.southId_"},"required":true},
         },
         "additionalProperties": false,
     },
@@ -3899,6 +4271,27 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "HistoryQueryItemCommandTypedDTO_SouthRestItemSettings_": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "name": {"dataType":"string","required":true},
+            "enabled": {"dataType":"boolean","required":true},
+            "settings": {"ref":"SouthRestItemSettings","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "HistoryQuerySouthCommandTypedDTO_rest.SouthRestSettings.SouthRestItemSettings_": {
+        "dataType": "refObject",
+        "properties": {
+            "southType": {"dataType":"enum","enums":["rest"],"required":true},
+            "southSettings": {"ref":"SouthRestSettings","required":true},
+            "items": {"dataType":"array","array":{"dataType":"refObject","ref":"HistoryQueryItemCommandTypedDTO_SouthRestItemSettings_"},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "HistoryQueryItemCommandTypedDTO_SouthSFTPItemSettings_": {
         "dataType": "refObject",
         "properties": {
@@ -4033,7 +4426,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "HistoryQueryCommandDTO": {
         "dataType": "refAlias",
-        "type": {"dataType":"intersection","subSchemas":[{"ref":"HistoryQueryCommandCommonDTO"},{"dataType":"union","subSchemas":[{"ref":"HistoryQuerySouthCommandTypedDTO_ads.SouthADSSettings.SouthADSItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_folder-scanner.SouthFolderScannerSettings.SouthFolderScannerItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_ftp.SouthFTPSettings.SouthFTPItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_modbus.SouthModbusSettings.SouthModbusItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_mqtt.SouthMQTTSettings.SouthMQTTItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_mssql.SouthMSSQLSettings.SouthMSSQLItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_mysql.SouthMySQLSettings.SouthMySQLItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_odbc.SouthODBCSettings.SouthODBCItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_oianalytics.SouthOIAnalyticsSettings.SouthOIAnalyticsItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_oledb.SouthOLEDBSettings.SouthOLEDBItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_opc.SouthOPCSettings.SouthOPCItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_opcua.SouthOPCUASettings.SouthOPCUAItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_oracle.SouthOracleSettings.SouthOracleItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_osisoft-pi.SouthPISettings.SouthPIItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_postgresql.SouthPostgreSQLSettings.SouthPostgreSQLItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_sftp.SouthSFTPSettings.SouthSFTPItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_sqlite.SouthSQLiteSettings.SouthSQLiteItemSettings_"}]},{"dataType":"union","subSchemas":[{"ref":"HistoryQueryNorthCommandTypedDTO_aws-s3.NorthAmazonS3Settings_"},{"ref":"HistoryQueryNorthCommandTypedDTO_azure-blob.NorthAzureBlobSettings_"},{"ref":"HistoryQueryNorthCommandTypedDTO_console.NorthConsoleSettings_"},{"ref":"HistoryQueryNorthCommandTypedDTO_file-writer.NorthFileWriterSettings_"},{"ref":"HistoryQueryNorthCommandTypedDTO_modbus.NorthModbusSettings_"},{"ref":"HistoryQueryNorthCommandTypedDTO_mqtt.NorthMQTTSettings_"},{"ref":"HistoryQueryNorthCommandTypedDTO_oianalytics.NorthOIAnalyticsSettings_"},{"ref":"HistoryQueryNorthCommandTypedDTO_opcua.NorthOPCUASettings_"},{"ref":"HistoryQueryNorthCommandTypedDTO_rest.NorthRESTSettings_"},{"ref":"HistoryQueryNorthCommandTypedDTO_sftp.NorthSFTPSettings_"}]}],"validators":{}},
+        "type": {"dataType":"intersection","subSchemas":[{"ref":"HistoryQueryCommandCommonDTO"},{"dataType":"union","subSchemas":[{"ref":"HistoryQuerySouthCommandTypedDTO_ads.SouthADSSettings.SouthADSItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_folder-scanner.SouthFolderScannerSettings.SouthFolderScannerItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_ftp.SouthFTPSettings.SouthFTPItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_modbus.SouthModbusSettings.SouthModbusItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_mqtt.SouthMQTTSettings.SouthMQTTItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_mssql.SouthMSSQLSettings.SouthMSSQLItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_mysql.SouthMySQLSettings.SouthMySQLItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_odbc.SouthODBCSettings.SouthODBCItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_oianalytics.SouthOIAnalyticsSettings.SouthOIAnalyticsItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_oledb.SouthOLEDBSettings.SouthOLEDBItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_opc.SouthOPCSettings.SouthOPCItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_opcua.SouthOPCUASettings.SouthOPCUAItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_oracle.SouthOracleSettings.SouthOracleItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_osisoft-pi.SouthPISettings.SouthPIItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_postgresql.SouthPostgreSQLSettings.SouthPostgreSQLItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_rest.SouthRestSettings.SouthRestItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_sftp.SouthSFTPSettings.SouthSFTPItemSettings_"},{"ref":"HistoryQuerySouthCommandTypedDTO_sqlite.SouthSQLiteSettings.SouthSQLiteItemSettings_"}]},{"dataType":"union","subSchemas":[{"ref":"HistoryQueryNorthCommandTypedDTO_aws-s3.NorthAmazonS3Settings_"},{"ref":"HistoryQueryNorthCommandTypedDTO_azure-blob.NorthAzureBlobSettings_"},{"ref":"HistoryQueryNorthCommandTypedDTO_console.NorthConsoleSettings_"},{"ref":"HistoryQueryNorthCommandTypedDTO_file-writer.NorthFileWriterSettings_"},{"ref":"HistoryQueryNorthCommandTypedDTO_modbus.NorthModbusSettings_"},{"ref":"HistoryQueryNorthCommandTypedDTO_mqtt.NorthMQTTSettings_"},{"ref":"HistoryQueryNorthCommandTypedDTO_oianalytics.NorthOIAnalyticsSettings_"},{"ref":"HistoryQueryNorthCommandTypedDTO_opcua.NorthOPCUASettings_"},{"ref":"HistoryQueryNorthCommandTypedDTO_rest.NorthRESTSettings_"},{"ref":"HistoryQueryNorthCommandTypedDTO_sftp.NorthSFTPSettings_"}]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusCreateHistoryQueryCommandDTO": {
@@ -4123,7 +4516,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "HistoryQueryItemCommandDTO": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"ref":"HistoryQueryItemCommandTypedDTO_SouthADSItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthFolderScannerItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthFTPItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthModbusItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthMQTTItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthMSSQLItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthMySQLItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthODBCItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthOIAnalyticsItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthOLEDBItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthOPCItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthOPCUAItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthOracleItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthPIItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthPostgreSQLItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthSFTPItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthSQLiteItemSettings_"}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"ref":"HistoryQueryItemCommandTypedDTO_SouthADSItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthFolderScannerItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthFTPItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthModbusItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthMQTTItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthMSSQLItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthMySQLItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthODBCItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthOIAnalyticsItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthOLEDBItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthOPCItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthOPCUAItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthOracleItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthPIItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthPostgreSQLItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthRestItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthSFTPItemSettings_"},{"ref":"HistoryQueryItemCommandTypedDTO_SouthSQLiteItemSettings_"}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusTestHistoryQuerySouthItemCommandDTO": {
@@ -4201,9 +4594,147 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "CacheSearchParam": {
+        "dataType": "refObject",
+        "properties": {
+            "start": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}],"required":true},
+            "end": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}],"required":true},
+            "nameContains": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}],"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "OIBusSearchNorthCacheContentCommandDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"string","required":true},
+            "type": {"dataType":"enum","enums":["search-north-cache-content"],"required":true},
+            "status": {"ref":"OIBusCommandStatus","required":true},
+            "ack": {"dataType":"boolean","required":true},
+            "retrievedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
+            "completedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
+            "result": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "northConnectorId": {"dataType":"string","required":true},
+            "commandContent": {"dataType":"nestedObjectLiteral","nestedProperties":{"folder":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["archive"]},{"dataType":"enum","enums":["error"]}],"required":true},"searchParams":{"ref":"CacheSearchParam","required":true}},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "OIBusSearchHistoryCacheContentCommandDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"string","required":true},
+            "type": {"dataType":"enum","enums":["search-history-cache-content"],"required":true},
+            "status": {"ref":"OIBusCommandStatus","required":true},
+            "ack": {"dataType":"boolean","required":true},
+            "retrievedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
+            "completedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
+            "result": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "historyQueryId": {"dataType":"string","required":true},
+            "commandContent": {"dataType":"nestedObjectLiteral","nestedProperties":{"folder":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["archive"]},{"dataType":"enum","enums":["error"]}],"required":true},"searchParams":{"ref":"CacheSearchParam","required":true}},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "OIBusGetNorthCacheFileContentCommandDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"string","required":true},
+            "type": {"dataType":"enum","enums":["get-north-cache-file-content"],"required":true},
+            "status": {"ref":"OIBusCommandStatus","required":true},
+            "ack": {"dataType":"boolean","required":true},
+            "retrievedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
+            "completedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
+            "result": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "northConnectorId": {"dataType":"string","required":true},
+            "commandContent": {"dataType":"nestedObjectLiteral","nestedProperties":{"filename":{"dataType":"string","required":true},"folder":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["archive"]},{"dataType":"enum","enums":["error"]}],"required":true}},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "OIBusGetHistoryCacheFileContentCommandDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"string","required":true},
+            "type": {"dataType":"enum","enums":["get-history-cache-file-content"],"required":true},
+            "status": {"ref":"OIBusCommandStatus","required":true},
+            "ack": {"dataType":"boolean","required":true},
+            "retrievedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
+            "completedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
+            "result": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "historyQueryId": {"dataType":"string","required":true},
+            "commandContent": {"dataType":"nestedObjectLiteral","nestedProperties":{"filename":{"dataType":"string","required":true},"folder":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["archive"]},{"dataType":"enum","enums":["error"]}],"required":true}},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "OIBusRemoveNorthCacheContentCommandDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"string","required":true},
+            "type": {"dataType":"enum","enums":["remove-north-cache-content"],"required":true},
+            "status": {"ref":"OIBusCommandStatus","required":true},
+            "ack": {"dataType":"boolean","required":true},
+            "retrievedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
+            "completedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
+            "result": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "northConnectorId": {"dataType":"string","required":true},
+            "commandContent": {"dataType":"nestedObjectLiteral","nestedProperties":{"metadataFilenameList":{"dataType":"array","array":{"dataType":"string"},"required":true},"folder":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["archive"]},{"dataType":"enum","enums":["error"]}],"required":true}},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "OIBusRemoveHistoryCacheContentCommandDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"string","required":true},
+            "type": {"dataType":"enum","enums":["remove-history-cache-content"],"required":true},
+            "status": {"ref":"OIBusCommandStatus","required":true},
+            "ack": {"dataType":"boolean","required":true},
+            "retrievedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
+            "completedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
+            "result": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "historyQueryId": {"dataType":"string","required":true},
+            "commandContent": {"dataType":"nestedObjectLiteral","nestedProperties":{"metadataFilenameList":{"dataType":"array","array":{"dataType":"string"},"required":true},"folder":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["archive"]},{"dataType":"enum","enums":["error"]}],"required":true}},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "OIBusMoveNorthCacheContentCommandDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"string","required":true},
+            "type": {"dataType":"enum","enums":["move-north-cache-content"],"required":true},
+            "status": {"ref":"OIBusCommandStatus","required":true},
+            "ack": {"dataType":"boolean","required":true},
+            "retrievedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
+            "completedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
+            "result": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "northConnectorId": {"dataType":"string","required":true},
+            "commandContent": {"dataType":"nestedObjectLiteral","nestedProperties":{"cacheContentList":{"dataType":"array","array":{"dataType":"string"},"required":true},"destinationFolder":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["archive"]},{"dataType":"enum","enums":["error"]}],"required":true},"originFolder":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["archive"]},{"dataType":"enum","enums":["error"]}],"required":true}},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "OIBusMoveHistoryCacheContentCommandDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"string","required":true},
+            "type": {"dataType":"enum","enums":["move-history-cache-content"],"required":true},
+            "status": {"ref":"OIBusCommandStatus","required":true},
+            "ack": {"dataType":"boolean","required":true},
+            "retrievedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
+            "completedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
+            "result": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "historyQueryId": {"dataType":"string","required":true},
+            "commandContent": {"dataType":"nestedObjectLiteral","nestedProperties":{"cacheContentList":{"dataType":"array","array":{"dataType":"string"},"required":true},"destinationFolder":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["archive"]},{"dataType":"enum","enums":["error"]}],"required":true},"originFolder":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["archive"]},{"dataType":"enum","enums":["error"]}],"required":true}},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusCommandDTO": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"ref":"OIBusUpdateVersionCommandDTO"},{"ref":"OIBusRegenerateCipherKeysCommandDTO"},{"ref":"OIBusRestartEngineCommandDTO"},{"ref":"OIBusUpdateEngineSettingsCommandDTO"},{"ref":"OIBusUpdateRegistrationSettingsCommandDTO"},{"ref":"OIBusCreateScanModeCommandDTO"},{"ref":"OIBusUpdateScanModeCommandDTO"},{"ref":"OIBusDeleteScanModeCommandDTO"},{"ref":"OIBusCreateIPFilterCommandDTO"},{"ref":"OIBusUpdateIPFilterCommandDTO"},{"ref":"OIBusDeleteIPFilterCommandDTO"},{"ref":"OIBusCreateCertificateCommandDTO"},{"ref":"OIBusUpdateCertificateCommandDTO"},{"ref":"OIBusDeleteCertificateCommandDTO"},{"ref":"OIBusCreateSouthConnectorCommandDTO"},{"ref":"OIBusUpdateSouthConnectorCommandDTO"},{"ref":"OIBusDeleteSouthConnectorCommandDTO"},{"ref":"OIBusTestSouthConnectorCommandDTO"},{"ref":"OIBusTestSouthConnectorItemCommandDTO"},{"ref":"OIBusCreateNorthConnectorCommandDTO"},{"ref":"OIBusUpdateNorthConnectorCommandDTO"},{"ref":"OIBusDeleteNorthConnectorCommandDTO"},{"ref":"OIBusTestNorthConnectorCommandDTO"},{"ref":"OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommandDTO"},{"ref":"OIBusCreateHistoryQueryCommandDTO"},{"ref":"OIBusUpdateHistoryQueryCommandDTO"},{"ref":"OIBusDeleteHistoryQueryCommandDTO"},{"ref":"OIBusTestHistoryQueryNorthConnectionCommandDTO"},{"ref":"OIBusTestHistoryQuerySouthConnectionCommandDTO"},{"ref":"OIBusTestHistoryQuerySouthItemCommandDTO"},{"ref":"OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommandDTO"},{"ref":"OIBusUpdateHistoryQueryStatusCommandDTO"},{"ref":"OIBusSetpointCommandDTO"}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"ref":"OIBusUpdateVersionCommandDTO"},{"ref":"OIBusRegenerateCipherKeysCommandDTO"},{"ref":"OIBusRestartEngineCommandDTO"},{"ref":"OIBusUpdateEngineSettingsCommandDTO"},{"ref":"OIBusUpdateRegistrationSettingsCommandDTO"},{"ref":"OIBusCreateScanModeCommandDTO"},{"ref":"OIBusUpdateScanModeCommandDTO"},{"ref":"OIBusDeleteScanModeCommandDTO"},{"ref":"OIBusCreateIPFilterCommandDTO"},{"ref":"OIBusUpdateIPFilterCommandDTO"},{"ref":"OIBusDeleteIPFilterCommandDTO"},{"ref":"OIBusCreateCertificateCommandDTO"},{"ref":"OIBusUpdateCertificateCommandDTO"},{"ref":"OIBusDeleteCertificateCommandDTO"},{"ref":"OIBusCreateSouthConnectorCommandDTO"},{"ref":"OIBusUpdateSouthConnectorCommandDTO"},{"ref":"OIBusDeleteSouthConnectorCommandDTO"},{"ref":"OIBusTestSouthConnectorCommandDTO"},{"ref":"OIBusTestSouthConnectorItemCommandDTO"},{"ref":"OIBusCreateNorthConnectorCommandDTO"},{"ref":"OIBusUpdateNorthConnectorCommandDTO"},{"ref":"OIBusDeleteNorthConnectorCommandDTO"},{"ref":"OIBusTestNorthConnectorCommandDTO"},{"ref":"OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommandDTO"},{"ref":"OIBusCreateHistoryQueryCommandDTO"},{"ref":"OIBusUpdateHistoryQueryCommandDTO"},{"ref":"OIBusDeleteHistoryQueryCommandDTO"},{"ref":"OIBusTestHistoryQueryNorthConnectionCommandDTO"},{"ref":"OIBusTestHistoryQuerySouthConnectionCommandDTO"},{"ref":"OIBusTestHistoryQuerySouthItemCommandDTO"},{"ref":"OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommandDTO"},{"ref":"OIBusUpdateHistoryQueryStatusCommandDTO"},{"ref":"OIBusSetpointCommandDTO"},{"ref":"OIBusSearchNorthCacheContentCommandDTO"},{"ref":"OIBusSearchHistoryCacheContentCommandDTO"},{"ref":"OIBusGetNorthCacheFileContentCommandDTO"},{"ref":"OIBusGetHistoryCacheFileContentCommandDTO"},{"ref":"OIBusRemoveNorthCacheContentCommandDTO"},{"ref":"OIBusRemoveHistoryCacheContentCommandDTO"},{"ref":"OIBusMoveNorthCacheContentCommandDTO"},{"ref":"OIBusMoveHistoryCacheContentCommandDTO"}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "Page_OIBusCommandDTO_": {
@@ -4220,7 +4751,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusNorthType": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["modbus"]},{"dataType":"enum","enums":["mqtt"]},{"dataType":"enum","enums":["oianalytics"]},{"dataType":"enum","enums":["opcua"]},{"dataType":"enum","enums":["sftp"]},{"dataType":"enum","enums":["aws-s3"]},{"dataType":"enum","enums":["azure-blob"]},{"dataType":"enum","enums":["console"]},{"dataType":"enum","enums":["file-writer"]},{"dataType":"enum","enums":["rest"]}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["opcua"]},{"dataType":"enum","enums":["mqtt"]},{"dataType":"enum","enums":["modbus"]},{"dataType":"enum","enums":["oianalytics"]},{"dataType":"enum","enums":["rest"]},{"dataType":"enum","enums":["sftp"]},{"dataType":"enum","enums":["aws-s3"]},{"dataType":"enum","enums":["azure-blob"]},{"dataType":"enum","enums":["console"]},{"dataType":"enum","enums":["file-writer"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusNorthCategory": {
@@ -4266,9 +4797,12 @@ const models: TsoaRoute.Models = {
     "TransformerDTOWithOptions": {
         "dataType": "refObject",
         "properties": {
-            "inputType": {"dataType":"string","required":true},
+            "id": {"dataType":"string","required":true},
+            "inputType": {"ref":"InputType","required":true},
             "transformer": {"ref":"TransformerDTO","required":true},
             "options": {"ref":"Record_string.unknown_","required":true},
+            "south": {"ref":"SouthConnectorLightDTO"},
+            "items": {"dataType":"array","array":{"dataType":"refObject","ref":"ItemLightDTO"},"required":true},
         },
         "additionalProperties": false,
     },
@@ -4285,7 +4819,6 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"NorthAmazonS3Settings","required":true},
             "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanMode":{"ref":"ScanModeDTO","required":true}},"required":true}},"required":true},
-            "subscriptions": {"dataType":"array","array":{"dataType":"refObject","ref":"SouthConnectorLightDTO"},"required":true},
             "transformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerDTOWithOptions"},"required":true},
         },
         "additionalProperties": false,
@@ -4303,7 +4836,6 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"NorthAzureBlobSettings","required":true},
             "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanMode":{"ref":"ScanModeDTO","required":true}},"required":true}},"required":true},
-            "subscriptions": {"dataType":"array","array":{"dataType":"refObject","ref":"SouthConnectorLightDTO"},"required":true},
             "transformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerDTOWithOptions"},"required":true},
         },
         "additionalProperties": false,
@@ -4321,7 +4853,6 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"NorthConsoleSettings","required":true},
             "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanMode":{"ref":"ScanModeDTO","required":true}},"required":true}},"required":true},
-            "subscriptions": {"dataType":"array","array":{"dataType":"refObject","ref":"SouthConnectorLightDTO"},"required":true},
             "transformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerDTOWithOptions"},"required":true},
         },
         "additionalProperties": false,
@@ -4339,7 +4870,6 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"NorthFileWriterSettings","required":true},
             "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanMode":{"ref":"ScanModeDTO","required":true}},"required":true}},"required":true},
-            "subscriptions": {"dataType":"array","array":{"dataType":"refObject","ref":"SouthConnectorLightDTO"},"required":true},
             "transformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerDTOWithOptions"},"required":true},
         },
         "additionalProperties": false,
@@ -4357,7 +4887,6 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"NorthModbusSettings","required":true},
             "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanMode":{"ref":"ScanModeDTO","required":true}},"required":true}},"required":true},
-            "subscriptions": {"dataType":"array","array":{"dataType":"refObject","ref":"SouthConnectorLightDTO"},"required":true},
             "transformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerDTOWithOptions"},"required":true},
         },
         "additionalProperties": false,
@@ -4375,7 +4904,6 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"NorthMQTTSettings","required":true},
             "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanMode":{"ref":"ScanModeDTO","required":true}},"required":true}},"required":true},
-            "subscriptions": {"dataType":"array","array":{"dataType":"refObject","ref":"SouthConnectorLightDTO"},"required":true},
             "transformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerDTOWithOptions"},"required":true},
         },
         "additionalProperties": false,
@@ -4393,7 +4921,6 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"NorthOIAnalyticsSettings","required":true},
             "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanMode":{"ref":"ScanModeDTO","required":true}},"required":true}},"required":true},
-            "subscriptions": {"dataType":"array","array":{"dataType":"refObject","ref":"SouthConnectorLightDTO"},"required":true},
             "transformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerDTOWithOptions"},"required":true},
         },
         "additionalProperties": false,
@@ -4411,7 +4938,6 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"NorthOPCUASettings","required":true},
             "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanMode":{"ref":"ScanModeDTO","required":true}},"required":true}},"required":true},
-            "subscriptions": {"dataType":"array","array":{"dataType":"refObject","ref":"SouthConnectorLightDTO"},"required":true},
             "transformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerDTOWithOptions"},"required":true},
         },
         "additionalProperties": false,
@@ -4429,7 +4955,6 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"NorthRESTSettings","required":true},
             "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanMode":{"ref":"ScanModeDTO","required":true}},"required":true}},"required":true},
-            "subscriptions": {"dataType":"array","array":{"dataType":"refObject","ref":"SouthConnectorLightDTO"},"required":true},
             "transformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerDTOWithOptions"},"required":true},
         },
         "additionalProperties": false,
@@ -4447,7 +4972,6 @@ const models: TsoaRoute.Models = {
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"NorthSFTPSettings","required":true},
             "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanMode":{"ref":"ScanModeDTO","required":true}},"required":true}},"required":true},
-            "subscriptions": {"dataType":"array","array":{"dataType":"refObject","ref":"SouthConnectorLightDTO"},"required":true},
             "transformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerDTOWithOptions"},"required":true},
         },
         "additionalProperties": false,
@@ -4463,11 +4987,6 @@ const models: TsoaRoute.Models = {
         "type": {"dataType":"union","subSchemas":[{"ref":"NorthAmazonS3Settings"},{"ref":"NorthAzureBlobSettings"},{"ref":"NorthConsoleSettings"},{"ref":"NorthFileWriterSettings"},{"ref":"NorthModbusSettings"},{"ref":"NorthMQTTSettings"},{"ref":"NorthOIAnalyticsSettings"},{"ref":"NorthOPCUASettings"},{"ref":"NorthRESTSettings"},{"ref":"NorthSFTPSettings"}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "Record_string.string-or-number_": {
-        "dataType": "refAlias",
-        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{},"additionalProperties":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"double"}]},"validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "CacheMetadata": {
         "dataType": "refObject",
         "properties": {
@@ -4476,8 +4995,6 @@ const models: TsoaRoute.Models = {
             "numberOfElement": {"dataType":"double","required":true},
             "createdAt": {"ref":"Instant","required":true},
             "contentType": {"dataType":"string","required":true},
-            "source": {"dataType":"string","required":true},
-            "options": {"ref":"Record_string.string-or-number_","required":true},
         },
         "additionalProperties": false,
     },
@@ -4569,6 +5086,16 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "Pick_TransformerDTOWithOptions.Exclude_keyofTransformerDTOWithOptions.south__": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"id":{"dataType":"string","required":true},"inputType":{"dataType":"string","required":true},"items":{"dataType":"array","array":{"dataType":"refObject","ref":"ItemLightDTO"},"required":true},"options":{"ref":"Record_string.unknown_","required":true},"transformer":{"ref":"TransformerDTO","required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "Omit_TransformerDTOWithOptions.south_": {
+        "dataType": "refAlias",
+        "type": {"ref":"Pick_TransformerDTOWithOptions.Exclude_keyofTransformerDTOWithOptions.south__","validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "HistoryQueryCommonDTO": {
         "dataType": "refObject",
         "properties": {
@@ -4578,7 +5105,7 @@ const models: TsoaRoute.Models = {
             "startTime": {"dataType":"string","required":true},
             "endTime": {"dataType":"string","required":true},
             "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanMode":{"ref":"ScanModeDTO","required":true}},"required":true}},"required":true},
-            "northTransformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerDTOWithOptions"},"required":true},
+            "northTransformers": {"dataType":"array","array":{"dataType":"refAlias","ref":"Omit_TransformerDTOWithOptions.south_"},"required":true},
         },
         "additionalProperties": false,
     },
@@ -4928,6 +5455,29 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "HistoryQueryItemTypedDTO_SouthRestItemSettings_": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"string","required":true},
+            "creationDate": {"ref":"Instant"},
+            "lastEditInstant": {"ref":"Instant"},
+            "name": {"dataType":"string","required":true},
+            "enabled": {"dataType":"boolean","required":true},
+            "settings": {"ref":"SouthRestItemSettings","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "HistoryQuerySouthTypedDTO_rest.SouthRestSettings.SouthRestItemSettings_": {
+        "dataType": "refObject",
+        "properties": {
+            "southType": {"dataType":"enum","enums":["rest"],"required":true},
+            "southSettings": {"ref":"SouthRestSettings","required":true},
+            "items": {"dataType":"array","array":{"dataType":"refObject","ref":"HistoryQueryItemTypedDTO_SouthRestItemSettings_"},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "HistoryQueryItemTypedDTO_SouthSFTPItemSettings_": {
         "dataType": "refObject",
         "properties": {
@@ -5066,7 +5616,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "HistoryQueryDTO": {
         "dataType": "refAlias",
-        "type": {"dataType":"intersection","subSchemas":[{"ref":"BaseEntity"},{"ref":"HistoryQueryCommonDTO"},{"dataType":"union","subSchemas":[{"ref":"HistoryQuerySouthTypedDTO_ads.SouthADSSettings.SouthADSItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_folder-scanner.SouthFolderScannerSettings.SouthFolderScannerItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_ftp.SouthFTPSettings.SouthFTPItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_modbus.SouthModbusSettings.SouthModbusItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_mqtt.SouthMQTTSettings.SouthMQTTItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_mssql.SouthMSSQLSettings.SouthMSSQLItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_mysql.SouthMySQLSettings.SouthMySQLItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_odbc.SouthODBCSettings.SouthODBCItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_oianalytics.SouthOIAnalyticsSettings.SouthOIAnalyticsItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_oledb.SouthOLEDBSettings.SouthOLEDBItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_opc.SouthOPCSettings.SouthOPCItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_opcua.SouthOPCUASettings.SouthOPCUAItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_oracle.SouthOracleSettings.SouthOracleItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_osisoft-pi.SouthPISettings.SouthPIItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_postgresql.SouthPostgreSQLSettings.SouthPostgreSQLItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_sftp.SouthSFTPSettings.SouthSFTPItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_sqlite.SouthSQLiteSettings.SouthSQLiteItemSettings_"}]},{"dataType":"union","subSchemas":[{"ref":"HistoryQueryNorthTypedDTO_aws-s3.NorthAmazonS3Settings_"},{"ref":"HistoryQueryNorthTypedDTO_azure-blob.NorthAzureBlobSettings_"},{"ref":"HistoryQueryNorthTypedDTO_console.NorthConsoleSettings_"},{"ref":"HistoryQueryNorthTypedDTO_file-writer.NorthFileWriterSettings_"},{"ref":"HistoryQueryNorthTypedDTO_modbus.NorthModbusSettings_"},{"ref":"HistoryQueryNorthTypedDTO_mqtt.NorthMQTTSettings_"},{"ref":"HistoryQueryNorthTypedDTO_oianalytics.NorthOIAnalyticsSettings_"},{"ref":"HistoryQueryNorthTypedDTO_opcua.NorthOPCUASettings_"},{"ref":"HistoryQueryNorthTypedDTO_rest.NorthRESTSettings_"},{"ref":"HistoryQueryNorthTypedDTO_sftp.NorthSFTPSettings_"}]}],"validators":{}},
+        "type": {"dataType":"intersection","subSchemas":[{"ref":"BaseEntity"},{"ref":"HistoryQueryCommonDTO"},{"dataType":"union","subSchemas":[{"ref":"HistoryQuerySouthTypedDTO_ads.SouthADSSettings.SouthADSItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_folder-scanner.SouthFolderScannerSettings.SouthFolderScannerItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_ftp.SouthFTPSettings.SouthFTPItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_modbus.SouthModbusSettings.SouthModbusItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_mqtt.SouthMQTTSettings.SouthMQTTItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_mssql.SouthMSSQLSettings.SouthMSSQLItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_mysql.SouthMySQLSettings.SouthMySQLItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_odbc.SouthODBCSettings.SouthODBCItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_oianalytics.SouthOIAnalyticsSettings.SouthOIAnalyticsItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_oledb.SouthOLEDBSettings.SouthOLEDBItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_opc.SouthOPCSettings.SouthOPCItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_opcua.SouthOPCUASettings.SouthOPCUAItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_oracle.SouthOracleSettings.SouthOracleItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_osisoft-pi.SouthPISettings.SouthPIItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_postgresql.SouthPostgreSQLSettings.SouthPostgreSQLItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_rest.SouthRestSettings.SouthRestItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_sftp.SouthSFTPSettings.SouthSFTPItemSettings_"},{"ref":"HistoryQuerySouthTypedDTO_sqlite.SouthSQLiteSettings.SouthSQLiteItemSettings_"}]},{"dataType":"union","subSchemas":[{"ref":"HistoryQueryNorthTypedDTO_aws-s3.NorthAmazonS3Settings_"},{"ref":"HistoryQueryNorthTypedDTO_azure-blob.NorthAzureBlobSettings_"},{"ref":"HistoryQueryNorthTypedDTO_console.NorthConsoleSettings_"},{"ref":"HistoryQueryNorthTypedDTO_file-writer.NorthFileWriterSettings_"},{"ref":"HistoryQueryNorthTypedDTO_modbus.NorthModbusSettings_"},{"ref":"HistoryQueryNorthTypedDTO_mqtt.NorthMQTTSettings_"},{"ref":"HistoryQueryNorthTypedDTO_oianalytics.NorthOIAnalyticsSettings_"},{"ref":"HistoryQueryNorthTypedDTO_opcua.NorthOPCUASettings_"},{"ref":"HistoryQueryNorthTypedDTO_rest.NorthRESTSettings_"},{"ref":"HistoryQueryNorthTypedDTO_sftp.NorthSFTPSettings_"}]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "HistorySouthItemTestRequest": {
@@ -5081,7 +5631,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "HistoryQueryItemDTO": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"ref":"HistoryQueryItemTypedDTO_SouthADSItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthFolderScannerItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthFTPItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthModbusItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthMQTTItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthMSSQLItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthMySQLItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthODBCItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthOIAnalyticsItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthOLEDBItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthOPCItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthOPCUAItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthOracleItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthPIItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthPostgreSQLItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthSFTPItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthSQLiteItemSettings_"}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"ref":"HistoryQueryItemTypedDTO_SouthADSItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthFolderScannerItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthFTPItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthModbusItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthMQTTItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthMSSQLItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthMySQLItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthODBCItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthOIAnalyticsItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthOLEDBItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthOPCItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthOPCUAItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthOracleItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthPIItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthPostgreSQLItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthRestItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthSFTPItemSettings_"},{"ref":"HistoryQueryItemTypedDTO_SouthSQLiteItemSettings_"}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "Page_HistoryQueryItemDTO_": {
@@ -5135,6 +5685,15 @@ const models: TsoaRoute.Models = {
             "proxyEnabled": {"dataType":"boolean","required":true},
             "proxyPort": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
             "logParameters": {"dataType":"nestedObjectLiteral","nestedProperties":{"oia":{"dataType":"nestedObjectLiteral","nestedProperties":{"interval":{"dataType":"double","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"loki":{"dataType":"nestedObjectLiteral","nestedProperties":{"password":{"dataType":"string","required":true},"username":{"dataType":"string","required":true},"address":{"dataType":"string","required":true},"interval":{"dataType":"double","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"database":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfLogs":{"dataType":"double","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"file":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"maxFileSize":{"dataType":"double","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"console":{"dataType":"nestedObjectLiteral","nestedProperties":{"level":{"ref":"LogLevel","required":true}},"required":true}},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "EngineSettingsUpdateResultDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "needsRedirect": {"dataType":"boolean","required":true},
+            "newPort": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -5379,6 +5938,67 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
             }
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsTransformerController_listManifest: Record<string, TsoaRoute.ParameterSchema> = {
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.get('/api/transformers/types',
+            ...(fetchMiddlewares<RequestHandler>(TransformerController)),
+            ...(fetchMiddlewares<RequestHandler>(TransformerController.prototype.listManifest)),
+
+            async function TransformerController_listManifest(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsTransformerController_listManifest, request, response });
+
+                const controller = new TransformerController();
+
+              await templateService.apiHandler({
+                methodName: 'listManifest',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsTransformerController_getManifest: Record<string, TsoaRoute.ParameterSchema> = {
+                type: {"in":"path","name":"type","required":true,"dataType":"string"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.get('/api/transformers/manifests/:type',
+            ...(fetchMiddlewares<RequestHandler>(TransformerController)),
+            ...(fetchMiddlewares<RequestHandler>(TransformerController.prototype.getManifest)),
+
+            async function TransformerController_getManifest(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsTransformerController_getManifest, request, response });
+
+                const controller = new TransformerController();
+
+              await templateService.apiHandler({
+                methodName: 'getManifest',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsTransformerController_search: Record<string, TsoaRoute.ParameterSchema> = {
                 type: {"in":"query","name":"type","required":true,"dataType":"union","subSchemas":[{"dataType":"enum","enums":["standard"]},{"dataType":"enum","enums":["custom"]},{"dataType":"undefined"}]},
                 inputType: {"in":"query","name":"inputType","required":true,"dataType":"union","subSchemas":[{"ref":"OIBusDataType"},{"dataType":"undefined"}]},
@@ -5562,6 +6182,69 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 next,
                 validatedArgs,
                 successStatus: 204,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsTransformerController_test: Record<string, TsoaRoute.ParameterSchema> = {
+                transformerId: {"in":"path","name":"transformerId","required":true,"dataType":"string"},
+                command: {"in":"body","name":"command","required":true,"ref":"TransformerTestRequest"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.post('/api/transformers/:transformerId/test',
+            ...(fetchMiddlewares<RequestHandler>(TransformerController)),
+            ...(fetchMiddlewares<RequestHandler>(TransformerController.prototype.test)),
+
+            async function TransformerController_test(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsTransformerController_test, request, response });
+
+                const controller = new TransformerController();
+
+              await templateService.apiHandler({
+                methodName: 'test',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 204,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsTransformerController_getInputTemplate: Record<string, TsoaRoute.ParameterSchema> = {
+                inputType: {"in":"path","name":"inputType","required":true,"ref":"InputType"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.get('/api/transformers/template/:inputType',
+            ...(fetchMiddlewares<RequestHandler>(TransformerController)),
+            ...(fetchMiddlewares<RequestHandler>(TransformerController.prototype.getInputTemplate)),
+
+            async function TransformerController_getInputTemplate(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsTransformerController_getInputTemplate, request, response });
+
+                const controller = new TransformerController();
+
+              await templateService.apiHandler({
+                methodName: 'getInputTemplate',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
               });
             } catch (err) {
                 return next(err);
@@ -6762,6 +7445,37 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
             }
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsOIAnalyticsRegistrationController_testConnection: Record<string, TsoaRoute.ParameterSchema> = {
+                requestBody: {"in":"body","name":"requestBody","required":true,"ref":"RegistrationSettingsCommandDTO"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.post('/api/oianalytics/registration/test-connection',
+            ...(fetchMiddlewares<RequestHandler>(OIAnalyticsRegistrationController)),
+            ...(fetchMiddlewares<RequestHandler>(OIAnalyticsRegistrationController.prototype.testConnection)),
+
+            async function OIAnalyticsRegistrationController_testConnection(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsOIAnalyticsRegistrationController_testConnection, request, response });
+
+                const controller = new OIAnalyticsRegistrationController();
+
+              await templateService.apiHandler({
+                methodName: 'testConnection',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 204,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsOIAnalyticsRegistrationController_unregister: Record<string, TsoaRoute.ParameterSchema> = {
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
         };
@@ -7255,70 +7969,6 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
 
               await templateService.apiHandler({
                 methodName: 'removeTransformer',
-                controller,
-                response,
-                next,
-                validatedArgs,
-                successStatus: 204,
-              });
-            } catch (err) {
-                return next(err);
-            }
-        });
-        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-        const argsNorthConnectorController_subscribeToSouth: Record<string, TsoaRoute.ParameterSchema> = {
-                northId: {"in":"path","name":"northId","required":true,"dataType":"string"},
-                southId: {"in":"path","name":"southId","required":true,"dataType":"string"},
-                request: {"in":"request","name":"request","required":true,"dataType":"object"},
-        };
-        app.post('/api/north/:northId/subscriptions/:southId',
-            ...(fetchMiddlewares<RequestHandler>(NorthConnectorController)),
-            ...(fetchMiddlewares<RequestHandler>(NorthConnectorController.prototype.subscribeToSouth)),
-
-            async function NorthConnectorController_subscribeToSouth(request: ExRequest, response: ExResponse, next: any) {
-
-            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-
-            let validatedArgs: any[] = [];
-            try {
-                validatedArgs = templateService.getValidatedArgs({ args: argsNorthConnectorController_subscribeToSouth, request, response });
-
-                const controller = new NorthConnectorController();
-
-              await templateService.apiHandler({
-                methodName: 'subscribeToSouth',
-                controller,
-                response,
-                next,
-                validatedArgs,
-                successStatus: 204,
-              });
-            } catch (err) {
-                return next(err);
-            }
-        });
-        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-        const argsNorthConnectorController_unsubscribeFromSouth: Record<string, TsoaRoute.ParameterSchema> = {
-                northId: {"in":"path","name":"northId","required":true,"dataType":"string"},
-                southId: {"in":"path","name":"southId","required":true,"dataType":"string"},
-                request: {"in":"request","name":"request","required":true,"dataType":"object"},
-        };
-        app.delete('/api/north/:northId/subscriptions/:southId',
-            ...(fetchMiddlewares<RequestHandler>(NorthConnectorController)),
-            ...(fetchMiddlewares<RequestHandler>(NorthConnectorController.prototype.unsubscribeFromSouth)),
-
-            async function NorthConnectorController_unsubscribeFromSouth(request: ExRequest, response: ExResponse, next: any) {
-
-            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-
-            let validatedArgs: any[] = [];
-            try {
-                validatedArgs = templateService.getValidatedArgs({ args: argsNorthConnectorController_unsubscribeFromSouth, request, response });
-
-                const controller = new NorthConnectorController();
-
-              await templateService.apiHandler({
-                methodName: 'unsubscribeFromSouth',
                 controller,
                 response,
                 next,
@@ -8648,7 +9298,7 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsHistoryQueryController_addOrEditTransformer: Record<string, TsoaRoute.ParameterSchema> = {
                 historyId: {"in":"path","name":"historyId","required":true,"dataType":"string"},
-                command: {"in":"body","name":"command","required":true,"ref":"TransformerDTOWithOptions"},
+                command: {"in":"body","name":"command","required":true,"ref":"Omit_TransformerDTOWithOptions.south_"},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
         };
         app.post('/api/history/:historyId/transformers',
@@ -8964,7 +9614,7 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 response,
                 next,
                 validatedArgs,
-                successStatus: 204,
+                successStatus: 200,
               });
             } catch (err) {
                 return next(err);

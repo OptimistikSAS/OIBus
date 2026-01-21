@@ -141,6 +141,15 @@ export interface OIBusEnablingCondition {
    * @example ["MQTT"]
    */
   values: Array<string | number | boolean>;
+
+  /**
+   * Operator to use for the condition.
+   * EQUALS: The referral attribute value must be equal to one of the values.
+   * CONTAINS: The referral attribute value must contain one of the values (string only).
+   *
+   * @example "EQUALS"
+   */
+  operator?: 'EQUALS' | 'CONTAINS';
 }
 
 /**
