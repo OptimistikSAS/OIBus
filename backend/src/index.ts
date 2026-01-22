@@ -251,7 +251,6 @@ const CERT_FOLDER = 'certs';
   await cleanupService.start();
 
   const server = new WebServer(
-    oibusSettings.id,
     oibusSettings.port,
     encryptionService,
     scanModeService,
