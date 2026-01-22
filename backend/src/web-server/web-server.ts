@@ -35,14 +35,12 @@ import { NotFoundError, OIBusTestingError, OIBusValidationError } from '../model
  */
 export default class WebServer {
   private _logger: pino.Logger;
-  private readonly _id: string;
   private _port: number;
   private _whiteList: Array<string> = [];
   private app: Express | null = null;
   private webServer: Http.Server | null = null;
 
   constructor(
-    id: string,
     port: number,
     private readonly encryptionService: EncryptionService,
     private readonly scanModeService: ScanModeService,
@@ -61,7 +59,6 @@ export default class WebServer {
     private readonly ignoreIpFilters: boolean,
     logger: pino.Logger
   ) {
-    this._id = id;
     this._port = port;
     this._logger = logger;
     this._whiteList = this.ipFilterService.list().map(filter => filter.address);
@@ -91,14 +88,17 @@ export default class WebServer {
             scriptSrc: ["'self'", "'unsafe-eval'"], // unsafe-eval required for Monaco Editor
             styleSrc: ["'self'", "'unsafe-inline'"], // unsafe-inline required for Monaco Editor
             imgSrc: ["'self'", 'data:'], // data: required for SVG in styles
-            fontSrc: ["'self'"],
+            fontSrc: ["'self'", 'data:'], // Allow base64 fonts for Monaco
             connectSrc: ["'self'"],
-            workerSrc: ["'self'", 'blob:'] // blob: required for Monaco Editor workers
+            workerSrc: ["'self'", 'blob:'], // blob: required for Monaco Editor workers
+            upgradeInsecureRequests: null // Explicitly disable upgrades to HTTPS
           }
         },
-        hsts: false,
+        crossOriginEmbedderPolicy: false,
         crossOriginOpenerPolicy: false,
-        crossOriginEmbedderPolicy: false
+        crossOriginResourcePolicy: false,
+        originAgentCluster: false,
+        hsts: false
       })
     );
     this.app.disable('x-powered-by'); // Remove X-Powered-By header
