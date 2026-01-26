@@ -256,6 +256,11 @@ describe('North Service', () => {
     expect(engine.getNorthDataStream).toHaveBeenCalledWith(testData.north.list[0].id);
   });
 
+  it('should get a north metric', () => {
+    service.getNorthMetric(testData.north.list[0].id);
+    expect(engine.getNorthMetric).toHaveBeenCalledWith(testData.north.list[0].id);
+  });
+
   it('should test a north connector in creation mode', async () => {
     await service.testNorth('create', testData.north.command.type, testData.north.command.settings);
 

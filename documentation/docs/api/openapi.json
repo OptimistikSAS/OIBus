@@ -9179,12 +9179,7 @@
 					},
 					"commandPermissions": {
 						"properties": {
-							"moveNorthCacheContent": {
-								"type": "boolean",
-								"description": "Permission to move cache content.",
-								"example": true
-							},
-							"removeNorthCacheContent": {
+							"updateNorthCacheContent": {
 								"type": "boolean",
 								"description": "Permission to remove cache content.",
 								"example": true
@@ -9199,14 +9194,9 @@
 								"description": "Permission to search cache content.",
 								"example": true
 							},
-							"moveHistoryCacheContent": {
+							"updateHistoryCacheContent": {
 								"type": "boolean",
 								"description": "Permission to move cache content.",
-								"example": true
-							},
-							"removeHistoryCacheContent": {
-								"type": "boolean",
-								"description": "Permission to remove cache content.",
 								"example": true
 							},
 							"getHistoryCacheFileContent": {
@@ -9351,12 +9341,10 @@
 							}
 						},
 						"required": [
-							"moveNorthCacheContent",
-							"removeNorthCacheContent",
+							"updateNorthCacheContent",
 							"getNorthCacheFileContent",
 							"searchNorthCacheContent",
-							"moveHistoryCacheContent",
-							"removeHistoryCacheContent",
+							"updateHistoryCacheContent",
 							"getHistoryCacheFileContent",
 							"searchHistoryCacheContent",
 							"setpoint",
@@ -9490,12 +9478,7 @@
 					},
 					"commandPermissions": {
 						"properties": {
-							"moveNorthCacheContent": {
-								"type": "boolean",
-								"description": "Permission to move cache content.",
-								"example": true
-							},
-							"removeNorthCacheContent": {
+							"updateNorthCacheContent": {
 								"type": "boolean",
 								"description": "Permission to remove cache content.",
 								"example": true
@@ -9510,12 +9493,7 @@
 								"description": "Permission to search cache content.",
 								"example": true
 							},
-							"moveHistoryCacheContent": {
-								"type": "boolean",
-								"description": "Permission to move cache content.",
-								"example": true
-							},
-							"removeHistoryCacheContent": {
+							"updateHistoryCacheContent": {
 								"type": "boolean",
 								"description": "Permission to remove cache content.",
 								"example": true
@@ -9692,12 +9670,10 @@
 							}
 						},
 						"required": [
-							"moveNorthCacheContent",
-							"removeNorthCacheContent",
+							"updateNorthCacheContent",
 							"getNorthCacheFileContent",
 							"searchNorthCacheContent",
-							"moveHistoryCacheContent",
-							"removeHistoryCacheContent",
+							"updateHistoryCacheContent",
 							"getHistoryCacheFileContent",
 							"searchHistoryCacheContent",
 							"setpoint",
@@ -9796,10 +9772,8 @@
 					"search-history-cache-content",
 					"get-north-cache-file-content",
 					"get-history-cache-file-content",
-					"remove-north-cache-content",
-					"remove-history-cache-content",
-					"move-north-cache-content",
-					"move-history-cache-content"
+					"update-north-cache-content",
+					"update-history-cache-content"
 				],
 				"description": "Type representing an OIBus command type."
 			},
@@ -17052,20 +17026,16 @@
 					},
 					"commandContent": {
 						"properties": {
-							"folder": {
-								"type": "string",
-								"enum": [
-									"cache",
-									"archive",
-									"error"
-								]
+							"maxNumberOfFilesReturned": {
+								"type": "number",
+								"format": "double"
 							},
 							"searchParams": {
 								"$ref": "#/components/schemas/CacheSearchParam"
 							}
 						},
 						"required": [
-							"folder",
+							"maxNumberOfFilesReturned",
 							"searchParams"
 						],
 						"type": "object"
@@ -17140,20 +17110,16 @@
 					},
 					"commandContent": {
 						"properties": {
-							"folder": {
-								"type": "string",
-								"enum": [
-									"cache",
-									"archive",
-									"error"
-								]
+							"maxNumberOfFilesReturned": {
+								"type": "number",
+								"format": "double"
 							},
 							"searchParams": {
 								"$ref": "#/components/schemas/CacheSearchParam"
 							}
 						},
 						"required": [
-							"folder",
+							"maxNumberOfFilesReturned",
 							"searchParams"
 						],
 						"type": "object"
@@ -17349,7 +17315,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"OIBusRemoveNorthCacheContentCommandDTO": {
+			"OIBusUpdateNorthCacheContentCommandDTO": {
 				"properties": {
 					"id": {
 						"type": "string",
@@ -17359,7 +17325,7 @@
 					"type": {
 						"type": "string",
 						"enum": [
-							"remove-north-cache-content"
+							"update-north-cache-content"
 						],
 						"nullable": false,
 						"description": "The type of the command."
@@ -17404,24 +17370,50 @@
 					},
 					"commandContent": {
 						"properties": {
-							"metadataFilenameList": {
+							"newArchiveMetadataFilenameList": {
 								"items": {
 									"type": "string"
 								},
 								"type": "array"
 							},
-							"folder": {
-								"type": "string",
-								"enum": [
-									"cache",
-									"archive",
-									"error"
-								]
+							"newErrorMetadataFilenameList": {
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							},
+							"newCacheMetadataFilenameList": {
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							},
+							"originArchiveMetadataFilenameList": {
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							},
+							"originErrorMetadataFilenameList": {
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							},
+							"originCacheMetadataFilenameList": {
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
 							}
 						},
 						"required": [
-							"metadataFilenameList",
-							"folder"
+							"newArchiveMetadataFilenameList",
+							"newErrorMetadataFilenameList",
+							"newCacheMetadataFilenameList",
+							"originArchiveMetadataFilenameList",
+							"originErrorMetadataFilenameList",
+							"originCacheMetadataFilenameList"
 						],
 						"type": "object"
 					}
@@ -17440,7 +17432,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"OIBusRemoveHistoryCacheContentCommandDTO": {
+			"OIBusUpdateHistoryCacheContentCommandDTO": {
 				"properties": {
 					"id": {
 						"type": "string",
@@ -17450,7 +17442,7 @@
 					"type": {
 						"type": "string",
 						"enum": [
-							"remove-history-cache-content"
+							"update-history-cache-content"
 						],
 						"nullable": false,
 						"description": "The type of the command."
@@ -17495,224 +17487,50 @@
 					},
 					"commandContent": {
 						"properties": {
-							"metadataFilenameList": {
+							"newArchiveMetadataFilenameList": {
 								"items": {
 									"type": "string"
 								},
 								"type": "array"
 							},
-							"folder": {
-								"type": "string",
-								"enum": [
-									"cache",
-									"archive",
-									"error"
-								]
-							}
-						},
-						"required": [
-							"metadataFilenameList",
-							"folder"
-						],
-						"type": "object"
-					}
-				},
-				"required": [
-					"id",
-					"type",
-					"status",
-					"ack",
-					"retrievedDate",
-					"completedDate",
-					"result",
-					"historyQueryId",
-					"commandContent"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"OIBusMoveNorthCacheContentCommandDTO": {
-				"properties": {
-					"id": {
-						"type": "string",
-						"description": "The unique identifier of the command.",
-						"example": "cmd123"
-					},
-					"type": {
-						"type": "string",
-						"enum": [
-							"move-north-cache-content"
-						],
-						"nullable": false,
-						"description": "The type of the command."
-					},
-					"status": {
-						"$ref": "#/components/schemas/OIBusCommandStatus",
-						"description": "The current status of the command."
-					},
-					"ack": {
-						"type": "boolean",
-						"description": "Whether the command has been acknowledged.",
-						"example": true
-					},
-					"retrievedDate": {
-						"allOf": [
-							{
-								"$ref": "#/components/schemas/Instant"
-							}
-						],
-						"nullable": true,
-						"description": "The date and time when the command was retrieved.",
-						"example": "2023-10-31T12:34:56.789Z"
-					},
-					"completedDate": {
-						"allOf": [
-							{
-								"$ref": "#/components/schemas/Instant"
-							}
-						],
-						"nullable": true,
-						"description": "The date and time when the command was completed.",
-						"example": "2023-10-31T12:35:56.789Z"
-					},
-					"result": {
-						"type": "string",
-						"nullable": true,
-						"description": "The result of the command execution.",
-						"example": "Success"
-					},
-					"northConnectorId": {
-						"type": "string"
-					},
-					"commandContent": {
-						"properties": {
-							"cacheContentList": {
+							"newErrorMetadataFilenameList": {
 								"items": {
 									"type": "string"
 								},
 								"type": "array"
 							},
-							"destinationFolder": {
-								"type": "string",
-								"enum": [
-									"cache",
-									"archive",
-									"error"
-								]
-							},
-							"originFolder": {
-								"type": "string",
-								"enum": [
-									"cache",
-									"archive",
-									"error"
-								]
-							}
-						},
-						"required": [
-							"cacheContentList",
-							"destinationFolder",
-							"originFolder"
-						],
-						"type": "object"
-					}
-				},
-				"required": [
-					"id",
-					"type",
-					"status",
-					"ack",
-					"retrievedDate",
-					"completedDate",
-					"result",
-					"northConnectorId",
-					"commandContent"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"OIBusMoveHistoryCacheContentCommandDTO": {
-				"properties": {
-					"id": {
-						"type": "string",
-						"description": "The unique identifier of the command.",
-						"example": "cmd123"
-					},
-					"type": {
-						"type": "string",
-						"enum": [
-							"move-history-cache-content"
-						],
-						"nullable": false,
-						"description": "The type of the command."
-					},
-					"status": {
-						"$ref": "#/components/schemas/OIBusCommandStatus",
-						"description": "The current status of the command."
-					},
-					"ack": {
-						"type": "boolean",
-						"description": "Whether the command has been acknowledged.",
-						"example": true
-					},
-					"retrievedDate": {
-						"allOf": [
-							{
-								"$ref": "#/components/schemas/Instant"
-							}
-						],
-						"nullable": true,
-						"description": "The date and time when the command was retrieved.",
-						"example": "2023-10-31T12:34:56.789Z"
-					},
-					"completedDate": {
-						"allOf": [
-							{
-								"$ref": "#/components/schemas/Instant"
-							}
-						],
-						"nullable": true,
-						"description": "The date and time when the command was completed.",
-						"example": "2023-10-31T12:35:56.789Z"
-					},
-					"result": {
-						"type": "string",
-						"nullable": true,
-						"description": "The result of the command execution.",
-						"example": "Success"
-					},
-					"historyQueryId": {
-						"type": "string"
-					},
-					"commandContent": {
-						"properties": {
-							"cacheContentList": {
+							"newCacheMetadataFilenameList": {
 								"items": {
 									"type": "string"
 								},
 								"type": "array"
 							},
-							"destinationFolder": {
-								"type": "string",
-								"enum": [
-									"cache",
-									"archive",
-									"error"
-								]
+							"originArchiveMetadataFilenameList": {
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
 							},
-							"originFolder": {
-								"type": "string",
-								"enum": [
-									"cache",
-									"archive",
-									"error"
-								]
+							"originErrorMetadataFilenameList": {
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							},
+							"originCacheMetadataFilenameList": {
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
 							}
 						},
 						"required": [
-							"cacheContentList",
-							"destinationFolder",
-							"originFolder"
+							"newArchiveMetadataFilenameList",
+							"newErrorMetadataFilenameList",
+							"newCacheMetadataFilenameList",
+							"originArchiveMetadataFilenameList",
+							"originErrorMetadataFilenameList",
+							"originCacheMetadataFilenameList"
 						],
 						"type": "object"
 					}
@@ -17845,16 +17663,10 @@
 						"$ref": "#/components/schemas/OIBusGetHistoryCacheFileContentCommandDTO"
 					},
 					{
-						"$ref": "#/components/schemas/OIBusRemoveNorthCacheContentCommandDTO"
+						"$ref": "#/components/schemas/OIBusUpdateNorthCacheContentCommandDTO"
 					},
 					{
-						"$ref": "#/components/schemas/OIBusRemoveHistoryCacheContentCommandDTO"
-					},
-					{
-						"$ref": "#/components/schemas/OIBusMoveNorthCacheContentCommandDTO"
-					},
-					{
-						"$ref": "#/components/schemas/OIBusMoveHistoryCacheContentCommandDTO"
+						"$ref": "#/components/schemas/OIBusUpdateHistoryCacheContentCommandDTO"
 					}
 				],
 				"description": "Union type representing all possible OIBus command DTOs."

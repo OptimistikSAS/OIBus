@@ -1,7 +1,7 @@
 //
 // DTO to send to OIAnalytics
 //
-import { EngineSettingsCommandDTO } from '../../../shared/model/engine.model';
+import { CacheSearchParam, EngineSettingsCommandDTO } from '../../../shared/model/engine.model';
 import { NorthConnectorCommandDTO } from '../../../shared/model/north-connector.model';
 import {
   SouthConnectorCommandDTO,
@@ -163,7 +163,13 @@ export const OIANALYTICS_FETCH_COMMAND_TYPES = [
   'test-history-query-south-item',
   'create-or-update-history-query-south-items-from-csv',
   'update-history-query-status',
-  'setpoint'
+  'setpoint',
+  'search-north-cache-content',
+  'search-history-cache-content',
+  'get-north-cache-file-content',
+  'get-history-cache-file-content',
+  'update-north-cache-content',
+  'update-history-cache-content'
 ] as const;
 export type OIAnalyticsFetchCommandType = (typeof OIANALYTICS_FETCH_COMMAND_TYPES)[number];
 
@@ -387,6 +393,62 @@ export interface OIAnalyticsFetchSetpointCommandDTO extends BaseOIAnalyticsFetch
   };
 }
 
+export interface OIAnalyticsFetchSearchNorthCacheContentCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'search-north-cache-content';
+  northConnectorId: string;
+  commandContent: {
+    searchParams: CacheSearchParam;
+    maxNumberOfFilesReturned: number;
+  };
+}
+
+export interface OIAnalyticsFetchSearchHistoryCacheContentCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'search-history-cache-content';
+  historyQueryId: string;
+  commandContent: {
+    searchParams: CacheSearchParam;
+    maxNumberOfFilesReturned: number;
+  };
+}
+
+export interface OIAnalyticsFetchGetNorthCacheFileContentCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'get-north-cache-file-content';
+  northConnectorId: string;
+  commandContent: {
+    folder: 'cache' | 'archive' | 'error';
+    filename: string;
+  };
+}
+
+export interface OIAnalyticsFetchGetHistoryCacheFileContentCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'get-history-cache-file-content';
+  historyQueryId: string;
+  commandContent: {
+    folder: 'cache' | 'archive' | 'error';
+    filename: string;
+  };
+}
+
+export interface OIAnalyticsFetchUpdateNorthCacheContentCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'update-north-cache-content';
+  northConnectorId: string;
+  commandContent: {
+    cache: { remove: Array<string>; move: Array<{ filename: string; to: 'cache' | 'error' | 'archive' }> };
+    error: { remove: Array<string>; move: Array<{ filename: string; to: 'cache' | 'error' | 'archive' }> };
+    archive: { remove: Array<string>; move: Array<{ filename: string; to: 'cache' | 'error' | 'archive' }> };
+  };
+}
+
+export interface OIAnalyticsFetchUpdateHistoryCacheContentCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'update-history-cache-content';
+  historyQueryId: string;
+  commandContent: {
+    cache: { remove: Array<string>; move: Array<{ filename: string; to: 'cache' | 'error' | 'archive' }> };
+    error: { remove: Array<string>; move: Array<{ filename: string; to: 'cache' | 'error' | 'archive' }> };
+    archive: { remove: Array<string>; move: Array<{ filename: string; to: 'cache' | 'error' | 'archive' }> };
+  };
+}
+
 export type OIAnalyticsFetchCommandDTO =
   | OIAnalyticsFetchUpdateVersionCommandDTO
   | OIAnalyticsFetchRestartEngineCommandDTO
@@ -420,4 +482,10 @@ export type OIAnalyticsFetchCommandDTO =
   | OIAnalyticsFetchTestHistoryQuerySouthItemConnectionCommandDTO
   | OIAnalyticsFetchCreateOrUpdateHistoryQuerySouthItemsFromCSVCommandDTO
   | OIAnalyticsFetchUpdateHistoryQueryStatusCommandDTO
-  | OIAnalyticsFetchSetpointCommandDTO;
+  | OIAnalyticsFetchSetpointCommandDTO
+  | OIAnalyticsFetchSearchNorthCacheContentCommandDTO
+  | OIAnalyticsFetchSearchHistoryCacheContentCommandDTO
+  | OIAnalyticsFetchGetNorthCacheFileContentCommandDTO
+  | OIAnalyticsFetchGetHistoryCacheFileContentCommandDTO
+  | OIAnalyticsFetchUpdateNorthCacheContentCommandDTO
+  | OIAnalyticsFetchUpdateHistoryCacheContentCommandDTO;
