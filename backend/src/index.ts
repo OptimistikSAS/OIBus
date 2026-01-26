@@ -166,7 +166,8 @@ const CERT_FOLDER = 'certs';
     repositoryService.oianalyticsRegistrationRepository,
     repositoryService.certificateRepository,
     oIAnalyticsMessageService,
-    dataStreamEngine
+    dataStreamEngine,
+    repositoryService.southItemGroupRepository
   );
   const historyQueryService = new HistoryQueryService(
     new JoiValidator(),

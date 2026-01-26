@@ -52,7 +52,8 @@ describe('SouthFolderScanner', () => {
           ignoreModifiedDate: false,
           minAge: 1000
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: []
       },
       {
         id: 'id2',
@@ -64,7 +65,8 @@ describe('SouthFolderScanner', () => {
           ignoreModifiedDate: false,
           minAge: 1000
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: []
       },
       {
         id: 'id3',
@@ -76,7 +78,8 @@ describe('SouthFolderScanner', () => {
           ignoreModifiedDate: true,
           minAge: 1000
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: []
       }
     ]
   };
@@ -231,7 +234,8 @@ describe('SouthFolderScanner with compression', () => {
           ignoreModifiedDate: false,
           minAge: 1000
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: []
       },
       {
         id: 'id2',
@@ -243,7 +247,8 @@ describe('SouthFolderScanner with compression', () => {
           ignoreModifiedDate: false,
           minAge: 1000
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: []
       },
       {
         id: 'id3',
@@ -255,7 +260,8 @@ describe('SouthFolderScanner with compression', () => {
           ignoreModifiedDate: true,
           minAge: 1000
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: []
       }
     ]
   };

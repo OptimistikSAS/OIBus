@@ -107,7 +107,8 @@ describe('South Modbus', () => {
             multiplierCoefficient: 1
           }
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: []
       },
       {
         id: 'id2',
@@ -121,7 +122,8 @@ describe('South Modbus', () => {
             multiplierCoefficient: 1
           }
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: []
       },
       {
         id: 'id3',
@@ -135,7 +137,8 @@ describe('South Modbus', () => {
             multiplierCoefficient: 1
           }
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: []
       },
       {
         id: 'id4',
@@ -145,7 +148,8 @@ describe('South Modbus', () => {
           address: '0x1E82',
           modbusType: 'discrete-input'
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: []
       },
       {
         id: 'id5',
@@ -155,7 +159,8 @@ describe('South Modbus', () => {
           address: '0x0E83',
           modbusType: 'coil'
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: []
       },
       {
         id: 'id6',
@@ -170,7 +175,8 @@ describe('South Modbus', () => {
             multiplierCoefficient: 1
           }
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: []
       }
     ]
   };
@@ -372,7 +378,8 @@ describe('South Modbus', () => {
       settings: {
         modbusType: 'bad type' as SouthModbusItemSettingsModbusType,
         address: '1010'
-      }
+      },
+      groups: []
     };
     await expect(south.modbusFunction(mockedClient, item)).rejects.toThrow(
       `Wrong Modbus type "${item.settings.modbusType}" for point "${item.name}"`

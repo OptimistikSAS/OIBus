@@ -480,14 +480,16 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         name: 'item1',
         enabled: true,
         settings: {} as SouthItemSettings,
-        scanMode: scanModes[0]
+        scanMode: scanModes[0],
+        groups: []
       },
       {
         id: 'southItemId2',
         name: 'item2',
         enabled: true,
         settings: {} as SouthItemSettings,
-        scanMode: scanModes[1]
+        scanMode: scanModes[1],
+        groups: []
       }
     ]
   },
@@ -521,14 +523,16 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         name: 'item3',
         enabled: true,
         settings: {} as SouthItemSettings,
-        scanMode: scanModes[0]
+        scanMode: scanModes[0],
+        groups: []
       },
       {
         id: 'southItemId4',
         name: 'item4',
         enabled: true,
         settings: {} as SouthItemSettings,
-        scanMode: scanModes[0]
+        scanMode: scanModes[0],
+        groups: []
       }
     ]
   },
@@ -566,7 +570,8 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         settings: {
           mode: 'ha'
         } as SouthItemSettings,
-        scanMode: scanModes[0]
+        scanMode: scanModes[0],
+        groups: []
       },
       {
         id: 'southItemId6',
@@ -575,7 +580,8 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         settings: {
           mode: 'da'
         } as SouthItemSettings,
-        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
+        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+        groups: []
       },
       {
         id: 'southItemId7',
@@ -584,7 +590,8 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         settings: {
           mode: 'da'
         } as SouthItemSettings,
-        scanMode: scanModes[1]
+        scanMode: scanModes[1],
+        groups: []
       },
       {
         id: 'southItemId8',
@@ -593,7 +600,8 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         settings: {
           mode: 'ha'
         } as SouthItemSettings,
-        scanMode: scanModes[0]
+        scanMode: scanModes[0],
+        groups: []
       }
     ]
   }
@@ -619,7 +627,9 @@ const southConnectorCommand: SouthConnectorCommandDTO = {
         ignoreModifiedDate: false
       },
       scanModeId: scanModes[1].id,
-      scanModeName: null
+      scanModeName: null,
+      groupId: null,
+      groupName: null
     }
   ]
 };
@@ -634,7 +644,9 @@ const southConnectorItemCommand: SouthConnectorItemCommandDTO = {
     minAge: 100,
     preserveFiles: true,
     ignoreModifiedDate: false
-  }
+  },
+  groupId: null,
+  groupName: null
 };
 const itemTestingSettings: SouthConnectorItemTestingSettings = {
   history: {

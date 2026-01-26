@@ -34,7 +34,8 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
       topic: 'my/first/topic',
       valueType: 'number'
     },
-    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
+    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+    groups: []
   },
   {
     id: 'id2',
@@ -44,7 +45,8 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
       topic: 'my/+/+/topic/with/wildcard/#',
       valueType: 'string'
     },
-    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
+    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+    groups: []
   },
   {
     id: 'id3',
@@ -54,7 +56,8 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
       topic: 'my/wrong/topic////',
       valueType: 'string'
     },
-    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
+    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+    groups: []
   },
   {
     id: 'id4',
@@ -81,7 +84,8 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
         }
       }
     },
-    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
+    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+    groups: []
   },
   {
     id: 'id5',
@@ -107,7 +111,8 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
         }
       }
     },
-    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
+    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+    groups: []
   },
   {
     id: 'id6',
@@ -129,7 +134,8 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
         timestampOrigin: 'oibus'
       }
     },
-    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
+    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+    groups: []
   },
   // Additional test items for edge cases
   {
@@ -140,7 +146,8 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
       topic: 'disabled/topic',
       valueType: 'string'
     },
-    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
+    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+    groups: []
   },
   {
     id: 'id8',
@@ -150,7 +157,8 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
       topic: 'my/second/topic', // Duplicate topic with id1
       valueType: 'string'
     },
-    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
+    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+    groups: []
   },
   {
     id: 'id9',
@@ -160,7 +168,8 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
       topic: 'my/second/topic', // Duplicate topic with id1
       valueType: 'string'
     },
-    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
+    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+    groups: []
   },
   {
     id: 'id10',
@@ -170,7 +179,8 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
       topic: 'simple/+', // Simple wildcard
       valueType: 'string'
     },
-    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
+    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+    groups: []
   }
 ];
 describe('Service utils MQTT', () => {

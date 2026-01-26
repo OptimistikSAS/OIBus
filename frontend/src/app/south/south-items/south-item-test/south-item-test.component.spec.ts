@@ -41,7 +41,8 @@ class TestComponent {
       minAge: 100,
       preserveFiles: true
     } as SouthFolderScannerItemSettings,
-    scanMode: testData.scanMode.list[0]
+    scanMode: testData.scanMode.list[0],
+    group: null
   };
   connectorCommand = testData.south.command;
   manifest = testData.south.manifest;

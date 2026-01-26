@@ -89,7 +89,8 @@ describe('SouthFTP', () => {
           ignoreModifiedDate: false,
           minAge: 1000
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: []
       },
       {
         id: 'id2',
@@ -102,7 +103,8 @@ describe('SouthFTP', () => {
           ignoreModifiedDate: false,
           minAge: 1000
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: []
       },
       {
         id: 'id3',
@@ -115,7 +117,8 @@ describe('SouthFTP', () => {
           ignoreModifiedDate: true,
           minAge: 1000
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        groups: []
       }
     ]
   };

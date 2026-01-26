@@ -55,7 +55,7 @@ import {
 } from '../../model/oianalytics-command.model';
 import { CommandSearchParam, OIBusCommandDTO } from '../../../shared/model/command.model';
 import { Page } from '../../../shared/model/types';
-import SouthService from '../south.service';
+import SouthService, { toSouthConnectorItemDTO } from '../south.service';
 import NorthService from '../north.service';
 import OIAnalyticsClient from './oianalytics-client.service';
 import os from 'node:os';
@@ -849,7 +849,9 @@ export default class OIAnalyticsCommandService {
       command.commandContent.csvContent,
       command.commandContent.delimiter,
       // Type assertion is safe because checkImportItems accepts the union type
-      command.commandContent.deleteItemsNotPresent ? [] : (southConnector.items as Array<SouthConnectorItemDTO>)
+      command.commandContent.deleteItemsNotPresent
+        ? []
+        : (southConnector.items.map(i => toSouthConnectorItemDTO(i, southConnector.type)) as Array<SouthConnectorItemDTO>)
     );
 
     if (errors.length > 0) {

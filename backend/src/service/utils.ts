@@ -674,16 +674,19 @@ export const itemToFlattenedCSV = (
   delimiter: string,
   scanModes?: Array<ScanMode>
 ): string => {
-  const columns: Set<string> = new Set<string>(['name', 'enabled', 'scanMode']);
+  const columns: Set<string> = new Set<string>(['name', 'enabled', 'scanMode', 'group']);
 
   return csv.unparse(
     items.map(item => {
+      const { group, ...itemWithoutGroup } = item as SouthConnectorItemDTO;
       const flattenedItem: Record<string, string | object | boolean> = {
-        ...item
+        ...itemWithoutGroup
       };
       if (scanModes) {
         flattenedItem.scanMode = (item as SouthConnectorItemDTO).scanMode.name;
       }
+      // Add group name to CSV
+      flattenedItem.group = group?.name || '';
       for (const [itemSettingsKey, itemSettingsValue] of Object.entries(item.settings)) {
         columns.add(`settings_${itemSettingsKey}`);
         if (typeof itemSettingsValue === 'object') {

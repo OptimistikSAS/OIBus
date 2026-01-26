@@ -51,7 +51,10 @@ describe('SouthDetailComponent', () => {
   let engineService: jasmine.SpyObj<EngineService>;
 
   const manifest = testData.south.manifest;
-  const southConnector = testData.south.list[0] as SouthConnectorDTO;
+  const southConnector: SouthConnectorDTO = {
+    ...testData.south.list[0],
+    items: testData.south.list[0].items.map(item => ({ ...item, group: null }))
+  } as SouthConnectorDTO;
   const engineInfo = testData.engine.oIBusInfo;
 
   beforeEach(() => {
@@ -93,6 +96,7 @@ describe('SouthDetailComponent', () => {
         items: southConnector.items.map(element => ({ ...element, scanModeId: element.scanMode.id }))
       } as any)
     );
+    southConnectorService.getGroups.and.returnValue(of([]));
     southConnectorService.getSouthManifest.and.returnValue(of(manifest));
     southConnectorService.start.and.returnValue(of(undefined));
     southConnectorService.stop.and.returnValue(of(undefined));
@@ -114,7 +118,7 @@ describe('SouthDetailComponent', () => {
     expect(tester.southItems.length).toBe(2);
     const item = tester.southItems[0];
     expect(item.elements('td')[2]).toContainText('item1');
-    expect(item.elements('td')[3]).toContainText('scanMode1');
+    expect(item.elements('td')[4]).toContainText('scanMode1');
   });
 
   it('should display logs', async () => {
@@ -137,6 +141,7 @@ describe('SouthDetailComponent', () => {
         enabled: false
       } as any)
     );
+    southConnectorService.getGroups.and.returnValue(of([]));
     await tester.change();
     tester.toggleButton.click();
     expect(southConnectorService.start).toHaveBeenCalledWith(southConnector.id);
