@@ -28,11 +28,6 @@ export default class HistoryQuery {
   ) {}
 
   async start(): Promise<void> {
-    if (this.historyConfiguration.status !== 'RUNNING') {
-      this.logger.trace(`History Query "${this.historyConfiguration.name}" not enabled`);
-      return;
-    }
-
     this.north.metricsEvent.on('connect', (data: { lastConnection: Instant }) => {
       this.metricsEvent.emit('north-connect', data);
     });
@@ -174,7 +169,7 @@ export default class HistoryQuery {
       id: historyQueryConfiguration.id,
       name: historyQueryConfiguration.name,
       description: historyQueryConfiguration.description,
-      enabled: true,
+      enabled: historyQueryConfiguration.status === 'RUNNING',
       type: historyQueryConfiguration.southType,
       settings: historyQueryConfiguration.southSettings,
       items: []
@@ -183,7 +178,7 @@ export default class HistoryQuery {
       id: historyQueryConfiguration.id,
       name: historyQueryConfiguration.name,
       description: historyQueryConfiguration.description,
-      enabled: true,
+      enabled: historyQueryConfiguration.status === 'RUNNING',
       type: historyQueryConfiguration.northType,
       settings: historyQueryConfiguration.northSettings,
       caching: historyQueryConfiguration.caching,

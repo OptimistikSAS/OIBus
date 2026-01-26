@@ -162,7 +162,7 @@ describe('NorthMQTT', () => {
     north.disconnect = jest.fn();
     north['connector'].enabled = false;
 
-    await north.start();
+    await north.connect();
 
     expect(north.disconnect).toHaveBeenCalledTimes(1);
     expect(setTimeoutSpy).not.toHaveBeenCalled();
