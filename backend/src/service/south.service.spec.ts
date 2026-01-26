@@ -2,6 +2,7 @@ import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import pino from 'pino';
 import SouthService, {
+  copySouthItemCommandToSouthItemEntity,
   southManifestList,
   toSouthConnectorDTO,
   toSouthConnectorItemDTO,
@@ -147,6 +148,30 @@ describe('South Service', () => {
     }
   });
 
+  it('should create a south connector with retrieveSecretsFromSouth when item has no id', async () => {
+    service.retrieveSecretsFromSouth = jest.fn().mockReturnValue(testData.south.list[0]);
+
+    const command = JSON.parse(JSON.stringify(testData.south.command));
+    // Set item id to null to test the branch where command.id is falsy
+    command.items[0].id = null;
+
+    await service.create(command, testData.south.list[0].id);
+
+    expect(southConnectorRepository.saveSouth).toHaveBeenCalledTimes(1);
+    expect(service.retrieveSecretsFromSouth).toHaveBeenCalledTimes(1);
+    // Verify that items have their IDs reset to empty string when retrieveSecretsFromSouth is true
+    const savedSouthCall = (southConnectorRepository.saveSouth as jest.Mock).mock.calls[0];
+    const savedSouth = savedSouthCall[0];
+    if (savedSouth.items && savedSouth.items.length > 0) {
+      savedSouth.items.forEach((item: { id: string; groups?: Array<unknown> }) => {
+        expect(item.id).toBe('');
+        // When retrieveSecretsFromSouth is true and southItemGroupRepository is not provided,
+        // groups should not be set (undefined)
+        expect(item.groups).toBeUndefined();
+      });
+    }
+  });
+
   it('should not create south connector if disabled', async () => {
     service.retrieveSecretsFromSouth = jest.fn();
 
@@ -157,6 +182,14 @@ describe('South Service', () => {
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
     expect(engine.createSouth).toHaveBeenCalledTimes(1);
     expect(engine.startSouth).not.toHaveBeenCalled();
+    // Verify that when retrieveSecretsFromSouth is false and command.id is null, id is set to empty string
+    const savedSouthCall = (southConnectorRepository.saveSouth as jest.Mock).mock.calls[0];
+    const savedSouth = savedSouthCall[0];
+    if (savedSouth.items && savedSouth.items.length > 0) {
+      savedSouth.items.forEach((item: { id: string }) => {
+        expect(item.id).toBe('');
+      });
+    }
   });
 
   it('should not create a south connector with duplicate name', async () => {
@@ -310,6 +343,20 @@ describe('South Service', () => {
     expect(engine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0]);
   });
 
+  it('should create an item with null id', async () => {
+    const commandWithNullId: SouthConnectorItemCommandDTO = {
+      ...testData.south.itemCommand,
+      id: null
+    };
+
+    await service.createItem(testData.south.list[0].id, commandWithNullId);
+
+    expect(southConnectorRepository.saveItem).toHaveBeenCalledTimes(1);
+    // Verify that when retrieveSecretsFromSouth is false and command.id is null, id is set to empty string
+    const savedItemCall = (southConnectorRepository.saveItem as jest.Mock).mock.calls[0];
+    expect(savedItemCall[1].id).toBe('');
+  });
+
   it('should create item with group', async () => {
     const group: SouthItemGroupEntity = {
       id: 'group1',
@@ -371,6 +418,9 @@ describe('South Service', () => {
     expect(southConnectorRepository.saveItem).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
     expect(engine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0]);
+    // Verify that when retrieveSecretsFromSouth is false and command.id is truthy, id is set to command.id
+    const savedItemCall = (southConnectorRepository.saveItem as jest.Mock).mock.calls[0];
+    expect(savedItemCall[1].id).toBe(testData.south.itemCommand.id);
   });
 
   it('should update item with group', async () => {
@@ -1190,6 +1240,32 @@ describe('South Service', () => {
 
       const itemDTO = toSouthConnectorItemDTO(itemWithoutGroup, testData.south.list[0].type);
       expect(itemDTO.group).toBeNull();
+    });
+  });
+
+  describe('copySouthItemCommandToSouthItemEntity', () => {
+    it('should use default value for retrieveSecretsFromSouth when undefined is passed', async () => {
+      const southItemEntity = {} as SouthConnectorItemEntity<SouthItemSettings>;
+      const command: SouthConnectorItemCommandDTO = {
+        ...testData.south.itemCommand,
+        id: 'testItemId'
+      };
+
+      // Pass undefined for retrieveSecretsFromSouth to exercise the default value (retrieveSecretsFromSouth = false)
+      await copySouthItemCommandToSouthItemEntity(
+        southItemEntity,
+        command,
+        null,
+        testData.south.list[0].type,
+        testData.scanMode.list,
+        undefined, // retrieveSecretsFromSouth - should default to false
+        undefined // southItemGroupRepository
+      );
+
+      // When retrieveSecretsFromSouth is false (default) and command.id is truthy, id should be set to command.id
+      expect(southItemEntity.id).toBe('testItemId');
+      expect(southItemEntity.name).toBe(testData.south.itemCommand.name);
+      expect(southItemEntity.enabled).toBe(testData.south.itemCommand.enabled);
     });
   });
 });

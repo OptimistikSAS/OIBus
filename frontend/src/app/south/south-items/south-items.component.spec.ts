@@ -700,7 +700,8 @@ describe('SouthItemsComponent CSV Import Tests', () => {
           settings: item.settings,
           scanModeId: item.scanMode.id,
           scanModeName: null,
-          groupId: null
+          groupId: null,
+          groupName: null
         })) as any
       );
       expect(notificationService.success).toHaveBeenCalledWith('south.items.import.imported');

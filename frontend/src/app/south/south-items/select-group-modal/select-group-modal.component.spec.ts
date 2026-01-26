@@ -6,7 +6,7 @@ import { SelectGroupModalComponent } from './select-group-modal.component';
 import { SouthItemGroupDTO } from '../../../../../../backend/shared/model/south-connector.model';
 import { ModalService } from '../../../shared/modal.service';
 import { EditSouthItemGroupModalComponent } from '../edit-south-item-group-modal/edit-south-item-group-modal.component';
-import { of, throwError } from 'rxjs';
+import { of, throwError, EMPTY } from 'rxjs';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
 import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
 
@@ -69,7 +69,7 @@ describe('SelectGroupModalComponent', () => {
     TestBed.createComponent(DefaultValidationErrorsComponent).detectChanges();
 
     tester = new SelectGroupModalComponentTester();
-    tester.componentInstance.prepare(groups, 'southId1', testData.scanMode.list, testData.south.manifest);
+    tester.componentInstance.prepare([...groups], 'southId1', testData.scanMode.list, testData.south.manifest);
     await tester.change();
   });
 
@@ -123,13 +123,7 @@ describe('SelectGroupModalComponent', () => {
       componentInstance: {
         prepareForCreation: jasmine.createSpy('prepareForCreation')
       },
-      result: of({
-        id: 'newGroup',
-        name: 'New Group',
-        scanMode: testData.scanMode.list[0],
-        shareTrackedInstant: false,
-        overlap: null
-      } as SouthItemGroupDTO)
+      result: EMPTY
     };
     modalService.open.and.returnValue(mockModalRef as any);
 
@@ -140,7 +134,8 @@ describe('SelectGroupModalComponent', () => {
       'southId1',
       testData.scanMode.list,
       testData.south.manifest,
-      groups
+      groups,
+      false // inMemoryMode
     );
   });
 

@@ -724,7 +724,7 @@ const copySouthConnectorCommandToSouthEntity = async (
   );
 };
 
-const copySouthItemCommandToSouthItemEntity = async (
+export const copySouthItemCommandToSouthItemEntity = async (
   southItemEntity: SouthConnectorItemEntity<SouthItemSettings>,
   command: SouthConnectorItemCommandDTO,
   currentSettings: SouthConnectorItemEntity<SouthItemSettings> | null,

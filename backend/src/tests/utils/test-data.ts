@@ -628,7 +628,8 @@ const southConnectorCommand: SouthConnectorCommandDTO = {
       },
       scanModeId: scanModes[1].id,
       scanModeName: null,
-      groupId: null
+      groupId: null,
+      groupName: null
     }
   ]
 };
@@ -644,7 +645,8 @@ const southConnectorItemCommand: SouthConnectorItemCommandDTO = {
     preserveFiles: true,
     ignoreModifiedDate: false
   },
-  groupId: null
+  groupId: null,
+  groupName: null
 };
 const itemTestingSettings: SouthConnectorItemTestingSettings = {
   history: {

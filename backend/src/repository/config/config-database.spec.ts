@@ -249,6 +249,7 @@ describe('Repository with populated database', () => {
         (generateRandomId as jest.Mock).mockReturnValueOnce(element.id);
       }
       repository = new TransformerRepository(database);
+      jest.resetAllMocks();
     });
 
     it('should properly find all transformers', () => {
