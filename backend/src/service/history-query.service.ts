@@ -20,7 +20,7 @@ import SouthService, { southManifestList } from './south.service';
 import NorthService, { northManifestList } from './north.service';
 import LogRepository from '../repository/logs/log.repository';
 import { Page } from '../../shared/model/types';
-import { CacheMetadata, CacheSearchParam, OIBusContent } from '../../shared/model/engine.model';
+import { CacheMetadata, CacheSearchParam, HistoryQueryMetrics, OIBusContent } from '../../shared/model/engine.model';
 import { ScanMode } from '../model/scan-mode.model';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import csv from 'papaparse';
@@ -197,6 +197,10 @@ export default class HistoryQueryService {
 
   getHistoryDataStream(historyId: string): PassThrough | null {
     return this.engine.getHistoryQueryDataStream(historyId);
+  }
+
+  getHistoryMetric(historyId: string): HistoryQueryMetrics | null {
+    return this.engine.getHistoryMetric(historyId);
   }
 
   async testNorth(

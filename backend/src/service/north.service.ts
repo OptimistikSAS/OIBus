@@ -32,7 +32,13 @@ import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-
 import DataStreamEngine from '../engine/data-stream-engine';
 import { PassThrough } from 'node:stream';
 import { ReadStream } from 'node:fs';
-import { CacheMetadata, CacheMetadataSource, CacheSearchParam, OIBusSetpointContent } from '../../shared/model/engine.model';
+import {
+  CacheMetadata,
+  CacheMetadataSource,
+  CacheSearchParam,
+  NorthConnectorMetrics,
+  OIBusSetpointContent
+} from '../../shared/model/engine.model';
 import TransformerService, { toTransformerDTO } from './transformer.service';
 import { toScanModeDTO } from './scan-mode.service';
 import { buildNorth } from '../north/north-connector-factory';
@@ -216,6 +222,10 @@ export default class NorthService {
 
   getNorthDataStream(northId: string): PassThrough | null {
     return this.engine.getNorthDataStream(northId);
+  }
+
+  getNorthMetric(northId: string): NorthConnectorMetrics | null {
+    return this.engine.getNorthMetric(northId);
   }
 
   async testNorth(northId: string, northType: OIBusNorthType, settingsToTest: NorthSettings): Promise<void> {
