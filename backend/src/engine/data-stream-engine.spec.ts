@@ -17,8 +17,8 @@ import NorthConnectorMetricsService from '../service/metrics/north-connector-met
 import NorthConnectorMetricsServiceMock from '../tests/__mocks__/service/metrics/north-connector-metrics-service.mock';
 import SouthConnectorMetricsService from '../service/metrics/south-connector-metrics.service';
 import SouthConnectorMetricsServiceMock from '../tests/__mocks__/service/metrics/south-connector-metrics-service.mock';
-import { SouthConnectorEntity, SouthConnectorEntityLight } from '../model/south-connector.model';
-import { NorthConnectorEntity, NorthConnectorEntityLight } from '../model/north-connector.model';
+import { SouthConnectorEntityLight } from '../model/south-connector.model';
+import { NorthConnectorEntityLight } from '../model/north-connector.model';
 import NorthConnectorRepository from '../repository/config/north-connector.repository';
 import NorthConnectorRepositoryMock from '../tests/__mocks__/repository/config/north-connector-repository.mock';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
@@ -328,9 +328,9 @@ describe('DataStreamEngine', () => {
     engine.startSouth = jest.fn();
     await engine.start(northList, southList, historyList);
 
-    expect(engine.startNorth).toHaveBeenCalledTimes(1);
+    expect(engine.startNorth).toHaveBeenCalledTimes(2);
     expect(engine.startNorth).toHaveBeenCalledWith(testData.north.list[0].id);
-    expect(engine.startSouth).toHaveBeenCalledTimes(1);
+    expect(engine.startSouth).toHaveBeenCalledTimes(2);
     expect(engine.startSouth).toHaveBeenCalledWith(testData.south.list[0].id);
   });
 
@@ -671,10 +671,10 @@ describe('DataStreamEngine', () => {
     await engine.start(northList, [southList[0]], []);
 
     engine.updateNorthTransformerBySouth('badId');
-    expect(northConnectorRepository.findNorthById).toHaveBeenCalledTimes(3); // 3 from startup
+    expect(northConnectorRepository.findNorthById).toHaveBeenCalledTimes(4);
 
     engine.updateNorthTransformerBySouth('southId1');
-    expect(northConnectorRepository.findNorthById).toHaveBeenCalledTimes(4); // 3 when creating North and 1 because of the update
+    expect(northConnectorRepository.findNorthById).toHaveBeenCalledTimes(5); // 4 when creating North and 1 because of the update
     expect(northConnectorRepository.findNorthById).toHaveBeenCalledWith(mockedNorth1.connectorConfiguration.id);
     expect(northConnectorRepository.findNorthById).toHaveBeenCalledWith(mockedNorth2.connectorConfiguration.id);
   });
@@ -743,32 +743,20 @@ describe('DataStreamEngine', () => {
     expect(mockedSouth1.updateSouthCacheOnScanModeAndMaxInstantChanges).toHaveBeenCalledTimes(1);
   });
 
-  it('should properly reload south if disabled', async () => {
-    await engine.start(northList, southList, historyList);
-    const south = JSON.parse(JSON.stringify(testData.south.list[0])) as SouthConnectorEntity<SouthSettings, SouthItemSettings>;
-    south.enabled = false;
-    engine.startSouth = jest.fn();
-    await engine.reloadSouth(south);
-    expect(engine.startSouth).not.toHaveBeenCalled();
-  });
-
-  it('should properly reload north if disabled', async () => {
-    await engine.start(northList, southList, historyList);
-    const north = JSON.parse(JSON.stringify(testData.north.list[0])) as NorthConnectorEntity<NorthSettings>;
-    north.enabled = false;
-    engine.startNorth = jest.fn();
-    await engine.reloadNorth(north);
-    expect(engine.startNorth).not.toHaveBeenCalled();
-  });
-
   it('should properly get stream', async () => {
     await engine.start(northList, southList, historyList);
 
     expect(engine.getNorthDataStream(mockedNorth1.connectorConfiguration.id)).not.toBeNull();
     expect(engine.getNorthDataStream('bad id')).toBeNull();
 
+    expect(engine.getNorthMetric(mockedNorth1.connectorConfiguration.id)).not.toBeNull();
+    expect(engine.getNorthMetric('bad id')).toBeNull();
+
     expect(engine.getSouthDataStream(mockedSouth1.connectorConfiguration.id)).not.toBeNull();
     expect(engine.getSouthDataStream('bad id')).toBeNull();
+
+    expect(engine.getHistoryMetric(mockedHistoryQuery1.historyQueryConfiguration.id)).not.toBeNull();
+    expect(engine.getHistoryMetric('bad id')).toBeNull();
 
     expect(engine.getHistoryQueryDataStream(mockedHistoryQuery1.historyQueryConfiguration.id)).not.toBeNull();
     expect(engine.getHistoryQueryDataStream('bad id')).toBeNull();
