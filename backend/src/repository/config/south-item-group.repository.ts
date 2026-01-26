@@ -56,6 +56,27 @@ export default class SouthItemGroupRepository {
       .map(result => toSouthItemGroup(result as Record<string, string | number>));
   }
 
+  findByNameAndSouthId(name: string, southId: string): SouthItemGroupEntity | null {
+    const query = `SELECT
+      g.id,
+      g.created_at,
+      g.updated_at,
+      g.name,
+      g.south_id,
+      g.scan_mode_id,
+      g.share_tracked_instant,
+      g.overlap,
+      s.id as scan_mode_id_full,
+      s.name as scan_mode_name,
+      s.description as scan_mode_description,
+      s.cron as scan_mode_cron
+    FROM ${SOUTH_ITEM_GROUPS_TABLE} g
+    JOIN scan_modes s ON g.scan_mode_id = s.id
+    WHERE g.name = ? AND g.south_id = ?;`;
+    const result = this.database.prepare(query).get(name, southId) as Record<string, string | number> | undefined;
+    return result ? toSouthItemGroup(result) : null;
+  }
+
   create(command: Omit<SouthItemGroupEntity, 'id' | 'created_at' | 'updated_at'>, id = generateRandomId(6)): SouthItemGroupEntity {
     const insertQuery = `INSERT INTO ${SOUTH_ITEM_GROUPS_TABLE} (id, name, south_id, scan_mode_id, share_tracked_instant, overlap) VALUES (?, ?, ?, ?, ?, ?);`;
     this.database

@@ -90,6 +90,45 @@ describe('South Item Group Repository', () => {
       expect(groups).toEqual([]);
     });
 
+    it('should find a group by name and south id', () => {
+      (generateRandomId as jest.Mock).mockReturnValueOnce('findByNameGroupId');
+      const groupToCreate: Omit<SouthItemGroupEntity, 'id' | 'created_at' | 'updated_at'> = {
+        name: 'Find By Name Group',
+        southId: testData.south.list[0].id,
+        scanMode: testData.scanMode.list[0],
+        shareTrackedInstant: false,
+        overlap: null
+      };
+      repository.create(groupToCreate);
+
+      const found = repository.findByNameAndSouthId('Find By Name Group', testData.south.list[0].id);
+      expect(found).toBeDefined();
+      expect(found!.id).toEqual('findByNameGroupId');
+      expect(found!.name).toEqual('Find By Name Group');
+      expect(found!.southId).toEqual(testData.south.list[0].id);
+    });
+
+    it('should return null when finding group by name that does not exist', () => {
+      const found = repository.findByNameAndSouthId('Non Existing Group', testData.south.list[0].id);
+      expect(found).toBeNull();
+    });
+
+    it('should return null when finding group by name for different south id', () => {
+      (generateRandomId as jest.Mock).mockReturnValueOnce('differentSouthGroupId');
+      const groupToCreate: Omit<SouthItemGroupEntity, 'id' | 'created_at' | 'updated_at'> = {
+        name: 'Group For Different South',
+        southId: testData.south.list[0].id,
+        scanMode: testData.scanMode.list[0],
+        shareTrackedInstant: false,
+        overlap: null
+      };
+      repository.create(groupToCreate);
+
+      // Try to find with a different south id
+      const found = repository.findByNameAndSouthId('Group For Different South', 'differentSouthId');
+      expect(found).toBeNull();
+    });
+
     it('should create a group with generated id', () => {
       (generateRandomId as jest.Mock).mockReturnValueOnce('generatedGroupId');
 

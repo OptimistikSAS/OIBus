@@ -243,7 +243,8 @@ export class SouthItemsComponent implements OnInit {
               scanModeId: command.scanMode.id,
               scanModeName: null,
               settings: command.settings,
-              groupId: command.group?.id || null
+              groupId: command.group?.id || null,
+              groupName: null
             } as any);
           } else {
             if (command.group && !this.groups.find(g => g.id === command.group!.id)) {
@@ -292,7 +293,8 @@ export class SouthItemsComponent implements OnInit {
               settings: command.settings,
               scanModeName: null,
               scanModeId: command.scanMode.id,
-              groupId: command.group?.id || null
+              groupId: command.group?.id || null,
+              groupName: null
             } as any);
           } else {
             if (command.group && !this.groups.find(g => g.id === command.group!.id)) {
@@ -427,7 +429,7 @@ export class SouthItemsComponent implements OnInit {
   importItems() {
     const modal = this.modalService.open(ImportItemModalComponent, { backdrop: 'static' });
     const expectedHeaders = ['name', 'enabled'];
-    const optionalHeaders: Array<string> = [];
+    const optionalHeaders: Array<string> = ['group'];
     if (this.scanModes().length > 0) {
       expectedHeaders.push('scanMode');
     }
@@ -494,7 +496,7 @@ export class SouthItemsComponent implements OnInit {
                 scanModeId: item.scanMode.id,
                 scanModeName: null,
                 groupId: item.group?.id || null,
-                groupName: item.group?.name || null
+                groupName: item.group?.id ? null : item.group?.name || null
               })) as any
             );
           } else {

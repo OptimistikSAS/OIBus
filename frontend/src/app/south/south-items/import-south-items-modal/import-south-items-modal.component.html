@@ -49,6 +49,7 @@
               @if (scanModes.length > 0) {
                 <th translate="south.items.scan-mode" style="width: 120px"></th>
               }
+              <th translate="south.items.group" style="width: 150px"></th>
               @for (setting of displaySettings; track setting) {
                 <th style="min-width: 150px; max-width: 250px">
                   @if (setting.type === 'string-select') {
@@ -74,6 +75,11 @@
                 @if (item.scanMode.id === 'subscription' && scanModes.length > 0) {
                   <td translate="scan-mode.subscription"></td>
                 }
+                <td class="text-truncate" style="max-width: 150px">
+                  <span [ngbTooltip]="item.group?.name || getGroupNoneText()">
+                    {{ item.group?.name || getGroupNoneText() }}
+                  </span>
+                </td>
                 @for (setting of displaySettings; track setting) {
                   <td class="text-truncate" style="max-width: 250px">
                     <span [ngbTooltip]="getFieldValue(item.settings, setting.key)">

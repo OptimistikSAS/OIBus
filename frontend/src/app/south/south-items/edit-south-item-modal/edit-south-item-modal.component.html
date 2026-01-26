@@ -14,50 +14,48 @@
           </div>
         </div>
         <!-- Group -->
-        @if (southId !== 'create') {
-          <div class="col-3">
-            <div class="form-group">
-              <label for="group" class="form-label" translate="south.items.group"></label>
-              <div ngbDropdown class="d-inline-block w-100">
+        <div class="col-3">
+          <div class="form-group">
+            <label for="group" class="form-label" translate="south.items.group"></label>
+            <div ngbDropdown class="d-inline-block w-100">
+              <button
+                type="button"
+                class="form-select w-100 d-flex justify-content-between align-items-center text-start"
+                id="group"
+                ngbDropdownToggle
+              >
+                <span class="text-truncate">{{ getSelectedGroupName() }}</span>
+              </button>
+              <div ngbDropdownMenu aria-labelledby="group" class="w-100">
+                <button type="button" ngbDropdownItem (click)="selectGroup(null)" translate="south.items.group-none"></button>
+                @for (group of groups; track group.id) {
+                  <div class="d-flex align-items-center justify-content-between px-2 group-row">
+                    <button type="button" ngbDropdownItem (click)="selectGroup(group.id)" class="flex-grow-1 text-start ps-2">
+                      {{ group.name }}
+                    </button>
+                    <div class="d-flex gap-1 pe-2">
+                      <button type="button" class="btn btn-sm btn-link p-0 text-primary" (click)="onEditGroup(group, $event)">
+                        <i class="fa fa-pencil"></i>
+                      </button>
+                      <button type="button" class="btn btn-sm btn-link p-0 text-danger" (click)="onDeleteGroup(group, $event)">
+                        <i class="fa fa-trash"></i>
+                      </button>
+                    </div>
+                  </div>
+                }
+                <div class="dropdown-divider"></div>
                 <button
                   type="button"
-                  class="form-select w-100 d-flex justify-content-between align-items-center text-start"
-                  id="group"
-                  ngbDropdownToggle
-                >
-                  <span class="text-truncate">{{ getSelectedGroupName() }}</span>
-                </button>
-                <div ngbDropdownMenu aria-labelledby="group" class="w-100">
-                  <button type="button" ngbDropdownItem (click)="selectGroup(null)" translate="south.items.group-none"></button>
-                  @for (group of groups; track group.id) {
-                    <div class="d-flex align-items-center justify-content-between px-2 group-row">
-                      <button type="button" ngbDropdownItem (click)="selectGroup(group.id)" class="flex-grow-1 text-start ps-2">
-                        {{ group.name }}
-                      </button>
-                      <div class="d-flex gap-1 pe-2">
-                        <button type="button" class="btn btn-sm btn-link p-0 text-primary" (click)="onEditGroup(group, $event)">
-                          <i class="fa fa-pencil"></i>
-                        </button>
-                        <button type="button" class="btn btn-sm btn-link p-0 text-danger" (click)="onDeleteGroup(group, $event)">
-                          <i class="fa fa-trash"></i>
-                        </button>
-                      </div>
-                    </div>
-                  }
-                  <div class="dropdown-divider"></div>
-                  <button
-                    type="button"
-                    ngbDropdownItem
-                    (click)="selectGroup('__create_new__')"
-                    translate="south.items.create-new-group"
-                  ></button>
-                </div>
+                  ngbDropdownItem
+                  (click)="selectGroup('__create_new__')"
+                  translate="south.items.create-new-group"
+                ></button>
               </div>
-              <input type="hidden" formControlName="groupId" />
-              <val-errors controlName="groupId" />
             </div>
+            <input type="hidden" formControlName="groupId" />
+            <val-errors controlName="groupId" />
           </div>
-        }
+        </div>
         <!-- Scan mode -->
         @if (form.controls.scanMode.enabled) {
           <div class="col-3">

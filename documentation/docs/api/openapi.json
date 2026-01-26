@@ -6925,6 +6925,12 @@
 						"nullable": true,
 						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
 						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
 					}
 				},
 				"required": [
@@ -6934,7 +6940,8 @@
 					"settings",
 					"scanModeId",
 					"scanModeName",
-					"groupId"
+					"groupId",
+					"groupName"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -7027,6 +7034,12 @@
 						"nullable": true,
 						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
 						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
 					}
 				},
 				"required": [
@@ -7036,7 +7049,8 @@
 					"settings",
 					"scanModeId",
 					"scanModeName",
-					"groupId"
+					"groupId",
+					"groupName"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -7129,6 +7143,12 @@
 						"nullable": true,
 						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
 						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
 					}
 				},
 				"required": [
@@ -7138,7 +7158,8 @@
 					"settings",
 					"scanModeId",
 					"scanModeName",
-					"groupId"
+					"groupId",
+					"groupName"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -7231,6 +7252,12 @@
 						"nullable": true,
 						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
 						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
 					}
 				},
 				"required": [
@@ -7240,7 +7267,8 @@
 					"settings",
 					"scanModeId",
 					"scanModeName",
-					"groupId"
+					"groupId",
+					"groupName"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -7333,6 +7361,12 @@
 						"nullable": true,
 						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
 						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
 					}
 				},
 				"required": [
@@ -7342,7 +7376,8 @@
 					"settings",
 					"scanModeId",
 					"scanModeName",
-					"groupId"
+					"groupId",
+					"groupName"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -7435,6 +7470,12 @@
 						"nullable": true,
 						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
 						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
 					}
 				},
 				"required": [
@@ -7444,7 +7485,8 @@
 					"settings",
 					"scanModeId",
 					"scanModeName",
-					"groupId"
+					"groupId",
+					"groupName"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -7537,6 +7579,12 @@
 						"nullable": true,
 						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
 						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
 					}
 				},
 				"required": [
@@ -7546,7 +7594,8 @@
 					"settings",
 					"scanModeId",
 					"scanModeName",
-					"groupId"
+					"groupId",
+					"groupName"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -7639,6 +7688,12 @@
 						"nullable": true,
 						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
 						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
 					}
 				},
 				"required": [
@@ -7648,7 +7703,8 @@
 					"settings",
 					"scanModeId",
 					"scanModeName",
-					"groupId"
+					"groupId",
+					"groupName"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -7741,6 +7797,12 @@
 						"nullable": true,
 						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
 						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
 					}
 				},
 				"required": [
@@ -7750,7 +7812,8 @@
 					"settings",
 					"scanModeId",
 					"scanModeName",
-					"groupId"
+					"groupId",
+					"groupName"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -7843,6 +7906,12 @@
 						"nullable": true,
 						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
 						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
 					}
 				},
 				"required": [
@@ -7852,7 +7921,8 @@
 					"settings",
 					"scanModeId",
 					"scanModeName",
-					"groupId"
+					"groupId",
+					"groupName"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -7945,6 +8015,12 @@
 						"nullable": true,
 						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
 						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
 					}
 				},
 				"required": [
@@ -7954,7 +8030,8 @@
 					"settings",
 					"scanModeId",
 					"scanModeName",
-					"groupId"
+					"groupId",
+					"groupName"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -8047,6 +8124,12 @@
 						"nullable": true,
 						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
 						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
 					}
 				},
 				"required": [
@@ -8056,7 +8139,8 @@
 					"settings",
 					"scanModeId",
 					"scanModeName",
-					"groupId"
+					"groupId",
+					"groupName"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -8149,6 +8233,12 @@
 						"nullable": true,
 						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
 						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
 					}
 				},
 				"required": [
@@ -8158,7 +8248,8 @@
 					"settings",
 					"scanModeId",
 					"scanModeName",
-					"groupId"
+					"groupId",
+					"groupName"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -8251,6 +8342,12 @@
 						"nullable": true,
 						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
 						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
 					}
 				},
 				"required": [
@@ -8260,7 +8357,8 @@
 					"settings",
 					"scanModeId",
 					"scanModeName",
-					"groupId"
+					"groupId",
+					"groupName"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -8353,6 +8451,12 @@
 						"nullable": true,
 						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
 						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
 					}
 				},
 				"required": [
@@ -8362,7 +8466,8 @@
 					"settings",
 					"scanModeId",
 					"scanModeName",
-					"groupId"
+					"groupId",
+					"groupName"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -8455,6 +8560,12 @@
 						"nullable": true,
 						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
 						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
 					}
 				},
 				"required": [
@@ -8464,7 +8575,8 @@
 					"settings",
 					"scanModeId",
 					"scanModeName",
-					"groupId"
+					"groupId",
+					"groupName"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -8557,6 +8669,12 @@
 						"nullable": true,
 						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
 						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
 					}
 				},
 				"required": [
@@ -8566,7 +8684,8 @@
 					"settings",
 					"scanModeId",
 					"scanModeName",
-					"groupId"
+					"groupId",
+					"groupName"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -8659,6 +8778,12 @@
 						"nullable": true,
 						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
 						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
 					}
 				},
 				"required": [
@@ -8668,7 +8793,8 @@
 					"settings",
 					"scanModeId",
 					"scanModeName",
-					"groupId"
+					"groupId",
+					"groupName"
 				],
 				"type": "object",
 				"additionalProperties": false
