@@ -12,6 +12,7 @@ export default jest.fn().mockImplementation(() => ({
   start: jest.fn(),
   stop: jest.fn(),
   getNorthDataStream: jest.fn(),
+  getNorthMetric: jest.fn(),
   testNorth: jest.fn(),
   addOrEditTransformer: jest.fn(),
   removeTransformer: jest.fn(),
