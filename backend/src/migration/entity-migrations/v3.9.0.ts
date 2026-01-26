@@ -13,19 +13,19 @@ export async function up(knex: Knex): Promise<void> {
 }
 
 async function createSouthItemGroupsTable(knex: Knex): Promise<void> {
-  await knex.schema.createTable(SOUTH_ITEM_GROUPS_TABLE, table => {
-    table.uuid('id').primary();
-    table.datetime('created_at').notNullable().defaultTo(knex.fn.now());
-    table.datetime('updated_at').notNullable().defaultTo(knex.fn.now());
-    table.string('name', 255).notNullable();
-    table.uuid('south_id').notNullable();
-    table.foreign('south_id').references('id').inTable(SOUTH_CONNECTORS_TABLE).onDelete('CASCADE');
-    table.uuid('scan_mode_id').notNullable();
-    table.foreign('scan_mode_id').references('id').inTable(SCAN_MODES_TABLE);
-    table.boolean('share_tracked_instant').notNullable().defaultTo(false);
-    table.integer('overlap').nullable();
-    table.unique(['name', 'south_id']);
-  });
+  await knex.schema.raw(`CREATE TABLE ${SOUTH_ITEM_GROUPS_TABLE} (
+    id char(36) PRIMARY KEY,
+    created_at datetime DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')) NOT NULL,
+    updated_at datetime DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')) NOT NULL,
+    name varchar(255) NOT NULL,
+    south_id char(36) NOT NULL,
+    scan_mode_id char(36) NOT NULL,
+    share_tracked_instant boolean NOT NULL DEFAULT 0,
+    overlap integer,
+    UNIQUE (name, south_id),
+    FOREIGN KEY (south_id) REFERENCES ${SOUTH_CONNECTORS_TABLE}(id) ON DELETE CASCADE,
+    FOREIGN KEY (scan_mode_id) REFERENCES ${SCAN_MODES_TABLE}(id)
+  );`);
 }
 
 async function createGroupItemsTable(knex: Knex): Promise<void> {

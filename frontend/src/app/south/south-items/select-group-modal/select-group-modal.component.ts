@@ -23,6 +23,7 @@ export class SelectGroupModalComponent {
   southId!: string;
   scanModes: Array<ScanModeDTO> = [];
   manifest!: SouthConnectorManifest;
+  inMemoryMode = false;
 
   form: FormGroup<{
     groupId: FormControl<string | null>;
@@ -46,17 +47,24 @@ export class SelectGroupModalComponent {
     this.form.controls.groupId.setValue(groupId);
   }
 
-  prepare(groups: Array<SouthItemGroupDTO>, southId: string, scanModes: Array<ScanModeDTO>, manifest: SouthConnectorManifest) {
+  prepare(
+    groups: Array<SouthItemGroupDTO>,
+    southId: string,
+    scanModes: Array<ScanModeDTO>,
+    manifest: SouthConnectorManifest,
+    inMemoryMode = false
+  ) {
     this.groups = groups;
     this.southId = southId;
     this.scanModes = scanModes;
     this.manifest = manifest;
+    this.inMemoryMode = inMemoryMode;
   }
 
   onCreateNewGroup() {
     const modalRef = this.modalService.open(EditSouthItemGroupModalComponent, { backdrop: 'static' });
     const component: EditSouthItemGroupModalComponent = modalRef.componentInstance;
-    component.prepareForCreation(this.southId, this.scanModes, this.manifest, this.groups);
+    component.prepareForCreation(this.southId, this.scanModes, this.manifest, this.groups, this.inMemoryMode);
 
     modalRef.result.subscribe({
       next: (group: SouthItemGroupDTO) => {

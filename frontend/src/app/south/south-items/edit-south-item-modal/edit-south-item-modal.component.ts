@@ -74,6 +74,7 @@ export class EditSouthItemModalComponent {
   item: SouthConnectorItemDTO | null = null;
   itemList: Array<SouthConnectorItemDTO> = [];
   groups: Array<SouthItemGroupDTO> = [];
+  inMemoryMode = false;
   private previousGroupId: string | null = null;
 
   /** Not every item passed will have an id, but we still need to check for uniqueness.
@@ -127,7 +128,9 @@ export class EditSouthItemModalComponent {
     certificates: Array<CertificateDTO>,
     southId: string,
     southConnectorCommand: SouthConnectorCommandDTO,
-    manifest: SouthConnectorManifest
+    manifest: SouthConnectorManifest,
+    groups: Array<SouthItemGroupDTO>,
+    inMemoryMode = false
   ) {
     this.mode = 'create';
     this.manifest = manifest;
@@ -136,7 +139,8 @@ export class EditSouthItemModalComponent {
     this.itemList = itemList;
     this.scanModes = this.setScanModes(scanModes, this.getScanModeAttribute());
     this.certificates = certificates;
-    this.loadGroups();
+    this.groups = groups;
+    this.inMemoryMode = inMemoryMode;
     this.buildForm();
   }
 
@@ -152,7 +156,9 @@ export class EditSouthItemModalComponent {
     southId: string,
     southConnectorCommand: SouthConnectorCommandDTO,
     manifest: SouthConnectorManifest,
-    tableIndex: number
+    tableIndex: number,
+    groups: Array<SouthItemGroupDTO>,
+    inMemoryMode = false
   ) {
     this.mode = 'edit';
     this.manifest = manifest;
@@ -163,7 +169,8 @@ export class EditSouthItemModalComponent {
     this.scanModes = this.setScanModes(scanModes, this.getScanModeAttribute());
     this.certificates = certificates;
     this.tableIndex = tableIndex;
-    this.loadGroups();
+    this.groups = groups;
+    this.inMemoryMode = inMemoryMode;
     this.buildForm();
   }
 
@@ -177,14 +184,17 @@ export class EditSouthItemModalComponent {
     item: SouthConnectorItemDTO,
     southId: string,
     southConnectorCommand: SouthConnectorCommandDTO,
-    manifest: SouthConnectorManifest
+    manifest: SouthConnectorManifest,
+    groups: Array<SouthItemGroupDTO>,
+    inMemoryMode = false
   ) {
     this.mode = 'copy';
     this.manifest = manifest;
     this.southId = southId;
     this.southConnectorCommand = southConnectorCommand;
     this.itemList = itemList;
-    this.loadGroups();
+    this.groups = groups;
+    this.inMemoryMode = inMemoryMode;
     this.scanModes = this.setScanModes(scanModes, this.getScanModeAttribute());
     this.certificates = certificates;
     this.item = JSON.parse(JSON.stringify(item)) as SouthConnectorItemDTO;
@@ -250,15 +260,7 @@ export class EditSouthItemModalComponent {
     };
   }
 
-  private loadGroups() {
-    if (this.southId !== 'create') {
-      this.southConnectorService.getGroups(this.southId).subscribe(groups => {
-        this.groups = groups;
-      });
-    } else {
-      this.groups = [];
-    }
-  }
+  // Groups are now passed from parent component
 
   private buildForm() {
     this.form = this.fb.group({
@@ -303,7 +305,7 @@ export class EditSouthItemModalComponent {
     event.stopPropagation();
     const modalRef = this.modalService.open(EditSouthItemGroupModalComponent, { backdrop: 'static' });
     const component: EditSouthItemGroupModalComponent = modalRef.componentInstance;
-    component.prepareForEdition(this.southId, this.scanModes, this.manifest, group, this.groups);
+    component.prepareForEdition(this.southId, this.scanModes, this.manifest, group, this.groups, this.inMemoryMode);
 
     modalRef.result.subscribe((updatedGroup: SouthItemGroupDTO) => {
       if (updatedGroup) {
@@ -326,18 +328,27 @@ export class EditSouthItemModalComponent {
         interpolateParams: { name: group.name }
       })
       .subscribe(() => {
-        this.southConnectorService.deleteGroup(this.southId, group.id).subscribe({
-          next: () => {
-            this.groups = this.groups.filter(g => g.id !== group.id);
-            if (this.form!.controls.groupId.value === group.id) {
-              this.form!.controls.groupId.setValue(null);
-            }
-            this.notificationService.success('south.groups.deleted');
-          },
-          error: error => {
-            this.notificationService.error('south.groups.delete-error', { error: error.message });
+        if (this.inMemoryMode) {
+          // In-memory mode: just remove from local array
+          this.groups = this.groups.filter(g => g.id !== group.id);
+          if (this.form!.controls.groupId.value === group.id) {
+            this.form!.controls.groupId.setValue(null);
           }
-        });
+        } else {
+          // Normal mode: delete via API
+          this.southConnectorService.deleteGroup(this.southId, group.id).subscribe({
+            next: () => {
+              this.groups = this.groups.filter(g => g.id !== group.id);
+              if (this.form!.controls.groupId.value === group.id) {
+                this.form!.controls.groupId.setValue(null);
+              }
+              this.notificationService.success('south.groups.deleted');
+            },
+            error: error => {
+              this.notificationService.error('south.groups.delete-error', { error: error.message });
+            }
+          });
+        }
       });
   }
 
@@ -346,7 +357,7 @@ export class EditSouthItemModalComponent {
       // Open the create group modal
       const modalRef = this.modalService.open(EditSouthItemGroupModalComponent, { backdrop: 'static' });
       const component: EditSouthItemGroupModalComponent = modalRef.componentInstance;
-      component.prepareForCreation(this.southId, this.scanModes, this.manifest, this.groups);
+      component.prepareForCreation(this.southId, this.scanModes, this.manifest, this.groups, this.inMemoryMode);
 
       modalRef.result.subscribe({
         next: (group: SouthItemGroupDTO) => {

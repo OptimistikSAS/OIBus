@@ -438,6 +438,15 @@ export interface SouthConnectorItemCommandTypedDTO<IS> {
    * @example "group-123"
    */
   groupId: string | null;
+
+  /**
+   * The name of the group this item belongs to.
+   * Used when importing from CSV where group IDs are not available.
+   * Null when the item is not in any group.
+   *
+   * @example "Production Line A"
+   */
+  groupName: string | null;
 }
 
 /**

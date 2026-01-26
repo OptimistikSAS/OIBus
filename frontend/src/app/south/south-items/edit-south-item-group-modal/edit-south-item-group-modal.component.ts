@@ -42,6 +42,7 @@ export class EditSouthItemGroupModalComponent {
   manifest!: SouthConnectorManifest;
   group: SouthItemGroupDTO | null = null;
   existingGroups: Array<SouthItemGroupDTO> = [];
+  inMemoryMode = false;
 
   form: FormGroup<{
     name: FormControl<string>;
@@ -58,7 +59,8 @@ export class EditSouthItemGroupModalComponent {
     southId: string,
     scanModes: Array<ScanModeDTO>,
     manifest: SouthConnectorManifest,
-    existingGroups: Array<SouthItemGroupDTO>
+    existingGroups: Array<SouthItemGroupDTO>,
+    inMemoryMode = false
   ) {
     this.mode = 'create';
     this.southId = southId;
@@ -66,6 +68,7 @@ export class EditSouthItemGroupModalComponent {
     this.manifest = manifest;
     this.existingGroups = existingGroups;
     this.group = null;
+    this.inMemoryMode = inMemoryMode;
     this.buildForm();
   }
 
@@ -74,7 +77,8 @@ export class EditSouthItemGroupModalComponent {
     scanModes: Array<ScanModeDTO>,
     manifest: SouthConnectorManifest,
     group: SouthItemGroupDTO,
-    existingGroups: Array<SouthItemGroupDTO>
+    existingGroups: Array<SouthItemGroupDTO>,
+    inMemoryMode = false
   ) {
     this.mode = 'edit';
     this.southId = southId;
@@ -82,6 +86,7 @@ export class EditSouthItemGroupModalComponent {
     this.manifest = manifest;
     this.group = group;
     this.existingGroups = existingGroups;
+    this.inMemoryMode = inMemoryMode;
     this.buildForm();
   }
 
@@ -150,6 +155,20 @@ export class EditSouthItemGroupModalComponent {
       shareTrackedInstant: formValue.shareTrackedInstant ?? false,
       overlap: formValue.overlap ?? null
     };
+
+    // Handle in-memory mode (during south connector creation)
+    if (this.inMemoryMode) {
+      const scanMode = this.scanModes.find(s => s.id === formValue.scanMode);
+      const group: SouthItemGroupDTO = {
+        id: this.group?.id || `temp_${Date.now()}`,
+        name: formValue.name!,
+        scanMode: scanMode!,
+        shareTrackedInstant: formValue.shareTrackedInstant ?? false,
+        overlap: formValue.overlap ?? null
+      };
+      this.modal.close(group);
+      return;
+    }
 
     let obs: Observable<SouthItemGroupDTO>;
     if (this.mode === 'create') {

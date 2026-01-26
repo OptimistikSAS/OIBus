@@ -188,6 +188,7 @@ export class SouthItemsComponent implements OnInit {
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
 
     const tableIndex = this.allItems.findIndex(i => i.id === southItem.id || i.name === southItem.name);
+    const inMemoryMode = !this.saveChangesDirectly();
     component.prepareForEdition(
       this.allItems,
       this.scanModes(),
@@ -196,7 +197,9 @@ export class SouthItemsComponent implements OnInit {
       this.southId(),
       this.southConnectorCommand(),
       this.southManifest(),
-      tableIndex
+      tableIndex,
+      this.groups,
+      inMemoryMode
     );
     this.refreshAfterEditionModalClosed(modalRef, southItem);
   }
@@ -211,13 +214,16 @@ export class SouthItemsComponent implements OnInit {
       }
     });
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
+    const inMemoryMode = !this.saveChangesDirectly();
     component.prepareForCreation(
       this.allItems,
       this.scanModes(),
       this.certificates(),
       this.southId(),
       this.southConnectorCommand(),
-      this.southManifest()
+      this.southManifest(),
+      this.groups,
+      inMemoryMode
     );
     this.refreshAfterCreationModalClosed(modalRef);
   }
@@ -350,6 +356,7 @@ export class SouthItemsComponent implements OnInit {
   duplicateItem(item: SouthConnectorItemDTO) {
     const modalRef = this.modalService.open(EditSouthItemModalComponent, { size: 'xl', backdrop: 'static' });
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
+    const inMemoryMode = !this.saveChangesDirectly();
     component.prepareForCopy(
       this.allItems,
       this.scanModes(),
@@ -357,7 +364,9 @@ export class SouthItemsComponent implements OnInit {
       item,
       this.southId(),
       this.southConnectorCommand(),
-      this.southManifest()
+      this.southManifest(),
+      this.groups,
+      inMemoryMode
     );
     this.refreshAfterCreationModalClosed(modalRef);
   }
@@ -484,7 +493,8 @@ export class SouthItemsComponent implements OnInit {
                 settings: item.settings,
                 scanModeId: item.scanMode.id,
                 scanModeName: null,
-                groupId: item.group?.id || null
+                groupId: item.group?.id || null,
+                groupName: item.group?.name || null
               })) as any
             );
           } else {
@@ -678,7 +688,8 @@ export class SouthItemsComponent implements OnInit {
 
     const modalRef = this.modalService.open(SelectGroupModalComponent, { backdrop: 'static' });
     const component: SelectGroupModalComponent = modalRef.componentInstance;
-    component.prepare(this.groups, this.southId(), this.scanModes(), this.southManifest());
+    const inMemoryMode = !this.saveChangesDirectly();
+    component.prepare(this.groups, this.southId(), this.scanModes(), this.southManifest(), inMemoryMode);
 
     modalRef.result.subscribe({
       next: (groupId: string | null) => {
