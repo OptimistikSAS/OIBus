@@ -84,12 +84,10 @@ export class RegisterOibusModalComponent {
       setpoint: [true, Validators.required],
       searchHistoryCacheContent: [true, Validators.required],
       getHistoryCacheFileContent: [true, Validators.required],
-      removeHistoryCacheContent: [true, Validators.required],
-      moveHistoryCacheContent: [true, Validators.required],
+      updateHistoryCacheContent: [true, Validators.required],
       searchNorthCacheContent: [true, Validators.required],
       getNorthCacheFileContent: [true, Validators.required],
-      removeNorthCacheContent: [true, Validators.required],
-      moveNorthCacheContent: [true, Validators.required]
+      updateNorthCacheContent: [true, Validators.required]
     })
   });
   mode: 'register' | 'edit' = 'register';
@@ -183,12 +181,10 @@ export class RegisterOibusModalComponent {
         setpoint: formValue.commandPermissions!.setpoint!,
         searchNorthCacheContent: formValue.commandPermissions!.searchNorthCacheContent!,
         getNorthCacheFileContent: formValue.commandPermissions!.getNorthCacheFileContent!,
-        removeNorthCacheContent: formValue.commandPermissions!.removeNorthCacheContent!,
-        moveNorthCacheContent: formValue.commandPermissions!.moveNorthCacheContent!,
+        updateNorthCacheContent: formValue.commandPermissions!.updateNorthCacheContent!,
         searchHistoryCacheContent: formValue.commandPermissions!.searchHistoryCacheContent!,
         getHistoryCacheFileContent: formValue.commandPermissions!.getHistoryCacheFileContent!,
-        removeHistoryCacheContent: formValue.commandPermissions!.removeHistoryCacheContent!,
-        moveHistoryCacheContent: formValue.commandPermissions!.moveHistoryCacheContent!
+        updateHistoryCacheContent: formValue.commandPermissions!.updateHistoryCacheContent!
       }
     };
 
@@ -270,12 +266,10 @@ export class RegisterOibusModalComponent {
         setpoint: formValue.commandPermissions!.setpoint!,
         searchNorthCacheContent: formValue.commandPermissions!.searchNorthCacheContent!,
         getNorthCacheFileContent: formValue.commandPermissions!.getNorthCacheFileContent!,
-        removeNorthCacheContent: formValue.commandPermissions!.removeNorthCacheContent!,
-        moveNorthCacheContent: formValue.commandPermissions!.moveNorthCacheContent!,
+        updateNorthCacheContent: formValue.commandPermissions!.updateNorthCacheContent!,
         searchHistoryCacheContent: formValue.commandPermissions!.searchHistoryCacheContent!,
         getHistoryCacheFileContent: formValue.commandPermissions!.getHistoryCacheFileContent!,
-        removeHistoryCacheContent: formValue.commandPermissions!.removeHistoryCacheContent!,
-        moveHistoryCacheContent: formValue.commandPermissions!.moveHistoryCacheContent!
+        updateHistoryCacheContent: formValue.commandPermissions!.updateHistoryCacheContent!
       }
     };
     if (this.mode === 'register') {

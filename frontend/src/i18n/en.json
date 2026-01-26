@@ -223,10 +223,8 @@
       "search-history-cache-content": "Search cache content",
       "get-north-cache-file-content": "Get cache file",
       "get-history-cache-file-content": "Get cache file",
-      "remove-north-cache-content": "Remove cache files",
-      "remove-history-cache-content": "Remove cache files",
-      "move-north-cache-content": "Move cache files",
-      "move-history-cache-content": "Move cache files"
+      "update-north-cache-content": "Edit cache",
+      "update-history-cache-content": "Edit cache"
     },
     "oibus-input-data-type": {
       "any": "Files (for all sources)",
