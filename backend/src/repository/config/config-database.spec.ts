@@ -25,7 +25,11 @@ import {
   OIAnalyticsFetchDeleteNorthConnectorCommandDTO,
   OIAnalyticsFetchDeleteScanModeCommandDTO,
   OIAnalyticsFetchDeleteSouthConnectorCommandDTO,
+  OIAnalyticsFetchGetHistoryCacheFileContentCommandDTO,
+  OIAnalyticsFetchGetNorthCacheFileContentCommandDTO,
   OIAnalyticsFetchRestartEngineCommandDTO,
+  OIAnalyticsFetchSearchHistoryCacheContentCommandDTO,
+  OIAnalyticsFetchSearchNorthCacheContentCommandDTO,
   OIAnalyticsFetchSetpointCommandDTO,
   OIAnalyticsFetchTestHistoryQueryNorthConnectionCommandDTO,
   OIAnalyticsFetchTestHistoryQuerySouthConnectionCommandDTO,
@@ -35,9 +39,11 @@ import {
   OIAnalyticsFetchTestSouthItemCommandDTO,
   OIAnalyticsFetchUpdateCertificateCommandDTO,
   OIAnalyticsFetchUpdateEngineSettingsCommandDTO,
+  OIAnalyticsFetchUpdateHistoryCacheContentCommandDTO,
   OIAnalyticsFetchUpdateHistoryQueryCommandDTO,
   OIAnalyticsFetchUpdateHistoryQueryStatusCommandDTO,
   OIAnalyticsFetchUpdateIPFilterCommandDTO,
+  OIAnalyticsFetchUpdateNorthCacheContentCommandDTO,
   OIAnalyticsFetchUpdateNorthConnectorCommandDTO,
   OIAnalyticsFetchUpdateRegistrationSettingsCommandDTO,
   OIAnalyticsFetchUpdateScanModeCommandDTO,
@@ -82,6 +88,7 @@ import JSONToCSVTransformer from '../../transformers/any/json-to-csv/json-to-csv
 import JSONToMQTTTransformer from '../../transformers/any/json-to-mqtt/json-to-mqtt-transformer';
 import CSVToMQTTTransformer from '../../transformers/any/csv-to-mqtt/csv-to-mqtt-transformer';
 import CSVToTimeValuesTransformer from '../../transformers/any/csv-to-time-values/csv-to-time-values-transformer';
+import { CacheSearchParam } from '../../../shared/model/engine.model';
 
 jest.mock('../../service/utils');
 jest.mock('argon2');
@@ -1486,274 +1493,154 @@ describe('Repository with populated database', () => {
     });
 
     it('should properly read search-north-cache-content command from database', () => {
-      const commandId = 'searchNorthCacheContentId';
-      const commandContent = { searchParams: {}, folder: 'cache' as const };
-      database
-        .prepare(
-          `INSERT INTO commands (id, retrieved_date, type, status, ack, target_version, north_connector_id, command_content)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-        .run(
-          commandId,
-          testData.constants.dates.FAKE_NOW,
-          'search-north-cache-content',
-          'RETRIEVED',
-          0,
-          testData.engine.settings.version,
-          'northId1',
-          JSON.stringify(commandContent)
-        );
-
-      expect(repository.findById(commandId)).toEqual({
-        id: commandId,
+      const command: OIAnalyticsFetchSearchNorthCacheContentCommandDTO = {
+        id: 'searchNorthCacheContentId',
+        targetVersion: '3.8.0',
         type: 'search-north-cache-content',
+        northConnectorId: 'northId1',
+        commandContent: { searchParams: {} as CacheSearchParam, maxNumberOfFilesReturned: 1000 }
+      };
+      repository.create(command);
+
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
         status: 'RETRIEVED',
         ack: false,
-        targetVersion: testData.engine.settings.version,
+        targetVersion: command.targetVersion,
         retrievedDate: testData.constants.dates.FAKE_NOW,
         completedDate: null,
         result: null,
-        northConnectorId: 'northId1',
-        commandContent
+        northConnectorId: command.northConnectorId,
+        commandContent: command.commandContent
       });
     });
 
     it('should properly read search-history-cache-content command from database', () => {
-      const commandId = 'searchHistoryCacheContentId';
-      const commandContent = { searchParams: {}, folder: 'archive' as const };
-      database
-        .prepare(
-          `INSERT INTO commands (id, retrieved_date, type, status, ack, target_version, history_id, command_content)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-        .run(
-          commandId,
-          testData.constants.dates.FAKE_NOW,
-          'search-history-cache-content',
-          'RETRIEVED',
-          0,
-          testData.engine.settings.version,
-          'historyId1',
-          JSON.stringify(commandContent)
-        );
-
-      expect(repository.findById(commandId)).toEqual({
-        id: commandId,
+      const command: OIAnalyticsFetchSearchHistoryCacheContentCommandDTO = {
+        id: 'searchHistoryCacheContentId',
+        targetVersion: '3.8.0',
         type: 'search-history-cache-content',
+        historyQueryId: 'historyId1',
+        commandContent: { searchParams: {} as CacheSearchParam, maxNumberOfFilesReturned: 1000 }
+      };
+      repository.create(command);
+
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
         status: 'RETRIEVED',
         ack: false,
-        targetVersion: testData.engine.settings.version,
+        targetVersion: command.targetVersion,
         retrievedDate: testData.constants.dates.FAKE_NOW,
         completedDate: null,
         result: null,
-        historyQueryId: 'historyId1',
-        commandContent
+        historyQueryId: command.historyQueryId,
+        commandContent: command.commandContent
       });
     });
 
     it('should properly read get-north-cache-file-content command from database', () => {
-      const commandId = 'getNorthCacheFileContentId';
-      const commandContent = { folder: 'error' as const, filename: 'file.txt' };
-      database
-        .prepare(
-          `INSERT INTO commands (id, retrieved_date, type, status, ack, target_version, north_connector_id, command_content)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-        .run(
-          commandId,
-          testData.constants.dates.FAKE_NOW,
-          'get-north-cache-file-content',
-          'RETRIEVED',
-          0,
-          testData.engine.settings.version,
-          'northId1',
-          JSON.stringify(commandContent)
-        );
-
-      expect(repository.findById(commandId)).toEqual({
-        id: commandId,
+      const command: OIAnalyticsFetchGetNorthCacheFileContentCommandDTO = {
+        id: 'getNorthCacheFileContentId',
+        targetVersion: '3.8.0',
         type: 'get-north-cache-file-content',
+        northConnectorId: 'northId1',
+        commandContent: { folder: 'error' as const, filename: 'file.txt' }
+      };
+      repository.create(command);
+
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
         status: 'RETRIEVED',
         ack: false,
-        targetVersion: testData.engine.settings.version,
+        targetVersion: command.targetVersion,
         retrievedDate: testData.constants.dates.FAKE_NOW,
         completedDate: null,
         result: null,
-        northConnectorId: 'northId1',
-        commandContent
+        northConnectorId: command.northConnectorId,
+        commandContent: command.commandContent
       });
     });
 
     it('should properly read get-history-cache-file-content command from database', () => {
-      const commandId = 'getHistoryCacheFileContentId';
-      const commandContent = { folder: 'cache' as const, filename: 'file.txt' };
-      database
-        .prepare(
-          `INSERT INTO commands (id, retrieved_date, type, status, ack, target_version, history_id, command_content)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-        .run(
-          commandId,
-          testData.constants.dates.FAKE_NOW,
-          'get-history-cache-file-content',
-          'RETRIEVED',
-          0,
-          testData.engine.settings.version,
-          'historyId1',
-          JSON.stringify(commandContent)
-        );
-
-      expect(repository.findById(commandId)).toEqual({
-        id: commandId,
+      const command: OIAnalyticsFetchGetHistoryCacheFileContentCommandDTO = {
+        id: 'getHistoryCacheFileContentId',
+        targetVersion: '3.8.0',
         type: 'get-history-cache-file-content',
-        status: 'RETRIEVED',
-        ack: false,
-        targetVersion: testData.engine.settings.version,
-        retrievedDate: testData.constants.dates.FAKE_NOW,
-        completedDate: null,
-        result: null,
         historyQueryId: 'historyId1',
-        commandContent
-      });
-    });
-
-    it('should properly read remove-north-cache-content command from database', () => {
-      const commandId = 'removeNorthCacheContentId';
-      const commandContent = { folder: 'cache' as const, metadataFilenameList: ['file1.txt', 'file2.txt'] };
-      database
-        .prepare(
-          `INSERT INTO commands (id, retrieved_date, type, status, ack, target_version, north_connector_id, command_content)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-        .run(
-          commandId,
-          testData.constants.dates.FAKE_NOW,
-          'remove-north-cache-content',
-          'RETRIEVED',
-          0,
-          testData.engine.settings.version,
-          'northId1',
-          JSON.stringify(commandContent)
-        );
-
-      expect(repository.findById(commandId)).toEqual({
-        id: commandId,
-        type: 'remove-north-cache-content',
-        status: 'RETRIEVED',
-        ack: false,
-        targetVersion: testData.engine.settings.version,
-        retrievedDate: testData.constants.dates.FAKE_NOW,
-        completedDate: null,
-        result: null,
-        northConnectorId: 'northId1',
-        commandContent
-      });
-    });
-
-    it('should properly read remove-history-cache-content command from database', () => {
-      const commandId = 'removeHistoryCacheContentId';
-      const commandContent = { folder: 'archive' as const, metadataFilenameList: ['file1.txt'] };
-      database
-        .prepare(
-          `INSERT INTO commands (id, retrieved_date, type, status, ack, target_version, history_id, command_content)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-        .run(
-          commandId,
-          testData.constants.dates.FAKE_NOW,
-          'remove-history-cache-content',
-          'RETRIEVED',
-          0,
-          testData.engine.settings.version,
-          'historyId1',
-          JSON.stringify(commandContent)
-        );
-
-      expect(repository.findById(commandId)).toEqual({
-        id: commandId,
-        type: 'remove-history-cache-content',
-        status: 'RETRIEVED',
-        ack: false,
-        targetVersion: testData.engine.settings.version,
-        retrievedDate: testData.constants.dates.FAKE_NOW,
-        completedDate: null,
-        result: null,
-        historyQueryId: 'historyId1',
-        commandContent
-      });
-    });
-
-    it('should properly read move-north-cache-content command from database', () => {
-      const commandId = 'moveNorthCacheContentId';
-      const commandContent = {
-        originFolder: 'cache' as const,
-        destinationFolder: 'archive' as const,
-        cacheContentList: ['file1.txt', 'file2.txt']
+        commandContent: { folder: 'error' as const, filename: 'file.txt' }
       };
-      database
-        .prepare(
-          `INSERT INTO commands (id, retrieved_date, type, status, ack, target_version, north_connector_id, command_content)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-        .run(
-          commandId,
-          testData.constants.dates.FAKE_NOW,
-          'move-north-cache-content',
-          'RETRIEVED',
-          0,
-          testData.engine.settings.version,
-          'northId1',
-          JSON.stringify(commandContent)
-        );
+      repository.create(command);
 
-      expect(repository.findById(commandId)).toEqual({
-        id: commandId,
-        type: 'move-north-cache-content',
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
         status: 'RETRIEVED',
         ack: false,
-        targetVersion: testData.engine.settings.version,
+        targetVersion: command.targetVersion,
         retrievedDate: testData.constants.dates.FAKE_NOW,
         completedDate: null,
         result: null,
-        northConnectorId: 'northId1',
-        commandContent
+        historyQueryId: command.historyQueryId,
+        commandContent: command.commandContent
       });
     });
 
-    it('should properly read move-history-cache-content command from database', () => {
-      const commandId = 'moveHistoryCacheContentId';
-      const commandContent = {
-        originFolder: 'error' as const,
-        destinationFolder: 'cache' as const,
-        cacheContentList: ['file1.txt']
+    it('should properly read update-north-cache-content command from database', () => {
+      const command: OIAnalyticsFetchUpdateNorthCacheContentCommandDTO = {
+        id: 'updateNorthCacheContentId',
+        targetVersion: '3.8.0',
+        type: 'update-north-cache-content',
+        northConnectorId: 'northId1',
+        commandContent: {
+          cache: { remove: [], move: [] },
+          error: { remove: [], move: [] },
+          archive: { remove: [], move: [] }
+        }
       };
-      database
-        .prepare(
-          `INSERT INTO commands (id, retrieved_date, type, status, ack, target_version, history_id, command_content)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-        .run(
-          commandId,
-          testData.constants.dates.FAKE_NOW,
-          'move-history-cache-content',
-          'RETRIEVED',
-          0,
-          testData.engine.settings.version,
-          'historyId1',
-          JSON.stringify(commandContent)
-        );
+      repository.create(command);
 
-      expect(repository.findById(commandId)).toEqual({
-        id: commandId,
-        type: 'move-history-cache-content',
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
         status: 'RETRIEVED',
         ack: false,
-        targetVersion: testData.engine.settings.version,
+        targetVersion: command.targetVersion,
         retrievedDate: testData.constants.dates.FAKE_NOW,
         completedDate: null,
         result: null,
+        northConnectorId: command.northConnectorId,
+        commandContent: command.commandContent
+      });
+    });
+
+    it('should properly read update-history-cache-content command from database', () => {
+      const command: OIAnalyticsFetchUpdateHistoryCacheContentCommandDTO = {
+        id: 'updateHistoryCacheContentId',
+        targetVersion: '3.8.0',
+        type: 'update-history-cache-content',
         historyQueryId: 'historyId1',
-        commandContent
+        commandContent: {
+          cache: { remove: [], move: [] },
+          error: { remove: [], move: [] },
+          archive: { remove: [], move: [] }
+        }
+      };
+      repository.create(command);
+
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
+        status: 'RETRIEVED',
+        ack: false,
+        targetVersion: command.targetVersion,
+        retrievedDate: testData.constants.dates.FAKE_NOW,
+        completedDate: null,
+        result: null,
+        historyQueryId: command.historyQueryId,
+        commandContent: command.commandContent
       });
     });
   });
@@ -2623,12 +2510,10 @@ describe('Repository with empty database', () => {
           setpoint: true,
           searchHistoryCacheContent: true,
           getHistoryCacheFileContent: true,
-          removeHistoryCacheContent: true,
-          moveHistoryCacheContent: true,
+          updateHistoryCacheContent: true,
           searchNorthCacheContent: true,
           getNorthCacheFileContent: true,
-          removeNorthCacheContent: true,
-          moveNorthCacheContent: true
+          updateNorthCacheContent: true
         }
       });
     });

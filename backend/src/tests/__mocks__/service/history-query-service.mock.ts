@@ -10,6 +10,7 @@ export default jest.fn().mockImplementation(() => ({
   start: jest.fn(),
   pause: jest.fn(),
   getHistoryDataStream: jest.fn(),
+  getHistoryMetric: jest.fn(),
   testNorth: jest.fn(),
   testSouth: jest.fn(),
   testItem: jest.fn(),

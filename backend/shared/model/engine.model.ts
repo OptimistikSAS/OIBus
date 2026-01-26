@@ -440,16 +440,10 @@ export interface RegistrationSettingsDTO extends BaseEntity {
     getHistoryCacheFileContent: boolean;
 
     /**
-     * Permission to remove cache content.
-     * @example true
-     */
-    removeHistoryCacheContent: boolean;
-
-    /**
      * Permission to move cache content.
      * @example true
      */
-    moveHistoryCacheContent: boolean;
+    updateHistoryCacheContent: boolean;
 
     /**
      * Permission to search cache content.
@@ -467,13 +461,7 @@ export interface RegistrationSettingsDTO extends BaseEntity {
      * Permission to remove cache content.
      * @example true
      */
-    removeNorthCacheContent: boolean;
-
-    /**
-     * Permission to move cache content.
-     * @example true
-     */
-    moveNorthCacheContent: boolean;
+    updateNorthCacheContent: boolean;
   };
 }
 
@@ -772,13 +760,7 @@ export interface RegistrationSettingsCommandDTO {
      * Permission to remove cache content.
      * @example true
      */
-    removeHistoryCacheContent: boolean;
-
-    /**
-     * Permission to move cache content.
-     * @example true
-     */
-    moveHistoryCacheContent: boolean;
+    updateHistoryCacheContent: boolean;
 
     /**
      * Permission to search cache content.
@@ -796,13 +778,7 @@ export interface RegistrationSettingsCommandDTO {
      * Permission to remove cache content.
      * @example true
      */
-    removeNorthCacheContent: boolean;
-
-    /**
-     * Permission to move cache content.
-     * @example true
-     */
-    moveNorthCacheContent: boolean;
+    updateNorthCacheContent: boolean;
   };
 }
 

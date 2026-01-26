@@ -85,22 +85,18 @@ async function updateRegistrationSettings(knex: Knex): Promise<void> {
   await knex.schema.alterTable(REGISTRATIONS_TABLE, table => {
     table.boolean('command_search_history_cache_content');
     table.boolean('command_get_history_cache_file_content');
-    table.boolean('command_remove_history_cache_content');
-    table.boolean('command_move_history_cache_content');
+    table.boolean('command_update_history_cache_content');
     table.boolean('command_search_north_cache_content');
     table.boolean('command_get_north_cache_file_content');
-    table.boolean('command_remove_north_cache_content');
-    table.boolean('command_move_north_cache_content');
+    table.boolean('command_update_north_cache_content');
   });
   await knex(REGISTRATIONS_TABLE).update({
     command_search_history_cache_content: true,
     command_get_history_cache_file_content: true,
-    command_remove_history_cache_content: true,
-    command_move_history_cache_content: true,
+    command_update_history_cache_content: true,
     command_search_north_cache_content: true,
     command_get_north_cache_file_content: true,
-    command_remove_north_cache_content: true,
-    command_move_north_cache_content: true
+    command_update_north_cache_content: true
   });
 }
 
