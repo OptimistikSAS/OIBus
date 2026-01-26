@@ -106,7 +106,9 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     }
     this.cacheSizeWarningHasBeenTriggered = false;
     await this.cacheService.start();
-    await this.connect();
+    if (this.isEnabled()) {
+      await this.connect();
+    }
   }
 
   isEnabled(): boolean {

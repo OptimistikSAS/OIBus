@@ -224,8 +224,12 @@ describe('History Query service', () => {
 
   it('should get history query data stream', () => {
     service.getHistoryDataStream(testData.historyQueries.list[0].id);
-
     expect(engine.getHistoryQueryDataStream).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
+  });
+
+  it('should get history query metric', () => {
+    service.getHistoryMetric(testData.historyQueries.list[0].id);
+    expect(engine.getHistoryMetric).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
   });
 
   it('should test north connection in creation mode', async () => {

@@ -92,10 +92,15 @@ describe('NorthConnector', () => {
     expect(north.connectorConfiguration).toEqual(testData.north.list[0]);
   });
 
-  it('should set and get connector configuration', () => {
+  it('should set and get connector configuration', async () => {
     const newConfig = JSON.parse(JSON.stringify(testData.north.list[0]));
     newConfig.name = 'Updated Name';
+    newConfig.enabled = false;
+    north.connect = jest.fn();
     north.connectorConfiguration = newConfig;
+    await north.start();
+    expect(cacheService.start).toHaveBeenCalled();
+    expect(north.connect).not.toHaveBeenCalled();
     expect(north.connectorConfiguration).toEqual(newConfig);
   });
 

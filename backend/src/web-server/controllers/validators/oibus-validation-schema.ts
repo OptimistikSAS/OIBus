@@ -120,12 +120,10 @@ const registrationSchema: Joi.ObjectSchema = Joi.object({
     setpoint: Joi.boolean().required(),
     searchNorthCacheContent: Joi.boolean().required(),
     getNorthCacheFileContent: Joi.boolean().required(),
-    removeNorthCacheContent: Joi.boolean().required(),
-    moveNorthCacheContent: Joi.boolean().required(),
+    updateNorthCacheContent: Joi.boolean().required(),
     searchHistoryCacheContent: Joi.boolean().required(),
     getHistoryCacheFileContent: Joi.boolean().required(),
-    removeHistoryCacheContent: Joi.boolean().required(),
-    moveHistoryCacheContent: Joi.boolean().required()
+    updateHistoryCacheContent: Joi.boolean().required()
   }).required()
 });
 
