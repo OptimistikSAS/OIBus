@@ -6,6 +6,7 @@ import { BaseFolders, Instant } from '../model/types';
 import {
   CacheMetadata,
   CacheSearchParam,
+  HistoryQueryMetrics,
   NorthConnectorMetrics,
   OIBusContent,
   SouthConnectorMetrics
@@ -79,9 +80,7 @@ export default class DataStreamEngine {
     for (const northLight of northConnectorList) {
       try {
         const north = await this.createNorth(northLight.id);
-        if (north.connectorConfiguration.enabled) {
-          await this.startNorth(north.connectorConfiguration.id);
-        }
+        await this.startNorth(north.connectorConfiguration.id);
       } catch (error: unknown) {
         this._logger.error(
           `Error while creating North connector "${northLight.name}" of type "${northLight.type}" (${northLight.id}): ${(error as Error).message}`
@@ -92,9 +91,8 @@ export default class DataStreamEngine {
     for (const southLight of southConnectorList) {
       try {
         const south = await this.createSouth(southLight.id);
-        if (south.connectorConfiguration.enabled) {
-          await this.startSouth(south.connectorConfiguration.id);
-        }
+
+        await this.startSouth(south.connectorConfiguration.id);
       } catch (error: unknown) {
         this._logger.error(
           `Error while creating South connector "${southLight.name}" of type "${southLight.type}" (${southLight.id}): ${(error as Error).message}`
@@ -105,9 +103,7 @@ export default class DataStreamEngine {
     for (const historyLight of historyQueryList) {
       try {
         const historyQuery = await this.createHistoryQuery(historyLight.id);
-        if (historyQuery.historyQueryConfiguration.status === 'RUNNING') {
-          await this.startHistoryQuery(historyQuery.historyQueryConfiguration.id);
-        }
+        await this.startHistoryQuery(historyQuery.historyQueryConfiguration.id);
       } catch (error: unknown) {
         this._logger.error(
           `Error while creating History query "${historyLight.name}" of South type "${historyLight.southType}" and North type "${historyLight.northType}" (${historyLight.id}): ${(error as Error).message}`
@@ -178,8 +174,12 @@ export default class DataStreamEngine {
     return this.northConnectors.get(northId);
   }
 
-  getNorthDataStream(northConnectorId: string): PassThrough | null {
-    return this.northConnectorMetrics.get(northConnectorId)?.stream || null;
+  getNorthDataStream(northId: string): PassThrough | null {
+    return this.northConnectorMetrics.get(northId)?.stream || null;
+  }
+
+  getNorthMetric(northId: string): NorthConnectorMetrics | null {
+    return this.northConnectorMetrics.get(northId)?.metrics || null;
   }
 
   getNorthMetrics(): Record<string, NorthConnectorMetrics> {
@@ -199,9 +199,7 @@ export default class DataStreamEngine {
     const north = this.northConnectors.get(northConnector.id);
     if (north) {
       north.setLogger(this.logger.child({ scopeType: 'north', scopeId: northConnector.id, scopeName: northConnector.name }));
-      if (northConnector.enabled) {
-        await this.startNorth(northConnector.id);
-      }
+      await this.startNorth(northConnector.id);
     }
   }
 
@@ -291,16 +289,14 @@ export default class DataStreamEngine {
     const south = this.southConnectors.get(southConnector.id);
     if (south) {
       if (south.queriesHistory()) {
-        await south.updateSouthCacheOnScanModeAndMaxInstantChanges(
+        south.updateSouthCacheOnScanModeAndMaxInstantChanges(
           south.connectorConfiguration,
           southConnector,
           south.getMaxInstantPerItem(south.connectorConfiguration.settings)
         );
       }
       south.setLogger(this.logger.child({ scopeType: 'south', scopeId: southConnector.id, scopeName: southConnector.name }));
-      if (southConnector.enabled) {
-        await this.startSouth(southConnector.id);
-      }
+      await this.startSouth(southConnector.id);
     }
   }
 
@@ -363,7 +359,7 @@ export default class DataStreamEngine {
         id: configuration.id,
         name: configuration.name,
         description: configuration.description,
-        enabled: true,
+        enabled: configuration.status === 'RUNNING',
         type: configuration.northType,
         settings: configuration.northSettings,
         caching: configuration.caching,
@@ -388,7 +384,7 @@ export default class DataStreamEngine {
         id: configuration.id,
         name: configuration.name,
         description: configuration.description,
-        enabled: true,
+        enabled: configuration.status === 'RUNNING',
         type: configuration.southType,
         settings: configuration.southSettings,
         items: []
@@ -434,8 +430,12 @@ export default class DataStreamEngine {
     });
   }
 
-  getHistoryQueryDataStream(historyQueryId: string): PassThrough | null {
-    return this.historyQueryMetrics.get(historyQueryId)?.stream || null;
+  getHistoryQueryDataStream(historyId: string): PassThrough | null {
+    return this.historyQueryMetrics.get(historyId)?.stream || null;
+  }
+
+  getHistoryMetric(historyId: string): HistoryQueryMetrics | null {
+    return this.historyQueryMetrics.get(historyId)?.metrics || null;
   }
 
   async reloadHistoryQuery(historyQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>, resetCache: boolean) {

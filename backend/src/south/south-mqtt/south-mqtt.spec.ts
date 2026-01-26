@@ -308,7 +308,7 @@ describe('SouthMQTT', () => {
     south.disconnect = jest.fn();
     south['connector'].enabled = false;
 
-    await south.start();
+    await south.connect();
 
     expect(south.disconnect).toHaveBeenCalledTimes(1);
     expect(setTimeoutSpy).not.toHaveBeenCalled();
@@ -318,7 +318,7 @@ describe('SouthMQTT', () => {
     south['connector'].settings.maxNumberOfMessages = 2;
     south.subscribe = jest.fn();
     south.flushMessages = jest.fn();
-    south.start();
+    south.connect();
     await flushPromises();
     mqttStream.emit('connect');
     mqttStream.emit('message', 'myTopic', 'myMessage', { dup: false, qos: 1, retain: false });
@@ -355,7 +355,7 @@ describe('SouthMQTT', () => {
       throw new Error('subscription error');
     });
 
-    south.start();
+    south.connect();
     await flushPromises();
     await south.subscribe(configuration.items);
     expect(logger.error).toHaveBeenCalledWith(`Subscription error: subscription error`);
@@ -377,7 +377,7 @@ describe('SouthMQTT', () => {
       throw new Error('unsubscription error');
     });
 
-    south.start();
+    south.connect();
     await flushPromises();
     await south.unsubscribe(configuration.items);
     expect(logger.error).toHaveBeenCalledWith(`Unsubscription error: unsubscription error`);

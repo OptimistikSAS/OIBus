@@ -81,7 +81,9 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
 
   async start(): Promise<void> {
     this.logger.debug(`South connector ${this.connector.name} enabled. Starting services...`);
-    await this.connect();
+    if (this.isEnabled()) {
+      await this.connect();
+    }
   }
 
   async connect(): Promise<void> {
