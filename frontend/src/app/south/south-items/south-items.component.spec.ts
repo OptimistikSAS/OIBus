@@ -570,7 +570,7 @@ describe('SouthItemsComponent CSV Import Tests', () => {
       const modalRef = (modalService.open as jasmine.Spy).calls.mostRecent().returnValue as { componentInstance: any };
       expect(modalRef.componentInstance.prepare).toHaveBeenCalledWith(
         ['name', 'enabled', 'scanMode', 'settings_objectArray', 'settings_objectSettings', 'settings_objectValue'],
-        [],
+        ['group'],
         [],
         false
       );
@@ -588,7 +588,7 @@ describe('SouthItemsComponent CSV Import Tests', () => {
       const modalRef = (modalService.open as jasmine.Spy).calls.mostRecent().returnValue as { componentInstance: any };
       expect(modalRef.componentInstance.prepare).toHaveBeenCalledWith(
         ['name', 'enabled', 'settings_objectArray', 'settings_objectSettings', 'settings_objectValue'],
-        [],
+        ['group'],
         [],
         false
       );
@@ -871,7 +871,7 @@ describe('SouthItemsComponent CSV Import Tests', () => {
       const modalRef = (modalService.open as jasmine.Spy).calls.mostRecent().returnValue as { componentInstance: any };
       expect(modalRef.componentInstance.prepare).toHaveBeenCalledWith(
         ['name', 'enabled', 'scanMode', 'settings_query', 'settings_timeout', 'settings_enabled'],
-        [],
+        ['group'],
         [],
         false
       );

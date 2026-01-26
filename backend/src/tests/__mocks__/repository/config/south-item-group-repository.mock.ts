@@ -4,6 +4,7 @@
 export default jest.fn().mockImplementation(() => ({
   findById: jest.fn(),
   findBySouthId: jest.fn(),
+  findByNameAndSouthId: jest.fn(),
   findAll: jest.fn(),
   create: jest.fn(),
   update: jest.fn(),

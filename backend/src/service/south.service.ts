@@ -827,7 +827,7 @@ const copySouthConnectorCommandToSouthEntity = async (
   command: SouthConnectorCommandDTO,
   currentSettings: SouthConnectorEntity<SouthSettings, SouthItemSettings> | null,
   scanModes: Array<ScanMode>,
-  retrieveSecretsFromSouth = false,
+  retrieveSecretsFromSouth: boolean,
   southItemGroupRepository?: SouthItemGroupRepository,
   southId?: string
 ): Promise<void> => {
