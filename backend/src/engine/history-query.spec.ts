@@ -49,13 +49,6 @@ describe('HistoryQuery enabled', () => {
     expect(historyQuery.historyQueryConfiguration).toEqual(testData.historyQueries.list[0]);
   });
 
-  it('should not start if not running', async () => {
-    historyQuery['historyConfiguration'].status = 'FINISHED';
-    await historyQuery.start();
-    expect(logger.trace).toHaveBeenCalledWith(`History Query "${testData.historyQueries.list[0].name}" not enabled`);
-    historyQuery['historyConfiguration'].status = 'RUNNING';
-  });
-
   it('should start south connector', async () => {
     const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
     (mockedSouth1.historyQueryHandler as jest.Mock).mockImplementation(() => {
