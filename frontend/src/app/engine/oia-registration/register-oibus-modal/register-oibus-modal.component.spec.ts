@@ -211,12 +211,10 @@ describe('RegisterOibusModalComponent', () => {
         setpoint: true,
         searchHistoryCacheContent: true,
         getHistoryCacheFileContent: true,
-        removeHistoryCacheContent: true,
-        moveHistoryCacheContent: true,
+        updateHistoryCacheContent: true,
         searchNorthCacheContent: true,
         getNorthCacheFileContent: true,
-        removeNorthCacheContent: true,
-        moveNorthCacheContent: true
+        updateNorthCacheContent: true
       }
     };
 
@@ -292,12 +290,10 @@ describe('RegisterOibusModalComponent', () => {
           setpoint: true,
           searchHistoryCacheContent: true,
           getHistoryCacheFileContent: true,
-          removeHistoryCacheContent: true,
-          moveHistoryCacheContent: true,
+          updateHistoryCacheContent: true,
           searchNorthCacheContent: true,
           getNorthCacheFileContent: true,
-          removeNorthCacheContent: true,
-          moveNorthCacheContent: true
+          updateNorthCacheContent: true
         }
       } as RegistrationSettingsDTO,
       'edit'
@@ -362,12 +358,10 @@ describe('RegisterOibusModalComponent', () => {
         setpoint: true,
         searchHistoryCacheContent: true,
         getHistoryCacheFileContent: true,
-        removeHistoryCacheContent: true,
-        moveHistoryCacheContent: true,
+        updateHistoryCacheContent: true,
         searchNorthCacheContent: true,
         getNorthCacheFileContent: true,
-        removeNorthCacheContent: true,
-        moveNorthCacheContent: true
+        updateNorthCacheContent: true
       }
     };
 

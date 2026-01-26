@@ -87,12 +87,10 @@ export interface OIBusUpdateRegistrationSettingsCommand extends BaseOIBusCommand
       setpoint: boolean;
       searchNorthCacheContent: boolean;
       getNorthCacheFileContent: boolean;
-      removeNorthCacheContent: boolean;
-      moveNorthCacheContent: boolean;
+      updateNorthCacheContent: boolean;
       searchHistoryCacheContent: boolean;
       getHistoryCacheFileContent: boolean;
-      removeHistoryCacheContent: boolean;
-      moveHistoryCacheContent: boolean;
+      updateHistoryCacheContent: boolean;
     };
   };
 }
@@ -295,7 +293,7 @@ export interface OIBusSearchNorthCacheContentCommand extends BaseOIBusCommand {
   northConnectorId: string;
   commandContent: {
     searchParams: CacheSearchParam;
-    folder: 'cache' | 'archive' | 'error';
+    maxNumberOfFilesReturned: number;
   };
 }
 
@@ -304,7 +302,7 @@ export interface OIBusSearchHistoryCacheContentCommand extends BaseOIBusCommand 
   historyQueryId: string;
   commandContent: {
     searchParams: CacheSearchParam;
-    folder: 'cache' | 'archive' | 'error';
+    maxNumberOfFilesReturned: number;
   };
 }
 
@@ -326,41 +324,23 @@ export interface OIBusGetHistoryCacheFileContentCommand extends BaseOIBusCommand
   };
 }
 
-export interface OIBusRemoveNorthCacheContentCommand extends BaseOIBusCommand {
-  type: 'remove-north-cache-content';
+export interface OIBusUpdateNorthCacheContentCommand extends BaseOIBusCommand {
+  type: 'update-north-cache-content';
   northConnectorId: string;
   commandContent: {
-    folder: 'cache' | 'archive' | 'error';
-    metadataFilenameList: Array<string>;
+    cache: { remove: Array<string>; move: Array<{ filename: string; to: 'cache' | 'error' | 'archive' }> };
+    error: { remove: Array<string>; move: Array<{ filename: string; to: 'cache' | 'error' | 'archive' }> };
+    archive: { remove: Array<string>; move: Array<{ filename: string; to: 'cache' | 'error' | 'archive' }> };
   };
 }
 
-export interface OIBusRemoveHistoryCacheContentCommand extends BaseOIBusCommand {
-  type: 'remove-history-cache-content';
+export interface OIBusUpdateHistoryCacheContentCommand extends BaseOIBusCommand {
+  type: 'update-history-cache-content';
   historyQueryId: string;
   commandContent: {
-    folder: 'cache' | 'archive' | 'error';
-    metadataFilenameList: Array<string>;
-  };
-}
-
-export interface OIBusMoveNorthCacheContentCommand extends BaseOIBusCommand {
-  type: 'move-north-cache-content';
-  northConnectorId: string;
-  commandContent: {
-    originFolder: 'cache' | 'archive' | 'error';
-    destinationFolder: 'cache' | 'archive' | 'error';
-    cacheContentList: Array<string>;
-  };
-}
-
-export interface OIBusMoveHistoryCacheContentCommand extends BaseOIBusCommand {
-  type: 'move-history-cache-content';
-  historyQueryId: string;
-  commandContent: {
-    originFolder: 'cache' | 'archive' | 'error';
-    destinationFolder: 'cache' | 'archive' | 'error';
-    cacheContentList: Array<string>;
+    cache: { remove: Array<string>; move: Array<{ filename: string; to: 'cache' | 'error' | 'archive' }> };
+    error: { remove: Array<string>; move: Array<{ filename: string; to: 'cache' | 'error' | 'archive' }> };
+    archive: { remove: Array<string>; move: Array<{ filename: string; to: 'cache' | 'error' | 'archive' }> };
   };
 }
 
@@ -402,7 +382,5 @@ export type OIBusCommand =
   | OIBusSearchHistoryCacheContentCommand
   | OIBusGetNorthCacheFileContentCommand
   | OIBusGetHistoryCacheFileContentCommand
-  | OIBusRemoveNorthCacheContentCommand
-  | OIBusRemoveHistoryCacheContentCommand
-  | OIBusMoveNorthCacheContentCommand
-  | OIBusMoveHistoryCacheContentCommand;
+  | OIBusUpdateNorthCacheContentCommand
+  | OIBusUpdateHistoryCacheContentCommand;

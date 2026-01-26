@@ -1354,12 +1354,10 @@ const oIAnalyticsRegistrationRegistered: OIAnalyticsRegistration = {
     setpoint: true,
     searchHistoryCacheContent: true,
     getHistoryCacheFileContent: true,
-    removeHistoryCacheContent: true,
-    moveHistoryCacheContent: true,
+    updateHistoryCacheContent: true,
     searchNorthCacheContent: true,
     getNorthCacheFileContent: true,
-    removeNorthCacheContent: true,
-    moveNorthCacheContent: true
+    updateNorthCacheContent: true
   }
 };
 const oIAnalyticsRegistrationPending: OIAnalyticsRegistration = {
@@ -1419,12 +1417,10 @@ const oIAnalyticsRegistrationPending: OIAnalyticsRegistration = {
     setpoint: true,
     searchHistoryCacheContent: true,
     getHistoryCacheFileContent: true,
-    removeHistoryCacheContent: true,
-    moveHistoryCacheContent: true,
+    updateHistoryCacheContent: true,
     searchNorthCacheContent: true,
     getNorthCacheFileContent: true,
-    removeNorthCacheContent: true,
-    moveNorthCacheContent: true
+    updateNorthCacheContent: true
   }
 };
 const oIAnalyticsRegistrationCommand: OIAnalyticsRegistrationEditCommand = {
@@ -1475,12 +1471,10 @@ const oIAnalyticsRegistrationCommand: OIAnalyticsRegistrationEditCommand = {
     setpoint: true,
     searchHistoryCacheContent: true,
     getHistoryCacheFileContent: true,
-    removeHistoryCacheContent: true,
-    moveHistoryCacheContent: true,
+    updateHistoryCacheContent: true,
     searchNorthCacheContent: true,
     getNorthCacheFileContent: true,
-    removeNorthCacheContent: true,
-    moveNorthCacheContent: true
+    updateNorthCacheContent: true
   }
 };
 
@@ -1710,12 +1704,10 @@ const oIBusCommands: Array<OIBusCommand> = [
         setpoint: true,
         searchHistoryCacheContent: true,
         getHistoryCacheFileContent: true,
-        removeHistoryCacheContent: true,
-        moveHistoryCacheContent: true,
+        updateHistoryCacheContent: true,
         searchNorthCacheContent: true,
         getNorthCacheFileContent: true,
-        removeNorthCacheContent: true,
-        moveNorthCacheContent: true
+        updateNorthCacheContent: true
       }
     }
   }
