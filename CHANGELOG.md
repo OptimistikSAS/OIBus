@@ -1,5 +1,23 @@
 # Changelog
 
+## [3.7.8](https://github.com/OptimistikSAS/OIBus/compare/v3.7.7...v3.7.8) (2026-01-28)
+
+
+### Bug Fixes
+
+* **api-gateway:** add api gateway base endpoint ([6e19baa](https://github.com/OptimistikSAS/OIBus/commit/6e19baa175a2209a6b439b2be3e57ef3e1055464))
+* **api-gateway:** make api gateway base endpoint field a regular input ([7ba15a9](https://github.com/OptimistikSAS/OIBus/commit/7ba15a9c2685b64d4a5f426b4ad3eddbce695e93))
+* **ci:** add signtool with Google Cloud KMS Provider ([181b94d](https://github.com/OptimistikSAS/OIBus/commit/181b94d7d9956b9e0c9fd9b03c4800b7db1f5cc9))
+* **cors:** restrict CORS origin based on environment ([33e06b1](https://github.com/OptimistikSAS/OIBus/commit/33e06b1bce86510a67cf446615d71cb5eb543b7e))
+* **engine:** convert entity timestamps to ISO 8601 format ([0a46ef1](https://github.com/OptimistikSAS/OIBus/commit/0a46ef1098cfe806b2da456a68663423e4801da2))
+* **oianalytics:** connect to oianalytics through api gateway ([6f2e976](https://github.com/OptimistikSAS/OIBus/commit/6f2e9769a2572e09a7cb913e9cb40dabee6ba5f5))
+* **rate-limiting:** added express-rate-limit middleware to API endpoints ([4704af9](https://github.com/OptimistikSAS/OIBus/commit/4704af90477884cd308d5fcd92c4bd8b616098cb))
+* **security:** integrated Helmet with Content Security Policy in web server ([43e152c](https://github.com/OptimistikSAS/OIBus/commit/43e152cb87d74e313ef5df94d7162db580156418))
+* **web-client:** set inlineCritical to false in angular config ([f2f3cf3](https://github.com/OptimistikSAS/OIBus/commit/f2f3cf37b8b62633c8c9632d1bacf1bf6adace88))
+* **web-server:** fix helmet configuration to access OIBus remotely through dns ([acec1ab](https://github.com/OptimistikSAS/OIBus/commit/acec1ab1ac475a6cb240eed3b3e67461b9f560c9))
+* **web-server:** fix helmet configuration to load content remotely ([9035897](https://github.com/OptimistikSAS/OIBus/commit/903589750d144f35fd29f0f4cefe8b457acc079c))
+* **web-server:** increase limit rate ([4ceead0](https://github.com/OptimistikSAS/OIBus/commit/4ceead0da586a62c7f8ee99d1f9e4fd773656503))
+
 ## [3.7.7](https://github.com/OptimistikSAS/OIBus/compare/v3.7.6...v3.7.7) (2025-12-17)
 
 
