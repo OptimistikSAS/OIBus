@@ -182,6 +182,7 @@ export const toOIAnalyticsRegistrationDTO = (registration: OIAnalyticsRegistrati
     proxyUsername: registration.proxyUsername,
     useApiGateway: registration.useApiGateway,
     apiGatewayHeaderKey: registration.apiGatewayHeaderKey,
+    apiGatewayBaseEndpoint: registration.apiGatewayBaseEndpoint,
     acceptUnauthorized: registration.acceptUnauthorized,
     commandRefreshInterval: registration.commandRefreshInterval,
     commandRetryInterval: registration.commandRetryInterval,

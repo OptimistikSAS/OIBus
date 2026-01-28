@@ -6,7 +6,7 @@ import { HTTPRequest } from '../http-request.utils';
 import { encryptionService } from '../encryption.service';
 import { PinoLog } from '../../model/logs.model';
 import { Instant } from '../../model/types';
-import { buildHttpOptions } from '../utils-oianalytics';
+import { buildHttpOptions, getUrl } from '../utils-oianalytics';
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
 
 interface OIAnalyticsLog {
@@ -27,6 +27,7 @@ const LEVEL_FORMAT: Record<string, 'TRACE' | 'DEBUG' | 'INFO' | 'WARN' | 'ERROR'
   '40': 'WARN',
   '50': 'ERROR'
 };
+const LOGS_OIANALYTICS_ENDPOINT = '/api/oianalytics/oibus/logs';
 
 const SCOPE_TYPE_FORMAT: Record<ScopeType, 'SOUTH' | 'NORTH' | 'HISTORY_QUERY' | 'INTERNAL' | 'WEB_SERVER'> = {
   south: 'SOUTH',
@@ -75,7 +76,10 @@ class OianalyticsTransport {
    * Method used to send the log to OIAnalytics
    */
   sendOIALogs = async (): Promise<void> => {
-    const logUrl = new URL('/api/oianalytics/oibus/logs', this.options.registrationSettings.host);
+    const url = getUrl(LOGS_OIANALYTICS_ENDPOINT, this.options.registrationSettings.host, {
+      useApiGateway: this.options.registrationSettings.useApiGateway,
+      apiGatewayBaseEndpoint: this.options.registrationSettings.apiGatewayBaseEndpoint
+    });
     const dataBuffer = JSON.stringify(this.batchLogs);
     this.batchLogs = [];
 
@@ -84,16 +88,16 @@ class OianalyticsTransport {
     (httpOptions.headers! as Record<string, string>)['Content-Type'] = 'application/json';
 
     try {
-      const response = await HTTPRequest(logUrl, httpOptions);
+      const response = await HTTPRequest(url, httpOptions);
       if (response.statusCode !== 200 && response.statusCode !== 201 && response.statusCode !== 204) {
         if (response.statusCode === 401) {
-          console.error(`OIAnalytics authentication error on ${logUrl}: ${response.statusCode} - ${await response.body.text()}`);
+          console.error(`OIAnalytics authentication error on ${url}: ${response.statusCode} - ${await response.body.text()}`);
         } else {
-          console.error(`OIAnalytics fetch error on ${logUrl}: ${response.statusCode} - ${response.statusCode} with payload ${dataBuffer}`);
+          console.error(`OIAnalytics fetch error on ${url}: ${response.statusCode} - ${response.statusCode} with payload ${dataBuffer}`);
         }
       }
     } catch (error) {
-      console.error(`Error when sending logs to ${logUrl}. ${error}`);
+      console.error(`Error when sending logs to ${url}. ${error}`);
     }
   };
 
