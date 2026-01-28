@@ -8380,6 +8380,11 @@
 						"description": "The header key for the API gateway",
 						"example": null
 					},
+					"apiGatewayBaseEndpoint": {
+						"type": "string",
+						"nullable": true,
+						"description": "The base endpoint used by the API gateway"
+					},
 					"acceptUnauthorized": {
 						"type": "boolean",
 						"description": "Whether to accept unauthorized certificates.",
@@ -8580,6 +8585,7 @@
 					"proxyUsername",
 					"useApiGateway",
 					"apiGatewayHeaderKey",
+					"apiGatewayBaseEndpoint",
 					"acceptUnauthorized",
 					"commandRefreshInterval",
 					"commandRetryInterval",
@@ -8636,6 +8642,11 @@
 						"nullable": true,
 						"description": "The header value (a secret) used for the API gateway",
 						"example": null
+					},
+					"apiGatewayBaseEndpoint": {
+						"type": "string",
+						"nullable": true,
+						"description": "The base endpoint used by the API gateway"
 					},
 					"acceptUnauthorized": {
 						"type": "boolean",
@@ -8870,6 +8881,7 @@
 					"useApiGateway",
 					"apiGatewayHeaderKey",
 					"apiGatewayHeaderValue",
+					"apiGatewayBaseEndpoint",
 					"acceptUnauthorized",
 					"commandRefreshInterval",
 					"commandRetryInterval",

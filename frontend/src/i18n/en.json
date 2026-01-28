@@ -378,6 +378,7 @@
       "use-api-gateway": "Use API Gateway",
       "api-gateway-header-key": "Header Key",
       "api-gateway-header-value": "Secret Header Value",
+      "api-gateway-base-endpoint": "Base endpoint",
       "register": "Register",
       "saved": "Registration settings saved",
       "unregister": "Unregister",

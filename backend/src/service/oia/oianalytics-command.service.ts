@@ -564,6 +564,7 @@ export default class OIAnalyticsCommandService {
       useApiGateway: registration.useApiGateway,
       apiGatewayHeaderKey: registration.apiGatewayHeaderKey,
       apiGatewayHeaderValue: '', // Won't update secret in editConnectionSettings method
+      apiGatewayBaseEndpoint: registration.apiGatewayBaseEndpoint,
       acceptUnauthorized: registration.acceptUnauthorized,
       commandRefreshInterval: command.commandContent.commandRefreshInterval,
       commandRetryInterval: command.commandContent.commandRetryInterval,

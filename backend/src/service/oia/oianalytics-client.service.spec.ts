@@ -3,7 +3,7 @@ import OIAnalyticsClient from './oianalytics-client.service';
 import { generateRandomId } from '../utils';
 import { HTTPRequest } from '../http-request.utils';
 import { createMockResponse } from '../../tests/__mocks__/undici.mock';
-import { buildHttpOptions, getHeaders, getProxyOptions } from '../utils-oianalytics';
+import { buildHttpOptions, getHeaders, getProxyOptions, getUrl } from '../utils-oianalytics';
 import fs from 'node:fs/promises';
 
 // Mock dependencies
@@ -30,6 +30,7 @@ describe('OIAnalytics Client', () => {
     (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(200));
     (buildHttpOptions as jest.Mock).mockImplementation(method => ({ ...mockHttpOptions, method }));
     (generateRandomId as jest.Mock).mockReturnValue('123ABC');
+    (getUrl as jest.Mock).mockImplementation((endpoint, host) => new URL(endpoint, host));
 
     service = new OIAnalyticsClient();
   });

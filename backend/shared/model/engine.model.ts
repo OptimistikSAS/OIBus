@@ -238,6 +238,12 @@ export interface RegistrationSettingsDTO extends BaseEntity {
   apiGatewayHeaderKey: string | null;
 
   /**
+   * The base endpoint used by the API gateway
+   * @example /oianalytics
+   */
+  apiGatewayBaseEndpoint: string | null;
+
+  /**
    * Whether to accept unauthorized certificates.
    * @example false
    */
@@ -475,6 +481,12 @@ export interface RegistrationSettingsCommandDTO {
    * @example null
    */
   apiGatewayHeaderValue: string | null;
+
+  /**
+   * The base endpoint used by the API gateway
+   * @example /oianalytics
+   */
+  apiGatewayBaseEndpoint: string | null;
 
   /**
    * Whether to accept unauthorized certificates.

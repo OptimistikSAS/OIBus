@@ -200,6 +200,17 @@ export const buildHttpOptions = async (
   };
 };
 
+export const getUrl = (
+  targetEndpoint: string,
+  host: string,
+  apiGateway: { useApiGateway: boolean; apiGatewayBaseEndpoint: string | null }
+): URL => {
+  if (apiGateway.useApiGateway && apiGateway.apiGatewayBaseEndpoint) {
+    return new URL(apiGateway.apiGatewayBaseEndpoint + targetEndpoint, host);
+  }
+  return new URL(targetEndpoint, host);
+};
+
 /**
  * Parse data from OIAnalytics time values API
  * check data from OIAnalytics API for result of

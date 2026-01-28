@@ -14,7 +14,7 @@ import CertificateRepository from '../../repository/config/certificate.repositor
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import { OIBusError } from '../../model/engine.model';
 import CacheService from '../../service/cache/cache.service';
-import { buildHttpOptions, getHost } from '../../service/utils-oianalytics';
+import { buildHttpOptions, getHost, getUrl } from '../../service/utils-oianalytics';
 
 /**
  * Class NorthOIAnalytics - Send files to a POST Multipart HTTP request and values as JSON payload
@@ -42,12 +42,15 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
       this.connector.settings.timeout * 1000,
       this.certificateRepository
     );
-    const host = getHost(this.connector.settings.useOiaModule, registrationSettings, this.connector.settings.specificSettings);
-    const requestUrl = new URL('/api/optimistik/oibus/status', host);
+    const url = getUrl(
+      '/api/optimistik/oibus/status',
+      getHost(this.connector.settings.useOiaModule, registrationSettings, this.connector.settings.specificSettings),
+      { useApiGateway: registrationSettings.useApiGateway, apiGatewayBaseEndpoint: registrationSettings.apiGatewayBaseEndpoint }
+    );
 
     let response: ReqResponse;
     try {
-      response = await HTTPRequest(requestUrl, httpOptions);
+      response = await HTTPRequest(url, httpOptions);
     } catch (error) {
       throw new Error(`Fetch error ${error}`);
     }
@@ -85,19 +88,22 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
       this.certificateRepository
     );
     (httpOptions.headers! as Record<string, string>)['Content-Type'] = 'application/json';
-    const host = getHost(this.connector.settings.useOiaModule, registrationSettings, this.connector.settings.specificSettings);
     const endpoint = this.connector.settings.compress
       ? '/api/oianalytics/oibus/time-values/compressed'
       : '/api/oianalytics/oibus/time-values';
-    const valuesUrl = new URL(endpoint, host);
+    const url = getUrl(
+      endpoint,
+      getHost(this.connector.settings.useOiaModule, registrationSettings, this.connector.settings.specificSettings),
+      { useApiGateway: registrationSettings.useApiGateway, apiGatewayBaseEndpoint: registrationSettings.apiGatewayBaseEndpoint }
+    );
     httpOptions.body = this.connector.settings.compress ? zlib.gzipSync(JSON.stringify(values)) : JSON.stringify(values);
     httpOptions.query = { dataSourceId: this.connector.name };
 
     let response: ReqResponse;
     try {
-      response = await HTTPRequest(valuesUrl, httpOptions);
+      response = await HTTPRequest(url, httpOptions);
     } catch (fetchError) {
-      throw new OIBusError(`Fail to reach values endpoint ${valuesUrl}. ${fetchError}`, true);
+      throw new OIBusError(`Fail to reach values endpoint ${url}. ${fetchError}`, true);
     }
 
     if (!response.ok) {
@@ -143,22 +149,24 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
       this.connector.settings.timeout * 1000,
       this.certificateRepository
     );
-    const host = getHost(this.connector.settings.useOiaModule, registrationSettings, this.connector.settings.specificSettings);
-    const endpoint = '/api/oianalytics/file-uploads';
-    const fileUrl = new URL(endpoint, host);
+    const url = getUrl(
+      '/api/oianalytics/file-uploads',
+      getHost(this.connector.settings.useOiaModule, registrationSettings, this.connector.settings.specificSettings),
+      { useApiGateway: registrationSettings.useApiGateway, apiGatewayBaseEndpoint: registrationSettings.apiGatewayBaseEndpoint }
+    );
     httpOptions.body = body;
     httpOptions.query = { dataSourceId: this.connector.name };
     httpOptions.headers = { ...httpOptions.headers, ...body.getHeaders() };
     let response: ReqResponse;
     try {
-      response = await HTTPRequest(fileUrl, httpOptions);
+      response = await HTTPRequest(url, httpOptions);
       readStream.close();
       if (this.connector.settings.compress && ext !== '.gz') {
         // Remove only the compressed file. The uncompressed file will be removed by north connector logic
         await fs.unlink(fileToSend);
       }
     } catch (fetchError) {
-      throw new OIBusError(`Fail to reach file endpoint ${fileUrl}. ${fetchError}`, true);
+      throw new OIBusError(`Fail to reach file endpoint ${url}. ${fetchError}`, true);
     } finally {
       if (!readStream.closed) {
         readStream.close();

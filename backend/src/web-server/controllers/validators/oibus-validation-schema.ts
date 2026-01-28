@@ -82,6 +82,7 @@ const registrationSchema: Joi.ObjectSchema = Joi.object({
   useApiGateway: Joi.boolean().required(),
   apiGatewayHeaderKey: Joi.string().optional().allow(''),
   apiGatewayHeaderValue: Joi.string().optional().allow(''),
+  apiGatewayBaseEndpoint: Joi.string().optional().allow(''),
   commandRefreshInterval: Joi.number().integer().required().min(1),
   commandRetryInterval: Joi.number().integer().required().min(1),
   messageRetryInterval: Joi.number().integer().required().min(1),

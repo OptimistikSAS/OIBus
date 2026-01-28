@@ -3,7 +3,7 @@ import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/sout
 import { SouthOIAnalyticsItemSettings, SouthOIAnalyticsSettings } from '../../../shared/model/south-settings.model';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import { HTTPRequest } from '../../service/http-request.utils';
-import { buildHttpOptions, getHost, parseData } from '../../service/utils-oianalytics';
+import { buildHttpOptions, getHost, getUrl, parseData } from '../../service/utils-oianalytics';
 import { formatQueryParams, persistResults } from '../../service/utils';
 import { createMockResponse } from '../../tests/__mocks__/undici.mock';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
@@ -79,6 +79,7 @@ describe('SouthOIAnalytics', () => {
     // Default mock implementations for the utils we imported
     (buildHttpOptions as jest.Mock).mockResolvedValue({ headers: {}, auth: {}, timeout: 30000 });
     (getHost as jest.Mock).mockReturnValue('http://mock-host');
+    (getUrl as jest.Mock).mockImplementation((endpoint, host) => new URL(endpoint, host));
     (formatQueryParams as jest.Mock).mockReturnValue({ formatted: 'query' });
     (parseData as jest.Mock).mockReturnValue({ formattedResult: [], maxInstant: '2023-01-01T00:00:00.000Z' });
     (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(testData.oIAnalytics.registration.completed);

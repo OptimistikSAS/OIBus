@@ -80,7 +80,7 @@
     @if (form.controls.useApiGateway.value) {
       <div class="row">
         <!-- API Gateway Header Key -->
-        <div class="col-6">
+        <div class="col-4">
           <div class="form-group">
             <label class="form-label" for="api-gateway-header-key" translate="oia-module.registration.api-gateway-header-key"></label>
             <input formControlName="apiGatewayHeaderKey" id="api-gateway-header-key" class="form-control" />
@@ -88,11 +88,19 @@
           </div>
         </div>
         <!-- API Gateway Header Value -->
-        <div class="col-6">
+        <div class="col-4">
           <div class="form-group">
             <label class="form-label" for="api-gateway-header-value" translate="oia-module.registration.api-gateway-header-value"></label>
             <input type="password" formControlName="apiGatewayHeaderValue" id="api-gateway-header-value" class="form-control" />
             <val-errors controlName="apiGatewayHeaderValue" />
+          </div>
+        </div>
+        <!-- API Gateway Base Endpoint -->
+        <div class="col-4">
+          <div class="form-group">
+            <label class="form-label" for="api-gateway-base-endpoint" translate="oia-module.registration.api-gateway-base-endpoint"></label>
+            <input type="password" formControlName="apiGatewayBaseEndpoint" id="api-gateway-base-endpoint" class="form-control" />
+            <val-errors controlName="apiGatewayBaseEndpoint" />
           </div>
         </div>
       </div>

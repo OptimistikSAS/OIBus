@@ -5,7 +5,8 @@ import {
   getProxyOptions,
   buildHttpOptions,
   parseData,
-  OIATimeValues
+  OIATimeValues,
+  getUrl
 } from './utils-oianalytics';
 import { encryptionService } from './encryption.service';
 import { ClientSecretCredential, ClientCertificateCredential } from '@azure/identity';
@@ -227,6 +228,18 @@ describe('utils-oianalytics', () => {
         timeout: 5000,
         acceptUnauthorized: false
       });
+    });
+  });
+
+  describe('getUrl', () => {
+    it('should return URL without API Gateway', () => {
+      const result = getUrl('/my/endpoint', 'http://host:4200', { useApiGateway: false, apiGatewayBaseEndpoint: null });
+      expect(result).toEqual(new URL('/my/endpoint', 'http://host:4200'));
+    });
+
+    it('should return URL with API Gateway', () => {
+      const result = getUrl('/my/endpoint', 'http://host:4200', { useApiGateway: true, apiGatewayBaseEndpoint: '/oianalytics' });
+      expect(result).toEqual(new URL('/oianalytics/my/endpoint', 'http://host:4200'));
     });
   });
 

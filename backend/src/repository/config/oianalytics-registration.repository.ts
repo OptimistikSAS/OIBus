@@ -18,6 +18,7 @@ export default class OIAnalyticsRegistrationRepository {
       useApiGateway: false,
       apiGatewayHeaderKey: null,
       apiGatewayHeaderValue: null,
+      apiGatewayBaseEndpoint: null,
       commandRefreshInterval: 10,
       commandRetryInterval: 5,
       messageRetryInterval: 5,
@@ -61,7 +62,7 @@ export default class OIAnalyticsRegistrationRepository {
   get(): OIAnalyticsRegistration | null {
     const query =
       `SELECT id, host, token, public_key, private_key, activation_code, status, activation_date, check_url, ` +
-      `activation_expiration_date, use_proxy, proxy_url, proxy_username, proxy_password, accept_unauthorized, use_api_gateway, api_gateway_header_key, api_gateway_header_value, ` +
+      `activation_expiration_date, use_proxy, proxy_url, proxy_username, proxy_password, accept_unauthorized, use_api_gateway, api_gateway_header_key, api_gateway_header_value, api_gateway_base_endpoint, ` +
       `command_refresh_interval, command_retry_interval, message_retry_interval, ` +
       `command_update_version, command_restart_engine, command_regenerate_cipher_keys, command_update_engine_settings, command_update_registration_settings, ` +
       `command_create_scan_mode, command_update_scan_mode, command_delete_scan_mode, ` +
@@ -99,7 +100,7 @@ export default class OIAnalyticsRegistrationRepository {
     const query =
       `UPDATE ${REGISTRATIONS_TABLE} SET host = ?, status = 'PENDING', token = '', activation_code = ?, ` +
       `check_url = ?, activation_expiration_date = ?, use_proxy = ?, proxy_url = ?, proxy_username = ?, proxy_password = ?, ` +
-      `use_api_gateway = ?, api_gateway_header_key = ?, api_gateway_header_value = ?, ` +
+      `use_api_gateway = ?, api_gateway_header_key = ?, api_gateway_header_value = ?, api_gateway_base_endpoint = ?,` +
       `accept_unauthorized = ?, public_key = ?, private_key = ?, command_refresh_interval = ?, command_retry_interval = ?, message_retry_interval = ?, command_update_version = ?, ` +
       `command_restart_engine = ?, command_regenerate_cipher_keys = ?, command_update_engine_settings = ?, command_update_registration_settings = ?, ` +
       `command_create_scan_mode = ?, command_update_scan_mode = ?, command_delete_scan_mode = ?, ` +
@@ -124,6 +125,7 @@ export default class OIAnalyticsRegistrationRepository {
         +command.useApiGateway,
         command.apiGatewayHeaderKey,
         command.apiGatewayHeaderValue,
+        command.apiGatewayBaseEndpoint,
         +command.acceptUnauthorized,
         publicKey,
         privateKey,
@@ -182,7 +184,7 @@ export default class OIAnalyticsRegistrationRepository {
   update(command: Omit<OIAnalyticsRegistrationEditCommand, 'host'>): void {
     const query =
       `UPDATE ${REGISTRATIONS_TABLE} SET ` +
-      `use_proxy = ?, proxy_url = ?, proxy_username = ?, proxy_password = ?, use_api_gateway = ?, api_gateway_header_key = ?, api_gateway_header_value = ?, ` +
+      `use_proxy = ?, proxy_url = ?, proxy_username = ?, proxy_password = ?, use_api_gateway = ?, api_gateway_header_key = ?, api_gateway_header_value = ?, api_gateway_base_endpoint = ?, ` +
       `accept_unauthorized = ?, command_refresh_interval = ?, command_retry_interval = ?, message_retry_interval = ?, ` +
       `command_update_version = ?, command_restart_engine = ?, command_regenerate_cipher_keys = ?, command_update_engine_settings = ?, command_update_registration_settings = ?, ` +
       `command_create_scan_mode = ?, command_update_scan_mode = ?, command_delete_scan_mode = ?, ` +
@@ -203,6 +205,7 @@ export default class OIAnalyticsRegistrationRepository {
         +command.useApiGateway,
         command.apiGatewayHeaderKey,
         command.apiGatewayHeaderValue,
+        command.apiGatewayBaseEndpoint,
         +command.acceptUnauthorized,
         command.commandRefreshInterval,
         command.commandRetryInterval,
@@ -253,7 +256,7 @@ export default class OIAnalyticsRegistrationRepository {
     }
 
     const query =
-      `INSERT INTO ${REGISTRATIONS_TABLE} (id, host, status, use_proxy, proxy_url, proxy_username, proxy_password, use_api_gateway, api_gateway_header_key, api_gateway_header_value, ` +
+      `INSERT INTO ${REGISTRATIONS_TABLE} (id, host, status, use_proxy, proxy_url, proxy_username, proxy_password, use_api_gateway, api_gateway_header_key, api_gateway_header_value, api_gateway_base_endpoint, ` +
       `accept_unauthorized, command_refresh_interval, command_retry_interval, message_retry_interval, command_update_version, ` +
       `command_restart_engine, command_regenerate_cipher_keys, command_update_engine_settings, command_update_registration_settings, ` +
       `command_create_scan_mode, command_update_scan_mode, command_delete_scan_mode, ` +
@@ -264,7 +267,7 @@ export default class OIAnalyticsRegistrationRepository {
       `command_create_south, command_update_south, command_delete_south, command_create_or_update_south_items_from_csv, ` +
       `command_test_south_connection, command_test_south_item, ` +
       `command_create_north, command_update_north, command_delete_north, command_test_north_connection, command_setpoint ` +
-      `) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
+      `) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
     this.database
       .prepare(query)
       .run(
@@ -278,6 +281,7 @@ export default class OIAnalyticsRegistrationRepository {
         +command.useApiGateway,
         command.apiGatewayHeaderKey,
         command.apiGatewayHeaderValue,
+        command.apiGatewayBaseEndpoint,
         +command.acceptUnauthorized,
         command.commandRefreshInterval,
         command.commandRetryInterval,
@@ -336,6 +340,7 @@ export default class OIAnalyticsRegistrationRepository {
       useApiGateway: Boolean(result.use_api_gateway),
       apiGatewayHeaderKey: result.api_gateway_header_key as string,
       apiGatewayHeaderValue: result.api_gateway_header_value as string,
+      apiGatewayBaseEndpoint: result.api_gateway_base_endpoint as string,
       acceptUnauthorized: Boolean(result.accept_unauthorized),
       commandRefreshInterval: result.command_refresh_interval as number,
       commandRetryInterval: result.command_retry_interval as number,
