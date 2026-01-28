@@ -18,6 +18,7 @@ export interface OIAnalyticsRegistration extends BaseEntity {
   useApiGateway: boolean;
   apiGatewayHeaderKey: string | null;
   apiGatewayHeaderValue: string | null;
+  apiGatewayBaseEndpoint: string | null;
   acceptUnauthorized: boolean;
   commandRefreshInterval: number;
   commandRetryInterval: number;
@@ -67,6 +68,7 @@ export interface OIAnalyticsRegistrationEditCommand {
   useApiGateway: boolean;
   apiGatewayHeaderKey: string | null;
   apiGatewayHeaderValue: string | null;
+  apiGatewayBaseEndpoint: string | null;
   acceptUnauthorized: boolean;
   commandRefreshInterval: number;
   commandRetryInterval: number;

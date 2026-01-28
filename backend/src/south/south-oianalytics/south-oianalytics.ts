@@ -12,7 +12,7 @@ import OIAnalyticsRegistrationRepository from '../../repository/config/oianalyti
 import CertificateRepository from '../../repository/config/certificate.repository';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { HTTPRequest, ReqResponse } from '../../service/http-request.utils';
-import { buildHttpOptions, getHost, OIATimeValues, parseData } from '../../service/utils-oianalytics';
+import { buildHttpOptions, getHost, getUrl, OIATimeValues, parseData } from '../../service/utils-oianalytics';
 
 /**
  * Class SouthOIAnalytics - Retrieve data from OIAnalytics REST API
@@ -43,12 +43,15 @@ export default class SouthOIAnalytics
       this.connector.settings.timeout * 1000,
       this.certificateRepository
     );
-    const host = getHost(this.connector.settings.useOiaModule, registrationSettings, this.connector.settings.specificSettings);
-    const requestUrl = new URL('/api/optimistik/oibus/status', host);
+    const url = getUrl(
+      '/api/optimistik/oibus/status',
+      getHost(this.connector.settings.useOiaModule, registrationSettings, this.connector.settings.specificSettings),
+      { useApiGateway: registrationSettings.useApiGateway, apiGatewayBaseEndpoint: registrationSettings.apiGatewayBaseEndpoint }
+    );
 
     let response: ReqResponse;
     try {
-      response = await HTTPRequest(requestUrl, httpOptions);
+      response = await HTTPRequest(url, httpOptions);
     } catch (error) {
       throw new Error(`Fetch error ${error}`);
     }
@@ -137,10 +140,13 @@ export default class SouthOIAnalytics
       this.certificateRepository
     );
     httpOptions.query = formatQueryParams(startTime, endTime, item.settings.queryParams);
-    const host = getHost(this.connector.settings.useOiaModule, registrationSettings, this.connector.settings.specificSettings);
-    const requestUrl = new URL(item.settings.endpoint, host);
-    this.logger.info(`Requesting data from URL "${requestUrl}" and query params "${JSON.stringify(httpOptions.query)}"`);
-    const response = await HTTPRequest(requestUrl, httpOptions);
+    const url = getUrl(
+      item.settings.endpoint,
+      getHost(this.connector.settings.useOiaModule, registrationSettings, this.connector.settings.specificSettings),
+      { useApiGateway: registrationSettings.useApiGateway, apiGatewayBaseEndpoint: registrationSettings.apiGatewayBaseEndpoint }
+    );
+    this.logger.info(`Requesting data from URL "${url}" and query params "${JSON.stringify(httpOptions.query)}"`);
+    const response = await HTTPRequest(url, httpOptions);
     if (!response.ok) {
       throw new Error(`HTTP request failed with status code ${response.statusCode} and message: ${await response.body.text()}`);
     }

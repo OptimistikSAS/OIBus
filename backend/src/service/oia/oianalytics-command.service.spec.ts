@@ -503,6 +503,7 @@ describe('OIAnalytics Command Service', () => {
       useApiGateway: testData.oIAnalytics.registration.completed.useApiGateway,
       apiGatewayHeaderKey: testData.oIAnalytics.registration.completed.apiGatewayHeaderKey,
       apiGatewayHeaderValue: '',
+      apiGatewayBaseEndpoint: testData.oIAnalytics.registration.completed.apiGatewayBaseEndpoint,
       acceptUnauthorized: testData.oIAnalytics.registration.completed.acceptUnauthorized,
       commandRefreshInterval: (testData.oIAnalytics.commands.oIBusList[15] as OIBusUpdateRegistrationSettingsCommand).commandContent
         .commandRefreshInterval,
@@ -573,6 +574,7 @@ describe('OIAnalytics Command Service', () => {
       useApiGateway: registration.useApiGateway,
       apiGatewayHeaderKey: registration.apiGatewayHeaderKey,
       apiGatewayHeaderValue: '',
+      apiGatewayBaseEndpoint: registration.apiGatewayBaseEndpoint,
       acceptUnauthorized: registration.acceptUnauthorized,
       commandRefreshInterval: (testData.oIAnalytics.commands.oIBusList[15] as OIBusUpdateRegistrationSettingsCommand).commandContent
         .commandRefreshInterval,

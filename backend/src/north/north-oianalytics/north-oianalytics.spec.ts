@@ -14,7 +14,7 @@ import { HTTPRequest } from '../../service/http-request.utils';
 import { createMockResponse } from '../../tests/__mocks__/undici.mock';
 import FormData from 'form-data';
 import { OIBusError } from '../../model/engine.model';
-import { buildHttpOptions, getHost } from '../../service/utils-oianalytics';
+import { buildHttpOptions, getHost, getUrl } from '../../service/utils-oianalytics';
 import { compress, filesExists } from '../../service/utils';
 import zlib from 'node:zlib';
 import CacheService from '../../service/cache/cache.service';
@@ -94,6 +94,7 @@ describe('NorthOIAnalytics', () => {
       timeout: 30000
     });
     (getHost as jest.Mock).mockReturnValue('https://mock-host');
+    (getUrl as jest.Mock).mockImplementation((endpoint, host) => new URL(endpoint, host));
     (filesExists as jest.Mock).mockResolvedValue(true);
     (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(200));
     (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(testData.oIAnalytics.registration.completed);

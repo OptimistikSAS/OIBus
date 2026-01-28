@@ -6,7 +6,7 @@ import { OIBusInfo, RegistrationSettingsCommandDTO } from '../../../shared/model
 import { Instant } from '../../../shared/model/types';
 import fs from 'node:fs/promises';
 import { HTTPRequest, ReqOptions } from '../http-request.utils';
-import { buildHttpOptions, getHeaders, getProxyOptions } from '../utils-oianalytics';
+import { buildHttpOptions, getHeaders, getProxyOptions, getUrl } from '../utils-oianalytics';
 
 const OIANALYTICS_TIMEOUT = 30_000;
 const OIANALYTICS_DOWNLOAD_TIMEOUT = 900_000; // 15 minutes
@@ -20,8 +20,11 @@ const DOWNLOAD_UPDATE_OIANALYTICS_ENDPOINT = `/api/oianalytics/oibus/upgrade/ass
 
 export default class OIAnalyticsClient {
   async updateCommandStatus(registrationSettings: OIAnalyticsRegistration, payload: string): Promise<void> {
-    const url = new URL(COMMAND_STATUS_OIANALYTICS_ENDPOINT, registrationSettings.host);
     const httpOptions = await buildHttpOptions('PUT', true, registrationSettings, null, OIANALYTICS_TIMEOUT, null);
+    const url = getUrl(COMMAND_STATUS_OIANALYTICS_ENDPOINT, registrationSettings.host, {
+      useApiGateway: registrationSettings.useApiGateway,
+      apiGatewayBaseEndpoint: registrationSettings.apiGatewayBaseEndpoint
+    });
     (httpOptions.headers! as Record<string, string>)['Content-Type'] = 'application/json';
     httpOptions.body = payload;
 
@@ -35,7 +38,10 @@ export default class OIAnalyticsClient {
     registrationSettings: OIAnalyticsRegistration,
     commands: Array<OIBusCommand>
   ): Promise<Array<OIAnalyticsFetchCommandDTO>> {
-    const url = new URL(RETRIEVE_CANCELLED_COMMANDS_OIANALYTICS_ENDPOINT, registrationSettings.host);
+    const url = getUrl(RETRIEVE_CANCELLED_COMMANDS_OIANALYTICS_ENDPOINT, registrationSettings.host, {
+      useApiGateway: registrationSettings.useApiGateway,
+      apiGatewayBaseEndpoint: registrationSettings.apiGatewayBaseEndpoint
+    });
     const httpOptions = await buildHttpOptions('GET', true, registrationSettings, null, OIANALYTICS_TIMEOUT, null);
     httpOptions.query = { ids: commands.map(command => command.id) };
 
@@ -47,7 +53,10 @@ export default class OIAnalyticsClient {
   }
 
   async retrievePendingCommands(registrationSettings: OIAnalyticsRegistration): Promise<Array<OIAnalyticsFetchCommandDTO>> {
-    const url = new URL(RETRIEVE_PENDING_COMMANDS_OIANALYTICS_ENDPOINT, registrationSettings.host);
+    const url = getUrl(RETRIEVE_PENDING_COMMANDS_OIANALYTICS_ENDPOINT, registrationSettings.host, {
+      useApiGateway: registrationSettings.useApiGateway,
+      apiGatewayBaseEndpoint: registrationSettings.apiGatewayBaseEndpoint
+    });
     const httpOptions = await buildHttpOptions('GET', true, registrationSettings, null, OIANALYTICS_TIMEOUT, null);
 
     const response = await HTTPRequest(url, httpOptions);
@@ -63,7 +72,11 @@ export default class OIAnalyticsClient {
     publicKey: string
   ): Promise<{ redirectUrl: string; expirationDate: Instant; activationCode: string }> {
     const activationCode = generateRandomId(6);
-    const url = new URL(REGISTRATION_OIANALYTICS_ENDPOINT, registration.host);
+    const url = getUrl(REGISTRATION_OIANALYTICS_ENDPOINT, registration.host, {
+      useApiGateway: registration.useApiGateway,
+      apiGatewayBaseEndpoint: registration.apiGatewayBaseEndpoint
+    });
+
     const headers = await getHeaders(true, registration as OIAnalyticsRegistration);
     headers['Content-Type'] = 'application/json';
     const { proxy, acceptUnauthorized } = getProxyOptions(true, registration as OIAnalyticsRegistration, null);
@@ -102,7 +115,10 @@ export default class OIAnalyticsClient {
     if (registrationSettings.checkUrl === null) {
       throw new Error('No check url specified');
     }
-    const url = new URL(registrationSettings.checkUrl, registrationSettings.host);
+    const url = getUrl(registrationSettings.checkUrl, registrationSettings.host, {
+      useApiGateway: registrationSettings.useApiGateway,
+      apiGatewayBaseEndpoint: registrationSettings.apiGatewayBaseEndpoint
+    });
     const headers = await getHeaders(true, registrationSettings);
     headers['Content-Type'] = 'application/json';
     const { proxy, acceptUnauthorized } = getProxyOptions(true, registrationSettings, null);
@@ -123,7 +139,10 @@ export default class OIAnalyticsClient {
   }
 
   async sendConfiguration(registrationSettings: OIAnalyticsRegistration, payload: string): Promise<void> {
-    const url = new URL(SEND_CONFIGURATION_OIANALYTICS_ENDPOINT, registrationSettings.host);
+    const url = getUrl(SEND_CONFIGURATION_OIANALYTICS_ENDPOINT, registrationSettings.host, {
+      useApiGateway: registrationSettings.useApiGateway,
+      apiGatewayBaseEndpoint: registrationSettings.apiGatewayBaseEndpoint
+    });
     const httpOptions = await buildHttpOptions('PUT', true, registrationSettings, null, OIANALYTICS_TIMEOUT, null);
     (httpOptions.headers! as Record<string, string>)['Content-Type'] = 'application/json';
     httpOptions.body = payload;
@@ -135,7 +154,10 @@ export default class OIAnalyticsClient {
   }
 
   async sendHistoryQuery(registrationSettings: OIAnalyticsRegistration, payload: string): Promise<void> {
-    const url = new URL(HISTORY_QUERY_OIANALYTICS_ENDPOINT, registrationSettings.host);
+    const url = getUrl(HISTORY_QUERY_OIANALYTICS_ENDPOINT, registrationSettings.host, {
+      useApiGateway: registrationSettings.useApiGateway,
+      apiGatewayBaseEndpoint: registrationSettings.apiGatewayBaseEndpoint
+    });
     const httpOptions = await buildHttpOptions('PUT', true, registrationSettings, null, OIANALYTICS_TIMEOUT, null);
     (httpOptions.headers! as Record<string, string>)['Content-Type'] = 'application/json';
     httpOptions.body = payload;
@@ -147,7 +169,10 @@ export default class OIAnalyticsClient {
   }
 
   async deleteHistoryQuery(registrationSettings: OIAnalyticsRegistration, historyId: string): Promise<void> {
-    const url = new URL(HISTORY_QUERY_OIANALYTICS_ENDPOINT, registrationSettings.host);
+    const url = getUrl(HISTORY_QUERY_OIANALYTICS_ENDPOINT, registrationSettings.host, {
+      useApiGateway: registrationSettings.useApiGateway,
+      apiGatewayBaseEndpoint: registrationSettings.apiGatewayBaseEndpoint
+    });
     const httpOptions = await buildHttpOptions('DELETE', true, registrationSettings, null, OIANALYTICS_TIMEOUT, null);
     httpOptions.query = { historyId };
 
@@ -158,7 +183,10 @@ export default class OIAnalyticsClient {
   }
 
   async downloadFile(registrationSettings: OIAnalyticsRegistration, assetId: string, filename: string): Promise<void> {
-    const url = new URL(DOWNLOAD_UPDATE_OIANALYTICS_ENDPOINT, registrationSettings.host);
+    const url = getUrl(DOWNLOAD_UPDATE_OIANALYTICS_ENDPOINT, registrationSettings.host, {
+      useApiGateway: registrationSettings.useApiGateway,
+      apiGatewayBaseEndpoint: registrationSettings.apiGatewayBaseEndpoint
+    });
     const httpOptions = await buildHttpOptions('GET', true, registrationSettings, null, OIANALYTICS_DOWNLOAD_TIMEOUT, null);
     httpOptions.query = { assetId };
 

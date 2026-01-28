@@ -2254,6 +2254,7 @@ describe('Repository with empty database', () => {
         useApiGateway: false,
         apiGatewayHeaderKey: null,
         apiGatewayHeaderValue: null,
+        apiGatewayBaseEndpoint: null,
         commandRefreshInterval: 10,
         commandRetryInterval: 5,
         messageRetryInterval: 5,

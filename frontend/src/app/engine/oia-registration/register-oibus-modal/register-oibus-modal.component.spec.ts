@@ -50,6 +50,10 @@ class RegisterOibusModalComponentTester extends ComponentTester<RegisterOibusMod
     return this.input('#api-gateway-header-value')!;
   }
 
+  get apiBaseEndpoint() {
+    return this.input('#api-gateway-base-endpoint')!;
+  }
+
   get commandRefreshInterval() {
     return this.input('#command-refresh-interval')!;
   }
@@ -157,6 +161,7 @@ describe('RegisterOibusModalComponent', () => {
     await tester.useApiGateway.check();
     await tester.apiHeaderKey.fillWith('headerKey');
     await tester.apiHeaderValue.fillWith('headerValue');
+    await tester.apiBaseEndpoint.fillWith('/oianalytics');
     await tester.commandRefreshInterval.fillWith('15');
     await tester.commandRetryInterval.fillWith('10');
     await tester.messageRetryInterval.fillWith('5');
@@ -173,6 +178,7 @@ describe('RegisterOibusModalComponent', () => {
       useApiGateway: true,
       apiGatewayHeaderKey: 'headerKey',
       apiGatewayHeaderValue: 'headerValue',
+      apiGatewayBaseEndpoint: '/oianalytics',
       commandRefreshInterval: 15,
       commandRetryInterval: 10,
       messageRetryInterval: 5,
@@ -246,6 +252,7 @@ describe('RegisterOibusModalComponent', () => {
         useApiGateway: false,
         apiGatewayHeaderKey: null,
         apiGatewayHeaderValue: null,
+        apiGatewayBaseEndpoint: null,
         commandRefreshInterval: 60,
         commandRetryInterval: 5,
         messageRetryInterval: 5,
@@ -289,6 +296,7 @@ describe('RegisterOibusModalComponent', () => {
     await tester.useApiGateway.check();
     await tester.apiHeaderKey.fillWith('headerKey');
     await tester.apiHeaderValue.fillWith('headerValue');
+    await tester.apiBaseEndpoint.fillWith('/oianalytics');
     await tester.change();
     await tester.save.click();
 
@@ -302,6 +310,7 @@ describe('RegisterOibusModalComponent', () => {
       useApiGateway: true,
       apiGatewayHeaderKey: 'headerKey',
       apiGatewayHeaderValue: 'headerValue',
+      apiGatewayBaseEndpoint: '/oianalytics',
       commandRefreshInterval: 60,
       commandRetryInterval: 5,
       messageRetryInterval: 5,
