@@ -17358,50 +17358,125 @@
 					},
 					"commandContent": {
 						"properties": {
-							"newArchiveMetadataFilenameList": {
-								"items": {
-									"type": "string"
+							"archive": {
+								"properties": {
+									"move": {
+										"items": {
+											"properties": {
+												"to": {
+													"type": "string",
+													"enum": [
+														"cache",
+														"error",
+														"archive"
+													]
+												},
+												"filename": {
+													"type": "string"
+												}
+											},
+											"required": [
+												"to",
+												"filename"
+											],
+											"type": "object"
+										},
+										"type": "array"
+									},
+									"remove": {
+										"items": {
+											"type": "string"
+										},
+										"type": "array"
+									}
 								},
-								"type": "array"
+								"required": [
+									"move",
+									"remove"
+								],
+								"type": "object"
 							},
-							"newErrorMetadataFilenameList": {
-								"items": {
-									"type": "string"
+							"error": {
+								"properties": {
+									"move": {
+										"items": {
+											"properties": {
+												"to": {
+													"type": "string",
+													"enum": [
+														"cache",
+														"error",
+														"archive"
+													]
+												},
+												"filename": {
+													"type": "string"
+												}
+											},
+											"required": [
+												"to",
+												"filename"
+											],
+											"type": "object"
+										},
+										"type": "array"
+									},
+									"remove": {
+										"items": {
+											"type": "string"
+										},
+										"type": "array"
+									}
 								},
-								"type": "array"
+								"required": [
+									"move",
+									"remove"
+								],
+								"type": "object"
 							},
-							"newCacheMetadataFilenameList": {
-								"items": {
-									"type": "string"
+							"cache": {
+								"properties": {
+									"move": {
+										"items": {
+											"properties": {
+												"to": {
+													"type": "string",
+													"enum": [
+														"cache",
+														"error",
+														"archive"
+													]
+												},
+												"filename": {
+													"type": "string"
+												}
+											},
+											"required": [
+												"to",
+												"filename"
+											],
+											"type": "object"
+										},
+										"type": "array"
+									},
+									"remove": {
+										"items": {
+											"type": "string"
+										},
+										"type": "array"
+									}
 								},
-								"type": "array"
-							},
-							"originArchiveMetadataFilenameList": {
-								"items": {
-									"type": "string"
-								},
-								"type": "array"
-							},
-							"originErrorMetadataFilenameList": {
-								"items": {
-									"type": "string"
-								},
-								"type": "array"
-							},
-							"originCacheMetadataFilenameList": {
-								"items": {
-									"type": "string"
-								},
-								"type": "array"
+								"required": [
+									"move",
+									"remove"
+								],
+								"type": "object"
 							}
 						},
 						"required": [
-							"newArchiveMetadataFilenameList",
-							"newErrorMetadataFilenameList",
-							"newCacheMetadataFilenameList",
-							"originArchiveMetadataFilenameList",
-							"originErrorMetadataFilenameList",
-							"originCacheMetadataFilenameList"
+							"archive",
+							"error",
+							"cache"
 						],
 						"type": "object"
 					}
@@ -17475,50 +17550,125 @@
 					},
 					"commandContent": {
 						"properties": {
-							"newArchiveMetadataFilenameList": {
-								"items": {
-									"type": "string"
+							"archive": {
+								"properties": {
+									"move": {
+										"items": {
+											"properties": {
+												"to": {
+													"type": "string",
+													"enum": [
+														"cache",
+														"error",
+														"archive"
+													]
+												},
+												"filename": {
+													"type": "string"
+												}
+											},
+											"required": [
+												"to",
+												"filename"
+											],
+											"type": "object"
+										},
+										"type": "array"
+									},
+									"remove": {
+										"items": {
+											"type": "string"
+										},
+										"type": "array"
+									}
 								},
-								"type": "array"
+								"required": [
+									"move",
+									"remove"
+								],
+								"type": "object"
 							},
-							"newErrorMetadataFilenameList": {
-								"items": {
-									"type": "string"
+							"error": {
+								"properties": {
+									"move": {
+										"items": {
+											"properties": {
+												"to": {
+													"type": "string",
+													"enum": [
+														"cache",
+														"error",
+														"archive"
+													]
+												},
+												"filename": {
+													"type": "string"
+												}
+											},
+											"required": [
+												"to",
+												"filename"
+											],
+											"type": "object"
+										},
+										"type": "array"
+									},
+									"remove": {
+										"items": {
+											"type": "string"
+										},
+										"type": "array"
+									}
 								},
-								"type": "array"
+								"required": [
+									"move",
+									"remove"
+								],
+								"type": "object"
 							},
-							"newCacheMetadataFilenameList": {
-								"items": {
-									"type": "string"
+							"cache": {
+								"properties": {
+									"move": {
+										"items": {
+											"properties": {
+												"to": {
+													"type": "string",
+													"enum": [
+														"cache",
+														"error",
+														"archive"
+													]
+												},
+												"filename": {
+													"type": "string"
+												}
+											},
+											"required": [
+												"to",
+												"filename"
+											],
+											"type": "object"
+										},
+										"type": "array"
+									},
+									"remove": {
+										"items": {
+											"type": "string"
+										},
+										"type": "array"
+									}
 								},
-								"type": "array"
-							},
-							"originArchiveMetadataFilenameList": {
-								"items": {
-									"type": "string"
-								},
-								"type": "array"
-							},
-							"originErrorMetadataFilenameList": {
-								"items": {
-									"type": "string"
-								},
-								"type": "array"
-							},
-							"originCacheMetadataFilenameList": {
-								"items": {
-									"type": "string"
-								},
-								"type": "array"
+								"required": [
+									"move",
+									"remove"
+								],
+								"type": "object"
 							}
 						},
 						"required": [
-							"newArchiveMetadataFilenameList",
-							"newErrorMetadataFilenameList",
-							"newCacheMetadataFilenameList",
-							"originArchiveMetadataFilenameList",
-							"originErrorMetadataFilenameList",
-							"originCacheMetadataFilenameList"
+							"archive",
+							"error",
+							"cache"
 						],
 						"type": "object"
 					}
@@ -22328,7 +22478,7 @@
 	},
 	"info": {
 		"title": "OIBus API",
-		"version": "3.7.7",
+		"version": "3.8.7",
 		"description": "OIBus API is a RESTful interface for managing industrial data flows. It allows you to configure connectors, schedule data collection, transform and route data, monitor system health, and secure communications. Designed for developers and system integrators, it enables seamless integration between industrial systems and enterprise applications.",
 		"license": {
 			"name": "EUPL"

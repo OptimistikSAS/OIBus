@@ -7,7 +7,6 @@ import OIBusTimeValuesToCsvTransformer from './oibus-time-values-to-csv-transfor
 import timeValuesToCsvManifest from './manifest';
 import { OIBusTimeValue } from '../../../../shared/model/engine.model';
 import csv from 'papaparse';
-import JSONToTimeValuesTransformer from '../../any/json-to-time-values/json-to-time-values-transformer';
 
 jest.mock('../../../service/utils', () => ({
   sanitizeFilename: jest.fn().mockImplementation(name => name),

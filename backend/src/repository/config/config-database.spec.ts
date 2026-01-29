@@ -83,9 +83,7 @@ import OIBusSetpointToModbusTransformer from '../../transformers/setpoint/oibus-
 import OIBusSetpointToMQTTTransformer from '../../transformers/setpoint/oibus-setpoint-to-mqtt/oibus-setpoint-to-mqtt-transformer';
 import OIBusSetpointToOPCUATransformer from '../../transformers/setpoint/oibus-setpoint-to-opcua/oibus-setpoint-to-opcua-transformer';
 import OIBusTimeValuesToOIAnalyticsTransformer from '../../transformers/time-values/oibus-time-values-to-oianalytics/oibus-time-values-to-oianalytics-transformer';
-import JSONToTimeValuesTransformer from '../../transformers/any/json-to-time-values/json-to-time-values-transformer';
 import JSONToCSVTransformer from '../../transformers/any/json-to-csv/json-to-csv-transformer';
-import JSONToMQTTTransformer from '../../transformers/any/json-to-mqtt/json-to-mqtt-transformer';
 import CSVToMQTTTransformer from '../../transformers/any/csv-to-mqtt/csv-to-mqtt-transformer';
 import CSVToTimeValuesTransformer from '../../transformers/any/csv-to-time-values/csv-to-time-values-transformer';
 import { CacheSearchParam } from '../../../shared/model/engine.model';
@@ -166,20 +164,6 @@ describe('Repository with populated database', () => {
         inputType: 'any',
         functionName: JSONToCSVTransformer.transformerName,
         outputType: 'any',
-        type: 'standard'
-      },
-      {
-        id: 'jsonToMqtt',
-        inputType: 'any',
-        functionName: JSONToMQTTTransformer.transformerName,
-        outputType: 'mqtt',
-        type: 'standard'
-      },
-      {
-        id: 'jsonTimeValues',
-        inputType: 'any',
-        functionName: JSONToTimeValuesTransformer.transformerName,
-        outputType: 'time-values',
         type: 'standard'
       },
       {

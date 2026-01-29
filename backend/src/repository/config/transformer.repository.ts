@@ -15,11 +15,9 @@ import OIBusSetpointToModbusTransformer from '../../transformers/setpoint/oibus-
 import OIBusSetpointToOPCUATransformer from '../../transformers/setpoint/oibus-setpoint-to-opcua/oibus-setpoint-to-opcua-transformer';
 import OIBusSetpointToMQTTTransformer from '../../transformers/setpoint/oibus-setpoint-to-mqtt/oibus-setpoint-to-mqtt-transformer';
 import OIBusTimeValuesToOIAnalyticsTransformer from '../../transformers/time-values/oibus-time-values-to-oianalytics/oibus-time-values-to-oianalytics-transformer';
-import JSONToTimeValuesTransformer from '../../transformers/any/json-to-time-values/json-to-time-values-transformer';
 import JSONToCSVTransformer from '../../transformers/any/json-to-csv/json-to-csv-transformer';
 import CSVToMQTTTransformer from '../../transformers/any/csv-to-mqtt/csv-to-mqtt-transformer';
 import CSVToTimeValuesTransformer from '../../transformers/any/csv-to-time-values/csv-to-time-values-transformer';
-import JSONToMQTTTransformer from '../../transformers/any/json-to-mqtt/json-to-mqtt-transformer';
 
 const TRANSFORMERS_TABLE = 'transformers';
 const PAGE_SIZE = 10;
@@ -183,26 +181,6 @@ export default class TransformerRepository {
         functionName: JSONToCSVTransformer.transformerName,
         inputType: 'any',
         outputType: 'any'
-      };
-      this.createStandardTransformer(standardTransformer);
-    }
-    if (!this.findByFunctionName(JSONToMQTTTransformer.transformerName)) {
-      const standardTransformer: StandardTransformer = {
-        id: generateRandomId(6),
-        type: 'standard',
-        functionName: JSONToMQTTTransformer.transformerName,
-        inputType: 'any',
-        outputType: 'mqtt'
-      };
-      this.createStandardTransformer(standardTransformer);
-    }
-    if (!this.findByFunctionName(JSONToTimeValuesTransformer.transformerName)) {
-      const standardTransformer: StandardTransformer = {
-        id: generateRandomId(6),
-        type: 'standard',
-        functionName: JSONToTimeValuesTransformer.transformerName,
-        inputType: 'any',
-        outputType: 'time-values'
       };
       this.createStandardTransformer(standardTransformer);
     }
