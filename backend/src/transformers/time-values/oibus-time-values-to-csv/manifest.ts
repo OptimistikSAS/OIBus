@@ -160,7 +160,12 @@ const manifest: TransformerManifest = {
         values: ['string']
       }
     ],
-    validators: [],
+    validators: [
+      {
+        type: 'REQUIRED',
+        arguments: []
+      }
+    ],
     displayProperties: {
       visible: true,
       wrapInBox: true

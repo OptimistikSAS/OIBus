@@ -112,57 +112,6 @@ export const TRANSFORMER_JSON_TO_CSV_SETTINGS_DELIMITERS = [
 ] as const;
 export type TransformerJsonToCsvSettingsDelimiter = (typeof TRANSFORMER_JSON_TO_CSV_SETTINGS_DELIMITERS)[number];
 
-export const TRANSFORMER_JSON_TO_MQTT_SETTINGS_DATETIME_SETTINGS_INPUT_TYPES = [
-  'iso-string',
-  'unix-epoch',
-  'unix-epoch-ms',
-  'string'
-] as const;
-export type TransformerJsonToMqttSettingsDatetimeSettingsInputType =
-  (typeof TRANSFORMER_JSON_TO_MQTT_SETTINGS_DATETIME_SETTINGS_INPUT_TYPES)[number];
-
-export const TRANSFORMER_JSON_TO_MQTT_SETTINGS_DATETIME_SETTINGS_OUTPUT_TYPES = [
-  'iso-string',
-  'unix-epoch',
-  'unix-epoch-ms',
-  'string'
-] as const;
-export type TransformerJsonToMqttSettingsDatetimeSettingsOutputType =
-  (typeof TRANSFORMER_JSON_TO_MQTT_SETTINGS_DATETIME_SETTINGS_OUTPUT_TYPES)[number];
-
-export const TRANSFORMER_JSON_TO_MQTT_SETTINGS_OBJECT_FIELDS_DATETIME_SETTINGS_INPUT_TYPES = [
-  'iso-string',
-  'unix-epoch',
-  'unix-epoch-ms',
-  'string'
-] as const;
-export type TransformerJsonToMqttSettingsObjectFieldsDatetimeSettingsInputType =
-  (typeof TRANSFORMER_JSON_TO_MQTT_SETTINGS_OBJECT_FIELDS_DATETIME_SETTINGS_INPUT_TYPES)[number];
-
-export const TRANSFORMER_JSON_TO_MQTT_SETTINGS_OBJECT_FIELDS_DATETIME_SETTINGS_OUTPUT_TYPES = [
-  'iso-string',
-  'unix-epoch',
-  'unix-epoch-ms',
-  'string'
-] as const;
-export type TransformerJsonToMqttSettingsObjectFieldsDatetimeSettingsOutputType =
-  (typeof TRANSFORMER_JSON_TO_MQTT_SETTINGS_OBJECT_FIELDS_DATETIME_SETTINGS_OUTPUT_TYPES)[number];
-
-export const TRANSFORMER_JSON_TO_MQTT_SETTINGS_OBJECT_FIELDS_DATA_TYPES = ['string', 'number', 'boolean', 'datetime'] as const;
-export type TransformerJsonToMqttSettingsObjectFieldsDataType = (typeof TRANSFORMER_JSON_TO_MQTT_SETTINGS_OBJECT_FIELDS_DATA_TYPES)[number];
-
-export const TRANSFORMER_JSON_TO_MQTT_SETTINGS_PAYLOAD_TYPES = ['string', 'number', 'boolean', 'datetime', 'object'] as const;
-export type TransformerJsonToMqttSettingsPayloadType = (typeof TRANSFORMER_JSON_TO_MQTT_SETTINGS_PAYLOAD_TYPES)[number];
-
-export const TRANSFORMER_JSON_TO_TIME_VALUES_SETTINGS_TIMESTAMP_SETTINGS_TYPES = [
-  'iso-string',
-  'unix-epoch',
-  'unix-epoch-ms',
-  'string'
-] as const;
-export type TransformerJsonToTimeValuesSettingsTimestampSettingsType =
-  (typeof TRANSFORMER_JSON_TO_TIME_VALUES_SETTINGS_TIMESTAMP_SETTINGS_TYPES)[number];
-
 export const TRANSFORMER_SETPOINT_TO_MODBUS_SETTINGS_MAPPING_MODBUS_TYPES = ['coil', 'register'] as const;
 export type TransformerSetpointToModbusSettingsMappingModbusType =
   (typeof TRANSFORMER_SETPOINT_TO_MODBUS_SETTINGS_MAPPING_MODBUS_TYPES)[number];
@@ -244,42 +193,6 @@ export interface TransformerJsonToCsvSettingsFields {
   datetimeSettings?: TransformerJsonToCsvSettingsFieldsDatetimeSettings | null;
 }
 
-export interface TransformerJsonToMqttSettingsDatetimeSettings {
-  inputType: TransformerJsonToMqttSettingsDatetimeSettingsInputType;
-  inputTimezone?: Timezone;
-  inputFormat?: string;
-  inputLocale?: string;
-  outputType: TransformerJsonToMqttSettingsDatetimeSettingsOutputType;
-  outputTimezone?: Timezone;
-  outputFormat?: string;
-  outputLocale?: string;
-}
-
-export interface TransformerJsonToMqttSettingsObjectFieldsDatetimeSettings {
-  inputType: TransformerJsonToMqttSettingsObjectFieldsDatetimeSettingsInputType;
-  inputTimezone?: Timezone;
-  inputFormat?: string;
-  inputLocale?: string;
-  outputType: TransformerJsonToMqttSettingsObjectFieldsDatetimeSettingsOutputType;
-  outputTimezone?: Timezone;
-  outputFormat?: string;
-  outputLocale?: string;
-}
-
-export interface TransformerJsonToMqttSettingsObjectFields {
-  key: string;
-  path: string;
-  dataType: TransformerJsonToMqttSettingsObjectFieldsDataType;
-  datetimeSettings?: TransformerJsonToMqttSettingsObjectFieldsDatetimeSettings | null;
-}
-
-export interface TransformerJsonToTimeValuesSettingsTimestampSettings {
-  type: TransformerJsonToTimeValuesSettingsTimestampSettingsType;
-  timezone?: Timezone;
-  format?: string;
-  locale?: string;
-}
-
 export interface TransformerSetpointToModbusSettingsMapping {
   reference: string;
   address: string;
@@ -328,31 +241,14 @@ export interface TransformerCsvToTimeValuesSettings {
   pointIdColumn: string;
   timestampColumn: string;
   valueColumn: string;
-  timestampSettings: TransformerCsvToTimeValuesSettingsTimestampSettings | null;
+  timestampSettings: TransformerCsvToTimeValuesSettingsTimestampSettings;
 }
 
 export interface TransformerJsonToCsvSettings {
   filename: string;
   delimiter: TransformerJsonToCsvSettingsDelimiter;
   rowIteratorPath: string;
-  fields: Array<TransformerJsonToCsvSettingsFields> | null;
-}
-
-export interface TransformerJsonToMqttSettings {
-  rowIteratorPath: string;
-  topicPath: string;
-  payloadType: TransformerJsonToMqttSettingsPayloadType;
-  valuePath?: string | null;
-  datetimeSettings?: TransformerJsonToMqttSettingsDatetimeSettings | null;
-  objectFields?: Array<TransformerJsonToMqttSettingsObjectFields> | null;
-}
-
-export interface TransformerJsonToTimeValuesSettings {
-  rowIteratorPath: string;
-  pointIdPath: string;
-  timestampPath: string;
-  valuePath: string;
-  timestampSettings: TransformerJsonToTimeValuesSettingsTimestampSettings | null;
+  fields: Array<TransformerJsonToCsvSettingsFields>;
 }
 
 export type TransformerIgnoreSettings = object;
@@ -360,15 +256,15 @@ export type TransformerIgnoreSettings = object;
 export type TransformerIsoSettings = object;
 
 export interface TransformerSetpointToModbusSettings {
-  mapping: Array<TransformerSetpointToModbusSettingsMapping> | null;
+  mapping: Array<TransformerSetpointToModbusSettingsMapping>;
 }
 
 export interface TransformerSetpointToMqttSettings {
-  mapping: Array<TransformerSetpointToMqttSettingsMapping> | null;
+  mapping: Array<TransformerSetpointToMqttSettingsMapping>;
 }
 
 export interface TransformerSetpointToOpcuaSettings {
-  mapping: Array<TransformerSetpointToOpcuaSettingsMapping> | null;
+  mapping: Array<TransformerSetpointToOpcuaSettingsMapping>;
 }
 
 export interface TransformerTimeValuesToCsvSettings {
@@ -385,11 +281,11 @@ export interface TransformerTimeValuesToCsvSettings {
 export type TransformerTimeValuesToJsonSettings = object;
 
 export interface TransformerTimeValuesToModbusSettings {
-  mapping: Array<TransformerTimeValuesToModbusSettingsMapping> | null;
+  mapping: Array<TransformerTimeValuesToModbusSettingsMapping>;
 }
 
 export interface TransformerTimeValuesToMqttSettings {
-  mapping: Array<TransformerTimeValuesToMqttSettingsMapping> | null;
+  mapping: Array<TransformerTimeValuesToMqttSettingsMapping>;
 }
 
 export interface TransformerTimeValuesToOianalyticsSettings {
@@ -397,15 +293,13 @@ export interface TransformerTimeValuesToOianalyticsSettings {
 }
 
 export interface TransformerTimeValuesToOpcuaSettings {
-  mapping: Array<TransformerTimeValuesToOpcuaSettingsMapping> | null;
+  mapping: Array<TransformerTimeValuesToOpcuaSettingsMapping>;
 }
 
 export type TransformerSettings =
   | TransformerCsvToMqttSettings
   | TransformerCsvToTimeValuesSettings
   | TransformerJsonToCsvSettings
-  | TransformerJsonToMqttSettings
-  | TransformerJsonToTimeValuesSettings
   | TransformerIgnoreSettings
   | TransformerIsoSettings
   | TransformerSetpointToModbusSettings
