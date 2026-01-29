@@ -67,7 +67,12 @@ const manifest: TransformerManifest = {
         translationKey: 'configuration.oibus.manifest.transformers.json-to-csv.fields.title',
         paginate: false,
         numberOfElementPerPage: 20,
-        validators: [],
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          }
+        ],
         rootAttribute: {
           type: 'object',
           key: 'fieldItem',
