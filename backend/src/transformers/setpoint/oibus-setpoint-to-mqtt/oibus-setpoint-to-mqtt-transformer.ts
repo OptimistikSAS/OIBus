@@ -5,12 +5,9 @@ import { CacheMetadata, CacheMetadataSource, OIBusSetpoint } from '../../../../s
 import { promisify } from 'node:util';
 import { generateRandomId } from '../../../service/utils';
 import { OIBusMQTTValue } from '../../connector-types.model';
+import { TransformerSetpointToMqttSettings } from '../../../../shared/model/transformer-settings.model';
 
 const pipelineAsync = promisify(pipeline);
-
-interface TransformerOptions {
-  mapping: Array<{ reference: string; topic: string }>;
-}
 
 export default class OIBusSetpointToMQTTTransformer extends OIBusTransformer {
   public static transformerName = 'setpoint-to-mqtt';
@@ -57,7 +54,7 @@ export default class OIBusSetpointToMQTTTransformer extends OIBusTransformer {
     };
   }
 
-  get options(): TransformerOptions {
-    return this._options as TransformerOptions;
+  get options(): TransformerSetpointToMqttSettings {
+    return this._options as TransformerSetpointToMqttSettings;
   }
 }

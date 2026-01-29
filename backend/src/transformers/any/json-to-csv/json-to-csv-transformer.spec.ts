@@ -5,7 +5,6 @@ import testData from '../../../tests/utils/test-data';
 import { flushPromises } from '../../../tests/utils/test-utils';
 import JSONToCSVTransformer from './json-to-csv-transformer';
 import csv from 'papaparse';
-import JSONToMQTTTransformer from '../json-to-mqtt/json-to-mqtt-transformer';
 import jsonToCsvManifest from './manifest';
 
 // Mock external modules

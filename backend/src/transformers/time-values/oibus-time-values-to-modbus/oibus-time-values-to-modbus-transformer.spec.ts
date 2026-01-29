@@ -95,7 +95,12 @@ describe('OIBusTimeValuesToModbusTransformer', () => {
           translationKey: 'configuration.oibus.manifest.transformers.time-values-to-modbus.mapping.title',
           paginate: true,
           numberOfElementPerPage: 20,
-          validators: [],
+          validators: [
+            {
+              type: 'REQUIRED',
+              arguments: []
+            }
+          ],
           rootAttribute: {
             type: 'object',
             key: 'item',
