@@ -7,29 +7,9 @@ import { promisify } from 'node:util';
 import { convertDateTime, convertDelimiter, injectIndices, sanitizeFilename, stringToBoolean } from '../../../service/utils';
 import csv from 'papaparse';
 import { DateTime } from 'luxon';
+import { TransformerJsonToCsvSettings } from '../../../../shared/model/transformer-settings.model';
 
 const pipelineAsync = promisify(pipeline);
-
-interface TransformerOptions {
-  filename: string;
-  delimiter: 'DOT' | 'SEMI_COLON' | 'COLON' | 'COMMA' | 'NON_BREAKING_SPACE' | 'SLASH' | 'TAB' | 'PIPE';
-  rowIteratorPath: string;
-  fields: Array<{
-    jsonPath: string;
-    columnName: string;
-    dataType: 'string' | 'number' | 'datetime' | 'array' | 'boolean' | 'object';
-    datetimeSettings?: {
-      inputType: 'iso-string' | 'unix-epoch' | 'unix-epoch-ms' | 'string';
-      inputTimezone?: string;
-      inputFormat?: string;
-      inputLocale?: string;
-      outputType: 'iso-string' | 'unix-epoch' | 'unix-epoch-ms' | 'string';
-      outputTimezone?: string;
-      outputFormat?: string;
-      outputLocale?: string;
-    };
-  }>;
-}
 
 export default class JSONToCSVTransformer extends OIBusTransformer {
   public static transformerName = 'json-to-csv';
@@ -144,7 +124,7 @@ export default class JSONToCSVTransformer extends OIBusTransformer {
     };
   }
 
-  get options(): TransformerOptions {
-    return this._options as TransformerOptions;
+  get options(): TransformerJsonToCsvSettings {
+    return this._options as TransformerJsonToCsvSettings;
   }
 }

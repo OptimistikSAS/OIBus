@@ -5,12 +5,9 @@ import { CacheMetadata, CacheMetadataSource, OIBusSetpoint } from '../../../../s
 import { promisify } from 'node:util';
 import { generateRandomId } from '../../../service/utils';
 import { OIBusOPCUAValue } from '../../connector-types.model';
+import { TransformerSetpointToOpcuaSettings } from '../../../../shared/model/transformer-settings.model';
 
 const pipelineAsync = promisify(pipeline);
-
-interface TransformerOptions {
-  mapping: Array<{ reference: string; nodeId: string; dataType: string }>;
-}
 
 export default class OIBusSetpointToOPCUATransformer extends OIBusTransformer {
   public static transformerName = 'setpoint-to-opcua';
@@ -57,7 +54,7 @@ export default class OIBusSetpointToOPCUATransformer extends OIBusTransformer {
     };
   }
 
-  get options(): TransformerOptions {
-    return this._options as TransformerOptions;
+  get options(): TransformerSetpointToOpcuaSettings {
+    return this._options as TransformerSetpointToOpcuaSettings;
   }
 }

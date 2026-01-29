@@ -5,12 +5,9 @@ import { CacheMetadata, CacheMetadataSource, OIBusTimeValue } from '../../../../
 import { promisify } from 'node:util';
 import { generateRandomId } from '../../../service/utils';
 import { OIBusOPCUAValue } from '../../connector-types.model';
+import { TransformerTimeValuesToOpcuaSettings } from '../../../../shared/model/transformer-settings.model';
 
 const pipelineAsync = promisify(pipeline);
-
-interface TransformerOptions {
-  mapping: Array<{ pointId: string; nodeId: string }>;
-}
 
 export default class OIBusTimeValuesToOPCUATransformer extends OIBusTransformer {
   public static transformerName = 'time-values-to-opcua';
@@ -57,7 +54,7 @@ export default class OIBusTimeValuesToOPCUATransformer extends OIBusTransformer 
     };
   }
 
-  get options(): TransformerOptions {
-    return this._options as TransformerOptions;
+  get options(): TransformerTimeValuesToOpcuaSettings {
+    return this._options as TransformerTimeValuesToOpcuaSettings;
   }
 }
