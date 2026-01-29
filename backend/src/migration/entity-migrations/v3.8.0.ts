@@ -240,24 +240,6 @@ async function createDefaultTransformers(knex: Knex): Promise<void> {
       function_name: 'json-to-csv'
     });
   }
-  if (!knex.select('id').where({ function_name: 'json-to-mqtt' })) {
-    knex.insert({
-      id: generateRandomId(6),
-      type: 'standard',
-      input_type: 'any',
-      output_type: 'mqtt',
-      function_name: 'json-to-mqtt'
-    });
-  }
-  if (!knex.select('id').where({ function_name: 'json-to-time-values' })) {
-    knex.insert({
-      id: generateRandomId(6),
-      type: 'standard',
-      input_type: 'any',
-      output_type: 'time-values',
-      function_name: 'json-to-time-values'
-    });
-  }
   if (!knex.select('id').where({ function_name: 'time-values-to-csv' })) {
     knex.insert({
       id: generateRandomId(6),

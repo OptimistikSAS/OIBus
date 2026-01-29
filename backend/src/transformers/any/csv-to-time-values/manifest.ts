@@ -60,7 +60,12 @@ const manifest: TransformerManifest = {
           { referralPathFromRoot: 'type', targetPathFromRoot: 'format', values: ['string'] },
           { referralPathFromRoot: 'type', targetPathFromRoot: 'locale', values: ['string'] }
         ],
-        validators: [],
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          }
+        ],
         attributes: [
           {
             type: 'string-select',

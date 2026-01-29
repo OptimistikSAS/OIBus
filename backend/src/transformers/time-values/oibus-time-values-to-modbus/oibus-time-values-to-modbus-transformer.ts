@@ -5,12 +5,9 @@ import { CacheMetadata, CacheMetadataSource, OIBusTimeValue } from '../../../../
 import { promisify } from 'node:util';
 import { generateRandomId } from '../../../service/utils';
 import { OIBusModbusValue } from '../../connector-types.model';
+import { TransformerTimeValuesToModbusSettings } from '../../../../shared/model/transformer-settings.model';
 
 const pipelineAsync = promisify(pipeline);
-
-interface TransformerOptions {
-  mapping: Array<{ pointId: string; address: string; modbusType: 'coil' | 'register' }>;
-}
 
 export default class OIBusTimeValuesToModbusTransformer extends OIBusTransformer {
   public static transformerName = 'time-values-to-modbus';
@@ -59,7 +56,7 @@ export default class OIBusTimeValuesToModbusTransformer extends OIBusTransformer
     };
   }
 
-  get options(): TransformerOptions {
-    return this._options as TransformerOptions;
+  get options(): TransformerTimeValuesToModbusSettings {
+    return this._options as TransformerTimeValuesToModbusSettings;
   }
 }
