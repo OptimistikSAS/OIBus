@@ -5,12 +5,9 @@ import { CacheMetadata, CacheMetadataSource, OIBusTimeValue } from '../../../../
 import { promisify } from 'node:util';
 import { generateRandomId } from '../../../service/utils';
 import { OIBusMQTTValue } from '../../connector-types.model';
+import { TransformerTimeValuesToMqttSettings } from '../../../../shared/model/transformer-settings.model';
 
 const pipelineAsync = promisify(pipeline);
-
-interface TransformerOptions {
-  mapping: Array<{ pointId: string; topic: string }>;
-}
 
 export default class OIBusTimeValuesToMQTTTransformer extends OIBusTransformer {
   public static transformerName = 'time-values-to-mqtt';
@@ -57,7 +54,7 @@ export default class OIBusTimeValuesToMQTTTransformer extends OIBusTransformer {
     };
   }
 
-  get options(): TransformerOptions {
-    return this._options as TransformerOptions;
+  get options(): TransformerTimeValuesToMqttSettings {
+    return this._options as TransformerTimeValuesToMqttSettings;
   }
 }

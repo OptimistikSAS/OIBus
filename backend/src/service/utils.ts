@@ -437,7 +437,7 @@ export const formatInstant = (
 
 export const convertDateTimeToInstant = (
   dateTime: string | number | Date,
-  options: { type?: DateTimeType; timezone?: string; format?: string; locale?: string }
+  options: { type?: DateTimeType; timezone?: Timezone; format?: string; locale?: string }
 ): Instant => {
   // Early return if no conversion is needed (assume input is already an ISO string)
   if (!options.type) {
