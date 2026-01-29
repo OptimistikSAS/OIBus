@@ -6,19 +6,9 @@ import { pipeline, Readable, Transform } from 'node:stream';
 import { promisify } from 'node:util';
 import { DateTime } from 'luxon';
 import { convertDelimiter, formatInstant, sanitizeFilename } from '../../../service/utils';
+import { TransformerTimeValuesToCsvSettings } from '../../../../shared/model/transformer-settings.model';
 
 const pipelineAsync = promisify(pipeline);
-
-interface TransformerOptions {
-  filename: string;
-  delimiter: 'DOT' | 'SEMI_COLON' | 'COLON' | 'COMMA' | 'NON_BREAKING_SPACE' | 'SLASH' | 'TAB' | 'PIPE';
-  pointIdColumnTitle: string;
-  valueColumnTitle: string;
-  timestampColumnTitle: string;
-  timestampType: 'string' | 'iso-string' | 'unix-epoch' | 'unix-epoch-ms';
-  timestampFormat: string;
-  timezone: string;
-}
 
 export default class OIBusTimeValuesToCsvTransformer extends OIBusTransformer {
   public static transformerName = 'time-values-to-csv';
@@ -70,7 +60,7 @@ export default class OIBusTimeValuesToCsvTransformer extends OIBusTransformer {
     };
   }
 
-  get options(): TransformerOptions {
-    return this._options as TransformerOptions;
+  get options(): TransformerTimeValuesToCsvSettings {
+    return this._options as TransformerTimeValuesToCsvSettings;
   }
 }

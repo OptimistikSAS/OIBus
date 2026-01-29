@@ -5,28 +5,9 @@ import { CacheMetadata, CacheMetadataSource, OIBusTimeValue } from '../../../../
 import { promisify } from 'node:util';
 import { convertDateTimeToInstant, convertDelimiter, generateRandomId } from '../../../service/utils';
 import Papa from 'papaparse';
+import { TransformerCsvToTimeValuesSettings } from '../../../../shared/model/transformer-settings.model';
 
 const pipelineAsync = promisify(pipeline);
-
-interface TransformerOptions {
-  filename: string;
-
-  // CSV Specific Settings
-  delimiter: 'DOT' | 'SEMI_COLON' | 'COLON' | 'COMMA' | 'NON_BREAKING_SPACE' | 'SLASH' | 'TAB' | 'PIPE';
-  hasHeader: boolean;
-
-  // Columns can be names (if header=true) or indices (if header=false, e.g. "0")
-  pointIdColumn: string;
-  timestampColumn: string;
-  valueColumn: string;
-
-  timestampSettings: {
-    type: 'iso-string' | 'unix-epoch' | 'unix-epoch-ms' | 'string';
-    timezone: string;
-    format: string;
-    locale: string;
-  };
-}
 
 export default class CSVToTimeValuesTransformer extends OIBusTransformer {
   public static transformerName = 'csv-to-time-values';
@@ -113,7 +94,7 @@ export default class CSVToTimeValuesTransformer extends OIBusTransformer {
     }
   }
 
-  get options(): TransformerOptions {
-    return this._options as TransformerOptions;
+  get options(): TransformerCsvToTimeValuesSettings {
+    return this._options as TransformerCsvToTimeValuesSettings;
   }
 }

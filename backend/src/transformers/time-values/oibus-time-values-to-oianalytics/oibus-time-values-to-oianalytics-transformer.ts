@@ -6,12 +6,9 @@ import { promisify } from 'node:util';
 import { generateRandomId } from '../../../service/utils';
 import { Instant } from '../../../model/types';
 import { DateTime } from 'luxon';
+import { TransformerTimeValuesToOianalyticsSettings } from '../../../../shared/model/transformer-settings.model';
 
 const pipelineAsync = promisify(pipeline);
-
-interface TransformerOptions {
-  precision: 'ms' | 's' | 'min' | 'hr';
-}
 
 export default class OIBusTimeValuesToOIAnalyticsTransformer extends OIBusTransformer {
   public static transformerName = 'time-values-to-oianalytics';
@@ -51,8 +48,8 @@ export default class OIBusTimeValuesToOIAnalyticsTransformer extends OIBusTransf
     };
   }
 
-  get options(): TransformerOptions {
-    return this._options as TransformerOptions;
+  get options(): TransformerTimeValuesToOianalyticsSettings {
+    return this._options as TransformerTimeValuesToOianalyticsSettings;
   }
 
   formatInstant(timestamp: Instant, precision: 'ms' | 's' | 'min' | 'hr'): Instant {
