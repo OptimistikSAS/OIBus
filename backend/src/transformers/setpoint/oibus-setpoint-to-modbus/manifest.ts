@@ -15,7 +15,12 @@ const manifest: TransformerManifest = {
         translationKey: 'configuration.oibus.manifest.transformers.setpoint-to-modbus.mapping.title',
         paginate: true,
         numberOfElementPerPage: 20,
-        validators: [],
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          }
+        ],
         rootAttribute: {
           type: 'object',
           key: 'item',
