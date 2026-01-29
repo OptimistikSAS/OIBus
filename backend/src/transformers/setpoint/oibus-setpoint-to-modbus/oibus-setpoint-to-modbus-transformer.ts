@@ -5,12 +5,9 @@ import { CacheMetadata, CacheMetadataSource, OIBusSetpoint } from '../../../../s
 import { promisify } from 'node:util';
 import { generateRandomId } from '../../../service/utils';
 import { OIBusModbusValue } from '../../connector-types.model';
+import { TransformerSetpointToModbusSettings } from '../../../../shared/model/transformer-settings.model';
 
 const pipelineAsync = promisify(pipeline);
-
-interface TransformerOptions {
-  mapping: Array<{ reference: string; address: string; modbusType: 'coil' | 'register' }>;
-}
 
 export default class OIBusSetpointToModbusTransformer extends OIBusTransformer {
   public static transformerName = 'setpoint-to-modbus';
@@ -59,7 +56,7 @@ export default class OIBusSetpointToModbusTransformer extends OIBusTransformer {
     };
   }
 
-  get options(): TransformerOptions {
-    return this._options as TransformerOptions;
+  get options(): TransformerSetpointToModbusSettings {
+    return this._options as TransformerSetpointToModbusSettings;
   }
 }

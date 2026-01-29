@@ -6,49 +6,12 @@ import { promisify } from 'node:util';
 import { convertDateTime, convertDelimiter, generateRandomId, stringToBoolean } from '../../../service/utils';
 import { OIBusMQTTValue } from '../../connector-types.model';
 import Papa from 'papaparse';
+import {
+  TransformerCsvToMqttSettings,
+  TransformerCsvToMqttSettingsDatetimeSettings
+} from '../../../../shared/model/transformer-settings.model';
 
 const pipelineAsync = promisify(pipeline);
-
-// Reusable interface for Datetime Settings
-interface DatetimeSettings {
-  inputType: 'iso-string' | 'unix-epoch' | 'unix-epoch-ms' | 'string';
-  inputTimezone?: string;
-  inputFormat?: string;
-  inputLocale?: string;
-  outputType: 'iso-string' | 'unix-epoch' | 'unix-epoch-ms' | 'string';
-  outputTimezone?: string;
-  outputFormat?: string;
-  outputLocale?: string;
-}
-
-// Definition of a field within a custom Object payload for CSV
-interface CSVObjectField {
-  key: string;
-  column: string; // Replaces 'path' from JSON transformer
-  dataType: 'string' | 'number' | 'boolean' | 'datetime';
-  datetimeSettings?: DatetimeSettings;
-}
-
-interface TransformerOptions {
-  filename: string;
-
-  // CSV Specific Settings
-  delimiter: 'DOT' | 'SEMI_COLON' | 'COLON' | 'COMMA' | 'NON_BREAKING_SPACE' | 'SLASH' | 'TAB' | 'PIPE';
-  hasHeader: boolean;
-
-  // MQTT Configuration
-  topicColumn: string;
-
-  // Payload Configuration
-  payloadType: 'string' | 'number' | 'boolean' | 'datetime' | 'object';
-
-  // 1. If payloadType is simple (string/number/boolean/datetime)
-  valueColumn?: string;
-  datetimeSettings?: DatetimeSettings;
-
-  // 2. If payloadType is 'object'
-  objectFields?: Array<CSVObjectField>;
-}
 
 export default class CSVToMQTTTransformer extends OIBusTransformer {
   public static transformerName = 'csv-to-mqtt';
@@ -162,7 +125,7 @@ export default class CSVToMQTTTransformer extends OIBusTransformer {
   /**
    * Helper: Formats a raw value into the target type
    */
-  private formatValue(raw: unknown, type: string, dtSettings?: DatetimeSettings) {
+  private formatValue(raw: unknown, type: string, dtSettings?: TransformerCsvToMqttSettingsDatetimeSettings | null) {
     if (raw === undefined || raw === null) return null;
 
     switch (type) {
@@ -193,7 +156,7 @@ export default class CSVToMQTTTransformer extends OIBusTransformer {
     }
   }
 
-  get options(): TransformerOptions {
-    return this._options as TransformerOptions;
+  get options(): TransformerCsvToMqttSettings {
+    return this._options as TransformerCsvToMqttSettings;
   }
 }

@@ -20,19 +20,15 @@ import OIBusSetpointToOPCUATransformer from '../transformers/setpoint/oibus-setp
 import OIBusTimeValuesToOIAnalyticsTransformer from '../transformers/time-values/oibus-time-values-to-oianalytics/oibus-time-values-to-oianalytics-transformer';
 import OIBusCustomTransformer from '../transformers/oibus-custom-transformer';
 import { NotFoundError, OIBusValidationError } from '../model/types';
-import JSONToTimeValuesTransformer from '../transformers/any/json-to-time-values/json-to-time-values-transformer';
 import JSONToCSVTransformer from '../transformers/any/json-to-csv/json-to-csv-transformer';
 import CSVToMQTTTransformer from '../transformers/any/csv-to-mqtt/csv-to-mqtt-transformer';
 import CSVToTimeValuesTransformer from '../transformers/any/csv-to-time-values/csv-to-time-values-transformer';
-import JSONToMQTTTransformer from '../transformers/any/json-to-mqtt/json-to-mqtt-transformer';
 // Import transformer manifests
 import isoManifest from '../transformers/iso-transformer/manifest';
 import ignoreManifest from '../transformers/ignore-transformer/manifest';
 import csvToMqttManifest from '../transformers/any/csv-to-mqtt/manifest';
 import csvToTimeValuesManifest from '../transformers/any/csv-to-time-values/manifest';
 import jsonToCsvManifest from '../transformers/any/json-to-csv/manifest';
-import jsonToMqttManifest from '../transformers/any/json-to-mqtt/manifest';
-import jsonToTimeValuesManifest from '../transformers/any/json-to-time-values/manifest';
 import timeValuesToCsvManifest from '../transformers/time-values/oibus-time-values-to-csv/manifest';
 import timeValuesToJsonManifest from '../transformers/time-values/oibus-time-values-to-json/manifest';
 import timeValuesToModbusManifest from '../transformers/time-values/oibus-time-values-to-modbus/manifest';
@@ -270,24 +266,6 @@ describe('Transformer Service', () => {
         logger
       )
     ).toBeInstanceOf(JSONToCSVTransformer);
-
-    transformer.functionName = 'json-to-mqtt';
-    expect(
-      createTransformer(
-        { id: 'northTransformerId1', transformer, options: {}, inputType: 'any', south: undefined, items: [] },
-        testData.north.list[0],
-        logger
-      )
-    ).toBeInstanceOf(JSONToMQTTTransformer);
-
-    transformer.functionName = 'json-to-time-values';
-    expect(
-      createTransformer(
-        { id: 'northTransformerId1', transformer, options: {}, inputType: 'any', south: undefined, items: [] },
-        testData.north.list[0],
-        logger
-      )
-    ).toBeInstanceOf(JSONToTimeValuesTransformer);
 
     transformer.functionName = 'time-values-to-csv';
     expect(
@@ -596,8 +574,6 @@ describe('Transformer Service', () => {
     expect(getStandardManifest('iso')).toEqual(isoManifest.settings);
     expect(getStandardManifest('ignore')).toEqual(ignoreManifest.settings);
     expect(getStandardManifest('json-to-csv')).toEqual(jsonToCsvManifest.settings);
-    expect(getStandardManifest('json-to-mqtt')).toEqual(jsonToMqttManifest.settings);
-    expect(getStandardManifest('json-to-time-values')).toEqual(jsonToTimeValuesManifest.settings);
     expect(getStandardManifest('time-values-to-csv')).toEqual(timeValuesToCsvManifest.settings);
     expect(getStandardManifest('time-values-to-json')).toEqual(timeValuesToJsonManifest.settings);
     expect(getStandardManifest('time-values-to-modbus')).toEqual(timeValuesToModbusManifest.settings);

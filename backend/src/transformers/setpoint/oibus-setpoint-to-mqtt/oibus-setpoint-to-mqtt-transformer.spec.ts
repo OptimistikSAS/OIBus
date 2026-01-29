@@ -32,7 +32,6 @@ describe('OIBusSetpointToMQTTTransformer', () => {
     };
     // Arrange
     const transformer = new OIBusSetpointToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
-    const source = 'test-source';
     const dataChunks: Array<OIBusSetpoint> = [
       {
         reference: 'reference1',
@@ -86,7 +85,12 @@ describe('OIBusSetpointToMQTTTransformer', () => {
           translationKey: 'configuration.oibus.manifest.transformers.setpoint-to-mqtt.mapping.title',
           paginate: true,
           numberOfElementPerPage: 20,
-          validators: [],
+          validators: [
+            {
+              type: 'REQUIRED',
+              arguments: []
+            }
+          ],
           rootAttribute: {
             type: 'object',
             key: 'item',
@@ -137,7 +141,12 @@ describe('OIBusSetpointToMQTTTransformer', () => {
         }
       ],
       enablingConditions: [],
-      validators: [],
+      validators: [
+        {
+          type: 'REQUIRED',
+          arguments: []
+        }
+      ],
       displayProperties: {
         visible: true,
         wrapInBox: false

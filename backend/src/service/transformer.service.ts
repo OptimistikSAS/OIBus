@@ -1,12 +1,13 @@
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import { transformerSchema } from '../web-server/controllers/validators/oibus-validation-schema';
 import TransformerRepository from '../repository/config/transformer.repository';
-import { CustomTransformer, Transformer, NorthTransformerWithOptions } from '../model/transformer.model';
+import { CustomTransformer, NorthTransformerWithOptions, Transformer } from '../model/transformer.model';
 import {
   CustomTransformerCommandDTO,
   InputTemplate,
   InputType,
   TransformerDTO,
+  TransformerManifest,
   TransformerSearchParam,
   TransformerTestRequest,
   TransformerTestResponse
@@ -32,18 +33,14 @@ import OIBusCustomTransformer from '../transformers/oibus-custom-transformer';
 import { Readable } from 'node:stream';
 import { DateTime } from 'luxon';
 import { CacheMetadataSource, OIBusSetpoint, OIBusTimeValue } from '../../shared/model/engine.model';
-import JSONToTimeValuesTransformer from '../transformers/any/json-to-time-values/json-to-time-values-transformer';
 import JSONToCSVTransformer from '../transformers/any/json-to-csv/json-to-csv-transformer';
 import CSVToMQTTTransformer from '../transformers/any/csv-to-mqtt/csv-to-mqtt-transformer';
 import CSVToTimeValuesTransformer from '../transformers/any/csv-to-time-values/csv-to-time-values-transformer';
-import JSONToMQTTTransformer from '../transformers/any/json-to-mqtt/json-to-mqtt-transformer';
 import isoManifest from '../transformers/iso-transformer/manifest';
 import ignoreManifest from '../transformers/ignore-transformer/manifest';
 import csvToMqttManifest from '../transformers/any/csv-to-mqtt/manifest';
 import csvToTimeValuesManifest from '../transformers/any/csv-to-time-values/manifest';
 import jsonToCsvManifest from '../transformers/any/json-to-csv/manifest';
-import jsonToMqttManifest from '../transformers/any/json-to-mqtt/manifest';
-import jsonToTimeValuesManifest from '../transformers/any/json-to-time-values/manifest';
 import timeValuesToCsvManifest from '../transformers/time-values/oibus-time-values-to-csv/manifest';
 import timeValuesToJsonManifest from '../transformers/time-values/oibus-time-values-to-json/manifest';
 import timeValuesToModbusManifest from '../transformers/time-values/oibus-time-values-to-modbus/manifest';
@@ -53,7 +50,6 @@ import timeValuesToOpcuaManifest from '../transformers/time-values/oibus-time-va
 import setpointToModbusManifest from '../transformers/setpoint/oibus-setpoint-to-modbus/manifest';
 import setpointToMqttManifest from '../transformers/setpoint/oibus-setpoint-to-mqtt/manifest';
 import setpointToOpcuaManifest from '../transformers/setpoint/oibus-setpoint-to-opcua/manifest';
-import { TransformerManifest } from '../../shared/model/transformer.model';
 
 export const transformerManifestList: Array<TransformerManifest> = [
   isoManifest,
@@ -61,8 +57,6 @@ export const transformerManifestList: Array<TransformerManifest> = [
   csvToMqttManifest,
   csvToTimeValuesManifest,
   jsonToCsvManifest,
-  jsonToMqttManifest,
-  jsonToTimeValuesManifest,
   timeValuesToCsvManifest,
   timeValuesToJsonManifest,
   timeValuesToModbusManifest,
@@ -370,12 +364,6 @@ export const createTransformer = (
       case JSONToCSVTransformer.transformerName: {
         return new JSONToCSVTransformer(logger, transformerWithOptions.transformer, northConnector, transformerWithOptions.options);
       }
-      case JSONToMQTTTransformer.transformerName: {
-        return new JSONToMQTTTransformer(logger, transformerWithOptions.transformer, northConnector, transformerWithOptions.options);
-      }
-      case JSONToTimeValuesTransformer.transformerName: {
-        return new JSONToTimeValuesTransformer(logger, transformerWithOptions.transformer, northConnector, transformerWithOptions.options);
-      }
       case OIBusTimeValuesToCsvTransformer.transformerName: {
         return new OIBusTimeValuesToCsvTransformer(
           logger,
@@ -475,12 +463,6 @@ export const getStandardManifest = (functionName: string): OIBusObjectAttribute 
     }
     case jsonToCsvManifest.id: {
       return jsonToCsvManifest.settings;
-    }
-    case jsonToMqttManifest.id: {
-      return jsonToMqttManifest.settings;
-    }
-    case jsonToTimeValuesManifest.id: {
-      return jsonToTimeValuesManifest.settings;
     }
     case timeValuesToCsvManifest.id: {
       return timeValuesToCsvManifest.settings;
