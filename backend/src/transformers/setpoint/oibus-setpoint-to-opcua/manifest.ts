@@ -1,4 +1,4 @@
-import { TransformerManifest} from '../../../../shared/model/transformer.model';
+import { TransformerManifest } from '../../../../shared/model/transformer.model';
 
 const manifest: TransformerManifest = {
   id: 'setpoint-to-opcua',
@@ -15,7 +15,12 @@ const manifest: TransformerManifest = {
         translationKey: 'configuration.oibus.manifest.transformers.setpoint-to-opcua.mapping.title',
         paginate: true,
         numberOfElementPerPage: 20,
-        validators: [],
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          }
+        ],
         rootAttribute: {
           type: 'object',
           key: 'item',
@@ -66,7 +71,12 @@ const manifest: TransformerManifest = {
       }
     ],
     enablingConditions: [],
-    validators: [],
+    validators: [
+      {
+        type: 'REQUIRED',
+        arguments: []
+      }
+    ],
     displayProperties: {
       visible: true,
       wrapInBox: false

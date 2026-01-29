@@ -956,8 +956,6 @@
             "ignore": "Ignore",
             "iso": "No transform",
             "json-to-csv": "CSV (from JSON)",
-            "json-to-mqtt": "MQTT payloads (from JSON)",
-            "json-to-time-values": "Time Values (from JSON)",
             "time-values-to-csv": "CSV",
             "time-values-to-json": "JSON",
             "time-values-to-modbus": "Modbus values",
@@ -1204,75 +1202,6 @@
                 "format": "Format",
                 "locale": "Locale"
               }
-            }
-          },
-          "json-to-mqtt": {
-            "row-iterator-path": "Row Iterator JSONPath",
-            "topic-path": "Topic JSONPath",
-            "payload-type": {
-              "title": "MQTT payload Type",
-              "string": "String",
-              "number": "Number",
-              "boolean": "Boolean",
-              "datetime": "Datetime",
-              "array": "Array",
-              "object": "Object"
-            },
-            "value-path": "Value JSONPath",
-            "datetime-settings": {
-              "title": "Datetime Settings",
-              "input-type": {
-                "title": "Timestamp input type",
-                "string": "String",
-                "iso-string": "ISO string",
-                "unix-epoch": "Unix epoch (s)",
-                "unix-epoch-ms": "Unix epoch (ms)"
-              },
-              "output-type": {
-                "title": "Timestamp output type",
-                "string": "String",
-                "iso-string": "ISO string",
-                "unix-epoch": "Unix epoch (s)",
-                "unix-epoch-ms": "Unix epoch (ms)"
-              },
-              "timezone": "Timezone",
-              "format": "Format",
-              "locale": "Locale"
-            },
-            "object-fields": {
-              "title": "Object Fields",
-              "item": {
-                "title": "Field Configuration"
-              },
-              "key": "Key",
-              "path": "JSONPath",
-              "data-type": {
-                "title": "Data Type",
-                "string": "String",
-                "number": "Number",
-                "boolean": "Boolean",
-                "datetime": "Datetime",
-                "object": "Object"
-              }
-            }
-          },
-          "json-to-time-values": {
-            "row-iterator-path": "Row Iterator JSONPath",
-            "point-id-path": "Point ID JSONPath",
-            "timestamp-path": "Timestamp JSONPath",
-            "value-path": "Value JSONPath",
-            "timestamp-settings": {
-              "title": "Timestamp Settings",
-              "type": {
-                "title": "Timestamp type",
-                "string": "String",
-                "iso-string": "ISO string",
-                "unix-epoch": "Unix epoch (s)",
-                "unix-epoch-ms": "Unix epoch (ms)"
-              },
-              "timezone": "Timezone",
-              "format": "Format",
-              "locale": "Locale"
             }
           },
           "setpoint-to-modbus": {
