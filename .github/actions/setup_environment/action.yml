@@ -89,11 +89,7 @@ runs:
 
     # --- Generate SBOM ---
     - name: Generate Unified SBOM
-      #if: ${{ inputs.prerelease == 'false' }}
       shell: bash
-      env:
-        # v1.4 to be compatible with Snyk
-        CDXGEN_SPEC_VERSION: 1.4
       run: |
         echo "⬇️ Installing cdxgen..."
         npm install -g @cyclonedx/cdxgen
@@ -104,7 +100,7 @@ runs:
         echo "✅ SBOM generation complete. File created: oibus-sbom.json"
 
     - name: Install snyk for dependencies watch of OIBus releases
-      # if: ${{ inputs.prerelease == 'false' }}
+      if: ${{ inputs.prerelease == 'false' }}
       shell: bash
       run: |
         echo "⬇️ Installing Snyk tools..."
