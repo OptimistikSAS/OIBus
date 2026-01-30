@@ -154,14 +154,12 @@ jobs:
           
 
       - name: Copy SBOM to build/bin
-        env:
-          GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
         shell: bash
         run: |
           cp oibus-sbom.json build/bin/${{ matrix.config['platform'] }}/
 
       - name: Upload SBOM
-        if: ${{ inputs.prerelease == 'false' }}
+        if: ${{ steps.release_info.outputs.prerelease  == 'false' }}
         env:
           GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
         shell: bash
@@ -177,7 +175,7 @@ jobs:
           ${{ matrix.config['zip'] }} ../${{ matrix.config['archiveName'] }}-${{ github.ref_name }}.zip .
 
       - name: Monitor SBOM with Snyk
-        if: ${{ inputs.prerelease == 'false' }}
+        if: ${{ steps.release_info.outputs.prerelease  == 'false' }}
         shell: bash
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
