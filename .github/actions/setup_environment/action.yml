@@ -64,7 +64,7 @@ runs:
       shell: bash
       run: npm ci
 
-    # --- BUMP VERSIONS (After Install) ---
+    # --- BUMP VERSIONS  ---
 
     - name: Bump versions if pre-release
       if: ${{ inputs.prerelease == 'true' }}
@@ -85,4 +85,27 @@ runs:
         bump_version "backend"
         bump_version "frontend"
         bump_version "launcher"
-        bump_version "documentation"
+        bump_version "documentation"      
+
+    # --- Generate SBOM ---
+    - name: Generate Unified SBOM
+      #if: ${{ inputs.prerelease == 'false' }}
+      shell: bash
+      env:
+        # v1.4 to be compatible with Snyk
+        CDXGEN_SPEC_VERSION: 1.4
+      run: |
+        echo "⬇️ Installing cdxgen..."
+        npm install -g @cyclonedx/cdxgen
+        
+        echo "🔍 Generating Full Project SBOM..."
+        cdxgen . -o oibus-sbom.json --recurse
+        
+        echo "✅ SBOM generation complete. File created: oibus-sbom.json"
+
+    - name: Install snyk for dependencies watch of OIBus releases
+      # if: ${{ inputs.prerelease == 'false' }}
+      shell: bash
+      run: |
+        echo "⬇️ Installing Snyk tools..."
+        npm install -g snyk

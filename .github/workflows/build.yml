@@ -151,11 +151,35 @@ jobs:
         run: |
           cd build/bin/${{ matrix.config['platform'] }}
           ./oibus-launcher --config ../../../data-folder --version true
+          
+
+      - name: Copy SBOM to build/bin
+        env:
+          GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
+        shell: bash
+        run: |
+          cp oibus-sbom.json build/bin/${{ matrix.config['platform'] }}/
+          SBOM_FILENAME="sbom-${{ matrix.config['archiveName'] }}-${{ github.ref_name }}.json"
+          cp oibus-sbom.json "$SBOM_FILENAME"
+          gh release upload ${{ github.ref_name }} "$SBOM_FILENAME" --clobber
 
       - name: Package OIBus for ${{ matrix.config['friendlyName'] }}
         run: |
           cd build/bin/${{ matrix.config['platform'] }}
           ${{ matrix.config['zip'] }} ../${{ matrix.config['archiveName'] }}-${{ github.ref_name }}.zip .
+
+      - name: Monitor SBOM with Snyk
+#        if: ${{ inputs.prerelease == 'false' }}
+        shell: bash
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: |
+          snyk monitor \
+            --all-projects \
+            --detection-depth=2 \
+            --exclude=dist,documentation \
+            --target-reference="OIBus-${{ steps.release_info.outputs.tag_name }}-${{ matrix.config['platform'] }}" \
+            --remote-repo-url="https://github.com/${{ github.repository }}"
 
       - name: Upload Artifact ${{ matrix.config['archiveName'] }}-${{ github.ref_name }}.zip
         env:

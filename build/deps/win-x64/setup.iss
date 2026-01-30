@@ -72,6 +72,9 @@ Source: "..\..\bin\win-x64\binaries\oibus.exe"; DestDir: "{app}\binaries"; Flags
 Source: "..\..\bin\win-x64\nssm.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\bin\win-x64\oibus-launcher.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\bin\win-x64\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
+#ifdef EnableSigning
+  Source: "..\..\bin\win-x64\oibus-sbom.json"; DestDir: "{app}"; Flags: ignoreversion
+#endif
 
 [Registry]
 ; We use the dynamic {code:GetServiceName} to create a unique registry key for this service instance

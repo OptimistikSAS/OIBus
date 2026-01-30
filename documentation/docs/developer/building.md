@@ -131,10 +131,6 @@ $pfxContent | Out-File -FilePath "oibus64.pfx" -Encoding ASCII
 #### 3. Build the Installer
 
 ```powershell
-# Set environment variables
-$env:PFX_PASSWORD = "password"
-$env:PFX_PATH = "full\path\to\oibus64.pfx"
-
 # Run the build
 npm run build:win-setup
 ```
