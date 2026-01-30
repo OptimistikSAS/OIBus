@@ -43,7 +43,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
       this.certificateRepository
     );
     const url = getUrl(
-      '/api/optimistik/oibus/status',
+      '/api/oianalytics/oibus/status',
       getHost(this.connector.settings.useOiaModule, registrationSettings, this.connector.settings.specificSettings),
       { useApiGateway: registrationSettings.useApiGateway, apiGatewayBaseEndpoint: registrationSettings.apiGatewayBaseEndpoint }
     );

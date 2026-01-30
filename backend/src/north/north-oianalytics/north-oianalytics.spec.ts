@@ -121,7 +121,7 @@ describe('NorthOIAnalytics', () => {
 
       expect(buildHttpOptions).toHaveBeenCalledWith('GET', false, expect.anything(), expect.anything(), 30000, certificateRepository);
       expect(HTTPRequest).toHaveBeenCalledWith(
-        expect.objectContaining({ href: 'https://mock-host/api/optimistik/oibus/status' }),
+        expect.objectContaining({ href: 'https://mock-host/api/oianalytics/oibus/status' }),
         expect.anything()
       );
     });

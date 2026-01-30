@@ -127,7 +127,7 @@ describe('SouthOIAnalytics', () => {
         certificateRepository
       );
       expect(getHost).toHaveBeenCalled();
-      expect(HTTPRequest).toHaveBeenCalledWith(expect.objectContaining({ pathname: '/api/optimistik/oibus/status' }), expect.anything());
+      expect(HTTPRequest).toHaveBeenCalledWith(expect.objectContaining({ pathname: '/api/oianalytics/oibus/status' }), expect.anything());
     });
 
     it('should throw error when API returns non-200', async () => {
