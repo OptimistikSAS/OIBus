@@ -8,6 +8,9 @@ inputs:
     description: 'Is it a prerelease or not'
     required: false
     default: 'false'
+  platform_arch:
+    description: 'Specific platform/arch (e.g. linux-x64, linux-arm64)'
+    required: true
   tag_name:
     description: 'Tag name used for version bumping'
     required: false
@@ -27,7 +30,7 @@ runs:
       uses: actions/cache@v5
       with:
        path: backend/node_modules
-       key: backend-deps-${{ runner.os }}-${{ inputs.cache_version }}-${{ hashFiles('backend/package-lock.json') }}
+       key: backend-deps-${{ inputs.platform_arch }}-${{ inputs.cache_version }}-${{ hashFiles('backend/package-lock.json') }}
 
       # 2. Frontend Cache
     - name: Cache Frontend
@@ -35,7 +38,7 @@ runs:
       uses: actions/cache@v5
       with:
        path: frontend/node_modules
-       key: frontend-deps-${{ runner.os }}-${{ inputs.cache_version }}-${{ hashFiles('frontend/package-lock.json') }}
+       key: frontend-deps-${{ inputs.platform_arch }}-${{ inputs.cache_version }}-${{ hashFiles('frontend/package-lock.json') }}
 
       # 3. Launcher Cache
     - name: Cache Launcher
@@ -43,7 +46,7 @@ runs:
       uses: actions/cache@v5
       with:
         path: launcher/node_modules
-        key: launcher-deps-${{ runner.os }}-${{ inputs.cache_version }}-${{ hashFiles('launcher/package-lock.json') }}
+        key: launcher-deps-${{ inputs.platform_arch }}-${{ inputs.cache_version }}-${{ hashFiles('launcher/package-lock.json') }}
 
     # --- INSTALL DEPENDENCIES ---
     - name: Install Backend Dependencies

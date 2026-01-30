@@ -16,7 +16,11 @@ jobs:
     runs-on: ${{ matrix.os  }}
     strategy:
       matrix:
-        os: [ windows-2025, ubuntu-24.04 ]
+        include:
+          - os: ubuntu-24.04
+            platform: linux-x64
+          - os: windows-2025
+            platform: win-x64
     timeout-minutes: 25
     steps:
       - name: Checkout
@@ -28,6 +32,7 @@ jobs:
         uses: ./.github/actions/setup_environment
         with:
           cache_version: ${{ secrets.GH_ACTIONS_CACHE_KEY }}
+          platform_arch: ${{ matrix.platform }}
 
       - name: Run unit tests
         uses: ./.github/actions/unit_tests

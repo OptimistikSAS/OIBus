@@ -55,6 +55,7 @@ jobs:
           cache_version: ${{ secrets.GH_ACTIONS_CACHE_KEY }}
           prerelease: ${{ steps.release_info.outputs.prerelease }}
           tag_name: ${{ steps.release_info.outputs.tag_name }}
+          platform_arch: ${{ matrix.config['platform'] }}
 
 
       - name: Bundle OIBus frontend for ${{ matrix.config['friendlyName'] }}
