@@ -70,7 +70,10 @@ describe('SouthSFTP', () => {
           regex: '.*.csv',
           preserveFiles: false,
           ignoreModifiedDate: false,
-          minAge: 1000
+          minAge: 1000,
+          maxFiles: 0,
+          maxSize: 0,
+          recursive: false
         },
         scanMode: testData.scanMode.list[0]
       },
@@ -83,7 +86,10 @@ describe('SouthSFTP', () => {
           regex: '.*.log',
           preserveFiles: true,
           ignoreModifiedDate: false,
-          minAge: 1000
+          minAge: 1000,
+          maxFiles: 0,
+          maxSize: 0,
+          recursive: false
         },
         scanMode: testData.scanMode.list[0]
       },
@@ -96,7 +102,10 @@ describe('SouthSFTP', () => {
           regex: '.*.txt',
           preserveFiles: true,
           ignoreModifiedDate: true,
-          minAge: 1000
+          minAge: 1000,
+          maxFiles: 0,
+          maxSize: 0,
+          recursive: false
         },
         scanMode: testData.scanMode.list[0]
       }
@@ -146,6 +155,143 @@ describe('SouthSFTP', () => {
     expect(south.getFile).toHaveBeenCalledWith(fileInfo1, configuration.items[0]);
     expect(south.getFile).toHaveBeenCalledWith(fileInfo2, configuration.items[0]);
     expect(south.getFile).toHaveBeenCalledWith(fileInfo3, configuration.items[1]);
+  });
+
+  it('should respect max files limit and skip remaining files', async () => {
+    const configWithLimit: SouthConnectorEntity<SouthSFTPSettings, SouthSFTPItemSettings> = {
+      ...configuration,
+      settings: { ...configuration.settings },
+      items: [
+        ...configuration.items.map(item => ({
+          ...item,
+          settings: {
+            ...item.settings,
+            maxFiles: 2,
+            maxSize: 0
+          }
+        }))
+      ]
+    };
+    const southWithLimit = new SouthSftp(configWithLimit, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+    await southWithLimit.start();
+
+    const mtimeMs = DateTime.fromISO(testData.constants.dates.FAKE_NOW).minus({ minutes: 2 }).toMillis();
+    const file1: FileInfo = { name: 'file1.csv', size: 100, modifyTime: mtimeMs } as FileInfo;
+    const file2: FileInfo = { name: 'file2.csv', size: 100, modifyTime: mtimeMs } as FileInfo;
+    const file3: FileInfo = { name: 'file3.csv', size: 100, modifyTime: mtimeMs } as FileInfo;
+
+    mockSftpClient.list.mockReset();
+    mockSftpClient.list.mockResolvedValue([file1, file2, file3]);
+    mockSftpClient.fastGet.mockResolvedValue(undefined);
+    mockSftpClient.delete.mockResolvedValue(undefined);
+
+    await southWithLimit.fileQuery([configWithLimit.items[0]]);
+
+    expect(mockSftpClient.fastGet).toHaveBeenCalledTimes(2);
+    expect(logger.debug).toHaveBeenCalledWith('Max files limit (2) reached for item item1, skipping remaining files');
+  });
+
+  it('should respect max files limit and stop file query across items', async () => {
+    const configWithLimit: SouthConnectorEntity<SouthSFTPSettings, SouthSFTPItemSettings> = {
+      ...configuration,
+      settings: { ...configuration.settings },
+      items: [
+        ...configuration.items.map(item => ({
+          ...item,
+          settings: {
+            ...item.settings,
+            maxFiles: 2,
+            maxSize: 0
+          }
+        }))
+      ]
+    };
+    const southWithLimit = new SouthSftp(configWithLimit, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+    await southWithLimit.start();
+
+    const mtimeMs = DateTime.fromISO(testData.constants.dates.FAKE_NOW).minus({ minutes: 2 }).toMillis();
+    const file1: FileInfo = { name: 'file1.csv', size: 100, modifyTime: mtimeMs } as FileInfo;
+    const file2: FileInfo = { name: 'file2.csv', size: 100, modifyTime: mtimeMs } as FileInfo;
+    const file3: FileInfo = { name: 'file3.csv', size: 100, modifyTime: mtimeMs } as FileInfo;
+
+    mockSftpClient.list.mockReset();
+    mockSftpClient.list.mockResolvedValueOnce([file1, file2, file3]);
+
+    mockSftpClient.fastGet.mockResolvedValue(undefined);
+    mockSftpClient.delete.mockResolvedValue(undefined);
+
+    await southWithLimit.fileQuery(configWithLimit.items);
+
+    expect(mockSftpClient.fastGet).toHaveBeenCalledTimes(2);
+    expect(logger.debug).toHaveBeenCalledWith('Max files limit (2) reached for item item1, skipping remaining files');
+  });
+
+  it('should respect max size limit and skip remaining files', async () => {
+    const configWithLimit: SouthConnectorEntity<SouthSFTPSettings, SouthSFTPItemSettings> = {
+      ...configuration,
+      settings: { ...configuration.settings },
+      items: [
+        ...configuration.items.map(item => ({
+          ...item,
+          settings: {
+            ...item.settings,
+            maxFiles: 0,
+            maxSize: 1
+          }
+        }))
+      ]
+    };
+    const southWithLimit = new SouthSftp(configWithLimit, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+    await southWithLimit.start();
+
+    const mtimeMs = DateTime.fromISO(testData.constants.dates.FAKE_NOW).minus({ minutes: 2 }).toMillis();
+    const file1: FileInfo = { name: 'file1.csv', size: 600 * 1024, modifyTime: mtimeMs } as FileInfo;
+    const file2: FileInfo = { name: 'file2.csv', size: 600 * 1024, modifyTime: mtimeMs } as FileInfo;
+
+    mockSftpClient.list.mockReset();
+    mockSftpClient.list.mockResolvedValue([file1, file2]);
+    mockSftpClient.fastGet.mockResolvedValue(undefined);
+    mockSftpClient.delete.mockResolvedValue(undefined);
+
+    await southWithLimit.fileQuery([configWithLimit.items[0]]);
+
+    expect(mockSftpClient.fastGet).toHaveBeenCalledTimes(1);
+    expect(logger.debug).toHaveBeenCalledWith('Max size limit (1 MB) reached for item item1, skipping remaining files');
+  });
+
+  it('should respect max size limit and stop file query across items', async () => {
+    const configWithLimit: SouthConnectorEntity<SouthSFTPSettings, SouthSFTPItemSettings> = {
+      ...configuration,
+      settings: { ...configuration.settings },
+      items: [
+        ...configuration.items.map(item => ({
+          ...item,
+          settings: {
+            ...item.settings,
+            maxFiles: 0,
+            maxSize: 1
+          }
+        }))
+      ]
+    };
+    const southWithLimit = new SouthSftp(configWithLimit, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+    await southWithLimit.start();
+
+    const mtimeMs = DateTime.fromISO(testData.constants.dates.FAKE_NOW).minus({ minutes: 2 }).toMillis();
+    const file1: FileInfo = { name: 'file1.csv', size: 512 * 1024, modifyTime: mtimeMs } as FileInfo;
+    const file2: FileInfo = { name: 'file2.csv', size: 512 * 1024, modifyTime: mtimeMs } as FileInfo;
+    const file3: FileInfo = { name: 'file3.csv', size: 100, modifyTime: mtimeMs } as FileInfo;
+
+    mockSftpClient.list.mockReset();
+    mockSftpClient.list.mockResolvedValueOnce([file1, file2, file3]);
+
+    mockSftpClient.fastGet.mockResolvedValue(undefined);
+    mockSftpClient.delete.mockResolvedValue(undefined);
+
+    await southWithLimit.fileQuery(configWithLimit.items);
+
+    expect(mockSftpClient.fastGet).toHaveBeenCalledTimes(2);
+    expect(logger.debug).toHaveBeenCalledWith('Max size limit (1 MB) reached for item item1, skipping remaining files');
   });
 
   it('should properly check condition', () => {
@@ -245,6 +391,50 @@ describe('SouthSFTP', () => {
     expect(result).toEqual([fileInfo]);
   });
 
+  it('should list files recursively when recursive is true', async () => {
+    const configRecursive: SouthConnectorEntity<SouthSFTPSettings, SouthSFTPItemSettings> = {
+      ...configuration,
+      settings: { ...configuration.settings },
+      items: [
+        ...configuration.items.map(item => ({
+          ...item,
+          settings: {
+            ...item.settings,
+            recursive: true
+          }
+        }))
+      ]
+    };
+    const southRecursive = new SouthSftp(configRecursive, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+    await southRecursive.start();
+
+    const mtimeMs = DateTime.fromISO(testData.constants.dates.FAKE_NOW).minus({ minutes: 2 }).toMillis();
+    const dirEntry: FileInfo = { type: 'd', name: 'subdir' } as FileInfo;
+    const fileInSubdir: FileInfo = {
+      type: '-',
+      name: 'file.csv',
+      size: 100,
+      modifyTime: mtimeMs
+    } as FileInfo;
+    const fileFailsCondition: FileInfo = {
+      type: '-',
+      name: 'other.xml',
+      size: 100,
+      modifyTime: mtimeMs
+    } as FileInfo;
+
+    mockSftpClient.list.mockReset();
+    mockSftpClient.list.mockResolvedValueOnce([dirEntry]).mockResolvedValueOnce([fileInSubdir, fileFailsCondition]);
+
+    const item = configRecursive.items[0];
+    const result = await southRecursive.listFiles(item);
+
+    expect(mockSftpClient.list).toHaveBeenCalledWith('input');
+    expect(mockSftpClient.list).toHaveBeenCalledWith('input/subdir');
+    expect(result).toHaveLength(1);
+    expect(result[0].name).toBe('subdir/file.csv');
+  });
+
   it('should properly check condition with ignore modified date', () => {
     const mtimeMs = new Date('2020-02-02T02:02:02.222Z').getTime();
     south.getModifiedTime = jest
@@ -289,7 +479,10 @@ describe('SouthFTP with preserve file and compression', () => {
           regex: '.*.csv',
           preserveFiles: false,
           ignoreModifiedDate: false,
-          minAge: 1000
+          minAge: 1000,
+          maxFiles: 0,
+          maxSize: 0,
+          recursive: false
         },
         scanMode: testData.scanMode.list[0]
       },
@@ -302,7 +495,10 @@ describe('SouthFTP with preserve file and compression', () => {
           regex: '.*.log',
           preserveFiles: true,
           ignoreModifiedDate: false,
-          minAge: 1000
+          minAge: 1000,
+          maxFiles: 0,
+          maxSize: 0,
+          recursive: false
         },
         scanMode: testData.scanMode.list[0]
       },
@@ -315,7 +511,10 @@ describe('SouthFTP with preserve file and compression', () => {
           regex: '.*.txt',
           preserveFiles: true,
           ignoreModifiedDate: true,
-          minAge: 1000
+          minAge: 1000,
+          maxFiles: 0,
+          maxSize: 0,
+          recursive: false
         },
         scanMode: testData.scanMode.list[0]
       }
@@ -448,7 +647,10 @@ describe('SouthSFTP test connection with private key', () => {
           regex: '.*.csv',
           preserveFiles: false,
           ignoreModifiedDate: false,
-          minAge: 1000
+          minAge: 1000,
+          maxFiles: 0,
+          maxSize: 0,
+          recursive: false
         },
         scanMode: testData.scanMode.list[0]
       },
@@ -461,7 +663,10 @@ describe('SouthSFTP test connection with private key', () => {
           regex: '.*.log',
           preserveFiles: true,
           ignoreModifiedDate: false,
-          minAge: 1000
+          minAge: 1000,
+          maxFiles: 0,
+          maxSize: 0,
+          recursive: false
         },
         scanMode: testData.scanMode.list[0]
       },
@@ -474,7 +679,10 @@ describe('SouthSFTP test connection with private key', () => {
           regex: '.*.txt',
           preserveFiles: true,
           ignoreModifiedDate: true,
-          minAge: 1000
+          minAge: 1000,
+          maxFiles: 0,
+          maxSize: 0,
+          recursive: false
         },
         scanMode: testData.scanMode.list[0]
       }
