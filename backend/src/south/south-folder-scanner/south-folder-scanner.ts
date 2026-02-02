@@ -82,23 +82,55 @@ export default class SouthFolderScanner
   }
 
   /**
+   * List files recursively if enabled
+   */
+  private async listFilesRecursively(
+    dirPath: string,
+    baseDir: string,
+    item: SouthConnectorItemEntity<SouthFolderScannerItemSettings>
+  ): Promise<Array<string>> {
+    const files: Array<string> = [];
+    const entries = await fs.readdir(dirPath, { withFileTypes: true });
+
+    for (const entry of entries) {
+      const fullPath = path.join(dirPath, entry.name);
+      if (entry.isDirectory() && item.settings.recursive) {
+        const subFiles = await this.listFilesRecursively(fullPath, baseDir, item);
+        files.push(...subFiles);
+      } else if (entry.isFile()) {
+        files.push(path.relative(baseDir, fullPath));
+      }
+    }
+    return files;
+  }
+
+  /**
    * Read the raw file and rewrite it to another file in the folder archive
    */
   async fileQuery(items: Array<SouthConnectorItemEntity<SouthFolderScannerItemSettings>>): Promise<void> {
     const inputFolder = path.resolve(this.connector.settings.inputFolder);
     this.logger.trace(`Reading "${inputFolder}" directory`);
-    // List files in the inputFolder
-    const startRequest = DateTime.now();
-    const files = await fs.readdir(inputFolder);
-    const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
-    this.logger.debug(`Folder ${inputFolder} read in ${requestDuration} ms`);
-
-    if (files.length === 0) {
-      this.logger.debug(`The folder "${inputFolder}" is empty`);
-      return;
-    }
 
     for (const item of items) {
+      let fileCount = 0;
+      let sizeRetrieved = 0;
+
+      const maxFiles = Number(item.settings.maxFiles) || 0;
+      const maxSize = (Number(item.settings.maxSize) || 0) * 1024 * 1024; // Convert MB to bytes
+
+      this.logger.debug(`File query limits for item ${item.name} - maxFiles: ${maxFiles}, maxSize: ${maxSize} bytes`);
+
+      // List files in the inputFolder
+      const startRequest = DateTime.now();
+      const files = await this.listFilesRecursively(inputFolder, inputFolder, item);
+      const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
+      this.logger.debug(`Folder ${inputFolder} read in ${requestDuration} ms`);
+
+      if (files.length === 0) {
+        this.logger.debug(`The folder "${inputFolder}" is empty`);
+        continue;
+      }
+
       this.logger.trace(`Filtering with regex "${item.settings.regex}"`);
       const filteredFiles = files.filter(file => file.match(item.settings.regex));
       if (filteredFiles.length === 0) {
@@ -124,6 +156,22 @@ export default class SouthFolderScanner
       this.logger.trace(`Sending ${matchedFiles.length} files`);
 
       for (const file of matchedFiles) {
+        // Check file count limit (applies across all items in this scan)
+        if (maxFiles > 0 && fileCount >= maxFiles) {
+          this.logger.debug(`Max files limit (${maxFiles}) reached for item ${item.name}, skipping remaining files`);
+          return;
+        }
+
+        // Check size limit (applies across all items in this scan)
+        const filePath = path.resolve(inputFolder, file);
+        const stats = await fs.stat(filePath);
+        if (maxSize > 0 && sizeRetrieved + stats.size > maxSize) {
+          this.logger.debug(`Max size limit (${item.settings.maxSize} MB) reached for item ${item.name}, skipping remaining files`);
+          break;
+        }
+
+        sizeRetrieved += stats.size;
+        fileCount++;
         await this.sendFile(item, file, startRequest.toUTC().toISO());
       }
     }
@@ -182,7 +230,8 @@ export default class SouthFolderScanner
     if (this.connector.settings.compression) {
       try {
         // Compress and send the compressed file
-        const gzipPath = path.resolve(this.tmpFolder, `${filename}.gz`);
+        const safeFilename = filename.split(path.sep).join('_');
+        const gzipPath = path.resolve(this.tmpFolder, `${safeFilename}.gz`);
         await compress(filePath, gzipPath);
         await this.addContent({ type: 'any', filePath: gzipPath }, queryTime, [item.id]);
         try {
