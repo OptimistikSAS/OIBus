@@ -50,7 +50,10 @@ describe('SouthFolderScanner', () => {
           regex: '.*.csv',
           preserveFiles: false,
           ignoreModifiedDate: false,
-          minAge: 1000
+          minAge: 1000,
+          maxFiles: 0,
+          maxSize: 0,
+          recursive: false
         },
         scanMode: testData.scanMode.list[0]
       },
@@ -62,7 +65,10 @@ describe('SouthFolderScanner', () => {
           regex: '.*.log',
           preserveFiles: true,
           ignoreModifiedDate: false,
-          minAge: 1000
+          minAge: 1000,
+          maxFiles: 0,
+          maxSize: 0,
+          recursive: false
         },
         scanMode: testData.scanMode.list[0]
       },
@@ -74,7 +80,10 @@ describe('SouthFolderScanner', () => {
           regex: '.*.txt',
           preserveFiles: true,
           ignoreModifiedDate: true,
-          minAge: 1000
+          minAge: 1000,
+          maxFiles: 0,
+          maxSize: 0,
+          recursive: false
         },
         scanMode: testData.scanMode.list[0]
       }
@@ -89,23 +98,40 @@ describe('SouthFolderScanner', () => {
     await south.start();
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('fileQuery should manage file query', async () => {
+    // First fileQuery call - all 3 items get empty
+    // Second fileQuery call - all 3 items get files
     (fs.readdir as jest.Mock)
-      .mockImplementationOnce(() => Promise.resolve([]))
-      .mockImplementationOnce(() => Promise.resolve(['file.txt', 'file2.txt', 'file3.txt', 'file.log']));
+      .mockResolvedValueOnce([]) // item1 empty
+      .mockResolvedValueOnce([]) // item2 empty
+      .mockResolvedValueOnce([]) // item3 empty
+      .mockResolvedValue([
+        { name: 'file.txt', isFile: () => true, isDirectory: () => false },
+        { name: 'file2.txt', isFile: () => true, isDirectory: () => false },
+        { name: 'file3.txt', isFile: () => true, isDirectory: () => false },
+        { name: 'file.log', isFile: () => true, isDirectory: () => false }
+      ]); // All subsequent calls return files
 
     south.sendFile = jest.fn();
     south.checkAge = jest
       .fn()
-      .mockImplementationOnce(() => false)
-      .mockImplementationOnce(() => false)
-      .mockImplementationOnce(() => true)
-      .mockImplementationOnce(() => true);
+      // Second fileQuery - item2 (.log regex): file.log
+      .mockReturnValueOnce(false) // file.log - too young
+      // Second fileQuery - item3 (.txt regex): file.txt, file2.txt, file3.txt
+      .mockReturnValueOnce(false) // file.txt - too young
+      .mockReturnValueOnce(true)  // file2.txt - OK
+      .mockReturnValueOnce(true); // file3.txt - OK
+
+    (fs.stat as jest.Mock).mockResolvedValue({ size: 100 });
 
     await south.fileQuery(configuration.items);
 
     expect(logger.trace).toHaveBeenCalledWith(`Reading "${path.resolve(configuration.settings.inputFolder)}" directory`);
-    expect(fs.readdir).toHaveBeenCalledTimes(1);
+    expect(fs.readdir).toHaveBeenCalledTimes(3); // Once for each of the 3 items
     expect(logger.debug).toHaveBeenCalledWith(`The folder "${path.resolve(configuration.settings.inputFolder)}" is empty`);
 
     await south.fileQuery(configuration.items);
@@ -229,7 +255,10 @@ describe('SouthFolderScanner with compression', () => {
           regex: '.*.csv',
           preserveFiles: true,
           ignoreModifiedDate: false,
-          minAge: 1000
+          minAge: 1000,
+          maxFiles: 0,
+          maxSize: 0,
+          recursive: false
         },
         scanMode: testData.scanMode.list[0]
       },
@@ -241,7 +270,10 @@ describe('SouthFolderScanner with compression', () => {
           regex: '.*.log',
           preserveFiles: true,
           ignoreModifiedDate: false,
-          minAge: 1000
+          minAge: 1000,
+          maxFiles: 0,
+          maxSize: 0,
+          recursive: false
         },
         scanMode: testData.scanMode.list[0]
       },
@@ -253,7 +285,10 @@ describe('SouthFolderScanner with compression', () => {
           regex: '.*.txt',
           preserveFiles: true,
           ignoreModifiedDate: true,
-          minAge: 1000
+          minAge: 1000,
+          maxFiles: 0,
+          maxSize: 0,
+          recursive: false
         },
         scanMode: testData.scanMode.list[0]
       }
@@ -265,6 +300,10 @@ describe('SouthFolderScanner with compression', () => {
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
     south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   it('should properly send compressed file', async () => {
@@ -383,5 +422,239 @@ describe('SouthFolderScanner with compression', () => {
     expect(south.testConnection).toHaveBeenCalledTimes(1);
     expect(fs.readdir).toHaveBeenCalledTimes(1);
     expect(south.checkAge).not.toHaveBeenCalled();
+  });
+
+  it('should respect max files limit', async () => {
+    const configWithLimit: SouthConnectorEntity<SouthFolderScannerSettings, SouthFolderScannerItemSettings> = {
+      ...configuration,
+      settings: {
+        inputFolder: 'inputFolder',
+        compression: false
+      },
+      items: [
+        ...configuration.items.map(item => ({
+          ...item,
+          settings: {
+            ...item.settings,
+            maxFiles: 2,
+            maxSize: 0,
+            recursive: false
+          }
+        }))
+      ]
+    };
+    south = new SouthFolderScanner(configWithLimit, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+
+    (fs.readdir as jest.Mock).mockResolvedValue([
+      { name: 'file1.csv', isFile: () => true, isDirectory: () => false },
+      { name: 'file2.csv', isFile: () => true, isDirectory: () => false },
+      { name: 'file3.csv', isFile: () => true, isDirectory: () => false }
+    ]);
+
+    south.sendFile = jest.fn();
+    south.checkAge = jest.fn().mockReturnValue(true);
+    (fs.stat as jest.Mock).mockReturnValue({ size: 100 });
+
+    await south.fileQuery(configWithLimit.items);
+
+    expect(south.sendFile).toHaveBeenCalledTimes(2);
+    expect(logger.debug).toHaveBeenCalledWith(expect.stringContaining('Max files limit (2) reached'));
+  });
+
+  it('should respect max size limit', async () => {
+    const configWithLimit: SouthConnectorEntity<SouthFolderScannerSettings, SouthFolderScannerItemSettings> = {
+      ...configuration,
+      settings: {
+        inputFolder: 'inputFolder',
+        compression: false
+      },
+      items: [
+        ...configuration.items.map(item => ({
+          ...item,
+          settings: {
+            ...item.settings,
+            maxFiles: 0,
+            maxSize: 1,
+            recursive: false
+          }
+        }))
+      ]
+    };
+    south = new SouthFolderScanner(configWithLimit, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+
+    (fs.readdir as jest.Mock).mockResolvedValue([
+      { name: 'file1.csv', isFile: () => true, isDirectory: () => false },
+      { name: 'file2.csv', isFile: () => true, isDirectory: () => false }
+    ]);
+
+    south.sendFile = jest.fn();
+    south.checkAge = jest.fn().mockReturnValue(true);
+    (fs.stat as jest.Mock)
+      .mockReturnValueOnce({ size: 500 * 1024 }) // 500 KB
+      .mockReturnValueOnce({ size: 600 * 1024 }); // 600 KB - should exceed 1MB limit
+
+    await south.fileQuery(configWithLimit.items);
+
+    expect(south.sendFile).toHaveBeenCalledTimes(1);
+    expect(logger.debug).toHaveBeenCalledWith(expect.stringContaining('Max size limit (1 MB) reached'));
+  });
+
+  it('should stop file query when max files limit reached across items', async () => {
+    const configWithLimit: SouthConnectorEntity<SouthFolderScannerSettings, SouthFolderScannerItemSettings> = {
+      ...configuration,
+      settings: {
+        inputFolder: 'inputFolder',
+        compression: false
+      },
+      items: [
+        ...configuration.items.map(item => ({
+          ...item,
+          settings: {
+            ...item.settings,
+            maxFiles: 2,
+            maxSize: 0,
+            recursive: false
+          }
+        }))
+      ]
+    };
+    south = new SouthFolderScanner(configWithLimit, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+
+    (fs.readdir as jest.Mock).mockResolvedValue([
+      { name: 'file1.csv', isFile: () => true, isDirectory: () => false },
+      { name: 'file2.csv', isFile: () => true, isDirectory: () => false },
+      { name: 'file3.csv', isFile: () => true, isDirectory: () => false }
+    ]);
+
+    south.sendFile = jest.fn();
+    south.checkAge = jest.fn().mockReturnValue(true);
+    (fs.stat as jest.Mock).mockReturnValue({ size: 100 });
+
+    await south.fileQuery(configWithLimit.items);
+
+    expect(south.sendFile).toHaveBeenCalledTimes(2);
+    expect(logger.debug).toHaveBeenCalledWith('Max files limit (2) reached for item item1, skipping remaining files');
+  });
+
+  it('should stop file query when max size limit reached across items', async () => {
+    const configWithLimit: SouthConnectorEntity<SouthFolderScannerSettings, SouthFolderScannerItemSettings> = {
+      ...configuration,
+      settings: {
+        inputFolder: 'inputFolder',
+        compression: false
+      },
+      items: [
+        ...configuration.items.map(item => ({
+          ...item,
+          settings: {
+            ...item.settings,
+            maxFiles: 0,
+            maxSize: 1,
+            recursive: false
+          }
+        }))
+      ]
+    };
+    south = new SouthFolderScanner(configWithLimit, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+    await south.start();
+
+    (fs.readdir as jest.Mock).mockReset();
+    (fs.readdir as jest.Mock).mockResolvedValue([
+      { name: 'file1.csv', isFile: () => true, isDirectory: () => false },
+      { name: 'file2.csv', isFile: () => true, isDirectory: () => false },
+      { name: 'file3.csv', isFile: () => true, isDirectory: () => false }
+    ]);
+
+    (fs.stat as jest.Mock).mockReset();
+    (fs.stat as jest.Mock).mockReturnValue({ size: 512 * 1024, mtimeMs: Date.now() });
+
+    south.sendFile = jest.fn();
+    south.checkAge = jest.fn().mockReturnValue(true);
+
+    await south.fileQuery(configWithLimit.items);
+
+    expect(south.sendFile).toHaveBeenCalledTimes(2);
+    expect(logger.debug).toHaveBeenCalledWith('Max size limit (1 MB) reached for item item1, skipping remaining files');
+  });
+
+  it('should skip directory entries when recursive is false', async () => {
+    const configNoRecursive: SouthConnectorEntity<SouthFolderScannerSettings, SouthFolderScannerItemSettings> = {
+      ...configuration,
+      settings: {
+        inputFolder: 'inputFolder',
+        compression: false
+      },
+      items: [
+        ...configuration.items.map(item => ({
+          ...item,
+          settings: {
+            ...item.settings,
+            maxFiles: 0,
+            maxSize: 0,
+            recursive: false
+          }
+        }))
+      ]
+    };
+    south = new SouthFolderScanner(configNoRecursive, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+    await south.start();
+
+    (fs.readdir as jest.Mock).mockReset();
+    (fs.readdir as jest.Mock)
+      .mockResolvedValueOnce([
+        { name: 'subdir', isFile: () => false, isDirectory: () => true },
+        { name: 'file1.csv', isFile: () => true, isDirectory: () => false }
+      ])
+      .mockResolvedValue([]); // Return empty for any recursive calls
+
+    south.sendFile = jest.fn();
+    south.checkAge = jest.fn().mockReturnValue(true);
+    (fs.stat as jest.Mock).mockReset();
+    (fs.stat as jest.Mock).mockReturnValue({ size: 100, mtimeMs: Date.now() });
+
+    await south.fileQuery(configNoRecursive.items);
+
+    expect(south.sendFile).toHaveBeenCalledTimes(1);
+    expect(south.sendFile).toHaveBeenCalledWith(configNoRecursive.items[0], 'file1.csv', expect.any(String));
+  });
+
+  it('should scan recursively when enabled', async () => {
+    const configWithRecursive: SouthConnectorEntity<SouthFolderScannerSettings, SouthFolderScannerItemSettings> = {
+      ...configuration,
+      settings: {
+        inputFolder: 'inputFolder',
+        compression: false
+      },
+      items: [
+        ...configuration.items.map(item => ({
+          ...item,
+          settings: {
+            ...item.settings,
+            maxFiles: 0,
+            maxSize: 0,
+            recursive: true
+          }
+        }))
+      ]
+    };
+    south = new SouthFolderScanner(configWithRecursive, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+
+    (fs.readdir as jest.Mock)
+      .mockResolvedValueOnce([
+        { name: 'file1.csv', isFile: () => true, isDirectory: () => false },
+        { name: 'subdir', isFile: () => false, isDirectory: () => true }
+      ])
+      .mockResolvedValueOnce([{ name: 'file2.csv', isFile: () => true, isDirectory: () => false }]) // subdir contents
+      .mockResolvedValue([]); // All subsequent calls (item2, item3) return empty
+
+    south.sendFile = jest.fn();
+    south.checkAge = jest.fn().mockReturnValue(true);
+    (fs.stat as jest.Mock).mockReturnValue({ size: 100 });
+
+    await south.fileQuery(configWithRecursive.items);
+
+    // Item1: 2 readdir calls (root + subdir), 2 files sent
+    // Item2 & Item3: 1 readdir call each (root), 0 files (empty)
+    expect(south.sendFile).toHaveBeenCalledTimes(2); // Both files from item1
   });
 });

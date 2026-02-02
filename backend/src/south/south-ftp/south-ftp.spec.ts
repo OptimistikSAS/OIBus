@@ -87,7 +87,10 @@ describe('SouthFTP', () => {
           regex: '.*.csv',
           preserveFiles: false,
           ignoreModifiedDate: false,
-          minAge: 1000
+          minAge: 1000,
+          maxFiles: 0,
+          maxSize: 0,
+          recursive: false
         },
         scanMode: testData.scanMode.list[0]
       },
@@ -100,7 +103,10 @@ describe('SouthFTP', () => {
           regex: '.*.log',
           preserveFiles: true,
           ignoreModifiedDate: false,
-          minAge: 1000
+          minAge: 1000,
+          maxFiles: 0,
+          maxSize: 0,
+          recursive: false
         },
         scanMode: testData.scanMode.list[0]
       },
@@ -113,7 +119,10 @@ describe('SouthFTP', () => {
           regex: '.*.txt',
           preserveFiles: true,
           ignoreModifiedDate: true,
-          minAge: 1000
+          minAge: 1000,
+          maxFiles: 0,
+          maxSize: 0,
+          recursive: false
         },
         scanMode: testData.scanMode.list[0]
       }
@@ -410,6 +419,66 @@ describe('SouthFTP', () => {
       );
     });
 
+    it('should list files recursively when recursive is true', async () => {
+      const configRecursive = {
+        ...configuration,
+        settings: { ...configuration.settings },
+        items: [
+          ...configuration.items.map(item => ({
+            ...item,
+            settings: {
+              ...item.settings,
+              recursive: true
+            }
+          }))
+        ]
+      };
+      const southRecursive = new SouthFtp(configRecursive, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+      await southRecursive.start();
+
+      const dirEntry = {
+        ...createMockFileInfo('subdir', new Date(DateTime.now().minus({ minutes: 2 }).toMillis())),
+        name: 'subdir',
+        isDirectory: true,
+        isFile: false
+      } as FileInfo;
+      const fileInSubdir = {
+        ...createMockFileInfo('file.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis())),
+        isDirectory: false,
+        isFile: true
+      } as FileInfo;
+      const fileFailsCondition = {
+        ...createMockFileInfo('other.xml', new Date(DateTime.now().minus({ minutes: 2 }).toMillis())),
+        isDirectory: false,
+        isFile: true
+      } as FileInfo;
+
+      mockFtpClient.list.mockResolvedValueOnce([dirEntry]).mockResolvedValueOnce([fileInSubdir, fileFailsCondition]);
+
+      const item = configRecursive.items[0];
+      const result = await southRecursive.listFiles(item);
+
+      expect(mockFtpClient.list).toHaveBeenCalledWith('input');
+      expect(mockFtpClient.list).toHaveBeenCalledWith('input/subdir');
+      expect(result).toHaveLength(1);
+      expect(result[0].name).toBe('subdir/file.csv');
+    });
+
+    it('should query files with file that has zero size', async () => {
+      const fileWithNoSize = {
+        ...createMockFileInfo('test.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis())),
+        size: 0
+      };
+
+      mockFtpClient.list.mockResolvedValue([fileWithNoSize]);
+      mockFtpClient.downloadTo.mockResolvedValue(undefined);
+      mockFtpClient.remove.mockResolvedValue(undefined);
+
+      await south.fileQuery([configuration.items[0]]);
+
+      expect(mockFtpClient.downloadTo).toHaveBeenCalledWith(path.resolve('cacheFolder', 'tmp', 'test.csv'), 'input/test.csv');
+    });
+
     it('should query files', async () => {
       const fileInfo = createMockFileInfo('test.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
 
@@ -430,6 +499,135 @@ describe('SouthFTP', () => {
         testData.constants.dates.FAKE_NOW,
         [configuration.items[0].id]
       );
+    });
+
+    it('should respect max files limit and skip remaining files', async () => {
+      const configWithLimit = {
+        ...configuration,
+        settings: { ...configuration.settings },
+        items: [
+          ...configuration.items.map(item => ({
+            ...item,
+            settings: {
+              ...item.settings,
+              maxFiles: 2,
+              maxSize: 0
+            }
+          }))
+        ]
+      };
+      const southWithLimit = new SouthFtp(configWithLimit, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+      await southWithLimit.start();
+
+      const file1 = createMockFileInfo('file1.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
+      const file2 = createMockFileInfo('file2.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
+      const file3 = createMockFileInfo('file3.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
+
+      mockFtpClient.list.mockResolvedValue([file1, file2, file3]);
+      mockFtpClient.downloadTo.mockResolvedValue(undefined);
+      mockFtpClient.remove.mockResolvedValue(undefined);
+
+      await southWithLimit.fileQuery([configWithLimit.items[0]]);
+
+      expect(mockFtpClient.downloadTo).toHaveBeenCalledTimes(2);
+      expect(logger.debug).toHaveBeenCalledWith('Max files limit (2) reached for item item1, skipping remaining files');
+    });
+
+    it('should respect max files limit and stop file query across items', async () => {
+      const configWithLimit = {
+        ...configuration,
+        settings: { ...configuration.settings },
+        items: [
+          ...configuration.items.map(item => ({
+            ...item,
+            settings: {
+              ...item.settings,
+              maxFiles: 2,
+              maxSize: 0
+            }
+          }))
+        ]
+      };
+      const southWithLimit = new SouthFtp(configWithLimit, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+      await southWithLimit.start();
+
+      const file1 = createMockFileInfo('file1.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
+      const file2 = createMockFileInfo('file2.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
+      const file3 = createMockFileInfo('file3.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
+
+      mockFtpClient.list.mockResolvedValueOnce([file1, file2, file3]);
+
+      mockFtpClient.downloadTo.mockResolvedValue(undefined);
+      mockFtpClient.remove.mockResolvedValue(undefined);
+
+      await southWithLimit.fileQuery(configWithLimit.items);
+
+      expect(mockFtpClient.downloadTo).toHaveBeenCalledTimes(2);
+      expect(logger.debug).toHaveBeenCalledWith('Max files limit (2) reached for item item1, skipping remaining files');
+    });
+
+    it('should respect max size limit and skip remaining files', async () => {
+      const configWithLimit = {
+        ...configuration,
+        settings: { ...configuration.settings },
+        items: [
+          ...configuration.items.map(item => ({
+            ...item,
+            settings: {
+              ...item.settings,
+              maxFiles: 0,
+              maxSize: 1
+            }
+          }))
+        ]
+      };
+      const southWithLimit = new SouthFtp(configWithLimit, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+      await southWithLimit.start();
+
+      const file1 = { ...createMockFileInfo('file1.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis())), size: 600 * 1024 };
+      const file2 = { ...createMockFileInfo('file2.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis())), size: 600 * 1024 };
+
+      mockFtpClient.list.mockResolvedValue([file1, file2]);
+      mockFtpClient.downloadTo.mockResolvedValue(undefined);
+      mockFtpClient.remove.mockResolvedValue(undefined);
+
+      await southWithLimit.fileQuery([configWithLimit.items[0]]);
+
+      expect(mockFtpClient.downloadTo).toHaveBeenCalledTimes(1);
+      expect(logger.debug).toHaveBeenCalledWith('Max size limit (1 MB) reached for item item1, skipping remaining files');
+    });
+
+    it('should respect max size limit and stop file query across items', async () => {
+      const configWithLimit = {
+        ...configuration,
+        settings: { ...configuration.settings },
+        items: [
+          ...configuration.items.map(item => ({
+            ...item,
+            settings: {
+              ...item.settings,
+              maxFiles: 0,
+              maxSize: 1
+            }
+          }))
+        ]
+      };
+      const southWithLimit = new SouthFtp(configWithLimit, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+      await southWithLimit.start();
+
+      const file1 = { ...createMockFileInfo('file1.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis())), size: 512 * 1024 };
+      const file2 = { ...createMockFileInfo('file2.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis())), size: 512 * 1024 };
+      const file3 = createMockFileInfo('file3.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
+
+      mockFtpClient.list.mockResolvedValue([file1, file2, file3]);
+
+      mockFtpClient.downloadTo.mockResolvedValue(undefined);
+      mockFtpClient.remove.mockResolvedValue(undefined);
+
+      await southWithLimit.fileQuery(configWithLimit.items);
+
+      expect(mockFtpClient.downloadTo).toHaveBeenCalledTimes(2);
+      expect(logger.debug).toHaveBeenCalledWith('Max size limit (1 MB) reached for item item1, skipping remaining files');
     });
 
     it('should handle start error when createFolder fails', async () => {
@@ -486,7 +684,9 @@ describe('SouthFTP', () => {
 
       mockFtpClient.access.mockResolvedValue(undefined);
       mockFtpClient.list.mockResolvedValue([fileInfo]);
-      mockFtpClient.close.mockRejectedValue(new Error('Close failed'));
+      mockFtpClient.close.mockImplementationOnce(() => {
+        throw new Error('Close failed');
+      });
 
       const item = configuration.items[0];
 
