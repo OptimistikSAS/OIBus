@@ -1363,7 +1363,10 @@
           },
           "folder-scanner": {
             "input-folder": "Input folder",
-            "compression": "Enable compression"
+            "compression": "Enable compression",
+            "max-files": "Max files per scan (0 = no limit)",
+            "max-size": "Max size per scan (0 = no limit)",
+            "recursive": "Scan sub-folders"
           },
           "modbus": {
             "host": "Host",
@@ -1678,7 +1681,10 @@
             "password": "Password",
             "private-key": "Private key",
             "passphrase": "Passphrase",
-            "compression": "Compress files"
+            "compression": "Compress files",
+            "max-files": "Max files per scan (0 = no limit)",
+            "max-size": "Max size per scan (0 = no limit)",
+            "recursive": "Scan sub-folders"
           },
           "ftp": {
             "host": "Host",
@@ -1690,7 +1696,10 @@
             },
             "username": "Username",
             "password": "Password",
-            "compression": "Compress files"
+            "compression": "Compress files",
+            "max-files": "Max files per scan (0 = no limit)",
+            "max-size": "Max size per scan (0 = no limit)",
+            "recursive": "Scan sub-folders"
           },
           "sqlite": {
             "throttling": {
