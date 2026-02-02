@@ -616,7 +616,10 @@ const southConnectorCommand: SouthConnectorCommandDTO = {
         regex: '*',
         minAge: 100,
         preserveFiles: true,
-        ignoreModifiedDate: false
+        ignoreModifiedDate: false,
+        maxFiles: 0,
+        maxSize: 0,
+        recursive: false
       },
       scanModeId: scanModes[1].id,
       scanModeName: null
@@ -633,7 +636,10 @@ const southConnectorItemCommand: SouthConnectorItemCommandDTO = {
     regex: '*',
     minAge: 100,
     preserveFiles: true,
-    ignoreModifiedDate: false
+    ignoreModifiedDate: false,
+    maxFiles: 0,
+    maxSize: 0,
+    recursive: false
   }
 };
 const itemTestingSettings: SouthConnectorItemTestingSettings = {
