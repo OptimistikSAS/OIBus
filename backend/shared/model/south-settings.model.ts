@@ -910,6 +910,9 @@ export interface SouthFolderScannerItemSettings {
   minAge: number;
   preserveFiles: boolean;
   ignoreModifiedDate?: boolean;
+  maxFiles: number;
+  maxSize: number;
+  recursive: boolean;
 }
 
 export interface SouthFTPItemSettings {
@@ -918,6 +921,9 @@ export interface SouthFTPItemSettings {
   minAge: number;
   preserveFiles: boolean;
   ignoreModifiedDate?: boolean;
+  maxFiles: number;
+  maxSize: number;
+  recursive: boolean;
 }
 
 export interface SouthModbusItemSettings {
@@ -1011,6 +1017,9 @@ export interface SouthSFTPItemSettings {
   minAge: number;
   preserveFiles: boolean;
   ignoreModifiedDate?: boolean;
+  maxFiles: number;
+  maxSize: number;
+  recursive: boolean;
 }
 
 export interface SouthSQLiteItemSettings {

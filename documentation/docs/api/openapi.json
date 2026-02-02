@@ -1859,12 +1859,26 @@
 					},
 					"ignoreModifiedDate": {
 						"type": "boolean"
+					},
+					"maxFiles": {
+						"type": "number",
+						"format": "double"
+					},
+					"maxSize": {
+						"type": "number",
+						"format": "double"
+					},
+					"recursive": {
+						"type": "boolean"
 					}
 				},
 				"required": [
 					"regex",
 					"minAge",
-					"preserveFiles"
+					"preserveFiles",
+					"maxFiles",
+					"maxSize",
+					"recursive"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -2037,13 +2051,27 @@
 					},
 					"ignoreModifiedDate": {
 						"type": "boolean"
+					},
+					"maxFiles": {
+						"type": "number",
+						"format": "double"
+					},
+					"maxSize": {
+						"type": "number",
+						"format": "double"
+					},
+					"recursive": {
+						"type": "boolean"
 					}
 				},
 				"required": [
 					"remoteFolder",
 					"regex",
 					"minAge",
-					"preserveFiles"
+					"preserveFiles",
+					"maxFiles",
+					"maxSize",
+					"recursive"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -6211,13 +6239,27 @@
 					},
 					"ignoreModifiedDate": {
 						"type": "boolean"
+					},
+					"maxFiles": {
+						"type": "number",
+						"format": "double"
+					},
+					"maxSize": {
+						"type": "number",
+						"format": "double"
+					},
+					"recursive": {
+						"type": "boolean"
 					}
 				},
 				"required": [
 					"remoteFolder",
 					"regex",
 					"minAge",
-					"preserveFiles"
+					"preserveFiles",
+					"maxFiles",
+					"maxSize",
+					"recursive"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -22490,7 +22532,7 @@
 	},
 	"info": {
 		"title": "OIBus API",
-		"version": "3.8.8",
+		"version": "3.7.8",
 		"description": "OIBus API is a RESTful interface for managing industrial data flows. It allows you to configure connectors, schedule data collection, transform and route data, monitor system health, and secure communications. Designed for developers and system integrators, it enables seamless integration between industrial systems and enterprise applications.",
 		"license": {
 			"name": "EUPL"
