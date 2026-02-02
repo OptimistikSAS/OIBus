@@ -72,6 +72,26 @@ interface NewNorthRESTSettings {
     testSuccessCode: number;
   };
 }
+
+interface OldSouthFileItemSettings {
+  remoteFolder: string;
+  regex: string;
+  minAge: number;
+  preserveFiles: boolean;
+  ignoreModifiedDate?: boolean;
+}
+
+interface NewSouthFileItemSettings {
+  remoteFolder: string;
+  regex: string;
+  minAge: number;
+  preserveFiles: boolean;
+  ignoreModifiedDate?: boolean;
+  maxFiles: number;
+  maxSize: number;
+  recursive: boolean;
+}
+
 export async function up(knex: Knex): Promise<void> {
   await updateRegistrationSettings(knex);
   await updateTransformersTable(knex);
@@ -79,6 +99,7 @@ export async function up(knex: Knex): Promise<void> {
   await createDefaultTransformers(knex);
   await migrateSubscriptionsToTransformers(knex);
   await addTransformersItems(knex);
+  await updateFileConnectorItems(knex);
 }
 
 async function updateRegistrationSettings(knex: Knex): Promise<void> {
@@ -431,6 +452,32 @@ async function addTransformersItems(knex: Knex): Promise<void> {
     table.string('item_id').references('id').inTable(HISTORY_ITEMS_TABLE);
     table.unique(['id', 'item_id']);
   });
+}
+
+async function updateFileConnectorItems(knex: Knex): Promise<void> {
+  const oldSouth: Array<{
+    id: string;
+    type: string;
+  }> = await knex(SOUTH_CONNECTORS_TABLE).select('id', 'type', 'settings').whereIn('type', ['folder-scanner', 'sftp', 'ftp']);
+  for (const connector of oldSouth) {
+    const oldItems: Array<{
+      id: string;
+      settings: string;
+    }> = await knex(SOUTH_ITEMS_TABLE).select('id', 'settings').where('connector_id', connector.id);
+    for (const item of oldItems) {
+      const oldSettings = JSON.parse(item.settings) as OldSouthFileItemSettings;
+
+      const newSettings: NewSouthFileItemSettings = {
+        ...oldSettings,
+        recursive: false,
+        maxFiles: 0,
+        maxSize: 0
+      };
+      await knex(SOUTH_ITEMS_TABLE)
+        .update({ settings: JSON.stringify(newSettings) })
+        .where('id', item.id);
+    }
+  }
 }
 
 export async function down(_knex: Knex): Promise<void> {

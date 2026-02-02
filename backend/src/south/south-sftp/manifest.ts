@@ -347,6 +347,67 @@ const manifest: SouthConnectorManifest = {
                 columns: 4,
                 displayInViewMode: false
               }
+            },
+            {
+              type: 'number',
+              key: 'maxFiles',
+              translationKey: 'configuration.oibus.manifest.south.sftp.max-files',
+              defaultValue: 0,
+              unit: null,
+              validators: [
+                {
+                  type: 'REQUIRED',
+                  arguments: []
+                },
+                {
+                  type: 'MINIMUM',
+                  arguments: ['0']
+                }
+              ],
+              displayProperties: {
+                row: 2,
+                columns: 4,
+                displayInViewMode: true
+              }
+            },
+            {
+              type: 'number',
+              key: 'maxSize',
+              translationKey: 'configuration.oibus.manifest.south.sftp.max-size',
+              defaultValue: 0,
+              unit: 'MB',
+              validators: [
+                {
+                  type: 'REQUIRED',
+                  arguments: []
+                },
+                {
+                  type: 'MINIMUM',
+                  arguments: ['0']
+                }
+              ],
+              displayProperties: {
+                row: 2,
+                columns: 4,
+                displayInViewMode: true
+              }
+            },
+            {
+              type: 'boolean',
+              key: 'recursive',
+              translationKey: 'configuration.oibus.manifest.south.sftp.recursive',
+              defaultValue: false,
+              validators: [
+                {
+                  type: 'REQUIRED',
+                  arguments: []
+                }
+              ],
+              displayProperties: {
+                row: 2,
+                columns: 4,
+                displayInViewMode: true
+              }
             }
           ]
         }
