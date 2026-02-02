@@ -10,6 +10,9 @@ The **Folder Scanner** South connector periodically scans a specified input fold
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------- |
 | Input folder       | Path of the folder to scan. Can be **absolute** or **relative** (relative to the **Data folder** - see the _About_ section). Supports remote paths (e.g., `/remote.server/data` or `Z:\Remote disk\DATA`). **Case-sensitive**. | `/data/input` or `Z:\Files` |
 | Enable compression | If enabled, files are compressed using **gzip** before being sent to North caches.                                                                                                                                             | Enabled/Disabled            |
+| Max files per scan | Maximum number of files to retrieve per scan. Set to **0** for no limit. When reached, remaining files are retrieved in the next scan.                                                                                         | `0` (no limit), `100`       |
+| Max size per scan  | Maximum total size (in MB) of files to retrieve per scan. Set to **0** for no limit. When reached, remaining files are retrieved in the next scan.                                                                             | `0` (no limit), `500`       |
+| Scan sub-folders   | If enabled, recursively scans sub-folders within the input folder.                                                                                                                                                             | Enabled/Disabled            |
 
 :::caution User Access Requirements
 
