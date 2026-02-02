@@ -119,6 +119,39 @@ services:
     profiles: [ "oibus" ]
     entrypoint: /bin/sh -c "envsubst < /etc/nginx/oibus.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
 
+  ftp-server:
+    image: fauria/vsftpd
+    container_name: oibus_ftp-server
+    ports:
+      - "20:20"
+      - "21:21"
+      - "21100-21110:21100-21110"
+    environment:
+      FTP_USER: oibus
+      FTP_PASS: oibuspass
+      PASV_ADDRESS: 127.0.0.1
+      PASV_MIN_PORT: 21100
+      PASV_MAX_PORT: 21110
+    volumes:
+      - ./docker/ftp/data:/home/vsftpd
+    networks:
+      - oibus-network
+    restart: unless-stopped
+    profiles: [ "testing" ]
+
+  sftp-server:
+    image: atmoz/sftp
+    container_name: oibus_sftp-server
+    ports:
+      - "2222:22"
+    command: oibus:pass:::upload
+    volumes:
+      - ./docker/sftp/data:/home/oibus/upload
+    networks:
+      - oibus-network
+    restart: unless-stopped
+    profiles: [ "testing" ]
+
 networks:
   oibus-network:
     driver: bridge

@@ -6,11 +6,14 @@ Securely transfer and read files from remote SFTP servers.
 
 ## Specific Settings
 
-| Setting           | Description                                     |
-| ----------------- | ----------------------------------------------- |
-| **Host**          | IP address or hostname of the SFTP server.      |
-| **Port**          | Port for the connection (default: **8080**).    |
-| **Compress file** | Enable gzip compression before North processing |
+| Setting              | Description                                                                                                                                        |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Host**             | IP address or hostname of the SFTP server.                                                                                                         |
+| **Port**             | Port for the connection (default: **8080**).                                                                                                       |
+| **Compress file**    | Enable gzip compression before North processing                                                                                                    |
+| **Max files**        | Maximum number of files to retrieve per scan. Set to **0** for no limit. When reached, remaining files are retrieved in the next scan.             |
+| **Max size (MB)**    | Maximum total size (in MB) of files to retrieve per scan. Set to **0** for no limit. When reached, remaining files are retrieved in the next scan. |
+| **Scan sub-folders** | If enabled, recursively scans sub-folders within the remote folder.                                                                                |
 
 ### Authentication Methods
 
