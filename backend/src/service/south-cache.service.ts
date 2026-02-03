@@ -10,8 +10,7 @@ export default class SouthCacheService {
    * Retrieve south cache or return a new one with startTime
    */
   getSouthCache(southId: string, scanModeId: string, itemId: string, startTime: Instant): SouthCache {
-    const tableName = `south_item_cache_${southId}`;
-    const southCache = this.cacheRepository.getSouthCache(tableName, scanModeId, itemId);
+    const southCache = this.cacheRepository.getSouthCache(southId, scanModeId, itemId);
     if (!southCache) {
       return {
         southId,
@@ -24,13 +23,11 @@ export default class SouthCacheService {
   }
 
   saveSouthCache(command: SouthCache): void {
-    const tableName = `south_item_cache_${command.southId}`;
-    this.cacheRepository.save(tableName, command);
+    this.cacheRepository.save(command);
   }
 
   resetSouthCache(id: string): void {
-    const tableName = `south_item_cache_${id}`;
-    this.cacheRepository.deleteAllBySouthConnector(tableName);
+    this.cacheRepository.deleteAllBySouthConnector(id);
   }
 
   createCustomTable(tableName: string, fields: string): void {
@@ -43,5 +40,29 @@ export default class SouthCacheService {
 
   runQueryOnCustomTable(query: string, params: Array<string | number>): void {
     this.cacheRepository.runQueryOnCustomTable(query, params);
+  }
+
+  createItemValueTable(connectorId: string): void {
+    this.cacheRepository.createItemValueTable(connectorId);
+  }
+
+  getItemLastValue(connectorId: string, itemId: string) {
+    return this.cacheRepository.getItemLastValue(connectorId, itemId);
+  }
+
+  getAllItemValues(connectorId: string) {
+    return this.cacheRepository.getAllItemValues(connectorId);
+  }
+
+  saveItemLastValue(connectorId: string, value: import('../../shared/model/south-connector.model').SouthItemLastValue): void {
+    this.cacheRepository.saveItemLastValue(connectorId, value);
+  }
+
+  deleteItemValue(connectorId: string, itemId: string): void {
+    this.cacheRepository.deleteItemValue(connectorId, itemId);
+  }
+
+  dropItemValueTable(connectorId: string): void {
+    this.cacheRepository.dropItemValueTable(connectorId);
   }
 }

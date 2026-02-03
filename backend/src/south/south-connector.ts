@@ -88,16 +88,14 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   async start(): Promise<void> {
     this.logger.debug(`South connector ${this.connector.name} enabled. Starting services...`);
     if (this.isEnabled()) {
+      // Create item value table for this connector
+      this.cacheService!.createItemValueTable(this.connector.id);
       await this.connect();
     }
   }
 
   async connect(): Promise<void> {
     this.logger.info(`South connector "${this.connector.name}" of type ${this.connector.type} started`);
-
-    // Initialize the cache table for this connector
-    const cacheTableFields = 'south_id TEXT, scan_mode_id TEXT, item_id TEXT, max_instant TEXT, PRIMARY KEY(scan_mode_id, item_id)';
-    this.cacheService!.createCustomTable(`south_item_cache_${this.connector.id}`, cacheTableFields);
 
     for (const cronJob of this.cronByScanModeIds.values()) {
       cronJob.stop();
@@ -581,17 +579,17 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
    */
   private safeDeleteSouthCacheEntry(
     southConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings>,
-    southItemId: string,
+    itemId: string,
     scanModeId: string,
     maxInstantPerItem: boolean
   ) {
-    const tableName = `south_item_cache_${southConnector.id}`;
     if (maxInstantPerItem) {
-      this.southCacheRepository.deleteAllBySouthItem(tableName, southItemId);
+      this.southCacheRepository.deleteItemValue(southConnector.id, itemId);
     } else {
       const isOldScanModeUnused = !southConnector.items.some(item => item.scanMode.id === scanModeId);
       if (isOldScanModeUnused) {
-        this.southCacheRepository.delete(tableName, scanModeId, 'all');
+        // In shared mode, we use scanModeId as the key
+        this.southCacheRepository.deleteItemValue(southConnector.id, scanModeId);
       }
     }
   }
@@ -606,11 +604,20 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     newScanModeId: string,
     maxInstantPerItem: boolean
   ) {
-    const tableName = `south_item_cache_${southConnector.id}`;
-    const previousCacheEntry = this.southCacheRepository.getSouthCache(tableName, previousScanModeId, southItemId);
+    let previousMaxInstant: string | null = null;
+
+    // Get max instant from the appropriate key
+    if (maxInstantPerItem) {
+      const cache = this.southCacheRepository.getItemLastValue(southConnector.id, southItemId);
+      previousMaxInstant = cache?.trackedInstant || null;
+    } else {
+      // Shared mode: key is scanModeId
+      const cache = this.southCacheRepository.getItemLastValue(southConnector.id, previousScanModeId);
+      previousMaxInstant = cache?.trackedInstant || null;
+    }
 
     // If the south hasn't been started yet, the previous cache entry won't exist
-    if (!previousCacheEntry) {
+    if (!previousMaxInstant) {
       return;
     }
 
@@ -620,24 +627,24 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     // Max instant per item is enabled
     if (maxInstantPerItem) {
       // 2. Create the new cache entry, with the previous max instant
-      this.southCacheRepository.save(tableName, {
-        southId: southConnector.id,
+      this.southCacheRepository.saveItemLastValue(southConnector.id, {
         itemId: southItemId,
-        scanModeId: newScanModeId,
-        maxInstant: previousCacheEntry.maxInstant
+        queryTime: null,
+        value: null,
+        trackedInstant: previousMaxInstant
       });
     }
 
     // Max instant per item is disabled
     if (!maxInstantPerItem) {
-      const newCacheEntry = this.southCacheRepository.getSouthCache(tableName, newScanModeId, southItemId);
-      // 2. Create the new cache entry, with the previous max instant, if it's not already created
+      // Shared mode: key is scanModeId
+      const newCacheEntry = this.southCacheRepository.getItemLastValue(southConnector.id, newScanModeId);
       if (!newCacheEntry) {
-        this.southCacheRepository.save(tableName, {
-          southId: southConnector.id,
-          itemId: 'all',
-          scanModeId: newScanModeId,
-          maxInstant: previousCacheEntry.maxInstant
+        this.southCacheRepository.saveItemLastValue(southConnector.id, {
+          itemId: newScanModeId, // Key is scanModeId
+          queryTime: null,
+          value: null,
+          trackedInstant: previousMaxInstant
         });
       }
     }
@@ -651,15 +658,41 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     previousItems: Array<SouthConnectorItemEntity<SouthItemSettings>>,
     maxInstantPerItem: boolean
   ) {
-    const tableName = `south_item_cache_${southConnectorId}`;
-    const maxInstantsByScanMode = this.southCacheRepository.getLatestMaxInstants(tableName);
+    // Collect all values to calculate max instants locally
+    const allValues = this.southCacheRepository.getAllItemValues(southConnectorId);
+
+    // Map ScanModeId -> MaxInstant
+    const maxInstantsByScanMode = new Map<string, Instant>();
+
+    for (const val of allValues) {
+      if (!val.trackedInstant) continue;
+
+      // Try to identify if this value is for an Item or a ScanMode (shared)
+      const item = previousItems.find(i => i.id === val.itemId);
+
+      let scanModeId = val.itemId; // specific case: itemId == scanModeId (shared history)
+      if (item) {
+        scanModeId = item.scanMode.id;
+      } else {
+        // Check if val.itemId is a known scan mode ID
+        const knownScanMode = previousItems.find(i => i.scanMode.id === val.itemId);
+        if (!knownScanMode) continue; // Unknown ID, skip
+      }
+
+      const currentMax = maxInstantsByScanMode.get(scanModeId);
+      if (!currentMax || val.trackedInstant > currentMax) {
+        maxInstantsByScanMode.set(scanModeId, val.trackedInstant);
+      }
+    }
+
     // If the south hasn't been started yet, the cache entries won't exist
-    if (!maxInstantsByScanMode) {
+    if (maxInstantsByScanMode.size === 0) {
       return;
     }
 
     // 1. Remove all previous cache entries
-    this.southCacheRepository.deleteAllBySouthConnector(tableName);
+    this.southCacheRepository.dropItemValueTable(southConnectorId);
+    this.southCacheRepository.createItemValueTable(southConnectorId); // Recreate empty
 
     // Max instant per item is being enabled
     if (maxInstantPerItem) {
@@ -668,11 +701,11 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       for (const item of previousItems) {
         const maxInstant = maxInstantsByScanMode.get(item.scanMode.id);
         if (maxInstant) {
-          this.southCacheRepository.save(tableName, {
-            southId: southConnectorId,
+          this.southCacheRepository.saveItemLastValue(southConnectorId, {
             itemId: item.id,
-            scanModeId: item.scanMode.id,
-            maxInstant
+            queryTime: null,
+            value: null,
+            trackedInstant: maxInstant
           });
         }
       }
@@ -683,7 +716,12 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       // 2. Create a single cache entry for all scan modes
       // The max instant of these new entries, will be the *latest* max instant of the previously removed ones
       for (const [scanModeId, maxInstant] of maxInstantsByScanMode) {
-        this.southCacheRepository.save(tableName, { southId: southConnectorId, itemId: 'all', scanModeId, maxInstant });
+        this.southCacheRepository.saveItemLastValue(southConnectorId, {
+          itemId: scanModeId, // Key is scanModeId
+          queryTime: null,
+          value: null,
+          trackedInstant: maxInstant
+        });
       }
     }
   }
