@@ -3065,6 +3065,18 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthItemLastValueDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "itemId": {"dataType":"string","required":true},
+            "queryTime": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
+            "value": {"dataType":"any","required":true},
+            "trackedInstant": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
+            "itemName": {"dataType":"string","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthConnectorItemCommandDTO": {
         "dataType": "refAlias",
         "type": {"dataType":"union","subSchemas":[{"ref":"SouthConnectorItemCommandTypedDTO_SouthADSItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthFolderScannerItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthFTPItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthModbusItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthMQTTItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthMSSQLItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthMySQLItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthODBCItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthOIAnalyticsItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthOLEDBItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthOPCItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthOPCUAItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthOracleItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthPIItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthPostgreSQLItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthRestItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthSFTPItemSettings_"},{"ref":"SouthConnectorItemCommandTypedDTO_SouthSQLiteItemSettings_"}],"validators":{}},
@@ -6895,6 +6907,38 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
 
               await templateService.apiHandler({
                 methodName: 'findItemById',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsSouthConnectorController_getItemLastValue: Record<string, TsoaRoute.ParameterSchema> = {
+                southId: {"in":"path","name":"southId","required":true,"dataType":"string"},
+                itemId: {"in":"path","name":"itemId","required":true,"dataType":"string"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.get('/api/south/:southId/items/:itemId/last-value',
+            ...(fetchMiddlewares<RequestHandler>(SouthConnectorController)),
+            ...(fetchMiddlewares<RequestHandler>(SouthConnectorController.prototype.getItemLastValue)),
+
+            async function SouthConnectorController_getItemLastValue(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsSouthConnectorController_getItemLastValue, request, response });
+
+                const controller = new SouthConnectorController();
+
+              await templateService.apiHandler({
+                methodName: 'getItemLastValue',
                 controller,
                 response,
                 next,

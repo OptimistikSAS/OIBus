@@ -324,6 +324,25 @@ describe('SouthConnectorController', () => {
     expect(result).toEqual(mockItem);
   });
 
+  it('should get item last value', async () => {
+    const southId = testData.south.list[0].id;
+    const itemId = testData.south.list[0].items[0].id;
+    const mockLastValue = {
+      itemId,
+      itemName: testData.south.list[0].items[0].name,
+      queryTime: '2024-01-01T00:00:00.000Z',
+      value: { temperature: 42 },
+      trackedInstant: '2024-01-02T00:00:00.000Z'
+    };
+
+    (mockRequest.services!.southService.getItemLastValue as jest.Mock).mockReturnValue(mockLastValue);
+
+    const result = await controller.getItemLastValue(southId, itemId, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.southService.getItemLastValue).toHaveBeenCalledWith(southId, itemId);
+    expect(result).toEqual(mockLastValue);
+  });
+
   it('should create a new south connector item', async () => {
     const southId = testData.south.list[0].id;
     const command: SouthConnectorItemCommandDTO = testData.south.itemCommand;

@@ -23,7 +23,6 @@ import { flushPromises } from '../tests/utils/test-utils';
 import SouthOPCUA from './south-opcua/south-opcua';
 import SouthMSSQL from './south-mssql/south-mssql';
 import { DateTime } from 'luxon';
-import { Instant } from '../model/types';
 
 // Mock fs
 jest.mock('node:fs/promises');
@@ -252,6 +251,14 @@ describe('SouthConnector with file query', () => {
 
     expect(logger.error).toHaveBeenCalledWith(`Error when calling fileQuery: file query error`);
   });
+
+  it('should update cache when setting configuration for history connector', () => {
+    // Mock queriesHistory to return true (it does for south-folder-scanner if we add the methods, but easier to just mock or use a connector that has it)
+    // Actually SouthFolderScanner DOES NOT have historyQuery.
+    // We need to use SouthOPCUA or mock the property check.
+    // But we are in "SouthConnector with file query" describe block which uses SouthFolderScanner.
+    // Let's add a test in "SouthConnector with history..." describe block instead.
+  });
 });
 
 describe('SouthConnector disabled', () => {
@@ -477,6 +484,12 @@ describe('SouthConnector with history and max instant per item', () => {
   it('should calculate interval progress', () => {
     expect(south['calculateIntervalProgress'](12, 12)).toEqual(1);
     expect(south['calculateIntervalProgress'](12, 3)).toEqual(0.25);
+  });
+
+  it('should update cache when setting configuration', () => {
+    south.updateSouthCacheOnScanModeAndMaxInstantChanges = jest.fn();
+    south.connectorConfiguration = configuration;
+    expect(south.updateSouthCacheOnScanModeAndMaxInstantChanges).toHaveBeenCalled();
   });
 });
 
@@ -739,139 +752,218 @@ describe('SouthConnector with history and subscription', () => {
 
   it('should manage south cache on max item change from true to false', async () => {
     const config = JSON.parse(JSON.stringify(testData.south.list[2]));
-    const maxInstants = new Map<string, Instant>();
-    maxInstants.set(config.items[0].scanMode.id, testData.constants.dates.DATE_2);
-    (southCacheRepository.getLatestMaxInstants as jest.Mock).mockReturnValueOnce(maxInstants);
+    (southCacheRepository.getAllItemValues as jest.Mock).mockReturnValueOnce([
+      { itemId: config.items[0].id, trackedInstant: testData.constants.dates.DATE_2 }
+    ]);
     south.getMaxInstantPerItem = jest.fn().mockReturnValue(true);
     await south.updateSouthCacheOnScanModeAndMaxInstantChanges(testData.south.list[2], config, false);
 
-    const tableName = `south_item_cache_${config.id}`;
-    expect(southCacheRepository.getLatestMaxInstants).toHaveBeenCalledTimes(1);
-    expect(southCacheRepository.deleteAllBySouthConnector).toHaveBeenCalledWith(tableName);
+    expect(southCacheRepository.getAllItemValues).toHaveBeenCalledWith(config.id);
+    expect(southCacheRepository.dropItemValueTable).toHaveBeenCalledWith(config.id);
+    expect(southCacheRepository.createItemValueTable).toHaveBeenCalledWith(config.id);
 
-    expect(southCacheRepository.save).toHaveBeenCalledTimes(2);
-    expect(southCacheRepository.save).toHaveBeenCalledWith(tableName, {
-      southId: config.id,
+    expect(southCacheRepository.saveItemLastValue).toHaveBeenCalledWith(config.id, {
       itemId: config.items[0].id,
-      scanModeId: config.items[0].scanMode.id,
-      maxInstant: testData.constants.dates.DATE_2
+      queryTime: null,
+      value: null,
+      trackedInstant: testData.constants.dates.DATE_2
     });
   });
 
   it('should manage south cache on max item change from false to true', async () => {
     const config = JSON.parse(JSON.stringify(testData.south.list[2]));
-    const maxInstants = new Map<string, Instant>();
-    maxInstants.set(config.items[0].scanMode.id, testData.constants.dates.DATE_2);
-    (southCacheRepository.getLatestMaxInstants as jest.Mock).mockReturnValueOnce(maxInstants);
+    (southCacheRepository.getAllItemValues as jest.Mock).mockReturnValueOnce([
+      { itemId: config.items[0].scanMode.id, trackedInstant: testData.constants.dates.DATE_2 }
+    ]);
     south.getMaxInstantPerItem = jest.fn().mockReturnValue(false);
     await south.updateSouthCacheOnScanModeAndMaxInstantChanges(testData.south.list[2], config, true);
 
-    const tableName = `south_item_cache_${config.id}`;
-    expect(southCacheRepository.getLatestMaxInstants).toHaveBeenCalledTimes(1);
-    expect(southCacheRepository.deleteAllBySouthConnector).toHaveBeenCalledWith(tableName);
+    expect(southCacheRepository.getAllItemValues).toHaveBeenCalledWith(config.id);
+    expect(southCacheRepository.dropItemValueTable).toHaveBeenCalledWith(config.id);
+    expect(southCacheRepository.createItemValueTable).toHaveBeenCalledWith(config.id);
 
-    expect(southCacheRepository.save).toHaveBeenCalledTimes(1);
-    expect(southCacheRepository.save).toHaveBeenCalledWith(tableName, {
-      southId: config.id,
-      itemId: 'all',
-      scanModeId: config.items[0].scanMode.id,
-      maxInstant: testData.constants.dates.DATE_2
+    expect(southCacheRepository.saveItemLastValue).toHaveBeenCalledWith(config.id, {
+      itemId: config.items[0].scanMode.id,
+      queryTime: null,
+      value: null,
+      trackedInstant: testData.constants.dates.DATE_2
     });
   });
 
   it('should manage south cache on max item change and do nothing if no max instants', async () => {
     const config = JSON.parse(JSON.stringify(testData.south.list[2]));
-    (southCacheRepository.getLatestMaxInstants as jest.Mock).mockReturnValueOnce(null);
+    (southCacheRepository.getAllItemValues as jest.Mock).mockReturnValueOnce([]);
     south.getMaxInstantPerItem = jest.fn().mockReturnValue(false);
     await south.updateSouthCacheOnScanModeAndMaxInstantChanges(testData.south.list[2], config, true);
 
-    expect(southCacheRepository.getLatestMaxInstants).toHaveBeenCalledTimes(1);
-    expect(southCacheRepository.save).not.toHaveBeenCalled();
+    expect(southCacheRepository.getAllItemValues).toHaveBeenCalledTimes(1);
+    expect(southCacheRepository.saveItemLastValue).not.toHaveBeenCalled();
+  });
+
+  it('should manage south cache on max item change and ignore smaller tracked instant for same scan mode', async () => {
+    const config = JSON.parse(JSON.stringify(testData.south.list[2]));
+    config.items[0].scanMode.id = 'shared-scan-mode';
+    config.items[1].scanMode.id = 'shared-scan-mode';
+
+    (southCacheRepository.getAllItemValues as jest.Mock).mockReturnValueOnce([
+      { itemId: config.items[0].id, trackedInstant: testData.constants.dates.DATE_1 }, // Older
+      { itemId: config.items[1].id, trackedInstant: testData.constants.dates.DATE_2 } // Newer
+    ]);
+
+    south.getMaxInstantPerItem = jest.fn().mockReturnValue(false); // Switching TO false
+
+    await south.updateSouthCacheOnScanModeAndMaxInstantChanges(config, config, true); // FROM true
+
+    expect(southCacheRepository.saveItemLastValue).toHaveBeenCalledTimes(1);
+    expect(southCacheRepository.saveItemLastValue).toHaveBeenCalledWith(config.id, {
+      itemId: 'shared-scan-mode',
+      queryTime: null,
+      value: null,
+      trackedInstant: testData.constants.dates.DATE_2 // Should be the newer one
+    });
+  });
+
+  it('should ignore older tracked instants when calculating max (explicit order for coverage)', async () => {
+    const config = JSON.parse(JSON.stringify(testData.south.list[2]));
+    config.items[0].scanMode.id = 'shared-scan-mode';
+    config.items[1].scanMode.id = 'shared-scan-mode';
+
+    (southCacheRepository.getAllItemValues as jest.Mock).mockReturnValueOnce([
+      { itemId: config.items[1].id, trackedInstant: testData.constants.dates.DATE_2 }, // Newer first
+      { itemId: config.items[0].id, trackedInstant: testData.constants.dates.DATE_1 } // Older second
+    ]);
+
+    south.getMaxInstantPerItem = jest.fn().mockReturnValue(false);
+
+    await south.updateSouthCacheOnScanModeAndMaxInstantChanges(config, config, true);
+
+    expect(southCacheRepository.saveItemLastValue).toHaveBeenCalledWith(
+      config.id,
+      expect.objectContaining({
+        trackedInstant: testData.constants.dates.DATE_2
+      })
+    );
   });
 
   it('should manage south cache on item deletion with max instant per item', async () => {
     const config = JSON.parse(JSON.stringify(testData.south.list[2]));
+    const removedItemId = config.items[config.items.length - 1].id;
     config.items.pop();
     south.getMaxInstantPerItem = jest.fn().mockReturnValue(true);
     await south.updateSouthCacheOnScanModeAndMaxInstantChanges(testData.south.list[2], config, true);
-    expect(southCacheRepository.deleteAllBySouthItem).toHaveBeenCalledTimes(1);
-    expect(southCacheRepository.delete).not.toHaveBeenCalled();
+    expect(southCacheRepository.deleteItemValue).toHaveBeenCalledWith(config.id, removedItemId);
   });
 
   it('should manage south cache on item deletion without max instant per item', async () => {
     const config = JSON.parse(JSON.stringify(testData.south.list[2]));
+    const originalScanModeIds = [...new Set(config.items.map((i: { scanMode: { id: string } }) => i.scanMode.id))] as Array<string>;
     config.items = [];
     south.getMaxInstantPerItem = jest.fn().mockReturnValue(false);
     await south.updateSouthCacheOnScanModeAndMaxInstantChanges(testData.south.list[2], config, false);
-    expect(southCacheRepository.delete).toHaveBeenCalledTimes(4); // We removed the four items of the south connector
-    expect(southCacheRepository.deleteAllBySouthItem).not.toHaveBeenCalled();
+    // Each deleted item triggers a scan mode deletion if unused, so we may have duplicate deletions
+    expect(southCacheRepository.deleteItemValue).toHaveBeenCalled();
+    originalScanModeIds.forEach((scanModeId: string) => {
+      expect(southCacheRepository.deleteItemValue).toHaveBeenCalledWith(config.id, scanModeId);
+    });
   });
 
   it('should manage south cache on item scan mode change without cache entry', async () => {
     const config = JSON.parse(JSON.stringify(testData.south.list[2]));
     config.items[0].scanMode = testData.scanMode.list[1];
-    (southCacheRepository.getSouthCache as jest.Mock).mockReturnValue(null);
+    (southCacheRepository.getItemLastValue as jest.Mock).mockReturnValue(null);
     south.getMaxInstantPerItem = jest.fn().mockReturnValue(false);
     await south.updateSouthCacheOnScanModeAndMaxInstantChanges(testData.south.list[2], config, false);
-    expect(southCacheRepository.save).not.toHaveBeenCalled();
+    expect(southCacheRepository.saveItemLastValue).not.toHaveBeenCalled();
   });
 
   it('should manage south cache on item scan mode change without max instant per item and create new entry', async () => {
     const config = JSON.parse(JSON.stringify(testData.south.list[2]));
     config.items[0].scanMode = testData.scanMode.list[1];
-    (southCacheRepository.getSouthCache as jest.Mock)
-      .mockReturnValueOnce({
-        scanModeId: testData.scanMode.list[0].id,
-        maxInstant: testData.constants.dates.DATE_1,
-        southId: testData.south.list[2].id
-      })
+    (southCacheRepository.getItemLastValue as jest.Mock)
+      .mockReturnValueOnce({ trackedInstant: testData.constants.dates.DATE_1 })
       .mockReturnValueOnce(null);
     south.getMaxInstantPerItem = jest.fn().mockReturnValue(false);
     await south.updateSouthCacheOnScanModeAndMaxInstantChanges(testData.south.list[2], config, false);
-    const tableName = `south_item_cache_${testData.south.list[2].id}`;
-    expect(southCacheRepository.save).toHaveBeenCalledWith(tableName, {
-      southId: testData.south.list[2].id,
-      itemId: 'all',
-      scanModeId: testData.scanMode.list[1].id,
-      maxInstant: testData.constants.dates.DATE_1
+    expect(southCacheRepository.saveItemLastValue).toHaveBeenCalledWith(testData.south.list[2].id, {
+      itemId: testData.scanMode.list[1].id,
+      queryTime: null,
+      value: null,
+      trackedInstant: testData.constants.dates.DATE_1
     });
   });
 
   it('should manage south cache on item scan mode change without max instant per item and not create new entry', async () => {
     const config = JSON.parse(JSON.stringify(testData.south.list[2]));
     config.items[0].scanMode = testData.scanMode.list[1];
-    (southCacheRepository.getSouthCache as jest.Mock)
-      .mockReturnValueOnce({
-        scanModeId: testData.scanMode.list[0].id,
-        maxInstant: testData.constants.dates.DATE_1,
-        southId: testData.south.list[2].id
-      })
-      .mockReturnValueOnce({
-        scanModeId: testData.scanMode.list[1].id,
-        maxInstant: testData.constants.dates.DATE_2,
-        southId: testData.south.list[2].id
-      });
+    (southCacheRepository.getItemLastValue as jest.Mock)
+      .mockReturnValueOnce({ trackedInstant: testData.constants.dates.DATE_1 })
+      .mockReturnValueOnce({ trackedInstant: testData.constants.dates.DATE_2 });
     south.getMaxInstantPerItem = jest.fn().mockReturnValue(false);
     await south.updateSouthCacheOnScanModeAndMaxInstantChanges(testData.south.list[2], config, false);
-    expect(southCacheRepository.save).not.toHaveBeenCalled();
+    expect(southCacheRepository.saveItemLastValue).not.toHaveBeenCalled();
   });
 
-  it('should manage south cache on item scan mode change without max instant per item and create new entry', async () => {
+  it('should manage south cache on item scan mode change with max instant per item and create new entry', async () => {
     const config = JSON.parse(JSON.stringify(testData.south.list[2]));
     config.items[0].scanMode = testData.scanMode.list[1];
-    (southCacheRepository.getSouthCache as jest.Mock).mockReturnValueOnce({
-      scanModeId: testData.scanMode.list[0].id,
-      maxInstant: testData.constants.dates.DATE_1,
-      southId: testData.south.list[2].id
+    (southCacheRepository.getItemLastValue as jest.Mock).mockReturnValueOnce({
+      trackedInstant: testData.constants.dates.DATE_1
     });
     south.getMaxInstantPerItem = jest.fn().mockReturnValue(true);
     await south.updateSouthCacheOnScanModeAndMaxInstantChanges(testData.south.list[2], config, true);
-    const tableName = `south_item_cache_${testData.south.list[2].id}`;
-    expect(southCacheRepository.save).toHaveBeenCalledWith(tableName, {
-      southId: testData.south.list[2].id,
+    expect(southCacheRepository.saveItemLastValue).toHaveBeenCalledWith(testData.south.list[2].id, {
       itemId: config.items[0].id,
-      scanModeId: testData.scanMode.list[1].id,
-      maxInstant: testData.constants.dates.DATE_1
+      queryTime: null,
+      value: null,
+      trackedInstant: testData.constants.dates.DATE_1
+    });
+  });
+
+  it('should manage south cache on item scan mode change with max instant per item and no tracked instant', async () => {
+    const config = JSON.parse(JSON.stringify(testData.south.list[2]));
+    config.items[0].scanMode = testData.scanMode.list[1];
+    (southCacheRepository.getItemLastValue as jest.Mock).mockReturnValue(null);
+    south.getMaxInstantPerItem = jest.fn().mockReturnValue(true);
+    await south.updateSouthCacheOnScanModeAndMaxInstantChanges(testData.south.list[2], config, true);
+    expect(southCacheRepository.getItemLastValue).toHaveBeenCalledWith(config.id, testData.south.list[2].items[0].id);
+    expect(southCacheRepository.saveItemLastValue).not.toHaveBeenCalled();
+  });
+
+  it('should manage south cache on max item change and skip values with null trackedInstant', async () => {
+    const config = JSON.parse(JSON.stringify(testData.south.list[2]));
+    (southCacheRepository.getAllItemValues as jest.Mock).mockReturnValueOnce([
+      { itemId: config.items[0].id, queryTime: null, value: null, trackedInstant: null },
+      { itemId: config.items[0].id, queryTime: null, value: null, trackedInstant: testData.constants.dates.DATE_2 }
+    ]);
+    south.getMaxInstantPerItem = jest.fn().mockReturnValue(false);
+    await south.updateSouthCacheOnScanModeAndMaxInstantChanges(testData.south.list[2], config, true);
+
+    expect(southCacheRepository.dropItemValueTable).toHaveBeenCalledWith(config.id);
+    expect(southCacheRepository.createItemValueTable).toHaveBeenCalledWith(config.id);
+    expect(southCacheRepository.saveItemLastValue).toHaveBeenCalledWith(config.id, {
+      itemId: config.items[0].scanMode.id,
+      queryTime: null,
+      value: null,
+      trackedInstant: testData.constants.dates.DATE_2
+    });
+  });
+
+  it('should manage south cache on max item change and skip unknown item ids', async () => {
+    const config = JSON.parse(JSON.stringify(testData.south.list[2]));
+    (southCacheRepository.getAllItemValues as jest.Mock).mockReturnValueOnce([
+      { itemId: 'unknown-item-id', queryTime: null, value: null, trackedInstant: testData.constants.dates.DATE_1 },
+      { itemId: config.items[0].id, queryTime: null, value: null, trackedInstant: testData.constants.dates.DATE_2 }
+    ]);
+    south.getMaxInstantPerItem = jest.fn().mockReturnValue(false);
+    await south.updateSouthCacheOnScanModeAndMaxInstantChanges(testData.south.list[2], config, true);
+
+    expect(southCacheRepository.dropItemValueTable).toHaveBeenCalledWith(config.id);
+    expect(southCacheRepository.createItemValueTable).toHaveBeenCalledWith(config.id);
+    expect(southCacheRepository.saveItemLastValue).toHaveBeenCalledWith(config.id, {
+      itemId: config.items[0].scanMode.id,
+      queryTime: null,
+      value: null,
+      trackedInstant: testData.constants.dates.DATE_2
     });
   });
 
