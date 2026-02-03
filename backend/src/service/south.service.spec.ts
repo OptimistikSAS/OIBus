@@ -454,6 +454,48 @@ describe('South Service', () => {
     expect(southConnectorRepository.findItemById).toHaveBeenCalledWith(testData.south.list[0].id, testData.south.list[0].items[0].id);
   });
 
+  it('should get item last value when cache has value', () => {
+    const southId = testData.south.list[0].id;
+    const itemId = testData.south.list[0].items[0].id;
+    const cached = {
+      itemId,
+      queryTime: '2024-01-01T00:00:00.000Z',
+      value: { temperature: 42 },
+      trackedInstant: '2024-01-02T00:00:00.000Z'
+    };
+    (southCacheRepository.getItemLastValue as jest.Mock).mockReturnValue(cached);
+
+    const result = service.getItemLastValue(southId, itemId);
+
+    expect(southConnectorRepository.findSouthById).toHaveBeenCalledWith(southId);
+    expect(southConnectorRepository.findItemById).toHaveBeenCalledWith(southId, itemId);
+    expect(southCacheRepository.getItemLastValue).toHaveBeenCalledWith(southId, itemId);
+    expect(result).toEqual({
+      itemId,
+      itemName: testData.south.list[0].items[0].name,
+      queryTime: cached.queryTime,
+      value: cached.value,
+      trackedInstant: cached.trackedInstant
+    });
+  });
+
+  it('should get item last value when cache has no value', () => {
+    const southId = testData.south.list[0].id;
+    const itemId = testData.south.list[0].items[0].id;
+    (southCacheRepository.getItemLastValue as jest.Mock).mockReturnValue(null);
+
+    const result = service.getItemLastValue(southId, itemId);
+
+    expect(southCacheRepository.getItemLastValue).toHaveBeenCalledWith(southId, itemId);
+    expect(result).toEqual({
+      itemId,
+      itemName: testData.south.list[0].items[0].name,
+      queryTime: null,
+      value: null,
+      trackedInstant: null
+    });
+  });
+
   it('should create an item', async () => {
     await service.createItem(testData.south.list[0].id, testData.south.itemCommand, 'userTest');
 
