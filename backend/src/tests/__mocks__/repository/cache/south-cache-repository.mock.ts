@@ -1,5 +1,5 @@
 /**
- * Create a mock object for South Cache Repositoru
+ * Create a mock object for South Cache Repository
  */
 export default jest.fn().mockImplementation(() => ({
   getSouthCache: jest.fn(),
@@ -11,5 +11,11 @@ export default jest.fn().mockImplementation(() => ({
   deleteAllByScanMode: jest.fn(),
   createCustomTable: jest.fn(),
   runQueryOnCustomTable: jest.fn(),
-  getQueryOnCustomTable: jest.fn()
+  getQueryOnCustomTable: jest.fn(),
+  createItemValueTable: jest.fn(),
+  getItemLastValue: jest.fn(),
+  getAllItemValues: jest.fn(),
+  saveItemLastValue: jest.fn(),
+  deleteItemValue: jest.fn(),
+  dropItemValueTable: jest.fn()
 }));

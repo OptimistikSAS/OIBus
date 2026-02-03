@@ -153,6 +153,15 @@ export class SouthConnectorService {
   }
 
   /**
+   * Get the last cached value for a South connector item
+   * @param southId - the ID of the South connector
+   * @param itemId - the ID of the South connector item
+   */
+  getItemLastValue(southId: string, itemId: string): Observable<any> {
+    return this.http.get(`/api/south/${southId}/items/${itemId}/last-value`);
+  }
+
+  /**
    * Create a new South connector item
    * @param southId - the ID of the South connector
    * @param command - The values of the South connector item to create
