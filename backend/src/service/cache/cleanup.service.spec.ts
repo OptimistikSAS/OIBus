@@ -149,6 +149,20 @@ describe('CleanupService', () => {
       (fs.readdir as jest.Mock).mockRejectedValue(new Error('Read Error'));
       await expect(service['cleanOrphans']()).resolves.not.toThrow();
     });
+
+    it('should handle removal errors gracefully', async () => {
+      (fs.readdir as jest.Mock).mockImplementation((p: string) => {
+        if (p.includes('cache')) return Promise.resolve(['south-2']);
+        return Promise.resolve([]);
+      });
+      (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(undefined);
+      (fs.rm as jest.Mock).mockRejectedValue(new Error('Remove Error'));
+
+      await service['cleanOrphans']();
+
+      expect(fs.rm).toHaveBeenCalledWith(path.resolve('baseFolder', 'cache', 'south-2'), { force: true, recursive: true });
+      expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Could not remove orphan'));
+    });
   });
 
   describe('cleanNorthConnectors (Retention Policy)', () => {

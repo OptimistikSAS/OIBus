@@ -175,7 +175,7 @@ describe('SouthFTP', () => {
     });
 
     it('should properly start', () => {
-      expect(southCacheService.createCustomTable).toHaveBeenCalledWith('south_ftp_southId', 'filename TEXT PRIMARY KEY, mtime_ms INTEGER');
+      expect(southCacheService.createItemValueTable).toHaveBeenCalledWith('southId');
     });
 
     it('should test connection', async () => {
@@ -371,16 +371,18 @@ describe('SouthFTP', () => {
       const fileInfo = createMockFileInfo('test.log', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
 
       mockFtpClient.downloadTo.mockResolvedValue(undefined);
-      southCacheService.getQueryOnCustomTable.mockReturnValue(null);
+      southCacheService.getItemLastValue.mockReturnValue(null);
 
       const item = configuration.items[1]; // preserveFiles: true
       await south.getFile(fileInfo, item);
 
       expect(mockFtpClient.remove).not.toHaveBeenCalled();
-      expect(southCacheService.runQueryOnCustomTable).toHaveBeenCalledWith(
-        'INSERT INTO "south_ftp_southId" (filename, mtime_ms) VALUES (?, ?) ON CONFLICT(filename) DO UPDATE SET mtime_ms = ?',
-        ['test.log', fileInfo.modifiedAt!.getTime(), fileInfo.modifiedAt!.getTime()]
-      );
+      expect(southCacheService.saveItemLastValue).toHaveBeenCalledWith('southId', {
+        itemId: item.id,
+        queryTime: expect.any(String),
+        value: [{ filename: 'test.log', modifiedTime: fileInfo.modifiedAt!.getTime() }],
+        trackedInstant: null
+      });
     });
 
     it('should handle file removal error', async () => {
@@ -662,10 +664,7 @@ describe('SouthFTP', () => {
 
       await newSouth.start();
 
-      expect(southCacheService.createCustomTable).toHaveBeenCalledWith(
-        'south_ftp_southId-not-test',
-        'filename TEXT PRIMARY KEY, mtime_ms INTEGER'
-      );
+      expect(southCacheService.createItemValueTable).toHaveBeenCalledWith('southId-not-test');
     });
 
     it('should handle listFiles error when FTP access fails', async () => {
@@ -770,8 +769,8 @@ describe('SouthFTP', () => {
     it('should check condition with ignoreModifiedDate false and existing file', async () => {
       const fileInfo = createMockFileInfo('test.log', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
 
-      southCacheService.getQueryOnCustomTable.mockReturnValue({
-        mtimeMs: DateTime.now().toMillis().toString() // File exists with newer timestamp
+      southCacheService.getItemLastValue.mockReturnValue({
+        value: [{ filename: 'test.log', modifiedTime: DateTime.now().toMillis() }] // File exists with newer timestamp
       });
 
       const item = configuration.items[1]; // preserveFiles: true, ignoreModifiedDate: false
@@ -844,16 +843,13 @@ describe('SouthFTP', () => {
 
       const nonTestSouth = new SouthFtp(nonTestConfig, addContentCallback, southCacheRepository, logger, 'cacheFolder');
 
-      // Clear previous calls to createCustomTable
-      southCacheService.createCustomTable.mockClear();
+      // Clear previous calls to createItemValueTable
+      southCacheService.createItemValueTable.mockClear();
 
       await nonTestSouth.start();
 
-      // When connector id is not 'test', createCustomTable should be called
-      expect(southCacheService.createCustomTable).toHaveBeenCalledWith(
-        'south_ftp_southId-not-test',
-        'filename TEXT PRIMARY KEY, mtime_ms INTEGER'
-      );
+      // When connector id is not 'test', createItemValueTable should be called
+      expect(southCacheService.createItemValueTable).toHaveBeenCalledWith('southId-not-test');
     });
 
     it('should handle start method when connector id is not test and createFolder succeeds', async () => {
@@ -867,17 +863,14 @@ describe('SouthFTP', () => {
 
       const nonTestSouth = new SouthFtp(nonTestConfig, addContentCallback, southCacheRepository, logger, 'cacheFolder');
 
-      // Clear previous calls to createCustomTable
-      southCacheService.createCustomTable.mockClear();
+      // Clear previous calls to createItemValueTable
+      southCacheService.createItemValueTable.mockClear();
 
       await nonTestSouth.start();
 
       // When connector id is not 'test', the condition this.connector.id !== 'test' should be true
-      // and createCustomTable should be called
-      expect(southCacheService.createCustomTable).toHaveBeenCalledWith(
-        'south_ftp_southId-not-test',
-        'filename TEXT PRIMARY KEY, mtime_ms INTEGER'
-      );
+      // and createItemValueTable should be called
+      expect(southCacheService.createItemValueTable).toHaveBeenCalledWith('southId-not-test');
     });
 
     it('should handle preserveFiles with ignoreModifiedDate true', async () => {
@@ -900,23 +893,43 @@ describe('SouthFTP', () => {
     });
 
     it('should get modified time when file exists in cache', async () => {
-      southCacheService.getQueryOnCustomTable.mockReturnValue({
-        mtimeMs: '123456789'
+      const item = configuration.items[0];
+      southCacheService.getItemLastValue.mockReturnValue({
+        value: [{ filename: 'test.csv', modifiedTime: 123456789 }]
       });
 
-      const result = south.getModifiedTime('test.csv');
+      const result = south.getModifiedTime(item, 'test.csv');
 
       expect(result).toBe(123456789);
-      expect(southCacheService.getQueryOnCustomTable).toHaveBeenCalledWith(
-        'SELECT mtime_ms AS mtimeMs FROM "south_ftp_southId" WHERE filename = ?',
-        ['test.csv']
-      );
+      expect(southCacheService.getItemLastValue).toHaveBeenCalledWith('southId', item.id);
     });
 
     it('should return 0 when file does not exist in cache', async () => {
-      southCacheService.getQueryOnCustomTable.mockReturnValue(null);
+      const item = configuration.items[0];
+      southCacheService.getItemLastValue.mockReturnValue(null);
 
-      const result = south.getModifiedTime('nonexistent.csv');
+      const result = south.getModifiedTime(item, 'nonexistent.csv');
+
+      expect(result).toBe(0);
+    });
+
+    it('should return 0 when filename is not in cache array', async () => {
+      const item = configuration.items[0];
+      southCacheService.getItemLastValue.mockReturnValue({
+        value: [{ filename: 'other.csv', modifiedTime: 1 }]
+      });
+
+      const result = south.getModifiedTime(item, 'requested.csv');
+
+      expect(result).toBe(0);
+      expect(southCacheService.getItemLastValue).toHaveBeenCalledWith('southId', item.id);
+    });
+
+    it('should return 0 when getModifiedTime value is not an array', async () => {
+      const item = configuration.items[0];
+      southCacheService.getItemLastValue.mockReturnValue({ value: 42 });
+
+      const result = south.getModifiedTime(item, 'any');
 
       expect(result).toBe(0);
     });
@@ -1016,8 +1029,8 @@ describe('SouthFTP', () => {
       const fileInfo = createMockFileInfo('test.log', new Date(DateTime.now().minus({ minutes: 1 }).toMillis()));
 
       // Mock that the file exists in cache with an older timestamp
-      southCacheService.getQueryOnCustomTable.mockReturnValue({
-        mtimeMs: DateTime.now().minus({ minutes: 5 }).toMillis().toString() // Older timestamp
+      southCacheService.getItemLastValue.mockReturnValue({
+        value: [{ filename: 'test.log', modifiedTime: DateTime.now().minus({ minutes: 5 }).toMillis() }] // Older timestamp
       });
 
       const item = configuration.items[1]; // preserveFiles: true, ignoreModifiedDate: false
@@ -1031,8 +1044,8 @@ describe('SouthFTP', () => {
       const fileInfo = createMockFileInfo('test.log', new Date(DateTime.now().minus({ minutes: 5 }).toMillis()));
 
       // Mock that the file exists in cache with a newer timestamp
-      southCacheService.getQueryOnCustomTable.mockReturnValue({
-        mtimeMs: DateTime.now().minus({ minutes: 1 }).toMillis().toString() // Newer timestamp
+      southCacheService.getItemLastValue.mockReturnValue({
+        value: [{ filename: 'test.log', modifiedTime: DateTime.now().minus({ minutes: 1 }).toMillis() }] // Newer timestamp
       });
 
       const item = configuration.items[1]; // preserveFiles: true, ignoreModifiedDate: false
@@ -1103,15 +1116,47 @@ describe('SouthFTP', () => {
     });
 
     it('should update modified time', () => {
+      const item = configuration.items[0];
       const filename = 'test.csv';
       const mtimeMs = 123456789;
 
-      south.updateModifiedTime(filename, mtimeMs);
+      southCacheService.getItemLastValue.mockReturnValue(null);
+      south.updateModifiedTime(item, filename, mtimeMs);
 
-      expect(southCacheService.runQueryOnCustomTable).toHaveBeenCalledWith(
-        'INSERT INTO "south_ftp_southId" (filename, mtime_ms) VALUES (?, ?) ON CONFLICT(filename) DO UPDATE SET mtime_ms = ?',
-        [filename, mtimeMs, mtimeMs]
-      );
+      expect(southCacheService.saveItemLastValue).toHaveBeenCalledWith('southId', {
+        itemId: item.id,
+        queryTime: expect.any(String),
+        value: [{ filename, modifiedTime: mtimeMs }],
+        trackedInstant: null
+      });
+    });
+
+    it('should update modified time for existing file entry', () => {
+      const item = configuration.items[0];
+      const filename = 'existing.csv';
+      southCacheService.getItemLastValue.mockReturnValue({
+        value: [{ filename, modifiedTime: 1000 }]
+      });
+      south.updateModifiedTime(item, filename, 2000);
+      expect(southCacheService.saveItemLastValue).toHaveBeenCalledWith('southId', {
+        itemId: item.id,
+        queryTime: expect.any(String),
+        value: [{ filename, modifiedTime: 2000 }],
+        trackedInstant: null
+      });
+    });
+
+    it('should reset files when updateModifiedTime value is not an array', () => {
+      const item = configuration.items[0];
+      const filename = 'new.csv';
+      southCacheService.getItemLastValue.mockReturnValue({ value: 42 });
+      south.updateModifiedTime(item, filename, 1);
+      expect(southCacheService.saveItemLastValue).toHaveBeenCalledWith('southId', {
+        itemId: item.id,
+        queryTime: expect.any(String),
+        value: [{ filename, modifiedTime: 1 }],
+        trackedInstant: null
+      });
     });
 
     it('should handle compression error and unlink error', async () => {

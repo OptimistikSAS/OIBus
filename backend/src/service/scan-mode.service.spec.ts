@@ -181,13 +181,25 @@ describe('Scan Mode Service', () => {
     (scanModeRepository.findById as jest.Mock).mockReturnValueOnce(testData.scanMode.list[0]);
     (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValueOnce([{ id: 'south1' }, { id: 'south2' }]);
 
+    const mockItem = { id: 'item1', scanMode: { id: testData.scanMode.list[0].id } };
+    (southConnectorRepository.findAllItemsForSouth as jest.Mock).mockReturnValue([mockItem]);
+
     await service.delete(testData.scanMode.list[0].id);
 
     expect(scanModeRepository.findById).toHaveBeenCalledWith(testData.scanMode.list[0].id);
     expect(scanModeRepository.delete).toHaveBeenCalledWith(testData.scanMode.list[0].id);
     expect(southConnectorRepository.findAllSouth).toHaveBeenCalled();
-    expect(southCacheRepository.deleteAllByScanMode).toHaveBeenCalledWith('south_item_cache_south1', testData.scanMode.list[0].id);
-    expect(southCacheRepository.deleteAllByScanMode).toHaveBeenCalledWith('south_item_cache_south2', testData.scanMode.list[0].id);
+    expect(southConnectorRepository.findAllItemsForSouth).toHaveBeenCalledWith('south1');
+    expect(southConnectorRepository.findAllItemsForSouth).toHaveBeenCalledWith('south2');
+
+    // Verify cache deletion for items
+    expect(southCacheRepository.deleteItemValue).toHaveBeenCalledWith('south1', 'item1');
+    expect(southCacheRepository.deleteItemValue).toHaveBeenCalledWith('south2', 'item1');
+
+    // Verify cache deletion for scan mode itself
+    expect(southCacheRepository.deleteItemValue).toHaveBeenCalledWith('south1', testData.scanMode.list[0].id);
+    expect(southCacheRepository.deleteItemValue).toHaveBeenCalledWith('south2', testData.scanMode.list[0].id);
+
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
   });
 
