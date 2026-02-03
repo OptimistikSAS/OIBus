@@ -329,6 +329,20 @@ describe('CacheService', () => {
     expect(result.cache[0].filename).toBe(fileList[0].filename);
   });
 
+  it('should search cache content with minimal filters', async () => {
+    (fs.readdir as jest.Mock).mockReturnValue([fileList[0].filename]);
+    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify(fileList[0].metadata));
+
+    const result = await service.searchCacheContent({
+      nameContains: undefined,
+      start: undefined,
+      end: undefined,
+      maxNumberOfFilesReturned: 0
+    });
+
+    expect(result.cache.length).toBe(1);
+  });
+
   it('should get cache content file stream', async () => {
     (createReadStream as jest.Mock).mockReturnValueOnce(null);
     (fs.readFile as jest.Mock).mockResolvedValue(JSON.stringify(fileList[0].metadata));
@@ -597,6 +611,20 @@ describe('CacheService', () => {
 
       expect(fs.writeFile).toHaveBeenCalledTimes(2);
       expect(service['queue']).toEqual([{ filename: 'another_file.json', metadata: fileData.metadata }]);
+    });
+
+    it('should handled missing queue element', async () => {
+      const fileData = {
+        filename: 'test.json',
+        metadata: { contentSize: 100, numberOfElement: 1, createdAt: '', contentType: 'any', contentFile: 'orig' }
+      };
+      const newContent = [{ id: 'new' }];
+
+      service['queue'] = []; // Empty queue
+      (fs.writeFile as jest.Mock).mockResolvedValue(undefined);
+      (fs.stat as jest.Mock).mockResolvedValue({ size: 500 });
+
+      await expect(service['overwriteCacheFile'](fileData, newContent)).resolves.not.toThrow();
     });
   });
 

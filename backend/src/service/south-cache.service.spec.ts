@@ -56,9 +56,48 @@ describe('South cache service', () => {
     expect(southCacheRepository.deleteAllBySouthConnector).toHaveBeenCalledTimes(1);
   });
 
-  it('should reset cache', () => {
-    service.resetSouthCache('id');
-    expect(southCacheRepository.deleteAllBySouthConnector).toHaveBeenCalledTimes(1);
+  it('should create item value table', () => {
+    service.createItemValueTable('conn-1');
+    expect(southCacheRepository.createItemValueTable).toHaveBeenCalledTimes(1);
+    expect(southCacheRepository.createItemValueTable).toHaveBeenCalledWith('conn-1');
+  });
+
+  it('should get item last value', () => {
+    const value = { itemId: 'item-1', queryTime: null, value: { x: 1 }, trackedInstant: '2024-01-01T00:00:00Z' };
+    (southCacheRepository.getItemLastValue as jest.Mock).mockReturnValueOnce(value);
+    const result = service.getItemLastValue('conn-1', 'item-1');
+    expect(southCacheRepository.getItemLastValue).toHaveBeenCalledWith('conn-1', 'item-1');
+    expect(result).toEqual(value);
+  });
+
+  it('should get all item values', () => {
+    const values = [
+      { itemId: 'item-1', queryTime: null, value: null, trackedInstant: '2024-01-01T00:00:00Z' },
+      { itemId: 'item-2', queryTime: null, value: null, trackedInstant: '2024-01-02T00:00:00Z' }
+    ];
+    (southCacheRepository.getAllItemValues as jest.Mock).mockReturnValueOnce(values);
+    const result = service.getAllItemValues('conn-1');
+    expect(southCacheRepository.getAllItemValues).toHaveBeenCalledWith('conn-1');
+    expect(result).toEqual(values);
+  });
+
+  it('should save item last value', () => {
+    const value = { itemId: 'item-1', queryTime: null, value: { x: 1 }, trackedInstant: '2024-01-01T00:00:00Z' };
+    service.saveItemLastValue('conn-1', value);
+    expect(southCacheRepository.saveItemLastValue).toHaveBeenCalledTimes(1);
+    expect(southCacheRepository.saveItemLastValue).toHaveBeenCalledWith('conn-1', value);
+  });
+
+  it('should delete item value', () => {
+    service.deleteItemValue('conn-1', 'item-1');
+    expect(southCacheRepository.deleteItemValue).toHaveBeenCalledTimes(1);
+    expect(southCacheRepository.deleteItemValue).toHaveBeenCalledWith('conn-1', 'item-1');
+  });
+
+  it('should drop item value table', () => {
+    service.dropItemValueTable('conn-1');
+    expect(southCacheRepository.dropItemValueTable).toHaveBeenCalledTimes(1);
+    expect(southCacheRepository.dropItemValueTable).toHaveBeenCalledWith('conn-1');
   });
 
   it('should create custom table', () => {
