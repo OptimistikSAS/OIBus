@@ -13,6 +13,7 @@ import {
   SouthItemGroupDTO
 } from '../../../../../backend/shared/model/south-connector.model';
 import { EditSouthItemModalComponent } from './edit-south-item-modal/edit-south-item-modal.component';
+import { ViewItemValueModalComponent } from './view-item-value-modal/view-item-value-modal.component';
 import { debounceTime, distinctUntilChanged, firstValueFrom, of, switchMap } from 'rxjs';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
@@ -361,6 +362,25 @@ export class SouthItemsComponent implements OnInit {
           this.resetPage();
         }
       });
+  }
+
+  viewItemLastValue(item: SouthConnectorItemDTO) {
+    if (!this.saveChangesDirectly()) {
+      // Can't view last value in create mode
+      this.notificationService.success('south.items.last-value-not-available-in-create-mode');
+      return;
+    }
+
+    this.southConnectorService.getItemLastValue(this.southId(), item.id!).subscribe({
+      next: lastValue => {
+        const modalRef = this.modalService.open(ViewItemValueModalComponent, { size: 'lg' });
+        const component: ViewItemValueModalComponent = modalRef.componentInstance;
+        component.prepareForDisplay(lastValue, this.getGroupName(item));
+      },
+      error: error => {
+        this.notificationService.error('south.items.last-value-error', { error: error.message });
+      }
+    });
   }
 
   duplicateItem(item: SouthConnectorItemDTO) {
