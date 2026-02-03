@@ -88,8 +88,8 @@ export default class SouthFolderScanner
 
   async start(): Promise<void> {
     await super.start();
-    // Create a custom table in the south cache database to manage file already sent when preserve file is set to true
-    this.cacheService!.createCustomTable(`folder_scanner_${this.connector.id}`, 'filename TEXT PRIMARY KEY, mtime_ms INTEGER');
+    // Create item value table for this connector
+    this.cacheService!.createItemValueTable(this.connector.id);
   }
 
   /**
@@ -208,7 +208,7 @@ export default class SouthFolderScanner
     // Check if the file was already sent (if preserveFiles is true)
     if (item.settings.preserveFiles && !test) {
       if (item.settings.ignoreModifiedDate) return true;
-      const lastModifiedTime = this.getModifiedTime(filename);
+      const lastModifiedTime = this.getModifiedTime(item, filename);
 
       if (stats.mtimeMs <= lastModifiedTime) return false;
       this.logger.trace(
@@ -218,17 +218,38 @@ export default class SouthFolderScanner
     return true;
   }
 
-  getModifiedTime(filename: string): number {
-    const query = `SELECT mtime_ms AS mtimeMs FROM "folder_scanner_${this.connector.id}" WHERE filename = ?`;
-    const result: { mtimeMs: string } | null = this.cacheService!.getQueryOnCustomTable(query, [filename]) as {
-      mtimeMs: string;
-    } | null;
-    return result ? parseFloat(result.mtimeMs) : 0;
+  getModifiedTime(item: SouthConnectorItemEntity<SouthFolderScannerItemSettings>, filename: string): number {
+    const itemValue = this.cacheService!.getItemLastValue(this.connector.id, item.id);
+    if (!itemValue || !Array.isArray(itemValue.value)) return 0;
+
+    const files = itemValue.value as Array<{ filename: string; modifiedTime: number }>;
+    const fileEntry = files.find(f => f.filename === filename);
+    return fileEntry ? fileEntry.modifiedTime : 0;
   }
 
-  updateModifiedTime(filename: string, mtimeMs: number): void {
-    const query = `INSERT INTO "folder_scanner_${this.connector.id}" (filename, mtime_ms) VALUES (?, ?) ON CONFLICT(filename) DO UPDATE SET mtime_ms = ?`;
-    this.cacheService!.runQueryOnCustomTable(query, [filename, mtimeMs, mtimeMs]);
+  updateModifiedTime(item: SouthConnectorItemEntity<SouthFolderScannerItemSettings>, filename: string, mtimeMs: number): void {
+    const itemValue = this.cacheService!.getItemLastValue(this.connector.id, item.id);
+    let files: Array<{ filename: string; modifiedTime: number }> = [];
+
+    if (itemValue && Array.isArray(itemValue.value)) {
+      files = itemValue.value as Array<{ filename: string; modifiedTime: number }>;
+    }
+
+    // Update or add the file entry
+    const existingIndex = files.findIndex(f => f.filename === filename);
+    if (existingIndex >= 0) {
+      files[existingIndex].modifiedTime = mtimeMs;
+    } else {
+      files.push({ filename, modifiedTime: mtimeMs });
+    }
+
+    // Save the updated list
+    this.cacheService!.saveItemLastValue(this.connector.id, {
+      itemId: item.id,
+      queryTime: DateTime.now().toUTC().toISO(),
+      value: files,
+      trackedInstant: null
+    });
   }
 
   /**
@@ -268,7 +289,7 @@ export default class SouthFolderScanner
     } else {
       const stats = await fs.stat(filePath);
       this.logger.debug(`Upsert handled file "${filename}" with modify time ${stats.mtimeMs}`);
-      this.updateModifiedTime(filename, stats.mtimeMs);
+      this.updateModifiedTime(item, filename, stats.mtimeMs);
     }
   }
 }

@@ -376,21 +376,63 @@ describe('SouthSFTP', () => {
   });
 
   it('should get modified time', () => {
-    southCacheService.getQueryOnCustomTable.mockReturnValueOnce({ mtimeMs: 1 }).mockReturnValueOnce(null);
-    expect(south.getModifiedTime('my file')).toEqual(1);
-    expect(south.getModifiedTime('my file')).toEqual(0);
-    expect(southCacheService.getQueryOnCustomTable).toHaveBeenCalledWith(
-      `SELECT mtime_ms AS mtimeMs FROM "south_sftp_${configuration.id}" WHERE filename = ?`,
-      ['my file']
-    );
+    const item = configuration.items[0];
+    southCacheService.getItemLastValue.mockReturnValueOnce({ value: [{ filename: 'my file', modifiedTime: 1 }] }).mockReturnValueOnce(null);
+    expect(south.getModifiedTime(item, 'my file')).toEqual(1);
+    expect(south.getModifiedTime(item, 'my file')).toEqual(0);
+    expect(southCacheService.getItemLastValue).toHaveBeenCalledWith(configuration.id, item.id);
+  });
+
+  it('should return 0 when getModifiedTime value is not an array', () => {
+    const item = configuration.items[0];
+    southCacheService.getItemLastValue.mockReturnValue({ value: 42 });
+    expect(south.getModifiedTime(item, 'any')).toEqual(0);
+  });
+
+  it('should return 0 when file is not found in cache', () => {
+    const item = configuration.items[0];
+    southCacheService.getItemLastValue.mockReturnValue({
+      value: [{ filename: 'other.txt', modifiedTime: 1000 }]
+    });
+    expect(south.getModifiedTime(item, 'missing.txt')).toEqual(0);
   });
 
   it('should update modified time', () => {
-    south.updateModifiedTime('my file', 1);
-    expect(southCacheService.runQueryOnCustomTable).toHaveBeenCalledWith(
-      `INSERT INTO "south_sftp_${configuration.id}" (filename, mtime_ms) VALUES (?, ?) ON CONFLICT(filename) DO UPDATE SET mtime_ms = ?`,
-      ['my file', 1, 1]
-    );
+    const item = configuration.items[0];
+    southCacheService.getItemLastValue.mockReturnValue(null);
+    south.updateModifiedTime(item, 'my file', 1);
+    expect(southCacheService.saveItemLastValue).toHaveBeenCalledWith(configuration.id, {
+      itemId: item.id,
+      queryTime: expect.any(String),
+      value: [{ filename: 'my file', modifiedTime: 1 }],
+      trackedInstant: null
+    });
+  });
+
+  it('should update modified time for existing file entry', () => {
+    const item = configuration.items[0];
+    southCacheService.getItemLastValue.mockReturnValue({
+      value: [{ filename: 'existing.txt', modifiedTime: 1000 }]
+    });
+    south.updateModifiedTime(item, 'existing.txt', 2000);
+    expect(southCacheService.saveItemLastValue).toHaveBeenCalledWith(configuration.id, {
+      itemId: item.id,
+      queryTime: expect.any(String),
+      value: [{ filename: 'existing.txt', modifiedTime: 2000 }],
+      trackedInstant: null
+    });
+  });
+
+  it('should reset files when updateModifiedTime value is not an array', () => {
+    const item = configuration.items[0];
+    southCacheService.getItemLastValue.mockReturnValue({ value: 42 });
+    south.updateModifiedTime(item, 'new file', 1);
+    expect(southCacheService.saveItemLastValue).toHaveBeenCalledWith(configuration.id, {
+      itemId: item.id,
+      queryTime: expect.any(String),
+      value: [{ filename: 'new file', modifiedTime: 1 }],
+      trackedInstant: null
+    });
   });
 
   it('should properly list files', async () => {

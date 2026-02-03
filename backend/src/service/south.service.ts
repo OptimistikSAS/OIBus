@@ -12,7 +12,8 @@ import {
   SouthConnectorLightDTO,
   SouthConnectorManifest,
   SouthItemGroupCommandDTO,
-  SouthItemGroupDTO
+  SouthItemGroupDTO,
+  SouthItemLastValueDTO
 } from '../../shared/model/south-connector.model';
 
 import oianalyticsManifest from '../south/south-oianalytics/manifest';
@@ -428,6 +429,23 @@ export default class SouthService {
       throw new NotFoundError(`Item "${itemId}" not found`);
     }
     return item;
+  }
+
+  getItemLastValue(southId: string, itemId: string): SouthItemLastValueDTO {
+    // Verify south connector and item exist
+    this.findById(southId);
+    const item = this.findItemById(southId, itemId);
+
+    // Get last value from cache
+    const lastValue = this.southCacheRepository.getItemLastValue(southId, itemId);
+
+    return {
+      itemId,
+      itemName: item.name,
+      queryTime: lastValue?.queryTime || null,
+      value: lastValue?.value || null,
+      trackedInstant: lastValue?.trackedInstant || null
+    };
   }
 
   async createItem(
