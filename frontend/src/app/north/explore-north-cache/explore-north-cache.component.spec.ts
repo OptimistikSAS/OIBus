@@ -7,6 +7,7 @@ import { NorthConnectorDTO } from '../../../../../backend/shared/model/north-con
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import testData from '../../../../../backend/src/tests/utils/test-data';
+import { CacheSearchResult } from '../../../../../backend/shared/model/engine.model';
 
 class ExploreNorthCacheComponentTester extends ComponentTester<ExploreNorthCacheComponent> {
   constructor() {
@@ -62,6 +63,20 @@ describe('ExploreNorthCacheComponent', () => {
       }
     }
   } as NorthConnectorDTO;
+  const cacheSearchResult: CacheSearchResult = {
+    searchDate: testData.constants.dates.DATE_3,
+    metrics: {
+      lastConnection: null,
+      lastRunStart: null,
+      lastRunDuration: 0,
+      currentCacheSize: 0,
+      currentErrorSize: 0,
+      currentArchiveSize: 0
+    },
+    error: [],
+    archive: [],
+    cache: []
+  };
 
   beforeEach(async () => {
     northConnectorService = createMock(NorthConnectorService);
@@ -82,13 +97,13 @@ describe('ExploreNorthCacheComponent', () => {
       ]
     });
     northConnectorService.findById.and.returnValue(of(northConnector));
-    northConnectorService.searchCacheContent.and.returnValue(of([]));
+    northConnectorService.searchCacheContent.and.returnValue(of(cacheSearchResult));
     tester = new ExploreNorthCacheComponentTester();
     await tester.change();
   });
 
   it('should have a title, error and archive list components', () => {
-    expect(tester.title).toContainText('Cache content for connector North Connector');
+    expect(tester.title).toContainText('Cache of North Connector');
     expect(tester.cacheContent).toBeDefined();
     expect(tester.errorContent).toBeDefined();
     expect(tester.archiveContent).toBeDefined();

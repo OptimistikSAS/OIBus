@@ -27,46 +27,80 @@ import {
   NorthSFTPSettings
 } from '../../shared/model/north-settings.model';
 import NorthConnector from './north-connector';
+import { createFolder } from '../service/utils';
+import path from 'node:path';
+import fs from 'node:fs/promises';
+import { OIBusNorthType } from '../../shared/model/north-connector.model';
+import { CONTENT_FOLDER, METADATA_FOLDER } from '../model/engine.model';
 
 export const buildNorth = (
   settings: NorthConnectorEntity<NorthSettings>,
   logger: pino.Logger,
-  cacheFolder: string,
-  errorFolder: string,
-  archiveFolder: string,
   certificateRepository: CertificateRepository,
-  oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository
+  oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
+  orchestrator: CacheService
 ): NorthConnector<NorthSettings> => {
-  const cacheService = new CacheService(logger, cacheFolder, errorFolder, archiveFolder);
   switch (settings.type) {
     case 'aws-s3':
-      return new NorthAmazonS3(settings as NorthConnectorEntity<NorthAmazonS3Settings>, logger, cacheFolder, cacheService);
+      return new NorthAmazonS3(settings as NorthConnectorEntity<NorthAmazonS3Settings>, logger, orchestrator);
     case 'azure-blob':
-      return new NorthAzureBlob(settings as NorthConnectorEntity<NorthAzureBlobSettings>, logger, cacheFolder, cacheService);
+      return new NorthAzureBlob(settings as NorthConnectorEntity<NorthAzureBlobSettings>, logger, orchestrator);
     case 'console':
-      return new NorthConsole(settings as NorthConnectorEntity<NorthConsoleSettings>, logger, cacheFolder, cacheService);
+      return new NorthConsole(settings as NorthConnectorEntity<NorthConsoleSettings>, logger, orchestrator);
     case 'file-writer':
-      return new NorthFileWriter(settings as NorthConnectorEntity<NorthFileWriterSettings>, logger, cacheFolder, cacheService);
+      return new NorthFileWriter(settings as NorthConnectorEntity<NorthFileWriterSettings>, logger, orchestrator);
     case 'modbus':
-      return new NorthModbus(settings as NorthConnectorEntity<NorthModbusSettings>, logger, cacheFolder, cacheService);
+      return new NorthModbus(settings as NorthConnectorEntity<NorthModbusSettings>, logger, orchestrator);
     case 'mqtt':
-      return new NorthMQTT(settings as NorthConnectorEntity<NorthMQTTSettings>, logger, cacheFolder, cacheService);
+      return new NorthMQTT(settings as NorthConnectorEntity<NorthMQTTSettings>, logger, orchestrator);
     case 'oianalytics':
       return new NorthOIAnalytics(
         settings as NorthConnectorEntity<NorthOIAnalyticsSettings>,
         logger,
-        cacheFolder,
-        cacheService,
+        orchestrator,
         certificateRepository,
         oIAnalyticsRegistrationRepository
       );
     case 'opcua':
-      return new NorthOPCUA(settings as NorthConnectorEntity<NorthOPCUASettings>, logger, cacheFolder, cacheService);
+      return new NorthOPCUA(settings as NorthConnectorEntity<NorthOPCUASettings>, logger, orchestrator);
     case 'rest':
-      return new NorthREST(settings as NorthConnectorEntity<NorthRESTSettings>, logger, cacheFolder, cacheService);
+      return new NorthREST(settings as NorthConnectorEntity<NorthRESTSettings>, logger, orchestrator);
     case 'sftp':
-      return new NorthSFTP(settings as NorthConnectorEntity<NorthSFTPSettings>, logger, cacheFolder, cacheService);
+      return new NorthSFTP(settings as NorthConnectorEntity<NorthSFTPSettings>, logger, orchestrator);
     default:
       throw Error(`North connector of type "${settings.type}" not installed`);
   }
+};
+
+export const initNorthCache = async (id: string, type: OIBusNorthType, baseFolder: string) => {
+  await createFolder(path.join(baseFolder, 'cache', `north-${id}`));
+  await createFolder(path.join(baseFolder, 'cache', `north-${id}`, METADATA_FOLDER));
+  await createFolder(path.join(baseFolder, 'cache', `north-${id}`, CONTENT_FOLDER));
+  await createFolder(path.join(baseFolder, 'cache', `north-${id}`, 'tmp'));
+  if (type === 'opcua') {
+    await createFolder(path.join(baseFolder, 'cache', `north-${id}`, 'opcua'));
+  }
+
+  await createFolder(path.join(baseFolder, 'error', `north-${id}`));
+  await createFolder(path.join(baseFolder, 'error', `north-${id}`, METADATA_FOLDER));
+  await createFolder(path.join(baseFolder, 'error', `north-${id}`, CONTENT_FOLDER));
+
+  await createFolder(path.join(baseFolder, 'archive', `north-${id}`));
+  await createFolder(path.join(baseFolder, 'archive', `north-${id}`, METADATA_FOLDER));
+  await createFolder(path.join(baseFolder, 'archive', `north-${id}`, CONTENT_FOLDER));
+};
+
+export const deleteNorthCache = async (id: string, baseFolder: string) => {
+  await fs.rm(path.join(baseFolder, 'cache', `north-${id}`), { recursive: true, force: true });
+  await fs.rm(path.join(baseFolder, 'error', `north-${id}`), { recursive: true, force: true });
+  await fs.rm(path.join(baseFolder, 'archive', `north-${id}`), { recursive: true, force: true });
+};
+
+export const createNorthOrchestrator = (baseFolder: string, id: string, logger: pino.Logger): CacheService => {
+  return new CacheService(
+    logger,
+    path.join(baseFolder, 'cache', `north-${id}`),
+    path.join(baseFolder, 'error', `north-${id}`),
+    path.join(baseFolder, 'archive', `north-${id}`)
+  );
 };

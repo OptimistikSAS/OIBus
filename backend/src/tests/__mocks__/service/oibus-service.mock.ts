@@ -19,6 +19,9 @@ export default jest.fn().mockImplementation(() => ({
   resetEngineMetrics: jest.fn(),
   resetNorthMetrics: jest.fn(),
   resetSouthMetrics: jest.fn(),
+  searchCacheContent: jest.fn(),
+  getFileFromCache: jest.fn(),
+  updateCacheContent: jest.fn(),
   stream: new EventEmitter(),
   loggerEvent: new EventEmitter(),
   portChangeEvent: new EventEmitter()

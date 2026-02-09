@@ -9,8 +9,7 @@ import {
   NorthConnectorManifest,
   NorthType
 } from '../../../../backend/shared/model/north-connector.model';
-import { HttpResponse } from '@angular/common/http';
-import { CacheMetadata } from '../../../../backend/shared/model/engine.model';
+import { CacheContentUpdateCommand, CacheSearchResult, FileCacheContent } from '../../../../backend/shared/model/engine.model';
 import testData from '../../../../backend/src/tests/utils/test-data';
 import { TransformerDTOWithOptions } from '../../../../backend/shared/model/transformer.model';
 
@@ -115,34 +114,31 @@ describe('NorthConnectorService', () => {
   });
 
   it('should search cache content', () => {
-    let expectedNorthCacheFiles: Array<{ metadataFilename: string; metadata: CacheMetadata }> | null = null;
-    const northCacheFiles: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [];
+    let result: CacheSearchResult | null = null;
+    const northCacheFiles: CacheSearchResult = {} as CacheSearchResult;
 
     service
-      .searchCacheContent(
-        'id1',
-        {
-          start: '2020-01-01T00:00:00.000Z',
-          end: '2021-01-01T00:00:00.000Z',
-          nameContains: 'file'
-        },
-        'cache'
-      )
-      .subscribe(c => (expectedNorthCacheFiles = c));
+      .searchCacheContent('id1', {
+        start: '2020-01-01T00:00:00.000Z',
+        end: '2021-01-01T00:00:00.000Z',
+        nameContains: 'file',
+        maxNumberOfFilesReturned: 1000
+      })
+      .subscribe(c => (result = c));
 
     http
       .expectOne({
-        url: '/api/north/id1/cache/search?folder=cache&start=2020-01-01T00:00:00.000Z&end=2021-01-01T00:00:00.000Z&nameContains=file',
+        url: '/api/north/id1/cache/search?maxNumberOfFilesReturned=1000&start=2020-01-01T00:00:00.000Z&end=2021-01-01T00:00:00.000Z&nameContains=file',
         method: 'GET'
       })
       .flush(northCacheFiles);
-    expect(expectedNorthCacheFiles!).toEqual(northCacheFiles);
+    expect(result!).toEqual(northCacheFiles);
   });
 
   it('should get cache file content', () => {
-    let httpResponse: HttpResponse<Blob>;
-    const northCacheFileContent = new Blob(['test'], { type: 'text/plain' });
-    service.getCacheFileContent('id1', 'cache', 'file1').subscribe(c => (httpResponse = c));
+    let result: FileCacheContent | null = null;
+    const northCacheFileContent: FileCacheContent = {} as FileCacheContent;
+    service.getCacheFileContent('id1', 'cache', 'file1').subscribe(c => (result = c));
 
     http
       .expectOne({
@@ -150,47 +146,18 @@ describe('NorthConnectorService', () => {
         method: 'GET'
       })
       .flush(northCacheFileContent);
-    expect(httpResponse!.body).toEqual(northCacheFileContent);
+    expect(result!).toEqual(northCacheFileContent);
   });
 
-  it('should remove listed cache files', () => {
+  it('should update cache', () => {
     let done = false;
-    service.removeCacheContent('id1', 'cache', ['file1', 'file2']).subscribe(() => (done = true));
-    const testRequest = http.expectOne({
-      method: 'DELETE',
-      url: '/api/north/id1/cache/remove?folder=cache'
-    });
-    testRequest.flush(['file1', 'file2']);
-    expect(done).toBe(true);
-  });
-
-  it('should remove all archive files', () => {
-    let done = false;
-    service.removeAllCacheContent('id1', 'archive').subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'DELETE', url: '/api/north/id1/cache/remove-all?folder=archive' });
-    testRequest.flush(null);
-    expect(done).toBe(true);
-  });
-
-  it('should move listed cache files into archive', () => {
-    let done = false;
-    service.moveCacheContent('id1', 'cache', 'archive', ['file1', 'file2']).subscribe(() => (done = true));
+    const updateCommand = {} as CacheContentUpdateCommand;
+    service.updateCacheContent('id1', updateCommand).subscribe(() => (done = true));
     const testRequest = http.expectOne({
       method: 'POST',
-      url: '/api/north/id1/cache/move?originFolder=cache&destinationFolder=archive'
+      url: '/api/north/id1/cache/update'
     });
-    testRequest.flush(null);
-    expect(done).toBe(true);
-  });
-
-  it('should move all archive files into cache', () => {
-    let done = false;
-    service.moveAllCacheContent('id1', 'archive', 'cache').subscribe(() => (done = true));
-    const testRequest = http.expectOne({
-      method: 'POST',
-      url: '/api/north/id1/cache/move-all?originFolder=archive&destinationFolder=cache'
-    });
-    testRequest.flush(null);
+    testRequest.flush(updateCommand);
     expect(done).toBe(true);
   });
 

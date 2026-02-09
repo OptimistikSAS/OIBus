@@ -16,7 +16,7 @@ import EngineMetricsRepository from '../repository/metrics/engine-metrics.reposi
 import os from 'node:os';
 import testData from '../tests/utils/test-data';
 import { EngineSettings } from '../model/engine.model';
-import { EngineSettingsCommandDTO } from '../../shared/model/engine.model';
+import { CacheContentUpdateCommand, EngineSettingsCommandDTO } from '../../shared/model/engine.model';
 import { getOIBusInfo } from './utils';
 import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
 import SouthService from './south.service';
@@ -355,6 +355,26 @@ describe('OIBus Service', () => {
   it('should reset South Connector Metrics', () => {
     service.resetSouthMetrics('id');
     expect(engine.resetSouthMetrics).toHaveBeenCalledWith('id');
+  });
+
+  it('should search cache content', async () => {
+    await service.searchCacheContent('north', 'northId', { start: '', end: '', nameContains: '', maxNumberOfFilesReturned: 1000 });
+    expect(engine.searchCacheContent).toHaveBeenCalledWith('north', 'northId', {
+      start: '',
+      end: '',
+      nameContains: '',
+      maxNumberOfFilesReturned: 1000
+    });
+  });
+
+  it('should get file from cache', async () => {
+    await service.getFileFromCache('north', 'northId', 'cache', 'file');
+    expect(engine.getFileFromCache).toHaveBeenCalledWith('north', 'northId', 'cache', 'file');
+  });
+
+  it('should update cache content', async () => {
+    await service.updateCacheContent('north', 'northId', {} as CacheContentUpdateCommand);
+    expect(engine.updateCacheContent).toHaveBeenCalledWith('north', 'northId', {} as CacheContentUpdateCommand);
   });
 
   it('should properly convert to DTO', () => {

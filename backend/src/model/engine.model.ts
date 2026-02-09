@@ -39,8 +39,17 @@ export class OIBusError extends Error {
   readonly _isOIBusError = true;
   constructor(
     message: string,
-    readonly retry: boolean
+    readonly forceRetry: boolean
   ) {
     super(message);
   }
 }
+
+export interface CacheSize {
+  cache: number;
+  error: number;
+  archive: number;
+}
+
+export const METADATA_FOLDER = 'metadata';
+export const CONTENT_FOLDER = 'content';

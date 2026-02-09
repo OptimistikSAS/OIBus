@@ -11,7 +11,6 @@ import HistoryQueryRepository from '../../repository/config/history-query.reposi
 import HistoryQueryRepositoryMock from '../../tests/__mocks__/repository/config/history-query-repository.mock';
 import DataStreamEngine from '../../engine/data-stream-engine';
 import DataStreamEngineMock from '../../tests/__mocks__/data-stream-engine.mock';
-import { flushPromises } from '../../tests/utils/test-utils';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { DateTime } from 'luxon';
@@ -33,70 +32,17 @@ const oianalyticsMessageRepository: OIAnalyticsMessageRepository = new Oianalyti
 const oianalyticsCommandRepository: OIAnalyticsCommandRepository = new OianalyticsCommandRepositoryMock();
 const engine: DataStreamEngine = new DataStreamEngineMock();
 
-const fileList: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [
-  {
-    metadataFilename: 'file1.json',
-    metadata: {
-      contentFile: 'file1-123456.json',
-      contentSize: 100,
-      numberOfElement: 3,
-      createdAt: testData.constants.dates.DATE_1,
-      contentType: 'time-values'
-    }
-  },
-  {
-    metadataFilename: 'file2.json',
-    metadata: {
-      contentFile: 'file2-123456.json',
-      contentSize: 100,
-      numberOfElement: 4,
-      createdAt: testData.constants.dates.DATE_2,
-      contentType: 'time-values'
-    }
-  },
-  {
-    metadataFilename: 'file3.json',
-    metadata: {
-      contentFile: 'file3-123456.csv',
-      contentSize: 100,
-      numberOfElement: 0,
-      createdAt: testData.constants.dates.DATE_3,
-      contentType: 'any'
-    }
-  },
-  {
-    metadataFilename: 'file4.json',
-    metadata: {
-      contentFile: 'file4-123456.json',
-      contentSize: 100,
-      numberOfElement: 6,
-      createdAt: testData.constants.dates.FAKE_NOW,
-      contentType: 'time-values'
-    }
-  },
-  {
-    metadataFilename: 'file5.json',
-    metadata: {
-      contentFile: 'file5-123456.csv',
-      contentSize: 100,
-      numberOfElement: 0,
-      createdAt: testData.constants.dates.FAKE_NOW,
-      contentType: 'any'
-    }
-  },
-  {
-    metadataFilename: 'file6.json',
-    metadata: {
-      contentFile: 'file6-123456.json',
-      contentSize: 100,
-      numberOfElement: 9,
-      createdAt: testData.constants.dates.FAKE_NOW,
-      contentType: 'time-values'
-    }
-  }
-];
+// Helper to create test metadata
+const createMetadata = (date: string): string =>
+  JSON.stringify({
+    contentFile: 'file-123.json',
+    contentSize: 100,
+    numberOfElement: 1,
+    createdAt: date,
+    contentType: 'any'
+  } as CacheMetadata);
 
-describe('CacheService', () => {
+describe('CleanupService', () => {
   let service: CleanupService;
 
   beforeEach(() => {
@@ -115,307 +61,236 @@ describe('CacheService', () => {
     );
   });
 
-  it('should trigger cleanup method', async () => {
+  it('should start and schedule cleanup', async () => {
+    const setIntervalSpy = jest.spyOn(global, 'setInterval');
     const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
-    service.scanMainFolder = jest.fn();
-    service.cleanUpOIAnalyticsCommandAndMessage = jest.fn();
-    await service.start();
-    expect(clearIntervalSpy).not.toHaveBeenCalled();
-    expect(logger.debug).toHaveBeenCalledWith(`Cleaning up data folder...`);
-    expect(service.cleanUpOIAnalyticsCommandAndMessage).toHaveBeenCalledTimes(1);
-    expect(service.scanMainFolder).toHaveBeenCalledTimes(3);
-    expect(service.scanMainFolder).toHaveBeenCalledWith('cache');
-    expect(service.scanMainFolder).toHaveBeenCalledWith('error');
-    expect(service.scanMainFolder).toHaveBeenCalledWith('archive');
-    jest.advanceTimersByTime(3600 * 1000); // trigger next cleanup
-    await flushPromises();
-    expect(service.scanMainFolder).toHaveBeenCalledTimes(6);
-    expect(service.cleanUpOIAnalyticsCommandAndMessage).toHaveBeenCalledTimes(2);
+
+    // Mock internal methods to avoid actual execution during start test
+    service['cleanOrphans'] = jest.fn();
+    service['cleanNorthConnectors'] = jest.fn();
+    service['cleanHistoryQueries'] = jest.fn();
+    service['cleanOIAnalyticsData'] = jest.fn();
 
     await service.start();
-    expect(clearIntervalSpy).toHaveBeenCalledTimes(1);
 
-    await service.stop();
-    expect(clearIntervalSpy).toHaveBeenCalledTimes(2);
-    await service.stop();
-    expect(clearIntervalSpy).toHaveBeenCalledTimes(2);
+    expect(service['cleanOrphans']).toHaveBeenCalled();
+    expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 3600 * 1000);
+
+    service.stop();
+    expect(clearIntervalSpy).toHaveBeenCalled();
   });
 
-  it('should manage clean up error', async () => {
-    service.scanMainFolder = jest.fn().mockImplementationOnce(() => {
-      throw new Error('clean up error');
-    });
+  it('should run full cleanup process', async () => {
+    service['cleanOrphans'] = jest.fn();
+    service['cleanNorthConnectors'] = jest.fn();
+    service['cleanHistoryQueries'] = jest.fn();
+    service['cleanOIAnalyticsData'] = jest.fn();
+
     await service.cleanup();
-    expect(logger.error).toHaveBeenCalledWith('Data folder clean up error: clean up error');
+
+    expect(logger.debug).toHaveBeenCalledWith('Cleaning up data folder...');
+    expect(service['cleanOrphans']).toHaveBeenCalled();
+    expect(service['cleanNorthConnectors']).toHaveBeenCalled();
+    expect(service['cleanHistoryQueries']).toHaveBeenCalled();
+    expect(service['cleanOIAnalyticsData']).toHaveBeenCalled();
   });
 
-  it('should use another logger', async () => {
+  describe('cleanOrphans', () => {
+    it('should remove orphan folders in all main directories', async () => {
+      // Setup: Mock fs.readdir to return different folders for cache, error, archive
+      // cache: south-1 (active), south-2 (orphan)
+      // error: north-1 (active), north-2 (orphan)
+      // archive: history-1 (active), history-2 (orphan)
+      (fs.readdir as jest.Mock).mockImplementation((p: string) => {
+        if (p.includes('cache')) return Promise.resolve(['south-1', 'south-2', 'random.db']);
+        if (p.includes('error')) return Promise.resolve(['north-1', 'north-2']);
+        if (p.includes('archive')) return Promise.resolve(['history-1', 'history-2']);
+        return Promise.resolve([]);
+      });
+      (fs.rm as jest.Mock).mockResolvedValue(undefined);
+
+      // Setup: Mock Repositories
+      (southConnectorRepository.findSouthById as jest.Mock).mockImplementation(id => id === '1');
+      (northConnectorRepository.findNorthById as jest.Mock).mockImplementation(id => id === '1');
+      (historyQueryRepository.findHistoryById as jest.Mock).mockImplementation(id => id === '1');
+
+      await service['cleanOrphans']();
+
+      // Expect removal of orphans
+      expect(fs.rm).toHaveBeenCalledWith(path.resolve('baseFolder', 'cache', 'south-2'), { force: true, recursive: true });
+      expect(fs.rm).toHaveBeenCalledWith(path.resolve('baseFolder', 'error', 'north-2'), { force: true, recursive: true });
+      expect(fs.rm).toHaveBeenCalledWith(path.resolve('baseFolder', 'archive', 'history-2'), { force: true, recursive: true });
+
+      // Expect active folders NOT to be removed
+      expect(fs.rm).not.toHaveBeenCalledWith(path.resolve('baseFolder', 'cache', 'south-1'), expect.anything());
+      expect(fs.rm).not.toHaveBeenCalledWith(path.resolve('baseFolder', 'error', 'north-1'), expect.anything());
+      expect(fs.rm).not.toHaveBeenCalledWith(path.resolve('baseFolder', 'archive', 'history-1'), expect.anything());
+    });
+
+    it('should handle fs errors gracefully', async () => {
+      (fs.readdir as jest.Mock).mockRejectedValue(new Error('Read Error'));
+      await expect(service['cleanOrphans']()).resolves.not.toThrow();
+    });
+  });
+
+  describe('cleanNorthConnectors (Retention Policy)', () => {
+    it('should apply retention policy and update content', async () => {
+      // Setup: 1 North connector with retention settings
+      const north = {
+        id: 'n1',
+        caching: {
+          error: { retentionDuration: 1 }, // 1 hour
+          archive: { retentionDuration: 5 } // 5 hours
+        }
+      };
+      (northConnectorRepository.findAllNorthFull as jest.Mock).mockReturnValue([north]);
+
+      // Setup: Mock File System
+      // Files for Error folder (Retention 1h)
+      // file1: created NOW (keep)
+      // file2: created 2h ago (delete)
+      const errorFiles = ['file1.json', 'file2.json'];
+
+      // Files for Archive folder (Retention 5h)
+      // file3: created 2h ago (keep)
+      // file4: created 6h ago (delete)
+      const archiveFiles = ['file3.json', 'file4.json'];
+
+      (fs.readdir as jest.Mock).mockImplementation((p: string) => {
+        if (p.includes(path.join('error', 'north-n1', 'metadata'))) return Promise.resolve(errorFiles);
+        if (p.includes(path.join('archive', 'north-n1', 'metadata'))) return Promise.resolve(archiveFiles);
+        return Promise.resolve([]);
+      });
+
+      const now = DateTime.fromISO(testData.constants.dates.FAKE_NOW);
+      (fs.readFile as jest.Mock).mockImplementation((p: string) => {
+        if (p.includes('file1')) return Promise.resolve(createMetadata(now.toUTC().toISO()!));
+        if (p.includes('file2')) return Promise.resolve(createMetadata(now.minus({ hours: 2 }).toUTC().toISO()!));
+        if (p.includes('file3')) return Promise.resolve(createMetadata(now.minus({ hours: 2 }).toUTC().toISO()!));
+        if (p.includes('file4')) return Promise.resolve(createMetadata(now.minus({ hours: 6 }).toUTC().toISO()!));
+        return Promise.resolve('');
+      });
+
+      await service['cleanNorthConnectors']();
+
+      // Verify Update Command
+      expect(engine.updateCacheContent).toHaveBeenCalledWith('north', 'n1', {
+        error: { remove: ['file2.json'], move: [] },
+        archive: { remove: ['file4.json'], move: [] },
+        cache: { remove: [], move: [] }
+      });
+    });
+
+    it('should skip folders if retention is 0 (optimization)', async () => {
+      const north = {
+        id: 'n1',
+        caching: {
+          error: { retentionDuration: 0 },
+          archive: { retentionDuration: 0 }
+        }
+      };
+      (northConnectorRepository.findAllNorthFull as jest.Mock).mockReturnValue([north]);
+
+      await service['cleanNorthConnectors']();
+
+      // Should NOT read disk
+      expect(fs.readdir).not.toHaveBeenCalled();
+      expect(engine.updateCacheContent).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('cleanHistoryQueries (Retention Policy)', () => {
+    it('should apply retention policy including subpath "north"', async () => {
+      const history = {
+        id: 'h1',
+        caching: {
+          error: { retentionDuration: 24 },
+          archive: { retentionDuration: 0 } // Disabled
+        }
+      };
+      (historyQueryRepository.findAllHistoriesFull as jest.Mock).mockReturnValue([history]);
+
+      const files = ['old.json'];
+      // Path should include 'north' subfolder for history queries
+      const targetPath = path.join('error', 'history-h1', 'north', 'metadata');
+
+      (fs.readdir as jest.Mock).mockImplementation((p: string) => {
+        if (p.includes(targetPath)) return Promise.resolve(files);
+        return Promise.resolve([]);
+      });
+
+      // 25 hours ago -> should delete
+      const oldDate = DateTime.fromISO(testData.constants.dates.FAKE_NOW).minus({ hours: 25 }).toUTC().toISO()!;
+      (fs.readFile as jest.Mock).mockResolvedValue(createMetadata(oldDate));
+
+      await service['cleanHistoryQueries']();
+
+      expect(engine.updateCacheContent).toHaveBeenCalledWith('history', 'h1', {
+        error: { remove: ['old.json'], move: [] },
+        archive: { remove: [], move: [] }, // skipped
+        cache: { remove: [], move: [] }
+      });
+    });
+  });
+
+  describe('retrieveFilesToDelete (Low Level)', () => {
+    it('should delete corrupt metadata files', async () => {
+      (fs.readdir as jest.Mock).mockResolvedValue(['corrupt.json']);
+      (fs.readFile as jest.Mock).mockResolvedValue('INVALID JSON');
+      (fs.rm as jest.Mock).mockResolvedValue(undefined);
+
+      const files = await service['retrieveFilesToDelete']('some/folder', 10);
+
+      // It should try to remove the corrupt file from disk
+      expect(fs.rm).toHaveBeenCalledWith(expect.stringContaining('corrupt.json'), { force: true });
+
+      // It should NOT include it in the returned list for the engine (since it's already deleted manually)
+      expect(files).toEqual([]);
+    });
+
+    it('should handle missing folders gracefully', async () => {
+      (fs.readdir as jest.Mock).mockRejectedValue(new Error('ENOENT'));
+
+      const files = await service['retrieveFilesToDelete']('missing/folder', 10);
+      expect(files).toEqual([]);
+    });
+  });
+
+  describe('cleanOIAnalyticsData', () => {
+    it('should delete old messages and commands', () => {
+      const messages = [{ id: 'm1' }, { id: 'm2' }];
+      const commands = [{ id: 'c1' }];
+
+      (oianalyticsMessageRepository.list as jest.Mock).mockReturnValue(messages);
+      (oianalyticsCommandRepository.list as jest.Mock).mockReturnValue(commands);
+
+      service['cleanOIAnalyticsData']();
+
+      const expectedEnd = DateTime.fromISO(testData.constants.dates.FAKE_NOW).minus({ days: 7 }).toUTC().toISO();
+
+      expect(oianalyticsMessageRepository.list).toHaveBeenCalledWith({
+        types: [],
+        status: ['ERRORED', 'COMPLETED'],
+        start: undefined,
+        end: expectedEnd
+      });
+      expect(oianalyticsMessageRepository.delete).toHaveBeenCalledWith('m1');
+      expect(oianalyticsMessageRepository.delete).toHaveBeenCalledWith('m2');
+
+      expect(oianalyticsCommandRepository.list).toHaveBeenCalledWith({
+        types: [],
+        status: ['ERRORED', 'COMPLETED', 'CANCELLED'],
+        start: undefined,
+        ack: undefined,
+        end: expectedEnd
+      });
+      expect(oianalyticsCommandRepository.delete).toHaveBeenCalledWith('c1');
+    });
+  });
+
+  it('should use another logger', () => {
     service.setLogger(anotherLogger);
-    (logger.debug as jest.Mock).mockClear();
-    service.scanMainFolder = jest.fn();
-    await service.start();
-    expect(anotherLogger.debug).toHaveBeenCalledTimes(1);
-    expect(logger.debug).not.toHaveBeenCalled();
-  });
-
-  it('should get id from folder', () => {
-    expect(service['getFolderId']('')).toEqual(null);
-    expect(service['getFolderId']('folder')).toEqual(null);
-    expect(service['getFolderId']('folder-id')).toEqual('id');
-    expect(service['getFolderId']('folder-id-test')).toEqual('id-test');
-  });
-
-  it('should clean up cache folder', async () => {
-    service['readCacheMetadataFiles'] = jest.fn().mockReturnValue([]);
-    (fs.readdir as jest.Mock).mockReturnValueOnce([
-      'cache.db',
-      'south-id1',
-      'south-id2',
-      'south-bad-south',
-      'north-id3',
-      'north-id4',
-      'north-bad-north',
-      'history-id5',
-      'history-id6',
-      'history-bad-history'
-    ]);
-    (southConnectorRepository.findSouthById as jest.Mock)
-      .mockReturnValueOnce(testData.south.list[0])
-      .mockReturnValueOnce(null)
-      .mockReturnValueOnce(null);
-    (northConnectorRepository.findNorthById as jest.Mock)
-      .mockReturnValueOnce(testData.north.list[0])
-      .mockReturnValueOnce(null)
-      .mockReturnValueOnce(null);
-    (historyQueryRepository.findHistoryById as jest.Mock)
-      .mockReturnValueOnce(testData.historyQueries.list[0])
-      .mockReturnValueOnce(null)
-      .mockReturnValueOnce(null);
-
-    (fs.rm as jest.Mock)
-      .mockImplementationOnce(() => Promise.resolve())
-      .mockImplementationOnce(() => {
-        throw new Error(`south rm error`);
-      })
-      .mockImplementationOnce(() => Promise.resolve())
-      .mockImplementationOnce(() => {
-        throw new Error(`north rm error`);
-      })
-      .mockImplementationOnce(() => Promise.resolve())
-      .mockImplementationOnce(() => {
-        throw new Error(`history rm error`);
-      });
-
-    await service.scanMainFolder('cache');
-
-    expect(southConnectorRepository.findSouthById).toHaveBeenCalledTimes(3);
-    expect(southConnectorRepository.findSouthById).toHaveBeenCalledWith('id1');
-    expect(southConnectorRepository.findSouthById).toHaveBeenCalledWith('id2');
-    expect(southConnectorRepository.findSouthById).toHaveBeenCalledWith('bad-south');
-    expect(logger.debug).toHaveBeenCalledWith(`Folder "south-id2" not associated to a South connector. Removing it.`);
-    expect(logger.debug).toHaveBeenCalledWith(`Folder "south-bad-south" not associated to a South connector. Removing it.`);
-    expect(fs.rm).toHaveBeenCalledWith(path.resolve('baseFolder', 'cache', 'south-id2'), { force: true, recursive: true });
-    expect(fs.rm).toHaveBeenCalledWith(path.resolve('baseFolder', 'cache', 'south-bad-south'), { force: true, recursive: true });
-    expect(logger.error).toHaveBeenCalledWith(
-      `Could not remove "${path.resolve('baseFolder', 'cache', 'south-bad-south')}": south rm error`
-    );
-
-    expect(northConnectorRepository.findNorthById).toHaveBeenCalledTimes(3);
-    expect(northConnectorRepository.findNorthById).toHaveBeenCalledWith('id3');
-    expect(northConnectorRepository.findNorthById).toHaveBeenCalledWith('id4');
-    expect(northConnectorRepository.findNorthById).toHaveBeenCalledWith('bad-north');
-    expect(logger.debug).toHaveBeenCalledWith(`Folder "north-id4" not associated to a North connector. Removing it.`);
-    expect(logger.debug).toHaveBeenCalledWith(`Folder "north-bad-north" not associated to a North connector. Removing it.`);
-    expect(fs.rm).toHaveBeenCalledWith(path.resolve('baseFolder', 'cache', 'north-id4'), { force: true, recursive: true });
-    expect(fs.rm).toHaveBeenCalledWith(path.resolve('baseFolder', 'cache', 'north-bad-north'), { force: true, recursive: true });
-    expect(logger.error).toHaveBeenCalledWith(
-      `Could not remove "${path.resolve('baseFolder', 'cache', 'north-bad-north')}": north rm error`
-    );
-
-    expect(historyQueryRepository.findHistoryById).toHaveBeenCalledTimes(3);
-    expect(historyQueryRepository.findHistoryById).toHaveBeenCalledWith('id5');
-    expect(historyQueryRepository.findHistoryById).toHaveBeenCalledWith('id6');
-    expect(historyQueryRepository.findHistoryById).toHaveBeenCalledWith('bad-history');
-    expect(logger.debug).toHaveBeenCalledWith(`Folder "history-id6" not associated to a History query. Removing it.`);
-    expect(logger.debug).toHaveBeenCalledWith(`Folder "history-bad-history" not associated to a History query. Removing it.`);
-    expect(fs.rm).toHaveBeenCalledWith(path.resolve('baseFolder', 'cache', 'history-id6'), { force: true, recursive: true });
-    expect(fs.rm).toHaveBeenCalledWith(path.resolve('baseFolder', 'cache', 'history-bad-history'), { force: true, recursive: true });
-    expect(logger.error).toHaveBeenCalledWith(
-      `Could not remove "${path.resolve('baseFolder', 'cache', 'history-bad-history')}": history rm error`
-    );
-  });
-
-  it('should clean up archive folder', async () => {
-    service['shouldDeleteFile'] = jest.fn().mockReturnValue(true);
-    service['readCacheMetadataFiles'] = jest.fn().mockReturnValue(fileList);
-    (fs.readdir as jest.Mock).mockReturnValueOnce(['north-id1', 'north-id2', 'north-id3', 'history-id4', 'history-id5', 'history-id6']);
-
-    (northConnectorRepository.findNorthById as jest.Mock)
-      .mockReturnValueOnce({ id: 'id1', caching: { archive: { enabled: false } } })
-      .mockReturnValueOnce({ id: 'id2', caching: { archive: { enabled: true, retentionDuration: 1 } } })
-      .mockReturnValueOnce({ id: 'id3', caching: { archive: { enabled: true, retentionDuration: 0 } } });
-    (historyQueryRepository.findHistoryById as jest.Mock)
-      .mockReturnValueOnce({ id: 'id4', caching: { archive: { enabled: false } } })
-      .mockReturnValueOnce({ id: 'id5', caching: { archive: { enabled: true, retentionDuration: 1 } } })
-      .mockReturnValueOnce({ id: 'id6', caching: { archive: { enabled: true, retentionDuration: 0 } } });
-
-    await service.scanMainFolder('archive');
-
-    expect(northConnectorRepository.findNorthById).toHaveBeenCalledTimes(3);
-    expect(engine.removeCacheContent).toHaveBeenCalledTimes(4);
-    expect(engine.removeCacheContent).toHaveBeenCalledWith(
-      'north',
-      'id1',
-      'archive',
-      fileList.map(file => file.metadataFilename)
-    );
-    expect(engine.removeCacheContent).toHaveBeenCalledWith(
-      'north',
-      'id2',
-      'archive',
-      fileList.map(file => file.metadataFilename)
-    );
-    expect(historyQueryRepository.findHistoryById).toHaveBeenCalledTimes(3);
-  });
-
-  it('clean up should do nothing if folder does not contain any files', async () => {
-    service['shouldDeleteFile'] = jest.fn().mockReturnValue(true);
-    service['readCacheMetadataFiles'] = jest.fn().mockReturnValue([]);
-    (fs.readdir as jest.Mock).mockReturnValueOnce(['north-id1', 'history-id2']);
-
-    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValueOnce({
-      id: 'id1',
-      caching: { archive: { enabled: true, retentionDuration: 1 } }
-    });
-    (historyQueryRepository.findHistoryById as jest.Mock).mockReturnValueOnce({
-      id: 'id2',
-      caching: { archive: { enabled: true, retentionDuration: 1 } }
-    });
-
-    await service.scanMainFolder('archive');
-
-    expect(northConnectorRepository.findNorthById).toHaveBeenCalledTimes(1);
-    expect(engine.removeCacheContent).not.toHaveBeenCalled();
-
-    expect(historyQueryRepository.findHistoryById).toHaveBeenCalledTimes(1);
-  });
-
-  it('should clean up error folder', async () => {
-    service['shouldDeleteFile'] = jest.fn().mockReturnValue(true);
-    service['readCacheMetadataFiles'] = jest.fn().mockReturnValue(fileList);
-    (fs.readdir as jest.Mock).mockReturnValueOnce(['north-id1', 'north-id2', 'history-id3', 'history-id4']);
-
-    (northConnectorRepository.findNorthById as jest.Mock)
-      .mockReturnValueOnce({ id: 'id1', caching: { error: { retentionDuration: 1 } } })
-      .mockReturnValueOnce({ id: 'id2', caching: { error: { retentionDuration: 0 } } });
-    (historyQueryRepository.findHistoryById as jest.Mock)
-
-      .mockReturnValueOnce({ id: 'id3', caching: { error: { retentionDuration: 1 } } })
-      .mockReturnValueOnce({ id: 'id4', caching: { error: { retentionDuration: 0 } } });
-
-    await service.scanMainFolder('error');
-
-    expect(northConnectorRepository.findNorthById).toHaveBeenCalledTimes(2);
-    expect(service['readCacheMetadataFiles']).toHaveBeenCalledTimes(4);
-    expect(service['readCacheMetadataFiles']).toHaveBeenCalledWith(path.resolve('baseFolder', 'error', 'north-id1'));
-    expect(service['readCacheMetadataFiles']).toHaveBeenCalledWith(path.resolve('baseFolder', 'error', 'north-id2'));
-    expect(engine.removeCacheContent).toHaveBeenCalledTimes(2);
-    expect(engine.removeCacheContent).toHaveBeenCalledWith(
-      'north',
-      'id1',
-      'error',
-      fileList.map(file => file.metadataFilename)
-    );
-    expect(historyQueryRepository.findHistoryById).toHaveBeenCalledTimes(2);
-    expect(service['readCacheMetadataFiles']).toHaveBeenCalledWith(path.resolve('baseFolder', 'error', 'history-id3', 'north'));
-    expect(service['readCacheMetadataFiles']).toHaveBeenCalledWith(path.resolve('baseFolder', 'error', 'history-id4', 'north'));
-  });
-
-  it('should delete file', () => {
-    expect(
-      service['shouldDeleteFile'](
-        { metadataFilename: 'file', metadata: { createdAt: testData.constants.dates.FAKE_NOW } as CacheMetadata },
-        1
-      )
-    ).toBeFalsy(); // retention of 1 hr and createdAt set at NOW
-
-    expect(
-      service['shouldDeleteFile'](
-        { metadataFilename: 'file', metadata: { createdAt: testData.constants.dates.DATE_1 } as CacheMetadata },
-        1
-      )
-    ).toBeTruthy(); // retention of 1 hr and createdAt set at DATE_1 (very older)
-
-    expect(
-      service['shouldDeleteFile'](
-        {
-          metadataFilename: 'file',
-          metadata: { createdAt: DateTime.fromISO(testData.constants.dates.FAKE_NOW).minus({ hour: 1 }).toUTC().toISO() } as CacheMetadata
-        },
-        1
-      )
-    ).toBeTruthy(); // retention of 1 hr and createdAt set at exactly NOW - 1 hr
-  });
-
-  it('should return empty array when cache metadata files fails', async () => {
-    (fs.readdir as jest.Mock).mockImplementationOnce(() => {
-      throw new Error('read error');
-    });
-    const result = await service['readCacheMetadataFiles']('folder');
-    expect(result).toEqual([]);
-    expect(logger.debug).toHaveBeenCalledWith(`Could not read cache metadata files from folder "folder": read error`);
-  });
-
-  it('should read cache metadata files', async () => {
-    (fs.readdir as jest.Mock).mockReturnValueOnce([
-      fileList[0].metadataFilename,
-      fileList[1].metadataFilename,
-      fileList[2].metadataFilename
-    ]);
-    (fs.readFile as jest.Mock).mockReturnValueOnce(JSON.stringify(fileList[0].metadata)).mockReturnValueOnce('o').mockReturnValueOnce('o');
-    (fs.rm as jest.Mock)
-      .mockImplementationOnce(() => Promise.resolve())
-      .mockImplementationOnce(() => {
-        throw new Error('remove error');
-      });
-    const result = await service['readCacheMetadataFiles']('folder');
-    expect(result).toEqual([fileList[0]]);
-    expect(logger.error).toHaveBeenCalledWith(
-      `Error while reading file "${path.join('folder', 'metadata', fileList[1].metadataFilename)}": Unexpected token 'o', "o" is not valid JSON`
-    );
-    expect(logger.error).toHaveBeenCalledWith(
-      `Error while reading file "${path.join('folder', 'metadata', fileList[2].metadataFilename)}": Unexpected token 'o', "o" is not valid JSON`
-    );
-    expect(logger.error).toHaveBeenCalledWith(
-      `Error while removing file "${path.join('folder', 'metadata', fileList[2].metadataFilename)}": remove error`
-    );
-  });
-
-  it('should clean up oianalytics tables', () => {
-    (oianalyticsMessageRepository.list as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.messages.oIBusList);
-    (oianalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.commands.oIBusList);
-
-    service.cleanUpOIAnalyticsCommandAndMessage();
-    expect(oianalyticsMessageRepository.list).toHaveBeenCalledTimes(1);
-    expect(oianalyticsMessageRepository.list).toHaveBeenCalledWith({
-      types: [],
-      status: ['ERRORED', 'COMPLETED'],
-      end: DateTime.fromISO(testData.constants.dates.FAKE_NOW)
-        .minus({ hour: 24 * 7 })
-        .toUTC()
-        .toISO()!
-    });
-    expect(oianalyticsMessageRepository.delete).toHaveBeenCalledTimes(testData.oIAnalytics.messages.oIBusList.length);
-
-    expect(oianalyticsCommandRepository.list).toHaveBeenCalledTimes(1);
-    expect(oianalyticsCommandRepository.list).toHaveBeenCalledWith({
-      types: [],
-      status: ['ERRORED', 'COMPLETED', 'CANCELLED'],
-      end: DateTime.fromISO(testData.constants.dates.FAKE_NOW)
-        .minus({ hour: 24 * 7 })
-        .toUTC()
-        .toISO()!
-    });
-    expect(oianalyticsCommandRepository.delete).toHaveBeenCalledTimes(testData.oIAnalytics.commands.oIBusList.length);
+    service.cleanup();
+    expect(anotherLogger.debug).toHaveBeenCalled();
   });
 });

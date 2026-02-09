@@ -1117,24 +1117,8 @@ export default class OIAnalyticsCommandService {
 
   async executeSearchNorthCacheContentCommand(command: OIBusSearchNorthCacheContentCommand): Promise<void> {
     try {
-      const metrics = this.northService.getNorthMetric(command.northConnectorId);
-      if (!metrics) {
-        throw new Error(`North ${command.northConnectorId} not found`);
-      }
-      const error = (await this.northService.searchCacheContent(command.northConnectorId, command.commandContent.searchParams, 'error'))
-        .sort((a, b) => b.metadata.createdAt.localeCompare(a.metadata.createdAt))
-        .splice(0, command.commandContent.maxNumberOfFilesReturned);
-      const archive = (await this.northService.searchCacheContent(command.northConnectorId, command.commandContent.searchParams, 'archive'))
-        .sort((a, b) => b.metadata.createdAt.localeCompare(a.metadata.createdAt))
-        .splice(0, command.commandContent.maxNumberOfFilesReturned);
-      const cache = (await this.northService.searchCacheContent(command.northConnectorId, command.commandContent.searchParams, 'cache'))
-        .sort((a, b) => b.metadata.createdAt.localeCompare(a.metadata.createdAt))
-        .splice(0, command.commandContent.maxNumberOfFilesReturned);
-      this.oIAnalyticsCommandRepository.markAsCompleted(
-        command.id,
-        DateTime.now().toUTC().toISO(),
-        JSON.stringify({ metrics, error, archive, cache })
-      );
+      const result = await this.oIBusService.searchCacheContent('north', command.northConnectorId, command.commandContent);
+      this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), JSON.stringify(result));
     } catch (error: unknown) {
       this.oIAnalyticsCommandRepository.markAsErrored(command.id, (error as Error).message);
     }
@@ -1142,30 +1126,8 @@ export default class OIAnalyticsCommandService {
 
   async executeSearchHistoryCacheContentCommand(command: OIBusSearchHistoryCacheContentCommand): Promise<void> {
     try {
-      const metrics = this.historyQueryService.getHistoryMetric(command.historyQueryId);
-      if (!metrics) {
-        throw new Error(`History ${command.historyQueryId} not found`);
-      }
-      const error = (
-        await this.historyQueryService.searchCacheContent(command.historyQueryId, command.commandContent.searchParams, 'error')
-      )
-        .sort((a, b) => b.metadata.createdAt.localeCompare(a.metadata.createdAt))
-        .splice(0, command.commandContent.maxNumberOfFilesReturned);
-      const archive = (
-        await this.historyQueryService.searchCacheContent(command.historyQueryId, command.commandContent.searchParams, 'archive')
-      )
-        .sort((a, b) => b.metadata.createdAt.localeCompare(a.metadata.createdAt))
-        .splice(0, command.commandContent.maxNumberOfFilesReturned);
-      const cache = (
-        await this.historyQueryService.searchCacheContent(command.historyQueryId, command.commandContent.searchParams, 'cache')
-      )
-        .sort((a, b) => b.metadata.createdAt.localeCompare(a.metadata.createdAt))
-        .splice(0, command.commandContent.maxNumberOfFilesReturned);
-      this.oIAnalyticsCommandRepository.markAsCompleted(
-        command.id,
-        DateTime.now().toUTC().toISO(),
-        JSON.stringify({ metrics, error, archive, cache })
-      );
+      const result = await this.oIBusService.searchCacheContent('history', command.historyQueryId, command.commandContent);
+      this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), JSON.stringify(result));
     } catch (error: unknown) {
       this.oIAnalyticsCommandRepository.markAsErrored(command.id, (error as Error).message);
     }
@@ -1173,12 +1135,13 @@ export default class OIAnalyticsCommandService {
 
   async executeGetNorthCacheFileContentCommand(command: OIBusGetNorthCacheFileContentCommand): Promise<void> {
     try {
-      const stream = await this.northService.getCacheFileContent(
+      const result = await this.oIBusService.getFileFromCache(
+        'north',
         command.northConnectorId,
         command.commandContent.folder,
         command.commandContent.filename
       );
-      await this.processCacheFileContent(command, stream);
+      this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), JSON.stringify(result));
     } catch (error: unknown) {
       this.oIAnalyticsCommandRepository.markAsErrored(command.id, (error as Error).message);
     }
@@ -1186,89 +1149,21 @@ export default class OIAnalyticsCommandService {
 
   async executeGetHistoryCacheFileContentCommand(command: OIBusGetHistoryCacheFileContentCommand): Promise<void> {
     try {
-      const stream = await this.historyQueryService.getCacheFileContent(
+      const result = await this.oIBusService.getFileFromCache(
+        'history',
         command.historyQueryId,
         command.commandContent.folder,
         command.commandContent.filename
       );
-      await this.processCacheFileContent(command, stream);
+      this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), JSON.stringify(result));
     } catch (error: unknown) {
       this.oIAnalyticsCommandRepository.markAsErrored(command.id, (error as Error).message);
     }
   }
 
-  private async processCacheFileContent(
-    command: OIBusGetNorthCacheFileContentCommand | OIBusGetHistoryCacheFileContentCommand,
-    stream: NodeJS.ReadableStream
-  ) {
-    const chunks: Array<Buffer> = [];
-    let totalSize = 0;
-    let truncated = false;
-    const MAX_SIZE = 1024 * 500; // 500KB limit
-
-    for await (const chunk of stream) {
-      const bufferChunk = Buffer.from(chunk);
-      if (totalSize + bufferChunk.length > MAX_SIZE) {
-        const remaining = MAX_SIZE - totalSize;
-        if (remaining > 0) {
-          chunks.push(bufferChunk.subarray(0, remaining));
-          totalSize += remaining;
-        }
-        truncated = true;
-        break;
-      }
-      chunks.push(bufferChunk);
-      totalSize += bufferChunk.length;
-    }
-    const content = Buffer.concat(chunks).toString('utf-8');
-    this.oIAnalyticsCommandRepository.markAsCompleted(
-      command.id,
-      DateTime.now().toUTC().toISO(),
-      JSON.stringify({ content, truncated, totalSize })
-    );
-  }
-
   async executeUpdateNorthCacheContentCommand(command: OIBusUpdateNorthCacheContentCommand): Promise<void> {
     try {
-      await this.northService.removeCacheContent(command.northConnectorId, 'cache', command.commandContent.cache.remove);
-      await this.northService.removeCacheContent(command.northConnectorId, 'error', command.commandContent.error.remove);
-      await this.northService.removeCacheContent(command.northConnectorId, 'archive', command.commandContent.archive.remove);
-      await this.northService.moveCacheContent(
-        command.northConnectorId,
-        'cache',
-        'error',
-        command.commandContent.cache.move.filter(element => element.to === 'error').map(element => element.filename)
-      );
-      await this.northService.moveCacheContent(
-        command.northConnectorId,
-        'cache',
-        'archive',
-        command.commandContent.cache.move.filter(element => element.to === 'archive').map(element => element.filename)
-      );
-      await this.northService.moveCacheContent(
-        command.northConnectorId,
-        'error',
-        'cache',
-        command.commandContent.error.move.filter(element => element.to === 'cache').map(element => element.filename)
-      );
-      await this.northService.moveCacheContent(
-        command.northConnectorId,
-        'error',
-        'archive',
-        command.commandContent.error.move.filter(element => element.to === 'archive').map(element => element.filename)
-      );
-      await this.northService.moveCacheContent(
-        command.northConnectorId,
-        'archive',
-        'cache',
-        command.commandContent.archive.move.filter(element => element.to === 'cache').map(element => element.filename)
-      );
-      await this.northService.moveCacheContent(
-        command.northConnectorId,
-        'archive',
-        'error',
-        command.commandContent.archive.move.filter(element => element.to === 'error').map(element => element.filename)
-      );
+      await this.oIBusService.updateCacheContent('north', command.northConnectorId, command.commandContent);
       this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'Cache updated successfully');
     } catch (error: unknown) {
       this.oIAnalyticsCommandRepository.markAsErrored(command.id, (error as Error).message);
@@ -1277,45 +1172,7 @@ export default class OIAnalyticsCommandService {
 
   async executeUpdateHistoryCacheContentCommand(command: OIBusUpdateHistoryCacheContentCommand): Promise<void> {
     try {
-      await this.historyQueryService.removeCacheContent(command.historyQueryId, 'cache', command.commandContent.cache.remove);
-      await this.historyQueryService.removeCacheContent(command.historyQueryId, 'error', command.commandContent.error.remove);
-      await this.historyQueryService.removeCacheContent(command.historyQueryId, 'archive', command.commandContent.archive.remove);
-      await this.historyQueryService.moveCacheContent(
-        command.historyQueryId,
-        'cache',
-        'error',
-        command.commandContent.cache.move.filter(element => element.to === 'error').map(element => element.filename)
-      );
-      await this.historyQueryService.moveCacheContent(
-        command.historyQueryId,
-        'cache',
-        'archive',
-        command.commandContent.cache.move.filter(element => element.to === 'archive').map(element => element.filename)
-      );
-      await this.historyQueryService.moveCacheContent(
-        command.historyQueryId,
-        'error',
-        'cache',
-        command.commandContent.error.move.filter(element => element.to === 'cache').map(element => element.filename)
-      );
-      await this.historyQueryService.moveCacheContent(
-        command.historyQueryId,
-        'error',
-        'archive',
-        command.commandContent.error.move.filter(element => element.to === 'archive').map(element => element.filename)
-      );
-      await this.historyQueryService.moveCacheContent(
-        command.historyQueryId,
-        'archive',
-        'cache',
-        command.commandContent.archive.move.filter(element => element.to === 'cache').map(element => element.filename)
-      );
-      await this.historyQueryService.moveCacheContent(
-        command.historyQueryId,
-        'archive',
-        'error',
-        command.commandContent.archive.move.filter(element => element.to === 'error').map(element => element.filename)
-      );
+      await this.oIBusService.updateCacheContent('history', command.historyQueryId, command.commandContent);
       this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'Cache updated successfully');
     } catch (error: unknown) {
       this.oIAnalyticsCommandRepository.markAsErrored(command.id, (error as Error).message);
