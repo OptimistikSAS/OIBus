@@ -1,0 +1,78 @@
+@if (historyQuery) {
+  <div class="oib-padded-container">
+    <div class="row justify-content-center align-items-center">
+      <div class="col-md-10 col-lg-8">
+        <div class="oib-header-container">
+          <h1 class="d-flex justify-content-between">
+            <div class="title-container me-2">
+              <span
+                [ngbTooltip]="getFullTitle()"
+                placement="bottom-end"
+                translate="explore-cache.title"
+                [translateParams]="{ name: historyQuery.name }"
+                id="title"
+              ></span>
+            </div>
+          </h1>
+        </div>
+
+        <form [formGroup]="form" (ngSubmit)="submit()" id="cache-form" class="oib-search-form px-3 mb-3">
+          <div class="row gx-2 pt-1 pb-3">
+            <!-- From -->
+            <div class="col">
+              <label for="start" class="col-auto col-form-label" translate="explore-cache.search.start"></label>
+              <oib-datetimepicker formControlName="start" id="start-date" />
+            </div>
+
+            <!-- To -->
+            <div class="col">
+              <label for="end" class="col-auto col-form-label" translate="explore-cache.search.end"></label>
+              <oib-datetimepicker formControlName="end" id="end-date" />
+              <val-errors [control]="form" />
+            </div>
+          </div>
+          <div class="row gx-2 pb-3">
+            <!-- Filename contains -->
+            <div class="col">
+              <label for="filename-contains" class="col-auto col-form-label" translate="explore-cache.search.filename-contains"></label>
+              <input type="text" class="form-control" id="filename-contains" formControlName="nameContains" />
+            </div>
+
+            <!-- Max number of files returned -->
+            <div class="col">
+              <label
+                for="max-number-of-files-returned"
+                class="col-auto col-form-label"
+                translate="explore-cache.search.max-number-of-files-returned"
+              ></label>
+              <input type="number" class="form-control" id="max-number-of-files-returned" formControlName="maxNumberOfFilesReturned" />
+            </div>
+          </div>
+          <div class="row gx-2 pb-1">
+            <div class="col">
+              <div class="d-flex gap-2 pull-right">
+                <button
+                  [oib-save-button]="state"
+                  class="btn btn-primary"
+                  form="cache-form"
+                  id="search-button"
+                  iconClass="fa-search"
+                  translationKey="common.search"
+                ></button>
+              </div>
+            </div>
+          </div>
+        </form>
+        @if (cacheContent) {
+          <oib-cache-explore
+            [cacheContent]="cacheContent"
+            [entity]="{ id: historyQuery.id, type: 'history' }"
+            [state]="state"
+            (updateCommand)="updateCacheContent($event)"
+            (viewCommand)="viewCacheContent($event)"
+          />
+        }
+      </div>
+    </div>
+  </div>
+}

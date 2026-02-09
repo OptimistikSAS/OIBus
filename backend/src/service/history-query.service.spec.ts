@@ -224,12 +224,12 @@ describe('History Query service', () => {
 
   it('should get history query data stream', () => {
     service.getHistoryDataStream(testData.historyQueries.list[0].id);
-    expect(engine.getHistoryQueryDataStream).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
+    expect(engine.getHistoryQuerySSE).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
   });
 
   it('should get history query metric', () => {
     service.getHistoryMetric(testData.historyQueries.list[0].id);
-    expect(engine.getHistoryMetric).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
+    expect(engine.getHistoryMetrics).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
   });
 
   it('should test north connection in creation mode', async () => {
@@ -683,59 +683,6 @@ describe('History Query service', () => {
     expect(historyQueryRepository.removeTransformer).toHaveBeenCalledWith(testData.historyQueries.list[0].northTransformers[0].id);
     expect(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).toHaveBeenCalled();
     expect(engine.stopHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
-  });
-
-  it('should search cache content', async () => {
-    await service.searchCacheContent(
-      testData.historyQueries.list[0].id,
-      { start: testData.constants.dates.DATE_1, end: testData.constants.dates.DATE_2, nameContains: 'file' },
-      'cache'
-    );
-
-    expect(engine.searchCacheContent).toHaveBeenCalledWith(
-      'history',
-      testData.historyQueries.list[0].id,
-      { start: testData.constants.dates.DATE_1, end: testData.constants.dates.DATE_2, nameContains: 'file' },
-      'cache'
-    );
-  });
-
-  it('should get cache content file stream', async () => {
-    (engine.getCacheContentFileStream as jest.Mock).mockReturnValueOnce('content');
-
-    const result = await service.getCacheFileContent(testData.historyQueries.list[0].id, 'cache', 'filename');
-    expect(result).toEqual('content');
-    expect(engine.getCacheContentFileStream).toHaveBeenCalledWith('history', testData.historyQueries.list[0].id, 'cache', 'filename');
-  });
-
-  it('should throw an error if file not found with cache content', async () => {
-    (engine.getCacheContentFileStream as jest.Mock).mockReturnValueOnce(null);
-
-    await expect(service.getCacheFileContent(testData.historyQueries.list[0].id, 'cache', 'filename')).rejects.toThrow(
-      new NotFoundError(`File "filename" not found in cache`)
-    );
-
-    expect(engine.getCacheContentFileStream).toHaveBeenCalledWith('history', testData.historyQueries.list[0].id, 'cache', 'filename');
-  });
-
-  it('should remove cache content', async () => {
-    await service.removeCacheContent(testData.historyQueries.list[0].id, 'cache', ['filename']);
-    expect(engine.removeCacheContent).toHaveBeenCalledWith('history', testData.historyQueries.list[0].id, 'cache', ['filename']);
-  });
-
-  it('should remove all cache content', async () => {
-    await service.removeAllCacheContent(testData.historyQueries.list[0].id, 'cache');
-    expect(engine.removeAllCacheContent).toHaveBeenCalledWith('history', testData.historyQueries.list[0].id, 'cache');
-  });
-
-  it('should move cache content', async () => {
-    await service.moveCacheContent(testData.historyQueries.list[0].id, 'cache', 'error', ['filename']);
-    expect(engine.moveCacheContent).toHaveBeenCalledWith('history', testData.historyQueries.list[0].id, 'cache', 'error', ['filename']);
-  });
-
-  it('should move all cache content', async () => {
-    await service.moveAllCacheContent(testData.historyQueries.list[0].id, 'cache', 'archive');
-    expect(engine.moveAllCacheContent).toHaveBeenCalledWith('history', testData.historyQueries.list[0].id, 'cache', 'archive');
   });
 
   it('should retrieve secrets from history query', () => {

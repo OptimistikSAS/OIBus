@@ -7,41 +7,23 @@ import { DateTime } from 'luxon';
 import { NorthFileWriterSettings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
-import { getFilenameWithoutRandomId } from '../../service/utils';
 import CacheService from '../../service/cache/cache.service';
+import { createWriteStream, ReadStream } from 'node:fs';
+import { pipeline } from 'node:stream/promises';
 
 /**
  * Class NorthFileWriter - Write files in an output folder
  */
 export default class NorthFileWriter extends NorthConnector<NorthFileWriterSettings> {
-  constructor(
-    configuration: NorthConnectorEntity<NorthFileWriterSettings>,
-    logger: pino.Logger,
-    cacheFolderPath: string,
-    cacheService: CacheService
-  ) {
-    super(configuration, logger, cacheFolderPath, cacheService);
+  constructor(configuration: NorthConnectorEntity<NorthFileWriterSettings>, logger: pino.Logger, cacheService: CacheService) {
+    super(configuration, logger, cacheService);
   }
 
-  async handleContent(cacheMetadata: CacheMetadata): Promise<void> {
-    if (!this.supportedTypes().includes(cacheMetadata.contentType)) {
-      throw new Error(`Unsupported data type: ${cacheMetadata.contentType} (file ${cacheMetadata.contentFile})`);
-    }
-
-    const nowDate = DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS');
-
-    // Remove timestamp from the file path
-    const { name, ext } = path.parse(getFilenameWithoutRandomId(cacheMetadata.contentFile));
-
-    const prefix = (this.connector.settings.prefix || '').replace('@CurrentDate', nowDate).replace('@ConnectorName', this.connector.name);
-    const suffix = (this.connector.settings.suffix || '').replace('@CurrentDate', nowDate).replace('@ConnectorName', this.connector.name);
-
-    const resultingFilename = `${prefix}${name}${suffix}${ext}`;
-    await fs.copyFile(cacheMetadata.contentFile, path.join(path.resolve(this.connector.settings.outputFolder), resultingFilename));
-    this.logger.debug(`File "${cacheMetadata.contentFile}" copied into "${resultingFilename}"`);
+  supportedTypes(): Array<string> {
+    return ['any', 'setpoint', 'time-values'];
   }
 
-  override async testConnection(): Promise<void> {
+  async testConnection(): Promise<void> {
     const outputFolder = path.resolve(this.connector.settings.outputFolder);
 
     try {
@@ -57,7 +39,15 @@ export default class NorthFileWriter extends NorthConnector<NorthFileWriterSetti
     }
   }
 
-  supportedTypes(): Array<string> {
-    return ['any', 'setpoint', 'time-values'];
+  async handleContent(fileStream: ReadStream, cacheMetadata: CacheMetadata): Promise<void> {
+    const { name, ext } = path.parse(cacheMetadata.contentFile);
+    const nowDate = DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS');
+    const prefix = (this.connector.settings.prefix || '').replace('@CurrentDate', nowDate).replace('@ConnectorName', this.connector.name);
+    const suffix = (this.connector.settings.suffix || '').replace('@CurrentDate', nowDate).replace('@ConnectorName', this.connector.name);
+    const resultingFilename = `${prefix}${name}${suffix}${ext}`;
+    const destinationPath = path.join(path.resolve(this.connector.settings.outputFolder), resultingFilename);
+
+    await pipeline(fileStream, createWriteStream(destinationPath));
+    this.logger.debug(`File "${cacheMetadata.contentFile}" copied into "${resultingFilename}"`);
   }
 }
