@@ -1,15 +1,13 @@
-import fs from 'node:fs';
+import { ReadStream } from 'node:fs';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import { NodeHttpHandler } from '@smithy/node-http-handler';
-
 import { HeadBucketCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import pino from 'pino';
 import NorthConnector from '../north-connector';
 import { encryptionService } from '../../service/encryption.service';
-import pino from 'pino';
 import { NorthAmazonS3Settings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
-import { getFilenameWithoutRandomId } from '../../service/utils';
 import CacheService from '../../service/cache/cache.service';
 
 /**
@@ -18,42 +16,62 @@ import CacheService from '../../service/cache/cache.service';
 export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings> {
   private s3: S3Client | undefined;
 
-  constructor(
-    connector: NorthConnectorEntity<NorthAmazonS3Settings>,
-    logger: pino.Logger,
-    cacheFolderPath: string,
-    cacheService: CacheService
-  ) {
-    super(connector, logger, cacheFolderPath, cacheService);
+  constructor(connector: NorthConnectorEntity<NorthAmazonS3Settings>, logger: pino.Logger, cacheService: CacheService) {
+    super(connector, logger, cacheService);
   }
 
-  /**
-   * Initialize services (logger, certificate, status data) at startup
-   */
+  supportedTypes(): Array<string> {
+    return ['any'];
+  }
+
   async start(): Promise<void> {
     await super.start();
-    await this.prepareConnection();
+    await this.prepareConnection(this.connector.settings);
   }
 
-  async prepareConnection(): Promise<void> {
+  async testConnection(): Promise<void> {
+    await this.prepareConnection(this.connector.settings);
+
+    try {
+      await this.s3!.send(
+        new HeadBucketCommand({
+          Bucket: this.connector.settings.bucket
+        })
+      );
+      this.logger.info(`Access to bucket "${this.connector.settings.bucket}" allowed`);
+    } catch (error: unknown) {
+      throw new Error(`Error testing Amazon S3 connection: ${(error as Error).message}`);
+    }
+  }
+
+  override async handleContent(fileStream: ReadStream, cacheMetadata: CacheMetadata): Promise<void> {
+    const params = {
+      Bucket: this.connector.settings.bucket,
+      Body: fileStream,
+      Key: `${this.connector.settings.folder}/${cacheMetadata.contentFile}`
+    };
+    await this.s3!.send(new PutObjectCommand(params));
+  }
+
+  async prepareConnection(settings: NorthAmazonS3Settings): Promise<void> {
     let proxyAgent;
-    if (this.connector.settings.useProxy) {
-      let proxyUrl = this.connector.settings.proxyUrl!;
-      if (this.connector.settings.proxyUsername && this.connector.settings.proxyPassword) {
+    if (settings.useProxy) {
+      let proxyUrl = settings.proxyUrl!;
+      if (settings.proxyUsername && settings.proxyPassword) {
         // Insert username and password into the proxy URL
         const url = new URL(proxyUrl);
-        url.username = this.connector.settings.proxyUsername;
-        url.password = await encryptionService.decryptText(this.connector.settings.proxyPassword);
+        url.username = settings.proxyUsername;
+        url.password = await encryptionService.decryptText(settings.proxyPassword);
         proxyUrl = url.toString();
       }
       proxyAgent = new HttpsProxyAgent(proxyUrl);
     }
 
     this.s3 = new S3Client({
-      region: this.connector.settings.region,
+      region: settings.region,
       credentials: {
-        accessKeyId: this.connector.settings.accessKey,
-        secretAccessKey: this.connector.settings.secretKey ? await encryptionService.decryptText(this.connector.settings.secretKey) : ''
+        accessKeyId: settings.accessKey,
+        secretAccessKey: await encryptionService.decryptText(settings.secretKey)
       },
       requestHandler: proxyAgent
         ? new NodeHttpHandler({
@@ -61,37 +79,5 @@ export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings>
           })
         : undefined
     });
-  }
-
-  override async handleContent(cacheMetadata: CacheMetadata): Promise<void> {
-    if (!this.supportedTypes().includes(cacheMetadata.contentType)) {
-      throw new Error(`Unsupported data type: ${cacheMetadata.contentType} (file ${cacheMetadata.contentFile})`);
-    }
-    const params = {
-      Bucket: this.connector.settings.bucket,
-      Body: fs.createReadStream(cacheMetadata.contentFile),
-      Key: `${this.connector.settings.folder}/${getFilenameWithoutRandomId(cacheMetadata.contentFile)}`
-    };
-
-    await this.s3!.send(new PutObjectCommand(params));
-  }
-
-  override async testConnection(): Promise<void> {
-    await this.prepareConnection();
-
-    try {
-      const result = await this.s3!.send(
-        new HeadBucketCommand({
-          Bucket: this.connector.settings.bucket // required
-        })
-      );
-      this.logger.info(`Access to bucket ${this.connector.settings.bucket} allowed. ${JSON.stringify(result)}`);
-    } catch (error) {
-      throw new Error(`Error testing Amazon S3 connection. ${error}`);
-    }
-  }
-
-  supportedTypes(): Array<string> {
-    return ['any'];
   }
 }

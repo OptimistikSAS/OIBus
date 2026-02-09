@@ -31,17 +31,10 @@ import CertificateRepository from '../repository/config/certificate.repository';
 import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
 import DataStreamEngine from '../engine/data-stream-engine';
 import { PassThrough } from 'node:stream';
-import { ReadStream } from 'node:fs';
-import {
-  CacheMetadata,
-  CacheMetadataSource,
-  CacheSearchParam,
-  NorthConnectorMetrics,
-  OIBusSetpointContent
-} from '../../shared/model/engine.model';
+import { CacheMetadataSource, NorthConnectorMetrics, OIBusSetpointContent } from '../../shared/model/engine.model';
 import TransformerService, { toTransformerDTO } from './transformer.service';
 import { toScanModeDTO } from './scan-mode.service';
-import { buildNorth } from '../north/north-connector-factory';
+import { buildNorth, createNorthOrchestrator } from '../north/north-connector-factory';
 import { NotFoundError, OIBusValidationError } from '../model/types';
 import { NorthTransformerWithOptions } from '../model/transformer.model';
 
@@ -221,11 +214,11 @@ export default class NorthService {
   }
 
   getNorthDataStream(northId: string): PassThrough | null {
-    return this.engine.getNorthDataStream(northId);
+    return this.engine.getNorthSSE(northId);
   }
 
   getNorthMetric(northId: string): NorthConnectorMetrics | null {
-    return this.engine.getNorthMetric(northId);
+    return this.engine.getNorthMetrics(northId);
   }
 
   async testNorth(northId: string, northType: OIBusNorthType, settingsToTest: NorthSettings): Promise<void> {
@@ -237,12 +230,12 @@ export default class NorthService {
     await this.validator.validateSettings(manifest.settings, settingsToTest);
 
     const testToRun: NorthConnectorEntity<NorthSettings> = {
-      id: northConnector?.id || 'test',
+      id: 'test',
       type: northType,
       description: '',
       enabled: false,
       settings: await encryptionService.encryptConnectorSecrets(settingsToTest, northConnector?.settings || null, manifest.settings),
-      name: northConnector ? northConnector.name : `${northType}:test-connection`,
+      name: `${northType}:test-connection`,
       transformers: [],
       caching: {
         trigger: {
@@ -272,21 +265,20 @@ export default class NorthService {
       }
     };
 
+    const childLoggerForTest = this.engine.logger.child(
+      {
+        scopeType: 'north',
+        scopeId: 'test',
+        scopeName: `${northType}:test-connection`
+      },
+      { level: 'silent' }
+    );
     const north = buildNorth(
       testToRun,
-      this.engine.logger.child(
-        {
-          scopeType: 'north',
-          scopeId: 'test',
-          scopeName: 'test'
-        },
-        { level: 'silent' }
-      ),
-      '',
-      '',
-      '',
+      childLoggerForTest,
       this.certificateRepository,
-      this.oIAnalyticsRegistrationRepository
+      this.oIAnalyticsRegistrationRepository,
+      createNorthOrchestrator(this.engine.baseFolder, 'test', childLoggerForTest)
     );
     return await north.testConnection();
   }
@@ -305,47 +297,6 @@ export default class NorthService {
     this.engine.updateNorthConfiguration(northConnector.id);
   }
 
-  async searchCacheContent(
-    northId: string,
-    searchParams: CacheSearchParam,
-    folder: 'cache' | 'archive' | 'error'
-  ): Promise<Array<{ metadataFilename: string; metadata: CacheMetadata }>> {
-    return await this.engine.searchCacheContent('north', northId, searchParams, folder);
-  }
-
-  async getCacheFileContent(northId: string, folder: 'cache' | 'archive' | 'error', filename: string): Promise<ReadStream> {
-    const fileStream = await this.engine.getCacheContentFileStream('north', northId, folder, filename);
-    if (!fileStream) {
-      throw new NotFoundError(`File "${filename}" not found in ${folder}`);
-    }
-    return fileStream;
-  }
-
-  async removeCacheContent(northId: string, folder: 'cache' | 'archive' | 'error', metadataFilenameList: Array<string>): Promise<void> {
-    return await this.engine.removeCacheContent('north', northId, folder, metadataFilenameList);
-  }
-
-  async removeAllCacheContent(northId: string, folder: 'cache' | 'archive' | 'error'): Promise<void> {
-    return await this.engine.removeAllCacheContent('north', northId, folder);
-  }
-
-  async moveCacheContent(
-    northId: string,
-    originFolder: 'cache' | 'archive' | 'error',
-    destinationFolder: 'cache' | 'archive' | 'error',
-    cacheContentList: Array<string>
-  ): Promise<void> {
-    return await this.engine.moveCacheContent('north', northId, originFolder, destinationFolder, cacheContentList);
-  }
-
-  async moveAllCacheContent(
-    northId: string,
-    originFolder: 'cache' | 'archive' | 'error',
-    destinationFolder: 'cache' | 'archive' | 'error'
-  ): Promise<void> {
-    return await this.engine.moveAllCacheContent('north', northId, originFolder, destinationFolder);
-  }
-
   async executeSetpoint(
     northConnectorId: string,
     commandContent: Array<{
@@ -354,11 +305,7 @@ export default class NorthService {
     }>,
     callback: (result: string) => void
   ) {
-    const northConnector = this.engine.getNorth(northConnectorId);
-    if (!northConnector) {
-      throw new NotFoundError(`North connector "${northConnectorId}" not found`);
-    }
-
+    const northConnector = this.engine.getNorth(northConnectorId).north;
     if (!northConnector.isEnabled()) {
       throw new OIBusValidationError(`North connector "${northConnectorId}" disabled`);
     }
