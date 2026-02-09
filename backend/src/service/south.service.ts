@@ -209,7 +209,7 @@ export default class SouthService {
   }
 
   getSouthDataStream(southId: string): PassThrough | null {
-    return this.engine.getSouthDataStream(southId);
+    return this.engine.getSouthSSE(southId);
   }
 
   async testSouth(southId: string, southType: OIBusSouthType, settingsToTest: SouthSettings): Promise<void> {
@@ -221,12 +221,12 @@ export default class SouthService {
     await this.validator.validateSettings(manifest.settings, settingsToTest);
 
     const testToRun: SouthConnectorEntity<SouthSettings, SouthItemSettings> = {
-      id: southConnector?.id || 'test',
+      id: 'test',
       type: southType,
       description: '',
       enabled: false,
       settings: await encryptionService.encryptConnectorSecrets(settingsToTest, southConnector?.settings || null, manifest.settings),
-      name: southConnector ? southConnector.name : `${southType}:test-connection`,
+      name: `${southType}:test-connection`,
       items: []
     };
 
@@ -239,7 +239,7 @@ export default class SouthService {
         {
           scopeType: 'south',
           scopeId: 'test',
-          scopeName: 'test'
+          scopeName: `${southType}:test-connection`
         },
         { level: 'silent' }
       ),
@@ -283,12 +283,12 @@ export default class SouthService {
       settings: await encryptionService.encryptConnectorSecrets(itemSettings, null, itemSettingsManifest)
     };
     const testConnectorToRun: SouthConnectorEntity<SouthSettings, SouthItemSettings> = {
-      id: southConnector?.id || 'test',
+      id: 'test',
       type: southType,
       enabled: false,
       description: '',
       settings: await encryptionService.encryptConnectorSecrets(southSettings, southConnector?.settings || null, manifest.settings),
-      name: southConnector ? southConnector.name : `${southType}:test-connection`,
+      name: `${southType}:test-connection`,
       items: [testItemToRun]
     };
 
@@ -301,7 +301,7 @@ export default class SouthService {
         {
           scopeType: 'south',
           scopeId: 'test',
-          scopeName: 'test'
+          scopeName: `${southType}:test-connection`
         },
         { level: 'silent' }
       ),

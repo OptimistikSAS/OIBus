@@ -10,51 +10,22 @@ import { CacheMetadata } from '../../../shared/model/engine.model';
 import sftpClient, { ConnectOptions } from 'ssh2-sftp-client';
 import fs from 'node:fs/promises';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
-import { getFilenameWithoutRandomId } from '../../service/utils';
 import CacheService from '../../service/cache/cache.service';
+import { ReadStream } from 'node:fs';
 
 /**
  * Class NorthSFTP - Write files in an output folder
  */
 export default class NorthSFTP extends NorthConnector<NorthSFTPSettings> {
-  constructor(
-    configuration: NorthConnectorEntity<NorthSFTPSettings>,
-    logger: pino.Logger,
-    cacheFolderPath: string,
-    cacheService: CacheService
-  ) {
-    super(configuration, logger, cacheFolderPath, cacheService );
+  constructor(configuration: NorthConnectorEntity<NorthSFTPSettings>, logger: pino.Logger, cacheService: CacheService) {
+    super(configuration, logger, cacheService);
   }
 
-  async handleContent(cacheMetadata: CacheMetadata): Promise<void> {
-    if (!this.supportedTypes().includes(cacheMetadata.contentType)) {
-      throw new Error(`Unsupported data type: ${cacheMetadata.contentType} (file ${cacheMetadata.contentFile})`);
-    }
-
-    const nowDate = DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS');
-
-    // Remove timestamp from the file path
-    const { name, ext } = path.parse(getFilenameWithoutRandomId(cacheMetadata.contentFile));
-
-    const prefix = (this.connector.settings.prefix || '').replace('@CurrentDate', nowDate).replace('@ConnectorName', this.connector.name);
-    const suffix = (this.connector.settings.suffix || '').replace('@CurrentDate', nowDate).replace('@ConnectorName', this.connector.name);
-
-    const resultingFilename = `${prefix}${name}${suffix}${ext}`;
-    const target = `${this.connector.settings.remoteFolder}/${resultingFilename}`;
-    await this.sendToSftpServer(cacheMetadata.contentFile, target);
-    this.logger.debug(`File "${cacheMetadata.contentFile}" sent into "${target}" remote folder`);
+  supportedTypes(): Array<string> {
+    return ['any'];
   }
 
-  async sendToSftpServer(file: string | Buffer, target: string): Promise<void> {
-    const connectionOptions = await this.createConnectionOptions();
-
-    const client = new sftpClient();
-    await client.connect(connectionOptions);
-    await client.put(file, target);
-    await client.end();
-  }
-
-  override async testConnection(): Promise<void> {
+  async testConnection(): Promise<void> {
     let folderExists: false | 'd' | '-' | 'l' = false;
     const connectionOptions = await this.createConnectionOptions();
     try {
@@ -77,6 +48,27 @@ export default class NorthSFTP extends NorthConnector<NorthSFTPSettings> {
     }
   }
 
+  async handleContent(fileStream: ReadStream, cacheMetadata: CacheMetadata): Promise<void> {
+    const { name, ext } = path.parse(cacheMetadata.contentFile);
+    const nowDate = DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS');
+    const prefix = (this.connector.settings.prefix || '').replace('@CurrentDate', nowDate).replace('@ConnectorName', this.connector.name);
+    const suffix = (this.connector.settings.suffix || '').replace('@CurrentDate', nowDate).replace('@ConnectorName', this.connector.name);
+    const resultingFilename = `${prefix}${name}${suffix}${ext}`;
+    const target = `${this.connector.settings.remoteFolder}/${resultingFilename}`;
+
+    await this.sendToSftpServer(fileStream, target);
+    this.logger.debug(`File "${cacheMetadata.contentFile}" sent into "${target}" remote folder`);
+  }
+
+  async sendToSftpServer(fileStream: ReadStream, target: string): Promise<void> {
+    const connectionOptions = await this.createConnectionOptions();
+
+    const client = new sftpClient();
+    await client.connect(connectionOptions);
+    await client.put(fileStream, target);
+    await client.end();
+  }
+
   private async createConnectionOptions(): Promise<ConnectOptions> {
     switch (this.connector.settings.authentication) {
       case 'private-key':
@@ -85,7 +77,7 @@ export default class NorthSFTP extends NorthConnector<NorthSFTPSettings> {
           port: this.connector.settings.port,
           username: this.connector.settings.username,
           privateKey: await fs.readFile(this.connector.settings.privateKey!, 'utf8'),
-          passphrase: this.connector.settings.passphrase ? await encryptionService.decryptText(this.connector.settings.passphrase) : ''
+          passphrase: await encryptionService.decryptText(this.connector.settings.passphrase)
         };
       case 'password':
       default:
@@ -96,9 +88,5 @@ export default class NorthSFTP extends NorthConnector<NorthSFTPSettings> {
           password: this.connector.settings.password ? await encryptionService.decryptText(this.connector.settings.password) : ''
         };
     }
-  }
-
-  supportedTypes(): Array<string> {
-    return ['any'];
   }
 }

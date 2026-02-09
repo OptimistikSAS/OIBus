@@ -3,7 +3,6 @@ import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import NorthOPCUA from './north-opcua';
 import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
-import csv from 'papaparse';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import { NorthOPCUASettings } from '../../../shared/model/north-settings.model';
 import testData from '../../tests/utils/test-data';
@@ -11,23 +10,26 @@ import CacheService from '../../service/cache/cache.service';
 import { createTransformer } from '../../service/transformer.service';
 import OIBusTransformer from '../../transformers/oibus-transformer';
 import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
-import { AttributeIds, ClientSession, DataType, OPCUAClient, resolveNodeId } from 'node-opcua';
+import { AttributeIds, ClientSession, DataType, OPCUACertificateManager, OPCUAClient, resolveNodeId } from 'node-opcua';
 import { randomUUID } from 'crypto';
 import fs from 'node:fs/promises';
 import { OIBusOPCUAValue } from '../../transformers/connector-types.model';
 import { createSessionConfigs, initOPCUACertificateFolders } from '../../service/utils-opcua';
-import path from 'node:path';
+import { ReadStream } from 'node:fs';
+import { streamToString } from '../../service/utils';
+import { buildNorthConfiguration } from '../../tests/utils/test-utils';
 
-// Mock node-opcua-client
+// Mocks
 jest.mock('node-opcua', () => ({
   ...nodeOPCUAMock,
+  // Keep actual enums/classes for logic that relies on them
   DataType: jest.requireActual('node-opcua').DataType,
   StatusCodes: jest.requireActual('node-opcua').StatusCodes,
   SecurityPolicy: jest.requireActual('node-opcua').SecurityPolicy,
   AttributeIds: jest.requireActual('node-opcua').AttributeIds,
-  UserTokenType: jest.requireActual('node-opcua').UserTokenType
+  resolveNodeId: jest.fn()
 }));
-// Mock only the randomUUID function because other functions are used by OPCUA
+
 jest.mock('crypto', () => ({
   ...jest.requireActual('crypto'),
   randomUUID: jest.fn()
@@ -35,6 +37,7 @@ jest.mock('crypto', () => ({
 jest.mock('node:fs/promises');
 jest.mock('../../service/utils');
 jest.mock('../../service/utils-opcua');
+jest.mock('../../service/transformer.service');
 
 const logger: pino.Logger = new PinoLogger();
 const cacheService: CacheService = new CacheServiceMock();
@@ -47,299 +50,130 @@ jest.mock(
       return cacheService;
     }
 );
-jest.mock('../../service/utils');
-jest.mock('../../service/transformer.service');
-jest.mock('papaparse');
 
 const opcuaOptions = {
   applicationName: 'OIBus',
   clientName: 'connectorName-connectorId',
-  connectionStrategy: {
-    initialDelay: 1000,
-    maxRetry: 1
-  },
+  connectionStrategy: { initialDelay: 1000, maxRetry: 1 },
   securityMode: 1,
   securityPolicy: 'none',
   endpointMustExist: false,
-  keepSessionAlive: false,
-  keepPendingSessionsOnDisconnect: false,
-  requestedSessionTimeout: 15000,
-  clientCertificateManager: { state: 2 }
+  keepSessionAlive: false
 };
 const opcuaUserIdentity = { type: 0 };
 
 describe('NorthOPCUA', () => {
   let configuration: NorthConnectorEntity<NorthOPCUASettings>;
   let north: NorthOPCUA;
+  let mockSession: ClientSession;
 
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    configuration = JSON.parse(JSON.stringify(testData.north.list[0]));
-    configuration.settings = {
+
+    configuration = buildNorthConfiguration<NorthOPCUASettings>('opcua', {
       url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
       retryInterval: 10000,
-      authentication: {
-        type: 'none',
-        password: null
-      },
+      authentication: { type: 'none', password: null },
       securityMode: 'none',
       securityPolicy: 'none',
       keepSessionAlive: false
-    };
-    (csv.unparse as jest.Mock).mockReturnValue('csv content');
+    });
+
+    mockSession = {
+      close: jest.fn(),
+      read: jest.fn(),
+      write: jest.fn()
+    } as unknown as ClientSession;
+
     (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
     (createSessionConfigs as jest.Mock).mockReturnValue({ options: opcuaOptions, userIdentity: opcuaUserIdentity });
     (randomUUID as jest.Mock).mockReturnValue('randomUUID');
+    (OPCUAClient.createSession as jest.Mock).mockResolvedValue(mockSession);
+    (resolveNodeId as jest.Mock).mockImplementation(id => id); // Identity mock by default
 
-    north = new NorthOPCUA(configuration, logger, 'cacheFolder', cacheService);
-    north.createCronJob = jest.fn();
+    north = new NorthOPCUA(configuration, logger, cacheService);
   });
 
   afterEach(async () => {
     cacheService.cacheSizeEventEmitter.removeAllListeners();
   });
 
+  it('should return correct types', () => {
+    expect(north.supportedTypes()).toEqual(['opcua']);
+  });
+
   it('should be properly initialized', async () => {
-    north.connect = jest.fn();
-    north.createSession = jest.fn();
     await north.start();
+    expect(initOPCUACertificateFolders).toHaveBeenCalledWith('cache');
+  });
+
+  it('should be properly initialized without initialising opcua certificate', async () => {
+    north['clientCertificateManager'] = {} as unknown as OPCUACertificateManager;
     await north.start();
-    expect(initOPCUACertificateFolders).toHaveBeenCalledTimes(2);
-    expect(initOPCUACertificateFolders).toHaveBeenCalledWith('cacheFolder');
-    // createSession should not be called right after starting, because
-    // it will be eventually called when the first session is needed
-    expect(north.createSession).not.toHaveBeenCalled();
-    expect(north.connect).toHaveBeenCalledTimes(2);
+    expect(initOPCUACertificateFolders).toHaveBeenCalledWith('cache');
+    expect(OPCUACertificateManager).not.toHaveBeenCalled();
   });
 
   it('should properly connect', async () => {
     const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
-    north.createSession = jest.fn();
     north.disconnect = jest.fn();
     north['reconnectTimeout'] = setTimeout(() => null);
+
     await north.connect();
-    expect(north.createSession).toHaveBeenCalledTimes(1);
+
+    expect(createSessionConfigs).toHaveBeenCalledTimes(1);
+    expect(OPCUAClient.createSession).toHaveBeenCalledTimes(1);
+    expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('connected'));
     expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
     expect(north.disconnect).not.toHaveBeenCalled();
   });
 
-  it('should create session', async () => {
-    await north.createSession();
-    expect(createSessionConfigs).toHaveBeenCalledTimes(1);
-    expect(OPCUAClient.createSession).toHaveBeenCalledTimes(1);
-    expect(logger.info).toHaveBeenCalledWith(`OPCUA connector "${configuration.name}" connected`);
+  it('should handle connection error and trigger reconnect', async () => {
+    const error = new Error('Session creation failed');
+    (OPCUAClient.createSession as jest.Mock).mockRejectedValueOnce(error);
+    const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
+    north.disconnect = jest.fn();
+
+    await north.connect();
+
+    expect(logger.error).toHaveBeenCalledWith('Error while connecting to the OPCUA server: Session creation failed');
+    expect(north.disconnect).toHaveBeenCalled();
+    expect(setTimeoutSpy).toHaveBeenCalledTimes(1);
   });
 
   it('should not reconnect if disconnecting', async () => {
-    north.createSession = jest.fn().mockImplementation(() => {
-      throw new Error('get session error');
-    });
-    north.disconnect = jest.fn();
+    (OPCUAClient.createSession as jest.Mock).mockRejectedValueOnce(new Error('Fail'));
     north['disconnecting'] = true;
     const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
-    await north.connect();
-    expect(logger.error).toHaveBeenCalledWith('Error while connecting to the OPCUA server: get session error');
-    expect(setTimeoutSpy).not.toHaveBeenCalled();
-    expect(north.disconnect).toHaveBeenCalled();
-  });
-
-  it('should properly reconnect if not disconnecting', async () => {
-    north.createSession = jest.fn().mockImplementation(() => {
-      throw new Error('get session error');
-    });
     north.disconnect = jest.fn();
-    north['disconnecting'] = false;
-    const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
+
     await north.connect();
-    expect(logger.error).toHaveBeenCalledWith('Error while connecting to the OPCUA server: get session error');
+
     expect(north.disconnect).toHaveBeenCalled();
-    expect(setTimeoutSpy).toHaveBeenCalledTimes(1);
+    expect(setTimeoutSpy).not.toHaveBeenCalled();
   });
 
   it('should properly disconnect', async () => {
+    north['client'] = mockSession;
+    north['reconnectTimeout'] = setTimeout(() => null);
     const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
 
     await north.disconnect();
-    expect(clearTimeoutSpy).not.toHaveBeenCalled();
 
-    const close = jest.fn();
-    north['client'] = { close } as unknown as ClientSession;
-    north['reconnectTimeout'] = setTimeout(() => null);
-
-    await north.disconnect();
+    expect(mockSession.close).toHaveBeenCalledTimes(1);
     expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
-    expect(close).toHaveBeenCalledTimes(1);
+    expect(north['client']).toBeNull();
   });
 
-  it('should handle content', async () => {
-    const values: Array<OIBusOPCUAValue> = [
-      {
-        nodeId: 'nodeId1',
-        value: 123
-      },
-      {
-        nodeId: 'nodeId2',
-        value: 456
-      },
-      {
-        nodeId: 'nodeId3',
-        value: 789
-      },
-      {
-        nodeId: 'nodeId4',
-        value: 321
-      }
-    ];
-    (fs.readFile as jest.Mock).mockReturnValueOnce(JSON.stringify(values));
-
-    (resolveNodeId as jest.Mock)
-      .mockImplementationOnce(node => node)
-      .mockImplementationOnce(node => node)
-      .mockImplementationOnce(node => node)
-      .mockImplementationOnce(() => {
-        throw new Error('bad node id');
-      });
-
-    const readFn = jest
-      .fn()
-      .mockReturnValueOnce({ value: { value: { value: DataType.Int32 } } })
-      .mockReturnValueOnce({ value: { value: { value: DataType.Int32 } } })
-      .mockReturnValueOnce({ value: { value: { value: 'bad data type' } } });
-    const writeFn = jest
-      .fn()
-      .mockReturnValueOnce({ isGood: jest.fn().mockReturnValueOnce(true) })
-      .mockReturnValueOnce({ isGood: jest.fn().mockReturnValueOnce(false), name: 'error' });
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error
-    north['client'] = {
-      write: writeFn,
-      read: readFn
-    };
-
-    await north.handleContent({
-      contentFile: 'path/to/file/example-123456789.json',
-      contentSize: 1234,
-      numberOfElement: 1,
-      createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'opcua'
-    });
-
-    expect(resolveNodeId).toHaveBeenCalledTimes(4);
-    expect(logger.error).toHaveBeenCalledWith(`Error when parsing node ID nodeId4: bad node id`);
-
-    expect(readFn).toHaveBeenCalledTimes(3);
-    expect(logger.error).toHaveBeenCalledWith(`Invalid data type for node ID nodeId3`);
-    expect(readFn).toHaveBeenCalledWith({
-      nodeId: 'nodeId1',
-      attributeId: AttributeIds.DataType
-    });
-
-    expect(writeFn).toHaveBeenCalledTimes(2);
-    expect(writeFn).toHaveBeenCalledWith({
-      nodeId: values[0].nodeId,
-      attributeId: AttributeIds.Value,
-      value: {
-        value: {
-          dataType: DataType.Int32,
-          value: values[0].value
-        }
-      }
-    });
-    expect(writeFn).toHaveBeenCalledWith({
-      nodeId: values[1].nodeId,
-      attributeId: AttributeIds.Value,
-      value: {
-        value: {
-          dataType: DataType.Int32,
-          value: values[1].value
-        }
-      }
-    });
-
-    expect(logger.trace).toHaveBeenCalledWith(`Value ${values[0].value} written successfully on nodeId ${values[0].nodeId}`);
-    expect(logger.error).toHaveBeenCalledWith(`Failed to write value ${values[1].value} on nodeId ${values[1].nodeId}: error`);
-  });
-
-  it('should manage handle content errors', async () => {
-    const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
-
-    const values: Array<OIBusOPCUAValue> = [
-      {
-        nodeId: 'nodeId1',
-        value: 123
-      },
-      {
-        nodeId: 'nodeId2',
-        value: 456
-      }
-    ];
-    (fs.readFile as jest.Mock).mockReturnValueOnce(JSON.stringify(values)).mockReturnValueOnce(JSON.stringify([values[0]]));
-
-    (resolveNodeId as jest.Mock)
-      .mockImplementationOnce(node => node)
-      .mockImplementationOnce(node => node)
-      .mockImplementationOnce(node => node);
-
-    const readFn = jest
-      .fn()
-      .mockImplementationOnce(() => {
-        throw new Error('BadAttributeIdInvalid');
-      })
-      .mockImplementationOnce(() => {
-        throw new Error('another error1');
-      })
-      .mockImplementationOnce(() => {
-        throw new Error('another error2');
-      });
-    const writeFn = jest.fn();
-
-    north['client'] = {
-      write: writeFn,
-      read: readFn
-    } as unknown as ClientSession;
-    north.disconnect = jest.fn();
-
-    await expect(
-      north.handleContent({
-        contentFile: 'path/to/file/example-123456789.json',
-        contentSize: 1234,
-        numberOfElement: 1,
-        createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'opcua'
-      })
-    ).rejects.toThrow(new Error('another error1'));
-
-    expect(logger.error).toHaveBeenCalledWith(`Write error on nodeId nodeId1: BadAttributeIdInvalid`);
-
-    expect(north.disconnect).toHaveBeenCalledTimes(1);
-    expect(setTimeoutSpy).toHaveBeenCalledTimes(1);
-    expect(logger.error).toHaveBeenCalledWith(`Unexpected error: another error1`);
-
-    north['connector'].enabled = false;
-    north['reconnectTimeout'] = null;
-
-    await expect(
-      north.handleContent({
-        contentFile: 'path/to/file/example-123456789.json',
-        contentSize: 1234,
-        numberOfElement: 1,
-        createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'opcua'
-      })
-    ).rejects.toThrow(new Error('another error2'));
-    expect(logger.error).toHaveBeenCalledWith(`Unexpected error: another error2`);
-    expect(north.disconnect).toHaveBeenCalledTimes(2);
-    expect(setTimeoutSpy).toHaveBeenCalledTimes(1);
-  });
-
-  it('should throw error if client is reconnecting', async () => {
-    north['client'] = {} as unknown as ClientSession;
+  it('should throw error if connector is in reconnecting state', async () => {
     north['reconnectTimeout'] = setTimeout(() => null);
+    const readStream = {} as unknown as ReadStream;
+
     await expect(
-      north.handleContent({
-        contentFile: 'path/to/file/example-123456789.json',
-        contentSize: 1234,
+      north.handleContent(readStream, {
+        contentFile: 'file.json',
+        contentSize: 100,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
         contentType: 'opcua'
@@ -347,12 +181,17 @@ describe('NorthOPCUA', () => {
     ).rejects.toThrow('Connector is reconnecting...');
   });
 
-  it('should throw error if client is not set when handling content', async () => {
-    (fs.readFile as jest.Mock).mockReturnValueOnce('[{}]');
+  it('should throw error if client is not set', async () => {
+    const values: Array<OIBusOPCUAValue> = [
+      { nodeId: 'ns=1;s=Tag1', value: 123 },
+      { nodeId: 'ns=1;s=Tag2', value: 456 }
+    ];
+    (streamToString as jest.Mock).mockResolvedValue(JSON.stringify(values));
+    const readStream = {} as unknown as ReadStream;
     await expect(
-      north.handleContent({
-        contentFile: 'path/to/file/example-123456789.json',
-        contentSize: 1234,
+      north.handleContent(readStream, {
+        contentFile: 'file.json',
+        contentSize: 100,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
         contentType: 'opcua'
@@ -360,35 +199,129 @@ describe('NorthOPCUA', () => {
     ).rejects.toThrow('OPCUA client not set');
   });
 
-  it('should ignore data if bad content type', async () => {
+  it('should handle content success', async () => {
+    const values: Array<OIBusOPCUAValue> = [
+      { nodeId: 'ns=1;s=Tag1', value: 123 },
+      { nodeId: 'ns=1;s=Tag2', value: 456 },
+      { nodeId: 'ns=1;s=Tag3', value: 789 },
+      { nodeId: 'ns=1;s=Tag4', value: 111 }
+    ];
+    (streamToString as jest.Mock).mockResolvedValue(JSON.stringify(values));
+
+    // Setup client behavior
+    (mockSession.read as jest.Mock)
+      .mockResolvedValueOnce({ value: 'bad' }) // Tag1
+      .mockResolvedValueOnce({ value: { value: { value: 'Bad' } } }) // Tag2
+      .mockResolvedValueOnce({ value: { value: { value: DataType.Double } } }) // Tag3
+      .mockResolvedValueOnce({ value: { value: { value: DataType.Double } } }); // Tag4
+
+    (mockSession.write as jest.Mock)
+      .mockResolvedValueOnce({ isGood: () => false, name: 'Bad' })
+      .mockResolvedValueOnce({ isGood: () => true, name: 'Good' });
+
+    north['client'] = mockSession;
+    const readStream = {} as ReadStream;
+
+    await north.handleContent(readStream, {
+      contentFile: 'file.json',
+      contentSize: 100,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'opcua'
+    });
+
+    // Tag 1 Verification
+    expect(mockSession.read).toHaveBeenCalledWith({ nodeId: 'ns=1;s=Tag1', attributeId: AttributeIds.DataType });
+    expect(mockSession.write).toHaveBeenCalledWith({
+      nodeId: 'ns=1;s=Tag4',
+      attributeId: AttributeIds.Value,
+      value: { value: { dataType: DataType.Double, value: 111 } }
+    });
+
+    // Tag 2 Verification (Failed Write Log)
+    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Could not read DataType for node ID "ns=1;s=Tag1"'));
+    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Invalid data type for node ID "ns=1;s=Tag2"'));
+    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Failed to write value "789" for node ID "ns=1;s=Tag3"'));
+    expect(logger.trace).toHaveBeenCalledWith(expect.stringContaining('Value "111" written successfully on node ID "ns=1;s=Tag4"'));
+  });
+
+  it('should handle bad node IDs without disconnecting', async () => {
+    const values = [{ nodeId: 'bad-node', value: 123 }];
+    (streamToString as jest.Mock).mockResolvedValue(JSON.stringify(values));
+
+    (resolveNodeId as jest.Mock).mockImplementationOnce(() => {
+      throw new Error('BadNodeId');
+    });
+
+    north['client'] = mockSession;
+    north.disconnect = jest.fn();
+
+    await north.handleContent({} as ReadStream, {
+      contentFile: 'f',
+      contentSize: 0,
+      numberOfElement: 0,
+      createdAt: '',
+      contentType: 'opcua'
+    });
+
+    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Error when parsing node ID'));
+    expect(north.disconnect).not.toHaveBeenCalled();
+  });
+
+  it('should handle write error without disconnecting', async () => {
+    const values = [{ nodeId: 'bad-node', value: 123 }];
+    (streamToString as jest.Mock).mockResolvedValue(JSON.stringify(values));
+
+    (mockSession.read as jest.Mock).mockRejectedValueOnce(new Error('BadNodeId'));
+    north['client'] = mockSession;
+    north.disconnect = jest.fn();
+
+    await north.handleContent({} as ReadStream, {
+      contentFile: 'f',
+      contentSize: 0,
+      numberOfElement: 0,
+      createdAt: '',
+      contentType: 'opcua'
+    });
+
+    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Write error on node ID "bad-node": BadNodeId'));
+    expect(north.disconnect).not.toHaveBeenCalled();
+  });
+
+  it('should handle critical errors and trigger reconnect', async () => {
+    const values = [{ nodeId: 'tag1', value: 123 }];
+    (streamToString as jest.Mock).mockResolvedValue(JSON.stringify(values));
+
+    (mockSession.read as jest.Mock).mockRejectedValue(new Error('Connection Lost'));
+
+    north['client'] = mockSession;
+    north.disconnect = jest.fn();
+    const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
+
     await expect(
-      north.handleContent({
-        contentFile: 'path/to/file/example-123456789.file',
-        contentSize: 1234,
-        numberOfElement: 1,
-        createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'any'
-      })
-    ).rejects.toThrow(`Unsupported data type: any (file path/to/file/example-123456789.file)`);
+      north.handleContent({} as ReadStream, { contentFile: 'f', contentSize: 0, numberOfElement: 0, createdAt: '', contentType: 'opcua' })
+    ).rejects.toThrow('Connection Lost');
+
+    expect(logger.error).toHaveBeenCalledWith('Unexpected OPCUA error: Connection Lost');
+    expect(north.disconnect).toHaveBeenCalled();
+    expect(setTimeoutSpy).toHaveBeenCalled();
   });
 
   it('should properly test connection', async () => {
-    const mockedClient = { close: jest.fn() };
-    north.createSession = jest.fn().mockReturnValueOnce(mockedClient);
+    const mockSessionClose = jest.fn();
+    (OPCUAClient.createSession as jest.Mock).mockResolvedValue({ close: mockSessionClose });
+
     await north.testConnection();
-    expect(initOPCUACertificateFolders).toHaveBeenCalledWith('opcua-test-randomUUID');
-    expect(north.createSession).toHaveBeenCalledTimes(1);
-    expect(mockedClient.close).toHaveBeenCalledTimes(1);
-    expect(fs.rm).toHaveBeenCalledWith(path.resolve('opcua-test-randomUUID'), { recursive: true, force: true });
+
+    expect(initOPCUACertificateFolders).toHaveBeenCalledWith(expect.stringContaining('opcua-test-'));
+    expect(OPCUAClient.createSession).toHaveBeenCalled();
+    expect(mockSessionClose).toHaveBeenCalled();
+    expect(fs.rm).toHaveBeenCalled();
   });
 
-  it('should properly throw error if test fails', async () => {
-    north.createSession = jest.fn().mockImplementationOnce(() => {
-      throw new Error('get session error');
-    });
-    await expect(north.testConnection()).rejects.toThrow('get session error');
-    expect(initOPCUACertificateFolders).toHaveBeenCalledWith('opcua-test-randomUUID');
-    expect(fs.rm).toHaveBeenCalledWith(path.resolve('opcua-test-randomUUID'), { recursive: true, force: true });
-    expect(north.createSession).toHaveBeenCalledTimes(1);
+  it('should throw error if test fails', async () => {
+    (OPCUAClient.createSession as jest.Mock).mockRejectedValue(new Error('Auth failed'));
+    await expect(north.testConnection()).rejects.toThrow('Auth failed');
+    expect(fs.rm).toHaveBeenCalled(); // cleanup even on error
   });
 });

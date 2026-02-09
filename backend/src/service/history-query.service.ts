@@ -20,7 +20,7 @@ import SouthService, { southManifestList } from './south.service';
 import NorthService, { northManifestList } from './north.service';
 import LogRepository from '../repository/logs/log.repository';
 import { Page } from '../../shared/model/types';
-import { CacheMetadata, CacheSearchParam, HistoryQueryMetrics, OIBusContent } from '../../shared/model/engine.model';
+import { HistoryQueryMetrics, OIBusContent } from '../../shared/model/engine.model';
 import { ScanMode } from '../model/scan-mode.model';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import csv from 'papaparse';
@@ -28,7 +28,6 @@ import HistoryQueryMetricsRepository from '../repository/metrics/history-query-m
 import { PassThrough } from 'node:stream';
 import NorthConnectorRepository from '../repository/config/north-connector.repository';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
-import { ReadStream } from 'node:fs';
 import TransformerService, { toTransformerDTO } from './transformer.service';
 import { OIBusObjectAttribute } from '../../shared/model/form.model';
 import DataStreamEngine from '../engine/data-stream-engine';
@@ -196,11 +195,11 @@ export default class HistoryQueryService {
   }
 
   getHistoryDataStream(historyId: string): PassThrough | null {
-    return this.engine.getHistoryQueryDataStream(historyId);
+    return this.engine.getHistoryQuerySSE(historyId);
   }
 
   getHistoryMetric(historyId: string): HistoryQueryMetrics | null {
-    return this.engine.getHistoryMetric(historyId);
+    return this.engine.getHistoryMetrics(historyId);
   }
 
   async testNorth(
@@ -506,47 +505,6 @@ export default class HistoryQueryService {
     this.historyQueryRepository.removeTransformer(historyTransformerId);
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
     await this.engine.stopHistoryQuery(historyQuery.id);
-  }
-
-  async searchCacheContent(
-    historyQueryId: string,
-    searchParams: CacheSearchParam,
-    folder: 'cache' | 'archive' | 'error'
-  ): Promise<Array<{ metadataFilename: string; metadata: CacheMetadata }>> {
-    return await this.engine.searchCacheContent('history', historyQueryId, searchParams, folder);
-  }
-
-  async getCacheFileContent(historyId: string, folder: 'cache' | 'archive' | 'error', filename: string): Promise<ReadStream> {
-    const fileStream = await this.engine.getCacheContentFileStream('history', historyId, folder, filename);
-    if (!fileStream) {
-      throw new NotFoundError(`File "${filename}" not found in ${folder}`);
-    }
-    return fileStream;
-  }
-
-  async removeCacheContent(historyId: string, folder: 'cache' | 'archive' | 'error', metadataFilenameList: Array<string>): Promise<void> {
-    return await this.engine.removeCacheContent('history', historyId, folder, metadataFilenameList);
-  }
-
-  async removeAllCacheContent(historyId: string, folder: 'cache' | 'archive' | 'error'): Promise<void> {
-    return await this.engine.removeAllCacheContent('history', historyId, folder);
-  }
-
-  async moveCacheContent(
-    historyId: string,
-    originFolder: 'cache' | 'archive' | 'error',
-    destinationFolder: 'cache' | 'archive' | 'error',
-    cacheContentList: Array<string>
-  ): Promise<void> {
-    return await this.engine.moveCacheContent('history', historyId, originFolder, destinationFolder, cacheContentList);
-  }
-
-  async moveAllCacheContent(
-    historyId: string,
-    originFolder: 'cache' | 'archive' | 'error',
-    destinationFolder: 'cache' | 'archive' | 'error'
-  ): Promise<void> {
-    return await this.engine.moveAllCacheContent('history', historyId, originFolder, destinationFolder);
   }
 
   retrieveSecrets(

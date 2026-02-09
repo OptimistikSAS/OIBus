@@ -64,6 +64,10 @@ import SouthFTP from '../south/south-ftp/south-ftp';
 import SouthSQLite from '../south/south-sqlite/south-sqlite';
 import SouthConnector from './south-connector';
 import { Instant } from '../model/types';
+import { createFolder } from '../service/utils';
+import path from 'node:path';
+import fs from 'node:fs/promises';
+import { OIBusSouthType } from '../../shared/model/south-connector.model';
 
 export const buildSouth = (
   settings: SouthConnectorEntity<SouthSettings, SouthItemSettings>,
@@ -224,4 +228,16 @@ export const buildSouth = (
     default:
       throw Error(`South connector of type "${settings.type}" not installed`);
   }
+};
+
+export const initSouthCache = async (id: string, type: OIBusSouthType, baseFolder: string) => {
+  await createFolder(path.join(baseFolder, 'cache', `south-${id}`));
+  await createFolder(path.join(baseFolder, 'cache', `south-${id}`, 'tmp'));
+  if (type === 'opcua') {
+    await createFolder(path.join(baseFolder, 'cache', `south-${id}`, 'opcua'));
+  }
+};
+
+export const deleteSouthCache = async (id: string, baseFolder: string) => {
+  await fs.rm(path.join(baseFolder, 'cache', `south-${id}`), { recursive: true, force: true });
 };
