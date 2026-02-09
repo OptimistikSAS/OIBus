@@ -30,10 +30,17 @@ import HistoryQueryService, { toHistoryQueryDTO, toHistoryQueryItemDTO, toHistor
 import { itemToFlattenedCSV } from '../../service/utils';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
-import { CacheMetadata, OIBusContent } from '../../../shared/model/engine.model';
+import {
+  CacheContentUpdateCommand,
+  CacheSearchResult,
+  DataFolderType,
+  FileCacheContent,
+  OIBusContent
+} from '../../../shared/model/engine.model';
 import { TransformerDTOWithOptions } from '../../../shared/model/transformer.model';
 import { OIBusTestingError, OIBusValidationError } from '../../model/types';
 import { HistoryTransformerWithOptions } from '../../model/transformer.model';
+import OIBusService from '../../service/oibus.service';
 
 /**
  * @interface HistorySouthItemTestRequest
@@ -73,17 +80,6 @@ interface HistoryCsvImportResponse {
 interface HistoryCsvDelimiterRequest {
   /** CSV delimiter character */
   delimiter: string;
-}
-
-/**
- * @interface HistoryCacheMetadata
- * @description Metadata for cache files
- */
-interface HistoryCacheMetadata {
-  /** Filename of the metadata */
-  metadataFilename: string;
-  /** Metadata content */
-  metadata: CacheMetadata;
 }
 
 @Route('/api/history')
@@ -557,8 +553,8 @@ export class HistoryQueryController extends Controller {
 
   /**
    * Searches for files in the history query cache
-   * @summary Search cache content
-   * @returns {Promise<Array<HistoryCacheMetadata>>} Array of cache file metadata
+   * @summary Search files in cache, error and archive folders
+   * @returns {Promise<CacheSearchResult>} The cache search result
    */
   @Get('/{historyId}/cache/search')
   async searchCacheContent(
@@ -566,92 +562,46 @@ export class HistoryQueryController extends Controller {
     @Query() nameContains: string | undefined,
     @Query() start: string | undefined,
     @Query() end: string | undefined,
-    @Query() folder: 'cache' | 'archive' | 'error',
+    @Query() maxNumberOfFilesReturned: number | undefined,
     @Request() request: CustomExpressRequest
-  ): Promise<Array<HistoryCacheMetadata>> {
-    const historyQueryService = request.services.historyQueryService as HistoryQueryService;
-    return await historyQueryService.searchCacheContent(historyId, { start, end, nameContains }, folder);
+  ): Promise<CacheSearchResult> {
+    const engineService = request.services.oIBusService as OIBusService;
+    return await engineService.searchCacheContent('history', historyId, {
+      start,
+      end,
+      nameContains,
+      maxNumberOfFilesReturned: maxNumberOfFilesReturned || 0
+    });
   }
 
   /**
-   * Downloads a specific file from the history query cache
-   * @summary Download cache file
-   * @responseHeader Content-Disposition attachment; filename="{filename}"
+   * Retrieve a file from a north connector cache
+   * @summary Retrieve cache file content
+   * @returns {Promise<FileCacheContent>} The content of the file - may be truncated
    */
   @Get('/{historyId}/cache/content/{filename}')
   async getCacheFileContent(
     @Path() historyId: string,
     @Path() filename: string,
-    @Query() folder: 'cache' | 'archive' | 'error',
+    @Query() folder: DataFolderType,
     @Request() request: CustomExpressRequest
-  ): Promise<void> {
-    const historyQueryService = request.services.historyQueryService as HistoryQueryService;
-    const fileStream = await historyQueryService.getCacheFileContent(historyId, folder, filename);
-    request.res!.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    fileStream.pipe(request.res!);
+  ): Promise<FileCacheContent> {
+    const engineService = request.services.oIBusService as OIBusService;
+    return await engineService.getFileFromCache('history', historyId, folder, filename);
   }
 
   /**
-   * Removes specific files from the history query cache
-   * @summary Remove cache files
+   * Update cache content by moving or removing files from cache, archive and error folders
+   * @summary Move or remove files from cache, error and archive folders
    */
-  @Delete('/{historyId}/cache/remove')
+  @Delete('/{historyId}/cache/update')
   @SuccessResponse(204, 'No Content')
-  async removeCacheContent(
+  async updateCacheContent(
     @Path() historyId: string,
-    @Query() folder: 'cache' | 'archive' | 'error',
-    @Body() filenames: Array<string>,
+    @Body() updateCommand: CacheContentUpdateCommand,
     @Request() request: CustomExpressRequest
   ): Promise<void> {
-    const historyQueryService = request.services.historyQueryService as HistoryQueryService;
-    await historyQueryService.removeCacheContent(historyId, folder, filenames);
-  }
-
-  /**
-   * Removes all files from the history query cache
-   * @summary Remove all cache files
-   */
-  @Delete('/{historyId}/cache/remove-all')
-  @SuccessResponse(204, 'No Content')
-  async removeAllCacheContent(
-    @Path() historyId: string,
-    @Query() folder: 'cache' | 'archive' | 'error',
-    @Request() request: CustomExpressRequest
-  ): Promise<void> {
-    const historyQueryService = request.services.historyQueryService as HistoryQueryService;
-    await historyQueryService.removeAllCacheContent(historyId, folder);
-  }
-
-  /**
-   * Moves specific files between folders in the history query cache
-   * @summary Move cache files
-   */
-  @Post('/{historyId}/cache/move')
-  @SuccessResponse(204, 'No Content')
-  async moveCacheContent(
-    @Path() historyId: string,
-    @Query() originFolder: 'cache' | 'archive' | 'error',
-    @Query() destinationFolder: 'cache' | 'archive' | 'error',
-    @Body() filenames: Array<string>,
-    @Request() request: CustomExpressRequest
-  ): Promise<void> {
-    const historyQueryService = request.services.historyQueryService as HistoryQueryService;
-    await historyQueryService.moveCacheContent(historyId, originFolder, destinationFolder, filenames);
-  }
-
-  /**
-   * Moves all files between folders in the history query cache
-   * @summary Move all cache files
-   */
-  @Post('/{historyId}/cache/move-all')
-  @SuccessResponse(204, 'No Content')
-  async moveAllCacheContent(
-    @Path() historyId: string,
-    @Query() originFolder: 'cache' | 'archive' | 'error',
-    @Query() destinationFolder: 'cache' | 'archive' | 'error',
-    @Request() request: CustomExpressRequest
-  ): Promise<void> {
-    const historyQueryService = request.services.historyQueryService as HistoryQueryService;
-    await historyQueryService.moveAllCacheContent(historyId, originFolder, destinationFolder);
+    const engineService = request.services.oIBusService as OIBusService;
+    await engineService.updateCacheContent('history', historyId, updateCommand);
   }
 }

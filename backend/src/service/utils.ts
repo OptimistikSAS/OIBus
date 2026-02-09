@@ -18,7 +18,9 @@ import { ValidatedCronExpression } from '../../shared/model/scan-mode.model';
 import { SouthConnectorItemDTO } from '../../shared/model/south-connector.model';
 import { ScanMode } from '../model/scan-mode.model';
 import { HistoryQueryItemDTO } from '../../shared/model/history-query.model';
-import { BaseFolders, NotFoundError, OIBusValidationError } from '../model/types';
+import { NotFoundError, OIBusValidationError } from '../model/types';
+import { OIBusError } from '../model/engine.model';
+import Stream from 'node:stream';
 
 const COMPRESSION_LEVEL = 9;
 
@@ -120,19 +122,6 @@ export const createFolder = async (folder: string): Promise<void> => {
     await fs.stat(folderPath);
   } catch {
     await fs.mkdir(folderPath, { recursive: true });
-  }
-};
-
-/**
- * Create folders defined by the BaseFolders type
- */
-export const createBaseFolders = async (baseFolders: BaseFolders, entityType: 'south' | 'north' | 'history') => {
-  for (const type of Object.keys(baseFolders) as Array<keyof BaseFolders>) {
-    await createFolder(baseFolders[type]);
-    if (entityType === 'history') {
-      await createFolder(path.resolve(baseFolders[type], 'north'));
-      await createFolder(path.resolve(baseFolders[type], 'south'));
-    }
   }
 };
 
@@ -764,4 +753,67 @@ export const injectIndices = (pathDefinition: string, indices: Array<number>): s
     indexPointer++;
     return `[${val}]`;
   });
+};
+
+export const processCacheFileContent = async (
+  stream: NodeJS.ReadableStream,
+  sizeLimit = 1024 * 500 // 500KB limit
+): Promise<{ content: string; truncated: boolean }> => {
+  const chunks: Array<Buffer> = [];
+  let totalSize = 0;
+  let truncated = false;
+
+  for await (const chunk of stream) {
+    const bufferChunk = Buffer.from(chunk);
+    if (totalSize + bufferChunk.length > sizeLimit) {
+      const remaining = sizeLimit - totalSize;
+      if (remaining > 0) {
+        chunks.push(bufferChunk.subarray(0, remaining));
+        totalSize += remaining;
+      }
+      truncated = true;
+      break;
+    }
+    chunks.push(bufferChunk);
+    totalSize += bufferChunk.length;
+  }
+  return { content: Buffer.concat(chunks).toString('utf-8'), truncated };
+};
+
+export const determineContentTypeFromFilename = (filename: string): 'csv' | 'xml' | 'json' | 'raw' => {
+  const { ext } = path.parse(filename);
+  switch (ext) {
+    case '.csv':
+      return 'csv';
+    case '.json':
+      return 'json';
+    case '.xml':
+      return 'xml';
+    default:
+      return 'raw';
+  }
+};
+
+export const streamToString = (stream: Stream): Promise<string> => {
+  const chunks: Array<Buffer> = [];
+  return new Promise((resolve, reject) => {
+    stream.on('data', chunk => chunks.push(Buffer.from(chunk)));
+    stream.on('error', err => reject(err));
+    stream.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+  });
+};
+/**
+ * Create an OIBusError from an unknown error thrown by the handleFile or handleValues connector method
+ * The error thrown can be overridden with an OIBusError to force a retry on specific cases
+ */
+export const createOIBusError = (error: unknown): OIBusError => {
+  if (typeof error === 'object' && error !== null && '_isOIBusError' in error) {
+    return error as OIBusError;
+  } else if (error instanceof Error) {
+    return new OIBusError(error.message, false);
+  } else if (typeof error === 'string') {
+    return new OIBusError(error, false);
+  } else {
+    return new OIBusError(JSON.stringify(error), false);
+  }
 };

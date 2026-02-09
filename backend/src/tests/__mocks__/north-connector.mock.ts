@@ -27,12 +27,8 @@ export default class NorthConnectorMock {
   setLogger = jest.fn();
   updateScanMode = jest.fn();
   searchCacheContent = jest.fn();
-  getCacheContentFileStream = jest.fn();
-  removeCacheContent = jest.fn();
-  removeAllCacheContent = jest.fn();
-  moveCacheContent = jest.fn();
-  moveAllCacheContent = jest.fn();
-  metadataFileListToCacheContentList = jest.fn();
+  getFileFromCache = jest.fn();
+  updateCacheContent = jest.fn();
   testConnection = jest.fn();
   metricsEvent = new EventEmitter();
 

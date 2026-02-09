@@ -4,7 +4,7 @@ import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
 import NorthServiceMock from '../../tests/__mocks__/service/north-service.mock';
 import { StandardTransformerDTO, TransformerDTOWithOptions } from '../../../shared/model/transformer.model';
-import { CacheMetadata } from '../../../shared/model/engine.model';
+import { CacheContentUpdateCommand, CacheMetadata } from '../../../shared/model/engine.model';
 import OibusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
 import { OIBusTestingError } from '../../model/types';
 
@@ -196,41 +196,45 @@ describe('NorthConnectorController', () => {
 
   it('should search cache content with default params', async () => {
     const northId = testData.north.list[0].id;
-    const folder = 'cache';
 
     const mockCacheMetadata: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [];
-    (mockRequest.services!.northService.searchCacheContent as jest.Mock).mockResolvedValue(mockCacheMetadata);
+    (mockRequest.services!.oIBusService.searchCacheContent as jest.Mock).mockResolvedValue(mockCacheMetadata);
 
     const result = await controller.searchCacheContent(
       northId,
       undefined,
       undefined,
       undefined,
-      folder,
+      undefined,
       mockRequest as CustomExpressRequest
     );
 
-    expect(mockRequest.services!.northService.searchCacheContent).toHaveBeenCalledWith(
-      northId,
-      { start: undefined, end: undefined, nameContains: undefined },
-      folder
-    );
+    expect(mockRequest.services!.oIBusService.searchCacheContent).toHaveBeenCalledWith('north', northId, {
+      start: undefined,
+      end: undefined,
+      nameContains: undefined,
+      maxNumberOfFilesReturned: 0
+    });
     expect(result).toEqual(mockCacheMetadata);
   });
 
   it('should search cache content with parameters', async () => {
     const northId = testData.north.list[0].id;
-    const folder = 'cache';
     const nameContains = 'test';
     const start = testData.constants.dates.DATE_1;
     const end = testData.constants.dates.DATE_2;
 
     const mockCacheMetadata: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [];
-    (mockRequest.services!.northService.searchCacheContent as jest.Mock).mockResolvedValue(mockCacheMetadata);
+    (mockRequest.services!.oIBusService.searchCacheContent as jest.Mock).mockResolvedValue(mockCacheMetadata);
 
-    const result = await controller.searchCacheContent(northId, nameContains, start, end, folder, mockRequest as CustomExpressRequest);
+    const result = await controller.searchCacheContent(northId, nameContains, start, end, 10000, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.northService.searchCacheContent).toHaveBeenCalledWith(northId, { start, end, nameContains }, folder);
+    expect(mockRequest.services!.oIBusService.searchCacheContent).toHaveBeenCalledWith('north', northId, {
+      start,
+      end,
+      nameContains,
+      maxNumberOfFilesReturned: 10000
+    });
     expect(result).toEqual(mockCacheMetadata);
   });
 
@@ -240,60 +244,20 @@ describe('NorthConnectorController', () => {
     const filename = 'test-file';
 
     const mockFileStream = { pipe: jest.fn() };
-    (mockRequest.services!.northService.getCacheFileContent as jest.Mock).mockResolvedValue(mockFileStream);
+    (mockRequest.services!.oIBusService.getFileFromCache as jest.Mock).mockResolvedValue(mockFileStream);
 
     await controller.getCacheFileContent(northId, filename, folder, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.northService.getCacheFileContent).toHaveBeenCalledWith(northId, folder, filename);
-    expect(mockRequest.res!.setHeader).toHaveBeenCalledWith('Content-Disposition', `attachment; filename="${filename}"`);
-    expect(mockFileStream.pipe).toHaveBeenCalledWith(mockRequest.res);
+    expect(mockRequest.services!.oIBusService.getFileFromCache).toHaveBeenCalledWith('north', northId, folder, filename);
   });
 
-  it('should remove cache content', async () => {
+  it('should update cache content', async () => {
     const northId = testData.north.list[0].id;
-    const folder = 'cache';
-    const filenames = ['file1', 'file2'];
 
-    (mockRequest.services!.northService.removeCacheContent as jest.Mock).mockResolvedValue(undefined);
+    (mockRequest.services!.oIBusService.updateCacheContent as jest.Mock).mockResolvedValue(undefined);
 
-    await controller.removeCacheContent(northId, folder, filenames, mockRequest as CustomExpressRequest);
+    await controller.updateCacheContent(northId, {} as CacheContentUpdateCommand, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.northService.removeCacheContent).toHaveBeenCalledWith(northId, folder, filenames);
-  });
-
-  it('should remove all cache content', async () => {
-    const northId = testData.north.list[0].id;
-    const folder = 'cache';
-
-    (mockRequest.services!.northService.removeAllCacheContent as jest.Mock).mockResolvedValue(undefined);
-
-    await controller.removeAllCacheContent(northId, folder, mockRequest as CustomExpressRequest);
-
-    expect(mockRequest.services!.northService.removeAllCacheContent).toHaveBeenCalledWith(northId, folder);
-  });
-
-  it('should move cache content', async () => {
-    const northId = testData.north.list[0].id;
-    const originFolder = 'cache';
-    const destinationFolder = 'archive';
-    const filenames = ['file1', 'file2'];
-
-    (mockRequest.services!.northService.moveCacheContent as jest.Mock).mockResolvedValue(undefined);
-
-    await controller.moveCacheContent(northId, originFolder, destinationFolder, filenames, mockRequest as CustomExpressRequest);
-
-    expect(mockRequest.services!.northService.moveCacheContent).toHaveBeenCalledWith(northId, originFolder, destinationFolder, filenames);
-  });
-
-  it('should move all cache content', async () => {
-    const northId = testData.north.list[0].id;
-    const originFolder = 'cache';
-    const destinationFolder = 'archive';
-
-    (mockRequest.services!.northService.moveAllCacheContent as jest.Mock).mockResolvedValue(undefined);
-
-    await controller.moveAllCacheContent(northId, originFolder, destinationFolder, mockRequest as CustomExpressRequest);
-
-    expect(mockRequest.services!.northService.moveAllCacheContent).toHaveBeenCalledWith(northId, originFolder, destinationFolder);
+    expect(mockRequest.services!.oIBusService.updateCacheContent).toHaveBeenCalledWith('north', northId, {});
   });
 });
