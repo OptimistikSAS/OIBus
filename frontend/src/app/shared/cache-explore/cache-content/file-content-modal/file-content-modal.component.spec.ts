@@ -2,9 +2,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
 import { FileContentModalComponent } from './file-content-modal.component';
-import { provideI18nTesting } from '../../../i18n/mock-i18n';
+import { provideI18nTesting } from '../../../../../i18n/mock-i18n';
 import { createMock } from 'ngx-speculoos';
-import testData from '../../../../../backend/src/tests/utils/test-data';
 
 describe('FileContentModalComponent', () => {
   let component: FileContentModalComponent;
@@ -26,24 +25,12 @@ describe('FileContentModalComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should call prepareForCreation method with correct parameters', () => {
-    const contentFile = {
-      metadataFilename: 'file1.json',
-      metadata: {
-        contentFile: '8-1696843490050.txt',
-        contentSize: 6,
-        numberOfElement: 0,
-        createdAt: testData.constants.dates.DATE_1,
-        contentType: 'raw',
-        source: 'south',
-        options: {}
-      }
-    };
+  it('should call prepare method with correct parameters', () => {
     const content = '{ "foo": "bar" }';
-    component.prepareForCreation(contentFile, content);
+    component.prepare('file1', { content, contentType: 'json', totalSize: content.length, truncated: false });
 
-    expect(component.contentFile!.metadata.contentFile).toEqual(contentFile.metadata.contentFile);
-    expect(component.content).toEqual(content);
+    expect(component.filename).toEqual('file1');
+    expect(component.fileCacheContent).toEqual({ content, contentType: 'json', totalSize: content.length, truncated: false });
   });
 
   it('should load OibCodeBlockComponent', () => {
