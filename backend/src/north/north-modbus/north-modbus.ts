@@ -5,12 +5,13 @@ import { CacheMetadata } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import net from 'node:net';
 import ModbusTCPClient from 'jsmodbus/dist/modbus-tcp-client';
-import { client, UserRequestError } from 'jsmodbus';
-import fs from 'node:fs/promises';
+import { client } from 'jsmodbus';
 import { OIBusModbusValue } from '../../transformers/connector-types.model';
 import CacheService from '../../service/cache/cache.service';
 import { connectSocket } from '../../service/utils-modbus';
 import { OIBusError } from '../../model/engine.model';
+import { ReadStream } from 'node:fs';
+import { streamToString } from '../../service/utils';
 
 /**
  * Class NorthModbus - Write values in a Modbus server
@@ -21,13 +22,28 @@ export default class NorthModbus extends NorthConnector<NorthModbusSettings> {
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private disconnecting = false;
 
-  constructor(
-    configuration: NorthConnectorEntity<NorthModbusSettings>,
-    logger: pino.Logger,
-    cacheFolderPath: string,
-    cacheService: CacheService
-  ) {
-    super(configuration, logger, cacheFolderPath, cacheService);
+  constructor(configuration: NorthConnectorEntity<NorthModbusSettings>, logger: pino.Logger, cacheService: CacheService) {
+    super(configuration, logger, cacheService);
+  }
+
+  supportedTypes(): Array<string> {
+    return ['modbus'];
+  }
+
+  async testConnection(): Promise<void> {
+    try {
+      const socket = new net.Socket();
+      await connectSocket(socket, this.connector.settings);
+    } catch (error: unknown) {
+      switch ((error as { code: string; message: string }).code) {
+        case 'ENOTFOUND':
+        case 'ECONNREFUSED':
+          throw new Error(`Please check host and port: ${(error as Error).message}`);
+
+        default:
+          throw new Error(`Unable to connect to socket: ${(error as Error).message}`);
+      }
+    }
   }
 
   override async connect(): Promise<void> {
@@ -67,33 +83,11 @@ export default class NorthModbus extends NorthConnector<NorthModbusSettings> {
     this.disconnecting = false;
   }
 
-  override async testConnection(): Promise<void> {
-    try {
-      const socket = new net.Socket();
-      await connectSocket(socket, this.connector.settings);
-    } catch (error: unknown) {
-      switch ((error as { code: string; message: string }).code) {
-        case 'ENOTFOUND':
-        case 'ECONNREFUSED':
-          throw new Error(`Please check host and port: ${(error as Error).message}`);
-
-        default:
-          throw new Error(`Unable to connect to socket: ${(error as Error).message}`);
-      }
-    }
-  }
-
-  async handleContent(cacheMetadata: CacheMetadata): Promise<void> {
-    if (!this.supportedTypes().includes(cacheMetadata.contentType)) {
-      throw new Error(`Unsupported data type: ${cacheMetadata.contentType} (file ${cacheMetadata.contentFile})`);
-    }
+  async handleContent(fileStream: ReadStream, _cacheMetadata: CacheMetadata): Promise<void> {
     if (this.reconnectTimeout) {
       throw new OIBusError('Connector is reconnecting...', true);
     }
-    return this.handleValues(JSON.parse(await fs.readFile(cacheMetadata.contentFile, { encoding: 'utf-8' })) as Array<OIBusModbusValue>);
-  }
-
-  private async handleValues(values: Array<OIBusModbusValue>) {
+    const values = JSON.parse(await streamToString(fileStream)) as Array<OIBusModbusValue>;
     try {
       if (!this.modbusClient) {
         throw new OIBusError('Modbus client not set. The connector cannot write values', true);
@@ -102,15 +96,19 @@ export default class NorthModbus extends NorthConnector<NorthModbusSettings> {
         await this.modbusFunction(this.modbusClient, value);
       }
     } catch (error: unknown) {
-      await this.disconnect();
-      if (!this.disconnecting && this.connector.enabled) {
-        this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
-      }
-
+      await this.triggerReconnect();
       if (typeof error === 'object' && error !== null && 'err' in error && 'message' in error) {
         throw new OIBusError(`${error.err} - ${error.message}`, true);
       }
       throw error;
+    }
+  }
+
+  private async triggerReconnect(): Promise<void> {
+    await this.disconnect();
+    // Only schedule if not already disconnecting, enabled, and no timer already active
+    if (!this.disconnecting && this.connector.enabled && !this.reconnectTimeout) {
+      this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
     }
   }
 
@@ -131,9 +129,5 @@ export default class NorthModbus extends NorthConnector<NorthModbusSettings> {
       default:
         throw new Error(`Wrong Modbus type "${modbusValue.modbusType}" for address ${address}`);
     }
-  }
-
-  supportedTypes(): Array<string> {
-    return ['modbus'];
   }
 }

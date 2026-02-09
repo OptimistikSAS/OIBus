@@ -206,7 +206,7 @@ describe('South Service', () => {
 
   it('should get a south data stream for metrics', () => {
     service.getSouthDataStream(testData.south.list[0].id);
-    expect(engine.getSouthDataStream).toHaveBeenCalledWith(testData.south.list[0].id);
+    expect(engine.getSouthSSE).toHaveBeenCalledWith(testData.south.list[0].id);
   });
 
   it('should test a south connector in creation mode', async () => {

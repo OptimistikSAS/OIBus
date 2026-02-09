@@ -1,4 +1,4 @@
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { inject, Injectable } from '@angular/core';
 import {
@@ -10,7 +10,13 @@ import {
   OIBusNorthType
 } from '../../../../backend/shared/model/north-connector.model';
 import { NorthSettings } from '../../../../backend/shared/model/north-settings.model';
-import { CacheMetadata, CacheSearchParam } from '../../../../backend/shared/model/engine.model';
+import {
+  CacheContentUpdateCommand,
+  CacheSearchParam,
+  CacheSearchResult,
+  DataFolderType,
+  FileCacheContent
+} from '../../../../backend/shared/model/engine.model';
 import { TransformerDTOWithOptions } from '../../../../backend/shared/model/transformer.model';
 
 /**
@@ -117,13 +123,12 @@ export class NorthConnectorService {
     return this.http.delete<void>(`/api/north/${northId}/transformers/${northTransformerId}`);
   }
 
-  searchCacheContent(
-    northId: string,
-    searchParams: CacheSearchParam,
-    folder: 'cache' | 'archive' | 'error'
-  ): Observable<Array<{ metadataFilename: string; metadata: CacheMetadata }>> {
-    const params: Record<string, string | Array<string>> = {
-      folder
+  /**
+   * List files from north cache by search params
+   */
+  searchCacheContent(northId: string, searchParams: CacheSearchParam): Observable<CacheSearchResult> {
+    const params: Record<string, number | string | Array<string>> = {
+      maxNumberOfFilesReturned: searchParams.maxNumberOfFilesReturned
     };
     if (searchParams.start) {
       params['start'] = searchParams.start;
@@ -134,60 +139,24 @@ export class NorthConnectorService {
     if (searchParams.nameContains) {
       params['nameContains'] = searchParams.nameContains;
     }
-    return this.http.get<Array<{ metadataFilename: string; metadata: CacheMetadata }>>(`/api/north/${northId}/cache/search`, { params });
+    return this.http.get<CacheSearchResult>(`/api/north/${northId}/cache/search`, { params });
   }
 
-  getCacheFileContent(northId: string, folder: 'cache' | 'archive' | 'error', filename: string): Observable<HttpResponse<Blob>> {
-    return this.http.get<Blob>(`/api/north/${northId}/cache/content/${filename}`, {
-      responseType: 'blob' as 'json',
-      observe: 'response',
+  /**
+   * Retrieve file content from north cache
+   */
+  getCacheFileContent(northId: string, folder: DataFolderType, filename: string): Observable<FileCacheContent> {
+    return this.http.get<FileCacheContent>(`/api/north/${northId}/cache/content/${filename}`, {
       params: {
         folder
       }
     });
   }
 
-  removeCacheContent(northId: string, folder: 'cache' | 'archive' | 'error', filenames: Array<string>): Observable<void> {
-    return this.http.delete<void>(`/api/north/${northId}/cache/remove`, {
-      params: {
-        folder
-      },
-      body: filenames
-    });
-  }
-
-  removeAllCacheContent(northId: string, folder: 'cache' | 'archive' | 'error'): Observable<void> {
-    return this.http.delete<void>(`/api/north/${northId}/cache/remove-all`, {
-      params: {
-        folder
-      }
-    });
-  }
-
-  moveCacheContent(
-    northId: string,
-    originFolder: 'cache' | 'archive' | 'error',
-    destinationFolder: 'cache' | 'archive' | 'error',
-    filenames: Array<string>
-  ): Observable<void> {
-    return this.http.post<void>(`/api/north/${northId}/cache/move`, filenames, {
-      params: {
-        originFolder,
-        destinationFolder
-      }
-    });
-  }
-
-  moveAllCacheContent(
-    northId: string,
-    originFolder: 'cache' | 'archive' | 'error',
-    destinationFolder: 'cache' | 'archive' | 'error'
-  ): Observable<void> {
-    return this.http.post<void>(`/api/north/${northId}/cache/move-all`, null, {
-      params: {
-        originFolder,
-        destinationFolder
-      }
-    });
+  /**
+   * Update north cache content by moving or removing files from cache, archive and error folders
+   */
+  updateCacheContent(northId: string, updateCommand: CacheContentUpdateCommand): Observable<void> {
+    return this.http.post<void>(`/api/north/${northId}/cache/update`, updateCommand);
   }
 }
