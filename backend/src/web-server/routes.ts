@@ -4611,6 +4611,7 @@ const models: TsoaRoute.Models = {
             "start": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}],"required":true},
             "end": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}],"required":true},
             "nameContains": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}],"required":true},
+            "maxNumberOfFilesReturned": {"dataType":"double","required":true},
         },
         "additionalProperties": false,
     },
@@ -4626,7 +4627,7 @@ const models: TsoaRoute.Models = {
             "completedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
             "result": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "northConnectorId": {"dataType":"string","required":true},
-            "commandContent": {"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfFilesReturned":{"dataType":"double","required":true},"searchParams":{"ref":"CacheSearchParam","required":true}},"required":true},
+            "commandContent": {"ref":"CacheSearchParam","required":true},
         },
         "additionalProperties": false,
     },
@@ -4642,9 +4643,14 @@ const models: TsoaRoute.Models = {
             "completedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
             "result": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "historyQueryId": {"dataType":"string","required":true},
-            "commandContent": {"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfFilesReturned":{"dataType":"double","required":true},"searchParams":{"ref":"CacheSearchParam","required":true}},"required":true},
+            "commandContent": {"ref":"CacheSearchParam","required":true},
         },
         "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "DataFolderType": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["error"]},{"dataType":"enum","enums":["archive"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusGetNorthCacheFileContentCommandDTO": {
@@ -4658,7 +4664,7 @@ const models: TsoaRoute.Models = {
             "completedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
             "result": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "northConnectorId": {"dataType":"string","required":true},
-            "commandContent": {"dataType":"nestedObjectLiteral","nestedProperties":{"filename":{"dataType":"string","required":true},"folder":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["archive"]},{"dataType":"enum","enums":["error"]}],"required":true}},"required":true},
+            "commandContent": {"dataType":"nestedObjectLiteral","nestedProperties":{"filename":{"dataType":"string","required":true},"folder":{"ref":"DataFolderType","required":true}},"required":true},
         },
         "additionalProperties": false,
     },
@@ -4674,7 +4680,17 @@ const models: TsoaRoute.Models = {
             "completedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
             "result": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "historyQueryId": {"dataType":"string","required":true},
-            "commandContent": {"dataType":"nestedObjectLiteral","nestedProperties":{"filename":{"dataType":"string","required":true},"folder":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["archive"]},{"dataType":"enum","enums":["error"]}],"required":true}},"required":true},
+            "commandContent": {"dataType":"nestedObjectLiteral","nestedProperties":{"filename":{"dataType":"string","required":true},"folder":{"ref":"DataFolderType","required":true}},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "CacheContentUpdateCommand": {
+        "dataType": "refObject",
+        "properties": {
+            "cache": {"dataType":"nestedObjectLiteral","nestedProperties":{"move":{"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"to":{"ref":"DataFolderType","required":true},"filename":{"dataType":"string","required":true}}},"required":true},"remove":{"dataType":"array","array":{"dataType":"string"},"required":true}},"required":true},
+            "error": {"dataType":"nestedObjectLiteral","nestedProperties":{"move":{"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"to":{"ref":"DataFolderType","required":true},"filename":{"dataType":"string","required":true}}},"required":true},"remove":{"dataType":"array","array":{"dataType":"string"},"required":true}},"required":true},
+            "archive": {"dataType":"nestedObjectLiteral","nestedProperties":{"move":{"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"to":{"ref":"DataFolderType","required":true},"filename":{"dataType":"string","required":true}}},"required":true},"remove":{"dataType":"array","array":{"dataType":"string"},"required":true}},"required":true},
         },
         "additionalProperties": false,
     },
@@ -4690,7 +4706,7 @@ const models: TsoaRoute.Models = {
             "completedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
             "result": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "northConnectorId": {"dataType":"string","required":true},
-            "commandContent": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"move":{"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"to":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["error"]},{"dataType":"enum","enums":["archive"]}],"required":true},"filename":{"dataType":"string","required":true}}},"required":true},"remove":{"dataType":"array","array":{"dataType":"string"},"required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"move":{"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"to":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["error"]},{"dataType":"enum","enums":["archive"]}],"required":true},"filename":{"dataType":"string","required":true}}},"required":true},"remove":{"dataType":"array","array":{"dataType":"string"},"required":true}},"required":true},"cache":{"dataType":"nestedObjectLiteral","nestedProperties":{"move":{"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"to":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["error"]},{"dataType":"enum","enums":["archive"]}],"required":true},"filename":{"dataType":"string","required":true}}},"required":true},"remove":{"dataType":"array","array":{"dataType":"string"},"required":true}},"required":true}},"required":true},
+            "commandContent": {"ref":"CacheContentUpdateCommand","required":true},
         },
         "additionalProperties": false,
     },
@@ -4706,7 +4722,7 @@ const models: TsoaRoute.Models = {
             "completedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
             "result": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "historyQueryId": {"dataType":"string","required":true},
-            "commandContent": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"move":{"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"to":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["error"]},{"dataType":"enum","enums":["archive"]}],"required":true},"filename":{"dataType":"string","required":true}}},"required":true},"remove":{"dataType":"array","array":{"dataType":"string"},"required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"move":{"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"to":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["error"]},{"dataType":"enum","enums":["archive"]}],"required":true},"filename":{"dataType":"string","required":true}}},"required":true},"remove":{"dataType":"array","array":{"dataType":"string"},"required":true}},"required":true},"cache":{"dataType":"nestedObjectLiteral","nestedProperties":{"move":{"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"to":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["error"]},{"dataType":"enum","enums":["archive"]}],"required":true},"filename":{"dataType":"string","required":true}}},"required":true},"remove":{"dataType":"array","array":{"dataType":"string"},"required":true}},"required":true}},"required":true},
+            "commandContent": {"ref":"CacheContentUpdateCommand","required":true},
         },
         "additionalProperties": false,
     },
@@ -4978,11 +4994,25 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "NorthCacheMetadata": {
+    "CacheSearchResult": {
         "dataType": "refObject",
         "properties": {
-            "metadataFilename": {"dataType":"string","required":true},
-            "metadata": {"ref":"CacheMetadata","required":true},
+            "searchDate": {"ref":"Instant","required":true},
+            "metrics": {"dataType":"nestedObjectLiteral","nestedProperties":{"currentArchiveSize":{"dataType":"double","required":true},"currentErrorSize":{"dataType":"double","required":true},"currentCacheSize":{"dataType":"double","required":true},"lastRunDuration":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"lastRunStart":{"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},"lastConnection":{"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true}},"required":true},
+            "error": {"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"metadata":{"ref":"CacheMetadata","required":true},"filename":{"dataType":"string","required":true}}},"required":true},
+            "archive": {"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"metadata":{"ref":"CacheMetadata","required":true},"filename":{"dataType":"string","required":true}}},"required":true},
+            "cache": {"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"metadata":{"ref":"CacheMetadata","required":true},"filename":{"dataType":"string","required":true}}},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "FileCacheContent": {
+        "dataType": "refObject",
+        "properties": {
+            "content": {"dataType":"string","required":true},
+            "contentType": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["csv"]},{"dataType":"enum","enums":["xml"]},{"dataType":"enum","enums":["json"]},{"dataType":"enum","enums":["raw"]}],"required":true},
+            "truncated": {"dataType":"boolean","required":true},
+            "totalSize": {"dataType":"double","required":true},
         },
         "additionalProperties": false,
     },
@@ -5638,15 +5668,6 @@ const models: TsoaRoute.Models = {
         "properties": {
             "items": {"dataType":"array","array":{"dataType":"refAlias","ref":"HistoryQueryItemCommandDTO"},"required":true},
             "errors": {"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"error":{"dataType":"string","required":true},"item":{"ref":"Record_string.string_","required":true}}},"required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "HistoryCacheMetadata": {
-        "dataType": "refObject",
-        "properties": {
-            "metadataFilename": {"dataType":"string","required":true},
-            "metadata": {"ref":"CacheMetadata","required":true},
         },
         "additionalProperties": false,
     },
@@ -7964,7 +7985,7 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 nameContains: {"in":"query","name":"nameContains","required":true,"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},
                 start: {"in":"query","name":"start","required":true,"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},
                 end: {"in":"query","name":"end","required":true,"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},
-                folder: {"in":"query","name":"folder","required":true,"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["archive"]},{"dataType":"enum","enums":["error"]}]},
+                maxNumberOfFilesReturned: {"in":"query","name":"maxNumberOfFilesReturned","required":true,"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"undefined"}]},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
         };
         app.get('/api/north/:northId/cache/search',
@@ -7997,7 +8018,7 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
         const argsNorthConnectorController_getCacheFileContent: Record<string, TsoaRoute.ParameterSchema> = {
                 northId: {"in":"path","name":"northId","required":true,"dataType":"string"},
                 filename: {"in":"path","name":"filename","required":true,"dataType":"string"},
-                folder: {"in":"query","name":"folder","required":true,"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["archive"]},{"dataType":"enum","enums":["error"]}]},
+                folder: {"in":"query","name":"folder","required":true,"ref":"DataFolderType"},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
         };
         app.get('/api/north/:northId/cache/content/:filename',
@@ -8027,127 +8048,27 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
             }
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-        const argsNorthConnectorController_removeCacheContent: Record<string, TsoaRoute.ParameterSchema> = {
+        const argsNorthConnectorController_updateCacheContent: Record<string, TsoaRoute.ParameterSchema> = {
                 northId: {"in":"path","name":"northId","required":true,"dataType":"string"},
-                folder: {"in":"query","name":"folder","required":true,"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["archive"]},{"dataType":"enum","enums":["error"]}]},
-                filenames: {"in":"body","name":"filenames","required":true,"dataType":"array","array":{"dataType":"string"}},
+                updateCommand: {"in":"body","name":"updateCommand","required":true,"ref":"CacheContentUpdateCommand"},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
         };
-        app.delete('/api/north/:northId/cache/remove',
+        app.post('/api/north/:northId/cache/update',
             ...(fetchMiddlewares<RequestHandler>(NorthConnectorController)),
-            ...(fetchMiddlewares<RequestHandler>(NorthConnectorController.prototype.removeCacheContent)),
+            ...(fetchMiddlewares<RequestHandler>(NorthConnectorController.prototype.updateCacheContent)),
 
-            async function NorthConnectorController_removeCacheContent(request: ExRequest, response: ExResponse, next: any) {
+            async function NorthConnectorController_updateCacheContent(request: ExRequest, response: ExResponse, next: any) {
 
             // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 
             let validatedArgs: any[] = [];
             try {
-                validatedArgs = templateService.getValidatedArgs({ args: argsNorthConnectorController_removeCacheContent, request, response });
+                validatedArgs = templateService.getValidatedArgs({ args: argsNorthConnectorController_updateCacheContent, request, response });
 
                 const controller = new NorthConnectorController();
 
               await templateService.apiHandler({
-                methodName: 'removeCacheContent',
-                controller,
-                response,
-                next,
-                validatedArgs,
-                successStatus: 204,
-              });
-            } catch (err) {
-                return next(err);
-            }
-        });
-        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-        const argsNorthConnectorController_removeAllCacheContent: Record<string, TsoaRoute.ParameterSchema> = {
-                northId: {"in":"path","name":"northId","required":true,"dataType":"string"},
-                folder: {"in":"query","name":"folder","required":true,"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["archive"]},{"dataType":"enum","enums":["error"]}]},
-                request: {"in":"request","name":"request","required":true,"dataType":"object"},
-        };
-        app.delete('/api/north/:northId/cache/remove-all',
-            ...(fetchMiddlewares<RequestHandler>(NorthConnectorController)),
-            ...(fetchMiddlewares<RequestHandler>(NorthConnectorController.prototype.removeAllCacheContent)),
-
-            async function NorthConnectorController_removeAllCacheContent(request: ExRequest, response: ExResponse, next: any) {
-
-            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-
-            let validatedArgs: any[] = [];
-            try {
-                validatedArgs = templateService.getValidatedArgs({ args: argsNorthConnectorController_removeAllCacheContent, request, response });
-
-                const controller = new NorthConnectorController();
-
-              await templateService.apiHandler({
-                methodName: 'removeAllCacheContent',
-                controller,
-                response,
-                next,
-                validatedArgs,
-                successStatus: 204,
-              });
-            } catch (err) {
-                return next(err);
-            }
-        });
-        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-        const argsNorthConnectorController_moveCacheContent: Record<string, TsoaRoute.ParameterSchema> = {
-                northId: {"in":"path","name":"northId","required":true,"dataType":"string"},
-                originFolder: {"in":"query","name":"originFolder","required":true,"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["archive"]},{"dataType":"enum","enums":["error"]}]},
-                destinationFolder: {"in":"query","name":"destinationFolder","required":true,"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["archive"]},{"dataType":"enum","enums":["error"]}]},
-                filenames: {"in":"body","name":"filenames","required":true,"dataType":"array","array":{"dataType":"string"}},
-                request: {"in":"request","name":"request","required":true,"dataType":"object"},
-        };
-        app.post('/api/north/:northId/cache/move',
-            ...(fetchMiddlewares<RequestHandler>(NorthConnectorController)),
-            ...(fetchMiddlewares<RequestHandler>(NorthConnectorController.prototype.moveCacheContent)),
-
-            async function NorthConnectorController_moveCacheContent(request: ExRequest, response: ExResponse, next: any) {
-
-            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-
-            let validatedArgs: any[] = [];
-            try {
-                validatedArgs = templateService.getValidatedArgs({ args: argsNorthConnectorController_moveCacheContent, request, response });
-
-                const controller = new NorthConnectorController();
-
-              await templateService.apiHandler({
-                methodName: 'moveCacheContent',
-                controller,
-                response,
-                next,
-                validatedArgs,
-                successStatus: 204,
-              });
-            } catch (err) {
-                return next(err);
-            }
-        });
-        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-        const argsNorthConnectorController_moveAllCacheContent: Record<string, TsoaRoute.ParameterSchema> = {
-                northId: {"in":"path","name":"northId","required":true,"dataType":"string"},
-                originFolder: {"in":"query","name":"originFolder","required":true,"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["archive"]},{"dataType":"enum","enums":["error"]}]},
-                destinationFolder: {"in":"query","name":"destinationFolder","required":true,"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["archive"]},{"dataType":"enum","enums":["error"]}]},
-                request: {"in":"request","name":"request","required":true,"dataType":"object"},
-        };
-        app.post('/api/north/:northId/cache/move-all',
-            ...(fetchMiddlewares<RequestHandler>(NorthConnectorController)),
-            ...(fetchMiddlewares<RequestHandler>(NorthConnectorController.prototype.moveAllCacheContent)),
-
-            async function NorthConnectorController_moveAllCacheContent(request: ExRequest, response: ExResponse, next: any) {
-
-            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-
-            let validatedArgs: any[] = [];
-            try {
-                validatedArgs = templateService.getValidatedArgs({ args: argsNorthConnectorController_moveAllCacheContent, request, response });
-
-                const controller = new NorthConnectorController();
-
-              await templateService.apiHandler({
-                methodName: 'moveAllCacheContent',
+                methodName: 'updateCacheContent',
                 controller,
                 response,
                 next,
@@ -9344,7 +9265,7 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 nameContains: {"in":"query","name":"nameContains","required":true,"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},
                 start: {"in":"query","name":"start","required":true,"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},
                 end: {"in":"query","name":"end","required":true,"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},
-                folder: {"in":"query","name":"folder","required":true,"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["archive"]},{"dataType":"enum","enums":["error"]}]},
+                maxNumberOfFilesReturned: {"in":"query","name":"maxNumberOfFilesReturned","required":true,"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"undefined"}]},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
         };
         app.get('/api/history/:historyId/cache/search',
@@ -9377,7 +9298,7 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
         const argsHistoryQueryController_getCacheFileContent: Record<string, TsoaRoute.ParameterSchema> = {
                 historyId: {"in":"path","name":"historyId","required":true,"dataType":"string"},
                 filename: {"in":"path","name":"filename","required":true,"dataType":"string"},
-                folder: {"in":"query","name":"folder","required":true,"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["archive"]},{"dataType":"enum","enums":["error"]}]},
+                folder: {"in":"query","name":"folder","required":true,"ref":"DataFolderType"},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
         };
         app.get('/api/history/:historyId/cache/content/:filename',
@@ -9407,127 +9328,27 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
             }
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-        const argsHistoryQueryController_removeCacheContent: Record<string, TsoaRoute.ParameterSchema> = {
+        const argsHistoryQueryController_updateCacheContent: Record<string, TsoaRoute.ParameterSchema> = {
                 historyId: {"in":"path","name":"historyId","required":true,"dataType":"string"},
-                folder: {"in":"query","name":"folder","required":true,"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["archive"]},{"dataType":"enum","enums":["error"]}]},
-                filenames: {"in":"body","name":"filenames","required":true,"dataType":"array","array":{"dataType":"string"}},
+                updateCommand: {"in":"body","name":"updateCommand","required":true,"ref":"CacheContentUpdateCommand"},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
         };
-        app.delete('/api/history/:historyId/cache/remove',
+        app.delete('/api/history/:historyId/cache/update',
             ...(fetchMiddlewares<RequestHandler>(HistoryQueryController)),
-            ...(fetchMiddlewares<RequestHandler>(HistoryQueryController.prototype.removeCacheContent)),
+            ...(fetchMiddlewares<RequestHandler>(HistoryQueryController.prototype.updateCacheContent)),
 
-            async function HistoryQueryController_removeCacheContent(request: ExRequest, response: ExResponse, next: any) {
+            async function HistoryQueryController_updateCacheContent(request: ExRequest, response: ExResponse, next: any) {
 
             // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 
             let validatedArgs: any[] = [];
             try {
-                validatedArgs = templateService.getValidatedArgs({ args: argsHistoryQueryController_removeCacheContent, request, response });
+                validatedArgs = templateService.getValidatedArgs({ args: argsHistoryQueryController_updateCacheContent, request, response });
 
                 const controller = new HistoryQueryController();
 
               await templateService.apiHandler({
-                methodName: 'removeCacheContent',
-                controller,
-                response,
-                next,
-                validatedArgs,
-                successStatus: 204,
-              });
-            } catch (err) {
-                return next(err);
-            }
-        });
-        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-        const argsHistoryQueryController_removeAllCacheContent: Record<string, TsoaRoute.ParameterSchema> = {
-                historyId: {"in":"path","name":"historyId","required":true,"dataType":"string"},
-                folder: {"in":"query","name":"folder","required":true,"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["archive"]},{"dataType":"enum","enums":["error"]}]},
-                request: {"in":"request","name":"request","required":true,"dataType":"object"},
-        };
-        app.delete('/api/history/:historyId/cache/remove-all',
-            ...(fetchMiddlewares<RequestHandler>(HistoryQueryController)),
-            ...(fetchMiddlewares<RequestHandler>(HistoryQueryController.prototype.removeAllCacheContent)),
-
-            async function HistoryQueryController_removeAllCacheContent(request: ExRequest, response: ExResponse, next: any) {
-
-            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-
-            let validatedArgs: any[] = [];
-            try {
-                validatedArgs = templateService.getValidatedArgs({ args: argsHistoryQueryController_removeAllCacheContent, request, response });
-
-                const controller = new HistoryQueryController();
-
-              await templateService.apiHandler({
-                methodName: 'removeAllCacheContent',
-                controller,
-                response,
-                next,
-                validatedArgs,
-                successStatus: 204,
-              });
-            } catch (err) {
-                return next(err);
-            }
-        });
-        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-        const argsHistoryQueryController_moveCacheContent: Record<string, TsoaRoute.ParameterSchema> = {
-                historyId: {"in":"path","name":"historyId","required":true,"dataType":"string"},
-                originFolder: {"in":"query","name":"originFolder","required":true,"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["archive"]},{"dataType":"enum","enums":["error"]}]},
-                destinationFolder: {"in":"query","name":"destinationFolder","required":true,"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["archive"]},{"dataType":"enum","enums":["error"]}]},
-                filenames: {"in":"body","name":"filenames","required":true,"dataType":"array","array":{"dataType":"string"}},
-                request: {"in":"request","name":"request","required":true,"dataType":"object"},
-        };
-        app.post('/api/history/:historyId/cache/move',
-            ...(fetchMiddlewares<RequestHandler>(HistoryQueryController)),
-            ...(fetchMiddlewares<RequestHandler>(HistoryQueryController.prototype.moveCacheContent)),
-
-            async function HistoryQueryController_moveCacheContent(request: ExRequest, response: ExResponse, next: any) {
-
-            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-
-            let validatedArgs: any[] = [];
-            try {
-                validatedArgs = templateService.getValidatedArgs({ args: argsHistoryQueryController_moveCacheContent, request, response });
-
-                const controller = new HistoryQueryController();
-
-              await templateService.apiHandler({
-                methodName: 'moveCacheContent',
-                controller,
-                response,
-                next,
-                validatedArgs,
-                successStatus: 204,
-              });
-            } catch (err) {
-                return next(err);
-            }
-        });
-        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-        const argsHistoryQueryController_moveAllCacheContent: Record<string, TsoaRoute.ParameterSchema> = {
-                historyId: {"in":"path","name":"historyId","required":true,"dataType":"string"},
-                originFolder: {"in":"query","name":"originFolder","required":true,"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["archive"]},{"dataType":"enum","enums":["error"]}]},
-                destinationFolder: {"in":"query","name":"destinationFolder","required":true,"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cache"]},{"dataType":"enum","enums":["archive"]},{"dataType":"enum","enums":["error"]}]},
-                request: {"in":"request","name":"request","required":true,"dataType":"object"},
-        };
-        app.post('/api/history/:historyId/cache/move-all',
-            ...(fetchMiddlewares<RequestHandler>(HistoryQueryController)),
-            ...(fetchMiddlewares<RequestHandler>(HistoryQueryController.prototype.moveAllCacheContent)),
-
-            async function HistoryQueryController_moveAllCacheContent(request: ExRequest, response: ExResponse, next: any) {
-
-            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-
-            let validatedArgs: any[] = [];
-            try {
-                validatedArgs = templateService.getValidatedArgs({ args: argsHistoryQueryController_moveAllCacheContent, request, response });
-
-                const controller = new HistoryQueryController();
-
-              await templateService.apiHandler({
-                methodName: 'moveAllCacheContent',
+                methodName: 'updateCacheContent',
                 controller,
                 response,
                 next,

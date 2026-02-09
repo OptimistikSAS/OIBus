@@ -15,11 +15,11 @@ import { HistoryQueryListComponent } from './history-query/history-query-list.co
 import { HistoryQueryDetailComponent } from './history-query/history-query-detail/history-query-detail.component';
 import { LoginComponent } from './auth/login/login.component';
 import { authenticationGuard } from './auth/authentication.guard';
-import { ExploreNorthCacheComponent } from './north/explore-cache/explore-north-cache.component';
 import { EditUserSettingsComponent } from './user-settings/edit-user-settings/edit-user-settings.component';
-import { ExploreHistoryCacheComponent } from './history-query/explore-cache/explore-history-cache.component';
 import { OIARegistrationComponent } from './engine/oia-registration/oia-registration.component';
 import { UnsavedChangesGuard } from './shared/unsaved-changes.guard';
+import { ExploreNorthCacheComponent } from './north/explore-north-cache/explore-north-cache.component';
+import { ExploreHistoryCacheComponent } from './history-query/explore-history-cache/explore-history-cache.component';
 
 export const ROUTES: Routes = [
   { path: 'login', component: LoginComponent },

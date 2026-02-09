@@ -11,6 +11,8 @@ import { OIBusOPCUAValue } from '../../transformers/connector-types.model';
 import CacheService from '../../service/cache/cache.service';
 import { createSessionConfigs, initOPCUACertificateFolders } from '../../service/utils-opcua';
 import { OIBusError } from '../../model/engine.model';
+import { ReadStream } from 'node:fs';
+import { streamToString } from '../../service/utils';
 
 /**
  * Class NorthOPCUA - Write values in an OPCUA server
@@ -21,24 +23,43 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
   client: ClientSession | null = null;
   private reconnectTimeout: NodeJS.Timeout | null = null;
 
-  constructor(
-    connector: NorthConnectorEntity<NorthOPCUASettings>,
-    logger: pino.Logger,
-    cacheFolderPath: string,
-    cacheService: CacheService
-  ) {
-    super(connector, logger, cacheFolderPath, cacheService);
+  constructor(connector: NorthConnectorEntity<NorthOPCUASettings>, logger: pino.Logger, cacheService: CacheService) {
+    super(connector, logger, cacheService);
+  }
+
+  supportedTypes(): Array<string> {
+    return ['opcua'];
+  }
+
+  async testConnection(): Promise<void> {
+    const tempCertFolder = `opcua-test-${randomUUID()}`;
+    await initOPCUACertificateFolders(tempCertFolder);
+    const clientCertificateManager = new OPCUACertificateManager({
+      rootFolder: path.resolve(tempCertFolder, 'opcua'),
+      automaticallyAcceptUnknownCertificate: true
+    });
+    clientCertificateManager.state = 2;
+    this.clientCertificateManager = clientCertificateManager;
+    let session;
+    try {
+      session = await this.createSession();
+    } finally {
+      await fs.rm(path.resolve(tempCertFolder), { recursive: true, force: true });
+      if (session) {
+        await session.close();
+        session = null;
+      }
+    }
   }
 
   override async start(): Promise<void> {
-    await initOPCUACertificateFolders(this.cacheFolderPath);
+    await initOPCUACertificateFolders(this.getCacheFolder());
     if (!this.clientCertificateManager) {
       this.clientCertificateManager = new OPCUACertificateManager({
-        rootFolder: path.resolve(this.cacheFolderPath, 'opcua'),
+        rootFolder: path.resolve(this.getCacheFolder(), 'opcua'),
         automaticallyAcceptUnknownCertificate: true
       });
-      // Set the state to the CertificateManager to 2 (Initialized) to avoid a call to openssl
-      // It is useful for offline instances of OIBus where downloading openssl is not possible
+      // Set state to 2 (Initialized) to avoid openssl call
       this.clientCertificateManager.state = 2;
     }
     await super.start();
@@ -55,10 +76,7 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
       await super.connect();
     } catch (error: unknown) {
       this.logger.error(`Error while connecting to the OPCUA server: ${(error as Error).message}`);
-      await this.disconnect();
-      if (!this.disconnecting && this.connector.enabled) {
-        this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
-      }
+      await this.triggerReconnect();
     }
   }
 
@@ -78,29 +96,6 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
     this.disconnecting = false;
   }
 
-  override async testConnection(): Promise<void> {
-    const tempCertFolder = `opcua-test-${randomUUID()}`;
-    await initOPCUACertificateFolders(tempCertFolder);
-    const clientCertificateManager = new OPCUACertificateManager({
-      rootFolder: path.resolve(tempCertFolder, 'opcua'),
-      automaticallyAcceptUnknownCertificate: true
-    });
-    // Set the state to the CertificateManager to 2 (Initialized) to avoid a call to openssl
-    // It is useful for offline instances of OIBus where downloading openssl is not possible
-    clientCertificateManager.state = 2;
-
-    let session;
-    try {
-      session = await this.createSession();
-    } finally {
-      await fs.rm(path.resolve(tempCertFolder), { recursive: true, force: true });
-      if (session) {
-        await session.close();
-        session = null;
-      }
-    }
-  }
-
   async createSession(): Promise<ClientSession> {
     const { options, userIdentity } = await createSessionConfigs(
       this.connector.id,
@@ -110,22 +105,14 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
       undefined
     );
     this.logger.debug(`Connecting to OPCUA on ${this.connector.settings.url}`);
-    const session = await OPCUAClient.createSession(this.connector.settings.url, userIdentity, options);
-    this.logger.info(`OPCUA connector "${this.connector.name}" connected`);
-    return session;
+    return await OPCUAClient.createSession(this.connector.settings.url, userIdentity, options);
   }
 
-  async handleContent(cacheMetadata: CacheMetadata): Promise<void> {
-    if (!this.supportedTypes().includes(cacheMetadata.contentType)) {
-      throw new Error(`Unsupported data type: ${cacheMetadata.contentType} (file ${cacheMetadata.contentFile})`);
-    }
+  async handleContent(fileStream: ReadStream, _cacheMetadata: CacheMetadata): Promise<void> {
     if (this.reconnectTimeout) {
       throw new OIBusError('Connector is reconnecting...', true);
     }
-    return this.handleValues(JSON.parse(await fs.readFile(cacheMetadata.contentFile, { encoding: 'utf-8' })) as Array<OIBusOPCUAValue>);
-  }
-
-  private async handleValues(values: Array<OIBusOPCUAValue>) {
+    const values = JSON.parse(await streamToString(fileStream)) as Array<OIBusOPCUAValue>;
     for (const value of values) {
       let nodeId;
       try {
@@ -140,18 +127,27 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
           continue;
         }
 
-        // Read the DataType attribute of the node
+        // Read DataType
         const dataValue = await this.client.read({
           nodeId,
           attributeId: AttributeIds.DataType
         });
-        // Extract the data type from the DataValue
-        const dataType = dataValue.value.value.value as DataType;
-        // Ensure that the dataType is valid
-        if (!Object.values(DataType).includes(dataType)) {
-          this.logger.error(`Invalid data type for node ID ${nodeId}`);
+
+        // Extract and Validate Type
+        if (!dataValue.value || !dataValue.value.value) {
+          this.logger.error(`Could not read DataType for node ID "${nodeId}"`);
           continue;
         }
+
+        // Handling Variant/DataType complexities might need casting, simplified here
+        const dataType = dataValue.value.value.value as DataType;
+
+        // Basic check if it's a valid enum value (might need stricter check depending on node-opcua version)
+        if (!Object.values(DataType).includes(dataType)) {
+          this.logger.error(`Invalid data type for node ID "${nodeId}"`);
+          continue;
+        }
+
         // Write the value to the node
         const writeResult = await this.client.write({
           nodeId,
@@ -165,29 +161,31 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
         });
 
         if (writeResult.isGood()) {
-          this.logger.trace(`Value ${value.value} written successfully on nodeId ${value.nodeId}`);
+          this.logger.trace(`Value "${value.value}" written successfully on node ID "${value.nodeId}"`);
         } else {
-          this.logger.error(`Failed to write value ${value.value} on nodeId ${value.nodeId}: ${writeResult.name}`);
+          this.logger.error(`Failed to write value "${value.value}" for node ID "${value.nodeId}": ${writeResult.name}`);
         }
       } catch (error: unknown) {
+        const message = (error as Error).message;
+
         // Check for specific write errors
-        if ((error as Error).message.includes('BadNodeIdUnknown') || (error as Error).message.includes('BadAttributeIdInvalid')) {
-          this.logger.error(`Write error on nodeId ${nodeId}: ${(error as Error).message}`);
-          // Continue to the next iteration or operation
-        } else {
-          const oibusError = new OIBusError((error as Error).message, true);
-          this.logger.error(`Unexpected error: ${oibusError.message}`);
-          await this.disconnect();
-          if (!this.disconnecting && this.connector.enabled) {
-            this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
-          }
-          throw oibusError;
+        if (message.includes('BadNodeId') || message.includes('BadAttributeId')) {
+          this.logger.error(`Write error on node ID "${nodeId}": ${message}`);
+          continue;
         }
+
+        const oibusError = new OIBusError((error as Error).message, true);
+        this.logger.error(`Unexpected OPCUA error: ${oibusError.message}`);
+        await this.triggerReconnect();
+        throw oibusError;
       }
     }
   }
 
-  supportedTypes(): Array<string> {
-    return ['opcua'];
+  private async triggerReconnect(): Promise<void> {
+    await this.disconnect();
+    if (!this.disconnecting && this.connector.enabled && !this.reconnectTimeout) {
+      this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
+    }
   }
 }

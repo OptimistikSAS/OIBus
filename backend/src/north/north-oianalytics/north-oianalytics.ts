@@ -1,14 +1,12 @@
 import NorthConnector from '../north-connector';
 import pino from 'pino';
-import { createReadStream } from 'node:fs';
+import { ReadStream } from 'node:fs';
 import zlib from 'node:zlib';
 import FormData from 'form-data';
 import { HTTPRequest, ReqResponse, retryableHttpStatusCodes } from '../../service/http-request.utils';
-import path from 'node:path';
-import { compress, filesExists } from '../../service/utils';
+import { streamToString } from '../../service/utils';
 import { NorthOIAnalyticsSettings } from '../../../shared/model/north-settings.model';
-import { CacheMetadata, OIBusTimeValue } from '../../../shared/model/engine.model';
-import fs from 'node:fs/promises';
+import { CacheMetadata } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import CertificateRepository from '../../repository/config/certificate.repository';
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
@@ -24,15 +22,18 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
   constructor(
     connector: NorthConnectorEntity<NorthOIAnalyticsSettings>,
     logger: pino.Logger,
-    cacheFolderPath: string,
     cacheService: CacheService,
     private readonly certificateRepository: CertificateRepository,
     private readonly oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository
   ) {
-    super(connector, logger, cacheFolderPath, cacheService);
+    super(connector, logger, cacheService);
   }
 
-  override async testConnection(): Promise<void> {
+  supportedTypes(): Array<string> {
+    return ['any', 'time-values', 'oianalytics'];
+  }
+
+  async testConnection(): Promise<void> {
     const registrationSettings = this.oIAnalyticsRegistrationRepository.get()!;
     await testOIAnalyticsConnection(
       this.connector.settings.useOiaModule,
@@ -44,25 +45,18 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     );
   }
 
-  async handleContent(cacheMetadata: CacheMetadata): Promise<void> {
-    if (!this.supportedTypes().includes(cacheMetadata.contentType)) {
-      throw new Error(`Unsupported data type: ${cacheMetadata.contentType} (file ${cacheMetadata.contentFile})`);
-    }
-
+  async handleContent(fileStream: ReadStream, cacheMetadata: CacheMetadata): Promise<void> {
     switch (cacheMetadata.contentType) {
       case 'any':
-        return this.handleFile(cacheMetadata.contentFile);
+        return this.handleFile(fileStream, cacheMetadata);
 
       case 'time-values':
       case 'oianalytics':
-        return this.handleValues(JSON.parse(await fs.readFile(cacheMetadata.contentFile, { encoding: 'utf-8' })) as Array<OIBusTimeValue>);
+        return this.handleValues(fileStream);
     }
   }
 
-  /**
-   * Handle values by sending them to OIAnalytics
-   */
-  async handleValues(values: Array<OIBusTimeValue>): Promise<void> {
+  async handleValues(fileStream: ReadStream): Promise<void> {
     const registrationSettings = this.oIAnalyticsRegistrationRepository.get()!;
     const httpOptions = await buildHttpOptions(
       'POST',
@@ -81,7 +75,9 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
       getHost(this.connector.settings.useOiaModule, registrationSettings, this.connector.settings.specificSettings),
       { useApiGateway: registrationSettings.useApiGateway, apiGatewayBaseEndpoint: registrationSettings.apiGatewayBaseEndpoint }
     );
-    httpOptions.body = this.connector.settings.compress ? zlib.gzipSync(JSON.stringify(values)) : JSON.stringify(values);
+    httpOptions.body = this.connector.settings.compress
+      ? await streamToString(fileStream.pipe(zlib.createGzip({ level: 9 })))
+      : await streamToString(fileStream);
     httpOptions.query = { dataSourceId: this.connector.name };
 
     let response: ReqResponse;
@@ -99,30 +95,17 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     }
   }
 
-  /**
-   * Handle the file by sending it to OIAnalytics.
-   */
-  async handleFile(filePath: string): Promise<void> {
-    if (!(await filesExists(filePath))) {
-      throw new Error(`File ${filePath} does not exist`);
-    }
-    const { name, ext, dir } = path.parse(filePath);
-    const randomString = name.slice(name.lastIndexOf('-'));
-
-    const fileToSend =
-      this.connector.settings.compress && ext !== '.gz'
-        ? path.resolve(dir, `${name.replace(randomString, '')}${ext}${randomString}.gz`)
-        : path.resolve(dir, `${name}${ext}`);
-    if (this.connector.settings.compress && ext !== '.gz' && !(await filesExists(fileToSend))) {
-      // Compress only if the file has not been compressed by another try first
-      await compress(filePath, fileToSend);
-    }
-
-    const readStream = createReadStream(fileToSend);
+  async handleFile(fileStream: ReadStream, cacheMetadata: CacheMetadata): Promise<void> {
+    const readStream =
+      this.connector.settings.compress && !cacheMetadata.contentFile.endsWith('.gz')
+        ? fileStream.pipe(zlib.createGzip({ level: 9 }))
+        : fileStream;
     const body = new FormData();
-    const filename = path.parse(fileToSend).base.replace(randomString, '');
     body.append('file', readStream, {
-      filename
+      filename:
+        this.connector.settings.compress && !cacheMetadata.contentFile.endsWith('.gz')
+          ? `${cacheMetadata.contentFile}.gz`
+          : cacheMetadata.contentFile
     });
 
     const registrationSettings = this.oIAnalyticsRegistrationRepository.get()!;
@@ -145,17 +128,8 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     let response: ReqResponse;
     try {
       response = await HTTPRequest(url, httpOptions);
-      readStream.close();
-      if (this.connector.settings.compress && ext !== '.gz') {
-        // Remove only the compressed file. The uncompressed file will be removed by north connector logic
-        await fs.unlink(fileToSend);
-      }
     } catch (fetchError) {
       throw new OIBusError(`Fail to reach file endpoint ${url}. ${fetchError}`, true);
-    } finally {
-      if (!readStream.closed) {
-        readStream.close();
-      }
     }
 
     if (!response.ok) {
@@ -164,9 +138,5 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
         retryableHttpStatusCodes.includes(response.statusCode)
       );
     }
-  }
-
-  supportedTypes(): Array<string> {
-    return ['any', 'time-values', 'oianalytics'];
   }
 }
