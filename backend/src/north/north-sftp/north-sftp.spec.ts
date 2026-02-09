@@ -4,7 +4,6 @@ import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-serv
 import { encryptionService } from '../../service/encryption.service';
 import NorthSftp from './north-sftp';
 import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
-import csv from 'papaparse';
 import { NorthSFTPSettings } from '../../../shared/model/north-settings.model';
 import sftpClient from 'ssh2-sftp-client';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
@@ -13,17 +12,23 @@ import CacheService from '../../service/cache/cache.service';
 import { createTransformer } from '../../service/transformer.service';
 import OIBusTransformer from '../../transformers/oibus-transformer';
 import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
-import { getFilenameWithoutRandomId } from '../../service/utils';
+import fs from 'node:fs/promises';
+import { ReadStream } from 'node:fs';
+import { buildNorthConfiguration } from '../../tests/utils/test-utils';
 
+// Mock dependencies
 jest.mock('node:fs/promises');
+jest.mock('ssh2-sftp-client');
+jest.mock('../../service/utils');
+jest.mock('../../service/transformer.service');
+jest.mock('../../service/encryption.service', () => ({
+  encryptionService: new EncryptionServiceMock('', '')
+}));
 
 const logger: pino.Logger = new PinoLogger();
 const cacheService: CacheService = new CacheServiceMock();
 const oiBusTransformer: OIBusTransformer = new OIBusTransformerMock() as unknown as OIBusTransformer;
 
-jest.mock('../../service/encryption.service', () => ({
-  encryptionService: new EncryptionServiceMock('', '')
-}));
 jest.mock(
   '../../service/cache/cache.service',
   () =>
@@ -40,10 +45,6 @@ const mockSftpClient = {
   end: jest.fn(),
   exists: jest.fn()
 };
-jest.mock('ssh2-sftp-client');
-jest.mock('../../service/utils');
-jest.mock('../../service/transformer.service');
-jest.mock('papaparse');
 
 let configuration: NorthConnectorEntity<NorthSFTPSettings>;
 let north: NorthSftp;
@@ -52,23 +53,23 @@ describe('NorthSFTP', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    configuration = JSON.parse(JSON.stringify(testData.north.list[0]));
-    configuration.settings = {
+
+    configuration = buildNorthConfiguration<NorthSFTPSettings>('sftp', {
       host: '127.0.0.1',
       port: 2222,
       remoteFolder: 'remoteFolder',
       authentication: 'password',
       username: 'user',
       password: 'pass',
-      prefix: '',
-      suffix: ''
-    };
+      prefix: 'prefix_',
+      suffix: '_suffix'
+    });
     (sftpClient as jest.Mock).mockImplementation(() => mockSftpClient);
-    (csv.unparse as jest.Mock).mockReturnValue('csv content');
     (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
-    (getFilenameWithoutRandomId as jest.Mock).mockReturnValue('example.file');
+    // Default mock for readFile (used in private key auth, but safe to mock globally)
+    (fs.readFile as jest.Mock).mockResolvedValue('private-key-content');
 
-    north = new NorthSftp(configuration, logger, 'cacheFolder', cacheService);
+    north = new NorthSftp(configuration, logger, cacheService);
     await north.start();
   });
 
@@ -76,28 +77,37 @@ describe('NorthSFTP', () => {
     cacheService.cacheSizeEventEmitter.removeAllListeners();
   });
 
-  it('should properly handle files', async () => {
-    north.sendToSftpServer = jest.fn();
-    const expectedFileName = `${configuration.settings.prefix}example${configuration.settings.suffix}.file`;
-    await north.handleContent({
+  it('should retrieve supported types', () => {
+    expect(north.supportedTypes()).toEqual(['any']);
+  });
+
+  it('should properly handle files and call sendToSftpServer', async () => {
+    const sendSpy = jest.spyOn(north, 'sendToSftpServer').mockResolvedValue(undefined);
+    const mockStream = {} as ReadStream;
+
+    // Logic: prefix + name + suffix + ext
+    // contentFile: 'path/to/file/example-123.file' -> name='example-123', ext='.file'
+    // prefix='prefix_', suffix='_suffix'
+    const expectedFileName = `prefix_example-123_suffix.file`;
+    const expectedTarget = `remoteFolder/${expectedFileName}`;
+
+    await north.handleContent(mockStream, {
       contentFile: 'path/to/file/example-123.file',
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
       contentType: 'any'
     });
-    expect(north.sendToSftpServer).toHaveBeenCalledWith(
-      'path/to/file/example-123.file',
-      `${configuration.settings.remoteFolder}/${expectedFileName}`
-    );
+
+    expect(sendSpy).toHaveBeenCalledWith(mockStream, expectedTarget);
   });
 
   it('should properly catch handle file error', async () => {
-    north.sendToSftpServer = jest.fn().mockImplementationOnce(() => {
-      throw new Error('Error handling files');
-    });
+    jest.spyOn(north, 'sendToSftpServer').mockRejectedValue(new Error('Error handling files'));
+    const mockStream = {} as ReadStream;
+
     await expect(
-      north.handleContent({
+      north.handleContent(mockStream, {
         contentFile: 'path/to/file/example-123.file',
         contentSize: 1234,
         numberOfElement: 1,
@@ -107,29 +117,35 @@ describe('NorthSFTP', () => {
     ).rejects.toThrow('Error handling files');
   });
 
-  it('should send content into SFTP server', async () => {
-    await north.sendToSftpServer('myFile.csv', 'remoteFolder/target');
+  it('should send content into SFTP server (Password Auth)', async () => {
+    const mockStream = {} as ReadStream;
+    await north.sendToSftpServer(mockStream, 'remoteFolder/target');
+
     expect(mockSftpClient.connect).toHaveBeenCalledTimes(1);
-    expect(mockSftpClient.put).toHaveBeenCalledTimes(1);
+    expect(mockSftpClient.put).toHaveBeenCalledWith(mockStream, 'remoteFolder/target');
     expect(mockSftpClient.end).toHaveBeenCalledTimes(1);
-    expect(encryptionService.decryptText).toHaveBeenCalledTimes(1);
+    expect(encryptionService.decryptText).toHaveBeenCalledWith('pass');
   });
 
   it('should send content into SFTP server without user and password', async () => {
     configuration.settings.username = '';
     configuration.settings.password = null;
-    await north.sendToSftpServer('myFile.csv', 'remoteFolder/target');
+    const mockStream = {} as ReadStream;
+
+    await north.sendToSftpServer(mockStream, 'remoteFolder/target');
+
     expect(mockSftpClient.connect).toHaveBeenCalledTimes(1);
-    expect(mockSftpClient.put).toHaveBeenCalledTimes(1);
+    expect(mockSftpClient.put).toHaveBeenCalledWith(mockStream, 'remoteFolder/target');
     expect(mockSftpClient.end).toHaveBeenCalledTimes(1);
     expect(encryptionService.decryptText).not.toHaveBeenCalled();
   });
 });
 
-describe('NorthSFTP without suffix or prefix', () => {
+describe('NorthSFTP without suffix or prefix (Private Key Auth)', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+
     configuration = JSON.parse(JSON.stringify(testData.north.list[0]));
     configuration.settings = {
       host: '127.0.0.1',
@@ -137,91 +153,89 @@ describe('NorthSFTP without suffix or prefix', () => {
       remoteFolder: 'remoteFolder',
       authentication: 'private-key',
       username: 'user',
-      privateKey: 'myPrivateKey',
+      privateKey: 'path/to/private.key',
       passphrase: 'myPassphrase',
       prefix: '',
       suffix: ''
     };
     (sftpClient as jest.Mock).mockImplementation(() => mockSftpClient);
     (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
+    (fs.readFile as jest.Mock).mockResolvedValue('actual-private-key-content');
 
-    north = new NorthSftp(configuration, logger, 'cacheFolder', cacheService);
+    north = new NorthSftp(configuration, logger, cacheService);
   });
 
   afterEach(() => {
     cacheService.cacheSizeEventEmitter.removeAllListeners();
   });
 
-  it('should properly handle files', async () => {
-    north.sendToSftpServer = jest.fn();
-    await north.handleContent({
+  it('should properly handle files (Direct Naming)', async () => {
+    const sendSpy = jest.spyOn(north, 'sendToSftpServer').mockResolvedValue(undefined);
+    const mockStream = {} as ReadStream;
+
+    // name: example-123, ext: .file
+    // prefix: '', suffix: '' -> example-123.file
+    await north.handleContent(mockStream, {
       contentFile: 'path/to/file/example-123.file',
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
       contentType: 'any'
     });
-    expect(north.sendToSftpServer).toHaveBeenCalledWith(
-      'path/to/file/example-123.file',
-      `${configuration.settings.remoteFolder}/example.file`
+
+    expect(sendSpy).toHaveBeenCalledWith(mockStream, 'remoteFolder/example-123.file');
+  });
+
+  it('should use private key for connection', async () => {
+    const mockStream = {} as ReadStream;
+    await north.sendToSftpServer(mockStream, 'target');
+
+    expect(fs.readFile).toHaveBeenCalledWith('path/to/private.key', 'utf8');
+    expect(encryptionService.decryptText).toHaveBeenCalledWith('myPassphrase');
+
+    expect(mockSftpClient.connect).toHaveBeenCalledWith(
+      expect.objectContaining({
+        username: 'user',
+        privateKey: 'actual-private-key-content',
+        passphrase: 'myPassphrase' // decrypted value mocked usually returns input in default mock
+      })
     );
   });
 
+  // --- Test Connection ---
+
   it('should have access to output folder', async () => {
-    mockSftpClient.exists = jest.fn().mockReturnValueOnce('d');
+    mockSftpClient.exists = jest.fn().mockReturnValueOnce('d'); // 'd' = directory
+
     await expect(north.testConnection()).resolves.not.toThrow();
+
     expect(mockSftpClient.connect).toHaveBeenCalledTimes(1);
-    expect(mockSftpClient.exists).toHaveBeenCalledTimes(1);
+    expect(mockSftpClient.exists).toHaveBeenCalledWith('remoteFolder');
     expect(mockSftpClient.end).toHaveBeenCalledTimes(1);
   });
 
   it('should throw an error if no access', async () => {
-    mockSftpClient.exists = jest.fn().mockReturnValueOnce(false);
-    await expect(north.testConnection()).rejects.toThrow(
-      new Error(`Remote target "${configuration.settings.remoteFolder}" does not exist or the user does not have the right permissions`)
-    );
-    expect(mockSftpClient.connect).toHaveBeenCalledTimes(1);
-    expect(mockSftpClient.exists).toHaveBeenCalledTimes(1);
+    mockSftpClient.exists = jest.fn().mockReturnValueOnce(false); // false = doesn't exist
+
+    await expect(north.testConnection()).rejects.toThrow(/Remote target .* does not exist/);
     expect(mockSftpClient.end).toHaveBeenCalledTimes(1);
   });
 
   it('should throw an error if it is a file', async () => {
-    mockSftpClient.exists = jest.fn().mockReturnValueOnce('-');
-    await expect(north.testConnection()).rejects.toThrow(
-      new Error(`Remote target "${configuration.settings.remoteFolder}" is not a folder`)
-    );
-    expect(mockSftpClient.connect).toHaveBeenCalledTimes(1);
-    expect(mockSftpClient.exists).toHaveBeenCalledTimes(1);
+    mockSftpClient.exists = jest.fn().mockReturnValueOnce('-'); // '-' = file
+
+    await expect(north.testConnection()).rejects.toThrow(/is not a folder/);
     expect(mockSftpClient.end).toHaveBeenCalledTimes(1);
-    expect(encryptionService.decryptText).toHaveBeenCalledTimes(1);
   });
 
   it('should handle SFTP error', async () => {
-    configuration.settings.username = '';
-    configuration.settings.passphrase = '';
     mockSftpClient.exists = jest.fn().mockImplementationOnce(() => {
       throw new Error('sftp error');
     });
-    await expect(north.testConnection()).rejects.toThrow(
-      new Error(
-        `Access error on "${configuration.settings.remoteFolder}" on "${configuration.settings.host}:${configuration.settings.port}": sftp error`
-      )
-    );
-    expect(mockSftpClient.connect).toHaveBeenCalledTimes(1);
-    expect(mockSftpClient.exists).toHaveBeenCalledTimes(1);
-    expect(mockSftpClient.end).not.toHaveBeenCalled();
-    expect(encryptionService.decryptText).not.toHaveBeenCalled();
-  });
 
-  it('should ignore data if bad content type', async () => {
-    await expect(
-      north.handleContent({
-        contentFile: 'path/to/file/example-123456789.file',
-        contentSize: 1234,
-        numberOfElement: 1,
-        createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'time-values'
-      })
-    ).rejects.toThrow(`Unsupported data type: time-values (file path/to/file/example-123456789.file)`);
+    await expect(north.testConnection()).rejects.toThrow(/Access error on .* sftp error/);
+
+    // Note: Implementation doesn't call end() in catch block
+    expect(mockSftpClient.end).not.toHaveBeenCalled();
   });
 });

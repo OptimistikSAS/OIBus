@@ -1,4 +1,4 @@
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import { inject, Injectable } from '@angular/core';
 import {
@@ -12,7 +12,14 @@ import {
 import { Page } from '../../../../backend/shared/model/types';
 import { OIBusSouthType, SouthConnectorItemTestingSettings } from '../../../../backend/shared/model/south-connector.model';
 import { DownloadService } from './download.service';
-import { CacheMetadata, CacheSearchParam, OIBusContent } from '../../../../backend/shared/model/engine.model';
+import {
+  CacheContentUpdateCommand,
+  CacheSearchParam,
+  CacheSearchResult,
+  DataFolderType,
+  FileCacheContent,
+  OIBusContent
+} from '../../../../backend/shared/model/engine.model';
 import { SouthItemSettings, SouthSettings } from '../../../../backend/shared/model/south-settings.model';
 import { NorthSettings } from '../../../../backend/shared/model/north-settings.model';
 import { OIBusNorthType } from '../../../../backend/shared/model/north-connector.model';
@@ -320,13 +327,12 @@ export class HistoryQueryService {
     return this.http.delete<void>(`/api/history/${historyId}/transformers/${transformerId}`);
   }
 
-  searchCacheContent(
-    historyId: string,
-    searchParams: CacheSearchParam,
-    folder: 'cache' | 'archive' | 'error'
-  ): Observable<Array<{ metadataFilename: string; metadata: CacheMetadata }>> {
-    const params: Record<string, string | Array<string>> = {
-      folder
+  /**
+   * List files from history cache by search params
+   */
+  searchCacheContent(historyId: string, searchParams: CacheSearchParam): Observable<CacheSearchResult> {
+    const params: Record<string, number | string | Array<string>> = {
+      maxNumberOfFilesReturned: searchParams.maxNumberOfFilesReturned
     };
     if (searchParams.start) {
       params['start'] = searchParams.start;
@@ -337,62 +343,26 @@ export class HistoryQueryService {
     if (searchParams.nameContains) {
       params['nameContains'] = searchParams.nameContains;
     }
-    return this.http.get<Array<{ metadataFilename: string; metadata: CacheMetadata }>>(`/api/history/${historyId}/cache/search`, {
+    return this.http.get<CacheSearchResult>(`/api/history/${historyId}/cache/search`, {
       params
     });
   }
 
-  getCacheFileContent(historyId: string, folder: 'cache' | 'archive' | 'error', filename: string): Observable<HttpResponse<Blob>> {
-    return this.http.get<Blob>(`/api/history/${historyId}/cache/content/${filename}`, {
-      responseType: 'blob' as 'json',
-      observe: 'response',
+  /**
+   * Retrieve file content from history cache
+   */
+  getCacheFileContent(historyId: string, folder: DataFolderType, filename: string): Observable<FileCacheContent> {
+    return this.http.get<FileCacheContent>(`/api/history/${historyId}/cache/content/${filename}`, {
       params: {
         folder
       }
     });
   }
 
-  removeCacheContent(historyId: string, folder: 'cache' | 'archive' | 'error', filenames: Array<string>): Observable<void> {
-    return this.http.delete<void>(`/api/history/${historyId}/cache/remove`, {
-      params: {
-        folder
-      },
-      body: filenames
-    });
-  }
-
-  removeAllCacheContent(historyId: string, folder: 'cache' | 'archive' | 'error'): Observable<void> {
-    return this.http.delete<void>(`/api/history/${historyId}/cache/remove-all`, {
-      params: {
-        folder
-      }
-    });
-  }
-
-  moveCacheContent(
-    historyId: string,
-    originFolder: 'cache' | 'archive' | 'error',
-    destinationFolder: 'cache' | 'archive' | 'error',
-    filenames: Array<string>
-  ): Observable<void> {
-    return this.http.post<void>(`/api/history/${historyId}/cache/move`, filenames, {
-      params: {
-        originFolder,
-        destinationFolder
-      }
-    });
-  }
-
-  moveAllCacheContent(
-    historyId: string,
-    originFolder: 'cache' | 'archive' | 'error',
-    destinationFolder: 'cache' | 'archive' | 'error'
-  ): Observable<void> {
-    return this.http.post<void>(`/api/history/${historyId}/cache/move-all`, null, {
-      params: {
-        originFolder,
-        destinationFolder
-      }
-    });
+  /**
+   * Update history cache content by moving or removing files from cache, archive and error folders
+   */
+  updateCacheContent(historyId: string, updateCommand: CacheContentUpdateCommand): Observable<void> {
+    return this.http.post<void>(`/api/history/${historyId}/cache/update`, updateCommand);
   }
 }

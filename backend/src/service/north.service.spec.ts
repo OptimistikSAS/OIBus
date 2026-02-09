@@ -253,12 +253,12 @@ describe('North Service', () => {
 
   it('should get a north stream for metrics', () => {
     service.getNorthDataStream(testData.north.list[0].id);
-    expect(engine.getNorthDataStream).toHaveBeenCalledWith(testData.north.list[0].id);
+    expect(engine.getNorthSSE).toHaveBeenCalledWith(testData.north.list[0].id);
   });
 
   it('should get a north metric', () => {
     service.getNorthMetric(testData.north.list[0].id);
-    expect(engine.getNorthMetric).toHaveBeenCalledWith(testData.north.list[0].id);
+    expect(engine.getNorthMetrics).toHaveBeenCalledWith(testData.north.list[0].id);
   });
 
   it('should test a north connector in creation mode', async () => {
@@ -299,59 +299,10 @@ describe('North Service', () => {
     expect(engine.updateNorthConfiguration).toHaveBeenCalledWith(testData.north.list[0].id);
   });
 
-  it('should search cache content', async () => {
-    await service.searchCacheContent(
-      testData.north.list[0].id,
-      { start: testData.constants.dates.DATE_1, end: testData.constants.dates.DATE_2, nameContains: 'file' },
-      'cache'
-    );
-    expect(engine.searchCacheContent).toHaveBeenCalledWith(
-      'north',
-      testData.north.list[0].id,
-      { start: testData.constants.dates.DATE_1, end: testData.constants.dates.DATE_2, nameContains: 'file' },
-      'cache'
-    );
-  });
-
-  it('should get cache content file stream', async () => {
-    (engine.getCacheContentFileStream as jest.Mock).mockReturnValueOnce('file');
-    const result = await service.getCacheFileContent(testData.north.list[0].id, 'cache', 'filename');
-    expect(result).toEqual('file');
-    expect(engine.getCacheContentFileStream).toHaveBeenCalledWith('north', testData.north.list[0].id, 'cache', 'filename');
-  });
-
-  it('should not get cache content file stream and throw not found', async () => {
-    (engine.getCacheContentFileStream as jest.Mock).mockReturnValueOnce(null);
-    await expect(service.getCacheFileContent(testData.north.list[0].id, 'cache', 'filename')).rejects.toThrow(
-      new NotFoundError(`File "filename" not found in cache`)
-    );
-    expect(engine.getCacheContentFileStream).toHaveBeenCalledWith('north', testData.north.list[0].id, 'cache', 'filename');
-  });
-
-  it('should remove cache content', async () => {
-    await service.removeCacheContent(testData.north.list[0].id, 'cache', ['filename']);
-    expect(engine.removeCacheContent).toHaveBeenCalledWith('north', testData.north.list[0].id, 'cache', ['filename']);
-  });
-
-  it('should remove all cache content', async () => {
-    await service.removeAllCacheContent(testData.north.list[0].id, 'cache');
-    expect(engine.removeAllCacheContent).toHaveBeenCalledWith('north', testData.north.list[0].id, 'cache');
-  });
-
-  it('should move cache content', async () => {
-    await service.moveCacheContent(testData.north.list[0].id, 'cache', 'error', ['filename']);
-    expect(engine.moveCacheContent).toHaveBeenCalledWith('north', testData.north.list[0].id, 'cache', 'error', ['filename']);
-  });
-
-  it('should move all cache content', async () => {
-    await service.moveAllCacheContent(testData.north.list[0].id, 'cache', 'archive');
-    expect(engine.moveAllCacheContent).toHaveBeenCalledWith('north', testData.north.list[0].id, 'cache', 'archive');
-  });
-
   it('should execute setpoint', async () => {
     const northMock = new NorthConnectorMock(testData.north.list[0]);
     (northMock.isEnabled as jest.Mock).mockReturnValueOnce(true);
-    (engine.getNorth as jest.Mock).mockReturnValue(northMock);
+    (engine.getNorth as jest.Mock).mockReturnValue({ north: northMock });
     const callback = jest.fn();
     const commandContent = [{ reference: 'reference', value: '123456' }];
     await service.executeSetpoint('northId', commandContent, callback);
@@ -375,19 +326,10 @@ describe('North Service', () => {
   it('should not execute setpoint if north disabled', async () => {
     const northMock = new NorthConnectorMock(testData.north.list[0]);
     (northMock.isEnabled as jest.Mock).mockReturnValueOnce(false);
-    (engine.getNorth as jest.Mock).mockReturnValue(northMock);
+    (engine.getNorth as jest.Mock).mockReturnValue({ north: northMock });
     const callback = jest.fn();
     await expect(service.executeSetpoint('northId', [{ reference: 'reference', value: '123456' }], callback)).rejects.toThrow(
       `North connector "northId" disabled`
-    );
-    expect(callback).not.toHaveBeenCalled();
-  });
-
-  it('should not execute setpoint content if north not found', async () => {
-    (engine.getNorth as jest.Mock).mockReturnValue(null);
-    const callback = jest.fn();
-    await expect(service.executeSetpoint('badId', [{ reference: 'reference', value: '123456' }], callback)).rejects.toThrow(
-      `North connector "badId" not found`
     );
     expect(callback).not.toHaveBeenCalled();
   });

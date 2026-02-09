@@ -1677,4 +1677,98 @@ export interface CacheSearchParam {
    * @example "example"
    */
   nameContains: string | undefined;
+
+  /**
+   * The maximum number of file to return. Default to 0, meaning no limit
+   */
+  maxNumberOfFilesReturned: number;
+}
+
+export interface CacheSearchResult {
+  searchDate: Instant;
+  metrics: {
+    /**
+     * The last connection time.
+     * @example "2023-01-01T00:00:00Z"
+     */
+    lastConnection: Instant | null;
+
+    /**
+     * The start time of the last run.
+     * @example "2023-01-01T00:00:00Z"
+     */
+    lastRunStart: Instant | null;
+
+    /**
+     * The duration of the last run in milliseconds.
+     * @example 1000
+     */
+    lastRunDuration: number | null;
+
+    /**
+     * The current size of the cache.
+     * @example 0
+     */
+    currentCacheSize: number;
+
+    /**
+     * The current size of errors.
+     * @example 0
+     */
+    currentErrorSize: number;
+
+    /**
+     * The current size of the archive.
+     * @example 0
+     */
+    currentArchiveSize: number;
+  };
+  error: Array<{ filename: string; metadata: CacheMetadata }>;
+  archive: Array<{ filename: string; metadata: CacheMetadata }>;
+  cache: Array<{ filename: string; metadata: CacheMetadata }>;
+}
+
+export type DataFolderType = 'cache' | 'error' | 'archive';
+
+export interface CacheMove {
+  action: 'move';
+  source: DataFolderType;
+  destination: DataFolderType;
+  filenames: Array<string>;
+}
+
+export interface CacheRemove {
+  action: 'remove';
+  folder: DataFolderType;
+  filenames: Array<string>;
+}
+
+export interface CacheView {
+  action: 'view';
+  folder: DataFolderType;
+  filename: string;
+}
+
+export type CacheOperation = CacheView | CacheRemove | CacheMove;
+
+export interface CacheContentUpdateCommand {
+  cache: {
+    remove: Array<string>;
+    move: Array<{ filename: string; to: DataFolderType }>;
+  };
+  error: {
+    remove: Array<string>;
+    move: Array<{ filename: string; to: DataFolderType }>;
+  };
+  archive: {
+    remove: Array<string>;
+    move: Array<{ filename: string; to: DataFolderType }>;
+  };
+}
+
+export interface FileCacheContent {
+  content: string;
+  contentType: 'csv' | 'xml' | 'json' | 'raw';
+  truncated: boolean;
+  totalSize: number;
 }

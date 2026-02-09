@@ -2,9 +2,7 @@ import path from 'node:path';
 import fs from 'node:fs/promises';
 import fsSync, { Dirent, Stats } from 'node:fs';
 import zlib from 'node:zlib';
-
 import minimist from 'minimist';
-
 import { DateTime } from 'luxon';
 import {
   checkScanMode,
@@ -12,7 +10,6 @@ import {
   convertDateTime,
   convertDateTimeToInstant,
   convertDelimiter,
-  createBaseFolders,
   createFolder,
   delay,
   dirSize,
@@ -45,7 +42,6 @@ import os from 'node:os';
 import { EngineSettingsDTO, OIBusInfo } from '../../shared/model/engine.model';
 import cronstrue from 'cronstrue';
 import testData from '../tests/utils/test-data';
-import { mockBaseFolders } from '../tests/utils/test-utils';
 import { SouthConnectorItemDTO } from '../../shared/model/south-connector.model';
 import { HistoryQueryItemDTO } from '../../shared/model/history-query.model';
 
@@ -180,36 +176,6 @@ describe('Service utils', () => {
 
       expect(fs.mkdir).toHaveBeenCalledTimes(1);
       expect(fs.mkdir).toHaveBeenCalledWith(path.resolve(folderToCreate), { recursive: true });
-    });
-  });
-
-  describe('createBaseFolders', () => {
-    beforeEach(() => {
-      jest.clearAllMocks();
-    });
-
-    it('should properly create base folders for north', async () => {
-      (fs.stat as jest.Mock).mockImplementation(() => null);
-
-      await createBaseFolders(mockBaseFolders(testData.north.list[0].id), 'north');
-      expect(fs.mkdir).not.toHaveBeenCalled();
-      expect(fs.stat).toHaveBeenCalledTimes(3);
-    });
-
-    it('should properly create base folders for south', async () => {
-      (fs.stat as jest.Mock).mockImplementation(() => null);
-
-      await createBaseFolders(mockBaseFolders(testData.south.list[0].id), 'south');
-      expect(fs.mkdir).not.toHaveBeenCalled();
-      expect(fs.stat).toHaveBeenCalledTimes(3);
-    });
-
-    it('should properly create base folders for history query', async () => {
-      (fs.stat as jest.Mock).mockImplementation(() => null);
-
-      await createBaseFolders(mockBaseFolders(testData.historyQueries.list[0].id), 'history');
-      expect(fs.mkdir).not.toHaveBeenCalled();
-      expect(fs.stat).toHaveBeenCalledTimes(9);
     });
   });
 

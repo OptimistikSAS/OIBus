@@ -1,7 +1,7 @@
 //
 // DTO to send to OIAnalytics
 //
-import { CacheSearchParam, EngineSettingsCommandDTO } from '../../../shared/model/engine.model';
+import { CacheContentUpdateCommand, CacheSearchParam, DataFolderType, EngineSettingsCommandDTO } from '../../../shared/model/engine.model';
 import { NorthConnectorCommandDTO } from '../../../shared/model/north-connector.model';
 import {
   SouthConnectorCommandDTO,
@@ -415,7 +415,7 @@ export interface OIAnalyticsFetchGetNorthCacheFileContentCommandDTO extends Base
   type: 'get-north-cache-file-content';
   northConnectorId: string;
   commandContent: {
-    folder: 'cache' | 'archive' | 'error';
+    folder: DataFolderType;
     filename: string;
   };
 }
@@ -424,7 +424,7 @@ export interface OIAnalyticsFetchGetHistoryCacheFileContentCommandDTO extends Ba
   type: 'get-history-cache-file-content';
   historyQueryId: string;
   commandContent: {
-    folder: 'cache' | 'archive' | 'error';
+    folder: DataFolderType;
     filename: string;
   };
 }
@@ -432,21 +432,13 @@ export interface OIAnalyticsFetchGetHistoryCacheFileContentCommandDTO extends Ba
 export interface OIAnalyticsFetchUpdateNorthCacheContentCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
   type: 'update-north-cache-content';
   northConnectorId: string;
-  commandContent: {
-    cache: { remove: Array<string>; move: Array<{ filename: string; to: 'cache' | 'error' | 'archive' }> };
-    error: { remove: Array<string>; move: Array<{ filename: string; to: 'cache' | 'error' | 'archive' }> };
-    archive: { remove: Array<string>; move: Array<{ filename: string; to: 'cache' | 'error' | 'archive' }> };
-  };
+  commandContent: CacheContentUpdateCommand;
 }
 
 export interface OIAnalyticsFetchUpdateHistoryCacheContentCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
   type: 'update-history-cache-content';
   historyQueryId: string;
-  commandContent: {
-    cache: { remove: Array<string>; move: Array<{ filename: string; to: 'cache' | 'error' | 'archive' }> };
-    error: { remove: Array<string>; move: Array<{ filename: string; to: 'cache' | 'error' | 'archive' }> };
-    archive: { remove: Array<string>; move: Array<{ filename: string; to: 'cache' | 'error' | 'archive' }> };
-  };
+  commandContent: CacheContentUpdateCommand;
 }
 
 export type OIAnalyticsFetchCommandDTO =
