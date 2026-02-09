@@ -1,6 +1,17 @@
 import DataStreamEngine from '../engine/data-stream-engine';
 import pino from 'pino';
-import { EngineMetrics, EngineSettingsDTO, EngineSettingsUpdateResultDTO, OIBusContent, OIBusInfo } from '../../shared/model/engine.model';
+import {
+  CacheContentUpdateCommand,
+  CacheSearchParam,
+  CacheSearchResult,
+  DataFolderType,
+  EngineMetrics,
+  EngineSettingsDTO,
+  EngineSettingsUpdateResultDTO,
+  FileCacheContent,
+  OIBusContent,
+  OIBusInfo
+} from '../../shared/model/engine.model';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import EngineRepository from '../repository/config/engine.repository';
 import { EngineSettings } from '../model/engine.model';
@@ -270,6 +281,18 @@ export default class OIBusService {
 
   resetSouthMetrics(southId: string): void {
     this.engine.resetSouthMetrics(southId);
+  }
+
+  async searchCacheContent(type: 'north' | 'history', id: string, searchParams: CacheSearchParam): Promise<CacheSearchResult> {
+    return await this.engine.searchCacheContent(type, id, searchParams);
+  }
+
+  async getFileFromCache(type: 'north' | 'history', id: string, folder: DataFolderType, filename: string): Promise<FileCacheContent> {
+    return await this.engine.getFileFromCache(type, id, folder, filename);
+  }
+
+  async updateCacheContent(type: 'north' | 'history', id: string, updateCommand: CacheContentUpdateCommand): Promise<void> {
+    return await this.engine.updateCacheContent(type, id, updateCommand);
   }
 
   /**

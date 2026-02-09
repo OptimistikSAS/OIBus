@@ -3,11 +3,12 @@ import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO, HistoryQueryItemSea
 import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
 import HistoryQueryServiceMock from '../../tests/__mocks__/service/history-query-service.mock';
-import { CacheMetadata, OIBusContent } from '../../../shared/model/engine.model';
+import { CacheContentUpdateCommand, CacheMetadata, OIBusContent } from '../../../shared/model/engine.model';
 import { TransformerDTO, TransformerDTOWithOptions } from '../../../shared/model/transformer.model';
 import { OIBusTestingError } from '../../model/types';
 import { SouthSettings, SouthItemSettings } from '../../../shared/model/south-settings.model';
 import fs from 'node:fs/promises';
+import OibusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
 
 interface HistorySouthItemTestRequest {
   southSettings: SouthSettings;
@@ -41,7 +42,8 @@ describe('HistoryQueryController', () => {
         getInstalledSouthManifests: jest
           .fn()
           .mockReturnValue([{ ...testData.south.manifest, id: testData.historyQueries.list[0].southType }])
-      }
+      },
+      oIBusService: new OibusServiceMock()
     },
     res: {
       attachment: jest.fn(),
@@ -634,12 +636,35 @@ describe('HistoryQueryController', () => {
     expect(mockRequest.services!.historyQueryService.removeTransformer).toHaveBeenCalledWith(historyId, transformerId);
   });
 
-  it('should search cache content', async () => {
+  it('should search cache content with default params', async () => {
+    const northId = testData.north.list[0].id;
+
+    const mockCacheMetadata: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [];
+    (mockRequest.services!.oIBusService.searchCacheContent as jest.Mock).mockResolvedValue(mockCacheMetadata);
+
+    const result = await controller.searchCacheContent(
+      northId,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      mockRequest as CustomExpressRequest
+    );
+
+    expect(mockRequest.services!.oIBusService.searchCacheContent).toHaveBeenCalledWith('history', northId, {
+      start: undefined,
+      end: undefined,
+      nameContains: undefined,
+      maxNumberOfFilesReturned: 0
+    });
+    expect(result).toEqual(mockCacheMetadata);
+  });
+
+  it('should search cache content with parameters', async () => {
     const historyId = testData.historyQueries.list[0].id;
     const nameContains = 'test';
     const start = '2023-01-01';
     const end = '2023-01-02';
-    const folder: 'cache' | 'archive' | 'error' = 'cache';
 
     const mockMetadata: CacheMetadata = {
       contentFile: '/path/to/content.json',
@@ -655,15 +680,16 @@ describe('HistoryQueryController', () => {
       }
     ];
 
-    (mockRequest.services!.historyQueryService.searchCacheContent as jest.Mock).mockResolvedValue(mockResult);
+    (mockRequest.services!.oIBusService.searchCacheContent as jest.Mock).mockResolvedValue(mockResult);
 
-    const result = await controller.searchCacheContent(historyId, nameContains, start, end, folder, mockRequest as CustomExpressRequest);
+    const result = await controller.searchCacheContent(historyId, nameContains, start, end, 1000, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.historyQueryService.searchCacheContent).toHaveBeenCalledWith(
-      historyId,
-      { start, end, nameContains },
-      folder
-    );
+    expect(mockRequest.services!.oIBusService.searchCacheContent).toHaveBeenCalledWith('history', historyId, {
+      start,
+      end,
+      nameContains,
+      maxNumberOfFilesReturned: 1000
+    });
     expect(result).toEqual(mockResult);
   });
 
@@ -673,65 +699,19 @@ describe('HistoryQueryController', () => {
     const folder = 'cache';
 
     const mockStream = { pipe: jest.fn() };
-    (mockRequest.services!.historyQueryService.getCacheFileContent as jest.Mock).mockResolvedValue(mockStream);
+    (mockRequest.services!.oIBusService.getFileFromCache as jest.Mock).mockResolvedValue(mockStream);
 
     await controller.getCacheFileContent(historyId, filename, folder, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.historyQueryService.getCacheFileContent).toHaveBeenCalledWith(historyId, folder, filename);
-    expect(mockRequest.res!.setHeader).toHaveBeenCalledWith('Content-Disposition', `attachment; filename="${filename}"`);
-    expect(mockStream.pipe).toHaveBeenCalledWith(mockRequest.res!);
+    expect(mockRequest.services!.oIBusService.getFileFromCache).toHaveBeenCalledWith('history', historyId, folder, filename);
   });
 
-  it('should remove cache content', async () => {
+  it('should update cache content', async () => {
     const historyId = testData.historyQueries.list[0].id;
-    const folder: 'cache' | 'archive' | 'error' = 'cache';
-    const filenames = ['test1.json', 'test2.json'];
+    (mockRequest.services!.oIBusService.updateCacheContent as jest.Mock).mockResolvedValue(undefined);
 
-    (mockRequest.services!.historyQueryService.removeCacheContent as jest.Mock).mockResolvedValue(undefined);
+    await controller.updateCacheContent(historyId, {} as CacheContentUpdateCommand, mockRequest as CustomExpressRequest);
 
-    await controller.removeCacheContent(historyId, folder, filenames, mockRequest as CustomExpressRequest);
-
-    expect(mockRequest.services!.historyQueryService.removeCacheContent).toHaveBeenCalledWith(historyId, folder, filenames);
-  });
-
-  it('should remove all cache content', async () => {
-    const historyId = testData.historyQueries.list[0].id;
-    const folder: 'cache' | 'archive' | 'error' = 'cache';
-
-    (mockRequest.services!.historyQueryService.removeAllCacheContent as jest.Mock).mockResolvedValue(undefined);
-
-    await controller.removeAllCacheContent(historyId, folder, mockRequest as CustomExpressRequest);
-
-    expect(mockRequest.services!.historyQueryService.removeAllCacheContent).toHaveBeenCalledWith(historyId, folder);
-  });
-
-  it('should move cache content', async () => {
-    const historyId = testData.historyQueries.list[0].id;
-    const originFolder: 'cache' | 'archive' | 'error' = 'cache';
-    const destinationFolder: 'cache' | 'archive' | 'error' = 'archive';
-    const filenames = ['test1.json', 'test2.json'];
-
-    (mockRequest.services!.historyQueryService.moveCacheContent as jest.Mock).mockResolvedValue(undefined);
-
-    await controller.moveCacheContent(historyId, originFolder, destinationFolder, filenames, mockRequest as CustomExpressRequest);
-
-    expect(mockRequest.services!.historyQueryService.moveCacheContent).toHaveBeenCalledWith(
-      historyId,
-      originFolder,
-      destinationFolder,
-      filenames
-    );
-  });
-
-  it('should move all cache content', async () => {
-    const historyId = testData.historyQueries.list[0].id;
-    const originFolder: 'cache' | 'archive' | 'error' = 'cache';
-    const destinationFolder: 'cache' | 'archive' | 'error' = 'archive';
-
-    (mockRequest.services!.historyQueryService.moveAllCacheContent as jest.Mock).mockResolvedValue(undefined);
-
-    await controller.moveAllCacheContent(historyId, originFolder, destinationFolder, mockRequest as CustomExpressRequest);
-
-    expect(mockRequest.services!.historyQueryService.moveAllCacheContent).toHaveBeenCalledWith(historyId, originFolder, destinationFolder);
+    expect(mockRequest.services!.oIBusService.updateCacheContent).toHaveBeenCalledWith('history', historyId, {});
   });
 });
