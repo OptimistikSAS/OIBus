@@ -9,6 +9,7 @@ import { HistoryQueryService } from '../../services/history-query.service';
 import { HistoryQueryDTO } from '../../../../../backend/shared/model/history-query.model';
 import { SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 import testData from '../../../../../backend/src/tests/utils/test-data';
+import { CacheSearchResult } from '../../../../../backend/shared/model/engine.model';
 
 class ExploreHistoryCacheComponentTester extends ComponentTester<ExploreHistoryCacheComponent> {
   constructor() {
@@ -43,8 +44,8 @@ describe('ExploreHistoryCacheComponent', () => {
     northType: 'file-writer',
     startTime: testData.constants.dates.DATE_1,
     endTime: testData.constants.dates.DATE_2,
-    name: 'North Connector',
-    description: 'My North connector description',
+    name: 'History query 1',
+    description: 'My history query description',
     enabled: true,
     caching: {
       trigger: {
@@ -72,6 +73,20 @@ describe('ExploreHistoryCacheComponent', () => {
     items: [],
     northTransformers: []
   } as HistoryQueryDTO;
+  const cacheSearchResult: CacheSearchResult = {
+    searchDate: testData.constants.dates.DATE_3,
+    metrics: {
+      lastConnection: null,
+      lastRunStart: null,
+      lastRunDuration: 0,
+      currentCacheSize: 0,
+      currentErrorSize: 0,
+      currentArchiveSize: 0
+    },
+    error: [],
+    archive: [],
+    cache: []
+  };
 
   beforeEach(async () => {
     historyQueryService = createMock(HistoryQueryService);
@@ -92,13 +107,13 @@ describe('ExploreHistoryCacheComponent', () => {
       ]
     });
     historyQueryService.findById.and.returnValue(of(historyQuery));
-    historyQueryService.searchCacheContent.and.returnValue(of([]));
+    historyQueryService.searchCacheContent.and.returnValue(of(cacheSearchResult));
     tester = new ExploreHistoryCacheComponentTester();
     await tester.change();
   });
 
   it('should have a title, error and archive list components', () => {
-    expect(tester.title).toContainText('Cache content for connector North Connector');
+    expect(tester.title).toContainText('Cache of History query 1');
     expect(tester.cacheContent).toBeDefined();
     expect(tester.errorContent).toBeDefined();
     expect(tester.archiveContent).toBeDefined();

@@ -2499,33 +2499,7 @@
         "retention-duration": "Retention duration for archived data",
         "value": "Enabled: {{ enabled }} / Retention duration: {{ retentionDuration }} hr"
       },
-      "explore-cache": "Explore cache",
-      "refresh-cache": "Refresh cache",
-      "select-all": "Select all",
-      "unselect-all": "Unselect all",
-      "selected-files": "{{ count }} selected",
-      "file-date": "Creation date",
-      "file-size": "Size",
-      "filename": "Filename",
-      "cache-content": "Cache files",
-      "cache-content-none": "No cache files",
-      "error-content": "Error content",
-      "error-content-none": "No errored content",
-      "archive-content": "Archive content",
-      "archive-content-none": "No archived content",
-      "remove-selected-content": "Remove selected content",
-      "archive-selected-content": "Archive selected content",
-      "error-selected-content": "Error selected content",
-      "retry-selected-content": "Retry selected content",
-      "replay-selected-content": "Replay selected content",
-      "actions": "Actions",
-      "view-content": "File content: {{ filename }}",
-      "view-content-action": "View content",
-      "remove-content-action": "Remove content",
-      "archive-content-action": "Archive content",
-      "error-content-action": "Error content",
-      "retry-content-action": "Retry content",
-      "replay-content-action": "Replay content"
+      "explore-cache": "Explore cache"
     },
     "transformers": {
       "title": "Transform payloads",
@@ -2557,9 +2531,6 @@
       "error-size-value": "Current size: {{ currentSize }} / Total errored: {{ totalSize }}",
       "archive-size-title": "Archive size",
       "archive-size-value": "Current size: {{ currentSize }} / Total archived: {{ totalSize }}"
-    },
-    "cache": {
-      "title": "Cache content for connector {{ name }}"
     },
     "tooltips": {
       "add": "Create a new north connector",
@@ -2744,6 +2715,58 @@
       "duplicate": "Duplicate history query",
       "delete": "Delete history query",
       "copy-cache-path": "Copy cache path to clipboard"
+    }
+  },
+  "explore-cache": {
+    "title": "Cache of {{ name }}",
+    "search": {
+      "start": "From",
+      "end": "To",
+      "filename-contains": "Filename contains",
+      "max-number-of-files-returned": "Maximum number of files"
+    },
+    "snapshot-warning": "The displayed data is a snapshot from {{ snapshotDate }}. The state of the cache may have changed in OIBus since the search.",
+    "unsaved-changes": "You have unsaved changes.",
+    "save-changes": "Save changes",
+    "cache-updated": "Cache updated",
+    "select-all": "Select all",
+    "unselect-all": "Unselect all",
+    "selected-files": "{{ count }} selected",
+    "file-date": "Creation date",
+    "filename": "Filename",
+    "file-size": "Size",
+    "cache": {
+      "title": "Cache folder",
+      "title-empty": "Cache folder (empty)",
+      "none": "No file in cache folder"
+    },
+    "error": {
+      "title": "Error folder",
+      "title-empty": "Error folder (empty)",
+      "none": "No file in error folder"
+    },
+    "archive": {
+      "title": "Archive folder",
+      "title-empty": "Archive folder (empty)",
+      "none": "No file in archive folder"
+    },
+    "error-content-action": "Error content",
+    "archive-content-action": "Archive content",
+    "retry-content-action": "Retry content",
+    "replay-content-action": "Replay content",
+    "view-content-action": "View content",
+    "remove-content-action": "Remove content",
+    "remove-selected-content": "Remove selected content",
+    "replay-selected-content": "Replay selected content",
+    "archive-selected-content": "Archive selected content",
+    "retry-selected-content": "Retry selected content",
+    "error-selected-content": "Error selected content",
+    "view-content": {
+      "title": "Content of file {{ filename }}",
+      "truncated": "Content is truncated. Real size: {{ realSize }}. Retrieved size: {{ currentSize }}",
+      "file-size": "Content size: {{ contentSize }}",
+      "content-type": "Content type: {{ contentType }}",
+      "content-type-truncated": "Content type: {{ contentType }}. Displayed as raw text because the content is truncated"
     }
   },
   "scan-mode": {

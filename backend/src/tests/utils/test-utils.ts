@@ -31,6 +31,7 @@ import {
 } from '../../../shared/model/engine.model';
 import { BaseFolders } from 'src/model/types';
 import { Transformer } from '../../model/transformer.model';
+import { OIBusNorthType } from '../../../shared/model/north-connector.model';
 
 const CONFIG_TEST_DATABASE = path.resolve('src', 'tests', 'test-config.db');
 const CRYPTO_TEST_DATABASE = path.resolve('src', 'tests', 'test-crypto.db');
@@ -114,9 +115,9 @@ export const emptyDatabase = async (database: 'config' | 'crypto' | 'cache' | 'l
 };
 
 export const mockBaseFolders = (id: string): BaseFolders => ({
-  archive: path.resolve('archiveBaseFolder', id),
-  cache: path.resolve('cacheBaseFolder', id),
-  error: path.resolve('errorBaseFolder', id)
+  archive: path.resolve('archive', id),
+  cache: path.resolve('cache', id),
+  error: path.resolve('error', id)
 });
 
 const populateMetricsDatabase = async () => {
@@ -716,3 +717,34 @@ const createHistoryQueryTransformer = async (
     })
     .into('history_query_transformers');
 };
+
+export const buildNorthConfiguration = <T extends NorthSettings>(type: OIBusNorthType, settings: T): NorthConnectorEntity<T> => ({
+  id: 'northTest',
+  name: 'My north',
+  type: type,
+  description: 'my north connector',
+  enabled: true,
+  settings,
+  caching: {
+    trigger: {
+      scanMode: testData.scanMode.list[0],
+      numberOfElements: 250,
+      numberOfFiles: 1
+    },
+    throttling: {
+      runMinDelay: 200,
+      maxSize: 30,
+      maxNumberOfElements: 10_000
+    },
+    error: {
+      retryInterval: 1_000,
+      retryCount: 3,
+      retentionDuration: 24
+    },
+    archive: {
+      enabled: false,
+      retentionDuration: 72
+    }
+  },
+  transformers: []
+});

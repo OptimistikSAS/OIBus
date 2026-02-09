@@ -1,4 +1,4 @@
-import { CacheSearchParam, EngineSettingsCommandDTO } from './engine.model';
+import { CacheContentUpdateCommand, CacheSearchParam, DataFolderType, EngineSettingsCommandDTO } from './engine.model';
 import { Instant } from './types';
 import { ScanModeCommandDTO } from './scan-mode.model';
 import { SouthConnectorCommandDTO, SouthConnectorItemTestingSettings } from './south-connector.model';
@@ -1034,26 +1034,20 @@ export interface OIBusSetpointCommandDTO extends BaseOIBusCommandDTO {
 export interface OIBusSearchNorthCacheContentCommandDTO extends BaseOIBusCommandDTO {
   type: 'search-north-cache-content';
   northConnectorId: string;
-  commandContent: {
-    searchParams: CacheSearchParam;
-    maxNumberOfFilesReturned: number;
-  };
+  commandContent: CacheSearchParam;
 }
 
 export interface OIBusSearchHistoryCacheContentCommandDTO extends BaseOIBusCommandDTO {
   type: 'search-history-cache-content';
   historyQueryId: string;
-  commandContent: {
-    searchParams: CacheSearchParam;
-    maxNumberOfFilesReturned: number;
-  };
+  commandContent: CacheSearchParam;
 }
 
 export interface OIBusGetNorthCacheFileContentCommandDTO extends BaseOIBusCommandDTO {
   type: 'get-north-cache-file-content';
   northConnectorId: string;
   commandContent: {
-    folder: 'cache' | 'archive' | 'error';
+    folder: DataFolderType;
     filename: string;
   };
 }
@@ -1062,7 +1056,7 @@ export interface OIBusGetHistoryCacheFileContentCommandDTO extends BaseOIBusComm
   type: 'get-history-cache-file-content';
   historyQueryId: string;
   commandContent: {
-    folder: 'cache' | 'archive' | 'error';
+    folder: DataFolderType;
     filename: string;
   };
 }
@@ -1070,21 +1064,13 @@ export interface OIBusGetHistoryCacheFileContentCommandDTO extends BaseOIBusComm
 export interface OIBusUpdateNorthCacheContentCommandDTO extends BaseOIBusCommandDTO {
   type: 'update-north-cache-content';
   northConnectorId: string;
-  commandContent: {
-    cache: { remove: Array<string>; move: Array<{ filename: string; to: 'cache' | 'error' | 'archive' }> };
-    error: { remove: Array<string>; move: Array<{ filename: string; to: 'cache' | 'error' | 'archive' }> };
-    archive: { remove: Array<string>; move: Array<{ filename: string; to: 'cache' | 'error' | 'archive' }> };
-  };
+  commandContent: CacheContentUpdateCommand;
 }
 
 export interface OIBusUpdateHistoryCacheContentCommandDTO extends BaseOIBusCommandDTO {
   type: 'update-history-cache-content';
   historyQueryId: string;
-  commandContent: {
-    cache: { remove: Array<string>; move: Array<{ filename: string; to: 'cache' | 'error' | 'archive' }> };
-    error: { remove: Array<string>; move: Array<{ filename: string; to: 'cache' | 'error' | 'archive' }> };
-    archive: { remove: Array<string>; move: Array<{ filename: string; to: 'cache' | 'error' | 'archive' }> };
-  };
+  commandContent: CacheContentUpdateCommand;
 }
 
 /**

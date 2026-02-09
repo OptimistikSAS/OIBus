@@ -1,0 +1,280 @@
+<oib-box>
+  <ng-template oibBoxTitle>
+    <div class="d-flex justify-content-between align-items-center">
+      <div [translate]="'explore-cache.' + cacheType() + '.title'"></div>
+      @if (cacheContentFiles().length !== 0) {
+        <div>
+          @switch (cacheType()) {
+            @case ('cache') {
+              <button
+                type="button"
+                class="btn btn-secondary btn-sm mx-1"
+                (click)="moveCacheContent('error')"
+                [disabled]="selectedFileCount() === 0"
+                translate="explore-cache.error-selected-content"
+                id="error-selected-content"
+              ></button
+              ><button
+                type="button"
+                class="btn btn-secondary btn-sm mx-1"
+                (click)="moveCacheContent('archive')"
+                [disabled]="selectedFileCount() === 0"
+                translate="explore-cache.archive-selected-content"
+                id="archive-selected-content"
+              ></button>
+            }
+            @case ('error') {
+              <button
+                type="button"
+                class="btn btn-secondary btn-sm mx-1"
+                (click)="moveCacheContent('cache')"
+                [disabled]="selectedFileCount() === 0"
+                translate="explore-cache.retry-selected-content"
+                id="retry-selected-error-content"
+              ></button>
+              <button
+                type="button"
+                class="btn btn-secondary btn-sm mx-1"
+                (click)="moveCacheContent('archive')"
+                [disabled]="selectedFileCount() === 0"
+                translate="explore-cache.archive-selected-content"
+                id="archive-selected-error-content"
+              ></button>
+            }
+            @case ('archive') {
+              <button
+                type="button"
+                class="btn btn-secondary btn-sm mx-1"
+                (click)="moveCacheContent('cache')"
+                [disabled]="selectedFileCount() === 0"
+                translate="explore-cache.replay-selected-content"
+                id="retry-selected-archive-content"
+              ></button>
+            }
+          }
+          <button
+            type="button"
+            class="btn btn-danger btn-sm mx-1"
+            (click)="removeCacheContent()"
+            [disabled]="selectedFileCount() === 0"
+            translate="explore-cache.remove-selected-content"
+            id="remove-selected-files"
+          ></button>
+        </div>
+      }
+    </div>
+  </ng-template>
+
+  @if (cacheContentFiles().length !== 0) {
+    <div class="mb-3">
+      <div class="d-flex justify-content-between align-items-center my-2">
+        <div class="d-flex align-items-center selection-controls">
+          <button
+            type="button"
+            class="btn btn-sm"
+            (click)="selectAll()"
+            [disabled]="selectedFileCount() === cacheContentFiles().length"
+            id="select-all-button"
+          >
+            <span class="fa fa-check-square me-1"></span>
+            <span translate="explore-cache.select-all"></span>
+          </button>
+          <button type="button" class="btn btn-sm" (click)="unselectAll()" [disabled]="selectedFileCount() === 0" id="unselect-all-button">
+            <span class="fa fa-square-o me-1"></span>
+            <span translate="explore-cache.unselect-all"></span>
+          </button>
+          @if (selectedFileCount() > 0) {
+            <span class="badge counter-badge ms-2">
+              <span translate="explore-cache.selected-files" [translateParams]="{ count: selectedFileCount() }"></span>
+            </span>
+          }
+        </div>
+
+        @if (pages().totalElements) {
+          <oib-pagination [page]="pages()" (pageChanged)="currentPage.set($event)" />
+        }
+      </div>
+
+      <table class="table table-sm table-hover oib-table">
+        <thead class="light">
+          <tr>
+            <th style="width: 50px"></th>
+            <th>
+              <button
+                class="py-1 px-0 sort-by-modification-date"
+                style="background: none; border: none; font-weight: bold"
+                (click)="toggleColumnSort('createdAt')"
+              >
+                <span translate="explore-cache.file-date" class="me-2"></span>
+                <span
+                  class="fa"
+                  [class.fa-sort]="currentColumnSort() === 'createdAt' && currentColumnOrder() === 0"
+                  [class.fa-sort-asc]="currentColumnSort() === 'createdAt' && currentColumnOrder() === 1"
+                  [class.fa-sort-desc]="currentColumnSort() === 'createdAt' && currentColumnOrder() === 2"
+                ></span>
+              </button>
+            </th>
+            <th>
+              <button
+                class="py-1 px-0 sort-by-filename"
+                style="background: none; border: none; font-weight: bold"
+                (click)="toggleColumnSort('contentFile')"
+              >
+                <span translate="explore-cache.filename" class="me-2"></span>
+                <span
+                  class="fa"
+                  [class.fa-sort]="currentColumnSort() === 'contentFile' && currentColumnOrder() === 0"
+                  [class.fa-sort-asc]="currentColumnSort() === 'contentFile' && currentColumnOrder() === 1"
+                  [class.fa-sort-desc]="currentColumnSort() === 'contentFile' && currentColumnOrder() === 2"
+                ></span>
+              </button>
+            </th>
+            <th>
+              <button
+                class="py-1 px-0 sort-by-size"
+                style="background: none; border: none; font-weight: bold"
+                (click)="toggleColumnSort('contentSize')"
+              >
+                <span translate="explore-cache.file-size" class="me-2"></span>
+                <span
+                  class="fa"
+                  [class.fa-sort]="currentColumnSort() === 'contentSize' && currentColumnOrder() === 0"
+                  [class.fa-sort-asc]="currentColumnSort() === 'contentSize' && currentColumnOrder() === 1"
+                  [class.fa-sort-desc]="currentColumnSort() === 'contentSize' && currentColumnOrder() === 2"
+                ></span>
+              </button>
+            </th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (file of pages().content; track file.filename) {
+            <tr class="data">
+              <td>
+                <input
+                  type="checkbox"
+                  (change)="onFileCheckboxClick(checkbox.checked, file.filename)"
+                  #checkbox
+                  [checked]="selectedFilenames().has(file.filename)"
+                  class="form-check-input"
+                  [id]="'file-' + file.filename"
+                  style="width: 16px; height: 16px; cursor: pointer"
+                />
+              </td>
+              <td class="modification-date">{{ file.metadata.createdAt | datetime: 'mediumWithSeconds' }}</td>
+              <td class="filename">{{ file.metadata.contentFile }}</td>
+              <td>{{ file.metadata.contentSize | fileSize }}</td>
+              <td class="action-buttons">
+                <div class="text-nowrap text-end">
+                  @switch (cacheType()) {
+                    @case ('cache') {
+                      <button
+                        type="button"
+                        class="btn btn-link px-1 py-0"
+                        (click)="onItemAction('error', file)"
+                        [disabled]="state().isPending | async"
+                        triggers="hover"
+                        placement="top"
+                        [ngbTooltip]="'explore-cache.error-content-action' | translate"
+                      >
+                        <span class="fa fa-bolt"></span>
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-link px-1 py-0"
+                        (click)="onItemAction('archive', file)"
+                        [disabled]="state().isPending | async"
+                        triggers="hover"
+                        placement="top"
+                        [ngbTooltip]="'explore-cache.archive-content-action' | translate"
+                      >
+                        <span class="fa fa-archive"></span>
+                      </button>
+                    }
+                    @case ('error') {
+                      <button
+                        type="button"
+                        class="btn btn-link px-1 py-0"
+                        (click)="onItemAction('retry', file)"
+                        [disabled]="state().isPending | async"
+                        triggers="hover"
+                        placement="top"
+                        [ngbTooltip]="'explore-cache.retry-content-action' | translate"
+                      >
+                        <span class="fa fa-refresh"></span>
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-link px-1 py-0"
+                        (click)="onItemAction('archive', file)"
+                        [disabled]="state().isPending | async"
+                        triggers="hover"
+                        placement="top"
+                        [ngbTooltip]="'explore-cache.archive-content-action' | translate"
+                      >
+                        <span class="fa fa-archive"></span>
+                      </button>
+                    }
+                    @case ('archive') {
+                      <button
+                        type="button"
+                        class="btn btn-link px-1 py-0"
+                        (click)="onItemAction('retry', file)"
+                        triggers="hover"
+                        placement="top"
+                        [disabled]="state().isPending | async"
+                        [ngbTooltip]="'explore-cache.replay-content-action' | translate"
+                      >
+                        <span class="fa fa-refresh"></span>
+                      </button>
+                    }
+                  }
+                  <button
+                    type="button"
+                    class="btn btn-link px-1 py-0"
+                    (click)="onItemAction('view', file)"
+                    triggers="hover"
+                    placement="top"
+                    [disabled]="state().isPending | async"
+                    [ngbTooltip]="'explore-cache.view-content-action' | translate"
+                  >
+                    <span class="fa fa-search"></span>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-link px-1 py-0"
+                    (click)="onItemAction('remove', file)"
+                    [disabled]="state().isPending | async"
+                    triggers="hover"
+                    placement="top"
+                    [ngbTooltip]="'explore-cache.remove-content-action' | translate"
+                  >
+                    <span class="fa fa-trash"></span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else {
+    @switch (cacheType()) {
+      @case ('cache') {
+        <div>
+          <div class="mb-3 oib-grey-container" translate="explore-cache.cache.none"></div>
+        </div>
+      }
+      @case ('error') {
+        <div>
+          <div class="mb-3 oib-grey-container" translate="explore-cache.error.none"></div>
+        </div>
+      }
+      @case ('archive') {
+        <div>
+          <div class="mb-3 oib-grey-container" translate="explore-cache.archive.none"></div>
+        </div>
+      }
+    }
+  }
+</oib-box>
