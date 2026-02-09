@@ -139,6 +139,7 @@ export default class SouthOPCUA
     // Set the state to the CertificateManager to 2 (Initialized) to avoid a call to openssl
     // It is useful for offline instances of OIBus where downloading openssl is not possible
     clientCertificateManager.state = 2;
+    this.clientCertificateManager = clientCertificateManager;
 
     let session;
     try {

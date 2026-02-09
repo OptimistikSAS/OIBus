@@ -29,6 +29,20 @@ export default class NorthConnectorRepository {
       .map(result => this.toNorthConnectorLight(result as Record<string, string>));
   }
 
+  findAllNorthFull(): Array<NorthConnectorEntity<NorthSettings>> {
+    const query =
+      `SELECT id, name, type, description, enabled, settings, ` +
+      `caching_trigger_schedule, caching_trigger_number_of_elements, caching_trigger_number_of_files, ` +
+      `caching_throttling_run_min_delay, caching_throttling_cache_max_size, caching_throttling_max_number_of_elements, ` +
+      `caching_error_retry_interval, caching_error_retry_count, caching_error_retention_duration, ` +
+      `caching_archive_enabled, caching_archive_retention_duration ` +
+      `FROM ${NORTH_CONNECTORS_TABLE};`;
+    return this.database
+      .prepare(query)
+      .all()
+      .map(result => this.toNorthConnector(result as Record<string, string | number>));
+  }
+
   findNorthById(id: string): NorthConnectorEntity<NorthSettings> | null {
     const query =
       `SELECT id, name, type, description, enabled, settings, ` +
