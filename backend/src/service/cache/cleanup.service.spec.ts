@@ -107,7 +107,7 @@ describe('CleanupService', () => {
         if (p.includes('archive')) return Promise.resolve(['history-1', 'history-2']);
         return Promise.resolve([]);
       });
-      (fs.rm as jest.Mock).mockResolvedValue(undefined);
+      (fs.rm as jest.Mock).mockRejectedValueOnce(new Error('rm error')).mockResolvedValue(undefined);
 
       // Setup: Mock Repositories
       (southConnectorRepository.findSouthById as jest.Mock).mockImplementation(id => id === '1');
@@ -125,6 +125,20 @@ describe('CleanupService', () => {
       expect(fs.rm).not.toHaveBeenCalledWith(path.resolve('baseFolder', 'cache', 'south-1'), expect.anything());
       expect(fs.rm).not.toHaveBeenCalledWith(path.resolve('baseFolder', 'error', 'north-1'), expect.anything());
       expect(fs.rm).not.toHaveBeenCalledWith(path.resolve('baseFolder', 'archive', 'history-1'), expect.anything());
+
+      expect(logger.error).toHaveBeenCalledTimes(1);
+      expect(logger.error).toHaveBeenCalledWith(`Could not remove orphan "${path.resolve('baseFolder', 'cache', 'south-2')}": rm error`);
+    });
+
+    it('should manage other folders gracefully', async () => {
+      (fs.readdir as jest.Mock).mockImplementation((p: string) => {
+        if (p.includes('cache')) return Promise.resolve(['south-1', 'south-2', 'random.db', 'other_folder', 'other_folder-withId']);
+        if (p.includes('error')) return Promise.resolve(['north-1', 'north-2', 'other_folder', 'other_folder-withId']);
+        if (p.includes('archive')) return Promise.resolve(['history-1', 'history-2', 'other_folder', 'other_folder-withId']);
+        return Promise.resolve([]);
+      });
+
+      await expect(service['cleanOrphans']()).resolves.not.toThrow();
     });
 
     it('should handle fs errors gracefully', async () => {
