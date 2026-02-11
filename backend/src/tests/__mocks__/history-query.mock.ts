@@ -20,11 +20,8 @@ export default class HistoryQueryMock {
   metricsEvent = new EventEmitter();
   finishEvent = new EventEmitter();
   searchCacheContent = jest.fn();
-  getCacheContentFileStream = jest.fn();
-  removeCacheContent = jest.fn();
-  removeAllCacheContent = jest.fn();
-  moveCacheContent = jest.fn();
-  moveAllCacheContent = jest.fn();
+  getFileFromCache = jest.fn();
+  updateCacheContent = jest.fn();
 
   set historyQueryConfiguration(connectorConfiguration: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>) {
     this.connector = connectorConfiguration;
