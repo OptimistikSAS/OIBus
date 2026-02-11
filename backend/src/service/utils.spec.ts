@@ -11,11 +11,15 @@ import {
   convertDateTimeToInstant,
   convertDelimiter,
   createFolder,
+  createOIBusError,
   delay,
+  determineContentTypeFromFilename,
   dirSize,
   filesExists,
   formatInstant,
   formatQueryParams,
+  generateCsvContent,
+  generateFilenameForSerialization,
   generateIntervals,
   generateRandomId,
   generateReplacementParameters,
@@ -27,7 +31,9 @@ import {
   itemToFlattenedCSV,
   logQuery,
   persistResults,
+  processCacheFileContent,
   sanitizeFilename,
+  streamToString,
   stringToBoolean,
   testIPOnFilter,
   unzip,
@@ -44,6 +50,8 @@ import cronstrue from 'cronstrue';
 import testData from '../tests/utils/test-data';
 import { SouthConnectorItemDTO } from '../../shared/model/south-connector.model';
 import { HistoryQueryItemDTO } from '../../shared/model/history-query.model';
+import { Readable } from 'node:stream';
+import { OIBusError } from '../model/engine.model';
 
 jest.mock('node:zlib');
 jest.mock('node:fs/promises');
@@ -56,13 +64,23 @@ jest.mock('node:https', () => ({ request: jest.fn() }));
 
 describe('Service utils', () => {
   describe('getCommandLineArguments', () => {
+    let consoleSpy: jest.SpyInstance;
+
     beforeEach(() => {
       jest.clearAllMocks();
+
+      consoleSpy = jest.spyOn(console, 'info').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      consoleSpy.mockRestore();
     });
 
     it('should parse command line arguments without args', () => {
       (minimist as unknown as jest.Mock).mockReturnValue({});
       const result = getCommandLineArguments();
+
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('OIBus starting with the following arguments:'));
       expect(result).toEqual({
         version: false,
         configFile: path.resolve('./'),
@@ -83,6 +101,8 @@ describe('Service utils', () => {
         launcherVersion: '3.5.0'
       });
       const result = getCommandLineArguments();
+
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('OIBus starting with the following arguments:'));
       expect(result).toEqual({
         version: true,
         configFile: path.resolve('myConfig.json'),
@@ -1380,6 +1400,168 @@ describe('Service utils', () => {
       expect(injectIndices('$.users[0].items[*]', [2])).toBe('$.users[0].items[2]');
 
       expect(injectIndices('$.users["key"].items[*]', [3])).toBe('$.users["key"].items[3]');
+    });
+  });
+
+  describe('processCacheFileContent', () => {
+    it('should read full content if smaller than limit', async () => {
+      const content = 'Hello World';
+      const stream = Readable.from(Buffer.from(content));
+
+      const result = await processCacheFileContent(stream);
+
+      expect(result.content).toEqual(content);
+      expect(result.truncated).toBe(false);
+    });
+
+    it('should truncate content if larger than limit', async () => {
+      const content = 'Hello World';
+      const limit = 5;
+
+      // Use a generator to yield 1-byte chunks to force the loop to iterate multiple times
+      function* charGenerator() {
+        for (const char of content) {
+          yield Buffer.from(char);
+        }
+      }
+      const stream = Readable.from(charGenerator());
+
+      const result = await processCacheFileContent(stream, limit);
+
+      expect(result.content).toEqual('Hello');
+      expect(result.truncated).toBe(true);
+    });
+
+    it('should handle multi-chunk streams correctly', async () => {
+      // Simulate stream with multiple small chunks
+      function* generateChunks() {
+        yield Buffer.from('Chunk1');
+        yield Buffer.from('Chunk2');
+        yield Buffer.from('Chunk3');
+      }
+      const stream = Readable.from(generateChunks());
+
+      // Limit cuts off in the middle of Chunk2 (Limit 9: "Chunk1" (6) + "Chu" (3))
+      const result = await processCacheFileContent(stream, 9);
+
+      expect(result.content).toEqual('Chunk1Chu');
+      expect(result.truncated).toBe(true);
+    });
+  });
+
+  describe('determineContentTypeFromFilename', () => {
+    it('should identify json', () => {
+      expect(determineContentTypeFromFilename('data.json')).toBe('json');
+      expect(determineContentTypeFromFilename('/path/to/file.json')).toBe('json');
+    });
+
+    it('should identify csv', () => {
+      expect(determineContentTypeFromFilename('data.csv')).toBe('csv');
+    });
+
+    it('should identify xml', () => {
+      expect(determineContentTypeFromFilename('data.xml')).toBe('xml');
+    });
+
+    it('should default to raw for others', () => {
+      expect(determineContentTypeFromFilename('data.txt')).toBe('raw');
+      expect(determineContentTypeFromFilename('data')).toBe('raw');
+      expect(determineContentTypeFromFilename('data.bin')).toBe('raw');
+    });
+  });
+
+  describe('streamToString', () => {
+    it('should convert stream to string', async () => {
+      const expected = 'stream content';
+      const stream = Readable.from(Buffer.from(expected));
+
+      const result = await streamToString(stream);
+      expect(result).toEqual(expected);
+    });
+
+    it('should reject on stream error', async () => {
+      const stream = new Readable({
+        read() {
+          this.emit('error', new Error('Stream Error'));
+        }
+      });
+
+      await expect(streamToString(stream)).rejects.toThrow('Stream Error');
+    });
+  });
+
+  describe('createOIBusError', () => {
+    it('should return OIBusError as is', () => {
+      const originalError = new OIBusError('test', true);
+      const result = createOIBusError(originalError);
+      expect(result).toBe(originalError);
+      expect(result.forceRetry).toBe(true);
+    });
+
+    it('should wrap Error object', () => {
+      const error = new Error('Standard error');
+      const result = createOIBusError(error);
+      expect(result).toBeInstanceOf(OIBusError);
+      expect(result.message).toBe('Standard error');
+      expect(result.forceRetry).toBe(false);
+    });
+
+    it('should wrap string error', () => {
+      const result = createOIBusError('String error');
+      expect(result).toBeInstanceOf(OIBusError);
+      expect(result.message).toBe('String error');
+    });
+
+    it('should stringify unknown object', () => {
+      const obj = { custom: 'value' };
+      const result = createOIBusError(obj);
+      expect(result).toBeInstanceOf(OIBusError);
+      expect(result.message).toBe('{"custom":"value"}');
+    });
+  });
+
+  describe('generateFilenameForSerialization', () => {
+    beforeEach(() => {
+      jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    });
+
+    it('should replace placeholders correctly', () => {
+      const base = '/base/folder';
+      const filenameTemplate = 'export_@ConnectorName_@ItemName_@CurrentDate.csv';
+      const connectorName = 'MyConnector';
+      const itemName = 'MyItem';
+
+      const result = generateFilenameForSerialization(base, filenameTemplate, connectorName, itemName);
+
+      const expectedDate = '2021_01_02_00_00_00_000';
+      const expectedFilename = `export_${connectorName}_${itemName}_${expectedDate}.csv`;
+
+      expect(result).toEqual(path.join(base, expectedFilename));
+    });
+  });
+
+  describe('generateCsvContent', () => {
+    it('should generate CSV string with correct delimiter', () => {
+      const data = [
+        { col1: 'val1', col2: 123 },
+        { col1: 'val2', col2: 456 }
+      ];
+
+      (csv.unparse as jest.Mock).mockReturnValue('mocked,csv,output');
+
+      const result = generateCsvContent(data, 'COMMA');
+
+      expect(csv.unparse).toHaveBeenCalledWith(data, {
+        header: true,
+        delimiter: ','
+      });
+      expect(result).toBe('mocked,csv,output');
+    });
+
+    it('should handle different delimiters', () => {
+      const data = [{ a: 1 }];
+      generateCsvContent(data, 'SEMI_COLON');
+      expect(csv.unparse).toHaveBeenCalledWith(data, expect.objectContaining({ delimiter: ';' }));
     });
   });
 });
