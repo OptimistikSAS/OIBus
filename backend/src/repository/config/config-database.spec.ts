@@ -1846,6 +1846,10 @@ describe('Repository with populated database', () => {
       );
     });
 
+    it('should properly get full north connectors', () => {
+      expect(repository.findAllNorthFull()).toEqual(testData.north.list);
+    });
+
     it('should properly get a north connector', () => {
       const result = repository.findNorthById(testData.north.list[0].id);
       expect(result).toEqual(testData.north.list[0]);

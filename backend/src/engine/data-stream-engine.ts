@@ -107,15 +107,27 @@ export default class DataStreamEngine {
 
   async stop(): Promise<void> {
     for (const id of this.southConnectors.keys()) {
-      await this.stopSouth(id);
+      try {
+        await this.stopSouth(id);
+      } catch (error: unknown) {
+        this._logger.error(`Error while stopping South "${id}": ${(error as Error).message}`);
+      }
     }
 
     for (const id of this.northConnectors.keys()) {
-      await this.stopNorth(id);
+      try {
+        await this.stopNorth(id);
+      } catch (error: unknown) {
+        this._logger.error(`Error while stopping North "${id}": ${(error as Error).message}`);
+      }
     }
 
     for (const id of this.historyQueries.keys()) {
-      await this.stopHistoryQuery(id);
+      try {
+        await this.stopHistoryQuery(id);
+      } catch (error: unknown) {
+        this._logger.error(`Error while stopping History query "${id}": ${(error as Error).message}`);
+      }
     }
   }
 
@@ -255,10 +267,6 @@ export default class DataStreamEngine {
     return this.getSouth(southId).metrics.stream;
   }
 
-  getSouthMetrics(south: string): SouthConnectorMetrics {
-    return this.getSouth(south).metrics.metrics;
-  }
-
   getAllSouthMetrics(): Record<string, SouthConnectorMetrics> {
     const metricsList: Record<string, SouthConnectorMetrics> = {};
     for (const [id, value] of this.southConnectors.entries()) {
@@ -299,7 +307,6 @@ export default class DataStreamEngine {
       if (south.queriesLastPoint() || south.queriesHistory() || south.queriesFile()) {
         south.updateCronJobs();
       }
-
       if (south.queriesSubscription()) {
         await south.updateSubscriptions();
       }
@@ -476,13 +483,13 @@ export default class DataStreamEngine {
     if (type === 'north') {
       const result = await this.getNorth(id).north.searchCacheContent(searchParams);
       return {
-        metrics: await this.getNorthMetrics(id)!,
+        metrics: this.getNorthMetrics(id)!,
         ...result
       };
     }
     const result = await this.getHistoryQuery(id).historyQuery.searchCacheContent(searchParams);
     return {
-      metrics: await this.getHistoryMetrics(id)!.north,
+      metrics: this.getHistoryMetrics(id)!.north,
       ...result
     };
   }
