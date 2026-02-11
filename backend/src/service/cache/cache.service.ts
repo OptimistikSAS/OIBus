@@ -30,7 +30,6 @@ export default class CacheService {
   private readonly _errorFolder: string;
   private readonly _archiveFolder: string;
 
-  private compactQueue$: DeferredPromise | null = null;
   private updateCache$: DeferredPromise | null = null;
   private queue: Array<{ filename: string; metadata: CacheMetadata }> = [];
   private _cacheSizeEventEmitter: EventEmitter = new EventEmitter();
@@ -151,9 +150,6 @@ export default class CacheService {
     if (this.updateCache$) {
       await this.updateCache$.promise;
     }
-    if (this.compactQueue$) {
-      await this.compactQueue$.promise;
-    }
   }
 
   async getCacheContentToSend(maxGroupCount: number): Promise<{ filename: string; metadata: CacheMetadata } | null> {
@@ -179,12 +175,12 @@ export default class CacheService {
   }
 
   async compactQueue(maxGroupCount: number, contentType: string): Promise<void> {
-    if (this.compactQueue$) {
+    if (this.updateCache$) {
       // Return existing promise if running
-      return this.compactQueue$.promise;
+      return this.updateCache$.promise;
     }
 
-    this.compactQueue$ = new DeferredPromise();
+    this.updateCache$ = new DeferredPromise();
     try {
       // 1. Filter Queue
       const copiedQueue = this.queue.filter(el => el.metadata.contentType === contentType);
@@ -214,15 +210,15 @@ export default class CacheService {
       // 5. Cleanup Intermediate Files
       // These are the files in the "middle" that were fully merged
       for (const element of compactedFiles) {
-        await this.deleteCacheEntry(element.filename);
+        await this.deleteCacheEntry('cache', element.filename);
       }
 
       // 6. Update Queue Reference
       // Remove the deleted files from the main queue
       this.queue = this.queue.filter(el => !compactedFiles.includes(el));
     } finally {
-      this.compactQueue$?.resolve();
-      this.compactQueue$ = null;
+      this.updateCache$.resolve();
+      this.updateCache$ = null;
     }
   }
 
@@ -267,14 +263,14 @@ export default class CacheService {
 
   async searchCacheContent(searchParams: CacheSearchParam): Promise<Omit<CacheSearchResult, 'metrics'>> {
     await this.waitCacheUpdateTasks();
-    const cacheContentList: Array<{ filename: string; metadata: CacheMetadata }> = await this.readCacheMetadataFiles('cache');
-    const errorContentList: Array<{ filename: string; metadata: CacheMetadata }> = await this.readCacheMetadataFiles('error');
-    const archiveContentList: Array<{ filename: string; metadata: CacheMetadata }> = await this.readCacheMetadataFiles('archive');
+    const cacheList: Array<{ filename: string; metadata: CacheMetadata }> = await this.readCacheMetadataFiles('cache');
+    const errorList: Array<{ filename: string; metadata: CacheMetadata }> = await this.readCacheMetadataFiles('error');
+    const archiveList: Array<{ filename: string; metadata: CacheMetadata }> = await this.readCacheMetadataFiles('archive');
     return {
       searchDate: DateTime.now().toUTC().toISO(),
-      cache: this.filterFile(cacheContentList, searchParams),
-      error: this.filterFile(errorContentList, searchParams),
-      archive: this.filterFile(archiveContentList, searchParams)
+      cache: this.filterFile(cacheList, searchParams),
+      error: this.filterFile(errorList, searchParams),
+      archive: this.filterFile(archiveList, searchParams)
     };
   }
 
@@ -369,8 +365,11 @@ export default class CacheService {
     if (from === 'cache') {
       this.removeCacheContentFromQueue(filename);
     }
+    const metadata = await this.readCacheMetadataFile(from, filename);
+    if (!metadata) {
+      return;
+    }
     try {
-      const metadata = await this.readCacheMetadataFile(from, filename);
       await fs.rename(contentOriginPath, contentDestinationPath);
       await fs.rename(metadataOriginPath, metadataDestinationPath);
       if (to === 'cache') {
@@ -388,17 +387,15 @@ export default class CacheService {
   }
 
   private async removeContent(from: DataFolderType, filename: string): Promise<void> {
-    const folderPath = this.getFolder(from);
-    const metadataFilePath = path.join(folderPath, METADATA_FOLDER, filename);
-    const contentFilePath = path.join(folderPath, CONTENT_FOLDER, filename);
-
     if (from === 'cache') {
       this.removeCacheContentFromQueue(filename);
     }
+    const metadata = await this.readCacheMetadataFile(from, filename);
+    if (!metadata) {
+      return;
+    }
     try {
-      const metadata = await this.readCacheMetadataFile(from, filename);
-      await fs.unlink(contentFilePath);
-      await fs.unlink(metadataFilePath);
+      await this.deleteCacheEntry(from, filename);
       this.cacheSize[from] -= metadata.contentSize;
       this.logger.trace(`File "${filename}" removed from ${from}`);
     } catch (error: unknown) {
@@ -407,7 +404,40 @@ export default class CacheService {
   }
 
   async removeAllCacheContent(): Promise<void> {
-    // TODO: remove all files
+    await this.waitCacheUpdateTasks();
+    this.updateCache$ = new DeferredPromise();
+
+    const folderList: Array<DataFolderType> = ['cache', 'error', 'archive'];
+    for (const folder of folderList) {
+      const metadataFolder = path.join(this.getFolder(folder), METADATA_FOLDER);
+      const metadataFiles = await fs.readdir(metadataFolder);
+      for (const file of metadataFiles) {
+        await fs
+          .rm(path.join(metadataFolder, file), { force: true, recursive: true })
+          .catch(err =>
+            this.logger.error(`Could not remove file "${file}" from ${path.join(this.getFolder(folder), METADATA_FOLDER)}: ${err.message}`)
+          );
+      }
+
+      const contentFolder = path.join(this.getFolder(folder), CONTENT_FOLDER);
+      const contentFiles = await fs.readdir(contentFolder);
+      for (const file of contentFiles) {
+        await fs
+          .rm(path.join(contentFolder, file), { force: true, recursive: true })
+          .catch(err =>
+            this.logger.error(`Could not remove file "${file}" from ${path.join(this.getFolder(folder), CONTENT_FOLDER)}: ${err.message}`)
+          );
+      }
+    }
+    this.queue = [];
+    this.cacheSize = {
+      cache: 0,
+      error: 0,
+      archive: 0
+    };
+    this.cacheSizeEventEmitter.emit('cache-size', this.cacheSize);
+    this.updateCache$.resolve();
+    this.updateCache$ = null;
   }
 
   get cacheSizeEventEmitter(): EventEmitter {
@@ -419,24 +449,23 @@ export default class CacheService {
 
     const cacheMetadataFiles: Array<{ filename: string; metadata: CacheMetadata }> = [];
     for (const filename of filenames) {
-      try {
-        cacheMetadataFiles.push({ filename, metadata: await this.readCacheMetadataFile(folder, filename) });
-      } catch {
-        // Ignore error
+      const metadata = await this.readCacheMetadataFile(folder, filename);
+      if (metadata) {
+        cacheMetadataFiles.push({ filename, metadata });
       }
     }
     return cacheMetadataFiles;
   }
 
-  private async readCacheMetadataFile(folder: DataFolderType, filename: string): Promise<CacheMetadata> {
+  private async readCacheMetadataFile(folder: DataFolderType, filename: string): Promise<CacheMetadata | null> {
     const filePath = path.join(this.getFolder(folder), METADATA_FOLDER, filename);
     try {
       return JSON.parse(await fs.readFile(filePath, { encoding: 'utf8' })) as CacheMetadata;
     } catch (error: unknown) {
       this.logger.error(`Error while reading file "${filePath}": ${(error as Error).message}`);
-      await this.deleteCacheEntry(filename);
+      await this.deleteCacheEntry(folder, filename);
+      return null;
     }
-    throw new Error(`Could not read cache metadata from ${filename} in ${folder}`);
   }
 
   private getFolder(folder: DataFolderType) {
@@ -544,11 +573,13 @@ export default class CacheService {
             }
           }
           // Stop reading files if we have reached the limit
-          if (newListOfContent.length >= maxGroupCount) break;
+          if (newListOfContent.length >= maxGroupCount) {
+            break;
+          }
         }
       } catch (error) {
         this.logger.error(`Error while reading file "${data.filename}": ${(error as Error).message}`);
-        await this.deleteCacheEntry(data.filename); // Helper to delete metadata/content
+        await this.deleteCacheEntry('cache', data.filename); // Helper to delete metadata/content
         this.removeCacheContentFromQueue(data.filename);
       }
     }
@@ -583,10 +614,10 @@ export default class CacheService {
     }
   }
 
-  private async deleteCacheEntry(filename: string): Promise<void> {
+  private async deleteCacheEntry(folder: DataFolderType, filename: string): Promise<void> {
     try {
-      await fs.rm(path.join(this.cacheFolder, METADATA_FOLDER, filename), { recursive: true, force: true });
-      await fs.rm(path.join(this.cacheFolder, CONTENT_FOLDER, filename), { recursive: true, force: true });
+      await fs.rm(path.join(this.getFolder(folder), METADATA_FOLDER, filename), { recursive: true, force: true });
+      await fs.rm(path.join(this.getFolder(folder), CONTENT_FOLDER, filename), { recursive: true, force: true });
     } catch (error: unknown) {
       // Ignore delete errors
       this.logger.trace(`Error deleting cache entry "${filename}": ${(error as Error).message}`);
