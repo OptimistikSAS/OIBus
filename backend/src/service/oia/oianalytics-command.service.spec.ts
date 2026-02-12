@@ -1588,6 +1588,7 @@ describe('OIAnalytics Command Service', () => {
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
     const fileContent: FileCacheContent = {
       content: 'content',
+      contentFilename: 'my_file.txt',
       contentType: 'raw',
       truncated: false,
       totalSize: 7
@@ -1628,6 +1629,7 @@ describe('OIAnalytics Command Service', () => {
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
     const fileContent: FileCacheContent = {
       content: 'content',
+      contentFilename: 'my_file.txt',
       contentType: 'raw',
       truncated: false,
       totalSize: 7
