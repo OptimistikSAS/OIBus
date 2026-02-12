@@ -281,7 +281,13 @@ export default class CacheService {
       const metadata: CacheMetadata = JSON.parse(await fs.readFile(metadataPath, { encoding: 'utf8' }));
       const contentType = determineContentTypeFromFilename(metadata.contentFile);
       const result = await processCacheFileContent(createReadStream(contentPath));
-      return { content: result.content, totalSize: metadata.contentSize, truncated: result.truncated, contentType };
+      return {
+        content: result.content,
+        contentFilename: metadata.contentFile,
+        totalSize: metadata.contentSize,
+        truncated: result.truncated,
+        contentType
+      };
     } catch (error: unknown) {
       throw new Error(`Error while reading file "${contentPath}": ${(error as Error).message}`);
     }
