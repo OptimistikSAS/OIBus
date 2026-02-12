@@ -27,10 +27,22 @@ describe('FileContentModalComponent', () => {
 
   it('should call prepare method with correct parameters', () => {
     const content = '{ "foo": "bar" }';
-    component.prepare('file1', { content, contentType: 'json', totalSize: content.length, truncated: false });
+    component.prepare('file1', {
+      content,
+      contentFilename: 'contentFilename.json',
+      contentType: 'json',
+      totalSize: content.length,
+      truncated: false
+    });
 
     expect(component.filename).toEqual('file1');
-    expect(component.fileCacheContent).toEqual({ content, contentType: 'json', totalSize: content.length, truncated: false });
+    expect(component.fileCacheContent).toEqual({
+      content,
+      contentFilename: 'contentFilename.json',
+      contentType: 'json',
+      totalSize: content.length,
+      truncated: false
+    });
   });
 
   it('should load OibCodeBlockComponent', () => {
