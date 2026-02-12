@@ -1768,6 +1768,7 @@ export interface CacheContentUpdateCommand {
 
 export interface FileCacheContent {
   content: string;
+  contentFilename: string;
   contentType: 'csv' | 'xml' | 'json' | 'raw';
   truncated: boolean;
   totalSize: number;
