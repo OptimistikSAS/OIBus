@@ -1,6 +1,9 @@
 <div class="modal-header">
   <h4 class="modal-title">
-    <span translate="explore-cache.view-content.title" [translateParams]="{ filename: filename }"></span>
+    <span
+      translate="explore-cache.view-content.title"
+      [translateParams]="{ filename: filename, contentFilename: fileCacheContent?.contentFilename }"
+    ></span>
   </h4>
 </div>
 <div class="modal-body">
