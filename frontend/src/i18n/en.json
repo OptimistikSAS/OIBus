@@ -2762,7 +2762,7 @@
     "retry-selected-content": "Retry selected content",
     "error-selected-content": "Error selected content",
     "view-content": {
-      "title": "Content of file {{ filename }}",
+      "title": "Content of file {{ contentFilename }} ({{ filename }})",
       "truncated": "Content is truncated. Real size: {{ realSize }}. Retrieved size: {{ currentSize }}",
       "file-size": "Content size: {{ contentSize }}",
       "content-type": "Content type: {{ contentType }}",

@@ -332,7 +332,7 @@ describe('CacheService', () => {
     (createReadStream as jest.Mock).mockReturnValueOnce(null);
     (fs.readFile as jest.Mock).mockResolvedValue(JSON.stringify(fileList[0].metadata));
     (determineContentTypeFromFilename as jest.Mock).mockReturnValueOnce('json');
-    const cacheFileContentResult = { content: 'content', truncated: false };
+    const cacheFileContentResult = { content: 'content', truncated: false, contentFilename: 'file1-123456.json' };
     (processCacheFileContent as jest.Mock).mockReturnValueOnce(cacheFileContentResult);
     const result = await service.getFileFromCache('cache', 'test');
     expect(result).toEqual({ ...cacheFileContentResult, totalSize: 100, contentType: 'json' });
