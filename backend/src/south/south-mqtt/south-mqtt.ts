@@ -11,7 +11,7 @@ import { OIBusContent } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
-import { createConnectionOptions, createContent, getItem, parseMessage } from '../../service/utils-mqtt';
+import { createConnectionOptions, getItem } from '../../service/utils-mqtt';
 
 /**
  * Class SouthMQTT - Subscribe to a data topic from a MQTT broker
@@ -21,7 +21,12 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
   private reconnectTimeout: NodeJS.Timeout | null = null;
 
   private flushTimeout: NodeJS.Timeout | null = null;
-  private bufferedMessages: Array<{ topic: string; message: string; item: SouthConnectorItemEntity<SouthMQTTItemSettings> }> = [];
+  private bufferedMessages: Array<{
+    topic: string;
+    message: string;
+    item: SouthConnectorItemEntity<SouthMQTTItemSettings>;
+    timestamp: Instant;
+  }> = [];
   private disconnecting = false;
 
   constructor(
@@ -62,16 +67,15 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
       });
       this.client.on('message', async (topic, message, packet) => {
         this.logger.trace(`MQTT message for topic ${topic}: ${message}, dup:${packet.dup}, qos:${packet.qos}, retain:${packet.retain}`);
-        let item;
         try {
-          item = getItem(topic, this.connector.items);
+          const item = getItem(topic, this.connector.items);
+          this.bufferedMessages.push({ topic, message: message.toString(), item, timestamp: DateTime.now().toUTC().toISO() });
+          if (this.bufferedMessages.length >= this.connector.settings.maxNumberOfMessages) {
+            await this.flushMessages();
+          }
         } catch (error: unknown) {
           this.logger.error(`Error for topic ${topic}: ${(error as Error).message}`);
           return;
-        }
-        this.bufferedMessages.push({ topic, message: message.toString(), item });
-        if (this.bufferedMessages.length >= this.connector.settings.maxNumberOfMessages) {
-          await this.flushMessages();
         }
       });
       this.logger.info(`MQTT South connector "${this.connector.name}" connected`);
@@ -98,14 +102,22 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
       try {
         await this.addContent(
           {
-            type: 'time-values',
-            content: messageToParse.flatMap(element => parseMessage(element.topic, element.message, element.item, this.logger))
+            type: 'any-content',
+            content: JSON.stringify(
+              messageToParse.map(element => {
+                return {
+                  message: element.message,
+                  timestamp: element.timestamp,
+                  item: { id: element.item.id, name: element.item.name, topic: element.item.settings.topic }
+                };
+              })
+            )
           },
           DateTime.now().toUTC().toISO(),
           [...new Set(messageToParse.map(element => element.item.id))]
         );
       } catch (error: unknown) {
-        this.logger.error(`Error when flushing messages: ${error}`);
+        this.logger.error(`Error when flushing messages: ${(error as Error).message}`);
       }
     }
     this.flushTimeout = setTimeout(this.flushMessages.bind(this), this.connector.settings.flushMessageTimeout);
@@ -153,8 +165,12 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
               await client.unsubscribeAsync(item.settings.topic);
               client.end(true);
               resolve({
-                type: 'time-values',
-                content: createContent(item, message.toString(), messageTimestamp, this.logger)
+                type: 'any-content',
+                content: JSON.stringify({
+                  message: message,
+                  timestamp: messageTimestamp,
+                  item: { id: item.id, name: item.name, topic: item.settings.topic }
+                })
               });
             } catch (error: unknown) {
               reject(`Error when testing item ${item.settings.topic} (received message "${message}"): ${(error as Error).message}`);
