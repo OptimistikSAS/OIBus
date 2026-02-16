@@ -473,7 +473,7 @@ export default class SouthService {
       }
 
       let hasSettingsError = false;
-      const settings: Record<string, string | object | boolean> = {};
+      const settings: Record<string, string | object | boolean | undefined> = {};
       const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
         attribute => attribute.key === 'settings'
       )! as OIBusObjectAttribute;
@@ -494,7 +494,7 @@ export default class SouthService {
           } else if (manifestSettings.type === 'boolean') {
             settings[settingsKey] = stringToBoolean(value);
           } else {
-            settings[settingsKey] = value;
+            settings[settingsKey] = value || undefined;
           }
         }
       }
