@@ -9,7 +9,7 @@ import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/sou
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import { flushPromises } from '../../tests/utils/test-utils';
 import { SouthConnectorEntity } from '../../model/south-connector.model';
-import { createConnectionOptions, createContent, getItem, parseMessage } from '../../service/utils-mqtt';
+import { createConnectionOptions, getItem } from '../../service/utils-mqtt';
 import testData from '../../tests/utils/test-data';
 
 jest.mock('mqtt');
@@ -81,8 +81,7 @@ describe('SouthMQTT', () => {
         name: 'item1',
         enabled: true,
         settings: {
-          topic: 'my/first/topic',
-          valueType: 'number'
+          topic: 'my/first/topic'
         },
         scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
       },
@@ -91,8 +90,7 @@ describe('SouthMQTT', () => {
         name: 'item2',
         enabled: true,
         settings: {
-          topic: 'my/+/+/topic/with/wildcard/#',
-          valueType: 'string'
+          topic: 'my/+/+/topic/with/wildcard/#'
         },
         scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
       },
@@ -101,8 +99,7 @@ describe('SouthMQTT', () => {
         name: 'item3',
         enabled: true,
         settings: {
-          topic: 'my/wrong/topic////',
-          valueType: 'string'
+          topic: 'my/wrong/topic////'
         },
         scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
       },
@@ -111,25 +108,7 @@ describe('SouthMQTT', () => {
         name: 'item4',
         enabled: true,
         settings: {
-          topic: 'json/topic',
-          valueType: 'json',
-          jsonPayload: {
-            useArray: true,
-            dataArrayPath: '',
-            pointIdOrigin: 'oibus',
-            valuePath: 'received.value',
-            otherFields: [
-              { name: 'appId', path: 'received.appId' },
-              { name: 'messageType', path: 'received.message.type' }
-            ],
-            timestampOrigin: 'payload',
-            timestampPayload: {
-              timestampPath: 'received.timestamp',
-              timestampType: 'string',
-              timezone: 'Europe/Paris',
-              timestampFormat: 'yyyy-MM-dd HH:mm:ss'
-            }
-          }
+          topic: 'json/topic'
         },
         scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
       },
@@ -138,24 +117,7 @@ describe('SouthMQTT', () => {
         name: 'item5',
         enabled: true,
         settings: {
-          topic: 'json/topic',
-          valueType: 'json',
-          jsonPayload: {
-            useArray: false,
-            dataArrayPath: '',
-            pointIdOrigin: 'payload',
-            pointIdPath: 'received.reference',
-            valuePath: 'received.value',
-            otherFields: [
-              { name: 'appId', path: 'received.appId' },
-              { name: 'messageType', path: 'received.message.type' }
-            ],
-            timestampOrigin: 'payload',
-            timestampPayload: {
-              timestampPath: 'received.timestamp',
-              timestampType: 'unix-epoch-ms'
-            }
-          }
+          topic: 'json/topic'
         },
         scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
       },
@@ -164,20 +126,7 @@ describe('SouthMQTT', () => {
         name: 'item6',
         enabled: true,
         settings: {
-          topic: 'json/topic',
-          valueType: 'json',
-          jsonPayload: {
-            useArray: true,
-            dataArrayPath: 'myArray',
-            pointIdOrigin: 'payload',
-            pointIdPath: 'received.reference',
-            valuePath: 'received.value',
-            otherFields: [
-              { name: 'appId', path: 'received.appId' },
-              { name: 'messageType', path: 'received.message.type' }
-            ],
-            timestampOrigin: 'oibus'
-          }
+          topic: 'json/topic'
         },
         scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
       }
@@ -202,10 +151,9 @@ describe('SouthMQTT', () => {
   });
 
   it('should properly connect', async () => {
-    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
     south.subscribe = jest.fn();
     south.disconnect = jest.fn();
-    (parseMessage as jest.Mock).mockReturnValue({});
+    south.flushMessages = jest.fn();
     (createConnectionOptions as jest.Mock).mockReturnValueOnce({});
     (getItem as jest.Mock).mockReturnValueOnce(configuration.items[0]);
     await south.connect();
@@ -216,23 +164,14 @@ describe('SouthMQTT', () => {
     mqttStream.emit('message', 'myTopic', 'myMessage', { dup: false, qos: 1, retain: false });
     await flushPromises(); // Flush message promise
 
-    expect(parseMessage).not.toHaveBeenCalled();
+    expect(south.flushMessages).not.toHaveBeenCalled();
     south['connector'].settings.maxNumberOfMessages = 1;
     (getItem as jest.Mock).mockReturnValueOnce(configuration.items[0]);
     mqttStream.emit('message', 'myTopic', 'myMessage', { dup: false, qos: 1, retain: false });
 
     await flushPromises(); // Flush message promise
     expect(logger.trace).toHaveBeenCalledWith('MQTT message for topic myTopic: myMessage, dup:false, qos:1, retain:false');
-    expect(parseMessage).toHaveBeenCalledTimes(2); // two messages stored
-    expect(parseMessage).toHaveBeenCalledWith('myTopic', 'myMessage', configuration.items[0], logger);
-
-    (parseMessage as jest.Mock).mockImplementationOnce(() => {
-      throw new Error('handle message error');
-    });
-    (getItem as jest.Mock).mockReturnValueOnce(configuration.items[0]);
-    mqttStream.emit('message', 'myTopic', 'myMessage', { dup: false });
-    await flushPromises(); // Flush message error promise
-    expect(logger.error).toHaveBeenCalledWith('Error when flushing messages: Error: handle message error');
+    expect(south.flushMessages).toHaveBeenCalledTimes(1);
 
     (getItem as jest.Mock).mockImplementationOnce(() => {
       throw new Error('getItem error');
@@ -245,7 +184,6 @@ describe('SouthMQTT', () => {
     await flushPromises(); // Flush disconnect promise
     expect(logger.error).toHaveBeenCalledWith(`MQTT Client error: ${new Error('error')}`); // Not called because promise is already resolved
     expect(south.disconnect).toHaveBeenCalledTimes(1);
-    expect(clearTimeoutSpy).toHaveBeenCalledTimes(2); // because of flushMessage
   });
 
   it('should properly connect and clear timeout', async () => {
@@ -270,6 +208,72 @@ describe('SouthMQTT', () => {
     mqttStream.emit('close');
     expect(logger.debug).toHaveBeenCalledWith('MQTT Client closed unintentionally');
     expect(setTimeoutSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it('should properly flush queued messages and reset the queue', async () => {
+    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+
+    // Create a dummy timeout to verify it gets cleared
+    south['flushTimeout'] = setTimeout(() => null, 10000);
+
+    // Mock the internal messages queue with some data
+    const mockPayload = {
+      topic: 'myTopic',
+      message: 'myMessage',
+      item: configuration.items[0],
+      timestamp: testData.constants.dates.FAKE_NOW
+    };
+    south['bufferedMessages'] = [mockPayload];
+
+    await south.flushMessages();
+
+    expect(addContentCallback).toHaveBeenCalledTimes(1);
+    expect(addContentCallback).toHaveBeenCalledWith(
+      'southId',
+      {
+        content: JSON.stringify([
+          {
+            message: mockPayload.message,
+            timestamp: mockPayload.timestamp,
+            item: { id: mockPayload.item.id, name: mockPayload.item.name, topic: mockPayload.item.settings.topic }
+          }
+        ]),
+        type: 'any-content'
+      },
+      testData.constants.dates.FAKE_NOW,
+      [mockPayload.item.id]
+    );
+
+    // Verify internal state was properly reset
+    expect(south['bufferedMessages']).toEqual([]);
+    expect(clearTimeoutSpy).toHaveBeenCalled();
+  });
+
+  it('should not trigger callback if there are no messages to flush', async () => {
+    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+    south['flushTimeout'] = setTimeout(() => null, 10000);
+    south['bufferedMessages'] = [];
+
+    await south.flushMessages();
+
+    expect(addContentCallback).not.toHaveBeenCalled();
+
+    expect(clearTimeoutSpy).toHaveBeenCalled();
+  });
+
+  it('should log error if fail to add content', async () => {
+    const mockPayload = {
+      topic: 'myTopic',
+      message: 'myMessage',
+      item: configuration.items[0],
+      timestamp: testData.constants.dates.FAKE_NOW
+    };
+    south['bufferedMessages'] = [mockPayload];
+    south.addContent = jest.fn().mockRejectedValueOnce(new Error('add content error'));
+
+    await south.flushMessages();
+
+    expect(logger.error).toHaveBeenCalledWith('Error when flushing messages: add content error');
   });
 
   it('should properly connect and manage intentional close event', async () => {
@@ -407,7 +411,6 @@ describe('SouthMQTT', () => {
     expect(mqttStream.unsubscribeAsync).toHaveBeenCalledTimes(1);
     expect(mqttStream.unsubscribeAsync).toHaveBeenCalledWith(configuration.items[0].settings.topic);
     expect(mqttStream.end).toHaveBeenCalledWith(true);
-    expect(createContent).toHaveBeenCalledWith(configuration.items[0], 'myMessage', testData.constants.dates.FAKE_NOW, logger);
     expect(south.disconnect).toHaveBeenCalledTimes(1);
   });
 
@@ -426,7 +429,6 @@ describe('SouthMQTT', () => {
     expect(mqttStream.unsubscribeAsync).toHaveBeenCalledTimes(1);
     expect(mqttStream.unsubscribeAsync).toHaveBeenCalledWith(configuration.items[0].settings.topic);
     expect(mqttStream.end).not.toHaveBeenCalled();
-    expect(createContent).not.toHaveBeenCalled();
     expect(south.disconnect).toHaveBeenCalledTimes(1);
     expect(error).toEqual(
       `Error when testing item ${configuration.items[0].settings.topic} (received message "myMessage"): unsubscribe error`
@@ -443,7 +445,6 @@ describe('SouthMQTT', () => {
 
     await flushPromises();
 
-    expect(createContent).not.toHaveBeenCalled();
     expect(south.disconnect).toHaveBeenCalledTimes(1);
     expect(error).toEqual(`Error when testing item ${configuration.items[0].settings.topic}: subscribe error`);
   });

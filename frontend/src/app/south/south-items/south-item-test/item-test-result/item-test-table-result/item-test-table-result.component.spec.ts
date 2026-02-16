@@ -3,7 +3,7 @@ import { ItemTestTableResultComponent } from './item-test-table-result.component
 import { Component, viewChild } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideI18nTesting } from '../../../../../../i18n/mock-i18n';
-import { OIBusContent, OIBusRawContent, OIBusTimeValueContent } from '../../../../../../../../backend/shared/model/engine.model';
+import { OIBusContent, OIBusFileContent, OIBusTimeValueContent } from '../../../../../../../../backend/shared/model/engine.model';
 
 @Component({
   selector: 'oib-test-item-test-table-result-component',
@@ -27,7 +27,7 @@ class ItemTestTableResultComponentTester extends ComponentTester<TestComponent> 
     super(TestComponent);
   }
 
-  changeContent(content: OIBusRawContent) {
+  changeContent(content: OIBusFileContent) {
     this.componentInstance.content = content as any;
   }
 
