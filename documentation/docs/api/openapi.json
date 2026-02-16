@@ -2519,141 +2519,14 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthMQTTItemSettingsValueType": {
-				"type": "string",
-				"enum": [
-					"string",
-					"number",
-					"json"
-				]
-			},
-			"SouthMQTTItemSettingsJsonPayloadPointIdOrigin": {
-				"type": "string",
-				"enum": [
-					"oibus",
-					"payload"
-				]
-			},
-			"SouthMQTTItemSettingsJsonPayloadTimestampOrigin": {
-				"type": "string",
-				"enum": [
-					"oibus",
-					"payload"
-				]
-			},
-			"SouthMQTTItemSettingsJsonPayloadTimestampPayloadTimestampType": {
-				"type": "string",
-				"enum": [
-					"string",
-					"iso-string",
-					"unix-epoch",
-					"unix-epoch-ms"
-				]
-			},
-			"SouthMQTTItemSettingsJsonPayloadTimestampPayload": {
-				"properties": {
-					"timestampPath": {
-						"type": "string"
-					},
-					"timestampType": {
-						"$ref": "#/components/schemas/SouthMQTTItemSettingsJsonPayloadTimestampPayloadTimestampType"
-					},
-					"timestampFormat": {
-						"type": "string"
-					},
-					"timezone": {
-						"$ref": "#/components/schemas/Timezone"
-					}
-				},
-				"required": [
-					"timestampPath",
-					"timestampType"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"SouthMQTTItemSettingsJsonPayloadOtherFields": {
-				"properties": {
-					"name": {
-						"type": "string"
-					},
-					"path": {
-						"type": "string"
-					}
-				},
-				"required": [
-					"name",
-					"path"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"SouthMQTTItemSettingsJsonPayload": {
-				"properties": {
-					"useArray": {
-						"type": "boolean"
-					},
-					"dataArrayPath": {
-						"type": "string"
-					},
-					"valuePath": {
-						"type": "string"
-					},
-					"pointIdOrigin": {
-						"$ref": "#/components/schemas/SouthMQTTItemSettingsJsonPayloadPointIdOrigin"
-					},
-					"pointIdPath": {
-						"type": "string"
-					},
-					"timestampOrigin": {
-						"$ref": "#/components/schemas/SouthMQTTItemSettingsJsonPayloadTimestampOrigin"
-					},
-					"timestampPayload": {
-						"allOf": [
-							{
-								"$ref": "#/components/schemas/SouthMQTTItemSettingsJsonPayloadTimestampPayload"
-							}
-						],
-						"nullable": true
-					},
-					"otherFields": {
-						"items": {
-							"$ref": "#/components/schemas/SouthMQTTItemSettingsJsonPayloadOtherFields"
-						},
-						"type": "array",
-						"nullable": true
-					}
-				},
-				"required": [
-					"useArray",
-					"valuePath",
-					"pointIdOrigin",
-					"timestampOrigin",
-					"otherFields"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
 			"SouthMQTTItemSettings": {
 				"properties": {
 					"topic": {
 						"type": "string"
-					},
-					"valueType": {
-						"$ref": "#/components/schemas/SouthMQTTItemSettingsValueType"
-					},
-					"jsonPayload": {
-						"allOf": [
-							{
-								"$ref": "#/components/schemas/SouthMQTTItemSettingsJsonPayload"
-							}
-						],
-						"nullable": true
 					}
 				},
 				"required": [
-					"topic",
-					"valueType"
+					"topic"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -2854,14 +2727,14 @@
 				"type": "string",
 				"enum": [
 					"string",
-					"iso-string",
-					"unix-epoch",
-					"unix-epoch-ms",
 					"date",
 					"date-time",
 					"date-time-2",
 					"date-time-offset",
-					"small-date-time"
+					"small-date-time",
+					"iso-string",
+					"unix-epoch",
+					"unix-epoch-ms"
 				]
 			},
 			"SouthMSSQLItemSettingsDateTimeFields": {
@@ -3147,10 +3020,10 @@
 				"type": "string",
 				"enum": [
 					"string",
+					"date-time",
 					"iso-string",
 					"unix-epoch",
-					"unix-epoch-ms",
-					"date-time"
+					"unix-epoch-ms"
 				]
 			},
 			"SouthMySQLItemSettingsDateTimeFields": {
@@ -4908,10 +4781,10 @@
 				"type": "string",
 				"enum": [
 					"string",
+					"date-time",
 					"iso-string",
 					"unix-epoch",
-					"unix-epoch-ms",
-					"date-time"
+					"unix-epoch-ms"
 				]
 			},
 			"SouthOracleItemSettingsDateTimeFields": {
@@ -8607,7 +8480,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"OIBusRawContent": {
+			"OIBusFileContent": {
 				"description": "Raw content.",
 				"properties": {
 					"type": {
@@ -8632,6 +8505,29 @@
 				"required": [
 					"type",
 					"filePath"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OIBusAnyContent": {
+				"properties": {
+					"type": {
+						"type": "string",
+						"enum": [
+							"any-content"
+						],
+						"nullable": false,
+						"description": "The type of content.",
+						"example": "any-content"
+					},
+					"content": {
+						"type": "string",
+						"description": "The content"
+					}
+				},
+				"required": [
+					"type",
+					"content"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -8701,7 +8597,10 @@
 						"$ref": "#/components/schemas/OIBusTimeValueContent"
 					},
 					{
-						"$ref": "#/components/schemas/OIBusRawContent"
+						"$ref": "#/components/schemas/OIBusFileContent"
+					},
+					{
+						"$ref": "#/components/schemas/OIBusAnyContent"
 					},
 					{
 						"$ref": "#/components/schemas/OIBusSetpointContent"

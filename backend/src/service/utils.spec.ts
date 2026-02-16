@@ -32,6 +32,7 @@ import {
   logQuery,
   persistResults,
   processCacheFileContent,
+  resolveBypassingExports,
   sanitizeFilename,
   streamToString,
   stringToBoolean,
@@ -69,7 +70,9 @@ describe('Service utils', () => {
     beforeEach(() => {
       jest.clearAllMocks();
 
-      consoleSpy = jest.spyOn(console, 'info').mockImplementation(() => {});
+      consoleSpy = jest.spyOn(console, 'info').mockImplementation(() => {
+        // do nothing
+      });
     });
 
     afterEach(() => {
@@ -1586,6 +1589,59 @@ describe('Service utils', () => {
       const data = [{ a: 1 }];
       generateCsvContent(data, 'SEMI_COLON');
       expect(csv.unparse).toHaveBeenCalledWith(data, expect.objectContaining({ delimiter: ';' }));
+    });
+  });
+
+  describe('resolveBypassingExports', () => {
+    it('should resolve a standard allowed export normally', () => {
+      // 'typescript' or 'papaparse' package.json are typically allowed exports.
+      // This tests the standard `require.resolve` try block.
+      const result = resolveBypassingExports('typescript', 'package.json');
+
+      // It should successfully find the path inside the node_modules folder
+      expect(result).toContain(path.normalize('node_modules/typescript/package.json'));
+    });
+
+    it('should bypass exports restrictions for blocked subpaths (e.g., luxon)', () => {
+      // We know natively that Luxon blocks this deep import, which will trigger
+      // the catch block and ERR_PACKAGE_PATH_NOT_EXPORTED logic in our function.
+      const pkgName = 'luxon';
+      const subPath = 'build/global/luxon.min.js';
+
+      const result = resolveBypassingExports(pkgName, subPath);
+
+      // Our fallback logic should successfully locate it
+      expect(result).toContain(path.normalize(`node_modules/${pkgName}/${subPath}`));
+    });
+
+    it('should throw standard MODULE_NOT_FOUND for non-existent packages', () => {
+      // If a package truly doesn't exist, it should not be swallowed by our fallback
+      expect(() => {
+        resolveBypassingExports('some-fake-package-that-does-not-exist', 'file.js');
+      }).toThrow(/Cannot find module 'some-fake-package-that-does-not-exist\/file\.js'/);
+    });
+
+    it('should re-throw generic errors that are not related to module resolution', () => {
+      // Passing a Symbol causes the template literal `${pkgName}/${subPath}` to throw a native
+      // TypeError BEFORE require.resolve is even called. This safely tests the default fallback.
+      expect(() => {
+        resolveBypassingExports(Symbol('bad-input') as unknown as string, 'file.js');
+      }).toThrow(TypeError);
+
+      expect(() => {
+        resolveBypassingExports(Symbol('bad-input') as unknown as string, 'file.js');
+      }).toThrow('Cannot convert a Symbol value to a string');
+    });
+
+    it('should throw the original error if the package resolves but is not in a node_modules folder (rootIdx === -1)', () => {
+      // 'fs' is a Node.js built-in module.
+      // require.resolve('fs/fake-subpath.js') natively throws MODULE_NOT_FOUND.
+      // The fallback runs require.resolve('fs'), which returns the literal string 'fs'.
+      // Because 'fs' does not contain 'node_modules/fs', rootIdx becomes -1.
+
+      expect(() => {
+        resolveBypassingExports('fs', 'fake-subpath.js');
+      }).toThrow(/Cannot find module 'fs\/fake-subpath\.js'/);
     });
   });
 });
