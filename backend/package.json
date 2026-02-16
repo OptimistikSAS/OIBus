@@ -75,7 +75,6 @@
     "mysql2": "3.22.0",
     "node-forge": "1.4.0",
     "node-opcua": "2.168.0",
-    "object-path": "0.11.8",
     "oracledb": "6.10.0",
     "papaparse": "5.5.3",
     "pg": "8.20.0",
@@ -149,7 +148,10 @@
       "node_modules/argon2/**/*.node",
       "node_modules/oracledb/**/*.node",
       "node_modules/better-sqlite3/build/Release/better_sqlite3.node",
-      "node_modules/odbc/**/*.node"
+      "node_modules/odbc/**/*.node",
+      "node_modules/luxon/build/global/luxon.min.js",
+      "node_modules/jsonpath-plus/dist/index-browser-umd.min.cjs",
+      "node_modules/papaparse/papaparse.min.js"
     ]
   }
 }

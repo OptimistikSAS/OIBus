@@ -11,7 +11,7 @@ import { SouthFolderScannerItemSettings } from '../../../../../../backend/shared
 import { HistoryQueryService } from '../../../services/history-query.service';
 import { DateTime, Settings } from 'luxon';
 import { provideDatepicker } from '../../../shared/datepicker.providers';
-import { OIBusContent, OIBusRawContent, OIBusTimeValueContent } from '../../../../../../backend/shared/model/engine.model';
+import { OIBusContent, OIBusFileContent, OIBusTimeValueContent } from '../../../../../../backend/shared/model/engine.model';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
 
 @Component({
@@ -364,7 +364,7 @@ describe('SouthItemTestComponent', () => {
         of({
           type: 'any',
           filePath: '/file/path'
-        } as OIBusRawContent).pipe(delay(3000))
+        } as OIBusFileContent).pipe(delay(3000))
       );
 
       tester.testButton.click();
@@ -428,7 +428,7 @@ describe('SouthItemTestComponent', () => {
         of({
           type: 'any',
           filePath: '/file/path'
-        } as OIBusRawContent).pipe(delay(3000))
+        } as OIBusFileContent).pipe(delay(3000))
       );
 
       tester.testButton.click();

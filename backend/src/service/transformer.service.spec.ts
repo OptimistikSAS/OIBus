@@ -42,6 +42,7 @@ import setpointToOpcuaManifest from '../transformers/setpoint/oibus-setpoint-to-
 jest.mock('papaparse');
 jest.mock('./utils');
 jest.mock('../web-server/controllers/validators/joi.validator');
+jest.mock('../transformers/oibus-custom-transformer');
 
 const validator = new JoiValidator();
 const transformerRepository: TransformerRepository = new TransformerRepositoryMock();
@@ -372,6 +373,21 @@ describe('Transformer Service', () => {
   });
 
   describe('test a custom transformer', () => {
+    // Add this beforeEach block to configure the mock's behavior
+    beforeEach(() => {
+      (OIBusCustomTransformer as jest.Mock).mockImplementation(() => {
+        return {
+          transform: jest.fn().mockResolvedValue({
+            metadata: {
+              contentType: 'any',
+              numberOfElement: 1
+            },
+            output: JSON.stringify({ data: [{ pointId: 'test', timestamp: '2023-01-01T00:00:00Z', data: { value: 42 } }] })
+          })
+        };
+      });
+    });
+
     it('should test a custom transformer successfully', async () => {
       const customTransformer: CustomTransformer = {
         id: 'test-transformer',

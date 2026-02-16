@@ -818,3 +818,33 @@ export const createOIBusError = (error: unknown): OIBusError => {
     return new OIBusError(JSON.stringify(error), false);
   }
 };
+
+// Helper to bypass Node's strict "exports" rule in package.json
+export const resolveBypassingExports = (pkgName: string, subPath: string) => {
+  try {
+    // Try standard resolution first
+    return require.resolve(`${pkgName}/${subPath}`);
+  } catch (error: unknown) {
+    const err = error as Error & { code?: string };
+
+    // Native Node throws ERR_PACKAGE_PATH_NOT_EXPORTED.
+    // Jest throws MODULE_NOT_FOUND when "exports" blocks a path.
+    if (err.code === 'ERR_PACKAGE_PATH_NOT_EXPORTED' || err.code === 'MODULE_NOT_FOUND') {
+      try {
+        const mainPath = require.resolve(pkgName); // e.g., .../node_modules/luxon/build/node/luxon.js
+        const searchStr = `node_modules${path.sep}${pkgName}`;
+        const rootIdx = mainPath.lastIndexOf(searchStr);
+
+        if (rootIdx !== -1) {
+          const rootPath = mainPath.substring(0, rootIdx + searchStr.length);
+          return path.join(rootPath, subPath);
+        }
+      } catch {
+        // If we can't even resolve the main package (pkgName), it truly doesn't exist.
+        // We throw the original error to preserve the exact message.
+        throw error;
+      }
+    }
+    throw error;
+  }
+};
