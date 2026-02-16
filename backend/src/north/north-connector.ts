@@ -407,6 +407,16 @@ export default abstract class NorthConnector<T extends NorthSettings> {
           });
         }
         break;
+      case 'any-content':
+        {
+          const { metadata, output } = await transformer.transform(Readable.from(data.content), source, null);
+          await this.cacheService.addCacheContent(output, {
+            contentType: metadata.contentType,
+            contentFilename: metadata.contentFile,
+            numberOfElement: metadata.numberOfElement
+          });
+        }
+        break;
 
       case 'any':
         {
@@ -430,6 +440,10 @@ export default abstract class NorthConnector<T extends NorthSettings> {
       await this.cacheService.addCacheContent(createReadStream(data.filePath), {
         contentType: data.type,
         contentFilename: data.filePath
+      });
+    } else if (data.type === 'any-content') {
+      await this.cacheService.addCacheContent(Readable.from(data.content), {
+        contentType: data.type
       });
     } else {
       if (this.connector.caching.throttling.maxNumberOfElements > 0) {

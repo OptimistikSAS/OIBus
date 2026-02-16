@@ -202,11 +202,12 @@ export default class TransformerService {
     switch (inputType) {
       case 'time-values':
         return this.generateTimeValuesTemplate();
-      case 'setpoint':
-        return this.generateSetpointTemplate();
       case 'any':
+      case 'any-content':
+        return this.generateFileTemplate(inputType);
+      case 'setpoint':
       default:
-        return this.generateFileTemplate();
+        return this.generateSetpointTemplate();
     }
   }
 
@@ -285,7 +286,7 @@ export default class TransformerService {
   /**
    * Generate input template for any (file) input type
    */
-  private generateFileTemplate(): InputTemplate {
+  private generateFileTemplate(contentType: 'any' | 'any-content'): InputTemplate {
     const fileContent = {
       timestamp: DateTime.now().toUTC().toISO(),
       source: 'test_device',
@@ -302,7 +303,7 @@ export default class TransformerService {
     };
 
     return {
-      type: 'any',
+      type: contentType,
       data: JSON.stringify(fileContent, null, 2),
       description: 'Sample file content with structured data'
     };

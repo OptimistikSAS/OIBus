@@ -9,7 +9,7 @@ import {
   CacheMetadata,
   CacheMetadataSource,
   OIBusContent,
-  OIBusRawContent
+  OIBusFileContent
 } from '../../shared/model/engine.model';
 import testData from '../tests/utils/test-data';
 import { NorthFileWriterSettings, NorthSettings } from '../../shared/model/north-settings.model';
@@ -519,7 +519,7 @@ describe('NorthConnector', () => {
     (generateRandomId as jest.Mock).mockReturnValueOnce('1234567890');
 
     const metadata: CacheMetadata = {
-      contentFile: `${path.parse((testData.oibusContent[1] as OIBusRawContent).filePath).name}-1234567890.csv`,
+      contentFile: `${path.parse((testData.oibusContent[1] as OIBusFileContent).filePath).name}-1234567890.csv`,
       contentSize: 100,
       numberOfElement: 0,
       createdAt: DateTime.fromMillis(123).toUTC().toISO()!,
@@ -530,7 +530,7 @@ describe('NorthConnector', () => {
 
     await north.cacheContent(testData.oibusContent[1], { source: 'test' });
 
-    expect(createReadStream).toHaveBeenCalledWith((testData.oibusContent[1] as OIBusRawContent).filePath);
+    expect(createReadStream).toHaveBeenCalledWith((testData.oibusContent[1] as OIBusFileContent).filePath);
 
     expect(oiBusTransformer.transform).toHaveBeenCalledWith(
       expect.anything(),
@@ -606,6 +606,26 @@ describe('NorthConnector', () => {
     expect(north['triggerRunIfNecessary']).toHaveBeenCalledTimes(1);
   });
 
+  it('should transformer any-content payload', async () => {
+    const options: NorthTransformerWithOptions = {
+      id: 'northId'
+    } as NorthTransformerWithOptions;
+    const transform = jest.fn().mockReturnValueOnce({
+      output: 'output',
+      metadata: {
+        contentType: 'opcua',
+        numberOfElement: 1
+      }
+    });
+    (createTransformer as jest.Mock).mockReturnValueOnce({ transform });
+    await north['executeTransformation']({ type: 'any-content', content: '' }, options, { source: 'oianalytics' });
+    expect(transform).toHaveBeenCalledWith(expect.anything(), { source: 'oianalytics' }, null);
+    expect(cacheService.addCacheContent).toHaveBeenCalledWith('output', {
+      contentType: 'opcua',
+      numberOfElement: 1
+    });
+  });
+
   it('should transformer setpoint payload', async () => {
     const options: NorthTransformerWithOptions = {
       id: 'northId'
@@ -630,6 +650,12 @@ describe('NorthConnector', () => {
     north.connectorConfiguration.caching.throttling.maxNumberOfElements = 1;
     await north['cacheWithoutTransform']({ type: 'time-values', content: [{}, {}] } as OIBusContent);
     expect(cacheService.addCacheContent).toHaveBeenCalledTimes(2);
+  });
+
+  it('should cache without transform with any-content', async () => {
+    north.connectorConfiguration.caching.throttling.maxNumberOfElements = 1;
+    await north['cacheWithoutTransform']({ type: 'any-content', content: '' } as OIBusContent);
+    expect(cacheService.addCacheContent).toHaveBeenCalledTimes(1);
   });
 
   it('should cache without transform', async () => {
