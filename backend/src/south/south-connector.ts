@@ -10,7 +10,7 @@ import { DateTime } from 'luxon';
 import SouthCacheService from '../service/south-cache.service';
 import { QueriesFile, QueriesHistory, QueriesLastPoint, QueriesSubscription } from './south-interface';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
-import { OIBusContent, OIBusRawContent, OIBusTimeValueContent } from '../../shared/model/engine.model';
+import { OIBusAnyContent, OIBusContent, OIBusFileContent, OIBusTimeValueContent } from '../../shared/model/engine.model';
 import path from 'node:path';
 import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../model/south-connector.model';
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
@@ -460,13 +460,24 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     switch (data.type) {
       case 'time-values':
         return this.addValues(data, queryTime, itemIds);
+      case 'any-content':
+        return this.addAnyContent(data, queryTime, itemIds);
       case 'any':
         return this.addFile(data, queryTime, itemIds);
     }
   }
 
+  private async addAnyContent(data: OIBusAnyContent, queryTime: Instant, itemIds: Array<string>): Promise<void> {
+    this.logger.debug(`Add ${data.content.length} bytes of content to cache from South "${this.connector.name}"`);
+    await this.engineAddContentCallback(this.connector.id, data, queryTime, itemIds);
+    this.metricsEvent.emit('add-values', {
+      numberOfValuesRetrieved: data.content.length,
+      lastValueRetrieved: data.content
+    });
+  }
+
   private async addValues(data: OIBusTimeValueContent, queryTime: Instant, itemIds: Array<string>): Promise<void> {
-    if (data.content.length > 0 && this.connector.id !== 'test') {
+    if (data.content.length > 0) {
       this.logger.debug(`Add ${data.content.length} values to cache from South "${this.connector.name}"`);
       await this.engineAddContentCallback(this.connector.id, data, queryTime, itemIds);
       this.metricsEvent.emit('add-values', {
@@ -476,7 +487,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     }
   }
 
-  private async addFile(data: OIBusRawContent, queryTime: Instant, itemIds: Array<string>): Promise<void> {
+  private async addFile(data: OIBusFileContent, queryTime: Instant, itemIds: Array<string>): Promise<void> {
     this.logger.debug(`Add file "${data.filePath}" to cache from South "${this.connector.name}"`);
     await this.engineAddContentCallback(this.connector.id, data, queryTime, itemIds);
     this.metricsEvent.emit('add-file', {

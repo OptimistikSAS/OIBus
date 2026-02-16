@@ -3,147 +3,211 @@ import { Logger } from 'pino';
 import { CustomTransformer } from '../model/transformer.model';
 import { CacheMetadata, CacheMetadataSource } from '../../shared/model/engine.model';
 import ts from 'typescript';
+import * as fs from 'node:fs';
+import { resolveBypassingExports } from './utils';
 
-interface ResultOutput<TOutput> {
-  data: TOutput;
+interface ResultOutput {
+  data: string;
   filename: string;
   numberOfElement?: number;
 }
 
 export default class SandboxService {
-  constructor(private readonly logger: Logger) {}
+  private readonly snapshot: ivm.ExternalCopy<ArrayBuffer> | null = null;
 
-  public async execute<TOutput>(
-    stringContent: string,
-    source: CacheMetadataSource,
-    filename: string,
-    transformer: CustomTransformer,
-    options: object
-  ): Promise<{ metadata: CacheMetadata; output: string }> {
-    if (transformer.language === 'typescript') {
-      return this.executeTypeScript<TOutput>(stringContent, source, filename, transformer, options);
-    } else {
-      return this.executeJavaScript<TOutput>(stringContent, source, filename, transformer, options);
+  constructor(private readonly logger: Logger) {
+    try {
+      const luxonSource = fs.readFileSync(resolveBypassingExports('luxon', 'build/global/luxon.min.js'), 'utf8');
+      const jsonPathSource = fs.readFileSync(resolveBypassingExports('jsonpath-plus', 'dist/index-browser-umd.cjs'), 'utf8');
+      const papaParseSource = fs.readFileSync(resolveBypassingExports('papaparse', 'papaparse.min.js'), 'utf8');
+
+      // This script runs ONCE during service initialization to build the frozen heap.
+      const snapshotSetupCode = `
+        var window = this;
+        var global = this;
+        var globalThis = this;
+        var self = this;
+
+        // Load Luxon
+        var module = { exports: {} };
+        var exports = module.exports;
+        ${luxonSource}
+        global.luxon = module.exports.DateTime ? module.exports : (globalThis.luxon || window.luxon);
+
+        // Load JSONPath-Plus
+        module = { exports: {} };
+        exports = module.exports;
+        ${jsonPathSource}
+        global.jsonpath = module.exports.JSONPath || module.exports || globalThis.JSONPath;
+
+        // Load PapaParse
+        module = { exports: {} };
+        exports = module.exports;
+        ${papaParseSource}
+        global.papaparse = module.exports.parse ? module.exports : (globalThis.Papa || window.Papa);
+      `;
+
+      // We store the snapshot in memory to instantly clone new Isolates from it.
+      this.snapshot = ivm.Isolate.createSnapshot([{ code: snapshotSetupCode }]);
+      this.logger.info('Sandbox snapshot created successfully.');
+    } catch (e) {
+      this.logger.error(`Could not load sandbox libraries or create snapshot: ${(e as Error).message}`);
+      this.snapshot = null;
     }
   }
 
-  private async executeJavaScript<TOutput>(
+  public async execute(
     stringContent: string,
     source: CacheMetadataSource,
     filename: string,
     transformer: CustomTransformer,
     options: object
   ): Promise<{ metadata: CacheMetadata; output: string }> {
-    const isolate = new ivm.Isolate();
+    const startTime = process.hrtime.bigint();
+    const memoryLimitMb = 256;
+
+    const isolateOptions: ivm.IsolateOptions = { memoryLimit: memoryLimitMb };
+    if (this.snapshot) {
+      isolateOptions.snapshot = this.snapshot;
+    }
+    const isolate = new ivm.Isolate(isolateOptions);
     let context: ivm.Context | null = null;
+
     try {
-      const script = await isolate.compileScript(transformer.customCode);
       context = await isolate.createContext();
-
       const jail = context.global;
-      await jail.set('global', jail.derefInto());
-      await script.run(context);
 
-      const transformFnRef = await jail.get('transform', { reference: true });
+      // These cannot be snapshotted, so we do them at execution time.
+      await jail.set(
+        '_trace',
+        new ivm.Reference((...args: Array<unknown>) => this.logger.trace(['CUSTOM TRANSFORMER:', ...args].join(' ')))
+      );
+      await jail.set(
+        '_debug',
+        new ivm.Reference((...args: Array<unknown>) => this.logger.debug(['CUSTOM TRANSFORMER:', ...args].join(' ')))
+      );
+      await jail.set('_log', new ivm.Reference((...args: Array<unknown>) => this.logger.debug(['CUSTOM TRANSFORMER:', ...args].join(' '))));
+      await jail.set('_info', new ivm.Reference((...args: Array<unknown>) => this.logger.info(['CUSTOM TRANSFORMER:', ...args].join(' '))));
+      await jail.set('_warn', new ivm.Reference((...args: Array<unknown>) => this.logger.warn(['CUSTOM TRANSFORMER:', ...args].join(' '))));
+      await jail.set(
+        '_error',
+        new ivm.Reference((...args: Array<unknown>) => this.logger.error(['CUSTOM TRANSFORMER:', ...args].join(' ')))
+      );
 
-      const _result = (await transformFnRef.apply(undefined, [stringContent, source, filename, options], {
-        arguments: { copy: true },
-        result: { copy: true, promise: true },
-        timeout: 5000
-      })) as ResultOutput<TOutput>;
+      await context.eval(`
+        global.console = {
+          trace: (...args) => _trace.apply(undefined, args, { arguments: { copy: true } }),
+          debug: (...args) => _debug.apply(undefined, args, { arguments: { copy: true } }),
+          log: (...args) => _debug.apply(undefined, args, { arguments: { copy: true } }),
+          info: (...args) => _info.apply(undefined, args, { arguments: { copy: true } }),
+          warn: (...args) => _warn.apply(undefined, args, { arguments: { copy: true } }),
+          error: (...args) => _error.apply(undefined, args, { arguments: { copy: true } })
+        };
+      `);
 
-      if (!_result || !_result.data) {
-        throw new Error(`Transform function did not return a valid result: ${JSON.stringify(_result)}`);
-      }
-
-      const result = {
-        data: _result.data as TOutput,
-        filename: _result.filename,
-        numberOfElement: _result.numberOfElement || 0
-      };
-
-      return {
-        output: JSON.stringify(result.data as TOutput),
-        metadata: {
-          contentFile: result.filename,
-          contentSize: 0,
-          createdAt: '',
-          numberOfElement: result.numberOfElement || 0,
-          contentType: transformer.outputType
-        }
-      };
-    } finally {
-      if (context) {
-        context.release();
-      }
-    }
-  }
-
-  private async executeTypeScript<TOutput>(
-    stringContent: string,
-    source: CacheMetadataSource,
-    filename: string,
-    transformer: CustomTransformer,
-    options: object
-  ): Promise<{ metadata: CacheMetadata; output: string }> {
-    const isolate = new ivm.Isolate();
-    let context: ivm.Context | null = null;
-    try {
-      // Compile TypeScript to JavaScript
-      let compiledCode: string;
-      try {
-        compiledCode = ts.transpile(transformer.customCode, {
-          target: ts.ScriptTarget.ES2022,
-          module: ts.ModuleKind.ESNext,
-          jsx: ts.JsxEmit.Preserve,
-          allowJs: true,
-          strict: false,
-          esModuleInterop: true,
-          skipLibCheck: true,
-          forceConsistentCasingInFileNames: false
+      let codeToExecute = transformer.customCode;
+      if (transformer.language === 'typescript') {
+        const transpileResult = ts.transpileModule(transformer.customCode, {
+          compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 }
         });
-      } catch (compileError) {
-        throw new Error(`TypeScript compilation failed: ${compileError instanceof Error ? compileError.message : String(compileError)}`);
+        codeToExecute = transpileResult.outputText;
       }
 
-      const script = await isolate.compileScript(compiledCode);
-      context = await isolate.createContext();
+      // We wrap the user code, and because of the snapshot,
+      // global.luxon, global.papaparse, etc., are ALREADY populated instantly!
+      const wrappedCode = `
+        function require(name) {
+          if (name === 'luxon') {
+            if (!global.luxon || !global.luxon.DateTime) throw new Error("Luxon is missing from the snapshot.");
+            return global.luxon;
+          }
+          if (name === 'jsonpath-plus' || name === 'jsonpath') {
+            if (!global.jsonpath) throw new Error("JSONPath is missing from the snapshot.");
+            // Wrap the function in an object to support TS destructuring: import { JSONPath } from ...
+            return { JSONPath: global.jsonpath, default: global.jsonpath };
+          }
+          if (name === 'papaparse') {
+            if (!global.papaparse) throw new Error("PapaParse is missing from the snapshot.");
+            return global.papaparse;
+          }
+          throw new Error('Module "' + name + '" is not allowed.');
+        }
 
-      const jail = context.global;
-      await jail.set('global', jail.derefInto());
+        var exports = {}; var module = { exports: exports };
+        ${codeToExecute}
+        global.__sandbox_transform = module.exports.default || module.exports.transform || transform;
+      `;
+
+      const script = await isolate.compileScript(wrappedCode);
       await script.run(context);
 
-      const transformFnRef = await jail.get('transform', { reference: true });
-
-      const _result = (await transformFnRef.apply(undefined, [stringContent, source, filename, options], {
-        arguments: { copy: true },
-        result: { copy: true, promise: true },
-        timeout: 5000
-      })) as ResultOutput<TOutput>;
-
-      if (!_result || !_result.data) {
-        throw new Error(`Transform function did not return a valid result: ${JSON.stringify(_result)}`);
+      const transformFnRef = await jail.get('__sandbox_transform', { reference: true });
+      if (typeof transformFnRef === 'undefined' || transformFnRef.typeof !== 'function') {
+        throw new Error('Custom code must export a "transform" function.');
       }
 
-      const result = {
-        data: _result.data as TOutput,
-        filename: _result.filename,
-        numberOfElement: _result.numberOfElement || 0
-      };
+      const _resultRef = (await transformFnRef.apply(
+        undefined,
+        [
+          new ivm.ExternalCopy(stringContent).copyInto(),
+          new ivm.ExternalCopy(options).copyInto(),
+          new ivm.ExternalCopy(source).copyInto(),
+          new ivm.ExternalCopy(filename).copyInto()
+        ],
+        {
+          result: { copy: true, promise: true },
+          timeout: 2000
+        }
+      )) as ResultOutput;
+
+      if (!_resultRef || !_resultRef.data) {
+        throw new Error('Transform function returned an invalid or empty result.');
+      }
 
       return {
-        output: JSON.stringify(result.data as TOutput),
+        output: JSON.stringify(_resultRef.data),
         metadata: {
-          contentFile: result.filename,
-          contentSize: 0,
-          createdAt: '',
-          numberOfElement: result.numberOfElement || 0,
+          contentFile: _resultRef.filename,
+          contentSize: Buffer.byteLength(stringContent, 'utf8'),
+          createdAt: new Date().toISOString(),
+          numberOfElement: _resultRef.numberOfElement || 0,
           contentType: transformer.outputType
         }
       };
+    } catch (error: unknown) {
+      let errorCategory = 'RUNTIME_ERROR';
+      if ((error as Error).message.includes('Script execution timed out')) {
+        errorCategory = 'TIMEOUT_ERROR';
+      } else if ((error as Error).message.includes('Isolate was disposed') || (error as Error).message.includes('memory')) {
+        errorCategory = 'MEMORY_LIMIT_EXCEEDED';
+      } else if ((error as Error).message.includes('TypeScript compilation failed')) {
+        errorCategory = 'SYNTAX_ERROR';
+      }
+      throw new Error(`[${errorCategory}] Sandbox execution failed: ${(error as Error).message}`);
     } finally {
+      if (!isolate.isDisposed) {
+        try {
+          const heapStats = isolate.getHeapStatisticsSync();
+          const cpuTimeNs = isolate.cpuTime;
+          const totalDurationMs = Number(process.hrtime.bigint() - startTime) / 1e6;
+
+          this.logger.info({
+            msg: `Sandbox Execution Metrics for ${filename}`,
+            metrics: {
+              cpuTimeMs: Number(cpuTimeNs) / 1e6,
+              totalDurationMs: totalDurationMs,
+              heapUsedMb: (heapStats.used_heap_size / (1024 * 1024)).toFixed(2)
+            }
+          });
+        } catch {
+          /* ignore */
+        }
+      }
       if (context) {
         context.release();
+      }
+      if (!isolate.isDisposed) {
+        isolate.dispose();
       }
     }
   }
