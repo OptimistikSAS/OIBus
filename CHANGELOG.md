@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.7.9](https://github.com/OptimistikSAS/OIBus/compare/v3.7.8...v3.7.9) (2026-02-16)
+
+
+### Bug Fixes
+
+* **south:** fix item import when field is empty ([aba5e1f](https://github.com/OptimistikSAS/OIBus/commit/aba5e1f1e97d96ed9e0ea8bc84366727a36b0dd1))
+
 ## [3.7.8](https://github.com/OptimistikSAS/OIBus/compare/v3.7.7...v3.7.8) (2026-01-30)
 
 
