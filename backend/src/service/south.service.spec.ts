@@ -424,7 +424,7 @@ describe('South Service', () => {
       {
         name: 'item5',
         enabled: 'true',
-        settings_regex: '*',
+        settings_regex: '',
         settings_preserveFiles: 'true',
         settings_ignoreModifiedDate: 'false',
         settings_minAge: 100,
@@ -451,7 +451,7 @@ describe('South Service', () => {
             ignoreModifiedDate: true,
             minAge: 100,
             preserveFiles: true,
-            regex: '*'
+            regex: undefined
           }
         }
       ],
