@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { ItemTestCodeblockResultComponent } from './item-test-codeblock-result.component';
 import { Component, viewChild } from '@angular/core';
-import { OIBusContent, OIBusRawContent, OIBusTimeValueContent } from '../../../../../../../../backend/shared/model/engine.model';
+import { OIBusContent, OIBusFileContent, OIBusTimeValueContent } from '../../../../../../../../backend/shared/model/engine.model';
 import { ComponentTester } from 'ngx-speculoos';
 import { provideI18nTesting } from '../../../../../../i18n/mock-i18n';
 
@@ -28,7 +28,7 @@ class ItemTestCodeblockResultComponentTester extends ComponentTester<TestCompone
     super(TestComponent);
   }
 
-  changeContent(content: OIBusRawContent) {
+  changeContent(content: OIBusFileContent) {
     this.componentInstance.content = content as any;
   }
 

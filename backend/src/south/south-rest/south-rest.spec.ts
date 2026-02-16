@@ -14,7 +14,7 @@ import { createMockResponse } from '../../tests/__mocks__/undici.mock';
 import * as utils from '../../service/utils';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { Stats } from 'node:fs';
-import { OIBusRawContent } from '../../../shared/model/engine.model';
+import { OIBusFileContent } from '../../../shared/model/engine.model';
 
 // --- Mocks ---
 jest.mock('../../service/utils', () => {
@@ -543,7 +543,7 @@ describe('SouthRestAPI connector', () => {
 
     expect(result.type).toBe('any');
     expect(result.content).toEqual(JSON.stringify({ test: 'ok' }));
-    expect((result as OIBusRawContent).filePath).toBeDefined();
+    expect((result as OIBusFileContent).filePath).toBeDefined();
   });
 
   // --------------------------------------------------------------------------
