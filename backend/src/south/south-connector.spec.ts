@@ -620,6 +620,17 @@ describe('SouthConnector with history and subscription', () => {
     );
   });
 
+  it('should add any content', async () => {
+    await south.addContent({ type: 'any-content', content: 'file.csv' }, testData.constants.dates.DATE_1, []);
+    expect(logger.debug).toHaveBeenCalledWith(`Add 8 bytes of content to cache from South "${testData.south.list[2].name}"`);
+    expect(addContentCallback).toHaveBeenCalledWith(
+      testData.south.list[2].id,
+      { type: 'any-content', content: 'file.csv' },
+      testData.constants.dates.DATE_1,
+      []
+    );
+  });
+
   it('should manage history query with several intervals', async () => {
     const intervals = [
       { start: '2020-02-02T02:02:02.222Z', end: '2021-02-02T02:02:02.222Z' },
