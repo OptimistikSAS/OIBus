@@ -1559,7 +1559,7 @@ export interface OIBusSetpointContent extends BaseOIBusContent {
 /**
  * Raw content.
  */
-export interface OIBusRawContent extends BaseOIBusContent {
+export interface OIBusFileContent extends BaseOIBusContent {
   /**
    * The type of content.
    * @example "any"
@@ -1578,10 +1578,23 @@ export interface OIBusRawContent extends BaseOIBusContent {
   content?: string;
 }
 
+export interface OIBusAnyContent extends BaseOIBusContent {
+  /**
+   * The type of content.
+   * @example "any-content"
+   */
+  type: 'any-content';
+
+  /**
+   * The content
+   */
+  content: string;
+}
+
 /**
  * Type representing OIBus content.
  */
-export type OIBusContent = OIBusTimeValueContent | OIBusRawContent | OIBusSetpointContent;
+export type OIBusContent = OIBusTimeValueContent | OIBusFileContent | OIBusAnyContent | OIBusSetpointContent;
 
 /**
  * Metadata for cached content.
