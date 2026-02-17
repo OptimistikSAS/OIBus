@@ -13,7 +13,7 @@ import {
   SouthConnectorManifest,
   SouthItemGroupCommandDTO,
   SouthItemGroupDTO,
-  SouthItemLastValueDTO
+  SouthItemLastValue
 } from '../../shared/model/south-connector.model';
 
 import oianalyticsManifest from '../south/south-oianalytics/manifest';
@@ -431,7 +431,7 @@ export default class SouthService {
     return item;
   }
 
-  getItemLastValue(southId: string, itemId: string): SouthItemLastValueDTO {
+  getItemLastValue(southId: string, itemId: string): SouthItemLastValue {
     // Verify south connector and item exist
     this.findById(southId);
     const item = this.findItemById(southId, itemId);

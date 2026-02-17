@@ -104,12 +104,12 @@ export default class SouthCacheRepository {
   /**
    * Get last value for an item
    */
-  getItemLastValue(connectorId: string, itemId: string): SouthItemLastValue | null {
+  getItemLastValue(connectorId: string, itemId: string): Omit<SouthItemLastValue, 'itemName'> | null {
     const tableName = `south_item_cache_${connectorId}`;
-    // Check if table exists first? No, we assume table exists (created on start)
-    // However, if table doesn't exist, this might throw?
-    // better-sqlite3 throws if table not found? Yes.
-    // So createItemValueTable on start is CRITICAL.
+    // Check if the table exists first? No, we assume the table exists (created on start)
+    // However, if the table doesn't exist, this might throw?
+    // better-sqlite3 throws if the table is not found? Yes.
+    // So createItemValueTable at startup is CRITICAL.
     const query = `SELECT item_id, query_time, value, tracked_instant FROM "${tableName}" WHERE item_id = ?;`;
     try {
       const result = this._database.prepare(query).get(itemId) as Record<string, string> | undefined;
@@ -124,7 +124,7 @@ export default class SouthCacheRepository {
   /**
    * Get all item values for a connector
    */
-  getAllItemValues(connectorId: string): Array<SouthItemLastValue> {
+  getAllItemValues(connectorId: string): Array<Omit<SouthItemLastValue, 'itemName'>> {
     const tableName = `south_item_cache_${connectorId}`;
     const query = `SELECT item_id, query_time, value, tracked_instant FROM "${tableName}";`;
     try {
@@ -136,9 +136,9 @@ export default class SouthCacheRepository {
   }
 
   /**
-   * Save or update item last value
+   * Save or update the item last value
    */
-  saveItemLastValue(connectorId: string, command: SouthItemLastValue): void {
+  saveItemLastValue(connectorId: string, command: Omit<SouthItemLastValue, 'itemName'>): void {
     const tableName = `south_item_cache_${connectorId}`;
     const existing = this.getItemLastValue(connectorId, command.itemId);
 
@@ -166,7 +166,7 @@ export default class SouthCacheRepository {
     }
   }
 
-  private toSouthItemLastValue(result: Record<string, string>): SouthItemLastValue {
+  private toSouthItemLastValue(result: Record<string, string>): Omit<SouthItemLastValue, 'itemName'> {
     let parsedValue: unknown = null;
     if (result.value) {
       try {
