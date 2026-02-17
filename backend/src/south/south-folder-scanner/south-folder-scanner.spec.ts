@@ -123,7 +123,7 @@ describe('SouthFolderScanner', () => {
       .mockReturnValueOnce(false) // file.log - too young
       // Second fileQuery - item3 (.txt regex): file.txt, file2.txt, file3.txt
       .mockReturnValueOnce(false) // file.txt - too young
-      .mockReturnValueOnce(true)  // file2.txt - OK
+      .mockReturnValueOnce(true) // file2.txt - OK
       .mockReturnValueOnce(true); // file3.txt - OK
 
     (fs.stat as jest.Mock).mockResolvedValue({ size: 100 });
