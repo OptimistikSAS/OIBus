@@ -98,6 +98,7 @@ describe('Repository with populated database', () => {
   });
 
   afterAll(async () => {
+    database.close();
     await emptyDatabase('config');
   });
 
@@ -537,6 +538,10 @@ describe('Repository with populated database', () => {
       jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
       repository = new OIAnalyticsCommandRepository(database);
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
     });
 
     it('should properly list commands', () => {
@@ -2374,10 +2379,11 @@ describe('Repository with populated database', () => {
 
 describe('Repository with empty database', () => {
   beforeAll(async () => {
-    await initDatabase('config', false);
+    database = await initDatabase('config', false);
   });
 
   afterAll(async () => {
+    database.close();
     await emptyDatabase('config');
   });
 
