@@ -611,26 +611,48 @@ describe('SouthConnector with history and subscription', () => {
     await south.addContent({ type: 'time-values', content: [] }, testData.constants.dates.DATE_1, []);
     expect(logger.debug).toHaveBeenCalledTimes(1);
     expect(addContentCallback).not.toHaveBeenCalled();
+    expect(southCacheService.saveItemLastValue).not.toHaveBeenCalled();
 
-    await south.addContent({ type: 'time-values', content: [{}, {}] as Array<OIBusTimeValue> }, testData.constants.dates.DATE_1, []);
+    const values = [{}, {}] as Array<OIBusTimeValue>;
+    await south.addContent({ type: 'time-values', content: values }, testData.constants.dates.DATE_1, ['item1', 'item2']);
     expect(logger.debug).toHaveBeenCalledWith(`Add 2 values to cache from South "${testData.south.list[2].name}"`);
     expect(addContentCallback).toHaveBeenCalledWith(
       testData.south.list[2].id,
-      { type: 'time-values', content: [{}, {}] },
+      { type: 'time-values', content: values },
       testData.constants.dates.DATE_1,
-      []
+      ['item1', 'item2']
     );
+    expect(southCacheService.saveItemLastValue).toHaveBeenCalledTimes(2);
+    expect(southCacheService.saveItemLastValue).toHaveBeenCalledWith(testData.south.list[2].id, {
+      itemId: 'item1',
+      queryTime: testData.constants.dates.DATE_1,
+      value: values,
+      trackedInstant: null
+    });
+    expect(southCacheService.saveItemLastValue).toHaveBeenCalledWith(testData.south.list[2].id, {
+      itemId: 'item2',
+      queryTime: testData.constants.dates.DATE_1,
+      value: values,
+      trackedInstant: null
+    });
   });
 
   it('should add file', async () => {
-    await south.addContent({ type: 'any', filePath: 'file.csv' }, testData.constants.dates.DATE_1, []);
+    await south.addContent({ type: 'any', filePath: 'file.csv' }, testData.constants.dates.DATE_1, ['item1']);
     expect(logger.debug).toHaveBeenCalledWith(`Add file "file.csv" to cache from South "${testData.south.list[2].name}"`);
     expect(addContentCallback).toHaveBeenCalledWith(
       testData.south.list[2].id,
       { type: 'any', filePath: 'file.csv' },
       testData.constants.dates.DATE_1,
-      []
+      ['item1']
     );
+    expect(southCacheService.saveItemLastValue).toHaveBeenCalledTimes(1);
+    expect(southCacheService.saveItemLastValue).toHaveBeenCalledWith(testData.south.list[2].id, {
+      itemId: 'item1',
+      queryTime: testData.constants.dates.DATE_1,
+      value: { filePath: 'file.csv' },
+      trackedInstant: null
+    });
   });
 
   it('should add any content', async () => {
