@@ -748,6 +748,13 @@ export interface SouthItemLastValue {
   itemId: string;
 
   /**
+   * The name of the item.
+   *
+   * @example "Temperature Sensor 1"
+   */
+  itemName: string;
+
+  /**
    * The timestamp when the data was last queried (ISO 8601 format).
    *
    * @example "2024-02-02T12:00:00.000Z"
@@ -768,18 +775,6 @@ export interface SouthItemLastValue {
    * @example "2024-02-02T12:00:00.000Z"
    */
   trackedInstant: Instant | null;
-}
-
-/**
- * DTO for South connector item last value with item name.
- */
-export interface SouthItemLastValueDTO extends SouthItemLastValue {
-  /**
-   * The name of the item.
-   *
-   * @example "Temperature Sensor 1"
-   */
-  itemName: string;
 }
 
 /**
