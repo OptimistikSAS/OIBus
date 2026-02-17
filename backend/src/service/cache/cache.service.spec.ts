@@ -97,6 +97,7 @@ describe('CacheService', () => {
   });
 
   afterEach(() => {
+    jest.useRealTimers();
     service.cacheSizeEventEmitter.removeAllListeners();
   });
 
