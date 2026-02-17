@@ -486,6 +486,16 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
         numberOfValuesRetrieved: data.content.length,
         lastValueRetrieved: data.content[data.content.length - 1]
       });
+
+      // Store last received values per item
+      for (const itemId of itemIds) {
+        this.cacheService!.saveItemLastValue(this.connector.id, {
+          itemId,
+          queryTime,
+          value: data.content,
+          trackedInstant: null
+        });
+      }
     }
   }
 
@@ -495,6 +505,16 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     this.metricsEvent.emit('add-file', {
       lastFileRetrieved: path.parse(data.filePath).base
     });
+
+    // Store last received file per item
+    for (const itemId of itemIds) {
+      this.cacheService!.saveItemLastValue(this.connector.id, {
+        itemId,
+        queryTime,
+        value: { filePath: data.filePath },
+        trackedInstant: null
+      });
+    }
   }
 
   async disconnect(): Promise<void> {
@@ -598,7 +618,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     newScanModeId: string,
     maxInstantPerItem: boolean
   ) {
-    let previousMaxInstant: string | null = null;
+    let previousMaxInstant: string | null;
 
     // Get max instant from the appropriate key
     if (maxInstantPerItem) {

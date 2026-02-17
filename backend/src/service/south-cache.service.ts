@@ -1,6 +1,6 @@
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
 
-import { SouthCache } from '../../shared/model/south-connector.model';
+import { SouthCache, SouthItemLastValue } from '../../shared/model/south-connector.model';
 import { Instant } from '../../shared/model/types';
 
 export default class SouthCacheService {
@@ -54,7 +54,7 @@ export default class SouthCacheService {
     return this.cacheRepository.getAllItemValues(connectorId);
   }
 
-  saveItemLastValue(connectorId: string, value: import('../../shared/model/south-connector.model').SouthItemLastValue): void {
+  saveItemLastValue(connectorId: string, value: Omit<SouthItemLastValue, 'itemName'>): void {
     this.cacheRepository.saveItemLastValue(connectorId, value);
   }
 

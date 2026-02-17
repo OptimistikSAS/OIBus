@@ -26,7 +26,7 @@ import {
   SouthConnectorManifest,
   SouthItemGroupCommandDTO,
   SouthItemGroupDTO,
-  SouthItemLastValueDTO,
+  SouthItemLastValue,
   SouthType
 } from '../../../shared/model/south-connector.model';
 import { Page } from '../../../shared/model/types';
@@ -315,14 +315,14 @@ export class SouthConnectorController extends Controller {
   /**
    * Retrieves the last cached value for a specific item
    * @summary Get item last value
-   * @returns {Promise<SouthItemLastValueDTO>} The item's last cached value
+   * @returns {Promise<SouthItemLastValue>} The item's last cached value
    */
   @Get('/{southId}/items/{itemId}/last-value')
   async getItemLastValue(
     @Path() southId: string,
     @Path() itemId: string,
     @Request() request: CustomExpressRequest
-  ): Promise<SouthItemLastValueDTO> {
+  ): Promise<SouthItemLastValue> {
     const southService = request.services.southService as SouthService;
     return southService.getItemLastValue(southId, itemId);
   }
