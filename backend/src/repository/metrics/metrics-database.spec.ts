@@ -14,6 +14,7 @@ describe('Repository with populated database', () => {
   });
 
   afterAll(async () => {
+    database.close();
     await emptyDatabase('metrics');
   });
 
@@ -25,6 +26,10 @@ describe('Repository with populated database', () => {
       jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
       repository = new EngineMetricsRepository(database);
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
     });
 
     it('should get metrics', () => {
@@ -60,6 +65,10 @@ describe('Repository with populated database', () => {
       jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
       repository = new NorthConnectorMetricsRepository(database);
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
     });
 
     it('should get metrics', () => {
@@ -104,6 +113,10 @@ describe('Repository with populated database', () => {
       jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
       repository = new SouthConnectorMetricsRepository(database);
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
     });
 
     it('should get metrics', () => {
@@ -152,6 +165,10 @@ describe('Repository with populated database', () => {
       repository = new HistoryQueryMetricsRepository(database);
     });
 
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
     it('should get metrics', () => {
       repository.initMetrics(testData.historyQueries.list[0].id);
       const result = repository.getMetrics(testData.historyQueries.list[0].id);
@@ -194,10 +211,11 @@ describe('Repository with populated database', () => {
 
 describe('Repository with empty database', () => {
   beforeAll(async () => {
-    await initDatabase('metrics', false);
+    database = await initDatabase('metrics', false);
   });
 
   afterAll(async () => {
+    database.close();
     await emptyDatabase('metrics');
   });
 

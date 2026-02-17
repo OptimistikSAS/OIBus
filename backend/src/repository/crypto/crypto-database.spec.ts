@@ -13,6 +13,7 @@ describe('Repository with populated database', () => {
   });
 
   afterAll(async () => {
+    database.close();
     await emptyDatabase('crypto');
   });
 
@@ -44,6 +45,7 @@ describe('Repository with empty database', () => {
   });
 
   afterAll(async () => {
+    database.close();
     await emptyDatabase('crypto');
   });
   describe('Crypto', () => {
