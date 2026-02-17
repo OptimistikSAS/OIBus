@@ -11,6 +11,7 @@ describe('Repository with populated database', () => {
   });
 
   afterAll(async () => {
+    database.close();
     await emptyDatabase('logs');
   });
 
