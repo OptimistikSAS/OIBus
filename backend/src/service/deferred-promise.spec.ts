@@ -5,6 +5,10 @@ describe('DeferredPromise', () => {
     jest.useFakeTimers();
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('it should resolve', async () => {
     const callback = jest.fn();
     const deferredPromise$ = new DeferredPromise();

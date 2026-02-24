@@ -139,6 +139,10 @@ describe('OIAnalytics Command Service', () => {
     );
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should get a north connector', () => {
     const result = service.findById(testData.oIAnalytics.commands.oIBusList[0].id);
 
@@ -2043,6 +2047,10 @@ describe('OIAnalytics Command service with update error', () => {
     );
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should properly start and stop service', async () => {
     expect(oIBusService.getEngineSettings).toHaveBeenCalledTimes(1);
     expect(oIBusService.updateOIBusVersion).not.toHaveBeenCalled();
@@ -2079,6 +2087,10 @@ describe('OIAnalytics Command service with ignoreRemoteUpdate', () => {
       true,
       '3.4.0'
     );
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   it('should change logger', async () => {
@@ -2128,6 +2140,10 @@ describe('OIAnalytics Command service with no commands', () => {
     );
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should properly start when not registered', () => {
     expect(oIBusService.getEngineSettings).toHaveBeenCalled();
     expect(oIAnalyticsCommandRepository.list).toHaveBeenCalled();
@@ -2162,6 +2178,10 @@ describe('OIAnalytics Command service with no commands and without update', () =
       true,
       engineSettings.launcherVersion
     );
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   it('should properly start when not registered', () => {

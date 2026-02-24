@@ -87,6 +87,7 @@ describe('SouthDetailComponent', () => {
     scanModeService.list.and.returnValue(of(testData.scanMode.list));
     certificateService.list.and.returnValue(of(testData.certificates.list));
     engineService.getInfo.and.returnValue(of(engineInfo));
+    (engineService as any).info$ = of(engineInfo);
     southConnectorService.findById.and.returnValue(
       of({
         ...southConnector,

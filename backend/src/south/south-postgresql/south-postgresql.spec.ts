@@ -165,6 +165,10 @@ describe('SouthPostgreSQL with authentication', () => {
     south = new SouthPostgreSQL(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should get throttling settings', () => {
     expect(south.getThrottlingSettings(configuration.settings)).toEqual({
       maxReadInterval: configuration.settings.throttling.maxReadInterval,
@@ -465,6 +469,10 @@ describe('SouthPostgreSQL without authentication', () => {
     south = new SouthPostgreSQL(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should manage connection error', async () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
@@ -629,6 +637,10 @@ describe('SouthPostgreSQL test connection', () => {
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
     south = new SouthPostgreSQL(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   it('Database is reachable and has tables', async () => {

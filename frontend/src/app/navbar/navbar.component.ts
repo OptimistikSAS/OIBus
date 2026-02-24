@@ -39,7 +39,7 @@ export class NavbarComponent implements OnInit {
         switchMap(user => {
           this.user = user;
           if (this.user) {
-            return this.engineService.getInfo();
+            return this.engineService.info$;
           }
           return of(null);
         })

@@ -19,6 +19,10 @@ describe('HistoryMetricsService', () => {
     service = new HistoryQueryMetricsService(historyQueryMock, historyQueryMetricsRepository);
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should be properly initialised', () => {
     service.initMetrics();
     expect(historyQueryMetricsRepository.initMetrics).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
