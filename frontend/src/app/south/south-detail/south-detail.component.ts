@@ -76,7 +76,7 @@ export class SouthDetailComponent implements OnInit, OnDestroy {
   southId: string | null = null;
 
   ngOnInit() {
-    combineLatest([this.scanModeService.list(), this.certificateService.list(), this.engineService.getInfo()]).subscribe(
+    combineLatest([this.scanModeService.list(), this.certificateService.list(), this.engineService.info$]).subscribe(
       ([scanModes, certificates, engineInfo]) => {
         this.scanModes = scanModes;
         this.certificates = certificates;

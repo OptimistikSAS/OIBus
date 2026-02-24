@@ -74,6 +74,7 @@ describe('NorthSFTP', () => {
   });
 
   afterEach(() => {
+    jest.useRealTimers();
     cacheService.cacheSizeEventEmitter.removeAllListeners();
   });
 
@@ -166,6 +167,7 @@ describe('NorthSFTP without suffix or prefix (Private Key Auth)', () => {
   });
 
   afterEach(() => {
+    jest.useRealTimers();
     cacheService.cacheSizeEventEmitter.removeAllListeners();
   });
 

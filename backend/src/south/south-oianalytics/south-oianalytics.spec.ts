@@ -97,6 +97,10 @@ describe('SouthOIAnalytics', () => {
     );
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   describe('Getters', () => {
     it('should return throttling settings', () => {
       expect(south.getThrottlingSettings(baseConfiguration.settings)).toEqual({

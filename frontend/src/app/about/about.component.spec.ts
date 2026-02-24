@@ -67,6 +67,7 @@ describe('AboutComponent', () => {
 
   it('should have static info', async () => {
     engineService.getInfo.and.returnValue(EMPTY);
+    (engineService as any).info$ = EMPTY;
     tester = new AboutComponentTester();
     await tester.change();
     expect(tester.officialSite).toContainText('Official site');
@@ -77,6 +78,7 @@ describe('AboutComponent', () => {
 
   it('should have dynamic info', async () => {
     engineService.getInfo.and.returnValue(of(testData.engine.oIBusInfo));
+    (engineService as any).info$ = of(testData.engine.oIBusInfo);
     tester = new AboutComponentTester();
     await tester.change();
 

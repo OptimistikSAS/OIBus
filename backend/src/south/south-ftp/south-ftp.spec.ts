@@ -150,6 +150,10 @@ describe('SouthFTP', () => {
     south = new SouthFtp(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   describe('with valid configuration', () => {
     beforeEach(async () => {
       await south.start();

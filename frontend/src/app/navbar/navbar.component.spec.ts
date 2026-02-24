@@ -50,6 +50,7 @@ describe('NavbarComponent', () => {
 
     currentUserService.get.and.returnValue(of(currentUser));
     engineService.getInfo.and.returnValue(of({ version: '3.0' } as OIBusInfo));
+    (engineService as any).info$ = of({ version: '3.0' } as OIBusInfo);
 
     tester = new NavbarComponentTester();
   });

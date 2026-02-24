@@ -163,6 +163,10 @@ describe('SouthMySQL with authentication', () => {
     south = new SouthMySQL(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should get throttling settings', () => {
     expect(south.getThrottlingSettings(configuration.settings)).toEqual({
       maxReadInterval: configuration.settings.throttling.maxReadInterval,
@@ -465,6 +469,10 @@ describe('SouthMySQL without authentication', () => {
     south = new SouthMySQL(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should manage connection error', async () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
@@ -638,6 +646,10 @@ describe('SouthMySQL test connection', () => {
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
     south = new SouthMySQL(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   it('Database is reachable and has tables', async () => {
