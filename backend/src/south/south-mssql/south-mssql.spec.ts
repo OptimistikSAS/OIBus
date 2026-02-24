@@ -169,6 +169,10 @@ describe('SouthMSSQL with authentication', () => {
     south = new SouthMSSQL(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should get throttling settings', () => {
     expect(south.getThrottlingSettings(configuration.settings)).toEqual({
       maxReadInterval: configuration.settings.throttling.maxReadInterval,
@@ -421,6 +425,10 @@ describe('SouthMSSQL without authentication', () => {
     south = new SouthMSSQL(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should manage query error', async () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
@@ -597,6 +605,10 @@ describe('SouthMSSQL test connection', () => {
     jest.spyOn(mssql, 'ConnectionPool').mockImplementation(() => ({ connect }) as unknown as ConnectionPool);
 
     south = new SouthMSSQL(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   it('Database is reachable and has tables', async () => {

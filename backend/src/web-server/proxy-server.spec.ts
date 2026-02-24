@@ -38,6 +38,10 @@ describe('ProxyServer', () => {
     proxyServer = new ProxyServer(logger, false);
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should initialize with default IP filters', () => {
     expect(proxyServer['ipFilters']).toEqual([]);
   });

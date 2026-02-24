@@ -23,6 +23,10 @@ describe('Log Service', () => {
     service = new LogService(validator, logRepository);
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should search logs', () => {
     const expectedResult = createPageFromArray(testData.logs.list, 25, 0);
     (logRepository.search as jest.Mock).mockReturnValueOnce(expectedResult);

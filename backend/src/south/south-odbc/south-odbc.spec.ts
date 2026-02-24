@@ -164,6 +164,10 @@ describe('SouthODBC odbc driver with authentication', () => {
     south = new SouthODBC(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should get throttling settings', () => {
     expect(south.getThrottlingSettings(configuration.settings)).toEqual({
       maxReadInterval: configuration.settings.throttling.maxReadInterval,
@@ -517,6 +521,10 @@ describe('SouthODBC odbc driver without authentication', () => {
     south = new SouthODBC(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should get data from ODBC without auth', async () => {
     const odbc = {
       connect: jest.fn()
@@ -775,6 +783,10 @@ describe('SouthODBC odbc driver test connection', () => {
     south = new SouthODBC(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('Database is reachable and has tables', async () => {
     const odbc = {
       connect: jest.fn()
@@ -972,6 +984,10 @@ describe('SouthODBC odbc remote with authentication', () => {
     (convertDelimiter as jest.Mock).mockImplementation(value => value);
 
     south = new SouthODBC(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   it('should properly connect to remote agent and disconnect ', async () => {
@@ -1340,6 +1356,10 @@ describe('SouthODBC odbc remote test connection', () => {
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
     south = new SouthODBC(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   it('should test connection successfully', async () => {
