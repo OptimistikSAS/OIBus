@@ -35,6 +35,10 @@ describe('OIAnalytics Client', () => {
     service = new OIAnalyticsClient();
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   describe('updateCommandStatus', () => {
     it('should call PUT endpoint with correct options', async () => {
       await service.updateCommandStatus(testData.oIAnalytics.registration.completed, 'payload');

@@ -216,6 +216,10 @@ describe('SouthOPCUA', () => {
     south = new SouthOPCUA(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should be properly initialized', async () => {
     south.connect = jest.fn();
     south.createSession = jest.fn();

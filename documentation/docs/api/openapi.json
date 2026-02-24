@@ -20026,6 +20026,9 @@
 					"content": {
 						"type": "string"
 					},
+					"contentFilename": {
+						"type": "string"
+					},
 					"contentType": {
 						"type": "string",
 						"enum": [
@@ -20045,6 +20048,7 @@
 				},
 				"required": [
 					"content",
+					"contentFilename",
 					"contentType",
 					"truncated",
 					"totalSize"
@@ -24986,7 +24990,7 @@
 				"operationId": "SearchCacheContent",
 				"responses": {
 					"200": {
-						"description": "Array of cache file metadata",
+						"description": "The cache search result",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -24997,7 +25001,7 @@
 					}
 				},
 				"description": "Searches for files in the north connector cache",
-				"summary": "Search cache files",
+				"summary": "Search files in cache, error and archive folders",
 				"tags": [
 					"North Connectors"
 				],
@@ -25052,7 +25056,7 @@
 				"operationId": "GetCacheFileContent",
 				"responses": {
 					"200": {
-						"description": "Ok",
+						"description": "The content of the file - may be truncated",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -25062,8 +25066,8 @@
 						}
 					}
 				},
-				"description": "Download a cache file from a north connector cache",
-				"summary": "Download cache file",
+				"description": "Retrieve a file from a north connector cache",
+				"summary": "Retrieve cache file content",
 				"tags": [
 					"North Connectors"
 				],
@@ -25104,7 +25108,7 @@
 						"description": "No Content"
 					}
 				},
-				"description": "Update north cache content by moving or removing files from cache, archive and error folders",
+				"description": "Update cache content by moving or removing files from cache, archive and error folders",
 				"summary": "Move or remove files from cache, error and archive folders",
 				"tags": [
 					"North Connectors"
@@ -26593,7 +26597,7 @@
 				"operationId": "SearchCacheContent",
 				"responses": {
 					"200": {
-						"description": "Array of cache file metadata",
+						"description": "The cache search result",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -26604,7 +26608,7 @@
 					}
 				},
 				"description": "Searches for files in the history query cache",
-				"summary": "Search cache content",
+				"summary": "Search files in cache, error and archive folders",
 				"tags": [
 					"History Queries"
 				],
@@ -26659,7 +26663,7 @@
 				"operationId": "GetCacheFileContent",
 				"responses": {
 					"200": {
-						"description": "Ok",
+						"description": "The content of the file - may be truncated",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -26669,8 +26673,8 @@
 						}
 					}
 				},
-				"description": "Downloads a specific file from the history query cache",
-				"summary": "Download cache file",
+				"description": "Retrieve a file from a north connector cache",
+				"summary": "Retrieve cache file content",
 				"tags": [
 					"History Queries"
 				],
@@ -26711,7 +26715,7 @@
 						"description": "No Content"
 					}
 				},
-				"description": "Update north cache content by moving or removing files from cache, archive and error folders",
+				"description": "Update cache content by moving or removing files from cache, archive and error folders",
 				"summary": "Move or remove files from cache, error and archive folders",
 				"tags": [
 					"History Queries"

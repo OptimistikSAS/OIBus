@@ -167,6 +167,7 @@ describe('HistoryQueryDetailComponent', () => {
     certificateService.list.and.returnValue(of([]));
     transformerService.list.and.returnValue(of([]));
     engineService.getInfo.and.returnValue(of(engineInfo));
+    (engineService as any).info$ = of(engineInfo);
 
     tester = new HistoryQueryDetailComponentTester();
   });

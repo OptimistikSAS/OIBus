@@ -25,6 +25,10 @@ describe('LogController', () => {
     controller = new LogController();
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should return logs with search parameters', async () => {
     const page = 1;
     const start = testData.constants.dates.DATE_1;

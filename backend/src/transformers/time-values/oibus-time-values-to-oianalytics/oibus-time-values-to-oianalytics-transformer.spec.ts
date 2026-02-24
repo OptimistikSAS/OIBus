@@ -19,6 +19,10 @@ describe('OIBusTimeValuesToOIAnalyticsTransformer', () => {
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should transform data from a stream and return metadata', async () => {
     const options = {
       precision: 'ms'

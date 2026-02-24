@@ -39,6 +39,7 @@ describe('HistoryQuery enabled', () => {
   });
 
   afterEach(() => {
+    jest.useRealTimers();
     mockedSouth1.connectedEvent.removeAllListeners();
   });
 

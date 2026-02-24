@@ -5010,6 +5010,7 @@ const models: TsoaRoute.Models = {
         "dataType": "refObject",
         "properties": {
             "content": {"dataType":"string","required":true},
+            "contentFilename": {"dataType":"string","required":true},
             "contentType": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["csv"]},{"dataType":"enum","enums":["xml"]},{"dataType":"enum","enums":["json"]},{"dataType":"enum","enums":["raw"]}],"required":true},
             "truncated": {"dataType":"boolean","required":true},
             "totalSize": {"dataType":"double","required":true},
