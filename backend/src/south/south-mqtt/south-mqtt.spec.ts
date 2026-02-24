@@ -197,6 +197,7 @@ describe('SouthMQTT', () => {
   });
 
   afterEach(() => {
+    jest.useRealTimers();
     mqttStream.removeAllListeners();
   });
 

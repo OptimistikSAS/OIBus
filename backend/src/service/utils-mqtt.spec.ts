@@ -438,6 +438,7 @@ describe('Service utils MQTT', () => {
     });
 
     afterEach(() => {
+      jest.useRealTimers();
       // Restore the original implementations after each test
       jest.restoreAllMocks();
     });

@@ -11,5 +11,5 @@ import { toSignal } from '@angular/core/rxjs-interop';
   styleUrl: './about.component.scss'
 })
 export class AboutComponent {
-  readonly oibusInfo = toSignal(inject(EngineService).getInfo());
+  readonly oibusInfo = toSignal(inject(EngineService).info$);
 }

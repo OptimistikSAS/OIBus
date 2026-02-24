@@ -65,6 +65,7 @@ describe('NorthAzureBlob', () => {
   });
 
   afterEach(() => {
+    jest.useRealTimers();
     cacheService.cacheSizeEventEmitter.removeAllListeners();
   });
 

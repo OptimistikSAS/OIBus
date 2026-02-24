@@ -164,6 +164,10 @@ describe('SouthOLEDB', () => {
     south = new SouthOLEDB(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should get throttling settings', () => {
     expect(south.getThrottlingSettings(configuration.settings)).toEqual({
       maxReadInterval: configuration.settings.throttling.maxReadInterval,

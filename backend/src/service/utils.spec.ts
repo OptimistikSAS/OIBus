@@ -120,6 +120,10 @@ describe('Service utils', () => {
       jest.clearAllMocks();
     });
 
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
     it('should delay', async () => {
       const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
 
@@ -1075,6 +1079,10 @@ describe('Service utils', () => {
       jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
     });
 
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
     it('should properly validate a cron expression (every second)', () => {
       const result = validateCronExpression('* * * * * *');
       const expectedResult = {
@@ -1198,6 +1206,10 @@ describe('Service utils', () => {
       jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
     });
 
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
     it('should properly check scan mode', () => {
       expect(checkScanMode(testData.scanMode.list, 'scanModeId1', null)).toEqual(testData.scanMode.list[0]);
       expect(() => checkScanMode(testData.scanMode.list, null, null)).toThrow('Scan mode not specified');
@@ -1210,6 +1222,10 @@ describe('Service utils', () => {
     beforeEach(() => {
       jest.resetAllMocks();
       jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
     });
 
     it('should properly convert items into csv', () => {
@@ -1250,6 +1266,10 @@ describe('Service utils', () => {
     beforeEach(() => {
       jest.resetAllMocks();
       jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
     });
 
     it('should properly convert string to boolean', () => {
@@ -1538,6 +1558,10 @@ describe('Service utils', () => {
   describe('generateFilenameForSerialization', () => {
     beforeEach(() => {
       jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
     });
 
     it('should replace placeholders correctly', () => {
