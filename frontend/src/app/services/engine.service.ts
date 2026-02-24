@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, shareReplay } from 'rxjs';
 import { Injectable, inject } from '@angular/core';
 import {
   EngineSettingsCommandDTO,
@@ -45,6 +45,8 @@ export class EngineService {
   restart(): Observable<void> {
     return this.http.post<void>('/api/engine/restart', null);
   }
+
+  readonly info$: Observable<OIBusInfo> = this.http.get<OIBusInfo>('/api/engine/info').pipe(shareReplay(1));
 
   getInfo(): Observable<OIBusInfo> {
     return this.http.get<OIBusInfo>('/api/engine/info');

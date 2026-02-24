@@ -42,6 +42,10 @@ describe('Logger', () => {
     service = new LoggerService('folder');
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should be properly initialized', async () => {
     service.createChildLogger = jest.fn();
     const expectedTargets = [

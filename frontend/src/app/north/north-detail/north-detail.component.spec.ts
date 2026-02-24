@@ -85,6 +85,7 @@ describe('NorthDetailComponent', () => {
     northConnectorService.start.and.returnValue(of(undefined));
     northConnectorService.stop.and.returnValue(of(undefined));
     engineService.getInfo.and.returnValue(of(engineInfo));
+    (engineService as any).info$ = of(engineInfo);
     scanModeService.list.and.returnValue(of([]));
     certificateService.list.and.returnValue(of([]));
     transformerService.list.and.returnValue(of([]));

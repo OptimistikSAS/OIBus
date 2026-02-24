@@ -92,6 +92,10 @@ describe('SouthConnector with file query', () => {
     await south.start();
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should properly add to queue a new task and trigger next run', async () => {
     south.run = jest.fn();
 
@@ -273,6 +277,10 @@ describe('SouthConnector disabled', () => {
     await south.start();
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should be properly initialized ', async () => {
     expect(logger.trace(`South connector ${testData.south.list[1].name} not enabled`));
     expect(south.isEnabled()).toEqual(false);
@@ -321,6 +329,10 @@ describe('SouthConnector with history and max instant per item', () => {
     south = new SouthOPCUA(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
 
     await south.start();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   it('should manage history query with several intervals with max instant per item', async () => {
@@ -492,6 +504,10 @@ describe('SouthConnector with history and subscription', () => {
     south.connect = jest.fn();
     south.disconnect = jest.fn();
     await south.start();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   it('should properly run task a task', async () => {

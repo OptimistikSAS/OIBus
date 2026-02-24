@@ -167,6 +167,10 @@ describe('SouthOracle with authentication', () => {
     south = new SouthOracle(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should get throttling settings', () => {
     expect(south.getThrottlingSettings(configuration.settings)).toEqual({
       maxReadInterval: configuration.settings.throttling.maxReadInterval,
@@ -481,6 +485,10 @@ describe('SouthOracle without authentication but with thick mode', () => {
     south = new SouthOracle(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should manage connection error', async () => {
     expect(oracledb.initOracleClient).toHaveBeenCalledWith({ libDir: path.resolve(configuration.settings.oracleClient!) });
     const startTime = '2020-01-01T00:00:00.000Z';
@@ -649,6 +657,10 @@ describe('SouthOracle test connection', () => {
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
     south = new SouthOracle(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   it('Database is reachable and has tables', async () => {

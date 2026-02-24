@@ -196,6 +196,7 @@ describe('DataStreamEngine', () => {
   });
 
   afterEach(() => {
+    jest.useRealTimers();
     mockedSouth1.connectedEvent.removeAllListeners();
     mockedSouth2.connectedEvent.removeAllListeners();
   });
