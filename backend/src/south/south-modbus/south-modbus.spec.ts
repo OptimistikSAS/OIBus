@@ -186,6 +186,10 @@ describe('South Modbus', () => {
     south = new SouthModbus(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should properly connect', async () => {
     const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
 

@@ -20,6 +20,10 @@ describe('SouthConnectorMetricsService', () => {
     service = new SouthConnectorMetricsService(southMock, southConnectorMetricsRepository);
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should be properly initialised', () => {
     service.initMetrics();
     expect(southConnectorMetricsRepository.initMetrics).toHaveBeenCalledWith(testData.south.list[0].id);

@@ -119,6 +119,10 @@ describe('SouthSFTP', () => {
     south = new SouthSftp(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('fileQuery should manage file retrieval', async () => {
     expect(southCacheService.getQueryOnCustomTable).not.toHaveBeenCalled();
     (fs.readdir as jest.Mock)
@@ -530,6 +534,10 @@ describe('SouthFTP with preserve file and compression', () => {
     await south.start();
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should properly check condition', () => {
     const mtimeMs = new Date('2020-02-02T02:02:02.222Z').getTime();
     south.getModifiedTime = jest
@@ -695,6 +703,10 @@ describe('SouthSFTP test connection with private key', () => {
     (sftpClient as jest.Mock).mockImplementation(() => mockSftpClient);
 
     south = new SouthSftp(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   it('should throw an error if connection fails', async () => {

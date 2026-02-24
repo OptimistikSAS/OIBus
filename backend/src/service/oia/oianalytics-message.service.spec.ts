@@ -103,6 +103,7 @@ describe('OIAnalytics Message Service', () => {
   });
 
   afterEach(async () => {
+    jest.useRealTimers();
     await flushPromises();
     oIAnalyticsRegistrationService.registrationEvent.removeAllListeners();
   });
