@@ -78,6 +78,7 @@ describe('NorthMQTT', () => {
   });
 
   afterEach(async () => {
+    jest.useRealTimers();
     cacheService.cacheSizeEventEmitter.removeAllListeners();
   });
 

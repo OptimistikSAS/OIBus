@@ -79,6 +79,7 @@ describe('NorthAmazonS3', () => {
   });
 
   afterEach(() => {
+    jest.useRealTimers();
     cacheService.cacheSizeEventEmitter.removeAllListeners();
   });
 

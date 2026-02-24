@@ -17,6 +17,10 @@ describe('IgnoreTransformer', () => {
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should transform data from a stream and return metadata without filename', async () => {
     // Arrange
     const transformer = new IgnoreTransformer(logger, testData.transformers.list[0], testData.north.list[0], {});
