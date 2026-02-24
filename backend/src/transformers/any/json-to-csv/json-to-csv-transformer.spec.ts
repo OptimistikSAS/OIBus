@@ -29,6 +29,10 @@ describe('JSONToCSVTransformer', () => {
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should transform data from a stream and return metadata when regex matches', async () => {
     (csv.unparse as jest.Mock).mockReturnValue('csv content');
 
